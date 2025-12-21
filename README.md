@@ -1,6 +1,6 @@
 # MultiView Calendar Health Care Appointment Management System – Next.js, Postgresql FullStack Project (Admin Control Panel Permission Dashboard)
 
-A modern, full-featured calendar and appointment management web application built with Next.js, React, and Supabase. Perfect for healthcare, clinics, and organizations needing robust scheduling, filtering, and client management with multiple calendar views, instant search, advanced filtering, and a clean, responsive UI.
+A modern, full-featured calendar and appointment management web application built with Next.js, React, and PostgreSQL. Perfect for healthcare, clinics, and organizations needing robust scheduling, filtering, and client management with multiple calendar views, instant search, advanced filtering, and a clean, responsive UI.
 
 **Live Demo:** [https://doctor-patient-calendar-appointment.vercel.app/](https://doctor-patient-calendar-appointment.vercel.app/)
 
@@ -95,10 +95,10 @@ This is a comprehensive appointment management system designed for healthcare pr
 
 ### User Management
 
-- Secure authentication with Supabase Auth
+- Secure authentication with custom JWT-based system
 - Email verification required
 - User profile management
-- Session-based authentication
+- Session-based authentication with secure cookies
 
 ---
 
@@ -117,11 +117,11 @@ This is a comprehensive appointment management system designed for healthcare pr
 
 ### Backend & Database
 
-- **Supabase**: Backend-as-a-Service
-  - PostgreSQL database
-  - Authentication
-  - Row Level Security (RLS)
-  - Storage for attachments
+- **PostgreSQL**: Self-hosted PostgreSQL database
+  - Direct database connection via `pg` library
+  - Custom JWT-based authentication system
+  - Server-side permission validation
+  - Vercel Blob storage for attachments
 
 ### Additional Libraries
 
@@ -197,8 +197,10 @@ multiview-calender-appointment/
 │   │   ├── DateContext.tsx         # Global date state
 │   │   └── AppointmentColorContext.tsx  # Color management
 │   ├── lib/                        # Utility libraries
-│   │   ├── supabaseClient.ts       # Client-side Supabase client
-│   │   ├── supabaseAdmin.ts        # Server-side admin client
+│   │   ├── postgresClient.ts       # PostgreSQL database client
+│   │   ├── auth.ts                 # Custom JWT authentication
+│   │   ├── vercelBlob.ts           # Vercel Blob storage client
+│   │   ├── session.ts              # Session management
 │   │   ├── email.ts                # Email sending
 │   │   ├── permissions.ts          # Permission checking
 │   │   └── utils.ts                # General utilities
@@ -207,6 +209,15 @@ multiview-calender-appointment/
 │   │   └── invitation.ts           # Invitation types
 │   └── styles/
 │       └── globals.css             # Global styles
+├── migrations/                     # Database migration SQL files
+│   ├── 001_initial_schema.sql      # Initial database schema
+│   ├── 002_add_password_to_users.sql  # Password authentication support
+│   └── 003_add_performance_indexes.sql # Performance optimizations
+├── scripts/                        # Database utility scripts
+│   ├── migrate.ts                  # Run database migrations
+│   ├── seed.ts                     # Seed database from CSV files
+│   ├── check-users.ts              # List all users in database
+│   └── manage-user.ts              # Manage user verification/passwords
 ├── package.json                    # Dependencies
 ├── tsconfig.json                   # TypeScript config
 ├── next.config.ts                  # Next.js config
@@ -225,7 +236,8 @@ Before you begin, ensure you have the following installed:
 - **Node.js** 18.x or higher
 - **npm** or **yarn** or **pnpm** package manager
 - **Git** for version control
-- A **Supabase** account (free tier works)
+- A **PostgreSQL** database (self-hosted or cloud provider)
+- A **Vercel** account (for Vercel Blob storage, free tier works)
 
 ---
 
@@ -236,16 +248,22 @@ Create a `.env.local` file in the root directory with the following variables:
 ### Required Environment Variables
 
 ```bash
-# Supabase Configuration
-# Get these from your Supabase project settings
-NEXT_PUBLIC_SUPABASE_URL=your-supabase-project-url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
+# PostgreSQL Database Configuration
+# Format: postgresql://username:password@host:port/database
+DATABASE_URL=postgresql://username:password@host:port/database
+
+# Authentication Secret (JWT)
+# Generate with: openssl rand -base64 32
+AUTH_SECRET=your-jwt-secret-key-here
 
 # Application Base URL
 # For local development: http://localhost:3000
 # For production: https://your-domain.com
 NEXT_PUBLIC_BASE_URL=http://localhost:3000
+
+# Vercel Blob Storage
+# Get from Vercel Dashboard → Storage → Blob
+BLOB_READ_WRITE_TOKEN=vercel_blob_rw_xxxxxxxxxxxxx
 
 # Email Configuration (Gmail SMTP)
 # For Gmail, you'll need to:
@@ -255,15 +273,47 @@ EMAIL_USER=your-email@gmail.com
 EMAIL_PASS=your-app-password
 ```
 
-### How to Get Supabase Credentials
+### How to Get Database Credentials
 
-1. **Create a Supabase Account**: Go to [supabase.com](https://supabase.com) and sign up
-2. **Create a New Project**: Click "New Project" and fill in the details
-3. **Get Your Credentials**:
-   - Go to Project Settings → API
-   - Copy the "Project URL" → `NEXT_PUBLIC_SUPABASE_URL`
-   - Copy the "anon public" key → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - Copy the "service_role" key → `SUPABASE_SERVICE_ROLE_KEY` (keep this secret!)
+1. **Set Up PostgreSQL Database**:
+   - Use a self-hosted PostgreSQL instance, or
+   - Use a cloud provider (AWS RDS, DigitalOcean, Hetzner, etc.)
+2. **Create Database and User**:
+   - Create a database for the project
+   - Create a user with appropriate permissions
+   - Note the connection details (host, port, database name, username, password)
+3. **Format Connection String**:
+   - Use format: `postgresql://username:password@host:port/database`
+   - Example: `postgresql://myuser:mypass@localhost:5432/myapp_db`
+
+### How to Get Vercel Blob Token
+
+1. **Create Vercel Account**: Go to [vercel.com](https://vercel.com) and sign up
+2. **Create a Blob Store**:
+   - Go to your Vercel project dashboard
+   - Navigate to Storage → Blob
+   - Click "Create Database" (if first time) or "Create Blob Store"
+   - Give it a name (e.g., "appointments-attachments")
+3. **Get Read/Write Token**:
+   - In the Blob Store settings, find "Tokens"
+   - Create a new token with read/write permissions
+   - Copy the token → `BLOB_READ_WRITE_TOKEN`
+
+### How to Generate JWT Secret
+
+1. **Using OpenSSL** (recommended):
+
+   ```bash
+   openssl rand -base64 32
+   ```
+
+2. **Using Node.js**:
+
+   ```bash
+   node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+   ```
+
+3. **Copy the output** → `AUTH_SECRET` in your `.env.local` file
 
 ### How to Get Gmail App Password
 
@@ -278,9 +328,12 @@ EMAIL_PASS=your-app-password
 ⚠️ **Important Security Notes**:
 
 - Never commit `.env.local` to version control (it's in `.gitignore`)
-- The `SUPABASE_SERVICE_ROLE_KEY` bypasses all security policies - keep it secret!
+- The `AUTH_SECRET` is used to sign JWT tokens - keep it secret and never expose it!
+- The `DATABASE_URL` contains database credentials - protect it like a password
+- The `BLOB_READ_WRITE_TOKEN` grants access to your file storage - keep it secure
 - Use different credentials for development and production
 - Rotate credentials if they're ever exposed
+- Generate strong, random values for `AUTH_SECRET` (minimum 32 characters)
 
 ---
 
@@ -307,13 +360,22 @@ pnpm install
 
 Create `.env.local` file and add all required environment variables (see [Environment Variables](#-environment-variables) section above).
 
-### Step 4: Set Up Supabase Database
+### Step 4: Set Up PostgreSQL Database
 
-You'll need to create the following tables in your Supabase database:
+You'll need to create the database schema using the migration files:
 
-#### Required Tables
+#### Run Database Migrations
 
-1. **users** - User profiles
+The project includes migration SQL files in the `migrations/` directory:
+
+```bash
+# Run migrations to create all tables
+npm run db:migrate
+```
+
+This will create the following tables:
+
+1. **users** - User profiles with authentication
 2. **appointments** - Appointment records
 3. **appointment_assignee** - Appointment invitations and permissions
 4. **patients** - Patient information
@@ -326,31 +388,43 @@ You'll need to create the following tables in your Supabase database:
 
 ```sql
 CREATE TABLE appointments (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE,
   start TIMESTAMP WITH TIME ZONE NOT NULL,
   end TIMESTAMP WITH TIME ZONE NOT NULL,
   location TEXT,
-  patient UUID REFERENCES patients(id),
+  patient UUID REFERENCES patients(id) ON DELETE SET NULL,
   attachements TEXT[],
-  category UUID REFERENCES categories(id),
+  category UUID REFERENCES categories(id) ON DELETE SET NULL,
   notes TEXT,
   title TEXT NOT NULL,
   status TEXT CHECK (status IN ('done', 'pending', 'alert')),
-  user_id UUID REFERENCES auth.users(id) NOT NULL
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL
 );
 ```
 
-> **Note**: You'll need to set up Row Level Security (RLS) policies in Supabase to control data access. Refer to Supabase documentation for RLS setup.
+> **Note**: The migration files are idempotent (safe to run multiple times). They use `CREATE TABLE IF NOT EXISTS` and `CREATE INDEX IF NOT EXISTS` to avoid errors.
 
-### Step 5: Configure Supabase Storage
+### Step 5: Seed Database (Optional)
 
-Create a storage bucket named `attachments` for storing appointment attachments:
+If you have CSV data to import:
 
-1. Go to Supabase Dashboard → Storage
-2. Create a new bucket named `attachments`
-3. Set appropriate policies for upload/download
+```bash
+# Set CSV_DIR environment variable to your CSV files location
+export CSV_DIR=/path/to/your/csv/files
+
+# Run seed script
+npm run db:seed
+```
+
+### Step 6: Configure Vercel Blob Storage
+
+Vercel Blob storage is automatically configured when you set the `BLOB_READ_WRITE_TOKEN` environment variable. The application will use Vercel Blob for storing appointment attachments.
+
+1. Ensure `BLOB_READ_WRITE_TOKEN` is set in your `.env.local`
+2. The application will automatically create blob stores as needed
+3. Files are uploaded via `/api/storage/upload` endpoint
 
 ---
 
@@ -381,6 +455,24 @@ npm start
 npm run lint
 ```
 
+### Database Management Scripts
+
+The project includes several database utility scripts:
+
+```bash
+# Run database migrations (creates all tables)
+npm run db:migrate
+
+# Seed database from CSV files (requires CSV_DIR environment variable)
+npm run db:seed
+
+# Check all users in the database
+npm run db:check-users
+
+# Manage user (verify email, set password)
+npm run db:manage-user -- --email user@example.com --verify --set-password newpassword
+```
+
 ---
 
 ## 🎓 Project Walkthrough
@@ -388,9 +480,10 @@ npm run lint
 ### Initial Setup Flow
 
 1. **Registration**: New users register with email and password
-2. **Email Verification**: Users must verify their email address
-3. **Login**: After verification, users can log in
-4. **User Sync**: User data is automatically synced to the `users` table
+2. **Email Verification**: Users receive verification email and must verify their email address
+3. **Login**: After verification, users can log in with email and password
+4. **Session Creation**: JWT token is created and stored in secure HTTP-only cookie
+5. **User Record**: User data is stored in the `users` table with hashed password
 
 ### Main Application Flow
 
@@ -892,9 +985,10 @@ Secure authentication flow:
 
 **Implementation:**
 
-- Supabase Auth integration
-- Client and server-side authentication
-- Automatic user sync to database
+- Custom JWT-based authentication system
+- Server-side authentication with secure password hashing
+- Session management with HTTP-only cookies
+- API route protection with authentication middleware
 
 ---
 
@@ -931,29 +1025,31 @@ function CreateAppointmentButton() {
 
 ```tsx
 import { useEffect, useState } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import type { Appointment } from '@/types/types';
 
 function AppointmentList() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const supabase = createClientComponentClient();
   
   useEffect(() => {
     async function fetchAppointments() {
-      const { data, error } = await supabase
-        .from('appointments')
-        .select('*')
-        .order('start', { ascending: true });
-      
-      if (error) {
+      try {
+        const response = await fetch('/api/appointments', {
+          credentials: 'include', // Include cookies for authentication
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch appointments');
+        }
+        
+        const data = await response.json();
+        setAppointments(data.appointments || []);
+      } catch (error) {
         console.error('Error fetching appointments:', error);
-      } else {
-        setAppointments(data || []);
       }
     }
     
     fetchAppointments();
-  }, [supabase]);
+  }, []);
   
   return (
     <div>
@@ -1056,12 +1152,17 @@ async function sendInvitation() {
 
 #### `users`
 
-Stores user profile information synced from Supabase Auth.
+Stores user profile information with custom authentication.
 
 ```sql
 CREATE TABLE users (
-  id UUID PRIMARY KEY REFERENCES auth.users(id),
-  email TEXT NOT NULL,
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  email TEXT NOT NULL UNIQUE,
+  password_hash TEXT,
+  email_verified BOOLEAN DEFAULT false,
+  email_verification_token UUID,
+  password_reset_token UUID,
+  password_reset_expires TIMESTAMP WITH TIME ZONE,
   display_name TEXT,
   role TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -1086,7 +1187,7 @@ CREATE TABLE appointments (
   notes TEXT,
   title TEXT NOT NULL,
   status TEXT CHECK (status IN ('done', 'pending', 'alert')),
-  user_id UUID REFERENCES auth.users(id) NOT NULL
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL
 );
 ```
 
@@ -1098,13 +1199,14 @@ Tracks appointment invitations and permissions.
 CREATE TABLE appointment_assignee (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  appointment UUID REFERENCES appointments(id) NOT NULL,
-  user UUID REFERENCES auth.users(id),
+  appointment UUID REFERENCES appointments(id) ON DELETE CASCADE NOT NULL,
+  "user" UUID REFERENCES users(id) ON DELETE SET NULL,
+  user_type TEXT CHECK (user_type IN ('users', 'relatives', 'patients')),
   invited_email TEXT,
   status TEXT CHECK (status IN ('pending', 'accepted', 'declined')),
   permission TEXT CHECK (permission IN ('read', 'write', 'full')),
   invitation_token UUID UNIQUE,
-  invited_by UUID REFERENCES auth.users(id)
+  invited_by UUID REFERENCES users(id) ON DELETE SET NULL
 );
 ```
 
@@ -1150,11 +1252,13 @@ CREATE TABLE categories (
 ### Authentication Flow
 
 1. **Registration**: User creates account with email/password
-2. **Email Verification**: Supabase sends verification email
-3. **Verification**: User clicks link to verify email
-4. **Login**: User logs in with verified credentials
-5. **Session**: Supabase manages session with cookies
-6. **User Sync**: User data synced to `users` table
+2. **Password Hashing**: Password is hashed using bcrypt before storage
+3. **Email Verification**: System sends verification email with unique token
+4. **Verification**: User clicks link to verify email
+5. **Login**: User logs in with verified credentials
+6. **JWT Token**: System generates JWT token with user ID and email
+7. **Session Cookie**: JWT token stored in secure HTTP-only cookie
+8. **User Record**: User data stored in `users` table with hashed password
 
 ### Authorization Flow
 
@@ -1165,17 +1269,20 @@ CREATE TABLE categories (
 
 ### Security Features
 
-- **Row Level Security (RLS)**: Database-level access control
-- **Service Role Key**: Only used server-side, never exposed
+- **Password Hashing**: Passwords hashed with bcrypt (salt rounds: 10)
+- **JWT Tokens**: Secure token-based authentication with expiration
+- **HTTP-Only Cookies**: Session tokens stored in secure, HTTP-only cookies
+- **Server-Side Validation**: All authentication and authorization checks on server
 - **Token-based Invitations**: Secure UUID tokens for invitations
 - **Email Verification**: Required before accessing app
-- **Session Management**: Secure session handling with Supabase
+- **Rate Limiting**: API endpoints protected against brute force attacks
+- **Input Validation**: All user inputs validated and sanitized
 
 ---
 
 ## 🏷️ Keywords
 
-Next.js, React, TypeScript, Supabase, Tailwind CSS, shadcn/ui, Radix UI, Calendar, Appointment Management, Healthcare, Medical Scheduling, Multi-View Calendar, List View, Week View, Month View, Search, Filtering, Invitation System, Permission Management, Role-Based Access Control, RESTful API, OpenAPI, Authentication, Authorization, Email Notifications, Responsive Design, Full-Stack, CRUD Operations, PostgreSQL, Row Level Security, Context API, State Management, Date-fns, Nodemailer, UUID, Vercel, Production Ready, Educational Project, Open Source, Arnob Mahmud
+Next.js, React, TypeScript, PostgreSQL, Vercel Blob, Tailwind CSS, shadcn/ui, Radix UI, Calendar, Appointment Management, Healthcare, Medical Scheduling, Multi-View Calendar, List View, Week View, Month View, Search, Filtering, Invitation System, Permission Management, Role-Based Access Control, RESTful API, OpenAPI, JWT Authentication, Custom Auth, Authorization, Email Notifications, Responsive Design, Full-Stack, CRUD Operations, Database Migration, Context API, State Management, Date-fns, Nodemailer, UUID, Vercel, Production Ready, Educational Project, Open Source, Arnob Mahmud
 
 ---
 
