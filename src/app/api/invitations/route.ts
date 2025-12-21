@@ -1,3 +1,17 @@
+/**
+ * Invitations API Route Handler
+ * 
+ * This file handles invitation management for the application:
+ * - POST: Create and send new invitations (appointment or dashboard access)
+ * - GET: Retrieve all invitations for the current user
+ * 
+ * Invitation System:
+ * - Supports two types: "appointment" and "dashboard"
+ * - Uses secure tokens (UUID) for invitation links
+ * - Sends email notifications to invitees
+ * - Tracks invitation status (pending, accepted, declined)
+ */
+
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 import { sendInvitationEmail } from "@/lib/email";
@@ -6,23 +20,50 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 
-// Placeholder for DB and email logic
-
-// POST /api/invitations - Send invitation (appointment or dashboard)
+/**
+ * POST /api/invitations
+ * 
+ * Creates a new invitation and sends it via email.
+ * Supports two invitation types:
+ * 1. "appointment" - Invite user to access a specific appointment
+ * 2. "dashboard" - Invite user to access another user's dashboard
+ * 
+ * Request Body:
+ * - type: "appointment" | "dashboard"
+ * - email: Email address of the person being invited
+ * - resourceId: ID of the appointment or dashboard owner
+ * - permission: "read" | "write" | "full"
+ * - invitedUserId: (optional) User ID if they already have an account
+ * 
+ * @param req - Next.js request containing invitation data
+ * @returns JSON response with invitation token or error
+ */
 export async function POST(req: NextRequest) {
   try {
+    // Get authenticated user from session cookies
+    // This ensures only logged-in users can send invitations
     const supabase = createRouteHandlerClient({ cookies });
     const {
       data: { user },
     } = await supabase.auth.getUser();
+    
+    // Security: Require authentication
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    
+    // Parse request body
     const body = (await req.json()) as InvitationRequest;
-  const { type, email, resourceId, permission, invitedUserId } = body;
+    const { type, email, resourceId, permission, invitedUserId } = body;
+    
+    // Input validation: Ensure all required fields are present
     if (!type || !email || !resourceId || !permission) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
+    
+    // Generate unique invitation token
+    // This token is used in the invitation link and stored in the database
+    // UUID v4 provides cryptographically strong random tokens
     const token = uuidv4();
     // Debug log for insert values
     console.log("Inserting invitation:", {

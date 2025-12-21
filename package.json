@@ -1,5 +1,5 @@
 {
-  "name": "vocare-calender",
+  "name": "multiview-calender-appointment",
   "version": "0.2.1",
   "private": true,
   "scripts": {
@@ -41,7 +41,7 @@
     "@types/react-dom": "^19",
     "@types/uuid": "^10.0.0",
     "eslint": "^9",
-    "eslint-config-next": "15.3.4",
+    "eslint-config-next": "15.4.10",
     "tailwindcss": "^4",
     "tw-animate-css": "^1.3.4",
     "typescript": "^5"
