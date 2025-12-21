@@ -3,21 +3,34 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
 export default function Navbar() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
-  const supabase = createClientComponentClient();
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
+    const fetchUser = async () => {
+      try {
+        const response = await fetch("/api/auth/me");
+        if (response.ok) {
+          const data = await response.json();
       setUserEmail(data?.user?.email ?? null);
-    });
-  }, [supabase]);
+        }
+      } catch (error) {
+        console.error("Error fetching user:", error);
+      }
+    };
+    fetchUser();
+  }, []);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      window.location.href = "/login";
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Still redirect even if API call fails
     window.location.href = "/login";
+    }
   };
 
   return (

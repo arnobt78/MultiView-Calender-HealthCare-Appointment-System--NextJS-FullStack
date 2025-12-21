@@ -11,15 +11,14 @@ import {
   Activity,
   Relative,
 } from "@/types/types";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { useEffect as useAuthEffect, useState as useAuthState } from "react";
-import type { User } from "@supabase/supabase-js";
 import Filters from "./Filters";
 import AppointmentDialog from "./AppointmentDialog";
 import EditAppointmentDialog from "./EditAppointmentDialog";
 import { useDateContext } from "@/context/DateContext";
 import { Button } from "@/components/ui/button";
 import { getUserAppointmentPermission } from "@/lib/permissions";
+// Using Vercel Blob for file storage
+import { getPublicUrl } from "@/lib/vercelBlob";
 import {
   FiEdit2,
   FiTrash2,
@@ -124,9 +123,8 @@ function getDateTag(date: Date) {
 
 export default function AppointmentList() {
   // State for current user
-  const [user, setUser] = useAuthState<User | null>(null);
-  // Create a Supabase client for all calls
-  const supabase = createClientComponentClient();
+  const [user, setUser] = useState<{ id: string; email: string } | null>(null);
+  // Using API routes for all data operations
   const [appointments, setAppointments] = useState<FullAppointment[]>([]);
   const [category, setCategory] = useState<string | null>(null);
   const [patient, setPatient] = useState<string | null>(null);
@@ -148,48 +146,92 @@ export default function AppointmentList() {
   // Fetch categories, patients, relatives on mount
   useEffect(() => {
     (async () => {
-      const { data: catData } = await supabase.from("categories").select("*");
-      setCategories(catData || []);
-      const { data: patData } = await supabase.from("patients").select("*");
-      console.log('DEBUG - Fetched patients:', patData);
-      setPatients(patData || []);
-      const { data: rels } = await supabase.from("relatives").select("*");
-      console.log('DEBUG - Fetched relatives:', rels);
-      setRelatives(rels || []);
+      try {
+        const [catRes, patRes, relRes] = await Promise.all([
+          fetch("/api/categories"),
+          fetch("/api/patients"),
+          fetch("/api/relatives"),
+        ]);
+        const catData = await catRes.json();
+        const patData = await patRes.json();
+        const relsData = await relRes.json();
+        setCategories(catData.categories || []);
+        if (process.env.NODE_ENV === "development") {
+          console.log('DEBUG - Fetched patients:', patData.patients);
+        }
+        setPatients(patData.patients || []);
+        if (process.env.NODE_ENV === "development") {
+          console.log('DEBUG - Fetched relatives:', relsData.relatives);
+        }
+        setRelatives(relsData.relatives || []);
+      } catch (error) {
+        console.error("Error loading initial data:", error);
+      }
     })();
-  }, [supabase]);
+  }, []);
 
   // Fetch current user on mount
-  useAuthEffect(() => {
+  useEffect(() => {
     (async () => {
-      const { data } = await supabase.auth.getUser();
-      setUser(data.user ?? null);
+      try {
+        const response = await fetch("/api/auth/me");
+        if (response.ok) {
+          const data = await response.json();
+          setUser(data.user ?? null);
+        }
+      } catch (error) {
+        console.error("Error fetching user:", error);
+      }
     })();
-  }, [supabase]);
+  }, []);
 
   // Compose filters object for query
   const filters = { category, patient, date, status };
 
   const fetchAppointments = useCallback(async () => {
     if (!user) return;
-    if (!user) return;
     setLoading(true);
-    // Fetch owned appointments
-    const { data: owned } = await supabase
-      .from("appointments")
-      .select("*, category:category(*), patient:patients(*), appointment_assignee:appointment_assignee(*), activities:activities(*)")
-      .eq("user_id", user.id)
-      .order("start", { ascending: true });
+    // Fetch owned appointments (API automatically filters by authenticated user)
+    const ownedRes = await fetch("/api/appointments");
+    const ownedData = await ownedRes.json();
+    const owned = ownedData.appointments || [];
+    
+    // Fetch categories, patients, assignees, and activities separately for joining
+    const [categoriesRes, patientsRes, allAssigneesRes, activitiesRes] = await Promise.all([
+      fetch("/api/categories"),
+      fetch("/api/patients"),
+      fetch("/api/appointment-assignees"),
+      fetch("/api/activities"),
+    ]);
+    const categoriesData = await categoriesRes.json();
+    const patientsData = await patientsRes.json();
+    const allAssigneesData = await allAssigneesRes.json();
+    const activitiesData = await activitiesRes.json();
+    const categories = categoriesData.categories || [];
+    const patients = patientsData.patients || [];
+    const allAssignees = allAssigneesData.assignees || [];
+    const allActivities = activitiesData.activities || [];
+    
+    // Join categories, patients, assignees, and activities with appointments
+    const ownedWithDetails = owned.map((appt: Appointment) => ({
+      ...appt,
+      category_data: categories.find((c: Category) => c.id === appt.category),
+      patient_data: patients.find((p: Patient) => p.id === appt.patient),
+      appointment_assignee: allAssignees.filter((a: AppointmentAssignee) => a.appointment === appt.id),
+      activities: allActivities.filter((act: Activity) => act.appointment === appt.id),
+    }));
 
-    console.log('DEBUG - Fetched owned appointments:', owned);
+    if (process.env.NODE_ENV === "development") {
+      console.log('DEBUG - Fetched owned appointments:', ownedWithDetails);
+    }
 
     // --- NEW: Fetch dashboard access for invited users ---
-    const { data: dashboardAccess } = await supabase
-      .from("dashboard_access")
-      .select("owner_user_id")
-      .eq("invited_user_id", user.id)
-      .eq("status", "accepted");
-    console.log('DEBUG - Fetched dashboard access:', dashboardAccess);
+    const dashboardAccessRes = await fetch("/api/dashboard-access?status=accepted");
+    const dashboardAccessData = await dashboardAccessRes.json();
+    const dashboardAccess = dashboardAccessData.dashboard_access || [];
+    if (process.env.NODE_ENV === "development") {
+      console.log('DEBUG - Fetched dashboard access:', dashboardAccess);
+    }
 
     // Define type for dashboardAccess rows
     type DashboardAccessRow = { owner_user_id: string };
@@ -197,21 +239,15 @@ export default function AppointmentList() {
     let sharedAppointments: FullAppointment[] = [];
     if (dashboardAccess && dashboardAccess.length > 0) {
       const ownerIds = (dashboardAccess as DashboardAccessRow[]).map((d) => d.owner_user_id).filter(Boolean);
-      if (ownerIds.length > 0) {
-        const { data: shared } = await supabase
-          .from("appointments")
-          .select("*, category:category(*), patient:patients(*), appointment_assignee:appointment_assignee(*), activities:activities(*)")
-          .in("user_id", ownerIds)
-          .order("start", { ascending: true });
-        sharedAppointments = (shared || []) as FullAppointment[];
-        console.log('DEBUG - Fetched shared appointments:', sharedAppointments);
-      }
+      // Note: Current API filters by authenticated user, so we can't fetch other users' appointments directly
+      // This would require a new API route that allows fetching by owner_user_id with proper permissions
+      // For now, we'll skip shared appointments from dashboard access
     }
 
     // Fetch all unique user IDs from appointments to get owner emails
     const allUserIds = new Set<string>();
     if (owned) {
-      owned.forEach(appt => {
+      owned.forEach((appt: Appointment) => {
         if (appt.user_id) allUserIds.add(appt.user_id);
       });
     }
@@ -221,53 +257,69 @@ export default function AppointmentList() {
       });
     }
 
-    // Fetch user data for all owners
-    const { data: ownerUsers } = await supabase
-      .from("users")
-      .select("id, email")
-      .in("id", Array.from(allUserIds));
-
-    console.log('DEBUG - Fetched owner users:', ownerUsers);
-
-    // Fetch assigned appointments by user
-    const { data: assignedByUser } = await supabase
-      .from("appointment_assignee")
-      .select("appointment, permission, status, appointment_data:appointment(*), invited_email, id, created_at, user, user_type")
-      .eq("user", user.id)
-      .eq("status", "accepted");
-
-    console.log('DEBUG - Fetched assigned appointments by user:', assignedByUser);
-
-    // Fetch assigned appointments by invited_email
+    // Fetch assigned appointments by user and email
+    const assignedByUser = allAssignees.filter(
+      (a: AppointmentAssignee) => a.user === user.id && a.status === "accepted"
+    );
+    
+    // Fetch user email
     let userEmail: string | null = null;
-    const { data: userData } = await supabase.auth.getUser();
-    userEmail = userData?.user?.email || null;
-    let assignedByEmail: (AppointmentAssignee & { appointment_data: Appointment })[] = [];
-    if (userEmail) {
-      const { data: assignedEmail } = await supabase
-        .from("appointment_assignee")
-        .select("appointment, permission, status, appointment_data:appointment(*), invited_email, id, created_at, user, user_type")
-        .eq("invited_email", userEmail)
-        .eq("status", "accepted");
-      assignedByEmail = (assignedEmail || []).map((a) => ({
-        ...a,
-        appointment_data: Array.isArray(a.appointment_data)
-          ? a.appointment_data[0]
-          : a.appointment_data,
-      }));
-
-      console.log('DEBUG - Fetched assigned appointments by email:', assignedEmail);
-      console.log('DEBUG - Processed assignedByEmail:', assignedByEmail);
+    try {
+      const response = await fetch("/api/auth/me");
+      if (response.ok) {
+        const data = await response.json();
+        userEmail = data?.user?.email || null;
+      }
+    } catch (error) {
+      console.error("Error fetching user:", error);
     }
-    // Merge assigned appointments
+    
+    const assignedByEmail = userEmail
+      ? allAssignees.filter(
+          (a: AppointmentAssignee) => a.invited_email === userEmail && a.status === "accepted"
+        )
+      : [];
+
+    if (process.env.NODE_ENV === "development") {
+      console.log('DEBUG - Fetched assigned appointments by user:', assignedByUser);
+      console.log('DEBUG - Fetched assigned appointments by email:', assignedByEmail);
+    }
+
+    // Fetch appointment data for assigned appointments
+    const assignedAppointmentIds = [
+      ...assignedByUser.map((a: AppointmentAssignee) => a.appointment),
+      ...assignedByEmail.map((a: AppointmentAssignee) => a.appointment),
+    ].filter(Boolean);
+    const uniqueAppointmentIds = [...new Set(assignedAppointmentIds)];
+
+    const assignedAppointmentsData = await Promise.all(
+      uniqueAppointmentIds.map(async (apptId: string) => {
+        const res = await fetch(`/api/appointments/${apptId}`);
+        if (res.ok) {
+          const data = await res.json();
+          return data.appointment;
+        }
+        return null;
+      })
+    );
+
+    // Merge assigned appointments with assignee data
     type AppointmentWithAssignees = FullAppointment & { appointment_assignee?: AppointmentAssignee[] };
-    const assignedAppointments: AppointmentWithAssignees[] = [...(assignedByUser || []), ...assignedByEmail]
-      .filter((a) => typeof a.permission === "string" && ["read", "write", "full"].includes(a.permission))
-      .map((a) => {
-        const apptData = Array.isArray(a.appointment_data)
-          ? a.appointment_data[0]
-          : a.appointment_data;
-        return { ...apptData, appointment_assignee: [a] };
+    const assignedAppointments: AppointmentWithAssignees[] = assignedAppointmentsData
+      .filter(Boolean)
+      .map((appt: Appointment) => {
+        const relatedAssignees = [
+          ...assignedByUser.filter((a: AppointmentAssignee) => a.appointment === appt.id),
+          ...assignedByEmail.filter((a: AppointmentAssignee) => a.appointment === appt.id),
+        ].filter((a) => typeof a.permission === "string" && ["read", "write", "full"].includes(a.permission));
+        
+        return {
+          ...appt,
+          category_data: categories.find((c: Category) => c.id === appt.category),
+          patient_data: patients.find((p: Patient) => p.id === appt.patient),
+          appointment_assignee: relatedAssignees,
+          activities: allActivities.filter((act: Activity) => act.appointment === appt.id),
+        };
       });
 
     // Add owner user IDs from assigned appointments
@@ -275,19 +327,45 @@ export default function AppointmentList() {
       if (appt.user_id) allUserIds.add(appt.user_id);
     });
 
-    // Fetch user data for all owners (including assigned appointments)
-    const { data: allOwnerUsers } = await supabase
-      .from("users")
-      .select("id, email")
-      .in("id", Array.from(allUserIds));
+    // Fetch user data for all owners (using search API)
+    const ownerUsersPromises = Array.from(allUserIds).map(async (userId: string) => {
+      const res = await fetch(`/api/users/search?query=${userId}`);
+      if (res.ok) {
+        const data = await res.json();
+        const user = data.users?.find((u: { id: string }) => u.id === userId);
+        return user ? { id: user.id, email: user.email } : null;
+      }
+      return null;
+    });
+    const ownerUsersResults = await Promise.all(ownerUsersPromises);
+    const ownerUsers = ownerUsersResults.filter(Boolean) as { id: string; email: string }[];
 
-    console.log('DEBUG - Fetched all owner users:', allOwnerUsers);
+    if (process.env.NODE_ENV === "development") {
+      console.log('DEBUG - Fetched owner users:', ownerUsers);
+    }
+    
+    // Fetch user data for all owners (including assigned appointments)
+    const allOwnerUsersPromises = Array.from(allUserIds).map(async (userId: string) => {
+      const res = await fetch(`/api/users/search?query=${userId}`);
+      if (res.ok) {
+        const data = await res.json();
+        const user = data.users?.find((u: { id: string }) => u.id === userId);
+        return user ? { id: user.id, email: user.email } : null;
+      }
+      return null;
+    });
+    const allOwnerUsersResults = await Promise.all(allOwnerUsersPromises);
+    const allOwnerUsers = allOwnerUsersResults.filter(Boolean) as { id: string; email: string }[];
+
+    if (process.env.NODE_ENV === "development") {
+      console.log('DEBUG - Fetched all owner users:', allOwnerUsers);
+    }
 
     // Set owner users state
     setOwnerUsers(allOwnerUsers || []);
     // Merge and deduplicate, always include all assignees for each appointment
     // Merge shared appointments for invited dashboard access
-    const allAppointments: AppointmentWithAssignees[] = [...(owned || []), ...sharedAppointments, ...assignedAppointments].map((appt) => ({ ...appt }));
+    const allAppointments: AppointmentWithAssignees[] = [...ownedWithDetails, ...sharedAppointments, ...assignedAppointments].map((appt) => ({ ...appt }));
     const deduped: AppointmentWithAssignees[] = allAppointments.reduce((acc: AppointmentWithAssignees[], curr: AppointmentWithAssignees) => {
       if (!curr || !curr.id) return acc;
       const existing = acc.find((a) => a.id === curr.id);
@@ -320,7 +398,7 @@ export default function AppointmentList() {
     if (status) filtered = filtered.filter((a: AppointmentWithAssignees) => a.status === status);
     setAppointments(filtered as FullAppointment[]);
     setLoading(false);
-  }, [category, patient, date, status, user, supabase]);
+  }, [category, patient, date, status, user]);
   // Helper: get permission for current user on an appointment
   // Use shared permission helper
   function getUserPermission(appt: FullAppointment): "owner" | "full" | "write" | "read" | null {
@@ -336,10 +414,18 @@ export default function AppointmentList() {
   }, [fetchAppointments, currentDate, user, patients]);
 
   const toggleStatus = async (id: string, newStatus: string) => {
-    await supabase
-      .from("appointments")
-      .update({ status: newStatus })
-      .eq("id", id);
+    try {
+      const response = await fetch(`/api/appointments/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!response.ok) {
+        console.error("Failed to update appointment status");
+      }
+    } catch (error) {
+      console.error("Error updating appointment status:", error);
+    }
     setAppointments((prev) =>
       prev.map((a) =>
         a.id === id ? { ...a, status: newStatus as typeof a.status } : a
@@ -349,7 +435,16 @@ export default function AppointmentList() {
 
   const deleteAppt = async (id: string) => {
     if (!confirm("Termin wirklich löschen?")) return;
-    await supabase.from("appointments").delete().eq("id", id);
+    try {
+      const response = await fetch(`/api/appointments/${id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        console.error("Failed to delete appointment");
+      }
+    } catch (error) {
+      console.error("Error deleting appointment:", error);
+    }
     setAppointments((prev) => prev.filter((a) => a.id !== id));
   };
 
@@ -392,7 +487,7 @@ export default function AppointmentList() {
           match(appt.category_data.description))) ||
       patientNameMatch ||
       (appt.appointment_assignee &&
-        appt.appointment_assignee.some((a) => match(a.user))) ||
+        appt.appointment_assignee.some((a) => a.user && match(a.user))) ||
       (appt.activities &&
         appt.activities.some((a) => match(a.type) || match(a.content))) ||
       (appt.attachements && appt.attachements.some((a) => match(a)))
@@ -414,18 +509,9 @@ export default function AppointmentList() {
     if (!open) setEditAppt(null);
   };
 
-  // --- DEBUG: Log Supabase Storage buckets and env at runtime ---
-  useEffect(() => {
-    (async () => {
-      // List all buckets
-      const { data: buckets, error } = await supabase.storage.listBuckets();
-      if (error) {
-        console.error("[DEBUG] Error listing buckets:", error);
-      } else {
-        console.log("[DEBUG] Supabase buckets:", buckets);
-      }
-    })();
-  }, [supabase.storage]);
+  // --- DEBUG: Vercel Blob storage doesn't require bucket listing ---
+  // Files are stored with URLs directly
+  // Removed Supabase Storage bucket listing code
 
   // Group appointments by date (descending)
   const grouped = groupAppointmentsByDate(filteredAppointments);
@@ -756,24 +842,13 @@ export default function AppointmentList() {
                             <FiPaperclip className="w-4 h-4" />
                             <span>Anhänge:</span>
                             {appt.attachements.map((file, idx) => {
-                              if (typeof window !== "undefined") {
-                                console.log("Supabase bucket:", "attachments");
-                                console.log("Attachment file:", file);
-                              }
-                              const { data } = supabase.storage
-                                .from("attachments")
-                                .getPublicUrl(file);
-                              if (typeof window !== "undefined") {
-                                console.log(
-                                  "Generated publicUrl:",
-                                  data?.publicUrl
-                                );
-                              }
+                              // Get Vercel Blob public URL
+                              const publicUrl = getPublicUrl(file);
                               const fileName = file.split("/").pop() || file;
-                              return data && data.publicUrl ? (
+                              return publicUrl ? (
                                 <a
                                   key={idx}
-                                  href={data.publicUrl}
+                                  href={publicUrl}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="not-italic text-blue-700 underline"
@@ -804,14 +879,16 @@ export default function AppointmentList() {
                             <FiUsers /> Refer to:
                             {(() => {
                               try {
-                                // Debug: Log the patient data
-                                console.log('DEBUG - Patient data:', {
-                                  patient: appt.patient,
-                                  patientType: typeof appt.patient,
-                                  isObject: typeof appt.patient === 'object',
-                                  hasFirstname: appt.patient && typeof appt.patient === 'object' && 'firstname' in appt.patient,
-                                  hasLastname: appt.patient && typeof appt.patient === 'object' && 'lastname' in appt.patient
-                                });
+                                // Debug: Log the patient data (development only)
+                                if (process.env.NODE_ENV === "development") {
+                                  console.log('DEBUG - Patient data:', {
+                                    patient: appt.patient,
+                                    patientType: typeof appt.patient,
+                                    isObject: typeof appt.patient === 'object',
+                                    hasFirstname: appt.patient && typeof appt.patient === 'object' && 'firstname' in appt.patient,
+                                    hasLastname: appt.patient && typeof appt.patient === 'object' && 'lastname' in appt.patient
+                                  });
+                                }
 
                                 // If patient is already an object with firstname/lastname
                                 if (appt.patient &&
@@ -970,7 +1047,6 @@ export default function AppointmentList() {
           trigger={undefined}
           isOpen={editOpen}
           onOpenChange={handleEditDialogChange}
-          supabase={supabase}
           refreshAppointments={fetchAppointments}
         />
       ) : null}

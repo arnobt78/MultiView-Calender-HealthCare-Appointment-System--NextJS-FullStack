@@ -16,9 +16,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 import { sendInvitationEmail } from "@/lib/email";
 import { InvitationRequest } from "@/types/invitation";
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { query } from "@/lib/postgresClient";
+import { getSessionUser } from "@/lib/session";
 
 /**
  * POST /api/invitations
@@ -40,17 +39,16 @@ import { cookies } from "next/headers";
  */
 export async function POST(req: NextRequest) {
   try {
-    // Get authenticated user from session cookies
+    // Get authenticated user from session
     // This ensures only logged-in users can send invitations
-    const supabase = createRouteHandlerClient({ cookies });
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const sessionUser = await getSessionUser();
     
     // Security: Require authentication
-    if (!user) {
+    if (!sessionUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    
+    const user = { id: sessionUser.userId, email: sessionUser.email };
     
     // Parse request body
     const body = (await req.json()) as InvitationRequest;
@@ -77,33 +75,25 @@ export async function POST(req: NextRequest) {
     });
     // Save invitation to DB (appointment_assignee or dashboard_access)
     if (type === "appointment") {
-      const { data, error } = await supabaseAdmin.from("appointment_assignee").insert({
-        appointment: resourceId,
-        user: invitedUserId || null,
-        invited_email: email,
-        status: "pending",
-        invitation_token: token,
-        permission,
-        created_at: new Date().toISOString(),
-        invited_by: user.id,
-      });
-      console.log("Insert result (appointment_assignee):", { data, error });
-      if (error) {
+      try {
+        await query(
+          `INSERT INTO appointment_assignee (appointment, "user", invited_email, status, invitation_token, permission, invited_by, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())`,
+          [resourceId, invitedUserId || null, email, "pending", token, permission, user.id]
+        );
+      } catch (error: any) {
+        console.error("Insert error (appointment_assignee):", error);
         return NextResponse.json({ error: error.message }, { status: 500 });
       }
     } else if (type === "dashboard") {
-      const { data, error } = await supabaseAdmin.from("dashboard_access").insert({
-        owner_user_id: resourceId,
-        invited_user_id: invitedUserId || null,
-        invited_email: email,
-        status: "pending",
-        invitation_token: token,
-        permission,
-        created_at: new Date().toISOString(),
-        invited_by: user.id,
-      });
-      console.log("Insert result (dashboard_access):", { data, error });
-      if (error) {
+      try {
+        await query(
+          `INSERT INTO dashboard_access (owner_user_id, invited_user_id, invited_email, status, invitation_token, permission, invited_by, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())`,
+          [resourceId, invitedUserId || null, email, "pending", token, permission, user.id]
+        );
+      } catch (error: any) {
+        console.error("Insert error (dashboard_access):", error);
         return NextResponse.json({ error: error.message }, { status: 500 });
       }
     } else {
@@ -121,49 +111,43 @@ export async function POST(req: NextRequest) {
   }
 }
 export async function GET(req: NextRequest) {
-  // Auth required: get user from session (using cookies)
-  const supabase = createRouteHandlerClient({ cookies });
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
+  // Auth required: get user from session
+  const sessionUser = await getSessionUser();
+  if (!sessionUser) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  // Query both tables for invitations for this user (by email or user id)
-  const email = user.email;
-  const userId = user.id;
+  
+  const email = sessionUser.email;
+  const userId = sessionUser.userId;
+  
   // Get all appointment invitations where user is sender or receiver
-  const { data: appointmentAssignees, error: appointmentError } = await supabaseAdmin
-    .from("appointment_assignee")
-    .select("*")
-    .or(`user.eq.${userId},invited_email.eq.${email},invited_by.eq.${userId}`);
-
-  // Fetch appointment titles for all unique appointment IDs
-  const appointmentIds = Array.from(new Set((appointmentAssignees || []).map((a: any) => a.appointment).filter(Boolean)));
-  let appointmentTitles: Record<string, string> = {};
-  if (appointmentIds.length > 0) {
-    const { data: appointmentsData } = await supabaseAdmin
-      .from("appointments")
-      .select("id, title")
-      .in("id", appointmentIds);
-    if (appointmentsData) {
-      appointmentTitles = appointmentsData.reduce((acc: Record<string, string>, appt: any) => {
-        acc[appt.id] = appt.title || "";
-        return acc;
-      }, {});
-    }
-  }
-
-  // Attach title to each appointment invitation
-  const appointmentInvitations = (appointmentAssignees || []).map((a: any) => ({
+  // Optimized query with single JOIN instead of two separate queries (reduces N+1 problem)
+  const appointmentAssigneesResult = await query(
+    `SELECT 
+       aa.*,
+       a.title as appointment_title
+     FROM appointment_assignee aa
+     LEFT JOIN appointments a ON aa.appointment = a.id
+     WHERE aa."user" = $1 OR aa.invited_email = $2 OR aa.invited_by = $3
+     ORDER BY aa.created_at DESC
+     LIMIT 100`,
+    [userId, email, userId]
+  );
+  
+  // Map results to expected format
+  const appointmentInvitations = appointmentAssigneesResult.rows.map((a: any) => ({
     ...a,
-    appointment_title: appointmentTitles[a.appointment] || "",
+    appointment_title: a.appointment_title || "",
   }));
+  
   // Get all dashboard invitations where user is sender or receiver
-  const { data: dashboardInvitations, error: dashboardError } = await supabaseAdmin
-    .from("dashboard_access")
-    .select("*")
-    .or(`invited_user_id.eq.${userId},invited_email.eq.${email},invited_by.eq.${userId}`);
+  const dashboardInvitationsResult = await query(
+    `SELECT * FROM dashboard_access 
+     WHERE invited_user_id = $1 OR invited_email = $2 OR invited_by = $3`,
+    [userId, email, userId]
+  );
+  const dashboardInvitations = dashboardInvitationsResult.rows;
+  
   return NextResponse.json({
     appointmentInvitations: appointmentInvitations || [],
     dashboardInvitations: dashboardInvitations || [],

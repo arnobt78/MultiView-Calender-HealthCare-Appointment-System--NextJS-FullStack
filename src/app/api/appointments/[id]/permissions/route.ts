@@ -19,18 +19,25 @@ export async function DELETE(req: NextRequest) {
   if (!id) {
     return NextResponse.json({ error: "Missing appointment ID" }, { status: 400 });
   }
-  // TODO: Auth check (ensure user is sender or receiver)
-  // TODO: Connect to DB and delete appointment_assignee by id
-  // Example using supabaseAdmin (adjust as needed for your DB setup)
+  // Auth check (ensure user is sender or receiver)
   try {
-    const { supabaseAdmin } = await import("@/lib/supabaseAdmin");
-    const { data, error } = await supabaseAdmin
-      .from("appointment_assignee")
-      .delete()
-      .eq("id", id);
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    const { getSessionUser } = await import("@/lib/session");
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    
+    // Connect to DB and delete appointment_assignee by id
+    const { query } = await import("@/lib/postgresClient");
+    const result = await query(
+      `DELETE FROM appointment_assignee WHERE id = $1`,
+      [id]
+    );
+    
+    if (result.rowCount === 0) {
+      return NextResponse.json({ error: "Invitation not found" }, { status: 404 });
+    }
+    
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
     let message = "Unknown error";

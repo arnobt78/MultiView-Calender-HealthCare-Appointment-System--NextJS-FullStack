@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { getSupabaseUserId } from "./helper";
+import { getCurrentUserId } from "./helper";
 
 export default function AcceptInvitationPage() {
   const router = useRouter();
@@ -15,7 +15,7 @@ export default function AcceptInvitationPage() {
   const [checkingAuth, setCheckingAuth] = useState(true);
 
   useEffect(() => {
-    getSupabaseUserId().then(uid => {
+    getCurrentUserId().then(uid => {
       setUserId(uid);
       setCheckingAuth(false);
     });

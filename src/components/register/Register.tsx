@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 // Removed Dialog imports for full-page layout
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
   export function Register() {
     const [email, setEmail] = useState("");
@@ -16,27 +15,32 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
     const [success, setSuccess] = useState("");
     const [loading, setLoading] = useState(false);
     const router = useRouter();
-    const supabase = createClientComponentClient();
   
     const handleRegister = async (e: React.FormEvent) => {
       e.preventDefault();
       setLoading(true);
       setError("");
       setSuccess("");
-      const { data, error } = await supabase.auth.signUp({ email, password });
+      
+      try {
+        const response = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+
+        const data = await response.json();
       setLoading(false);
-      if (error) setError(error.message);
-      else {
-        setSuccess("Check your email to confirm your registration. You must verify your email before logging in.");
-        // If user is returned and email is confirmed instantly (rare), upsert into users table
-        if (data?.user && data.user.email_confirmed_at) {
-          await supabase.from("users").upsert({
-            id: data.user.id,
-            email: data.user.email,
-            display_name: data.user.user_metadata?.full_name || data.user.email,
-          });
+
+        if (!response.ok) {
+          setError(data.error || "Registration failed");
+          return;
         }
-        // Otherwise, upsert will happen after first login
+
+        setSuccess(data.message || "Check your email to confirm your registration. You must verify your email before logging in.");
+      } catch (err: any) {
+        setLoading(false);
+        setError(err.message || "An error occurred during registration");
       }
     };
   

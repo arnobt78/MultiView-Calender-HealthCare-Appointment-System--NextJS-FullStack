@@ -1,34 +1,65 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { query } from "@/lib/postgresClient";
+import { getSessionUser } from "@/lib/session";
+import { isValidUUID } from "@/lib/validation";
+import { PAGINATION, VALIDATION } from "@/lib/constants";
 
 // GET /api/appointments/search?query=...
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const query = searchParams.get("query") || "";
-  // Get current user from session (pass cookies as required by Next.js app dir)
-  const supabase = createRouteHandlerClient({ cookies });
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const { searchParams } = new URL(req.url);
+    const searchQuery = searchParams.get("query") || "";
+    const limit = parseInt(searchParams.get("limit") || PAGINATION.DEFAULT_LIMIT.toString());
+    
+    // Validate search query length
+    if (searchQuery.length < VALIDATION.MIN_SEARCH_QUERY_LENGTH) {
+      return NextResponse.json({ 
+        error: `Search query must be at least ${VALIDATION.MIN_SEARCH_QUERY_LENGTH} characters` 
+      }, { status: 400 });
+    }
+    
+    if (searchQuery.length > VALIDATION.MAX_SEARCH_QUERY_LENGTH) {
+      return NextResponse.json({ 
+        error: `Search query too long (max ${VALIDATION.MAX_SEARCH_QUERY_LENGTH} characters)` 
+      }, { status: 400 });
+    }
+    
+    // Get current user from session
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    
+    // Search appointments by title or id, but only for this user
+    const safeLimit = Math.min(Math.max(limit, 1), PAGINATION.MAX_SEARCH_LIMIT);
+    
+    let result;
+    if (isValidUUID(searchQuery)) {
+      // Search by ID (exact match)
+      result = await query(
+        `SELECT id, title, "start", "end", status FROM appointments 
+         WHERE user_id = $1 AND id = $2 
+         LIMIT $3`,
+        [sessionUser.userId, searchQuery, safeLimit]
+      );
+    } else {
+      // Search by title (case-insensitive, partial match)
+      // Use trigram index if available for better performance on large datasets
+      result = await query(
+        `SELECT id, title, "start", "end", status FROM appointments 
+         WHERE user_id = $1 AND title ILIKE $2 
+         ORDER BY "start" DESC
+         LIMIT $3`,
+        [sessionUser.userId, `%${searchQuery}%`, safeLimit]
+      );
+    }
+    
+    return NextResponse.json({ 
+      appointments: result.rows,
+      count: result.rows.length,
+      limit: safeLimit
+    });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || "Search failed" }, { status: 500 });
   }
-  // Search appointments by title or id, but only for this user
-  function isValidUUID(str: string) {
-    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
-  }
-  let orFilter = `title.ilike.*${query}*`;
-  if (isValidUUID(query)) {
-    orFilter += `,id.eq.${query}`;
-  }
-  const { data, error } = await supabaseAdmin
-    .from("appointments")
-    .select("id, title")
-    .eq("user_id", user.id)
-    .or(orFilter);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ appointments: data });
-// (no trailing brace)
 }

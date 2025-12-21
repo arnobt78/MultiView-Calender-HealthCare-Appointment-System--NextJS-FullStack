@@ -1,8 +1,14 @@
-// Helper to get Supabase user id on the client
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-
-export async function getSupabaseUserId(): Promise<string | null> {
-  const supabase = createClientComponentClient();
-  const { data } = await supabase.auth.getUser();
-  return data.user?.id || null;
+// Helper to get current user id on the client
+export async function getCurrentUserId(): Promise<string | null> {
+  try {
+    const response = await fetch("/api/auth/me");
+    if (response.ok) {
+      const data = await response.json();
+      return data?.user?.id || null;
+    }
+    return null;
+  } catch (error) {
+    console.error("Error fetching user ID:", error);
+    return null;
+  }
 }

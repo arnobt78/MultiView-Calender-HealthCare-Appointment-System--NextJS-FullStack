@@ -17,9 +17,6 @@ A modern, full-featured calendar and appointment management web application buil
 ![Screenshot 2025-08-11 at 02 37 40](https://github.com/user-attachments/assets/05814743-73b3-47d9-a10f-1c302519b7a8)
 ![Screenshot 2025-08-11 at 02 39 00](https://github.com/user-attachments/assets/0b0af4f5-e5c5-4637-9d02-1eaba7ab9978)
 ![Screenshot 2025-08-11 at 02 40 47](https://github.com/user-attachments/assets/ac8c4241-2ffe-48da-9136-97cbb41b7401)
-![Screenshot 2025-08-11 at 02 38 05](https://github.com/user-attachments/assets/74aa44c2-aa80-4367-881c-6f08ae84a1fc)
-![Screenshot 2025-08-11 at 02 38 27](https://github.com/user-attachments/assets/b49f7a55-ee6d-46b9-9b80-5793906024f1)
-![Screenshot 2025-08-11 at 02 08 35](https://github.com/user-attachments/assets/ef889182-0c04-46a8-a428-cb866ed7438d)
 
 ## 📋 Table of Contents
 

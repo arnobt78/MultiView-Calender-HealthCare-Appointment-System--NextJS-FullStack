@@ -1,37 +1,25 @@
 /**
  * Supabase Admin Client Configuration
  * 
- * This file creates and exports a Supabase admin client for server-side operations.
- * This client uses the service role key and BYPASSES Row Level Security (RLS) policies.
+ * ⚠️ REMOVED: Supabase has been completely removed from this project.
  * 
- * ⚠️ SECURITY WARNING:
- * - NEVER use this client in client-side code (browser)
- * - NEVER expose the service role key to the frontend
- * - Only use in API routes, server components, and server-side functions
+ * This file is kept for backward compatibility but will throw errors if used.
+ * All API routes now use PostgreSQL directly via postgresClient (src/lib/postgresClient.ts).
  * 
- * Use this client when you need:
- * - Full database access without RLS restrictions
- * - Server-side operations that require elevated permissions
- * - Admin operations in API routes
+ * Migration:
+ * - Database: PostgreSQL (direct connection)
+ * - Authentication: Custom JWT (src/lib/auth.ts)
+ * - Storage: Vercel Blob (src/lib/vercelBlob.ts)
+ * 
+ * Use postgresClient.query() for database operations instead.
  */
 
-import { createClient } from "@supabase/supabase-js";
-
-// Get Supabase URL (public, safe to expose)
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-
-// Get service role key (PRIVATE - must never be exposed to client)
-// This key has admin privileges and bypasses all RLS policies
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-// Validate that service role key is configured
-// Fail fast if missing to prevent runtime errors
-if (!supabaseServiceRoleKey) {
-  throw new Error(
-    "SUPABASE_SERVICE_ROLE_KEY is missing. Please set it in your .env.local file."
-  );
-}
-
-// Create admin client with service role key
-// This client bypasses RLS and has full database access
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
+// Supabase has been removed - this export will cause errors if used
+export const supabaseAdmin = {
+  from: () => {
+    throw new Error(
+      "Supabase has been removed. Please use postgresClient.query() for database operations. " +
+      "See src/lib/postgresClient.ts for examples."
+    );
+  },
+} as any;

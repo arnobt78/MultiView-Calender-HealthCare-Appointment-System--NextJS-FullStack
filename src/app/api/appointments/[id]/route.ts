@@ -11,8 +11,10 @@
  * Example: /api/appointments/123-abc-456
  */
 
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
+import { query } from "@/lib/postgresClient";
+import { getSessionUser } from "@/lib/session";
+import { isValidUUID } from "@/lib/validation";
 
 // TypeScript interface matching the database schema
 type Appointment = {
@@ -44,20 +46,42 @@ type Appointment = {
  * @returns JSON response with appointment data or 404 error
  */
 export async function GET(req: NextRequest, context: any) {
-  // Extract appointment ID from URL parameters
-  // Example: /api/appointments/abc123 -> id = "abc123"
-  const { id } = context.params;
-  
-  // Query database for appointment with matching ID
-  // .single() expects exactly one result, throws error if 0 or multiple results
-  const { data, error } = await supabaseAdmin.from("appointments").select("*").eq("id", id).single();
-  
-  if (error) {
-    // Return 404 if appointment not found or query failed
-    return NextResponse.json({ error: error.message }, { status: 404 });
+  try {
+    // Extract appointment ID from URL parameters
+    // Example: /api/appointments/abc123 -> id = "abc123"
+    // Next.js 15: params must be awaited
+    const { id } = await context.params;
+    
+    // Validate UUID format
+    if (!isValidUUID(id)) {
+      return NextResponse.json({ error: "Invalid appointment ID format" }, { status: 400 });
+    }
+    
+    // Optional: Check authentication for private appointments
+    // For now, allow public access (for invitation links)
+    // If you want to restrict, uncomment below:
+    /*
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    */
+    
+    // Query database for appointment with matching ID
+    const result = await query(
+      `SELECT * FROM appointments WHERE id = $1`,
+      [id]
+    );
+    
+    if (result.rows.length === 0) {
+      // Return 404 if appointment not found
+      return NextResponse.json({ error: "Appointment not found" }, { status: 404 });
+    }
+    
+    return NextResponse.json({ appointment: result.rows[0] });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
-  
-  return NextResponse.json({ appointment: data });
 }
 
 /**
@@ -75,14 +99,41 @@ export async function GET(req: NextRequest, context: any) {
 export async function PUT(req: NextRequest, context: any) {
   const { id } = context.params;
   try {
-    const body = await req.json();
-    // Update all fields - body should contain complete appointment object
-    // .select() returns the updated record
-    const { data, error } = await supabaseAdmin.from("appointments").update(body).eq("id", id).select();
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    // Get authenticated user
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    return NextResponse.json({ appointment: data[0] });
+    
+    const body = await req.json();
+    
+    // Update all fields - body should contain complete appointment object
+    const result = await query(
+      `UPDATE appointments 
+       SET title = $1, "start" = $2, "end" = $3, location = $4, patient = $5, 
+           attachements = $6, category = $7, notes = $8, status = $9, updated_at = NOW()
+       WHERE id = $10 AND user_id = $11
+       RETURNING *`,
+      [
+        body.title,
+        body.start,
+        body.end,
+        body.location || null,
+        body.patient || null,
+        body.attachements || null,
+        body.category || null,
+        body.notes || null,
+        body.status || null,
+        id,
+        sessionUser.userId,
+      ]
+    );
+    
+    if (result.rows.length === 0) {
+      return NextResponse.json({ error: "Appointment not found or unauthorized" }, { status: 404 });
+    }
+    
+    return NextResponse.json({ appointment: result.rows[0] });
   } catch (err: unknown) {
     let message = "Unknown error";
     if (err instanceof Error) message = err.message;
@@ -106,14 +157,80 @@ export async function PUT(req: NextRequest, context: any) {
 export async function PATCH(req: NextRequest, context: any) {
   const { id } = context.params;
   try {
-    const body = await req.json();
-    // Partial update - only fields in body are updated
-    // .select() returns the updated record
-    const { data, error } = await supabaseAdmin.from("appointments").update(body).eq("id", id).select();
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    // Get authenticated user
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    return NextResponse.json({ appointment: data[0] });
+    
+    const body = await req.json();
+    
+    // Build dynamic UPDATE query for partial update
+    const updateFields: string[] = [];
+    const values: any[] = [];
+    let paramIndex = 1;
+    
+    // Only update fields that are provided in the body
+    if (body.title !== undefined) {
+      updateFields.push(`title = $${paramIndex++}`);
+      values.push(body.title);
+    }
+    if (body.start !== undefined) {
+      updateFields.push(`"start" = $${paramIndex++}`);
+      values.push(body.start);
+    }
+    if (body.end !== undefined) {
+      updateFields.push(`"end" = $${paramIndex++}`);
+      values.push(body.end);
+    }
+    if (body.location !== undefined) {
+      updateFields.push(`location = $${paramIndex++}`);
+      values.push(body.location);
+    }
+    if (body.patient !== undefined) {
+      updateFields.push(`patient = $${paramIndex++}`);
+      values.push(body.patient);
+    }
+    if (body.attachements !== undefined) {
+      updateFields.push(`attachements = $${paramIndex++}`);
+      values.push(body.attachements);
+    }
+    if (body.category !== undefined) {
+      updateFields.push(`category = $${paramIndex++}`);
+      values.push(body.category);
+    }
+    if (body.notes !== undefined) {
+      updateFields.push(`notes = $${paramIndex++}`);
+      values.push(body.notes);
+    }
+    if (body.status !== undefined) {
+      updateFields.push(`status = $${paramIndex++}`);
+      values.push(body.status);
+    }
+    
+    if (updateFields.length === 0) {
+      return NextResponse.json({ error: "No fields to update" }, { status: 400 });
+    }
+    
+    // Always update updated_at
+    updateFields.push(`updated_at = NOW()`);
+    
+    // Add WHERE clause with id and user_id for security
+    values.push(id, sessionUser.userId);
+    
+    const result = await query(
+      `UPDATE appointments 
+       SET ${updateFields.join(", ")}
+       WHERE id = $${paramIndex++} AND user_id = $${paramIndex++}
+       RETURNING *`,
+      values
+    );
+    
+    if (result.rows.length === 0) {
+      return NextResponse.json({ error: "Appointment not found or unauthorized" }, { status: 404 });
+    }
+    
+    return NextResponse.json({ appointment: result.rows[0] });
   } catch (err: unknown) {
     let message = "Unknown error";
     if (err instanceof Error) message = err.message;
@@ -135,11 +252,25 @@ export async function PATCH(req: NextRequest, context: any) {
  */
 export async function DELETE(req: NextRequest, context: any) {
   const { id } = context.params;
-  // Delete appointment with matching ID
-  // No .select() needed since we're not returning data
-  const { error } = await supabaseAdmin.from("appointments").delete().eq("id", id);
-  if (error) {
+  try {
+    // Get authenticated user
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    
+    // Delete appointment with matching ID and user_id (security check)
+    const result = await query(
+      `DELETE FROM appointments WHERE id = $1 AND user_id = $2`,
+      [id, sessionUser.userId]
+    );
+    
+    if (result.rowCount === 0) {
+      return NextResponse.json({ error: "Appointment not found or unauthorized" }, { status: 404 });
+    }
+    
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-  return NextResponse.json({ success: true });
 }

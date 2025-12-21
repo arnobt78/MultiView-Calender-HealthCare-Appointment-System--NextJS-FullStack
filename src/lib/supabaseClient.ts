@@ -1,24 +1,28 @@
 /**
  * Supabase Client Configuration
  * 
- * This file creates and exports a Supabase client for client-side operations.
- * This client uses the anonymous (public) key and respects Row Level Security (RLS) policies.
+ * ⚠️ REMOVED: Supabase has been completely removed from this project.
  * 
- * Use this client in:
- * - Client components ("use client")
- * - Browser-side operations
- * - Operations that should respect RLS policies
+ * This file is kept for backward compatibility but will throw errors if used.
+ * All components should use API routes instead:
+ * - /api/patients
+ * - /api/categories
+ * - /api/relatives
+ * - /api/appointments
+ * - /api/appointments/[id]
  * 
- * For server-side operations that need to bypass RLS, use supabaseAdmin instead.
+ * Database: PostgreSQL (direct connection via postgresClient)
+ * Authentication: Custom JWT-based system (see src/lib/auth.ts)
+ * Storage: Vercel Blob (see src/lib/vercelBlob.ts)
  */
 
-import { createClient } from "@supabase/supabase-js";
-
-// Get Supabase configuration from environment variables
-// NEXT_PUBLIC_ prefix makes these available in the browser
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
-
-// Create and export the Supabase client
-// This client will be used throughout the application for client-side database operations
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Supabase has been removed - this export will cause errors if used
+// Components should migrate to API routes
+export const supabase = {
+  from: () => {
+    throw new Error(
+      "Supabase has been removed. Please use API routes instead. " +
+      "See /api/patients, /api/categories, /api/appointments, etc."
+    );
+  },
+} as any;

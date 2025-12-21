@@ -26,6 +26,8 @@ import type {
   Activity,
 } from "@/types/types";
 import { useAppointmentColor } from "@/context/AppointmentColorContext";
+// Using Vercel Blob for file storage
+import { getPublicUrl } from "@/lib/vercelBlob";
 
 
 
@@ -40,7 +42,6 @@ export interface AppointmentHoverCardProps {
   ownerUsers: { id: string, email: string }[]; // Add owner users data
   getDateTag: (date: Date) => React.ReactNode;
   onEdit: (appt: Appointment & { category_data?: Category; appointment_assignee?: AppointmentAssignee[] }) => void;
-  supabase: unknown; // Supabase client instance
   onDelete: (id: string) => void;
   onToggleStatus: (id: string, newStatus: string) => void;
   showDetails?: boolean; // default false
@@ -89,7 +90,6 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
   onEdit,
   onDelete,
   onToggleStatus,
-  supabase,
   showDetails = false,
 }) => {
   const { randomBgColor } = useAppointmentColor();
@@ -299,15 +299,13 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
             <div className="flex items-center gap-2 text-xs text-gray-400 mb-1">
               <FiPaperclip /> Anhänge:
               {a.attachements.map((file, idx) => {
-                // @ts-expect-error: supabase type is unknown, but storage API is available
-                const { data } = supabase.storage
-                  .from("attachments")
-                  .getPublicUrl(file);
+                // Get Vercel Blob public URL
+                const publicUrl = getPublicUrl(file);
                 const fileName = file.split("/").pop() || file;
-                return data && data.publicUrl ? (
+                return publicUrl ? (
                   <a
                     key={idx}
-                    href={data.publicUrl}
+                    href={publicUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="not-italic text-blue-700 underline"
@@ -334,14 +332,16 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
               <FiUsers /> Refer to:
               {(() => {
                 try {
-                  // Debug: Log the patient data
-                  console.log('DEBUG - HoverCard Patient data:', {
-                    patient: a.patient,
-                    patientType: typeof a.patient,
-                    isObject: typeof a.patient === 'object',
-                    hasFirstname: a.patient && typeof a.patient === 'object' && 'firstname' in a.patient,
-                    hasLastname: a.patient && typeof a.patient === 'object' && 'lastname' in a.patient
-                  });
+                  // Debug: Log the patient data (development only)
+                  if (process.env.NODE_ENV === "development") {
+                    console.log('DEBUG - HoverCard Patient data:', {
+                      patient: a.patient,
+                      patientType: typeof a.patient,
+                      isObject: typeof a.patient === 'object',
+                      hasFirstname: a.patient && typeof a.patient === 'object' && 'firstname' in a.patient,
+                      hasLastname: a.patient && typeof a.patient === 'object' && 'lastname' in a.patient
+                    });
+                  }
 
                   // If patient is already an object with firstname/lastname
                   if (a.patient &&
@@ -487,16 +487,18 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
                 );
                 userPermission = userAssignment?.permission || null;
 
-                // Debug logging
-                console.log('DEBUG - HoverCard Permission Check:', {
-                  appointmentId: a.id,
-                  userId: userId,
-                  userEmail: userEmail,
-                  assignees: assignees,
-                  userAssignment: userAssignment,
-                  userPermission: userPermission,
-                  isOwner: isOwner
-                });
+                // Debug logging (development only)
+                if (process.env.NODE_ENV === "development") {
+                  console.log('DEBUG - HoverCard Permission Check:', {
+                    appointmentId: a.id,
+                    userId: userId,
+                    userEmail: userEmail,
+                    assignees: assignees,
+                    userAssignment: userAssignment,
+                    userPermission: userPermission,
+                    isOwner: isOwner
+                  });
+                }
               }
 
               // Only owner, full, or write can toggle status
@@ -536,14 +538,16 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
                 );
                 userPermission = userAssignment?.permission || null;
 
-                // Debug logging for edit button
-                console.log('DEBUG - HoverCard Edit Permission:', {
-                  appointmentId: a.id,
-                  userId: userId,
-                  userEmail: userEmail,
-                  userPermission: userPermission,
-                  canEdit: isOwner || userPermission === "full"
-                });
+                // Debug logging for edit button (development only)
+                if (process.env.NODE_ENV === "development") {
+                  console.log('DEBUG - HoverCard Edit Permission:', {
+                    appointmentId: a.id,
+                    userId: userId,
+                    userEmail: userEmail,
+                    userPermission: userPermission,
+                    canEdit: isOwner || userPermission === "full"
+                  });
+                }
               }
 
               // Only owner or full can edit

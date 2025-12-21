@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     template: "%s | Doctor Patient Calendar",
   },
   description:
-    "Modern, full-featured calendar and appointment management web application built with Next.js, React, and Supabase. Perfect for healthcare, clinics, and organizations needing robust scheduling, filtering, and client management with multiple calendar views (List, Week, Month), instant search, advanced filtering, and a clean, responsive UI.",
+    "Modern, full-featured calendar and appointment management web application built with Next.js, React, and PostgreSQL. Perfect for healthcare, clinics, and organizations needing robust scheduling, filtering, and client management with multiple calendar views (List, Week, Month), instant search, advanced filtering, and a clean, responsive UI.",
   keywords: [
     "calendar",
     "appointment management",
@@ -46,7 +46,8 @@ export const metadata: Metadata = {
     "appointment system",
     "Next.js",
     "React",
-    "Supabase",
+    "PostgreSQL",
+    "Vercel Blob",
     "Tailwind CSS",
     "shadcn/ui",
     "Radix UI",
@@ -139,21 +140,19 @@ import AuthLayout from "./AuthLayout";
  */
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         {/* Canonical URL helps search engines understand the preferred URL for this page */}
         <link rel="canonical" href="https://doctor-patient-calendar-appointment.vercel.app" />
         {/* Additional URL meta tags for better SEO and link recognition */}
         <meta name="url" content="https://doctor-patient-calendar-appointment.vercel.app" />
         <meta name="identifier-URL" content="https://doctor-patient-calendar-appointment.vercel.app" />
-        {/* Favicon - the small icon shown in browser tabs */}
-        <link rel="icon" type="image/x-icon" href="/favicon.ico" />
         {/* Viewport meta tag ensures responsive design works on mobile devices */}
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         {/* Theme color for mobile browsers - controls the browser UI color */}
         <meta name="theme-color" content="#ffffff" />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         {/* AuthLayout wraps all pages with authentication, navigation, and context providers */}
         <AuthLayout>{children}</AuthLayout>
       </body>

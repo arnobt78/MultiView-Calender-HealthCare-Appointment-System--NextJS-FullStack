@@ -28,19 +28,26 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   // Track current user state - used to conditionally render layout
   const [user, setUser] = useState<{ id: string; email: string } | null>(null);
   // Check authentication status on component mount
-  // Uses dynamic import to reduce initial bundle size (code splitting)
   useEffect(() => {
-    import("@supabase/auth-helpers-nextjs").then(({ createClientComponentClient }) => {
-      const supabase = createClientComponentClient();
-      // Get current authenticated user from Supabase
-      supabase.auth.getUser().then(({ data }) => {
-        if (data?.user) {
-          setUser({ id: data.user.id, email: data.user.email ?? "" });
+    const fetchUser = async () => {
+      try {
+        const response = await fetch("/api/auth/me");
+        if (response.ok) {
+          const data = await response.json();
+          if (data?.user) {
+            setUser({ id: data.user.id, email: data.user.email ?? "" });
+          } else {
+            setUser(null);
+          }
         } else {
           setUser(null);
         }
-      });
-    });
+      } catch (error) {
+        console.error("Error fetching user:", error);
+        setUser(null);
+      }
+    };
+    fetchUser();
   }, []);
 
   // Determine if current route is an authentication page (login, register, accept invitation)

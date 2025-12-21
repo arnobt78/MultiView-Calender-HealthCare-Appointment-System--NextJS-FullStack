@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/navigation";
 // Removed Dialog imports for full-page layout
 import { Button } from "@/components/ui/button";
@@ -10,12 +9,18 @@ export default function Logout() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
-  const supabase = createClientComponentClient();
   const handleLogout = async () => {
     setLoading(true);
-    await supabase.auth.signOut();
-    setLoading(false);
-    router.push("/login");
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      window.location.href = "/login";
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Still redirect even if API call fails
+      window.location.href = "/login";
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

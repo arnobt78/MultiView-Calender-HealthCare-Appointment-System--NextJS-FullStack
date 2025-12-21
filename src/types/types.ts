@@ -65,7 +65,7 @@ export interface AppointmentAssignee {
   id: UUID;
   created_at: string;
   appointment: UUID;
-  user: UUID;
+  user: UUID | null; // Can be null when user_type is "patients" or "relatives" (they're not users)
   user_type: "relatives" | "patients";
   status?: "pending" | "accepted" | "declined";
   permission?: "read" | "write" | "full";

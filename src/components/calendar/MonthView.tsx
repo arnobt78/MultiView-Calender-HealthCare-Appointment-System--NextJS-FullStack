@@ -20,7 +20,8 @@ import {
   Activity,
 } from "@/types/types";
 import { getUserAppointmentPermission } from "@/lib/permissions";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+// Using Vercel Blob for file storage
+import { getPublicUrl } from "@/lib/vercelBlob";
 import { useEffect, useState, useCallback } from "react";
 import { useDateContext } from "@/context/DateContext";
 import AppointmentDialog from "./AppointmentDialog";
@@ -49,7 +50,6 @@ export default function MonthView() {
   const [calendarDays, setCalendarDays] = useState<
     { date: Date; appointments: AppointmentWithCategory[] }[]
   >([]);
-  const supabase = createClientComponentClient();
   const { currentDate } = useDateContext();
   const [editAppt, setEditAppt] = useState<AppointmentWithCategory | null>(null);
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -91,78 +91,112 @@ export default function MonthView() {
       let uid = userId;
       let email: string | null = userEmail;
       if (!uid) {
-        const { data: userData } = await supabase.auth.getUser();
-        uid = userData?.user?.id || null;
-        email = userData?.user?.email || null;
+        const response = await fetch("/api/auth/me");
+        if (response.ok) {
+          const data = await response.json();
+          uid = data?.user?.id || null;
+          email = data?.user?.email || null;
+        }
         if (!uid) return;
         setUserId(uid);
         setUserEmail(email);
       } else {
-        // If userId is already set, fetch email from Supabase
-        const { data: userData } = await supabase.auth.getUser();
-        email = userData?.user?.email || null;
-        setUserEmail(email);
+        // If userId is already set, fetch email from API
+        const response = await fetch("/api/auth/me");
+        if (response.ok) {
+          const data = await response.json();
+          email = data?.user?.email || null;
+          setUserEmail(email);
+        }
       }
-      // Fetch owned appointments
-      const { data: owned } = await supabase
-        .from("appointments")
-        .select("*, category:category(*), patient:patients(*), appointment_assignee:appointment_assignee(*)")
-        .eq("user_id", uid);
+      
+      try {
+        // Fetch owned appointments (API automatically filters by authenticated user)
+        const ownedRes = await fetch("/api/appointments");
+        const ownedData = await ownedRes.json();
+        const owned = ownedData.appointments || [];
+        
+        // Fetch categories, patients, and assignees separately for joining
+        const [categoriesRes, patientsRes, allAssigneesRes] = await Promise.all([
+          fetch("/api/categories"),
+          fetch("/api/patients"),
+          fetch("/api/appointment-assignees"),
+        ]);
+        const categoriesData = await categoriesRes.json();
+        const patientsData = await patientsRes.json();
+        const allAssigneesData = await allAssigneesRes.json();
+        const categories = categoriesData.categories || [];
+        const patients = patientsData.patients || [];
+        const allAssignees = allAssigneesData.assignees || [];
+        
+        // Join categories, patients, and assignees with appointments
+        const ownedWithDetails = owned.map((appt: Appointment) => ({
+          ...appt,
+          category_data: categories.find((c: Category) => c.id === appt.category),
+          patient_data: patients.find((p: Patient) => p.id === appt.patient),
+          appointment_assignee: allAssignees.filter((a: AppointmentAssignee) => a.appointment === appt.id),
+        }));
 
       // --- NEW: Fetch dashboard access for invited users ---
-      const { data: dashboardAccess } = await supabase
-        .from("dashboard_access")
-        .select("owner_user_id")
-        .eq("invited_user_id", uid)
-        .eq("status", "accepted");
-      // Define type for dashboardAccess rows
+      const dashboardAccessRes = await fetch("/api/dashboard-access?status=accepted");
+      const dashboardAccessData = await dashboardAccessRes.json();
+      const dashboardAccess = dashboardAccessData.dashboard_access || [];
       type DashboardAccessRow = { owner_user_id: string };
-      // Define type for shared appointments (AppointmentWithCategory)
       let sharedAppointments: AppointmentWithCategory[] = [];
       if (dashboardAccess && dashboardAccess.length > 0) {
         const ownerIds = (dashboardAccess as DashboardAccessRow[]).map((d) => d.owner_user_id).filter(Boolean);
-        if (ownerIds.length > 0) {
-          const { data: shared } = await supabase
-            .from("appointments")
-            .select("*, category:category(*), patient:patients(*), appointment_assignee:appointment_assignee(*)")
-            .in("user_id", ownerIds);
-          sharedAppointments = (shared || []) as AppointmentWithCategory[];
-        }
+        // Note: Current API filters by authenticated user, so we can't fetch other users' appointments directly
+        // This would require a new API route that allows fetching by owner_user_id with proper permissions
+        // For now, we'll skip shared appointments from dashboard access
       }
 
-      // Fetch assigned appointments by user
-      const { data: assignedByUser } = await supabase
-        .from("appointment_assignee")
-        .select("appointment, permission, status, appointment_data:appointment(*), invited_email, id, created_at, user, user_type")
-        .eq("user", uid)
-        .eq("status", "accepted");
-      // Fetch assigned appointments by invited_email
-      let assignedByEmail: (AppointmentAssignee & { appointment_data: Appointment })[] = [];
-      if (email) {
-        const { data: assignedEmail } = await supabase
-          .from("appointment_assignee")
-          .select("appointment, permission, status, appointment_data:appointment(*), invited_email, id, created_at, user, user_type")
-          .eq("invited_email", email)
-          .eq("status", "accepted");
-        assignedByEmail = (assignedEmail || []).map((a) => ({
-          ...a,
-          appointment_data: Array.isArray(a.appointment_data)
-            ? a.appointment_data[0]
-            : a.appointment_data,
-        }));
-      }
-      // Merge assigned appointments
+      // Fetch assigned appointments by user and email
+      const assignedByUser = allAssignees.filter(
+        (a: AppointmentAssignee) => a.user === uid && a.status === "accepted"
+      );
+      const assignedByEmail = email
+        ? allAssignees.filter(
+            (a: AppointmentAssignee) => a.invited_email === email && a.status === "accepted"
+          )
+        : [];
+
+      // Fetch appointment data for assigned appointments
+      const assignedAppointmentIds = [
+        ...assignedByUser.map((a: AppointmentAssignee) => a.appointment),
+        ...assignedByEmail.map((a: AppointmentAssignee) => a.appointment),
+      ].filter(Boolean);
+      const uniqueAppointmentIds = [...new Set(assignedAppointmentIds)];
+
+      const assignedAppointmentsData = await Promise.all(
+        uniqueAppointmentIds.map(async (apptId: string) => {
+          const res = await fetch(`/api/appointments/${apptId}`);
+          if (res.ok) {
+            const data = await res.json();
+            return data.appointment;
+          }
+          return null;
+        })
+      );
+
+      // Merge assigned appointments with assignee data
       type AppointmentWithAssignees = AppointmentWithCategory & { appointment_assignee?: AppointmentAssignee[] };
-      const assignedAppointments: AppointmentWithAssignees[] = [...(assignedByUser || []), ...assignedByEmail]
-        .filter((a) => typeof a.permission === "string" && ["read", "write", "full"].includes(a.permission))
-        .map((a) => {
-          const apptData = Array.isArray(a.appointment_data)
-            ? a.appointment_data[0]
-            : a.appointment_data;
-          return { ...apptData, appointment_assignee: [a] };
+      const assignedAppointments: AppointmentWithAssignees[] = assignedAppointmentsData
+        .filter(Boolean)
+        .map((appt: Appointment) => {
+          const relatedAssignees = [
+            ...assignedByUser.filter((a: AppointmentAssignee) => a.appointment === appt.id),
+            ...assignedByEmail.filter((a: AppointmentAssignee) => a.appointment === appt.id),
+          ].filter((a) => typeof a.permission === "string" && ["read", "write", "full"].includes(a.permission));
+          
+          return {
+            ...appt,
+            category_data: categories.find((c: Category) => c.id === appt.category),
+            patient_data: patients.find((p: Patient) => p.id === appt.patient),
+            appointment_assignee: relatedAssignees,
+          };
         });
       // Merge and deduplicate, always include all assignees for each appointment
-      const allAppointments: AppointmentWithAssignees[] = [...(owned || []), ...sharedAppointments, ...assignedAppointments].map((appt) => ({ ...appt }));
+      const allAppointments: AppointmentWithAssignees[] = [...ownedWithDetails, ...sharedAppointments, ...assignedAppointments].map((appt) => ({ ...appt }));
       const deduped: AppointmentWithAssignees[] = allAppointments.reduce((acc: AppointmentWithAssignees[], curr: AppointmentWithAssignees) => {
         if (!curr || !curr.id) return acc;
         const existing = acc.find((a) => a.id === curr.id);
@@ -180,12 +214,10 @@ export default function MonthView() {
 
       // Collect all unique user IDs from appointments and dashboard_access to get owner emails
       const allUserIds = new Set<string>();
-      if (owned) {
-        owned.forEach(appt => {
-          if (appt.user_id) allUserIds.add(appt.user_id);
-        });
-      }
-      assignedAppointments.forEach(appt => {
+      ownedWithDetails.forEach((appt: Appointment) => {
+        if (appt.user_id) allUserIds.add(appt.user_id);
+      });
+      assignedAppointments.forEach((appt: Appointment) => {
         if (appt.user_id) allUserIds.add(appt.user_id);
       });
       // Also add owner_user_id from dashboardAccess for invited dashboard appointments
@@ -195,15 +227,25 @@ export default function MonthView() {
         });
       }
 
-      // Fetch user data for all owners
-      const { data: allOwnerUsers } = await supabase
-        .from("users")
-        .select("id, email")
-        .in("id", Array.from(allUserIds));
+      // Fetch user data for all owners (using search API)
+      const ownerUsersPromises = Array.from(allUserIds).map(async (userId: string) => {
+        const res = await fetch(`/api/users/search?query=${userId}`);
+        if (res.ok) {
+          const data = await res.json();
+          const user = data.users?.find((u: { id: string }) => u.id === userId);
+          return user ? { id: user.id, email: user.email } : null;
+        }
+        return null;
+      });
+      const ownerUsersResults = await Promise.all(ownerUsersPromises);
+      const allOwnerUsers = ownerUsersResults.filter(Boolean) as { id: string; email: string }[];
 
       setOwnerUsers(allOwnerUsers || []);
+      } catch (error) {
+        console.error("Error fetching appointments:", error);
+      }
     })();
-  }, [currentDate, buildCalendar, supabase, userId, userEmail]);
+  }, [currentDate, buildCalendar, userId, userEmail]);
 
   // Helper: get permission for current user on an appointment
   // Use shared permission helper
@@ -221,43 +263,70 @@ export default function MonthView() {
   useEffect(() => {
     // Fetch all patients, relatives, assignees, and activities for mapping
     (async () => {
-      const { data: pats } = await supabase.from("patients").select("*");
-      const { data: rels } = await supabase.from("relatives").select("*");
-      const { data: assigns } = await supabase
-        .from("appointment_assignee")
-        .select("*");
-      const { data: acts } = await supabase.from("activities").select("*");
-      setPatients(pats || []);
-      setRelatives(rels || []);
-      setAssignees(assigns || []);
-      setActivities(acts || []);
+      try {
+        const [patsRes, relsRes, assignsRes, actsRes] = await Promise.all([
+          fetch("/api/patients"),
+          fetch("/api/relatives"),
+          fetch("/api/appointment-assignees"),
+          fetch("/api/activities"),
+        ]);
+        const patsData = await patsRes.json();
+        const relsData = await relsRes.json();
+        const assignsData = await assignsRes.json();
+        const actsData = await actsRes.json();
+        setPatients(patsData.patients || []);
+        setRelatives(relsData.relatives || []);
+        setAssignees(assignsData.assignees || []);
+        setActivities(actsData.activities || []);
+      } catch (error) {
+        console.error("Error loading initial data:", error);
+      }
     })();
-  }, [supabase]);
+  }, []);
 
   const toggleStatus = async (id: string, newStatus: string) => {
-    await supabase
-      .from("appointments")
-      .update({ status: newStatus })
-      .eq("id", id);
-    setCalendarDays((prev) =>
-      prev.map((d) => ({
-        ...d,
-        appointments: d.appointments.map((a) =>
-          a.id === id ? { ...a, status: newStatus as typeof a.status } : a
-        ),
-      }))
-    );
+    try {
+      const response = await fetch(`/api/appointments/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (response.ok) {
+        setCalendarDays((prev) =>
+          prev.map((d) => ({
+            ...d,
+            appointments: d.appointments.map((a) =>
+              a.id === id ? { ...a, status: newStatus as typeof a.status } : a
+            ),
+          }))
+        );
+      } else {
+        console.error("Failed to update appointment status");
+      }
+    } catch (error) {
+      console.error("Error updating appointment status:", error);
+    }
   };
 
   const deleteAppt = async (id: string) => {
     if (!confirm("Termin wirklich löschen?")) return;
-    await supabase.from("appointments").delete().eq("id", id);
-    setCalendarDays((prev) =>
-      prev.map((d) => ({
-        ...d,
-        appointments: d.appointments.filter((a) => a.id !== id),
-      }))
-    );
+    try {
+      const response = await fetch(`/api/appointments/${id}`, {
+        method: "DELETE",
+      });
+      if (response.ok) {
+        setCalendarDays((prev) =>
+          prev.map((d) => ({
+            ...d,
+            appointments: d.appointments.filter((a) => a.id !== id),
+          }))
+        );
+      } else {
+        console.error("Failed to delete appointment");
+      }
+    } catch (error) {
+      console.error("Error deleting appointment:", error);
+    }
   };
 
   // Helper: sort appointments by start time ascending
@@ -375,7 +444,6 @@ export default function MonthView() {
                         onEdit={setEditAppt}
                         onDelete={deleteAppt}
                         onToggleStatus={toggleStatus}
-                        supabase={supabase}
                         showDetails={false} // Default to false, can be overridden
                       />
                     );
@@ -514,14 +582,13 @@ export default function MonthView() {
                       <div className="flex items-center gap-2 text-xs text-gray-400 mb-1">
                         <FiPaperclip /> Anhänge:
                         {a.attachements.map((file, idx) => {
-                          const { data } = supabase.storage
-                            .from("attachments")
-                            .getPublicUrl(file);
+                          // Get Vercel Blob public URL
+                          const publicUrl = getPublicUrl(file);
                           const fileName = file.split("/").pop() || file;
-                          return data && data.publicUrl ? (
+                          return publicUrl ? (
                             <a
                               key={idx}
-                              href={data.publicUrl}
+                              href={publicUrl}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="not-italic text-blue-700 underline"
@@ -549,14 +616,16 @@ export default function MonthView() {
                         <FiUsers /> Refer to:
                         {(() => {
                           try {
-                            // Debug: Log the patient data
-                            console.log('DEBUG - MonthView Patient data:', {
-                              patient: a.patient,
-                              patientType: typeof a.patient,
-                              isObject: typeof a.patient === 'object',
-                              hasFirstname: a.patient && typeof a.patient === 'object' && 'firstname' in a.patient,
-                              hasLastname: a.patient && typeof a.patient === 'object' && 'lastname' in a.patient
-                            });
+                            // Debug: Log the patient data (development only)
+                            if (process.env.NODE_ENV === "development") {
+                              console.log('DEBUG - MonthView Patient data:', {
+                                patient: a.patient,
+                                patientType: typeof a.patient,
+                                isObject: typeof a.patient === 'object',
+                                hasFirstname: a.patient && typeof a.patient === 'object' && 'firstname' in a.patient,
+                                hasLastname: a.patient && typeof a.patient === 'object' && 'lastname' in a.patient
+                              });
+                            }
 
                             // If patient is already an object with firstname/lastname
                             if (a.patient &&
@@ -613,8 +682,10 @@ export default function MonthView() {
                           // Invitee view: show owner's email
                           <span className="not-italic text-blue-700">
                             {(() => {
-                              // Debug: Log ownerUsers and appointment user_id mapping
-                              console.log('[MonthView Assigned by] ownerUsers:', ownerUsers, 'appointment user_id:', a.user_id);
+                              // Debug: Log ownerUsers and appointment user_id mapping (development only)
+                              if (process.env.NODE_ENV === "development") {
+                                console.log('[MonthView Assigned by] ownerUsers:', ownerUsers, 'appointment user_id:', a.user_id);
+                              }
                               const owner = ownerUsers.find(u => u.id === a.user_id);
                               return owner?.email || a.user_id;
                             })()}
@@ -660,16 +731,18 @@ export default function MonthView() {
                         );
                         userPermission = userAssignment?.permission || null;
 
-                        // Debug logging
-                        console.log('DEBUG - MonthView Sidebar Permission Check:', {
-                          appointmentId: a.id,
-                          userId: userId,
-                          userEmail: userEmail,
-                          dedupedAssignees: dedupedAssignees,
-                          userAssignment: userAssignment,
-                          userPermission: userPermission,
-                          isOwner: isOwner
-                        });
+                        // Debug logging (development only)
+                        if (process.env.NODE_ENV === "development") {
+                          console.log('DEBUG - MonthView Sidebar Permission Check:', {
+                            appointmentId: a.id,
+                            userId: userId,
+                            userEmail: userEmail,
+                            dedupedAssignees: dedupedAssignees,
+                            userAssignment: userAssignment,
+                            userPermission: userPermission,
+                            isOwner: isOwner
+                          });
+                        }
                       }
 
                       // Only owner, full, or write can toggle status
@@ -711,14 +784,16 @@ export default function MonthView() {
                         );
                         userPermission = userAssignment?.permission || null;
 
-                        // Debug logging for edit button
-                        console.log('DEBUG - MonthView Sidebar Edit Permission:', {
-                          appointmentId: a.id,
-                          userId: userId,
-                          userEmail: userEmail,
-                          userPermission: userPermission,
-                          canEdit: isOwner || userPermission === "full"
-                        });
+                        // Debug logging for edit button (development only)
+                        if (process.env.NODE_ENV === "development") {
+                          console.log('DEBUG - MonthView Sidebar Edit Permission:', {
+                            appointmentId: a.id,
+                            userId: userId,
+                            userEmail: userEmail,
+                            userPermission: userPermission,
+                            canEdit: isOwner || userPermission === "full"
+                          });
+                        }
                       }
 
                       // Only owner or full can edit
@@ -793,14 +868,25 @@ export default function MonthView() {
             setEditAppt(null);
           }}
           trigger={null}
-          supabase={supabase}
-          refreshAppointments={() => {
-            supabase
-              .from("appointments")
-              .select("*, category:category(*)")
-              .then(({ data }) => {
-                if (data) buildCalendar(data as AppointmentWithCategory[]);
-              });
+          refreshAppointments={async () => {
+            try {
+              const response = await fetch("/api/appointments");
+              if (response.ok) {
+                const data = await response.json();
+                const appointments = data.appointments || [];
+                // Fetch categories and join
+                const categoriesRes = await fetch("/api/categories");
+                const categoriesData = await categoriesRes.json();
+                const categories = categoriesData.categories || [];
+                const appointmentsWithCategories = appointments.map((appt: Appointment) => ({
+                  ...appt,
+                  category_data: categories.find((c: Category) => c.id === appt.category),
+                }));
+                buildCalendar(appointmentsWithCategories as AppointmentWithCategory[]);
+              }
+            } catch (error) {
+              console.error("Error refreshing appointments:", error);
+            }
           }}
         />
       )}

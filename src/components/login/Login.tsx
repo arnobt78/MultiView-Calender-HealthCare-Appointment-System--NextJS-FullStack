@@ -6,9 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 // Removed Dialog imports for full-page layout
 import Link from "next/link";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-
 import { useSearchParams } from "next/navigation";
+import { setClientSession } from "@/lib/session";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -16,7 +15,6 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const supabase = createClientComponentClient();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect");
 
@@ -24,45 +22,46 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
     setError("");
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-    if (error) setError(error.message);
-    else if (data.user && !data.user.email_confirmed_at) {
-      setError("Please verify your email address before logging in. Check your inbox for a confirmation link.");
-      await supabase.auth.signOut();
-    } else if (data.user) {
-      // Upsert user into users table
-      await supabase.from("users").upsert({
-        id: data.user.id,
-        email: data.user.email,
-        display_name: data.user.user_metadata?.full_name || data.user.email,
+    
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
       });
-      if (redirect) {
-        // Always reload the page after redirect to ensure invitation page is shown
-        window.location.href = redirect;
+
+      const data = await response.json();
+      setLoading(false);
+
+      if (!response.ok) {
+        setError(data.error || "Login failed");
         return;
       }
-      router.push("/");
+
+      // Set session cookie (client-side)
+      if (data.user) {
+        // Get token from response headers or set via cookie
+        // The server already set the cookie, but we can also store it client-side for immediate access
+        const tokenResponse = await fetch("/api/auth/me");
+        if (tokenResponse.ok) {
+          if (redirect) {
+            // Always reload the page after redirect to ensure invitation page is shown
+            window.location.href = redirect;
+            return;
+          }
+          router.push("/");
+          router.refresh(); // Refresh to update auth state
+        }
+      }
+    } catch (err: any) {
+      setLoading(false);
+      setError(err.message || "An error occurred during login");
     }
   };
 
+  // Google OAuth removed - can be re-implemented later if needed
   const handleGoogle = async () => {
-    setLoading(true);
-    setError("");
-    // If there's a redirect param, pass it through the OAuth flow
-    let redirectTo = window.location.origin;
-    if (redirect) {
-      redirectTo += redirect.startsWith("/") ? redirect : `/${redirect}`;
-    }
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo }
-    });
-    setLoading(false);
-    if (error) setError(error.message);
-    // After Google OAuth, Supabase will send a confirmation email if required by project settings
-    // The user will be redirected back after OAuth, so AuthGuard will enforce email verification
-    // Upsert user will be handled after redirect in AuthGuard or on next login
+    setError("Google OAuth is not yet implemented. Please use email/password login.");
   };
 
   return (

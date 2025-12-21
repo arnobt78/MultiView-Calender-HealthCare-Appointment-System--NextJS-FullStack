@@ -20,7 +20,6 @@ import {
 import { Button } from "@/components/ui/button";
 
 import { ChangeEvent, useEffect, useRef, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
 import {
   Category,
   Patient,
@@ -29,7 +28,8 @@ import {
   Activity,
   Relative,
 } from "@/types/types";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+// Using Vercel Blob for file storage (better for demo projects on Vercel)
+import { uploadFileViaAPI, deleteFile } from "@/lib/vercelBlob";
 
 type Props = {
   trigger?: React.ReactNode;
@@ -47,7 +47,6 @@ export default function AppointmentDialog({
   onOpenChange,
 }: Props) {
   const isEditMode = Boolean(appointment);
-  const supabase = createClientComponentClient();
   const [open, setOpen] = useState(isEditMode);
 
   // Sync open state with parent if controlled
@@ -82,16 +81,25 @@ export default function AppointmentDialog({
 
   useEffect(() => {
     const load = async () => {
-      const { data: pats } = await supabase.from("patients").select("*");
-      const { data: cats } = await supabase.from("categories").select("*");
-      const { data: rels } = await supabase.from("relatives").select("*");
-      setPatients(pats || []);
-      setCategories(cats || []);
-      setRelatives(rels || []);
+      try {
+        const [patsRes, catsRes, relsRes] = await Promise.all([
+          fetch("/api/patients"),
+          fetch("/api/categories"),
+          fetch("/api/relatives"),
+        ]);
+        const patsData = await patsRes.json();
+        const catsData = await catsRes.json();
+        const relsData = await relsRes.json();
+        setPatients(patsData.patients || []);
+        setCategories(catsData.categories || []);
+        setRelatives(relsData.relatives || []);
+      } catch (error) {
+        console.error("Error loading initial data:", error);
+      }
     };
 
     load();
-  }, [supabase]);
+  }, []);
 
   useEffect(() => {
     if (appointment) {
@@ -107,32 +115,33 @@ export default function AppointmentDialog({
       setOpen(true);
       (async () => {
         if (appointment.id) {
-          // Prefill assignees with all fields, but deduplicate by user + invited_email
-          const { data: assigneesData } = await supabase
-            .from("appointment_assignee")
-            .select("id, created_at, appointment, user, user_type, invited_email, status, permission")
-            .eq("appointment", appointment.id);
-          const dedupedMap = new Map();
-          for (const a of (assigneesData as AppointmentAssignee[] || [])) {
-            const key = `${a.user || ''}|${a.invited_email || ''}`;
-            if (!dedupedMap.has(key)) {
-              dedupedMap.set(key, a);
+          try {
+            // Prefill assignees with all fields, but deduplicate by user + invited_email
+            const assigneesRes = await fetch(`/api/appointments/${appointment.id}/assignees`);
+            const assigneesData = await assigneesRes.json();
+            const assigneesList = assigneesData.assignees || [];
+            const dedupedMap = new Map();
+            for (const a of (assigneesList as AppointmentAssignee[] || [])) {
+              const key = `${a.user || ''}|${a.invited_email || ''}`;
+              if (!dedupedMap.has(key)) {
+                dedupedMap.set(key, a);
+              }
             }
+            setAssignees(Array.from(dedupedMap.values()));
+            // Prefill activities with all fields
+            const actsRes = await fetch(`/api/appointments/${appointment.id}/activities`);
+            const actsData = await actsRes.json();
+            setActivityList((actsData.activities as Activity[]) || []);
+          } catch (error) {
+            console.error("Error loading appointment data:", error);
           }
-          setAssignees(Array.from(dedupedMap.values()));
-          // Prefill activities with all fields
-          const { data: acts } = await supabase
-            .from("activities")
-            .select("id, type, content, created_at, created_by, appointment")
-            .eq("appointment", appointment.id);
-          setActivityList((acts as Activity[]) || []);
         }
       })();
     } else {
       setAssignees([]);
       setActivityList([]);
     }
-  }, [appointment, supabase]);
+  }, [appointment]);
 
   const handleSave = async () => {
     setLoading(true);
@@ -172,18 +181,21 @@ export default function AppointmentDialog({
         // Always update updated_at on edit
         updates.updated_at = new Date().toISOString();
         if (Object.keys(updates).length > 0) {
-          const { error } = await supabase
-            .from("appointments")
-            .update(updates)
-            .eq("id", appointment!.id);
-          if (error) throw new Error("Fehler beim Speichern");
+          const response = await fetch(`/api/appointments/${appointment!.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(updates),
+          });
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || "Fehler beim Speichern");
+          }
         }
         // --- PATCH: Preserve all existing assignees ---
         // Fetch all existing assignees for this appointment
-        const { data: existingAssignees } = await supabase
-          .from("appointment_assignee")
-          .select("*")
-          .eq("appointment", appointment!.id);
+        const existingAssigneesRes = await fetch(`/api/appointments/${appointment!.id}/assignees`);
+        const existingAssigneesData = await existingAssigneesRes.json();
+        const existingAssignees = existingAssigneesData.assignees || [];
         console.log('[AppointmentDialog] Edit:', { appointment, existingAssignees, assignees });
         // Merge dialog assignees with existing ones, keeping accepted/invited users
         // Deduplicate by user and invited_email, keep highest status/permission
@@ -217,17 +229,21 @@ export default function AppointmentDialog({
         console.log('[AppointmentDialog] Merged Assignees:', mergedAssignees);
         // Remove old assignees/activities atomically
         // Only allow owner to update assignees. If current user is not owner, skip assignee update.
-        const isOwner = appointment?.user_id === (await getCurrentUserId());
+        let currentUserId = "";
+        try {
+          const response = await fetch("/api/auth/me");
+          if (response.ok) {
+            const data = await response.json();
+            currentUserId = data?.user?.id || "";
+          }
+        } catch (error) {
+          console.error("Error fetching user ID:", error);
+        }
+        const isOwner = appointment?.user_id === currentUserId;
         if (isOwner) {
           await Promise.all([
-            supabase
-              .from("appointment_assignee")
-              .delete()
-              .eq("appointment", appointment!.id),
-            supabase
-              .from("activities")
-              .delete()
-              .eq("appointment", appointment!.id),
+            fetch(`/api/appointments/${appointment!.id}/assignees`, { method: "DELETE" }),
+            fetch(`/api/appointments/${appointment!.id}/activities`, { method: "DELETE" }),
           ]);
           // Re-insert only unique assignees (deduplicated by user and invited_email)
           const uniqueAssigneesMap = new Map();
@@ -239,41 +255,49 @@ export default function AppointmentDialog({
           }
           const uniqueAssignees = Array.from(uniqueAssigneesMap.values());
           if (uniqueAssignees.length > 0) {
-            await supabase.from("appointment_assignee").insert(
-              uniqueAssignees.map((a) => ({
-                appointment: apptId,
-                user: a.user,
-                user_type: a.user_type,
-                invited_email: a.invited_email || null,
-                status: typeof a.status === 'string' ? a.status : "pending",
-                permission: typeof a.permission === 'string' ? a.permission : "read",
-              }))
-            );
+            await fetch(`/api/appointments/${apptId}/assignees`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                assignees: uniqueAssignees.map((a) => ({
+                  appointment: apptId,
+                  user: a.user,
+                  user_type: a.user_type,
+                  invited_email: a.invited_email || null,
+                  status: typeof a.status === 'string' ? a.status : "pending",
+                  permission: typeof a.permission === 'string' ? a.permission : "read",
+                })),
+              }),
+            });
           }
         }
       } else {
         // Insert new appointment and get ID, set user_id to current user
         const user_id = await getCurrentUserId();
-        const { data, error } = await supabase
-          .from("appointments")
-          .insert([
-            {
-              title,
-              notes,
-              start: safeStart,
-              end: safeEnd,
-              patient: patientId,
-              category: categoryId,
-              location,
-              attachements: attachementArray,
-              status,
-              user_id,
-            },
-          ])
-          .select();
-        if (error || !data || !data[0])
+        const response = await fetch("/api/appointments", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title,
+            notes,
+            start: safeStart,
+            end: safeEnd,
+            patient: patientId,
+            category: categoryId,
+            location,
+            attachements: attachementArray,
+            status,
+            user_id,
+          }),
+        });
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Fehler beim Speichern");
+        }
+        const data = await response.json();
+        if (!data || !data.appointment)
           throw new Error("Fehler beim Speichern");
-        apptId = data[0].id;
+        apptId = data.appointment.id;
         // Deduplicate assignees before insert
         if (assignees.length > 0) {
           const dedupedMap = new Map<string, typeof assignees[0]>();
@@ -301,30 +325,37 @@ export default function AppointmentDialog({
             }
           }
           const uniqueAssignees = Array.from(dedupedMap.values());
-          await supabase.from("appointment_assignee").insert(
-            uniqueAssignees.map((a) => ({
-              appointment: apptId,
-              user: a.user,
-              user_type: a.user_type,
-              invited_email: a.invited_email || null,
-              status: typeof a.status === 'string' ? a.status : "pending",
-              permission: typeof a.permission === 'string' ? a.permission : "read",
-            }))
-          );
+          await fetch(`/api/appointments/${apptId}/assignees`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              assignees: uniqueAssignees.map((a) => ({
+                appointment: apptId,
+                user: a.user,
+                user_type: a.user_type,
+                invited_email: a.invited_email || null,
+                status: typeof a.status === 'string' ? a.status : "pending",
+                permission: typeof a.permission === 'string' ? a.permission : "read",
+              })),
+            }),
+          });
         }
       }
       // Save activities (all fields)
       if (activityList.length > 0) {
-        await supabase.from("activities").insert(
-          await Promise.all(
-            activityList.map(async (act) => ({
-              appointment: apptId,
-              type: act.type,
-              content: act.content,
-              created_by: act.created_by || (await getCurrentUserId()),
-            }))
-          )
+        const activitiesToInsert = await Promise.all(
+          activityList.map(async (act) => ({
+            appointment: apptId,
+            type: act.type,
+            content: act.content,
+            created_by: act.created_by || (await getCurrentUserId()),
+          }))
         );
+        await fetch(`/api/appointments/${apptId}/activities`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ activities: activitiesToInsert }),
+        });
       }
       setSuccess(true);
       setOpen(false);
@@ -349,28 +380,26 @@ export default function AppointmentDialog({
     const files = Array.from(e.target.files);
     const uploadedFileNames: string[] = [];
     for (const file of files) {
-      const filePath = `${Date.now()}_${file.name}`;
       setFileProgress((prev) => ({ ...prev, [file.name]: 0 }));
-      const uploadPromise = supabase.storage
-        .from("attachments")
-        .upload(filePath, file);
-      let progress = 0;
-      const interval = setInterval(() => {
-        progress += 20;
-        setFileProgress((prev) => ({
-          ...prev,
-          [file.name]: Math.min(progress, 100),
-        }));
-      }, 100);
-      const { error } = await uploadPromise;
-      clearInterval(interval);
-      setFileProgress((prev) => ({ ...prev, [file.name]: 100 }));
-      if (error) {
+      try {
+        // Upload to Vercel Blob with progress tracking
+        // Uses project-specific folder from environment variable
+        const result = await uploadFileViaAPI(
+          file,
+          (progress) => {
+            setFileProgress((prev) => ({
+              ...prev,
+              [file.name]: progress,
+            }));
+          }
+        );
+        // Store the Vercel Blob URL (full URL for easy access)
+        uploadedFileNames.push(result.url);
+      } catch (error) {
         setError(`Fehler beim Hochladen: ${file.name}`);
+        setFileProgress((prev) => ({ ...prev, [file.name]: 0 }));
         continue;
       }
-      // Store only the file path, not the public URL
-      uploadedFileNames.push(filePath);
     }
     setUploadedFiles((prev) => [...prev, ...uploadedFileNames]);
     setattachements((prev: string) =>
@@ -381,25 +410,38 @@ export default function AppointmentDialog({
     setUploading(false);
   };
 
-  const handleRemoveUploadedFile = (url: string) => {
-    setUploadedFiles((prev) => prev.filter((f) => f !== url));
+  const handleRemoveUploadedFile = async (publicId: string) => {
+    setUploadedFiles((prev) => prev.filter((f) => f !== publicId));
     setattachements((prev) =>
       prev
         .split(",")
         .map((s) => s.trim())
-        .filter((f) => f && f !== url)
+        .filter((f) => f && f !== publicId)
         .join(", ")
     );
-    // Optionally: remove from Supabase storage (not just UI)
-    // const path = url.split("/attachments/")[1];
-    // if (path) supabase.storage.from("attachments").remove([`attachments/${path}`]);
+    // Optionally: remove from Vercel Blob storage (not just UI)
+    try {
+      // Delete via API route (requires authentication)
+      await fetch("/api/storage/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: publicId }),
+      });
+    } catch (error) {
+      console.error("Error deleting file from Vercel Blob:", error);
+      // Continue even if deletion fails - file is removed from UI
+    }
   };
 
   // Helper: get current user (if available)
   const getCurrentUserId = async (): Promise<string> => {
     try {
-      const { data } = await supabase.auth.getUser();
-      return data?.user?.id || "";
+      const response = await fetch("/api/auth/me");
+      if (response.ok) {
+        const data = await response.json();
+        return data?.user?.id || "";
+      }
+      return "";
     } catch {
       return "";
     }
@@ -411,19 +453,31 @@ export default function AppointmentDialog({
     const user_type = patients.find((p) => p.id === userId)
       ? "patients"
       : "relatives";
+    // Important: When user_type is "patients" or "relatives", the "user" field should be null
+    // because the appointment_assignee.user field has a foreign key to users.id
+    // Patients and relatives are not users, so we store null and use user_type to identify them
     setAssignees((prev) => [
       ...prev,
       {
         id: "temp-" + Date.now(),
         created_at: new Date().toISOString(),
         appointment: appointment?.id || "",
-        user: userId,
+        user: null, // Always null for patients/relatives (they're not users)
         user_type,
+        // Store the patient/relative ID in a way that can be retrieved later if needed
+        // Note: The current schema doesn't have a separate field for patient/relative ID
+        // This might need schema changes if you need to track which specific patient/relative
       },
     ]);
   };
-  const handleRemoveAssignee = (userId: string) => {
-    setAssignees((prev) => prev.filter((a) => a.user !== userId));
+  const handleRemoveAssignee = (userId: string | null, assigneeId?: string) => {
+    if (assigneeId) {
+      // Remove by assignee ID (more reliable for patients/relatives)
+      setAssignees((prev) => prev.filter((a) => a.id !== assigneeId));
+    } else if (userId) {
+      // Remove by user ID (for backward compatibility)
+      setAssignees((prev) => prev.filter((a) => a.user !== userId));
+    }
   };
   const handleAddActivity = async () => {
     if (!activityType || !activityContent) return;
@@ -665,7 +719,7 @@ export default function AppointmentDialog({
                     <span className="ml-1 text-gray-400">[{a.user_type}]</span>
                     <button
                       type="button"
-                      onClick={() => handleRemoveAssignee(a.user)}
+                      onClick={() => handleRemoveAssignee(a.user, a.id)}
                       className="ml-1 text-red-500 cursor-pointer hover:bg-red-100 rounded"
                     >
                       &times;
