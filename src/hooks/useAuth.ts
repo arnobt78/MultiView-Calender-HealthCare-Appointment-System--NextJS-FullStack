@@ -11,6 +11,7 @@ interface AuthResponse {
     role?: string;
     display_name?: string;
     email_verified: boolean;
+    image?: string | null;
   } | null;
 }
 

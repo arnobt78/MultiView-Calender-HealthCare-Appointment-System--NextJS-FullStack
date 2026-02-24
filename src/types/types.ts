@@ -4,6 +4,7 @@ export interface User {
   email: string;
   role?: string;
   display_name?: string;
+  image?: string | null;
   created_at?: string;
 }
 export type UUID = string;

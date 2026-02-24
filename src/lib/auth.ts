@@ -96,7 +96,7 @@ export function verifyToken(token: string): { userId: string; email: string } | 
  */
 export async function getUserByEmail(email: string) {
   const result = await query(
-    'SELECT id, email, password_hash, email_verified, display_name, role, created_at FROM users WHERE email = $1',
+    'SELECT id, email, password_hash, email_verified, display_name, role, image, created_at FROM users WHERE email = $1',
     [email]
   );
   return result.rows[0] || null;
@@ -110,7 +110,7 @@ export async function getUserByEmail(email: string) {
  */
 export async function getUserById(userId: string) {
   const result = await query(
-    'SELECT id, email, email_verified, display_name, role, created_at FROM users WHERE id = $1',
+    'SELECT id, email, email_verified, display_name, role, image, created_at FROM users WHERE id = $1',
     [userId]
   );
   return result.rows[0] || null;
@@ -215,6 +215,36 @@ export async function updatePassword(userId: string, passwordHash: string) {
   await query(
     'UPDATE users SET password_hash = $1, password_reset_token = NULL, password_reset_expires = NULL WHERE id = $2',
     [passwordHash, userId]
+  );
+}
+
+/**
+ * Create a new user from Google OAuth (no password). Sets email_verified = true.
+ */
+export async function createUserFromGoogle(
+  email: string,
+  displayName: string | null,
+  image: string | null
+) {
+  const result = await query(
+    `INSERT INTO users (id, email, email_verified, display_name, image, created_at)
+     VALUES (gen_random_uuid(), $1, true, $2, $3, NOW())
+     RETURNING id, email, email_verified, display_name, role, image, created_at`,
+    [email, displayName ?? null, image ?? null]
+  );
+  return result.rows[0];
+}
+
+/**
+ * Update user profile (e.g. after Google sign-in with updated name/image)
+ */
+export async function updateUserProfile(
+  userId: string,
+  data: { display_name?: string | null; image?: string | null }
+) {
+  await query(
+    'UPDATE users SET display_name = COALESCE($1, display_name), image = COALESCE($2, image) WHERE id = $3',
+    [data.display_name ?? null, data.image ?? null, userId]
   );
 }
 

@@ -39,6 +39,7 @@ export async function GET() {
         display_name: user.display_name,
         role: user.role,
         email_verified: user.email_verified,
+        image: user.image ?? null,
       },
     });
   } catch (error: any) {

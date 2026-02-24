@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -27,12 +27,14 @@ export default function Navbar() {
   const { user, logout, isLoggingOut } = useAuth();
   const pathname = usePathname();
 
-  // Helper to get initials
+  // Avatar: use profile image, else Robohash by email (when user exists)
+  const avatarSrc =
+    user?.image ||
+    (user ? `https://robohash.org/${encodeURIComponent(user.email)}.png?set=set1` : "");
   const initials = user?.email
     ? user.email.substring(0, 2).toUpperCase()
     : "U";
 
-  // Helper to generate a simple breadcrumb
   const getCurrentPageName = () => {
     if (pathname === "/") return "Dashboard";
     if (pathname.includes("control-panel")) return "Control Panel";
@@ -86,6 +88,7 @@ export default function Navbar() {
                     <span className="text-xs text-muted-foreground">{user.email}</span>
                   </div>
                   <Avatar>
+                    <AvatarImage src={avatarSrc} alt="" />
                     <AvatarFallback className="bg-primary/10 text-primary font-medium">{initials}</AvatarFallback>
                   </Avatar>
                 </div>

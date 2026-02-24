@@ -16,15 +16,46 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const testAccounts: Record<string, { email: string; password: string; label: string }> = {
+  "guest-user": {
+    email: "test@user.com",
+    password: "12345678",
+    label: "Guest User",
+  },
+};
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [selectedRole, setSelectedRole] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect");
   const queryClient = useQueryClient();
+
+  const handleRoleSelect = (value: string) => {
+    if (value === "clear") {
+      setSelectedRole("");
+      setEmail("");
+      setPassword("");
+      return;
+    }
+    setSelectedRole(value);
+    const account = testAccounts[value];
+    if (account) {
+      setEmail(account.email);
+      setPassword(account.password);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,8 +94,9 @@ export default function Login() {
     }
   };
 
-  const handleGoogle = async () => {
-    toast.error("Google OAuth is not yet implemented. Please use email/password login.");
+  const handleGoogle = () => {
+    const redirectParam = redirect ? `?redirect=${encodeURIComponent(redirect)}` : "";
+    window.location.href = `/api/auth/google${redirectParam}`;
   };
 
   return (
@@ -85,6 +117,28 @@ export default function Login() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">
+                Test account (optional)
+              </label>
+              <Select
+                key={`select-${selectedRole || "empty"}`}
+                value={selectedRole || undefined}
+                onValueChange={handleRoleSelect}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select test account" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="guest-user">Guest User (test@user.com)</SelectItem>
+                  {selectedRole && (
+                    <SelectItem value="clear" className="text-muted-foreground">
+                      Clear Selection
+                    </SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-2">
               <label htmlFor="login-email" className="text-sm font-medium text-gray-700">
                 Email

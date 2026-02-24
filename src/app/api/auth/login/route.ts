@@ -115,6 +115,7 @@ export async function POST(req: NextRequest) {
         email: user.email,
         display_name: user.display_name,
         role: user.role,
+        image: user.image ?? null,
       },
     }, {
       headers: {
