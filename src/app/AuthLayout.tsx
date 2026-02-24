@@ -2,84 +2,20 @@
 
 /**
  * AuthLayout Component
- * 
- * This component handles conditional rendering based on authentication state:
- * - For auth pages (login, register, accept-invitation) when not logged in: Shows minimal layout without navbar
- * - For authenticated pages: Shows full app with Navbar, AuthGuard, and context providers
- * 
- * This pattern allows different layouts for public vs authenticated pages while maintaining
- * a single layout structure.
+ *
+ * Wraps the app with AppProviders (Query, Toast, Date, Color) and AuthLayoutInner.
+ * AuthLayoutInner uses useAuth() to decide:
+ * - Auth pages when not logged in: minimal layout (no navbar)
+ * - Authenticated: full layout with AuthGuard and Navbar
  */
 
-import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import Navbar from "@/components/navbar/Navbar";
-import AuthGuard from "@/components/AuthGuard";
-import { DateProvider } from "@/context/DateContext";
-import { cn } from "@/lib/utils";
-import { Inter } from "next/font/google";
-import { AppointmentColorProvider } from "@/context/AppointmentColorContext";
-
-const inter = Inter({ subsets: ["latin"] });
+import { AppProviders } from "@/providers/AppProviders";
+import { AuthLayoutInner } from "./AuthLayoutInner";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
-  // Get current route pathname to determine if we're on an auth page
-  const pathname = usePathname();
-  // Track current user state - used to conditionally render layout
-  const [user, setUser] = useState<{ id: string; email: string } | null>(null);
-  // Check authentication status on component mount
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const response = await fetch("/api/auth/me");
-        if (response.ok) {
-          const data = await response.json();
-          if (data?.user) {
-            setUser({ id: data.user.id, email: data.user.email ?? "" });
-          } else {
-            setUser(null);
-          }
-        } else {
-          setUser(null);
-        }
-      } catch (error) {
-        console.error("Error fetching user:", error);
-        setUser(null);
-      }
-    };
-    fetchUser();
-  }, []);
-
-  // Determine if current route is an authentication page (login, register, accept invitation)
-  // These pages should show minimal layout without navbar when user is not logged in
-  const isAuthPage = ["/login", "/register", "/accept-invitation"].some((p) => pathname.startsWith(p));
-  
-  // Render minimal layout for auth pages when user is not logged in
-  // This provides a cleaner experience for login/registration flows
-  if (isAuthPage && !user) {
-    return (
-      <div className={cn("min-h-screen bg-gray-50 text-gray-900", inter.className)}>
-        {children}
-      </div>
-    );
-  }
-  
-  // Full app layout for authenticated users
-  // Wraps children with:
-  // - AuthGuard: Handles authentication checks and redirects
-  // - AppointmentColorProvider: Manages color coding for appointments
-  // - DateProvider: Manages current date state for calendar navigation
-  // - Navbar: Main navigation component
   return (
-    <div className={cn("min-h-screen bg-gray-50 text-gray-900", inter.className)}>
-      <AuthGuard>
-        <AppointmentColorProvider>
-          <DateProvider>
-            <Navbar />
-            {children}
-          </DateProvider>
-        </AppointmentColorProvider>
-      </AuthGuard>
-    </div>
+    <AppProviders>
+      <AuthLayoutInner>{children}</AuthLayoutInner>
+    </AppProviders>
   );
 }

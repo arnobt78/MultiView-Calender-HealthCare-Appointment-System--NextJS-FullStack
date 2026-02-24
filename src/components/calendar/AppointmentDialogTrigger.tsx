@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, startTransition } from "react";
 import AppointmentDialog from "./AppointmentDialog";
 import { Appointment } from "@/types/types";
 
@@ -18,7 +18,9 @@ export default function AppointmentDialogTrigger({
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    if (appointment) setOpen(true);
+    if (appointment) {
+      startTransition(() => setOpen(true));
+    }
   }, [appointment]);
 
   const handleOpenChange = (val: boolean) => {

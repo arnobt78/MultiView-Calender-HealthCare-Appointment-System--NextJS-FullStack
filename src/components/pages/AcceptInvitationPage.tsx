@@ -1,0 +1,94 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
+import { apiClient, handleApiError } from "@/lib/api-client";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
+export default function AcceptInvitationPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token");
+  const { user, isLoading: checkingAuth } = useAuth();
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [message, setMessage] = useState("");
+
+  const handleAccept = async () => {
+    if (!token || !user?.id) {
+      setStatus("error");
+      setMessage("Missing invitation token or user session. Please log in.");
+      return;
+    }
+    setStatus("loading");
+    try {
+      const data = await apiClient<{ message?: string }>("/api/invitations/accept", {
+        method: "POST",
+        body: JSON.stringify({ token, userId: user.id }),
+      });
+      setStatus("success");
+      setMessage(data.message || "Invitation accepted!");
+      toast.success("Invitation accepted!");
+    } catch (err) {
+      setStatus("error");
+      setMessage(err instanceof Error ? err.message : "Failed to accept invitation.");
+      handleApiError(err, "Accept invitation");
+    }
+  };
+
+  return (
+    <div className="max-w-md mx-auto mt-16 p-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-2xl">Accept Invitation</CardTitle>
+          <CardDescription>
+            {checkingAuth
+              ? "Checking authentication..."
+              : "Use the actions below to accept your invitation."}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {checkingAuth ? (
+            <p className="text-muted-foreground">Checking authentication...</p>
+          ) : !user ? (
+            <>
+              <p className="text-destructive">You must be logged in to accept this invitation.</p>
+              <Button asChild className="w-full">
+                <Link
+                  href={`/login?redirect=/accept-invitation${token ? `?token=${encodeURIComponent(token)}` : ""}`}
+                >
+                  Login to continue
+                </Link>
+              </Button>
+            </>
+          ) : status === "idle" ? (
+            <>
+              <p className="text-muted-foreground">Click below to accept your invitation.</p>
+              <Button onClick={handleAccept} disabled={!token}>
+                Accept Invitation
+              </Button>
+            </>
+          ) : status === "loading" ? (
+            <p className="text-muted-foreground">Accepting invitation...</p>
+          ) : status === "success" ? (
+            <div className="flex flex-col items-center gap-4">
+              <p className="text-green-700">{message}</p>
+              <Button onClick={() => router.push("/")}>Go to Dashboard</Button>
+            </div>
+          ) : (
+            <p className="text-destructive">{message}</p>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

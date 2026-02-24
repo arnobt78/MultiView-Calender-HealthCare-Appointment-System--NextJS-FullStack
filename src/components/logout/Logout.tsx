@@ -1,27 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-// Removed Dialog imports for full-page layout
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Logout() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
-
-  const handleLogout = async () => {
-    setLoading(true);
-    try {
-      await fetch("/api/auth/logout", { method: "POST" });
-      window.location.href = "/login";
-    } catch (error) {
-      console.error("Logout error:", error);
-      // Still redirect even if API call fails
-      window.location.href = "/login";
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { logout, isLoggingOut } = useAuth();
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-white">
@@ -29,10 +14,10 @@ export default function Logout() {
         <h1 className="text-3xl font-bold mb-2 text-center">Logout</h1>
         <p className="text-gray-500 mb-6 text-center">Are you sure you want to log out?</p>
         <div className="flex flex-col gap-4 mt-4">
-          <Button onClick={handleLogout} className="w-full" disabled={loading}>
-            {loading ? "Logging out..." : "Logout"}
+          <Button onClick={() => logout()} className="w-full" disabled={isLoggingOut}>
+            {isLoggingOut ? "Logging out..." : "Logout"}
           </Button>
-          <Button variant="secondary" className="w-full" onClick={() => router.back()} disabled={loading}>
+          <Button variant="secondary" className="w-full" onClick={() => router.back()} disabled={isLoggingOut}>
             Cancel
           </Button>
         </div>

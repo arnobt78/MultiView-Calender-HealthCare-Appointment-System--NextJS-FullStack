@@ -28,12 +28,18 @@ import {
   Activity,
   Relative,
 } from "@/types/types";
+import { usePatients } from "@/hooks/usePatients";
+import { useCategories } from "@/hooks/useCategories";
+import { useRelatives } from "@/hooks/useRelatives";
+import { useAppointments, FullAppointment } from "@/hooks/useAppointments";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 // Using Vercel Blob for file storage (better for demo projects on Vercel)
 import { uploadFileViaAPI, deleteFile } from "@/lib/vercelBlob";
 
 type Props = {
   trigger?: React.ReactNode;
-  appointment?: Appointment;
+  appointment?: FullAppointment;
   onSuccess?: () => void;
   isOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -54,13 +60,16 @@ export default function AppointmentDialog({
     if (typeof isOpen === "boolean") setOpen(isOpen);
   }, [isOpen]);
 
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const { data: patients = [] } = usePatients();
+  const { data: categories = [] } = useCategories();
+  const { data: relatives = [] } = useRelatives();
+  const { user } = useAuth();
+  const { createAppointmentAsync, updateAppointmentAsync } = useAppointments();
+
   const [assignees, setAssignees] = useState<AppointmentAssignee[]>([]); // type-safe
   const [activityType, setActivityType] = useState("");
   const [activityContent, setActivityContent] = useState("");
   const [activityList, setActivityList] = useState<Activity[]>([]);
-  const [relatives, setRelatives] = useState<Relative[]>([]);
 
   const [title, setTitle] = useState("");
   const [notes, setNotes] = useState("");
@@ -80,28 +89,6 @@ export default function AppointmentDialog({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const [patsRes, catsRes, relsRes] = await Promise.all([
-          fetch("/api/patients"),
-          fetch("/api/categories"),
-          fetch("/api/relatives"),
-        ]);
-        const patsData = await patsRes.json();
-        const catsData = await catsRes.json();
-        const relsData = await relsRes.json();
-        setPatients(patsData.patients || []);
-        setCategories(catsData.categories || []);
-        setRelatives(relsData.relatives || []);
-      } catch (error) {
-        console.error("Error loading initial data:", error);
-      }
-    };
-
-    load();
-  }, []);
-
-  useEffect(() => {
     if (appointment) {
       setTitle(appointment.title || "");
       setNotes(appointment.notes || "");
@@ -113,30 +100,18 @@ export default function AppointmentDialog({
       setattachements((appointment.attachements || []).join(", "));
       setStatus(appointment.status || "pending");
       setOpen(true);
-      (async () => {
-        if (appointment.id) {
-          try {
-            // Prefill assignees with all fields, but deduplicate by user + invited_email
-            const assigneesRes = await fetch(`/api/appointments/${appointment.id}/assignees`);
-            const assigneesData = await assigneesRes.json();
-            const assigneesList = assigneesData.assignees || [];
-            const dedupedMap = new Map();
-            for (const a of (assigneesList as AppointmentAssignee[] || [])) {
-              const key = `${a.user || ''}|${a.invited_email || ''}`;
-              if (!dedupedMap.has(key)) {
-                dedupedMap.set(key, a);
-              }
-            }
-            setAssignees(Array.from(dedupedMap.values()));
-            // Prefill activities with all fields
-            const actsRes = await fetch(`/api/appointments/${appointment.id}/activities`);
-            const actsData = await actsRes.json();
-            setActivityList((actsData.activities as Activity[]) || []);
-          } catch (error) {
-            console.error("Error loading appointment data:", error);
-          }
-        }
-      })();
+
+      if (appointment.appointment_assignee) {
+        setAssignees(appointment.appointment_assignee);
+      } else {
+        setAssignees([]);
+      }
+
+      if (appointment.activities) {
+        setActivityList(appointment.activities);
+      } else {
+        setActivityList([]);
+      }
     } else {
       setAssignees([]);
       setActivityList([]);
@@ -148,104 +123,66 @@ export default function AppointmentDialog({
     setError(null);
     setSuccess(false);
     try {
-      if (
-        !isEditMode &&
-        (!title || !start || !end || !patientId || !categoryId)
-      ) {
+      if (!isEditMode && (!title || !start || !end || !patientId || !categoryId)) {
         setError("Bitte alle Pflichtfelder ausfüllen.");
         setLoading(false);
         return;
       }
+
       const safeStart = localInputValueToUTC(start);
       const safeEnd = localInputValueToUTC(end);
-      const attachementArray = attachements
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
+      const attachementArray = attachements.split(",").map((s) => s.trim()).filter(Boolean);
       let apptId = appointment?.id;
-      if (isEditMode) {
+
+      if (isEditMode && apptId) {
         const updates: Partial<Appointment> = {};
         if (title !== appointment?.title) updates.title = title;
         if (notes !== appointment?.notes) updates.notes = notes;
-        if (start !== utcToLocalInputValue(appointment?.start || ""))
-          updates.start = safeStart;
-        if (end !== utcToLocalInputValue(appointment?.end || ""))
-          updates.end = safeEnd;
+        if (start !== utcToLocalInputValue(appointment?.start || "")) updates.start = safeStart;
+        if (end !== utcToLocalInputValue(appointment?.end || "")) updates.end = safeEnd;
         if (patientId !== appointment?.patient) updates.patient = patientId;
         if (categoryId !== appointment?.category) updates.category = categoryId;
         if (location !== appointment?.location) updates.location = location;
-        if (attachements !== (appointment?.attachements || []).join(", "))
-          updates.attachements = attachementArray;
-        if (status !== appointment?.status)
-          updates.status = status as "pending" | "done" | "alert";
-        // Always update updated_at on edit
+        if (attachements !== (appointment?.attachements || []).join(", ")) updates.attachements = attachementArray;
+        if (status !== appointment?.status) updates.status = status as "pending" | "done" | "alert";
         updates.updated_at = new Date().toISOString();
+
         if (Object.keys(updates).length > 0) {
-          const response = await fetch(`/api/appointments/${appointment!.id}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(updates),
-          });
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || "Fehler beim Speichern");
-          }
+          await updateAppointmentAsync({ id: apptId, ...updates });
         }
-        // --- PATCH: Preserve all existing assignees ---
-        // Fetch all existing assignees for this appointment
-        const existingAssigneesRes = await fetch(`/api/appointments/${appointment!.id}/assignees`);
-        const existingAssigneesData = await existingAssigneesRes.json();
-        const existingAssignees = existingAssigneesData.assignees || [];
-        console.log('[AppointmentDialog] Edit:', { appointment, existingAssignees, assignees });
-        // Merge dialog assignees with existing ones, keeping accepted/invited users
-        // Deduplicate by user and invited_email, keep highest status/permission
-        const allAssignees = [...(existingAssignees || []), ...assignees];
-        const dedupedMap = new Map();
-        for (const a of allAssignees) {
-          const key = `${a.user || ''}|${a.invited_email || ''}`;
-          if (!dedupedMap.has(key)) {
-            dedupedMap.set(key, a);
-          } else {
-            // Prefer accepted over pending, prefer higher permission
-            const prev = dedupedMap.get(key);
-            const statusOrder: Record<'accepted' | 'pending', number> = { accepted: 2, pending: 1 };
-            const permOrder: Record<'full' | 'write' | 'read', number> = { full: 3, write: 2, read: 1 };
-            // Type guards for status and permission
-            const isValidStatus = (s: unknown): s is 'accepted' | 'pending' => s === 'accepted' || s === 'pending';
-            const isValidPerm = (p: unknown): p is 'full' | 'write' | 'read' => p === 'full' || p === 'write' || p === 'read';
-            const prevStatus = isValidStatus(String(prev.status)) ? statusOrder[String(prev.status) as 'accepted' | 'pending'] : 0;
-            const currStatus = isValidStatus(String(a.status)) ? statusOrder[String(a.status) as 'accepted' | 'pending'] : 0;
-            const prevPerm = isValidPerm(String(prev.permission)) ? permOrder[String(prev.permission) as 'full' | 'write' | 'read'] : 0;
-            const currPerm = isValidPerm(String(a.permission)) ? permOrder[String(a.permission) as 'full' | 'write' | 'read'] : 0;
-            if (
-              currStatus > prevStatus ||
-              (currStatus === prevStatus && currPerm > prevPerm)
-            ) {
+
+        const isOwner = appointment?.user_id === user?.id;
+        if (isOwner) {
+          const existingAssigneesRes = await fetch(`/api/appointments/${apptId}/assignees`);
+          const existingAssigneesData = await existingAssigneesRes.json();
+          const existingAssignees = existingAssigneesData.assignees || [];
+
+          const allAssignees = [...existingAssignees, ...assignees];
+          const dedupedMap = new Map();
+          for (const a of allAssignees) {
+            const key = `${a.user || ''}|${a.invited_email || ''}`;
+            if (!dedupedMap.has(key)) {
               dedupedMap.set(key, a);
+            } else {
+              const prev = dedupedMap.get(key);
+              const statusOrder: Record<'accepted' | 'pending', number> = { accepted: 2, pending: 1 };
+              const permOrder: Record<'full' | 'write' | 'read', number> = { full: 3, write: 2, read: 1 };
+              const prevStatus = prev && typeof prev.status === 'string' && (prev.status === 'accepted' || prev.status === 'pending') ? statusOrder[prev.status as 'accepted' | 'pending'] : 0;
+              const currStatus = typeof a.status === 'string' && (a.status === 'accepted' || a.status === 'pending') ? statusOrder[a.status as 'accepted' | 'pending'] : 0;
+              const prevPerm = prev && typeof prev.permission === 'string' && (prev.permission === 'full' || prev.permission === 'write' || prev.permission === 'read') ? permOrder[prev.permission as 'full' | 'write' | 'read'] : 0;
+              const currPerm = typeof a.permission === 'string' && (a.permission === 'full' || a.permission === 'write' || a.permission === 'read') ? permOrder[a.permission as 'full' | 'write' | 'read'] : 0;
+              if (currStatus > prevStatus || (currStatus === prevStatus && currPerm > prevPerm)) {
+                dedupedMap.set(key, a);
+              }
             }
           }
-        }
-        const mergedAssignees = Array.from(dedupedMap.values());
-        console.log('[AppointmentDialog] Merged Assignees:', mergedAssignees);
-        // Remove old assignees/activities atomically
-        // Only allow owner to update assignees. If current user is not owner, skip assignee update.
-        let currentUserId = "";
-        try {
-          const response = await fetch("/api/auth/me");
-          if (response.ok) {
-            const data = await response.json();
-            currentUserId = data?.user?.id || "";
-          }
-        } catch (error) {
-          console.error("Error fetching user ID:", error);
-        }
-        const isOwner = appointment?.user_id === currentUserId;
-        if (isOwner) {
+          const mergedAssignees = Array.from(dedupedMap.values());
+
           await Promise.all([
-            fetch(`/api/appointments/${appointment!.id}/assignees`, { method: "DELETE" }),
-            fetch(`/api/appointments/${appointment!.id}/activities`, { method: "DELETE" }),
+            fetch(`/api/appointments/${apptId}/assignees`, { method: "DELETE" }),
+            fetch(`/api/appointments/${apptId}/activities`, { method: "DELETE" }),
           ]);
-          // Re-insert only unique assignees (deduplicated by user and invited_email)
+
           const uniqueAssigneesMap = new Map();
           for (const a of mergedAssignees) {
             const key = `${a.user || ''}|${a.invited_email || ''}`;
@@ -259,7 +196,7 @@ export default function AppointmentDialog({
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                assignees: uniqueAssignees.map((a) => ({
+                assignees: uniqueAssignees.map((a: any) => ({
                   appointment: apptId,
                   user: a.user,
                   user_type: a.user_type,
@@ -272,54 +209,36 @@ export default function AppointmentDialog({
           }
         }
       } else {
-        // Insert new appointment and get ID, set user_id to current user
-        const user_id = await getCurrentUserId();
-        const response = await fetch("/api/appointments", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            title,
-            notes,
-            start: safeStart,
-            end: safeEnd,
-            patient: patientId,
-            category: categoryId,
-            location,
-            attachements: attachementArray,
-            status,
-            user_id,
-          }),
+        const newAppt = await createAppointmentAsync({
+          title,
+          notes,
+          start: safeStart,
+          end: safeEnd,
+          patient: patientId,
+          category: categoryId,
+          location,
+          attachements: attachementArray,
+          status: status as "pending" | "done" | "alert",
+          user_id: user?.id,
         });
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Fehler beim Speichern");
-        }
-        const data = await response.json();
-        if (!data || !data.appointment)
-          throw new Error("Fehler beim Speichern");
-        apptId = data.appointment.id;
-        // Deduplicate assignees before insert
+
+        apptId = newAppt.id;
+
         if (assignees.length > 0) {
-          const dedupedMap = new Map<string, typeof assignees[0]>();
+          const dedupedMap = new Map();
           for (const a of assignees) {
             const key = `${a.user || ''}|${a.invited_email || ''}`;
             if (!dedupedMap.has(key)) {
               dedupedMap.set(key, a);
             } else {
-              // Prefer accepted over pending, prefer higher permission
               const prev = dedupedMap.get(key);
               const statusOrder: Record<'accepted' | 'pending', number> = { accepted: 2, pending: 1 };
               const permOrder: Record<'full' | 'write' | 'read', number> = { full: 3, write: 2, read: 1 };
-              const isValidStatus = (s: unknown): s is 'accepted' | 'pending' => s === 'accepted' || s === 'pending';
-              const isValidPerm = (p: unknown): p is 'full' | 'write' | 'read' => p === 'full' || p === 'write' || p === 'read';
-              const prevStatus = isValidStatus(prev?.status) ? statusOrder[prev.status as 'accepted' | 'pending'] : 0;
-              const currStatus = isValidStatus(a.status) ? statusOrder[a.status as 'accepted' | 'pending'] : 0;
-              const prevPerm = isValidPerm(prev?.permission) ? permOrder[prev.permission as 'full' | 'write' | 'read'] : 0;
-              const currPerm = isValidPerm(a.permission) ? permOrder[a.permission as 'full' | 'write' | 'read'] : 0;
-              if (
-                currStatus > prevStatus ||
-                (currStatus === prevStatus && currPerm > prevPerm)
-              ) {
+              const prevStatus = typeof prev?.status === 'string' && (prev.status === 'accepted' || prev.status === 'pending') ? statusOrder[prev.status as 'accepted' | 'pending'] : 0;
+              const currStatus = typeof a.status === 'string' && (a.status === 'accepted' || a.status === 'pending') ? statusOrder[a.status as 'accepted' | 'pending'] : 0;
+              const prevPerm = typeof prev?.permission === 'string' && (prev.permission === 'full' || prev.permission === 'write' || prev.permission === 'read') ? permOrder[prev.permission as 'full' | 'write' | 'read'] : 0;
+              const currPerm = typeof a.permission === 'string' && (a.permission === 'full' || a.permission === 'write' || a.permission === 'read') ? permOrder[a.permission as 'full' | 'write' | 'read'] : 0;
+              if (currStatus > prevStatus || (currStatus === prevStatus && currPerm > prevPerm)) {
                 dedupedMap.set(key, a);
               }
             }
@@ -329,7 +248,7 @@ export default function AppointmentDialog({
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              assignees: uniqueAssignees.map((a) => ({
+              assignees: uniqueAssignees.map((a: any) => ({
                 appointment: apptId,
                 user: a.user,
                 user_type: a.user_type,
@@ -341,30 +260,30 @@ export default function AppointmentDialog({
           });
         }
       }
-      // Save activities (all fields)
-      if (activityList.length > 0) {
-        const activitiesToInsert = await Promise.all(
-          activityList.map(async (act) => ({
-            appointment: apptId,
-            type: act.type,
-            content: act.content,
-            created_by: act.created_by || (await getCurrentUserId()),
-          }))
-        );
+
+      if (activityList.length > 0 && apptId) {
+        const activitiesToInsert = activityList.map((act) => ({
+          appointment: apptId,
+          type: act.type,
+          content: act.content,
+          created_by: act.created_by || user?.id,
+        }));
         await fetch(`/api/appointments/${apptId}/activities`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ activities: activitiesToInsert }),
         });
       }
+
       setSuccess(true);
       setOpen(false);
       onSuccess?.();
-      window.location.reload();
     } catch (e: unknown) {
       if (typeof e === "object" && e && "message" in e) {
+        toast.error((e as { message: string }).message || "Unbekannter Fehler");
         setError((e as { message: string }).message || "Unbekannter Fehler");
       } else {
+        toast.error("Unbekannter Fehler");
         setError("Unbekannter Fehler");
       }
     } finally {
@@ -714,8 +633,8 @@ export default function AppointmentDialog({
                     {p
                       ? `Patient: ${p.firstname} ${p.lastname}`
                       : r
-                      ? `Angehörige: ${r.firstname} ${r.lastname}`
-                      : a.user}
+                        ? `Angehörige: ${r.firstname} ${r.lastname}`
+                        : a.user}
                     <span className="ml-1 text-gray-400">[{a.user_type}]</span>
                     <button
                       type="button"
@@ -781,8 +700,8 @@ export default function AppointmentDialog({
           {loading
             ? "Speichern..."
             : isEditMode
-            ? "Änderungen speichern"
-            : "Speichern"}
+              ? "Änderungen speichern"
+              : "Speichern"}
         </Button>
       </DialogContent>
     </Dialog>

@@ -1,6 +1,26 @@
 "use client";
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { useInvitations } from "@/hooks/useInvitations";
+import { apiClient } from "@/lib/api-client";
+import { useDebounce } from "@/hooks/useDebounce";
 
 const permissions = [
   { value: "read", label: "Read Only" },
@@ -8,104 +28,120 @@ const permissions = [
   { value: "full", label: "Full Access (CRUD)" },
 ];
 
+interface UserSearchResult {
+  id: string;
+  email: string;
+  display_name?: string;
+}
+
 export default function UserAccessPermission() {
   const [email, setEmail] = useState("");
   const [ownerUserId, setOwnerUserId] = useState("");
   const [search, setSearch] = useState("");
-  const [results, setResults] = useState<{ id: string; email: string; display_name: string }[]>([]);
+  const [results, setResults] = useState<UserSearchResult[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [permission, setPermission] = useState("read");
-  const [status, setStatus] = useState<string | null>(null);
+  const [permission, setPermission] = useState<"read" | "write" | "full">("read");
 
+  const debouncedSearch = useDebounce(search, 300);
+  const { sendInvitation, isSending } = useInvitations("dashboard");
 
-  // Autocomplete users
-  async function handleSearch(q: string) {
-    setSearch(q);
-    setShowDropdown(true);
-    if (q.length < 2) {
+  React.useEffect(() => {
+    if (debouncedSearch.length < 2) {
       setResults([]);
       return;
     }
-    const res = await fetch(`/api/users/search?query=${encodeURIComponent(q)}`);
-    const data = await res.json();
-    setResults(data.users || []);
-  }
+    let cancelled = false;
+    apiClient<{ users: UserSearchResult[] }>(
+      `/api/users/search?query=${encodeURIComponent(debouncedSearch)}`
+    )
+      .then((data) => {
+        if (!cancelled) setResults(data.users || []);
+      })
+      .catch(() => {
+        if (!cancelled) setResults([]);
+      });
+    return () => { cancelled = true; };
+  }, [debouncedSearch]);
 
-  const handleSend = async () => {
-    setStatus(null);
-    const res = await fetch("/api/invitations", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        type: "dashboard",
-        email,
-        resourceId: ownerUserId,
-        permission,
-      }),
+  const handleSend = () => {
+    sendInvitation({
+      type: "dashboard",
+      email,
+      resourceId: ownerUserId,
+      permission,
     });
-    const data = await res.json();
-    if (res.ok) setStatus("Invitation sent!");
-    else setStatus(data.error || "Error sending invitation");
   };
 
   return (
-    <div className="max-w-lg space-y-4">
-      <h2 className="text-xl font-bold mb-2">User Dashboard Access Invitation</h2>
-      <label className="block font-medium">Invitee Email</label>
-      <input
-        className="w-full border rounded px-3 py-2 mb-2"
-        type="email"
-        value={email}
-        onChange={e => setEmail(e.target.value)}
-        placeholder="user@email.com"
-      />
-      <label className="block font-medium">Dashboard Owner User</label>
-      <input
-        className="w-full border rounded px-3 py-2 mb-2"
-        type="text"
-        value={search}
-        onChange={e => handleSearch(e.target.value)}
-        onFocus={() => setShowDropdown(true)}
-        placeholder="Search user by email or name"
-        autoComplete="off"
-      />
-      {showDropdown && results.length > 0 && (
-        <ul className="border rounded bg-white shadow max-h-40 overflow-y-auto absolute z-10 w-[90%]">
-          {results.map((u) => (
-            <li
-              key={u.id}
-              className="px-3 py-2 hover:bg-blue-100 cursor-pointer"
-              onClick={() => {
-                setOwnerUserId(u.id);
-                setSearch(u.display_name || u.email || u.id);
-                setShowDropdown(false);
-              }}
-            >
-              {u.display_name || u.email} <span className="text-xs text-gray-500">({u.id})</span>
-            </li>
-          ))}
-        </ul>
-      )}
-      {ownerUserId && (
-        <div className="text-xs text-gray-600 mb-2">Selected: {ownerUserId}</div>
-      )}
-      <label className="block font-medium">Permission</label>
-      <div className="flex gap-4 mb-2">
-        {permissions.map(p => (
-          <label key={p.value} className="flex items-center gap-1">
-            <input
-              type="radio"
-              name="permission"
-              value={p.value}
-              checked={permission === p.value}
-              onChange={() => setPermission(p.value)}
-            />
-            {p.label}
-          </label>
-        ))}
-      </div>
-      <Button onClick={handleSend}>Send User Dashboard Access Invitation</Button>
-      {status && <div className="mt-2 text-sm text-blue-700">{status}</div>}
-    </div>
+    <Card className="max-w-lg">
+      <CardHeader>
+        <CardTitle>User Dashboard Access Invitation</CardTitle>
+        <CardDescription>Invite someone to access a user&apos;s dashboard.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="user-email">Invitee Email</Label>
+          <Input
+            id="user-email"
+            type="email"
+            placeholder="user@email.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </div>
+        <div className="space-y-2 relative">
+          <Label htmlFor="user-search">Dashboard Owner User</Label>
+          <Input
+            id="user-search"
+            placeholder="Search user by email or name"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setShowDropdown(true);
+            }}
+            onFocus={() => setShowDropdown(true)}
+            autoComplete="off"
+          />
+          {showDropdown && results.length > 0 && (
+            <ul className="absolute z-10 w-full mt-1 border rounded-md bg-white shadow-lg max-h-40 overflow-y-auto">
+              {results.map((u) => (
+                <li
+                  key={u.id}
+                  className="px-3 py-2 hover:bg-muted cursor-pointer text-sm"
+                  onClick={() => {
+                    setOwnerUserId(u.id);
+                    setSearch(u.display_name || u.email || u.id);
+                    setShowDropdown(false);
+                  }}
+                >
+                  {u.display_name || u.email} <span className="text-muted-foreground">({u.id})</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {ownerUserId && (
+            <p className="text-xs text-muted-foreground">Selected: {ownerUserId}</p>
+          )}
+        </div>
+        <div className="space-y-2">
+          <Label>Permission</Label>
+          <Select value={permission} onValueChange={(v: "read" | "write" | "full") => setPermission(v)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {permissions.map((p) => (
+                <SelectItem key={p.value} value={p.value}>
+                  {p.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <Button onClick={handleSend} disabled={isSending || !email || !ownerUserId}>
+          {isSending ? "Sending..." : "Send User Dashboard Access Invitation"}
+        </Button>
+      </CardContent>
+    </Card>
   );
 }

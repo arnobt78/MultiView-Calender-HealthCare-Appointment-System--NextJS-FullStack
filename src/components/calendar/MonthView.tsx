@@ -142,7 +142,7 @@ export default function MonthView() {
       const dashboardAccessData = await dashboardAccessRes.json();
       const dashboardAccess = dashboardAccessData.dashboard_access || [];
       type DashboardAccessRow = { owner_user_id: string };
-      let sharedAppointments: AppointmentWithCategory[] = [];
+      const sharedAppointments: AppointmentWithCategory[] = [];
       if (dashboardAccess && dashboardAccess.length > 0) {
         const ownerIds = (dashboardAccess as DashboardAccessRow[]).map((d) => d.owner_user_id).filter(Boolean);
         // Note: Current API filters by authenticated user, so we can't fetch other users' appointments directly

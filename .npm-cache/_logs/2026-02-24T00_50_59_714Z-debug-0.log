@@ -1,0 +1,84 @@
+0 verbose cli /usr/local/bin/node /usr/local/bin/npm
+1 info using npm@11.3.0
+2 info using node@v24.1.0
+3 silly config load:file:/usr/local/lib/node_modules/npm/npmrc
+4 silly config load:file:/Users/arnob_t78/Projects/NextJS/multiview-calender-appointment/.npmrc
+5 silly config load:file:/Users/arnob_t78/.npmrc
+6 silly config load:file:/usr/local/etc/npmrc
+7 verbose title npm install sonner
+8 verbose argv "install" "sonner" "--cache" ".npm-cache"
+9 verbose logfile logs-max:10 dir:/Users/arnob_t78/Projects/NextJS/multiview-calender-appointment/.npm-cache/_logs/2026-02-24T00_50_59_714Z-
+10 verbose logfile /Users/arnob_t78/Projects/NextJS/multiview-calender-appointment/.npm-cache/_logs/2026-02-24T00_50_59_714Z-debug-0.log
+11 silly logfile done cleaning log files
+12 silly packumentCache heap:4496293888 maxSize:1124073472 maxEntrySize:562036736
+13 silly idealTree buildDeps
+14 silly fetch manifest sonner@^2.0.7
+15 silly packumentCache full:https://registry.npmjs.org/sonner cache-miss
+16 verbose shrinkwrap failed to load node_modules/.package-lock.json EPERM: operation not permitted, stat '/Users/arnob_t78/Projects/NextJS/multiview-calender-appointment/node_modules'
+17 http fetch GET 200 https://registry.npmjs.org/sonner 125ms (cache miss)
+18 silly packumentCache full:https://registry.npmjs.org/sonner set size:undefined disposed:false
+19 silly fetch manifest react@^18.3.1
+20 silly packumentCache full:https://registry.npmjs.org/react cache-miss
+21 http fetch GET 200 https://registry.npmjs.org/npm 348ms
+22 http fetch GET 200 https://registry.npmjs.org/react 170ms (cache miss)
+23 silly packumentCache full:https://registry.npmjs.org/react set size:undefined disposed:false
+24 silly fetch manifest react-dom@^18.3.1
+25 silly packumentCache full:https://registry.npmjs.org/react-dom cache-miss
+26 http fetch GET 200 https://registry.npmjs.org/react-dom 147ms (cache miss)
+27 silly packumentCache full:https://registry.npmjs.org/react-dom set size:undefined disposed:false
+28 silly placeDep ROOT sonner@2.0.7 REPLACE for: multiview-calender-appointment@0.2.1 want: ^2.0.7
+29 silly reify moves {}
+30 verbose reify failed optional dependency /Users/arnob_t78/Projects/NextJS/multiview-calender-appointment/node_modules/@tailwindcss/oxide-wasm32-wasi
+31 silly reify mark deleted [
+31 silly reify   '/Users/arnob_t78/Projects/NextJS/multiview-calender-appointment/node_modules/@tailwindcss/oxide-wasm32-wasi'
+31 silly reify ]
+32 verbose stack Error: EPERM: operation not permitted, lstat '/Users/arnob_t78/Projects/NextJS/multiview-calender-appointment/node_modules'
+32 verbose stack     at async lstat (node:internal/fs/promises:1022:18)
+32 verbose stack     at async #loadActual (/usr/local/lib/node_modules/npm/node_modules/@npmcli/arborist/lib/arborist/load-actual.js:129:15)
+32 verbose stack     at async /usr/local/lib/node_modules/npm/node_modules/@npmcli/arborist/lib/arborist/reify.js:952:11
+32 verbose stack     at async Promise.allSettled (index 0)
+32 verbose stack     at async [reifyPackages] (/usr/local/lib/node_modules/npm/node_modules/@npmcli/arborist/lib/arborist/reify.js:336:11)
+32 verbose stack     at async Arborist.reify (/usr/local/lib/node_modules/npm/node_modules/@npmcli/arborist/lib/arborist/reify.js:141:5)
+32 verbose stack     at async Install.exec (/usr/local/lib/node_modules/npm/lib/commands/install.js:149:5)
+32 verbose stack     at async Npm.exec (/usr/local/lib/node_modules/npm/lib/npm.js:208:9)
+32 verbose stack     at async module.exports (/usr/local/lib/node_modules/npm/lib/cli/entry.js:67:5)
+33 error code EPERM
+34 error syscall lstat
+35 error path /Users/arnob_t78/Projects/NextJS/multiview-calender-appointment/node_modules
+36 error errno -1
+37 error Error: EPERM: operation not permitted, lstat '/Users/arnob_t78/Projects/NextJS/multiview-calender-appointment/node_modules'
+37 error     at async lstat (node:internal/fs/promises:1022:18)
+37 error     at async #loadActual (/usr/local/lib/node_modules/npm/node_modules/@npmcli/arborist/lib/arborist/load-actual.js:129:15)
+37 error     at async /usr/local/lib/node_modules/npm/node_modules/@npmcli/arborist/lib/arborist/reify.js:952:11
+37 error     at async Promise.allSettled (index 0)
+37 error     at async [reifyPackages] (/usr/local/lib/node_modules/npm/node_modules/@npmcli/arborist/lib/arborist/reify.js:336:11)
+37 error     at async Arborist.reify (/usr/local/lib/node_modules/npm/node_modules/@npmcli/arborist/lib/arborist/reify.js:141:5)
+37 error     at async Install.exec (/usr/local/lib/node_modules/npm/lib/commands/install.js:149:5)
+37 error     at async Npm.exec (/usr/local/lib/node_modules/npm/lib/npm.js:208:9)
+37 error     at async module.exports (/usr/local/lib/node_modules/npm/lib/cli/entry.js:67:5) {
+37 error   errno: -1,
+37 error   code: 'EPERM',
+37 error   syscall: 'lstat',
+37 error   path: '/Users/arnob_t78/Projects/NextJS/multiview-calender-appointment/node_modules'
+37 error }
+38 error
+38 error The operation was rejected by your operating system.
+38 error It is likely you do not have the permissions to access this file as the current user
+38 error
+38 error If you believe this might be a permissions issue, please double-check the
+38 error permissions of the file and its containing directories, or try running
+38 error the command again as root/Administrator.
+39 silly unfinished npm timer reify 1771894260006
+40 silly unfinished npm timer reify:loadBundles 1771894260741
+41 verbose cwd /Users/arnob_t78/Projects/NextJS/multiview-calender-appointment
+42 verbose os Darwin 25.3.0
+43 verbose node v24.1.0
+44 verbose npm  v11.3.0
+45 notice
+45 notice New [33mminor[39m version of npm available! [33m11.3.0[39m -> [34m11.10.1[39m
+45 notice Changelog: [34mhttps://github.com/npm/cli/releases/tag/v11.10.1[39m
+45 notice To update run: [4mnpm install -g npm@11.10.1[24m
+45 notice  { force: true, Symbol(proc-log.meta): true }
+46 verbose exit -1
+47 verbose code -1
+48 error A complete log of this run can be found in: /Users/arnob_t78/Projects/NextJS/multiview-calender-appointment/.npm-cache/_logs/2026-02-24T00_50_59_714Z-debug-0.log

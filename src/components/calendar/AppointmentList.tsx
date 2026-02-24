@@ -3,9 +3,12 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
+import { FullAppointment, useAppointments } from "@/hooks/useAppointments";
+import { useCategories } from "@/hooks/useCategories";
+import { usePatients } from "@/hooks/usePatients";
+import { useRelatives } from "@/hooks/useRelatives";
+import { useAuth } from "@/hooks/useAuth";
 import {
-  Appointment,
-  Category,
   Patient,
   AppointmentAssignee,
   Activity,
@@ -16,6 +19,16 @@ import AppointmentDialog from "./AppointmentDialog";
 import EditAppointmentDialog from "./EditAppointmentDialog";
 import { useDateContext } from "@/context/DateContext";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { MoreVertical, CheckCircle, Circle } from "lucide-react";
 import { getUserAppointmentPermission } from "@/lib/permissions";
 // Using Vercel Blob for file storage
 import { getPublicUrl } from "@/lib/vercelBlob";
@@ -34,12 +47,7 @@ import AppointmentListSkeleton from "./AppointmentListSkeleton";
 import SearchBar from "./SearchBar";
 import { useAppointmentColor } from "@/context/AppointmentColorContext";
 
-type FullAppointment = Appointment & {
-  category_data?: Category;
-  patient_data?: Patient;
-  appointment_assignee?: (AppointmentAssignee & { invited_email?: string })[];
-  activities?: Activity[];
-};
+// Types imported from hooks
 
 // Reusable component for date headline
 function DateHeadline({ date }: { date: Date }) {
@@ -54,9 +62,9 @@ function DateHeadline({ date }: { date: Date }) {
           date.getDate() === now.getDate()
         ) {
           return (
-            <span className="ml-2 px-2 py-0.5 rounded bg-green-100 text-green-700 text-xs font-medium">
+            <Badge variant="outline" className="ml-2 bg-green-100 text-green-700 hover:bg-green-100 border-transparent">
               Heute
-            </span>
+            </Badge>
           );
         }
         return null;
@@ -96,15 +104,15 @@ function getDateTag(date: Date) {
   );
   if (diffDays === 0)
     return (
-      <span className="ml-2 px-2 py-0.5 rounded bg-green-100 text-green-700 text-xs font-medium">
+      <Badge variant="outline" className="ml-2 bg-green-100 text-green-700 hover:bg-green-100 border-transparent">
         Heute
-      </span>
+      </Badge>
     );
   if (diffDays === 1)
     return (
-      <span className="ml-2 px-2 py-0.5 rounded bg-yellow-100 text-yellow-800 text-xs font-medium">
-        Demnächst
-      </span>
+      <Badge variant="outline" className="ml-2 bg-blue-100 text-blue-700 hover:bg-blue-100 border-transparent">
+        Morgen
+      </Badge>
     );
   if (diffDays > 1)
     return (
@@ -122,285 +130,68 @@ function getDateTag(date: Date) {
 }
 
 export default function AppointmentList() {
-  // State for current user
-  const [user, setUser] = useState<{ id: string; email: string } | null>(null);
-  // Using API routes for all data operations
-  const [appointments, setAppointments] = useState<FullAppointment[]>([]);
+  const { user } = useAuth();
+
+  // Filters State
   const [category, setCategory] = useState<string | null>(null);
   const [patient, setPatient] = useState<string | null>(null);
   const [date, setDate] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [relatives, setRelatives] = useState<Relative[]>([]);
-  const [ownerUsers, setOwnerUsers] = useState<{ id: string, email: string }[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { currentDate } = useDateContext();
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [editAppt, setEditAppt] = useState<FullAppointment | null>(null);
-  const [editOpen, setEditOpen] = useState(false);
   const [search, setSearch] = useState("");
 
+  // Edit Dialog State
+  const [editAppt, setEditAppt] = useState<FullAppointment | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const { currentDate } = useDateContext();
   const { randomBgColor } = useAppointmentColor();
 
-  // Fetch categories, patients, relatives on mount
-  useEffect(() => {
-    (async () => {
-      try {
-        const [catRes, patRes, relRes] = await Promise.all([
-          fetch("/api/categories"),
-          fetch("/api/patients"),
-          fetch("/api/relatives"),
-        ]);
-        const catData = await catRes.json();
-        const patData = await patRes.json();
-        const relsData = await relRes.json();
-        setCategories(catData.categories || []);
-        if (process.env.NODE_ENV === "development") {
-          console.log('DEBUG - Fetched patients:', patData.patients);
-        }
-        setPatients(patData.patients || []);
-        if (process.env.NODE_ENV === "development") {
-          console.log('DEBUG - Fetched relatives:', relsData.relatives);
-        }
-        setRelatives(relsData.relatives || []);
-      } catch (error) {
-        console.error("Error loading initial data:", error);
-      }
-    })();
-  }, []);
+  // Queries
+  const {
+    appointments,
+    isLoading: loadingAppointments,
+    deleteAppointment,
+    toggleStatus,
+    refetch: refetchAppointments
+  } = useAppointments();
 
-  // Fetch current user on mount
+  const { data: categories = [] } = useCategories();
+  const { data: patients = [] } = usePatients();
+  const { data: relatives = [] } = useRelatives();
+
+  // Keep ownerUsers state empty for now, or we can fetch them separately if needed, 
+  // but useAppointments currently just returns user IDs. We'll simplify to just showing the user ID or email if invited_email is populated.
+  const [ownerUsers, setOwnerUsers] = useState<{ id: string, email: string }[]>([]);
+
+  // We can fetch owner users for shared appointments if needed, 
+  // but for now we'll just rely on the existing invited_email or user_id.
   useEffect(() => {
-    (async () => {
-      try {
-        const response = await fetch("/api/auth/me");
-        if (response.ok) {
-          const data = await response.json();
-          setUser(data.user ?? null);
-        }
-      } catch (error) {
-        console.error("Error fetching user:", error);
-      }
-    })();
-  }, []);
+    // Optional: Fetch emails for owner users if this is a shared appointment
+    // This is a simplified version of the previous logic.
+  }, [appointments]);
 
   // Compose filters object for query
   const filters = { category, patient, date, status };
 
-  const fetchAppointments = useCallback(async () => {
-    if (!user) return;
-    setLoading(true);
-    // Fetch owned appointments (API automatically filters by authenticated user)
-    const ownedRes = await fetch("/api/appointments");
-    const ownedData = await ownedRes.json();
-    const owned = ownedData.appointments || [];
-    
-    // Fetch categories, patients, assignees, and activities separately for joining
-    const [categoriesRes, patientsRes, allAssigneesRes, activitiesRes] = await Promise.all([
-      fetch("/api/categories"),
-      fetch("/api/patients"),
-      fetch("/api/appointment-assignees"),
-      fetch("/api/activities"),
-    ]);
-    const categoriesData = await categoriesRes.json();
-    const patientsData = await patientsRes.json();
-    const allAssigneesData = await allAssigneesRes.json();
-    const activitiesData = await activitiesRes.json();
-    const categories = categoriesData.categories || [];
-    const patients = patientsData.patients || [];
-    const allAssignees = allAssigneesData.assignees || [];
-    const allActivities = activitiesData.activities || [];
-    
-    // Join categories, patients, assignees, and activities with appointments
-    const ownedWithDetails = owned.map((appt: Appointment) => ({
-      ...appt,
-      category_data: categories.find((c: Category) => c.id === appt.category),
-      patient_data: patients.find((p: Patient) => p.id === appt.patient),
-      appointment_assignee: allAssignees.filter((a: AppointmentAssignee) => a.appointment === appt.id),
-      activities: allActivities.filter((act: Activity) => act.appointment === appt.id),
-    }));
+  // Apply local filters since react-query fetches all
+  let filteredBySidebar = appointments;
 
-    if (process.env.NODE_ENV === "development") {
-      console.log('DEBUG - Fetched owned appointments:', ownedWithDetails);
-    }
-
-    // --- NEW: Fetch dashboard access for invited users ---
-    const dashboardAccessRes = await fetch("/api/dashboard-access?status=accepted");
-    const dashboardAccessData = await dashboardAccessRes.json();
-    const dashboardAccess = dashboardAccessData.dashboard_access || [];
-    if (process.env.NODE_ENV === "development") {
-      console.log('DEBUG - Fetched dashboard access:', dashboardAccess);
-    }
-
-    // Define type for dashboardAccess rows
-    type DashboardAccessRow = { owner_user_id: string };
-    // Define type for shared appointments (FullAppointment)
-    let sharedAppointments: FullAppointment[] = [];
-    if (dashboardAccess && dashboardAccess.length > 0) {
-      const ownerIds = (dashboardAccess as DashboardAccessRow[]).map((d) => d.owner_user_id).filter(Boolean);
-      // Note: Current API filters by authenticated user, so we can't fetch other users' appointments directly
-      // This would require a new API route that allows fetching by owner_user_id with proper permissions
-      // For now, we'll skip shared appointments from dashboard access
-    }
-
-    // Fetch all unique user IDs from appointments to get owner emails
-    const allUserIds = new Set<string>();
-    if (owned) {
-      owned.forEach((appt: Appointment) => {
-        if (appt.user_id) allUserIds.add(appt.user_id);
-      });
-    }
-    if (sharedAppointments && sharedAppointments.length > 0) {
-      sharedAppointments.forEach(appt => {
-        if (appt.user_id) allUserIds.add(appt.user_id);
-      });
-    }
-
-    // Fetch assigned appointments by user and email
-    const assignedByUser = allAssignees.filter(
-      (a: AppointmentAssignee) => a.user === user.id && a.status === "accepted"
+  if (date) {
+    const day = new Date(date);
+    day.setHours(0, 0, 0, 0);
+    const dayStart = new Date(day);
+    const dayEnd = new Date(day);
+    dayEnd.setHours(23, 59, 59, 999);
+    filteredBySidebar = filteredBySidebar.filter((a) =>
+      new Date(a.start) >= dayStart &&
+      new Date(a.start) <= dayEnd
     );
-    
-    // Fetch user email
-    let userEmail: string | null = null;
-    try {
-      const response = await fetch("/api/auth/me");
-      if (response.ok) {
-        const data = await response.json();
-        userEmail = data?.user?.email || null;
-      }
-    } catch (error) {
-      console.error("Error fetching user:", error);
-    }
-    
-    const assignedByEmail = userEmail
-      ? allAssignees.filter(
-          (a: AppointmentAssignee) => a.invited_email === userEmail && a.status === "accepted"
-        )
-      : [];
+  }
+  if (category) filteredBySidebar = filteredBySidebar.filter((a) => a.category === category);
+  if (patient) filteredBySidebar = filteredBySidebar.filter((a) => a.patient === patient);
+  if (status) filteredBySidebar = filteredBySidebar.filter((a) => a.status === status);
 
-    if (process.env.NODE_ENV === "development") {
-      console.log('DEBUG - Fetched assigned appointments by user:', assignedByUser);
-      console.log('DEBUG - Fetched assigned appointments by email:', assignedByEmail);
-    }
-
-    // Fetch appointment data for assigned appointments
-    const assignedAppointmentIds = [
-      ...assignedByUser.map((a: AppointmentAssignee) => a.appointment),
-      ...assignedByEmail.map((a: AppointmentAssignee) => a.appointment),
-    ].filter(Boolean);
-    const uniqueAppointmentIds = [...new Set(assignedAppointmentIds)];
-
-    const assignedAppointmentsData = await Promise.all(
-      uniqueAppointmentIds.map(async (apptId: string) => {
-        const res = await fetch(`/api/appointments/${apptId}`);
-        if (res.ok) {
-          const data = await res.json();
-          return data.appointment;
-        }
-        return null;
-      })
-    );
-
-    // Merge assigned appointments with assignee data
-    type AppointmentWithAssignees = FullAppointment & { appointment_assignee?: AppointmentAssignee[] };
-    const assignedAppointments: AppointmentWithAssignees[] = assignedAppointmentsData
-      .filter(Boolean)
-      .map((appt: Appointment) => {
-        const relatedAssignees = [
-          ...assignedByUser.filter((a: AppointmentAssignee) => a.appointment === appt.id),
-          ...assignedByEmail.filter((a: AppointmentAssignee) => a.appointment === appt.id),
-        ].filter((a) => typeof a.permission === "string" && ["read", "write", "full"].includes(a.permission));
-        
-        return {
-          ...appt,
-          category_data: categories.find((c: Category) => c.id === appt.category),
-          patient_data: patients.find((p: Patient) => p.id === appt.patient),
-          appointment_assignee: relatedAssignees,
-          activities: allActivities.filter((act: Activity) => act.appointment === appt.id),
-        };
-      });
-
-    // Add owner user IDs from assigned appointments
-    assignedAppointments.forEach(appt => {
-      if (appt.user_id) allUserIds.add(appt.user_id);
-    });
-
-    // Fetch user data for all owners (using search API)
-    const ownerUsersPromises = Array.from(allUserIds).map(async (userId: string) => {
-      const res = await fetch(`/api/users/search?query=${userId}`);
-      if (res.ok) {
-        const data = await res.json();
-        const user = data.users?.find((u: { id: string }) => u.id === userId);
-        return user ? { id: user.id, email: user.email } : null;
-      }
-      return null;
-    });
-    const ownerUsersResults = await Promise.all(ownerUsersPromises);
-    const ownerUsers = ownerUsersResults.filter(Boolean) as { id: string; email: string }[];
-
-    if (process.env.NODE_ENV === "development") {
-      console.log('DEBUG - Fetched owner users:', ownerUsers);
-    }
-    
-    // Fetch user data for all owners (including assigned appointments)
-    const allOwnerUsersPromises = Array.from(allUserIds).map(async (userId: string) => {
-      const res = await fetch(`/api/users/search?query=${userId}`);
-      if (res.ok) {
-        const data = await res.json();
-        const user = data.users?.find((u: { id: string }) => u.id === userId);
-        return user ? { id: user.id, email: user.email } : null;
-      }
-      return null;
-    });
-    const allOwnerUsersResults = await Promise.all(allOwnerUsersPromises);
-    const allOwnerUsers = allOwnerUsersResults.filter(Boolean) as { id: string; email: string }[];
-
-    if (process.env.NODE_ENV === "development") {
-      console.log('DEBUG - Fetched all owner users:', allOwnerUsers);
-    }
-
-    // Set owner users state
-    setOwnerUsers(allOwnerUsers || []);
-    // Merge and deduplicate, always include all assignees for each appointment
-    // Merge shared appointments for invited dashboard access
-    const allAppointments: AppointmentWithAssignees[] = [...ownedWithDetails, ...sharedAppointments, ...assignedAppointments].map((appt) => ({ ...appt }));
-    const deduped: AppointmentWithAssignees[] = allAppointments.reduce((acc: AppointmentWithAssignees[], curr: AppointmentWithAssignees) => {
-      if (!curr || !curr.id) return acc;
-      const existing = acc.find((a) => a.id === curr.id);
-      if (existing) {
-        existing.appointment_assignee = [
-          ...(existing.appointment_assignee || []),
-          ...(curr.appointment_assignee || [])
-        ].filter((v, i, arr) => v && v.id && arr.findIndex((b) => b.id === v.id) === i);
-      } else {
-        acc.push(curr);
-      }
-      return acc;
-    }, []);
-
-    // Apply filters
-    let filtered = deduped;
-    if (date) {
-      const day = new Date(date);
-      day.setHours(0, 0, 0, 0);
-      const dayStart = new Date(day);
-      const dayEnd = new Date(day);
-      dayEnd.setHours(23, 59, 59, 999);
-      filtered = filtered.filter((a: AppointmentWithAssignees) =>
-        new Date(a.start) >= dayStart &&
-        new Date(a.start) <= dayEnd
-      );
-    }
-    if (category) filtered = filtered.filter((a: AppointmentWithAssignees) => a.category === category);
-    if (patient) filtered = filtered.filter((a: AppointmentWithAssignees) => a.patient === patient);
-    if (status) filtered = filtered.filter((a: AppointmentWithAssignees) => a.status === status);
-    setAppointments(filtered as FullAppointment[]);
-    setLoading(false);
-  }, [category, patient, date, status, user]);
   // Helper: get permission for current user on an appointment
-  // Use shared permission helper
   function getUserPermission(appt: FullAppointment): "owner" | "full" | "write" | "read" | null {
     return getUserAppointmentPermission({
       appointment: appt,
@@ -409,49 +200,20 @@ export default function AppointmentList() {
     });
   }
 
-  useEffect(() => {
-    if (user && patients.length > 0) fetchAppointments();
-  }, [fetchAppointments, currentDate, user, patients]);
-
-  const toggleStatus = async (id: string, newStatus: string) => {
-    try {
-      const response = await fetch(`/api/appointments/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
-      });
-      if (!response.ok) {
-        console.error("Failed to update appointment status");
-      }
-    } catch (error) {
-      console.error("Error updating appointment status:", error);
-    }
-    setAppointments((prev) =>
-      prev.map((a) =>
-        a.id === id ? { ...a, status: newStatus as typeof a.status } : a
-      )
-    );
+  const handleToggleStatus = (id: string, newStatus: string) => {
+    // Only pass id and status, casting generic string to required union
+    toggleStatus({ id, status: newStatus as "pending" | "done" | "alert" });
   };
 
-  const deleteAppt = async (id: string) => {
+  const handleDelete = (id: string) => {
     if (!confirm("Termin wirklich löschen?")) return;
-    try {
-      const response = await fetch(`/api/appointments/${id}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) {
-        console.error("Failed to delete appointment");
-      }
-    } catch (error) {
-      console.error("Error deleting appointment:", error);
-    }
-    setAppointments((prev) => prev.filter((a) => a.id !== id));
+    deleteAppointment(id);
   };
 
-  const isEmpty = appointments.length === 0;
+  const isEmpty = filteredBySidebar.length === 0;
 
   // Filtered appointments based on search
-  const filteredAppointments = appointments.filter((appt) => {
+  const filteredAppointments = filteredBySidebar.filter((appt) => {
     if (!search.trim()) return true;
     const lower = search.toLowerCase();
     // Helper to check if a string includes the search
@@ -476,7 +238,23 @@ export default function AppointmentList() {
       };
       patientNameMatch =
         !!match(patientObj.firstname) || !!match(patientObj.lastname);
+    } else if (typeof appt.patient === "string") {
+      // If patient is a string ID, try to find it in the patients list
+      const p = patients.find((p: Patient) => p.id === appt.patient);
+      if (p) {
+        patientNameMatch = !!match(p.firstname) || !!match(p.lastname);
+      }
     }
+
+    // Also search within patient and relative names directly from the fetched lists
+    const patientOrRelativeNameMatch =
+      patients.some((p: Patient) =>
+        (`${p.firstname} ${p.lastname}`).toLowerCase().includes(lower)
+      ) ||
+      relatives.some((r: Relative) =>
+        (`${r.firstname} ${r.lastname}`).toLowerCase().includes(lower)
+      );
+
     return (
       match(appt.title) ||
       match(appt.notes) ||
@@ -486,18 +264,17 @@ export default function AppointmentList() {
         (match(appt.category_data.label) ||
           match(appt.category_data.description))) ||
       patientNameMatch ||
+      patientOrRelativeNameMatch || // Include the direct patient/relative name search
       (appt.appointment_assignee &&
-        appt.appointment_assignee.some((a) => a.user && match(a.user))) ||
+        appt.appointment_assignee.some((a: AppointmentAssignee) => a.user && match(a.user))) ||
       (appt.activities &&
-        appt.activities.some((a) => match(a.type) || match(a.content))) ||
-      (appt.attachements && appt.attachements.some((a) => match(a)))
+        appt.activities.some((a: Activity) => match(a.type) || match(a.content))) ||
+      (appt.attachements && appt.attachements.some((a: string) => match(a)))
     );
   });
 
-  // Helper to handle edit dialog close and refresh
   const handleEditSuccess = () => {
     setEditAppt(null);
-    fetchAppointments();
   };
 
   const handleEdit = (appt: FullAppointment) => {
@@ -516,7 +293,7 @@ export default function AppointmentList() {
   // Group appointments by date (descending)
   const grouped = groupAppointmentsByDate(filteredAppointments);
 
-  if (loading) {
+  if (loadingAppointments) {
     return <AppointmentListSkeleton />;
   }
 
@@ -588,7 +365,7 @@ export default function AppointmentList() {
             <div key={date.toISOString()}>
               <DateHeadline date={date} />
               <div className="flex flex-col gap-4">
-                {appts.map((appt, i) => {
+                {appts.map((appt: FullAppointment, i: number) => {
                   // --- Begin: Restored full-featured appointment card ---
                   const start = new Date(appt.start);
                   const now = new Date();
@@ -660,12 +437,12 @@ export default function AppointmentList() {
                     patientField: appt.patient,
                     patientType: typeof appt.patient,
                     patientData: appt.patient_data,
-                    foundPatient: patients.find(p => p.id === appt.patient)
+                    foundPatient: patients.find((p: Patient) => p.id === appt.patient)
                   });
 
                   // Debug the specific fields we're trying to display
                   if (dedupedAssignees.length > 0) {
-                    dedupedAssignees.forEach((ass, idx) => {
+                    dedupedAssignees.forEach((ass: AppointmentAssignee, idx: number) => {
                       console.log(`DEBUG - Assignee ${idx}:`, {
                         assigneeId: ass.id,
                         userId: ass.user,
@@ -673,8 +450,8 @@ export default function AppointmentList() {
                         invitedEmail: ass.invited_email,
                         status: ass.status,
                         permission: ass.permission,
-                        foundPatient: patients.find(p => p.id === ass.user),
-                        foundRelative: relatives.find(r => r.id === ass.user)
+                        foundPatient: patients.find((p: Patient) => p.id === ass.user),
+                        foundRelative: relatives.find((r: Relative) => r.id === ass.user)
                       });
                     });
                   }
@@ -813,7 +590,7 @@ export default function AppointmentList() {
 
                                 // If patient is a string ID and patients are loaded
                                 if (typeof appt.patient === "string" && patients.length > 0) {
-                                  const p = patients.find((x) => x.id === appt.patient);
+                                  const p = patients.find((x: Patient) => x.id === appt.patient);
                                   return p && p.firstname && p.lastname ? `${p.firstname} ${p.lastname}` : "--";
                                 }
 
@@ -905,7 +682,7 @@ export default function AppointmentList() {
 
                                 // If patient is a string ID and patients are loaded
                                 if (typeof appt.patient === 'string' && patients.length > 0) {
-                                  const patient = patients.find((p) => p.id === appt.patient);
+                                  const patient = patients.find((p: Patient) => p.id === appt.patient);
                                   if (patient && patient.firstname && patient.lastname) {
                                     return (
                                       <span className="not-italic text-purple-700">
@@ -975,71 +752,70 @@ export default function AppointmentList() {
                       </div>
 
                       {/* Actions column */}
-                      <div className="flex flex-col items-center gap-3 min-w-[56px] py-4 px-2 justify-center">
-                        {/* Status checkbox - only show if user is owner, full, or write permission */}
-                        {(() => {
-                          const perm = getUserPermission(appt);
-                          // Only owner, full, or write can see status checkbox
-                          if (perm === "owner" || perm === "full" || perm === "write") {
-                            return (
-                              <label className="flex flex-col items-center gap-1">
-                                <input
-                                  type="checkbox"
-                                  className="mb-1 accent-green-600 w-5 h-5 cursor-pointer hover:ring-2 hover:ring-green-300"
-                                  checked={isDone}
-                                  onChange={() =>
-                                    toggleStatus(appt.id, isDone ? "pending" : "done")
-                                  }
-                                />
-                                <span className="text-xs text-gray-500 select-none">
-                                  {isDone ? "Erledigt" : "Offen"}
-                                </span>
-                              </label>
-                            );
-                          }
-                          return null;
-                        })()}
+                      <div className="flex flex-col items-center justify-center p-4 border-t sm:border-t-0 sm:border-l border-gray-100 bg-gray-50/50 rounded-b-xl sm:rounded-bl-none sm:rounded-r-xl min-w-[60px]">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                              <MoreVertical className="h-4 w-4 text-gray-500" />
+                              <span className="sr-only">Open menu</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48">
+                            {(() => {
+                              const perm = getUserPermission(appt);
 
-                        {/* Only show edit/delete if user is owner or has 'full' permission */}
-                        {(() => {
-                          const perm = getUserPermission(appt);
-                          // Only owner or full can edit/delete
-                          if (perm === "owner" || perm === "full") {
-                            return <>
-                              <Button
-                                size="icon"
-                                variant="outline"
-                                className="rounded-full border-gray-300 cursor-pointer hover:bg-gray-100"
-                                onClick={() => handleEdit(appt)}
-                                aria-label="Bearbeiten"
-                              >
-                                <FiEdit2 className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="rounded-full cursor-pointer hover:bg-red-100"
-                                onClick={() => deleteAppt(appt.id)}
-                                aria-label="Löschen"
-                              >
-                                <FiTrash2 className="w-4 h-4 text-red-500" />
-                              </Button>
-                            </>;
-                          }
-                          return null;
-                        })()}
+                              return (
+                                <>
+                                  {/* Status Checkbox replacement */}
+                                  {(perm === "owner" || perm === "full" || perm === "write") && (
+                                    <DropdownMenuItem
+                                      onClick={() => handleToggleStatus(appt.id, isDone ? "pending" : "done")}
+                                    >
+                                      {isDone ? (
+                                        <>
+                                          <Circle className="mr-2 h-4 w-4" />
+                                          <span>Als offen markieren</span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <CheckCircle className="mr-2 h-4 w-4 text-green-600" />
+                                          <span className="text-green-600">Als erledigt markieren</span>
+                                        </>
+                                      )}
+                                    </DropdownMenuItem>
+                                  )}
+
+                                  {/* Edit / Delete */}
+                                  {(perm === "owner" || perm === "full") && (
+                                    <>
+                                      {(perm === "owner" || perm === "full" || perm === "write") && <DropdownMenuSeparator />}
+                                      <DropdownMenuItem onClick={() => handleEdit(appt)}>
+                                        <FiEdit2 className="mr-2 h-4 w-4" />
+                                        <span>Bearbeiten</span>
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                        onClick={() => handleDelete(appt.id)}
+                                        className="text-red-600 focus:bg-red-50 focus:text-red-600"
+                                      >
+                                        <FiTrash2 className="mr-2 h-4 w-4" />
+                                        <span>Löschen</span>
+                                      </DropdownMenuItem>
+                                    </>
+                                  )}
+                                </>
+                              );
+                            })()}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
-                  );
-                  // --- End: Restored full-featured appointment card ---
+                );
                 })}
               </div>
             </div>
           ))}
         </div>
       )}
-
-      {/* Edit dialog */}
       {editAppt ? (
         <EditAppointmentDialog
           appointment={editAppt}
@@ -1047,7 +823,7 @@ export default function AppointmentList() {
           trigger={undefined}
           isOpen={editOpen}
           onOpenChange={handleEditDialogChange}
-          refreshAppointments={fetchAppointments}
+          refreshAppointments={refetchAppointments}
         />
       ) : null}
     </div>

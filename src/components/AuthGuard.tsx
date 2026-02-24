@@ -13,8 +13,9 @@
  * only authenticated users can access the main application.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
 
 // Routes that don't require authentication - users can access these without being logged in
 const ALLOWED_PATHS = ["/login", "/register", "/accept-invitation"];
@@ -30,68 +31,41 @@ interface User {
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  // Track if authentication check has completed (prevents flash of content)
-  const [checked, setChecked] = useState(false);
-  // Store current authenticated user
-  const [user, setUser] = useState<User | null>(null);
 
-  // Authentication check runs on mount and when pathname changes
+  // Use our new central auth hook
+  const { user, isLoading, isAuthenticated } = useAuth();
+
+  // Handle redirects side-effects
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const response = await fetch("/api/auth/me");
-        const data = await response.json();
-        
-        if (response.ok && data.user) {
-          setUser(data.user);
-          setChecked(true);
-          
-          // Email verification check: Users must verify their email before accessing the app
-          // If email is not verified, redirect to login with verification message
-          if (!data.user.email_verified && !ALLOWED_PATHS.includes(pathname)) {
-            router.replace("/login?verify=1");
-            return;
-          }
-          
-          // UX: If user is already logged in and tries to access login/register pages,
-          // redirect them to the main app (but allow /accept-invitation to work)
-          if (
-            data.user.email_verified &&
-            ["/login", "/register"].includes(pathname)
-          ) {
-            router.replace("/");
-          }
-        } else {
-          // Not authenticated
-          setUser(null);
-          setChecked(true);
-          
-          // Security: Redirect unauthenticated users to login if they're trying to access protected routes
-          if (!ALLOWED_PATHS.includes(pathname)) {
-            router.replace("/login");
-          }
-        }
-      } catch (error) {
-        console.error("Auth check error:", error);
-        setUser(null);
-        setChecked(true);
-        
-        // On error, redirect to login for protected routes
-        if (!ALLOWED_PATHS.includes(pathname)) {
-          router.replace("/login");
-        }
+    // Wait until the hook is done loading
+    if (isLoading) return;
+
+    if (isAuthenticated && user) {
+      // Email verification check
+      if (user.email_verified === false && !ALLOWED_PATHS.includes(pathname)) {
+        router.replace("/login?verify=1");
+        return;
       }
-    };
 
-    checkAuth();
-  }, [pathname, router]);
+      // UX: redirect from auth pages if logged in
+      if (user.email_verified !== false && ["/login", "/register"].includes(pathname)) {
+        router.replace("/");
+        return;
+      }
+    } else {
+      // Security: Redirect unauthenticated users
+      if (!ALLOWED_PATHS.includes(pathname)) {
+        router.replace("/login");
+        return;
+      }
+    }
+  }, [isLoading, isAuthenticated, user, pathname, router]);
 
-  // Show nothing while checking authentication for protected routes
-  // This prevents flash of content before redirect
-  if (!checked && !ALLOWED_PATHS.includes(pathname)) {
+  // Show nothing while checking authentication to prevent flash of content
+  if (isLoading || (!isAuthenticated && !ALLOWED_PATHS.includes(pathname))) {
     return null;
   }
-  
+
   // Render children only after authentication check is complete
   return <>{children}</>;
 }
