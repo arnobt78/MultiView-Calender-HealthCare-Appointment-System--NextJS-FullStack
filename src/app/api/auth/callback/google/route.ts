@@ -96,7 +96,8 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    let user = await getUserByEmail(profile.email);
+    type SessionUser = { id: string; email: string; display_name?: string | null; image?: string | null };
+    let user: SessionUser | null = await getUserByEmail(profile.email);
 
     if (!user) {
       user = await createUserFromGoogle(

@@ -1,66 +1,67 @@
 /**
- * Dashboard Access API Route Handler
- * 
- * This file implements RESTful API endpoints for dashboard access management:
- * - GET: Retrieve dashboard access records for the authenticated user
- * 
- * Uses PostgreSQL directly via postgresClient for database operations.
- * All operations require authentication via getSessionUser().
+ * Dashboard Access API (Prisma)
+ * GET: List dashboard access where user is owner, invited user, or invited by email
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { query } from "@/lib/postgresClient";
+import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 
-/**
- * GET /api/dashboard-access
- * 
- * Retrieves dashboard access records where the user is the owner, invited user, or invited by email.
- * Supports optional query parameter filtering by status.
- * 
- * Query Parameters:
- * - status (optional): Filter by status (pending, accepted, declined)
- * 
- * @param req - Next.js request object containing query parameters
- * @returns JSON response with dashboard access records array or error message
- */
+function serializeDashboardAccess(d: {
+  id: string;
+  created_at: Date;
+  owner_user_id: string;
+  invited_user_id: string | null;
+  invited_email: string | null;
+  status: string | null;
+  invitation_token: string | null;
+  permission: string | null;
+  invited_by_id: string | null;
+}) {
+  return {
+    ...d,
+    created_at: d.created_at?.toISOString?.(),
+    invited_by: d.invited_by_id,
+  };
+}
+
 export async function GET(req: NextRequest) {
   try {
-    // Require authentication
     const sessionUser = await getSessionUser();
     if (!sessionUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Extract query parameters
     const { searchParams } = new URL(req.url);
-    const status = searchParams.get("status");
+    const status = searchParams.get("status") ?? undefined;
 
-    // Build query to get dashboard access where user is owner, invited user, or invited by email
-    let sqlQuery = `
-      SELECT * FROM dashboard_access 
-      WHERE owner_user_id = $1 
-         OR invited_user_id = $1 
-         OR invited_email = $2
-    `;
-    const params: any[] = [sessionUser.userId, sessionUser.email];
-    
-    if (status) {
-      sqlQuery += ` AND status = $3`;
-      params.push(status);
-    }
-    
-    sqlQuery += ` ORDER BY created_at DESC`;
+    const where: {
+      OR: Array<
+        | { owner_user_id: string }
+        | { invited_user_id: string }
+        | { invited_email: string }
+      >;
+      status?: string;
+    } = {
+      OR: [
+        { owner_user_id: sessionUser.userId },
+        { invited_user_id: sessionUser.userId },
+        { invited_email: sessionUser.email ?? "" },
+      ],
+    };
+    if (status) where.status = status;
 
-    const result = await query(sqlQuery, params);
+    const records = await prisma.dashboardAccess.findMany({
+      where,
+      orderBy: { created_at: "desc" },
+    });
 
-    return NextResponse.json({ dashboard_access: result.rows || [] });
-  } catch (error: any) {
+    return NextResponse.json({
+      dashboard_access: records.map(serializeDashboardAccess),
+    });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Internal server error";
     console.error("Error fetching dashboard access:", error);
-    return NextResponse.json(
-      { error: error.message || "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-

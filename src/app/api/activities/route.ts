@@ -1,60 +1,53 @@
 /**
- * Activities API Route Handler
- * 
- * This file implements RESTful API endpoints for activity management:
- * - GET: Retrieve all activities (for authenticated users)
- * 
- * Uses PostgreSQL directly via postgresClient for database operations.
- * All operations require authentication via getSessionUser().
+ * Activities API (Prisma)
+ * GET: List activities, optional filter by appointment_id
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { query } from "@/lib/postgresClient";
+import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 
-/**
- * GET /api/activities
- * 
- * Retrieves all activities from the database.
- * Supports optional query parameter filtering by appointment_id.
- * 
- * Query Parameters:
- * - appointment_id (optional): Filter activities by appointment
- * 
- * @param req - Next.js request object containing query parameters
- * @returns JSON response with activities array or error message
- */
+function serializeActivity(a: {
+  id: string;
+  created_at: Date;
+  created_by_id: string | null;
+  appointment_id: string;
+  type: string;
+  content: string;
+}) {
+  return {
+    id: a.id,
+    created_at: a.created_at?.toISOString?.(),
+    created_by: a.created_by_id,
+    appointment: a.appointment_id,
+    type: a.type,
+    content: a.content,
+  };
+}
+
 export async function GET(req: NextRequest) {
   try {
-    // Require authentication
     const sessionUser = await getSessionUser();
     if (!sessionUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Extract query parameters
     const { searchParams } = new URL(req.url);
     const appointmentId = searchParams.get("appointment_id");
 
-    let sqlQuery = "SELECT * FROM activities";
-    const params: any[] = [];
-    
-    if (appointmentId) {
-      sqlQuery += " WHERE appointment = $1";
-      params.push(appointmentId);
-    }
-    
-    sqlQuery += " ORDER BY created_at DESC";
+    const where = appointmentId ? { appointment_id: appointmentId } : {};
 
-    const result = await query(sqlQuery, params);
+    const activities = await prisma.activity.findMany({
+      where,
+      orderBy: { created_at: "desc" },
+    });
 
-    return NextResponse.json({ activities: result.rows || [] });
-  } catch (error: any) {
+    return NextResponse.json({
+      activities: activities.map(serializeActivity),
+    });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Internal server error";
     console.error("Error fetching activities:", error);
-    return NextResponse.json(
-      { error: error.message || "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-

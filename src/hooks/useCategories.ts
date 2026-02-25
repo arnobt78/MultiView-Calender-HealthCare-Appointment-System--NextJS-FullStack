@@ -1,16 +1,85 @@
-import { useQuery } from "@tanstack/react-query";
-import { apiClient } from "@/lib/api-client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiClient, handleApiError } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
+import { invalidateAllForCrud } from "@/lib/query-client";
 import { Category } from "@/types/types";
+import { toast } from "sonner";
+
+export type CategoryCreateInput = Pick<Category, "label"> & Partial<Pick<Category, "description" | "color" | "icon">>;
+export type CategoryUpdateInput = Partial<Pick<Category, "label" | "description" | "color" | "icon">>;
 
 export function useCategories() {
-  return useQuery({
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
     queryKey: queryKeys.categories.all,
     queryFn: async () => {
       const res = await apiClient<{ categories: Category[] }>("/api/categories");
       return res.categories || [];
     },
-    // Categories rarely change, keep them cached longer
-    staleTime: 10 * 60 * 1000, 
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (data: CategoryCreateInput) =>
+      apiClient<{ category: Category }>("/api/categories", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+    onSuccess: async (data) => {
+      await invalidateAllForCrud(queryClient);
+      toast.success(`Category '${data.category.label}' created`);
+    },
+    onError: (e) => handleApiError(e, "Failed to create category"),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, ...data }: CategoryUpdateInput & { id: string }) =>
+      apiClient<{ category: Category }>(`/api/categories/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+      }),
+    onSuccess: async (data) => {
+      await invalidateAllForCrud(queryClient);
+      toast.success(`Category '${data.category.label}' updated`);
+    },
+    onError: (e) => handleApiError(e, "Failed to update category"),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) =>
+      apiClient(`/api/categories/${id}`, { method: "DELETE" }),
+    onSuccess: async () => {
+      await invalidateAllForCrud(queryClient);
+      toast.success("Category deleted");
+    },
+    onError: (e) => handleApiError(e, "Failed to delete category"),
+  });
+
+  return {
+    categories: query.data ?? [],
+    isLoading: query.isLoading,
+    isError: query.isError,
+    error: query.error,
+    refetch: query.refetch,
+    createCategory: createMutation.mutate,
+    createCategoryAsync: createMutation.mutateAsync,
+    isCreating: createMutation.isPending,
+    updateCategory: updateMutation.mutate,
+    updateCategoryAsync: updateMutation.mutateAsync,
+    isUpdating: updateMutation.isPending,
+    deleteCategory: deleteMutation.mutate,
+    isDeleting: deleteMutation.isPending,
+  };
+}
+
+export function useCategory(id: string | null) {
+  return useQuery({
+    queryKey: queryKeys.categories.detail(id ?? ""),
+    queryFn: async () => {
+      const res = await apiClient<{ category: Category }>(`/api/categories/${id}`);
+      return res.category;
+    },
+    enabled: !!id,
   });
 }

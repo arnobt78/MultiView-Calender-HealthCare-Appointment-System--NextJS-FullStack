@@ -11,7 +11,7 @@
  * - /api/appointments
  * - /api/appointments/[id]
  * 
- * Database: PostgreSQL (direct connection via postgresClient)
+ * Database: PostgreSQL via Prisma (src/lib/prisma.ts)
  * Authentication: Custom JWT-based system (see src/lib/auth.ts)
  * Storage: Vercel Blob (see src/lib/vercelBlob.ts)
  */

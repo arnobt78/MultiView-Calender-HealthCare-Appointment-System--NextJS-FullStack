@@ -1,4 +1,5 @@
 import { QueryClient } from "@tanstack/react-query";
+import { queryKeys } from "./query-keys";
 
 /**
  * Creates and configures the default QueryClient for the application.
@@ -21,4 +22,11 @@ export function createQueryClient() {
       },
     },
   });
+}
+
+/**
+ * Invalidate all app queries (lists + details). Use after any CRUD so the whole UI updates without page refresh.
+ */
+export async function invalidateAllForCrud(queryClient: QueryClient) {
+  await queryClient.invalidateQueries({ queryKey: queryKeys.root });
 }

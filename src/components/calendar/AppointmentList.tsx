@@ -155,8 +155,8 @@ export default function AppointmentList() {
     refetch: refetchAppointments
   } = useAppointments();
 
-  const { data: categories = [] } = useCategories();
-  const { data: patients = [] } = usePatients();
+  const { categories = [] } = useCategories();
+  const { patients = [] } = usePatients();
   const { data: relatives = [] } = useRelatives();
 
   // Keep ownerUsers state empty for now, or we can fetch them separately if needed, 

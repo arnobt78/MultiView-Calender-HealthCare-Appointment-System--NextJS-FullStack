@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient, handleApiError } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
+import { invalidateAllForCrud } from "@/lib/query-client";
 import { Appointment, Category, Patient, AppointmentAssignee, Activity, Relative } from "@/types/types";
 import { toast } from "sonner";
 import { useAuth } from "./useAuth";
@@ -132,8 +133,7 @@ export function useAppointments() {
         body: JSON.stringify(newAppointment),
       }),
     onSuccess: (data) => {
-      // Invalidate list to trigger refetch
-      queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all });
+      invalidateAllForCrud(queryClient);
       toast.success(`Appointment '${data.title || "New"}' created successfully`);
     },
     onError: (error) => handleApiError(error, "Failed to create appointment"),
@@ -146,8 +146,7 @@ export function useAppointments() {
         body: JSON.stringify(updateData),
       }),
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.appointments.detail(variables.id) });
+      invalidateAllForCrud(queryClient);
       toast.success(`Appointment '${data.title || "Updated"}' saved successfully`);
     },
     onError: (error) => handleApiError(error, "Failed to update appointment"),
@@ -157,11 +156,10 @@ export function useAppointments() {
     mutationFn: (id: string) => 
       apiClient(`/api/appointments/${id}`, { method: "DELETE" }),
     onSuccess: (_, deletedId) => {
-      // Optimistically remove from list cache
-      queryClient.setQueryData<FullAppointment[]>(queryKeys.appointments.all, (old) => 
+      queryClient.setQueryData<FullAppointment[]>(queryKeys.appointments.all, (old) =>
         old ? old.filter((appt) => appt.id !== deletedId) : []
       );
-      queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all });
+      invalidateAllForCrud(queryClient);
       toast.success("Appointment deleted successfully");
     },
     onError: (error) => handleApiError(error, "Failed to delete appointment"),
@@ -192,8 +190,7 @@ export function useAppointments() {
     },
     onSuccess: (data) => {
       toast.success(`Status updated to ${data.status}`);
-      // Invalidate to ensure we have the absolute latest DB state
-      queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all });
+      invalidateAllForCrud(queryClient);
     },
     onError: (error, variables, context) => {
       // Rollback on error

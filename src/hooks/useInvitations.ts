@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient, handleApiError } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
+import { invalidateAllForCrud } from "@/lib/query-client";
 import { AppointmentAssignee } from "@/types/types";
 import { toast } from "sonner";
 import { InvitationRequest, InvitationType } from "@/types/invitation";
@@ -40,33 +41,33 @@ export function useInvitations(type: "appointment" | "dashboard") {
   });
 
   const sendInvitationMutation = useMutation({
-    mutationFn: (request: InvitationRequest) => 
+    mutationFn: (request: InvitationRequest) =>
       apiClient("/api/invitations", {
         method: "POST",
         body: JSON.stringify(request),
       }),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.invitations.byType(variables.type) });
+    onSuccess: async (_, variables) => {
+      await invalidateAllForCrud(queryClient);
       toast.success(`Invitation sent to ${variables.email}`);
     },
     onError: (error) => handleApiError(error, "Failed to send invitation"),
   });
 
   const discardAppointmentInvitationMutation = useMutation({
-    mutationFn: (id: string) => 
+    mutationFn: (id: string) =>
       apiClient(`/api/appointments/${id}/permissions`, { method: "DELETE" }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.invitations.byType("appointment") });
+    onSuccess: async () => {
+      await invalidateAllForCrud(queryClient);
       toast.success("Appointment invitation discarded");
     },
     onError: (error) => handleApiError(error, "Failed to discard appointment invitation"),
   });
 
   const discardDashboardInvitationMutation = useMutation({
-    mutationFn: (id: string) => 
+    mutationFn: (id: string) =>
       apiClient(`/api/dashboard/${id}/permissions`, { method: "DELETE" }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.invitations.byType("dashboard") });
+    onSuccess: async () => {
+      await invalidateAllForCrud(queryClient);
       toast.success("Dashboard invitation discarded");
     },
     onError: (error) => handleApiError(error, "Failed to discard dashboard invitation"),

@@ -1,252 +1,202 @@
 /**
- * Custom Authentication Utilities
- * 
- * This file provides utilities for custom authentication, replacing Supabase Auth.
- * 
- * Features:
- * - Password hashing and verification
- * - JWT token generation and verification
- * - Session management
- * - Email verification token generation
- * - Password reset token generation
+ * Custom Authentication Utilities (Prisma)
+ * User lookup, create, update — all server-side via Prisma.
  */
 
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { query } from "./postgresClient";
+import { prisma } from "./prisma";
 
-// JWT secret from environment (should be a strong random string)
-// IMPORTANT: Never hardcode secrets! Always use environment variables.
 function getJwtSecret(): string {
   const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
   if (!secret) {
     throw new Error(
       "AUTH_SECRET or NEXTAUTH_SECRET environment variable is required. " +
-      "Please set it in your .env.local file. Generate with: openssl rand -base64 32"
+        "Please set it in your .env.local file. Generate with: openssl rand -base64 32"
     );
   }
   return secret;
 }
-const JWT_EXPIRES_IN = "7d"; // Token expires in 7 days
-
-// Password hashing salt rounds
+const JWT_EXPIRES_IN = "7d";
 const SALT_ROUNDS = 10;
 
-/**
- * Hash a password using bcrypt
- * 
- * @param password - Plain text password
- * @returns Hashed password
- */
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, SALT_ROUNDS);
 }
 
-/**
- * Verify a password against a hash
- * 
- * @param password - Plain text password
- * @param hash - Hashed password from database
- * @returns True if password matches
- */
 export async function verifyPassword(password: string, hash: string): Promise<boolean> {
   return bcrypt.compare(password, hash);
 }
 
-/**
- * Generate a JWT token for a user
- * 
- * @param userId - User ID
- * @param email - User email
- * @returns JWT token string
- */
 export function generateToken(userId: string, email: string): string {
-  return jwt.sign(
-    { userId, email },
-    getJwtSecret(),
-    { expiresIn: JWT_EXPIRES_IN }
-  );
+  return jwt.sign({ userId, email }, getJwtSecret(), { expiresIn: JWT_EXPIRES_IN });
 }
 
-/**
- * Verify and decode a JWT token
- * 
- * @param token - JWT token string
- * @returns Decoded token payload or null if invalid
- */
 export function verifyToken(token: string): { userId: string; email: string } | null {
   try {
     const decoded = jwt.verify(token, getJwtSecret()) as { userId: string; email: string };
-    // Ensure both fields are present for security
-    if (!decoded.userId || !decoded.email) {
-      return null;
-    }
+    if (!decoded.userId || !decoded.email) return null;
     return decoded;
-  } catch (error) {
-    // Token expired, invalid, or malformed
+  } catch {
     return null;
   }
 }
 
-/**
- * Get user from database by email
- * 
- * @param email - User email
- * @returns User object or null
- */
 export async function getUserByEmail(email: string) {
-  const result = await query(
-    'SELECT id, email, password_hash, email_verified, display_name, role, image, created_at FROM users WHERE email = $1',
-    [email]
-  );
-  return result.rows[0] || null;
+  const user = await prisma.user.findFirst({
+    where: { email },
+    select: {
+      id: true,
+      email: true,
+      password_hash: true,
+      email_verified: true,
+      display_name: true,
+      role: true,
+      image: true,
+      created_at: true,
+    },
+  });
+  if (!user) return null;
+  return {
+    ...user,
+    created_at: user.created_at?.toISOString?.(),
+  };
 }
 
-/**
- * Get user from database by ID
- * 
- * @param userId - User ID
- * @returns User object or null
- */
 export async function getUserById(userId: string) {
-  const result = await query(
-    'SELECT id, email, email_verified, display_name, role, image, created_at FROM users WHERE id = $1',
-    [userId]
-  );
-  return result.rows[0] || null;
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      email: true,
+      email_verified: true,
+      display_name: true,
+      role: true,
+      image: true,
+      created_at: true,
+    },
+  });
+  if (!user) return null;
+  return {
+    ...user,
+    created_at: user.created_at?.toISOString?.(),
+  };
 }
 
-/**
- * Create a new user in the database
- * 
- * @param email - User email
- * @param passwordHash - Hashed password
- * @param emailVerificationToken - Email verification token
- * @param displayName - Optional display name (shown in navbar, etc.)
- * @returns Created user object
- */
+function newUserId(): string {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 export async function createUser(
   email: string,
   passwordHash: string,
   emailVerificationToken: string,
   displayName?: string | null
 ) {
-  const result = await query(
-    `INSERT INTO users (id, email, password_hash, email_verified, email_verification_token, display_name, created_at)
-     VALUES (gen_random_uuid(), $1, $2, false, $3, $4, NOW())
-     RETURNING id, email, email_verified, display_name, role, created_at`,
-    [email, passwordHash, emailVerificationToken, displayName ?? null]
-  );
-  return result.rows[0];
+  const user = await prisma.user.create({
+    data: {
+      id: newUserId(),
+      email,
+      password_hash: passwordHash,
+      email_verified: false,
+      email_verification_token: emailVerificationToken,
+      display_name: displayName ?? null,
+    },
+    select: { id: true, email: true, email_verified: true, display_name: true, role: true, created_at: true },
+  });
+  return {
+    ...user,
+    created_at: user.created_at?.toISOString?.(),
+  };
 }
 
-/**
- * Update user's email verification status
- * 
- * @param userId - User ID
- * @param verified - Verification status
- */
 export async function updateEmailVerification(userId: string, verified: boolean) {
-  await query(
-    'UPDATE users SET email_verified = $1, email_verification_token = NULL WHERE id = $2',
-    [verified, userId]
-  );
+  await prisma.user.update({
+    where: { id: userId },
+    data: { email_verified: verified, email_verification_token: null },
+  });
 }
 
-/**
- * Generate a random UUID for email verification or password reset
- * 
- * Uses crypto.randomUUID() if available (Node 14.17+), otherwise falls back to manual generation.
- * 
- * @returns UUID string
- */
 export function generateVerificationToken(): string {
-  // Use crypto.randomUUID() if available (more secure and faster)
   if (typeof crypto !== "undefined" && crypto.randomUUID) {
     return crypto.randomUUID();
   }
-  
-  // Fallback for older Node versions
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0;
-    const v = c == 'x' ? r : (r & 0x3 | 0x8);
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
     return v.toString(16);
   });
 }
 
-/**
- * Set password reset token for a user
- * 
- * @param userId - User ID
- * @param token - Reset token
- */
 export async function setPasswordResetToken(userId: string, token: string) {
-  // Token expires in 1 hour
   const expiresAt = new Date();
   expiresAt.setHours(expiresAt.getHours() + 1);
-  
-  await query(
-    'UPDATE users SET password_reset_token = $1, password_reset_expires = $2 WHERE id = $3',
-    [token, expiresAt, userId]
-  );
+  await prisma.user.update({
+    where: { id: userId },
+    data: { password_reset_token: token, password_reset_expires: expiresAt },
+  });
 }
 
-/**
- * Verify password reset token and get user
- * 
- * @param token - Reset token
- * @returns User object or null if invalid/expired
- */
 export async function verifyPasswordResetToken(token: string) {
-  const result = await query(
-    `SELECT id, email FROM users 
-     WHERE password_reset_token = $1 
-     AND password_reset_expires > NOW()`,
-    [token]
-  );
-  return result.rows[0] || null;
+  const user = await prisma.user.findFirst({
+    where: {
+      password_reset_token: token,
+      password_reset_expires: { gt: new Date() },
+    },
+    select: { id: true, email: true },
+  });
+  return user ?? null;
 }
 
-/**
- * Update user password
- * 
- * @param userId - User ID
- * @param passwordHash - New hashed password
- */
 export async function updatePassword(userId: string, passwordHash: string) {
-  await query(
-    'UPDATE users SET password_hash = $1, password_reset_token = NULL, password_reset_expires = NULL WHERE id = $2',
-    [passwordHash, userId]
-  );
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      password_hash: passwordHash,
+      password_reset_token: null,
+      password_reset_expires: null,
+    },
+  });
 }
 
-/**
- * Create a new user from Google OAuth (no password). Sets email_verified = true.
- */
 export async function createUserFromGoogle(
   email: string,
   displayName: string | null,
   image: string | null
 ) {
-  const result = await query(
-    `INSERT INTO users (id, email, email_verified, display_name, image, created_at)
-     VALUES (gen_random_uuid(), $1, true, $2, $3, NOW())
-     RETURNING id, email, email_verified, display_name, role, image, created_at`,
-    [email, displayName ?? null, image ?? null]
-  );
-  return result.rows[0];
+  const user = await prisma.user.create({
+    data: {
+      id: newUserId(),
+      email,
+      email_verified: true,
+      display_name: displayName ?? null,
+      image: image ?? null,
+    },
+    select: { id: true, email: true, email_verified: true, display_name: true, role: true, image: true, created_at: true },
+  });
+  return {
+    ...user,
+    created_at: user.created_at?.toISOString?.(),
+  };
 }
 
-/**
- * Update user profile (e.g. after Google sign-in with updated name/image)
- */
 export async function updateUserProfile(
   userId: string,
   data: { display_name?: string | null; image?: string | null }
 ) {
-  await query(
-    'UPDATE users SET display_name = COALESCE($1, display_name), image = COALESCE($2, image) WHERE id = $3',
-    [data.display_name ?? null, data.image ?? null, userId]
-  );
+  const updateData: { display_name?: string | null; image?: string | null } = {};
+  if (data.display_name !== undefined) updateData.display_name = data.display_name;
+  if (data.image !== undefined) updateData.image = data.image;
+  if (Object.keys(updateData).length === 0) return;
+  await prisma.user.update({
+    where: { id: userId },
+    data: updateData,
+  });
 }
-

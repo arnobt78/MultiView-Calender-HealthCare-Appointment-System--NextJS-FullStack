@@ -4,22 +4,21 @@
  * ⚠️ REMOVED: Supabase has been completely removed from this project.
  * 
  * This file is kept for backward compatibility but will throw errors if used.
- * All API routes now use PostgreSQL directly via postgresClient (src/lib/postgresClient.ts).
+ * All API routes use PostgreSQL via Prisma (src/lib/prisma.ts).
  * 
  * Migration:
- * - Database: PostgreSQL (direct connection)
+ * - Database: Prisma + PostgreSQL
  * - Authentication: Custom JWT (src/lib/auth.ts)
  * - Storage: Vercel Blob (src/lib/vercelBlob.ts)
  * 
- * Use postgresClient.query() for database operations instead.
+ * Use prisma from src/lib/prisma.ts for database operations.
  */
 
 // Supabase has been removed - this export will cause errors if used
 export const supabaseAdmin = {
   from: () => {
     throw new Error(
-      "Supabase has been removed. Please use postgresClient.query() for database operations. " +
-      "See src/lib/postgresClient.ts for examples."
+      "Supabase has been removed. Please use Prisma (src/lib/prisma.ts) for database operations."
     );
   },
 } as any;

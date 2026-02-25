@@ -4,6 +4,9 @@ import React, { useState } from "react";
 import AppointmentAccessPermission from "@/components/control-panel/AppointmentAccessPermission";
 import UserAccessPermission from "@/components/control-panel/UserAccessPermission";
 import InvitationList from "@/components/control-panel/InvitationList";
+import PatientManagement from "@/components/control-panel/PatientManagement";
+import CategoryManagement from "@/components/control-panel/CategoryManagement";
+import DoctorManagement from "@/components/control-panel/DoctorManagement";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Sheet,
@@ -19,14 +22,22 @@ import { cn } from "@/lib/utils";
 const SIDEBAR_ITEMS = [
   { value: "appointment", label: "Appointment Access Invitation" },
   { value: "dashboard", label: "User Dashboard Access Invitation" },
+  { value: "patients", label: "Patient Management" },
+  { value: "categories", label: "Category Management" },
+  { value: "doctors", label: "Doctor / User Management" },
 ] as const;
 
-export default function ControlPanelPage() {
+type ControlPanelPageProps = {
+  /** Optional session from SSR to avoid client round-trip */
+  initialSession?: { userId: string; email: string } | null;
+};
+
+export default function ControlPanelPage({ initialSession }: ControlPanelPageProps) {
   const [activeTab, setActiveTab] = useState("appointment");
   const [sheetOpen, setSheetOpen] = useState(false);
 
   return (
-    <div className="w-full max-w-9xl mx-auto px-2 sm:px-6 lg:px-8 py-8">
+    <div className="w-full max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-8">
       <div className="flex flex-col md:flex-row gap-6 md:gap-8 min-h-[60vh]">
         {/* Desktop sidebar - shadcn Tabs as vertical tab menu */}
         <aside className="hidden md:flex min-w-[240px] w-64 shrink-0 flex-col rounded-lg border bg-card text-card-foreground shadow-xl">
@@ -107,6 +118,9 @@ export default function ControlPanelPage() {
               <TabsList className="grid w-full grid-cols-2 rounded-md shadow-xl">
                 <TabsTrigger value="appointment" className="py-2">Appointment Access</TabsTrigger>
                 <TabsTrigger value="dashboard" className="py-2">Dashboard Access</TabsTrigger>
+                <TabsTrigger value="patients" className="py-2">Patients</TabsTrigger>
+                <TabsTrigger value="categories" className="py-2">Categories</TabsTrigger>
+                <TabsTrigger value="doctors" className="py-2">Doctors</TabsTrigger>
               </TabsList>
             </div>
             <TabsContent value="appointment" className="mt-0 md:mt-0">
@@ -116,6 +130,15 @@ export default function ControlPanelPage() {
             <TabsContent value="dashboard" className="mt-0 md:mt-0">
               <UserAccessPermission />
               <InvitationList type="dashboard" />
+            </TabsContent>
+            <TabsContent value="patients" className="mt-0 md:mt-0">
+              <PatientManagement />
+            </TabsContent>
+            <TabsContent value="categories" className="mt-0 md:mt-0">
+              <CategoryManagement />
+            </TabsContent>
+            <TabsContent value="doctors" className="mt-0 md:mt-0">
+              <DoctorManagement />
             </TabsContent>
           </Tabs>
         </main>

@@ -61,8 +61,8 @@ export default function AppointmentDialog({
     if (typeof isOpen === "boolean") setOpen(isOpen);
   }, [isOpen]);
 
-  const { data: patients = [] } = usePatients();
-  const { data: categories = [] } = useCategories();
+  const { patients = [] } = usePatients();
+  const { categories = [] } = useCategories();
   const { data: relatives = [] } = useRelatives();
   const { user } = useAuth();
   const { createAppointmentAsync, updateAppointmentAsync } = useAppointments();

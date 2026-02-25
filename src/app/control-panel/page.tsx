@@ -1,8 +1,10 @@
 // Control Panel Page - Server Component (SSR)
-// Route entry point that renders the client-side ControlPanelPage component
+// Fetches session on the server and passes to client to avoid one client round-trip
 
 import ControlPanelPage from "@/components/pages/ControlPanelPage";
+import { getSessionUser } from "@/lib/session";
 
-export default function Page() {
-  return <ControlPanelPage />;
+export default async function Page() {
+  const sessionUser = await getSessionUser();
+  return <ControlPanelPage initialSession={sessionUser} />;
 }

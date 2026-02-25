@@ -1,45 +1,30 @@
 /**
- * Relatives API Route Handler
- * 
- * This file implements RESTful API endpoints for relative management:
- * - GET: Retrieve all relatives (for authenticated users)
- * 
- * Uses PostgreSQL directly via postgresClient for database operations.
- * All operations require authentication via getSessionUser().
+ * Relatives API Route Handler (Prisma)
+ * GET: List all relatives
  */
 
-import { NextRequest, NextResponse } from "next/server";
-import { query } from "@/lib/postgresClient";
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
+import { serializeRelative } from "@/lib/serializers";
 
-/**
- * GET /api/relatives
- * 
- * Retrieves all relatives from the database.
- * 
- * @param req - Next.js request object
- * @returns JSON response with relatives array or error message
- */
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
-    // Require authentication
     const sessionUser = await getSessionUser();
     if (!sessionUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Query all relatives (in a real app, you might want to filter by user)
-    const result = await query(
-      `SELECT * FROM relatives ORDER BY created_at DESC`
-    );
+    const relatives = await prisma.relative.findMany({
+      orderBy: { created_at: "desc" },
+    });
 
-    return NextResponse.json({ relatives: result.rows || [] });
-  } catch (error: any) {
+    return NextResponse.json({
+      relatives: relatives.map(serializeRelative),
+    });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Internal server error";
     console.error("Error fetching relatives:", error);
-    return NextResponse.json(
-      { error: error.message || "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-

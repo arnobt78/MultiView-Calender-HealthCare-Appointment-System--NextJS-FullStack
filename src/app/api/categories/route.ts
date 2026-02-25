@@ -1,45 +1,60 @@
 /**
- * Categories API Route Handler
- * 
- * This file implements RESTful API endpoints for category management:
- * - GET: Retrieve all categories (for authenticated users)
- * 
- * Uses PostgreSQL directly via postgresClient for database operations.
- * All operations require authentication via getSessionUser().
+ * Categories API Route Handler (Prisma)
+ * GET: List all categories | POST: Create a category
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { query } from "@/lib/postgresClient";
+import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
+import { serializeCategory } from "@/lib/serializers";
 
-/**
- * GET /api/categories
- * 
- * Retrieves all categories from the database.
- * 
- * @param req - Next.js request object
- * @returns JSON response with categories array or error message
- */
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
-    // Require authentication
     const sessionUser = await getSessionUser();
     if (!sessionUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Query all categories
-    const result = await query(
-      `SELECT * FROM categories ORDER BY created_at DESC`
-    );
+    const categories = await prisma.category.findMany({
+      orderBy: { created_at: "desc" },
+    });
 
-    return NextResponse.json({ categories: result.rows || [] });
-  } catch (error: any) {
+    return NextResponse.json({
+      categories: categories.map(serializeCategory),
+    });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Internal server error";
     console.error("Error fetching categories:", error);
-    return NextResponse.json(
-      { error: error.message || "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
+export async function POST(req: NextRequest) {
+  try {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await req.json();
+    if (!body.label || typeof body.label !== "string" || body.label.trim() === "") {
+      return NextResponse.json({ error: "label is required" }, { status: 400 });
+    }
+
+    const category = await prisma.category.create({
+      data: {
+        label: body.label.trim(),
+        description: body.description ?? null,
+        color: body.color ?? null,
+        icon: body.icon ?? null,
+      },
+    });
+
+    return NextResponse.json({
+      category: serializeCategory(category),
+    });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Internal server error";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}

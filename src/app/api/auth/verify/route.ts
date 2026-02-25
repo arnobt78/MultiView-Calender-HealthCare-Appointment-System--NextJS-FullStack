@@ -1,12 +1,8 @@
 /**
- * Email Verification API Route
- * 
- * Handles email verification via token.
- * Replaces Supabase Auth email verification.
+ * Email Verification API Route (Prisma)
  */
-
 import { NextRequest, NextResponse } from "next/server";
-import { query } from "@/lib/postgresClient";
+import { prisma } from "@/lib/prisma";
 import { updateEmailVerification } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
@@ -15,37 +11,22 @@ export async function GET(req: NextRequest) {
     const token = searchParams.get("token");
 
     if (!token) {
-      return NextResponse.redirect(
-        new URL("/login?error=invalid_token", req.url)
-      );
+      return NextResponse.redirect(new URL("/login?error=invalid_token", req.url));
     }
 
-    // Find user by verification token
-    const result = await query(
-      "SELECT id, email FROM users WHERE email_verification_token = $1",
-      [token]
-    );
+    const user = await prisma.user.findFirst({
+      where: { email_verification_token: token },
+      select: { id: true, email: true },
+    });
 
-    if (result.rows.length === 0) {
-      return NextResponse.redirect(
-        new URL("/login?error=invalid_token", req.url)
-      );
+    if (!user) {
+      return NextResponse.redirect(new URL("/login?error=invalid_token", req.url));
     }
 
-    const user = result.rows[0];
-
-    // Update user to verified
     await updateEmailVerification(user.id, true);
-
-    // Redirect to login with success message
-    return NextResponse.redirect(
-      new URL("/login?verified=1", req.url)
-    );
-  } catch (error: any) {
+    return NextResponse.redirect(new URL("/login?verified=1", req.url));
+  } catch (error: unknown) {
     console.error("Verification error:", error);
-    return NextResponse.redirect(
-      new URL("/login?error=verification_failed", req.url)
-    );
+    return NextResponse.redirect(new URL("/login?error=verification_failed", req.url));
   }
 }
-
