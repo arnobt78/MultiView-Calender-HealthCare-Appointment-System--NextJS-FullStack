@@ -73,129 +73,129 @@ export default function WeekView() {
           setUserEmail(email);
         }
         if (!uid && !email) return;
-        
+
         // Fetch owned appointments (API automatically filters by authenticated user)
         const ownedRes = await fetch("/api/appointments");
-      const ownedData = await ownedRes.json();
-      const owned = ownedData.appointments || [];
-      
-      // Fetch categories and assignees separately for joining
-      const [categoriesRes, allAssigneesRes] = await Promise.all([
-        fetch("/api/categories"),
-        fetch("/api/appointment-assignees"),
-      ]);
-      const categoriesData = await categoriesRes.json();
-      const allAssigneesData = await allAssigneesRes.json();
-      const categories = categoriesData.categories || [];
-      const allAssignees = allAssigneesData.assignees || [];
-      
-      // Join categories and assignees with appointments
-      const ownedWithCategories = owned.map((appt: Appointment) => ({
-        ...appt,
-        category_data: categories.find((c: Category) => c.id === appt.category),
-      }));
-      const ownedWithAssignees = ownedWithCategories.map((appt: Appointment) => ({
-        ...appt,
-        appointment_assignee: allAssignees.filter((a: AppointmentAssignee) => a.appointment === appt.id),
-      }));
+        const ownedData = await ownedRes.json();
+        const owned = ownedData.appointments || [];
 
-      // --- NEW: Fetch dashboard access for invited users ---
-      const dashboardAccessRes = await fetch("/api/dashboard-access?status=accepted");
-      const dashboardAccessData = await dashboardAccessRes.json();
-      const dashboardAccess = dashboardAccessData.dashboard_access || [];
-      type DashboardAccessRow = { owner_user_id: string };
-      let sharedAppointments: AppointmentWithCategory[] = [];
-      if (dashboardAccess && dashboardAccess.length > 0) {
-        const ownerIds = (dashboardAccess as DashboardAccessRow[]).map((d) => d.owner_user_id).filter(Boolean);
-        // Fetch appointments for each owner (API filters by authenticated user, so we need to fetch individually)
-        const sharedPromises = ownerIds.map(async (ownerId: string) => {
-          // Note: Current API filters by authenticated user, so we can't fetch other users' appointments directly
-          // This would require a new API route that allows fetching by owner_user_id with proper permissions
-          // For now, we'll skip shared appointments from dashboard access
-          return [];
-        });
-        const sharedResults = await Promise.all(sharedPromises);
-        sharedAppointments = sharedResults.flat() as AppointmentWithCategory[];
-      }
+        // Fetch categories and assignees separately for joining
+        const [categoriesRes, allAssigneesRes] = await Promise.all([
+          fetch("/api/categories"),
+          fetch("/api/appointment-assignees"),
+        ]);
+        const categoriesData = await categoriesRes.json();
+        const allAssigneesData = await allAssigneesRes.json();
+        const categories = categoriesData.categories || [];
+        const allAssignees = allAssigneesData.assignees || [];
 
-      // Fetch assigned appointments by user and email
-      const assignedByUser = allAssignees.filter(
-        (a: AppointmentAssignee) => a.user === uid && a.status === "accepted"
-      );
-      const assignedByEmail = email
-        ? allAssignees.filter(
+        // Join categories and assignees with appointments
+        const ownedWithCategories = owned.map((appt: Appointment) => ({
+          ...appt,
+          category_data: categories.find((c: Category) => c.id === appt.category),
+        }));
+        const ownedWithAssignees = ownedWithCategories.map((appt: Appointment) => ({
+          ...appt,
+          appointment_assignee: allAssignees.filter((a: AppointmentAssignee) => a.appointment === appt.id),
+        }));
+
+        // --- NEW: Fetch dashboard access for invited users ---
+        const dashboardAccessRes = await fetch("/api/dashboard-access?status=accepted");
+        const dashboardAccessData = await dashboardAccessRes.json();
+        const dashboardAccess = dashboardAccessData.dashboard_access || [];
+        type DashboardAccessRow = { owner_user_id: string };
+        let sharedAppointments: AppointmentWithCategory[] = [];
+        if (dashboardAccess && dashboardAccess.length > 0) {
+          const ownerIds = (dashboardAccess as DashboardAccessRow[]).map((d) => d.owner_user_id).filter(Boolean);
+          // Fetch appointments for each owner (API filters by authenticated user, so we need to fetch individually)
+          const sharedPromises = ownerIds.map(async (ownerId: string) => {
+            // Note: Current API filters by authenticated user, so we can't fetch other users' appointments directly
+            // This would require a new API route that allows fetching by owner_user_id with proper permissions
+            // For now, we'll skip shared appointments from dashboard access
+            return [];
+          });
+          const sharedResults = await Promise.all(sharedPromises);
+          sharedAppointments = sharedResults.flat() as AppointmentWithCategory[];
+        }
+
+        // Fetch assigned appointments by user and email
+        const assignedByUser = allAssignees.filter(
+          (a: AppointmentAssignee) => a.user === uid && a.status === "accepted"
+        );
+        const assignedByEmail = email
+          ? allAssignees.filter(
             (a: AppointmentAssignee) => a.invited_email === email && a.status === "accepted"
           )
-        : [];
+          : [];
 
-      // Fetch appointment data for assigned appointments
-      const assignedAppointmentIds = [
-        ...assignedByUser.map((a: AppointmentAssignee) => a.appointment),
-        ...assignedByEmail.map((a: AppointmentAssignee) => a.appointment),
-      ].filter(Boolean);
-      const uniqueAppointmentIds = [...new Set(assignedAppointmentIds)];
+        // Fetch appointment data for assigned appointments
+        const assignedAppointmentIds = [
+          ...assignedByUser.map((a: AppointmentAssignee) => a.appointment),
+          ...assignedByEmail.map((a: AppointmentAssignee) => a.appointment),
+        ].filter(Boolean);
+        const uniqueAppointmentIds = [...new Set(assignedAppointmentIds)];
 
-      const assignedAppointmentsData = await Promise.all(
-        uniqueAppointmentIds.map(async (apptId: string) => {
-          const res = await fetch(`/api/appointments/${apptId}`);
-          if (res.ok) {
-            const data = await res.json();
-            return data.appointment;
-          }
-          return null;
-        })
-      );
+        const assignedAppointmentsData = await Promise.all(
+          uniqueAppointmentIds.map(async (apptId: string) => {
+            const res = await fetch(`/api/appointments/${apptId}`);
+            if (res.ok) {
+              const data = await res.json();
+              return data.appointment;
+            }
+            return null;
+          })
+        );
 
-      // Merge assigned appointments with assignee data
-      type AppointmentWithAssignees = AppointmentWithCategory & { appointment_assignee?: AppointmentAssignee[] };
-      const assignedAppointments: AppointmentWithAssignees[] = assignedAppointmentsData
-        .filter(Boolean)
-        .map((appt: Appointment) => {
-          const relatedAssignees = [
-            ...assignedByUser.filter((a: AppointmentAssignee) => a.appointment === appt.id),
-            ...assignedByEmail.filter((a: AppointmentAssignee) => a.appointment === appt.id),
-          ].filter((a) => typeof a.permission === "string" && ["read", "write", "full"].includes(a.permission));
-          
-          return {
-            ...appt,
-            category_data: categories.find((c: Category) => c.id === appt.category),
-            appointment_assignee: relatedAssignees,
-          };
+        // Merge assigned appointments with assignee data
+        type AppointmentWithAssignees = AppointmentWithCategory & { appointment_assignee?: AppointmentAssignee[] };
+        const assignedAppointments: AppointmentWithAssignees[] = assignedAppointmentsData
+          .filter(Boolean)
+          .map((appt: Appointment) => {
+            const relatedAssignees = [
+              ...assignedByUser.filter((a: AppointmentAssignee) => a.appointment === appt.id),
+              ...assignedByEmail.filter((a: AppointmentAssignee) => a.appointment === appt.id),
+            ].filter((a) => typeof a.permission === "string" && ["read", "write", "full"].includes(a.permission));
+
+            return {
+              ...appt,
+              category_data: categories.find((c: Category) => c.id === appt.category),
+              appointment_assignee: relatedAssignees,
+            };
+          });
+
+        // Collect all unique user IDs from appointments to get owner emails
+        const allUserIds = new Set<string>();
+        ownedWithAssignees.forEach((appt: Appointment) => {
+          if (appt.user_id) allUserIds.add(appt.user_id);
+        });
+        sharedAppointments.forEach((appt: Appointment) => {
+          if (appt.user_id) allUserIds.add(appt.user_id);
+        });
+        assignedAppointments.forEach((appt: Appointment) => {
+          if (appt.user_id) allUserIds.add(appt.user_id);
         });
 
-      // Collect all unique user IDs from appointments to get owner emails
-      const allUserIds = new Set<string>();
-      ownedWithAssignees.forEach((appt: Appointment) => {
-        if (appt.user_id) allUserIds.add(appt.user_id);
-      });
-      sharedAppointments.forEach((appt: Appointment) => {
-        if (appt.user_id) allUserIds.add(appt.user_id);
-      });
-      assignedAppointments.forEach((appt: Appointment) => {
-        if (appt.user_id) allUserIds.add(appt.user_id);
-      });
+        // Fetch user data for all owners (using search API)
+        const ownerUsersPromises = Array.from(allUserIds).map(async (userId: string) => {
+          const res = await fetch(`/api/users/search?query=${userId}`);
+          if (res.ok) {
+            const data = await res.json();
+            const user = data.users?.find((u: { id: string }) => u.id === userId);
+            return user ? { id: user.id, email: user.email } : null;
+          }
+          return null;
+        });
+        const ownerUsersResults = await Promise.all(ownerUsersPromises);
+        const allOwnerUsers = ownerUsersResults.filter(Boolean) as { id: string; email: string }[];
 
-      // Fetch user data for all owners (using search API)
-      const ownerUsersPromises = Array.from(allUserIds).map(async (userId: string) => {
-        const res = await fetch(`/api/users/search?query=${userId}`);
-        if (res.ok) {
-          const data = await res.json();
-          const user = data.users?.find((u: { id: string }) => u.id === userId);
-          return user ? { id: user.id, email: user.email } : null;
-        }
-        return null;
-      });
-      const ownerUsersResults = await Promise.all(ownerUsersPromises);
-      const allOwnerUsers = ownerUsersResults.filter(Boolean) as { id: string; email: string }[];
-
-      setOwnerUsers(allOwnerUsers || []);
-      // Merge and deduplicate, always include all assignees for each appointment
-      const allAppointments: AppointmentWithAssignees[] = [
-        ...ownedWithAssignees,
-        ...sharedAppointments,
-        ...assignedAppointments,
-      ].map((appt) => ({ ...appt }));
-      const deduped: AppointmentWithAssignees[] = allAppointments.reduce(
+        setOwnerUsers(allOwnerUsers || []);
+        // Merge and deduplicate, always include all assignees for each appointment
+        const allAppointments: AppointmentWithAssignees[] = [
+          ...ownedWithAssignees,
+          ...sharedAppointments,
+          ...assignedAppointments,
+        ].map((appt) => ({ ...appt }));
+        const deduped: AppointmentWithAssignees[] = allAppointments.reduce(
           (acc: AppointmentWithAssignees[], curr: AppointmentWithAssignees) => {
             if (!curr || !curr.id) return acc;
             const existing = acc.find((a) => a.id === curr.id);
@@ -211,7 +211,7 @@ export default function WeekView() {
           },
           []
         );
-      if (deduped) setAppointments(deduped as AppointmentWithCategory[]);
+        if (deduped) setAppointments(deduped as AppointmentWithCategory[]);
       } catch (error) {
         console.error("Error fetching appointments:", error);
       }
@@ -253,7 +253,7 @@ export default function WeekView() {
   };
 
   const deleteAppt = async (id: string) => {
-    if (!confirm("Termin wirklich löschen?")) return;
+    if (!confirm("Delete appointment?")) return;
     try {
       const response = await fetch(`/api/appointments/${id}`, {
         method: "DELETE",
@@ -288,7 +288,7 @@ export default function WeekView() {
     );
   }
 
-  // Tag logic (Heute, Demnächst, Einen Tag später, Datum überschritten)
+  // Tag logic (Today, Next, One day later, Date overdrawn)
   function getDateTag(date: Date) {
     const today = new Date(currentDate);
     today.setHours(0, 0, 0, 0);
@@ -300,25 +300,25 @@ export default function WeekView() {
     if (diffDays === 0)
       return (
         <span className="ml-2 px-2 py-0.5 rounded bg-green-100 text-green-700 text-xs font-medium">
-          Heute
+          Today
         </span>
       );
     if (diffDays === 1)
       return (
         <span className="ml-2 px-2 py-0.5 rounded bg-yellow-100 text-yellow-800 text-xs font-medium">
-          Demnächst
+          Next day
         </span>
       );
     if (diffDays > 1)
       return (
         <span className="ml-2 px-2 py-0.5 rounded bg-sky-100 text-sky-700 text-xs font-medium">
-          Einen Tag später
+          Some days later
         </span>
       );
     if (diffDays < 0)
       return (
         <span className="ml-2 px-2 py-0.5 rounded bg-gray-200 text-gray-500 text-xs font-medium">
-          Datum überschritten
+          Date passed
         </span>
       );
     return null;
@@ -357,9 +357,9 @@ export default function WeekView() {
   };
 
   return (
-    <div className="p-6 sm:p-8 bg-[#f5f5f6] min-h-[calc(100vh-80px)] overflow-auto">
-      <h2 className="text-2xl font-semibold tracking-tight text-gray-800 mb-4">
-        Wochenansicht
+    <div className="py-4 px-2 sm:px-4 lg:px-8 bg-[#f5f5f6] min-h-[calc(100vh-80px)] overflow-auto">
+      <h2 className="text-2xl font-semibold tracking-tight text-gray-800 mb-2">
+        Week View
       </h2>
       <div
         style={{
@@ -434,7 +434,7 @@ export default function WeekView() {
           {/* Date/day header row */}
           {Array.from({ length: 7 }).map((_, i) => {
             const day = addDays(weekStart, i);
-            // Only highlight and show 'Heute' if today is in this week
+            // Only highlight and show 'Today' if today is in this week
             const isToday = day.toDateString() === new Date().toDateString();
             const isCurrentWeek = (() => {
               const today = new Date();
@@ -460,7 +460,7 @@ export default function WeekView() {
                 {format(day, "EEE dd.MM.")}
                 {isToday && isCurrentWeek && (
                   <span className="ml-2 px-2 py-0.5 rounded bg-green-100 text-green-700 text-xs font-medium">
-                    Heute
+                    Today
                   </span>
                 )}
               </div>

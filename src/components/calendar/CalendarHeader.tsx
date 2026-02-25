@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button";
 import React from "react";
 import AppointmentDialogTrigger from "./AppointmentDialogTrigger";
 
-// Change tab order to Liste, Woche, Monat
-const views = ["Liste", "Woche", "Monat"] as const;
+// Change tab order to List, Week, Month
+const views = ["List", "Week", "Month"] as const;
 type ViewType = (typeof views)[number];
 
 export default function CalendarHeader({
@@ -20,26 +20,26 @@ export default function CalendarHeader({
 }) {
   const { currentDate, setCurrentDate } = useDateContext();
 
-  // Navigation logic: only change date for Monat/Woche, not for Liste
+  // Navigation logic: only change date for Month/Week, not for List
   const handlePrev = () => {
-    if (view === "Monat") setCurrentDate(addDays(currentDate, -30));
-    else if (view === "Woche") setCurrentDate(addDays(currentDate, -7));
-    // For Liste, do nothing or optionally disable
+    if (view === "Month") setCurrentDate(addDays(currentDate, -30));
+    else if (view === "Week") setCurrentDate(addDays(currentDate, -7));
+    // For List, do nothing or optionally disable
   };
   const handleNext = () => {
-    if (view === "Monat") setCurrentDate(addDays(currentDate, 30));
-    else if (view === "Woche") setCurrentDate(addDays(currentDate, 7));
-    // For Liste, do nothing or optionally disable
+    if (view === "Month") setCurrentDate(addDays(currentDate, 30));
+    else if (view === "Week") setCurrentDate(addDays(currentDate, 7));
+    // For List, do nothing or optionally disable
   };
 
   return (
-    <div className="flex items-center justify-between p-4 border-b mb-4">
+    <div className="flex items-center justify-between py-4 px-2 sm:px-4 lg:px-8">
       <div className="flex items-center gap-4">
         <Button
           variant="outline"
           onClick={handlePrev}
-          disabled={view === "Liste"}
-          className="cursor-pointer hover:bg-gray-100 transition-colors"
+          disabled={view === "List"}
+          className="cursor-pointer hover:bg-gray-100 transition-colors shadow-xl"
         >
           ←
         </Button>
@@ -49,7 +49,7 @@ export default function CalendarHeader({
         <Button
           variant="outline"
           onClick={handleNext}
-          disabled={view === "Liste"}
+          disabled={view === "List"}
           className="cursor-pointer hover:bg-gray-100 transition-colors"
         >
           →
@@ -61,14 +61,14 @@ export default function CalendarHeader({
             <Button
               key={v}
               onClick={() => {
-                if (v === "Liste") {
-                  // Reset date to today when switching to Liste
+                if (v === "List") {
+                  // Reset date to today when switching to List
                   setCurrentDate(new Date());
                 }
                 setView(v);
               }}
               variant={v === view ? "default" : "outline"}
-              className="cursor-pointer transition-colors"
+              className="cursor-pointer transition-colors shadow-xl"
             >
               {v}
             </Button>
@@ -76,7 +76,7 @@ export default function CalendarHeader({
         </div>
         {/* Restore + Neuer Termin button */}
         <AppointmentDialogTrigger
-          trigger={<Button variant="default" className="cursor-pointer">+ Neuer Termin</Button>}
+          trigger={<Button variant="default" className="cursor-pointer shadow-xl">+ New Appointment</Button>}
         />
       </div>
     </div>

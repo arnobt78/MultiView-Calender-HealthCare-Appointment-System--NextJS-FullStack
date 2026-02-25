@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/card";
 
 export function Register() {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -28,7 +29,7 @@ export function Register() {
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, display_name: name.trim() || undefined }),
       });
 
       const data = await response.json();
@@ -66,6 +67,20 @@ export function Register() {
         <CardContent>
           <form onSubmit={handleRegister} className="space-y-4">
             <div className="space-y-2">
+              <label htmlFor="register-name" className="text-sm font-medium text-gray-700">
+                Name
+              </label>
+              <Input
+                id="register-name"
+                name="name"
+                type="text"
+                placeholder="John Doe"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                autoComplete="name"
+              />
+            </div>
+            <div className="space-y-2">
               <label htmlFor="register-email" className="text-sm font-medium text-gray-700">
                 Email
               </label>
@@ -73,7 +88,7 @@ export function Register() {
                 id="register-email"
                 name="email"
                 type="email"
-                placeholder="Email"
+                placeholder="john@doe.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -89,7 +104,7 @@ export function Register() {
                 id="register-password"
                 name="password"
                 type="password"
-                placeholder="Password"
+                placeholder="12345678"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -102,7 +117,7 @@ export function Register() {
           </form>
           <p className="text-center pt-4 text-sm">
             Already have an account?{" "}
-            <Link href="/login" className="text-blue-600 underline">
+            <Link href="/login" className="text-sky-600 hover:text-sky-700 hover:font-medium transition-colors">
               Login
             </Link>
           </p>

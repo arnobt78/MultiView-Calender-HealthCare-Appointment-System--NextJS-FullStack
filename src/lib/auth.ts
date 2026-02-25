@@ -122,18 +122,20 @@ export async function getUserById(userId: string) {
  * @param email - User email
  * @param passwordHash - Hashed password
  * @param emailVerificationToken - Email verification token
+ * @param displayName - Optional display name (shown in navbar, etc.)
  * @returns Created user object
  */
 export async function createUser(
   email: string,
   passwordHash: string,
-  emailVerificationToken: string
+  emailVerificationToken: string,
+  displayName?: string | null
 ) {
   const result = await query(
-    `INSERT INTO users (id, email, password_hash, email_verified, email_verification_token, created_at)
-     VALUES (gen_random_uuid(), $1, $2, false, $3, NOW())
+    `INSERT INTO users (id, email, password_hash, email_verified, email_verification_token, display_name, created_at)
+     VALUES (gen_random_uuid(), $1, $2, false, $3, $4, NOW())
      RETURNING id, email, email_verified, display_name, role, created_at`,
-    [email, passwordHash, emailVerificationToken]
+    [email, passwordHash, emailVerificationToken, displayName ?? null]
   );
   return result.rows[0];
 }

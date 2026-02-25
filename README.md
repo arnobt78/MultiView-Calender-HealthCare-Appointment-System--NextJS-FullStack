@@ -1,5 +1,11 @@
 # MultiView Calendar Health Care Appointment Management System – Next.js, Postgresql FullStack Project (Admin Control Panel Permission Dashboard)
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Next.js](https://img.shields.io/badge/Next.js-15-black)](https://nextjs.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue)](https://www.postgresql.org/)
+[![Vercel](https://img.shields.io/badge/Vercel-black)](https://vercel.com/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4-blue)](https://tailwindcss.com/)
+
 A modern, full-featured calendar and appointment management web application built with Next.js, React, and PostgreSQL. Perfect for healthcare, clinics, and organizations needing robust scheduling, filtering, and client management with multiple calendar views, instant search, advanced filtering, and a clean, responsive UI.
 
 **Live Demo:** [https://doctor-patient-calendar-appointment.vercel.app/](https://doctor-patient-calendar-appointment.vercel.app/)
@@ -469,8 +475,33 @@ npm run db:seed
 # Check all users in the database
 npm run db:check-users
 
-# Manage user (verify email, set password)
+# Manage user (verify email, set password, set display name)
 npm run db:manage-user -- --email user@example.com --verify --set-password newpassword
+npm run db:manage-user -- --email test@user.com --display-name "Guest User"
+```
+
+#### Verify a user via terminal (e.g. after registering with a dummy email)
+
+If you registered with an email you can't access (e.g. `test@user.com`), you can mark the account as verified from the terminal so you can log in:
+
+```bash
+# Mark user as verified (required before they can log in)
+npm run db:manage-user -- --email test@user.com --verify
+```
+
+Example output:
+
+```
+👤 Found user: test@user.com
+   Email Verified: ❌ No  →  ✅ Yes
+✅ Email verified successfully!
+✅ User can now login! Go to /login page to test
+```
+
+Then go to `/login` and sign in with that email and password. You can also set or change a user's password:
+
+```bash
+npm run db:manage-user -- --email test@user.com --set-password "newpassword"
 ```
 
 ---
@@ -748,7 +779,7 @@ Header component with view switcher and date navigation.
 ```tsx
 import CalendarHeader from '@/components/calendar/CalendarHeader';
 
-const [view, setView] = useState<"Liste" | "Woche" | "Monat">("Liste");
+const [view, setView] = useState<"List" | "Week" | "Month">("List");
 
 <CalendarHeader view={view} setView={setView} />
 ```

@@ -103,7 +103,7 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
         {showDetails ? (
           // WeekView: Rich details card
           <div className={clsx(
-            "flex flex-col w-full h-full rounded-md font-medium cursor-pointer shadow-sm transition hover:brightness-110 border border-gray-200 bg-white",
+            "flex flex-col w-full h-full rounded-md font-medium cursor-pointer shadow-xl transition hover:brightness-110 border border-gray-200 bg-white",
             { "line-through opacity-60": isDone }
           )}
             style={{ padding: "4px 4px" }}
@@ -219,7 +219,7 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
           // MonthView: Simple card
           <div
             className={clsx(
-              "flex items-center w-full rounded-md font-medium cursor-pointer shadow-sm transition hover:brightness-110 border border-gray-200 bg-white",
+              "flex items-center w-full rounded-md font-medium cursor-pointer shadow-xl transition hover:brightness-110 border border-gray-200 bg-white",
               { "line-through opacity-60": isDone }
             )}
             style={{ minHeight: 24 }}
@@ -233,7 +233,7 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
       </HoverCardTrigger>
 
 
-      <HoverCardContent className="relative text-sm min-w-[340px] bg-white rounded-xl shadow-lg p-4">
+      <HoverCardContent className="relative text-sm min-w-[340px] bg-white rounded-xl shadow-xl p-4">
         <div
           className="absolute left-2 top-2 bottom-2 w-1 rounded"
           style={{ backgroundColor: color }}

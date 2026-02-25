@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { email, password } = await req.json();
+    const { email, password, display_name } = await req.json();
 
     // Validate input
     if (!email || !password) {
@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
     const verificationToken = generateVerificationToken();
 
     // Create user in database
-    const user = await createUser(email, passwordHash, verificationToken);
+    const user = await createUser(email, passwordHash, verificationToken, display_name || null);
 
     // Send verification email
     try {
@@ -103,6 +103,7 @@ export async function POST(req: NextRequest) {
       user: {
         id: user.id,
         email: user.email,
+        display_name: user.display_name ?? null,
       },
     }, {
       headers: {

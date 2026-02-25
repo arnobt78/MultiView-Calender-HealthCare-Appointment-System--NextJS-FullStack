@@ -46,10 +46,10 @@ export default function AcceptInvitationPage() {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-16 p-6">
+    <div className="max-w-9xl mx-auto mt-16 py-8 px-2 sm:px-6 lg:px-8">
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Accept Invitation</CardTitle>
+          <CardTitle className="text-2xl font-semibold">Accept Invitation</CardTitle>
           <CardDescription>
             {checkingAuth
               ? "Checking authentication..."

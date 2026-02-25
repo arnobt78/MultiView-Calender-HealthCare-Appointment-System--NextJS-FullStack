@@ -109,13 +109,13 @@ export default function MonthView() {
           setUserEmail(email);
         }
       }
-      
+
       try {
         // Fetch owned appointments (API automatically filters by authenticated user)
         const ownedRes = await fetch("/api/appointments");
         const ownedData = await ownedRes.json();
         const owned = ownedData.appointments || [];
-        
+
         // Fetch categories, patients, and assignees separately for joining
         const [categoriesRes, patientsRes, allAssigneesRes] = await Promise.all([
           fetch("/api/categories"),
@@ -128,7 +128,7 @@ export default function MonthView() {
         const categories = categoriesData.categories || [];
         const patients = patientsData.patients || [];
         const allAssignees = allAssigneesData.assignees || [];
-        
+
         // Join categories, patients, and assignees with appointments
         const ownedWithDetails = owned.map((appt: Appointment) => ({
           ...appt,
@@ -137,110 +137,110 @@ export default function MonthView() {
           appointment_assignee: allAssignees.filter((a: AppointmentAssignee) => a.appointment === appt.id),
         }));
 
-      // --- NEW: Fetch dashboard access for invited users ---
-      const dashboardAccessRes = await fetch("/api/dashboard-access?status=accepted");
-      const dashboardAccessData = await dashboardAccessRes.json();
-      const dashboardAccess = dashboardAccessData.dashboard_access || [];
-      type DashboardAccessRow = { owner_user_id: string };
-      const sharedAppointments: AppointmentWithCategory[] = [];
-      if (dashboardAccess && dashboardAccess.length > 0) {
-        const ownerIds = (dashboardAccess as DashboardAccessRow[]).map((d) => d.owner_user_id).filter(Boolean);
-        // Note: Current API filters by authenticated user, so we can't fetch other users' appointments directly
-        // This would require a new API route that allows fetching by owner_user_id with proper permissions
-        // For now, we'll skip shared appointments from dashboard access
-      }
+        // --- NEW: Fetch dashboard access for invited users ---
+        const dashboardAccessRes = await fetch("/api/dashboard-access?status=accepted");
+        const dashboardAccessData = await dashboardAccessRes.json();
+        const dashboardAccess = dashboardAccessData.dashboard_access || [];
+        type DashboardAccessRow = { owner_user_id: string };
+        const sharedAppointments: AppointmentWithCategory[] = [];
+        if (dashboardAccess && dashboardAccess.length > 0) {
+          const ownerIds = (dashboardAccess as DashboardAccessRow[]).map((d) => d.owner_user_id).filter(Boolean);
+          // Note: Current API filters by authenticated user, so we can't fetch other users' appointments directly
+          // This would require a new API route that allows fetching by owner_user_id with proper permissions
+          // For now, we'll skip shared appointments from dashboard access
+        }
 
-      // Fetch assigned appointments by user and email
-      const assignedByUser = allAssignees.filter(
-        (a: AppointmentAssignee) => a.user === uid && a.status === "accepted"
-      );
-      const assignedByEmail = email
-        ? allAssignees.filter(
+        // Fetch assigned appointments by user and email
+        const assignedByUser = allAssignees.filter(
+          (a: AppointmentAssignee) => a.user === uid && a.status === "accepted"
+        );
+        const assignedByEmail = email
+          ? allAssignees.filter(
             (a: AppointmentAssignee) => a.invited_email === email && a.status === "accepted"
           )
-        : [];
+          : [];
 
-      // Fetch appointment data for assigned appointments
-      const assignedAppointmentIds = [
-        ...assignedByUser.map((a: AppointmentAssignee) => a.appointment),
-        ...assignedByEmail.map((a: AppointmentAssignee) => a.appointment),
-      ].filter(Boolean);
-      const uniqueAppointmentIds = [...new Set(assignedAppointmentIds)];
+        // Fetch appointment data for assigned appointments
+        const assignedAppointmentIds = [
+          ...assignedByUser.map((a: AppointmentAssignee) => a.appointment),
+          ...assignedByEmail.map((a: AppointmentAssignee) => a.appointment),
+        ].filter(Boolean);
+        const uniqueAppointmentIds = [...new Set(assignedAppointmentIds)];
 
-      const assignedAppointmentsData = await Promise.all(
-        uniqueAppointmentIds.map(async (apptId: string) => {
-          const res = await fetch(`/api/appointments/${apptId}`);
+        const assignedAppointmentsData = await Promise.all(
+          uniqueAppointmentIds.map(async (apptId: string) => {
+            const res = await fetch(`/api/appointments/${apptId}`);
+            if (res.ok) {
+              const data = await res.json();
+              return data.appointment;
+            }
+            return null;
+          })
+        );
+
+        // Merge assigned appointments with assignee data
+        type AppointmentWithAssignees = AppointmentWithCategory & { appointment_assignee?: AppointmentAssignee[] };
+        const assignedAppointments: AppointmentWithAssignees[] = assignedAppointmentsData
+          .filter(Boolean)
+          .map((appt: Appointment) => {
+            const relatedAssignees = [
+              ...assignedByUser.filter((a: AppointmentAssignee) => a.appointment === appt.id),
+              ...assignedByEmail.filter((a: AppointmentAssignee) => a.appointment === appt.id),
+            ].filter((a) => typeof a.permission === "string" && ["read", "write", "full"].includes(a.permission));
+
+            return {
+              ...appt,
+              category_data: categories.find((c: Category) => c.id === appt.category),
+              patient_data: patients.find((p: Patient) => p.id === appt.patient),
+              appointment_assignee: relatedAssignees,
+            };
+          });
+        // Merge and deduplicate, always include all assignees for each appointment
+        const allAppointments: AppointmentWithAssignees[] = [...ownedWithDetails, ...sharedAppointments, ...assignedAppointments].map((appt) => ({ ...appt }));
+        const deduped: AppointmentWithAssignees[] = allAppointments.reduce((acc: AppointmentWithAssignees[], curr: AppointmentWithAssignees) => {
+          if (!curr || !curr.id) return acc;
+          const existing = acc.find((a) => a.id === curr.id);
+          if (existing) {
+            existing.appointment_assignee = [
+              ...(existing.appointment_assignee || []),
+              ...(curr.appointment_assignee || [])
+            ].filter((v, i, arr) => v && v.id && arr.findIndex((b) => b.id === v.id) === i);
+          } else {
+            acc.push(curr);
+          }
+          return acc;
+        }, []);
+        if (deduped) buildCalendar(deduped as AppointmentWithCategory[]);
+
+        // Collect all unique user IDs from appointments and dashboard_access to get owner emails
+        const allUserIds = new Set<string>();
+        ownedWithDetails.forEach((appt: Appointment) => {
+          if (appt.user_id) allUserIds.add(appt.user_id);
+        });
+        assignedAppointments.forEach((appt: Appointment) => {
+          if (appt.user_id) allUserIds.add(appt.user_id);
+        });
+        // Also add owner_user_id from dashboardAccess for invited dashboard appointments
+        if (dashboardAccess && dashboardAccess.length > 0) {
+          (dashboardAccess as { owner_user_id: string }[]).forEach(d => {
+            if (d.owner_user_id) allUserIds.add(d.owner_user_id);
+          });
+        }
+
+        // Fetch user data for all owners (using search API)
+        const ownerUsersPromises = Array.from(allUserIds).map(async (userId: string) => {
+          const res = await fetch(`/api/users/search?query=${userId}`);
           if (res.ok) {
             const data = await res.json();
-            return data.appointment;
+            const user = data.users?.find((u: { id: string }) => u.id === userId);
+            return user ? { id: user.id, email: user.email } : null;
           }
           return null;
-        })
-      );
-
-      // Merge assigned appointments with assignee data
-      type AppointmentWithAssignees = AppointmentWithCategory & { appointment_assignee?: AppointmentAssignee[] };
-      const assignedAppointments: AppointmentWithAssignees[] = assignedAppointmentsData
-        .filter(Boolean)
-        .map((appt: Appointment) => {
-          const relatedAssignees = [
-            ...assignedByUser.filter((a: AppointmentAssignee) => a.appointment === appt.id),
-            ...assignedByEmail.filter((a: AppointmentAssignee) => a.appointment === appt.id),
-          ].filter((a) => typeof a.permission === "string" && ["read", "write", "full"].includes(a.permission));
-          
-          return {
-            ...appt,
-            category_data: categories.find((c: Category) => c.id === appt.category),
-            patient_data: patients.find((p: Patient) => p.id === appt.patient),
-            appointment_assignee: relatedAssignees,
-          };
         });
-      // Merge and deduplicate, always include all assignees for each appointment
-      const allAppointments: AppointmentWithAssignees[] = [...ownedWithDetails, ...sharedAppointments, ...assignedAppointments].map((appt) => ({ ...appt }));
-      const deduped: AppointmentWithAssignees[] = allAppointments.reduce((acc: AppointmentWithAssignees[], curr: AppointmentWithAssignees) => {
-        if (!curr || !curr.id) return acc;
-        const existing = acc.find((a) => a.id === curr.id);
-        if (existing) {
-          existing.appointment_assignee = [
-            ...(existing.appointment_assignee || []),
-            ...(curr.appointment_assignee || [])
-          ].filter((v, i, arr) => v && v.id && arr.findIndex((b) => b.id === v.id) === i);
-        } else {
-          acc.push(curr);
-        }
-        return acc;
-      }, []);
-      if (deduped) buildCalendar(deduped as AppointmentWithCategory[]);
+        const ownerUsersResults = await Promise.all(ownerUsersPromises);
+        const allOwnerUsers = ownerUsersResults.filter(Boolean) as { id: string; email: string }[];
 
-      // Collect all unique user IDs from appointments and dashboard_access to get owner emails
-      const allUserIds = new Set<string>();
-      ownedWithDetails.forEach((appt: Appointment) => {
-        if (appt.user_id) allUserIds.add(appt.user_id);
-      });
-      assignedAppointments.forEach((appt: Appointment) => {
-        if (appt.user_id) allUserIds.add(appt.user_id);
-      });
-      // Also add owner_user_id from dashboardAccess for invited dashboard appointments
-      if (dashboardAccess && dashboardAccess.length > 0) {
-        (dashboardAccess as { owner_user_id: string }[]).forEach(d => {
-          if (d.owner_user_id) allUserIds.add(d.owner_user_id);
-        });
-      }
-
-      // Fetch user data for all owners (using search API)
-      const ownerUsersPromises = Array.from(allUserIds).map(async (userId: string) => {
-        const res = await fetch(`/api/users/search?query=${userId}`);
-        if (res.ok) {
-          const data = await res.json();
-          const user = data.users?.find((u: { id: string }) => u.id === userId);
-          return user ? { id: user.id, email: user.email } : null;
-        }
-        return null;
-      });
-      const ownerUsersResults = await Promise.all(ownerUsersPromises);
-      const allOwnerUsers = ownerUsersResults.filter(Boolean) as { id: string; email: string }[];
-
-      setOwnerUsers(allOwnerUsers || []);
+        setOwnerUsers(allOwnerUsers || []);
       } catch (error) {
         console.error("Error fetching appointments:", error);
       }
@@ -382,13 +382,13 @@ export default function MonthView() {
   }
 
   return (
-    <div className="flex flex-col md:flex-row p-6 sm:p-8 space-y-4 md:space-y-0 md:space-x-8 bg-[#f5f5f6] min-h-[calc(100vh-80px)]">
+    <div className="flex flex-col md:flex-row py-4 px-2 sm:px-4 lg:px-8 space-y-4 md:space-y-0 md:space-x-8 bg-[#f5f5f6] min-h-[calc(100vh-80px)]">
       <div className="flex-1">
         <h2 className="text-2xl font-semibold tracking-tight text-gray-800 mb-2">
-          Monatsansicht
+          Month View
         </h2>
         <div className="grid grid-cols-7 gap-px bg-gray-200 text-sm">
-          {["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"].map((d) => (
+          {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
             <div
               key={d}
               className="bg-white p-2 font-medium text-gray-600 text-center border-b border-gray-200"
@@ -457,22 +457,14 @@ export default function MonthView() {
 
       {/* Side list for selected date */}
       {selectedDate && (
-        <div className="w-full md:w-[350px] bg-white rounded-xl shadow-lg p-2 h-fit sticky top-41">
+        <div className="w-full md:w-[350px] bg-white rounded-xl shadow-xl p-2 h-fit sticky top-41">
           <div className="flex items-center gap-2 mb-4">
-            <span className="bg-green-700 text-white rounded px-2 py-1 text-lg font-bold">
-              {format(selectedDate, "d")}
-            </span>
             <span className="text-lg font-semibold text-gray-800">
               {format(selectedDate, "EEEE, dd. MMMM", { locale: de })}
             </span>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="ml-auto bg-gray-200 hover:bg-gray-300 transition cursor-pointer"
-              onClick={() => setSelectedDate(null)}
-            >
-              Schließen
-            </Button>
+            <span className="bg-green-700 text-white rounded px-2 py-1 text-lg font-bold">
+              {format(selectedDate, "d")}
+            </span>
           </div>
           <div className="space-y-4">
             {sortByTime(
@@ -515,7 +507,7 @@ export default function MonthView() {
                 <div
                   key={a.id}
                   className={clsx(
-                    "relative border rounded-xl shadow bg-white p-0 flex items-stretch transition hover:shadow-lg min-h-[110px]",
+                    "relative border rounded-xl shadow bg-white p-0 flex items-stretch transition hover:shadow-xl min-h-[110px]",
                     isDone && "bg-gray-100 opacity-60"
                   )}
                 >
@@ -550,13 +542,13 @@ export default function MonthView() {
                           <FiFileText className="w-4 h-4" />
                         </span>
                         <span className="text-xs text-gray-700 break-words">
-                          {a.notes}
+                          Notes: {a.notes}
                         </span>
                       </div>
                     )}
 
                     <div className="flex items-center gap-2 text-xs text-gray-400 italic mb-1">
-                      <FiUser /> Klient:{" "}
+                      <FiUser /> Client:{" "}
                       <span className="not-italic text-gray-700">
                         {a.patient && patients.length > 0
                           ? (() => {
@@ -571,7 +563,7 @@ export default function MonthView() {
 
                     {a.location && (
                       <div className="flex items-center gap-2 text-xs text-gray-400 italic mb-1">
-                        <FiMapPin /> Ort:{" "}
+                        <FiMapPin /> Location:{" "}
                         <span className="not-italic text-gray-700">
                           {a.location}
                         </span>
@@ -580,7 +572,7 @@ export default function MonthView() {
 
                     {a.attachements && a.attachements.length > 0 && (
                       <div className="flex items-center gap-2 text-xs text-gray-400 mb-1">
-                        <FiPaperclip /> Anhänge:
+                        <FiPaperclip /> Attachments:
                         {a.attachements.map((file, idx) => {
                           // Get Vercel Blob public URL
                           const publicUrl = getPublicUrl(file);
@@ -597,14 +589,14 @@ export default function MonthView() {
                             </a>
                           ) : (
                             <span key={idx} className="text-red-600">
-                              [Fehler: Datei nicht gefunden]
+                              [Error: File not found]
                             </span>
                           );
                         })}
                       </div>
                     )}
                     <div className="flex items-center gap-2 text-xs text-gray-400 mb-1">
-                      <FiFlag /> Status:{" "}
+                      <FiFlag /> Status:
                       <span className="not-italic text-gray-700">
                         {a.status}
                       </span>
@@ -613,7 +605,7 @@ export default function MonthView() {
                     {/* Refer to: patient name from appointment.patient field */}
                     {a.patient && (
                       <div className="flex items-center gap-2 text-xs text-gray-400 mb-1">
-                        <FiUsers /> Refer to:
+                        <FiUser /> Client:
                         {(() => {
                           try {
                             // Debug: Log the patient data (development only)
@@ -672,7 +664,7 @@ export default function MonthView() {
 
                     {dedupedAssignees.length > 0 && (
                       <div className="flex items-center gap-2 text-xs text-gray-400 mb-1">
-                        <FiUsers /> Assigned by:
+                        <FiUser /> Assigned by:
                         {a.user_id === userId ? (
                           // Owner view
                           <span className="not-italic text-green-700">
@@ -696,7 +688,7 @@ export default function MonthView() {
 
                     {activities.length > 0 && (
                       <div className="flex flex-col gap-1 text-xs text-gray-400 mb-1">
-                        <span>Aktivitäten:</span>
+                        <span>Activities:</span>
                         {activities
                           .filter((act) => act.appointment === a.id)
                           .map((act, idx) => (
@@ -758,7 +750,7 @@ export default function MonthView() {
                               }
                             />
                             <span className="text-xs text-gray-500 select-none">
-                              {isDone ? "Erledigt" : "Offen"}
+                              {isDone ? "Done" : "Open"}
                             </span>
                           </label>
                         );
@@ -804,7 +796,7 @@ export default function MonthView() {
                             variant="outline"
                             className="rounded-full border-gray-300 cursor-pointer"
                             onClick={() => setEditAppt(a)}
-                            aria-label="Bearbeiten"
+                            aria-label="Edit"
                           >
                             <FiEdit2 className="w-4 h-4" />
                           </Button>
@@ -840,7 +832,7 @@ export default function MonthView() {
                             variant="ghost"
                             className="rounded-full cursor-pointer"
                             onClick={() => deleteAppt(a.id)}
-                            aria-label="Löschen"
+                            aria-label="Delete"
                           >
                             <FiTrash2 className="w-4 h-4 text-red-500" />
                           </Button>
@@ -854,7 +846,7 @@ export default function MonthView() {
             })}
             {(calendarDays.find((d) => isSameDay(d.date, selectedDate))
               ?.appointments.length || 0) === 0 && (
-                <div className="text-gray-400 text-center">Keine Termine</div>
+                <div className="text-gray-400 text-center">No appointments</div>
               )}
           </div>
         </div>

@@ -73,14 +73,14 @@ export default function UserAccessPermission() {
   };
 
   return (
-    <Card className="max-w-lg">
+    <Card className="w-full">
       <CardHeader>
-        <CardTitle>User Dashboard Access Invitation</CardTitle>
-        <CardDescription>Invite someone to access a user&apos;s dashboard.</CardDescription>
+        <CardTitle className="text-lg font-semibold">User Dashboard Access Invitation</CardTitle>
+        <CardDescription className="text-base text-muted-foreground">Invite someone to access a user&apos;s dashboard.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="user-email">Invitee Email</Label>
+          <Label htmlFor="user-email" className="text-base font-medium">Invitee Email</Label>
           <Input
             id="user-email"
             type="email"
@@ -90,7 +90,7 @@ export default function UserAccessPermission() {
           />
         </div>
         <div className="space-y-2 relative">
-          <Label htmlFor="user-search">Dashboard Owner User</Label>
+          <Label htmlFor="user-search" className="text-base font-medium">Dashboard Owner User</Label>
           <Input
             id="user-search"
             placeholder="Search user by email or name"
@@ -103,7 +103,7 @@ export default function UserAccessPermission() {
             autoComplete="off"
           />
           {showDropdown && results.length > 0 && (
-            <ul className="absolute z-10 w-full mt-1 border rounded-md bg-white shadow-lg max-h-40 overflow-y-auto">
+            <ul className="absolute z-10 w-full mt-1 border rounded-md bg-white shadow-xl max-h-40 overflow-y-auto">
               {results.map((u) => (
                 <li
                   key={u.id}
@@ -124,7 +124,7 @@ export default function UserAccessPermission() {
           )}
         </div>
         <div className="space-y-2">
-          <Label>Permission</Label>
+          <Label className="text-base font-medium">Permission</Label>
           <Select value={permission} onValueChange={(v: "read" | "write" | "full") => setPermission(v)}>
             <SelectTrigger>
               <SelectValue />

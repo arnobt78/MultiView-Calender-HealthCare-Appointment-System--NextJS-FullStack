@@ -8,6 +8,7 @@ import {
   getUserByEmail,
   createUserFromGoogle,
   updateUserProfile,
+  updateEmailVerification,
   generateToken,
 } from "@/lib/auth";
 import { setSession } from "@/lib/session";
@@ -104,12 +105,13 @@ export async function GET(req: NextRequest) {
         profile.picture ?? null
       );
     } else {
-      // Update profile if we have new name/image from Google
+      // Update profile and mark email verified (Google verified the email)
       await updateUserProfile(user.id, {
         display_name: profile.name ?? user.display_name,
         image: profile.picture ?? user.image,
       });
-      // Refetch to get updated image/display_name
+      await updateEmailVerification(user.id, true);
+      // Refetch to get updated image/display_name/email_verified
       user = await getUserByEmail(profile.email);
     }
 

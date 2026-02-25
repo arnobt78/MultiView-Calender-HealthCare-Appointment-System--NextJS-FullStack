@@ -8,7 +8,7 @@ export function ToastProvider() {
       position="bottom-right"
       toastOptions={{
         // Optional: you can apply default shadcn classes or Tailwind styling here
-        className: "bg-white border rounded-md shadow-lg",
+        className: "bg-white border rounded-md shadow-xl",
         duration: 4000,
       }}
     />

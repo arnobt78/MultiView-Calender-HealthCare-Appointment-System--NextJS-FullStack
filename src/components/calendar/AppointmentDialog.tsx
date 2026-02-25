@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { ChangeEvent, useEffect, useRef, useState } from "react";
 import {
@@ -432,276 +433,288 @@ export default function AppointmentDialog({
       <DialogContent className="sm:max-w-lg" aria-describedby="">
         <DialogHeader>
           <DialogTitle>
-            {isEditMode ? "Termin bearbeiten" : "Neuen Termin erstellen"}
+            {isEditMode ? "Edit appointment" : "Create new appointment"}
           </DialogTitle>
         </DialogHeader>
         {error && <div className="text-red-600 text-xs mb-2">{error}</div>}
         {success && (
           <div className="text-green-600 text-xs mb-2">
-            Erfolgreich gespeichert!
+            Successfully saved!
           </div>
         )}
-        <div className="grid gap-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="title">Titel</Label>
-            <Input
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="cursor-pointer"
-            />
-          </div>
+        <Tabs defaultValue="general" className="w-full pt-2">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="general" className="cursor-pointer">General</TabsTrigger>
+            <TabsTrigger value="assignees" className="cursor-pointer">Assignments</TabsTrigger>
+            <TabsTrigger value="activities" className="cursor-pointer">Activities</TabsTrigger>
+          </TabsList>
 
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notizen</Label>
-            <Textarea
-              id="notes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="cursor-pointer"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+          <TabsContent value="general" className="space-y-4 py-2 mt-0">
             <div className="space-y-2">
-              <Label htmlFor="start">Start</Label>
+              <Label htmlFor="title">Title</Label>
               <Input
-                type="datetime-local"
-                id="start"
-                value={start}
-                onChange={(e) => setStart(e.target.value)}
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="cursor-pointer"
               />
             </div>
+
             <div className="space-y-2">
-              <Label htmlFor="end">Ende</Label>
-              <Input
-                type="datetime-local"
-                id="end"
-                value={end}
-                onChange={(e) => {
-                  const newEnd = e.target.value;
-                  if (start && newEnd < start) {
-                    setEnd(start);
-                  } else {
-                    setEnd(newEnd);
-                  }
-                }}
-                min={start || undefined}
+              <Label htmlFor="notes">Notes</Label>
+              <Textarea
+                id="notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                className="cursor-pointer"
               />
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label>Klient</Label>
-            <Select value={patientId} onValueChange={setPatientId}>
-              <SelectTrigger className="cursor-pointer hover:bg-gray-100 transition-colors">
-                <SelectValue placeholder="Klient auswählen" />
-              </SelectTrigger>
-              <SelectContent>
-                {patients.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.firstname} {p.lastname}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Kategorie</Label>
-            <Select value={categoryId} onValueChange={setCategoryId}>
-              <SelectTrigger className="cursor-pointer hover:bg-gray-100 transition-colors">
-                <SelectValue placeholder="Kategorie wählen" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="location">Ort</Label>
-            <Input
-              id="location"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              className="cursor-pointer"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="attachements">Anhänge (Kommagetrennt)</Label>
-            <Input
-              id="attachements"
-              value={attachements}
-              onChange={(e) => setattachements(e.target.value)}
-              className="cursor-pointer"
-            />
-            <Input
-              type="file"
-              multiple
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              disabled={uploading}
-              className="cursor-pointer"
-            />
-            {uploading && (
-              <div className="text-xs text-blue-600">Hochladen...</div>
-            )}
-            {Object.keys(fileProgress).length > 0 && (
-              <div className="text-xs text-blue-600 mt-1">
-                {Object.entries(fileProgress).map(([name, prog]) => (
-                  <div key={name}>
-                    {name}: {prog}%
-                  </div>
-                ))}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="start">Start</Label>
+                <Input
+                  type="datetime-local"
+                  id="start"
+                  value={start}
+                  onChange={(e) => setStart(e.target.value)}
+                />
               </div>
-            )}
-            {uploadedFiles.length > 0 && (
-              <div className="text-xs text-green-600 mt-1">
-                Hochgeladen:{" "}
-                {uploadedFiles.map((f) => (
-                  <span key={f} className="inline-flex items-center mr-2">
-                    <a
-                      href={f}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="underline cursor-pointer hover:text-blue-700"
-                    >
-                      Datei
-                    </a>
-                    <button
-                      type="button"
-                      className="ml-1 text-red-500 cursor-pointer hover:bg-red-100 rounded"
-                      onClick={() => handleRemoveUploadedFile(f)}
-                    >
-                      &times;
-                    </button>
-                  </span>
-                ))}
+              <div className="space-y-2">
+                <Label htmlFor="end">End</Label>
+                <Input
+                  type="datetime-local"
+                  id="end"
+                  value={end}
+                  onChange={(e) => {
+                    const newEnd = e.target.value;
+                    if (start && newEnd < start) {
+                      setEnd(start);
+                    } else {
+                      setEnd(newEnd);
+                    }
+                  }}
+                  min={start || undefined}
+                />
               </div>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="status">Status</Label>
-            <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger className="cursor-pointer hover:bg-gray-100 transition-colors">
-                <SelectValue placeholder="Status wählen" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pending">Offen</SelectItem>
-                <SelectItem value="done">Erledigt</SelectItem>
-                <SelectItem value="alert">Alarm</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Assignees UI */}
-          <div className="space-y-2">
-            <Label>Zuweisen (Patienten/Angehörige)</Label>
-            <Select onValueChange={handleAddAssignee}>
-              <SelectTrigger className="cursor-pointer hover:bg-gray-100 transition-colors">
-                <SelectValue placeholder="Person auswählen" />
-              </SelectTrigger>
-              <SelectContent>
-                {patients.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    Patient: {p.firstname} {p.lastname}
-                  </SelectItem>
-                ))}
-                {relatives.map((r) => (
-                  <SelectItem key={r.id} value={r.id}>
-                    Angehörige: {r.firstname} {r.lastname}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <div className="flex flex-wrap gap-2 mt-1">
-              {assignees.map((a) => {
-                const p = patients.find((x) => x.id === a.user);
-                const r = relatives.find((x) => x.id === a.user);
-                return (
-                  <span
-                    key={a.user}
-                    className="bg-gray-200 px-2 py-1 rounded text-xs flex items-center gap-1"
-                  >
-                    {p
-                      ? `Patient: ${p.firstname} ${p.lastname}`
-                      : r
-                        ? `Angehörige: ${r.firstname} ${r.lastname}`
-                        : a.user}
-                    <span className="ml-1 text-gray-400">[{a.user_type}]</span>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveAssignee(a.user, a.id)}
-                      className="ml-1 text-red-500 cursor-pointer hover:bg-red-100 rounded"
-                    >
-                      &times;
-                    </button>
-                  </span>
-                );
-              })}
             </div>
-          </div>
-          {/* Activities UI */}
-          <div className="space-y-2">
-            <Label>Aktivität hinzufügen</Label>
-            <div className="flex gap-2">
+
+            <div className="space-y-2">
+              <Label>Client</Label>
+              <Select value={patientId} onValueChange={setPatientId}>
+                <SelectTrigger className="cursor-pointer hover:bg-gray-100 transition-colors">
+                  <SelectValue placeholder="Select client" />
+                </SelectTrigger>
+                <SelectContent>
+                  {patients.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.firstname} {p.lastname}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Category</Label>
+              <Select value={categoryId} onValueChange={setCategoryId}>
+                <SelectTrigger className="cursor-pointer hover:bg-gray-100 transition-colors">
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="location">Location</Label>
               <Input
-                placeholder="Typ (z.B. Telefon, Besuch)"
-                value={activityType}
-                onChange={(e) => setActivityType(e.target.value)}
+                id="location"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                className="cursor-pointer"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="attachements">Attachments (comma-separated)</Label>
+              <Input
+                id="attachements"
+                value={attachements}
+                onChange={(e) => setattachements(e.target.value)}
                 className="cursor-pointer"
               />
               <Input
-                placeholder="Inhalt"
-                value={activityContent}
-                onChange={(e) => setActivityContent(e.target.value)}
+                type="file"
+                multiple
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                disabled={uploading}
                 className="cursor-pointer"
               />
-              <Button
-                type="button"
-                onClick={handleAddActivity}
-                disabled={loading}
-                className="cursor-pointer transition-colors"
-              >
-                Hinzufügen
-              </Button>
+              {uploading && (
+                <div className="text-xs text-blue-600">Uploading...</div>
+              )}
+              {Object.keys(fileProgress).length > 0 && (
+                <div className="text-xs text-blue-600 mt-1">
+                  {Object.entries(fileProgress).map(([name, prog]) => (
+                    <div key={name}>
+                      {name}: {prog}%
+                    </div>
+                  ))}
+                </div>
+              )}
+              {uploadedFiles.length > 0 && (
+                <div className="text-xs text-green-600 mt-1">
+                  Uploaded:{" "}
+                  {uploadedFiles.map((f) => (
+                    <span key={f} className="inline-flex items-center mr-2">
+                      <a
+                        href={f}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline cursor-pointer hover:text-blue-700"
+                      >
+                        File
+                      </a>
+                      <button
+                        type="button"
+                        className="ml-1 text-red-500 cursor-pointer hover:bg-red-100 rounded"
+                        onClick={() => handleRemoveUploadedFile(f)}
+                      >
+                        &times;
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
-            <div className="flex flex-col gap-1 mt-1">
-              {activityList.map((a) => (
-                <span
-                  key={a.id}
-                  className="bg-gray-100 px-2 py-1 rounded text-xs flex items-center gap-1"
+
+            <div className="space-y-2">
+              <Label htmlFor="status">Status</Label>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger className="cursor-pointer hover:bg-gray-100 transition-colors">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">Open</SelectItem>
+                  <SelectItem value="done">Done</SelectItem>
+                  <SelectItem value="alert">Alert</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+          </TabsContent>
+
+          <TabsContent value="assignees" className="space-y-4 py-2 mt-0">
+            <div className="space-y-2">
+              <Label>Assign (Patients/Relatives)</Label>
+              <Select onValueChange={handleAddAssignee}>
+                <SelectTrigger className="cursor-pointer hover:bg-gray-100 transition-colors">
+                  <SelectValue placeholder="Select person" />
+                </SelectTrigger>
+                <SelectContent>
+                  {patients.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      Patient: {p.firstname} {p.lastname}
+                    </SelectItem>
+                  ))}
+                  {relatives.map((r) => (
+                    <SelectItem key={r.id} value={r.id}>
+                      Relative: {r.firstname} {r.lastname}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="flex flex-wrap gap-2 mt-1">
+                {assignees.map((a) => {
+                  const p = patients.find((x) => x.id === a.user);
+                  const r = relatives.find((x) => x.id === a.user);
+                  return (
+                    <span
+                      key={a.user}
+                      className="bg-gray-200 px-2 py-1 rounded text-xs flex items-center gap-1"
+                    >
+                      {p
+                        ? `Patient: ${p.firstname} ${p.lastname}`
+                        : r
+                          ? `Relative: ${r.firstname} ${r.lastname}`
+                          : a.user}
+                      <span className="ml-1 text-gray-400">[{a.user_type}]</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveAssignee(a.user, a.id)}
+                        className="ml-1 text-red-500 cursor-pointer hover:bg-red-100 rounded"
+                      >
+                        &times;
+                      </button>
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="activities" className="space-y-4 py-2 mt-0">
+            <div className="space-y-2">
+              <Label>Add activity</Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Type (eg. Phone, Visit)"
+                  value={activityType}
+                  onChange={(e) => setActivityType(e.target.value)}
+                  className="cursor-pointer"
+                />
+                <Input
+                  placeholder="Content"
+                  value={activityContent}
+                  onChange={(e) => setActivityContent(e.target.value)}
+                  className="cursor-pointer"
+                />
+                <Button
+                  type="button"
+                  onClick={handleAddActivity}
+                  disabled={loading}
+                  className="cursor-pointer transition-colors"
                 >
-                  {a.type}: {a.content}
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveActivity(a.id)}
-                    className="ml-1 text-red-500 cursor-pointer hover:bg-red-100 rounded"
+                  Add
+                </Button>
+              </div>
+              <div className="flex flex-col gap-1 mt-1">
+                {activityList.map((a) => (
+                  <span
+                    key={a.id}
+                    className="bg-gray-100 px-2 py-1 rounded text-xs flex items-center gap-1"
                   >
-                    &times;
-                  </button>
-                </span>
-              ))}
+                    {a.type}: {a.content}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveActivity(a.id)}
+                      className="ml-1 text-red-500 cursor-pointer hover:bg-red-100 rounded"
+                    >
+                      &times;
+                    </button>
+                  </span>
+                ))}
+              </div>
             </div>
-          </div>
-        </div>
+          </TabsContent>
+        </Tabs>
         <Button
           onClick={handleSave}
           disabled={loading || uploading}
           className="cursor-pointer transition-colors"
         >
           {loading
-            ? "Speichern..."
+            ? "Save..."
             : isEditMode
-              ? "Änderungen speichern"
-              : "Speichern"}
+              ? "Save changes"
+              : "Save"}
         </Button>
       </DialogContent>
     </Dialog>

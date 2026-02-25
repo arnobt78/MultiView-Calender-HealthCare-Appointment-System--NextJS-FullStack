@@ -10,7 +10,8 @@
     "db:migrate": "tsx scripts/migrate.ts",
     "db:seed": "tsx scripts/seed.ts",
     "db:check-users": "tsx scripts/check-users.ts",
-    "db:manage-user": "tsx scripts/manage-user.ts"
+    "db:manage-user": "tsx scripts/manage-user.ts",
+    "db:seed-test-user": "tsx scripts/seed-test-user.ts"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.14",

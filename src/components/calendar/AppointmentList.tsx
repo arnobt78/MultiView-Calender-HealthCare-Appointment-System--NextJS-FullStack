@@ -297,44 +297,41 @@ export default function AppointmentList() {
     return <AppointmentListSkeleton />;
   }
 
-  // ...existing code for rendering the list...
   return (
-    <div className="p-6 sm:p-8 space-y-6 bg-[#f5f5f6] min-h-[calc(100vh-80px)]">
+    <div className="py-4 px-2 sm:px-4 lg:px-8 bg-[#f5f5f6] min-h-[calc(100vh-80px)]">
       {/* <ListCalendarHeader /> */}
       <h2 className="text-2xl font-semibold tracking-tight text-gray-800 mb-2">
-        Terminliste
+        Appointment List
       </h2>
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-4">
-        <div className="flex-1 min-w-[220px]">
+      <div className="flex flex-row flex-wrap items-center gap-3 w-full">
+        <div className="flex-1 min-w-[200px] max-w-xl">
           <SearchBar value={search} setValue={setSearch} />
         </div>
-        <div className="flex flex-wrap gap-4 items-center w-full sm:w-auto">
-          <Filters
-            category={category}
-            setCategory={setCategory}
-            patient={patient}
-            setPatient={setPatient}
-            date={date}
-            setDate={setDate}
-            status={status}
-            setStatus={setStatus}
-            categories={categories}
-            patients={patients}
-          />
-          <Button
-            variant="outline"
-            className="ml-2 bg-black text-white hover:bg-gray-400 cursor-pointer"
-            onClick={() => {
-              setCategory(null);
-              setPatient(null);
-              setDate(null);
-              setStatus(null);
-              setSearch(""); // Clear search bar as well
-            }}
-          >
-            Reset
-          </Button>
-        </div>
+        <Filters
+          category={category}
+          setCategory={setCategory}
+          patient={patient}
+          setPatient={setPatient}
+          date={date}
+          setDate={setDate}
+          status={status}
+          setStatus={setStatus}
+          categories={categories}
+          patients={patients}
+        />
+        <Button
+          variant="default"
+          className="py-2 rounded-md shadow-xl"
+          onClick={() => {
+            setCategory(null);
+            setPatient(null);
+            setDate(null);
+            setStatus(null);
+            setSearch("");
+          }}
+        >
+          Reset
+        </Button>
       </div>
       {/* Only show the 'Kein Treffer gefunden' message if there is a search term */}
       {/* {filteredAppointments.length === 0 && search.trim() && ( */}
@@ -343,7 +340,7 @@ export default function AppointmentList() {
       {appointments.length === 0 && (
         <div className="flex items-center justify-center min-h-[50vh]">
           <div className="text-center text-gray-500 text-lg">
-            Kein Termin gefunden!
+            No appointments found!
           </div>
         </div>
       )}
@@ -352,7 +349,7 @@ export default function AppointmentList() {
       {appointments.length > 0 && filteredAppointments.length === 0 && (
         <div className="flex items-center justify-center min-h-[40vh]">
           <div className="text-center text-gray-500 text-lg">
-            ❌ Kein Treffer gefunden für Ihre Suche nach &quot;{search}&quot;
+            ❌ No matches found for your search for &quot;{search}&quot;
           </div>
         </div>
       )}
@@ -464,7 +461,7 @@ export default function AppointmentList() {
                       key={appt.id}
                       data-today={isToday ? "true" : undefined}
                       ref={isToday && i === 0 ? scrollRef : null}
-                      className={`relative border rounded-xl shadow bg-white p-0 flex items-stretch transition hover:shadow-lg min-h-[110px]`}
+                      className={`relative border rounded-xl shadow bg-white p-0 flex items-stretch transition hover:shadow-xl min-h-[110px]`}
                       style={{ '--appt-color': color } as React.CSSProperties}
                     >
                       {/* Color bar */}
@@ -575,7 +572,7 @@ export default function AppointmentList() {
                         {/* Client name with icon */}
                         <div className="flex items-center gap-2 text-xs text-gray-400 italic mt-1">
                           <FiUser className="w-4 h-4" />
-                          <span>Klient:</span>
+                          <span>Client:</span>
                           <span className="not-italic text-gray-700">
                             {(() => {
                               try {
@@ -607,7 +604,7 @@ export default function AppointmentList() {
                         {/* Location with icon */}
                         <div className="flex items-center gap-2 text-xs text-gray-400 italic mt-1">
                           <FiMapPin className="w-4 h-4" />
-                          <span>Ort:</span>
+                          <span>Location:</span>
                           <span className="not-italic text-gray-700">
                             {appt.location || "--"}
                           </span>
@@ -617,7 +614,7 @@ export default function AppointmentList() {
                         {appt.attachements && appt.attachements.length > 0 && (
                           <div className="flex items-center gap-2 text-xs text-gray-400 mt-1">
                             <FiPaperclip className="w-4 h-4" />
-                            <span>Anhänge:</span>
+                            <span>Attachments:</span>
                             {appt.attachements.map((file, idx) => {
                               // Get Vercel Blob public URL
                               const publicUrl = getPublicUrl(file);
@@ -634,7 +631,7 @@ export default function AppointmentList() {
                                 </a>
                               ) : (
                                 <span key={idx} className="text-red-600">
-                                  [Fehler: Datei nicht gefunden]
+                                  [Error: File not found]
                                 </span>
                               );
                             })}
@@ -737,7 +734,7 @@ export default function AppointmentList() {
 
                         {appt.activities && appt.activities.length > 0 && (
                           <div className="flex flex-col gap-1 text-xs text-gray-400 mt-1">
-                            <span>Aktivitäten:</span>
+                            <span>Activities:</span>
                             {appt.activities
                               .map((act, idx) => (
                                 <span
@@ -774,12 +771,12 @@ export default function AppointmentList() {
                                       {isDone ? (
                                         <>
                                           <Circle className="mr-2 h-4 w-4" />
-                                          <span>Als offen markieren</span>
+                                          <span>Mark as open</span>
                                         </>
                                       ) : (
                                         <>
                                           <CheckCircle className="mr-2 h-4 w-4 text-green-600" />
-                                          <span className="text-green-600">Als erledigt markieren</span>
+                                          <span className="text-green-600">Mark as done</span>
                                         </>
                                       )}
                                     </DropdownMenuItem>
@@ -791,14 +788,14 @@ export default function AppointmentList() {
                                       {(perm === "owner" || perm === "full" || perm === "write") && <DropdownMenuSeparator />}
                                       <DropdownMenuItem onClick={() => handleEdit(appt)}>
                                         <FiEdit2 className="mr-2 h-4 w-4" />
-                                        <span>Bearbeiten</span>
+                                        <span>Edit</span>
                                       </DropdownMenuItem>
                                       <DropdownMenuItem
                                         onClick={() => handleDelete(appt.id)}
                                         className="text-red-600 focus:bg-red-50 focus:text-red-600"
                                       >
                                         <FiTrash2 className="mr-2 h-4 w-4" />
-                                        <span>Löschen</span>
+                                        <span>Delete</span>
                                       </DropdownMenuItem>
                                     </>
                                   )}
@@ -809,7 +806,7 @@ export default function AppointmentList() {
                         </DropdownMenu>
                       </div>
                     </div>
-                );
+                  );
                 })}
               </div>
             </div>

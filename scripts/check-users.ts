@@ -94,6 +94,16 @@ async function checkUsers() {
     console.log(`   Users with password: ${users.filter(u => u.password_hash).length}`);
     console.log(`   Users who can login: ${users.filter(u => u.email_verified && u.password_hash).length}`);
 
+    // Explicit check for dropdown test user
+    const TEST_EMAIL = "test@user.com";
+    const testUser = users.find((u) => u.email === TEST_EMAIL);
+    if (testUser) {
+      console.log(`\n🧪 Test account "${TEST_EMAIL}": ✅ EXISTS (can use dropdown on login)`);
+    } else {
+      console.log(`\n🧪 Test account "${TEST_EMAIL}": ❌ NOT FOUND`);
+      console.log(`   Create it with: npm run db:seed-test-user`);
+    }
+
     console.log("\n💡 To login:");
     console.log("   1. Make sure your email is verified");
     console.log("   2. Make sure you have a password set");

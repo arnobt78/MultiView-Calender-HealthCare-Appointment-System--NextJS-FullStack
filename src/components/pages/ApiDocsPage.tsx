@@ -5,16 +5,16 @@ import Link from "next/link";
 
 export default function ApiDocsPage() {
   return (
-    <div className="max-w-4xl mx-auto py-8 px-4">
+    <div className="max-w-9xl mx-auto py-8 px-2 sm:px-6 lg:px-8">
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold">API Documentation</h1>
+        <h1 className="text-2xl font-semibold">API Documentation</h1>
         <Button asChild variant="outline" size="sm">
           <Link href="/">Back to Dashboard</Link>
         </Button>
       </div>
       <div className="mb-8">
         <p className="text-gray-700 mb-2">
-          Welcome to the Vocare Calendar API documentation. Below you&#39;ll find a summary of all available endpoints, their usage, and links to the full OpenAPI docs.
+          Welcome to the Appointment Calendar API documentation. Below you&#39;ll find a summary of all available endpoints, their usage, and links to the full OpenAPI docs.
         </p>
         <a
           href="/redoc.html"

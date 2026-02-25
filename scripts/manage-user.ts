@@ -1,12 +1,13 @@
 /**
  * Manage User Script
  * 
- * This script helps you manually verify email or set password for users
+ * This script helps you manually verify email, set password, or set display name.
  * Useful for testing or fixing users migrated from Supabase
  * 
  * Usage: 
  *   npm run db:manage-user -- --email your@email.com --verify
  *   npm run db:manage-user -- --email your@email.com --set-password "newpassword"
+ *   npm run db:manage-user -- --email test@user.com --display-name "Guest User"
  */
 
 import dotenv from "dotenv";
@@ -28,6 +29,7 @@ interface User {
   email: string;
   email_verified: boolean;
   password_hash: string | null;
+  display_name: string | null;
 }
 
 async function manageUser() {
@@ -37,6 +39,7 @@ async function manageUser() {
   let email: string | null = null;
   let verify = false;
   let setPassword: string | null = null;
+  let displayName: string | null = null;
   
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--email" && args[i + 1]) {
@@ -47,6 +50,9 @@ async function manageUser() {
     } else if (args[i] === "--set-password" && args[i + 1]) {
       setPassword = args[i + 1];
       i++;
+    } else if (args[i] === "--display-name" && args[i + 1]) {
+      displayName = args[i + 1];
+      i++;
     }
   }
 
@@ -55,6 +61,7 @@ async function manageUser() {
     console.log("\nUsage:");
     console.log("  npm run db:manage-user -- --email your@email.com --verify");
     console.log("  npm run db:manage-user -- --email your@email.com --set-password \"newpassword\"");
+    console.log("  npm run db:manage-user -- --email test@user.com --display-name \"Guest User\"");
     process.exit(1);
   }
 
@@ -67,7 +74,7 @@ async function manageUser() {
     
     // Check if user exists
     const userResult = await query(
-      `SELECT id, email, email_verified, password_hash FROM users WHERE email = $1`,
+      `SELECT id, email, email_verified, password_hash, display_name FROM users WHERE email = $1`,
       [email]
     );
 
@@ -82,6 +89,7 @@ async function manageUser() {
     const user: User = userResult.rows[0];
     console.log(`\n👤 Found user: ${user.email}`);
     console.log(`   ID: ${user.id}`);
+    console.log(`   Display Name: ${user.display_name || "(not set)"}`);
     console.log(`   Email Verified: ${user.email_verified ? "✅ Yes" : "❌ No"}`);
     console.log(`   Has Password: ${user.password_hash ? "✅ Yes" : "❌ No"}`);
 
@@ -111,14 +119,24 @@ async function manageUser() {
       console.log("\n✅ Password set successfully!");
     }
 
+    // Set display name
+    if (displayName !== null) {
+      await query(
+        `UPDATE users SET display_name = $1 WHERE id = $2`,
+        [displayName, user.id]
+      );
+      console.log(`\n✅ Display name set to "${displayName}"`);
+    }
+
     // Show final status
     const finalResult = await query(
-      `SELECT id, email, email_verified, password_hash FROM users WHERE id = $1`,
+      `SELECT id, email, email_verified, password_hash, display_name FROM users WHERE id = $1`,
       [user.id]
     );
     const finalUser: User = finalResult.rows[0];
     
     console.log("\n📊 Final Status:");
+    console.log(`   Display Name: ${finalUser.display_name || "(not set)"}`);
     console.log(`   Email Verified: ${finalUser.email_verified ? "✅ Yes" : "❌ No"}`);
     console.log(`   Has Password: ${finalUser.password_hash ? "✅ Yes" : "❌ No"}`);
     
