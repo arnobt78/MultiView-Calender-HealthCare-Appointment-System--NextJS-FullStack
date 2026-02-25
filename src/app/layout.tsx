@@ -69,7 +69,7 @@ export const metadata: Metadata = {
   authors: [
     {
       name: "Arnob Mahmud",
-      url: "https://arnob-mahmud.vercel.app/",
+      url: "https://www.arnobmahmud.com/",
     },
   ],
   creator: "Arnob Mahmud",
