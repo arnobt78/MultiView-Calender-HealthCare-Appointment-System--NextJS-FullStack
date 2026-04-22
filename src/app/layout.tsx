@@ -123,7 +123,7 @@ export const metadata: Metadata = {
   classification: "Healthcare, Calendar, Appointment Management",
 };
 
-import AuthLayout from "./AuthLayout";
+import AuthShell from "./AuthShell";
 
 /**
  * RootLayout Component
@@ -132,7 +132,7 @@ import AuthLayout from "./AuthLayout";
  * It provides:
  * - Global HTML structure (<html>, <head>, <body>)
  * - SEO meta tags in the <head>
- * - Authentication and context providers via AuthLayout
+ * - Authentication and context providers via AuthShell
  * 
  * @param children - All page components are passed as children and rendered here
  */
@@ -151,8 +151,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="theme-color" content="#ffffff" />
       </head>
       <body suppressHydrationWarning>
-        {/* AuthLayout wraps all pages with authentication, navigation, and context providers */}
-        <AuthLayout>{children}</AuthLayout>
+        {/* AuthShell wraps all pages with providers, authentication and navigation */}
+        <AuthShell>{children}</AuthShell>
       </body>
     </html>
   );

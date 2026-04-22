@@ -1,0 +1,722 @@
+"use client";
+
+import Link from "next/link";
+import Image from "next/image";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  Activity,
+  ArrowRight,
+  BarChart3,
+  Bell,
+  Building2,
+  CalendarDays,
+  CheckCircle2,
+  Clock,
+  HeartPulse,
+  User,
+  UserPlus,
+  LayoutGrid,
+  ShieldCheck,
+  Sparkles,
+  Stethoscope,
+  Users,
+  Zap,
+} from "lucide-react";
+import { RippleButton } from "@/components/ui/RippleButton";
+
+/* ─── motion tokens ─── */
+const ease = [0.22, 1, 0.36, 1] as const;
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 22, scale: 0.985, filter: "blur(4px)" },
+  visible: { opacity: 1, y: 0, scale: 1, filter: "blur(0px)", transition: { duration: 0.55, ease } },
+};
+
+const stagger = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.09, delayChildren: 0.05 } },
+};
+
+/* ─── stair-step line reveal (scroll-triggered, below-fold only) ─── */
+function StairLines({ lines }: { lines: string[] }) {
+  return (
+    <>
+      {lines.map((line, i) => (
+        <motion.span
+          key={i}
+          className="block"
+          initial={{ opacity: 0, y: 18 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: false, amount: 0 }}
+          transition={{ delay: i * 0.11, duration: 0.5, ease }}
+        >
+          {line}
+        </motion.span>
+      ))}
+    </>
+  );
+}
+
+/* ─── hero image list ─── */
+const HERO_IMAGES = [
+  "/images/img1.avif",
+  "/images/img2.webp",
+  "/images/img3.webp",
+  "/images/img4.avif",
+  "/images/img9.avif",
+];
+
+/* ─── Ken Burns two-layer background (fixed viewport) ─── */
+function HeroBackground({ prefersReduced }: { prefersReduced: boolean | null }) {
+  const layerA = useRef<HTMLDivElement>(null);
+  const layerB = useRef<HTMLDivElement>(null);
+  const state = useRef({ active: 0, index: 0, busy: false, lastAdvance: 0 });
+
+  useEffect(() => {
+    const A = layerA.current;
+    const B = layerB.current;
+    if (!A || !B) return;
+    const layers = [A, B];
+    const s = state.current;
+
+    A.style.backgroundImage = `url("${HERO_IMAGES[0]}")`;
+    B.style.backgroundImage = `url("${HERO_IMAGES[1]}")`;
+
+    const goNext = () => {
+      if (s.busy) return;
+      const now = performance.now();
+      if (now - s.lastAdvance < 120) return;
+      s.busy = true;
+      s.lastAdvance = now;
+      const nextIndex = (s.index + 1) % HERO_IMAGES.length;
+      const cur = layers[s.active];
+      const next = layers[1 - s.active];
+      next.style.backgroundImage = `url("${HERO_IMAGES[nextIndex]}")`;
+      cur.classList.remove("hero-bg-layer-active");
+      next.classList.remove("hero-bg-layer-active");
+      void next.offsetWidth;
+      next.classList.add("hero-bg-layer-active");
+      s.active = 1 - s.active;
+      s.index = nextIndex;
+      s.busy = false;
+    };
+
+    if (prefersReduced) {
+      A.classList.add("hero-bg-layer-active");
+      const t = setInterval(goNext, 8000);
+      return () => {
+        clearInterval(t);
+        A.classList.remove("hero-bg-layer-active");
+      };
+    }
+
+    const onAnimEnd = (e: AnimationEvent) => {
+      if (e.animationName !== "hero-bg-kenburns-cycle") return;
+      if (e.target !== e.currentTarget) return;
+      goNext();
+    };
+    A.classList.add("hero-bg-layer-active");
+    A.addEventListener("animationend", onAnimEnd);
+    B.addEventListener("animationend", onAnimEnd);
+    return () => {
+      A.removeEventListener("animationend", onAnimEnd);
+      B.removeEventListener("animationend", onAnimEnd);
+      A.classList.remove("hero-bg-layer-active");
+      B.classList.remove("hero-bg-layer-active");
+    };
+  }, [prefersReduced]);
+
+  return (
+    /* fixed wrapper — clips Ken Burns overflow, stays behind all content */
+    <div
+      aria-hidden
+      className="pointer-events-none fixed inset-0 overflow-hidden"
+      style={{ zIndex: -2 }}
+    >
+      <div ref={layerA} className="hero-bg-layer" />
+      <div ref={layerB} className="hero-bg-layer" />
+    </div>
+  );
+}
+
+/* ─── appointment deck ─── */
+const APPOINTMENTS = [
+  { id: 1, doctor: "Dr. Carter", specialty: "Cardiology", time: "10:30 AM", status: "Next up", Icon: HeartPulse, accent: "from-emerald-500/20 to-emerald-500/5", ic: "text-emerald-300", bc: "border-emerald-400/25" },
+  { id: 2, doctor: "Dr. Martinez", specialty: "Neurology", time: "2:00 PM", status: "Today", Icon: Activity, accent: "from-sky-500/20 to-sky-500/5", ic: "text-sky-300", bc: "border-sky-400/25" },
+  { id: 3, doctor: "Dr. Kim", specialty: "Dermatology", time: "4:15 PM", status: "Confirmed", Icon: Sparkles, accent: "from-violet-500/20 to-violet-500/5", ic: "text-violet-300", bc: "border-violet-400/25" },
+  { id: 4, doctor: "Dr. Patel", specialty: "Pediatrics", time: "9:00 AM", status: "Tomorrow", Icon: Users, accent: "from-amber-500/20 to-amber-500/5", ic: "text-amber-300", bc: "border-amber-400/25" },
+];
+
+function AppointmentDeck() {
+  const [offset, setOffset] = useState(0);
+
+  useEffect(() => {
+    const t = setInterval(() => setOffset((o) => (o + 1) % APPOINTMENTS.length), 3400);
+    return () => clearInterval(t);
+  }, []);
+
+  /* 3 visible cards: [top, mid, bottom] rotating through the 4-item list */
+  const cards = [0, 1, 2].map((i) => APPOINTMENTS[(offset + i) % APPOINTMENTS.length]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 40, scale: 0.97 }}
+      whileInView={{ opacity: 1, x: 0, scale: 1 }}
+      viewport={{ once: false, amount: 0 }}
+      transition={{ duration: 0.75, ease, delay: 0.15 }}
+      className="relative w-full max-w-[340px] md:max-w-[380px] xl:max-w-[480px] justify-self-center xl:justify-self-end"
+    >
+      <div className="rounded-[28px] border border-white/15 bg-slate-900/80 backdrop-blur-2xl shadow-[0_40px_100px_rgba(0,0,0,0.55)]">
+        {/* header */}
+        <div className="flex items-center justify-between px-6 pt-6 pb-4">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-sky-500/15 border border-sky-400/20">
+              <Clock className="h-3.5 w-3.5 text-sky-300" />
+            </span>
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.22em] text-white/45 leading-none">Upcoming</p>
+              <p className="text-sm font-semibold text-white leading-snug">Appointments</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1">
+            {APPOINTMENTS.map((_, i) => (
+              <motion.span
+                key={i}
+                animate={{ width: i === offset ? 16 : 6, opacity: i === offset ? 1 : 0.28 }}
+                transition={{ duration: 0.4 }}
+                className="h-1.5 rounded-full bg-sky-400 inline-block"
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* shuffling card list — popLayout ejects top card and lets the rest blob up */}
+        <div className="px-6 overflow-hidden">
+          <AnimatePresence initial={false} mode="popLayout">
+            {cards.map((apt, i) => (
+              <motion.div
+                key={apt.id}
+                layout
+                initial={{ opacity: 0, y: 36, scale: 0.94 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -52, scale: 0.92, filter: "blur(3px)" }}
+                transition={{
+                  duration: 0.46,
+                  ease: [0.22, 1, 0.36, 1],
+                  layout: { duration: 0.44, ease: [0.22, 1, 0.36, 1] },
+                }}
+                className={i === 0 ? "mb-3" : "mb-2"}
+              >
+                {i === 0 ? (
+                  /* top card — highlighted */
+                  <div className={`rounded-[18px] bg-gradient-to-br ${apt.accent} border ${apt.bc} p-4`}>
+                    <div className="flex items-center gap-3">
+                      <motion.div
+                        animate={{ scale: [1, 1.09, 1] }}
+                        transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
+                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/10 border border-white/10 ${apt.ic}`}
+                      >
+                        <apt.Icon className="h-5 w-5" />
+                      </motion.div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-white truncate">{apt.doctor}</p>
+                        <p className="text-xs text-white/55">{apt.specialty}</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className={`text-xs font-bold ${apt.ic}`}>{apt.time}</p>
+                        <span className="inline-block mt-0.5 text-[10px] px-1.5 py-0.5 rounded-full bg-white/10 text-white/60">
+                          {apt.status}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* lower cards — subtle rows */
+                  <div className="flex items-center gap-3 rounded-xl bg-white/5 px-3 py-2.5">
+                    <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/5 ${apt.ic}`}>
+                      <apt.Icon className="h-3.5 w-3.5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-white/80 truncate">{apt.doctor}</p>
+                      <p className="text-[11px] text-white/40">{apt.specialty} · {apt.time}</p>
+                    </div>
+                    <CheckCircle2 className="h-3.5 w-3.5 text-white/25 shrink-0" />
+                  </div>
+                )}
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+
+        {/* status bar */}
+        <div className="mx-6 mb-6 flex items-center gap-2 rounded-xl bg-white/5 px-3 py-2.5">
+          <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+          <p className="text-xs text-white/60">Live sync · 4 appointments today</p>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+/* ─── static data ─── */
+const FEATURES = [
+  { Icon: CalendarDays, title: "Multi-view calendar", desc: "Switch effortlessly between List, Day, Week and Month views to see exactly what matters.", from: "from-sky-500/20 via-sky-500/10 to-sky-500/5", border: "border-sky-400/30", shadow: "shadow-[0_20px_60px_rgba(2,132,199,0.25)]" },
+  { Icon: Stethoscope, title: "Doctor & patient management", desc: "Manage healthcare records, categories, relatives and invoices from a single control panel.", from: "from-emerald-500/20 via-emerald-500/10 to-emerald-500/5", border: "border-emerald-400/30", shadow: "shadow-[0_20px_60px_rgba(16,185,129,0.22)]" },
+  { Icon: Bell, title: "Smart reminders", desc: "Automatic email reminders and real-time notifications keep everyone in sync.", from: "from-amber-500/20 via-amber-500/10 to-amber-500/5", border: "border-amber-400/30", shadow: "shadow-[0_20px_60px_rgba(245,158,11,0.2)]" },
+  { Icon: Users, title: "Team invitations", desc: "Invite doctors and staff with granular roles and permissions in seconds.", from: "from-violet-500/20 via-violet-500/10 to-violet-500/5", border: "border-violet-400/30", shadow: "shadow-[0_20px_60px_rgba(139,92,246,0.25)]" },
+  { Icon: ShieldCheck, title: "Secure by default", desc: "Server-side proxy auth, strict CSP, and encrypted sessions protect every request.", from: "from-rose-500/20 via-rose-500/10 to-rose-500/5", border: "border-rose-400/30", shadow: "shadow-[0_20px_60px_rgba(225,29,72,0.25)]" },
+  { Icon: BarChart3, title: "Insights & analytics", desc: "Real-time dashboards reveal appointment trends, revenue, and patient outcomes.", from: "from-blue-500/20 via-blue-500/10 to-blue-500/5", border: "border-blue-400/30", shadow: "shadow-[0_20px_60px_rgba(59,130,246,0.25)]" },
+];
+
+const STATS = [
+  { label: "Views", value: "4", sub: "List · Day · Week · Month" },
+  { label: "Integrations", value: "10+", sub: "Stripe · Google · AI" },
+  { label: "Roles", value: "Full", sub: "RBAC & invitations" },
+  { label: "Realtime", value: "Live", sub: "SSE notifications" },
+];
+
+const HIGHLIGHTS = [
+  { Icon: Activity, text: "Real-time notification stream" },
+  { Icon: Clock, text: "Google Calendar two-way sync" },
+  { Icon: HeartPulse, text: "Telehealth video consultations" },
+  { Icon: Zap, text: "AI-powered appointment parsing" },
+];
+
+/* ════════════════════════════════════════════════════════════
+   MAIN COMPONENT
+════════════════════════════════════════════════════════════ */
+export default function LandingPage() {
+  const prefersReduced = useReducedMotion();
+  const [navScrolled, setNavScrolled] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
+
+  useEffect(() => {
+    const handler = () => setNavScrolled(window.scrollY > 30);
+    window.addEventListener("scroll", handler, { passive: true });
+    return () => window.removeEventListener("scroll", handler);
+  }, []);
+
+  const scrollTo = useCallback((id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+
+  const handleDemo = useCallback(async () => {
+    setDemoLoading(true);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "test@user.com", password: "12345678" }),
+      });
+      if (res.ok) window.location.href = "/";
+    } finally {
+      setDemoLoading(false);
+    }
+  }, []);
+
+  return (
+    <div className="relative min-h-screen text-white">
+
+      {/* ── Fixed rotating background (full viewport, behind everything) ── */}
+      <HeroBackground prefersReduced={prefersReduced} />
+
+      {/* ── Fixed global dark overlay (visible through all sections) ── */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0"
+        style={{
+          zIndex: -1,
+          background:
+            "linear-gradient(135deg, rgba(2,6,23,0.88) 0%, rgba(2,6,23,0.78) 45%, rgba(2,6,23,0.68) 100%)",
+        }}
+      />
+      {/* colour accent glows */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0"
+        style={{
+          zIndex: -1,
+          background:
+            "radial-gradient(circle at 20% 60%, rgba(59,130,246,0.12), transparent 55%), radial-gradient(circle at 80% 20%, rgba(139,92,246,0.08), transparent 50%)",
+        }}
+      />
+
+      {/* ── Fixed navbar ── */}
+      <header
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${navScrolled
+          ? "bg-transparent backdrop-blur-sm shadow-[0_4px_30px_rgba(0,0,0,0.4)]"
+          : "bg-transparent"
+          }`}
+      >
+        <div className="mx-auto flex w-full max-w-[1440px] items-center justify-between px-6 py-4 lg:px-10">
+          <Link href="/" className="flex items-center gap-3">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 backdrop-blur-md border border-white/20">
+              <CalendarDays className="h-[18px] w-[18px] text-white" />
+            </span>
+            <span className="text-base font-semibold tracking-tight">HealthCal Pro</span>
+          </Link>
+
+          <nav className="hidden gap-8 text-sm text-white/70 md:flex">
+            {(["Features", "Highlights", "About"] as const).map((label) => (
+              <button
+                key={label}
+                onClick={() => scrollTo(label.toLowerCase())}
+                className="cursor-pointer transition hover:text-white"
+              >
+                {label}
+              </button>
+            ))}
+          </nav>
+
+          <div className="flex items-center gap-2">
+            <Link
+              href="/login"
+              className="rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium backdrop-blur-sm transition hover:border-white/30 hover:bg-white/10"
+            >
+              Sign in
+            </Link>
+            <Link
+              href="/register"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-blue-400/40 bg-gradient-to-r from-blue-500/70 via-blue-500/50 to-blue-500/30 px-4 py-2 text-sm font-semibold shadow-[0_8px_25px_rgba(59,130,246,0.4)] backdrop-blur-sm transition hover:from-blue-500/80"
+            >
+              Get started <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      {/* ════════════════════ HERO ════════════════════ */}
+      {/*
+        No background or overflow-hidden needed here — the fixed bg
+        layers behind show through this transparent section.
+      */}
+      <section className="relative z-10 min-h-screen">
+        <div className="mx-auto grid w-full max-w-[1440px] min-h-screen grid-cols-1 items-center gap-12 px-6 pt-28 pb-16 lg:grid-cols-2 lg:px-10 lg:pt-32 lg:pb-20">
+
+          {/* Left: text + CTAs */}
+          <motion.div
+            variants={stagger}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: false, amount: 0 }}
+            className="flex flex-col gap-6"
+          >
+            <motion.div
+              variants={fadeUp}
+              className="inline-flex w-fit items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.25em] text-white/70 backdrop-blur-sm"
+            >
+              <Sparkles className="h-3 w-3 text-amber-300" />
+              Modern healthcare scheduling
+            </motion.div>
+
+            {/* h1 — uses parent stagger/fadeUp so it is always visible on load */}
+            <motion.h1
+              variants={fadeUp}
+              className="text-4xl font-black leading-[1.1] tracking-tight text-white md:text-5xl lg:text-[3.5rem] xl:text-6xl"
+            >
+              Calendar appointments,{" "}
+              <span className="bg-gradient-to-r from-sky-300 via-blue-300 to-violet-300 bg-clip-text text-transparent">
+                reimagined
+              </span>{" "}
+              for healthcare teams.
+            </motion.h1>
+
+            <motion.p
+              variants={fadeUp}
+              className="max-w-lg text-base leading-relaxed text-white/70 md:text-lg"
+            >
+              A fullstack platform for clinics and hospitals — schedule patients, send reminders,
+              and analyze operations from one beautifully crafted dashboard.
+            </motion.p>
+
+            {/* CTAs */}
+            <motion.div variants={fadeUp} className="flex flex-wrap items-center gap-3 pt-1">
+              <Link
+                href="/register"
+                className="inline-flex items-center gap-2 rounded-xl border border-blue-400/40 bg-gradient-to-r from-blue-500/80 via-blue-500/60 to-blue-500/40 px-6 py-3 text-sm font-semibold shadow-[0_15px_35px_rgba(59,130,246,0.45)] backdrop-blur-sm transition hover:from-blue-500/90"
+              >
+                <UserPlus className="h-4 w-4" />
+                Create free account
+              </Link>
+
+              {/* glow lives on the outer wrapper — cta-shine-wrap has overflow:hidden which clips box-shadow */}
+              <div
+                className="cta-shine-wrap rounded-xl transition-shadow duration-300"
+                style={{ boxShadow: "0 12px 32px rgba(16,185,129,0.5), 0 0 28px rgba(16,185,129,0.28)" }}
+              >
+                <RippleButton
+                  onClick={handleDemo}
+                  disabled={demoLoading}
+                  className="inline-flex items-center gap-2 rounded-xl border border-emerald-400/55 bg-gradient-to-r from-emerald-500/80 via-emerald-500/65 to-emerald-600/50 px-6 py-3 text-sm font-semibold text-white backdrop-blur-sm transition hover:from-emerald-500/90 disabled:opacity-60"
+                >
+                  {demoLoading ? (
+                    <span className="flex items-center gap-2">
+                      <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                      Signing in... <ArrowRight className="h-4 w-4" />
+                    </span>
+                  ) : (
+                    <>
+                      <Zap className="h-4 w-4" />
+                      Try demo account <ArrowRight className="h-4 w-4" />
+                    </>
+                  )}
+                </RippleButton>
+              </div>
+            </motion.div>
+
+            {/* Stats */}
+            <motion.div variants={stagger} className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+              {STATS.map((s) => (
+                <motion.div
+                  key={s.label}
+                  variants={fadeUp}
+                  className="rounded-2xl border border-white/10 bg-white/5 p-3.5 backdrop-blur-sm"
+                >
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-white/70">{s.label}</p>
+                  <p className="mt-1.5 text-2xl font-black text-white">{s.value}</p>
+                  <p className="mt-0.5 text-[10px] leading-snug text-white/70">{s.sub}</p>
+                </motion.div>
+              ))}
+            </motion.div>
+          </motion.div>
+
+          {/* Right: appointment deck */}
+          <AppointmentDeck />
+        </div>
+      </section>
+
+      {/* ════════════════════ HIGHLIGHTS ════════════════════ */}
+      <section
+        id="highlights"
+        className="relative z-10"
+
+      >
+        <motion.div
+          variants={stagger}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: false, amount: 0.3 }}
+          className="mx-auto grid w-full max-w-[1440px] grid-cols-2 gap-4 px-6 py-10 md:grid-cols-4 lg:px-10"
+        >
+          {HIGHLIGHTS.map(({ Icon, text }, i) => (
+            <motion.div
+              key={text}
+              variants={fadeUp}
+              className="flex items-center gap-3 text-sm text-white/80"
+            >
+              <motion.span
+                initial={{ scale: 0.6, opacity: 0 }}
+                whileInView={{ scale: 1, opacity: 1 }}
+                viewport={{ once: false, amount: 0 }}
+                transition={{ delay: i * 0.08 + 0.1, duration: 0.4, ease }}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-sky-400/25 bg-sky-500/10"
+              >
+                <Icon className="h-4 w-4 text-sky-300" />
+              </motion.span>
+              <motion.span
+                initial={{ opacity: 0, x: -10 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: false, amount: 0 }}
+                transition={{ delay: i * 0.08 + 0.2, duration: 0.42, ease }}
+              >
+                {text}
+              </motion.span>
+            </motion.div>
+          ))}
+        </motion.div>
+      </section>
+
+      {/* ════════════════════ FEATURES ════════════════════ */}
+      <section
+        id="features"
+        className="relative z-10"
+
+      >
+        <div className="mx-auto w-full max-w-[1440px] px-6 py-20 lg:px-10 lg:py-28">
+          <motion.div
+            variants={stagger}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: false, amount: 0.25 }}
+            className="mx-auto max-w-2xl text-center mb-14"
+          >
+            <motion.div
+              variants={fadeUp}
+              className="inline-flex items-center gap-2 rounded-full border border-sky-400/25 bg-sky-500/10 px-3 py-1 text-xs uppercase tracking-[0.25em] text-sky-300 backdrop-blur-sm"
+            >
+              <LayoutGrid className="h-3 w-3" />
+              Features
+            </motion.div>
+            <h2 className="mt-4 text-3xl font-bold md:text-4xl text-white">
+              <StairLines lines={["Everything a modern", "clinic needs"]} />
+            </h2>
+            <motion.p variants={fadeUp} className="mt-4 text-sm text-white/60 md:text-base">
+              Built with Next.js, PostgreSQL, Prisma and TanStack Query — production-grade performance
+              with delightful UX.
+            </motion.p>
+          </motion.div>
+
+          <motion.div
+            variants={stagger}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: false, amount: 0.1 }}
+            className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3"
+          >
+            {FEATURES.map(({ Icon, title, desc, from, border, shadow }) => (
+              <motion.article
+                key={title}
+                variants={fadeUp}
+                whileHover={{ y: -4, transition: { duration: 0.22 } }}
+                className={`rounded-[28px] border ${border} bg-gradient-to-br ${from} p-6 ${shadow} backdrop-blur-md`}
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/15 bg-white/5">
+                  <Icon className="h-5 w-5 text-white" />
+                </div>
+                <h3 className="mt-5 text-base font-semibold text-white">{title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-white/70">{desc}</p>
+              </motion.article>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ════════════════════ ABOUT ════════════════════ */}
+      <section
+        id="about"
+        className="relative z-10"
+      >
+        <div className="mx-auto grid w-full max-w-[1440px] grid-cols-1 gap-12 px-6 py-20 lg:grid-cols-2 lg:px-10 lg:py-28">
+
+          {/* Left: text */}
+          <motion.div
+            variants={stagger}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: false, amount: 0.15 }}
+            className="flex flex-col gap-6"
+          >
+            <motion.div
+              variants={fadeUp}
+              className="inline-flex w-fit items-center gap-2 rounded-full border border-emerald-400/25 bg-emerald-500/10 px-3 py-1 text-xs uppercase tracking-[0.25em] text-emerald-300 backdrop-blur-sm"
+            >
+              <Building2 className="h-3 w-3" />
+              About
+            </motion.div>
+            <h2 className="text-3xl font-bold leading-tight text-white md:text-4xl">
+              <StairLines
+                lines={["A production-ready platform", "crafted for real", "healthcare workflows."]}
+              />
+            </h2>
+
+            <div className="space-y-3 text-sm leading-relaxed text-white/70">
+              {[
+                "HealthCal Pro is a modern fullstack showcase combining a premium design system with a solid backend. Server-side auth, role-based access, realtime notifications, AI assistance and an extensible control panel ship out of the box.",
+                "Whether you run a small clinic or a multi-location hospital, the application scales with your workflow — from single-provider scheduling to organization-wide oversight with granular permissions.",
+                "Built with security headers, bot protection, Vercel production guardrails and edge-level proxy authentication for zero-flash navigation.",
+              ].map((line, i) => (
+                <motion.p
+                  key={i}
+                  initial={{ opacity: 0, x: -12 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: false, amount: 0 }}
+                  transition={{ delay: i * 0.1, duration: 0.5, ease }}
+                >
+                  {line}
+                </motion.p>
+              ))}
+            </div>
+
+            <motion.div variants={fadeUp} className="flex flex-wrap gap-3 pt-2">
+              <Link
+                href="/register"
+                className="inline-flex items-center gap-2 rounded-xl border border-emerald-400/40 bg-gradient-to-r from-emerald-500/70 via-emerald-500/50 to-emerald-500/30 px-5 py-2.5 text-sm font-semibold shadow-[0_15px_35px_rgba(16,185,129,0.32)] backdrop-blur-sm transition hover:from-emerald-500/80"
+              >
+                <Zap className="h-4 w-4" />
+                Start your trial <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link
+                href="/login"
+                className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-5 py-2.5 text-sm font-semibold backdrop-blur-sm transition hover:border-white/30 hover:bg-white/10"
+              >
+                <User className="h-4 w-4" />
+                I have an account
+              </Link>
+            </motion.div>
+          </motion.div>
+
+          {/* Right: image card */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96, y: 20 }}
+            whileInView={{ opacity: 1, scale: 1, y: 0 }}
+            viewport={{ once: false, amount: 0.15 }}
+            transition={{ duration: 0.65, ease }}
+            className="relative w-full max-w-md mx-auto"
+          >
+            {/* outer glow layers */}
+            <div
+              aria-hidden
+              className="absolute -inset-4 rounded-[44px] blur-2xl opacity-50"
+              style={{
+                background:
+                  "radial-gradient(ellipse at 30% 70%, rgba(16,185,129,0.55) 0%, transparent 60%), radial-gradient(ellipse at 70% 30%, rgba(59,130,246,0.45) 0%, transparent 60%)",
+              }}
+            />
+            <div
+              aria-hidden
+              className="absolute -inset-1 rounded-[36px] blur-xl opacity-30"
+              style={{
+                background:
+                  "linear-gradient(135deg, rgba(16,185,129,0.6) 0%, rgba(59,130,246,0.5) 50%, rgba(139,92,246,0.4) 100%)",
+              }}
+            />
+
+            {/* image */}
+            <div
+              className="relative aspect-4/5 w-full overflow-hidden rounded-[32px] border border-white/15"
+              style={{
+                boxShadow:
+                  "0 0 0 1px rgba(255,255,255,0.06), 0 30px 80px rgba(0,0,0,0.55), 0 0 50px rgba(16,185,129,0.18), 0 0 90px rgba(59,130,246,0.12)",
+              }}
+            >
+              <Image
+                src="/images/img7.jpg"
+                alt="Healthcare team"
+                fill
+                sizes="(max-width: 1024px) 100vw, 500px"
+                className="object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent" />
+              <div className="absolute bottom-5 left-5 right-5 rounded-2xl border border-white/15 bg-slate-900/75 p-4 backdrop-blur-xl">
+                <p className="text-sm font-semibold text-white">Trusted by modern practices</p>
+                <p className="mt-1 text-xs text-white/55">Security-first. Bot-protected. Production-ready.</p>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ════════════════════ FOOTER ════════════════════ */}
+      <footer
+        className="relative z-10"
+
+      >
+        <div className="mx-auto flex w-full max-w-[1440px] flex-col items-center justify-between gap-4 px-6 py-7 text-sm text-white/70 md:flex-row lg:px-10">
+          <div className="flex items-center gap-2">
+            <CalendarDays className="h-4 w-4" />
+            <span className=" text-white/70">HealthCal Pro</span>
+            <span className="text-white/70">·</span>
+            <span>© {new Date().getFullYear()} All rights reserved.</span>
+          </div>
+          <div className="flex items-center gap-6">
+            <button onClick={() => scrollTo("features")} className="cursor-pointer transition hover:text-white">Features</button>
+            <button onClick={() => scrollTo("highlights")} className="cursor-pointer transition hover:text-white">Highlights</button>
+            <button onClick={() => scrollTo("about")} className="cursor-pointer transition hover:text-white">About</button>
+            <Link href="/login" className="transition hover:text-white">Sign in</Link>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}

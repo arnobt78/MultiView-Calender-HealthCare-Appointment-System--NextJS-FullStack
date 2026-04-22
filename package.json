@@ -3,7 +3,7 @@
   "version": "0.2.1",
   "private": true,
   "scripts": {
-    "dev": "next dev --webpack",
+    "dev": "next dev",
     "build": "prisma generate && node -e \"require('dotenv').config({path:'.env'}); require('dotenv').config({path:'.env.local'}); require('child_process').execSync('npx prisma db push', {stdio:'inherit', env:process.env})\" && next build",
     "start": "next start",
     "lint": "eslint .",

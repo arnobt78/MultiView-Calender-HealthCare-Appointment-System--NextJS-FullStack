@@ -1,9 +1,15 @@
-// Home Page - Server Component (SSR)
-// This is the route entry point that renders the client-side HomePage component
-// The page itself is a server component for optimal SSR and metadata support
-
+import { cookies } from "next/headers";
 import HomePage from "@/components/pages/HomePage";
+import LandingPage from "@/components/pages/LandingPage";
+import { SESSION } from "@/lib/constants";
 
-export default function Page() {
+export default async function Page() {
+  const cookieStore = await cookies();
+  const isAuthenticated = Boolean(cookieStore.get(SESSION.COOKIE_NAME)?.value);
+
+  if (!isAuthenticated) {
+    return <LandingPage />;
+  }
+
   return <HomePage />;
 }
