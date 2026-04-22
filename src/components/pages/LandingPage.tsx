@@ -146,10 +146,10 @@ function HeroBackground({ prefersReduced }: { prefersReduced: boolean | null }) 
 
 /* ─── status bar typewriter ─── */
 const STATUS_ITEMS = [
-  { Icon: CalendarClock, label: "Today",    color: "bg-emerald-500/20 text-emerald-300 border-emerald-400/30", text: "6 appointments today"        },
-  { Icon: CalendarCheck, label: "Tomorrow", color: "bg-sky-500/20 text-sky-300 border-sky-400/30",             text: "3 appointments tomorrow"    },
-  { Icon: CalendarRange, label: "Week",     color: "bg-violet-500/20 text-violet-300 border-violet-400/30",    text: "21 appointments this week"  },
-  { Icon: TrendingUp,    label: "Month",    color: "bg-amber-500/20 text-amber-300 border-amber-400/30",       text: "63 appointments this month" },
+  { Icon: CalendarClock, label: "Today", color: "bg-emerald-500/20 text-emerald-300 border-emerald-400/30", text: "6 appointments today" },
+  { Icon: CalendarCheck, label: "Tomorrow", color: "bg-sky-500/20 text-sky-300 border-sky-400/30", text: "3 appointments tomorrow" },
+  { Icon: CalendarRange, label: "Week", color: "bg-violet-500/20 text-violet-300 border-violet-400/30", text: "21 appointments this week" },
+  { Icon: TrendingUp, label: "Month", color: "bg-amber-500/20 text-amber-300 border-amber-400/30", text: "63 appointments this month" },
 ] as const;
 
 type StatusItem = typeof STATUS_ITEMS[number];
@@ -232,7 +232,7 @@ function AppointmentDeck() {
       transition={{ duration: 0.75, ease, delay: 0.15 }}
       className="relative w-full max-w-[340px] md:max-w-[380px] xl:max-w-[480px] justify-self-center xl:justify-self-end"
     >
-      <div className="relative rounded-[28px] border border-white/15 overflow-hidden backdrop-blur-2xl shadow-[0_40px_100px_rgba(0,0,0,0.55)]">
+      <div className="relative rounded-[28px] border border-white/15 overflow-hidden backdrop-blur-2xl shadow-[0_40px_100px_rgba(0,0,0,0.55)]" style={{ transform: "translateZ(0)" }}>
 
         {/* ── crossfade + Ken Burns bg layers ── */}
         <div ref={layerA} aria-hidden className="card-bg-layer pointer-events-none" />
@@ -348,7 +348,7 @@ function AppointmentDeck() {
           </div>
 
           {/* status bar — typewriter */}
-          <div className="mx-6 mb-6 flex items-center gap-2 rounded-xl bg-white/5 px-3 py-2.5">
+          <div className="mx-6 lg:mx-8 mb-6 lg:mb-8 flex items-center gap-2 rounded-xl bg-white/5 px-3 py-2.5">
             <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
 
             {/* animated banner pill */}
@@ -358,9 +358,9 @@ function AppointmentDeck() {
                 /* enter — spring nugget: zooms in overshooting, shakes into place */
                 initial={{ opacity: 0, scale: 0.3, rotate: -8 }}
                 animate={{
-                  opacity: [0, 1,    1,    1,    1,    1   ],
-                  scale:   [0.3, 1.28, 0.88, 1.10, 0.97, 1 ],
-                  rotate:  [-8,  4,   -3,    2,   -1,   0  ],
+                  opacity: [0, 1, 1, 1, 1, 1],
+                  scale: [0.3, 1.28, 0.88, 1.10, 0.97, 1],
+                  rotate: [-8, 4, -3, 2, -1, 0],
                 }}
                 /* exit — smooth ease-out shrink + fade */
                 exit={{ opacity: 0, scale: 0.6, rotate: 6, filter: "blur(3px)", transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
@@ -434,7 +434,7 @@ export default function LandingPage() {
   const handleDemo = useCallback(async () => {
     setDemoLoading(true);
     try {
-      const res = await fetch("/api/auth/login", {
+      const res = await fetch("/api/auth/demo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: "test@user.com", password: "12345678" }),
@@ -574,9 +574,9 @@ export default function LandingPage() {
               <motion.div
                 initial={{ scale: 0.3, rotate: -8, opacity: 0 }}
                 whileInView={{
-                  scale:   [0.3, 1.26, 0.88, 1.08, 0.97, 1],
-                  rotate:  [-8,  5,    -3,   2,    -1,   0 ],
-                  opacity: [0,   1,     1,    1,    1,    1 ],
+                  scale: [0.3, 1.26, 0.88, 1.08, 0.97, 1],
+                  rotate: [-8, 5, -3, 2, -1, 0],
+                  opacity: [0, 1, 1, 1, 1, 1],
                 }}
                 viewport={{ once: false, amount: 0.6 }}
                 transition={{ duration: 0.62, delay: 0.45, ease: [0.22, 1, 0.36, 1] }}

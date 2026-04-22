@@ -292,9 +292,9 @@ html {
 /* ===== Appointment-card Ken Burns two-layer bg (8 s — smaller scale for card) ===== */
 .card-bg-layer {
   position: absolute;
-  inset: 0;
+  inset: -4px; /* overshoots edges so Ken Burns scale never exposes raw container border */
   background-size: cover;
-  background-position: center top;
+  background-position: center center;
   background-repeat: no-repeat;
   opacity: 0;
   transform-origin: center center;

@@ -304,13 +304,9 @@ export default function AppointmentList() {
   // Group appointments by date (descending)
   const grouped = groupAppointmentsByDate(filteredAppointments);
 
-  if (loadingAppointments) {
-    return <AppointmentListSkeleton />;
-  }
-
   return (
     <div className="py-4 px-2 sm:px-4 lg:px-8 min-h-[calc(100vh-80px)]">
-      {/* <ListCalendarHeader /> */}
+      {/* Static header — always visible, never skeletonised */}
       <h2 className="text-2xl font-semibold tracking-tight text-gray-800 mb-2">
         Appointment List
       </h2>
@@ -340,9 +336,39 @@ export default function AppointmentList() {
           />
         </div>
       </div>
-      {/* Only show the 'Kein Treffer gefunden' message if there is a search term */}
-      {/* {filteredAppointments.length === 0 && search.trim() && ( */}
 
+      {/* Data area — skeleton while loading, real content once ready */}
+      {loadingAppointments ? (
+        <div className="animate-pulse mt-8 flex flex-col gap-4">
+          <div className="h-6 w-56 bg-gray-200 rounded mb-1" />
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="relative rounded-2xl bg-white border border-gray-100 flex items-stretch min-h-[130px]">
+              <div className="w-1.5 rounded-l-2xl h-full absolute left-0 top-0 bottom-0 bg-gray-200" />
+              <div className="pl-6 pr-4 py-4 flex-1 flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <div className="h-5 w-36 bg-gray-200 rounded-lg" />
+                  <div className="h-5 w-20 bg-gray-100 rounded-full" />
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="h-4 w-28 bg-gray-100 rounded" />
+                  <div className="h-4 w-24 bg-gray-100 rounded" />
+                </div>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+                  <div className="h-3.5 w-32 bg-gray-100 rounded" />
+                  <div className="h-3.5 w-28 bg-gray-100 rounded" />
+                  <div className="h-3.5 w-24 bg-gray-100 rounded" />
+                  <div className="h-3.5 w-20 bg-gray-100 rounded" />
+                </div>
+              </div>
+              <div className="flex flex-col items-center justify-center gap-3 min-w-[68px] py-4 px-3 border-l border-gray-100">
+                <div className="h-9 w-20 bg-gray-100 rounded-md" />
+                <div className="h-8 w-8 bg-gray-100 rounded-full" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <>
       {/* Show empty state if no appointments at all (before filtering) */}
       {appointments.length === 0 && (
         <div className="flex items-center justify-center min-h-[50vh]">
@@ -696,6 +722,8 @@ export default function AppointmentList() {
           refreshAppointments={refetchAppointments}
         />
       ) : null}
+        </>
+      )}
     </div>
   );
 }

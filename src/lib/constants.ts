@@ -6,10 +6,10 @@
 
 // API Rate Limiting Constants
 export const RATE_LIMITS = {
-  LOGIN: { maxRequests: 5, windowMs: 15 * 60 * 1000 }, // 5 attempts per 15 minutes
-  REGISTER: { maxRequests: 3, windowMs: 60 * 60 * 1000 }, // 3 attempts per hour
-  PASSWORD_RESET: { maxRequests: 3, windowMs: 60 * 60 * 1000 }, // 3 attempts per hour
-  API_GENERAL: { maxRequests: 100, windowMs: 60 * 1000 }, // 100 requests per minute
+  LOGIN: { maxRequests: 10, windowMs: 60 * 1000 },          // 10 attempts per minute — blocks bots, never frustrates humans
+  REGISTER: { maxRequests: 5, windowMs: 60 * 1000 },        // 5 per minute
+  PASSWORD_RESET: { maxRequests: 5, windowMs: 60 * 1000 },  // 5 per minute
+  API_GENERAL: { maxRequests: 100, windowMs: 60 * 1000 },   // 100 per minute
 } as const;
 
 // Pagination Constants
