@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
@@ -15,10 +15,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-export default function AcceptInvitationPage() {
+type AcceptInvitationPageProps = {
+  token?: string | null;
+};
+
+export default function AcceptInvitationPage({ token = null }: AcceptInvitationPageProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const token = searchParams.get("token");
   const { user, isLoading: checkingAuth } = useAuth();
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");

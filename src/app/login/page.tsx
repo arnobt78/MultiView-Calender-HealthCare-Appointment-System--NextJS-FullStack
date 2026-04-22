@@ -1,6 +1,5 @@
 import Login from "@/components/login/Login";
 import type { Metadata } from "next";
-import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: "Login",
@@ -12,10 +11,11 @@ export const metadata: Metadata = {
   },
 };
 
-export default function LoginPage() {
-  return (
-    <Suspense fallback={<div className="p-8 text-sm text-muted-foreground">Loading login...</div>}>
-      <Login />
-    </Suspense>
-  );
+type LoginPageProps = {
+  searchParams: Promise<{ redirect?: string }>;
+};
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const { redirect } = await searchParams;
+  return <Login redirect={redirect ?? null} />;
 }
