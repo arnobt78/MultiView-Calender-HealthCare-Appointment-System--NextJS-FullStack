@@ -58,6 +58,7 @@ export default function AppointmentDialog({
 
   // Sync open state with parent if controlled
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (typeof isOpen === "boolean") setOpen(isOpen);
   }, [isOpen]);
 
@@ -91,6 +92,7 @@ export default function AppointmentDialog({
 
   useEffect(() => {
     if (appointment) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTitle(appointment.title || "");
       setNotes(appointment.notes || "");
       setStart(utcToLocalInputValue(appointment.start));

@@ -47,6 +47,7 @@ export default function UserAccessPermission() {
 
   React.useEffect(() => {
     if (debouncedSearch.length < 2) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setResults([]);
       return;
     }
