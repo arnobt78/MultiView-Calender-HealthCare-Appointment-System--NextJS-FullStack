@@ -289,6 +289,28 @@ html {
   }
 }
 
+/* ===== Appointment-card Ken Burns two-layer bg (8 s — smaller scale for card) ===== */
+.card-bg-layer {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+  opacity: 0;
+  transform-origin: center center;
+  transition: opacity 1.75s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-bg-layer-active {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .card-bg-layer-active {
+    animation: hero-bg-kenburns-cycle 8s forwards;
+  }
+}
+
 /* ===== Ripple button effect ===== */
 @keyframes ripple-expand {
   from { transform: scale(0); opacity: 0.45; }

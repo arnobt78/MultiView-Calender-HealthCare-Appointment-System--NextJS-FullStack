@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Calendar, LayoutDashboard, Settings, BookOpen, Activity, LogOut, Bell, CheckCheck, Search } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
 import { useAppStore } from "@/store/useAppStore";
 import GlobalSearch from "@/components/shared/GlobalSearch";
 

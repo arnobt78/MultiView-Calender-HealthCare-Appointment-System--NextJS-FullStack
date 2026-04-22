@@ -10,7 +10,10 @@ import {
   BarChart3,
   Bell,
   Building2,
+  CalendarCheck,
+  CalendarClock,
   CalendarDays,
+  CalendarRange,
   CheckCircle2,
   Clock,
   HeartPulse,
@@ -20,6 +23,7 @@ import {
   ShieldCheck,
   Sparkles,
   Stethoscope,
+  TrendingUp,
   Users,
   Zap,
 } from "lucide-react";
@@ -140,24 +144,85 @@ function HeroBackground({ prefersReduced }: { prefersReduced: boolean | null }) 
   );
 }
 
+/* ─── status bar typewriter ─── */
+const STATUS_ITEMS = [
+  { Icon: CalendarClock, label: "Today",    color: "bg-emerald-500/20 text-emerald-300 border-emerald-400/30", text: "6 appointments today"        },
+  { Icon: CalendarCheck, label: "Tomorrow", color: "bg-sky-500/20 text-sky-300 border-sky-400/30",             text: "3 appointments tomorrow"    },
+  { Icon: CalendarRange, label: "Week",     color: "bg-violet-500/20 text-violet-300 border-violet-400/30",    text: "21 appointments this week"  },
+  { Icon: TrendingUp,    label: "Month",    color: "bg-amber-500/20 text-amber-300 border-amber-400/30",       text: "63 appointments this month" },
+] as const;
+
+type StatusItem = typeof STATUS_ITEMS[number];
+
+function useTypewriter(
+  items: readonly StatusItem[],
+  typeMs = 46,
+  deleteMs = 20,
+  pauseMs = 1900,
+) {
+  const [idx, setIdx] = useState(0);
+  const [charIdx, setCharIdx] = useState(0);
+  const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    const target = items[idx].text;
+    let t: ReturnType<typeof setTimeout>;
+    if (!deleting && charIdx < target.length)
+      t = setTimeout(() => setCharIdx((c) => c + 1), typeMs);
+    else if (!deleting)
+      t = setTimeout(() => setDeleting(true), pauseMs);
+    else if (deleting && charIdx > 0)
+      t = setTimeout(() => setCharIdx((c) => c - 1), deleteMs);
+    else
+      t = setTimeout(() => { setDeleting(false); setIdx((i) => (i + 1) % items.length); }, typeMs);
+    return () => clearTimeout(t);
+  }, [charIdx, deleting, idx, items, typeMs, deleteMs, pauseMs]);
+
+  return { text: items[idx].text.slice(0, charIdx), Icon: items[idx].Icon, label: items[idx].label, color: items[idx].color };
+}
+
 /* ─── appointment deck ─── */
 const APPOINTMENTS = [
-  { id: 1, doctor: "Dr. Carter", specialty: "Cardiology", time: "10:30 AM", status: "Next up", Icon: HeartPulse, accent: "from-emerald-500/20 to-emerald-500/5", ic: "text-emerald-300", bc: "border-emerald-400/25" },
-  { id: 2, doctor: "Dr. Martinez", specialty: "Neurology", time: "2:00 PM", status: "Today", Icon: Activity, accent: "from-sky-500/20 to-sky-500/5", ic: "text-sky-300", bc: "border-sky-400/25" },
-  { id: 3, doctor: "Dr. Kim", specialty: "Dermatology", time: "4:15 PM", status: "Confirmed", Icon: Sparkles, accent: "from-violet-500/20 to-violet-500/5", ic: "text-violet-300", bc: "border-violet-400/25" },
-  { id: 4, doctor: "Dr. Patel", specialty: "Pediatrics", time: "9:00 AM", status: "Tomorrow", Icon: Users, accent: "from-amber-500/20 to-amber-500/5", ic: "text-amber-300", bc: "border-amber-400/25" },
+  { id: 1, doctor: "Dr. Carter", specialty: "Cardiology", time: "10:30 AM", status: "Next up", img: "/doctors/img-1.jpg", Icon: HeartPulse, accent: "from-emerald-500/20 to-emerald-500/5", ic: "text-emerald-300", bc: "border-emerald-400/25" },
+  { id: 2, doctor: "Dr. Martinez", specialty: "Neurology", time: "2:00 PM", status: "Today", img: "/doctors/img-2.jpg", Icon: Activity, accent: "from-sky-500/20 to-sky-500/5", ic: "text-sky-300", bc: "border-sky-400/25" },
+  { id: 3, doctor: "Dr. Kim", specialty: "Dermatology", time: "4:15 PM", status: "Confirmed", img: "/doctors/img-3.jpg", Icon: Sparkles, accent: "from-violet-500/20 to-violet-500/5", ic: "text-violet-300", bc: "border-violet-400/25" },
+  { id: 4, doctor: "Dr. Patel", specialty: "Pediatrics", time: "9:00 AM", status: "Tomorrow", img: "/doctors/img-4.jpg", Icon: Users, accent: "from-amber-500/20 to-amber-500/5", ic: "text-amber-300", bc: "border-amber-400/25" },
+  { id: 5, doctor: "Dr. Thompson", specialty: "Orthopedics", time: "11:45 AM", status: "Reschedule", img: "/doctors/img-5.jpg", Icon: Stethoscope, accent: "from-rose-500/20 to-rose-500/5", ic: "text-rose-300", bc: "border-rose-400/25" },
+  { id: 6, doctor: "Dr. John", specialty: "Endocrinology", time: "3:30 PM", status: "Pending", img: "/doctors/img-6.jpg", Icon: Zap, accent: "from-teal-500/20 to-teal-500/5", ic: "text-teal-300", bc: "border-teal-400/25" },
 ];
 
 function AppointmentDeck() {
   const [offset, setOffset] = useState(0);
+  const layerA = useRef<HTMLDivElement>(null);
+  const layerB = useRef<HTMLDivElement>(null);
+  const bgState = useRef({ active: 0 });
+  const { text: statusText, Icon: StatusIcon, label: statusLabel, color: statusColor } = useTypewriter(STATUS_ITEMS);
 
+  /* advance offset every 3.4 s */
   useEffect(() => {
     const t = setInterval(() => setOffset((o) => (o + 1) % APPOINTMENTS.length), 3400);
     return () => clearInterval(t);
   }, []);
 
-  /* 3 visible cards: [top, mid, bottom] rotating through the 4-item list */
-  const cards = [0, 1, 2].map((i) => APPOINTMENTS[(offset + i) % APPOINTMENTS.length]);
+  /* two-layer crossfade + Ken Burns — mirrors HERO_ROTATING_BACKGROUND_SPEC */
+  useEffect(() => {
+    const A = layerA.current;
+    const B = layerB.current;
+    if (!A || !B) return;
+    const layers = [A, B];
+    const s = bgState.current;
+    const next = layers[1 - s.active];
+    const cur = layers[s.active];
+    next.style.backgroundImage = `url("${APPOINTMENTS[offset].img}")`;
+    cur.classList.remove("card-bg-layer-active");
+    next.classList.remove("card-bg-layer-active");
+    void next.offsetWidth; // force reflow — restarts Ken Burns keyframes
+    next.classList.add("card-bg-layer-active");
+    s.active = 1 - s.active;
+  }, [offset]);
+
+  /* 4 visible cards rotating through 6 */
+  const cards = [0, 1, 2, 3, 4].map((i) => APPOINTMENTS[(offset + i) % APPOINTMENTS.length]);
 
   return (
     <motion.div
@@ -167,92 +232,157 @@ function AppointmentDeck() {
       transition={{ duration: 0.75, ease, delay: 0.15 }}
       className="relative w-full max-w-[340px] md:max-w-[380px] xl:max-w-[480px] justify-self-center xl:justify-self-end"
     >
-      <div className="rounded-[28px] border border-white/15 bg-slate-900/80 backdrop-blur-2xl shadow-[0_40px_100px_rgba(0,0,0,0.55)]">
-        {/* header */}
-        <div className="flex items-center justify-between px-6 pt-6 pb-4">
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-sky-500/15 border border-sky-400/20">
-              <Clock className="h-3.5 w-3.5 text-sky-300" />
-            </span>
-            <div>
-              <p className="text-[10px] uppercase tracking-[0.22em] text-white/45 leading-none">Upcoming</p>
-              <p className="text-sm font-semibold text-white leading-snug">Appointments</p>
+      <div className="relative rounded-[28px] border border-white/15 overflow-hidden backdrop-blur-2xl shadow-[0_40px_100px_rgba(0,0,0,0.55)]">
+
+        {/* ── crossfade + Ken Burns bg layers ── */}
+        <div ref={layerA} aria-hidden className="card-bg-layer pointer-events-none" />
+        <div ref={layerB} aria-hidden className="card-bg-layer pointer-events-none" />
+        {/* readability overlay */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 bg-slate-950/78" />
+
+        {/* ── content (above bg layers) ── */}
+        <div className="relative">
+
+          {/* header */}
+          <div className="flex items-center justify-between px-6 lg:px-8 pt-6 lg:pt-8 pb-4">
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-sky-500/15 border border-sky-400/20">
+                <Clock className="h-3.5 w-3.5 text-sky-300" />
+              </span>
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.22em] text-white/45 leading-none">Upcoming</p>
+                <p className="text-sm font-semibold text-white leading-snug">Appointments</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1">
+              {APPOINTMENTS.map((_, i) => (
+                <motion.span
+                  key={i}
+                  animate={{ width: i === offset ? 16 : 6, opacity: i === offset ? 1 : 0.25 }}
+                  transition={{ duration: 0.4 }}
+                  className="h-1.5 rounded-full bg-sky-400 inline-block"
+                />
+              ))}
             </div>
           </div>
-          <div className="flex items-center gap-1">
-            {APPOINTMENTS.map((_, i) => (
-              <motion.span
-                key={i}
-                animate={{ width: i === offset ? 16 : 6, opacity: i === offset ? 1 : 0.28 }}
-                transition={{ duration: 0.4 }}
-                className="h-1.5 rounded-full bg-sky-400 inline-block"
-              />
-            ))}
+
+          {/* shuffling card list — no overflow-hidden here so exit/settle animate freely */}
+          <div className="px-6 lg:px-8">
+            <AnimatePresence initial={false} mode="popLayout">
+              {cards.map((apt, i) => (
+                <motion.div
+                  key={apt.id}
+                  layout
+                  initial={{ opacity: 0, y: 40, scale: 0.92 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{
+                    opacity: 0,
+                    y: -72,
+                    scale: 0.88,
+                    filter: "blur(6px)",
+                    transition: { duration: 0.36, ease: [0.4, 0, 1, 1] },
+                  }}
+                  transition={{
+                    duration: 0.5,
+                    ease: [0.22, 1, 0.36, 1],
+                    layout: { duration: 0.48, ease: [0.22, 1, 0.36, 1] },
+                  }}
+                  className={i === 0 ? "mb-3" : "mb-2"}
+                >
+                  {/*
+                   * Every card gets the settle wrapper — key changes each cycle so all
+                   * 4 re-mount and play their nudge. Delay staggers top→bottom so the
+                   * spring ripple cascades down through the list.
+                   */}
+                  <motion.div
+                    key={`settle-${offset}-${i}`}
+                    initial={{ y: i === 0 ? 12 : 7 - i, opacity: 0.55 }}
+                    animate={{
+                      y: i === 0 ? [12, -9, 3, -1, 0] : [7 - i, -(6 - i), 2, 0],
+                      opacity: [0.55, 1, 1, 1],
+                    }}
+                    transition={{
+                      duration: i === 0 ? 0.62 : 0.5,
+                      delay: 0.14 + i * 0.055,
+                      ease: [0.22, 1, 0.36, 1],
+                    }}
+                  >
+                    {i === 0 ? (
+                      <div className={`rounded-[18px] bg-linear-to-br ${apt.accent} border ${apt.bc} p-4`}>
+                        <div className="flex items-center gap-3">
+                          <motion.div
+                            animate={{ scale: [1, 1.09, 1] }}
+                            transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
+                            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/10 border border-white/10 ${apt.ic}`}
+                          >
+                            <apt.Icon className="h-5 w-5" />
+                          </motion.div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-bold text-white truncate">{apt.doctor}</p>
+                            <p className="text-xs text-white/55">{apt.specialty}</p>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <p className={`text-xs font-bold ${apt.ic}`}>{apt.time}</p>
+                            <span className="inline-block mt-0.5 text-[10px] px-1.5 py-0.5 rounded-full bg-white/10 text-white/60">
+                              {apt.status}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-3 rounded-xl bg-white/5 px-3 py-2.5">
+                        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/5 ${apt.ic}`}>
+                          <apt.Icon className="h-3.5 w-3.5" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-white/80 truncate">{apt.doctor}</p>
+                          <p className="text-[11px] text-white/40">{apt.specialty} · {apt.time}</p>
+                        </div>
+                        <CheckCircle2 className="h-3.5 w-3.5 text-white/25 shrink-0" />
+                      </div>
+                    )}
+                  </motion.div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
-        </div>
 
-        {/* shuffling card list — popLayout ejects top card and lets the rest blob up */}
-        <div className="px-6 overflow-hidden">
-          <AnimatePresence initial={false} mode="popLayout">
-            {cards.map((apt, i) => (
-              <motion.div
-                key={apt.id}
-                layout
-                initial={{ opacity: 0, y: 36, scale: 0.94 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -52, scale: 0.92, filter: "blur(3px)" }}
-                transition={{
-                  duration: 0.46,
-                  ease: [0.22, 1, 0.36, 1],
-                  layout: { duration: 0.44, ease: [0.22, 1, 0.36, 1] },
+          {/* status bar — typewriter */}
+          <div className="mx-6 mb-6 flex items-center gap-2 rounded-xl bg-white/5 px-3 py-2.5">
+            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+
+            {/* animated banner pill */}
+            <AnimatePresence mode="wait">
+              <motion.span
+                key={statusLabel}
+                /* enter — spring nugget: zooms in overshooting, shakes into place */
+                initial={{ opacity: 0, scale: 0.3, rotate: -8 }}
+                animate={{
+                  opacity: [0, 1,    1,    1,    1,    1   ],
+                  scale:   [0.3, 1.28, 0.88, 1.10, 0.97, 1 ],
+                  rotate:  [-8,  4,   -3,    2,   -1,   0  ],
                 }}
-                className={i === 0 ? "mb-3" : "mb-2"}
+                /* exit — smooth ease-out shrink + fade */
+                exit={{ opacity: 0, scale: 0.6, rotate: 6, filter: "blur(3px)", transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
+                transition={{ duration: 0.58, ease: [0.22, 1, 0.36, 1] }}
+                className={`inline-flex shrink-0 items-center gap-1 rounded-3xl border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest ${statusColor}`}
               >
-                {i === 0 ? (
-                  /* top card — highlighted */
-                  <div className={`rounded-[18px] bg-gradient-to-br ${apt.accent} border ${apt.bc} p-4`}>
-                    <div className="flex items-center gap-3">
-                      <motion.div
-                        animate={{ scale: [1, 1.09, 1] }}
-                        transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
-                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/10 border border-white/10 ${apt.ic}`}
-                      >
-                        <apt.Icon className="h-5 w-5" />
-                      </motion.div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-white truncate">{apt.doctor}</p>
-                        <p className="text-xs text-white/55">{apt.specialty}</p>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <p className={`text-xs font-bold ${apt.ic}`}>{apt.time}</p>
-                        <span className="inline-block mt-0.5 text-[10px] px-1.5 py-0.5 rounded-full bg-white/10 text-white/60">
-                          {apt.status}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  /* lower cards — subtle rows */
-                  <div className="flex items-center gap-3 rounded-xl bg-white/5 px-3 py-2.5">
-                    <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/5 ${apt.ic}`}>
-                      <apt.Icon className="h-3.5 w-3.5" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-white/80 truncate">{apt.doctor}</p>
-                      <p className="text-[11px] text-white/40">{apt.specialty} · {apt.time}</p>
-                    </div>
-                    <CheckCircle2 className="h-3.5 w-3.5 text-white/25 shrink-0" />
-                  </div>
-                )}
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
+                <StatusIcon className="h-2.5 w-2.5" />
+                {statusLabel}
+              </motion.span>
+            </AnimatePresence>
 
-        {/* status bar */}
-        <div className="mx-6 mb-6 flex items-center gap-2 rounded-xl bg-white/5 px-3 py-2.5">
-          <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-          <p className="text-xs text-white/60">Live sync · 4 appointments today</p>
+            {/* typewriter text + blinking cursor */}
+            <p className="text-xs text-white/65 font-mono tracking-tight min-w-0 flex-1 truncate">
+              {statusText}
+              <motion.span
+                animate={{ opacity: [1, 0, 1] }}
+                transition={{ duration: 0.75, repeat: Infinity }}
+                className="inline-block w-[1.5px] h-[10px] bg-white/55 ml-[2px] align-middle rounded-sm"
+              />
+            </p>
+          </div>
+
         </div>
       </div>
     </motion.div>
@@ -441,7 +571,15 @@ export default function LandingPage() {
               </Link>
 
               {/* glow lives on the outer wrapper — cta-shine-wrap has overflow:hidden which clips box-shadow */}
-              <div
+              <motion.div
+                initial={{ scale: 0.3, rotate: -8, opacity: 0 }}
+                whileInView={{
+                  scale:   [0.3, 1.26, 0.88, 1.08, 0.97, 1],
+                  rotate:  [-8,  5,    -3,   2,    -1,   0 ],
+                  opacity: [0,   1,     1,    1,    1,    1 ],
+                }}
+                viewport={{ once: false, amount: 0.6 }}
+                transition={{ duration: 0.62, delay: 0.45, ease: [0.22, 1, 0.36, 1] }}
                 className="cta-shine-wrap rounded-xl transition-shadow duration-300"
                 style={{ boxShadow: "0 12px 32px rgba(16,185,129,0.5), 0 0 28px rgba(16,185,129,0.28)" }}
               >
@@ -462,7 +600,7 @@ export default function LandingPage() {
                     </>
                   )}
                 </RippleButton>
-              </div>
+              </motion.div>
             </motion.div>
 
             {/* Stats */}
