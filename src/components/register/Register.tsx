@@ -226,7 +226,6 @@ export function Register() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    autoFocus
                     autoComplete="email"
                     className="h-11 bg-slate-50 border-slate-200 rounded-md text-base focus-visible:ring-teal-500/30 focus-visible:border-teal-400"
                   />
