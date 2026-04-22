@@ -138,7 +138,7 @@ import AuthLayout from "./AuthLayout";
  */
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth">
       <head>
         {/* Canonical URL helps search engines understand the preferred URL for this page */}
         <link rel="canonical" href="https://doctor-patient-calendar-appointment.vercel.app" />

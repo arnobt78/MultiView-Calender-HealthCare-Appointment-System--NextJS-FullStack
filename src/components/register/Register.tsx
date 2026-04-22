@@ -96,8 +96,10 @@ export function Register() {
   };
 
   return (
-    <div className="relative h-screen overflow-hidden">
-      {/* Full-screen background — priority preloads before paint */}
+    <div
+      className="relative h-screen overflow-hidden"
+      style={{ background: "linear-gradient(to right, #042f2e, #022c22, #0f172a)" }}
+    >
       <Image
         src="/images/img5.jpg"
         alt=""
@@ -106,7 +108,6 @@ export function Register() {
         className="object-cover object-center"
         sizes="100vw"
       />
-      {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-r from-teal-950/92 via-emerald-950/80 to-slate-900/40" />
 
       {/* Layout */}

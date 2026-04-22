@@ -55,7 +55,7 @@ export function AuthLayoutInner({ children }: { children: React.ReactNode }) {
   // This prevents protected page hooks from firing unauthenticated API calls
   // (which otherwise causes noisy 401 loops before redirect to /login).
   if (!ALLOWED_PATHS.includes(pathname) && (isLoading || !isAuthenticated)) {
-    return null;
+    return <div style={{ minHeight: "100vh", backgroundColor: "#020617" }} />;
   }
 
   return (

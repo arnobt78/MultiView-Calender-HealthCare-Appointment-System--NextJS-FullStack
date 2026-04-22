@@ -172,8 +172,10 @@ export default function Login({ redirect = null }: LoginProps) {
   };
 
   return (
-    <div className="relative h-screen overflow-hidden">
-      {/* Full-screen background — priority preloads before paint, eliminates flash */}
+    <div
+      className="relative h-screen overflow-hidden"
+      style={{ background: "linear-gradient(to right, #020617, #172554, #0f172a)" }}
+    >
       <Image
         src="/images/img1.avif"
         alt=""
@@ -182,7 +184,6 @@ export default function Login({ redirect = null }: LoginProps) {
         className="object-cover object-center"
         sizes="100vw"
       />
-      {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-r from-slate-950/92 via-blue-950/80 to-slate-900/40" />
 
       {/* Layout */}
