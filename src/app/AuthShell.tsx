@@ -35,7 +35,7 @@ function AuthShellInner({ children }: { children: React.ReactNode }) {
         return;
       }
       if (user.email_verified !== false && ["/login", "/register"].includes(pathname)) {
-        router.replace("/");
+        router.replace("/dashboard");
         return;
       }
     } else {

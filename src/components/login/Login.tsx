@@ -1,13 +1,13 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import Image from "next/image";
-import { useQueryClient } from "@tanstack/react-query";
-import { queryKeys } from "@/lib/query-keys";
 import { toast } from "sonner";
 import {
   Select,
@@ -150,15 +150,10 @@ export default function Login({ redirect = null }: LoginProps) {
       }
 
       if (data.user) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.auth.me });
         toast.success(`Welcome back, ${data.user.email}!`);
-
-        if (redirect) {
-          window.location.href = redirect;
-          return;
-        }
-        router.push("/");
-        router.refresh();
+        /* seed the auth cache so AuthShell sees isAuthenticated=true immediately */
+        queryClient.setQueryData(queryKeys.auth.me, { ...data.user, email_verified: true });
+        router.push(redirect ?? "/dashboard");
       }
     } catch (err: unknown) {
       setLoading(false);
@@ -256,14 +251,7 @@ export default function Login({ redirect = null }: LoginProps) {
               ))}
             </div>
 
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.9, duration: 0.5 }}
-              className="mt-8 text-xs text-white/25"
-            >
-              Built with Next.js 16 · TypeScript · Prisma · PostgreSQL · TailwindCSS
-            </motion.p>
+
           </div>
 
           {/* ── Right form panel ── */}

@@ -259,9 +259,11 @@
 /* ===== Landing page — smooth scroll ===== */
 html {
   scroll-behavior: smooth;
+  /* prevents white/black flash between full-page navigations */
+  background-color: #0f172a;
 }
 
-/* ===== Hero Ken Burns two-layer background rotation ===== */
+/* ===== Hero Ken Burns — full-viewport rotating background ===== */
 @keyframes hero-bg-kenburns-cycle {
   0%   { transform: scale(1)     translate3d(0, 0, 0);      animation-timing-function: cubic-bezier(0.42, 0, 0.58, 1); }
   50%  { transform: scale(1.055) translate3d(0, -0.28%, 0); animation-timing-function: cubic-bezier(0.42, 0, 0.58, 1); }
@@ -289,16 +291,25 @@ html {
   }
 }
 
-/* ===== Appointment-card Ken Burns two-layer bg (8 s — smaller scale for card) ===== */
+/* ===== Appointment-card Ken Burns — independent keyframe, independent name ===== */
+@keyframes card-bg-kenburns {
+  0%   { transform: scale(1)     translate3d(0, 0, 0);      animation-timing-function: cubic-bezier(0.42, 0, 0.58, 1); }
+  50%  { transform: scale(1.055) translate3d(0, -0.5%, 0);  animation-timing-function: cubic-bezier(0.42, 0, 0.58, 1); }
+  100% { transform: scale(1)     translate3d(0, 0, 0); }
+}
+
 .card-bg-layer {
   position: absolute;
-  inset: -4px; /* overshoots edges so Ken Burns scale never exposes raw container border */
+  /* 20 px overshoot covers scale(1.055) × translate at any card size on any screen */
+  inset: -20px;
   background-size: cover;
-  background-position: center center;
+  background-position: center top;
   background-repeat: no-repeat;
   opacity: 0;
   transform-origin: center center;
   transition: opacity 1.75s cubic-bezier(0.4, 0, 0.2, 1);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .card-bg-layer-active {
@@ -307,7 +318,8 @@ html {
 
 @media (prefers-reduced-motion: no-preference) {
   .card-bg-layer-active {
-    animation: hero-bg-kenburns-cycle 8s forwards;
+    animation: card-bg-kenburns 8s forwards;
+    will-change: transform, opacity;
   }
 }
 

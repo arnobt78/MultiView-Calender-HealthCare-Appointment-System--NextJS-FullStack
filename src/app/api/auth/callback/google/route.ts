@@ -123,7 +123,7 @@ export async function GET(req: NextRequest) {
     const token = generateToken(user.id, user.email);
     await setSession(token);
 
-    const redirectTo = state.startsWith("/") ? state : "/";
+    const redirectTo = state.startsWith("/") ? state : "/dashboard";
     return NextResponse.redirect(new URL(redirectTo, req.url));
   } catch (err) {
     console.error("Google callback error:", err);

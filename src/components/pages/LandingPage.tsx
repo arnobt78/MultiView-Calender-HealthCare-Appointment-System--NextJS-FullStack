@@ -2,6 +2,9 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -26,6 +29,7 @@ import {
   TrendingUp,
   Users,
   Zap,
+  LogIn,
 } from "lucide-react";
 import { RippleButton } from "@/components/ui/RippleButton";
 
@@ -136,7 +140,7 @@ function HeroBackground({ prefersReduced }: { prefersReduced: boolean | null }) 
     <div
       aria-hidden
       className="pointer-events-none fixed inset-0 overflow-hidden"
-      style={{ zIndex: -2 }}
+      style={{ zIndex: 0 }}
     >
       <div ref={layerA} className="hero-bg-layer" />
       <div ref={layerB} className="hero-bg-layer" />
@@ -146,10 +150,10 @@ function HeroBackground({ prefersReduced }: { prefersReduced: boolean | null }) 
 
 /* ─── status bar typewriter ─── */
 const STATUS_ITEMS = [
-  { Icon: CalendarClock, label: "Today", color: "bg-emerald-500/20 text-emerald-300 border-emerald-400/30", text: "6 appointments today" },
-  { Icon: CalendarCheck, label: "Tomorrow", color: "bg-sky-500/20 text-sky-300 border-sky-400/30", text: "3 appointments tomorrow" },
-  { Icon: CalendarRange, label: "Week", color: "bg-violet-500/20 text-violet-300 border-violet-400/30", text: "21 appointments this week" },
-  { Icon: TrendingUp, label: "Month", color: "bg-amber-500/20 text-amber-300 border-amber-400/30", text: "63 appointments this month" },
+  { Icon: CalendarClock, label: "Today", color: "bg-emerald-500/20 text-emerald-300 border-emerald-400/30", text: "6 appointments today!" },
+  { Icon: CalendarCheck, label: "Tomorrow", color: "bg-sky-500/20 text-sky-300 border-sky-400/30", text: "3 appointments tomorrow!" },
+  { Icon: CalendarRange, label: "Week", color: "bg-violet-500/20 text-violet-300 border-violet-400/30", text: "21 appointments this week!" },
+  { Icon: TrendingUp, label: "Month", color: "bg-amber-500/20 text-amber-300 border-amber-400/30", text: "63 appointments this month!" },
 ] as const;
 
 type StatusItem = typeof STATUS_ITEMS[number];
@@ -232,7 +236,7 @@ function AppointmentDeck() {
       transition={{ duration: 0.75, ease, delay: 0.15 }}
       className="relative w-full max-w-[340px] md:max-w-[380px] xl:max-w-[480px] justify-self-center xl:justify-self-end"
     >
-      <div className="relative rounded-[28px] border border-white/15 overflow-hidden backdrop-blur-2xl shadow-[0_40px_100px_rgba(0,0,0,0.55)]" style={{ transform: "translateZ(0)" }}>
+      <div className="relative rounded-[28px] border border-white/15 overflow-hidden backdrop-blur-2xl shadow-[0_40px_100px_rgba(0,0,0,0.55)]" style={{ transform: "translateZ(0)", contain: "paint", isolation: "isolate" }}>
 
         {/* ── crossfade + Ken Burns bg layers ── */}
         <div ref={layerA} aria-hidden className="card-bg-layer pointer-events-none" />
@@ -418,6 +422,8 @@ const HIGHLIGHTS = [
 ════════════════════════════════════════════════════════════ */
 export default function LandingPage() {
   const prefersReduced = useReducedMotion();
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const [navScrolled, setNavScrolled] = useState(false);
   const [demoLoading, setDemoLoading] = useState(false);
 
@@ -439,11 +445,17 @@ export default function LandingPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: "test@user.com", password: "12345678" }),
       });
-      if (res.ok) window.location.href = "/";
+      if (res.ok) {
+        const data = await res.json();
+        if (data.user) {
+          queryClient.setQueryData(queryKeys.auth.me, { ...data.user, email_verified: true });
+        }
+        router.push("/dashboard");
+      }
     } finally {
       setDemoLoading(false);
     }
-  }, []);
+  }, [router, queryClient]);
 
   return (
     <div className="relative min-h-screen text-white">
@@ -456,7 +468,7 @@ export default function LandingPage() {
         aria-hidden
         className="pointer-events-none fixed inset-0"
         style={{
-          zIndex: -1,
+          zIndex: 1,
           background:
             "linear-gradient(135deg, rgba(2,6,23,0.88) 0%, rgba(2,6,23,0.78) 45%, rgba(2,6,23,0.68) 100%)",
         }}
@@ -466,7 +478,7 @@ export default function LandingPage() {
         aria-hidden
         className="pointer-events-none fixed inset-0"
         style={{
-          zIndex: -1,
+          zIndex: 1,
           background:
             "radial-gradient(circle at 20% 60%, rgba(59,130,246,0.12), transparent 55%), radial-gradient(circle at 80% 20%, rgba(139,92,246,0.08), transparent 50%)",
         }}
@@ -502,15 +514,17 @@ export default function LandingPage() {
           <div className="flex items-center gap-2">
             <Link
               href="/login"
-              className="rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium backdrop-blur-sm transition hover:border-white/30 hover:bg-white/10"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium backdrop-blur-sm transition hover:border-white/30 hover:bg-white/10"
             >
+              <User className="h-3.5 w-3.5" />
               Sign in
             </Link>
             <Link
               href="/register"
               className="inline-flex items-center gap-1.5 rounded-xl border border-blue-400/40 bg-gradient-to-r from-blue-500/70 via-blue-500/50 to-blue-500/30 px-4 py-2 text-sm font-semibold shadow-[0_8px_25px_rgba(59,130,246,0.4)] backdrop-blur-sm transition hover:from-blue-500/80"
             >
-              Get started <ArrowRight className="h-3.5 w-3.5" />
+              <Sparkles className="h-3.5 w-3.5" />
+              Get started
             </Link>
           </div>
         </div>
@@ -586,7 +600,7 @@ export default function LandingPage() {
                 <RippleButton
                   onClick={handleDemo}
                   disabled={demoLoading}
-                  className="inline-flex items-center gap-2 rounded-xl border border-emerald-400/55 bg-gradient-to-r from-emerald-500/80 via-emerald-500/65 to-emerald-600/50 px-6 py-3 text-sm font-semibold text-white backdrop-blur-sm transition hover:from-emerald-500/90 disabled:opacity-60"
+                  className="inline-flex items-center gap-2 rounded-xl border border-emerald-400/55 bg-gradient-to-r from-emerald-500/80 via-emerald-500/65 to-emerald-600/50 px-6 py-3 text-sm font-semibold text-white backdrop-blur-sm transition hover:from-emerald-700/90 hover:to-emerald-500/60 disabled:opacity-60 cursor-pointer"
                 >
                   {demoLoading ? (
                     <span className="flex items-center gap-2">

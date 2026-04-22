@@ -38,16 +38,12 @@ export function useAuth() {
   const logoutMutation = useMutation({
     mutationFn: () => apiClient("/api/auth/logout", { method: "POST" }),
     onSuccess: () => {
-      // Clear the auth cache
-      queryClient.setQueryData(queryKeys.auth.me, null);
-      queryClient.clear(); // Clear all other caches since we logged out
       toast.success("You have been logged out successfully");
+      // Navigate first — full reload clears all client state cleanly
       window.location.href = "/login";
     },
-    onError: (error) => {
-      handleApiError(error, "Logout failed");
-      // Even if API fails, clear client state and redirect
-      queryClient.setQueryData(queryKeys.auth.me, null);
+    onError: () => {
+      // Even on API error, session cookie is cleared server-side; navigate away
       window.location.href = "/login";
     },
   });
