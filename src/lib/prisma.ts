@@ -4,7 +4,7 @@
  * Prisma 6: uses DATABASE_URL from env (Next.js loads .env.local in dev).
  */
 
-import { PrismaClient } from "@/generated/prisma";
+import { PrismaClient } from "@prisma/client";
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
 
