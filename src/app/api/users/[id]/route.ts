@@ -1,5 +1,6 @@
 /**
- * GET /api/users/[id] - Single user for Control Panel detail (Prisma).
+ * GET  /api/users/[id] — Single user detail.
+ * PATCH /api/users/[id] — Update user role / display_name / image (admin operation).
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -10,27 +11,64 @@ import { serializeUser } from "@/lib/serializers";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
+const USER_SELECT = {
+  id: true,
+  email: true,
+  display_name: true,
+  role: true,
+  image: true,
+  created_at: true,
+} as const;
+
 export async function GET(req: NextRequest, context: RouteContext) {
   try {
     const sessionUser = await getSessionUser();
-    if (!sessionUser) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    if (!sessionUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { id } = await context.params;
-    if (!isValidUUID(id)) {
-      return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
-    }
+    if (!isValidUUID(id)) return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
 
-    const user = await prisma.user.findUnique({
-      where: { id },
-      select: { id: true, email: true, display_name: true, role: true, image: true, created_at: true },
-    });
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
+    const user = await prisma.user.findUnique({ where: { id }, select: USER_SELECT });
+    if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
+
     return NextResponse.json({ user: serializeUser(user) });
   } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Internal server error";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+export async function PATCH(req: NextRequest, context: RouteContext) {
+  try {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const { id } = await context.params;
+    if (!isValidUUID(id)) return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
+
+    const body = await req.json() as { role?: string; display_name?: string; image?: string };
+    const { role, display_name, image } = body;
+
+    const ALLOWED_ROLES = ["admin", "doctor", "secretary", "patient"];
+    if (role !== undefined && !ALLOWED_ROLES.includes(role)) {
+      return NextResponse.json({ error: "Invalid role" }, { status: 400 });
+    }
+
+    const user = await prisma.user.update({
+      where: { id },
+      data: {
+        ...(role !== undefined && { role }),
+        ...(display_name !== undefined && { display_name }),
+        ...(image !== undefined && { image }),
+      },
+      select: USER_SELECT,
+    });
+
+    return NextResponse.json({ user: serializeUser(user) });
+  } catch (error: unknown) {
+    if ((error as { code?: string }).code === "P2025") {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
     const message = error instanceof Error ? error.message : "Internal server error";
     return NextResponse.json({ error: message }, { status: 500 });
   }

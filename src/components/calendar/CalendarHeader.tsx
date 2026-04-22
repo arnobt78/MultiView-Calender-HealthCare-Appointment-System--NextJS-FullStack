@@ -6,9 +6,10 @@ import { de } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import React from "react";
 import AppointmentDialogTrigger from "./AppointmentDialogTrigger";
+import ImportICSDialog from "./ImportICSDialog";
 
-// Change tab order to List, Week, Month
-const views = ["List", "Week", "Month"] as const;
+// View modes in display order
+const views = ["List", "Day", "Week", "Month"] as const;
 type ViewType = (typeof views)[number];
 
 export default function CalendarHeader({
@@ -20,20 +21,22 @@ export default function CalendarHeader({
 }) {
   const { currentDate, setCurrentDate } = useDateContext();
 
-  // Navigation logic: only change date for Month/Week, not for List
+  // Navigation logic: only change date for Month/Week/Day, not for List
   const handlePrev = () => {
     if (view === "Month") setCurrentDate(addDays(currentDate, -30));
     else if (view === "Week") setCurrentDate(addDays(currentDate, -7));
-    // For List, do nothing or optionally disable
+    else if (view === "Day") setCurrentDate(addDays(currentDate, -1));
+    // For List, do nothing
   };
   const handleNext = () => {
     if (view === "Month") setCurrentDate(addDays(currentDate, 30));
     else if (view === "Week") setCurrentDate(addDays(currentDate, 7));
-    // For List, do nothing or optionally disable
+    else if (view === "Day") setCurrentDate(addDays(currentDate, 1));
+    // For List, do nothing
   };
 
   return (
-    <div className="flex items-center justify-between py-4 px-2 sm:px-4 lg:px-8">
+    <div className="flex items-center justify-between py-4 px-2 sm:px-4 lg:px-8 border-b border-gray-200/70">
       <div className="flex items-center gap-4">
         <Button
           variant="outline"
@@ -43,7 +46,7 @@ export default function CalendarHeader({
         >
           ←
         </Button>
-        <div className="text-lg font-medium ">
+        <div className="text-lg font-medium text-gray-800">
           {format(currentDate, "dd. MMMM yyyy", { locale: de })}
         </div>
         <Button
@@ -75,6 +78,13 @@ export default function CalendarHeader({
           ))}
         </div>
         {/* Restore + Neuer Termin button */}
+        <ImportICSDialog
+          trigger={
+            <Button variant="outline" className="cursor-pointer shadow-xl">
+              Import .ics
+            </Button>
+          }
+        />
         <AppointmentDialogTrigger
           trigger={<Button variant="default" className="cursor-pointer shadow-xl">+ New Appointment</Button>}
         />

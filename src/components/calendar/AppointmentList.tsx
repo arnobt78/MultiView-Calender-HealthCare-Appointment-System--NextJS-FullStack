@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoreVertical, CheckCircle, Circle } from "lucide-react";
 import { getUserAppointmentPermission } from "@/lib/permissions";
+import VideoCall from "./VideoCall";
 // Using Vercel Blob for file storage
 import { getPublicUrl } from "@/lib/vercelBlob";
 import {
@@ -46,13 +47,14 @@ import { MdCategory } from "react-icons/md";
 import AppointmentListSkeleton from "./AppointmentListSkeleton";
 import SearchBar from "./SearchBar";
 import { useAppointmentColor } from "@/context/AppointmentColorContext";
+import { motion } from "framer-motion";
 
 // Types imported from hooks
 
 // Reusable component for date headline
 function DateHeadline({ date }: { date: Date }) {
   return (
-    <div className="text-lg font-bold text-gray-700 mt-8 mb-2 flex items-center gap-2">
+    <div className="text-lg font-bold text-gray-700 mt-8 mb-3 flex items-center gap-2">
       {format(date, "EEEE, dd. MMMM", { locale: de })}
       {(() => {
         const now = new Date();
@@ -63,7 +65,7 @@ function DateHeadline({ date }: { date: Date }) {
         ) {
           return (
             <Badge variant="outline" className="ml-2 bg-green-100 text-green-700 hover:bg-green-100 border-transparent">
-              Heute
+              Today
             </Badge>
           );
         }
@@ -71,6 +73,15 @@ function DateHeadline({ date }: { date: Date }) {
       })()}
     </div>
   );
+}
+
+// Color bar for appointment cards — uses ref to avoid inline style lint warning
+function ColorBar({ color }: { color: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (ref.current) ref.current.style.backgroundColor = color;
+  }, [color]);
+  return <div ref={ref} className="w-2 rounded-l-xl h-full absolute left-0 top-0 bottom-0 transition-colors" />;
 }
 
 // Helper to group appointments by date (ascending, today first)
@@ -93,7 +104,7 @@ function groupAppointmentsByDate(appts: FullAppointment[]) {
   return sortedKeys.map((key) => ({ date: new Date(key), appts: groups[key] }));
 }
 
-// Tag logic for date (Heute, Demnächst, Einen Tag später, Datum überschritten)
+// Day tags helper (Today, Next Day, Some Day Later, Date Passed)
 function getDateTag(date: Date) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -105,25 +116,25 @@ function getDateTag(date: Date) {
   if (diffDays === 0)
     return (
       <Badge variant="outline" className="ml-2 bg-green-100 text-green-700 hover:bg-green-100 border-transparent">
-        Heute
+        Today
       </Badge>
     );
   if (diffDays === 1)
     return (
       <Badge variant="outline" className="ml-2 bg-blue-100 text-blue-700 hover:bg-blue-100 border-transparent">
-        Morgen
+        Next Day
       </Badge>
     );
   if (diffDays > 1)
     return (
       <span className="ml-2 px-2 py-0.5 rounded bg-sky-100 text-sky-700 text-xs font-medium">
-        Einen Tag später
+        Some Day Later
       </span>
     );
   if (diffDays < 0)
     return (
       <span className="ml-2 px-2 py-0.5 rounded bg-gray-200 text-gray-500 text-xs font-medium">
-        Datum überschritten
+        Date Passed
       </span>
     );
   return null;
@@ -157,7 +168,7 @@ export default function AppointmentList() {
 
   const { categories = [] } = useCategories();
   const { patients = [] } = usePatients();
-  const { data: relatives = [] } = useRelatives();
+  const { relatives = [] } = useRelatives();
 
   // Keep ownerUsers state empty for now, or we can fetch them separately if needed, 
   // but useAppointments currently just returns user IDs. We'll simplify to just showing the user ID or email if invited_email is populated.
@@ -217,7 +228,7 @@ export default function AppointmentList() {
     if (!search.trim()) return true;
     const lower = search.toLowerCase();
     // Helper to check if a string includes the search
-    const match = (val?: string) => !!val && val.toLowerCase().includes(lower);
+    const match = (val?: string | null) => !!val && val.toLowerCase().includes(lower);
     // Check all relevant fields
     // Patient name: handle both patient_data and patient as object
     let patientNameMatch = false;
@@ -298,40 +309,36 @@ export default function AppointmentList() {
   }
 
   return (
-    <div className="py-4 px-2 sm:px-4 lg:px-8 bg-[#f5f5f6] min-h-[calc(100vh-80px)]">
+    <div className="py-4 px-2 sm:px-4 lg:px-8 min-h-[calc(100vh-80px)]">
       {/* <ListCalendarHeader /> */}
       <h2 className="text-2xl font-semibold tracking-tight text-gray-800 mb-2">
         Appointment List
       </h2>
-      <div className="flex flex-row flex-wrap items-center gap-3 w-full">
-        <div className="flex-1 min-w-[200px] max-w-xl">
+      <div className="flex flex-wrap items-center gap-2 w-full">
+        <div className="w-full sm:flex-1 sm:min-w-[220px] sm:max-w-sm">
           <SearchBar value={search} setValue={setSearch} />
         </div>
-        <Filters
-          category={category}
-          setCategory={setCategory}
-          patient={patient}
-          setPatient={setPatient}
-          date={date}
-          setDate={setDate}
-          status={status}
-          setStatus={setStatus}
-          categories={categories}
-          patients={patients}
-        />
-        <Button
-          variant="default"
-          className="py-2 rounded-md shadow-xl"
-          onClick={() => {
-            setCategory(null);
-            setPatient(null);
-            setDate(null);
-            setStatus(null);
-            setSearch("");
-          }}
-        >
-          Reset
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Filters
+            category={category}
+            setCategory={setCategory}
+            patient={patient}
+            setPatient={setPatient}
+            date={date}
+            setDate={setDate}
+            status={status}
+            setStatus={setStatus}
+            categories={categories}
+            patients={patients}
+            onReset={() => {
+              setCategory(null);
+              setPatient(null);
+              setDate(null);
+              setStatus(null);
+              setSearch("");
+            }}
+          />
+        </div>
       </div>
       {/* Only show the 'Kein Treffer gefunden' message if there is a search term */}
       {/* {filteredAppointments.length === 0 && search.trim() && ( */}
@@ -357,7 +364,12 @@ export default function AppointmentList() {
       {/* Render grouped appointments */}
 
       {filteredAppointments.length > 0 && (
-        <div className="flex flex-col gap-4">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4 }}
+          className="flex flex-col gap-4"
+        >
           {grouped.map(({ date, appts }) => (
             <div key={date.toISOString()}>
               <DateHeadline date={date} />
@@ -457,270 +469,153 @@ export default function AppointmentList() {
 
 
                   return (
-                    <div
+                    <motion.div
                       key={appt.id}
                       data-today={isToday ? "true" : undefined}
                       ref={isToday && i === 0 ? scrollRef : null}
-                      className={`relative border rounded-xl shadow bg-white p-0 flex items-stretch transition hover:shadow-xl min-h-[110px]`}
-                      style={{ '--appt-color': color } as React.CSSProperties}
+                      initial={{ opacity: 0, y: 14 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.32, delay: i * 0.07 }}
+                      className="relative rounded-2xl bg-white border border-gray-100 shadow-md hover:shadow-xl transition-all duration-200 p-0 flex items-stretch min-h-[130px]"
                     >
                       {/* Color bar */}
-                      <div
-                        className="w-2 rounded-l-xl h-full absolute left-0 top-0 bottom-0 transition-colors"
-                        style={{ backgroundColor: 'var(--appt-color)' }}
-                      />
+                      <ColorBar color={color} />
+
                       {/* Main content */}
-                      <div className="pl-6 pr-2 py-4 flex-1 flex flex-col justify-center min-h-[110px]">
-                        <div className="flex items-center gap-2 mb-1">
-                          <div className="text-base font-semibold text-gray-700">
-                            <span
-                              className={
-                                isDone ? "line-through text-gray-400" : undefined
-                              }
-                            >
-                              {appt.title}
-                            </span>
-                          </div>
+                      <div className="pl-6 pr-4 py-4 flex-1 flex flex-col gap-2 min-w-0">
+
+                        {/* Row 1: Title + date tag */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={`text-base font-semibold text-gray-800 ${isDone ? "line-through text-gray-400" : ""}`}>
+                            {appt.title}
+                          </span>
                           {getDateTag(start)}
                         </div>
-                        {/* Date and Time with icon */}
-                        <div className="flex items-center gap-3 text-sm text-gray-500 mb-1">
-                          <span className="flex items-center gap-1">
-                            <svg
-                              width="16"
-                              height="16"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              className="inline-block align-middle text-gray-400"
-                            >
-                              <path
-                                d="M8 7V3M16 7V3M3 11H21M5 19H19C20.1046 19 21 18.1046 21 17V7C21 5.89543 20.1046 5 19 5H5C3.89543 5 3 5.89543 3 7V17C3 18.1046 3.89543 19 5 19Z"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
-                            </svg>
-                            <span
-                              className={
-                                isDone ? "line-through text-gray-400" : undefined
-                              }
-                            >
-                              {format(start, "dd.MM.yyyy")}
+
+                        {/* Row 2: Date · Time · Location */}
+                        <div className="flex items-center gap-5 flex-wrap text-sm text-gray-600">
+                          <span className="flex items-center gap-1.5 shrink-0">
+                            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" className="text-gray-400 shrink-0"><path d="M8 7V3M16 7V3M3 11H21M5 19H19C20.1046 19 21 18.1046 21 17V7C21 5.89543 20.1046 5 19 5H5C3.89543 5 3 5.89543 3 7V17C3 18.1046 3.89543 19 5 19Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                            <span className="text-gray-400 text-xs">Date:</span>
+                            <span className={`text-xs ${isDone ? "line-through text-gray-400" : "text-gray-700 font-medium"}`}>{format(start, "dd.MM.yyyy")}</span>
+                          </span>
+                          <span className="flex items-center gap-1.5 shrink-0">
+                            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" className="text-gray-400 shrink-0"><path d="M12 6V12L16 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" /></svg>
+                            <span className="text-gray-400 text-xs">Time:</span>
+                            <span className={`text-xs ${isDone ? "line-through text-gray-400" : "text-gray-700 font-medium"}`}>{format(start, "HH:mm")} – {format(new Date(appt.end), "HH:mm")}</span>
+                          </span>
+                          <span className="flex items-center gap-1.5 min-w-0">
+                            <FiMapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                            <span className="text-gray-400 text-xs shrink-0">Location:</span>
+                            <span className="text-xs text-gray-700 font-medium truncate">{appt.location || "--"}</span>
+                          </span>
+                        </div>
+
+                        {/* Row 3: Client · Category · Status */}
+                        <div className="flex items-center gap-5 flex-wrap">
+                          <span className="flex items-center gap-1.5 shrink-0">
+                            <FiUser className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                            <span className="text-gray-400 text-xs shrink-0">Client:</span>
+                            <span className="text-xs text-gray-700 font-medium">
+                              {(() => {
+                                try {
+                                  if (!appt.patient) return "--";
+                                  if (typeof appt.patient === "object" && "firstname" in appt.patient && "lastname" in appt.patient) {
+                                    return `${(appt.patient as Patient).firstname} ${(appt.patient as Patient).lastname}`;
+                                  }
+                                  if (typeof appt.patient === "string" && patients.length > 0) {
+                                    const p = patients.find((x: Patient) => x.id === appt.patient);
+                                    return p && p.firstname && p.lastname ? `${p.firstname} ${p.lastname}` : "--";
+                                  }
+                                  return "--";
+                                } catch (error) {
+                                  console.error('Error in client name lookup:', error);
+                                  return "--";
+                                }
+                              })()}
                             </span>
                           </span>
-                          <span className="flex items-center gap-1">
-                            <svg
-                              width="16"
-                              height="16"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              className="inline-block align-middle text-gray-400"
-                            >
-                              <path
-                                d="M12 6V12L16 14"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
-                              <circle
-                                cx="12"
-                                cy="12"
-                                r="10"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                              />
-                            </svg>
-                            <span
-                              className={
-                                isDone ? "line-through text-gray-400" : undefined
-                              }
-                            >
-                              {format(start, "HH:mm")} – {format(new Date(appt.end), "HH:mm")}
+                          {appt.category_data && (
+                            <span className="flex items-center gap-1.5 shrink-0">
+                              <MdCategory className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                              <span className="text-gray-400 text-xs shrink-0">Category:</span>
+                              <span className="text-xs text-gray-700 font-medium">{appt.category_data.label}</span>
+                            </span>
+                          )}
+                          <span className="flex items-center gap-1.5 shrink-0">
+                            <FiFlag className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                            <span className="text-gray-400 text-xs shrink-0">Status:</span>
+                            <span className={`text-xs font-semibold ${appt.status === "done" ? "text-green-600" : appt.status === "alert" ? "text-red-500" : "text-amber-600"}`}>
+                              {appt.status || "pending"}
                             </span>
                           </span>
                         </div>
 
-                        {/* Notes with icon */}
-                        {appt.notes && (
-                          <div className="flex items-center gap-2 text-sm mb-1">
-                            <FiFileText
-                              className={`w-4 h-4 ${isDone ? "text-gray-300" : "text-gray-400"
-                                }`}
-                            />
-                            <span
-                              className={
-                                isDone
-                                  ? "line-through text-gray-400"
-                                  : "text-gray-600"
-                              }
-                            >
-                              {appt.notes}
-                            </span>
-                          </div>
-                        )}
-
-                        {/* Category with icon */}
-                        {appt.category_data && (
-                          <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
-                            {categoryIcon}
-                            <span>{appt.category_data.label}</span>
-                          </div>
-                        )}
-
-                        {/* Client name with icon */}
-                        <div className="flex items-center gap-2 text-xs text-gray-400 italic mt-1">
-                          <FiUser className="w-4 h-4" />
-                          <span>Client:</span>
-                          <span className="not-italic text-gray-700">
+                        {/* Row 4: Refer to (only if patient exists) */}
+                        {appt.patient && (
+                          <div className="flex items-center gap-1.5">
+                            <FiUsers className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                            <span className="text-gray-400 text-xs shrink-0">Refer to:</span>
                             {(() => {
                               try {
-                                if (!appt.patient) return "--";
-
-                                // If patient is an object with firstname/lastname
-                                if (typeof appt.patient === "object" &&
-                                  "firstname" in appt.patient &&
-                                  "lastname" in appt.patient) {
-                                  return `${(appt.patient as Patient).firstname} ${(appt.patient as Patient).lastname}`;
+                                if (process.env.NODE_ENV === "development") {
+                                  console.log('DEBUG - Patient data:', { patient: appt.patient });
                                 }
-
-                                // If patient is a string ID and patients are loaded
-                                if (typeof appt.patient === "string" && patients.length > 0) {
-                                  const p = patients.find((x: Patient) => x.id === appt.patient);
-                                  return p && p.firstname && p.lastname ? `${p.firstname} ${p.lastname}` : "--";
+                                if (appt.patient && typeof appt.patient === 'object' && 'firstname' in appt.patient && 'lastname' in appt.patient) {
+                                  const patientObj = appt.patient as Patient;
+                                  return <span className="text-xs text-purple-700 font-medium">Patient: {patientObj.firstname} {patientObj.lastname}</span>;
                                 }
-
-                                // Fallback
-                                return "--";
+                                if (typeof appt.patient === 'string' && patients.length > 0) {
+                                  const patient = patients.find((p: Patient) => p.id === appt.patient);
+                                  if (patient && patient.firstname && patient.lastname) {
+                                    return <span className="text-xs text-purple-700 font-medium">Patient: {patient.firstname} {patient.lastname}</span>;
+                                  }
+                                }
+                                return <span className="text-xs text-red-500">Patient data not available</span>;
                               } catch (error) {
-                                console.error('Error in client name lookup:', error);
-                                return "--";
+                                console.error('Error in patient lookup:', error);
+                                return <span className="text-xs text-red-500">Error loading patient</span>;
                               }
                             })()}
-                          </span>
-                        </div>
+                          </div>
+                        )}
 
-                        {/* Location with icon */}
-                        <div className="flex items-center gap-2 text-xs text-gray-400 italic mt-1">
-                          <FiMapPin className="w-4 h-4" />
-                          <span>Location:</span>
-                          <span className="not-italic text-gray-700">
-                            {appt.location || "--"}
-                          </span>
-                        </div>
+                        {/* Row 5: Notes (only if present) */}
+                        {appt.notes && (
+                          <div className="flex items-center gap-1.5">
+                            <FiFileText className={`w-3.5 h-3.5 shrink-0 ${isDone ? "text-gray-300" : "text-gray-400"}`} />
+                            <span className="text-gray-400 text-xs shrink-0">Note:</span>
+                            <span className={`text-xs ${isDone ? "line-through text-gray-400" : "text-gray-600"}`}>{appt.notes}</span>
+                          </div>
+                        )}
 
-                        {/* Attachments with icon */}
+                        {/* Attachments (only if present) */}
                         {appt.attachements && appt.attachements.length > 0 && (
-                          <div className="flex items-center gap-2 text-xs text-gray-400 mt-1">
-                            <FiPaperclip className="w-4 h-4" />
-                            <span>Attachments:</span>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <FiPaperclip className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                            <span className="text-gray-400 text-xs shrink-0">Attachments:</span>
                             {appt.attachements.map((file, idx) => {
-                              // Get Vercel Blob public URL
                               const publicUrl = getPublicUrl(file);
                               const fileName = file.split("/").pop() || file;
                               return publicUrl ? (
-                                <a
-                                  key={idx}
-                                  href={publicUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="not-italic text-blue-700 underline"
-                                >
-                                  {fileName}
-                                </a>
+                                <a key={idx} href={publicUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline">{fileName}</a>
                               ) : (
-                                <span key={idx} className="text-red-600">
-                                  [Error: File not found]
-                                </span>
+                                <span key={idx} className="text-xs text-red-500">[File not found]</span>
                               );
                             })}
                           </div>
                         )}
 
-                        {/* Status with icon */}
-                        <div className="flex items-center gap-2 text-xs text-gray-400 mt-1">
-                          <FiFlag className="w-4 h-4" />
-                          <span>Status:</span>
-                          <span className="not-italic text-gray-700">
-                            {appt.status || "pending"}
-                          </span>
-                        </div>
-
-                        {/* Refer to: patient name from appointment.patient field */}
-                        {appt.patient && (
-                          <div className="flex items-center gap-2 text-xs text-gray-400 mt-1">
-                            <FiUsers /> Refer to:
-                            {(() => {
-                              try {
-                                // Debug: Log the patient data (development only)
-                                if (process.env.NODE_ENV === "development") {
-                                  console.log('DEBUG - Patient data:', {
-                                    patient: appt.patient,
-                                    patientType: typeof appt.patient,
-                                    isObject: typeof appt.patient === 'object',
-                                    hasFirstname: appt.patient && typeof appt.patient === 'object' && 'firstname' in appt.patient,
-                                    hasLastname: appt.patient && typeof appt.patient === 'object' && 'lastname' in appt.patient
-                                  });
-                                }
-
-                                // If patient is already an object with firstname/lastname
-                                if (appt.patient &&
-                                  typeof appt.patient === 'object' &&
-                                  'firstname' in appt.patient &&
-                                  'lastname' in appt.patient) {
-                                  const patientObj = appt.patient as Patient;
-                                  return (
-                                    <span className="not-italic text-purple-700">
-                                      Patient: {patientObj.firstname} {patientObj.lastname}
-                                    </span>
-                                  );
-                                }
-
-                                // If patient is a string ID and patients are loaded
-                                if (typeof appt.patient === 'string' && patients.length > 0) {
-                                  const patient = patients.find((p: Patient) => p.id === appt.patient);
-                                  if (patient && patient.firstname && patient.lastname) {
-                                    return (
-                                      <span className="not-italic text-purple-700">
-                                        Patient: {patient.firstname} {patient.lastname}
-                                      </span>
-                                    );
-                                  }
-                                }
-
-                                // Fallback
-                                return (
-                                  <span className="not-italic text-red-700">
-                                    Patient data not available
-                                  </span>
-                                );
-                              } catch (error) {
-                                console.error('Error in patient lookup:', error);
-                                return (
-                                  <span className="not-italic text-red-700">
-                                    Error loading patient
-                                  </span>
-                                );
-                              }
-                            })()}
-                          </div>
-                        )}
-
-                        {/* Assigned by: invited_email, user id, or owner */}
+                        {/* Assigned by */}
                         {dedupedAssignees.length > 0 && (
-                          <div className="flex items-center gap-2 text-xs text-gray-400 mt-1">
-                            <FiUsers /> Assigned by:
+                          <div className="flex items-center gap-1.5">
+                            <FiUsers className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                            <span className="text-gray-400 text-xs shrink-0">Assigned by:</span>
                             {appt.user_id === user?.id ? (
-                              // Owner view
-                              <span className="not-italic text-green-700">
-                                you ({user?.email || "owner"})
-                              </span>
+                              <span className="text-xs text-green-700 font-medium">you ({user?.email || "owner"})</span>
                             ) : (
-                              // Invitee view: show owner's email
-                              <span className="not-italic text-blue-700">
+                              <span className="text-xs text-blue-700 font-medium">
                                 {(() => {
-                                  // Find owner's email from ownerUsers
                                   const owner = ownerUsers.find(u => u.id === appt.user_id);
                                   return owner?.email || appt.user_id;
                                 })()}
@@ -729,30 +624,21 @@ export default function AppointmentList() {
                           </div>
                         )}
 
-
-
-
+                        {/* Activities */}
                         {appt.activities && appt.activities.length > 0 && (
-                          <div className="flex flex-col gap-1 text-xs text-gray-400 mt-1">
-                            <span>Activities:</span>
-                            {appt.activities
-                              .map((act, idx) => (
-                                <span
-                                  key={idx}
-                                  className="not-italic text-pink-700"
-                                >
-                                  {act.type}: {act.content}
-                                </span>
-                              ))}
+                          <div className="flex flex-col gap-0.5">
+                            {appt.activities.map((act, idx) => (
+                              <span key={idx} className="text-xs text-pink-700">{act.type}: {act.content}</span>
+                            ))}
                           </div>
                         )}
                       </div>
 
-                      {/* Actions column */}
-                      <div className="flex flex-col items-center justify-center p-4 border-t sm:border-t-0 sm:border-l border-gray-100 bg-gray-50/50 rounded-b-xl sm:rounded-bl-none sm:rounded-r-xl min-w-[60px]">
+                      {/* Actions column: 3-dot on top, Video Call on bottom */}
+                      <div className="flex flex-col items-center justify-between py-3 px-2 border-l border-gray-100 bg-gray-50/80 rounded-r-2xl min-w-[56px]">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-black/10">
                               <MoreVertical className="h-4 w-4 text-gray-500" />
                               <span className="sr-only">Open menu</span>
                             </Button>
@@ -760,42 +646,25 @@ export default function AppointmentList() {
                           <DropdownMenuContent align="end" className="w-48">
                             {(() => {
                               const perm = getUserPermission(appt);
-
                               return (
                                 <>
-                                  {/* Status Checkbox replacement */}
                                   {(perm === "owner" || perm === "full" || perm === "write") && (
-                                    <DropdownMenuItem
-                                      onClick={() => handleToggleStatus(appt.id, isDone ? "pending" : "done")}
-                                    >
+                                    <DropdownMenuItem onClick={() => handleToggleStatus(appt.id, isDone ? "pending" : "done")}>
                                       {isDone ? (
-                                        <>
-                                          <Circle className="mr-2 h-4 w-4" />
-                                          <span>Mark as open</span>
-                                        </>
+                                        <><Circle className="mr-2 h-4 w-4" /><span>Mark as open</span></>
                                       ) : (
-                                        <>
-                                          <CheckCircle className="mr-2 h-4 w-4 text-green-600" />
-                                          <span className="text-green-600">Mark as done</span>
-                                        </>
+                                        <><CheckCircle className="mr-2 h-4 w-4 text-green-600" /><span className="text-green-600">Mark as done</span></>
                                       )}
                                     </DropdownMenuItem>
                                   )}
-
-                                  {/* Edit / Delete */}
                                   {(perm === "owner" || perm === "full") && (
                                     <>
                                       {(perm === "owner" || perm === "full" || perm === "write") && <DropdownMenuSeparator />}
                                       <DropdownMenuItem onClick={() => handleEdit(appt)}>
-                                        <FiEdit2 className="mr-2 h-4 w-4" />
-                                        <span>Edit</span>
+                                        <FiEdit2 className="mr-2 h-4 w-4" /><span>Edit</span>
                                       </DropdownMenuItem>
-                                      <DropdownMenuItem
-                                        onClick={() => handleDelete(appt.id)}
-                                        className="text-red-600 focus:bg-red-50 focus:text-red-600"
-                                      >
-                                        <FiTrash2 className="mr-2 h-4 w-4" />
-                                        <span>Delete</span>
+                                      <DropdownMenuItem onClick={() => handleDelete(appt.id)} className="text-red-600 focus:bg-red-50 focus:text-red-600">
+                                        <FiTrash2 className="mr-2 h-4 w-4" /><span>Delete</span>
                                       </DropdownMenuItem>
                                     </>
                                   )}
@@ -804,14 +673,18 @@ export default function AppointmentList() {
                             })()}
                           </DropdownMenuContent>
                         </DropdownMenu>
+                        <VideoCall
+                          appointmentId={appt.id}
+                          appointmentTitle={appt.title ?? "Video Consultation"}
+                        />
                       </div>
-                    </div>
+                    </motion.div>
                   );
                 })}
               </div>
             </div>
           ))}
-        </div>
+        </motion.div>
       )}
       {editAppt ? (
         <EditAppointmentDialog

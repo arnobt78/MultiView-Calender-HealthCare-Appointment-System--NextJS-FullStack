@@ -1,50 +1,43 @@
-"use client";
-
-import { useParams } from "next/navigation";
+/**
+ * SSR: Category detail page.
+ * Server fetches via Prisma, passes to client component for editing.
+ */
+import { notFound } from "next/navigation";
 import Link from "next/link";
-import { useCategory } from "@/hooks/useCategories";
+import { prisma } from "@/lib/prisma";
+import { getSessionUser } from "@/lib/session";
+import { serializeCategory } from "@/lib/serializers";
+import { isValidUUID } from "@/lib/validation";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import { CategoryDetailForm } from "@/components/control-panel/CategoryDetailForm";
 
-export default function CategoryDetailPage() {
-  const params = useParams();
-  const id = typeof params.id === "string" ? params.id : null;
-  const { data: category, isLoading, isError, error } = useCategory(id);
+type PageProps = { params: Promise<{ id: string }> };
 
-  if (!id) {
-    return (
-      <div className="max-w-4xl mx-auto p-4">
-        <p className="text-destructive">Invalid category ID.</p>
-        <Button variant="link" asChild><Link href="/control-panel">Back to Control Panel</Link></Button>
-      </div>
-    );
-  }
+export async function generateMetadata({ params }: PageProps) {
+  const { id } = await params;
+  return { title: `Category — ${id.slice(0, 8)}` };
+}
 
-  if (isError) {
-    return (
-      <div className="max-w-4xl mx-auto p-4">
-        <p className="text-destructive">{error?.message ?? "Failed to load category."}</p>
-        <Button variant="link" asChild><Link href="/control-panel">Back to Control Panel</Link></Button>
-      </div>
-    );
-  }
+export default async function CategoryDetailPage({ params }: PageProps) {
+  const { id } = await params;
+  if (!isValidUUID(id)) notFound();
 
-  if (isLoading || !category) {
-    return (
-      <div className="max-w-4xl mx-auto p-4">
-        <p className="text-muted-foreground">Loading category...</p>
-      </div>
-    );
-  }
+  const sessionUser = await getSessionUser();
+  if (!sessionUser) notFound();
+
+  const raw = await prisma.category.findUnique({ where: { id } });
+  if (!raw) notFound();
+
+  const category = serializeCategory(raw);
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 p-4">
       <PageHeader
-        title={`Category: ${category.label}`}
-        description="All table schema properties"
+        title={category.label}
+        description="Category — all table schema properties"
         actions={
           <Button variant="outline" asChild>
             <Link href="/control-panel">
@@ -54,32 +47,64 @@ export default function CategoryDetailPage() {
           </Button>
         }
       />
+
       <Card>
         <CardHeader>
           <CardTitle>Schema: categories</CardTitle>
           <p className="text-sm text-muted-foreground">
-            id, created_at, updated_at, label, description, color, icon
+            id · created_at · updated_at · label · description · color · icon
           </p>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <dl className="grid gap-2 text-sm">
-            <div><dt className="font-medium text-muted-foreground">id</dt><dd className="font-mono">{category.id}</dd></div>
-            <div><dt className="font-medium text-muted-foreground">created_at</dt><dd>{category.created_at ? new Date(category.created_at).toISOString() : "—"}</dd></div>
-            <div><dt className="font-medium text-muted-foreground">updated_at</dt><dd>{category.updated_at ? new Date(category.updated_at).toISOString() : "—"}</dd></div>
-            <div><dt className="font-medium text-muted-foreground">label</dt><dd>{category.label}</dd></div>
-            <div><dt className="font-medium text-muted-foreground">description</dt><dd>{category.description ?? "—"}</dd></div>
-            <div className="flex items-center gap-2">
+        <CardContent className="space-y-6">
+          {/* All schema fields */}
+          <dl className="grid gap-3 text-sm sm:grid-cols-2">
+            <div>
+              <dt className="font-medium text-muted-foreground">id</dt>
+              <dd className="font-mono break-all text-xs mt-0.5">{category.id}</dd>
+            </div>
+            <div>
+              <dt className="font-medium text-muted-foreground">created_at</dt>
+              <dd className="mt-0.5">{category.created_at ? new Date(category.created_at).toLocaleString() : "—"}</dd>
+            </div>
+            <div>
+              <dt className="font-medium text-muted-foreground">updated_at</dt>
+              <dd className="mt-0.5">{category.updated_at ? new Date(category.updated_at).toLocaleString() : "—"}</dd>
+            </div>
+            <div>
+              <dt className="font-medium text-muted-foreground">label</dt>
+              <dd className="mt-0.5 font-medium">{category.label}</dd>
+            </div>
+            <div>
+              <dt className="font-medium text-muted-foreground">description</dt>
+              <dd className="mt-0.5">{category.description ?? "—"}</dd>
+            </div>
+            <div>
               <dt className="font-medium text-muted-foreground">color</dt>
-              <dd className="flex items-center gap-2">
-                {category.color && <span className="inline-block h-4 w-5 rounded border" style={{ backgroundColor: category.color }} />}
+              <dd className="flex items-center gap-2 mt-0.5">
+                {category.color && (
+                  <input
+                    type="color"
+                    value={category.color}
+                    readOnly
+                    disabled
+                    title="Category color"
+                    className="inline-block h-4 w-5 rounded border p-0 cursor-default"
+                  />
+                )}
                 <span>{category.color ?? "—"}</span>
               </dd>
             </div>
-            <div><dt className="font-medium text-muted-foreground">icon</dt><dd>{category.icon ?? "—"}</dd></div>
+            <div>
+              <dt className="font-medium text-muted-foreground">icon</dt>
+              <dd className="mt-0.5">{category.icon ?? "—"}</dd>
+            </div>
           </dl>
+
+          {/* Edit form (client component) */}
           <CategoryDetailForm category={category} />
         </CardContent>
       </Card>
     </div>
   );
 }
+

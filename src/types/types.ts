@@ -2,8 +2,8 @@
 export interface User {
   id: UUID; // Supabase Auth user id
   email: string;
-  role?: string;
-  display_name?: string;
+  role?: string | null;
+  display_name?: string | null;
   image?: string | null;
   created_at?: string;
 }
@@ -14,12 +14,12 @@ export interface Patient {
   id: UUID;
   firstname: string;
   lastname: string;
-  birth_date: string;
-  care_level: number;
-  pronoun: string;
-  email: string;
+  birth_date: string | null;
+  care_level: number | null;
+  pronoun: string | null;
+  email: string | null;
   active: boolean;
-  active_since: string;
+  active_since: string | null;
   created_at: string;
 }
 
@@ -39,9 +39,9 @@ export interface Category {
   created_at: string;
   updated_at: string | null;
   label: string;
-  description: string;
-  color: string;
-  icon: string;
+  description: string | null;
+  color: string | null;
+  icon: string | null;
 }
 
 // Appointment
@@ -51,14 +51,14 @@ export interface Appointment {
   updated_at: string | null;
   start: string;
   end: string;
-  location: string;
-  patient: UUID;
-  attachements: string[]; // Assuming array of URLs or filenames
-  category: UUID;
-  notes: string;
+  location: string | null;
+  patient: UUID | null;
+  attachements: string[];
+  category: UUID | null;
+  notes: string | null;
   title: string;
-  status?: "done" | "pending" | "alert"; // Optional status field added
-  user_id: UUID; // The owner (Supabase Auth user id)
+  status?: "done" | "pending" | "alert" | string | null;
+  user_id: UUID;
 }
 
 // Appointment Assignee

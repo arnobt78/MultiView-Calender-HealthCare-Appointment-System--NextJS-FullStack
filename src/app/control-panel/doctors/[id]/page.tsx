@@ -1,50 +1,55 @@
-"use client";
-
-import { useParams } from "next/navigation";
+/**
+ * SSR: Doctor / User detail page.
+ * Server fetches the user via Prisma, passes to client component for editing.
+ */
+import { notFound } from "next/navigation";
 import Link from "next/link";
-import { useUser } from "@/hooks/useUsers";
+import { prisma } from "@/lib/prisma";
+import { getSessionUser } from "@/lib/session";
+import { serializeUser } from "@/lib/serializers";
+import { isValidUUID } from "@/lib/validation";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ArrowLeft } from "lucide-react";
+import { DoctorDetailForm } from "@/components/control-panel/DoctorDetailForm";
 
-export default function DoctorDetailPage() {
-  const params = useParams();
-  const id = typeof params.id === "string" ? params.id : null;
-  const { data: user, isLoading, isError, error } = useUser(id);
+type PageProps = { params: Promise<{ id: string }> };
 
-  if (!id) {
-    return (
-      <div className="max-w-4xl mx-auto p-4">
-        <p className="text-destructive">Invalid user ID.</p>
-        <Button variant="link" asChild><Link href="/control-panel">Back to Control Panel</Link></Button>
-      </div>
-    );
-  }
+export async function generateMetadata({ params }: PageProps) {
+  const { id } = await params;
+  return { title: `Doctor / User — ${id.slice(0, 8)}` };
+}
 
-  if (isError) {
-    return (
-      <div className="max-w-4xl mx-auto p-4">
-        <p className="text-destructive">{error?.message ?? "Failed to load user."}</p>
-        <Button variant="link" asChild><Link href="/control-panel">Back to Control Panel</Link></Button>
-      </div>
-    );
-  }
+export default async function DoctorDetailPage({ params }: PageProps) {
+  const { id } = await params;
+  if (!isValidUUID(id)) notFound();
 
-  if (isLoading || !user) {
-    return (
-      <div className="max-w-4xl mx-auto p-4">
-        <p className="text-muted-foreground">Loading user...</p>
-      </div>
-    );
-  }
+  const sessionUser = await getSessionUser();
+  if (!sessionUser) notFound();
+
+  const raw = await prisma.user.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      email: true,
+      display_name: true,
+      role: true,
+      image: true,
+      created_at: true,
+    },
+  });
+  if (!raw) notFound();
+
+  const user = serializeUser(raw);
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 p-4">
       <PageHeader
-        title={user.display_name || user.email || "User"}
-        description="User / Doctor — all table schema properties"
+        title={user.display_name ?? user.email ?? "User"}
+        description="Doctor / User — all table schema properties"
         actions={
           <Button variant="outline" asChild>
             <Link href="/control-panel">
@@ -54,35 +59,67 @@ export default function DoctorDetailPage() {
           </Button>
         }
       />
+
       <Card>
         <CardHeader>
           <CardTitle>Schema: users</CardTitle>
           <p className="text-sm text-muted-foreground">
-            id, email, role, display_name, image, created_at (email_verified managed via auth)
+            id · email · role · display_name · image · created_at
           </p>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-4 mb-4">
+        <CardContent className="space-y-6">
+          {/* Profile avatar */}
+          <div className="flex items-center gap-4">
             <Avatar className="h-16 w-16">
               <AvatarImage src={user.image ?? undefined} alt="" />
-              <AvatarFallback>{(user.display_name || user.email || "?").slice(0, 2).toUpperCase()}</AvatarFallback>
+              <AvatarFallback className="text-lg">
+                {(user.display_name || user.email || "?").slice(0, 2).toUpperCase()}
+              </AvatarFallback>
             </Avatar>
             <div>
-              <p className="font-medium">{user.display_name || "—"}</p>
+              <p className="font-semibold text-lg">{user.display_name ?? "—"}</p>
               <p className="text-sm text-muted-foreground">{user.email}</p>
+              {user.role && (
+                <Badge variant="outline" className="mt-1 capitalize">
+                  {user.role}
+                </Badge>
+              )}
             </div>
           </div>
-          <dl className="grid gap-2 text-sm">
-            <div><dt className="font-medium text-muted-foreground">id</dt><dd className="font-mono break-all">{user.id}</dd></div>
-            <div><dt className="font-medium text-muted-foreground">email</dt><dd>{user.email}</dd></div>
-            <div><dt className="font-medium text-muted-foreground">display_name</dt><dd>{user.display_name ?? "—"}</dd></div>
-            <div><dt className="font-medium text-muted-foreground">role</dt><dd>{user.role ?? "—"}</dd></div>
-            <div><dt className="font-medium text-muted-foreground">image</dt><dd>{user.image ? "Yes" : "—"}</dd></div>
-            <div><dt className="font-medium text-muted-foreground">created_at</dt><dd>{user.created_at ? new Date(user.created_at).toISOString() : "—"}</dd></div>
+
+          {/* All schema fields */}
+          <dl className="grid gap-3 text-sm sm:grid-cols-2">
+            <div>
+              <dt className="font-medium text-muted-foreground">id</dt>
+              <dd className="font-mono break-all text-xs mt-0.5">{user.id}</dd>
+            </div>
+            <div>
+              <dt className="font-medium text-muted-foreground">email</dt>
+              <dd className="mt-0.5">{user.email}</dd>
+            </div>
+            <div>
+              <dt className="font-medium text-muted-foreground">display_name</dt>
+              <dd className="mt-0.5">{user.display_name ?? "—"}</dd>
+            </div>
+            <div>
+              <dt className="font-medium text-muted-foreground">role</dt>
+              <dd className="mt-0.5 capitalize">{user.role ?? "—"}</dd>
+            </div>
+            <div>
+              <dt className="font-medium text-muted-foreground">image</dt>
+              <dd className="mt-0.5 truncate">{user.image ?? "—"}</dd>
+            </div>
+            <div>
+              <dt className="font-medium text-muted-foreground">created_at</dt>
+              <dd className="mt-0.5">{user.created_at ? new Date(user.created_at).toLocaleString() : "—"}</dd>
+            </div>
           </dl>
-          <p className="text-muted-foreground text-sm">User profile updates (e.g. role, display_name) can be managed via auth or admin scripts.</p>
+
+          {/* Edit form (client component) */}
+          <DoctorDetailForm initialUser={user} />
         </CardContent>
       </Card>
     </div>
   );
 }
+

@@ -39,20 +39,20 @@ export function CategoryDetailForm({ category }: { category: Category }) {
       <h4 className="font-medium">Edit</h4>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label>Label</Label>
-          <Input value={form.label} onChange={(e) => setForm((p) => ({ ...p, label: e.target.value }))} />
+          <Label htmlFor="cat-detail-label">Label</Label>
+          <Input id="cat-detail-label" title="Category label" value={form.label} onChange={(e) => setForm((p) => ({ ...p, label: e.target.value }))} />
         </div>
         <div className="space-y-2">
-          <Label>Description</Label>
-          <Input value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} />
+          <Label htmlFor="cat-detail-description">Description</Label>
+          <Input id="cat-detail-description" title="Category description" value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} />
         </div>
         <div className="space-y-2">
-          <Label>Color</Label>
-          <Input value={form.color} onChange={(e) => setForm((p) => ({ ...p, color: e.target.value }))} />
+          <Label htmlFor="cat-detail-color">Color</Label>
+          <Input id="cat-detail-color" title="Category color" value={form.color} onChange={(e) => setForm((p) => ({ ...p, color: e.target.value }))} />
         </div>
         <div className="space-y-2">
-          <Label>Icon</Label>
-          <Input value={form.icon} onChange={(e) => setForm((p) => ({ ...p, icon: e.target.value }))} />
+          <Label htmlFor="cat-detail-icon">Icon</Label>
+          <Input id="cat-detail-icon" title="Category icon" value={form.icon} onChange={(e) => setForm((p) => ({ ...p, icon: e.target.value }))} />
         </div>
       </div>
       <div className="flex gap-2">

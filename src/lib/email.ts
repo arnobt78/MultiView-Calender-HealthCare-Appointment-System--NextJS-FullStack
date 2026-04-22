@@ -1,12 +1,14 @@
 /**
  * Email Service Configuration
  * 
- * This file configures and exports email sending functionality using Nodemailer.
- * Currently configured for Gmail SMTP, but can be adapted for other email providers.
+ * Supports Gmail SMTP (default) and Brevo SMTP (if configured).
+ * The transport is selected based on environment variables.
  * 
  * Used for:
  * - Sending appointment invitation emails
  * - Sending dashboard access invitation emails
+ * - Sending appointment reminders
+ * - Welcome emails and password reset
  * 
  * Security Note: Email credentials should NEVER be committed to version control.
  * Always use environment variables (.env.local).
@@ -15,49 +17,50 @@
 import nodemailer from "nodemailer";
 
 // Get email credentials from environment variables
-// These should be set in .env.local file
-const user = process.env.EMAIL_USER;
-const pass = process.env.EMAIL_PASS;
+const gmailUser = process.env.EMAIL_USER;
+const gmailPass = process.env.EMAIL_PASS;
+
+// Brevo SMTP credentials (optional, takes priority if set)
+const brevoHost = process.env.BREVO_SMTP_HOST;
+const brevoPort = process.env.BREVO_SMTP_PORT;
+const brevoUser = process.env.BREVO_SMTP_USER;
+const brevoPass = process.env.BREVO_SMTP_PASS;
 
 /**
- * Nodemailer Transporter Configuration
- * 
- * Creates a reusable email transporter instance configured for Gmail SMTP.
- * The transporter handles the connection to the email server.
- * 
- * Configuration:
- * - service: "gmail" uses Gmail's SMTP servers
- * - auth: Authentication credentials (username and password/app password)
- * 
- * Note: For Gmail, you may need to use an "App Password" instead of your regular password.
- * Enable 2FA and generate an app password in your Google Account settings.
+ * Create the appropriate email transporter based on available credentials.
+ * Priority: Brevo SMTP > Gmail SMTP
  */
-export const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user,
-    pass,
-  },
-});
+function createTransporter() {
+  // Use Brevo SMTP if credentials are available
+  if (brevoHost && brevoUser && brevoPass) {
+    return nodemailer.createTransport({
+      host: brevoHost,
+      port: parseInt(brevoPort || "587", 10),
+      secure: false, // true for 465, false for 587
+      auth: {
+        user: brevoUser,
+        pass: brevoPass,
+      },
+    });
+  }
+
+  // Default: Gmail SMTP
+  return nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: gmailUser,
+      pass: gmailPass,
+    },
+  });
+}
+
+export const transporter = createTransporter();
+
+/** The "from" address for outgoing emails */
+const fromAddress = process.env.EMAIL_FROM || gmailUser || brevoUser || "noreply@vocare.app";
 
 /**
- * sendInvitationEmail Function
- * 
- * Sends an HTML email invitation to a recipient.
- * Used for sending appointment and dashboard access invitations.
- * 
- * @param to - Recipient email address
- * @param subject - Email subject line
- * @param html - HTML content of the email (can include links, formatting, etc.)
- * @returns Promise that resolves when email is sent
- * @throws Error if email credentials are missing
- * 
- * Example usage:
- * await sendInvitationEmail({
- *   to: "user@example.com",
- *   subject: "You're invited!",
- *   html: "<p>Click <a href='...'>here</a> to accept</p>"
- * });
+ * Send an invitation email to a recipient.
  */
 export async function sendInvitationEmail({
   to,
@@ -68,14 +71,56 @@ export async function sendInvitationEmail({
   subject: string;
   html: string;
 }) {
-  // Validate that email credentials are configured
-  if (!user || !pass) throw new Error("Missing email credentials");
+  if (!gmailUser && !brevoUser) throw new Error("Missing email credentials");
   
-  // Send email using the configured transporter
   return transporter.sendMail({
-    from: user, // Sender email (from environment variable)
-    to,         // Recipient email
-    subject,     // Email subject
-    html,       // HTML email body (supports rich formatting and links)
+    from: fromAddress,
+    to,
+    subject,
+    html,
+  });
+}
+
+/**
+ * Send an appointment reminder email.
+ */
+export async function sendReminderEmail({
+  to,
+  subject,
+  html,
+}: {
+  to: string;
+  subject: string;
+  html: string;
+}) {
+  if (!gmailUser && !brevoUser) throw new Error("Missing email credentials");
+  
+  return transporter.sendMail({
+    from: fromAddress,
+    to,
+    subject,
+    html,
+  });
+}
+
+/**
+ * Send a generic email (for welcome, verification, password reset, etc.)
+ */
+export async function sendEmail({
+  to,
+  subject,
+  html,
+}: {
+  to: string;
+  subject: string;
+  html: string;
+}) {
+  if (!gmailUser && !brevoUser) throw new Error("Missing email credentials");
+  
+  return transporter.sendMail({
+    from: fromAddress,
+    to,
+    subject,
+    html,
   });
 }

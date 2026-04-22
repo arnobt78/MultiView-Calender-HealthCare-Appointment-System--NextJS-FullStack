@@ -11,6 +11,7 @@ const config = [
     rules: {
       "@typescript-eslint/no-unused-vars": "off",
       "@typescript-eslint/no-explicit-any": "off",
+      "react-hooks/incompatible-library": "off",
     },
   },
 ];

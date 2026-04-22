@@ -32,6 +32,8 @@ model User {
   dashboard_access_owned   DashboardAccess[]       @relation("DashboardOwner")
   dashboard_access_invited DashboardAccess[]      @relation("DashboardInvitedUser")
   dashboard_access_invited_by DashboardAccess[]    @relation("DashboardInvitedBy")
+  notifications               Notification[]        @relation("UserNotifications")
+  google_calendar_token       GoogleCalendarToken?  @relation("UserGoogleCalendar")
 
   @@map("users")
 }
@@ -158,4 +160,95 @@ model DashboardAccess {
   invited_by   User? @relation("DashboardInvitedBy", fields: [invited_by_id], references: [id], onDelete: SetNull)
 
   @@map("dashboard_access")
+}
+
+// --- Notifications (in-app notification center)
+model Notification {
+  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  created_at DateTime @default(now())
+  user_id    String   @db.Uuid
+  title      String   @db.Text
+  message    String   @db.Text
+  type       String   @db.Text // 'info' | 'success' | 'warning' | 'error' | 'invitation' | 'reminder'
+  read       Boolean  @default(false)
+  link       String?  @db.Text // optional link to navigate to
+
+  user User @relation("UserNotifications", fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, read])
+  @@index([user_id, created_at])
+  @@map("notifications")
+}
+
+// --- Google Calendar Token (OAuth token storage for calendar sync)
+model GoogleCalendarToken {
+  id            String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  created_at    DateTime @default(now())
+  updated_at    DateTime? @db.Timestamptz(6)
+  user_id       String   @unique @db.Uuid
+  access_token  String   @db.Text
+  refresh_token String?  @db.Text
+  expiry_date   DateTime? @db.Timestamptz(6)
+  calendar_id   String?  @db.Text // user's primary calendar ID
+
+  user User @relation("UserGoogleCalendar", fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("google_calendar_tokens")
+}
+
+// --- Organization (multi-tenant support)
+model Organization {
+  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  created_at DateTime @default(now())
+  name       String   @db.Text
+  slug       String   @unique @db.Text
+  owner_user_id String @db.Uuid
+
+  members OrganizationMember[]
+
+  @@map("organizations")
+}
+
+model OrganizationMember {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  org_id    String   @db.Uuid
+  user_id   String   @db.Uuid
+  role      String   @db.Text // 'admin' | 'doctor' | 'secretary' | 'patient'
+  joined_at DateTime @default(now())
+
+  organization Organization @relation(fields: [org_id], references: [id], onDelete: Cascade)
+
+  @@unique([org_id, user_id])
+  @@map("organization_members")
+}
+
+// --- Invoices & Payments (billing)
+model Invoice {
+  id             String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  created_at     DateTime  @default(now())
+  appointment_id String?   @db.Uuid
+  user_id        String    @db.Uuid
+  amount         Int       // Amount in cents
+  currency       String    @default("eur") @db.Text
+  status         String    @default("draft") @db.Text // 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled'
+  due_date       DateTime? @db.Date
+  paid_at        DateTime? @db.Timestamptz(6)
+  description    String?   @db.Text
+
+  payments Payment[]
+
+  @@map("invoices")
+}
+
+model Payment {
+  id                String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  created_at        DateTime @default(now())
+  invoice_id        String   @db.Uuid
+  stripe_payment_id String?  @db.Text
+  amount            Int      // Amount in cents
+  status            String   @db.Text // 'pending' | 'succeeded' | 'failed' | 'refunded'
+
+  invoice Invoice @relation(fields: [invoice_id], references: [id], onDelete: Cascade)
+
+  @@map("payments")
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { format, startOfWeek, addDays, setHours, setMinutes } from "date-fns";
 import { Appointment, Category, AppointmentAssignee, Patient, Relative, Activity } from "@/types/types";
 import { getUserAppointmentPermission } from "@/lib/permissions";
@@ -326,7 +326,7 @@ export default function WeekView() {
 
   // --- UI update: Only one outer scrollbar, calendar stretches naturally ---
   // Set hourHeight and dayWidth for grid and card calculations
-  const hourHeight = 120; // px per hour
+  const hourHeight = 64; // px per hour
   const dayWidth = 240; // px per day column, increased for better fit
   const headerRowHeight = hourHeight; // px, matches hour row height for now
 
@@ -356,80 +356,43 @@ export default function WeekView() {
     if (!open) setEditAppt(null);
   };
 
+  const timeIndicatorRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (timeIndicatorRef.current) {
+      timeIndicatorRef.current.style.top = `${headerRowHeight + getRedLinePosition() - (42 / 60) * hourHeight}px`;
+    }
+  });
+
+  const apptBlockRef = useCallback((el: HTMLDivElement | null, slotTop: number, slotHeight: number) => {
+    if (el) {
+      el.style.top = `${slotTop}px`;
+      el.style.height = `${slotHeight}px`;
+    }
+  }, []);
+
   return (
     <div className="py-4 px-2 sm:px-4 lg:px-8 bg-[#f5f5f6] min-h-[calc(100vh-80px)] overflow-auto">
       <h2 className="text-2xl font-semibold tracking-tight text-gray-800 mb-2">
         Week View
       </h2>
-      <div
-        style={{
-          overflow: "auto",
-          width: "100%",
-          maxHeight: "calc(100vh - 160px)",
-        }}
-      >
+      <div className="week-scroll-container">
         <div
-          className="inline-grid border border-gray-200 text-sm relative"
-          style={{
-            minWidth: 60 + 7 * dayWidth,
-            gridTemplateColumns: `60px repeat(7, minmax(0, ${dayWidth}px))`,
-          }}
+          className="grid w-full border border-gray-200 text-sm relative week-grid"
         >
           {/* --- Red current time line (always visible) --- */}
           <div
-            style={{
-              position: "absolute",
-              left: 60, // after time column
-              width: 7 * dayWidth, // span all 7 days
-              // Subtract 40 minutes from the red line position for testing
-              top:
-                headerRowHeight +
-                getRedLinePosition() -
-                (42 / 60) * hourHeight,
-              height: 0,
-              zIndex: 50,
-              pointerEvents: "none",
-            }}
+            ref={timeIndicatorRef}
+            className="week-time-indicator"
           >
-            <div
-              style={{
-                position: "absolute",
-                left: 0,
-                right: 0,
-                borderTop: "2px solid #ef4444",
-                display: "flex",
-                alignItems: "center",
-              }}
-            >
-              <span
-                style={{
-                  position: "absolute",
-                  left: -44,
-                  top: -10,
-                  color: "#fff",
-                  fontSize: 12,
-                  fontWeight: 600,
-                  background: "#ef4444",
-                  padding: "0 4px",
-                  borderRadius: 4,
-                  boxShadow: "0 1px 2px rgba(0,0,0,0.03)",
-                }}
-              >
+            <div className="week-time-line">
+              <span className="week-time-label">
                 {format(now, "HH:mm")}
               </span>
             </div>
           </div>
           {/* Top-left sticky cell */}
-          <div
-            className="bg-gray-50 border-r border-b"
-            style={{
-              width: 60,
-              position: "sticky",
-              left: 0,
-              top: 0,
-              zIndex: 30,
-            }}
-          />
+          <div className="bg-gray-50 border-r border-b week-sticky-corner" />
 
           {/* Date/day header row */}
           {Array.from({ length: 7 }).map((_, i) => {
@@ -445,17 +408,7 @@ export default function WeekView() {
             return (
               <div
                 key={i}
-                className={
-                  "border-r border-b p-2 text-center font-medium text-gray-600 bg-gray-50" +
-                  (isToday && isCurrentWeek ? " bg-green-50" : "")
-                }
-                style={{
-                  width: dayWidth,
-                  position: "sticky",
-                  top: 0,
-                  zIndex: 20,
-                  background: isToday && isCurrentWeek ? "#e6f9ed" : "#f9fafb",
-                }}
+                className={"border-r border-b p-2 text-center font-medium text-gray-600 week-day-header" + (isToday && isCurrentWeek ? " week-day-header-today" : "")}
               >
                 {format(day, "EEE dd.MM.")}
                 {isToday && isCurrentWeek && (
@@ -471,15 +424,7 @@ export default function WeekView() {
             <div key={hour} className="contents">
               {/* Time column sticky */}
               <div
-                className="border-r border-b px-2 py-2 text-xs bg-gray-50 text-gray-500"
-                style={{
-                  height: hourHeight,
-                  width: 60,
-                  position: "sticky",
-                  left: 0,
-                  zIndex: 15,
-                  background: "#f9fafb",
-                }}
+                className="border-r border-b px-2 py-2 text-xs text-gray-500 week-hour-cell"
               >{`${hour}:00`}
               </div>
               {Array.from({ length: 7 }).map((_, i) => {
@@ -504,15 +449,7 @@ export default function WeekView() {
                 return (
                   <div
                     key={i}
-                    className={
-                      "border-r border-b relative" +
-                      (isTodayCol ? " bg-green-50" : "")
-                    }
-                    style={{
-                      height: hourHeight,
-                      width: dayWidth,
-                      background: isTodayCol ? "#e6f9ed" : undefined,
-                    }}
+                    className={"border-r border-b relative week-slot-cell" + (isTodayCol ? " week-slot-today" : "")}
                   >
 
                     {/* Inject your code here: */}
@@ -529,16 +466,8 @@ export default function WeekView() {
                       return (
                         <div
                           key={a.id}
-                          style={{
-                            position: "absolute",
-                            left: 4,
-                            right: 4,
-                            top: slotTop,
-                            height: slotHeight,
-                            minHeight: 30,
-                            zIndex: 2,
-                            // Add border and background for the card
-                          }}
+                          ref={(el) => apptBlockRef(el, slotTop, slotHeight)}
+                          className="week-appt-block"
                         >
                           <AppointmentHoverCard
                             appointment={a}

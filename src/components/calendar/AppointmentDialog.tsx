@@ -63,7 +63,7 @@ export default function AppointmentDialog({
 
   const { patients = [] } = usePatients();
   const { categories = [] } = useCategories();
-  const { data: relatives = [] } = useRelatives();
+  const { relatives = [] } = useRelatives();
   const { user } = useAuth();
   const { createAppointmentAsync, updateAppointmentAsync } = useAppointments();
 
@@ -550,9 +550,12 @@ export default function AppointmentDialog({
                 className="cursor-pointer"
               />
               <Input
+                id="appointment-file-upload"
                 type="file"
                 multiple
                 ref={fileInputRef}
+                aria-label="Upload attachment files"
+                title="Upload attachment files"
                 onChange={handleFileChange}
                 disabled={uploading}
                 className="cursor-pointer"

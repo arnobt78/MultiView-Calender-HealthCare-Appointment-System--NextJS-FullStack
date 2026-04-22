@@ -45,4 +45,20 @@ export const queryKeys = {
   dashboardAccess: {
     all: ["app", "dashboard-access"] as const,
   },
+  notifications: {
+    all: ["app", "notifications"] as const,
+    unreadCount: ["app", "notifications", "unread-count"] as const,
+  },
+  organizations: {
+    all: ["app", "organizations"] as const,
+    detail: (id: string) => ["app", "organizations", id] as const,
+    members: (id: string) => ["app", "organizations", id, "members"] as const,
+  },
+  invoices: {
+    all: ["app", "invoices"] as const,
+    detail: (id: string) => ["app", "invoices", id] as const,
+  },
+  dashboard: {
+    overview: ["app", "dashboard", "overview"] as const,
+  },
 } as const;

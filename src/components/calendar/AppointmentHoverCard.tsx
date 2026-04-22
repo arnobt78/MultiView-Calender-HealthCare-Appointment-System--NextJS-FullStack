@@ -103,13 +103,14 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
         {showDetails ? (
           // WeekView: Rich details card
           <div className={clsx(
-            "flex flex-col w-full h-full rounded-md font-medium cursor-pointer shadow-xl transition hover:brightness-110 border border-gray-200 bg-white",
+            "flex flex-col w-full h-full rounded-md font-medium cursor-pointer shadow-xl transition hover:brightness-110 border border-gray-200 bg-white hover-card-rich",
             { "line-through opacity-60": isDone }
           )}
-            style={{ padding: "4px 4px" }}
           >
-            <span className="block w-1.5 h-full rounded-l-md absolute left-0 top-0 bottom-0" style={{ backgroundColor: color }} />
-            <div style={{ marginLeft: 8, position: "relative", zIndex: 1 }}>
+            <svg className="absolute left-0 top-0 bottom-0 w-1.5 h-full rounded-l-md" aria-hidden="true" preserveAspectRatio="none" viewBox="0 0 6 100">
+              <rect width="6" height="100" fill={color} />
+            </svg>
+            <div className="hover-card-content-inner">
 
               <div>
                 <div className="flex flex-col w-full">
@@ -219,12 +220,13 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
           // MonthView: Simple card
           <div
             className={clsx(
-              "flex items-center w-full rounded-md font-medium cursor-pointer shadow-xl transition hover:brightness-110 border border-gray-200 bg-white",
+              "flex items-center w-full rounded-md font-medium cursor-pointer shadow-xl transition hover:brightness-110 border border-gray-200 bg-white hover-card-simple",
               { "line-through opacity-60": isDone }
             )}
-            style={{ minHeight: 24 }}
           >
-            <span className="block w-1.5 h-6 rounded-l-md mr-2" style={{ backgroundColor: color }} />
+            <svg width="6" height="24" viewBox="0 0 6 24" aria-hidden="true" className="rounded-l-md mr-2 shrink-0">
+              <rect width="6" height="24" fill={color} />
+            </svg>
             <span className="truncate text-xs text-gray-700 text-left">
               {a.title}
             </span>
@@ -233,11 +235,10 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
       </HoverCardTrigger>
 
 
-      <HoverCardContent className="relative text-sm min-w-[340px] bg-white rounded-xl shadow-xl p-4">
-        <div
-          className="absolute left-2 top-2 bottom-2 w-1 rounded"
-          style={{ backgroundColor: color }}
-        />
+      <HoverCardContent className="relative text-sm min-w-[340px] bg-white rounded-md shadow-xl p-4">
+        <svg className="absolute left-2 top-2 bottom-2 w-1 rounded overflow-hidden" aria-hidden="true" preserveAspectRatio="none" viewBox="0 0 4 100">
+          <rect width="4" height="100" fill={color} />
+        </svg>
         <div className="pl-6">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xl font-semibold text-gray-800 flex items-center">

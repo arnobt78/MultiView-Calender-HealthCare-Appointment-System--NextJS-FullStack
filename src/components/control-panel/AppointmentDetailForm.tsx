@@ -1,0 +1,228 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAppointments } from "@/hooks/useAppointments";
+import { useCategories } from "@/hooks/useCategories";
+import { usePatients } from "@/hooks/usePatients";
+import VideoCall from "@/components/calendar/VideoCall";
+import { Printer } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import type { Appointment } from "@/types/types";
+
+interface AppointmentDetailFormProps {
+  appointment: Appointment;
+}
+
+export function AppointmentDetailForm({ appointment }: AppointmentDetailFormProps) {
+  const router = useRouter();
+  const { updateAppointment, isUpdating, deleteAppointment, isDeleting } = useAppointments();
+  const { categories } = useCategories();
+  const { patients } = usePatients();
+
+  const toLocal = (iso: string) => iso ? iso.slice(0, 16) : "";
+
+  const [form, setForm] = useState({
+    title: appointment.title ?? "",
+    start: toLocal(appointment.start),
+    end: toLocal(appointment.end),
+    location: appointment.location ?? "",
+    notes: appointment.notes ?? "",
+    status: appointment.status ?? "pending",
+    category: appointment.category ?? "",
+    patient: appointment.patient ?? "",
+  });
+
+  const handleSave = () => {
+    updateAppointment({
+      id: appointment.id,
+      title: form.title,
+      start: form.start,
+      end: form.end,
+      location: form.location,
+      notes: form.notes,
+      status: form.status as "pending" | "done" | "alert",
+      category: form.category || undefined,
+      patient: form.patient || undefined,
+    });
+  };
+
+  const handleDelete = () => {
+    deleteAppointment(appointment.id, {
+      onSuccess: () => router.push("/control-panel"),
+    });
+  };
+
+  return (
+    <div className="space-y-4 pt-4 border-t">
+      <h3 className="font-semibold text-sm">Edit Appointment</h3>
+      <div className="grid gap-4">
+        <div className="space-y-2">
+          <Label>Title *</Label>
+          <Input
+            value={form.title}
+            onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
+            placeholder="Appointment title"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="apptdetail-start">Start</Label>
+            <Input
+              id="apptdetail-start"
+              type="datetime-local"
+              title="Appointment start date and time"
+              value={form.start}
+              onChange={(e) => setForm((p) => ({ ...p, start: e.target.value }))}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="apptdetail-end">End</Label>
+            <Input
+              id="apptdetail-end"
+              type="datetime-local"
+              title="Appointment end date and time"
+              value={form.end}
+              onChange={(e) => setForm((p) => ({ ...p, end: e.target.value }))}
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Location</Label>
+          <Input
+            value={form.location}
+            onChange={(e) => setForm((p) => ({ ...p, location: e.target.value }))}
+            placeholder="Location or video link"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label>Patient</Label>
+            <Select value={form.patient} onValueChange={(v) => setForm((p) => ({ ...p, patient: v }))}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select patient" />
+              </SelectTrigger>
+              <SelectContent>
+                {patients.map((pt) => (
+                  <SelectItem key={pt.id} value={pt.id}>
+                    {pt.firstname} {pt.lastname}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Category</Label>
+            <Select value={form.category} onValueChange={(v) => setForm((p) => ({ ...p, category: v }))}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.id}>
+                    {cat.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Status</Label>
+          <Select
+            value={form.status}
+            onValueChange={(v) => setForm((p) => ({ ...p, status: v }))}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="done">Done</SelectItem>
+              <SelectItem value="alert">Alert</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Notes</Label>
+          <Textarea
+            value={form.notes}
+            onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))}
+            placeholder="Notes…"
+            rows={3}
+          />
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2 pt-2">
+        <Button
+          onClick={handleSave}
+          disabled={isUpdating || !form.title.trim()}
+          className="flex-1 sm:flex-none"
+        >
+          {isUpdating ? "Saving…" : "Save changes"}
+        </Button>
+        <VideoCall appointmentId={appointment.id} appointmentTitle={appointment.title ?? "Video Consultation"} />
+        <Button
+          variant="outline"
+          type="button"
+          onClick={() => window.print()}
+          className="gap-2"
+        >
+          <Printer className="h-4 w-4" />
+          Print
+        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="destructive" type="button" disabled={isDeleting}>
+              {isDeleting ? "Deleting…" : "Delete"}
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete appointment?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete <strong>&ldquo;{appointment.title}&rdquo;</strong> and all related data. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive hover:bg-destructive/90"
+                onClick={handleDelete}
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    </div>
+  );
+}

@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { v4 as uuidv4 } from "uuid";
+import { randomUUID } from "crypto";
 import { sendInvitationEmail } from "@/lib/email";
 import { InvitationRequest } from "@/types/invitation";
 import { prisma } from "@/lib/prisma";
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    const token = uuidv4();
+    const token = randomUUID();
 
     if (type === "appointment") {
       await prisma.appointmentAssignee.create({

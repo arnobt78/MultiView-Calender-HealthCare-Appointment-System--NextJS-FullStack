@@ -9,6 +9,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Tag, User, CalendarDays, Circle, RotateCcw } from "lucide-react";
 
 type FiltersProps = {
   category: string | null;
@@ -21,6 +23,7 @@ type FiltersProps = {
   setStatus: (v: string | null) => void;
   categories: Category[];
   patients: Patient[];
+  onReset: () => void;
 };
 
 const ALL_VALUE = "__all__";
@@ -36,18 +39,21 @@ export default function Filters({
   setStatus,
   categories,
   patients,
+  onReset,
 }: FiltersProps) {
   return (
-    <div className="flex flex-wrap items-center gap-3">
+    <div className="flex flex-wrap items-center gap-2">
+      {/* Category */}
       <Select
         value={category ?? ALL_VALUE}
         onValueChange={(v) => setCategory(v === ALL_VALUE ? null : v)}
       >
-        <SelectTrigger className="w-[140px] rounded-md shadow-xl">
+        <SelectTrigger className="h-9 w-auto min-w-[130px] rounded-md shadow-sm bg-white border-gray-200 text-gray-700 gap-2">
+          <Tag className="w-3.5 h-3.5 text-gray-400 shrink-0" />
           <SelectValue placeholder="Category" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value={ALL_VALUE}>Category</SelectItem>
+          <SelectItem value={ALL_VALUE}>All Categories</SelectItem>
           {categories.map((c) => (
             <SelectItem key={c.id} value={c.id}>
               {c.label}
@@ -56,15 +62,17 @@ export default function Filters({
         </SelectContent>
       </Select>
 
+      {/* Client */}
       <Select
         value={patient ?? ALL_VALUE}
         onValueChange={(v) => setPatient(v === ALL_VALUE ? null : v)}
       >
-        <SelectTrigger className="w-[160px] min-w-[140px] rounded-md shadow-xl">
+        <SelectTrigger className="h-9 w-auto min-w-[130px] rounded-md shadow-sm bg-white border-gray-200 text-gray-700 gap-2">
+          <User className="w-3.5 h-3.5 text-gray-400 shrink-0" />
           <SelectValue placeholder="Client" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value={ALL_VALUE}>Client</SelectItem>
+          <SelectItem value={ALL_VALUE}>All Clients</SelectItem>
           {patients.map((p) => (
             <SelectItem key={p.id} value={p.id}>
               {p.firstname} {p.lastname}
@@ -73,27 +81,46 @@ export default function Filters({
         </SelectContent>
       </Select>
 
-      <Input
-        type="date"
-        className="w-[140px] rounded-md shadow-xl"
-        value={date ?? ""}
-        onChange={(e) => setDate(e.target.value || null)}
-      />
+      {/* Date */}
+      <div className="relative flex items-center">
+        <CalendarDays className="absolute left-3 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+        <Input
+          id="filter-date"
+          type="date"
+          aria-label="Filter by date"
+          title="Filter by date"
+          className="h-9 pl-8 w-auto min-w-[155px] rounded-md shadow-sm bg-white border-gray-200 text-gray-700 cursor-pointer"
+          value={date ?? ""}
+          onChange={(e) => setDate(e.target.value || null)}
+        />
+      </div>
 
+      {/* Status */}
       <Select
         value={status ?? ALL_VALUE}
         onValueChange={(v) => setStatus(v === ALL_VALUE ? null : v)}
       >
-        <SelectTrigger className="w-[120px] rounded-md shadow-xl">
+        <SelectTrigger className="h-9 w-auto min-w-[120px] rounded-md shadow-sm bg-white border-gray-200 text-gray-700 gap-2">
+          <Circle className="w-3.5 h-3.5 text-gray-400 shrink-0" />
           <SelectValue placeholder="Status" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value={ALL_VALUE}>Status</SelectItem>
+          <SelectItem value={ALL_VALUE}>All Statuses</SelectItem>
           <SelectItem value="pending">Open</SelectItem>
           <SelectItem value="done">Done</SelectItem>
           <SelectItem value="alert">Alert</SelectItem>
         </SelectContent>
       </Select>
+
+      {/* Reset */}
+      <Button
+        variant="default"
+        className="h-9 px-4 rounded-md shadow-sm flex items-center gap-2 shrink-0 cursor-pointer active:bg-gray-700 transition-colors"
+        onClick={onReset}
+      >
+        <RotateCcw className="w-3.5 h-3.5" />
+        Reset
+      </Button>
     </div>
   );
 }

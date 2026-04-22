@@ -52,39 +52,49 @@ export function PatientDetailForm({ patient }: { patient: Patient }) {
       <h4 className="font-medium">Edit</h4>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label>First name</Label>
+          <Label htmlFor="patient-firstname">First name</Label>
           <Input
+            id="patient-firstname"
+            title="First name"
             value={form.firstname}
             onChange={(e) => setForm((p) => ({ ...p, firstname: e.target.value }))}
           />
         </div>
         <div className="space-y-2">
-          <Label>Last name</Label>
+          <Label htmlFor="patient-lastname">Last name</Label>
           <Input
+            id="patient-lastname"
+            title="Last name"
             value={form.lastname}
             onChange={(e) => setForm((p) => ({ ...p, lastname: e.target.value }))}
           />
         </div>
         <div className="space-y-2">
-          <Label>Email</Label>
+          <Label htmlFor="patient-email">Email</Label>
           <Input
+            id="patient-email"
             type="email"
+            title="Email address"
             value={form.email}
             onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
           />
         </div>
         <div className="space-y-2">
-          <Label>Birth date</Label>
+          <Label htmlFor="patient-birthdate">Birth date</Label>
           <Input
+            id="patient-birthdate"
             type="date"
+            title="Birth date"
             value={form.birth_date}
             onChange={(e) => setForm((p) => ({ ...p, birth_date: e.target.value }))}
           />
         </div>
         <div className="space-y-2">
-          <Label>Care level</Label>
+          <Label htmlFor="patient-carelevel">Care level</Label>
           <Input
+            id="patient-carelevel"
             type="number"
+            title="Care level"
             value={form.care_level}
             onChange={(e) => setForm((p) => ({ ...p, care_level: e.target.value }))}
           />

@@ -345,7 +345,7 @@ export default function MonthView() {
     );
   };
 
-  // Helper for Heute/Demnächst/Einen Tag später/Datum überschritten tag
+  // Helper for date tags (Today, Next Day, Some Day Later, Date Passed)
   function getDateTag(date: Date) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -357,25 +357,25 @@ export default function MonthView() {
     if (diffDays === 0)
       return (
         <span className="ml-2 px-2 py-0.5 rounded bg-green-100 text-green-700 text-xs font-medium">
-          Heute
+          Today
         </span>
       );
     if (diffDays === 1)
       return (
         <span className="ml-2 px-2 py-0.5 rounded bg-yellow-100 text-yellow-800 text-xs font-medium">
-          Demnächst
+          Next Day
         </span>
       );
     if (diffDays > 1)
       return (
         <span className="ml-2 px-2 py-0.5 rounded bg-sky-100 text-sky-700 text-xs font-medium">
-          Einen Tag später
+          Some Day Later
         </span>
       );
     if (diffDays < 0)
       return (
         <span className="ml-2 px-2 py-0.5 rounded bg-gray-200 text-gray-500 text-xs font-medium">
-          Datum überschritten
+          Date Passed
         </span>
       );
     return null;
@@ -457,7 +457,7 @@ export default function MonthView() {
 
       {/* Side list for selected date */}
       {selectedDate && (
-        <div className="w-full md:w-[350px] bg-white rounded-xl shadow-xl p-2 h-fit sticky top-41">
+        <div className="w-full md:w-[350px] bg-white rounded-md shadow-xl p-2 h-fit sticky top-41">
           <div className="flex items-center gap-2 mb-4">
             <span className="text-lg font-semibold text-gray-800">
               {format(selectedDate, "EEEE, dd. MMMM", { locale: de })}
@@ -507,15 +507,14 @@ export default function MonthView() {
                 <div
                   key={a.id}
                   className={clsx(
-                    "relative border rounded-xl shadow bg-white p-0 flex items-stretch transition hover:shadow-xl min-h-[110px]",
+                    "relative border rounded-md shadow bg-white p-0 flex items-stretch transition hover:shadow-xl min-h-[110px]",
                     isDone && "bg-gray-100 opacity-60"
                   )}
                 >
                   {/* Color bar */}
-                  <div
-                    className="w-2 rounded-l-xl h-full absolute left-0 top-0 bottom-0"
-                    style={{ backgroundColor: color }}
-                  />
+                  <svg className="absolute left-0 top-0 bottom-0 w-2 h-full rounded-l-xl" aria-hidden="true" preserveAspectRatio="none" viewBox="0 0 8 100">
+                    <rect width="8" height="100" fill={color} />
+                  </svg>
                   {/* Main content */}
                   <div className="pl-6 pr-2 py-4 flex-1 flex flex-col justify-center min-h-[110px]">
                     <div className="flex items-center gap-2 mb-1">

@@ -7,7 +7,7 @@ import { DataTable } from "@/components/shared/DataTable";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Category } from "@/types/types";
-import { Plus, Pencil } from "lucide-react";
+import { Plus, Pencil, MoreHorizontal, Trash2 } from "lucide-react";
 import { useState } from "react";
 import {
   Dialog,
@@ -16,74 +16,140 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { CategoryCreateInput } from "@/hooks/useCategories";
 
-const columns: ColumnDef<Category>[] = [
-  {
-    accessorKey: "label",
-    header: "Label",
-    cell: ({ row }) => row.original.label,
-  },
-  {
-    accessorKey: "description",
-    header: "Description",
-    cell: ({ row }) => row.original.description ?? "—",
-  },
-  {
-    accessorKey: "color",
-    header: "Color",
-    cell: ({ row }) => (
-      <div className="flex items-center gap-2">
-        {row.original.color && (
-          <span
-            className="inline-block h-4 w-5 rounded border"
-            style={{ backgroundColor: row.original.color }}
-          />
-        )}
-        <span>{row.original.color ?? "—"}</span>
-      </div>
-    ),
-  },
-  {
-    accessorKey: "icon",
-    header: "Icon",
-    cell: ({ row }) => row.original.icon ?? "—",
-  },
-  {
-    accessorKey: "created_at",
-    header: "Created",
-    cell: ({ row }) =>
-      row.original.created_at
-        ? new Date(row.original.created_at).toLocaleDateString()
-        : "—",
-  },
-  {
-    id: "actions",
-    header: "Actions",
-    cell: ({ row }) => {
-      const id = row.original.id;
-      return (
-        <Button variant="ghost" size="icon" asChild>
-          <Link href={`/control-panel/categories/${id}`} aria-label="View category">
-            <Pencil className="h-4 w-4" />
-          </Link>
-        </Button>
-      );
-    },
-  },
-];
+function CategoryActions({
+  category,
+  onDelete,
+}: {
+  category: Category;
+  onDelete: (id: string) => void;
+}) {
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-8 w-8">
+            <MoreHorizontal className="h-4 w-4" />
+            <span className="sr-only">Open menu</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem asChild>
+            <Link href={`/control-panel/categories/${category.id}`} className="flex items-center gap-2 cursor-pointer">
+              <Pencil className="h-4 w-4" />
+              View / Edit
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            className="text-destructive focus:text-destructive flex items-center gap-2"
+            onSelect={() => setConfirmOpen(true)}
+          >
+            <Trash2 className="h-4 w-4" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete category?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete{" "}
+              <strong>&ldquo;{category.label}&rdquo;</strong>. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive hover:bg-destructive/90"
+              onClick={() => onDelete(category.id)}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}
 
 export default function CategoryManagement() {
-  const { categories, isLoading, createCategory, isCreating } = useCategories();
+  const { categories, isLoading, createCategory, isCreating, deleteCategory } = useCategories();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<CategoryCreateInput>({
     label: "",
     description: "",
-    color: "",
+    color: "#6366f1",
     icon: "",
   });
+
+  const columns: ColumnDef<Category>[] = [
+    { accessorKey: "label", header: "Label", cell: ({ row }) => <span className="font-medium">{row.original.label}</span> },
+    { accessorKey: "description", header: "Description", cell: ({ row }) => row.original.description ?? "—" },
+    {
+      accessorKey: "color",
+      header: "Color",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          {row.original.color && (
+            <input
+              type="color"
+              title="Category color"
+              value={row.original.color}
+              readOnly
+              disabled
+              className="h-4 w-5 rounded border p-0"
+            />
+          )}
+          <span className="text-xs font-mono">{row.original.color ?? "—"}</span>
+        </div>
+      ),
+    },
+    { accessorKey: "icon", header: "Icon", cell: ({ row }) => row.original.icon ?? "—" },
+    {
+      accessorKey: "created_at",
+      header: "Created",
+      cell: ({ row }) =>
+        row.original.created_at ? new Date(row.original.created_at).toLocaleDateString() : "—",
+    },
+    {
+      accessorKey: "updated_at",
+      header: "Updated",
+      cell: ({ row }) =>
+        row.original.updated_at ? new Date(row.original.updated_at).toLocaleDateString() : "—",
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      enableSorting: false,
+      cell: ({ row }) => (
+        <CategoryActions category={row.original} onDelete={deleteCategory} />
+      ),
+    },
+  ];
 
   const handleCreate = () => {
     createCategory(
@@ -91,7 +157,7 @@ export default function CategoryManagement() {
       {
         onSuccess: () => {
           setDialogOpen(false);
-          setForm({ label: "", description: "", color: "", icon: "" });
+          setForm({ label: "", description: "", color: "#6366f1", icon: "" });
         },
       }
     );
@@ -101,7 +167,7 @@ export default function CategoryManagement() {
     <div className="space-y-4">
       <PageHeader
         title="Category Management"
-        description="View and manage categories. All table schema properties are shown."
+        description="Manage appointment categories. All table schema properties are shown."
         actions={
           <Button onClick={() => setDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
@@ -109,12 +175,13 @@ export default function CategoryManagement() {
           </Button>
         }
       />
+
       <DataTable<Category, unknown>
         columns={columns}
         data={categories}
         isLoading={isLoading}
         searchColumnId="label"
-        searchPlaceholder="Search by label..."
+        searchPlaceholder="Search by label…"
         emptyMessage="No categories yet. Add one to get started."
       />
 
@@ -125,7 +192,7 @@ export default function CategoryManagement() {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
-              <Label>Label</Label>
+              <Label>Label *</Label>
               <Input
                 value={form.label}
                 onChange={(e) => setForm((p) => ({ ...p, label: e.target.value }))}
@@ -143,12 +210,21 @@ export default function CategoryManagement() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Color</Label>
-                <Input
-                  type="text"
-                  value={form.color ?? ""}
-                  onChange={(e) => setForm((p) => ({ ...p, color: e.target.value }))}
-                  placeholder="#hex or name"
-                />
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    title="Pick a color"
+                    value={form.color ?? "#6366f1"}
+                    onChange={(e) => setForm((p) => ({ ...p, color: e.target.value }))}
+                    className="h-9 w-12 cursor-pointer rounded border p-1"
+                  />
+                  <Input
+                    value={form.color ?? ""}
+                    onChange={(e) => setForm((p) => ({ ...p, color: e.target.value }))}
+                    placeholder="#hex or name"
+                    className="flex-1"
+                  />
+                </div>
               </div>
               <div className="space-y-2">
                 <Label>Icon</Label>
@@ -161,11 +237,9 @@ export default function CategoryManagement() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Cancel
-            </Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
             <Button onClick={handleCreate} disabled={isCreating || !form.label.trim()}>
-              {isCreating ? "Creating..." : "Create"}
+              {isCreating ? "Creating…" : "Create"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -173,3 +247,4 @@ export default function CategoryManagement() {
     </div>
   );
 }
+

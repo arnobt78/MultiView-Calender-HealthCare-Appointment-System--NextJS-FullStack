@@ -117,6 +117,168 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  /* Premium subtle scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/30 rounded-full hover:bg-muted-foreground/50 transition-colors;
+  }
+}
+
+@layer utilities {
+  .glassmorphism {
+    @apply bg-background/60 backdrop-blur-xl border border-border/50 shadow-sm;
+  }
+  
+  .premium-shadow {
+    box-shadow: 0 4px 24px -6px rgba(0, 0, 0, 0.05), 0 8px 16px -4px rgba(0, 0, 0, 0.02);
+  }
+
+  .file-preview-zoom-50  { transform: scale(0.5); transition: transform 0.2s; }
+  .file-preview-zoom-100 { transform: scale(1);   transition: transform 0.2s; }
+  .file-preview-zoom-150 { transform: scale(1.5); transition: transform 0.2s; }
+  .file-preview-zoom-200 { transform: scale(2);   transition: transform 0.2s; }
+  .file-preview-zoom-250 { transform: scale(2.5); transition: transform 0.2s; }
+  .file-preview-zoom-300 { transform: scale(3);   transition: transform 0.2s; }
+
+  /* Dynamic CSS-variable utilities — replaces inline style props for runtime values */
+  .dyn-bg       { background-color: var(--dyn-color, #888); }
+  .dyn-bg-fill  { background: var(--dyn-color, #888); }
+  .dyn-h        { height: var(--dyn-h); min-height: var(--dyn-min-h, 0); }
+  .dyn-w        { width: var(--dyn-w, 0%); }
+  .dyn-top      { top: var(--dyn-top, 0px); }
+  .dyn-min-h    { min-height: var(--dyn-min-h, 64px); }
+
+  /* VideoCall iframe heights */
+  .video-iframe-normal     { height: calc(80vh - 48px); }
+  .video-iframe-fullscreen { height: calc(100vh - 48px); }
+
+  /* WeekView layout classes */
+  .week-scroll-container {
+    overflow-x: hidden;
+    overflow-y: auto;
+    width: 100%;
+    max-height: calc(100vh - 160px);
+  }
+  .week-grid {
+    grid-template-columns: 60px repeat(7, 1fr);
+  }
+  .week-time-indicator {
+    position: absolute;
+    left: 60px;
+    width: calc(100% - 60px);
+    top: var(--indicator-top, 0px);
+    height: 0;
+    z-index: 50;
+    pointer-events: none;
+  }
+  .week-time-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    border-top: 2px solid #ef4444;
+    display: flex;
+    align-items: center;
+  }
+  .week-time-label {
+    position: absolute;
+    left: -44px;
+    top: -10px;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    background: #ef4444;
+    padding: 0 4px;
+    border-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  }
+  .week-sticky-corner {
+    width: 60px;
+    position: sticky;
+    left: 0;
+    top: 0;
+    z-index: 30;
+  }
+  .week-day-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: #f9fafb;
+  }
+  .week-day-header-today {
+    background: #e6f9ed;
+  }
+  .week-hour-cell {
+    height: var(--hour-h, 64px);
+    width: 60px;
+    position: sticky;
+    left: 0;
+    z-index: 15;
+    background: #f9fafb;
+  }
+  .week-slot-cell {
+    height: var(--hour-h, 64px);
+  }
+  .week-slot-today {
+    background: #e6f9ed;
+  }
+  .week-appt-block {
+    position: absolute;
+    left: 4px;
+    right: 4px;
+    top: var(--appt-top, 0px);
+    height: var(--appt-h, 30px);
+    min-height: 30px;
+    z-index: 2;
+  }
+
+  /* AppointmentHoverCard layout helpers */
+  .hover-card-rich {
+    padding: 4px;
+  }
+  .hover-card-content-inner {
+    margin-left: 8px;
+    position: relative;
+    z-index: 1;
+  }
+  .hover-card-simple {
+    min-height: 24px;
+  }
+}
+
+/* ===== Print styles: hide nav/sidebar, show content cleanly ===== */
+@media print {
+  nav,
+  header,
+  aside,
+  [data-print-hide],
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    font-size: 12pt;
+    color: #000;
+    background: #fff;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .card,
+  [class*="rounded"] {
+    border: 1px solid #ccc !important;
+    box-shadow: none !important;
   }
 }

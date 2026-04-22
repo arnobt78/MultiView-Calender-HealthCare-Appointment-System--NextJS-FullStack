@@ -68,6 +68,40 @@ export function serializeRelative(r: {
 }
 
 /** Appointment: map Prisma field names to API (patient_id → patient, category_id → category) */
+export function serializeOrganization(o: {
+  id: string;
+  created_at: Date;
+  name: string;
+  slug: string;
+  owner_user_id: string;
+}) {
+  return {
+    ...o,
+    created_at: o.created_at?.toISOString?.(),
+  };
+}
+
+export function serializeInvoice(i: {
+  id: string;
+  created_at: Date;
+  appointment_id: string | null;
+  user_id: string;
+  amount: number;
+  currency: string;
+  status: string;
+  due_date: Date | null;
+  paid_at: Date | null;
+  description: string | null;
+}) {
+  return {
+    ...i,
+    created_at: i.created_at?.toISOString?.(),
+    due_date: i.due_date ? i.due_date.toISOString().slice(0, 10) : null,
+    paid_at: i.paid_at?.toISOString?.() ?? null,
+  };
+}
+
+/** Appointment: map Prisma field names to API (patient_id → patient, category_id → category) */
 export function serializeAppointment(a: {
   id: string;
   created_at: Date;

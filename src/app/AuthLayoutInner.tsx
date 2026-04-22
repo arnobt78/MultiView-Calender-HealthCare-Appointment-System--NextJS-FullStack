@@ -1,41 +1,75 @@
 "use client";
 
-/**
- * Inner layout that uses useAuth() (must be inside QueryProvider).
- * Decides between minimal layout (auth pages when not logged in) and full app layout.
- */
-
-import { usePathname } from "next/navigation";
+import { useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import Navbar from "@/components/navbar/Navbar";
-import AuthGuard from "@/components/AuthGuard";
 import { useAuth } from "@/hooks/useAuth";
+import { useAppStore } from "@/store/useAppStore";
+import VideoCall from "@/components/calendar/VideoCall";
+import QuickActionsModal from "@/components/shared/QuickActionsModal";
 import { cn } from "@/lib/utils";
 import { Inter } from "next/font/google";
 
 const inter = Inter({ subsets: ["latin"] });
 
+const ALLOWED_PATHS = ["/login", "/register", "/accept-invitation"];
+
 export function AuthLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { user, isLoading } = useAuth();
+  const router = useRouter();
+  const { user, isLoading, isAuthenticated } = useAuth();
+  const { isVideoCallActive, activeVideoAppointmentId, endVideoCall } = useAppStore();
 
-  const isAuthPage = ["/login", "/register", "/accept-invitation"].some((p) =>
-    pathname.startsWith(p)
-  );
+  const isAuthPage = ALLOWED_PATHS.some((p) => pathname.startsWith(p));
 
-  if (isAuthPage && !user && !isLoading) {
-    return (
-      <div className={cn("min-h-screen bg-gray-50 text-gray-900", inter.className)}>
-        {children}
-      </div>
-    );
+  // Route guard: handle redirects once auth state resolves
+  useEffect(() => {
+    if (isLoading) return;
+
+    if (isAuthenticated && user) {
+      // Email verification check
+      if (user.email_verified === false && !ALLOWED_PATHS.includes(pathname)) {
+        router.replace("/login?verify=1");
+        return;
+      }
+      // Redirect away from auth pages if already logged in
+      if (user.email_verified !== false && ["/login", "/register"].includes(pathname)) {
+        router.replace("/");
+        return;
+      }
+    } else {
+      // Redirect unauthenticated users away from protected routes
+      if (!ALLOWED_PATHS.includes(pathname)) {
+        router.replace("/login");
+        return;
+      }
+    }
+  }, [isLoading, isAuthenticated, user, pathname, router]);
+
+  // Auth pages (login/register/accept-invitation): render without navbar
+  if (isAuthPage && !user) {
+    return <>{children}</>;
+  }
+
+  // Protected routes should not render app UI until auth is resolved.
+  // This prevents protected page hooks from firing unauthenticated API calls
+  // (which otherwise causes noisy 401 loops before redirect to /login).
+  if (!ALLOWED_PATHS.includes(pathname) && (isLoading || !isAuthenticated)) {
+    return null;
   }
 
   return (
-    <div className={cn("min-h-screen bg-gray-50 text-gray-900", inter.className)}>
-      <AuthGuard>
-        <Navbar />
-        {children}
-      </AuthGuard>
+    <div className={cn("min-h-screen bg-gradient-to-br from-white via-slate-50 to-slate-100 text-gray-900", inter.className)}>
+      <Navbar />
+      {children}
+      {isVideoCallActive && activeVideoAppointmentId && (
+        <VideoCall
+          appointmentId={activeVideoAppointmentId}
+          appointmentTitle="Video Consultation"
+          onClose={endVideoCall}
+        />
+      )}
+      <QuickActionsModal />
     </div>
   );
 }
