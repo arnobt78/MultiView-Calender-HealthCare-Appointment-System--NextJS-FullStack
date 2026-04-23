@@ -1,35 +1,52 @@
 "use client";
 
-// HomePage Component - Main calendar view page
-// Manages the three different calendar view modes:
-// - List (List View): Shows appointments in a list format grouped by date
-// - Week (Week View): Shows appointments in a weekly calendar grid
-// - Month (Month View): Shows appointments in a monthly calendar grid
+// HomePage — main calendar area.  View mode is kept in the URL as ?view=list|day|week|month
+// so a refresh returns to the same tab.
 
-import React, { useState } from "react";
+import React, { useCallback } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import MonthView from "@/components/calendar/MonthView";
 import WeekView from "@/components/calendar/WeekView";
 import DayView from "@/components/calendar/DayView";
 import AppointmentList from "@/components/calendar/AppointmentList";
 import CalendarHeader from "@/components/calendar/CalendarHeader";
 
-// Type definition for the four available calendar view modes
-type ViewType = "List" | "Day" | "Week" | "Month";
+const views = ["List", "Day", "Week", "Month"] as const;
+export type ViewType = (typeof views)[number];
+
+function parseViewParam(v: string | null): ViewType {
+  if (!v) return "List";
+  const t = v.charAt(0).toUpperCase() + v.slice(1).toLowerCase();
+  return (views as readonly string[]).includes(t) ? (t as ViewType) : "List";
+}
 
 const HomePage: React.FC = () => {
-  // State to track which calendar view is currently active
-  // Default view is "List" (List View)
-  const [view, setView] = useState<ViewType>("List");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const view = parseViewParam(searchParams.get("view"));
+
+  const setView = useCallback(
+    (v: ViewType) => {
+      const p = new URLSearchParams(searchParams.toString());
+      p.set("view", v.toLowerCase());
+      const q = p.toString();
+      router.replace(q ? `${pathname}?${q}` : pathname, { scroll: false });
+    },
+    [router, pathname, searchParams]
+  );
 
   return (
-    <div>
-      {/* CalendarHeader component provides view switching buttons and date navigation */}
-      <CalendarHeader view={view} setView={setView} />
-      {/* Conditional rendering based on selected view */}
-      {view === "List" && <AppointmentList />}
-      {view === "Day" && <DayView />}
-      {view === "Week" && <WeekView />}
-      {view === "Month" && <MonthView />}
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
+      <div className="shrink-0">
+        <CalendarHeader view={view} setView={setView} />
+      </div>
+      <div className="inner-dashboard-scroll min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain">
+        {view === "List" && <AppointmentList />}
+        {view === "Day" && <DayView />}
+        {view === "Week" && <WeekView />}
+        {view === "Month" && <MonthView />}
+      </div>
     </div>
   );
 };

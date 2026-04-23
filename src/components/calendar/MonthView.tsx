@@ -22,10 +22,9 @@ import {
 import { getUserAppointmentPermission } from "@/lib/permissions";
 // Using Vercel Blob for file storage
 import { getPublicUrl } from "@/lib/vercelBlob";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useDateContext } from "@/context/DateContext";
-import AppointmentDialog from "./AppointmentDialog";
-import EditAppointmentDialog from "./EditAppointmentDialog";
+import AppointmentDialogController from "./AppointmentDialogController";
 import { Button } from "@/components/ui/button";
 import {
   FiEdit2,
@@ -38,8 +37,8 @@ import {
   FiUsers,
 } from "react-icons/fi";
 import AppointmentHoverCard from "./AppointmentHoverCard";
-import { de } from "date-fns/locale";
 import { useAppointmentColor } from "@/context/AppointmentColorContext";
+import { Badge } from "../ui/badge";
 
 type AppointmentWithCategory = Appointment & {
   category_data?: Category;
@@ -85,6 +84,31 @@ export default function MonthView() {
     [currentDate]
   );
 
+  const placeholderMonthDates = useMemo(() => {
+    const start = startOfWeek(startOfMonth(currentDate), { weekStartsOn: 1 });
+    const end = endOfWeek(endOfMonth(currentDate), { weekStartsOn: 1 });
+    const dates: Date[] = [];
+    for (let d = start; d <= end; d = addDays(d, 1)) {
+      dates.push(new Date(d));
+    }
+    return dates;
+  }, [currentDate]);
+
+  const displayCalendarDays = useMemo(() => {
+    const matchesPlaceholder =
+      calendarDays.length > 0 &&
+      calendarDays.length === placeholderMonthDates.length &&
+      calendarDays[0].date.getTime() === placeholderMonthDates[0].getTime();
+    if (matchesPlaceholder) {
+      return calendarDays;
+    }
+    return placeholderMonthDates.map((date) => ({
+      date,
+      appointments:
+        calendarDays.find((c) => isSameDay(c.date, date))?.appointments ?? [],
+    }));
+  }, [calendarDays, placeholderMonthDates]);
+
   useEffect(() => {
     (async () => {
       // Only fetch user once
@@ -97,7 +121,9 @@ export default function MonthView() {
           uid = data?.user?.id || null;
           email = data?.user?.email || null;
         }
-        if (!uid) return;
+        if (!uid) {
+          return;
+        }
         setUserId(uid);
         setUserEmail(email);
       } else {
@@ -356,47 +382,48 @@ export default function MonthView() {
     );
     if (diffDays === 0)
       return (
-        <span className="ml-2 px-2 py-0.5 rounded bg-green-100 text-green-700 text-xs font-medium">
+        <Badge variant="outline" className="ml-2 bg-green-100 text-green-700 hover:bg-green-100 border-transparent">
           Today
-        </span>
+        </Badge>
       );
     if (diffDays === 1)
       return (
-        <span className="ml-2 px-2 py-0.5 rounded bg-yellow-100 text-yellow-800 text-xs font-medium">
+        <Badge variant="outline" className="ml-2 bg-yellow-100 text-yellow-800 hover:bg-yellow-100 border-transparent">
           Next Day
-        </span>
+        </Badge>
       );
     if (diffDays > 1)
       return (
-        <span className="ml-2 px-2 py-0.5 rounded bg-sky-100 text-sky-700 text-xs font-medium">
+        <Badge variant="outline" className="ml-2 bg-sky-100 text-sky-700 hover:bg-sky-100 border-transparent">
           Some Day Later
-        </span>
+        </Badge>
       );
     if (diffDays < 0)
       return (
-        <span className="ml-2 px-2 py-0.5 rounded bg-gray-200 text-gray-500 text-xs font-medium">
+        <Badge variant="outline" className="ml-2 bg-gray-200 text-gray-500 hover:bg-gray-200 border-transparent">
           Date Passed
-        </span>
+        </Badge>
       );
     return null;
   }
 
   return (
-    <div className="flex flex-col md:flex-row py-4 px-2 sm:px-4 lg:px-8 space-y-4 md:space-y-0 md:space-x-8 bg-[#f5f5f6] min-h-[calc(100vh-80px)]">
-      <div className="flex-1">
+    <div className="flex min-h-0 flex-col gap-4 py-4 px-2 sm:px-4 lg:px-8 md:flex-row md:items-start md:space-x-8">
+      <div className="min-w-0 flex-1">
         <h2 className="text-2xl font-semibold tracking-tight text-gray-800 mb-2">
           Month View
         </h2>
-        <div className="grid grid-cols-7 gap-px bg-gray-200 text-sm">
+        <div className="overflow-hidden rounded-2xl border border-gray-200 bg-gray-200 text-sm shadow-sm">
+          <div className="grid min-h-[calc(100dvh-260px)] grid-cols-7 auto-rows-fr gap-px">
           {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
             <div
               key={d}
-              className="bg-white p-2 font-medium text-gray-600 text-center border-b border-gray-200"
+              className="bg-white p-2 text-center font-medium text-gray-600"
             >
               {d}
             </div>
           ))}
-          {calendarDays.map(({ date, appointments }) => {
+          {displayCalendarDays.map(({ date, appointments }) => {
             const selected = selectedDate && isSameDay(date, selectedDate);
             const isCurrent = isToday(date);
             const hasAppointments = appointments.length > 0;
@@ -404,11 +431,10 @@ export default function MonthView() {
               <div
                 key={date.toISOString()}
                 className={clsx(
-                  "min-h-[100px] p-2 border bg-white relative group transition",
+                  "relative min-h-[100px] bg-white p-2 transition",
                   !isSameMonth(date, currentDate) && "bg-gray-100 text-gray-400",
                   isCurrent && !selected && "bg-green-100",
-                  selected && "bg-gray-200 border-green-600 border-2 z-10",
-                  !selected && "border-gray-200",
+                  selected && "z-10 bg-gray-200 ring-2 ring-green-600",
                   hasAppointments ? "cursor-pointer" : "cursor-default"
                 )}
                 onClick={() => hasAppointments && setSelectedDate(date)}
@@ -416,7 +442,15 @@ export default function MonthView() {
                 <div className="flex items-center mb-1">
                   <span
                     className={clsx(
-                      "text-xs font-semibold text-gray-700 w-6 h-6 flex items-center justify-center rounded",
+                      "text-xs font-semibold w-6 h-6 flex items-center justify-center rounded",
+                      !isSameMonth(date, currentDate) &&
+                        !selected &&
+                        !isCurrent &&
+                        "text-gray-400",
+                      isSameMonth(date, currentDate) &&
+                        !selected &&
+                        !isCurrent &&
+                        "text-gray-700",
                       selected && "bg-green-500 text-white",
                       !selected && isCurrent && "bg-green-200 text-green-700"
                     )}
@@ -452,15 +486,20 @@ export default function MonthView() {
               </div>
             );
           })}
+          </div>
         </div>
       </div>
 
       {/* Side list for selected date */}
       {selectedDate && (
-        <div className="w-full md:w-[350px] bg-white rounded-2xl shadow-xl p-2 h-fit sticky top-41">
+        <div className="h-fit w-full rounded-2xl border border-gray-200 bg-white p-2 shadow-xl md:sticky md:top-2 md:w-[350px]">
           <div className="flex items-center gap-2 mb-4">
             <span className="text-lg font-semibold text-gray-800">
-              {format(selectedDate, "EEEE, dd. MMMM", { locale: de })}
+              {new Intl.DateTimeFormat("de-DE", {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+              }).format(selectedDate)}
             </span>
             <span className="bg-green-700 text-white rounded px-2 py-1 text-lg font-bold">
               {format(selectedDate, "d")}
@@ -468,7 +507,7 @@ export default function MonthView() {
           </div>
           <div className="space-y-4">
             {sortByTime(
-              calendarDays.find((d) => isSameDay(d.date, selectedDate))
+              displayCalendarDays.find((d) => isSameDay(d.date, selectedDate))
                 ?.appointments || []
             ).map((a) => {
               const color = a.category_data?.color || randomBgColor(a.id);
@@ -843,7 +882,7 @@ export default function MonthView() {
                 </div>
               );
             })}
-            {(calendarDays.find((d) => isSameDay(d.date, selectedDate))
+            {(displayCalendarDays.find((d) => isSameDay(d.date, selectedDate))
               ?.appointments.length || 0) === 0 && (
                 <div className="text-gray-400 text-center">No appointments</div>
               )}
@@ -853,31 +892,29 @@ export default function MonthView() {
 
       {/* Edit dialog */}
       {editAppt && (
-        <EditAppointmentDialog
+        <AppointmentDialogController
           appointment={editAppt}
           onSuccess={() => {
             setEditAppt(null);
-          }}
-          trigger={null}
-          refreshAppointments={async () => {
-            try {
-              const response = await fetch("/api/appointments");
-              if (response.ok) {
-                const data = await response.json();
-                const appointments = data.appointments || [];
-                // Fetch categories and join
-                const categoriesRes = await fetch("/api/categories");
-                const categoriesData = await categoriesRes.json();
-                const categories = categoriesData.categories || [];
-                const appointmentsWithCategories = appointments.map((appt: Appointment) => ({
-                  ...appt,
-                  category_data: categories.find((c: Category) => c.id === appt.category),
-                }));
-                buildCalendar(appointmentsWithCategories as AppointmentWithCategory[]);
+            void (async () => {
+              try {
+                const response = await fetch("/api/appointments");
+                if (response.ok) {
+                  const data = await response.json();
+                  const appointments = data.appointments || [];
+                  const categoriesRes = await fetch("/api/categories");
+                  const categoriesData = await categoriesRes.json();
+                  const categories = categoriesData.categories || [];
+                  const appointmentsWithCategories = appointments.map((appt: Appointment) => ({
+                    ...appt,
+                    category_data: categories.find((c: Category) => c.id === appt.category),
+                  }));
+                  buildCalendar(appointmentsWithCategories as AppointmentWithCategory[]);
+                }
+              } catch (error) {
+                console.error("Error refreshing appointments:", error);
               }
-            } catch (error) {
-              console.error("Error refreshing appointments:", error);
-            }
+            })();
           }}
         />
       )}

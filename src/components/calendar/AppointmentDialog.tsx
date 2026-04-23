@@ -127,7 +127,7 @@ export default function AppointmentDialog({
     setSuccess(false);
     try {
       if (!isEditMode && (!title || !start || !end || !patientId || !categoryId)) {
-        setError("Bitte alle Pflichtfelder ausfüllen.");
+        setError("Please fill in all required fields.");
         setLoading(false);
         return;
       }
@@ -283,11 +283,11 @@ export default function AppointmentDialog({
       onSuccess?.();
     } catch (e: unknown) {
       if (typeof e === "object" && e && "message" in e) {
-        toast.error((e as { message: string }).message || "Unbekannter Fehler");
-        setError((e as { message: string }).message || "Unbekannter Fehler");
+        toast.error((e as { message: string }).message || "Unknown error");
+        setError((e as { message: string }).message || "Unknown error");
       } else {
-        toast.error("Unbekannter Fehler");
-        setError("Unbekannter Fehler");
+        toast.error("Unknown error");
+        setError("Unknown error");
       }
     } finally {
       setLoading(false);
@@ -318,7 +318,7 @@ export default function AppointmentDialog({
         // Store the Vercel Blob URL (full URL for easy access)
         uploadedFileNames.push(result.url);
       } catch (error) {
-        setError(`Fehler beim Hochladen: ${file.name}`);
+        setError(`Error uploading: ${file.name}`);
         setFileProgress((prev) => ({ ...prev, [file.name]: 0 }));
         continue;
       }
@@ -432,7 +432,7 @@ export default function AppointmentDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange ? onOpenChange : setOpen}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      <DialogContent className="sm:max-w-lg" aria-describedby="">
+      <DialogContent aria-describedby="">
         <DialogHeader>
           <DialogTitle>
             {isEditMode ? "Edit appointment" : "Create new appointment"}

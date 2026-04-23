@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { format } from "date-fns";
-import { de } from "date-fns/locale";
 import { FullAppointment, useAppointments } from "@/hooks/useAppointments";
 import { useCategories } from "@/hooks/useCategories";
 import { usePatients } from "@/hooks/usePatients";
@@ -15,8 +14,7 @@ import {
   Relative,
 } from "@/types/types";
 import Filters from "./Filters";
-import AppointmentDialog from "./AppointmentDialog";
-import EditAppointmentDialog from "./EditAppointmentDialog";
+import AppointmentDialogController from "./AppointmentDialogController";
 import { useDateContext } from "@/context/DateContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -44,7 +42,6 @@ import {
   FiUsers,
 } from "react-icons/fi";
 import { MdCategory } from "react-icons/md";
-import AppointmentListSkeleton from "./AppointmentListSkeleton";
 import SearchBar from "./SearchBar";
 import { useAppointmentColor } from "@/context/AppointmentColorContext";
 import { motion } from "framer-motion";
@@ -55,7 +52,11 @@ import { motion } from "framer-motion";
 function DateHeadline({ date }: { date: Date }) {
   return (
     <div className="text-lg font-bold text-gray-700 mt-8 mb-3 flex items-center gap-2">
-      {format(date, "EEEE, dd. MMMM", { locale: de })}
+      {new Intl.DateTimeFormat("de-DE", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+      }).format(date)}
       {(() => {
         const now = new Date();
         if (
@@ -75,7 +76,7 @@ function DateHeadline({ date }: { date: Date }) {
   );
 }
 
-// Color bar for appointment cards — uses ref to avoid inline style lint warning
+// Color bar for appointment cards — uses ref to avoid inline style lint warning  
 function ColorBar({ color }: { color: string }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -127,15 +128,15 @@ function getDateTag(date: Date) {
     );
   if (diffDays > 1)
     return (
-      <span className="ml-2 px-2 py-0.5 rounded bg-sky-100 text-sky-700 text-xs font-medium">
+      <Badge variant="outline" className="ml-2 bg-sky-100 text-sky-700 hover:bg-sky-100 border-transparent">
         Some Day Later
-      </span>
+      </Badge>
     );
   if (diffDays < 0)
     return (
-      <span className="ml-2 px-2 py-0.5 rounded bg-gray-200 text-gray-500 text-xs font-medium">
+      <Badge variant="outline" className="ml-2 bg-gray-200 text-gray-500 hover:bg-gray-200 border-transparent">
         Date Passed
-      </span>
+      </Badge>
     );
   return null;
 }
@@ -287,6 +288,7 @@ export default function AppointmentList() {
 
   const handleEditSuccess = () => {
     setEditAppt(null);
+    void refetchAppointments();
   };
 
   const handleEdit = (appt: FullAppointment) => {
@@ -714,13 +716,11 @@ export default function AppointmentList() {
             </motion.div>
           )}
           {editAppt ? (
-            <EditAppointmentDialog
+            <AppointmentDialogController
               appointment={editAppt}
               onSuccess={handleEditSuccess}
-              trigger={undefined}
               isOpen={editOpen}
               onOpenChange={handleEditDialogChange}
-              refreshAppointments={refetchAppointments}
             />
           ) : null}
         </>

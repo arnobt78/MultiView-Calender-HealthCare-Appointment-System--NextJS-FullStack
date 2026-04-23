@@ -18,7 +18,7 @@ export type FullAppointment = Appointment & {
 export function useAppointments() {
   const queryClient = useQueryClient();
 
-  const { user } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
 
   const query = useQuery({
     queryKey: queryKeys.appointments.all,
@@ -203,7 +203,9 @@ export function useAppointments() {
 
   return {
     appointments: query.data || [],
-    isLoading: query.isLoading || (query.isFetching && !query.data?.length),
+    isLoading:
+      isAuthLoading ||
+      (!!user && (query.isLoading || (query.isFetching && !query.data?.length))),
     isFetching: query.isFetching,
     isError: query.isError,
     error: query.error,

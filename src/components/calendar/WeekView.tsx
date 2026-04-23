@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useCallback, type CSSProperties } from "react";
 import { format, startOfWeek, addDays, setHours, setMinutes } from "date-fns";
 import { Appointment, Category, AppointmentAssignee, Patient, Relative, Activity } from "@/types/types";
 import { getUserAppointmentPermission } from "@/lib/permissions";
-import AppointmentDialog from "./AppointmentDialog";
-import EditAppointmentDialog from "./EditAppointmentDialog";
+import AppointmentDialogController from "./AppointmentDialogController";
 import { useDateContext } from "@/context/DateContext";
 import AppointmentHoverCard from "./AppointmentHoverCard";
 import { useAppointmentColor } from "@/context/AppointmentColorContext";
+import { Badge } from "../ui/badge";
 
 type AppointmentWithCategory = Appointment & {
   category_data?: Category;
@@ -72,7 +72,9 @@ export default function WeekView() {
           setUserId(uid);
           setUserEmail(email);
         }
-        if (!uid && !email) return;
+        if (!uid && !email) {
+          return;
+        }
 
         // Fetch owned appointments (API automatically filters by authenticated user)
         const ownedRes = await fetch("/api/appointments");
@@ -299,27 +301,27 @@ export default function WeekView() {
     );
     if (diffDays === 0)
       return (
-        <span className="ml-2 px-2 py-0.5 rounded bg-green-100 text-green-700 text-xs font-medium">
+        <Badge variant="outline" className="ml-2 bg-green-100 text-green-700 hover:bg-green-100 border-transparent">
           Today
-        </span>
+        </Badge>
       );
     if (diffDays === 1)
       return (
-        <span className="ml-2 px-2 py-0.5 rounded bg-yellow-100 text-yellow-800 text-xs font-medium">
-          Next day
-        </span>
+        <Badge variant="outline" className="ml-2 bg-yellow-100 text-yellow-800 hover:bg-yellow-100 border-transparent">
+          Next Day
+        </Badge>
       );
     if (diffDays > 1)
       return (
-        <span className="ml-2 px-2 py-0.5 rounded bg-sky-100 text-sky-700 text-xs font-medium">
-          Some days later
-        </span>
+        <Badge variant="outline" className="ml-2 bg-sky-100 text-sky-700 hover:bg-sky-100 border-transparent">
+          Some Day Later
+        </Badge>
       );
     if (diffDays < 0)
       return (
-        <span className="ml-2 px-2 py-0.5 rounded bg-gray-200 text-gray-500 text-xs font-medium">
-          Date passed
-        </span>
+        <Badge variant="outline" className="ml-2 bg-gray-200 text-gray-500 hover:bg-gray-200 border-transparent">
+          Date Passed
+        </Badge>
       );
     return null;
   }
@@ -356,13 +358,10 @@ export default function WeekView() {
     if (!open) setEditAppt(null);
   };
 
-  const timeIndicatorRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (timeIndicatorRef.current) {
-      timeIndicatorRef.current.style.top = `${headerRowHeight + getRedLinePosition() - (42 / 60) * hourHeight}px`;
-    }
-  });
+  const showWeekNowLine = isTodayInWeek();
+  const weekIndicatorTopPx = showWeekNowLine
+    ? headerRowHeight + getRedLinePosition()
+    : 0;
 
   const apptBlockRef = useCallback((el: HTMLDivElement | null, slotTop: number, slotHeight: number) => {
     if (el) {
@@ -372,25 +371,26 @@ export default function WeekView() {
   }, []);
 
   return (
-    <div className="py-4 px-2 sm:px-4 lg:px-8 bg-[#f5f5f6] min-h-[calc(100vh-80px)] overflow-auto">
-      <h2 className="text-2xl font-semibold tracking-tight text-gray-800 mb-2">
+    <div className="min-h-0 py-4 px-2 sm:px-4 lg:px-8">
+      <h2 className="mb-2 text-2xl font-semibold tracking-tight text-gray-800">
         Week View
       </h2>
-      <div className="week-scroll-container">
-        <div
-          className="grid w-full border border-gray-200 text-sm relative week-grid"
-        >
-          {/* --- Red current time line (always visible) --- */}
-          <div
-            ref={timeIndicatorRef}
-            className="week-time-indicator"
-          >
-            <div className="week-time-line">
-              <span className="week-time-label">
-                {format(now, "HH:mm")}
-              </span>
+      <div className="week-scroll-container overflow-hidden rounded-2xl border border-gray-200 bg-background">
+        <div className="relative grid w-full text-sm week-grid">
+          {showWeekNowLine && (
+            <div
+              className="week-time-indicator"
+              style={
+                { ["--indicator-top" as string]: `${weekIndicatorTopPx}px` } as CSSProperties
+              }
+            >
+              <div className="week-time-line">
+                <span className="week-time-label">
+                  {format(now, "HH:mm")}
+                </span>
+              </div>
             </div>
-          </div>
+          )}
           {/* Top-left sticky cell */}
           <div className="bg-gray-50 border-r border-b week-sticky-corner" />
 
@@ -412,9 +412,9 @@ export default function WeekView() {
               >
                 {format(day, "EEE dd.MM.")}
                 {isToday && isCurrentWeek && (
-                  <span className="ml-2 px-2 py-0.5 rounded bg-green-100 text-green-700 text-xs font-medium">
+                  <Badge variant="outline" className="ml-2 bg-green-100 text-green-700 hover:bg-green-100 border-transparent">
                     Today
-                  </span>
+                  </Badge>
                 )}
               </div>
             );
@@ -451,7 +451,6 @@ export default function WeekView() {
                     key={i}
                     className={"border-r border-b relative week-slot-cell" + (isTodayCol ? " week-slot-today" : "")}
                   >
-
                     {/* Inject your code here: */}
                     {matches.map((a) => {
                       const color = randomBgColor(a.id);
@@ -497,34 +496,32 @@ export default function WeekView() {
 
       {/* Edit dialog */}
       {editAppt && (
-        <EditAppointmentDialog
+        <AppointmentDialogController
           appointment={editAppt}
           onSuccess={() => {
             setEditAppt(null);
+            void (async () => {
+              try {
+                const response = await fetch("/api/appointments");
+                if (response.ok) {
+                  const data = await response.json();
+                  const appointments = data.appointments || [];
+                  const categoriesRes = await fetch("/api/categories");
+                  const categoriesData = await categoriesRes.json();
+                  const categories = categoriesData.categories || [];
+                  const appointmentsWithCategories = appointments.map((appt: Appointment) => ({
+                    ...appt,
+                    category_data: categories.find((c: Category) => c.id === appt.category),
+                  }));
+                  setAppointments(appointmentsWithCategories);
+                }
+              } catch (error) {
+                console.error("Error refreshing appointments:", error);
+              }
+            })();
           }}
-          trigger={null}
           isOpen={editOpen}
           onOpenChange={handleEditDialogChange}
-          refreshAppointments={async () => {
-            try {
-              const response = await fetch("/api/appointments");
-              if (response.ok) {
-                const data = await response.json();
-                const appointments = data.appointments || [];
-                // Fetch categories and join
-                const categoriesRes = await fetch("/api/categories");
-                const categoriesData = await categoriesRes.json();
-                const categories = categoriesData.categories || [];
-                const appointmentsWithCategories = appointments.map((appt: Appointment) => ({
-                  ...appt,
-                  category_data: categories.find((c: Category) => c.id === appt.category),
-                }));
-                setAppointments(appointmentsWithCategories);
-              }
-            } catch (error) {
-              console.error("Error refreshing appointments:", error);
-            }
-          }}
         />
       )}
     </div>

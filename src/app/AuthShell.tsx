@@ -74,18 +74,27 @@ function AuthShellInner({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
+  const isDashboard = pathname === "/dashboard";
+
   // All protected pages — render with dashboard layout.
   // Middleware already verified auth before the browser received this HTML,
   // so no loading state or redirect is needed here.
   return (
     <div
       className={cn(
-        "min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 text-gray-900",
+        "flex h-dvh min-h-0 max-h-dvh flex-col overflow-hidden bg-gradient-to-br from-slate-50 via-white to-slate-100 text-gray-900",
         inter.className
       )}
     >
       <Navbar />
-      {children}
+      <main
+        className={cn(
+          "min-h-0 flex-1",
+          isDashboard ? "flex flex-col overflow-hidden" : "overflow-y-auto"
+        )}
+      >
+        {children}
+      </main>
 
       {isVideoCallActive && activeVideoAppointmentId && (
         <VideoCall

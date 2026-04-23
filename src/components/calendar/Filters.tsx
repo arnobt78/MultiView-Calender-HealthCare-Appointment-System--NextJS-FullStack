@@ -27,6 +27,11 @@ type FiltersProps = {
 };
 
 const ALL_VALUE = "__all__";
+const STATUS_LABEL: Record<string, string> = {
+  pending: "Open",
+  done: "Done",
+  alert: "Alert",
+};
 
 export default function Filters({
   category,
@@ -41,6 +46,17 @@ export default function Filters({
   patients,
   onReset,
 }: FiltersProps) {
+  const categoryLabel = !category
+    ? "All Categories"
+    : categories.find((c) => c.id === category)?.label ?? "All Categories";
+  const selectedPatient = patient ? patients.find((x) => x.id === patient) : undefined;
+  const clientLabel = !patient
+    ? "All Clients"
+    : selectedPatient
+      ? `${selectedPatient.firstname} ${selectedPatient.lastname}`.trim()
+      : "All Clients";
+  const statusLabel = !status ? "All Statuses" : STATUS_LABEL[status] ?? "All Statuses";
+
   return (
     <div className="flex flex-wrap items-center gap-2">
       {/* Category */}
@@ -48,9 +64,9 @@ export default function Filters({
         value={category ?? ALL_VALUE}
         onValueChange={(v) => setCategory(v === ALL_VALUE ? null : v)}
       >
-        <SelectTrigger className="h-9 w-auto min-w-[130px] rounded-2xl shadow-sm bg-white border-gray-200 text-gray-700 gap-2">
+        <SelectTrigger className="h-9 w-auto min-w-[160px] rounded-2xl shadow-sm bg-white border-gray-200 text-gray-700 gap-2">
           <Tag className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-          <SelectValue placeholder="Category" />
+          <SelectValue>{categoryLabel}</SelectValue>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value={ALL_VALUE}>All Categories</SelectItem>
@@ -67,9 +83,9 @@ export default function Filters({
         value={patient ?? ALL_VALUE}
         onValueChange={(v) => setPatient(v === ALL_VALUE ? null : v)}
       >
-        <SelectTrigger className="h-9 w-auto min-w-[130px] rounded-2xl shadow-sm bg-white border-gray-200 text-gray-700 gap-2">
+        <SelectTrigger className="h-9 w-auto min-w-[160px] rounded-2xl shadow-sm bg-white border-gray-200 text-gray-700 gap-2">
           <User className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-          <SelectValue placeholder="Client" />
+          <SelectValue>{clientLabel}</SelectValue>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value={ALL_VALUE}>All Clients</SelectItem>
@@ -100,9 +116,9 @@ export default function Filters({
         value={status ?? ALL_VALUE}
         onValueChange={(v) => setStatus(v === ALL_VALUE ? null : v)}
       >
-        <SelectTrigger className="h-9 w-auto min-w-[120px] rounded-2xl shadow-sm bg-white border-gray-200 text-gray-700 gap-2">
+        <SelectTrigger className="h-9 w-auto min-w-[140px] rounded-2xl shadow-sm bg-white border-gray-200 text-gray-700 gap-2">
           <Circle className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-          <SelectValue placeholder="Status" />
+          <SelectValue>{statusLabel}</SelectValue>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value={ALL_VALUE}>All Statuses</SelectItem>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useEffect } from "react";
+import { useMemo } from "react";
 import { format, isSameDay } from "date-fns";
 import Link from "next/link";
 import { useAppointments } from "@/hooks/useAppointments";
@@ -27,13 +27,7 @@ export default function DayView() {
   const now = new Date();
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
   const isToday = isSameDay(now, currentDate);
-  const timeIndicatorRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (timeIndicatorRef.current) {
-      timeIndicatorRef.current.style.top = `${(currentMinutes / 60) * SLOT_HEIGHT}px`;
-    }
-  }, [currentMinutes]);
+  const timeLineTopPx = isToday ? (currentMinutes / 60) * SLOT_HEIGHT : 0;
 
   if (isLoading) {
     return (
@@ -49,7 +43,7 @@ export default function DayView() {
   }
 
   return (
-    <div className="px-2 sm:px-4 lg:px-8 py-4 select-none">
+    <div className="min-h-0 select-none px-2 py-4 sm:px-4 lg:px-8">
       {/* Day header */}
       <div className="mb-4 flex items-center gap-3">
         <h2 className="text-xl font-semibold">{format(currentDate, "EEEE, MMMM d, yyyy")}</h2>
@@ -65,8 +59,8 @@ export default function DayView() {
         {/* Current time indicator */}
         {isToday && (
           <div
-            ref={timeIndicatorRef}
             className="absolute left-0 right-0 z-20 flex items-center pointer-events-none"
+            style={{ top: timeLineTopPx }}
           >
             <span className="w-14 text-[11px] text-red-500 font-semibold text-right pr-1.5 shrink-0">
               {format(now, "HH:mm")}

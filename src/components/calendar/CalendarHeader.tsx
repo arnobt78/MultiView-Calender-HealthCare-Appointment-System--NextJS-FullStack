@@ -4,7 +4,7 @@ import { useDateContext } from "@/context/DateContext";
 import { addDays } from "date-fns";
 import { Button } from "@/components/ui/button";
 import React from "react";
-import AppointmentDialogTrigger from "./AppointmentDialogTrigger";
+import AppointmentDialogController from "./AppointmentDialogController";
 import ImportICSDialog from "./ImportICSDialog";
 
 // View modes in display order
@@ -58,7 +58,7 @@ export default function CalendarHeader({
           variant="outline"
           onClick={handleNext}
           disabled={view === "List"}
-          className="cursor-pointer hover:bg-gray-100 transition-colors"
+          className="cursor-pointer hover:bg-gray-100 transition-colors shadow-xl"
         >
           →
         </Button>
@@ -94,7 +94,7 @@ export default function CalendarHeader({
         />
 
         {/* New Appointment button */}
-        <AppointmentDialogTrigger
+        <AppointmentDialogController
           trigger={<Button variant="default" className="cursor-pointer shadow-xl">+ New Appointment</Button>}
         />
       </div>

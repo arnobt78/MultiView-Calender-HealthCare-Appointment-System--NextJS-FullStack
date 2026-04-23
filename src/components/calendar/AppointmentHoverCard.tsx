@@ -278,7 +278,7 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
           )}
 
           <div className="flex items-center gap-2 text-xs text-gray-400 italic mb-1">
-            <FiUser /> Klient:{" "}
+            <FiUser /> Client:{" "}
             <span className="not-italic text-gray-700">
               {a.patient && patients.length > 0
                 ? (() => {
@@ -291,14 +291,14 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
 
           {a.location && (
             <div className="flex items-center gap-2 text-xs text-gray-400 italic mb-1">
-              <FiMapPin /> Ort:{" "}
+              <FiMapPin /> Location:{" "}
               <span className="not-italic text-gray-700">{a.location}</span>
             </div>
           )}
 
           {a.attachements && a.attachements.length > 0 && (
             <div className="flex items-center gap-2 text-xs text-gray-400 mb-1">
-              <FiPaperclip /> Anhänge:
+              <FiPaperclip /> Attachments:
               {a.attachements.map((file, idx) => {
                 // Get Vercel Blob public URL
                 const publicUrl = getPublicUrl(file);
@@ -315,7 +315,7 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
                   </a>
                 ) : (
                   <span key={idx} className="text-red-600">
-                    [Fehler: Datei nicht gefunden]
+                    [Error: File not found]
                   </span>
                 );
               })}
@@ -458,7 +458,7 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
 
           {activities.length > 0 && (
             <div className="flex flex-col gap-1 text-xs text-gray-400 mb-1">
-              <span>Aktivitäten:</span>
+              <span>Activities:</span>
               {activities
                 .filter((act) => act.appointment === a.id)
                 .map((act, idx) => (
@@ -513,7 +513,7 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
                       onChange={() => onToggleStatus(a.id, isDone ? "pending" : "done")}
                     />
                     <span className="text-xs text-gray-500 select-none">
-                      {isDone ? "Erledigt" : "Offen"}
+                      {isDone ? "Done" : "Open"}
                     </span>
                   </label>
                 );
@@ -559,7 +559,7 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
                     variant="outline"
                     className="rounded-full border-gray-300"
                     onClick={() => onEdit(a)}
-                    aria-label="Bearbeiten"
+                    aria-label="Edit"
                   >
                     <FiEdit2 className="w-4 h-4" />
                   </Button>
@@ -594,7 +594,7 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
                     variant="ghost"
                     className="rounded-full"
                     onClick={() => onDelete(a.id)}
-                    aria-label="Löschen"
+                    aria-label="Delete"
                   >
                     <FiTrash2 className="w-4 h-4 text-red-500" />
                   </Button>
