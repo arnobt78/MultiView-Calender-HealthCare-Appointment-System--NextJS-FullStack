@@ -14,7 +14,7 @@ export default function ApiDocsPage() {
       </div>
       <div className="mb-8">
         <p className="text-gray-700 mb-2">
-          Welcome to the Appointment Calendar API documentation. Below you&#39;ll find a summary of all available endpoints, their usage, and links to the full OpenAPI docs.
+          Welcome to the HealthCal Pro API documentation. Below you&#39;ll find a summary of all available endpoints, their usage, and links to the full OpenAPI docs.
         </p>
         <a
           href="/redoc.html"

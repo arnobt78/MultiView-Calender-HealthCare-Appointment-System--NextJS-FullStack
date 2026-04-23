@@ -261,6 +261,38 @@ html {
   scroll-behavior: smooth;
   /* prevents white/black flash between full-page navigations */
   background-color: #0f172a;
+  /* Reserve scrollbar width at all times — prevents layout shift when
+     content height changes (e.g. skeleton → data, modal open/close).
+     The track is transparent so the page background shows through;
+     only the thumb is visible and only while scrolling. */
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+}
+
+/* Webkit (Chrome, Safari, Edge) */
+html::-webkit-scrollbar {
+  width: 6px;
+}
+html::-webkit-scrollbar-track {
+  background: transparent;
+}
+html::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 99px;
+  transition: background 0.2s;
+}
+html:hover::-webkit-scrollbar-thumb,
+html::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* Firefox */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+html:hover {
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
 }
 
 /* ===== Hero Ken Burns — full-viewport rotating background ===== */

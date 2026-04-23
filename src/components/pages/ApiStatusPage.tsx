@@ -93,7 +93,7 @@ export default function ApiStatusPage() {
       <h1 className="text-2xl font-semibold mb-4">API & Project Status</h1>
       <div className="mb-4">
         <div className="text-lg font-semibold">Project:</div>
-        <div className="text-gray-700">Appointment Calendar</div>
+        <div className="text-gray-700">HealthCal Pro</div>
       </div>
       <div className="mb-4">
         <div className="text-lg font-semibold">Environment:</div>

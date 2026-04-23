@@ -46,7 +46,7 @@ export default function Navbar() {
             <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <Calendar className="h-6 w-6" />
             </span>
-            <span className="text-lg font-semibold tracking-tight text-primary">Appointment Calendar</span>
+            <span className="text-lg font-semibold tracking-tight text-primary">HealthCal Pro</span>
           </Link>
         </div>
 
