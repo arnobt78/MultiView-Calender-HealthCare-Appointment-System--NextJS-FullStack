@@ -1,10 +1,16 @@
 "use client";
 
-import { useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
+/**
+ * AuthShell — global layout wrapper.
+ *
+ * Route PROTECTION is handled entirely by src/middleware.ts (edge).
+ * This component only decides which chrome (Navbar, etc.) to render.
+ * No redirects, no loading placeholders, no flash.
+ */
+
+import { usePathname } from "next/navigation";
 import { Inter } from "next/font/google";
 import Navbar from "@/components/navbar/Navbar";
-import { useAuth } from "@/hooks/useAuth";
 import { useAppStore } from "@/store/useAppStore";
 import VideoCall from "@/components/calendar/VideoCall";
 import QuickActionsModal from "@/components/shared/QuickActionsModal";
@@ -13,52 +19,37 @@ import { cn } from "@/lib/utils";
 
 const inter = Inter({ subsets: ["latin"] });
 
-const PUBLIC_PATHS = ["/", "/login", "/register", "/accept-invitation"];
+// Paths that render without the dashboard chrome (Navbar, etc.)
+const BARE_PATHS = ["/", "/login", "/register", "/accept-invitation"];
 
-function isPublicPath(pathname: string) {
-  if (pathname === "/") return true;
-  return PUBLIC_PATHS.slice(1).some((p) => pathname.startsWith(p));
+function isBare(pathname: string): boolean {
+  return BARE_PATHS.some(
+    (p) => pathname === p || pathname.startsWith(p + "/")
+  );
 }
 
 function AuthShellInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const router = useRouter();
-  const { user, isLoading, isAuthenticated } = useAuth();
   const { isVideoCallActive, activeVideoAppointmentId, endVideoCall } = useAppStore();
 
-  useEffect(() => {
-    if (isLoading) return;
-
-    if (isAuthenticated && user) {
-      if (user.email_verified === false && !isPublicPath(pathname)) {
-        router.replace("/login?verify=1");
-        return;
-      }
-      if (user.email_verified !== false && ["/login", "/register"].includes(pathname)) {
-        router.replace("/dashboard");
-        return;
-      }
-    } else {
-      if (!isPublicPath(pathname)) {
-        router.replace("/login");
-      }
-    }
-  }, [isLoading, isAuthenticated, user, pathname, router]);
-
-  // Public routes (including landing `/` when unauthenticated): render raw
-  if (isPublicPath(pathname) && !user) {
+  // Landing page and auth pages — render children as-is (no dashboard chrome)
+  if (isBare(pathname)) {
     return <>{children}</>;
   }
 
-  // Protected routes that haven't resolved auth yet: dark placeholder (no flash)
-  if (!isPublicPath(pathname) && (isLoading || !isAuthenticated)) {
-    return <div style={{ minHeight: "100vh", backgroundColor: "#020617" }} />;
-  }
-
+  // All protected pages — render with dashboard layout.
+  // Middleware already verified auth before the browser received this HTML,
+  // so no loading state or redirect is needed here.
   return (
-    <div className={cn("min-h-screen bg-gradient-to-br from-white via-slate-50 to-slate-100 text-gray-900", inter.className)}>
+    <div
+      className={cn(
+        "min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 text-gray-900",
+        inter.className
+      )}
+    >
       <Navbar />
       {children}
+
       {isVideoCallActive && activeVideoAppointmentId && (
         <VideoCall
           appointmentId={activeVideoAppointmentId}
@@ -66,6 +57,7 @@ function AuthShellInner({ children }: { children: React.ReactNode }) {
           onClose={endVideoCall}
         />
       )}
+
       <QuickActionsModal />
     </div>
   );

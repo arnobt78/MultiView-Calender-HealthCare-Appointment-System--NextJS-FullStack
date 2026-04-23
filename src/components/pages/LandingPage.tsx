@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -65,6 +66,37 @@ function StairLines({ lines }: { lines: string[] }) {
     </>
   );
 }
+
+/* ─── About section rotating cards ─── */
+const ABOUT_CARDS = [
+  {
+    img: "/images/img7.jpg",
+    Icon: ShieldCheck,
+    iconColor: "text-emerald-400",
+    iconBorder: "border-emerald-400/40",
+    iconBg: "bg-emerald-400/10",
+    title: "Trusted by modern practices",
+    desc: "Security-first. Bot-protected. Production-ready.",
+  },
+  {
+    img: "/images/img5.jpg",
+    Icon: Users,
+    iconColor: "text-sky-400",
+    iconBorder: "border-sky-400/40",
+    iconBg: "bg-sky-400/10",
+    title: "Built for every care team",
+    desc: "Multi-role RBAC, org-wide oversight, and smart invitations.",
+  },
+  {
+    img: "/images/img6.jpg",
+    Icon: HeartPulse,
+    iconColor: "text-rose-400",
+    iconBorder: "border-rose-400/40",
+    iconBg: "bg-rose-400/10",
+    title: "Real-time care coordination",
+    desc: "Live notifications, Calendar sync, and telehealth video.",
+  },
+] as const;
 
 /* ─── hero image list ─── */
 const HERO_IMAGES = [
@@ -411,10 +443,42 @@ const STATS = [
 ];
 
 const HIGHLIGHTS = [
-  { Icon: Activity, text: "Real-time notification stream" },
-  { Icon: Clock, text: "Google Calendar two-way sync" },
-  { Icon: HeartPulse, text: "Telehealth video consultations" },
-  { Icon: Zap, text: "AI-powered appointment parsing" },
+  {
+    Icon: Activity,
+    text: "Real-time notifications",
+    desc: "Live SSE stream delivers instant alerts for bookings, cancellations, and reminders — no polling.",
+    iconColor: "text-emerald-400",
+    iconBorder: "border-emerald-400/30",
+    iconBg: "bg-emerald-400/10",
+    glow: "rgba(16,185,129,0.12)",
+  },
+  {
+    Icon: Clock,
+    text: "Google Calendar sync",
+    desc: "Two-way sync keeps your Google Calendar and HealthCal Pro in perfect alignment, always.",
+    iconColor: "text-sky-400",
+    iconBorder: "border-sky-400/30",
+    iconBg: "bg-sky-400/10",
+    glow: "rgba(56,189,248,0.12)",
+  },
+  {
+    Icon: HeartPulse,
+    text: "Telehealth video calls",
+    desc: "Launch secure video consultations directly from any appointment — no third-party app needed.",
+    iconColor: "text-rose-400",
+    iconBorder: "border-rose-400/30",
+    iconBg: "bg-rose-400/10",
+    glow: "rgba(251,113,133,0.12)",
+  },
+  {
+    Icon: Zap,
+    text: "AI appointment parsing",
+    desc: "Paste any free-text request and AI extracts patient, time, doctor, and category automatically.",
+    iconColor: "text-amber-400",
+    iconBorder: "border-amber-400/30",
+    iconBg: "bg-amber-400/10",
+    glow: "rgba(251,191,36,0.12)",
+  },
 ];
 
 /* ════════════════════════════════════════════════════════════
@@ -426,11 +490,17 @@ export default function LandingPage() {
   const queryClient = useQueryClient();
   const [navScrolled, setNavScrolled] = useState(false);
   const [demoLoading, setDemoLoading] = useState(false);
+  const [aboutCardIdx, setAboutCardIdx] = useState(0);
 
   useEffect(() => {
     const handler = () => setNavScrolled(window.scrollY > 30);
     window.addEventListener("scroll", handler, { passive: true });
     return () => window.removeEventListener("scroll", handler);
+  }, []);
+
+  useEffect(() => {
+    const t = setInterval(() => setAboutCardIdx((i) => (i + 1) % ABOUT_CARDS.length), 4500);
+    return () => clearInterval(t);
   }, []);
 
   const scrollTo = useCallback((id: string) => {
@@ -639,44 +709,65 @@ export default function LandingPage() {
       </section>
 
       {/* ════════════════════ HIGHLIGHTS ════════════════════ */}
-      <section
-        id="highlights"
-        className="relative z-10"
+      <section id="highlights" className="relative z-10 py-20 lg:py-28">
+        <div className="mx-auto w-full max-w-[1440px] px-6 lg:px-10">
 
-      >
-        <motion.div
-          variants={stagger}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: false, amount: 0.3 }}
-          className="mx-auto grid w-full max-w-[1440px] grid-cols-2 gap-4 px-6 py-10 md:grid-cols-4 lg:px-10"
-        >
-          {HIGHLIGHTS.map(({ Icon, text }, i) => (
-            <motion.div
-              key={text}
-              variants={fadeUp}
-              className="flex items-center gap-3 text-sm text-white/80"
-            >
-              <motion.span
-                initial={{ scale: 0.6, opacity: 0 }}
-                whileInView={{ scale: 1, opacity: 1 }}
-                viewport={{ once: false, amount: 0 }}
-                transition={{ delay: i * 0.08 + 0.1, duration: 0.4, ease }}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-sky-400/25 bg-sky-500/10"
-              >
-                <Icon className="h-4 w-4 text-sky-300" />
-              </motion.span>
-              <motion.span
-                initial={{ opacity: 0, x: -10 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: false, amount: 0 }}
-                transition={{ delay: i * 0.08 + 0.2, duration: 0.42, ease }}
-              >
-                {text}
-              </motion.span>
+          {/* ── section header ── */}
+          <motion.div
+            variants={stagger}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: false, amount: 0.2 }}
+            className="mb-12 flex flex-col items-center gap-4 text-center"
+          >
+            <motion.div variants={fadeUp} className="inline-flex items-center gap-2 rounded-full border border-sky-400/25 bg-sky-500/10 px-3 py-1 text-xs uppercase tracking-[0.25em] text-sky-300 backdrop-blur-sm">
+              <Sparkles className="h-3 w-3" />
+              Platform Highlights
             </motion.div>
-          ))}
-        </motion.div>
+            <motion.h2 variants={fadeUp} className="text-3xl font-black tracking-tight text-white md:text-4xl lg:text-[2.75rem]">
+              Everything your practice needs,{" "}
+              <span className="bg-linear-to-r from-sky-400 to-blue-400 bg-clip-text text-transparent">out of the box.</span>
+            </motion.h2>
+            <motion.p variants={fadeUp} className="max-w-xl text-base text-white/55">
+              Four capabilities that set HealthCal Pro apart from legacy scheduling tools.
+            </motion.p>
+          </motion.div>
+
+          {/* ── cards grid ── */}
+          <motion.div
+            variants={stagger}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: false, amount: 0.1 }}
+            className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+          >
+            {HIGHLIGHTS.map(({ Icon, text, desc, iconColor, iconBorder, iconBg, glow }, i) => (
+              <motion.div
+                key={text}
+                variants={fadeUp}
+                className="group relative flex flex-col gap-4 rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-colors duration-300 hover:border-white/20 hover:bg-white/8"
+                style={{ boxShadow: `0 0 40px ${glow}, inset 0 1px 0 rgba(255,255,255,0.05)` }}
+              >
+                {/* icon */}
+                <span className={`flex h-11 w-11 items-center justify-center rounded-xl border ${iconBorder} ${iconBg} transition-transform duration-300 group-hover:scale-110`}>
+                  <Icon className={`h-5 w-5 ${iconColor}`} />
+                </span>
+
+                {/* text */}
+                <div>
+                  <p className="text-base font-semibold text-white">{text}</p>
+                  <p className="mt-1.5 text-sm leading-relaxed text-white/50">{desc}</p>
+                </div>
+
+                {/* subtle number */}
+                <span className="absolute bottom-5 right-5 text-[2.5rem] font-black leading-none text-white/[0.04] select-none">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+              </motion.div>
+            ))}
+          </motion.div>
+
+        </div>
       </section>
 
       {/* ════════════════════ FEATURES ════════════════════ */}
@@ -700,12 +791,12 @@ export default function LandingPage() {
               <LayoutGrid className="h-3 w-3" />
               Features
             </motion.div>
-            <h2 className="mt-4 text-3xl font-bold md:text-4xl text-white">
-              <StairLines lines={["Everything a modern", "clinic needs"]} />
-            </h2>
-            <motion.p variants={fadeUp} className="mt-4 text-sm text-white/60 md:text-base">
-              Built with Next.js, PostgreSQL, Prisma and TanStack Query — production-grade performance
-              with delightful UX.
+            <motion.h2 variants={fadeUp} className="mt-4 text-3xl font-black tracking-tight text-white md:text-4xl lg:text-[2.75rem]">
+              Everything a modern{" "}
+              <span className="bg-linear-to-r from-sky-400 to-blue-400 bg-clip-text text-transparent">clinic needs.</span>
+            </motion.h2>
+            <motion.p variants={fadeUp} className="mt-4 max-w-xl text-base text-white/55">
+              Built with Next.js, PostgreSQL, Prisma and TanStack Query — production-grade performance with delightful UX.
             </motion.p>
           </motion.div>
 
@@ -824,7 +915,7 @@ export default function LandingPage() {
               }}
             />
 
-            {/* image */}
+            {/* image carousel */}
             <div
               className="relative aspect-4/5 w-full overflow-hidden rounded-[32px] border border-white/15"
               style={{
@@ -832,17 +923,54 @@ export default function LandingPage() {
                   "0 0 0 1px rgba(255,255,255,0.06), 0 30px 80px rgba(0,0,0,0.55), 0 0 50px rgba(16,185,129,0.18), 0 0 90px rgba(59,130,246,0.12)",
               }}
             >
-              <Image
-                src="/images/img7.jpg"
-                alt="Healthcare team"
-                fill
-                sizes="(max-width: 1024px) 100vw, 500px"
-                className="object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent" />
-              <div className="absolute bottom-5 left-5 right-5 rounded-2xl border border-white/15 bg-slate-900/75 p-4 backdrop-blur-xl">
-                <p className="text-sm font-semibold text-white">Trusted by modern practices</p>
-                <p className="mt-1 text-xs text-white/55">Security-first. Bot-protected. Production-ready.</p>
+              {/* sliding cards */}
+              <AnimatePresence initial={false}>
+                <motion.div
+                  key={aboutCardIdx}
+                  initial={{ x: "100%", opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  exit={{ x: "-100%", opacity: 0 }}
+                  transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+                  className="absolute inset-0"
+                >
+                  <Image
+                    src={ABOUT_CARDS[aboutCardIdx].img}
+                    alt={ABOUT_CARDS[aboutCardIdx].title}
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 500px"
+                    className="object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/92 via-slate-950/25 to-transparent" />
+
+                  {/* bottom info pill */}
+                  <div className="absolute bottom-5 left-5 right-5 rounded-2xl border border-white/15 bg-slate-900/80 p-4 backdrop-blur-xl">
+                    <div className="flex items-stretch gap-2">
+                      <span className={`flex w-10 shrink-0 self-stretch items-center justify-center rounded-lg border ${ABOUT_CARDS[aboutCardIdx].iconBorder} ${ABOUT_CARDS[aboutCardIdx].iconBg}`}>
+                        {React.createElement(ABOUT_CARDS[aboutCardIdx].Icon, {
+                          className: `h-3.5 w-3.5 ${ABOUT_CARDS[aboutCardIdx].iconColor}`,
+                        })}
+                      </span>
+                      <div>
+                        <p className="text-sm font-semibold text-white">{ABOUT_CARDS[aboutCardIdx].title}</p>
+                        <p className="mt-0.5 text-xs text-white/55">{ABOUT_CARDS[aboutCardIdx].desc}</p>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+
+              {/* dot indicators */}
+              <div className="absolute top-4 right-4 z-10 flex items-center gap-1.5">
+                {ABOUT_CARDS.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setAboutCardIdx(i)}
+                    className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${i === aboutCardIdx
+                      ? "w-5 bg-white"
+                      : "w-1.5 bg-white/35 hover:bg-white/60"
+                      }`}
+                  />
+                ))}
               </div>
             </div>
           </motion.div>

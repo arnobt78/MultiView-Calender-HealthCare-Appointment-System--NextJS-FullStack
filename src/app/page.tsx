@@ -1,15 +1,11 @@
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+/**
+ * Root page — always renders the public landing page.
+ *
+ * Route protection (redirect authenticated users to /dashboard) is now
+ * handled at the edge by src/middleware.ts, so no cookie check is needed here.
+ */
 import LandingPage from "@/components/pages/LandingPage";
-import { SESSION } from "@/lib/constants";
 
-export default async function Page() {
-  const cookieStore = await cookies();
-  const isAuthenticated = Boolean(cookieStore.get(SESSION.COOKIE_NAME)?.value);
-
-  if (isAuthenticated) {
-    redirect("/dashboard");
-  }
-
+export default function Page() {
   return <LandingPage />;
 }

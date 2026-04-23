@@ -138,20 +138,26 @@ import AuthShell from "./AuthShell";
  */
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth">
+    /*
+     * style={{ backgroundColor }} is inlined in the SSR HTML so the browser
+     * paints the dark canvas on the very first frame — before any CSS file
+     * is parsed.  This eliminates the gray/white flash that was visible
+     * between Chrome starting to render and the stylesheet arriving.
+     */
+    <html
+      lang="en"
+      suppressHydrationWarning
+      style={{ backgroundColor: "#0f172a" }}
+    >
       <head>
-        {/* Canonical URL helps search engines understand the preferred URL for this page */}
         <link rel="canonical" href="https://doctor-patient-calendar-appointment.vercel.app" />
-        {/* Additional URL meta tags for better SEO and link recognition */}
         <meta name="url" content="https://doctor-patient-calendar-appointment.vercel.app" />
         <meta name="identifier-URL" content="https://doctor-patient-calendar-appointment.vercel.app" />
-        {/* Viewport meta tag ensures responsive design works on mobile devices */}
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        {/* Theme color for mobile browsers - controls the browser UI color */}
-        <meta name="theme-color" content="#ffffff" />
+        {/* Match the app's dark background so the browser chrome / tab strip is consistent */}
+        <meta name="theme-color" content="#0f172a" />
       </head>
       <body suppressHydrationWarning>
-        {/* AuthShell wraps all pages with providers, authentication and navigation */}
         <AuthShell>{children}</AuthShell>
       </body>
     </html>
