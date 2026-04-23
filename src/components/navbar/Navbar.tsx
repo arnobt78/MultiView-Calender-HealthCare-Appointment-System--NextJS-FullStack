@@ -42,7 +42,7 @@ export default function Navbar() {
 
         {/* Left: logo */}
         <div className="flex flex-1 items-center">
-          <Link href="/" className="flex items-center gap-2">
+          <Link href="/dashboard" className="flex items-center gap-2">
             <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <Calendar className="h-6 w-6" />
             </span>
@@ -53,8 +53,8 @@ export default function Navbar() {
         {/* Center: nav links */}
         <nav className="hidden md:flex flex-1 items-center justify-center gap-6">
           <Link
-            href="/"
-            className={`text-base font-medium transition-colors hover:text-primary ${pathname === "/" ? "text-primary" : "text-muted-foreground"}`}
+            href="/dashboard"
+            className={`text-base font-medium transition-colors hover:text-primary ${pathname === "/dashboard" ? "text-primary" : "text-muted-foreground"}`}
           >
             Dashboard
           </Link>

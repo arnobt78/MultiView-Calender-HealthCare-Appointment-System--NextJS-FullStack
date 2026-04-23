@@ -9,7 +9,7 @@ export default function ApiDocsPage() {
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-semibold">API Documentation</h1>
         <Button asChild variant="outline" size="sm">
-          <Link href="/">Back to Dashboard</Link>
+          <Link href="/dashboard">Back to Dashboard</Link>
         </Button>
       </div>
       <div className="mb-8">

@@ -84,7 +84,7 @@ export default function AcceptInvitationPage({ token = null }: AcceptInvitationP
           ) : status === "success" ? (
             <div className="flex flex-col items-center gap-4">
               <p className="text-green-700">{message}</p>
-              <Button onClick={() => router.push("/")}>Go to Dashboard</Button>
+              <Button onClick={() => router.push("/dashboard")}>Go to Dashboard</Button>
             </div>
           ) : (
             <p className="text-destructive">{message}</p>
