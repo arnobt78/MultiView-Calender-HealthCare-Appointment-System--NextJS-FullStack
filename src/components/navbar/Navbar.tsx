@@ -202,15 +202,7 @@ export default function Navbar() {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild className="cursor-pointer">
-                    <Link href="/"><LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild className="cursor-pointer">
-                    <Link href="/control-panel"><Settings className="mr-2 h-4 w-4" /> Control Panel</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild className="cursor-pointer">
-                    <Link href="/patient-portal"><Calendar className="mr-2 h-4 w-4" /> Patient Portal</Link>
-                  </DropdownMenuItem>
+
                   <DropdownMenuItem asChild className="cursor-pointer">
                     <Link href="/api-docs"><BookOpen className="mr-2 h-4 w-4" /> API Documentation</Link>
                   </DropdownMenuItem>
