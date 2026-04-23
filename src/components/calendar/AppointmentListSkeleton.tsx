@@ -7,11 +7,11 @@ export default function AppointmentListSkeleton() {
       <div className="h-8 w-48 bg-white/20 rounded-lg mb-3" />
       {/* Filter bar skeleton */}
       <div className="flex flex-row flex-wrap items-center gap-3 mb-2">
-        <div className="h-10 flex-1 min-w-[200px] max-w-xl bg-white/15 rounded-md" />
-        <div className="h-10 w-32 bg-white/15 rounded-md" />
-        <div className="h-10 w-28 bg-white/15 rounded-md" />
-        <div className="h-10 w-24 bg-white/15 rounded-md" />
-        <div className="h-10 w-20 bg-white/15 rounded-md" />
+        <div className="h-10 flex-1 min-w-[200px] max-w-xl bg-white/15 rounded-2xl" />
+        <div className="h-10 w-32 bg-white/15 rounded-2xl" />
+        <div className="h-10 w-28 bg-white/15 rounded-2xl" />
+        <div className="h-10 w-24 bg-white/15 rounded-2xl" />
+        <div className="h-10 w-20 bg-white/15 rounded-2xl" />
       </div>
       {/* Date headline skeleton */}
       <div className="h-6 w-56 bg-white/20 rounded mt-8 mb-3" />
@@ -43,7 +43,7 @@ export default function AppointmentListSkeleton() {
             </div>
             {/* Actions column */}
             <div className="flex flex-col items-center justify-center gap-3 min-w-[68px] py-4 px-3 border-l border-gray-100">
-              <div className="h-9 w-20 bg-gray-150 rounded-md" />
+              <div className="h-9 w-20 bg-gray-150 rounded-2xl" />
               <div className="h-8 w-8 bg-gray-100 rounded-full" />
             </div>
           </div>

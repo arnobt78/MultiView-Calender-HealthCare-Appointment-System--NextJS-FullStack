@@ -122,7 +122,7 @@ export default function ActivitiesManagement() {
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-9 w-48" />
         </div>
-        <Skeleton className="h-[300px] w-full rounded-md" />
+        <Skeleton className="h-[300px] w-full rounded-2xl" />
       </div>
     );
   }
@@ -142,7 +142,7 @@ export default function ActivitiesManagement() {
           <p className="text-sm text-muted-foreground">{activities.length} total activities</p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
-          <div className="flex bg-muted rounded-md p-1 gap-1">
+          <div className="flex bg-muted rounded-2xl p-1 gap-1">
             {["all", ...uniqueTypes].map((t) => (
               <button
                 key={t}
@@ -175,7 +175,7 @@ export default function ActivitiesManagement() {
           </CardContent>
         </Card>
       ) : (
-        <div className="rounded-md border bg-card shadow-sm overflow-hidden">
+        <div className="rounded-2xl border bg-card shadow-sm overflow-hidden">
           <Table>
             <TableHeader>
               {table.getHeaderGroups().map((hg) => (

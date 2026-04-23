@@ -48,7 +48,7 @@ export default function Filters({
         value={category ?? ALL_VALUE}
         onValueChange={(v) => setCategory(v === ALL_VALUE ? null : v)}
       >
-        <SelectTrigger className="h-9 w-auto min-w-[130px] rounded-md shadow-sm bg-white border-gray-200 text-gray-700 gap-2">
+        <SelectTrigger className="h-9 w-auto min-w-[130px] rounded-2xl shadow-sm bg-white border-gray-200 text-gray-700 gap-2">
           <Tag className="w-3.5 h-3.5 text-gray-400 shrink-0" />
           <SelectValue placeholder="Category" />
         </SelectTrigger>
@@ -67,7 +67,7 @@ export default function Filters({
         value={patient ?? ALL_VALUE}
         onValueChange={(v) => setPatient(v === ALL_VALUE ? null : v)}
       >
-        <SelectTrigger className="h-9 w-auto min-w-[130px] rounded-md shadow-sm bg-white border-gray-200 text-gray-700 gap-2">
+        <SelectTrigger className="h-9 w-auto min-w-[130px] rounded-2xl shadow-sm bg-white border-gray-200 text-gray-700 gap-2">
           <User className="w-3.5 h-3.5 text-gray-400 shrink-0" />
           <SelectValue placeholder="Client" />
         </SelectTrigger>
@@ -89,7 +89,7 @@ export default function Filters({
           type="date"
           aria-label="Filter by date"
           title="Filter by date"
-          className="h-9 pl-8 w-auto min-w-[155px] rounded-md shadow-sm bg-white border-gray-200 text-gray-700 cursor-pointer"
+          className="h-9 pl-8 w-auto min-w-[155px] rounded-2xl shadow-sm bg-white border-gray-200 text-gray-700 cursor-pointer"
           value={date ?? ""}
           onChange={(e) => setDate(e.target.value || null)}
         />
@@ -100,7 +100,7 @@ export default function Filters({
         value={status ?? ALL_VALUE}
         onValueChange={(v) => setStatus(v === ALL_VALUE ? null : v)}
       >
-        <SelectTrigger className="h-9 w-auto min-w-[120px] rounded-md shadow-sm bg-white border-gray-200 text-gray-700 gap-2">
+        <SelectTrigger className="h-9 w-auto min-w-[120px] rounded-2xl shadow-sm bg-white border-gray-200 text-gray-700 gap-2">
           <Circle className="w-3.5 h-3.5 text-gray-400 shrink-0" />
           <SelectValue placeholder="Status" />
         </SelectTrigger>
@@ -115,7 +115,7 @@ export default function Filters({
       {/* Reset */}
       <Button
         variant="default"
-        className="h-9 px-4 rounded-md shadow-sm flex items-center gap-2 shrink-0 cursor-pointer active:bg-gray-700 transition-colors"
+        className="h-9 px-4 rounded-2xl shadow-sm flex items-center gap-2 shrink-0 cursor-pointer active:bg-gray-700 transition-colors"
         onClick={onReset}
       >
         <RotateCcw className="w-3.5 h-3.5" />

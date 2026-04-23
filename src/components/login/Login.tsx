@@ -10,12 +10,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { toast } from "sonner";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { ChevronDown } from "lucide-react";
 import {
   CalendarDays,
   Clock,
@@ -188,14 +189,14 @@ export default function Login({ redirect = null }: LoginProps) {
         {/* Top bar */}
         <div className="flex items-center justify-between px-6 py-4 lg:px-10 shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/10 border border-white/20 backdrop-blur-sm">
+            <div className="flex h-8 w-8 items-center justify-center rounded-2xl bg-white/10 border border-white/20 backdrop-blur-sm">
               <CalendarDays className="h-4 w-4 text-white" />
             </div>
             <span className="text-sm font-semibold text-white/80 tracking-tight">HealthCal Pro</span>
           </div>
           <Link
             href="/"
-            className="flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white/90 backdrop-blur-sm transition hover:border-white/30 hover:text-white shadow-xl"
+            className="flex items-center gap-1.5 rounded-2xl border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white/90 backdrop-blur-sm transition hover:border-white/30 hover:text-white shadow-xl"
           >
             <Home className="h-3.5 w-3.5" />
             Return home
@@ -240,7 +241,7 @@ export default function Login({ redirect = null }: LoginProps) {
                   transition={{ duration: 0.45, ease: "easeOut", delay: 0.25 + i * 0.06 }}
                   className="flex items-start gap-2.5 p-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/15 hover:bg-white/[0.14] transition-colors duration-200"
                 >
-                  <div className="shrink-0 p-1.5 bg-blue-400/25 rounded-md">
+                  <div className="shrink-0 p-1.5 bg-blue-400/25 rounded-2xl">
                     <Icon className="h-3.5 w-3.5 text-blue-200" />
                   </div>
                   <div>
@@ -285,29 +286,40 @@ export default function Login({ redirect = null }: LoginProps) {
                   transition={{ duration: 0.4, delay: 0.4 }}
                 >
                   <div className="flex flex-col gap-2">
-                    <Label htmlFor="login-role" className="text-slate-500 text-xs font-semibold uppercase tracking-wide">
+                    <Label className="text-slate-500 text-xs font-semibold uppercase tracking-wide">
                       Test Accounts To Login With
                     </Label>
-                    <Select
-                      key={`select-${selectedRole || "empty"}`}
-                      value={selectedRole || undefined}
-                      onValueChange={handleRoleSelect}
-                    >
-                      <SelectTrigger
-                        id="login-role"
-                        className="w-full h-11 bg-slate-50 border-slate-200 rounded-md text-base focus-visible:ring-blue-500/30 focus-visible:border-blue-400"
-                      >
-                        <SelectValue placeholder="Select Role Based Test Account" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="guest-user">Guest User (test@user.com)</SelectItem>
+                    <DropdownMenu modal={false}>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          type="button"
+                          className="flex w-full h-11 items-center justify-between gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-left shadow-sm transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:border-blue-400 cursor-pointer"
+                        >
+                          <span className={selectedRole ? "text-slate-800" : "text-slate-400"}>
+                            {selectedRole
+                              ? testAccounts[selectedRole]?.label + " (" + testAccounts[selectedRole]?.email + ")"
+                              : "Select Role Based Test Account"}
+                          </span>
+                          <ChevronDown className="size-4 shrink-0 text-slate-400" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start" className="w-[var(--radix-dropdown-menu-trigger-width)]" sideOffset={4}>
+                        <DropdownMenuItem onSelect={() => handleRoleSelect("guest-user")}>
+                          Guest User (test@user.com)
+                        </DropdownMenuItem>
                         {selectedRole && (
-                          <SelectItem value="clear" className="text-muted-foreground">
-                            Clear Selection
-                          </SelectItem>
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onSelect={() => handleRoleSelect("clear")}
+                              className="text-muted-foreground"
+                            >
+                              Clear Selection
+                            </DropdownMenuItem>
+                          </>
                         )}
-                      </SelectContent>
-                    </Select>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
 
                   <div className="flex flex-col gap-2">
@@ -323,7 +335,7 @@ export default function Login({ redirect = null }: LoginProps) {
                       onChange={(e) => setEmail(e.target.value)}
                       required
                       autoComplete="email"
-                      className="h-11 bg-slate-50 border-slate-200 rounded-md text-base focus-visible:ring-blue-500/30 focus-visible:border-blue-400"
+                      className="h-11 bg-slate-50 border-slate-200 rounded-2xl text-base focus-visible:ring-blue-500/30 focus-visible:border-blue-400"
                     />
                   </div>
 
@@ -340,14 +352,14 @@ export default function Login({ redirect = null }: LoginProps) {
                       onChange={(e) => setPassword(e.target.value)}
                       required
                       autoComplete="current-password"
-                      className="h-11 bg-slate-50 border-slate-200 rounded-md text-base focus-visible:ring-blue-500/30 focus-visible:border-blue-400"
+                      className="h-11 bg-slate-50 border-slate-200 rounded-2xl text-base focus-visible:ring-blue-500/30 focus-visible:border-blue-400"
                     />
                   </div>
 
                   <div className="pt-1 space-y-3">
                     <Button
                       type="submit"
-                      className="w-full h-11 rounded-md font-semibold text-sm bg-blue-600 hover:bg-blue-700 transition-colors"
+                      className="w-full h-11 rounded-2xl font-semibold text-sm bg-blue-600 hover:bg-blue-700 transition-colors"
                       disabled={loading}
                     >
                       {loading ? "Signing in…" : "Sign In"}
@@ -355,7 +367,7 @@ export default function Login({ redirect = null }: LoginProps) {
                     <Button
                       type="button"
                       variant="outline"
-                      className="w-full h-11 rounded-md font-medium text-sm border-slate-200 bg-white hover:bg-slate-50 text-slate-700"
+                      className="w-full h-11 rounded-2xl font-medium text-sm border-slate-200 bg-white hover:bg-slate-50 text-slate-700"
                       onClick={handleGoogle}
                       disabled={loading}
                     >

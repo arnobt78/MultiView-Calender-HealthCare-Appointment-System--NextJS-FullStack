@@ -61,7 +61,7 @@ export default function DayView() {
       </div>
 
       {/* Time grid */}
-      <div className="relative border rounded-md overflow-hidden bg-background">
+      <div className="relative border rounded-2xl overflow-hidden bg-background">
         {/* Current time indicator */}
         {isToday && (
           <div
@@ -105,7 +105,7 @@ export default function DayView() {
                       return (
                         <div
                           key={appt.id}
-                          className="relative flex items-center justify-between gap-2 rounded-md px-2 py-1.5 text-white overflow-hidden"
+                          className="relative flex items-center justify-between gap-2 rounded-2xl px-2 py-1.5 text-white overflow-hidden"
                         >
                           <svg className="absolute inset-0 w-full h-full" aria-hidden="true" preserveAspectRatio="none" viewBox="0 0 1 1">
                             <rect width="1" height="1" fill={bgColor} />

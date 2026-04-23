@@ -150,7 +150,7 @@ export default function PatientDetailView({ patientId }: { patientId: string }) 
                             {format(new Date(appt.start), "h:mm a")} - {format(new Date(appt.end), "h:mm a")}
                           </div>
                           {appt.notes && (
-                            <div className="text-sm bg-background p-2 rounded-md border text-muted-foreground mt-2 inline-flex items-start gap-2 w-full">
+                            <div className="text-sm bg-background p-2 rounded-2xl border text-muted-foreground mt-2 inline-flex items-start gap-2 w-full">
                               <FileText className="h-3.5 w-3.5 mt-0.5 shrink-0" />
                               <p className="line-clamp-2">{appt.notes}</p>
                             </div>

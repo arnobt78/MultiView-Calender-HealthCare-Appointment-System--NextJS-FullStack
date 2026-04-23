@@ -174,7 +174,7 @@ function AppointmentTimeline({
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h3 className="text-lg font-semibold">Appointment History</h3>
-        <div className="flex bg-muted rounded-md p-1 gap-1">
+        <div className="flex bg-muted rounded-2xl p-1 gap-1">
           {(["all", "upcoming", "past"] as const).map((f) => (
             <button
               key={f}
@@ -284,12 +284,12 @@ export default function PatientPortalPage() {
         </div>
         <div className="grid md:grid-cols-3 gap-6">
           <div className="space-y-4">
-            <Skeleton className="h-48 rounded-md" />
-            <Skeleton className="h-32 rounded-md" />
+            <Skeleton className="h-48 rounded-2xl" />
+            <Skeleton className="h-32 rounded-2xl" />
           </div>
           <div className="md:col-span-2 space-y-4">
             {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="h-28 rounded-md" />
+              <Skeleton key={i} className="h-28 rounded-2xl" />
             ))}
           </div>
         </div>

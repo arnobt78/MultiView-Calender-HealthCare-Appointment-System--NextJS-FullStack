@@ -51,7 +51,7 @@ export default function FilePreview({ url, filename, fileType }: FilePreviewProp
   const ext = filename.split(".").pop()?.toUpperCase() || "FILE";
 
   return (
-    <div className="flex items-center gap-2 p-2 rounded-md border hover:bg-muted/50 transition-colors group">
+    <div className="flex items-center gap-2 p-2 rounded-2xl border hover:bg-muted/50 transition-colors group">
       {getFileIcon(type)}
       <span className="text-sm truncate flex-1">{filename}</span>
       <Badge variant="outline" className="text-[10px]">{ext}</Badge>

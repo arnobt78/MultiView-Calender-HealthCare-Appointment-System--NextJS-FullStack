@@ -20,7 +20,7 @@ export default function SearchBar({ value, setValue }: SearchBarProps) {
         placeholder="Search... (eg. Name, Title, Notes)"
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        className="h-9 pl-10 pr-3 rounded-md shadow-sm w-full bg-white border-gray-200 text-gray-800 placeholder:text-gray-400 focus:border-slate-400 focus:ring-slate-200 text-sm"
+        className="h-9 pl-10 pr-3 rounded-2xl shadow-sm w-full bg-white border-gray-200 text-gray-800 placeholder:text-gray-400 focus:border-slate-400 focus:ring-slate-200 text-sm"
       />
     </div>
   );

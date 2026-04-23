@@ -295,11 +295,11 @@ export default function InvoiceManagement() {
     return (
       <div className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
-          <Skeleton className="h-24 rounded-md" />
-          <Skeleton className="h-24 rounded-md" />
+          <Skeleton className="h-24 rounded-2xl" />
+          <Skeleton className="h-24 rounded-2xl" />
         </div>
         <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-[300px] w-full rounded-md" />
+        <Skeleton className="h-[300px] w-full rounded-2xl" />
       </div>
     );
   }
@@ -361,7 +361,7 @@ export default function InvoiceManagement() {
           </CardContent>
         </Card>
       ) : (
-        <div className="rounded-md border bg-card shadow-sm overflow-hidden">
+        <div className="rounded-2xl border bg-card shadow-sm overflow-hidden">
           <Table>
             <TableHeader>
               {table.getHeaderGroups().map((hg) => (

@@ -98,7 +98,7 @@ export default function AppointmentAccessPermission() {
             autoComplete="off"
           />
           {showDropdown && results.length > 0 && (
-            <ul className="absolute z-10 w-full mt-1 border rounded-md bg-white shadow-xl max-h-40 overflow-y-auto">
+            <ul className="absolute z-10 w-full mt-1 border rounded-2xl bg-white shadow-xl max-h-40 overflow-y-auto">
               {results.map((a) => (
                 <li
                   key={a.id}

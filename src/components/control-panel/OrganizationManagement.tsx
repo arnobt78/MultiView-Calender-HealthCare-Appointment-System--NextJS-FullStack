@@ -305,7 +305,7 @@ export default function OrganizationManagement() {
     return (
       <div className="space-y-4">
         <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-[300px] w-full rounded-md" />
+        <Skeleton className="h-[300px] w-full rounded-2xl" />
       </div>
     );
   }
@@ -347,7 +347,7 @@ export default function OrganizationManagement() {
           </CardContent>
         </Card>
       ) : (
-        <div className="rounded-md border bg-card shadow-sm overflow-hidden">
+        <div className="rounded-2xl border bg-card shadow-sm overflow-hidden">
           <Table>
             <TableHeader>
               {table.getHeaderGroups().map((hg) => (

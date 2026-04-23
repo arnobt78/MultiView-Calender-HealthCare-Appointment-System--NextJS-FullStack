@@ -457,7 +457,7 @@ export default function MonthView() {
 
       {/* Side list for selected date */}
       {selectedDate && (
-        <div className="w-full md:w-[350px] bg-white rounded-md shadow-xl p-2 h-fit sticky top-41">
+        <div className="w-full md:w-[350px] bg-white rounded-2xl shadow-xl p-2 h-fit sticky top-41">
           <div className="flex items-center gap-2 mb-4">
             <span className="text-lg font-semibold text-gray-800">
               {format(selectedDate, "EEEE, dd. MMMM", { locale: de })}
@@ -507,7 +507,7 @@ export default function MonthView() {
                 <div
                   key={a.id}
                   className={clsx(
-                    "relative border rounded-md shadow bg-white p-0 flex items-stretch transition hover:shadow-xl min-h-[110px]",
+                    "relative border rounded-2xl shadow bg-white p-0 flex items-stretch transition hover:shadow-xl min-h-[110px]",
                     isDone && "bg-gray-100 opacity-60"
                   )}
                 >

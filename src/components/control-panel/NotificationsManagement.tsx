@@ -148,7 +148,7 @@ export default function NotificationsManagement() {
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-9 w-32" />
         </div>
-        <Skeleton className="h-[300px] w-full rounded-md" />
+        <Skeleton className="h-[300px] w-full rounded-2xl" />
       </div>
     );
   }
@@ -210,7 +210,7 @@ export default function NotificationsManagement() {
           </CardContent>
         </Card>
       ) : (
-        <div className="rounded-md border bg-card shadow-sm overflow-hidden">
+        <div className="rounded-2xl border bg-card shadow-sm overflow-hidden">
           <Table>
             <TableHeader>
               {table.getHeaderGroups().map((hg) => (

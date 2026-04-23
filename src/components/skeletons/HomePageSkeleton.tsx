@@ -33,7 +33,7 @@ export default function HomePageSkeleton() {
             {Array.from({ length: 3 }).map((_, i) => (
               <div
                 key={i}
-                className="relative border rounded-md shadow bg-white p-0 flex items-stretch min-h-[110px]"
+                className="relative border rounded-2xl shadow bg-white p-0 flex items-stretch min-h-[110px]"
               >
                 <div className="w-2 rounded-l-xl h-full absolute left-0 top-0 bottom-0 bg-gray-200" />
                 <div className="pl-6 pr-2 py-4 flex-1 flex flex-col justify-center min-h-[110px]">

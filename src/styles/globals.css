@@ -295,6 +295,19 @@ html:hover {
   scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
 }
 
+/* Radix UI scroll-lock compensation override.
+   Radix adds margin-right equal to the scrollbar width when it locks the body
+   (Dialog, Sheet, AlertDialog, DropdownMenu in modal mode, etc.).
+   Because we already reserve that space via scrollbar-gutter: stable above,
+   we zero out the compensation so the layout never shifts. */
+/* Higher specificity (html body > body) so this wins cascade-order ties with
+   the !important rule react-remove-scroll-bar injects at the end of <head>. */
+html body[data-scroll-locked] {
+  --removed-body-scroll-bar-size: 0px !important;
+  margin-right: 0 !important;
+  padding-right: 0 !important;
+}
+
 /* ===== Hero Ken Burns — full-viewport rotating background ===== */
 @keyframes hero-bg-kenburns-cycle {
   0%   { transform: scale(1)     translate3d(0, 0, 0);      animation-timing-function: cubic-bezier(0.42, 0, 0.58, 1); }

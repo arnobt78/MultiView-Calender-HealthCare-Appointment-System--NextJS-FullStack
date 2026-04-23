@@ -349,7 +349,7 @@ function AppointmentDeck() {
                           <motion.div
                             animate={{ scale: [1, 1.09, 1] }}
                             transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
-                            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/10 border border-white/10 ${apt.ic}`}
+                            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/10 border border-white/10 ${apt.ic}`}
                           >
                             <apt.Icon className="h-5 w-5" />
                           </motion.div>
@@ -366,7 +366,7 @@ function AppointmentDeck() {
                         </div>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-3 rounded-xl bg-white/5 px-3 py-2.5">
+                      <div className="flex items-center gap-3 rounded-2xl bg-white/5 px-3 py-2.5">
                         <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/5 ${apt.ic}`}>
                           <apt.Icon className="h-3.5 w-3.5" />
                         </div>
@@ -384,7 +384,7 @@ function AppointmentDeck() {
           </div>
 
           {/* status bar — typewriter */}
-          <div className="mx-6 lg:mx-8 mb-6 lg:mb-8 flex items-center gap-2 rounded-xl bg-white/5 px-3 py-2.5">
+          <div className="mx-6 lg:mx-8 mb-6 lg:mb-8 flex items-center gap-2 rounded-2xl bg-white/5 px-3 py-2.5">
             <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
 
             {/* animated banner pill */}
@@ -563,7 +563,7 @@ export default function LandingPage() {
       >
         <div className="mx-auto flex w-full max-w-[1440px] items-center justify-between px-6 py-4 lg:px-10">
           <Link href="/" className="flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 backdrop-blur-md border border-white/20">
+            <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-md border border-white/20">
               <CalendarDays className="h-[18px] w-[18px] text-white" />
             </span>
             <span className="text-base font-semibold tracking-tight">HealthCal Pro</span>
@@ -584,14 +584,14 @@ export default function LandingPage() {
           <div className="flex items-center gap-2">
             <Link
               href="/login"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium backdrop-blur-sm transition hover:border-white/30 hover:bg-white/10"
+              className="inline-flex items-center gap-1.5 rounded-2xl border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium backdrop-blur-sm transition hover:border-white/30 hover:bg-white/10"
             >
               <User className="h-3.5 w-3.5" />
               Sign in
             </Link>
             <Link
               href="/register"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-blue-400/40 bg-gradient-to-r from-blue-500/70 via-blue-500/50 to-blue-500/30 px-4 py-2 text-sm font-semibold shadow-[0_8px_25px_rgba(59,130,246,0.4)] backdrop-blur-sm transition hover:from-blue-500/80"
+              className="inline-flex items-center gap-1.5 rounded-2xl border border-blue-400/40 bg-gradient-to-r from-blue-500/70 via-blue-500/50 to-blue-500/30 px-4 py-2 text-sm font-semibold shadow-[0_8px_25px_rgba(59,130,246,0.4)] backdrop-blur-sm transition hover:from-blue-500/80"
             >
               <Sparkles className="h-3.5 w-3.5" />
               Get started
@@ -648,7 +648,7 @@ export default function LandingPage() {
             <motion.div variants={fadeUp} className="flex flex-wrap items-center gap-3 pt-1">
               <Link
                 href="/register"
-                className="inline-flex items-center gap-2 rounded-xl border border-blue-400/40 bg-gradient-to-r from-blue-500/80 via-blue-500/60 to-blue-500/40 px-6 py-3 text-sm font-semibold shadow-[0_15px_35px_rgba(59,130,246,0.45)] backdrop-blur-sm transition hover:from-blue-500/90"
+                className="inline-flex items-center gap-2 rounded-2xl border border-blue-400/40 bg-gradient-to-r from-blue-500/80 via-blue-500/60 to-blue-500/40 px-6 py-3 text-sm font-semibold shadow-[0_15px_35px_rgba(59,130,246,0.45)] backdrop-blur-sm transition hover:from-blue-500/90"
               >
                 <UserPlus className="h-4 w-4" />
                 Create free account
@@ -664,13 +664,13 @@ export default function LandingPage() {
                 }}
                 viewport={{ once: false, amount: 0.6 }}
                 transition={{ duration: 0.62, delay: 0.45, ease: [0.22, 1, 0.36, 1] }}
-                className="cta-shine-wrap rounded-xl transition-shadow duration-300"
+                className="cta-shine-wrap rounded-2xl transition-shadow duration-300"
                 style={{ boxShadow: "0 12px 32px rgba(16,185,129,0.5), 0 0 28px rgba(16,185,129,0.28)" }}
               >
                 <RippleButton
                   onClick={handleDemo}
                   disabled={demoLoading}
-                  className="inline-flex items-center gap-2 rounded-xl border border-emerald-400/55 bg-gradient-to-r from-emerald-500/80 via-emerald-500/65 to-emerald-600/50 px-6 py-3 text-sm font-semibold text-white backdrop-blur-sm transition hover:from-emerald-700/90 hover:to-emerald-500/60 disabled:opacity-60 cursor-pointer"
+                  className="inline-flex items-center gap-2 rounded-2xl border border-emerald-400/55 bg-gradient-to-r from-emerald-500/80 via-emerald-500/65 to-emerald-600/50 px-6 py-3 text-sm font-semibold text-white backdrop-blur-sm transition hover:from-emerald-700/90 hover:to-emerald-500/60 disabled:opacity-60 cursor-pointer"
                 >
                   {demoLoading ? (
                     <span className="flex items-center gap-2">
@@ -749,7 +749,7 @@ export default function LandingPage() {
                 style={{ boxShadow: `0 0 40px ${glow}, inset 0 1px 0 rgba(255,255,255,0.05)` }}
               >
                 {/* icon */}
-                <span className={`flex h-11 w-11 items-center justify-center rounded-xl border ${iconBorder} ${iconBg} transition-transform duration-300 group-hover:scale-110`}>
+                <span className={`flex h-11 w-11 items-center justify-center rounded-2xl border ${iconBorder} ${iconBg} transition-transform duration-300 group-hover:scale-110`}>
                   <Icon className={`h-5 w-5 ${iconColor}`} />
                 </span>
 
@@ -874,14 +874,14 @@ export default function LandingPage() {
             <motion.div variants={fadeUp} className="flex flex-wrap gap-3 pt-2">
               <Link
                 href="/register"
-                className="inline-flex items-center gap-2 rounded-xl border border-emerald-400/40 bg-gradient-to-r from-emerald-500/70 via-emerald-500/50 to-emerald-500/30 px-5 py-2.5 text-sm font-semibold shadow-[0_15px_35px_rgba(16,185,129,0.32)] backdrop-blur-sm transition hover:from-emerald-500/80"
+                className="inline-flex items-center gap-2 rounded-2xl border border-emerald-400/40 bg-gradient-to-r from-emerald-500/70 via-emerald-500/50 to-emerald-500/30 px-5 py-2.5 text-sm font-semibold shadow-[0_15px_35px_rgba(16,185,129,0.32)] backdrop-blur-sm transition hover:from-emerald-500/80"
               >
                 <Zap className="h-4 w-4" />
                 Start your trial <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
                 href="/login"
-                className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-5 py-2.5 text-sm font-semibold backdrop-blur-sm transition hover:border-white/30 hover:bg-white/10"
+                className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/5 px-5 py-2.5 text-sm font-semibold backdrop-blur-sm transition hover:border-white/30 hover:bg-white/10"
               >
                 <User className="h-4 w-4" />
                 I have an account

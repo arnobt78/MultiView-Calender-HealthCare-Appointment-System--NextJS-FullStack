@@ -117,14 +117,14 @@ export function Register() {
         {/* Top bar */}
         <div className="flex items-center justify-between px-6 py-4 lg:px-10 shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/10 border border-white/20 backdrop-blur-sm">
+            <div className="flex h-8 w-8 items-center justify-center rounded-2xl bg-white/10 border border-white/20 backdrop-blur-sm">
               <CalendarDays className="h-4 w-4 text-white" />
             </div>
             <span className="text-sm font-semibold text-white/80 tracking-tight">HealthCal Pro</span>
           </div>
           <Link
             href="/"
-            className="flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white/90 backdrop-blur-sm transition hover:border-white/30 hover:text-white shadow-xl"
+            className="flex items-center gap-1.5 rounded-2xl border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white/90 backdrop-blur-sm transition hover:border-white/30 hover:text-white shadow-xl"
           >
             <Home className="h-3.5 w-3.5" />
             Return home
@@ -169,7 +169,7 @@ export function Register() {
                   transition={{ duration: 0.45, ease: "easeOut", delay: 0.25 + i * 0.06 }}
                   className="flex items-start gap-2.5 p-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/15 hover:bg-white/[0.14] transition-colors duration-200"
                 >
-                  <div className="shrink-0 p-1.5 bg-teal-400/25 rounded-md">
+                  <div className="shrink-0 p-1.5 bg-teal-400/25 rounded-2xl">
                     <Icon className="h-3.5 w-3.5 text-teal-200" />
                   </div>
                   <div>
@@ -225,7 +225,7 @@ export function Register() {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       autoComplete="name"
-                      className="h-11 bg-slate-50 border-slate-200 rounded-md text-base focus-visible:ring-teal-500/30 focus-visible:border-teal-400"
+                      className="h-11 bg-slate-50 border-slate-200 rounded-2xl text-base focus-visible:ring-teal-500/30 focus-visible:border-teal-400"
                     />
                   </div>
 
@@ -242,7 +242,7 @@ export function Register() {
                       onChange={(e) => setEmail(e.target.value)}
                       required
                       autoComplete="email"
-                      className="h-11 bg-slate-50 border-slate-200 rounded-md text-base focus-visible:ring-teal-500/30 focus-visible:border-teal-400"
+                      className="h-11 bg-slate-50 border-slate-200 rounded-2xl text-base focus-visible:ring-teal-500/30 focus-visible:border-teal-400"
                     />
                   </div>
 
@@ -259,14 +259,14 @@ export function Register() {
                       onChange={(e) => setPassword(e.target.value)}
                       required
                       autoComplete="new-password"
-                      className="h-11 bg-slate-50 border-slate-200 rounded-md text-base focus-visible:ring-teal-500/30 focus-visible:border-teal-400"
+                      className="h-11 bg-slate-50 border-slate-200 rounded-2xl text-base focus-visible:ring-teal-500/30 focus-visible:border-teal-400"
                     />
                   </div>
 
                   <div className="pt-1">
                     <Button
                       type="submit"
-                      className="w-full h-11 rounded-md font-semibold text-sm bg-teal-600 hover:bg-teal-700 transition-colors"
+                      className="w-full h-11 rounded-2xl font-semibold text-sm bg-teal-600 hover:bg-teal-700 transition-colors"
                       disabled={loading}
                     >
                       {loading ? "Creating account…" : "Create Account"}

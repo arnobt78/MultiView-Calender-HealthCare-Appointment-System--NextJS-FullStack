@@ -103,7 +103,7 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
         {showDetails ? (
           // WeekView: Rich details card
           <div className={clsx(
-            "flex flex-col w-full h-full rounded-md font-medium cursor-pointer shadow-xl transition hover:brightness-110 border border-gray-200 bg-white hover-card-rich",
+            "flex flex-col w-full h-full rounded-2xl font-medium cursor-pointer shadow-xl transition hover:brightness-110 border border-gray-200 bg-white hover-card-rich",
             { "line-through opacity-60": isDone }
           )}
           >
@@ -220,7 +220,7 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
           // MonthView: Simple card
           <div
             className={clsx(
-              "flex items-center w-full rounded-md font-medium cursor-pointer shadow-xl transition hover:brightness-110 border border-gray-200 bg-white hover-card-simple",
+              "flex items-center w-full rounded-2xl font-medium cursor-pointer shadow-xl transition hover:brightness-110 border border-gray-200 bg-white hover-card-simple",
               { "line-through opacity-60": isDone }
             )}
           >
@@ -235,7 +235,7 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
       </HoverCardTrigger>
 
 
-      <HoverCardContent className="relative text-sm min-w-[340px] bg-white rounded-md shadow-xl p-4">
+      <HoverCardContent className="relative text-sm min-w-[340px] bg-white rounded-2xl shadow-xl p-4">
         <svg className="absolute left-2 top-2 bottom-2 w-1 rounded overflow-hidden" aria-hidden="true" preserveAspectRatio="none" viewBox="0 0 4 100">
           <rect width="4" height="100" fill={color} />
         </svg>

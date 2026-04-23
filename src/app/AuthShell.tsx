@@ -8,6 +8,7 @@
  * No redirects, no loading placeholders, no flash.
  */
 
+import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { Inter } from "next/font/google";
 import Navbar from "@/components/navbar/Navbar";
@@ -28,9 +29,45 @@ function isBare(pathname: string): boolean {
   );
 }
 
+/**
+ * Prevents layout shift caused by react-remove-scroll (used internally by
+ * Radix Dialog, AlertDialog, Sheet, etc.).  When those components open they
+ * inject a <style> tag that adds `padding-right: <scrollbar-width>px` to
+ * body to compensate for the hidden scrollbar.  Because that tag is appended
+ * AFTER our global CSS, cascade order makes it win even over !important rules.
+ *
+ * The MutationObserver fires synchronously (microtask) the moment the
+ * `data-scroll-locked` attribute is added/removed and applies an inline
+ * style — inline styles always beat stylesheet rules, so the shift is
+ * cancelled before the browser paints.
+ */
+function useScrollLockFix() {
+  useEffect(() => {
+    const fix = () => {
+      if (document.body.hasAttribute("data-scroll-locked")) {
+        document.body.style.setProperty("padding-right", "0px", "important");
+        document.body.style.setProperty("margin-right", "0px", "important");
+      } else {
+        document.body.style.removeProperty("padding-right");
+        document.body.style.removeProperty("margin-right");
+      }
+    };
+    const observer = new MutationObserver(fix);
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ["data-scroll-locked"],
+    });
+    return () => observer.disconnect();
+  }, []);
+}
+
 function AuthShellInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { isVideoCallActive, activeVideoAppointmentId, endVideoCall } = useAppStore();
+
+  // Globally suppress the body padding-right shift that react-remove-scroll
+  // injects whenever any Dialog / AlertDialog / Sheet opens.
+  useScrollLockFix();
 
   // Landing page and auth pages — render children as-is (no dashboard chrome)
   if (isBare(pathname)) {

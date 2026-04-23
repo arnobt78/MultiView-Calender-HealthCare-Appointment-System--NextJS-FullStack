@@ -1,8 +1,7 @@
 "use client";
 
 import { useDateContext } from "@/context/DateContext";
-import { format, addDays } from "date-fns";
-import { de } from "date-fns/locale";
+import { addDays } from "date-fns";
 import { Button } from "@/components/ui/button";
 import React from "react";
 import AppointmentDialogTrigger from "./AppointmentDialogTrigger";
@@ -36,8 +35,10 @@ export default function CalendarHeader({
   };
 
   return (
-    <div className="flex items-center justify-between py-4 px-2 sm:px-4 lg:px-8 border-b border-gray-200/70">
-      <div className="flex items-center gap-4">
+    <div className="flex items-center justify-between py-4 px-2 sm:px-4 lg:px-8">
+
+      {/* Date Navigation */}
+      <div className="flex items-center gap-4 ">
         <Button
           variant="outline"
           onClick={handlePrev}
@@ -47,7 +48,11 @@ export default function CalendarHeader({
           ←
         </Button>
         <div className="text-lg font-medium text-gray-800">
-          {format(currentDate, "dd. MMMM yyyy", { locale: de })}
+          {new Intl.DateTimeFormat("de-DE", {
+            day: "2-digit",
+            month: "long",
+            year: "numeric",
+          }).format(currentDate)}
         </div>
         <Button
           variant="outline"
@@ -58,6 +63,8 @@ export default function CalendarHeader({
           →
         </Button>
       </div>
+
+      {/* View Navigation */}
       <div className="flex items-center gap-4">
         <div className="flex gap-2">
           {views.map((v) => (
@@ -77,7 +84,7 @@ export default function CalendarHeader({
             </Button>
           ))}
         </div>
-        {/* Restore + Neuer Termin button */}
+        {/* Import .ics button */}
         <ImportICSDialog
           trigger={
             <Button variant="outline" className="cursor-pointer shadow-xl">
@@ -85,10 +92,13 @@ export default function CalendarHeader({
             </Button>
           }
         />
+
+        {/* New Appointment button */}
         <AppointmentDialogTrigger
           trigger={<Button variant="default" className="cursor-pointer shadow-xl">+ New Appointment</Button>}
         />
       </div>
+
     </div>
   );
 }

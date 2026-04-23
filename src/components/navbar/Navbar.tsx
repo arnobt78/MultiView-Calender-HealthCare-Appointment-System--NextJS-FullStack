@@ -37,7 +37,7 @@ export default function Navbar() {
     : "U";
 
   return (
-    <div className="w-full flex-col bg-transparent">
+    <div className="w-full flex-col sticky top-0 z-40 bg-transparent backdrop-blur-sm">
       <div className="flex py-4 items-center justify-between mx-2 sm:mx-4 lg:mx-8 border-b border-gray-100">
 
         {/* Left: logo */}
@@ -83,7 +83,7 @@ export default function Navbar() {
           <button
             type="button"
             onClick={toggleQuickActionModal}
-            className="hidden sm:flex items-center gap-1.5 rounded-md border border-input bg-muted/40 px-2.5 py-2 text-sm text-muted-foreground hover:bg-muted transition-colors cursor-pointer"
+            className="hidden sm:flex items-center gap-1.5 rounded-2xl border border-input bg-muted/40 px-2.5 py-2 text-sm text-muted-foreground hover:bg-muted transition-colors cursor-pointer"
             aria-label="Open quick actions (Ctrl+J)"
             title="Quick Actions (⌘J)"
           >
@@ -95,7 +95,7 @@ export default function Navbar() {
           <button
             type="button"
             onClick={openSearch}
-            className="hidden sm:flex items-center gap-2 rounded-md border border-input bg-muted/40 px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted transition-colors cursor-pointer"
+            className="hidden sm:flex items-center gap-2 rounded-2xl border border-input bg-muted/40 px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted transition-colors cursor-pointer"
             aria-label="Open global search (Ctrl+K)"
             title="Search (⌘K)"
           >
@@ -115,7 +115,7 @@ export default function Navbar() {
           {user && (
             <>
               {/* Notification Bell */}
-              <DropdownMenu>
+              <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
@@ -181,7 +181,7 @@ export default function Navbar() {
               </DropdownMenu>
 
               {/* User Avatar Menu */}
-              <DropdownMenu>
+              <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"

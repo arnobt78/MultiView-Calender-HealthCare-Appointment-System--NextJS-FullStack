@@ -204,6 +204,7 @@ export function useAppointments() {
   return {
     appointments: query.data || [],
     isLoading: query.isLoading || (query.isFetching && !query.data?.length),
+    isFetching: query.isFetching,
     isError: query.isError,
     error: query.error,
     refetch: query.refetch,

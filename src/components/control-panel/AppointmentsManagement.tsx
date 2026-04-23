@@ -259,9 +259,9 @@ export default function AppointmentsManagement() {
     return (
       <div className="space-y-4">
         <div className="grid grid-cols-3 gap-4">
-          {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-md" />)}
+          {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-2xl" />)}
         </div>
-        <Skeleton className="h-[350px] w-full rounded-md" />
+        <Skeleton className="h-[350px] w-full rounded-2xl" />
       </div>
     );
   }
@@ -337,7 +337,7 @@ export default function AppointmentsManagement() {
           </CardContent>
         </Card>
       ) : (
-        <div className="rounded-md border bg-card shadow-sm overflow-hidden">
+        <div className="rounded-2xl border bg-card shadow-sm overflow-hidden">
           <Table>
             <TableHeader>
               {table.getHeaderGroups().map((hg) => (

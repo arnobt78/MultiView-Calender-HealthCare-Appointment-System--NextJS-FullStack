@@ -104,7 +104,7 @@ export default function ImportICSDialog({ trigger }: Props) {
               accept=".ics,text/calendar"
               title="Select a .ics calendar file to import"
               onChange={handleFileChange}
-              className="block w-full text-sm text-gray-700 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 cursor-pointer border border-gray-200 rounded-md p-1"
+              className="block w-full text-sm text-gray-700 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 cursor-pointer border border-gray-200 rounded-2xl p-1"
             />
           </div>
 

@@ -22,7 +22,7 @@ const HomePage: React.FC = () => {
   const [view, setView] = useState<ViewType>("List");
 
   return (
-    <div className="min-h-screen">
+    <div>
       {/* CalendarHeader component provides view switching buttons and date navigation */}
       <CalendarHeader view={view} setView={setView} />
       {/* Conditional rendering based on selected view */}

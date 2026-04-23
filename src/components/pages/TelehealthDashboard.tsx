@@ -47,7 +47,7 @@ export default function TelehealthDashboard() {
           <h2 className="text-2xl font-bold tracking-tight">Telehealth Queue</h2>
           <p className="text-muted-foreground">Manage your daily appointments and video calls</p>
         </div>
-        <div className="flex bg-muted p-1 rounded-md">
+        <div className="flex bg-muted p-1 rounded-2xl">
           <Button
             variant={filter === "today" ? "secondary" : "ghost"}
             size="sm"
@@ -134,7 +134,7 @@ export default function TelehealthDashboard() {
               </CardContent>
             </Card>
           ) : (
-            <div className="h-full flex flex-col items-center justify-center text-center p-8 bg-muted/20 border rounded-md border-dashed">
+            <div className="h-full flex flex-col items-center justify-center text-center p-8 bg-muted/20 border rounded-2xl border-dashed">
               <Calendar className="h-12 w-12 text-muted-foreground/30 mb-4" />
               <p className="text-muted-foreground font-medium">No immediate appointments</p>
               <p className="text-sm text-muted-foreground mt-1">Your schedule is clear right now.</p>
@@ -145,7 +145,7 @@ export default function TelehealthDashboard() {
         {/* The Queue */}
         <div className="lg:col-span-2">
           <h3 className="font-semibold text-lg flex items-center gap-2 mb-4 text-muted-foreground">
-            <span className="p-1.5 bg-muted rounded-md"><Calendar className="h-4 w-4" /></span>
+            <span className="p-1.5 bg-muted rounded-2xl"><Calendar className="h-4 w-4" /></span>
             {filter === "today" ? "Today's Schedule" : filter === "upcoming" ? "Upcoming Queue" : "All Appointments"}
           </h3>
 
@@ -162,7 +162,7 @@ export default function TelehealthDashboard() {
                 return (
                   <div
                     key={appt.id}
-                    className={`flex items-center gap-4 p-4 rounded-md border transition-all hover:shadow-sm ${isCurrent ? 'border-primary shadow-sm bg-primary/5' :
+                    className={`flex items-center gap-4 p-4 rounded-2xl border transition-all hover:shadow-sm ${isCurrent ? 'border-primary shadow-sm bg-primary/5' :
                       isPastAppt ? 'opacity-60 bg-muted/20' :
                         'bg-background hover:bg-muted/10'
                       }`}
@@ -261,7 +261,7 @@ function TelehealthSkeleton() {
               </div>
               <Skeleton className="h-px w-full my-5" />
               <Skeleton className="h-12 w-full mb-6" />
-              <Skeleton className="h-12 w-full rounded-md" />
+              <Skeleton className="h-12 w-full rounded-2xl" />
             </CardContent>
           </Card>
         </div>
@@ -269,7 +269,7 @@ function TelehealthSkeleton() {
         <div className="lg:col-span-2 space-y-3">
           <Skeleton className="h-6 w-32 mb-4" />
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="flex items-center gap-4 p-4 border rounded-md">
+            <div key={i} className="flex items-center gap-4 p-4 border rounded-2xl">
               <Skeleton className="h-10 w-12" />
               <Skeleton className="h-12 w-1" />
               <div className="flex-1 space-y-2">

@@ -149,7 +149,7 @@ export default function ControlPanelPage({ initialSession }: ControlPanelPagePro
                   key={item.value}
                   value={item.value}
                   className={cn(
-                    "w-full justify-start rounded-md px-3 py-2 text-base font-medium text-left whitespace-normal h-auto min-h-10 cursor-pointer",
+                    "w-full justify-start rounded-2xl px-3 py-2 text-base font-medium text-left whitespace-normal h-auto min-h-10 cursor-pointer",
                     "hover:bg-gray-100!",
                     "data-[state=active]:bg-gray-200! data-[state=active]:text-foreground!",
                     "data-[state=active]:after:content-none! data-[state=active]:after:hidden!"
@@ -166,7 +166,7 @@ export default function ControlPanelPage({ initialSession }: ControlPanelPagePro
         <div className="md:hidden flex items-center gap-2">
           <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
             <SheetTrigger asChild>
-              <Button variant="outline" size="default" className="rounded-md shadow-xl" aria-label="Open menu">
+              <Button variant="outline" size="default" className="rounded-2xl shadow-xl" aria-label="Open menu">
                 <Menu className="h-5 w-5 mr-2" />
                 Menu
               </Button>
@@ -190,7 +190,7 @@ export default function ControlPanelPage({ initialSession }: ControlPanelPagePro
                       key={item.value}
                       value={item.value}
                       className={cn(
-                        "w-full justify-start rounded-md px-3 py-2 text-sm cursor-pointer",
+                        "w-full justify-start rounded-2xl px-3 py-2 text-sm cursor-pointer",
                         "hover:bg-gray-100!",
                         "data-[state=active]:bg-gray-200! data-[state=active]:text-foreground!"
                       )}
@@ -208,7 +208,7 @@ export default function ControlPanelPage({ initialSession }: ControlPanelPagePro
         <main className="flex-1 min-w-0">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <div className="md:hidden mb-4 overflow-x-auto">
-              <TabsList className="inline-flex w-full min-w-max rounded-md shadow-xl gap-2 p-1">
+              <TabsList className="inline-flex w-full min-w-max rounded-2xl shadow-xl gap-2 p-1">
                 <TabsTrigger value="overview" className="py-2">Overview</TabsTrigger>
                 <TabsTrigger value="telehealth" className="py-2">Telehealth</TabsTrigger>
                 <TabsTrigger value="appointment" className="py-2">Appointments</TabsTrigger>
