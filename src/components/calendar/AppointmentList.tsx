@@ -1,12 +1,18 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { format } from "date-fns";
-import { FullAppointment, useAppointments } from "@/hooks/useAppointments";
+import { FullAppointment } from "@/hooks/useAppointments";
 import { useCategories } from "@/hooks/useCategories";
 import { usePatients } from "@/hooks/usePatients";
 import { useRelatives } from "@/hooks/useRelatives";
 import { useAuth } from "@/hooks/useAuth";
+import { useAppointmentData } from "@/context/AppointmentDataContext";
+import {
+  useCalendarFilters,
+  applyCalendarFilters,
+} from "@/context/CalendarFiltersContext";
+import { summarizeDayAppointments } from "@/lib/appointment-stats";
 import {
   Patient,
   AppointmentAssignee,
@@ -42,21 +48,48 @@ import {
   FiUsers,
 } from "react-icons/fi";
 import { MdCategory } from "react-icons/md";
-import SearchBar from "./SearchBar";
+import GlobalCalendarFilters from "./GlobalCalendarFilters";
 import { useAppointmentColor } from "@/context/AppointmentColorContext";
 import { motion } from "framer-motion";
 
 // Types imported from hooks
 
 // Reusable component for date headline
-function DateHeadline({ date }: { date: Date }) {
+function StatBadge({
+  label,
+  value,
+  className,
+}: {
+  label: string;
+  value: number;
+  className: string;
+}) {
   return (
-    <div className="text-lg font-bold text-gray-700 mt-8 mb-3 flex items-center gap-2">
-      {new Intl.DateTimeFormat("de-DE", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-      }).format(date)}
+    <Badge
+      variant="outline"
+      className={`min-h-6 min-w-[90px] justify-center border-transparent ${className}`}
+    >
+      {label}: {value}
+    </Badge>
+  );
+}
+
+function DateHeadline({
+  date,
+  dayStats,
+}: {
+  date: Date;
+  dayStats: { total: number; open: number; alert: number; done: number };
+}) {
+  return (
+    <div className="mt-8 mb-3 flex flex-wrap items-center gap-2">
+      <div className="text-lg font-bold text-gray-700">
+        {new Intl.DateTimeFormat("de-DE", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+        }).format(date)}
+      </div>
       {(() => {
         const now = new Date();
         if (
@@ -65,13 +98,17 @@ function DateHeadline({ date }: { date: Date }) {
           date.getDate() === now.getDate()
         ) {
           return (
-            <Badge variant="outline" className="ml-2 bg-green-100 text-green-700 hover:bg-green-100 border-transparent">
+            <Badge variant="outline" className="bg-green-100 text-green-700 hover:bg-green-100 border-transparent">
               Today
             </Badge>
           );
         }
         return null;
       })()}
+      <StatBadge label="Total" value={dayStats.total} className="bg-sky-100 text-sky-700 hover:bg-sky-100" />
+      <StatBadge label="Open" value={dayStats.open} className="bg-amber-100 text-amber-700 hover:bg-amber-100" />
+      <StatBadge label="Alert" value={dayStats.alert} className="bg-rose-100 text-rose-700 hover:bg-rose-100" />
+      <StatBadge label="Done" value={dayStats.done} className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100" />
     </div>
   );
 }
@@ -144,13 +181,6 @@ function getDateTag(date: Date) {
 export default function AppointmentList() {
   const { user } = useAuth();
 
-  // Filters State
-  const [category, setCategory] = useState<string | null>(null);
-  const [patient, setPatient] = useState<string | null>(null);
-  const [date, setDate] = useState<string | null>(null);
-  const [status, setStatus] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-
   // Edit Dialog State
   const [editAppt, setEditAppt] = useState<FullAppointment | null>(null);
   const [editOpen, setEditOpen] = useState(false);
@@ -165,12 +195,14 @@ export default function AppointmentList() {
     isFetching: fetchingAppointments,
     deleteAppointment,
     toggleStatus,
-    refetch: refetchAppointments
-  } = useAppointments();
+    refetch: refetchAppointments,
+    summaryStats,
+  } = useAppointmentData();
 
   const { categories = [] } = useCategories();
   const { patients = [] } = usePatients();
   const { relatives = [] } = useRelatives();
+  const { category, patient, date, status, month, search } = useCalendarFilters();
 
   // Keep ownerUsers state empty for now, or we can fetch them separately if needed, 
   // but useAppointments currently just returns user IDs. We'll simplify to just showing the user ID or email if invited_email is populated.
@@ -183,26 +215,16 @@ export default function AppointmentList() {
     // This is a simplified version of the previous logic.
   }, [appointments]);
 
-  // Compose filters object for query
-  const filters = { category, patient, date, status };
-
-  // Apply local filters since react-query fetches all
-  let filteredBySidebar = appointments;
-
-  if (date) {
-    const day = new Date(date);
-    day.setHours(0, 0, 0, 0);
-    const dayStart = new Date(day);
-    const dayEnd = new Date(day);
-    dayEnd.setHours(23, 59, 59, 999);
-    filteredBySidebar = filteredBySidebar.filter((a) =>
-      new Date(a.start) >= dayStart &&
-      new Date(a.start) <= dayEnd
-    );
-  }
-  if (category) filteredBySidebar = filteredBySidebar.filter((a) => a.category === category);
-  if (patient) filteredBySidebar = filteredBySidebar.filter((a) => a.patient === patient);
-  if (status) filteredBySidebar = filteredBySidebar.filter((a) => a.status === status);
+  const filteredBySidebar = useMemo(
+    () =>
+      applyCalendarFilters(
+        appointments,
+        { category, patient, date, status, month, search: "" },
+        patients,
+        relatives
+      ),
+    [appointments, category, patient, date, status, month, patients, relatives]
+  );
 
   // Helper: get permission for current user on an appointment
   function getUserPermission(appt: FullAppointment): "owner" | "full" | "write" | "read" | null {
@@ -306,39 +328,37 @@ export default function AppointmentList() {
 
   // Group appointments by date (descending)
   const grouped = groupAppointmentsByDate(filteredAppointments);
-
+  const groupedWithTodayFirst = useMemo(() => {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const todayIdx = grouped.findIndex((g) => {
+      const d = new Date(g.date);
+      d.setHours(0, 0, 0, 0);
+      return d.getTime() === now.getTime();
+    });
+    if (todayIdx <= 0) return grouped;
+    const copy = [...grouped];
+    const [todayGroup] = copy.splice(todayIdx, 1);
+    return [todayGroup, ...copy];
+  }, [grouped]);
   return (
     <div className="py-4 px-2 sm:px-4 lg:px-8 pb-8">
       {/* Static header — always visible, never skeletonised */}
-      <h2 className="text-2xl font-semibold tracking-tight text-gray-800 mb-2">
-        Appointment List
-      </h2>
-      <div className="flex flex-wrap items-center gap-2 w-full">
-        <div className="w-full sm:flex-1 sm:min-w-[220px] sm:max-w-sm">
-          <SearchBar value={search} setValue={setSearch} />
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Filters
-            category={category}
-            setCategory={setCategory}
-            patient={patient}
-            setPatient={setPatient}
-            date={date}
-            setDate={setDate}
-            status={status}
-            setStatus={setStatus}
-            categories={categories}
-            patients={patients}
-            onReset={() => {
-              setCategory(null);
-              setPatient(null);
-              setDate(null);
-              setStatus(null);
-              setSearch("");
-            }}
-          />
-        </div>
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <h2 className="text-xl font-semibold tracking-tight text-gray-800">
+          Appointment List
+        </h2>
+        <StatBadge label="Total" value={summaryStats.total} className="bg-sky-100 text-sky-700 hover:bg-sky-100" />
+        <StatBadge label="Today" value={summaryStats.today} className="bg-green-100 text-green-700 hover:bg-green-100" />
+        <StatBadge label="Tomorrow" value={summaryStats.nextDay} className="bg-blue-100 text-blue-700 hover:bg-blue-100" />
+        <StatBadge label="Later Days" value={summaryStats.later} className="bg-violet-100 text-violet-700 hover:bg-violet-100" />
+        <StatBadge label="Passed Days" value={summaryStats.passed} className="bg-gray-200 text-gray-600 hover:bg-gray-200" />
+        <span className="px-1 text-xs font-semibold text-gray-500">Status:</span>
+        <StatBadge label="Open" value={summaryStats.open} className="bg-amber-100 text-amber-700 hover:bg-amber-100" />
+        <StatBadge label="Alert" value={summaryStats.alert} className="bg-rose-100 text-rose-700 hover:bg-rose-100" />
+        <StatBadge label="Done" value={summaryStats.done} className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100" />
       </div>
+      <GlobalCalendarFilters categories={categories} patients={patients} />
 
       {/* Data area — skeleton while loading, real content once ready */}
       {loadingAppointments ? (
@@ -399,9 +419,9 @@ export default function AppointmentList() {
               transition={{ duration: 0.4 }}
               className="flex flex-col gap-4"
             >
-              {grouped.map(({ date, appts }) => (
+              {groupedWithTodayFirst.map(({ date, appts }) => (
                 <div key={date.toISOString()}>
-                  <DateHeadline date={date} />
+                  <DateHeadline date={date} dayStats={summarizeDayAppointments(appts)} />
                   <div className="flex flex-col gap-4">
                     {appts.map((appt: FullAppointment, i: number) => {
                       // --- Begin: Restored full-featured appointment card ---

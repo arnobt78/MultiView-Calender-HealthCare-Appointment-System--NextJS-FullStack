@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Tag, User, CalendarDays, Circle, RotateCcw } from "lucide-react";
+import { Tag, User, CalendarDays, Circle, RotateCcw, CalendarRange } from "lucide-react";
 
 type FiltersProps = {
   category: string | null;
@@ -21,9 +21,13 @@ type FiltersProps = {
   setDate: (v: string | null) => void;
   status: string | null;
   setStatus: (v: string | null) => void;
+  month: string | null;
+  setMonth: (v: string | null) => void;
+  monthOptions: { value: string; label: string }[];
   categories: Category[];
   patients: Patient[];
   onReset: () => void;
+  showReset: boolean;
 };
 
 const ALL_VALUE = "__all__";
@@ -42,9 +46,13 @@ export default function Filters({
   setDate,
   status,
   setStatus,
+  month,
+  setMonth,
+  monthOptions,
   categories,
   patients,
   onReset,
+  showReset,
 }: FiltersProps) {
   const categoryLabel = !category
     ? "All Categories"
@@ -56,6 +64,10 @@ export default function Filters({
       ? `${selectedPatient.firstname} ${selectedPatient.lastname}`.trim()
       : "All Clients";
   const statusLabel = !status ? "All Statuses" : STATUS_LABEL[status] ?? "All Statuses";
+  const monthLabel =
+    !month
+      ? "Monthly View"
+      : monthOptions.find((m) => m.value === month)?.label ?? "Monthly View";
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -128,15 +140,36 @@ export default function Filters({
         </SelectContent>
       </Select>
 
-      {/* Reset */}
-      <Button
-        variant="default"
-        className="h-9 px-4 rounded-2xl shadow-sm flex items-center gap-2 shrink-0 cursor-pointer active:bg-gray-700 transition-colors"
-        onClick={onReset}
+      {/* Month */}
+      <Select
+        value={month ?? ALL_VALUE}
+        onValueChange={(v) => setMonth(v === ALL_VALUE ? null : v)}
       >
-        <RotateCcw className="w-3.5 h-3.5" />
-        Reset
-      </Button>
+        <SelectTrigger className="h-9 w-auto min-w-[155px] rounded-2xl shadow-sm bg-white border-gray-200 text-gray-700 gap-2">
+          <CalendarRange className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+          <SelectValue>{monthLabel}</SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={ALL_VALUE}>Monthly View</SelectItem>
+          {monthOptions.map((monthOption) => (
+            <SelectItem key={monthOption.value} value={monthOption.value}>
+              {monthOption.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      {/* Reset */}
+      {showReset && (
+        <Button
+          variant="default"
+          className="h-9 px-4 rounded-2xl shadow-sm flex items-center gap-2 shrink-0 cursor-pointer active:bg-gray-700 transition-colors"
+          onClick={onReset}
+        >
+          <RotateCcw className="w-3.5 h-3.5" />
+          Reset
+        </Button>
+      )}
     </div>
   );
 }

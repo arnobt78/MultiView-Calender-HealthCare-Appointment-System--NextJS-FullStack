@@ -1,14 +1,27 @@
 "use client";
 
-import { useEffect, useState, useCallback, type CSSProperties } from "react";
-import { format, startOfWeek, addDays, setHours, setMinutes } from "date-fns";
+import { useEffect, useState, useMemo, useCallback, type CSSProperties } from "react";
+import { format, startOfWeek, endOfWeek, isSameDay, addDays, setHours, setMinutes } from "date-fns";
 import { Appointment, Category, AppointmentAssignee, Patient, Relative, Activity } from "@/types/types";
 import { getUserAppointmentPermission } from "@/lib/permissions";
 import AppointmentDialogController from "./AppointmentDialogController";
 import { useDateContext } from "@/context/DateContext";
+import { useAppointmentData } from "@/context/AppointmentDataContext";
+import {
+  useCalendarFilters,
+  applyCalendarFilters,
+} from "@/context/CalendarFiltersContext";
+import { invalidateAllForCrud } from "@/lib/query-client";
+import { queryKeys } from "@/lib/query-keys";
+import { useQueryClient } from "@tanstack/react-query";
+import { useCategories } from "@/hooks/useCategories";
+import { usePatients } from "@/hooks/usePatients";
+import { useRelatives } from "@/hooks/useRelatives";
 import AppointmentHoverCard from "./AppointmentHoverCard";
 import { useAppointmentColor } from "@/context/AppointmentColorContext";
 import { Badge } from "../ui/badge";
+import type { FullAppointment } from "@/hooks/useAppointments";
+import GlobalCalendarFilters from "./GlobalCalendarFilters";
 
 type AppointmentWithCategory = Appointment & {
   category_data?: Category;
@@ -18,6 +31,11 @@ type AppointmentWithCategory = Appointment & {
 export default function WeekView() {
   const [appointments, setAppointments] = useState<AppointmentWithCategory[]>([]);
   const { currentDate } = useDateContext();
+  const { summaryStats, appointments: globalAppointments } = useAppointmentData();
+  const { categories = [] } = useCategories();
+  const { patients: filterPatients = [] } = usePatients();
+  const { relatives: filterRelatives = [] } = useRelatives();
+  const { category, patient, date, status, month, search } = useCalendarFilters();
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const hours = Array.from({ length: 24 }, (_, i) => i);
   const [editAppt, setEditAppt] = useState<AppointmentWithCategory | null>(null);
@@ -34,6 +52,65 @@ export default function WeekView() {
   const [ownerUsers, setOwnerUsers] = useState<{ id: string, email: string }[]>([]);
 
   const { randomBgColor } = useAppointmentColor();
+  const queryClient = useQueryClient();
+  const filteredAppointments = useMemo(
+    () =>
+      applyCalendarFilters(
+        appointments,
+        { category, patient, date, status, month, search },
+        filterPatients,
+        filterRelatives
+      ),
+    [appointments, category, patient, date, status, month, search, filterPatients, filterRelatives]
+  );
+  const filteredGlobalAppointments = useMemo(
+    () =>
+      applyCalendarFilters(
+        globalAppointments,
+        { category, patient, date, status, month, search },
+        filterPatients,
+        filterRelatives
+      ),
+    [globalAppointments, category, patient, date, status, month, search, filterPatients, filterRelatives]
+  );
+  const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
+  const weekAppointments = useMemo(
+    () =>
+      filteredGlobalAppointments.filter((appt) => {
+        const apptStart = new Date(appt.start).getTime();
+        const start = weekStart.getTime();
+        const end = weekEnd.getTime();
+        return apptStart >= start && apptStart <= end;
+      }),
+    [filteredGlobalAppointments, weekStart, weekEnd]
+  );
+  const today = new Date();
+  const selectedWeekHasToday = (() => {
+    const t = today.getTime();
+    const start = weekStart.getTime();
+    const end = weekEnd.getTime();
+    return t >= start && t <= end;
+  })();
+  const weekTodayCount = selectedWeekHasToday
+    ? weekAppointments.filter((appt) => isSameDay(new Date(appt.start), today)).length
+    : 0;
+  const weekStatus = useMemo(
+    () =>
+      weekAppointments.reduce(
+        (acc, appt) => {
+          if (appt.status === "done") acc.done += 1;
+          else if (appt.status === "alert") acc.alert += 1;
+          else acc.open += 1;
+          return acc;
+        },
+        { open: 0, alert: 0, done: 0 }
+      ),
+    [weekAppointments]
+  );
+  const weekTitle = `${format(weekStart, "EEE dd.MM.yyyy")} - ${format(
+    weekEnd,
+    "EEE dd.MM.yyyy"
+  )}`;
 
   useEffect(() => {
     // Fetch all patients, relatives, assignees, and activities for mapping
@@ -246,6 +323,14 @@ export default function WeekView() {
             a.id === id ? { ...a, status: newStatus as typeof a.status } : a
           )
         );
+        queryClient.setQueryData<FullAppointment[]>(
+          queryKeys.appointments.all,
+          (old = []) =>
+            old.map((a) =>
+              a.id === id ? { ...a, status: newStatus as FullAppointment["status"] } : a
+            )
+        );
+        void invalidateAllForCrud(queryClient);
       } else {
         console.error("Failed to update appointment status");
       }
@@ -262,6 +347,11 @@ export default function WeekView() {
       });
       if (response.ok) {
         setAppointments((prev) => prev.filter((a) => a.id !== id));
+        queryClient.setQueryData<FullAppointment[]>(
+          queryKeys.appointments.all,
+          (old = []) => old.filter((a) => a.id !== id)
+        );
+        void invalidateAllForCrud(queryClient);
       } else {
         console.error("Failed to delete appointment");
       }
@@ -372,9 +462,19 @@ export default function WeekView() {
 
   return (
     <div className="min-h-0 py-4 px-2 sm:px-4 lg:px-8">
-      <h2 className="mb-2 text-2xl font-semibold tracking-tight text-gray-800">
-        Week View
-      </h2>
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <h2 className="text-xl font-semibold tracking-tight text-gray-800">
+          {weekTitle}
+        </h2>
+        <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-sky-100 text-sky-700 hover:bg-sky-100">Total: {summaryStats.total}</Badge>
+        <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-cyan-100 text-cyan-700 hover:bg-cyan-100">This Week: {weekAppointments.length}</Badge>
+        <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-green-100 text-green-700 hover:bg-green-100">Today: {weekTodayCount}</Badge>
+        <span className="px-1 text-xs font-semibold text-gray-500">Status:</span>
+        <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-amber-100 text-amber-700 hover:bg-amber-100">Open: {weekStatus.open}</Badge>
+        <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-rose-100 text-rose-700 hover:bg-rose-100">Alert: {weekStatus.alert}</Badge>
+        <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-emerald-100 text-emerald-700 hover:bg-emerald-100">Done: {weekStatus.done}</Badge>
+      </div>
+      <GlobalCalendarFilters categories={categories} patients={filterPatients} className="mb-3" />
       <div className="week-scroll-container overflow-hidden rounded-2xl border border-gray-200 bg-background">
         <div className="relative grid w-full text-sm week-grid">
           {showWeekNowLine && (
@@ -437,7 +537,7 @@ export default function WeekView() {
                 const slotStart = setMinutes(setHours(day, hour), 0);
                 const slotEnd = setMinutes(setHours(day, hour + 1), 0);
                 // Find all appointments that overlap this hour slot
-                const matches = appointments.filter((a) => {
+                const matches = filteredAppointments.filter((a) => {
                   const start = new Date(a.start);
                   const end = new Date(a.end);
                   return (
@@ -500,6 +600,7 @@ export default function WeekView() {
           appointment={editAppt}
           onSuccess={() => {
             setEditAppt(null);
+            void invalidateAllForCrud(queryClient);
             void (async () => {
               try {
                 const response = await fetch("/api/appointments");

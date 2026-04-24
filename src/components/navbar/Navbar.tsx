@@ -21,7 +21,7 @@ import { useAppStore } from "@/store/useAppStore";
 import GlobalSearch from "@/components/shared/GlobalSearch";
 
 export default function Navbar() {
-  const { user, logout, isLoggingOut } = useAuth();
+  const { user, logout, isLoggingOut, isLoading } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
   const openSearch = useAppStore((s) => s.openSearch);
@@ -112,7 +112,7 @@ export default function Navbar() {
             <Search className="h-5 w-5 text-muted-foreground" />
           </button>
 
-          {user && (
+          {(isLoading || user) && (
             <>
               {/* Notification Bell */}
               <DropdownMenu modal={false}>
@@ -121,63 +121,69 @@ export default function Navbar() {
                     type="button"
                     className="relative rounded-full p-2 hover:bg-gray-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
                     aria-label="Notifications"
+                    disabled={!user}
                   >
-                    <Bell className="h-5 w-5 text-muted-foreground" />
-                    {unreadCount > 0 && (
+                    <Bell className={`h-5 w-5 ${user ? "text-muted-foreground" : "text-transparent"}`} />
+                    {user && unreadCount > 0 && (
                       <span className="absolute -top-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
                         {unreadCount > 9 ? "9+" : unreadCount}
                       </span>
                     )}
+                    {!user && (
+                      <span className="absolute inset-0 rounded-full bg-gray-200/90 animate-pulse" />
+                    )}
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-80 max-h-96 overflow-y-auto">
-                  <DropdownMenuLabel className="flex items-center justify-between">
-                    <span>Notifications</span>
-                    {unreadCount > 0 && (
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          markAllAsRead();
-                        }}
-                        className="text-xs text-primary hover:underline flex items-center gap-1 cursor-pointer"
-                      >
-                        <CheckCheck className="h-3 w-3" /> Mark all read
-                      </button>
+                {user && (
+                  <DropdownMenuContent align="end" className="w-80 max-h-96 overflow-y-auto">
+                    <DropdownMenuLabel className="flex items-center justify-between">
+                      <span>Notifications</span>
+                      {unreadCount > 0 && (
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            markAllAsRead();
+                          }}
+                          className="text-xs text-primary hover:underline flex items-center gap-1 cursor-pointer"
+                        >
+                          <CheckCheck className="h-3 w-3" /> Mark all read
+                        </button>
+                      )}
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {notifications.length === 0 ? (
+                      <div className="px-3 py-6 text-center text-sm text-muted-foreground">
+                        No notifications yet
+                      </div>
+                    ) : (
+                      notifications.slice(0, 10).map((n) => (
+                        <DropdownMenuItem
+                          key={n.id}
+                          className={`flex flex-col items-start gap-1 px-3 py-2.5 cursor-pointer ${!n.read ? "bg-primary/5" : ""}`}
+                          onClick={() => {
+                            if (!n.read) markAsRead(n.id);
+                            if (n.link) router.push(n.link);
+                          }}
+                        >
+                          <div className="flex items-center gap-2 w-full">
+                            {!n.read && (
+                              <span className="h-2 w-2 rounded-full bg-primary shrink-0" />
+                            )}
+                            <span className="text-sm font-medium truncate flex-1">{n.title}</span>
+                            <Badge variant="outline" className="text-[10px] shrink-0">
+                              {n.type}
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground line-clamp-2 w-full">{n.message}</p>
+                          <span className="text-[10px] text-muted-foreground">
+                            {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
+                          </span>
+                        </DropdownMenuItem>
+                      ))
                     )}
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {notifications.length === 0 ? (
-                    <div className="px-3 py-6 text-center text-sm text-muted-foreground">
-                      No notifications yet
-                    </div>
-                  ) : (
-                    notifications.slice(0, 10).map((n) => (
-                      <DropdownMenuItem
-                        key={n.id}
-                        className={`flex flex-col items-start gap-1 px-3 py-2.5 cursor-pointer ${!n.read ? "bg-primary/5" : ""}`}
-                        onClick={() => {
-                          if (!n.read) markAsRead(n.id);
-                          if (n.link) router.push(n.link);
-                        }}
-                      >
-                        <div className="flex items-center gap-2 w-full">
-                          {!n.read && (
-                            <span className="h-2 w-2 rounded-full bg-primary shrink-0" />
-                          )}
-                          <span className="text-sm font-medium truncate flex-1">{n.title}</span>
-                          <Badge variant="outline" className="text-[10px] shrink-0">
-                            {n.type}
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-muted-foreground line-clamp-2 w-full">{n.message}</p>
-                        <span className="text-[10px] text-muted-foreground">
-                          {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
-                        </span>
-                      </DropdownMenuItem>
-                    ))
-                  )}
-                </DropdownMenuContent>
+                  </DropdownMenuContent>
+                )}
               </DropdownMenu>
 
               {/* User Avatar Menu */}
@@ -187,39 +193,46 @@ export default function Navbar() {
                     type="button"
                     className="rounded-full ring-2 ring-border shadow-xl hover:opacity-90 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer bg-gray-100 hover:bg-gray-200/50"
                     aria-label="Account menu"
+                    disabled={!user}
                   >
-                    <Avatar>
-                      <AvatarImage src={avatarSrc} alt="" referrerPolicy="no-referrer" />
-                      <AvatarFallback className="bg-primary/10 text-primary font-medium">{initials}</AvatarFallback>
-                    </Avatar>
+                    {user ? (
+                      <Avatar>
+                        <AvatarImage src={avatarSrc} alt="" referrerPolicy="no-referrer" />
+                        <AvatarFallback className="bg-primary/10 text-primary font-medium">{initials}</AvatarFallback>
+                      </Avatar>
+                    ) : (
+                      <div className="h-10 w-10 rounded-full bg-gray-200/90 animate-pulse" />
+                    )}
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-64">
-                  <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col gap-1">
-                      <p className="text-base font-medium leading-none">{user.display_name || "User"}</p>
-                      <p className="text-sm text-muted-foreground leading-none">{user.email}</p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
+                {user && (
+                  <DropdownMenuContent align="end" className="w-64">
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col gap-1">
+                        <p className="text-base font-medium leading-none">{user.display_name || "User"}</p>
+                        <p className="text-sm text-muted-foreground leading-none">{user.email}</p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
 
-                  <DropdownMenuItem asChild className="cursor-pointer">
-                    <Link href="/api-docs"><BookOpen className="mr-2 h-4 w-4" /> API Documentation</Link>
-                  </DropdownMenuItem>
+                    <DropdownMenuItem asChild className="cursor-pointer">
+                      <Link href="/api-docs"><BookOpen className="mr-2 h-4 w-4" /> API Documentation</Link>
+                    </DropdownMenuItem>
 
-                  <DropdownMenuItem asChild className="cursor-pointer">
-                    <Link href="/api-status"><Activity className="mr-2 h-4 w-4" /> API Status</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => logout()}
-                    disabled={isLoggingOut}
-                    className="text-red-600 focus:text-red-600 cursor-pointer"
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    {isLoggingOut ? "Logging out..." : "Log out"}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
+                    <DropdownMenuItem asChild className="cursor-pointer">
+                      <Link href="/api-status"><Activity className="mr-2 h-4 w-4" /> API Status</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => logout()}
+                      disabled={isLoggingOut}
+                      className="text-red-600 focus:text-red-600 cursor-pointer"
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      {isLoggingOut ? "Logging out..." : "Log out"}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                )}
               </DropdownMenu>
             </>
           )}

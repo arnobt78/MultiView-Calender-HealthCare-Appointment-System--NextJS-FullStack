@@ -3,12 +3,20 @@
 import { useMemo } from "react";
 import { format, isSameDay } from "date-fns";
 import Link from "next/link";
-import { useAppointments } from "@/hooks/useAppointments";
+import { useAppointmentData } from "@/context/AppointmentDataContext";
+import {
+  useCalendarFilters,
+  applyCalendarFilters,
+} from "@/context/CalendarFiltersContext";
 import { useDateContext } from "@/context/DateContext";
 import { useAppointmentColor } from "@/context/AppointmentColorContext";
+import { useCategories } from "@/hooks/useCategories";
+import { usePatients } from "@/hooks/usePatients";
+import { useRelatives } from "@/hooks/useRelatives";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import VideoCall from "./VideoCall";
+import GlobalCalendarFilters from "./GlobalCalendarFilters";
 import type { Appointment } from "@/types/types";
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
@@ -16,13 +24,38 @@ const SLOT_HEIGHT = 64; // px per hour
 
 export default function DayView() {
   const { currentDate } = useDateContext();
-  const { appointments, isLoading } = useAppointments();
+  const { appointments, isLoading } = useAppointmentData();
+  const { category, patient, date, status, month, search } = useCalendarFilters();
+  const { categories = [] } = useCategories();
+  const { patients = [] } = usePatients();
+  const { relatives = [] } = useRelatives();
   const { randomBgColor } = useAppointmentColor();
+  const filteredAppointments = useMemo(
+    () =>
+      applyCalendarFilters(
+        appointments,
+        { category, patient, date, status, month, search },
+        patients,
+        relatives
+      ),
+    [appointments, category, patient, date, status, month, search, patients, relatives]
+  );
 
   const dayAppointments = useMemo(() => {
-    if (!appointments) return [];
-    return appointments.filter((a: Appointment) => isSameDay(new Date(a.start), currentDate));
-  }, [appointments, currentDate]);
+    if (!filteredAppointments) return [];
+    return filteredAppointments.filter((a: Appointment) => isSameDay(new Date(a.start), currentDate));
+  }, [filteredAppointments, currentDate]);
+  const dayStats = useMemo(() => {
+    return dayAppointments.reduce(
+      (acc, appt) => {
+        if (appt.status === "done") acc.done += 1;
+        else if (appt.status === "alert") acc.alert += 1;
+        else acc.open += 1;
+        return acc;
+      },
+      { open: 0, alert: 0, done: 0 }
+    );
+  }, [dayAppointments]);
 
   const now = new Date();
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
@@ -43,16 +76,25 @@ export default function DayView() {
   }
 
   return (
-    <div className="min-h-0 select-none px-2 py-4 sm:px-4 lg:px-8">
+    <div className="min-h-0 px-2 py-4 sm:px-4 lg:px-8">
       {/* Day header */}
-      <div className="mb-4 flex items-center gap-3">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
         <h2 className="text-xl font-semibold">{format(currentDate, "EEEE, MMMM d, yyyy")}</h2>
-        {dayAppointments.length > 0 && (
-          <Badge variant="secondary">
-            {dayAppointments.length} appointment{dayAppointments.length !== 1 ? "s" : ""}
-          </Badge>
-        )}
+        <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-green-100 text-green-700 hover:bg-green-100">
+          Today: {dayAppointments.length}
+        </Badge>
+        <span className="px-1 text-xs font-semibold text-gray-500">Status:</span>
+        <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-amber-100 text-amber-700 hover:bg-amber-100">
+          Open: {dayStats.open}
+        </Badge>
+        <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-rose-100 text-rose-700 hover:bg-rose-100">
+          Alert: {dayStats.alert}
+        </Badge>
+        <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
+          Done: {dayStats.done}
+        </Badge>
       </div>
+      <GlobalCalendarFilters categories={categories} patients={patients} className="mb-4" />
 
       {/* Time grid */}
       <div className="relative border rounded-2xl overflow-hidden bg-background">

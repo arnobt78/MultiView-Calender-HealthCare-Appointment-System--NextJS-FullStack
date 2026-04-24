@@ -2,6 +2,7 @@
 
 import {
   format,
+  isToday as isDateToday,
   startOfMonth,
   endOfMonth,
   startOfWeek,
@@ -24,8 +25,19 @@ import { getUserAppointmentPermission } from "@/lib/permissions";
 import { getPublicUrl } from "@/lib/vercelBlob";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useDateContext } from "@/context/DateContext";
+import { useAppointmentData } from "@/context/AppointmentDataContext";
+import {
+  useCalendarFilters,
+  applyCalendarFilters,
+} from "@/context/CalendarFiltersContext";
+import { invalidateAllForCrud } from "@/lib/query-client";
+import { queryKeys } from "@/lib/query-keys";
 import AppointmentDialogController from "./AppointmentDialogController";
 import { Button } from "@/components/ui/button";
+import { useQueryClient } from "@tanstack/react-query";
+import { useCategories } from "@/hooks/useCategories";
+import { usePatients } from "@/hooks/usePatients";
+import { useRelatives } from "@/hooks/useRelatives";
 import {
   FiEdit2,
   FiTrash2,
@@ -39,6 +51,8 @@ import {
 import AppointmentHoverCard from "./AppointmentHoverCard";
 import { useAppointmentColor } from "@/context/AppointmentColorContext";
 import { Badge } from "../ui/badge";
+import type { FullAppointment } from "@/hooks/useAppointments";
+import GlobalCalendarFilters from "./GlobalCalendarFilters";
 
 type AppointmentWithCategory = Appointment & {
   category_data?: Category;
@@ -46,6 +60,12 @@ type AppointmentWithCategory = Appointment & {
 };
 
 export default function MonthView() {
+  const { summaryStats, appointments: globalAppointments } = useAppointmentData();
+  const { categories = [] } = useCategories();
+  const { patients: filterPatients = [] } = usePatients();
+  const { relatives: filterRelatives = [] } = useRelatives();
+  const { category, patient, date, status, month, search } = useCalendarFilters();
+  const queryClient = useQueryClient();
   const [calendarDays, setCalendarDays] = useState<
     { date: Date; appointments: AppointmentWithCategory[] }[]
   >([]);
@@ -108,6 +128,80 @@ export default function MonthView() {
         calendarDays.find((c) => isSameDay(c.date, date))?.appointments ?? [],
     }));
   }, [calendarDays, placeholderMonthDates]);
+
+  const filteredCalendarDays = useMemo(
+    () =>
+      displayCalendarDays.map((day) => ({
+        ...day,
+        appointments: applyCalendarFilters(
+          day.appointments,
+          { category, patient, date, status, month, search },
+          filterPatients,
+          filterRelatives
+        ),
+      })),
+    [
+      displayCalendarDays,
+      category,
+      patient,
+      date,
+      status,
+      month,
+      search,
+      filterPatients,
+      filterRelatives,
+    ]
+  );
+  const filteredGlobalAppointments = useMemo(
+    () =>
+      applyCalendarFilters(
+        globalAppointments,
+        { category, patient, date, status, month, search },
+        filterPatients,
+        filterRelatives
+      ),
+    [
+      globalAppointments,
+      category,
+      patient,
+      date,
+      status,
+      month,
+      search,
+      filterPatients,
+      filterRelatives,
+    ]
+  );
+  const monthStart = startOfMonth(currentDate);
+  const monthEnd = endOfMonth(currentDate);
+  const monthAppointments = useMemo(
+    () => filteredGlobalAppointments.filter((a) => isSameMonth(new Date(a.start), currentDate)),
+    [filteredGlobalAppointments, currentDate]
+  );
+  const todayDate = new Date();
+  const isSelectedMonthCurrentMonth =
+    currentDate.getFullYear() === todayDate.getFullYear() &&
+    currentDate.getMonth() === todayDate.getMonth();
+  const monthTodayCount = isSelectedMonthCurrentMonth
+    ? monthAppointments.filter((a) => isSameDay(new Date(a.start), todayDate)).length
+    : 0;
+  const monthStatus = useMemo(
+    () =>
+      monthAppointments.reduce(
+        (acc, appt) => {
+          if (appt.status === "done") acc.done += 1;
+          else if (appt.status === "alert") acc.alert += 1;
+          else acc.open += 1;
+          return acc;
+        },
+        { open: 0, alert: 0, done: 0 }
+      ),
+    [monthAppointments]
+  );
+  const monthTitle = `${format(monthStart, "MMMM yyyy")} (${format(
+    monthStart,
+    "dd.MM"
+  )} - ${format(monthEnd, "dd.MM")})`;
 
   useEffect(() => {
     (async () => {
@@ -326,6 +420,14 @@ export default function MonthView() {
             ),
           }))
         );
+        queryClient.setQueryData<FullAppointment[]>(
+          queryKeys.appointments.all,
+          (old = []) =>
+            old.map((a) =>
+              a.id === id ? { ...a, status: newStatus as FullAppointment["status"] } : a
+            )
+        );
+        void invalidateAllForCrud(queryClient);
       } else {
         console.error("Failed to update appointment status");
       }
@@ -347,6 +449,11 @@ export default function MonthView() {
             appointments: d.appointments.filter((a) => a.id !== id),
           }))
         );
+        queryClient.setQueryData<FullAppointment[]>(
+          queryKeys.appointments.all,
+          (old = []) => old.filter((a) => a.id !== id)
+        );
+        void invalidateAllForCrud(queryClient);
       } else {
         console.error("Failed to delete appointment");
       }
@@ -410,82 +517,92 @@ export default function MonthView() {
   return (
     <div className="flex min-h-0 flex-col gap-4 py-4 px-2 sm:px-4 lg:px-8 md:flex-row md:items-start md:space-x-8">
       <div className="min-w-0 flex-1">
-        <h2 className="text-2xl font-semibold tracking-tight text-gray-800 mb-2">
-          Month View
-        </h2>
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <h2 className="text-xl font-semibold tracking-tight text-gray-800">
+            {monthTitle}
+          </h2>
+          <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-sky-100 text-sky-700 hover:bg-sky-100">Total: {summaryStats.total}</Badge>
+          <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-cyan-100 text-cyan-700 hover:bg-cyan-100">This Month: {monthAppointments.length}</Badge>
+          <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-green-100 text-green-700 hover:bg-green-100">Today: {monthTodayCount}</Badge>
+          <span className="px-1 text-xs font-semibold text-gray-500">Status:</span>
+          <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-amber-100 text-amber-700 hover:bg-amber-100">Open: {monthStatus.open}</Badge>
+          <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-rose-100 text-rose-700 hover:bg-rose-100">Alert: {monthStatus.alert}</Badge>
+          <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-emerald-100 text-emerald-700 hover:bg-emerald-100">Done: {monthStatus.done}</Badge>
+        </div>
+        <GlobalCalendarFilters categories={categories} patients={patients} className="mb-3" />
         <div className="overflow-hidden rounded-2xl border border-gray-200 bg-gray-200 text-sm shadow-sm">
           <div className="grid min-h-[calc(100dvh-260px)] grid-cols-7 auto-rows-fr gap-px">
-          {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
-            <div
-              key={d}
-              className="bg-white p-2 text-center font-medium text-gray-600"
-            >
-              {d}
-            </div>
-          ))}
-          {displayCalendarDays.map(({ date, appointments }) => {
-            const selected = selectedDate && isSameDay(date, selectedDate);
-            const isCurrent = isToday(date);
-            const hasAppointments = appointments.length > 0;
-            return (
+            {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
               <div
-                key={date.toISOString()}
-                className={clsx(
-                  "relative min-h-[100px] bg-white p-2 transition",
-                  !isSameMonth(date, currentDate) && "bg-gray-100 text-gray-400",
-                  isCurrent && !selected && "bg-green-100",
-                  selected && "z-10 bg-gray-200 ring-2 ring-green-600",
-                  hasAppointments ? "cursor-pointer" : "cursor-default"
-                )}
-                onClick={() => hasAppointments && setSelectedDate(date)}
+                key={d}
+                className="bg-white p-2 text-center font-medium text-gray-600"
               >
-                <div className="flex items-center mb-1">
-                  <span
-                    className={clsx(
-                      "text-xs font-semibold w-6 h-6 flex items-center justify-center rounded",
-                      !isSameMonth(date, currentDate) &&
+                {d}
+              </div>
+            ))}
+            {filteredCalendarDays.map(({ date, appointments }) => {
+              const selected = selectedDate && isSameDay(date, selectedDate);
+              const isCurrent = isToday(date);
+              const hasAppointments = appointments.length > 0;
+              return (
+                <div
+                  key={date.toISOString()}
+                  className={clsx(
+                    "relative min-h-[100px] bg-white p-2 transition",
+                    !isSameMonth(date, currentDate) && "bg-gray-100 text-gray-400",
+                    isCurrent && !selected && "bg-green-100",
+                    selected && "z-10 bg-gray-200 ring-2 ring-green-600",
+                    hasAppointments ? "cursor-pointer" : "cursor-default"
+                  )}
+                  onClick={() => hasAppointments && setSelectedDate(date)}
+                >
+                  <div className="flex items-center mb-1">
+                    <span
+                      className={clsx(
+                        "text-xs font-semibold w-6 h-6 flex items-center justify-center rounded",
+                        !isSameMonth(date, currentDate) &&
                         !selected &&
                         !isCurrent &&
                         "text-gray-400",
-                      isSameMonth(date, currentDate) &&
+                        isSameMonth(date, currentDate) &&
                         !selected &&
                         !isCurrent &&
                         "text-gray-700",
-                      selected && "bg-green-500 text-white",
-                      !selected && isCurrent && "bg-green-200 text-green-700"
-                    )}
-                  >
-                    {format(date, "d")}
-                  </span>
-                </div>
-                <div className="space-y-1">
-                  {appointments.map((a) => {
-                    // Filter assignees for this specific appointment
-                    const appointmentAssignees = assignees.filter((ass) => ass.appointment === a.id);
+                        selected && "bg-green-500 text-white",
+                        !selected && isCurrent && "bg-green-200 text-green-700"
+                      )}
+                    >
+                      {format(date, "d")}
+                    </span>
+                  </div>
+                  <div className="space-y-1">
+                    {appointments.map((a) => {
+                      // Filter assignees for this specific appointment
+                      const appointmentAssignees = assignees.filter((ass) => ass.appointment === a.id);
 
-                    return (
-                      <AppointmentHoverCard
-                        key={a.id}
-                        appointment={a}
-                        patients={patients}
-                        relatives={relatives}
-                        assignees={appointmentAssignees}
-                        activities={activities}
-                        userEmail={userEmail}
-                        userId={userId}
-                        ownerUsers={ownerUsers}
-                        getDateTag={getDateTag}
-                        onEdit={setEditAppt}
-                        onDelete={deleteAppt}
-                        onToggleStatus={toggleStatus}
-                        showDetails={false} // Default to false, can be overridden
-                      />
-                    );
-                  })}
+                      return (
+                        <AppointmentHoverCard
+                          key={a.id}
+                          appointment={a}
+                          patients={patients}
+                          relatives={relatives}
+                          assignees={appointmentAssignees}
+                          activities={activities}
+                          userEmail={userEmail}
+                          userId={userId}
+                          ownerUsers={ownerUsers}
+                          getDateTag={getDateTag}
+                          onEdit={setEditAppt}
+                          onDelete={deleteAppt}
+                          onToggleStatus={toggleStatus}
+                          showDetails={false} // Default to false, can be overridden
+                        />
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
           </div>
         </div>
       </div>
@@ -507,7 +624,7 @@ export default function MonthView() {
           </div>
           <div className="space-y-4">
             {sortByTime(
-              displayCalendarDays.find((d) => isSameDay(d.date, selectedDate))
+              filteredCalendarDays.find((d) => isSameDay(d.date, selectedDate))
                 ?.appointments || []
             ).map((a) => {
               const color = a.category_data?.color || randomBgColor(a.id);
@@ -882,7 +999,7 @@ export default function MonthView() {
                 </div>
               );
             })}
-            {(displayCalendarDays.find((d) => isSameDay(d.date, selectedDate))
+            {(filteredCalendarDays.find((d) => isSameDay(d.date, selectedDate))
               ?.appointments.length || 0) === 0 && (
                 <div className="text-gray-400 text-center">No appointments</div>
               )}
@@ -896,6 +1013,7 @@ export default function MonthView() {
           appointment={editAppt}
           onSuccess={() => {
             setEditAppt(null);
+            void invalidateAllForCrud(queryClient);
             void (async () => {
               try {
                 const response = await fetch("/api/appointments");

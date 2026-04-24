@@ -3,6 +3,8 @@
 import { QueryProvider } from "./QueryProvider";
 import { DateProvider } from "@/context/DateContext";
 import { AppointmentColorProvider } from "@/context/AppointmentColorContext";
+import { AppointmentDataProvider } from "@/context/AppointmentDataContext";
+import { CalendarFiltersProvider } from "@/context/CalendarFiltersContext";
 import { ToastProvider } from "./ToastProvider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
@@ -20,12 +22,16 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     <QueryProvider>
       <DateProvider>
         <AppointmentColorProvider>
-          <TooltipProvider>
-            {children}
-            {/* ToastProvider is rendered here so it sits at the top level visually 
-                but has access to any contexts if ever needed */}
-            <ToastProvider />
-          </TooltipProvider>
+          <AppointmentDataProvider>
+            <CalendarFiltersProvider>
+              <TooltipProvider>
+                {children}
+                {/* ToastProvider is rendered here so it sits at the top level visually 
+                    but has access to any contexts if ever needed */}
+                <ToastProvider />
+              </TooltipProvider>
+            </CalendarFiltersProvider>
+          </AppointmentDataProvider>
         </AppointmentColorProvider>
       </DateProvider>
     </QueryProvider>
