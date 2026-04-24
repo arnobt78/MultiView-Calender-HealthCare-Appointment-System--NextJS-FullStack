@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || req.nextUrl.origin;
   const redirectUri = `${baseUrl}/api/auth/callback/google`;
   const scope = "openid email profile";
-  const state = req.nextUrl.searchParams.get("redirect") || "/";
+  const state = req.nextUrl.searchParams.get("redirect") || "/dashboard";
 
   const params = new URLSearchParams({
     client_id: GOOGLE_CLIENT_ID,

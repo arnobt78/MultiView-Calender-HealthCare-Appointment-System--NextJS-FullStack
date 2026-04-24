@@ -36,7 +36,7 @@ interface GoogleUserInfo {
 
 export async function GET(req: NextRequest) {
   const code = req.nextUrl.searchParams.get("code");
-  const state = req.nextUrl.searchParams.get("state") || "/";
+  const state = req.nextUrl.searchParams.get("state") || "/dashboard";
   const errorParam = req.nextUrl.searchParams.get("error");
 
   if (errorParam) {
