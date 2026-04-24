@@ -60,14 +60,14 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
   const users =
     userIds.length > 0
       ? await prisma.user.findMany({
-          where: { id: { in: userIds } },
-          select: { id: true, email: true, display_name: true },
-        })
+        where: { id: { in: userIds } },
+        select: { id: true, email: true, display_name: true },
+      })
       : [];
   const userMap = Object.fromEntries(users.map((u) => [u.id, u]));
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 p-4">
+    <div className="max-w-9xl mx-auto space-y-6 p-4">
       <PageHeader
         title={org.name}
         description={`Slug: ${org.slug}`}

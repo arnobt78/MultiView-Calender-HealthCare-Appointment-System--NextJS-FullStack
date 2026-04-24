@@ -70,12 +70,12 @@ export default function AppointmentAccessPermission() {
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle className="text-lg font-semibold">Appointment Access Invitation</CardTitle>
+        <CardTitle className="text-lg font-semibold text-gray-700">Appointment Access Invitation</CardTitle>
         <CardDescription className="text-base text-muted-foreground">Invite someone to access a specific appointment.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="appt-email" className="text-base font-medium">Invitee Email</Label>
+          <Label htmlFor="appt-email" className="text-base font-medium text-gray-700">Invitee Email</Label>
           <Input
             id="appt-email"
             type="email"
@@ -85,7 +85,7 @@ export default function AppointmentAccessPermission() {
           />
         </div>
         <div className="space-y-2 relative">
-          <Label htmlFor="appt-search" className="text-base font-medium">Appointment</Label>
+          <Label htmlFor="appt-search" className="text-base font-medium text-gray-700">Appointment</Label>
           <Input
             id="appt-search"
             placeholder="Search appointment by title or ID"
@@ -119,7 +119,7 @@ export default function AppointmentAccessPermission() {
           )}
         </div>
         <div className="space-y-2">
-          <Label className="text-base font-medium">Permission</Label>
+          <Label className="text-base font-medium text-gray-700">Permission</Label>
           <Select value={permission} onValueChange={(v: "read" | "write" | "full") => setPermission(v)}>
             <SelectTrigger>
               <SelectValue />

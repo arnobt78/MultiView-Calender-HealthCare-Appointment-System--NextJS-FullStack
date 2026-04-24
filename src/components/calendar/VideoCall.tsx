@@ -60,7 +60,7 @@ export default function VideoCall({
         className={
           isFullscreen
             ? "fixed inset-0 max-w-none w-screen h-screen rounded-none p-0"
-            : "max-w-4xl w-full h-[80vh] p-0"
+            : "max-w-9xl w-full h-[80vh] p-0"
         }
       >
         <DialogHeader className="px-4 py-2 border-b flex-row items-center justify-between">

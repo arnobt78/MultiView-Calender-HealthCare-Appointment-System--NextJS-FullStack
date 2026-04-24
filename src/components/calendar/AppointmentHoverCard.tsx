@@ -241,7 +241,7 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
         </svg>
         <div className="pl-6">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-xl font-semibold text-gray-800 flex items-center">
+            <span className="text-xl font-semibold text-gray-700 flex items-center">
               {a.title}
               {getDateTag(new Date(a.start))}
             </span>

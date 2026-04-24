@@ -274,7 +274,7 @@ export default function Login({ redirect = null }: LoginProps) {
                   <div className="inline-flex p-2.5 bg-blue-50 rounded-2xl mb-4 ring-1 ring-blue-100">
                     <CalendarDays className="h-5 w-5 text-blue-600" />
                   </div>
-                  <h2 className="text-2xl font-bold text-slate-700 tracking-tight">Welcome back</h2>
+                  <h2 className="text-2xl font-bold text-gray-700 tracking-tight">Welcome back</h2>
                   <p className="text-slate-400 text-sm mt-1">Sign in to your account to continue</p>
                 </motion.div>
 
@@ -295,7 +295,7 @@ export default function Login({ redirect = null }: LoginProps) {
                           type="button"
                           className="flex w-full h-11 items-center justify-between gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-left shadow-sm transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:border-blue-400 cursor-pointer"
                         >
-                          <span className={selectedRole ? "text-slate-800" : "text-slate-400"}>
+                          <span className={selectedRole ? "text-gray-700" : "text-slate-400"}>
                             {selectedRole
                               ? testAccounts[selectedRole]?.label + " (" + testAccounts[selectedRole]?.email + ")"
                               : "Select Role Based Test Account"}
@@ -367,7 +367,7 @@ export default function Login({ redirect = null }: LoginProps) {
                     <Button
                       type="button"
                       variant="outline"
-                      className="w-full h-11 rounded-2xl font-medium text-sm border-slate-200 bg-white hover:bg-slate-50 text-slate-700"
+                      className="w-full h-11 rounded-2xl font-medium text-sm border-slate-200 bg-white hover:bg-slate-50 text-gray-700"
                       onClick={handleGoogle}
                       disabled={loading}
                     >

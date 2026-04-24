@@ -463,7 +463,7 @@ export default function WeekView() {
   return (
     <div className="min-h-0 py-4 px-2 sm:px-4 lg:px-8">
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <h2 className="text-xl font-semibold tracking-tight text-gray-800">
+        <h2 className="text-xl font-semibold tracking-tight text-gray-700">
           {weekTitle}
         </h2>
         <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-sky-100 text-sky-700 hover:bg-sky-100">Total: {summaryStats.total}</Badge>

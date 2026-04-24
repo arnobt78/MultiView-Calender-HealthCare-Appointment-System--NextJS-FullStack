@@ -24,7 +24,8 @@ import {
   Banknote,
   Receipt,
 } from "lucide-react";
-import { format, formatDistanceToNow } from "date-fns";
+import { format } from "date-fns";
+import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
 
 const STATUS_COLORS: Record<string, string> = {
   done: "bg-green-100 text-green-700 border-green-200",
@@ -127,7 +128,7 @@ export default function DashboardOverviewComponent() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Dashboard Overview</h2>
+          <h2 className="text-2xl font-bold tracking-tight text-gray-700">Dashboard Overview</h2>
           <p className="text-muted-foreground text-sm">
             Real-time system summary — last updated {format(new Date(), "HH:mm")}
           </p>

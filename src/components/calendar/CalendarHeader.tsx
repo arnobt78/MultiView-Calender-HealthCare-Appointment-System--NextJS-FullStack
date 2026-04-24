@@ -3,7 +3,8 @@
 import { useDateContext } from "@/context/DateContext";
 import { addDays } from "date-fns";
 import { Button } from "@/components/ui/button";
-import React from "react";
+import React, { useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import AppointmentDialogController from "./AppointmentDialogController";
 import ImportICSDialog from "./ImportICSDialog";
 
@@ -19,6 +20,21 @@ export default function CalendarHeader({
   setView: (v: ViewType) => void;
 }) {
   const { currentDate, setCurrentDate } = useDateContext();
+  const [isComposeOpen, setIsComposeOpen] = useState(false);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const shouldComposeOpen = searchParams.get("compose") === "1";
+
+  const handleComposeOpenChange = (open: boolean) => {
+    setIsComposeOpen(open);
+    if (!open && shouldComposeOpen) {
+      const next = new URLSearchParams(searchParams.toString());
+      next.delete("compose");
+      const query = next.toString();
+      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    }
+  };
 
   // Navigation logic: only change date for Month/Week/Day, not for List
   const handlePrev = () => {
@@ -47,7 +63,7 @@ export default function CalendarHeader({
         >
           ←
         </Button>
-        <div className="text-lg font-medium text-gray-800">
+        <div className="text-lg font-medium text-gray-700">
           {new Intl.DateTimeFormat("de-DE", {
             day: "2-digit",
             month: "long",
@@ -95,6 +111,8 @@ export default function CalendarHeader({
 
         {/* New Appointment button */}
         <AppointmentDialogController
+          isOpen={shouldComposeOpen || isComposeOpen}
+          onOpenChange={handleComposeOpenChange}
           trigger={<Button variant="default" className="cursor-pointer shadow-xl">+ New Appointment</Button>}
         />
       </div>

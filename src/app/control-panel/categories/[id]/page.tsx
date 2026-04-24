@@ -34,7 +34,7 @@ export default async function CategoryDetailPage({ params }: PageProps) {
   const category = serializeCategory(raw);
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 p-4">
+    <div className="max-w-9xl mx-auto space-y-6 p-4">
       <PageHeader
         title={category.label}
         description="Category — all table schema properties"

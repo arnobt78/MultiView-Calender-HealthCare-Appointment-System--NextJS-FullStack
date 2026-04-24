@@ -78,7 +78,7 @@ export default function DayView() {
   return (
     <div className="min-h-0 px-2 py-4 sm:px-4 lg:px-8">
       {/* Day header */}
-      <div className="mb-4 flex flex-wrap items-center gap-3">
+      <div className="mb-3 flex flex-wrap items-center gap-3">
         <h2 className="text-xl font-semibold">{format(currentDate, "EEEE, MMMM d, yyyy")}</h2>
         <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-green-100 text-green-700 hover:bg-green-100">
           Today: {dayAppointments.length}
@@ -94,7 +94,7 @@ export default function DayView() {
           Done: {dayStats.done}
         </Badge>
       </div>
-      <GlobalCalendarFilters categories={categories} patients={patients} className="mb-4" />
+      <GlobalCalendarFilters categories={categories} patients={patients} className="mb-3" />
 
       {/* Time grid */}
       <div className="relative border rounded-2xl overflow-hidden bg-background">

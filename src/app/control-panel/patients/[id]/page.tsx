@@ -35,7 +35,7 @@ export default async function PatientDetailPage({ params }: PageProps) {
   const patient = serializePatient(raw);
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 p-4">
+    <div className="max-w-9xl mx-auto space-y-6 p-4">
       <PageHeader
         title={`${patient.firstname} ${patient.lastname}`}
         description="Patient — all table schema properties"

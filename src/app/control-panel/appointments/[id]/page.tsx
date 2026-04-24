@@ -65,7 +65,7 @@ export default async function AppointmentDetailPage({ params }: PageProps) {
   const categoryData = raw.category ? serializeCategory(raw.category) : null;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 p-4">
+    <div className="max-w-9xl mx-auto space-y-6 p-4">
       <PageHeader
         title={appointment.title}
         description="Appointment — all table schema properties"

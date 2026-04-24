@@ -18,7 +18,7 @@ export default function PatientDetailPage() {
 
   if (!id) {
     return (
-      <div className="max-w-4xl mx-auto p-4">
+      <div className="max-w-9xl mx-auto p-4">
         <p className="text-destructive">Invalid patient ID.</p>
         <Button variant="link" asChild><Link href="/control-panel">Back to Control Panel</Link></Button>
       </div>
@@ -27,7 +27,7 @@ export default function PatientDetailPage() {
 
   if (isError) {
     return (
-      <div className="max-w-4xl mx-auto p-4">
+      <div className="max-w-9xl mx-auto p-4">
         <p className="text-destructive">{error?.message ?? "Failed to load patient."}</p>
         <Button variant="link" asChild><Link href="/control-panel">Back to Control Panel</Link></Button>
       </div>
@@ -36,14 +36,14 @@ export default function PatientDetailPage() {
 
   if (isLoading || !patient) {
     return (
-      <div className="max-w-4xl mx-auto p-4">
+      <div className="max-w-9xl mx-auto p-4">
         <p className="text-muted-foreground">Loading patient...</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 p-4">
+    <div className="max-w-9xl mx-auto space-y-6 p-4">
       <PageHeader
         title={`Patient: ${patient.firstname} ${patient.lastname}`}
         description="All table schema properties"

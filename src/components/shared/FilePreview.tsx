@@ -63,7 +63,7 @@ export default function FilePreview({ url, filename, fileType }: FilePreviewProp
             <Eye className="h-3.5 w-3.5" />
           </Button>
         </DialogTrigger>
-        <DialogContent className="max-w-4xl w-full max-h-[90vh] overflow-auto">
+        <DialogContent className="max-w-9xl w-full max-h-[90vh] overflow-auto">
           <DialogHeader>
             <DialogTitle className="text-sm font-medium flex items-center gap-2">
               {getFileIcon(type)} {filename}

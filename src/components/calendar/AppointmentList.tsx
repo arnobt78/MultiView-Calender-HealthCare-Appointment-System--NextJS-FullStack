@@ -345,7 +345,7 @@ export default function AppointmentList() {
     <div className="py-4 px-2 sm:px-4 lg:px-8 pb-8">
       {/* Static header — always visible, never skeletonised */}
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <h2 className="text-xl font-semibold tracking-tight text-gray-800">
+        <h2 className="text-xl font-semibold tracking-tight text-gray-700">
           Appointment List
         </h2>
         <StatBadge label="Total" value={summaryStats.total} className="bg-sky-100 text-sky-700 hover:bg-sky-100" />
@@ -535,7 +535,7 @@ export default function AppointmentList() {
 
                             {/* Row 1: Title + date tag */}
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className={`text-base font-semibold text-gray-800 ${isDone ? "line-through text-gray-400" : ""}`}>
+                              <span className={`text-base font-semibold text-gray-700 ${isDone ? "line-through text-gray-400" : ""}`}>
                                 {appt.title}
                               </span>
                               {getDateTag(start)}

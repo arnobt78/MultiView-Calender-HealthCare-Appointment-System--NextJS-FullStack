@@ -28,7 +28,7 @@ export default function ApiDocsPage() {
       <div className="space-y-8">
         <section>
           <h2 className="text-lg font-semibold mb-2">Appointments</h2>
-          <ul className="list-disc ml-6 text-gray-800">
+          <ul className="list-disc ml-6 text-gray-700">
             <li><code>GET /api/appointments</code> — List all appointments</li>
             <li><code>POST /api/appointments</code> — Create a new appointment</li>
             <li><code>GET /api/appointments/[id]</code> — Get details for a specific appointment</li>
@@ -40,34 +40,34 @@ export default function ApiDocsPage() {
         </section>
         <section>
           <h2 className="text-lg font-semibold mb-2">Appointment Permissions</h2>
-          <ul className="list-disc ml-6 text-gray-800">
+          <ul className="list-disc ml-6 text-gray-700">
             <li><code>GET /api/appointments/[id]/permissions</code> — Check appointment permissions for current user</li>
             <li><code>DELETE /api/appointments/[id]/permissions</code> — Discard appointment invitation</li>
           </ul>
         </section>
         <section>
           <h2 className="text-lg font-semibold mb-2">Dashboard Permissions</h2>
-          <ul className="list-disc ml-6 text-gray-800">
+          <ul className="list-disc ml-6 text-gray-700">
             <li><code>GET /api/dashboard/[id]/permissions</code> — Check dashboard permissions for current user</li>
             <li><code>DELETE /api/dashboard/[id]/permissions</code> — Discard dashboard invitation</li>
           </ul>
         </section>
         <section>
           <h2 className="text-lg font-semibold mb-2">Invitations</h2>
-          <ul className="list-disc ml-6 text-gray-800">
+          <ul className="list-disc ml-6 text-gray-700">
             <li><code>GET /api/invitations</code> — List all invitations for current user</li>
             <li><code>POST /api/invitations</code> — Send a new invitation</li>
           </ul>
         </section>
         <section>
           <h2 className="text-lg font-semibold mb-2">Users</h2>
-          <ul className="list-disc ml-6 text-gray-800">
+          <ul className="list-disc ml-6 text-gray-700">
             <li><code>GET /api/users/search</code> — Search users</li>
           </ul>
         </section>
         <section>
           <h2 className="text-lg font-semibold mb-2">OpenAPI & Docs</h2>
-          <ul className="list-disc ml-6 text-gray-800">
+          <ul className="list-disc ml-6 text-gray-700">
             <li><code>GET /api/openapi</code> — OpenAPI JSON</li>
             <li><code>/api-docs</code> — This documentation page</li>
             <li><code>/redoc.html</code> — Full interactive API docs</li>

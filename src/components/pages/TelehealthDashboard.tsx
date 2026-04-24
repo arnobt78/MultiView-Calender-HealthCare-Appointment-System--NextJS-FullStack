@@ -44,7 +44,7 @@ export default function TelehealthDashboard() {
     <div className="space-y-6 animate-in fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Telehealth Queue</h2>
+          <h2 className="text-2xl font-bold tracking-tight text-gray-700">Telehealth Queue</h2>
           <p className="text-muted-foreground">Manage your daily appointments and video calls</p>
         </div>
         <div className="flex bg-muted p-1 rounded-2xl">
@@ -82,7 +82,7 @@ export default function TelehealthDashboard() {
           <h3 className="font-semibold text-lg flex items-center gap-2 mb-4">
             <span className="relative flex h-3 w-3">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-primary text-gray-700"></span>
             </span>
             Up Next
           </h3>

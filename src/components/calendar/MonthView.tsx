@@ -518,7 +518,7 @@ export default function MonthView() {
     <div className="flex min-h-0 flex-col gap-4 py-4 px-2 sm:px-4 lg:px-8 md:flex-row md:items-start md:space-x-8">
       <div className="min-w-0 flex-1">
         <div className="mb-3 flex flex-wrap items-center gap-2">
-          <h2 className="text-xl font-semibold tracking-tight text-gray-800">
+          <h2 className="text-xl font-semibold tracking-tight text-gray-700">
             {monthTitle}
           </h2>
           <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-sky-100 text-sky-700 hover:bg-sky-100">Total: {summaryStats.total}</Badge>
@@ -611,7 +611,7 @@ export default function MonthView() {
       {selectedDate && (
         <div className="h-fit w-full rounded-2xl border border-gray-200 bg-white p-2 shadow-xl md:sticky md:top-2 md:w-[350px]">
           <div className="flex items-center gap-2 mb-4">
-            <span className="text-lg font-semibold text-gray-800">
+            <span className="text-lg font-semibold text-gray-700">
               {new Intl.DateTimeFormat("de-DE", {
                 weekday: "long",
                 day: "numeric",
@@ -674,7 +674,7 @@ export default function MonthView() {
                   {/* Main content */}
                   <div className="pl-6 pr-2 py-4 flex-1 flex flex-col justify-center min-h-[110px]">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xl font-semibold text-gray-800 flex items-center">
+                      <span className="text-xl font-semibold text-gray-700 flex items-center">
                         {a.title}
                         {getDateTag(new Date(a.start))}
                       </span>

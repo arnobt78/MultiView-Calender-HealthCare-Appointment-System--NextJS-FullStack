@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import PatientDetailView from "./PatientDetailView";
 import TelehealthDashboard from "./TelehealthDashboard";
 import { useAppStore } from "@/store/useAppStore";
@@ -52,9 +53,31 @@ const SIDEBAR_ITEMS = [
   { value: "google-calendar", label: "Google Calendar" },
 ] as const;
 
+const TAB_TO_SEGMENT: Record<string, string> = {
+  overview: "dashboard-overview",
+  telehealth: "telehealth-queue",
+  appointment: "appointment-access-invitation",
+  dashboard: "user-dashboard-access-invitation",
+  patients: "patient-management",
+  categories: "category-management",
+  doctors: "doctor-user-management",
+  relatives: "relative-management",
+  organizations: "organization-management",
+  invoices: "invoice-management",
+  appointments_mgmt: "appointment-management",
+  notifications: "notifications",
+  activities: "activity-log",
+  "google-calendar": "google-calendar",
+};
+
+const SEGMENT_TO_TAB = Object.fromEntries(
+  Object.entries(TAB_TO_SEGMENT).map(([tab, segment]) => [segment, tab])
+) as Record<string, string>;
+
 type ControlPanelPageProps = {
   /** Optional session from SSR to avoid client round-trip */
   initialSession?: { userId: string; email: string } | null;
+  initialTab?: string;
 };
 
 export function PatientsTab() {
@@ -94,7 +117,7 @@ export function PatientsTab() {
   return (
     <div className="space-y-4 animate-in fade-in">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Patient Management</h2>
+        <h2 className="text-2xl font-bold text-gray-700">Patient Management</h2>
         <Input
           placeholder="Search patients..."
           value={searchTerm}
@@ -125,9 +148,23 @@ export function PatientsTab() {
   );
 }
 
-export default function ControlPanelPage({ initialSession }: ControlPanelPageProps) {
-  const [activeTab, setActiveTab] = useState("overview");
+export default function ControlPanelPage({ initialSession, initialTab }: ControlPanelPageProps) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const resolvedInitialTab = useMemo(() => {
+    if (initialTab && TAB_TO_SEGMENT[initialTab]) return initialTab;
+    const segment = pathname.split("/")[2] || "";
+    return SEGMENT_TO_TAB[segment] ?? "overview";
+  }, [initialTab, pathname]);
+  const activeTab = resolvedInitialTab;
   const [sheetOpen, setSheetOpen] = useState(false);
+  const handleTabChange = (nextTab: string) => {
+    const segment = TAB_TO_SEGMENT[nextTab] ?? TAB_TO_SEGMENT.overview;
+    const targetPath = `/control-panel/${segment}`;
+    if (pathname !== targetPath) {
+      router.replace(targetPath, { scroll: false });
+    }
+  };
 
   return (
     <div className="w-full max-w-9xl mx-auto py-8 px-2 sm:px-6 lg:px-8">
@@ -136,7 +173,7 @@ export default function ControlPanelPage({ initialSession }: ControlPanelPagePro
         <aside className="hidden md:flex min-w-[240px] w-64 shrink-0 flex-col rounded-lg border bg-card text-card-foreground shadow-xl">
           <Tabs
             value={activeTab}
-            onValueChange={setActiveTab}
+            onValueChange={handleTabChange}
             orientation="vertical"
             className="flex-1 w-full"
           >
@@ -178,7 +215,7 @@ export default function ControlPanelPage({ initialSession }: ControlPanelPagePro
               <Tabs
                 value={activeTab}
                 onValueChange={(v) => {
-                  setActiveTab(v);
+                  handleTabChange(v);
                   setSheetOpen(false);
                 }}
                 orientation="vertical"
@@ -206,7 +243,7 @@ export default function ControlPanelPage({ initialSession }: ControlPanelPagePro
 
         {/* Main content - dynamic width */}
         <main className="flex-1 min-w-0">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
             <div className="md:hidden mb-4 overflow-x-auto">
               <TabsList className="inline-flex w-full min-w-max rounded-2xl shadow-xl gap-2 p-1">
                 <TabsTrigger value="overview" className="py-2">Overview</TabsTrigger>
