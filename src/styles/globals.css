@@ -117,7 +117,7 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary;
+    @apply bg-background text-foreground antialiased selection:bg-primary/20 selection:text-gray-700;
     font-feature-settings: "rlig" 1, "calt" 1;
     background-color: #020617;
   }
@@ -183,7 +183,7 @@
     position: absolute;
     left: 0;
     right: 0;
-    border-top: 2px solid #ef4444;
+  border-top: 2px solid #ef4444;
     display: flex;
     align-items: center;
   }
@@ -195,8 +195,8 @@
     font-size: 12px;
     font-weight: 600;
     background: #ef4444;
-    padding: 0 4px;
-    border-radius: 4px;
+  padding: 0 8px;
+  border-radius: 0.75rem;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
   }
   .week-sticky-corner {
@@ -391,8 +391,14 @@ html body[data-scroll-locked] {
 
 /* ===== Ripple button effect ===== */
 @keyframes ripple-expand {
-  from { transform: scale(0); opacity: 0.45; }
-  to   { transform: scale(1); opacity: 0; }
+  from {
+    transform: scale(0.15);
+    opacity: 0.55;
+  }
+  to {
+    transform: scale(2.35);
+    opacity: 0;
+  }
 }
 
 /* ===== CTA shine sweep ===== */

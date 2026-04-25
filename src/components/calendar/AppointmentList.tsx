@@ -32,7 +32,17 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, CheckCircle, Circle } from "lucide-react";
+import {
+  MoreVertical,
+  CheckCircle,
+  Circle,
+  CalendarCheck2,
+  CalendarClock,
+  CalendarX2,
+  CalendarDays,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react";
 import { getUserAppointmentPermission } from "@/lib/permissions";
 import VideoCall from "./VideoCall";
 // Using Vercel Blob for file storage
@@ -51,6 +61,7 @@ import { MdCategory } from "react-icons/md";
 import GlobalCalendarFilters from "./GlobalCalendarFilters";
 import { useAppointmentColor } from "@/context/AppointmentColorContext";
 import { motion } from "framer-motion";
+import CalendarStickyHeader from "./CalendarStickyHeader";
 
 // Types imported from hooks
 
@@ -178,6 +189,16 @@ function getDateTag(date: Date) {
   return null;
 }
 
+type ListSectionKey = "today" | "tomorrow" | "passed" | "later";
+
+function dayDiffFromToday(date: Date) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return Math.floor((d.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+}
+
 export default function AppointmentList() {
   const { user } = useAuth();
 
@@ -207,6 +228,12 @@ export default function AppointmentList() {
   // Keep ownerUsers state empty for now, or we can fetch them separately if needed, 
   // but useAppointments currently just returns user IDs. We'll simplify to just showing the user ID or email if invited_email is populated.
   const [ownerUsers, setOwnerUsers] = useState<{ id: string, email: string }[]>([]);
+  const [collapsedSections, setCollapsedSections] = useState<Record<ListSectionKey, boolean>>({
+    today: false,
+    tomorrow: false,
+    passed: false,
+    later: false,
+  });
 
   // We can fetch owner users for shared appointments if needed, 
   // but for now we'll just rely on the existing invited_email or user_id.
@@ -341,24 +368,97 @@ export default function AppointmentList() {
     const [todayGroup] = copy.splice(todayIdx, 1);
     return [todayGroup, ...copy];
   }, [grouped]);
+
+  const groupedSections = useMemo(() => {
+    const today: { date: Date; appts: FullAppointment[] }[] = [];
+    const tomorrow: { date: Date; appts: FullAppointment[] }[] = [];
+    const passed: { date: Date; appts: FullAppointment[] }[] = [];
+    const later: { date: Date; appts: FullAppointment[] }[] = [];
+
+    groupedWithTodayFirst.forEach((group) => {
+      const diff = dayDiffFromToday(group.date);
+      if (diff === 0) today.push(group);
+      else if (diff === 1) tomorrow.push(group);
+      else if (diff < 0) passed.push(group);
+      else later.push(group);
+    });
+
+    return { today, tomorrow, passed, later };
+  }, [groupedWithTodayFirst]);
+
+  const sectionConfig = useMemo(
+    () => [
+      {
+        key: "today" as const,
+        title: "Today's Appointments",
+        subtitle: "Scheduled for today",
+        icon: CalendarCheck2,
+        headerClass:
+          "border-emerald-300/55 bg-gradient-to-r from-emerald-50 via-emerald-50/80 to-emerald-100/70",
+        iconClass: "border-emerald-200 bg-emerald-100 text-emerald-700",
+        countClass: "bg-emerald-100 text-emerald-700",
+        emptyMessage: "No appointments for today.",
+      },
+      {
+        key: "tomorrow" as const,
+        title: "Tomorrow",
+        subtitle: "Upcoming appointments for next day",
+        icon: CalendarClock,
+        headerClass:
+          "border-blue-300/55 bg-gradient-to-r from-blue-50 via-blue-50/80 to-sky-100/70",
+        iconClass: "border-blue-200 bg-blue-100 text-blue-700",
+        countClass: "bg-blue-100 text-blue-700",
+        emptyMessage: "No appointments planned for tomorrow.",
+      },
+      {
+        key: "passed" as const,
+        title: "Passed Days",
+        subtitle: "Previous appointments",
+        icon: CalendarX2,
+        headerClass:
+          "border-gray-300/55 bg-gradient-to-r from-gray-50 via-gray-50/80 to-slate-100/70",
+        iconClass: "border-gray-200 bg-gray-100 text-gray-700",
+        countClass: "bg-gray-200 text-gray-700",
+        emptyMessage: "No passed appointments.",
+      },
+      {
+        key: "later" as const,
+        title: "Later Days",
+        subtitle: "Future appointments after tomorrow",
+        icon: CalendarDays,
+        headerClass:
+          "border-violet-300/55 bg-gradient-to-r from-violet-50 via-violet-50/80 to-violet-100/70",
+        iconClass: "border-violet-200 bg-violet-100 text-violet-700",
+        countClass: "bg-violet-100 text-violet-700",
+        emptyMessage: "No later appointments.",
+      },
+    ],
+    []
+  );
+
+  const toggleSection = (key: ListSectionKey) => {
+    setCollapsedSections((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
   return (
-    <div className="py-4 px-2 sm:px-4 lg:px-8 pb-8">
-      {/* Static header — always visible, never skeletonised */}
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <h2 className="text-xl font-semibold tracking-tight text-gray-700">
-          Appointment List
-        </h2>
-        <StatBadge label="Total" value={summaryStats.total} className="bg-sky-100 text-sky-700 hover:bg-sky-100" />
-        <StatBadge label="Today" value={summaryStats.today} className="bg-green-100 text-green-700 hover:bg-green-100" />
-        <StatBadge label="Tomorrow" value={summaryStats.nextDay} className="bg-blue-100 text-blue-700 hover:bg-blue-100" />
-        <StatBadge label="Later Days" value={summaryStats.later} className="bg-violet-100 text-violet-700 hover:bg-violet-100" />
-        <StatBadge label="Passed Days" value={summaryStats.passed} className="bg-gray-200 text-gray-600 hover:bg-gray-200" />
-        <span className="px-1 text-xs font-semibold text-gray-500">Status:</span>
-        <StatBadge label="Open" value={summaryStats.open} className="bg-amber-100 text-amber-700 hover:bg-amber-100" />
-        <StatBadge label="Alert" value={summaryStats.alert} className="bg-rose-100 text-rose-700 hover:bg-rose-100" />
-        <StatBadge label="Done" value={summaryStats.done} className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100" />
-      </div>
-      <GlobalCalendarFilters categories={categories} patients={patients} />
+    <div className="pt-0 px-2 sm:px-4 lg:px-8 pb-8">
+      {/* Sticky top rows: title/badges + filters */}
+      <CalendarStickyHeader >
+        <div className="mb-2 flex flex-wrap items-center gap-2">
+          <h2 className="text-xl font-semibold tracking-tight text-gray-700">
+            Appointment List
+          </h2>
+          <StatBadge label="Total" value={summaryStats.total} className="bg-sky-100 text-sky-700 hover:bg-sky-100" />
+          <StatBadge label="Today" value={summaryStats.today} className="bg-green-100 text-green-700 hover:bg-green-100" />
+          <StatBadge label="Tomorrow" value={summaryStats.nextDay} className="bg-blue-100 text-blue-700 hover:bg-blue-100" />
+          <StatBadge label="Later Days" value={summaryStats.later} className="bg-violet-100 text-violet-700 hover:bg-violet-100" />
+          <StatBadge label="Passed Days" value={summaryStats.passed} className="bg-gray-200 text-gray-600 hover:bg-gray-200" />
+          <span className="px-1 text-xs font-semibold text-gray-500">Status:</span>
+          <StatBadge label="Open" value={summaryStats.open} className="bg-amber-100 text-amber-700 hover:bg-amber-100" />
+          <StatBadge label="Alert" value={summaryStats.alert} className="bg-rose-100 text-rose-700 hover:bg-rose-100" />
+          <StatBadge label="Done" value={summaryStats.done} className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100" />
+        </div>
+        <GlobalCalendarFilters categories={categories} patients={patients} />
+      </CalendarStickyHeader>
 
       {/* Data area — skeleton while loading, real content once ready */}
       {loadingAppointments ? (
@@ -419,320 +519,372 @@ export default function AppointmentList() {
               transition={{ duration: 0.4 }}
               className="flex flex-col gap-4"
             >
-              {groupedWithTodayFirst.map(({ date, appts }) => (
-                <div key={date.toISOString()}>
-                  <DateHeadline date={date} dayStats={summarizeDayAppointments(appts)} />
-                  <div className="flex flex-col gap-4">
-                    {appts.map((appt: FullAppointment, i: number) => {
-                      // --- Begin: Restored full-featured appointment card ---
-                      const start = new Date(appt.start);
-                      const now = new Date();
-                      const isToday =
-                        start.getFullYear() === now.getFullYear() &&
-                        start.getMonth() === now.getMonth() &&
-                        start.getDate() === now.getDate();
-                      // Always use a stable random color from bgColors for the left border if no category color is set
-                      const color = appt.category_data?.color || randomBgColor(appt.id);
-                      const isDone = appt.status === "done";
-                      const categoryIcon = appt.category_data?.icon ? (
-                        <span className="inline-flex items-center mr-1">
-                          <MdCategory className="w-4 h-4 text-gray-400" />
-                        </span>
-                      ) : null;
+              {sectionConfig.map((section) => {
+                const groups = groupedSections[section.key];
+                const sectionCount = groups.reduce((acc, g) => acc + g.appts.length, 0);
+                const isCollapsed = collapsedSections[section.key];
+                const SectionIcon = section.icon;
+                return (
+                  <div
+                    key={section.key}
+                    className={`overflow-hidden rounded-2xl border ${section.headerClass}`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => toggleSection(section.key)}
+                      className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-white/35"
+                    >
+                      <span className={`flex h-9 w-9 items-center justify-center rounded-xl border ${section.iconClass}`}>
+                        <SectionIcon className="h-4.5 w-4.5" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-sm font-semibold text-gray-800">{section.title}</p>
+                          <Badge variant="outline" className={`border-transparent ${section.countClass}`}>
+                            {sectionCount}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-gray-500">{section.subtitle}</p>
+                      </div>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-white/70 px-2.5 py-1 text-xs font-medium text-gray-700 shadow-sm">
+                        {isCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                        {isCollapsed ? "Expand" : "Collapse"}
+                      </span>
+                    </button>
 
-                      // Deduplicate assignees by user + invited_email
-                      const filteredAssignees = appt.appointment_assignee || [];
-                      const dedupedMap = new Map();
-                      for (const ass of filteredAssignees) {
-                        const key = `${ass.user || ""}|${ass.invited_email || ""}`;
-                        if (!dedupedMap.has(key)) {
-                          dedupedMap.set(key, ass);
-                          continue;
-                        }
-                        // Prefer accepted over pending, prefer higher permission
-                        const prev = dedupedMap.get(key) as AppointmentAssignee;
-                        const statusOrder: Record<'accepted' | 'pending', number> = { accepted: 2, pending: 1 };
-                        const permOrder: Record<'full' | 'write' | 'read', number> = { full: 3, write: 2, read: 1 };
-                        // Type guards for status and permission
-                        const isValidStatus = (s: unknown): s is 'accepted' | 'pending' => s === 'accepted' || s === 'pending';
-                        const isValidPerm = (p: unknown): p is 'full' | 'write' | 'read' => p === 'full' || p === 'write' || p === 'read';
-                        const prevStatus = isValidStatus(prev.status) ? statusOrder[prev.status] : 0;
-                        const currStatus = isValidStatus(ass.status) ? statusOrder[ass.status] : 0;
-                        const prevPerm = isValidPerm(prev.permission) ? permOrder[prev.permission] : 0;
-                        const currPerm = isValidPerm(ass.permission) ? permOrder[ass.permission] : 0;
-                        if (
-                          currStatus > prevStatus ||
-                          (currStatus === prevStatus && currPerm > prevPerm)
-                        ) {
-                          dedupedMap.set(key, ass);
-                        }
-                      }
-                      const dedupedAssignees = Array.from(dedupedMap.values());
+                    <motion.div
+                      initial={false}
+                      animate={isCollapsed ? { height: 0, opacity: 0 } : { height: "auto", opacity: 1 }}
+                      transition={{ duration: 0.25, ease: "easeInOut" }}
+                      className="overflow-hidden bg-white/95"
+                    >
+                      <div className="px-3 pb-3">
+                        {groups.length === 0 ? (
+                          <div className="mt-2 flex items-center gap-2 rounded-xl border border-dashed border-gray-300/80 bg-gray-50/80 px-3 py-2.5 text-sm text-gray-500">
+                            <SectionIcon className="h-4 w-4 text-gray-400" />
+                            <span>{section.emptyMessage}</span>
+                          </div>
+                        ) : (
+                          groups.map(({ date, appts }) => (
+                            <div key={`${section.key}-${date.toISOString()}`}>
+                              <DateHeadline date={date} dayStats={summarizeDayAppointments(appts)} />
+                              <div className="flex flex-col gap-4">
+                                {appts.map((appt: FullAppointment, i: number) => {
+                                  // --- Begin: Restored full-featured appointment card ---
+                                  const start = new Date(appt.start);
+                                  const now = new Date();
+                                  const isToday =
+                                    start.getFullYear() === now.getFullYear() &&
+                                    start.getMonth() === now.getMonth() &&
+                                    start.getDate() === now.getDate();
+                                  // Always use a stable random color from bgColors for the left border if no category color is set
+                                  const color = appt.category_data?.color || randomBgColor(appt.id);
+                                  const isDone = appt.status === "done";
+                                  const categoryIcon = appt.category_data?.icon ? (
+                                    <span className="inline-flex items-center mr-1">
+                                      <MdCategory className="w-4 h-4 text-gray-400" />
+                                    </span>
+                                  ) : null;
 
-                      // DEBUG: Log data for Refer to and Assigned by
-                      console.log('DEBUG Appointment Card:', {
-                        appt,
-                        dedupedAssignees,
-                        patients,
-                        relatives,
-                        user
-                      });
-
-                      // Additional debugging for the specific issue
-                      console.log('DEBUG - Refer to section data:', {
-                        appointmentId: appt.id,
-                        appointmentAssignees: appt.appointment_assignee,
-                        dedupedAssignees,
-                        patientsData: patients,
-                        relativesData: relatives,
-                        ownerUsersData: ownerUsers,
-                        currentUser: user
-                      });
-
-                      // Debug patient data specifically
-                      console.log('DEBUG - Patient data for appointment:', {
-                        appointmentId: appt.id,
-                        patientField: appt.patient,
-                        patientType: typeof appt.patient,
-                        patientData: appt.patient_data,
-                        foundPatient: patients.find((p: Patient) => p.id === appt.patient)
-                      });
-
-                      // Debug the specific fields we're trying to display
-                      if (dedupedAssignees.length > 0) {
-                        dedupedAssignees.forEach((ass: AppointmentAssignee, idx: number) => {
-                          console.log(`DEBUG - Assignee ${idx}:`, {
-                            assigneeId: ass.id,
-                            userId: ass.user,
-                            userType: ass.user_type,
-                            invitedEmail: ass.invited_email,
-                            status: ass.status,
-                            permission: ass.permission,
-                            foundPatient: patients.find((p: Patient) => p.id === ass.user),
-                            foundRelative: relatives.find((r: Relative) => r.id === ass.user)
-                          });
-                        });
-                      }
-                      // console.log('[AppointmentList] Appointment Card:', appt);
-
-
-
-                      return (
-                        <motion.div
-                          key={appt.id}
-                          data-today={isToday ? "true" : undefined}
-                          ref={isToday && i === 0 ? scrollRef : null}
-                          initial={{ opacity: 0, y: 14 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.32, delay: i * 0.07 }}
-                          className="relative rounded-2xl bg-white border border-gray-100 shadow-md hover:shadow-xl transition-all duration-200 p-0 flex items-stretch min-h-[130px]"
-                        >
-                          {/* Color bar */}
-                          <ColorBar color={color} />
-
-                          {/* Main content */}
-                          <div className="pl-6 pr-4 py-4 flex-1 flex flex-col gap-2 min-w-0">
-
-                            {/* Row 1: Title + date tag */}
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className={`text-base font-semibold text-gray-700 ${isDone ? "line-through text-gray-400" : ""}`}>
-                                {appt.title}
-                              </span>
-                              {getDateTag(start)}
-                            </div>
-
-                            {/* Row 2: Date · Time · Location */}
-                            <div className="flex items-center gap-5 flex-wrap text-sm text-gray-600">
-                              <span className="flex items-center gap-1.5 shrink-0">
-                                <svg width="13" height="13" fill="none" viewBox="0 0 24 24" className="text-gray-400 shrink-0"><path d="M8 7V3M16 7V3M3 11H21M5 19H19C20.1046 19 21 18.1046 21 17V7C21 5.89543 20.1046 5 19 5H5C3.89543 5 3 5.89543 3 7V17C3 18.1046 3.89543 19 5 19Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                                <span className="text-gray-400 text-xs">Date:</span>
-                                <span className={`text-xs ${isDone ? "line-through text-gray-400" : "text-gray-700 font-medium"}`}>{format(start, "dd.MM.yyyy")}</span>
-                              </span>
-                              <span className="flex items-center gap-1.5 shrink-0">
-                                <svg width="13" height="13" fill="none" viewBox="0 0 24 24" className="text-gray-400 shrink-0"><path d="M12 6V12L16 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" /></svg>
-                                <span className="text-gray-400 text-xs">Time:</span>
-                                <span className={`text-xs ${isDone ? "line-through text-gray-400" : "text-gray-700 font-medium"}`}>{format(start, "HH:mm")} – {format(new Date(appt.end), "HH:mm")}</span>
-                              </span>
-                              <span className="flex items-center gap-1.5 min-w-0">
-                                <FiMapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                                <span className="text-gray-400 text-xs shrink-0">Location:</span>
-                                <span className="text-xs text-gray-700 font-medium truncate">{appt.location || "--"}</span>
-                              </span>
-                            </div>
-
-                            {/* Row 3: Client · Category · Status */}
-                            <div className="flex items-center gap-5 flex-wrap">
-                              <span className="flex items-center gap-1.5 shrink-0">
-                                <FiUser className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                                <span className="text-gray-400 text-xs shrink-0">Client:</span>
-                                <span className="text-xs text-gray-700 font-medium">
-                                  {(() => {
-                                    try {
-                                      if (!appt.patient) return "--";
-                                      if (typeof appt.patient === "object" && "firstname" in appt.patient && "lastname" in appt.patient) {
-                                        return `${(appt.patient as Patient).firstname} ${(appt.patient as Patient).lastname}`;
-                                      }
-                                      if (typeof appt.patient === "string" && patients.length > 0) {
-                                        const p = patients.find((x: Patient) => x.id === appt.patient);
-                                        return p && p.firstname && p.lastname ? `${p.firstname} ${p.lastname}` : "--";
-                                      }
-                                      return "--";
-                                    } catch (error) {
-                                      console.error('Error in client name lookup:', error);
-                                      return "--";
+                                  // Deduplicate assignees by user + invited_email
+                                  const filteredAssignees = appt.appointment_assignee || [];
+                                  const dedupedMap = new Map();
+                                  for (const ass of filteredAssignees) {
+                                    const key = `${ass.user || ""}|${ass.invited_email || ""}`;
+                                    if (!dedupedMap.has(key)) {
+                                      dedupedMap.set(key, ass);
+                                      continue;
                                     }
-                                  })()}
-                                </span>
-                              </span>
-                              {appt.category_data && (
-                                <span className="flex items-center gap-1.5 shrink-0">
-                                  <MdCategory className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                                  <span className="text-gray-400 text-xs shrink-0">Category:</span>
-                                  <span className="text-xs text-gray-700 font-medium">{appt.category_data.label}</span>
-                                </span>
-                              )}
-                              <span className="flex items-center gap-1.5 shrink-0">
-                                <FiFlag className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                                <span className="text-gray-400 text-xs shrink-0">Status:</span>
-                                <span className={`text-xs font-semibold ${appt.status === "done" ? "text-green-600" : appt.status === "alert" ? "text-red-500" : "text-amber-600"}`}>
-                                  {appt.status || "pending"}
-                                </span>
-                              </span>
-                            </div>
-
-                            {/* Row 4: Refer to (only if patient exists) */}
-                            {appt.patient && (
-                              <div className="flex items-center gap-1.5">
-                                <FiUsers className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                                <span className="text-gray-400 text-xs shrink-0">Refer to:</span>
-                                {(() => {
-                                  try {
-                                    if (process.env.NODE_ENV === "development") {
-                                      console.log('DEBUG - Patient data:', { patient: appt.patient });
+                                    // Prefer accepted over pending, prefer higher permission
+                                    const prev = dedupedMap.get(key) as AppointmentAssignee;
+                                    const statusOrder: Record<'accepted' | 'pending', number> = { accepted: 2, pending: 1 };
+                                    const permOrder: Record<'full' | 'write' | 'read', number> = { full: 3, write: 2, read: 1 };
+                                    // Type guards for status and permission
+                                    const isValidStatus = (s: unknown): s is 'accepted' | 'pending' => s === 'accepted' || s === 'pending';
+                                    const isValidPerm = (p: unknown): p is 'full' | 'write' | 'read' => p === 'full' || p === 'write' || p === 'read';
+                                    const prevStatus = isValidStatus(prev.status) ? statusOrder[prev.status] : 0;
+                                    const currStatus = isValidStatus(ass.status) ? statusOrder[ass.status] : 0;
+                                    const prevPerm = isValidPerm(prev.permission) ? permOrder[prev.permission] : 0;
+                                    const currPerm = isValidPerm(ass.permission) ? permOrder[ass.permission] : 0;
+                                    if (
+                                      currStatus > prevStatus ||
+                                      (currStatus === prevStatus && currPerm > prevPerm)
+                                    ) {
+                                      dedupedMap.set(key, ass);
                                     }
-                                    if (appt.patient && typeof appt.patient === 'object' && 'firstname' in appt.patient && 'lastname' in appt.patient) {
-                                      const patientObj = appt.patient as Patient;
-                                      return <span className="text-xs text-purple-700 font-medium">Patient: {patientObj.firstname} {patientObj.lastname}</span>;
-                                    }
-                                    if (typeof appt.patient === 'string' && patients.length > 0) {
-                                      const patient = patients.find((p: Patient) => p.id === appt.patient);
-                                      if (patient && patient.firstname && patient.lastname) {
-                                        return <span className="text-xs text-purple-700 font-medium">Patient: {patient.firstname} {patient.lastname}</span>;
-                                      }
-                                    }
-                                    return <span className="text-xs text-red-500">Patient data not available</span>;
-                                  } catch (error) {
-                                    console.error('Error in patient lookup:', error);
-                                    return <span className="text-xs text-red-500">Error loading patient</span>;
                                   }
-                                })()}
-                              </div>
-                            )}
+                                  const dedupedAssignees = Array.from(dedupedMap.values());
 
-                            {/* Row 5: Notes (only if present) */}
-                            {appt.notes && (
-                              <div className="flex items-center gap-1.5">
-                                <FiFileText className={`w-3.5 h-3.5 shrink-0 ${isDone ? "text-gray-300" : "text-gray-400"}`} />
-                                <span className="text-gray-400 text-xs shrink-0">Note:</span>
-                                <span className={`text-xs ${isDone ? "line-through text-gray-400" : "text-gray-600"}`}>{appt.notes}</span>
-                              </div>
-                            )}
+                                  // DEBUG: Log data for Refer to and Assigned by
+                                  console.log('DEBUG Appointment Card:', {
+                                    appt,
+                                    dedupedAssignees,
+                                    patients,
+                                    relatives,
+                                    user
+                                  });
 
-                            {/* Attachments (only if present) */}
-                            {appt.attachements && appt.attachements.length > 0 && (
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <FiPaperclip className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                                <span className="text-gray-400 text-xs shrink-0">Attachments:</span>
-                                {appt.attachements.map((file, idx) => {
-                                  const publicUrl = getPublicUrl(file);
-                                  const fileName = file.split("/").pop() || file;
-                                  return publicUrl ? (
-                                    <a key={idx} href={publicUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline">{fileName}</a>
-                                  ) : (
-                                    <span key={idx} className="text-xs text-red-500">[File not found]</span>
+                                  // Additional debugging for the specific issue
+                                  console.log('DEBUG - Refer to section data:', {
+                                    appointmentId: appt.id,
+                                    appointmentAssignees: appt.appointment_assignee,
+                                    dedupedAssignees,
+                                    patientsData: patients,
+                                    relativesData: relatives,
+                                    ownerUsersData: ownerUsers,
+                                    currentUser: user
+                                  });
+
+                                  // Debug patient data specifically
+                                  console.log('DEBUG - Patient data for appointment:', {
+                                    appointmentId: appt.id,
+                                    patientField: appt.patient,
+                                    patientType: typeof appt.patient,
+                                    patientData: appt.patient_data,
+                                    foundPatient: patients.find((p: Patient) => p.id === appt.patient)
+                                  });
+
+                                  // Debug the specific fields we're trying to display
+                                  if (dedupedAssignees.length > 0) {
+                                    dedupedAssignees.forEach((ass: AppointmentAssignee, idx: number) => {
+                                      console.log(`DEBUG - Assignee ${idx}:`, {
+                                        assigneeId: ass.id,
+                                        userId: ass.user,
+                                        userType: ass.user_type,
+                                        invitedEmail: ass.invited_email,
+                                        status: ass.status,
+                                        permission: ass.permission,
+                                        foundPatient: patients.find((p: Patient) => p.id === ass.user),
+                                        foundRelative: relatives.find((r: Relative) => r.id === ass.user)
+                                      });
+                                    });
+                                  }
+                                  // console.log('[AppointmentList] Appointment Card:', appt);
+
+
+
+                                  return (
+                                    <motion.div
+                                      key={appt.id}
+                                      data-today={isToday ? "true" : undefined}
+                                      ref={isToday && i === 0 ? scrollRef : null}
+                                      initial={{ opacity: 0, y: 14 }}
+                                      animate={{ opacity: 1, y: 0 }}
+                                      transition={{ duration: 0.32, delay: i * 0.07 }}
+                                      className="relative rounded-2xl bg-white border border-gray-100 shadow-md hover:shadow-xl transition-all duration-200 p-0 flex items-stretch min-h-[130px]"
+                                    >
+                                      {/* Color bar */}
+                                      <ColorBar color={color} />
+
+                                      {/* Main content */}
+                                      <div className="pl-6 pr-4 py-4 flex-1 flex flex-col gap-2 min-w-0">
+
+                                        {/* Row 1: Title + date tag */}
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                          <span className={`text-base font-semibold text-gray-700 ${isDone ? "line-through text-gray-400" : ""}`}>
+                                            {appt.title}
+                                          </span>
+                                          {getDateTag(start)}
+                                        </div>
+
+                                        {/* Row 2: Date · Time · Location */}
+                                        <div className="flex items-center gap-5 flex-wrap text-sm text-gray-600">
+                                          <span className="flex items-center gap-1.5 shrink-0">
+                                            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" className="text-gray-400 shrink-0"><path d="M8 7V3M16 7V3M3 11H21M5 19H19C20.1046 19 21 18.1046 21 17V7C21 5.89543 20.1046 5 19 5H5C3.89543 5 3 5.89543 3 7V17C3 18.1046 3.89543 19 5 19Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                                            <span className="text-gray-400 text-xs">Date:</span>
+                                            <span className={`text-xs ${isDone ? "line-through text-gray-400" : "text-gray-700 font-medium"}`}>{format(start, "dd.MM.yyyy")}</span>
+                                          </span>
+                                          <span className="flex items-center gap-1.5 shrink-0">
+                                            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" className="text-gray-400 shrink-0"><path d="M12 6V12L16 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" /></svg>
+                                            <span className="text-gray-400 text-xs">Time:</span>
+                                            <span className={`text-xs ${isDone ? "line-through text-gray-400" : "text-gray-700 font-medium"}`}>{format(start, "HH:mm")} – {format(new Date(appt.end), "HH:mm")}</span>
+                                          </span>
+                                          <span className="flex items-center gap-1.5 min-w-0">
+                                            <FiMapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                                            <span className="text-gray-400 text-xs shrink-0">Location:</span>
+                                            <span className="text-xs text-gray-700 font-medium truncate">{appt.location || "--"}</span>
+                                          </span>
+                                        </div>
+
+                                        {/* Row 3: Client · Category · Status */}
+                                        <div className="flex items-center gap-5 flex-wrap">
+                                          <span className="flex items-center gap-1.5 shrink-0">
+                                            <FiUser className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                                            <span className="text-gray-400 text-xs shrink-0">Client:</span>
+                                            <span className="text-xs text-gray-700 font-medium">
+                                              {(() => {
+                                                try {
+                                                  if (!appt.patient) return "--";
+                                                  if (typeof appt.patient === "object" && "firstname" in appt.patient && "lastname" in appt.patient) {
+                                                    return `${(appt.patient as Patient).firstname} ${(appt.patient as Patient).lastname}`;
+                                                  }
+                                                  if (typeof appt.patient === "string" && patients.length > 0) {
+                                                    const p = patients.find((x: Patient) => x.id === appt.patient);
+                                                    return p && p.firstname && p.lastname ? `${p.firstname} ${p.lastname}` : "--";
+                                                  }
+                                                  return "--";
+                                                } catch (error) {
+                                                  console.error('Error in client name lookup:', error);
+                                                  return "--";
+                                                }
+                                              })()}
+                                            </span>
+                                          </span>
+                                          {appt.category_data && (
+                                            <span className="flex items-center gap-1.5 shrink-0">
+                                              <MdCategory className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                                              <span className="text-gray-400 text-xs shrink-0">Category:</span>
+                                              <span className="text-xs text-gray-700 font-medium">{appt.category_data.label}</span>
+                                            </span>
+                                          )}
+                                          <span className="flex items-center gap-1.5 shrink-0">
+                                            <FiFlag className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                                            <span className="text-gray-400 text-xs shrink-0">Status:</span>
+                                            <span className={`text-xs font-semibold ${appt.status === "done" ? "text-green-600" : appt.status === "alert" ? "text-red-500" : "text-amber-600"}`}>
+                                              {appt.status || "pending"}
+                                            </span>
+                                          </span>
+                                        </div>
+
+                                        {/* Row 4: Refer to (only if patient exists) */}
+                                        {appt.patient && (
+                                          <div className="flex items-center gap-1.5">
+                                            <FiUsers className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                                            <span className="text-gray-400 text-xs shrink-0">Refer to:</span>
+                                            {(() => {
+                                              try {
+                                                if (process.env.NODE_ENV === "development") {
+                                                  console.log('DEBUG - Patient data:', { patient: appt.patient });
+                                                }
+                                                if (appt.patient && typeof appt.patient === 'object' && 'firstname' in appt.patient && 'lastname' in appt.patient) {
+                                                  const patientObj = appt.patient as Patient;
+                                                  return <span className="text-xs text-purple-700 font-medium">Patient: {patientObj.firstname} {patientObj.lastname}</span>;
+                                                }
+                                                if (typeof appt.patient === 'string' && patients.length > 0) {
+                                                  const patient = patients.find((p: Patient) => p.id === appt.patient);
+                                                  if (patient && patient.firstname && patient.lastname) {
+                                                    return <span className="text-xs text-purple-700 font-medium">Patient: {patient.firstname} {patient.lastname}</span>;
+                                                  }
+                                                }
+                                                return <span className="text-xs text-red-500">Patient data not available</span>;
+                                              } catch (error) {
+                                                console.error('Error in patient lookup:', error);
+                                                return <span className="text-xs text-red-500">Error loading patient</span>;
+                                              }
+                                            })()}
+                                          </div>
+                                        )}
+
+                                        {/* Row 5: Notes (only if present) */}
+                                        {appt.notes && (
+                                          <div className="flex items-center gap-1.5">
+                                            <FiFileText className={`w-3.5 h-3.5 shrink-0 ${isDone ? "text-gray-300" : "text-gray-400"}`} />
+                                            <span className="text-gray-400 text-xs shrink-0">Note:</span>
+                                            <span className={`text-xs ${isDone ? "line-through text-gray-400" : "text-gray-600"}`}>{appt.notes}</span>
+                                          </div>
+                                        )}
+
+                                        {/* Attachments (only if present) */}
+                                        {appt.attachements && appt.attachements.length > 0 && (
+                                          <div className="flex items-center gap-1.5 flex-wrap">
+                                            <FiPaperclip className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                                            <span className="text-gray-400 text-xs shrink-0">Attachments:</span>
+                                            {appt.attachements.map((file, idx) => {
+                                              const publicUrl = getPublicUrl(file);
+                                              const fileName = file.split("/").pop() || file;
+                                              return publicUrl ? (
+                                                <a key={idx} href={publicUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline">{fileName}</a>
+                                              ) : (
+                                                <span key={idx} className="text-xs text-red-500">[File not found]</span>
+                                              );
+                                            })}
+                                          </div>
+                                        )}
+
+                                        {/* Assigned by */}
+                                        {dedupedAssignees.length > 0 && (
+                                          <div className="flex items-center gap-1.5">
+                                            <FiUsers className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                                            <span className="text-gray-400 text-xs shrink-0">Assigned by:</span>
+                                            {appt.user_id === user?.id ? (
+                                              <span className="text-xs text-green-700 font-medium">you ({user?.email || "owner"})</span>
+                                            ) : (
+                                              <span className="text-xs text-blue-700 font-medium">
+                                                {(() => {
+                                                  const owner = ownerUsers.find(u => u.id === appt.user_id);
+                                                  return owner?.email || appt.user_id;
+                                                })()}
+                                              </span>
+                                            )}
+                                          </div>
+                                        )}
+
+                                        {/* Activities */}
+                                        {appt.activities && appt.activities.length > 0 && (
+                                          <div className="flex flex-col gap-0.5">
+                                            {appt.activities.map((act, idx) => (
+                                              <span key={idx} className="text-xs text-pink-700">{act.type}: {act.content}</span>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+
+                                      {/* Actions column: 3-dot on top, Video Call on bottom */}
+                                      <div className="flex flex-col items-center justify-between py-3 px-2 border-l border-gray-100 bg-gray-50/80 rounded-r-2xl min-w-[56px]">
+                                        <DropdownMenu>
+                                          <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-black/10">
+                                              <MoreVertical className="h-4 w-4 text-gray-500" />
+                                              <span className="sr-only">Open menu</span>
+                                            </Button>
+                                          </DropdownMenuTrigger>
+                                          <DropdownMenuContent align="end" className="w-48">
+                                            {(() => {
+                                              const perm = getUserPermission(appt);
+                                              return (
+                                                <>
+                                                  {(perm === "owner" || perm === "full" || perm === "write") && (
+                                                    <DropdownMenuItem onClick={() => handleToggleStatus(appt.id, isDone ? "pending" : "done")}>
+                                                      {isDone ? (
+                                                        <><Circle className="mr-2 h-4 w-4" /><span>Mark as open</span></>
+                                                      ) : (
+                                                        <><CheckCircle className="mr-2 h-4 w-4 text-green-600" /><span className="text-green-600">Mark as done</span></>
+                                                      )}
+                                                    </DropdownMenuItem>
+                                                  )}
+                                                  {(perm === "owner" || perm === "full") && (
+                                                    <>
+                                                      {(perm === "owner" || perm === "full" || perm === "write") && <DropdownMenuSeparator />}
+                                                      <DropdownMenuItem onClick={() => handleEdit(appt)}>
+                                                        <FiEdit2 className="mr-2 h-4 w-4" /><span>Edit</span>
+                                                      </DropdownMenuItem>
+                                                      <DropdownMenuItem onClick={() => handleDelete(appt.id)} className="text-red-600 focus:bg-red-50 focus:text-red-600">
+                                                        <FiTrash2 className="mr-2 h-4 w-4" /><span>Delete</span>
+                                                      </DropdownMenuItem>
+                                                    </>
+                                                  )}
+                                                </>
+                                              );
+                                            })()}
+                                          </DropdownMenuContent>
+                                        </DropdownMenu>
+                                        <VideoCall
+                                          appointmentId={appt.id}
+                                          appointmentTitle={appt.title ?? "Video Consultation"}
+                                        />
+                                      </div>
+                                    </motion.div>
                                   );
                                 })}
                               </div>
-                            )}
-
-                            {/* Assigned by */}
-                            {dedupedAssignees.length > 0 && (
-                              <div className="flex items-center gap-1.5">
-                                <FiUsers className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                                <span className="text-gray-400 text-xs shrink-0">Assigned by:</span>
-                                {appt.user_id === user?.id ? (
-                                  <span className="text-xs text-green-700 font-medium">you ({user?.email || "owner"})</span>
-                                ) : (
-                                  <span className="text-xs text-blue-700 font-medium">
-                                    {(() => {
-                                      const owner = ownerUsers.find(u => u.id === appt.user_id);
-                                      return owner?.email || appt.user_id;
-                                    })()}
-                                  </span>
-                                )}
-                              </div>
-                            )}
-
-                            {/* Activities */}
-                            {appt.activities && appt.activities.length > 0 && (
-                              <div className="flex flex-col gap-0.5">
-                                {appt.activities.map((act, idx) => (
-                                  <span key={idx} className="text-xs text-pink-700">{act.type}: {act.content}</span>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Actions column: 3-dot on top, Video Call on bottom */}
-                          <div className="flex flex-col items-center justify-between py-3 px-2 border-l border-gray-100 bg-gray-50/80 rounded-r-2xl min-w-[56px]">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-black/10">
-                                  <MoreVertical className="h-4 w-4 text-gray-500" />
-                                  <span className="sr-only">Open menu</span>
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-48">
-                                {(() => {
-                                  const perm = getUserPermission(appt);
-                                  return (
-                                    <>
-                                      {(perm === "owner" || perm === "full" || perm === "write") && (
-                                        <DropdownMenuItem onClick={() => handleToggleStatus(appt.id, isDone ? "pending" : "done")}>
-                                          {isDone ? (
-                                            <><Circle className="mr-2 h-4 w-4" /><span>Mark as open</span></>
-                                          ) : (
-                                            <><CheckCircle className="mr-2 h-4 w-4 text-green-600" /><span className="text-green-600">Mark as done</span></>
-                                          )}
-                                        </DropdownMenuItem>
-                                      )}
-                                      {(perm === "owner" || perm === "full") && (
-                                        <>
-                                          {(perm === "owner" || perm === "full" || perm === "write") && <DropdownMenuSeparator />}
-                                          <DropdownMenuItem onClick={() => handleEdit(appt)}>
-                                            <FiEdit2 className="mr-2 h-4 w-4" /><span>Edit</span>
-                                          </DropdownMenuItem>
-                                          <DropdownMenuItem onClick={() => handleDelete(appt.id)} className="text-red-600 focus:bg-red-50 focus:text-red-600">
-                                            <FiTrash2 className="mr-2 h-4 w-4" /><span>Delete</span>
-                                          </DropdownMenuItem>
-                                        </>
-                                      )}
-                                    </>
-                                  );
-                                })()}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                            <VideoCall
-                              appointmentId={appt.id}
-                              appointmentTitle={appt.title ?? "Video Consultation"}
-                            />
-                          </div>
-                        </motion.div>
-                      );
-                    })}
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </motion.div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </motion.div>
           )}
           {editAppt ? (

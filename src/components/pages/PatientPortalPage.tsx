@@ -311,7 +311,7 @@ export default function PatientPortalPage() {
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-6 border-b">
         <div>
           <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <Activity className="h-7 w-7 text-primary" />
+            <Activity className="h-7 w-7 text-gray-700" />
             Patient Portal
           </h1>
           <p className="text-muted-foreground mt-1">
@@ -334,7 +334,7 @@ export default function PatientPortalPage() {
                 <>
                   <div className="flex items-center gap-3">
                     <Avatar className="h-12 w-12">
-                      <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                      <AvatarFallback className="bg-primary/10 text-gray-700 font-semibold">
                         {`${patient.firstname[0]}${patient.lastname[0]}`.toUpperCase()}
                       </AvatarFallback>
                     </Avatar>

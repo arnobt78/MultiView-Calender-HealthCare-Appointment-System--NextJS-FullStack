@@ -53,6 +53,7 @@ import { useAppointmentColor } from "@/context/AppointmentColorContext";
 import { Badge } from "../ui/badge";
 import type { FullAppointment } from "@/hooks/useAppointments";
 import GlobalCalendarFilters from "./GlobalCalendarFilters";
+import CalendarStickyHeader from "./CalendarStickyHeader";
 
 type AppointmentWithCategory = Appointment & {
   category_data?: Category;
@@ -515,21 +516,23 @@ export default function MonthView() {
   }
 
   return (
-    <div className="flex min-h-0 flex-col gap-4 py-4 px-2 sm:px-4 lg:px-8 md:flex-row md:items-start md:space-x-8">
+    <div className="flex min-h-0 flex-col gap-4 pt-0 pb-4 px-2 sm:px-4 lg:px-8 md:flex-row md:items-start md:space-x-8">
       <div className="min-w-0 flex-1">
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          <h2 className="text-xl font-semibold tracking-tight text-gray-700">
-            {monthTitle}
-          </h2>
-          <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-sky-100 text-sky-700 hover:bg-sky-100">Total: {summaryStats.total}</Badge>
-          <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-cyan-100 text-cyan-700 hover:bg-cyan-100">This Month: {monthAppointments.length}</Badge>
-          <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-green-100 text-green-700 hover:bg-green-100">Today: {monthTodayCount}</Badge>
-          <span className="px-1 text-xs font-semibold text-gray-500">Status:</span>
-          <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-amber-100 text-amber-700 hover:bg-amber-100">Open: {monthStatus.open}</Badge>
-          <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-rose-100 text-rose-700 hover:bg-rose-100">Alert: {monthStatus.alert}</Badge>
-          <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-emerald-100 text-emerald-700 hover:bg-emerald-100">Done: {monthStatus.done}</Badge>
-        </div>
-        <GlobalCalendarFilters categories={categories} patients={patients} className="mb-3" />
+        <CalendarStickyHeader >
+          <div className="mb-2 flex flex-wrap items-center gap-2">
+            <h2 className="text-xl font-semibold tracking-tight text-gray-700">
+              {monthTitle}
+            </h2>
+            <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-sky-100 text-sky-700 hover:bg-sky-100">Total: {summaryStats.total}</Badge>
+            <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-cyan-100 text-cyan-700 hover:bg-cyan-100">This Month: {monthAppointments.length}</Badge>
+            <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-green-100 text-green-700 hover:bg-green-100">Today: {monthTodayCount}</Badge>
+            <span className="px-1 text-xs font-semibold text-gray-500">Status:</span>
+            <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-amber-100 text-amber-700 hover:bg-amber-100">Open: {monthStatus.open}</Badge>
+            <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-rose-100 text-rose-700 hover:bg-rose-100">Alert: {monthStatus.alert}</Badge>
+            <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-emerald-100 text-emerald-700 hover:bg-emerald-100">Done: {monthStatus.done}</Badge>
+          </div>
+          <GlobalCalendarFilters categories={categories} patients={patients} />
+        </CalendarStickyHeader>
         <div className="overflow-hidden rounded-2xl border border-gray-200 bg-gray-200 text-sm shadow-sm">
           <div className="grid min-h-[calc(100dvh-260px)] grid-cols-7 auto-rows-fr gap-px">
             {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
@@ -693,10 +696,10 @@ export default function MonthView() {
 
                     {a.notes && (
                       <div className="flex items-center gap-2 text-sm text-gray-400 mb-1 ">
-                        <span className="flex-shrink-0 flex items-center justify-center">
+                        <span className="shrink-0 flex items-center justify-center">
                           <FiFileText className="w-4 h-4" />
                         </span>
-                        <span className="text-xs text-gray-700 break-words">
+                        <span className="text-xs text-gray-700 wrap-break-word">
                           Notes: {a.notes}
                         </span>
                       </div>

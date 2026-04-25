@@ -141,7 +141,7 @@ export default async function InvoiceDetailPage({ params }: PageProps) {
                 {invoice.appointment_id ? (
                   <Link
                     href={`/control-panel/appointments/${invoice.appointment_id}`}
-                    className="font-mono text-xs text-primary hover:underline"
+                    className="font-mono text-xs text-gray-700 hover:underline"
                   >
                     #{invoice.appointment_id.slice(0, 8)}
                   </Link>

@@ -22,6 +22,9 @@ import { useAppointmentColor } from "@/context/AppointmentColorContext";
 import { Badge } from "../ui/badge";
 import type { FullAppointment } from "@/hooks/useAppointments";
 import GlobalCalendarFilters from "./GlobalCalendarFilters";
+import CalendarStickyHeader from "./CalendarStickyHeader";
+import { useLiveNow } from "./useLiveNow";
+import { getNowLineTop } from "./timeLinePosition";
 
 type AppointmentWithCategory = Appointment & {
   category_data?: Category;
@@ -420,28 +423,21 @@ export default function WeekView() {
   // Set hourHeight and dayWidth for grid and card calculations
   const hourHeight = 64; // px per hour
   const dayWidth = 240; // px per day column, increased for better fit
-  const headerRowHeight = hourHeight; // px, matches hour row height for now
+  const headerRowHeight = 40; // px, must match week header row fixed height
 
   // --- Real-time red current time line feature ---
   // State for current time (updates every minute)
-  const [now, setNow] = useState(new Date());
-  useEffect(() => {
-    const interval = setInterval(() => setNow(new Date()), 60000);
-    return () => clearInterval(interval);
-  }, []);
+  const now = useLiveNow();
 
   // Helper: is today in this week?
   const isTodayInWeek = () => {
+    if (!now) return false;
     const weekEnd = addDays(weekStart, 6);
     return now >= weekStart && now <= weekEnd;
   };
 
   // Helper: get position of red line (in px from top)
-  const getRedLinePosition = () => {
-    const hour = now.getHours();
-    const minute = now.getMinutes();
-    return hour * hourHeight + (minute / 60) * hourHeight;
-  };
+  const getRedLinePosition = () => (now ? getNowLineTop(now, hourHeight) : 0);
 
   const handleEditDialogChange = (open: boolean) => {
     setEditOpen(open);
@@ -450,7 +446,7 @@ export default function WeekView() {
 
   const showWeekNowLine = isTodayInWeek();
   const weekIndicatorTopPx = showWeekNowLine
-    ? headerRowHeight + getRedLinePosition()
+    ? headerRowHeight + getRedLinePosition() - (hourHeight / 60) * 2
     : 0;
 
   const apptBlockRef = useCallback((el: HTMLDivElement | null, slotTop: number, slotHeight: number) => {
@@ -461,20 +457,22 @@ export default function WeekView() {
   }, []);
 
   return (
-    <div className="min-h-0 py-4 px-2 sm:px-4 lg:px-8">
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <h2 className="text-xl font-semibold tracking-tight text-gray-700">
-          {weekTitle}
-        </h2>
-        <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-sky-100 text-sky-700 hover:bg-sky-100">Total: {summaryStats.total}</Badge>
-        <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-cyan-100 text-cyan-700 hover:bg-cyan-100">This Week: {weekAppointments.length}</Badge>
-        <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-green-100 text-green-700 hover:bg-green-100">Today: {weekTodayCount}</Badge>
-        <span className="px-1 text-xs font-semibold text-gray-500">Status:</span>
-        <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-amber-100 text-amber-700 hover:bg-amber-100">Open: {weekStatus.open}</Badge>
-        <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-rose-100 text-rose-700 hover:bg-rose-100">Alert: {weekStatus.alert}</Badge>
-        <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-emerald-100 text-emerald-700 hover:bg-emerald-100">Done: {weekStatus.done}</Badge>
-      </div>
-      <GlobalCalendarFilters categories={categories} patients={filterPatients} className="mb-3" />
+    <div className="min-h-0 pt-0 pb-4 px-2 sm:px-4 lg:px-8">
+      <CalendarStickyHeader >
+        <div className="mb-2 flex flex-wrap items-center gap-2">
+          <h2 className="text-xl font-semibold tracking-tight text-gray-700">
+            {weekTitle}
+          </h2>
+          <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-sky-100 text-sky-700 hover:bg-sky-100">Total: {summaryStats.total}</Badge>
+          <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-cyan-100 text-cyan-700 hover:bg-cyan-100">This Week: {weekAppointments.length}</Badge>
+          <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-green-100 text-green-700 hover:bg-green-100">Today: {weekTodayCount}</Badge>
+          <span className="px-1 text-xs font-semibold text-gray-500">Status:</span>
+          <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-amber-100 text-amber-700 hover:bg-amber-100">Open: {weekStatus.open}</Badge>
+          <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-rose-100 text-rose-700 hover:bg-rose-100">Alert: {weekStatus.alert}</Badge>
+          <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-emerald-100 text-emerald-700 hover:bg-emerald-100">Done: {weekStatus.done}</Badge>
+        </div>
+        <GlobalCalendarFilters categories={categories} patients={filterPatients} />
+      </CalendarStickyHeader>
       <div className="week-scroll-container overflow-hidden rounded-2xl border border-gray-200 bg-background">
         <div className="relative grid w-full text-sm week-grid">
           {showWeekNowLine && (
@@ -486,13 +484,13 @@ export default function WeekView() {
             >
               <div className="week-time-line">
                 <span className="week-time-label">
-                  {format(now, "HH:mm")}
+                  {now ? format(now, "HH:mm") : ""}
                 </span>
               </div>
             </div>
           )}
           {/* Top-left sticky cell */}
-          <div className="bg-gray-50 border-r border-b week-sticky-corner" />
+          <div className="h-10 bg-gray-50 border-r border-b week-sticky-corner" />
 
           {/* Date/day header row */}
           {Array.from({ length: 7 }).map((_, i) => {
@@ -508,7 +506,7 @@ export default function WeekView() {
             return (
               <div
                 key={i}
-                className={"border-r border-b p-2 text-center font-medium text-gray-600 week-day-header" + (isToday && isCurrentWeek ? " week-day-header-today" : "")}
+                className={"h-10 border-r border-b px-2 py-1 text-center font-medium text-gray-600 week-day-header" + (isToday && isCurrentWeek ? " week-day-header-today" : "")}
               >
                 {format(day, "EEE dd.MM.")}
                 {isToday && isCurrentWeek && (
@@ -551,6 +549,7 @@ export default function WeekView() {
                     key={i}
                     className={"border-r border-b relative week-slot-cell" + (isTodayCol ? " week-slot-today" : "")}
                   >
+                    <div className="pointer-events-none absolute left-0 right-0 top-1/2 border-t border-dashed border-gray-300/70" />
                     {/* Inject your code here: */}
                     {matches.map((a) => {
                       const color = randomBgColor(a.id);
@@ -595,36 +594,38 @@ export default function WeekView() {
       </div>
 
       {/* Edit dialog */}
-      {editAppt && (
-        <AppointmentDialogController
-          appointment={editAppt}
-          onSuccess={() => {
-            setEditAppt(null);
-            void invalidateAllForCrud(queryClient);
-            void (async () => {
-              try {
-                const response = await fetch("/api/appointments");
-                if (response.ok) {
-                  const data = await response.json();
-                  const appointments = data.appointments || [];
-                  const categoriesRes = await fetch("/api/categories");
-                  const categoriesData = await categoriesRes.json();
-                  const categories = categoriesData.categories || [];
-                  const appointmentsWithCategories = appointments.map((appt: Appointment) => ({
-                    ...appt,
-                    category_data: categories.find((c: Category) => c.id === appt.category),
-                  }));
-                  setAppointments(appointmentsWithCategories);
+      {
+        editAppt && (
+          <AppointmentDialogController
+            appointment={editAppt}
+            onSuccess={() => {
+              setEditAppt(null);
+              void invalidateAllForCrud(queryClient);
+              void (async () => {
+                try {
+                  const response = await fetch("/api/appointments");
+                  if (response.ok) {
+                    const data = await response.json();
+                    const appointments = data.appointments || [];
+                    const categoriesRes = await fetch("/api/categories");
+                    const categoriesData = await categoriesRes.json();
+                    const categories = categoriesData.categories || [];
+                    const appointmentsWithCategories = appointments.map((appt: Appointment) => ({
+                      ...appt,
+                      category_data: categories.find((c: Category) => c.id === appt.category),
+                    }));
+                    setAppointments(appointmentsWithCategories);
+                  }
+                } catch (error) {
+                  console.error("Error refreshing appointments:", error);
                 }
-              } catch (error) {
-                console.error("Error refreshing appointments:", error);
-              }
-            })();
-          }}
-          isOpen={editOpen}
-          onOpenChange={handleEditDialogChange}
-        />
-      )}
-    </div>
+              })();
+            }}
+            isOpen={editOpen}
+            onOpenChange={handleEditDialogChange}
+          />
+        )
+      }
+    </div >
   );
 }

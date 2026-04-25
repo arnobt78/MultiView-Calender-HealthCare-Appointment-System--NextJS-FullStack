@@ -79,7 +79,7 @@ export default function ActivitiesManagement() {
       cell: (info) => (
         <Link
           href={`/control-panel/appointments/${info.getValue()}`}
-          className="font-mono text-xs text-primary hover:underline flex items-center gap-1"
+          className="font-mono text-xs text-gray-700 hover:underline flex items-center gap-1"
         >
           <LinkIcon className="h-3 w-3" />
           #{info.getValue().slice(0, 8)}

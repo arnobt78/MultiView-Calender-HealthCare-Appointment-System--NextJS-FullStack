@@ -82,7 +82,7 @@ function AuthShellInner({ children }: { children: React.ReactNode }) {
   return (
     <div
       className={cn(
-        "flex h-dvh min-h-0 max-h-dvh flex-col overflow-hidden bg-gradient-to-br from-slate-50 via-white to-slate-100 text-gray-900",
+        "flex h-dvh min-h-0 max-h-dvh flex-col overflow-x-hidden bg-gradient-to-br from-slate-50 via-white to-slate-100 text-gray-900",
         inter.className
       )}
     >

@@ -156,7 +156,7 @@ export default function QuickActionsModal() {
                 </kbd>
               </div>
               <DialogDescription className="mt-1 text-sm">
-                Jump to key areas quickly. Choose an action below to navigate instantly and keep your workflow moving.
+                Jump to key areas quickly. Select an action card below to navigate instantly and keep your workflow moving.
               </DialogDescription>
             </div>
             <DialogClose asChild>
@@ -171,13 +171,14 @@ export default function QuickActionsModal() {
               </Button>
             </DialogClose>
           </div>
+          <div className="pt-4 border-b border-violet-200/60" />
         </div>
-        <div className="grid h-[calc(90vh-112px)] grid-cols-1 gap-3 overflow-y-auto p-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid h-[calc(90vh-112px)] grid-cols-1 gap-3 overflow-y-auto px-6 py-4 sm:grid-cols-2 lg:grid-cols-3">
           {ACTIONS.map((item) => (
             <Button
               key={item.label}
               variant="outline"
-              className="h-auto min-h-[96px] justify-start gap-3 overflow-hidden whitespace-normal rounded-2xl border-violet-200/60 bg-white p-3 text-left shadow-[0_10px_30px_rgba(139,92,246,0.15)] transition-all hover:border-violet-300/70 hover:shadow-[0_14px_34px_rgba(139,92,246,0.22)]"
+              className="h-auto min-h-[96px] justify-start gap-3 overflow-hidden whitespace-normal rounded-2xl border-violet-200/60 bg-white p-4 text-left shadow-[0_10px_30px_rgba(139,92,246,0.15)] transition-all hover:border-violet-300/70 hover:shadow-[0_14px_34px_rgba(139,92,246,0.22)]"
               onClick={() => handleAction(item)}
             >
               <span className={`rounded-full p-2 shrink-0 ${item.color}`}>

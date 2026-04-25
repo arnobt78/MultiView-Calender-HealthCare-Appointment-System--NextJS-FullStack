@@ -17,10 +17,14 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import VideoCall from "./VideoCall";
 import GlobalCalendarFilters from "./GlobalCalendarFilters";
+import CalendarStickyHeader from "./CalendarStickyHeader";
+import { useLiveNow } from "./useLiveNow";
+import { getNowLineTop } from "./timeLinePosition";
 import type { Appointment } from "@/types/types";
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 const SLOT_HEIGHT = 64; // px per hour
+const SLOT_ROW_HEIGHT = 65; // 64px row + 1px border
 
 export default function DayView() {
   const { currentDate } = useDateContext();
@@ -57,14 +61,13 @@ export default function DayView() {
     );
   }, [dayAppointments]);
 
-  const now = new Date();
-  const currentMinutes = now.getHours() * 60 + now.getMinutes();
-  const isToday = isSameDay(now, currentDate);
-  const timeLineTopPx = isToday ? (currentMinutes / 60) * SLOT_HEIGHT : 0;
+  const now = useLiveNow();
+  const isToday = now ? isSameDay(now, currentDate) : false;
+  const timeLineTopPx = now && isToday ? Math.max(0, getNowLineTop(now, SLOT_ROW_HEIGHT) - 14) : 0;
 
   if (isLoading) {
     return (
-      <div className="px-2 sm:px-4 lg:px-8 py-4 space-y-2">
+      <div className="px-2 sm:px-4 lg:px-8 pt-0 pb-4 space-y-2">
         {Array.from({ length: 12 }).map((_, i) => (
           <div key={i} className="flex gap-3 items-center">
             <Skeleton className="h-5 w-12 shrink-0" />
@@ -76,38 +79,39 @@ export default function DayView() {
   }
 
   return (
-    <div className="min-h-0 px-2 py-4 sm:px-4 lg:px-8">
-      {/* Day header */}
-      <div className="mb-3 flex flex-wrap items-center gap-3">
-        <h2 className="text-xl font-semibold">{format(currentDate, "EEEE, MMMM d, yyyy")}</h2>
-        <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-green-100 text-green-700 hover:bg-green-100">
-          Today: {dayAppointments.length}
-        </Badge>
-        <span className="px-1 text-xs font-semibold text-gray-500">Status:</span>
-        <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-amber-100 text-amber-700 hover:bg-amber-100">
-          Open: {dayStats.open}
-        </Badge>
-        <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-rose-100 text-rose-700 hover:bg-rose-100">
-          Alert: {dayStats.alert}
-        </Badge>
-        <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
-          Done: {dayStats.done}
-        </Badge>
-      </div>
-      <GlobalCalendarFilters categories={categories} patients={patients} className="mb-3" />
+    <div className="min-h-0 px-2 pt-0 pb-4 sm:px-4 lg:px-8">
+      <CalendarStickyHeader >
+        {/* Day header */}
+        <div className="mb-2 flex flex-wrap items-center gap-3">
+          <h2 className="text-xl font-semibold">{format(currentDate, "EEEE, MMMM d, yyyy")}</h2>
+          <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-green-100 text-green-700 hover:bg-green-100">
+            Today: {dayAppointments.length}
+          </Badge>
+          <span className="px-1 text-xs font-semibold text-gray-500">Status:</span>
+          <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-amber-100 text-amber-700 hover:bg-amber-100">
+            Open: {dayStats.open}
+          </Badge>
+          <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-rose-100 text-rose-700 hover:bg-rose-100">
+            Alert: {dayStats.alert}
+          </Badge>
+          <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
+            Done: {dayStats.done}
+          </Badge>
+        </div>
+        <GlobalCalendarFilters categories={categories} patients={patients} />
+      </CalendarStickyHeader>
 
       {/* Time grid */}
       <div className="relative border rounded-2xl overflow-hidden bg-background">
         {/* Current time indicator */}
-        {isToday && (
+        {now && isToday && (
           <div
-            className="absolute left-0 right-0 z-20 flex items-center pointer-events-none"
+            className="absolute left-14 right-0 z-20 pointer-events-none"
             style={{ top: timeLineTopPx }}
           >
-            <span className="w-14 text-[11px] text-red-500 font-semibold text-right pr-1.5 shrink-0">
-              {format(now, "HH:mm")}
-            </span>
-            <div className="flex-1 border-t-2 border-red-500" />
+            <div className="week-time-line">
+              <span className="week-time-label">{format(now, "HH:mm")}</span>
+            </div>
           </div>
         )}
 
@@ -123,7 +127,7 @@ export default function DayView() {
             >
               {/* Hour label */}
               <div className="w-14 shrink-0 text-[11px] text-muted-foreground text-right pr-2 pt-1">
-                {hour === 0 ? "" : `${String(hour).padStart(2, "0")}:00`}
+                {`${String(hour).padStart(2, "0")}:00`}
               </div>
 
               {/* Slot area */}

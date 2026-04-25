@@ -161,7 +161,7 @@ export default function NotificationsManagement() {
             <Bell className="h-6 w-6" />
             Notifications
             {unreadCount > 0 && (
-              <Badge className="bg-primary text-primary-foreground ml-1">{unreadCount} unread</Badge>
+              <Badge className="bg-primary text-gray-700-foreground ml-1">{unreadCount} unread</Badge>
             )}
           </h2>
           <p className="text-sm text-muted-foreground">{notifications.length} total notifications</p>

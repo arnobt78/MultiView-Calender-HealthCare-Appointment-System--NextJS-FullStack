@@ -47,7 +47,7 @@ export default function PatientDetailView({ patientId }: { patientId: string }) 
           <CardContent className="pt-6">
             <div className="flex flex-col items-center text-center">
               <Avatar className="h-24 w-24 mb-4 border-4 border-background shadow-sm">
-                <AvatarFallback className="text-2xl bg-primary/10 text-primary">
+                <AvatarFallback className="text-2xl bg-primary/10 text-gray-700">
                   {initials}
                 </AvatarFallback>
               </Avatar>
@@ -109,7 +109,7 @@ export default function PatientDetailView({ patientId }: { patientId: string }) 
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <Activity className="h-5 w-5 text-primary" />
+                  <Activity className="h-5 w-5 text-gray-700" />
                   Patient Timeline
                 </CardTitle>
                 <CardDescription>History of appointments and notes</CardDescription>
@@ -129,7 +129,7 @@ export default function PatientDetailView({ patientId }: { patientId: string }) 
                   return (
                     <div key={appt.id} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
                       {/* Timeline Dot */}
-                      <div className={`flex items-center justify-center w-10 h-10 rounded-full border-4 border-background shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 shadow-sm ${isUpcoming ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                      <div className={`flex items-center justify-center w-10 h-10 rounded-full border-4 border-background shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 shadow-sm ${isUpcoming ? 'bg-primary text-gray-700-foreground' : 'bg-muted text-muted-foreground'}`}>
                         {isUpcoming ? <Calendar className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
                       </div>
 
@@ -207,7 +207,7 @@ export default function PatientDetailView({ patientId }: { patientId: string }) 
 
         <Card className="shadow-sm border-muted bg-primary/5">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base text-primary">Quick Actions</CardTitle>
+            <CardTitle className="text-base text-gray-700">Quick Actions</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             <Button className="w-full justify-start gap-2" variant="outline">

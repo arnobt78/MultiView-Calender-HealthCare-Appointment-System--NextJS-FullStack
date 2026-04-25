@@ -159,7 +159,7 @@ export default async function AppointmentDetailPage({ params }: PageProps) {
               <dt className="font-medium text-muted-foreground">patient</dt>
               <dd className="mt-0.5">
                 {patientData ? (
-                  <Link href={`/control-panel/patients/${patientData.id}`} className="text-primary hover:underline">
+                  <Link href={`/control-panel/patients/${patientData.id}`} className="text-gray-700 hover:underline">
                     {patientData.firstname} {patientData.lastname}
                   </Link>
                 ) : (appointment.patient ?? "—")}
@@ -180,7 +180,7 @@ export default async function AppointmentDetailPage({ params }: PageProps) {
                         className="inline-block h-3 w-4 rounded border-0 p-0 cursor-default"
                       />
                     )}
-                    <Link href={`/control-panel/categories/${categoryData.id}`} className="text-primary hover:underline">
+                    <Link href={`/control-panel/categories/${categoryData.id}`} className="text-gray-700 hover:underline">
                       {categoryData.label}
                     </Link>
                   </span>

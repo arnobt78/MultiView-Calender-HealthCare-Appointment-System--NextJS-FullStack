@@ -3,7 +3,9 @@
 import { useRef, useState } from "react";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -12,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useAppointments } from "@/hooks/useAppointments";
 import { toast } from "sonner";
+import { CalendarDays, FileUp, Info, UploadCloud, X } from "lucide-react";
 
 type Props = {
   trigger?: React.ReactNode;
@@ -83,52 +86,108 @@ export default function ImportICSDialog({ trigger }: Props) {
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Import from .ics Calendar File</DialogTitle>
+      <DialogContent
+        showCloseButton={false}
+        className="w-[92vw] max-w-xl gap-0 overflow-hidden rounded-[28px] border border-violet-400/30 bg-white p-0 shadow-[0_30px_80px_rgba(139,92,246,0.35)]"
+      >
+        <DialogHeader className="space-y-0 p-0 text-left">
+          <div className="bg-white pt-6">
+            <div className="px-6">
+              <div className="flex items-start gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-violet-200/70 bg-violet-50 text-violet-700">
+                  <CalendarDays className="h-5 w-5" />
+                </span>
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <DialogTitle className="text-xl font-semibold text-gray-800">
+                      Import .ics Calendar
+                    </DialogTitle>
+                    <kbd className="rounded border bg-muted px-1.5 py-0.5 font-mono text-xs text-muted-foreground">
+                      File Upload
+                    </kbd>
+                  </div>
+                  <DialogDescription className="mt-1 text-sm">
+                    Upload an iCalendar file from Google, Outlook or Apple Calendar
+                    to create appointments instantly.
+                  </DialogDescription>
+                </div>
+                <DialogClose asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="ml-auto h-8 w-8 rounded-full text-muted-foreground hover:bg-violet-100 hover:text-violet-700"
+                  >
+                    <X className="h-4 w-4" />
+                    <span className="sr-only">Close</span>
+                  </Button>
+                </DialogClose>
+              </div>
+            </div>
+            <div className="mx-6 mt-4 border-b border-violet-200/60" />
+          </div>
         </DialogHeader>
 
-        <div className="space-y-4 pt-2">
-          <p className="text-sm text-gray-500">
-            Select a <strong>.ics</strong> file exported from Google Calendar,
-            Outlook, Apple Calendar, or any iCalendar-compatible app. All events
-            will be imported as new appointments.
-          </p>
-
-          <div className="space-y-2">
-            <Label htmlFor="ics-file-input">Select .ics file</Label>
-            <input
-              id="ics-file-input"
-              ref={fileInputRef}
-              type="file"
-              accept=".ics,text/calendar"
-              title="Select a .ics calendar file to import"
-              onChange={handleFileChange}
-              className="block w-full text-sm text-gray-700 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 cursor-pointer border border-gray-200 rounded-2xl p-1"
-            />
+        <div className="space-y-5 px-6 py-5">
+          <div className="rounded-2xl border border-violet-200/70 bg-violet-50/60 p-3 text-xs text-violet-900 shadow-[0_8px_24px_rgba(139,92,246,0.12)]">
+            <div className="flex items-start gap-2">
+              <Info className="mt-0.5 h-4 w-4 shrink-0 text-violet-700" />
+              <p className="leading-relaxed">
+                Choose a <strong>.ics</strong> file. Imported events are added as new
+                appointments in your calendar.
+              </p>
+            </div>
           </div>
 
-          {file && (
-            <p className="text-xs text-gray-500">
-              Selected: <span className="font-medium text-gray-700">{file.name}</span>{" "}
-              ({(file.size / 1024).toFixed(1)} KB)
-            </p>
+          <div className="space-y-2">
+            <Label htmlFor="ics-file-input" className="text-sm font-medium text-gray-700">
+              Select .ics file
+            </Label>
+            <div className="rounded-2xl border border-violet-200/70 bg-white p-2 shadow-[0_10px_28px_rgba(139,92,246,0.12)]">
+              <input
+                id="ics-file-input"
+                ref={fileInputRef}
+                type="file"
+                accept=".ics,text/calendar"
+                title="Select a .ics calendar file to import"
+                onChange={handleFileChange}
+                className="block w-full cursor-pointer rounded-xl border-0 bg-transparent p-1 text-sm text-gray-700 file:mr-3 file:cursor-pointer file:rounded-xl file:border file:border-violet-300/60 file:bg-violet-100/70 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-violet-800 hover:file:bg-violet-200/70"
+              />
+            </div>
+          </div>
+
+          {file ? (
+            <div className="rounded-2xl border border-emerald-300/50 bg-emerald-50/70 px-3 py-2 text-xs text-emerald-900 shadow-[0_8px_24px_rgba(16,185,129,0.12)]">
+              <div className="flex items-center gap-2">
+                <FileUp className="h-3.5 w-3.5 shrink-0 text-emerald-700" />
+                <span className="truncate font-medium">{file.name}</span>
+                <span className="text-emerald-700/80">({(file.size / 1024).toFixed(1)} KB)</span>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50/70 px-3 py-2 text-xs text-muted-foreground">
+              No file selected yet.
+            </div>
           )}
 
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex justify-end gap-2 pt-1">
             <Button
+              type="button"
               variant="outline"
               onClick={() => handleOpenChange(false)}
               disabled={loading}
+              className="rounded-full border-violet-200/70 bg-white text-violet-700 shadow-[0_8px_20px_rgba(139,92,246,0.1)] hover:bg-violet-50 hover:text-violet-800"
             >
               Cancel
             </Button>
             <Button
+              type="button"
               onClick={handleImport}
               disabled={!file || loading}
-              className="cursor-pointer"
+              className="rounded-full border border-violet-500/40 bg-linear-to-r from-violet-600 to-violet-700 text-white shadow-[0_12px_34px_rgba(139,92,246,0.36)] hover:from-violet-600/95 hover:to-violet-700/95"
             >
-              {loading ? "Importing…" : "Import Appointments"}
+              <UploadCloud className="h-4 w-4" />
+              {loading ? "Importing..." : "Import Appointments"}
             </Button>
           </div>
         </div>

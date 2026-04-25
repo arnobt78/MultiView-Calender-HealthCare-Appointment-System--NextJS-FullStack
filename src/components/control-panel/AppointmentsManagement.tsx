@@ -162,7 +162,7 @@ export default function AppointmentsManagement() {
         return (
           <Link
             href={`/control-panel/patients/${p.id}`}
-            className="text-sm text-primary hover:underline"
+            className="text-sm text-gray-700 hover:underline"
           >
             {p.firstname} {p.lastname}
           </Link>

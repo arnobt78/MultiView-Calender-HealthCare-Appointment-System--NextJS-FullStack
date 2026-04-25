@@ -134,7 +134,7 @@ export default function GlobalSearch() {
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) { setQuery(""); closeSearch(); } }}>
       <DialogContent
         showCloseButton={false}
-        className="h-[90vh] w-[92vw] max-w-[1200px] gap-0 overflow-hidden rounded-[28px] border border-sky-400/30 bg-white p-0 shadow-[0_30px_80px_rgba(2,132,199,0.35)]"
+        className="flex h-[90vh] w-[92vw] max-w-[1200px] flex-col gap-0 overflow-hidden rounded-[28px] border border-sky-400/30 bg-white p-0 shadow-[0_30px_80px_rgba(2,132,199,0.35)]"
         aria-describedby={undefined}
       >
         <div className="bg-white pt-6">
@@ -189,22 +189,23 @@ export default function GlobalSearch() {
             <kbd className="hidden rounded border bg-muted px-1.5 py-0.5 text-xs font-mono sm:inline-flex">
               ESC
             </kbd>
-            <DialogClose asChild>
+            {query.trim().length > 0 && (
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
                 className="h-7 w-7 rounded-full text-muted-foreground hover:bg-sky-100 hover:text-sky-700"
+                onClick={() => setQuery("")}
               >
                 <X className="h-3.5 w-3.5" />
-                <span className="sr-only">Close</span>
+                <span className="sr-only">Clear search</span>
               </Button>
-            </DialogClose>
+            )}
           </div>
         </div>
 
         {/* Results */}
-        <div className="h-[calc(90vh-180px)] overflow-y-auto">
+        <div className="min-h-0 flex-1 overflow-y-auto">
           {query.length < 2 ? (
             <div className="px-4 py-8 text-center text-sm text-muted-foreground">
               Type at least 2 characters to search...
@@ -244,8 +245,8 @@ export default function GlobalSearch() {
         </div>
 
         {/* Footer hint */}
-        <div className="bg-sky-50/40 px-6 py-2 text-xs text-muted-foreground">
-          <div className="flex items-center justify-center gap-4 border-t border-sky-200/60 pt-2">
+        <div className="shrink-0 bg-sky-50/40 px-6 py-2 text-xs text-muted-foreground border-t border-sky-200/60">
+          <div className="flex items-center justify-center gap-4">
             <span>
               <kbd className="px-1 py-0.5 font-mono bg-muted border rounded">↵</kbd> to navigate
             </span>

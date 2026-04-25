@@ -37,7 +37,7 @@ const HomePage: React.FC = () => {
   );
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-visible">
       <div className="shrink-0">
         <CalendarHeader view={view} setView={setView} />
       </div>

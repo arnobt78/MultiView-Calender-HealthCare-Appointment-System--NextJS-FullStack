@@ -92,7 +92,7 @@ export default function TelehealthDashboard() {
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-4">
                   <Badge variant="default" className="text-xs">{format(new Date(nextAppt.start), "h:mm a")}</Badge>
-                  <Badge variant="outline" className="text-xs text-primary">{nextAppt.category_data?.label || "Consultation"}</Badge>
+                  <Badge variant="outline" className="text-xs text-gray-700">{nextAppt.category_data?.label || "Consultation"}</Badge>
                 </div>
 
                 <h4 className="text-xl font-bold mb-1 truncate" title={nextAppt.title}>{nextAppt.title}</h4>
@@ -169,7 +169,7 @@ export default function TelehealthDashboard() {
                   >
                     {/* Time Column */}
                     <div className="w-20 text-center shrink-0">
-                      <p className={`font-bold text-lg leading-tight ${isCurrent ? 'text-primary' : ''}`}>
+                      <p className={`font-bold text-lg leading-tight ${isCurrent ? 'text-gray-700' : ''}`}>
                         {format(new Date(appt.start), "h:mm")}
                       </p>
                       <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
