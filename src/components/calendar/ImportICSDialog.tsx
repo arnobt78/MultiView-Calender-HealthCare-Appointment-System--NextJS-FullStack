@@ -88,7 +88,7 @@ export default function ImportICSDialog({ trigger }: Props) {
       </DialogTrigger>
       <DialogContent
         showCloseButton={false}
-        className="w-[92vw] max-w-xl gap-0 overflow-hidden rounded-[28px] border border-violet-400/30 bg-white p-0 shadow-[0_30px_80px_rgba(139,92,246,0.35)]"
+        className="flex h-auto min-h-0 max-h-[90vh] w-[92vw] max-w-xl flex-col gap-0 overflow-x-hidden overflow-y-auto rounded-[28px] border border-violet-400/30 bg-white p-0 shadow-[0_30px_80px_rgba(139,92,246,0.35)]"
       >
         <DialogHeader className="space-y-0 p-0 text-left">
           <div className="bg-white pt-6">
