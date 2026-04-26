@@ -33,6 +33,13 @@ import {
 import { invalidateAllForCrud } from "@/lib/query-client";
 import { queryKeys } from "@/lib/query-keys";
 import AppointmentDialogController from "./AppointmentDialogController";
+import {
+  calendarGridMonthShell,
+  calendarGridMonthGrid,
+  calendarGridMonthSidePanel,
+  calendarGridMonthWeekdayHeader,
+  calendarGridMonthWeekdaysStrip,
+} from "./calendarGridTokens";
 import { Button } from "@/components/ui/button";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCategories } from "@/hooks/useCategories";
@@ -516,8 +523,8 @@ export default function MonthView() {
   }
 
   return (
-    <div className="flex min-h-0 flex-col gap-4 pt-0 pb-4 px-2 sm:px-4 lg:px-8 md:flex-row md:items-start md:space-x-8">
-      <div className="min-w-0 flex-1">
+    <div className="flex h-full min-h-0 flex-1 flex-col pb-3 px-2 sm:px-4 lg:px-8 md:flex-row md:items-stretch md:space-x-8">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <CalendarStickyHeader >
           <div className="mb-2 flex flex-wrap items-center gap-2">
             <h2 className="text-xl font-semibold tracking-tight text-gray-700">
@@ -531,18 +538,24 @@ export default function MonthView() {
             <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-rose-100 text-rose-700 hover:bg-rose-100">Alert: {monthStatus.alert}</Badge>
             <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-emerald-100 text-emerald-700 hover:bg-emerald-100">Done: {monthStatus.done}</Badge>
           </div>
-          <GlobalCalendarFilters categories={categories} patients={patients} />
+          <GlobalCalendarFilters
+            categories={categories}
+            patients={patients}
+            className="pb-0"
+          />
         </CalendarStickyHeader>
-        <div className="overflow-hidden rounded-2xl border border-gray-200 bg-gray-200 text-sm shadow-sm">
-          <div className="grid min-h-[calc(100dvh-260px)] grid-cols-7 auto-rows-fr gap-px">
+        <div className={calendarGridMonthShell}>
+          <div className={calendarGridMonthWeekdaysStrip}>
             {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
               <div
                 key={d}
-                className="bg-white p-2 text-center font-medium text-gray-600"
+                className={calendarGridMonthWeekdayHeader}
               >
                 {d}
               </div>
             ))}
+          </div>
+          <div className={calendarGridMonthGrid}>
             {filteredCalendarDays.map(({ date, appointments }) => {
               const selected = selectedDate && isSameDay(date, selectedDate);
               const isCurrent = isToday(date);
@@ -551,18 +564,19 @@ export default function MonthView() {
                 <div
                   key={date.toISOString()}
                   className={clsx(
-                    "relative min-h-[100px] bg-white p-2 transition",
-                    !isSameMonth(date, currentDate) && "bg-gray-100 text-gray-400",
-                    isCurrent && !selected && "bg-green-100",
+                    "relative min-h-[100px] p-2 transition",
+                    !isSameMonth(date, currentDate) && "bg-gray-50 text-gray-400",
                     selected && "z-10 bg-gray-200 ring-2 ring-green-600",
+                    !selected && isCurrent && "bg-green-100",
+                    !selected && !isCurrent && isSameMonth(date, currentDate) && "bg-white",
                     hasAppointments ? "cursor-pointer" : "cursor-default"
                   )}
                   onClick={() => hasAppointments && setSelectedDate(date)}
                 >
-                  <div className="flex items-center mb-1">
+                  <div className="mb-1 flex items-center">
                     <span
                       className={clsx(
-                        "text-xs font-semibold w-6 h-6 flex items-center justify-center rounded",
+                        "flex h-6 w-6 items-center justify-center rounded text-xs font-semibold",
                         !isSameMonth(date, currentDate) &&
                         !selected &&
                         !isCurrent &&
@@ -572,7 +586,7 @@ export default function MonthView() {
                         !isCurrent &&
                         "text-gray-700",
                         selected && "bg-green-500 text-white",
-                        !selected && isCurrent && "bg-green-200 text-green-700"
+                        !selected && isCurrent && "bg-transparent font-bold text-green-900"
                       )}
                     >
                       {format(date, "d")}
@@ -612,8 +626,8 @@ export default function MonthView() {
 
       {/* Side list for selected date */}
       {selectedDate && (
-        <div className="h-fit w-full rounded-2xl border border-gray-200 bg-white p-2 shadow-xl md:sticky md:top-2 md:w-[350px]">
-          <div className="flex items-center gap-2 mb-4">
+        <div className={clsx(calendarGridMonthSidePanel, "md:self-start")}>
+          <div className="flex items-center gap-2 mb-2">
             <span className="text-lg font-semibold text-gray-700">
               {new Intl.DateTimeFormat("de-DE", {
                 weekday: "long",
@@ -621,11 +635,8 @@ export default function MonthView() {
                 month: "long",
               }).format(selectedDate)}
             </span>
-            <span className="bg-green-700 text-white rounded px-2 py-1 text-lg font-bold">
-              {format(selectedDate, "d")}
-            </span>
           </div>
-          <div className="space-y-4">
+          <div className="space-y-2">
             {sortByTime(
               filteredCalendarDays.find((d) => isSameDay(d.date, selectedDate))
                 ?.appointments || []
@@ -676,13 +687,13 @@ export default function MonthView() {
                   </svg>
                   {/* Main content */}
                   <div className="pl-6 pr-2 py-4 flex-1 flex flex-col justify-center min-h-[110px]">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xl font-semibold text-gray-700 flex items-center">
+                    <div className="flex items-center gap-2">
+                      <span className="text-md font-medium text-gray-700 flex items-center mb-1">
                         {a.title}
                         {getDateTag(new Date(a.start))}
                       </span>
                     </div>
-                    <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500 mb-1">
+                    <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500 mb-1">
                       <span className="flex items-center gap-1">
                         <FiFileText />
                         {format(new Date(a.start), "dd.MM.yyyy")}
@@ -695,9 +706,9 @@ export default function MonthView() {
                     </div>
 
                     {a.notes && (
-                      <div className="flex items-center gap-2 text-sm text-gray-400 mb-1 ">
+                      <div className="flex items-center gap-2 text-sm text-gray-400 mb-1">
                         <span className="shrink-0 flex items-center justify-center">
-                          <FiFileText className="w-4 h-4" />
+                          <FiFileText className="w-4 h-4 " />
                         </span>
                         <span className="text-xs text-gray-700 wrap-break-word">
                           Notes: {a.notes}

@@ -1,9 +1,15 @@
 "use client";
 
 import { useDateContext } from "@/context/DateContext";
-import { addDays } from "date-fns";
+import {
+  addDays,
+  endOfWeek,
+  isSameDay,
+  isSameMonth,
+  startOfWeek,
+} from "date-fns";
 import { Button } from "@/components/ui/button";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   LayoutList,
@@ -35,13 +41,13 @@ const tabInactive =
   "border-slate-300/55 bg-white/70 text-slate-700 shadow-[0_10px_24px_rgba(15,23,42,0.08)] hover:border-sky-300/60 hover:bg-sky-50/80 hover:text-sky-800 hover:shadow-[0_12px_30px_rgba(2,132,199,0.16)]";
 
 const tabActive =
-  "border-sky-500/55 bg-linear-to-r from-sky-600 to-sky-700 text-white shadow-[0_12px_36px_rgba(2,132,199,0.34)] hover:from-sky-600/95 hover:to-sky-700/95 hover:text-white active:text-white";
+  "border-sky-500/55 bg-linear-to-r from-sky-500 to-sky-700 text-white shadow-[0_12px_36px_rgba(2,132,199,0.34)] hover:from-sky-600/95 hover:to-sky-700/95 hover:text-white active:text-white";
 
 const violetGlassImport =
-  "inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-violet-300/55 bg-violet-50/75 px-4 text-sm font-medium text-violet-700 shadow-[0_10px_24px_rgba(139,92,246,0.18)] backdrop-blur-md transition-all duration-200 hover:border-violet-400/60 hover:bg-violet-100/75 hover:text-violet-800 hover:shadow-[0_12px_30px_rgba(139,92,246,0.24)] [&_svg]:size-4";
+  "inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-violet-300/55 bg-violet-50/75 px-4 text-sm font-medium text-violet-600 shadow-[0_10px_24px_rgba(139,92,246,0.18)] backdrop-blur-md transition-all duration-200 hover:border-violet-400/60 hover:bg-violet-100/75 hover:text-violet-800 hover:shadow-[0_12px_30px_rgba(139,92,246,0.24)] [&_svg]:size-4";
 
 const emeraldGlassPrimary =
-  "inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-emerald-400/45 bg-linear-to-r from-emerald-600 to-emerald-700 px-4 text-sm font-medium text-white shadow-[0_10px_40px_rgba(16,185,129,0.42)] backdrop-blur-md transition-all duration-200 hover:from-emerald-500 hover:via-emerald-600 hover:to-emerald-700 hover:text-white hover:shadow-[0_14px_48px_rgba(16,185,129,0.58)] active:text-white [&_svg]:size-4";
+  "inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-emerald-400/45 bg-linear-to-r from-emerald-500 to-emerald-700 px-4 text-sm font-medium text-white shadow-[0_10px_40px_rgba(16,185,129,0.42)] backdrop-blur-md transition-all duration-200 hover:from-emerald-500 hover:via-emerald-600 hover:to-emerald-700 hover:text-white hover:shadow-[0_14px_48px_rgba(16,185,129,0.58)] active:text-white [&_svg]:size-4";
 
 export default function CalendarHeader({
   view,
@@ -81,34 +87,93 @@ export default function CalendarHeader({
     // For List, do nothing
   };
 
+  const showJumpToToday = useMemo(() => {
+    if (view === "List") return false;
+    const t = new Date();
+    if (view === "Day") return !isSameDay(currentDate, t);
+    if (view === "Week") {
+      const ws = startOfWeek(currentDate, { weekStartsOn: 1 });
+      const we = endOfWeek(currentDate, { weekStartsOn: 1 });
+      return !(t >= ws && t <= we);
+    }
+    if (view === "Month") return !isSameMonth(currentDate, t);
+    return false;
+  }, [currentDate, view]);
+
+  const jumpToToday = () => setCurrentDate(new Date());
+
   return (
-    <div className="flex items-center justify-between py-4 px-2 sm:px-4 lg:px-8">
+    <div className="flex items-center justify-between py-3 px-2 sm:px-4 lg:px-8">
 
       {/* Date Navigation */}
-      <div className="flex items-center gap-4 ">
-        <Button
-          variant="outline"
-          onClick={handlePrev}
-          disabled={view === "List"}
-          className="cursor-pointer hover:bg-gray-100 transition-colors shadow-xl"
-        >
-          ←
-        </Button>
-        <div className="text-lg font-medium text-gray-700">
-          {new Intl.DateTimeFormat("de-DE", {
-            day: "2-digit",
-            month: "long",
-            year: "numeric",
-          }).format(currentDate)}
+      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-2 sm:gap-4">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-4">
+          <Button
+            variant="outline"
+            onClick={handlePrev}
+            disabled={view === "List"}
+            className="cursor-pointer hover:bg-gray-100 transition-colors shadow-xl"
+          >
+            ←
+          </Button>
+          <div className="text-lg font-medium text-gray-700">
+            {new Intl.DateTimeFormat("de-DE", {
+              day: "2-digit",
+              month: "long",
+              year: "numeric",
+            }).format(currentDate)}
+          </div>
+          <Button
+            variant="outline"
+            onClick={handleNext}
+            disabled={view === "List"}
+            className="cursor-pointer hover:bg-gray-100 transition-colors shadow-xl"
+          >
+            →
+          </Button>
         </div>
-        <Button
-          variant="outline"
-          onClick={handleNext}
-          disabled={view === "List"}
-          className="cursor-pointer hover:bg-gray-100 transition-colors shadow-xl"
-        >
-          →
-        </Button>
+        {showJumpToToday && (
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={jumpToToday}
+            className="group inline-flex h-auto min-w-0 max-w-full shrink items-center gap-2 whitespace-normal rounded-lg px-1.5 py-1 text-left text-xs leading-snug bg-transparent shadow-none hover:bg-transparent active:bg-transparent dark:hover:bg-transparent sm:px-2 sm:text-sm cursor-pointer"
+          >
+            {view === "Day" && (
+              <>
+                <Calendar
+                  className="size-4 shrink-0 text-sky-600 transition-colors group-hover:text-sky-700"
+                  aria-hidden
+                />
+                <span className="text-sky-600 transition-colors group-hover:text-sky-700">
+                  {"Go to today's calendar — day view"}
+                </span>
+              </>
+            )}
+            {view === "Week" && (
+              <>
+                <Columns3
+                  className="size-4 shrink-0 text-sky-600 transition-colors group-hover:text-sky-700"
+                  aria-hidden
+                />
+                <span className="text-sky-600 transition-colors group-hover:text-sky-700">
+                  {"Go to this week's calendar — week view"}
+                </span>
+              </>
+            )}
+            {view === "Month" && (
+              <>
+                <CalendarDays
+                  className="size-4 shrink-0 text-sky-600 transition-colors group-hover:text-sky-700"
+                  aria-hidden
+                />
+                <span className="text-sky-600 transition-colors group-hover:text-sky-700">
+                  {"Go to this month's calendar — month view"}
+                </span>
+              </>
+            )}
+          </Button>
+        )}
       </div>
 
       {/* View Navigation */}

@@ -20,6 +20,13 @@ import GlobalCalendarFilters from "./GlobalCalendarFilters";
 import CalendarStickyHeader from "./CalendarStickyHeader";
 import { useLiveNow } from "./useLiveNow";
 import { getNowLineTop } from "./timeLinePosition";
+import {
+  calendarGridShell,
+  calendarGridDayRow,
+  calendarGridDayTimeGutter,
+  calendarGridDaySlot,
+  calendarGridHalfHourLine,
+} from "./calendarGridTokens";
 import type { Appointment } from "@/types/types";
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
@@ -62,8 +69,7 @@ export default function DayView() {
   }, [dayAppointments]);
 
   const now = useLiveNow();
-  const isToday = now ? isSameDay(now, currentDate) : false;
-  const timeLineTopPx = now && isToday ? Math.max(0, getNowLineTop(now, SLOT_ROW_HEIGHT) - 14) : 0;
+  const timeLineTopPx = now ? Math.max(0, getNowLineTop(now, SLOT_ROW_HEIGHT) - 14) : 0;
 
   if (isLoading) {
     return (
@@ -102,9 +108,9 @@ export default function DayView() {
       </CalendarStickyHeader>
 
       {/* Time grid */}
-      <div className="relative border rounded-2xl overflow-hidden bg-background">
+      <div className={calendarGridShell}>
         {/* Current time indicator */}
-        {now && isToday && (
+        {now && (
           <div
             className="absolute left-14 right-0 z-20 pointer-events-none"
             style={{ top: timeLineTopPx }}
@@ -123,17 +129,17 @@ export default function DayView() {
           return (
             <div
               key={hour}
-              className="flex border-b last:border-0 min-h-16"
+              className={calendarGridDayRow}
             >
               {/* Hour label */}
-              <div className="w-14 shrink-0 text-[11px] text-muted-foreground text-right pr-2 pt-1">
+              <div className={calendarGridDayTimeGutter}>
                 {`${String(hour).padStart(2, "0")}:00`}
               </div>
 
               {/* Slot area */}
-              <div className="flex-1 border-l relative">
+              <div className={calendarGridDaySlot}>
                 {/* Half-hour dashed line */}
-                <div className="absolute left-0 right-0 top-1/2 border-dashed border-t border-muted-foreground/15 pointer-events-none" />
+                <div className={calendarGridHalfHourLine} />
 
                 {slotAppts.length > 0 && (
                   <div className="flex flex-col gap-1 p-1">

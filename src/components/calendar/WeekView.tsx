@@ -25,6 +25,14 @@ import GlobalCalendarFilters from "./GlobalCalendarFilters";
 import CalendarStickyHeader from "./CalendarStickyHeader";
 import { useLiveNow } from "./useLiveNow";
 import { getNowLineTop } from "./timeLinePosition";
+import {
+  calendarGridWeekOuterShell,
+  calendarGridWeekStickyCorner,
+  calendarGridWeekHeaderCell,
+  calendarGridWeekHourCell,
+  calendarGridWeekSlotCell,
+  calendarGridHalfHourLine,
+} from "./calendarGridTokens";
 
 type AppointmentWithCategory = Appointment & {
   category_data?: Category;
@@ -429,12 +437,6 @@ export default function WeekView() {
   // State for current time (updates every minute)
   const now = useLiveNow();
 
-  // Helper: is "now" inside the visible week
-  const isTodayInWeek = () => {
-    if (!now) return false;
-    return now >= weekStart && now <= weekEnd;
-  };
-
   // Helper: get position of red line (in px from top)
   const getRedLinePosition = () => (now ? getNowLineTop(now, hourHeight) : 0);
 
@@ -443,7 +445,7 @@ export default function WeekView() {
     if (!open) setEditAppt(null);
   };
 
-  const showWeekNowLine = isTodayInWeek();
+  const showWeekNowLine = Boolean(now);
   const weekIndicatorTopPx = showWeekNowLine
     ? headerRowHeight + getRedLinePosition() - (hourHeight / 60) * 2
     : 0;
@@ -472,7 +474,7 @@ export default function WeekView() {
         </div>
         <GlobalCalendarFilters categories={categories} patients={filterPatients} />
       </CalendarStickyHeader>
-      <div className="week-scroll-container overflow-hidden rounded-2xl border border-gray-200 bg-background">
+      <div className={calendarGridWeekOuterShell}>
         <div className="relative grid w-full text-sm week-grid">
           {showWeekNowLine && (
             <div
@@ -489,7 +491,7 @@ export default function WeekView() {
             </div>
           )}
           {/* Top-left sticky cell */}
-          <div className="h-10 bg-gray-50 border-r border-b week-sticky-corner" />
+          <div className={calendarGridWeekStickyCorner} />
 
           {/* Date/day header row */}
           {Array.from({ length: 7 }).map((_, i) => {
@@ -505,7 +507,10 @@ export default function WeekView() {
             return (
               <div
                 key={i}
-                className={"h-10 border-r border-b px-2 py-1 text-center font-medium text-gray-600 week-day-header" + (isToday && isCurrentWeek ? " week-day-header-today" : "")}
+                className={
+                  calendarGridWeekHeaderCell +
+                  (isToday && isCurrentWeek ? " week-day-header-today" : "")
+                }
               >
                 {format(day, "EEE dd.MM.")}
                 {isToday && isCurrentWeek && (
@@ -521,7 +526,7 @@ export default function WeekView() {
             <div key={hour} className="contents">
               {/* Time column sticky */}
               <div
-                className="border-r border-b px-2 py-2 text-xs text-gray-500 week-hour-cell"
+                className={calendarGridWeekHourCell}
               >{`${hour}:00`}
               </div>
               {Array.from({ length: 7 }).map((_, i) => {
@@ -546,9 +551,11 @@ export default function WeekView() {
                 return (
                   <div
                     key={i}
-                    className={"border-r border-b relative week-slot-cell" + (isTodayCol ? " week-slot-today" : "")}
+                    className={
+                      calendarGridWeekSlotCell + (isTodayCol ? " week-slot-today" : "")
+                    }
                   >
-                    <div className="pointer-events-none absolute left-0 right-0 top-1/2 border-t border-dashed border-gray-300/70" />
+                    <div className={calendarGridHalfHourLine} />
                     {/* Inject your code here: */}
                     {matches.map((a) => {
                       const color = randomBgColor(a.id);

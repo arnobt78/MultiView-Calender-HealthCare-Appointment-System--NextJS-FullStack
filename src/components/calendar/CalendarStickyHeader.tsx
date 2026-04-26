@@ -12,7 +12,7 @@ export default function CalendarStickyHeader({
   return (
     <div
       className={cn(
-        "mb-3 bg-transparent",
+        "mb-2 bg-transparent",
         className
       )}
     >
