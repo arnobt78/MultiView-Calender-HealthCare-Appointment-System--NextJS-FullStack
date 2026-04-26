@@ -137,7 +137,7 @@ export default function CalendarHeader({
             type="button"
             variant="ghost"
             onClick={jumpToToday}
-            className="group inline-flex h-auto min-w-0 max-w-full shrink items-center gap-2 whitespace-normal rounded-lg px-1.5 py-1 text-left text-xs leading-snug bg-transparent shadow-none hover:bg-transparent active:bg-transparent dark:hover:bg-transparent sm:px-2 sm:text-sm cursor-pointer"
+            className="group inline-flex h-auto min-w-0 max-w-full shrink items-center gap-2 whitespace-normal rounded-2xl px-1.5 py-1 text-left text-xs leading-snug bg-transparent shadow-none hover:bg-transparent active:bg-transparent dark:hover:bg-transparent sm:px-2 sm:text-sm cursor-pointer"
           >
             {view === "Day" && (
               <>

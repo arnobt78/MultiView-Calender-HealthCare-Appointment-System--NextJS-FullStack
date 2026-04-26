@@ -72,7 +72,7 @@ export default function FilePreview({ url, filename, fileType }: FilePreviewProp
           <div className="flex flex-col items-center gap-4">
             {type === "image" && (
               <>
-                <div className="overflow-auto max-h-[70vh] w-full flex items-center justify-center bg-muted/20 rounded-lg">
+                <div className="overflow-auto max-h-[70vh] w-full flex items-center justify-center bg-muted/20 rounded-2xl">
                   <div
                     className={`${zoomClass} max-w-full cursor-zoom-in`}
                     onClick={() => setZoom((z) => (z >= 3 ? 1 : z + 0.5))}
@@ -98,7 +98,7 @@ export default function FilePreview({ url, filename, fileType }: FilePreviewProp
             {type === "pdf" && (
               <iframe
                 src={url}
-                className="w-full h-[70vh] border rounded-lg"
+                className="w-full h-[70vh] border rounded-2xl"
                 title={filename}
               />
             )}

@@ -73,7 +73,7 @@ export default function AppointmentAccessPermission() {
         <CardTitle className="text-lg font-semibold text-gray-700">Appointment Access Invitation</CardTitle>
         <CardDescription className="text-base text-muted-foreground">Invite someone to access a specific appointment.</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-2">
         <div className="space-y-2">
           <Label htmlFor="appt-email" className="text-base font-medium text-gray-700">Invitee Email</Label>
           <Input

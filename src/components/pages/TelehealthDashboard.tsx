@@ -151,7 +151,7 @@ export default function TelehealthDashboard() {
 
           <div className="space-y-3">
             {sortedAppointments.length === 0 ? (
-              <div className="text-center p-8 border rounded-lg bg-background">
+              <div className="text-center p-8 border rounded-2xl bg-background">
                 <p className="text-muted-foreground">No appointments match this filter.</p>
               </div>
             ) : (

@@ -282,7 +282,7 @@ function AppointmentDeck() {
           {/* header */}
           <div className="flex items-center justify-between px-6 lg:px-8 pt-6 lg:pt-8 pb-4">
             <div className="flex items-center gap-2.5">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-sky-500/15 border border-sky-400/20">
+              <span className="flex h-7 w-7 items-center justify-center rounded-2xl bg-sky-500/15 border border-sky-400/20">
                 <Clock className="h-3.5 w-3.5 text-sky-300" />
               </span>
               <div>
@@ -367,7 +367,7 @@ function AppointmentDeck() {
                       </div>
                     ) : (
                       <div className="flex items-center gap-3 rounded-2xl bg-white/5 px-3 py-2.5">
-                        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/5 ${apt.ic}`}>
+                        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-2xl bg-white/5 ${apt.ic}`}>
                           <apt.Icon className="h-3.5 w-3.5" />
                         </div>
                         <div className="flex-1 min-w-0">
@@ -945,7 +945,7 @@ export default function LandingPage() {
                   {/* bottom info pill */}
                   <div className="absolute bottom-5 left-5 right-5 rounded-2xl border border-white/15 bg-slate-900/80 p-4 backdrop-blur-xl">
                     <div className="flex items-stretch gap-2">
-                      <span className={`flex w-10 shrink-0 self-stretch items-center justify-center rounded-lg border ${ABOUT_CARDS[aboutCardIdx].iconBorder} ${ABOUT_CARDS[aboutCardIdx].iconBg}`}>
+                      <span className={`flex w-10 shrink-0 self-stretch items-center justify-center rounded-2xl border ${ABOUT_CARDS[aboutCardIdx].iconBorder} ${ABOUT_CARDS[aboutCardIdx].iconBg}`}>
                         {React.createElement(ABOUT_CARDS[aboutCardIdx].Icon, {
                           className: `h-3.5 w-3.5 ${ABOUT_CARDS[aboutCardIdx].iconColor}`,
                         })}

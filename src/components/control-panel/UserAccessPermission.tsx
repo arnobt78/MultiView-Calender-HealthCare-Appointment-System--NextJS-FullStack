@@ -79,7 +79,7 @@ export default function UserAccessPermission() {
         <CardTitle className="text-lg font-semibold text-gray-700">User Dashboard Access Invitation</CardTitle>
         <CardDescription className="text-base text-muted-foreground">Invite someone to access a user&apos;s dashboard.</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-2">
         <div className="space-y-2">
           <Label htmlFor="user-email" className="text-base font-medium text-gray-700">Invitee Email</Label>
           <Input

@@ -143,7 +143,7 @@ export default function NotificationsManagement() {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-2">
         <div className="flex justify-between">
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-9 w-32" />
@@ -154,7 +154,7 @@ export default function NotificationsManagement() {
   }
 
   return (
-    <div className="space-y-4 animate-in fade-in">
+    <div className="space-y-2 animate-in fade-in">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">

@@ -27,7 +27,7 @@ export default function ControlPanelLoading() {
 
         {/* Main Content Area Skeleton */}
         <div className="flex-1 p-6 overflow-auto">
-          <div className="space-y-4">
+          <div className="space-y-2">
             {/* Table Header Match */}
             <div className="flex items-center justify-between">
               <Skeleton className="h-8 w-48" />

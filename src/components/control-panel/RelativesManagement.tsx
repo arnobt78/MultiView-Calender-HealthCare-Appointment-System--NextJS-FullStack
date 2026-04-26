@@ -173,7 +173,7 @@ export default function RelativesManagement() {
   if (isError) return <div className="p-4 text-red-500">Error: {error?.message}</div>;
 
   return (
-    <div className="space-y-4 animate-in fade-in">
+    <div className="space-y-2 animate-in fade-in">
       <PageHeader
         title="Relative Management"
         description="Manage all relatives linked to patients and appointments."

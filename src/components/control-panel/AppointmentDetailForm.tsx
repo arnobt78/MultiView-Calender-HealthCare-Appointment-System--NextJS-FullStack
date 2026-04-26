@@ -75,7 +75,7 @@ export function AppointmentDetailForm({ appointment }: AppointmentDetailFormProp
   };
 
   return (
-    <div className="space-y-4 pt-4 border-t">
+    <div className="space-y-2 pt-4 border-t">
       <h3 className="font-semibold text-sm">Edit Appointment</h3>
       <div className="grid gap-4">
         <div className="space-y-2">

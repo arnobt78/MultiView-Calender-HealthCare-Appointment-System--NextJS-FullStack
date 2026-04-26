@@ -451,7 +451,7 @@ export default function AppointmentDialog({
             <TabsTrigger value="activities" className="cursor-pointer">Activities</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="general" className="space-y-4 py-2 mt-0">
+          <TabsContent value="general" className="space-y-2 py-2 mt-0">
             <div className="space-y-2">
               <Label htmlFor="title">Title</Label>
               <Input
@@ -616,7 +616,7 @@ export default function AppointmentDialog({
 
           </TabsContent>
 
-          <TabsContent value="assignees" className="space-y-4 py-2 mt-0">
+          <TabsContent value="assignees" className="space-y-2 py-2 mt-0">
             <div className="space-y-2">
               <Label>Assign (Patients/Relatives)</Label>
               <Select onValueChange={handleAddAssignee}>
@@ -665,7 +665,7 @@ export default function AppointmentDialog({
             </div>
           </TabsContent>
 
-          <TabsContent value="activities" className="space-y-4 py-2 mt-0">
+          <TabsContent value="activities" className="space-y-2 py-2 mt-0">
             <div className="space-y-2">
               <Label>Add activity</Label>
               <div className="flex gap-2">

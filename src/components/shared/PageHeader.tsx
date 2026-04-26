@@ -21,7 +21,7 @@ export function PageHeader({
 }: PageHeaderProps) {
   if (loading) {
     return (
-      <div className={cn("flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 mb-6 border-b", className)} {...props}>
+      <div className={cn("flex flex-col sm:flex-row sm:items-center justify-between gap-4", className)} {...props}>
         <div className="space-y-2">
           <Skeleton className="h-8 w-64" />
           <Skeleton className="h-4 w-96" />
@@ -36,15 +36,15 @@ export function PageHeader({
   return (
     <div
       className={cn(
-        "flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 mb-6 border-b sticky top-0 bg-background/80 backdrop-blur-xl z-20 pt-2",
+        "flex flex-col sm:flex-row sm:items-center justify-between gap-4 sticky top-0 backdrop-blur-sm z-20",
         className
       )}
       {...props}
     >
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">{title}</h1>
+      <div className="py-2">
+        <h1 className="text-lg sm:text-xl font-semibold tracking-tight text-gray-700">{title}</h1>
         {description && (
-          <p className="text-muted-foreground mt-1 text-sm">{description}</p>
+          <p className="text-gray-500 text-xs sm:text-sm">{description}</p>
         )}
       </div>
       {actions && (

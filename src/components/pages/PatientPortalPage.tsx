@@ -96,7 +96,7 @@ function BookAppointmentDialog() {
         <DialogHeader>
           <DialogTitle>Request New Appointment</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+        <form onSubmit={handleSubmit} className="space-y-2 pt-2">
           <div className="space-y-1.5">
             <Label htmlFor="pp-title">Title</Label>
             <Input id="pp-title" placeholder="Reason for visit" value={title} onChange={(e) => setTitle(e.target.value)} required />
@@ -171,7 +171,7 @@ function AppointmentTimeline({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h3 className="text-lg font-semibold">Appointment History</h3>
         <div className="flex bg-muted rounded-2xl p-1 gap-1">
@@ -187,7 +187,7 @@ function AppointmentTimeline({
         </div>
       </div>
 
-      <div className="relative space-y-4 before:absolute before:inset-y-0 before:left-5 before:w-0.5 before:bg-border">
+      <div className="relative space-y-2 before:absolute before:inset-y-0 before:left-5 before:w-0.5 before:bg-border">
         {filtered.map((appt) => {
           const status = appt.status ?? "pending";
           const meta = STATUS_META[status] ?? STATUS_META.pending;
@@ -283,11 +283,11 @@ export default function PatientPortalPage() {
           <Skeleton className="h-10 w-40" />
         </div>
         <div className="grid md:grid-cols-3 gap-6">
-          <div className="space-y-4">
+          <div className="space-y-2">
             <Skeleton className="h-48 rounded-2xl" />
             <Skeleton className="h-32 rounded-2xl" />
           </div>
-          <div className="md:col-span-2 space-y-4">
+          <div className="md:col-span-2 space-y-2">
             {Array.from({ length: 3 }).map((_, i) => (
               <Skeleton key={i} className="h-28 rounded-2xl" />
             ))}
@@ -323,13 +323,13 @@ export default function PatientPortalPage() {
 
       <div className="grid md:grid-cols-3 gap-6">
         {/* Sidebar */}
-        <div className="space-y-4">
+        <div className="space-y-2">
           {/* Patient profile */}
           <Card>
             <CardHeader>
               <CardTitle className="text-base">My Profile</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-2">
               {patient ? (
                 <>
                   <div className="flex items-center gap-3">

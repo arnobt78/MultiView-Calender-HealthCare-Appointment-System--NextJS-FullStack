@@ -77,7 +77,7 @@ export default function DayView() {
         {Array.from({ length: 12 }).map((_, i) => (
           <div key={i} className="flex gap-3 items-center">
             <Skeleton className="h-5 w-12 shrink-0" />
-            <Skeleton className="h-14 flex-1 rounded-lg" />
+            <Skeleton className="h-14 flex-1 rounded-2xl" />
           </div>
         ))}
       </div>

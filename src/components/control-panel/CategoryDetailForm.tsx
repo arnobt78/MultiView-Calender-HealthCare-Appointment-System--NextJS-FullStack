@@ -35,7 +35,7 @@ export function CategoryDetailForm({ category }: { category: Category }) {
   };
 
   return (
-    <div className="border-t pt-4 space-y-4">
+    <div className="border-t pt-4 space-y-2">
       <h4 className="font-medium">Edit</h4>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">

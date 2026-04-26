@@ -8,7 +8,7 @@ import React from "react";
 export default function HomePageSkeleton() {
   return (
     <div className="min-h-screen">
-      <div className="p-4 space-y-4">
+      <div className="p-4 space-y-2">
         {/* CalendarHeader skeleton */}
         <div className="flex items-center justify-between p-4 border-b mb-4 animate-pulse">
           <div className="flex items-center gap-4">

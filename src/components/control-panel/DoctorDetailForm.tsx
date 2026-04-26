@@ -47,7 +47,7 @@ export function DoctorDetailForm({ initialUser }: DoctorDetailFormProps) {
   };
 
   return (
-    <div className="space-y-4 pt-4 border-t">
+    <div className="space-y-2 pt-4 border-t">
       <h3 className="font-semibold text-sm">Edit User</h3>
       <div className="grid gap-4">
         <div className="space-y-2">

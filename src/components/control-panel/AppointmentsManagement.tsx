@@ -257,7 +257,7 @@ export default function AppointmentsManagement() {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-2">
         <div className="grid grid-cols-3 gap-4">
           {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-2xl" />)}
         </div>
@@ -271,7 +271,7 @@ export default function AppointmentsManagement() {
   }
 
   return (
-    <div className="space-y-4 animate-in fade-in">
+    <div className="space-y-2 animate-in fade-in">
       {/* Stats row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <Card onClick={() => setStatusFilter("all")} className={`cursor-pointer transition-shadow hover:shadow-md ${statusFilter === "all" ? "ring-2 ring-primary" : ""}`}>

@@ -43,7 +43,7 @@ export default function PatientDetailPage() {
   }
 
   return (
-    <div className="max-w-9xl mx-auto space-y-6 p-4">
+    <div className="max-w-9xl mx-auto space-y-2 px-2 sm:px-4 lg:px-8">
       <PageHeader
         title={`Patient: ${patient.firstname} ${patient.lastname}`}
         description="All table schema properties"
@@ -65,7 +65,7 @@ export default function PatientDetailPage() {
             id, created_at, firstname, lastname, birth_date, care_level, pronoun, email, active, active_since
           </p>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-2">
           <dl className="grid gap-2 text-sm">
             <div><dt className="font-medium text-muted-foreground">id</dt><dd className="font-mono">{patient.id}</dd></div>
             <div><dt className="font-medium text-muted-foreground">created_at</dt><dd>{patient.created_at ? new Date(patient.created_at).toISOString() : "—"}</dd></div>

@@ -100,7 +100,7 @@ function CreateInvoiceDialog({
         <DialogHeader>
           <DialogTitle>Create Invoice</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+        <form onSubmit={handleSubmit} className="space-y-2 pt-2">
           <div className="space-y-1.5">
             <Label htmlFor="inv-amount">Amount (EUR)</Label>
             <Input
@@ -293,7 +293,7 @@ export default function InvoiceManagement() {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-2">
         <div className="grid gap-4 sm:grid-cols-2">
           <Skeleton className="h-24 rounded-2xl" />
           <Skeleton className="h-24 rounded-2xl" />
@@ -309,7 +309,7 @@ export default function InvoiceManagement() {
   }
 
   return (
-    <div className="space-y-4 animate-in fade-in">
+    <div className="space-y-2 animate-in fade-in">
       {/* Summary cards */}
       <div className="grid gap-4 sm:grid-cols-2">
         <Card>

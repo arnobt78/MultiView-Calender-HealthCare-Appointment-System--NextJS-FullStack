@@ -23,7 +23,7 @@ export default function ControlPanelSkeleton() {
         {/* Permission section skeleton */}
         <div className="space-y-6">
           <div className="h-8 w-64 bg-gray-200 rounded mb-4" />
-          <div className="bg-white rounded-lg border p-6 space-y-4">
+          <div className="bg-white rounded-2xl border p-6 space-y-2">
             <div className="h-6 w-48 bg-gray-200 rounded" />
             <div className="h-10 w-full bg-gray-100 rounded" />
             <div className="h-10 w-32 bg-gray-200 rounded" />
@@ -32,7 +32,7 @@ export default function ControlPanelSkeleton() {
           <div className="space-y-3 mt-6">
             <div className="h-6 w-40 bg-gray-200 rounded" />
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="bg-white rounded-lg border p-4 flex items-center gap-4">
+              <div key={i} className="bg-white rounded-2xl border p-4 flex items-center gap-4">
                 <div className="h-10 w-10 bg-gray-200 rounded-full" />
                 <div className="flex-1 space-y-2">
                   <div className="h-4 w-48 bg-gray-200 rounded" />

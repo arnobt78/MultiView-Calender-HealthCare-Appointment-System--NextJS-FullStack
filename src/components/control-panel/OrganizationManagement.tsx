@@ -86,7 +86,7 @@ function CreateOrgDialog({ onCreate }: { onCreate: (name: string) => void }) {
         <DialogHeader>
           <DialogTitle>Create Organization</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+        <form onSubmit={handleSubmit} className="space-y-2 pt-2">
           <div className="space-y-1.5">
             <Label htmlFor="org-name">Name</Label>
             <Input
@@ -144,7 +144,7 @@ function AddMemberDialog({
         <DialogHeader>
           <DialogTitle>Add Member to {org.name}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+        <form onSubmit={handleSubmit} className="space-y-2 pt-2">
           <div className="space-y-1.5">
             <Label>User</Label>
             <Select value={userId} onValueChange={setUserId}>
@@ -303,7 +303,7 @@ export default function OrganizationManagement() {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-2">
         <Skeleton className="h-8 w-64" />
         <Skeleton className="h-[300px] w-full rounded-2xl" />
       </div>
@@ -315,7 +315,7 @@ export default function OrganizationManagement() {
   }
 
   return (
-    <div className="space-y-4 animate-in fade-in">
+    <div className="space-y-2 animate-in fade-in">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
           <h2 className="text-2xl font-bold">Organization Management</h2>

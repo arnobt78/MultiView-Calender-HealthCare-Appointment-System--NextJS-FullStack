@@ -135,7 +135,7 @@ export default function DoctorManagement() {
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       <PageHeader
         title="Doctor / User Management"
         description="Manage users and their roles. Click a role badge to change it inline."

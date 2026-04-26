@@ -191,7 +191,7 @@ export default function PatientManagement() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       <PageHeader
         title="Patient Management"
         description="Manage patients. All table schema properties are shown."

@@ -66,7 +66,7 @@ export default function PatientDetailView({ patientId }: { patientId: string }) 
 
             <Separator className="my-6" />
 
-            <div className="space-y-4 text-sm">
+            <div className="space-y-2 text-sm">
               <div className="flex items-start gap-3">
                 <Mail className="h-4 w-4 text-muted-foreground mt-0.5" />
                 <div className="flex-1 overflow-hidden">
@@ -176,9 +176,9 @@ export default function PatientDetailView({ patientId }: { patientId: string }) 
             {upcomingAppts.length === 0 ? (
               <p className="text-sm text-muted-foreground">No upcoming appointments.</p>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-2">
                 {upcomingAppts.map((appt: any) => (
-                  <div key={appt.id} className="p-3 bg-muted/40 rounded-lg border text-sm">
+                  <div key={appt.id} className="p-3 bg-muted/40 rounded-2xl border text-sm">
                     <p className="font-medium mb-1 truncate">{appt.title}</p>
                     <div className="flex items-center gap-1.5 text-muted-foreground text-xs mb-3">
                       <Calendar className="h-3.5 w-3.5" />
@@ -237,7 +237,7 @@ function PatientDetailSkeleton() {
             <Skeleton className="h-6 w-3/4 mb-2" />
             <Skeleton className="h-5 w-1/2" />
             <Separator className="my-6 w-full" />
-            <div className="w-full space-y-4">
+            <div className="w-full space-y-2">
               <Skeleton className="h-10 w-full" />
               <Skeleton className="h-10 w-full" />
               <Skeleton className="h-10 w-full" />
@@ -274,7 +274,7 @@ function PatientDetailSkeleton() {
       <div className="lg:col-span-3 space-y-6">
         <Card>
           <CardHeader><Skeleton className="h-5 w-24" /></CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-2">
             <Skeleton className="h-28 w-full" />
           </CardContent>
         </Card>

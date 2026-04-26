@@ -156,7 +156,7 @@ export default function Navbar() {
                       <div className="flex flex-col gap-2 px-2 py-2">
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex min-w-0 items-center gap-2">
-                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sky-500/10 text-sky-600">
+                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-2xl bg-sky-500/10 text-sky-600">
                               <BellRing className="h-4 w-4" aria-hidden />
                             </span>
                             <span className="truncate text-sm font-semibold">Notifications</span>

@@ -92,7 +92,7 @@ export function PatientsTab() {
 
   if (activePatientId) {
     return (
-      <div className="space-y-4 animate-in fade-in h-[calc(100vh-140px)]">
+      <div className="space-y-2 animate-in fade-in h-[calc(100vh-140px)]">
         <div className="flex items-center gap-4 border-b pb-4">
           <Button variant="ghost" size="sm" onClick={() => setActivePatient(null)}>
             ← Back to Patient List
@@ -115,7 +115,7 @@ export function PatientsTab() {
   ) || [];
 
   return (
-    <div className="space-y-4 animate-in fade-in">
+    <div className="space-y-2 animate-in fade-in">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-700">Patient Management</h2>
         <Input
@@ -167,10 +167,10 @@ export default function ControlPanelPage({ initialSession, initialTab }: Control
   };
 
   return (
-    <div className="w-full max-w-9xl mx-auto py-8 px-2 sm:px-6 lg:px-8">
-      <div className="flex flex-col md:flex-row gap-6 md:gap-8 min-h-[60vh]">
+    <div className="w-full max-w-9xl mx-auto px-2 sm:px-6 lg:px-8 py-2">
+      <div className="flex flex-col md:flex-row gap-2 md:gap-4 min-h-[60vh]">
         {/* Desktop sidebar - shadcn Tabs as vertical tab menu */}
-        <aside className="hidden md:flex min-w-[240px] w-64 shrink-0 flex-col rounded-lg border bg-card text-card-foreground shadow-xl">
+        <aside className="hidden md:flex h-full min-w-[240px] w-64 shrink-0 flex-col rounded-2xl border bg-card text-card-foreground shadow-2xl sticky top-0">
           <Tabs
             value={activeTab}
             onValueChange={handleTabChange}

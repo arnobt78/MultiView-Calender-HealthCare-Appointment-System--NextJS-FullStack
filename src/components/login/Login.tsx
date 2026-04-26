@@ -280,7 +280,7 @@ export default function Login({ redirect = null }: LoginProps) {
 
                 <motion.form
                   onSubmit={handleLogin}
-                  className="space-y-4"
+                  className="space-y-2"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.4, delay: 0.4 }}

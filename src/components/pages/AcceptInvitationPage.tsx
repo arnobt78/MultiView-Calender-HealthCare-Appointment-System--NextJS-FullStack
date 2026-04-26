@@ -58,7 +58,7 @@ export default function AcceptInvitationPage({ token = null }: AcceptInvitationP
               : "Use the actions below to accept your invitation."}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-2">
           {checkingAuth ? (
             <p className="text-muted-foreground">Checking authentication...</p>
           ) : !user ? (

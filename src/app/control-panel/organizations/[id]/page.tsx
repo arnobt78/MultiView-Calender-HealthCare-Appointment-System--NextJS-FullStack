@@ -67,7 +67,7 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
   const userMap = Object.fromEntries(users.map((u) => [u.id, u]));
 
   return (
-    <div className="max-w-9xl mx-auto space-y-6 p-4">
+    <div className="max-w-9xl mx-auto space-y-2 px-2 sm:px-4 lg:px-8">
       <PageHeader
         title={org.name}
         description={`Slug: ${org.slug}`}

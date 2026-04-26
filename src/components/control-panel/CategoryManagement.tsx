@@ -164,7 +164,7 @@ export default function CategoryManagement() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       <PageHeader
         title="Category Management"
         description="Manage appointment categories. All table schema properties are shown."

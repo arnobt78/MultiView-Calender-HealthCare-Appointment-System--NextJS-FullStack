@@ -45,7 +45,7 @@ export default function AnalyticsLoading() {
             <Skeleton className="h-6 w-32 mb-1" />
             <Skeleton className="h-4 w-48" />
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-2">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i}>
                 <div className="flex justify-between mb-2">
