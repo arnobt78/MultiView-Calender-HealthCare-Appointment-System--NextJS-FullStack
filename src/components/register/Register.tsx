@@ -266,7 +266,7 @@ export function Register() {
                   <div className="pt-1">
                     <Button
                       type="submit"
-                      className="w-full h-11 rounded-2xl font-semibold text-sm bg-teal-600 hover:bg-teal-700 transition-colors"
+                      className="w-full h-11 rounded-2xl text-white font-semibold text-sm from-teal-500 to-teal-700 bg-gradient-to-r hover:from-teal-600 hover:to-teal-800 transition-colors"
                       disabled={loading}
                     >
                       {loading ? "Creating account…" : "Create Account"}

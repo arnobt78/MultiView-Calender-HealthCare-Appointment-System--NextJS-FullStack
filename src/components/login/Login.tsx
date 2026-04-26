@@ -359,7 +359,7 @@ export default function Login({ redirect = null }: LoginProps) {
                   <div className="pt-1 space-y-3">
                     <Button
                       type="submit"
-                      className="w-full h-11 rounded-2xl font-semibold text-sm bg-blue-600 hover:bg-blue-700 transition-colors"
+                      className="w-full h-11 rounded-2xl text-white font-semibold text-sm from-sky-500 to-sky-700 bg-gradient-to-r hover:from-sky-600 hover:to-sky-800 transition-colors"
                       disabled={loading}
                     >
                       {loading ? "Signing in…" : "Sign In"}
@@ -379,7 +379,7 @@ export default function Login({ redirect = null }: LoginProps) {
 
                 <p className="text-center mt-5 text-sm text-slate-400">
                   No account yet?{" "}
-                  <Link href="/register" className="text-blue-600 font-semibold hover:text-blue-700 transition-colors">
+                  <Link href="/register" className="text-sky-600 font-semibold hover:text-sky-700 transition-colors">
                     Create one
                   </Link>
                 </p>

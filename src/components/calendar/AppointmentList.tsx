@@ -41,7 +41,6 @@ import {
   CalendarX2,
   CalendarDays,
   ChevronDown,
-  ChevronRight,
 } from "lucide-react";
 import { getUserAppointmentPermission } from "@/lib/permissions";
 import VideoCall from "./VideoCall";
@@ -231,7 +230,7 @@ export default function AppointmentList() {
   const [collapsedSections, setCollapsedSections] = useState<Record<ListSectionKey, boolean>>({
     today: false,
     tomorrow: false,
-    passed: false,
+    passed: true,
     later: false,
   });
 
@@ -531,6 +530,7 @@ export default function AppointmentList() {
                   >
                     <button
                       type="button"
+                      aria-expanded={!isCollapsed}
                       onClick={() => toggleSection(section.key)}
                       className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-white/35"
                     >
@@ -546,9 +546,12 @@ export default function AppointmentList() {
                         </div>
                         <p className="text-xs text-gray-500">{section.subtitle}</p>
                       </div>
-                      <span className="inline-flex items-center gap-1 rounded-full bg-white/70 px-2.5 py-1 text-xs font-medium text-gray-700 shadow-sm">
-                        {isCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-                        {isCollapsed ? "Expand" : "Collapse"}
+                      <span className="inline-flex h-7 w-24 shrink-0 items-center justify-center gap-1 rounded-full bg-white/70 px-2 text-xs font-medium text-gray-700 shadow-lg">
+                        <ChevronDown
+                          className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ease-out will-change-transform ${isCollapsed ? "-rotate-90" : "rotate-0"}`}
+                          aria-hidden
+                        />
+                        <span className="whitespace-nowrap text-center">{isCollapsed ? "Expand" : "Collapse"}</span>
                       </span>
                     </button>
 
