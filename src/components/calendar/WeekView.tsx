@@ -429,10 +429,9 @@ export default function WeekView() {
   // State for current time (updates every minute)
   const now = useLiveNow();
 
-  // Helper: is today in this week?
+  // Helper: is "now" inside the visible week
   const isTodayInWeek = () => {
     if (!now) return false;
-    const weekEnd = addDays(weekStart, 6);
     return now >= weekStart && now <= weekEnd;
   };
 
