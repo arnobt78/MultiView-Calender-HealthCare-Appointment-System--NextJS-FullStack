@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { format, isSameDay } from "date-fns";
 import Link from "next/link";
 import { useAppointmentData } from "@/context/AppointmentDataContext";
@@ -14,6 +14,7 @@ import { useCategories } from "@/hooks/useCategories";
 import { usePatients } from "@/hooks/usePatients";
 import { useRelatives } from "@/hooks/useRelatives";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import VideoCall from "./VideoCall";
 import GlobalCalendarFilters from "./GlobalCalendarFilters";
@@ -28,6 +29,11 @@ import {
   calendarGridHalfHourLine,
 } from "./calendarGridTokens";
 import type { Appointment } from "@/types/types";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { MoreVertical, CheckCircle, Circle } from "lucide-react";
+import { FiEdit2, FiTrash2 } from "react-icons/fi";
+import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
+import AppointmentDialogController from "./AppointmentDialogController";
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 const SLOT_HEIGHT = 64; // px per hour
@@ -35,12 +41,14 @@ const SLOT_ROW_HEIGHT = 65; // 64px row + 1px border
 
 export default function DayView() {
   const { currentDate } = useDateContext();
-  const { appointments, isLoading } = useAppointmentData();
+  const { appointments, isLoading, toggleStatus, deleteAppointment } = useAppointmentData();
   const { category, patient, date, status, month, search } = useCalendarFilters();
   const { categories = [] } = useCategories();
   const { patients = [] } = usePatients();
   const { relatives = [] } = useRelatives();
-  const { randomBgColor } = useAppointmentColor();
+  const { getAppointmentColorToken } = useAppointmentColor();
+  const [editAppt, setEditAppt] = useState<Appointment | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const filteredAppointments = useMemo(
     () =>
       applyCalendarFilters(
@@ -70,6 +78,10 @@ export default function DayView() {
 
   const now = useLiveNow();
   const timeLineTopPx = now ? Math.max(0, getNowLineTop(now, SLOT_ROW_HEIGHT) - 14) : 0;
+
+  const handleToggleStatus = (id: string, newStatus: "pending" | "done" | "alert") => {
+    toggleStatus({ id, status: newStatus });
+  };
 
   if (isLoading) {
     return (
@@ -142,45 +154,114 @@ export default function DayView() {
                 <div className={calendarGridHalfHourLine} />
 
                 {slotAppts.length > 0 && (
-                  <div className="flex flex-col gap-1 p-1">
+                  <div className="relative h-full p-1">
                     {slotAppts.map((appt: Appointment) => {
                       const start = new Date(appt.start);
                       const end = new Date(appt.end);
-                      const bgColor = randomBgColor(appt.id);
+                      const isDone = appt.status === "done";
+                      const hourStart = start.getHours() + start.getMinutes() / 60;
+                      const hourEnd = end.getHours() + end.getMinutes() / 60;
+                      const slotTop = (hourStart - hour) * SLOT_HEIGHT;
+                      const slotHeight = Math.max(44, (hourEnd - hourStart) * SLOT_HEIGHT);
+                      const matchedPatient = patients.find((p) => p.id === (appt as any).patient);
+                      const patientName =
+                        matchedPatient?.firstname && matchedPatient?.lastname
+                          ? `${matchedPatient.firstname} ${matchedPatient.lastname}`
+                          : "--";
+                      const categoryLabel =
+                        categories.find((c) => c.id === (appt as any).category)?.label ?? "--";
+                      const referTo = patientName !== "--" ? `Patient: ${patientName}` : "--";
+                      const colorToken = getAppointmentColorToken(
+                        appt.id,
+                        (appt as any)?.category_data?.color ?? null
+                      );
 
                       return (
                         <div
                           key={appt.id}
-                          className="relative flex items-center justify-between gap-2 rounded-2xl px-2 py-1.5 text-white overflow-hidden"
+                          className="absolute left-1 right-1 z-10 flex items-stretch gap-2 overflow-hidden rounded-2xl border p-1.5 shadow-sm"
+                          style={{
+                            top: slotTop,
+                            height: slotHeight,
+                            backgroundColor: colorToken.cardBgColor,
+                            borderColor: colorToken.cardBorderColor,
+                          }}
                         >
-                          <svg className="absolute inset-0 w-full h-full" aria-hidden="true" preserveAspectRatio="none" viewBox="0 0 1 1">
-                            <rect width="1" height="1" fill={bgColor} />
+                          <svg className="absolute left-0 top-0 bottom-0 h-full w-1.5 rounded-l-md" aria-hidden="true" preserveAspectRatio="none" viewBox="0 0 6 100">
+                            <rect width="6" height="100" fill={colorToken.lineColor} />
                           </svg>
-                          <div className="relative z-10 flex items-center justify-between gap-2 w-full min-w-0">
-                            <div className="flex flex-col min-w-0 flex-1">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex min-w-0 items-center gap-2">
                               <Link
                                 href={`/control-panel/appointments/${appt.id}`}
-                                className="text-sm font-semibold truncate hover:underline"
+                                className="truncate text-sm font-medium text-gray-800 hover:underline"
                               >
                                 {appt.title}
                               </Link>
-                              <span className="text-[11px] text-white/80">
-                                {format(start, "HH:mm")} – {format(end, "HH:mm")}
-                                {appt.location && ` · ${appt.location}`}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-1.5 shrink-0">
                               <Badge
                                 variant="outline"
-                                className="text-[10px] border-white/40 text-white px-1 py-0 capitalize"
+                                className="shrink-0 border-transparent bg-green-100 px-1.5 py-0 text-[10px] text-green-700"
                               >
-                                {appt.status ?? "pending"}
+                                Today
                               </Badge>
-                              <VideoCall
-                                appointmentId={appt.id}
-                                appointmentTitle={appt.title ?? "Video Consultation"}
-                              />
                             </div>
+                            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 wrap-break-word px-1 text-xs text-gray-600">
+                              <span className="inline-flex items-center gap-1">
+                                <svg width="12" height="12" fill="none" viewBox="0 0 24 24" className="text-gray-400">
+                                  <path d="M12 6V12L16 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
+                                </svg>
+                                {format(start, "HH:mm")} - {format(end, "HH:mm")}
+                              </span>
+                              <span>Location: {appt.location || "--"}</span>
+                              <span>Client: {patientName}</span>
+                              <span>Category: {categoryLabel}</span>
+                              <span>Refer to: {referTo}</span>
+                            </div>
+                          </div>
+                          <div className="flex shrink-0 items-center gap-1">
+                            <VideoCall
+                              appointmentId={appt.id}
+                              appointmentTitle={appt.title ?? "Video Consultation"}
+                            />
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-black/5">
+                                  <MoreVertical className="h-4 w-4 text-gray-500" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    handleToggleStatus(appt.id, isDone ? "pending" : "done")
+                                  }
+                                >
+                                  {isDone ? (
+                                    <>
+                                      <Circle className="mr-2 h-4 w-4" />
+                                      <span>Mark as open</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <CheckCircle className="mr-2 h-4 w-4 text-green-600" />
+                                      <span className="text-green-600">Mark as done</span>
+                                    </>
+                                  )}
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => setEditAppt(appt)}>
+                                  <FiEdit2 className="mr-2 h-4 w-4" />
+                                  <span>Edit</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => setDeleteTargetId(appt.id)}
+                                  className="text-red-600 focus:bg-red-50 focus:text-red-600"
+                                >
+                                  <FiTrash2 className="mr-2 h-4 w-4" />
+                                  <span>Delete</span>
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </div>
                       );
@@ -198,6 +279,31 @@ export default function DayView() {
           No appointments on this day.
         </p>
       )}
+      <ConfirmActionDialog
+        open={Boolean(deleteTargetId)}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTargetId(null);
+        }}
+        title="Delete appointment?"
+        subtitle="This will permanently remove the appointment from your calendar."
+        confirmLabel="Delete"
+        onConfirm={() => {
+          if (deleteTargetId) {
+            deleteAppointment(deleteTargetId);
+          }
+          setDeleteTargetId(null);
+        }}
+      />
+      {editAppt ? (
+        <AppointmentDialogController
+          appointment={editAppt as any}
+          onSuccess={() => setEditAppt(null)}
+          isOpen={Boolean(editAppt)}
+          onOpenChange={(open) => {
+            if (!open) setEditAppt(null);
+          }}
+        />
+      ) : null}
     </div>
   );
 }

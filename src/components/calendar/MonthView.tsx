@@ -30,7 +30,7 @@ import {
   useCalendarFilters,
   applyCalendarFilters,
 } from "@/context/CalendarFiltersContext";
-import { invalidateAllForCrud } from "@/lib/query-client";
+import { invalidateAppointmentData } from "@/lib/query-client";
 import { queryKeys } from "@/lib/query-keys";
 import AppointmentDialogController from "./AppointmentDialogController";
 import {
@@ -91,7 +91,7 @@ export default function MonthView() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
-  const { randomBgColor } = useAppointmentColor();
+  const { getAppointmentColorToken } = useAppointmentColor();
 
   const buildCalendar = useCallback(
     (list: AppointmentWithCategory[]) => {
@@ -437,7 +437,6 @@ export default function MonthView() {
               a.id === id ? { ...a, status: newStatus as FullAppointment["status"] } : a
             )
         );
-        void invalidateAllForCrud(queryClient);
       } else {
         console.error("Failed to update appointment status");
       }
@@ -462,7 +461,6 @@ export default function MonthView() {
           queryKeys.appointments.all,
           (old = []) => old.filter((a) => a.id !== id)
         );
-        void invalidateAllForCrud(queryClient);
       } else {
         console.error("Failed to delete appointment");
       }
@@ -487,7 +485,7 @@ export default function MonthView() {
     );
   };
 
-  // Helper for date tags (Today, Next Day, Some Day Later, Date Passed)
+  // Helper for date tags (Today, Tomorrow, Later Days, Date Passed)
   function getDateTag(date: Date) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -505,13 +503,13 @@ export default function MonthView() {
     if (diffDays === 1)
       return (
         <Badge variant="outline" className="ml-2 bg-yellow-100 text-yellow-800 hover:bg-yellow-100 border-transparent">
-          Next Day
+          Tomorrow
         </Badge>
       );
     if (diffDays > 1)
       return (
         <Badge variant="outline" className="ml-2 bg-sky-100 text-sky-700 hover:bg-sky-100 border-transparent">
-          Some Day Later
+          Later Days
         </Badge>
       );
     if (diffDays < 0)
@@ -656,7 +654,10 @@ export default function MonthView() {
               filteredCalendarDays.find((d) => isSameDay(d.date, selectedDate))
                 ?.appointments || []
             ).map((a) => {
-              const color = a.category_data?.color || randomBgColor(a.id);
+              const colorToken = getAppointmentColorToken(
+                a.id,
+                a.category_data?.color ?? null
+              );
               const isDone = a.status === "done";
 
               // Deduplicate assignees by user + invited_email
@@ -692,13 +693,17 @@ export default function MonthView() {
                 <div
                   key={a.id}
                   className={clsx(
-                    "relative border rounded-2xl shadow bg-white p-0 flex items-stretch transition hover:shadow-xl min-h-[110px]",
+                    "relative border rounded-2xl shadow p-0 flex items-stretch transition hover:shadow-xl min-h-[110px]",
                     isDone && "bg-gray-100 opacity-60"
                   )}
+                  style={{
+                    backgroundColor: colorToken.cardBgColor,
+                    borderColor: colorToken.cardBorderColor,
+                  }}
                 >
                   {/* Color bar */}
                   <svg className="absolute left-0 top-0 bottom-0 w-2 h-full rounded-l-xl" aria-hidden="true" preserveAspectRatio="none" viewBox="0 0 8 100">
-                    <rect width="8" height="100" fill={color} />
+                    <rect width="8" height="100" fill={colorToken.lineColor} />
                   </svg>
                   {/* Main content */}
                   <div className="pl-6 pr-2 py-4 flex-1 flex flex-col justify-center min-h-[110px]">
@@ -1005,26 +1010,10 @@ export default function MonthView() {
           appointment={editAppt}
           onSuccess={() => {
             setEditAppt(null);
-            void invalidateAllForCrud(queryClient);
-            void (async () => {
-              try {
-                const response = await fetch("/api/appointments");
-                if (response.ok) {
-                  const data = await response.json();
-                  const appointments = data.appointments || [];
-                  const categoriesRes = await fetch("/api/categories");
-                  const categoriesData = await categoriesRes.json();
-                  const categories = categoriesData.categories || [];
-                  const appointmentsWithCategories = appointments.map((appt: Appointment) => ({
-                    ...appt,
-                    category_data: categories.find((c: Category) => c.id === appt.category),
-                  }));
-                  buildCalendar(appointmentsWithCategories as AppointmentWithCategory[]);
-                }
-              } catch (error) {
-                console.error("Error refreshing appointments:", error);
-              }
-            })();
+            const refreshed =
+              queryClient.getQueryData<FullAppointment[]>(queryKeys.appointments.all) || [];
+            buildCalendar(refreshed as AppointmentWithCategory[]);
+            void invalidateAppointmentData(queryClient);
           }}
         />
       )}

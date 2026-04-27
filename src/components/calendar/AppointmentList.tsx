@@ -153,7 +153,7 @@ function groupAppointmentsByDate(appts: FullAppointment[]) {
   return sortedKeys.map((key) => ({ date: new Date(key), appts: groups[key] }));
 }
 
-// Day tags helper (Today, Next Day, Some Day Later, Date Passed)
+// Day tags helper (Today, Tomorrow, Later Days, Date Passed)
 function getDateTag(date: Date) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -171,13 +171,13 @@ function getDateTag(date: Date) {
   if (diffDays === 1)
     return (
       <Badge variant="outline" className="ml-2 bg-blue-100 text-blue-700 hover:bg-blue-100 border-transparent">
-        Next Day
+        Tomorrow
       </Badge>
     );
   if (diffDays > 1)
     return (
       <Badge variant="outline" className="ml-2 bg-sky-100 text-sky-700 hover:bg-sky-100 border-transparent">
-        Some Day Later
+        Later Days
       </Badge>
     );
   if (diffDays < 0)
@@ -207,7 +207,7 @@ export default function AppointmentList() {
   const [editOpen, setEditOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { currentDate } = useDateContext();
-  const { randomBgColor } = useAppointmentColor();
+  const { getAppointmentColorToken } = useAppointmentColor();
 
   // Queries
   const {
@@ -403,7 +403,7 @@ export default function AppointmentList() {
       {
         key: "tomorrow" as const,
         title: "Tomorrow",
-        subtitle: "Upcoming appointments for next day",
+        subtitle: "Upcoming appointments for Tomorrow",
         icon: CalendarClock,
         headerClass:
           "border-blue-300/55 bg-gradient-to-r from-blue-50 via-blue-50/80 to-sky-100/70",
@@ -582,8 +582,10 @@ export default function AppointmentList() {
                                     start.getFullYear() === now.getFullYear() &&
                                     start.getMonth() === now.getMonth() &&
                                     start.getDate() === now.getDate();
-                                  // Always use a stable random color from bgColors for the left border if no category color is set
-                                  const color = appt.category_data?.color || randomBgColor(appt.id);
+                                  const colorToken = getAppointmentColorToken(
+                                    appt.id,
+                                    appt.category_data?.color ?? null
+                                  );
                                   const isDone = appt.status === "done";
                                   const categoryIcon = appt.category_data?.icon ? (
                                     <span className="inline-flex items-center mr-1">
@@ -628,17 +630,21 @@ export default function AppointmentList() {
                                       initial={{ opacity: 0, y: 14 }}
                                       animate={{ opacity: 1, y: 0 }}
                                       transition={{ duration: 0.32, delay: i * 0.07 }}
-                                      className="relative rounded-2xl bg-white border border-gray-100 shadow-md hover:shadow-xl transition-all duration-200 p-0 flex items-stretch min-h-[130px]"
+                                      className="relative rounded-2xl border shadow-md hover:shadow-xl transition-all duration-200 p-0 flex items-stretch min-h-[130px]"
+                                      style={{
+                                        backgroundColor: colorToken.cardBgColor,
+                                        borderColor: colorToken.cardBorderColor,
+                                      }}
                                     >
                                       {/* Color bar */}
-                                      <ColorBar color={color} />
+                                      <ColorBar color={colorToken.lineColor} />
 
                                       {/* Main content */}
                                       <div className="pl-6 pr-4 py-4 flex-1 flex flex-col gap-2 min-w-0">
 
                                         {/* Row 1: Title + date tag */}
                                         <div className="flex items-center gap-2 flex-wrap">
-                                          <span className={`text-base font-semibold text-gray-700 ${isDone ? "line-through text-gray-400" : ""}`}>
+                                          <span className={`text-md font-medium text-gray-700 ${isDone ? "line-through text-gray-400" : ""}`}>
                                             {appt.title}
                                           </span>
                                           {getDateTag(start)}

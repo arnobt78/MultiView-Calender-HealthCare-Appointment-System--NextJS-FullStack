@@ -11,14 +11,13 @@ import {
   useCalendarFilters,
   applyCalendarFilters,
 } from "@/context/CalendarFiltersContext";
-import { invalidateAllForCrud } from "@/lib/query-client";
+import { invalidateAppointmentData } from "@/lib/query-client";
 import { queryKeys } from "@/lib/query-keys";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCategories } from "@/hooks/useCategories";
 import { usePatients } from "@/hooks/usePatients";
 import { useRelatives } from "@/hooks/useRelatives";
 import AppointmentHoverCard from "./AppointmentHoverCard";
-import { useAppointmentColor } from "@/context/AppointmentColorContext";
 import { Badge } from "../ui/badge";
 import type { FullAppointment } from "@/hooks/useAppointments";
 import GlobalCalendarFilters from "./GlobalCalendarFilters";
@@ -64,7 +63,6 @@ export default function WeekView() {
   const [ownerUsers, setOwnerUsers] = useState<{ id: string, email: string }[]>([]);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
-  const { randomBgColor } = useAppointmentColor();
   const queryClient = useQueryClient();
   const filteredAppointments = useMemo(
     () =>
@@ -343,7 +341,6 @@ export default function WeekView() {
               a.id === id ? { ...a, status: newStatus as FullAppointment["status"] } : a
             )
         );
-        void invalidateAllForCrud(queryClient);
       } else {
         console.error("Failed to update appointment status");
       }
@@ -363,7 +360,6 @@ export default function WeekView() {
           queryKeys.appointments.all,
           (old = []) => old.filter((a) => a.id !== id)
         );
-        void invalidateAllForCrud(queryClient);
       } else {
         console.error("Failed to delete appointment");
       }
@@ -410,13 +406,13 @@ export default function WeekView() {
     if (diffDays === 1)
       return (
         <Badge variant="outline" className="ml-2 bg-yellow-100 text-yellow-800 hover:bg-yellow-100 border-transparent">
-          Next Day
+          Tomorrow
         </Badge>
       );
     if (diffDays > 1)
       return (
         <Badge variant="outline" className="ml-2 bg-sky-100 text-sky-700 hover:bg-sky-100 border-transparent">
-          Some Day Later
+          Later Days
         </Badge>
       );
     if (diffDays < 0)
@@ -559,7 +555,6 @@ export default function WeekView() {
                     <div className={calendarGridHalfHourLine} />
                     {/* Inject your code here: */}
                     {matches.map((a) => {
-                      const color = randomBgColor(a.id);
                       const start = new Date(a.start);
                       const end = new Date(a.end);
                       const hourStart = start.getHours() + start.getMinutes() / 60;
@@ -621,26 +616,10 @@ export default function WeekView() {
             appointment={editAppt}
             onSuccess={() => {
               setEditAppt(null);
-              void invalidateAllForCrud(queryClient);
-              void (async () => {
-                try {
-                  const response = await fetch("/api/appointments");
-                  if (response.ok) {
-                    const data = await response.json();
-                    const appointments = data.appointments || [];
-                    const categoriesRes = await fetch("/api/categories");
-                    const categoriesData = await categoriesRes.json();
-                    const categories = categoriesData.categories || [];
-                    const appointmentsWithCategories = appointments.map((appt: Appointment) => ({
-                      ...appt,
-                      category_data: categories.find((c: Category) => c.id === appt.category),
-                    }));
-                    setAppointments(appointmentsWithCategories);
-                  }
-                } catch (error) {
-                  console.error("Error refreshing appointments:", error);
-                }
-              })();
+              const refreshed =
+                queryClient.getQueryData<FullAppointment[]>(queryKeys.appointments.all) || [];
+              setAppointments(refreshed as AppointmentWithCategory[]);
+              void invalidateAppointmentData(queryClient);
             }}
             isOpen={editOpen}
             onOpenChange={handleEditDialogChange}

@@ -92,8 +92,9 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
   onToggleStatus,
   showDetails = false,
 }) => {
-  const { randomBgColor } = useAppointmentColor();
-  const color = randomBgColor(a.id);
+  const { getAppointmentColorToken } = useAppointmentColor();
+  const colorToken = getAppointmentColorToken(a.id, a.category_data?.color ?? null);
+  const color = colorToken.lineColor;
   const isDone = a.status === "done";
   const dedupedAssignees = dedupeAssignees(assignees, a.id);
 
@@ -101,11 +102,15 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
     <HoverCard key={a.id}>
       <HoverCardTrigger asChild>
         {showDetails ? (
-          // WeekView: Rich details card
+          // WeekView: compact responsive card
           <div className={clsx(
-            "flex flex-col w-full h-full rounded-2xl font-medium cursor-pointer shadow-xl transition hover:brightness-110 border border-gray-200 bg-white hover-card-rich",
+            "flex flex-col w-full h-full rounded-2xl font-medium cursor-pointer shadow-xl transition hover:brightness-110 border hover-card-rich",
             { "line-through opacity-60": isDone }
           )}
+          style={{
+            backgroundColor: colorToken.cardBgColor,
+            borderColor: colorToken.cardBorderColor,
+          }}
           >
             <svg className="absolute left-0 top-0 bottom-0 w-1.5 h-full rounded-l-md" aria-hidden="true" preserveAspectRatio="none" viewBox="0 0 6 100">
               <rect width="6" height="100" fill={color} />
@@ -113,22 +118,22 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
             <div className="hover-card-content-inner">
 
               <div>
-                <div className="flex flex-col w-full">
+                <div className="flex w-full items-center gap-2">
                   <span
                     className={clsx(
-                      "text-base font-semibold text-gray-600 truncate mb-1",
+                      "truncate text-sm font-medium text-gray-700",
                       isDone && "line-through text-gray-400"
                     )}
                   >
-                    {a.title.length > 18 ? a.title.slice(0, 18) + "..." : a.title}
-                    {getDateTag(new Date(a.start))}
+                    {a.title}
                   </span>
+                  {getDateTag(new Date(a.start))}
                 </div>
-                <div className="flex flex-col text-xs text-gray-500">
-                  <span className="flex items-center gap-1 mb-1">
+                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
+                  <span className="inline-flex items-center gap-1">
                     <svg
-                      width="16"
-                      height="16"
+                      width="14"
+                      height="14"
                       fill="none"
                       viewBox="0 0 24 24"
                       className="inline-block align-middle text-gray-400"
@@ -145,10 +150,10 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
                       {format(new Date(a.start), "dd.MM.yyyy")}
                     </span>
                   </span>
-                  <span className="flex items-center gap-1 mb-1">
+                  <span className="inline-flex items-center gap-1">
                     <svg
-                      width="16"
-                      height="16"
+                      width="14"
+                      height="14"
                       fill="none"
                       viewBox="0 0 24 24"
                       className="inline-block align-middle text-gray-400"
@@ -173,46 +178,6 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
                     </span>
                   </span>
                 </div>
-                {a.notes && (
-                  <div className="flex items-center gap-1 text-xs text-gray-600 mb-1 w-full">
-                    <svg
-                      width="16"
-                      height="16"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      className="inline-block align-middle text-gray-400"
-                    >
-                      <path
-                        d="M4 19.5A2.5 2.5 0 0 1 6.5 17H19M17 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2Z"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                    {a.notes.length > 30 ? a.notes.slice(0, 30) + "..." : a.notes}
-                  </div>
-                )}
-                {a.location && (
-                  <div className="flex items-center gap-1 text-xs text-gray-600 w-full">
-                    <svg
-                      width="16"
-                      height="16"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      className="inline-block align-middle text-gray-400"
-                    >
-                      <path
-                        d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                    {a.location}
-                  </div>
-                )}
               </div>
             </div>
           </div>
@@ -220,9 +185,13 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
           // MonthView: Simple card
           <div
             className={clsx(
-              "flex items-center w-full rounded-2xl font-medium cursor-pointer shadow-xl transition hover:brightness-110 border border-gray-200 bg-white hover-card-simple",
+              "flex items-center w-full rounded-2xl font-medium cursor-pointer shadow-xl transition hover:brightness-110 border hover-card-simple",
               { "line-through opacity-60": isDone }
             )}
+            style={{
+              backgroundColor: colorToken.cardBgColor,
+              borderColor: colorToken.cardBorderColor,
+            }}
           >
             <svg width="6" height="24" viewBox="0 0 6 24" aria-hidden="true" className="rounded-l-md mr-2 shrink-0">
               <rect width="6" height="24" fill={color} />
@@ -270,10 +239,10 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
 
           {a.notes && (
             <div className="flex items-center gap-2 text-sm text-gray-400 mb-1">
-              <span className="flex-shrink-0 flex items-center justify-center">
+              <span className="shrink-0 flex items-center justify-center">
                 <FiFileText className="w-4 h-4" />
               </span>
-              <span className="text-xs text-gray-700 break-words">{a.notes}</span>
+              <span className="text-xs text-gray-700 wrap-break-word">{a.notes}</span>
             </div>
           )}
 

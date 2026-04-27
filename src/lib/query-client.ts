@@ -30,3 +30,11 @@ export function createQueryClient() {
 export async function invalidateAllForCrud(queryClient: QueryClient) {
   await queryClient.invalidateQueries({ queryKey: queryKeys.root });
 }
+
+/**
+ * Invalidate only calendar appointment data.
+ * Use this after appointment CRUD/toggle actions to avoid full-app refetch storms.
+ */
+export async function invalidateAppointmentData(queryClient: QueryClient) {
+  await queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all });
+}

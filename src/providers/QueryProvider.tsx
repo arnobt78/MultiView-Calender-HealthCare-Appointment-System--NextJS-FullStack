@@ -7,11 +7,12 @@ import { createQueryClient } from "@/lib/query-client";
 
 export function QueryProvider({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => createQueryClient());
+  const showDevtools = process.env.NEXT_PUBLIC_RQ_DEVTOOLS === "1";
 
   return (
     <QueryClientProvider client={queryClient}>
       {children}
-      <ReactQueryDevtools initialIsOpen={false} />
+      {showDevtools ? <ReactQueryDevtools initialIsOpen={false} /> : null}
     </QueryClientProvider>
   );
 }

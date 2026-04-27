@@ -11,7 +11,7 @@
  * - Visual distinction: Helps users quickly identify appointment types/categories
  */
 
-import React, { createContext, useContext } from "react";
+import React, { createContext, useContext, useRef } from "react";
 
 // Predefined color palette for appointments
 // These colors are chosen for good contrast and visual distinction
@@ -38,15 +38,45 @@ const bgColors = [
  * @param seed - String used to deterministically select a color (e.g., appointment ID, category name)
  * @returns Hex color code from bgColors array
  */
-const randomBgColor = (seed: string) =>
-  bgColors[
-    seed.split("").reduce((a, c) => a + c.charCodeAt(0), 0) % bgColors.length
-  ];
+function hexToRgb(hex: string) {
+  const normalized = hex.replace("#", "");
+  const value =
+    normalized.length === 3
+      ? normalized.split("").map((c) => c + c).join("")
+      : normalized;
+  const int = Number.parseInt(value, 16);
+  return {
+    r: (int >> 16) & 255,
+    g: (int >> 8) & 255,
+    b: int & 255,
+  };
+}
+
+function toRgba(hex: string, alpha: number) {
+  const { r, g, b } = hexToRgb(hex);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+const getAppointmentColorToken = (
+  randomBgColor: (seed: string) => string,
+  seed: string,
+  preferredColor?: string | null
+) => {
+  void preferredColor;
+  const lineColor = randomBgColor(seed);
+  return {
+    lineColor,
+    cardBgColor: toRgba(lineColor, 0.05),
+    cardBorderColor: toRgba(lineColor, 0.45),
+  };
+};
 
 // Create context with color utilities
 const AppointmentColorContext = createContext({
   bgColors,
-  randomBgColor,
+  randomBgColor: (_seed: string) => bgColors[0],
+  getAppointmentColorToken: (seed: string, preferredColor?: string | null) =>
+    getAppointmentColorToken((_s: string) => bgColors[0], seed, preferredColor),
 });
 
 /**
@@ -56,11 +86,30 @@ const AppointmentColorContext = createContext({
  * 
  * @param children - Child components that need access to color utilities
  */
-export const AppointmentColorProvider = ({ children }: { children: React.ReactNode }) => (
-  <AppointmentColorContext.Provider value={{ bgColors, randomBgColor }}>
-    {children}
-  </AppointmentColorContext.Provider>
-);
+export const AppointmentColorProvider = ({ children }: { children: React.ReactNode }) => {
+  const randomColorBySeedRef = useRef<Map<string, string>>(new Map());
+
+  const randomBgColor = (seed: string) => {
+    const existing = randomColorBySeedRef.current.get(seed);
+    if (existing) return existing;
+    const color = bgColors[Math.floor(Math.random() * bgColors.length)];
+    randomColorBySeedRef.current.set(seed, color);
+    return color;
+  };
+
+  return (
+    <AppointmentColorContext.Provider
+      value={{
+        bgColors,
+        randomBgColor,
+        getAppointmentColorToken: (seed: string, preferredColor?: string | null) =>
+          getAppointmentColorToken(randomBgColor, seed, preferredColor),
+      }}
+    >
+      {children}
+    </AppointmentColorContext.Provider>
+  );
+};
 
 /**
  * useAppointmentColor Hook

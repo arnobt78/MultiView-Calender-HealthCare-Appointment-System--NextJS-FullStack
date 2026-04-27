@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient, handleApiError } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
-import { invalidateAllForCrud } from "@/lib/query-client";
+import { invalidateAppointmentData } from "@/lib/query-client";
 import { Appointment, Category, Patient, AppointmentAssignee, Activity, Relative } from "@/types/types";
 import { notify } from "@/lib/notify";
 import { useAuth } from "./useAuth";
@@ -172,7 +172,7 @@ export function useAppointments() {
       }),
     onSuccess: (data) => {
       const appointment = data.appointment;
-      invalidateAllForCrud(queryClient);
+      invalidateAppointmentData(queryClient);
       notify.crud({
         action: "created",
         entity: "Appointment",
@@ -194,7 +194,7 @@ export function useAppointments() {
     onSuccess: (data, variables) => {
       const appointment = data.appointment;
       const updatedLabels = getUpdatedFieldLabels(variables);
-      invalidateAllForCrud(queryClient);
+      invalidateAppointmentData(queryClient);
       notify.crud({
         action: "updated",
         entity: "Appointment",
@@ -219,7 +219,6 @@ export function useAppointments() {
       queryClient.setQueryData<FullAppointment[]>(queryKeys.appointments.all, (old) =>
         old ? old.filter((appt) => appt.id !== deletedId) : []
       );
-      invalidateAllForCrud(queryClient);
       const deleted = context?.deleted;
       notify.crud({
         action: "deleted",
@@ -260,13 +259,15 @@ export function useAppointments() {
     },
     onSuccess: (data) => {
       const appt = data.appointment;
+      queryClient.setQueryData<FullAppointment[]>(queryKeys.appointments.all, (old = []) =>
+        old.map((item) => (item.id === appt.id ? { ...item, ...appt } : item))
+      );
       notify.success({
         title: "Status updated",
         subtitle: `"${getSafeAppointmentTitle(appt)}" is now marked as ${getStatusLabel(
           appt?.status
         )} (${formatAppointmentRange(appt?.start, appt?.end)}).`,
       });
-      invalidateAllForCrud(queryClient);
     },
     onError: (error, variables, context) => {
       // Rollback on error
