@@ -84,15 +84,6 @@ export async function query(text: string, params?: any[]) {
         duration, 
         rows: res.rowCount 
       });
-    } else {
-      // Only log in development to reduce noise in production
-      if (process.env.NODE_ENV === "development") {
-        console.log("Executed query", { 
-          text: text.substring(0, 100), 
-          duration, 
-          rows: res.rowCount 
-        });
-      }
     }
     
     return res;

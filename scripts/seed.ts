@@ -133,11 +133,9 @@ function parseBoolean(value: string | null): boolean | null {
  * Seed users table
  */
 async function seedUsers(query: any) {
-  console.log("🌱 Seeding users...");
   const users = await parseCSV<UserRow>(join(CSV_DIR, "users.csv"));
 
   if (users.length === 0) {
-    console.log("⚠️  No users found in CSV, skipping...");
     return;
   }
 
@@ -164,18 +162,15 @@ async function seedUsers(query: any) {
       console.error(`❌ Error seeding user ${user.id}:`, error);
     }
   }
-  console.log(`✅ Seeded ${users.length} users`);
 }
 
 /**
  * Seed patients table
  */
 async function seedPatients(query: any) {
-  console.log("🌱 Seeding patients...");
   const patients = await parseCSV<PatientRow>(join(CSV_DIR, "patients.csv"));
 
   if (patients.length === 0) {
-    console.log("⚠️  No patients found in CSV, skipping...");
     return;
   }
 
@@ -211,18 +206,15 @@ async function seedPatients(query: any) {
       console.error(`❌ Error seeding patient ${patient.id}:`, error);
     }
   }
-  console.log(`✅ Seeded ${patients.length} patients`);
 }
 
 /**
  * Seed categories table
  */
 async function seedCategories(query: any) {
-  console.log("🌱 Seeding categories...");
   const categories = await parseCSV<CategoryRow>(join(CSV_DIR, "categories.csv"));
 
   if (categories.length === 0) {
-    console.log("⚠️  No categories found in CSV, skipping...");
     return;
   }
 
@@ -252,18 +244,15 @@ async function seedCategories(query: any) {
       console.error(`❌ Error seeding category ${category.id}:`, error);
     }
   }
-  console.log(`✅ Seeded ${categories.length} categories`);
 }
 
 /**
  * Seed appointments table
  */
 async function seedAppointments(query: any) {
-  console.log("🌱 Seeding appointments...");
   const appointments = await parseCSV<AppointmentRow>(join(CSV_DIR, "appointments.csv"));
 
   if (appointments.length === 0) {
-    console.log("⚠️  No appointments found in CSV, skipping...");
     return;
   }
 
@@ -305,20 +294,17 @@ async function seedAppointments(query: any) {
       console.error(`❌ Error seeding appointment ${appointment.id}:`, error);
     }
   }
-  console.log(`✅ Seeded ${appointments.length} appointments`);
 }
 
 /**
  * Seed appointment_assignee table
  */
 async function seedAppointmentAssignees(query: any) {
-  console.log("🌱 Seeding appointment assignees...");
   const assignees = await parseCSV<AppointmentAssigneeRow>(
     join(CSV_DIR, "appointment_assignee.csv")
   );
 
   if (assignees.length === 0) {
-    console.log("⚠️  No appointment assignees found in CSV, skipping...");
     return;
   }
 
@@ -366,14 +352,12 @@ async function seedAppointmentAssignees(query: any) {
       console.error(`❌ Error seeding appointment assignee ${assignee.id}:`, error);
     }
   }
-  console.log(`✅ Seeded ${assignees.length} appointment assignees`);
 }
 
 /**
  * Main seed function
  */
 async function runSeed() {
-  console.log("🚀 Starting database seed...\n");
 
   // Import after loading env vars (inside async function to avoid top-level await)
   const { pool, query } = await import("../src/lib/postgresClient");
@@ -381,7 +365,6 @@ async function runSeed() {
   try {
     // Test connection
     await query("SELECT NOW()");
-    console.log("✅ Database connection successful\n");
 
     // Seed in order to maintain foreign key relationships
     await seedUsers(query);
@@ -393,11 +376,6 @@ async function runSeed() {
     // Note: activities, dashboard_access, and relatives tables are empty
     // (no CSV files provided), so they will remain empty
 
-    console.log("\n✨ Database seeded successfully!");
-    console.log("\n📝 Note: The following tables are empty (no CSV data provided):");
-    console.log("   - activities");
-    console.log("   - dashboard_access");
-    console.log("   - relatives");
   } catch (error) {
     console.error("❌ Error seeding database:", error);
     throw error;

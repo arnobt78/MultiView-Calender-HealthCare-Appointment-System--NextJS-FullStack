@@ -5,6 +5,7 @@ import { invalidateAllForCrud } from "@/lib/query-client";
 import { Appointment, Category, Patient, AppointmentAssignee, Activity, Relative } from "@/types/types";
 import { notify } from "@/lib/notify";
 import { useAuth } from "./useAuth";
+import { format } from "date-fns";
 
 // This matches what the API returns natively in the app
 export type FullAppointment = Appointment & {
@@ -14,6 +15,43 @@ export type FullAppointment = Appointment & {
   invited_email?: string;
   activities?: Activity[];
 };
+
+function formatAppointmentRange(start?: string, end?: string) {
+  if (!start || !end) return "Date and time saved.";
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+  if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+    return "Date and time saved.";
+  }
+  return `${format(startDate, "dd.MM.yyyy")} · ${format(startDate, "HH:mm")} - ${format(endDate, "HH:mm")}`;
+}
+
+function getSafeAppointmentTitle(appt?: Partial<Appointment> | null) {
+  return appt?.title?.trim() ? appt.title : "Untitled";
+}
+
+function getStatusLabel(status?: string | null) {
+  if (status === "done") return "done";
+  if (status === "alert") return "alert";
+  return "pending";
+}
+
+function getUpdatedFieldLabels(updateData: Partial<Appointment>) {
+  const labels: Array<{ key: keyof Partial<Appointment>; label: string }> = [
+    { key: "title", label: "Title" },
+    { key: "start", label: "Start" },
+    { key: "end", label: "End" },
+    { key: "patient", label: "Client" },
+    { key: "category", label: "Category" },
+    { key: "location", label: "Location" },
+    { key: "notes", label: "Notes" },
+    { key: "status", label: "Status" },
+    { key: "attachements", label: "Attachments" },
+  ];
+  return labels
+    .filter(({ key }) => key in updateData)
+    .map(({ label }) => label);
+}
 
 export function useAppointments() {
   const queryClient = useQueryClient();
@@ -138,7 +176,10 @@ export function useAppointments() {
       notify.crud({
         action: "created",
         entity: "Appointment",
-        detail: `"${appointment?.title || "Untitled"}" is now in your calendar.`,
+        detail: `"${getSafeAppointmentTitle(appointment)}" scheduled for ${formatAppointmentRange(
+          appointment?.start,
+          appointment?.end
+        )}.`,
       });
     },
     onError: (error) => handleApiError(error, "Failed to create appointment"),
@@ -150,13 +191,17 @@ export function useAppointments() {
         method: "PATCH",
         body: JSON.stringify(updateData),
       }),
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       const appointment = data.appointment;
+      const updatedLabels = getUpdatedFieldLabels(variables);
       invalidateAllForCrud(queryClient);
       notify.crud({
         action: "updated",
         entity: "Appointment",
-        detail: `"${appointment?.title || "Untitled"}" has been saved.`,
+        detail:
+          updatedLabels.length > 0
+            ? `"${getSafeAppointmentTitle(appointment)}" updated fields: ${updatedLabels.join(", ")}.`
+            : `"${getSafeAppointmentTitle(appointment)}" has been saved.`,
       });
     },
     onError: (error) => handleApiError(error, "Failed to update appointment"),
@@ -165,15 +210,26 @@ export function useAppointments() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => 
       apiClient(`/api/appointments/${id}`, { method: "DELETE" }),
-    onSuccess: (_, deletedId) => {
+    onMutate: async (deletedId) => {
+      const current = queryClient.getQueryData<FullAppointment[]>(queryKeys.appointments.all) || [];
+      const deleted = current.find((appt) => appt.id === deletedId) || null;
+      return { deleted };
+    },
+    onSuccess: (_, deletedId, context) => {
       queryClient.setQueryData<FullAppointment[]>(queryKeys.appointments.all, (old) =>
         old ? old.filter((appt) => appt.id !== deletedId) : []
       );
       invalidateAllForCrud(queryClient);
+      const deleted = context?.deleted;
       notify.crud({
         action: "deleted",
         entity: "Appointment",
-        detail: "The appointment was removed from your calendar.",
+        detail: deleted
+          ? `"${getSafeAppointmentTitle(deleted)}" (${formatAppointmentRange(
+              deleted.start,
+              deleted.end
+            )}) was removed from your calendar.`
+          : "The selected appointment was removed from your calendar.",
       });
     },
     onError: (error) => handleApiError(error, "Failed to delete appointment"),
@@ -181,7 +237,7 @@ export function useAppointments() {
 
   const toggleStatusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: "pending" | "done" | "alert" }) => 
-      apiClient<FullAppointment>(`/api/appointments/${id}`, {
+      apiClient<{ appointment: FullAppointment }>(`/api/appointments/${id}`, {
         method: "PATCH",
         body: JSON.stringify({ status }),
       }),
@@ -203,9 +259,12 @@ export function useAppointments() {
       return { previousAppointments };
     },
     onSuccess: (data) => {
+      const appt = data.appointment;
       notify.success({
         title: "Status updated",
-        subtitle: `Appointment is now marked as ${data.status}.`,
+        subtitle: `"${getSafeAppointmentTitle(appt)}" is now marked as ${getStatusLabel(
+          appt?.status
+        )} (${formatAppointmentRange(appt?.start, appt?.end)}).`,
       });
       invalidateAllForCrud(queryClient);
     },

@@ -24,7 +24,6 @@ async function seedTestUser() {
 
   const existing = await getUserByEmail(TEST_EMAIL);
   if (existing) {
-    console.log(`✅ Test user ${TEST_EMAIL} already exists. No change.`);
     return;
   }
 
@@ -34,7 +33,6 @@ async function seedTestUser() {
      VALUES (gen_random_uuid(), $1, $2, true, NOW())`,
     [TEST_EMAIL, passwordHash]
   );
-  console.log(`✅ Test user created: ${TEST_EMAIL} / ${TEST_PASSWORD}`);
 }
 
 seedTestUser().catch((err) => {

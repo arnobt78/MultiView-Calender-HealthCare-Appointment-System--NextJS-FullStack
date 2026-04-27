@@ -20,12 +20,10 @@ config({ path: resolve(process.cwd(), ".env.local") });
 async function runMigration() {
   // Import after loading env vars (inside async function to avoid top-level await)
   const { pool, query } = await import("../src/lib/postgresClient");
-  console.log("🚀 Starting database migration...\n");
 
   try {
     // Test connection
     await query("SELECT NOW()");
-    console.log("✅ Database connection successful\n");
 
     // Read and execute all migration SQL files in order
     const migrationsDir = resolve(process.cwd(), "migrations");
@@ -65,7 +63,6 @@ async function runMigration() {
         .filter((stmt) => stmt.length > 0);
       
       // Execute each statement
-      console.log(`📝 Applying migration: ${migrationFile}...`);
       for (let i = 0; i < statements.length; i++) {
         const statement = statements[i];
         if (statement.trim()) {
@@ -75,13 +72,11 @@ async function runMigration() {
             // Ignore "already exists" errors for idempotency
             if (error.code === "42P07" || error.code === "42710" || error.code === "42723") {
               // Table/index/extension already exists - this is fine
-              console.log(`   ⚠️  Skipping (already exists): ${statement.substring(0, 50)}...`);
               continue;
             }
             // For "relation does not exist" on indexes, it might be that table wasn't created
             // Let's check if it's an index creation and the table exists
             if (error.code === "42P01" && statement.toUpperCase().includes("CREATE INDEX")) {
-              console.log(`   ⚠️  Index creation skipped (table may not exist yet): ${statement.substring(0, 50)}...`);
               continue;
             }
             console.error(`❌ Error executing statement ${i + 1}/${statements.length}:`, statement.substring(0, 100));
@@ -91,7 +86,6 @@ async function runMigration() {
       }
     }
     
-    console.log("✅ All migrations applied successfully!");
     
     // Verify tables were created
     const tablesResult = await query(`
@@ -102,9 +96,7 @@ async function runMigration() {
       ORDER BY table_name
     `);
     
-    console.log(`\n📋 Created tables (${tablesResult.rows.length}):`);
     tablesResult.rows.forEach((row) => {
-      console.log(`   ✓ ${row.table_name}`);
     });
     
   } catch (error) {

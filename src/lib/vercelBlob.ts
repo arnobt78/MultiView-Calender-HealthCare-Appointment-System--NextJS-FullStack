@@ -45,7 +45,6 @@ function getDefaultPrefix(): string {
  * 
  * Example:
  * const result = await uploadFile(file, "document.pdf");
- * console.log(result.url); // Public URL
  */
 export async function uploadFile(
   file: File | Buffer,

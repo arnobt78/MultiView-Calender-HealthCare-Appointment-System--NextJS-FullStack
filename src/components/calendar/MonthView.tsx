@@ -792,17 +792,6 @@ export default function MonthView() {
                         <FiUser /> Client:
                         {(() => {
                           try {
-                            // Debug: Log the patient data (development only)
-                            if (process.env.NODE_ENV === "development") {
-                              console.log('DEBUG - MonthView Patient data:', {
-                                patient: a.patient,
-                                patientType: typeof a.patient,
-                                isObject: typeof a.patient === 'object',
-                                hasFirstname: a.patient && typeof a.patient === 'object' && 'firstname' in a.patient,
-                                hasLastname: a.patient && typeof a.patient === 'object' && 'lastname' in a.patient
-                              });
-                            }
-
                             // If patient is already an object with firstname/lastname
                             if (a.patient &&
                               typeof a.patient === 'object' &&
@@ -858,10 +847,6 @@ export default function MonthView() {
                           // Invitee view: show owner's email
                           <span className="not-italic text-blue-700">
                             {(() => {
-                              // Debug: Log ownerUsers and appointment user_id mapping (development only)
-                              if (process.env.NODE_ENV === "development") {
-                                console.log('[MonthView Assigned by] ownerUsers:', ownerUsers, 'appointment user_id:', a.user_id);
-                              }
                               const owner = ownerUsers.find(u => u.id === a.user_id);
                               return owner?.email || a.user_id;
                             })()}
@@ -907,18 +892,6 @@ export default function MonthView() {
                         );
                         userPermission = userAssignment?.permission || null;
 
-                        // Debug logging (development only)
-                        if (process.env.NODE_ENV === "development") {
-                          console.log('DEBUG - MonthView Sidebar Permission Check:', {
-                            appointmentId: a.id,
-                            userId: userId,
-                            userEmail: userEmail,
-                            dedupedAssignees: dedupedAssignees,
-                            userAssignment: userAssignment,
-                            userPermission: userPermission,
-                            isOwner: isOwner
-                          });
-                        }
                       }
 
                       // Only owner, full, or write can toggle status
@@ -960,16 +933,6 @@ export default function MonthView() {
                         );
                         userPermission = userAssignment?.permission || null;
 
-                        // Debug logging for edit button (development only)
-                        if (process.env.NODE_ENV === "development") {
-                          console.log('DEBUG - MonthView Sidebar Edit Permission:', {
-                            appointmentId: a.id,
-                            userId: userId,
-                            userEmail: userEmail,
-                            userPermission: userPermission,
-                            canEdit: isOwner || userPermission === "full"
-                          });
-                        }
                       }
 
                       // Only owner or full can edit

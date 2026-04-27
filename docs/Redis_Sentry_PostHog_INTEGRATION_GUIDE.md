@@ -935,7 +935,6 @@ export function initPostHog(): void {
     api_host: posthogHost,
     loaded: (posthog) => {
       if (process.env.NODE_ENV === "development") {
-        console.log("PostHog initialized:", posthog);
       }
     },
     capture_pageview: true, // Automatically capture page views

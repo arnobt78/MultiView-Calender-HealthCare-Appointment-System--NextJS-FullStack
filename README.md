@@ -316,7 +316,6 @@ EMAIL_PASS=your-app-password
 2. **Using Node.js**:
 
    ```bash
-   node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
    ```
 
 3. **Copy the output** → `AUTH_SECRET` in your `.env.local` file
@@ -1043,7 +1042,6 @@ function CreateAppointmentButton() {
         isOpen={open}
         onOpenChange={setOpen}
         onSuccess={() => {
-          console.log('Appointment created!');
           setOpen(false);
         }}
       />
@@ -1168,7 +1166,6 @@ async function sendInvitation() {
   
   const data = await response.json();
   if (response.ok) {
-    console.log('Invitation sent:', data);
   } else {
     console.error('Error:', data.error);
   }

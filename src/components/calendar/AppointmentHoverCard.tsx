@@ -333,17 +333,6 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
               <FiUsers /> Refer to:
               {(() => {
                 try {
-                  // Debug: Log the patient data (development only)
-                  if (process.env.NODE_ENV === "development") {
-                    console.log('DEBUG - HoverCard Patient data:', {
-                      patient: a.patient,
-                      patientType: typeof a.patient,
-                      isObject: typeof a.patient === 'object',
-                      hasFirstname: a.patient && typeof a.patient === 'object' && 'firstname' in a.patient,
-                      hasLastname: a.patient && typeof a.patient === 'object' && 'lastname' in a.patient
-                    });
-                  }
-
                   // If patient is already an object with firstname/lastname
                   if (a.patient &&
                     typeof a.patient === 'object' &&
@@ -488,18 +477,6 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
                 );
                 userPermission = userAssignment?.permission || null;
 
-                // Debug logging (development only)
-                if (process.env.NODE_ENV === "development") {
-                  console.log('DEBUG - HoverCard Permission Check:', {
-                    appointmentId: a.id,
-                    userId: userId,
-                    userEmail: userEmail,
-                    assignees: assignees,
-                    userAssignment: userAssignment,
-                    userPermission: userPermission,
-                    isOwner: isOwner
-                  });
-                }
               }
 
               // Only owner, full, or write can toggle status
@@ -539,16 +516,6 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
                 );
                 userPermission = userAssignment?.permission || null;
 
-                // Debug logging for edit button (development only)
-                if (process.env.NODE_ENV === "development") {
-                  console.log('DEBUG - HoverCard Edit Permission:', {
-                    appointmentId: a.id,
-                    userId: userId,
-                    userEmail: userEmail,
-                    userPermission: userPermission,
-                    canEdit: isOwner || userPermission === "full"
-                  });
-                }
               }
 
               // Only owner or full can edit

@@ -620,54 +620,6 @@ export default function AppointmentList() {
                                   }
                                   const dedupedAssignees = Array.from(dedupedMap.values());
 
-                                  // DEBUG: Log data for Refer to and Assigned by
-                                  console.log('DEBUG Appointment Card:', {
-                                    appt,
-                                    dedupedAssignees,
-                                    patients,
-                                    relatives,
-                                    user
-                                  });
-
-                                  // Additional debugging for the specific issue
-                                  console.log('DEBUG - Refer to section data:', {
-                                    appointmentId: appt.id,
-                                    appointmentAssignees: appt.appointment_assignee,
-                                    dedupedAssignees,
-                                    patientsData: patients,
-                                    relativesData: relatives,
-                                    ownerUsersData: ownerUsers,
-                                    currentUser: user
-                                  });
-
-                                  // Debug patient data specifically
-                                  console.log('DEBUG - Patient data for appointment:', {
-                                    appointmentId: appt.id,
-                                    patientField: appt.patient,
-                                    patientType: typeof appt.patient,
-                                    patientData: appt.patient_data,
-                                    foundPatient: patients.find((p: Patient) => p.id === appt.patient)
-                                  });
-
-                                  // Debug the specific fields we're trying to display
-                                  if (dedupedAssignees.length > 0) {
-                                    dedupedAssignees.forEach((ass: AppointmentAssignee, idx: number) => {
-                                      console.log(`DEBUG - Assignee ${idx}:`, {
-                                        assigneeId: ass.id,
-                                        userId: ass.user,
-                                        userType: ass.user_type,
-                                        invitedEmail: ass.invited_email,
-                                        status: ass.status,
-                                        permission: ass.permission,
-                                        foundPatient: patients.find((p: Patient) => p.id === ass.user),
-                                        foundRelative: relatives.find((r: Relative) => r.id === ass.user)
-                                      });
-                                    });
-                                  }
-                                  // console.log('[AppointmentList] Appointment Card:', appt);
-
-
-
                                   return (
                                     <motion.div
                                       key={appt.id}
@@ -758,9 +710,6 @@ export default function AppointmentList() {
                                             <span className="text-gray-400 text-xs shrink-0">Refer to:</span>
                                             {(() => {
                                               try {
-                                                if (process.env.NODE_ENV === "development") {
-                                                  console.log('DEBUG - Patient data:', { patient: appt.patient });
-                                                }
                                                 if (appt.patient && typeof appt.patient === 'object' && 'firstname' in appt.patient && 'lastname' in appt.patient) {
                                                   const patientObj = appt.patient as Patient;
                                                   return <span className="text-xs text-purple-700 font-medium">Patient: {patientObj.firstname} {patientObj.lastname}</span>;
@@ -900,6 +849,23 @@ export default function AppointmentList() {
               onOpenChange={handleEditDialogChange}
             />
           ) : null}
+          <ConfirmActionDialog
+            open={Boolean(deleteTargetId)}
+            onOpenChange={(open) => {
+              if (!open) setDeleteTargetId(null);
+            }}
+            variant="destructive"
+            title="Delete appointment?"
+            subtitle="This will permanently remove this appointment from your calendar."
+            confirmLabel="Delete"
+            cancelLabel="Cancel"
+            onConfirm={() => {
+              if (deleteTargetId) {
+                deleteAppointment(deleteTargetId);
+              }
+              setDeleteTargetId(null);
+            }}
+          />
         </>
       )}
     </div>
