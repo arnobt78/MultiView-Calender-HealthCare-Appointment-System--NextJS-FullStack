@@ -179,7 +179,6 @@ export default function Login({ redirect = null }: LoginProps) {
         const serialized = JSON.stringify(payload);
         sessionStorage.setItem("post-login-toast", serialized);
         localStorage.setItem("post-login-toast", serialized);
-        notify.loginWelcome(payload);
         /* seed the auth cache so AuthShell sees isAuthenticated=true immediately */
         queryClient.setQueryData(queryKeys.auth.me, { ...data.user, email_verified: true });
         router.push(redirect ?? "/dashboard");

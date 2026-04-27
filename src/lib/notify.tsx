@@ -16,10 +16,12 @@ import { cn } from "@/lib/utils";
 type NotifyVariant = "success" | "info" | "warning" | "error";
 
 type NotifyPayload = {
-  title: string;
-  subtitle: string;
+  title: ReactNode;
+  subtitle: ReactNode;
+  subtitle2?: ReactNode;
   icon?: LucideIcon;
   duration?: number;
+  toastId?: string;
 };
 
 const variantStyles: Record<
@@ -60,30 +62,38 @@ function RichToast({
   variant,
   title,
   subtitle,
+  subtitle2,
   icon,
 }: {
   variant: NotifyVariant;
-  title: string;
-  subtitle: string;
+  title: ReactNode;
+  subtitle: ReactNode;
+  subtitle2?: ReactNode;
   icon?: LucideIcon;
 }) {
   const styles = variantStyles[variant];
   const Icon = icon ?? styles.fallbackIcon;
 
   return (
-    <div className={cn("w-full rounded-2xl border p-3 backdrop-blur-sm", styles.shell)}>
+    <div
+      className={cn(
+        "w-full min-w-[320px] max-w-[380px] rounded-2xl border px-4 py-3.5 backdrop-blur-md",
+        styles.shell
+      )}
+    >
       <div className="flex items-start gap-3">
         <span
           className={cn(
-            "inline-flex size-8 shrink-0 items-center justify-center rounded-xl border",
+            "mt-0.5 inline-flex size-8 shrink-0 items-center justify-center rounded-xl border",
             styles.iconWrap
           )}
         >
           <Icon className={cn("size-4", styles.iconColor)} />
         </span>
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold leading-tight">{title}</p>
-          <p className="mt-1 text-xs leading-snug opacity-90">{subtitle}</p>
+          <p className="text-sm font-medium leading-tight tracking-tight">{title}</p>
+          <p className="text-sm leading-snug opacity-95">{subtitle}</p>
+          {subtitle2 ? <p className="text-sm leading-snug opacity-90">{subtitle2}</p> : null}
         </div>
       </div>
     </div>
@@ -98,11 +108,15 @@ function showRichToast(variant: NotifyVariant, payload: NotifyPayload) {
           variant={variant}
           title={payload.title}
           subtitle={payload.subtitle}
+          subtitle2={payload.subtitle2}
           icon={payload.icon}
         />
       </div>
     ),
-    { duration: payload.duration ?? 4500 }
+    {
+      duration: payload.duration ?? 4500,
+      id: payload.toastId,
+    }
   );
 }
 
@@ -116,12 +130,18 @@ export const notify = {
       title: `Welcome back, ${name}`,
       subtitle: `Enjoy your day — you have ${todayCount} appointment${todayCount === 1 ? "" : "s"} today.`,
       icon: Hand,
+      toastId: "auth-login",
     }),
   logoutGoodbye: ({ name }: { name: string }) =>
     showRichToast("info", {
-      title: `Goodbye for now, ${name}`,
+      title: (
+        <>
+          Goodbye <span className="font-medium">{name}</span>
+        </>
+      ),
       subtitle: "Hope to see you soon.",
       icon: Hand,
+      toastId: "auth-logout",
     }),
   crud: ({
     action,
