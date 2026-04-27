@@ -71,28 +71,40 @@ function AuthShellInner({ children }: { children: React.ReactNode }) {
   useScrollLockFix();
 
   useEffect(() => {
-    const loginRaw = sessionStorage.getItem("post-login-toast");
+    const loginRaw =
+      sessionStorage.getItem("post-login-toast") || localStorage.getItem("post-login-toast");
     if (loginRaw) {
       sessionStorage.removeItem("post-login-toast");
+      localStorage.removeItem("post-login-toast");
       try {
         const parsed = JSON.parse(loginRaw) as { name?: string; todayCount?: number };
-        notify.loginWelcome({
-          name: parsed?.name || "there",
-          todayCount: Number(parsed?.todayCount ?? 0),
+        requestAnimationFrame(() => {
+          notify.loginWelcome({
+            name: parsed?.name || "there",
+            todayCount: Number(parsed?.todayCount ?? 0),
+          });
         });
       } catch {
-        notify.loginWelcome({ name: "there", todayCount: 0 });
+        requestAnimationFrame(() => {
+          notify.loginWelcome({ name: "there", todayCount: 0 });
+        });
       }
     }
 
-    const logoutRaw = sessionStorage.getItem("post-logout-toast");
+    const logoutRaw =
+      sessionStorage.getItem("post-logout-toast") || localStorage.getItem("post-logout-toast");
     if (logoutRaw) {
       sessionStorage.removeItem("post-logout-toast");
+      localStorage.removeItem("post-logout-toast");
       try {
         const parsed = JSON.parse(logoutRaw) as { name?: string };
-        notify.logoutGoodbye({ name: parsed?.name || "there" });
+        requestAnimationFrame(() => {
+          notify.logoutGoodbye({ name: parsed?.name || "there" });
+        });
       } catch {
-        notify.logoutGoodbye({ name: "there" });
+        requestAnimationFrame(() => {
+          notify.logoutGoodbye({ name: "there" });
+        });
       }
     }
   }, [pathname]);

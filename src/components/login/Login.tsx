@@ -176,7 +176,9 @@ export default function Login({ redirect = null }: LoginProps) {
           name: data.user.display_name || data.user.email?.split("@")[0] || "there",
           todayCount: Number(data.today_appointments ?? 0),
         };
-        sessionStorage.setItem("post-login-toast", JSON.stringify(payload));
+        const serialized = JSON.stringify(payload);
+        sessionStorage.setItem("post-login-toast", serialized);
+        localStorage.setItem("post-login-toast", serialized);
         notify.loginWelcome(payload);
         /* seed the auth cache so AuthShell sees isAuthenticated=true immediately */
         queryClient.setQueryData(queryKeys.auth.me, { ...data.user, email_verified: true });

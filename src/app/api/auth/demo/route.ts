@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyPassword, getUserByEmail } from "@/lib/auth";
 import { setSession } from "@/lib/session";
 import { generateToken } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
 const DEMO_EMAIL = "test@user.com";
 const DEMO_PASSWORD = "12345678";
@@ -35,6 +36,15 @@ export async function POST(req: NextRequest) {
         role: user.role,
         image: user.image ?? null,
       },
+      today_appointments: await prisma.appointment.count({
+        where: {
+          user_id: user.id,
+          start: {
+            gte: new Date(new Date().setHours(0, 0, 0, 0)),
+            lt: new Date(new Date().setHours(24, 0, 0, 0)),
+          },
+        },
+      }),
     });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Internal server error";

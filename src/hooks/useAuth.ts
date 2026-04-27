@@ -41,17 +41,20 @@ export function useAuth() {
         queryClient.getQueryData<any>(queryKeys.auth.me)?.display_name ||
         queryClient.getQueryData<any>(queryKeys.auth.me)?.email?.split("@")[0] ||
         "there";
-      sessionStorage.setItem(
-        "post-logout-toast",
-        JSON.stringify({
-          name,
-          timestamp: Date.now(),
-        })
-      );
+      const payload = JSON.stringify({ name, timestamp: Date.now() });
+      sessionStorage.setItem("post-logout-toast", payload);
+      localStorage.setItem("post-logout-toast", payload);
       // Navigate first — full reload clears all client state cleanly
       window.location.href = "/login";
     },
     onError: () => {
+      const name =
+        queryClient.getQueryData<any>(queryKeys.auth.me)?.display_name ||
+        queryClient.getQueryData<any>(queryKeys.auth.me)?.email?.split("@")[0] ||
+        "there";
+      const payload = JSON.stringify({ name, timestamp: Date.now() });
+      sessionStorage.setItem("post-logout-toast", payload);
+      localStorage.setItem("post-logout-toast", payload);
       // Even on API error, session cookie is cleared server-side; navigate away
       window.location.href = "/login";
     },

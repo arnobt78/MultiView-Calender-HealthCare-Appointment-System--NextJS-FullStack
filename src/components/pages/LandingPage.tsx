@@ -519,6 +519,12 @@ export default function LandingPage() {
         const data = await res.json();
         if (data.user) {
           queryClient.setQueryData(queryKeys.auth.me, { ...data.user, email_verified: true });
+          const payload = JSON.stringify({
+            name: data.user.display_name || data.user.email?.split("@")[0] || "there",
+            todayCount: Number(data.today_appointments ?? 0),
+          });
+          sessionStorage.setItem("post-login-toast", payload);
+          localStorage.setItem("post-login-toast", payload);
         }
         router.push("/dashboard");
       }
