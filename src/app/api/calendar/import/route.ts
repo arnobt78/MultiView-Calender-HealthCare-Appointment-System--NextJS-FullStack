@@ -7,6 +7,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import { uploadMetaSchema } from "@/lib/schemas/upload";
+import { zodBadRequest } from "@/lib/schemas/parse";
 
 interface ParsedEvent {
   summary: string;
@@ -96,6 +98,19 @@ export async function POST(request: NextRequest) {
 
     if (!file) {
       return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
+    }
+
+    const parsedFile = uploadMetaSchema.safeParse({
+      folder: undefined,
+      size: file.size,
+      name: file.name,
+      type: file.type,
+    });
+    if (!parsedFile.success) {
+      return zodBadRequest(parsedFile.error);
+    }
+    if (!file.name.toLowerCase().endsWith(".ics")) {
+      return NextResponse.json({ error: "Only .ics files are supported" }, { status: 400 });
     }
 
     const content = await file.text();

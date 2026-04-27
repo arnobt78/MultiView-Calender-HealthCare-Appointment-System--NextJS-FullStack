@@ -2,7 +2,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient, handleApiError } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import { User, UUID } from "@/types/types";
-import { toast } from "sonner";
 
 interface AuthResponse {
   user: {
@@ -38,7 +37,17 @@ export function useAuth() {
   const logoutMutation = useMutation({
     mutationFn: () => apiClient("/api/auth/logout", { method: "POST" }),
     onSuccess: () => {
-      toast.success("You have been logged out successfully");
+      const name =
+        queryClient.getQueryData<any>(queryKeys.auth.me)?.display_name ||
+        queryClient.getQueryData<any>(queryKeys.auth.me)?.email?.split("@")[0] ||
+        "there";
+      sessionStorage.setItem(
+        "post-logout-toast",
+        JSON.stringify({
+          name,
+          timestamp: Date.now(),
+        })
+      );
       // Navigate first — full reload clears all client state cleanly
       window.location.href = "/login";
     },

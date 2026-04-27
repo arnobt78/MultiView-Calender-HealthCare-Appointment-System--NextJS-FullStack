@@ -3,7 +3,7 @@ import { apiClient, handleApiError } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import { invalidateAllForCrud } from "@/lib/query-client";
 import { Appointment, Category, Patient, AppointmentAssignee, Activity, Relative } from "@/types/types";
-import { toast } from "sonner";
+import { notify } from "@/lib/notify";
 import { useAuth } from "./useAuth";
 
 // This matches what the API returns natively in the app
@@ -128,26 +128,36 @@ export function useAppointments() {
 
   const createMutation = useMutation({
     mutationFn: (newAppointment: Partial<Appointment>) => 
-      apiClient<FullAppointment>("/api/appointments", {
+      apiClient<{ appointment: FullAppointment }>("/api/appointments", {
         method: "POST",
         body: JSON.stringify(newAppointment),
       }),
     onSuccess: (data) => {
+      const appointment = data.appointment;
       invalidateAllForCrud(queryClient);
-      toast.success(`Appointment '${data.title || "New"}' created successfully`);
+      notify.crud({
+        action: "created",
+        entity: "Appointment",
+        detail: `"${appointment?.title || "Untitled"}" is now in your calendar.`,
+      });
     },
     onError: (error) => handleApiError(error, "Failed to create appointment"),
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, ...updateData }: Partial<Appointment> & { id: string }) => 
-      apiClient<FullAppointment>(`/api/appointments/${id}`, {
-        method: "PUT",
+      apiClient<{ appointment: FullAppointment }>(`/api/appointments/${id}`, {
+        method: "PATCH",
         body: JSON.stringify(updateData),
       }),
-    onSuccess: (data, variables) => {
+    onSuccess: (data) => {
+      const appointment = data.appointment;
       invalidateAllForCrud(queryClient);
-      toast.success(`Appointment '${data.title || "Updated"}' saved successfully`);
+      notify.crud({
+        action: "updated",
+        entity: "Appointment",
+        detail: `"${appointment?.title || "Untitled"}" has been saved.`,
+      });
     },
     onError: (error) => handleApiError(error, "Failed to update appointment"),
   });
@@ -160,7 +170,11 @@ export function useAppointments() {
         old ? old.filter((appt) => appt.id !== deletedId) : []
       );
       invalidateAllForCrud(queryClient);
-      toast.success("Appointment deleted successfully");
+      notify.crud({
+        action: "deleted",
+        entity: "Appointment",
+        detail: "The appointment was removed from your calendar.",
+      });
     },
     onError: (error) => handleApiError(error, "Failed to delete appointment"),
   });
@@ -189,7 +203,10 @@ export function useAppointments() {
       return { previousAppointments };
     },
     onSuccess: (data) => {
-      toast.success(`Status updated to ${data.status}`);
+      notify.success({
+        title: "Status updated",
+        subtitle: `Appointment is now marked as ${data.status}.`,
+      });
       invalidateAllForCrud(queryClient);
     },
     onError: (error, variables, context) => {

@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import Image from "next/image";
-import { toast } from "sonner";
+import { notify } from "@/lib/notify";
+import { loginRequestSchema } from "@/lib/schemas/auth";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -113,6 +114,7 @@ export default function Login({ redirect = null }: LoginProps) {
   const [password, setPassword] = useState("");
   const [selectedRole, setSelectedRole] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -136,22 +138,46 @@ export default function Login({ redirect = null }: LoginProps) {
     setLoading(true);
 
     try {
+      const parsed = loginRequestSchema.safeParse({ email, password });
+      if (!parsed.success) {
+        const fieldErrors = parsed.error.flatten().fieldErrors;
+        setErrors({
+          email: fieldErrors.email?.[0],
+          password: fieldErrors.password?.[0],
+        });
+        notify.error({
+          title: "Invalid login details",
+          subtitle: "Please fix the highlighted fields and try again.",
+        });
+        setLoading(false);
+        return;
+      }
+
+      setErrors({});
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(parsed.data),
       });
 
       const data = await response.json();
       setLoading(false);
 
       if (!response.ok) {
-        toast.error(data.error || "Login failed");
+        notify.error({
+          title: "Login failed",
+          subtitle: data.error || "Please check your credentials and try again.",
+        });
         return;
       }
 
       if (data.user) {
-        toast.success(`Welcome back, ${data.user.email}!`);
+        const payload = {
+          name: data.user.display_name || data.user.email?.split("@")[0] || "there",
+          todayCount: Number(data.today_appointments ?? 0),
+        };
+        sessionStorage.setItem("post-login-toast", JSON.stringify(payload));
+        notify.loginWelcome(payload);
         /* seed the auth cache so AuthShell sees isAuthenticated=true immediately */
         queryClient.setQueryData(queryKeys.auth.me, { ...data.user, email_verified: true });
         router.push(redirect ?? "/dashboard");
@@ -159,7 +185,10 @@ export default function Login({ redirect = null }: LoginProps) {
     } catch (err: unknown) {
       setLoading(false);
       const message = err instanceof Error ? err.message : "An error occurred during login";
-      toast.error(message);
+      notify.error({
+        title: "Unable to login",
+        subtitle: message,
+      });
     }
   };
 
@@ -336,7 +365,9 @@ export default function Login({ redirect = null }: LoginProps) {
                       required
                       autoComplete="email"
                       className="h-11 bg-slate-50 border-slate-200 rounded-2xl text-base focus-visible:ring-blue-500/30 focus-visible:border-blue-400"
+                      aria-invalid={Boolean(errors.email)}
                     />
+                    {errors.email ? <p className="text-xs font-medium text-rose-600">{errors.email}</p> : null}
                   </div>
 
                   <div className="flex flex-col gap-2">
@@ -353,7 +384,9 @@ export default function Login({ redirect = null }: LoginProps) {
                       required
                       autoComplete="current-password"
                       className="h-11 bg-slate-50 border-slate-200 rounded-2xl text-base focus-visible:ring-blue-500/30 focus-visible:border-blue-400"
+                      aria-invalid={Boolean(errors.email)}
                     />
+                    {errors.email ? <p className="text-xs font-medium text-rose-600">{errors.email}</p> : null}
                   </div>
 
                   <div className="pt-1 space-y-3">

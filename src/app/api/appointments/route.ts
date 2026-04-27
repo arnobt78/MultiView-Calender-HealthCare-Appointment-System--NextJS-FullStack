@@ -6,9 +6,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
-import { PAGINATION, VALIDATION } from "@/lib/constants";
+import { PAGINATION } from "@/lib/constants";
 import { serializeAppointment } from "@/lib/serializers";
-import { isValidDate, isValidAppointmentStatus } from "@/lib/validation";
+import { appointmentCreateSchema } from "@/lib/schemas/appointment";
+import { zodBadRequest } from "@/lib/schemas/parse";
 
 export async function GET(req: NextRequest) {
   try {
@@ -63,24 +64,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json();
-    if (!body.title || !body.start || !body.end) {
-      return NextResponse.json({ error: "Missing required fields: title, start, and end are required" }, { status: 400 });
+    const parsed = appointmentCreateSchema.safeParse(await req.json());
+    if (!parsed.success) {
+      return zodBadRequest(parsed.error);
     }
-    if (body.title.length > VALIDATION.MAX_TITLE_LENGTH) {
-      return NextResponse.json({ error: `Title must be less than ${VALIDATION.MAX_TITLE_LENGTH} characters` }, { status: 400 });
-    }
-    if (!isValidDate(body.start) || !isValidDate(body.end)) {
-      return NextResponse.json({ error: "Invalid date format. Use ISO 8601 format." }, { status: 400 });
-    }
+
+    const body = parsed.data;
     const startDate = new Date(body.start);
     const endDate = new Date(body.end);
-    if (endDate <= startDate) {
-      return NextResponse.json({ error: "End date must be after start date" }, { status: 400 });
-    }
-    if (body.status && !isValidAppointmentStatus(body.status)) {
-      return NextResponse.json({ error: "Invalid status. Must be 'done', 'pending', or 'alert'" }, { status: 400 });
-    }
 
     const appointment = await prisma.appointment.create({
       data: {

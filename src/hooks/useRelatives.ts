@@ -3,7 +3,7 @@ import { apiClient, handleApiError } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import { invalidateAllForCrud } from "@/lib/query-client";
 import { Relative } from "@/types/types";
-import { toast } from "sonner";
+import { notify } from "@/lib/notify";
 
 export type RelativeCreateInput = Pick<Relative, "firstname" | "lastname"> & Partial<Pick<Relative, "pronoun" | "notes">>;
 export type RelativeUpdateInput = Partial<Pick<Relative, "firstname" | "lastname" | "pronoun" | "notes">>;
@@ -27,7 +27,7 @@ export function useRelatives() {
       }),
     onSuccess: async (data) => {
       await invalidateAllForCrud(queryClient);
-      toast.success(`Relative '${data.relative.firstname} ${data.relative.lastname}' created`);
+      notify.crud({ action: "created", entity: "Relative", detail: `${data.relative.firstname} ${data.relative.lastname} was added.` });
     },
     onError: (e) => handleApiError(e, "Failed to create relative"),
   });
@@ -40,7 +40,7 @@ export function useRelatives() {
       }),
     onSuccess: async (data) => {
       await invalidateAllForCrud(queryClient);
-      toast.success(`Relative '${data.relative.firstname} ${data.relative.lastname}' updated`);
+      notify.crud({ action: "updated", entity: "Relative", detail: `${data.relative.firstname} ${data.relative.lastname} was updated.` });
     },
     onError: (e) => handleApiError(e, "Failed to update relative"),
   });
@@ -50,7 +50,7 @@ export function useRelatives() {
       apiClient(`/api/relatives/${id}`, { method: "DELETE" }),
     onSuccess: async () => {
       await invalidateAllForCrud(queryClient);
-      toast.success("Relative deleted");
+      notify.crud({ action: "deleted", entity: "Relative", detail: "The relative record was deleted." });
     },
     onError: (e) => handleApiError(e, "Failed to delete relative"),
   });

@@ -7,6 +7,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
+import { appointmentIcsImportSchema } from "@/lib/schemas/appointment";
+import { zodBadRequest } from "@/lib/schemas/parse";
 
 interface ParsedEvent {
   title: string;
@@ -118,29 +120,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json();
-    const content: string = body?.content ?? "";
-
-    if (!content || typeof content !== "string") {
-      return NextResponse.json(
-        { error: "Missing .ics file content" },
-        { status: 400 }
-      );
+    const parsed = appointmentIcsImportSchema.safeParse(await req.json());
+    if (!parsed.success) {
+      return zodBadRequest(parsed.error);
     }
 
-    if (content.length > 5 * 1024 * 1024) {
-      return NextResponse.json(
-        { error: "File too large. Maximum size is 5 MB." },
-        { status: 400 }
-      );
-    }
-
-    if (!content.includes("BEGIN:VCALENDAR")) {
-      return NextResponse.json(
-        { error: "Invalid .ics file. Missing BEGIN:VCALENDAR." },
-        { status: 400 }
-      );
-    }
+    const { content } = parsed.data;
 
     const events = parseICS(content);
 

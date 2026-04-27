@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient, handleApiError } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import { invalidateAllForCrud } from "@/lib/query-client";
-import { toast } from "sonner";
+import { notify } from "@/lib/notify";
 
 export interface InvoicePayment {
   id: string;
@@ -57,7 +57,7 @@ export function usePayments() {
     mutationFn: (body: { amount: number; currency?: string; description?: string; appointment_id?: string; due_date?: string }) =>
       apiClient("/api/invoices", { method: "POST", body: JSON.stringify(body) }),
     onSuccess: () => {
-      toast.success("Invoice created");
+      notify.crud({ action: "created", entity: "Invoice", detail: "The invoice is ready for payment." });
       invalidateAllForCrud(queryClient);
     },
     onError: (error) => handleApiError(error, "Failed to create invoice"),
@@ -67,7 +67,7 @@ export function usePayments() {
     mutationFn: (invoiceId: string) =>
       apiClient(`/api/invoices/${invoiceId}`, { method: "DELETE" }),
     onSuccess: () => {
-      toast.success("Invoice deleted");
+      notify.crud({ action: "deleted", entity: "Invoice", detail: "The invoice record was removed." });
       invalidateAllForCrud(queryClient);
     },
     onError: (error) => handleApiError(error, "Failed to delete invoice"),

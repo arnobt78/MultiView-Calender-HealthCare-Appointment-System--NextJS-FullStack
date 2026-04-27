@@ -61,6 +61,7 @@ import { Badge } from "../ui/badge";
 import type { FullAppointment } from "@/hooks/useAppointments";
 import GlobalCalendarFilters from "./GlobalCalendarFilters";
 import CalendarStickyHeader from "./CalendarStickyHeader";
+import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 
 type AppointmentWithCategory = Appointment & {
   category_data?: Category;
@@ -88,6 +89,7 @@ export default function MonthView() {
   // Store current userId for permission checks
   const [userId, setUserId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   const { randomBgColor } = useAppointmentColor();
 
@@ -445,7 +447,6 @@ export default function MonthView() {
   };
 
   const deleteAppt = async (id: string) => {
-    if (!confirm("Termin wirklich löschen?")) return;
     try {
       const response = await fetch(`/api/appointments/${id}`, {
         method: "DELETE",
@@ -610,7 +611,7 @@ export default function MonthView() {
                           ownerUsers={ownerUsers}
                           getDateTag={getDateTag}
                           onEdit={setEditAppt}
-                          onDelete={deleteAppt}
+                          onDelete={(id) => setDeleteTargetId(id)}
                           onToggleStatus={toggleStatus}
                           showDetails={false} // Default to false, can be overridden
                         />
@@ -623,6 +624,20 @@ export default function MonthView() {
           </div>
         </div>
       </div>
+
+      <ConfirmActionDialog
+        open={Boolean(deleteTargetId)}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTargetId(null);
+        }}
+        title="Delete appointment?"
+        subtitle="This will permanently remove the appointment from your monthly calendar."
+        confirmLabel="Delete"
+        onConfirm={async () => {
+          if (deleteTargetId) await deleteAppt(deleteTargetId);
+          setDeleteTargetId(null);
+        }}
+      />
 
       {/* Side list for selected date */}
       {selectedDate && (

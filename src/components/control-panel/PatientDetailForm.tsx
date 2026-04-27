@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import { Patient } from "@/types/types";
 import { usePatients } from "@/hooks/usePatients";
 import { Button } from "@/components/ui/button";
@@ -42,9 +43,7 @@ export function PatientDetailForm({ patient }: { patient: Patient }) {
   };
 
   const handleDelete = () => {
-    if (confirm("Delete this patient? This cannot be undone.")) {
-      deletePatient(patient.id, { onSuccess: () => router.push("/control-panel") });
-    }
+    deletePatient(patient.id, { onSuccess: () => router.push("/control-panel") });
   };
 
   return (
@@ -124,7 +123,15 @@ export function PatientDetailForm({ patient }: { patient: Patient }) {
       </div>
       <div className="flex gap-2">
         <Button onClick={handleSave} disabled={isUpdating}>{isUpdating ? "Saving..." : "Save"}</Button>
-        <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>{isDeleting ? "Deleting..." : "Delete"}</Button>
+        <ConfirmActionDialog
+          trigger={
+            <Button variant="destructive" disabled={isDeleting}>{isDeleting ? "Deleting..." : "Delete"}</Button>
+          }
+          title="Delete patient?"
+          subtitle="This action cannot be undone and removes this patient record."
+          confirmLabel="Delete"
+          onConfirm={handleDelete}
+        />
       </div>
     </div>
   );

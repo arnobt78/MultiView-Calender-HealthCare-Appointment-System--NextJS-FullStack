@@ -13,7 +13,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useAppointments } from "@/hooks/useAppointments";
-import { toast } from "sonner";
+import { notify } from "@/lib/notify";
+import { appointmentIcsImportSchema } from "@/lib/schemas/appointment";
+import { maxUploadSizeBytes } from "@/lib/schemas/upload";
 import { CalendarDays, FileUp, Info, UploadCloud, X } from "lucide-react";
 
 type Props = {
@@ -30,7 +32,19 @@ export default function ImportICSDialog({ trigger }: Props) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0] ?? null;
     if (selected && !selected.name.endsWith(".ics")) {
-      toast.error("Please select a valid .ics file.");
+      notify.error({
+        title: "Invalid file type",
+        subtitle: "Please choose a valid .ics file.",
+      });
+      setFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+    if (selected && selected.size > maxUploadSizeBytes) {
+      notify.error({
+        title: "File too large",
+        subtitle: "Maximum upload size is 1 MB.",
+      });
       setFile(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
@@ -44,26 +58,45 @@ export default function ImportICSDialog({ trigger }: Props) {
     setLoading(true);
     try {
       const content = await file.text();
+      const parsed = appointmentIcsImportSchema.safeParse({ content });
+      if (!parsed.success) {
+        notify.error({
+          title: "Import validation failed",
+          subtitle: parsed.error.issues[0]?.message || "Invalid .ics file content.",
+        });
+        return;
+      }
+
       const res = await fetch("/api/appointments/import-ics", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify(parsed.data),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        toast.error(data.error ?? "Import failed.");
+        notify.error({
+          title: "Import failed",
+          subtitle: data.error ?? "Unable to import appointments from this file.",
+        });
         return;
       }
 
-      toast.success(data.message ?? "Import successful.");
+      notify.crud({
+        action: "imported",
+        entity: "Appointments",
+        detail: data.message ?? "Appointments were imported successfully.",
+      });
       refetch();
       setOpen(false);
       setFile(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
     } catch {
-      toast.error("Failed to read or upload the file.");
+      notify.error({
+        title: "Upload failed",
+        subtitle: "Failed to read or upload the file.",
+      });
     } finally {
       setLoading(false);
     }

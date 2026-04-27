@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient, handleApiError } from "@/lib/api-client";
-import { toast } from "sonner";
+import { notify } from "@/lib/notify";
 
 interface GoogleCalendarStatus {
   connected: boolean;
@@ -30,7 +30,7 @@ export function useGoogleCalendar() {
         body: JSON.stringify({ appointmentId }),
       }),
     onSuccess: () => {
-      toast.success("Appointment synced to Google Calendar");
+      notify.success({ title: "Synced to Google Calendar", subtitle: "Appointment changes are now mirrored in Google Calendar." });
       queryClient.invalidateQueries({ queryKey: ["app", "google-calendar"] });
     },
     onError: (error) => handleApiError(error, "Failed to sync to Google Calendar"),
@@ -40,7 +40,7 @@ export function useGoogleCalendar() {
     mutationFn: () =>
       apiClient("/api/calendar/sync", { method: "DELETE" }),
     onSuccess: () => {
-      toast.success("Google Calendar disconnected");
+      notify.warning({ title: "Google Calendar disconnected", subtitle: "Calendar sync has been turned off." });
       queryClient.invalidateQueries({ queryKey: ["app", "google-calendar"] });
     },
     onError: (error) => handleApiError(error, "Failed to disconnect Google Calendar"),
@@ -58,7 +58,7 @@ export function useGoogleCalendar() {
       return response.json();
     },
     onSuccess: (data) => {
-      toast.success(`Imported ${data.imported} appointments`);
+      notify.crud({ action: "imported", entity: "Appointments", detail: `${data.imported} appointment(s) were imported from your calendar file.` });
       queryClient.invalidateQueries({ queryKey: ["app", "appointments"] });
     },
     onError: (error) => handleApiError(error, "Failed to import calendar"),

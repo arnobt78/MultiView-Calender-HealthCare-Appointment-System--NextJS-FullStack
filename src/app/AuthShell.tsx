@@ -17,6 +17,7 @@ import VideoCall from "@/components/calendar/VideoCall";
 import QuickActionsModal from "@/components/shared/QuickActionsModal";
 import { AppProviders } from "@/providers/AppProviders";
 import { cn } from "@/lib/utils";
+import { notify } from "@/lib/notify";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -68,6 +69,33 @@ function AuthShellInner({ children }: { children: React.ReactNode }) {
   // Globally suppress the body padding-right shift that react-remove-scroll
   // injects whenever any Dialog / AlertDialog / Sheet opens.
   useScrollLockFix();
+
+  useEffect(() => {
+    const loginRaw = sessionStorage.getItem("post-login-toast");
+    if (loginRaw) {
+      sessionStorage.removeItem("post-login-toast");
+      try {
+        const parsed = JSON.parse(loginRaw) as { name?: string; todayCount?: number };
+        notify.loginWelcome({
+          name: parsed?.name || "there",
+          todayCount: Number(parsed?.todayCount ?? 0),
+        });
+      } catch {
+        notify.loginWelcome({ name: "there", todayCount: 0 });
+      }
+    }
+
+    const logoutRaw = sessionStorage.getItem("post-logout-toast");
+    if (logoutRaw) {
+      sessionStorage.removeItem("post-logout-toast");
+      try {
+        const parsed = JSON.parse(logoutRaw) as { name?: string };
+        notify.logoutGoodbye({ name: parsed?.name || "there" });
+      } catch {
+        notify.logoutGoodbye({ name: "there" });
+      }
+    }
+  }, [pathname]);
 
   // Landing page and auth pages — render children as-is (no dashboard chrome)
   if (isBare(pathname)) {

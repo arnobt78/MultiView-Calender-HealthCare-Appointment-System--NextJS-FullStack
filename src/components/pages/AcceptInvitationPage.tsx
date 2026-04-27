@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
-import { toast } from "sonner";
+import { notify } from "@/lib/notify";
 import { apiClient, handleApiError } from "@/lib/api-client";
 import {
   Card,
@@ -39,7 +39,10 @@ export default function AcceptInvitationPage({ token = null }: AcceptInvitationP
       });
       setStatus("success");
       setMessage(data.message || "Invitation accepted!");
-      toast.success("Invitation accepted!");
+      notify.success({
+        title: "Invitation accepted",
+        subtitle: "You now have access to the shared workspace.",
+      });
     } catch (err) {
       setStatus("error");
       setMessage(err instanceof Error ? err.message : "Failed to accept invitation.");

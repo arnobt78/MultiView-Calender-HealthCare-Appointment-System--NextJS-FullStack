@@ -3,7 +3,7 @@ import { apiClient, handleApiError } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import { invalidateAllForCrud } from "@/lib/query-client";
 import { Patient } from "@/types/types";
-import { toast } from "sonner";
+import { notify } from "@/lib/notify";
 
 export type PatientCreateInput = Pick<Patient, "firstname" | "lastname"> &
   Partial<Pick<Patient, "birth_date" | "care_level" | "pronoun" | "email" | "active" | "active_since">>;
@@ -30,7 +30,7 @@ export function usePatients() {
       }),
     onSuccess: async (data) => {
       await invalidateAllForCrud(queryClient);
-      toast.success(`Patient ${data.patient.firstname} ${data.patient.lastname} created`);
+      notify.crud({ action: "created", entity: "Patient", detail: `${data.patient.firstname} ${data.patient.lastname} was added.` });
     },
     onError: (e) => handleApiError(e, "Failed to create patient"),
   });
@@ -43,7 +43,7 @@ export function usePatients() {
       }),
     onSuccess: async (data) => {
       await invalidateAllForCrud(queryClient);
-      toast.success(`Patient ${data.patient.firstname} ${data.patient.lastname} updated`);
+      notify.crud({ action: "updated", entity: "Patient", detail: `${data.patient.firstname} ${data.patient.lastname} was updated.` });
     },
     onError: (e) => handleApiError(e, "Failed to update patient"),
   });
@@ -53,7 +53,7 @@ export function usePatients() {
       apiClient(`/api/patients/${id}`, { method: "DELETE" }),
     onSuccess: async () => {
       await invalidateAllForCrud(queryClient);
-      toast.success("Patient deleted");
+      notify.crud({ action: "deleted", entity: "Patient", detail: "The patient record was deleted." });
     },
     onError: (e) => handleApiError(e, "Failed to delete patient"),
   });

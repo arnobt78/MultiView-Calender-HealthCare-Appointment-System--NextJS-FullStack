@@ -28,7 +28,7 @@ export const VALIDATION = {
   MAX_SEARCH_QUERY_LENGTH: 100,
   MAX_TITLE_LENGTH: 200,
   MAX_EMAIL_LENGTH: 255,
-  FILE_UPLOAD_MAX_SIZE_MB: 10, // Maximum file upload size in MB
+  FILE_UPLOAD_MAX_SIZE_MB: 1, // Maximum file upload size in MB
   NOTES_MAX_LENGTH: 1000, // Maximum length for notes/description fields
 } as const;
 

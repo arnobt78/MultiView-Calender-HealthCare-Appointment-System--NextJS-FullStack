@@ -316,3 +316,71 @@ Set by `proxy.ts` on every response. CDN headers use both `CDN-Cache-Control` an
 | Password reset | 5 req / min |
 | API general | 100 req / min |
 | Demo login | no limit |
+
+---
+
+## Latest UX Reliability Layer (Global Shared)
+
+### Shared Notification System
+
+- New reusable notification utility: `src/lib/notify.tsx`
+- Rich Sonner payloads now support semantic variant styling, left icon, title, subtitle, and operation-level helpers.
+- Added semantic helpers:
+  - `notify.loginWelcome({ name, todayCount })`
+  - `notify.logoutGoodbye({ name })`
+  - `notify.crud({ action, entity, detail })`
+- `src/lib/api-client.ts` now routes generic API errors through `notify.error(...)`.
+
+### Shared Sensitive-Action Dialog
+
+- New reusable confirmation component: `src/components/shared/ConfirmActionDialog.tsx`
+- Built on shadcn `AlertDialog` primitives with semantic variants (`destructive`, `warning`, `info`) and icon/title/subtitle support.
+- Designed for delete/disconnect/permission-sensitive actions.
+
+### Typed Validation Foundation (Zod)
+
+- New shared schema modules under `src/lib/schemas/`:
+  - `common.ts`
+  - `auth.ts`
+  - `appointment.ts`
+  - `upload.ts`
+  - `patient.ts`
+  - `parse.ts` (API-friendly zod error response helpers)
+- Global upload guard updated to **1MB max** via schema + constants alignment.
+
+### Core API Boundary Validation (Implemented)
+
+- `src/app/api/auth/login/route.ts` now validates request payload with `loginRequestSchema`.
+- `src/app/api/auth/register/route.ts` now validates request payload with `registerRequestSchema`.
+- `src/app/api/appointments/route.ts` POST now validates create payload with `appointmentCreateSchema`.
+- `src/app/api/appointments/import-ics/route.ts` now validates .ics content with `appointmentIcsImportSchema` (1MB limit).
+- `src/app/api/storage/upload/route.ts` now validates upload metadata/size with `uploadMetaSchema`.
+- `src/app/api/calendar/import/route.ts` now validates uploaded file metadata and enforces `.ics` extension.
+
+### Frontend Validation + Messaging Rollout (Current)
+
+- Auth forms now use zod client-side pre-validation and inline field error states:
+  - `src/components/login/Login.tsx`
+  - `src/components/register/Register.tsx`
+- Calendar import dialog now validates file type/size/content before submit:
+  - `src/components/calendar/ImportICSDialog.tsx`
+- Appointment dialog now applies schema validation before mutation submit:
+  - `src/components/calendar/AppointmentDialog.tsx`
+- Patient portal booking flow now validates date-time/title using appointment schema:
+  - `src/components/pages/PatientPortalPage.tsx`
+
+### Hook-Level CRUD Notification Standardization
+
+- CRUD hooks migrated from generic `toast.success(...)` to semantic `notify.*(...)` messaging:
+  - `src/hooks/useAppointments.ts`
+  - `src/hooks/useCategories.ts`
+  - `src/hooks/usePatients.ts`
+  - `src/hooks/useRelatives.ts`
+  - `src/hooks/useOrganization.ts`
+  - `src/hooks/useUsers.ts`
+  - `src/hooks/useInvitations.ts`
+  - `src/hooks/useNotifications.ts`
+  - `src/hooks/useGoogleCalendar.ts`
+  - `src/hooks/usePayments.ts`
+  - `src/hooks/useAuth.ts` (logout goodbye messaging)
+

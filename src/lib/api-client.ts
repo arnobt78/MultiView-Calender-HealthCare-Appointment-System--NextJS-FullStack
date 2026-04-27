@@ -1,4 +1,4 @@
-import { toast } from "sonner";
+import { notify } from "@/lib/notify";
 import { ApiError } from "@/types/api";
 
 type FetchOptions = RequestInit & {
@@ -65,5 +65,8 @@ export function handleApiError(error: unknown, customMessage?: string) {
     errorMessage = customMessage ? `${customMessage}: ${error.message}` : error.message;
   }
   
-  toast.error(errorMessage);
+  notify.error({
+    title: "Request failed",
+    subtitle: errorMessage,
+  });
 }

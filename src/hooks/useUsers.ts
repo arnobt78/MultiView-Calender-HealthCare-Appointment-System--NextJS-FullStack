@@ -3,7 +3,7 @@ import { apiClient, handleApiError } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import { invalidateAllForCrud } from "@/lib/query-client";
 import type { User } from "@/types/types";
-import { toast } from "sonner";
+import { notify } from "@/lib/notify";
 
 export type UserListFilters = {
   role?: string;
@@ -48,7 +48,7 @@ export function useUsers(filters: UserListFilters = {}) {
       }),
     onSuccess: async (data) => {
       await invalidateAllForCrud(queryClient);
-      toast.success(`User '${data.user.display_name ?? data.user.email}' updated`);
+      notify.crud({ action: "updated", entity: "User", detail: `${data.user.display_name ?? data.user.email} was updated.` });
     },
     onError: (e) => handleApiError(e, "Failed to update user"),
   });
@@ -85,7 +85,7 @@ export function useUser(id: string | null) {
       }),
     onSuccess: async (data) => {
       await invalidateAllForCrud(queryClient);
-      toast.success(`User '${data.user.display_name ?? data.user.email}' updated`);
+      notify.crud({ action: "updated", entity: "User", detail: `${data.user.display_name ?? data.user.email} was updated.` });
     },
     onError: (e) => handleApiError(e, "Failed to update user"),
   });

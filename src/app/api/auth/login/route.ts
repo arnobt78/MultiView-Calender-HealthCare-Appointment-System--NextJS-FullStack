@@ -8,7 +8,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hashPassword, verifyPassword, generateToken, getUserByEmail } from "@/lib/auth";
 import { setSession } from "@/lib/session";
-import { isValidEmail, validatePassword } from "@/lib/validation";
+import { loginRequestSchema } from "@/lib/schemas/auth";
+import { zodBadRequest } from "@/lib/schemas/parse";
 import { checkRateLimit, getClientIP } from "@/lib/rateLimit";
 import { RATE_LIMITS } from "@/lib/constants";
 
@@ -39,32 +40,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { email, password } = await req.json();
-
-    // Validate input
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: "Email and password are required" },
-        { status: 400 }
-      );
+    const parsed = loginRequestSchema.safeParse(await req.json());
+    if (!parsed.success) {
+      return zodBadRequest(parsed.error);
     }
 
-    // Validate email format
-    if (!isValidEmail(email)) {
-      return NextResponse.json(
-        { error: "Invalid email format" },
-        { status: 400 }
-      );
-    }
-
-    // Validate password
-    const passwordValidation = validatePassword(password);
-    if (!passwordValidation.isValid) {
-      return NextResponse.json(
-        { error: passwordValidation.error },
-        { status: 400 }
-      );
-    }
+    const { email, password } = parsed.data;
 
     // Get user from database
     const user = await getUserByEmail(email);

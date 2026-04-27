@@ -8,7 +8,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { uploadFile } from "@/lib/vercelBlob";
 import { getSessionUser } from "@/lib/session";
-import { VALIDATION } from "@/lib/constants";
+import { uploadMetaSchema } from "@/lib/schemas/upload";
+import { zodBadRequest } from "@/lib/schemas/parse";
 
 export async function POST(req: NextRequest) {
   try {
@@ -26,13 +27,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    // Validate file size using constants
-    const MAX_FILE_SIZE = VALIDATION.FILE_UPLOAD_MAX_SIZE_MB * 1024 * 1024;
-    if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json(
-        { error: `File size exceeds ${VALIDATION.FILE_UPLOAD_MAX_SIZE_MB}MB limit` },
-        { status: 400 }
-      );
+    const parsed = uploadMetaSchema.safeParse({
+      folder,
+      size: file.size,
+      name: file.name,
+      type: file.type,
+    });
+    if (!parsed.success) {
+      return zodBadRequest(parsed.error);
     }
 
     // Upload to Vercel Blob

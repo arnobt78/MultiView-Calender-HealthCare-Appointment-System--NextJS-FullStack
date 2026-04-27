@@ -25,6 +25,7 @@ import GlobalCalendarFilters from "./GlobalCalendarFilters";
 import CalendarStickyHeader from "./CalendarStickyHeader";
 import { useLiveNow } from "./useLiveNow";
 import { getNowLineTop } from "./timeLinePosition";
+import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import {
   calendarGridWeekOuterShell,
   calendarGridWeekStickyCorner,
@@ -61,6 +62,7 @@ export default function WeekView() {
   const [assignees, setAssignees] = useState<AppointmentAssignee[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [ownerUsers, setOwnerUsers] = useState<{ id: string, email: string }[]>([]);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   const { randomBgColor } = useAppointmentColor();
   const queryClient = useQueryClient();
@@ -351,7 +353,6 @@ export default function WeekView() {
   };
 
   const deleteAppt = async (id: string) => {
-    if (!confirm("Delete appointment?")) return;
     try {
       const response = await fetch(`/api/appointments/${id}`, {
         method: "DELETE",
@@ -584,7 +585,7 @@ export default function WeekView() {
                             ownerUsers={ownerUsers}
                             getDateTag={getDateTag}
                             onEdit={setEditAppt}
-                            onDelete={deleteAppt}
+                            onDelete={(id) => setDeleteTargetId(id)}
                             onToggleStatus={toggleStatus}
                             showDetails={true}
                           />
@@ -598,6 +599,20 @@ export default function WeekView() {
           ))}
         </div>
       </div>
+
+      <ConfirmActionDialog
+        open={Boolean(deleteTargetId)}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTargetId(null);
+        }}
+        title="Delete appointment?"
+        subtitle="This will permanently remove the appointment from your weekly calendar."
+        confirmLabel="Delete"
+        onConfirm={async () => {
+          if (deleteTargetId) await deleteAppt(deleteTargetId);
+          setDeleteTargetId(null);
+        }}
+      />
 
       {/* Edit dialog */}
       {

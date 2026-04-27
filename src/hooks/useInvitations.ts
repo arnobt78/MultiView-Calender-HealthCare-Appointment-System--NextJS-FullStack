@@ -3,7 +3,7 @@ import { apiClient, handleApiError } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import { invalidateAllForCrud } from "@/lib/query-client";
 import { AppointmentAssignee } from "@/types/types";
-import { toast } from "sonner";
+import { notify } from "@/lib/notify";
 import { InvitationRequest, InvitationType } from "@/types/invitation";
 
 export type DashboardInvitation = {
@@ -48,7 +48,7 @@ export function useInvitations(type: "appointment" | "dashboard") {
       }),
     onSuccess: async (_, variables) => {
       await invalidateAllForCrud(queryClient);
-      toast.success(`Invitation sent to ${variables.email}`);
+      notify.success({ title: "Invitation sent", subtitle: `An invitation was sent to ${variables.email}.` });
     },
     onError: (error) => handleApiError(error, "Failed to send invitation"),
   });
@@ -58,7 +58,7 @@ export function useInvitations(type: "appointment" | "dashboard") {
       apiClient(`/api/appointments/${id}/permissions`, { method: "DELETE" }),
     onSuccess: async () => {
       await invalidateAllForCrud(queryClient);
-      toast.success("Appointment invitation discarded");
+      notify.warning({ title: "Appointment invitation discarded", subtitle: "The invitation has been removed." });
     },
     onError: (error) => handleApiError(error, "Failed to discard appointment invitation"),
   });
@@ -68,7 +68,7 @@ export function useInvitations(type: "appointment" | "dashboard") {
       apiClient(`/api/dashboard/${id}/permissions`, { method: "DELETE" }),
     onSuccess: async () => {
       await invalidateAllForCrud(queryClient);
-      toast.success("Dashboard invitation discarded");
+      notify.warning({ title: "Dashboard invitation discarded", subtitle: "The invitation has been removed." });
     },
     onError: (error) => handleApiError(error, "Failed to discard dashboard invitation"),
   });

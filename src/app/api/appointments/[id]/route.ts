@@ -41,20 +41,33 @@ export async function PUT(req: NextRequest, context: RouteContext) {
     }
 
     const body = await req.json();
+    const data: Record<string, unknown> = { updated_at: new Date() };
+
+    if (body.title !== undefined) data.title = body.title;
+    if (body.start !== undefined) {
+      const start = new Date(body.start);
+      if (Number.isNaN(start.getTime())) {
+        return NextResponse.json({ error: "Invalid start date" }, { status: 400 });
+      }
+      data.start = start;
+    }
+    if (body.end !== undefined) {
+      const end = new Date(body.end);
+      if (Number.isNaN(end.getTime())) {
+        return NextResponse.json({ error: "Invalid end date" }, { status: 400 });
+      }
+      data.end = end;
+    }
+    if (body.location !== undefined) data.location = body.location ?? null;
+    if (body.patient !== undefined) data.patient_id = body.patient ?? null;
+    if (body.category !== undefined) data.category_id = body.category ?? null;
+    if (body.notes !== undefined) data.notes = body.notes ?? null;
+    if (body.status !== undefined) data.status = body.status ?? null;
+    if (body.attachements !== undefined) data.attachements = body.attachements ?? [];
+
     const appointment = await prisma.appointment.updateMany({
       where: { id, user_id: sessionUser.userId },
-      data: {
-        title: body.title,
-        start: new Date(body.start),
-        end: new Date(body.end),
-        location: body.location ?? null,
-        patient_id: body.patient ?? null,
-        category_id: body.category ?? null,
-        notes: body.notes ?? null,
-        status: body.status ?? null,
-        attachements: body.attachements ?? [],
-        updated_at: new Date(),
-      },
+      data,
     });
 
     if (appointment.count === 0) {
@@ -98,8 +111,20 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       status?: string | null;
     } = { updated_at: new Date() };
     if (body.title !== undefined) data.title = body.title;
-    if (body.start !== undefined) data.start = new Date(body.start);
-    if (body.end !== undefined) data.end = new Date(body.end);
+    if (body.start !== undefined) {
+      const start = new Date(body.start);
+      if (Number.isNaN(start.getTime())) {
+        return NextResponse.json({ error: "Invalid start date" }, { status: 400 });
+      }
+      data.start = start;
+    }
+    if (body.end !== undefined) {
+      const end = new Date(body.end);
+      if (Number.isNaN(end.getTime())) {
+        return NextResponse.json({ error: "Invalid end date" }, { status: 400 });
+      }
+      data.end = end;
+    }
     if (body.location !== undefined) data.location = body.location;
     if (body.patient !== undefined) data.patient_id = body.patient;
     if (body.attachements !== undefined) data.attachements = body.attachements;

@@ -3,7 +3,7 @@ import { apiClient, handleApiError } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import { invalidateAllForCrud } from "@/lib/query-client";
 import { Category } from "@/types/types";
-import { toast } from "sonner";
+import { notify } from "@/lib/notify";
 
 export type CategoryCreateInput = Pick<Category, "label"> & Partial<Pick<Category, "description" | "color" | "icon">>;
 export type CategoryUpdateInput = Partial<Pick<Category, "label" | "description" | "color" | "icon">>;
@@ -28,7 +28,7 @@ export function useCategories() {
       }),
     onSuccess: async (data) => {
       await invalidateAllForCrud(queryClient);
-      toast.success(`Category '${data.category.label}' created`);
+      notify.crud({ action: "created", entity: "Category", detail: `"${data.category.label}" is ready to use.` });
     },
     onError: (e) => handleApiError(e, "Failed to create category"),
   });
@@ -41,7 +41,7 @@ export function useCategories() {
       }),
     onSuccess: async (data) => {
       await invalidateAllForCrud(queryClient);
-      toast.success(`Category '${data.category.label}' updated`);
+      notify.crud({ action: "updated", entity: "Category", detail: `"${data.category.label}" was updated.` });
     },
     onError: (e) => handleApiError(e, "Failed to update category"),
   });
@@ -51,7 +51,7 @@ export function useCategories() {
       apiClient(`/api/categories/${id}`, { method: "DELETE" }),
     onSuccess: async () => {
       await invalidateAllForCrud(queryClient);
-      toast.success("Category deleted");
+      notify.crud({ action: "deleted", entity: "Category", detail: "The category has been removed." });
     },
     onError: (e) => handleApiError(e, "Failed to delete category"),
   });

@@ -20,7 +20,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-import { ChangeEvent, useEffect, useRef, useState } from "react";
+import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   Category,
   Patient,
@@ -34,7 +34,8 @@ import { useCategories } from "@/hooks/useCategories";
 import { useRelatives } from "@/hooks/useRelatives";
 import { useAppointments, FullAppointment } from "@/hooks/useAppointments";
 import { useAuth } from "@/hooks/useAuth";
-import { toast } from "sonner";
+import { notify } from "@/lib/notify";
+import { appointmentCreateSchema } from "@/lib/schemas/appointment";
 // Using Vercel Blob for file storage (better for demo projects on Vercel)
 import { uploadFileViaAPI, deleteFile } from "@/lib/vercelBlob";
 
@@ -90,6 +91,31 @@ export default function AppointmentDialog({
   const [fileProgress, setFileProgress] = useState<Record<string, number>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const resetFormState = () => {
+    setTitle("");
+    setNotes("");
+    setStart("");
+    setEnd("");
+    setPatientId("");
+    setCategoryId("");
+    setLocation("");
+    setattachements("");
+    setStatus("pending");
+    setUploadedFiles([]);
+    setAssignees([]);
+    setActivityType("");
+    setActivityContent("");
+    setActivityList([]);
+    setError(null);
+    setSuccess(false);
+    setUploading(false);
+    setLoading(false);
+    setFileProgress({});
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   useEffect(() => {
     if (appointment) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -121,12 +147,33 @@ export default function AppointmentDialog({
     }
   }, [appointment]);
 
+  const handleDialogOpenChange = (nextOpen: boolean) => {
+    setOpen(nextOpen);
+    onOpenChange?.(nextOpen);
+    if (!nextOpen) {
+      resetFormState();
+    }
+  };
+
+  const canSave = useMemo(
+    () =>
+      Boolean(
+        title.trim() &&
+          start &&
+          end &&
+          patientId &&
+          categoryId &&
+          new Date(localInputValueToUTC(start)).getTime() <= new Date(localInputValueToUTC(end)).getTime()
+      ),
+    [title, start, end, patientId, categoryId]
+  );
+
   const handleSave = async () => {
     setLoading(true);
     setError(null);
     setSuccess(false);
     try {
-      if (!isEditMode && (!title || !start || !end || !patientId || !categoryId)) {
+      if (!title || !start || !end || !patientId || !categoryId) {
         setError("Please fill in all required fields.");
         setLoading(false);
         return;
@@ -135,6 +182,28 @@ export default function AppointmentDialog({
       const safeStart = localInputValueToUTC(start);
       const safeEnd = localInputValueToUTC(end);
       const attachementArray = attachements.split(",").map((s) => s.trim()).filter(Boolean);
+
+      const parsed = appointmentCreateSchema.safeParse({
+        title,
+        start: safeStart,
+        end: safeEnd,
+        patient: patientId || null,
+        category: categoryId || null,
+        location: location || null,
+        notes: notes || "",
+        status: status as "pending" | "done" | "alert",
+        attachements: attachementArray,
+      });
+      if (!parsed.success) {
+        setError(parsed.error.issues[0]?.message || "Please check the form fields.");
+        notify.error({
+          title: "Invalid appointment details",
+          subtitle: parsed.error.issues[0]?.message || "Please check the form fields.",
+        });
+        setLoading(false);
+        return;
+      }
+
       let apptId = appointment?.id;
 
       if (isEditMode && apptId) {
@@ -212,7 +281,7 @@ export default function AppointmentDialog({
           }
         }
       } else {
-        const newAppt = await createAppointmentAsync({
+        const createResult = await createAppointmentAsync({
           title,
           notes,
           start: safeStart,
@@ -224,8 +293,7 @@ export default function AppointmentDialog({
           status: status as "pending" | "done" | "alert",
           user_id: user?.id,
         });
-
-        apptId = newAppt.id;
+        apptId = createResult.appointment.id;
 
         if (assignees.length > 0) {
           const dedupedMap = new Map();
@@ -279,14 +347,20 @@ export default function AppointmentDialog({
       }
 
       setSuccess(true);
-      setOpen(false);
+      handleDialogOpenChange(false);
       onSuccess?.();
     } catch (e: unknown) {
       if (typeof e === "object" && e && "message" in e) {
-        toast.error((e as { message: string }).message || "Unknown error");
+        notify.error({
+          title: "Activity save failed",
+          subtitle: (e as { message: string }).message || "Unknown error",
+        });
         setError((e as { message: string }).message || "Unknown error");
       } else {
-        toast.error("Unknown error");
+        notify.error({
+          title: "Activity save failed",
+          subtitle: "Unknown error",
+        });
         setError("Unknown error");
       }
     } finally {
@@ -430,7 +504,7 @@ export default function AppointmentDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange ? onOpenChange : setOpen}>
+    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent aria-describedby="">
         <DialogHeader>
@@ -479,7 +553,13 @@ export default function AppointmentDialog({
                   type="datetime-local"
                   id="start"
                   value={start}
-                  onChange={(e) => setStart(e.target.value)}
+                  onChange={(e) => {
+                    const nextStart = e.target.value;
+                    setStart(nextStart);
+                    if (end && nextStart && end < nextStart) {
+                      setEnd(nextStart);
+                    }
+                  }}
                 />
               </div>
               <div className="space-y-2">
@@ -496,6 +576,7 @@ export default function AppointmentDialog({
                       setEnd(newEnd);
                     }
                   }}
+                  disabled={!start}
                   min={start || undefined}
                 />
               </div>
@@ -710,17 +791,28 @@ export default function AppointmentDialog({
             </div>
           </TabsContent>
         </Tabs>
-        <Button
-          onClick={handleSave}
-          disabled={loading || uploading}
-          className="cursor-pointer transition-colors"
-        >
-          {loading
-            ? "Save..."
-            : isEditMode
-              ? "Save changes"
-              : "Save"}
-        </Button>
+        <div className="flex items-center justify-end gap-2 pt-1">
+          <Button
+            type="button"
+            variant="outline"
+            className="cursor-pointer"
+            onClick={() => handleDialogOpenChange(false)}
+            disabled={loading || uploading}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSave}
+            disabled={loading || uploading || !canSave}
+            className="cursor-pointer transition-colors"
+          >
+            {loading
+              ? "Save..."
+              : isEditMode
+                ? "Save changes"
+                : "Save"}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );

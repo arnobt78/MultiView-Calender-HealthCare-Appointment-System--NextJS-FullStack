@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 
 export function CategoryDetailForm({ category }: { category: Category }) {
   const router = useRouter();
@@ -29,9 +30,7 @@ export function CategoryDetailForm({ category }: { category: Category }) {
   };
 
   const handleDelete = () => {
-    if (confirm("Delete this category? Appointments using it may be affected.")) {
-      deleteCategory(category.id, { onSuccess: () => router.push("/control-panel") });
-    }
+    deleteCategory(category.id, { onSuccess: () => router.push("/control-panel") });
   };
 
   return (
@@ -57,7 +56,15 @@ export function CategoryDetailForm({ category }: { category: Category }) {
       </div>
       <div className="flex gap-2">
         <Button onClick={handleSave} disabled={isUpdating}>{isUpdating ? "Saving..." : "Save"}</Button>
-        <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>{isDeleting ? "Deleting..." : "Delete"}</Button>
+        <ConfirmActionDialog
+          trigger={
+            <Button variant="destructive" disabled={isDeleting}>{isDeleting ? "Deleting..." : "Delete"}</Button>
+          }
+          title="Delete category?"
+          subtitle="Appointments using this category may be affected."
+          confirmLabel="Delete"
+          onConfirm={handleDelete}
+        />
       </div>
     </div>
   );

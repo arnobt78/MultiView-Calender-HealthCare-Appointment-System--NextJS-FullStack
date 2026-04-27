@@ -61,6 +61,7 @@ import GlobalCalendarFilters from "./GlobalCalendarFilters";
 import { useAppointmentColor } from "@/context/AppointmentColorContext";
 import { motion } from "framer-motion";
 import CalendarStickyHeader from "./CalendarStickyHeader";
+import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 
 // Types imported from hooks
 
@@ -266,9 +267,10 @@ export default function AppointmentList() {
     toggleStatus({ id, status: newStatus as "pending" | "done" | "alert" });
   };
 
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+
   const handleDelete = (id: string) => {
-    if (!confirm("Termin wirklich löschen?")) return;
-    deleteAppointment(id);
+    setDeleteTargetId(id);
   };
 
   const isEmpty = filteredBySidebar.length === 0;

@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient, handleApiError } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import { Notification } from "@/types/notification";
-import { toast } from "sonner";
+import { notify } from "@/lib/notify";
 
 interface NotificationsResponse {
   notifications: Notification[];
@@ -44,7 +44,7 @@ export function useNotifications() {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
-      toast.success("All notifications marked as read");
+      notify.info({ title: "Notifications updated", subtitle: "All notifications were marked as read." });
     },
     onError: (error) => handleApiError(error, "Failed to mark notifications as read"),
   });

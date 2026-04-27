@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import Image from "next/image";
-import { toast } from "sonner";
+import { notify } from "@/lib/notify";
+import { registerRequestSchema } from "@/lib/schemas/auth";
 import {
   CalendarDays,
   Clock,
@@ -68,31 +69,62 @@ export function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string }>({});
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
+      const parsed = registerRequestSchema.safeParse({
+        email,
+        password,
+        display_name: name.trim() || undefined,
+      });
+      if (!parsed.success) {
+        const fieldErrors = parsed.error.flatten().fieldErrors;
+        setErrors({
+          name: fieldErrors.display_name?.[0],
+          email: fieldErrors.email?.[0],
+          password: fieldErrors.password?.[0],
+        });
+        notify.error({
+          title: "Invalid registration details",
+          subtitle: "Please fix the highlighted fields and try again.",
+        });
+        setLoading(false);
+        return;
+      }
+      setErrors({});
+
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, display_name: name.trim() || undefined }),
+        body: JSON.stringify(parsed.data),
       });
 
       const data = await response.json();
       setLoading(false);
 
       if (!response.ok) {
-        toast.error(data.error || "Registration failed");
+        notify.error({
+          title: "Registration failed",
+          subtitle: data.error || "Please try again with valid information.",
+        });
         return;
       }
 
-      toast.success(data.message || "Account created! Check your email to verify.");
+      notify.success({
+        title: "Account created successfully",
+        subtitle: data.message || "Please check your email to verify your account.",
+      });
     } catch (err: unknown) {
       setLoading(false);
       const message = err instanceof Error ? err.message : "An error occurred during registration";
-      toast.error(message);
+      notify.error({
+        title: "Unable to register",
+        subtitle: message,
+      });
     }
   };
 
@@ -226,7 +258,9 @@ export function Register() {
                       onChange={(e) => setName(e.target.value)}
                       autoComplete="name"
                       className="h-11 bg-slate-50 border-slate-200 rounded-2xl text-base focus-visible:ring-teal-500/30 focus-visible:border-teal-400"
+                      aria-invalid={Boolean(errors.name)}
                     />
+                    {errors.name ? <p className="text-xs font-medium text-rose-600">{errors.name}</p> : null}
                   </div>
 
                   <div className="flex flex-col gap-2">
@@ -243,7 +277,9 @@ export function Register() {
                       required
                       autoComplete="email"
                       className="h-11 bg-slate-50 border-slate-200 rounded-2xl text-base focus-visible:ring-teal-500/30 focus-visible:border-teal-400"
+                      aria-invalid={Boolean(errors.name)}
                     />
+                    {errors.name ? <p className="text-xs font-medium text-rose-600">{errors.name}</p> : null}
                   </div>
 
                   <div className="flex flex-col gap-2">
@@ -260,7 +296,9 @@ export function Register() {
                       required
                       autoComplete="new-password"
                       className="h-11 bg-slate-50 border-slate-200 rounded-2xl text-base focus-visible:ring-teal-500/30 focus-visible:border-teal-400"
+                      aria-invalid={Boolean(errors.name)}
                     />
+                    {errors.name ? <p className="text-xs font-medium text-rose-600">{errors.name}</p> : null}
                   </div>
 
                   <div className="pt-1">

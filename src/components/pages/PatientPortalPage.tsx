@@ -40,7 +40,8 @@ import {
 } from "lucide-react";
 import { format, isPast, isFuture, isToday } from "date-fns";
 import type { Patient, Appointment } from "@/types/types";
-import { toast } from "sonner";
+import { notify } from "@/lib/notify";
+import { appointmentCreateSchema } from "@/lib/schemas/appointment";
 import { useUsers } from "@/hooks/useUsers";
 
 interface PortalData {
@@ -72,7 +73,11 @@ function BookAppointmentDialog() {
     mutationFn: (body: object) =>
       apiClient("/api/patient-portal", { method: "POST", body: JSON.stringify(body) }),
     onSuccess: () => {
-      toast.success("Appointment request submitted");
+      notify.crud({
+        action: "created",
+        entity: "Appointment request",
+        detail: "Your appointment request was submitted successfully.",
+      });
       setOpen(false);
       setTitle(""); setStart(""); setEnd(""); setNotes(""); setDoctorId("");
     },
@@ -81,7 +86,24 @@ function BookAppointmentDialog() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!title || !start || !end) return;
+    const parsed = appointmentCreateSchema.safeParse({
+      title,
+      start: new Date(start).toISOString(),
+      end: new Date(end).toISOString(),
+      notes: notes || "",
+      status: "pending",
+      patient: null,
+      category: null,
+      location: null,
+      attachements: [],
+    });
+    if (!parsed.success) {
+      notify.error({
+        title: "Invalid appointment request",
+        subtitle: parsed.error.issues[0]?.message || "Please check your date and time values.",
+      });
+      return;
+    }
     bookMutation.mutate({ title, start, end, notes, doctorId: doctorId || undefined });
   }
 
