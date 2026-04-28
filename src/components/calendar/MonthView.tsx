@@ -485,7 +485,7 @@ export default function MonthView() {
     );
   };
 
-  // Helper for date tags (Today, Tomorrow, Later Days, Date Passed)
+  // Helper for date tags (Today, Tomorrow, Later, Passed)
   function getDateTag(date: Date) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -496,26 +496,26 @@ export default function MonthView() {
     );
     if (diffDays === 0)
       return (
-        <Badge variant="outline" className="ml-2 bg-green-100 text-green-700 hover:bg-green-100 border-transparent">
+        <Badge variant="outline" className="calendar-glass-badge calendar-glass-badge-emerald ">
           Today
         </Badge>
       );
     if (diffDays === 1)
       return (
-        <Badge variant="outline" className="ml-2 bg-yellow-100 text-yellow-800 hover:bg-yellow-100 border-transparent">
+        <Badge variant="outline" className="calendar-glass-badge calendar-glass-badge-blue ">
           Tomorrow
         </Badge>
       );
     if (diffDays > 1)
       return (
-        <Badge variant="outline" className="ml-2 bg-sky-100 text-sky-700 hover:bg-sky-100 border-transparent">
-          Later Days
+        <Badge variant="outline" className="calendar-glass-badge calendar-glass-badge-violet ">
+          Later
         </Badge>
       );
     if (diffDays < 0)
       return (
-        <Badge variant="outline" className="ml-2 bg-gray-200 text-gray-500 hover:bg-gray-200 border-transparent">
-          Date Passed
+        <Badge variant="outline" className="calendar-glass-badge calendar-glass-badge-slate ">
+          Passed
         </Badge>
       );
     return null;
@@ -529,13 +529,13 @@ export default function MonthView() {
             <h2 className="text-xl font-semibold tracking-tight text-gray-700">
               {monthTitle}
             </h2>
-            <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-sky-100 text-sky-700 hover:bg-sky-100">Total: {summaryStats.total}</Badge>
-            <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-cyan-100 text-cyan-700 hover:bg-cyan-100">This Month: {monthAppointments.length}</Badge>
-            <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-green-100 text-green-700 hover:bg-green-100">Today: {monthTodayCount}</Badge>
+            <Badge variant="outline" className="calendar-glass-badge calendar-glass-badge-sky min-h-6 min-w-[90px] justify-center">Total: {summaryStats.total}</Badge>
+            <Badge variant="outline" className="calendar-glass-badge calendar-glass-badge-blue min-h-6 min-w-[90px] justify-center">This Month: {monthAppointments.length}</Badge>
+            <Badge variant="outline" className="calendar-glass-badge calendar-glass-badge-emerald min-h-6 min-w-[90px] justify-center">Today: {monthTodayCount}</Badge>
             <span className="px-1 text-xs font-semibold text-gray-500">Status:</span>
-            <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-amber-100 text-amber-700 hover:bg-amber-100">Open: {monthStatus.open}</Badge>
-            <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-rose-100 text-rose-700 hover:bg-rose-100">Alert: {monthStatus.alert}</Badge>
-            <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-emerald-100 text-emerald-700 hover:bg-emerald-100">Done: {monthStatus.done}</Badge>
+            <Badge variant="outline" className="calendar-glass-badge calendar-glass-badge-amber min-h-6 min-w-[90px] justify-center">Open: {monthStatus.open}</Badge>
+            <Badge variant="outline" className="calendar-glass-badge calendar-glass-badge-rose min-h-6 min-w-[90px] justify-center">Alert: {monthStatus.alert}</Badge>
+            <Badge variant="outline" className="calendar-glass-badge calendar-glass-badge-emerald min-h-6 min-w-[90px] justify-center">Done: {monthStatus.done}</Badge>
           </div>
           <GlobalCalendarFilters
             categories={categories}

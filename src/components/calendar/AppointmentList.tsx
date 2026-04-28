@@ -78,7 +78,7 @@ function StatBadge({
   return (
     <Badge
       variant="outline"
-      className={`min-h-6 min-w-[90px] justify-center border-transparent ${className}`}
+      className={`calendar-glass-badge min-h-6 min-w-[90px] justify-center ${className}`}
     >
       {label}: {value}
     </Badge>
@@ -109,17 +109,17 @@ function DateHeadline({
           date.getDate() === now.getDate()
         ) {
           return (
-            <Badge variant="outline" className="bg-green-100 text-green-700 hover:bg-green-100 border-transparent">
+            <Badge variant="outline" className="calendar-glass-badge calendar-glass-badge-emerald">
               Today
             </Badge>
           );
         }
         return null;
       })()}
-      <StatBadge label="Total" value={dayStats.total} className="bg-sky-100 text-sky-700 hover:bg-sky-100" />
-      <StatBadge label="Open" value={dayStats.open} className="bg-amber-100 text-amber-700 hover:bg-amber-100" />
-      <StatBadge label="Alert" value={dayStats.alert} className="bg-rose-100 text-rose-700 hover:bg-rose-100" />
-      <StatBadge label="Done" value={dayStats.done} className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100" />
+      <StatBadge label="Total" value={dayStats.total} className="calendar-glass-badge-sky" />
+      <StatBadge label="Open" value={dayStats.open} className="calendar-glass-badge-amber" />
+      <StatBadge label="Alert" value={dayStats.alert} className="calendar-glass-badge-rose" />
+      <StatBadge label="Done" value={dayStats.done} className="calendar-glass-badge-emerald" />
     </div>
   );
 }
@@ -130,7 +130,7 @@ function ColorBar({ color }: { color: string }) {
   useEffect(() => {
     if (ref.current) ref.current.style.backgroundColor = color;
   }, [color]);
-  return <div ref={ref} className="w-2 rounded-l-xl h-full absolute left-0 top-0 bottom-0 transition-colors" />;
+  return <div ref={ref} className="w-2 rounded-l-2xl h-full absolute left-0 top-0 bottom-0 transition-colors" />;
 }
 
 // Helper to group appointments by date (ascending, today first)
@@ -153,7 +153,7 @@ function groupAppointmentsByDate(appts: FullAppointment[]) {
   return sortedKeys.map((key) => ({ date: new Date(key), appts: groups[key] }));
 }
 
-// Day tags helper (Today, Tomorrow, Later Days, Date Passed)
+// Day tags helper (Today, Tomorrow, Later, Passed)
 function getDateTag(date: Date) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -164,26 +164,26 @@ function getDateTag(date: Date) {
   );
   if (diffDays === 0)
     return (
-      <Badge variant="outline" className="ml-2 bg-green-100 text-green-700 hover:bg-green-100 border-transparent">
+      <Badge variant="outline" className="calendar-glass-badge calendar-glass-badge-emerald ">
         Today
       </Badge>
     );
   if (diffDays === 1)
     return (
-      <Badge variant="outline" className="ml-2 bg-blue-100 text-blue-700 hover:bg-blue-100 border-transparent">
+      <Badge variant="outline" className="calendar-glass-badge calendar-glass-badge-blue ">
         Tomorrow
       </Badge>
     );
   if (diffDays > 1)
     return (
-      <Badge variant="outline" className="ml-2 bg-sky-100 text-sky-700 hover:bg-sky-100 border-transparent">
-        Later Days
+      <Badge variant="outline" className="calendar-glass-badge calendar-glass-badge-violet ">
+        Later
       </Badge>
     );
   if (diffDays < 0)
     return (
-      <Badge variant="outline" className="ml-2 bg-gray-200 text-gray-500 hover:bg-gray-200 border-transparent">
-        Date Passed
+      <Badge variant="outline" className="calendar-glass-badge calendar-glass-badge-slate ">
+        Passed
       </Badge>
     );
   return null;
@@ -424,7 +424,7 @@ export default function AppointmentList() {
       },
       {
         key: "later" as const,
-        title: "Later Days",
+        title: "Later",
         subtitle: "Future appointments after tomorrow",
         icon: CalendarDays,
         headerClass:
@@ -448,15 +448,15 @@ export default function AppointmentList() {
           <h2 className="text-xl font-semibold tracking-tight text-gray-700">
             Appointment List
           </h2>
-          <StatBadge label="Total" value={summaryStats.total} className="bg-sky-100 text-sky-700 hover:bg-sky-100" />
-          <StatBadge label="Today" value={summaryStats.today} className="bg-green-100 text-green-700 hover:bg-green-100" />
-          <StatBadge label="Tomorrow" value={summaryStats.nextDay} className="bg-blue-100 text-blue-700 hover:bg-blue-100" />
-          <StatBadge label="Later Days" value={summaryStats.later} className="bg-violet-100 text-violet-700 hover:bg-violet-100" />
-          <StatBadge label="Passed Days" value={summaryStats.passed} className="bg-gray-200 text-gray-600 hover:bg-gray-200" />
+          <StatBadge label="Total" value={summaryStats.total} className="calendar-glass-badge-sky" />
+          <StatBadge label="Today" value={summaryStats.today} className="calendar-glass-badge-emerald" />
+          <StatBadge label="Tomorrow" value={summaryStats.nextDay} className="calendar-glass-badge-blue" />
+          <StatBadge label="Later" value={summaryStats.later} className="calendar-glass-badge-violet" />
+          <StatBadge label="Passed Days" value={summaryStats.passed} className="calendar-glass-badge-slate" />
           <span className="px-1 text-xs font-semibold text-gray-500">Status:</span>
-          <StatBadge label="Open" value={summaryStats.open} className="bg-amber-100 text-amber-700 hover:bg-amber-100" />
-          <StatBadge label="Alert" value={summaryStats.alert} className="bg-rose-100 text-rose-700 hover:bg-rose-100" />
-          <StatBadge label="Done" value={summaryStats.done} className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100" />
+          <StatBadge label="Open" value={summaryStats.open} className="calendar-glass-badge-amber" />
+          <StatBadge label="Alert" value={summaryStats.alert} className="calendar-glass-badge-rose" />
+          <StatBadge label="Done" value={summaryStats.done} className="calendar-glass-badge-emerald" />
         </div>
         <GlobalCalendarFilters categories={categories} patients={patients} />
       </CalendarStickyHeader>
@@ -640,7 +640,7 @@ export default function AppointmentList() {
                                       <ColorBar color={colorToken.lineColor} />
 
                                       {/* Main content */}
-                                      <div className="pl-6 pr-4 py-4 flex-1 flex flex-col gap-2 min-w-0">
+                                      <div className="pl-6 pr-4 py-3 flex-1 flex flex-col gap-2 min-w-0">
 
                                         {/* Row 1: Title + date tag */}
                                         <div className="flex items-center gap-2 flex-wrap">

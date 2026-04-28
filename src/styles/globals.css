@@ -297,6 +297,40 @@
   .hover-card-simple {
     min-height: 24px;
   }
+
+  /* Global glass badges used across calendar views/header */
+  .calendar-glass-badge {
+    @apply inline-flex items-center justify-center text-center rounded-full border px-2 text-xs backdrop-blur-sm transition;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+  }
+  .calendar-glass-badge-emerald {
+    @apply border-emerald-400/35 bg-linear-to-r from-emerald-500/20 via-emerald-500/10 to-emerald-500/5 text-emerald-700;
+    box-shadow: 0 10px 28px rgba(16, 185, 129, 0.18);
+  }
+  .calendar-glass-badge-sky {
+    @apply border-sky-400/35 bg-linear-to-r from-sky-500/20 via-sky-500/10 to-sky-500/5 text-sky-700;
+    box-shadow: 0 10px 28px rgba(2, 132, 199, 0.18);
+  }
+  .calendar-glass-badge-blue {
+    @apply border-blue-400/35 bg-linear-to-r from-blue-500/20 via-blue-500/10 to-blue-500/5 text-blue-700;
+    box-shadow: 0 10px 28px rgba(59, 130, 246, 0.18);
+  }
+  .calendar-glass-badge-violet {
+    @apply border-violet-400/35 bg-linear-to-r from-violet-500/20 via-violet-500/10 to-violet-500/5 text-violet-700;
+    box-shadow: 0 10px 28px rgba(139, 92, 246, 0.18);
+  }
+  .calendar-glass-badge-amber {
+    @apply border-amber-400/35 bg-linear-to-r from-amber-500/20 via-amber-500/10 to-amber-500/5 text-amber-700;
+    box-shadow: 0 10px 28px rgba(245, 158, 11, 0.18);
+  }
+  .calendar-glass-badge-rose {
+    @apply border-rose-400/35 bg-linear-to-r from-rose-500/20 via-rose-500/10 to-rose-500/5 text-rose-700;
+    box-shadow: 0 10px 28px rgba(225, 29, 72, 0.18);
+  }
+  .calendar-glass-badge-slate {
+    @apply border-slate-400/35 bg-linear-to-r from-slate-500/20 via-slate-500/10 to-slate-500/5 text-slate-600;
+    box-shadow: 0 10px 28px rgba(100, 116, 139, 0.16);
+  }
 }
 
 /* ===== Landing page — smooth scroll ===== */

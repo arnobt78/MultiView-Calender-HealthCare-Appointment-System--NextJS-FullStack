@@ -102,17 +102,17 @@ export default function DayView() {
         {/* Day header */}
         <div className="mb-2 flex flex-wrap items-center gap-3">
           <h2 className="text-xl font-semibold">{format(currentDate, "EEEE, MMMM d, yyyy")}</h2>
-          <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-green-100 text-green-700 hover:bg-green-100">
+          <Badge variant="outline" className="calendar-glass-badge calendar-glass-badge-emerald min-h-6 min-w-[90px] justify-center">
             Today: {dayAppointments.length}
           </Badge>
           <span className="px-1 text-xs font-semibold text-gray-500">Status:</span>
-          <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-amber-100 text-amber-700 hover:bg-amber-100">
+          <Badge variant="outline" className="calendar-glass-badge calendar-glass-badge-amber min-h-6 min-w-[90px] justify-center">
             Open: {dayStats.open}
           </Badge>
-          <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-rose-100 text-rose-700 hover:bg-rose-100">
+          <Badge variant="outline" className="calendar-glass-badge calendar-glass-badge-rose min-h-6 min-w-[90px] justify-center">
             Alert: {dayStats.alert}
           </Badge>
-          <Badge variant="outline" className="min-h-6 min-w-[90px] justify-center border-transparent bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
+          <Badge variant="outline" className="calendar-glass-badge calendar-glass-badge-emerald min-h-6 min-w-[90px] justify-center">
             Done: {dayStats.done}
           </Badge>
         </div>
@@ -179,18 +179,18 @@ export default function DayView() {
                       return (
                         <div
                           key={appt.id}
-                          className="absolute left-1 right-1 z-10 flex items-stretch gap-2 overflow-hidden rounded-2xl border p-1.5 shadow-sm"
+                          className="absolute left-1 right-1 z-10 flex items-stretch overflow-hidden rounded-2xl border p-0 shadow-md"
                           style={{
                             top: slotTop,
                             height: slotHeight,
-                            backgroundColor: colorToken.cardBgColor,
+                            backgroundColor: colorToken.cardSurfaceColor,
                             borderColor: colorToken.cardBorderColor,
                           }}
                         >
-                          <svg className="absolute left-0 top-0 bottom-0 h-full w-1.5 rounded-l-md" aria-hidden="true" preserveAspectRatio="none" viewBox="0 0 6 100">
-                            <rect width="6" height="100" fill={colorToken.lineColor} />
+                          <svg className="absolute left-0 top-0 bottom-0 h-full w-2 rounded-l-2xl" aria-hidden="true" preserveAspectRatio="none" viewBox="0 0 8 100">
+                            <rect width="8" height="100" fill={colorToken.lineColor} />
                           </svg>
-                          <div className="min-w-0 flex-1">
+                          <div className="min-w-0 flex-1 pl-6 pr-4 py-2">
                             <div className="flex min-w-0 items-center gap-2">
                               <Link
                                 href={`/control-panel/appointments/${appt.id}`}
@@ -200,12 +200,12 @@ export default function DayView() {
                               </Link>
                               <Badge
                                 variant="outline"
-                                className="shrink-0 border-transparent bg-green-100 px-1.5 py-0 text-[10px] text-green-700"
+                                className="calendar-glass-badge calendar-glass-badge-emerald shrink-0"
                               >
                                 Today
                               </Badge>
                             </div>
-                            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 wrap-break-word px-1 text-xs text-gray-600">
+                            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 wrap-break-word text-xs text-gray-600">
                               <span className="inline-flex items-center gap-1">
                                 <svg width="12" height="12" fill="none" viewBox="0 0 24 24" className="text-gray-400">
                                   <path d="M12 6V12L16 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -219,7 +219,7 @@ export default function DayView() {
                               <span>Refer to: {referTo}</span>
                             </div>
                           </div>
-                          <div className="flex shrink-0 items-center gap-1">
+                          <div className="flex shrink-0 items-center gap-1 border-l border-white/35 px-3">
                             <VideoCall
                               appointmentId={appt.id}
                               appointmentTitle={appt.title ?? "Video Consultation"}

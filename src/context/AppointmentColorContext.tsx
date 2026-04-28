@@ -57,6 +57,13 @@ function toRgba(hex: string, alpha: number) {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
+function mixWithWhite(hex: string, colorRatio: number) {
+  const { r, g, b } = hexToRgb(hex);
+  const ratio = Math.max(0, Math.min(1, colorRatio));
+  const ch = (value: number) => Math.round(255 * (1 - ratio) + value * ratio);
+  return `rgb(${ch(r)}, ${ch(g)}, ${ch(b)})`;
+}
+
 const getAppointmentColorToken = (
   randomBgColor: (seed: string) => string,
   seed: string,
@@ -66,7 +73,8 @@ const getAppointmentColorToken = (
   const lineColor = randomBgColor(seed);
   return {
     lineColor,
-    cardBgColor: toRgba(lineColor, 0.05),
+    cardBgColor: toRgba(lineColor, 0.03),
+    cardSurfaceColor: mixWithWhite(lineColor, 0.1),
     cardBorderColor: toRgba(lineColor, 0.45),
   };
 };

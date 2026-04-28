@@ -129,7 +129,7 @@ export default function ApiStatusPage() {
               <span className={`inline-block w-2 h-2 rounded-full ${ep.status === "ok" ? "bg-green-500" : "bg-red-500"}`}></span>
               <span className="font-mono">{ep.name}</span>
               <span className="text-xs text-gray-500">({ep.url})</span>
-              <span className="text-xs ml-2">{ep.message}</span>
+              <span className="text-xs ">{ep.message}</span>
             </li>
           ))}
         </ul>

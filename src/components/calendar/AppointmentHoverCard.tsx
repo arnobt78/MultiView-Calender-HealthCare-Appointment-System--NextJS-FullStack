@@ -104,16 +104,16 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
         {showDetails ? (
           // WeekView: compact responsive card
           <div className={clsx(
-            "flex flex-col w-full h-full rounded-2xl font-medium cursor-pointer shadow-xl transition hover:brightness-110 border hover-card-rich",
+            "relative z-10 flex flex-col w-full h-full overflow-hidden rounded-2xl cursor-pointer shadow-xl transition hover:brightness-110 border hover-card-rich",
             { "line-through opacity-60": isDone }
           )}
-          style={{
-            backgroundColor: colorToken.cardBgColor,
-            borderColor: colorToken.cardBorderColor,
-          }}
+            style={{
+              backgroundColor: colorToken.cardSurfaceColor,
+              borderColor: colorToken.cardBorderColor,
+            }}
           >
-            <svg className="absolute left-0 top-0 bottom-0 w-1.5 h-full rounded-l-md" aria-hidden="true" preserveAspectRatio="none" viewBox="0 0 6 100">
-              <rect width="6" height="100" fill={color} />
+            <svg className="absolute left-0 top-0 bottom-0 h-full w-2 rounded-l-2xl" aria-hidden="true" preserveAspectRatio="none" viewBox="0 0 8 100">
+              <rect width="8" height="100" fill={color} />
             </svg>
             <div className="hover-card-content-inner">
 
@@ -185,16 +185,16 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
           // MonthView: Simple card
           <div
             className={clsx(
-              "flex items-center w-full rounded-2xl font-medium cursor-pointer shadow-xl transition hover:brightness-110 border hover-card-simple",
+              "relative z-10 flex items-center w-full overflow-hidden rounded-2xl cursor-pointer shadow-xl transition hover:brightness-110 border hover-card-simple",
               { "line-through opacity-60": isDone }
             )}
             style={{
-              backgroundColor: colorToken.cardBgColor,
+              backgroundColor: colorToken.cardSurfaceColor,
               borderColor: colorToken.cardBorderColor,
             }}
           >
-            <svg width="6" height="24" viewBox="0 0 6 24" aria-hidden="true" className="rounded-l-md mr-2 shrink-0">
-              <rect width="6" height="24" fill={color} />
+            <svg width="8" height="24" viewBox="0 0 8 24" aria-hidden="true" className="rounded-l-2xl mr-2 shrink-0">
+              <rect width="8" height="24" fill={color} />
             </svg>
             <span className="truncate text-xs text-gray-700 text-left">
               {a.title}

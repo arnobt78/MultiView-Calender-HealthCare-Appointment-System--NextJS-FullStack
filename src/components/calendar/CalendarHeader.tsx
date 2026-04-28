@@ -116,7 +116,7 @@ export default function CalendarHeader({
           >
             ←
           </Button>
-          <div className="text-lg font-medium text-gray-700">
+          <div className="calendar-glass-badge calendar-glass-badge-sky">
             {new Intl.DateTimeFormat("de-DE", {
               day: "2-digit",
               month: "long",
@@ -137,7 +137,7 @@ export default function CalendarHeader({
             type="button"
             variant="ghost"
             onClick={jumpToToday}
-            className="group inline-flex h-auto min-w-0 max-w-full shrink items-center gap-2 whitespace-normal rounded-2xl px-1.5 py-1 text-left text-xs leading-snug bg-transparent shadow-none hover:bg-transparent active:bg-transparent dark:hover:bg-transparent sm:px-2 sm:text-sm cursor-pointer"
+            className="calendar-glass-badge calendar-glass-badge-blue group inline-flex h-auto min-w-0 max-w-full shrink items-center gap-2 whitespace-normal rounded-2xl text-left leading-snug cursor-pointer"
           >
             {view === "Day" && (
               <>
@@ -145,7 +145,7 @@ export default function CalendarHeader({
                   className="size-4 shrink-0 text-sky-600 transition-colors group-hover:text-sky-700"
                   aria-hidden
                 />
-                <span className="text-sky-600 transition-colors group-hover:text-sky-700">
+                <span className="text-sky-700 transition-colors group-hover:text-sky-800">
                   {"Go to today's calendar — day view"}
                 </span>
               </>
@@ -156,7 +156,7 @@ export default function CalendarHeader({
                   className="size-4 shrink-0 text-sky-600 transition-colors group-hover:text-sky-700"
                   aria-hidden
                 />
-                <span className="text-sky-600 transition-colors group-hover:text-sky-700">
+                <span className="text-sky-700 transition-colors group-hover:text-sky-800">
                   {"Go to this week's calendar — week view"}
                 </span>
               </>
@@ -167,7 +167,7 @@ export default function CalendarHeader({
                   className="size-4 shrink-0 text-sky-600 transition-colors group-hover:text-sky-700"
                   aria-hidden
                 />
-                <span className="text-sky-600 transition-colors group-hover:text-sky-700">
+                <span className="text-sky-700 transition-colors group-hover:text-sky-800">
                   {"Go to this month's calendar — month view"}
                 </span>
               </>
