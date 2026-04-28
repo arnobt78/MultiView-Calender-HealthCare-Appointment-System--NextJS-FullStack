@@ -28,12 +28,13 @@ const HomePage: React.FC = () => {
 
   const setView = useCallback(
     (v: ViewType) => {
+      if (v === view) return;
       const p = new URLSearchParams(searchParams.toString());
       p.set("view", v.toLowerCase());
       const q = p.toString();
       router.replace(q ? `${pathname}?${q}` : pathname, { scroll: false });
     },
-    [router, pathname, searchParams]
+    [router, pathname, searchParams, view]
   );
 
   return (

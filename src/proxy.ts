@@ -32,11 +32,11 @@ const SECURITY_HEADERS: Record<string, string> = {
   "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
   "Content-Security-Policy": [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://meet.jit.si",
+    "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://meet.jit.si https://vercel.live https://vercel.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' data: blob: https: http:",
-    "connect-src 'self' https://api.groq.com https://generativelanguage.googleapis.com https://api.stripe.com https://*.upstash.io https://meet.jit.si",
+    "connect-src 'self' https://api.groq.com https://generativelanguage.googleapis.com https://api.stripe.com https://*.upstash.io https://meet.jit.si https://vercel.live https://vercel.com",
     "frame-src 'self' https://meet.jit.si https://checkout.stripe.com",
     "media-src 'self' blob:",
     "object-src 'none'",
@@ -67,15 +67,6 @@ const PAGE_CACHE: PageCache[] = [
     cdn: "public, max-age=60, stale-while-revalidate=300",
   },
 ];
-
-// ─── prefetch hints ──────────────────────────────────────────────────────────
-
-const PREFETCH_MAP: Record<string, string[]> = {
-  "/": ["/login", "/register"],
-  "/login": ["/dashboard"],
-  "/register": ["/dashboard"],
-  "/dashboard": ["/control-panel", "/analytics"],
-};
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -156,12 +147,6 @@ export async function proxy(request: NextRequest) {
       }
       break;
     }
-  }
-
-  // ── 6. Prefetch hints ─────────────────────────────────────────────────────
-  const prefetch = PREFETCH_MAP[pathname];
-  if (prefetch?.length) {
-    res.headers.set("Link", prefetch.map((t) => `<${t}>; rel=prefetch`).join(", "));
   }
 
   return res;
