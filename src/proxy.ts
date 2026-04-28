@@ -125,6 +125,8 @@ export async function proxy(request: NextRequest) {
   //    Downstream code reads x-user-id from headers() — zero JWT re-work.
   //    We also strip any client-spoofed x-user-* headers.
   const reqHeaders = new Headers(request.headers);
+  // Prevent Vercel Toolbar injection on runtime page requests.
+  reqHeaders.set("x-vercel-skip-toolbar", "1");
   if (payload) {
     reqHeaders.set("x-user-id", payload.userId);
     reqHeaders.set("x-user-email", payload.email);
