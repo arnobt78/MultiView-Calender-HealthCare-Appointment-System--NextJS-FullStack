@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
 import clsx from "clsx";
 import { format } from "date-fns";
 import {
@@ -8,15 +8,21 @@ import {
 } from "@/components/ui/hover-card";
 import { Button } from "@/components/ui/button";
 import {
-  FiEdit2,
-  FiTrash2,
-  FiFileText,
-  FiUser,
-  FiMapPin,
   FiPaperclip,
-  FiFlag,
-  FiUsers,
 } from "react-icons/fi";
+import {
+  CalendarDays,
+  Clock3,
+  MapPin,
+  Flag,
+  UserRound,
+  Users,
+  NotebookPen,
+  CheckSquare,
+  Square,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 import type {
   Appointment,
   Category,
@@ -45,6 +51,7 @@ export interface AppointmentHoverCardProps {
   onDelete: (id: string) => void;
   onToggleStatus: (id: string, newStatus: string) => void;
   showDetails?: boolean; // default false
+  triggerContent?: React.ReactNode;
 }
 
 export function dedupeAssignees(
@@ -91,22 +98,65 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
   onDelete,
   onToggleStatus,
   showDetails = false,
+  triggerContent,
 }) => {
+  const [open, setOpen] = useState(false);
   const { getAppointmentColorToken } = useAppointmentColor();
   const colorToken = getAppointmentColorToken(a.id, a.category_data?.color ?? null);
   const color = colorToken.lineColor;
   const isDone = a.status === "done";
   const dedupedAssignees = dedupeAssignees(assignees, a.id);
+  const patientName =
+    typeof a.patient === "string" && patients.length > 0
+      ? (() => {
+        const p = patients.find((x) => x.id === a.patient);
+        return p ? `${p.firstname} ${p.lastname}` : "--";
+      })()
+      : a.patient &&
+        typeof a.patient === "object" &&
+        "firstname" in a.patient &&
+        "lastname" in a.patient
+        ? `${(a.patient as Patient).firstname} ${(a.patient as Patient).lastname}`
+        : "--";
+  const referToText = patientName !== "--" ? `Patient: ${patientName}` : "Patient data not available";
+  const statusTextClass =
+    a.status === "done"
+      ? "text-green-600"
+      : a.status === "alert"
+        ? "text-red-500"
+        : "text-amber-600";
+  const triggerNode = useMemo(() => {
+    const withClick = (node: React.ReactElement) =>
+      React.cloneElement(node, {
+        onClick: (e: React.MouseEvent) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setOpen((prev) => !prev);
+          if (typeof (node.props as any).onClick === "function") {
+            (node.props as any).onClick(e);
+          }
+        },
+      } as any);
+    if (triggerContent && React.isValidElement(triggerContent)) return withClick(triggerContent);
+    return null;
+  }, [triggerContent]);
 
   return (
-    <HoverCard key={a.id}>
+    <HoverCard key={a.id} open={open} onOpenChange={setOpen} openDelay={0} closeDelay={80}>
       <HoverCardTrigger asChild>
-        {showDetails ? (
+        {triggerNode ? (
+          triggerNode
+        ) : showDetails ? (
           // WeekView: compact responsive card
           <div className={clsx(
             "relative z-10 flex flex-col w-full h-full overflow-hidden rounded-2xl cursor-pointer shadow-xl transition hover:brightness-110 border hover-card-rich",
-            { "line-through opacity-60": isDone }
+            { "line-through": isDone }
           )}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setOpen((prev) => !prev);
+            }}
             style={{
               backgroundColor: colorToken.cardSurfaceColor,
               borderColor: colorToken.cardBorderColor,
@@ -131,48 +181,13 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
                 </div>
                 <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
                   <span className="inline-flex items-center gap-1">
-                    <svg
-                      width="14"
-                      height="14"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      className="inline-block align-middle text-gray-400"
-                    >
-                      <path
-                        d="M8 7V3M16 7V3M3 11H21M5 19H19C20.1046 19 21 18.1046 21 17V7C21 5.89543 20.1046 5 19 5H5C3.89543 5 3 5.89543 3 7V17C3 18.1046 3.89543 19 5 19Z"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
+                    <CalendarDays className="h-3.5 w-3.5 text-gray-400" />
                     <span className={isDone ? "line-through text-gray-400" : undefined}>
                       {format(new Date(a.start), "dd.MM.yyyy")}
                     </span>
                   </span>
                   <span className="inline-flex items-center gap-1">
-                    <svg
-                      width="14"
-                      height="14"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      className="inline-block align-middle text-gray-400"
-                    >
-                      <path
-                        d="M12 6V12L16 14"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <circle
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      />
-                    </svg>
+                    <Clock3 className="h-3.5 w-3.5 text-gray-400" />
                     <span className={isDone ? "line-through text-gray-400" : undefined}>
                       {format(new Date(a.start), "HH:mm")} – {format(new Date(a.end), "HH:mm")}
                     </span>
@@ -186,8 +201,13 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
           <div
             className={clsx(
               "relative z-10 flex items-center w-full overflow-hidden rounded-2xl cursor-pointer shadow-xl transition hover:brightness-110 border hover-card-simple",
-              { "line-through opacity-60": isDone }
+              { "line-through": isDone }
             )}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setOpen((prev) => !prev);
+            }}
             style={{
               backgroundColor: colorToken.cardSurfaceColor,
               borderColor: colorToken.cardBorderColor,
@@ -196,7 +216,7 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
             <svg width="8" height="24" viewBox="0 0 8 24" aria-hidden="true" className="rounded-l-2xl mr-2 shrink-0">
               <rect width="8" height="24" fill={color} />
             </svg>
-            <span className="truncate text-xs text-gray-700 text-left">
+            <span className="truncate text-sm font-medium text-gray-700 text-left">
               {a.title}
             </span>
           </div>
@@ -204,69 +224,71 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
       </HoverCardTrigger>
 
 
-      <HoverCardContent className="relative text-sm min-w-[340px] bg-white rounded-2xl shadow-xl p-4">
-        <svg className="absolute left-2 top-2 bottom-2 w-1 rounded overflow-hidden" aria-hidden="true" preserveAspectRatio="none" viewBox="0 0 4 100">
-          <rect width="4" height="100" fill={color} />
+      <HoverCardContent
+        side="bottom"
+        sideOffset={8}
+        align="center"
+        className="relative min-w-[320px] rounded-2xl border border-gray-200 bg-white p-4 shadow-xl"
+      >
+        <svg className="absolute left-0 top-0 bottom-0 h-full w-1.5 rounded-l-2xl" aria-hidden="true" preserveAspectRatio="none" viewBox="0 0 6 100">
+          <rect width="6" height="100" fill={color} />
         </svg>
-        <div className="pl-6">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-xl font-semibold text-gray-700 flex items-center">
+        <div className="px-1">
+          <div className="flex items-center gap-1 mb-1">
+            <span className="text-base font-medium text-gray-700 flex items-center gap-1">
               {a.title}
               {getDateTag(new Date(a.start))}
             </span>
           </div>
 
-          {/* Appointment details */}
-          <div className="flex flex-col gap-1 text-sm text-gray-500 mb-1">
-            <span className="flex items-center gap-1">
-              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" className="inline-block align-middle text-gray-400">
-                <path d="M8 7V3M16 7V3M3 11H21M5 19H19C20.1046 19 21 18.1046 21 17V7C21 5.89543 20.1046 5 19 5H5C3.89543 5 3 5.89543 3 7V17C3 18.1046 3.89543 19 5 19Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+          <div className="mb-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-600">
+            <span className="inline-flex items-center gap-1.5">
+              <CalendarDays className="h-4 w-4 text-gray-400" />
               <span className={isDone ? "line-through text-gray-400" : undefined}>
                 {format(new Date(a.start), "dd.MM.yyyy")}
               </span>
             </span>
-            <span className="flex items-center gap-1">
-              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" className="inline-block align-middle text-gray-400">
-                <path d="M12 6V12L16 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
-              </svg>
+            <span className="inline-flex items-center gap-1.5">
+              <Clock3 className="h-4 w-4 text-gray-400" />
               <span className={isDone ? "line-through text-gray-400" : undefined}>
                 {format(new Date(a.start), "HH:mm")} – {format(new Date(a.end), "HH:mm")}
               </span>
             </span>
           </div>
-
-          {a.notes && (
-            <div className="flex items-center gap-2 text-sm text-gray-400 mb-1">
-              <span className="shrink-0 flex items-center justify-center">
-                <FiFileText className="w-4 h-4" />
+          <div className="mb-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-600">
+            <span className="inline-flex items-center gap-1.5">
+              <MapPin className="h-4 w-4 text-gray-400" />
+              <span className={isDone ? " text-gray-400" : undefined}>
+                {a.location || "--"}
               </span>
-              <span className="text-xs text-gray-700 wrap-break-word">{a.notes}</span>
-            </div>
-          )}
-
-          <div className="flex items-center gap-2 text-xs text-gray-400 italic mb-1">
-            <FiUser /> Client:{" "}
-            <span className="not-italic text-gray-700">
-              {a.patient && patients.length > 0
-                ? (() => {
-                  const p = patients.find((x) => x.id === a.patient);
-                  return p ? `${p.firstname} ${p.lastname}` : "--";
-                })()
-                : "--"}
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Flag className="h-4 w-4 text-gray-400" />
+              <span className={clsx("capitalize font-medium", statusTextClass)}>{a.status}</span>
             </span>
           </div>
 
-          {a.location && (
-            <div className="flex items-center gap-2 text-xs text-gray-400 italic mb-1">
-              <FiMapPin /> Location:{" "}
-              <span className="not-italic text-gray-700">{a.location}</span>
+          <div className="mb-1 flex items-center gap-1 text-xs text-gray-500">
+            <UserRound className="h-4 w-4 text-gray-400" />
+            <span>Client</span>
+            <span className="text-gray-700">{patientName}</span>
+          </div>
+
+          <div className="mb-1 flex items-center gap-1 text-xs text-gray-500">
+            <Users className="h-4 w-4 text-gray-400" />
+            <span>Refer To</span>
+            <span className="text-purple-700">{referToText}</span>
+          </div>
+
+          {a.notes && (
+            <div className="mb-1 flex items-center gap-1 text-xs text-gray-600">
+              <NotebookPen className="h-4 w-4 text-gray-400" />
+              <span className="wrap-break-word">{a.notes}</span>
             </div>
           )}
 
           {a.attachements && a.attachements.length > 0 && (
-            <div className="flex items-center gap-2 text-xs text-gray-400 mb-1">
+            <div className="flex items-center gap-1 text-xs text-gray-400 mb-1">
               <FiPaperclip /> Attachments:
               {a.attachements.map((file, idx) => {
                 // Get Vercel Blob public URL
@@ -291,111 +313,9 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
             </div>
           )}
 
-          <div className="flex items-center gap-2 text-xs text-gray-400 mb-1">
-            <FiFlag /> Status:{" "}
-            <span className="not-italic text-gray-700">{a.status}</span>
-          </div>
-
-          {/* Refer to: patient name from appointment.patient field */}
-          {a.patient && (
-            <div className="flex items-center gap-2 text-xs text-gray-400 mb-1">
-              <FiUsers /> Refer to:
-              {(() => {
-                try {
-                  // If patient is already an object with firstname/lastname
-                  if (a.patient &&
-                    typeof a.patient === 'object' &&
-                    'firstname' in a.patient &&
-                    'lastname' in a.patient) {
-                    const patientObj = a.patient as Patient;
-                    return (
-                      <span className="not-italic text-purple-700">
-                        Patient: {patientObj.firstname} {patientObj.lastname}
-                      </span>
-                    );
-                  }
-
-                  // If patient is a string ID and patients are loaded
-                  if (typeof a.patient === 'string' && patients.length > 0) {
-                    const patient = patients.find((p) => p.id === a.patient);
-                    if (patient && patient.firstname && patient.lastname) {
-                      return (
-                        <span className="not-italic text-purple-700">
-                          Patient: {patient.firstname} {patient.lastname}
-                        </span>
-                      );
-                    }
-                  }
-
-                  // Fallback
-                  return (
-                    <span className="not-italic text-red-700">
-                      Patient data not available
-                    </span>
-                  );
-                } catch (error) {
-                  console.error('Error in HoverCard patient lookup:', error);
-                  return (
-                    <span className="not-italic text-red-700">
-                      Error loading patient
-                    </span>
-                  );
-                }
-              })()}
-            </div>
-          )}
-
-          {/* Assigned by: invited_email, user id, or owner */}
-          {/* {dedupedAssignees.length > 0 && (
-            <div className="flex items-center gap-2 text-xs text-gray-400 mb-1">
-              <FiUsers /> Assigned by:
-              {dedupedAssignees
-                .map((ass, idx) => {
-                  let patientName = "";
-                  if (ass.user_type === "patients") {
-                    const p = patients.find((x) => x.id === ass.user);
-                    if (p) patientName = `Patient: ${p.firstname} ${p.lastname}`;
-                  } else if (ass.user_type === "relatives") {
-                    const r = relatives.find((x) => x.id === ass.user);
-                    if (r) patientName = `Angehörige: ${r.firstname} ${r.lastname}`;
-                  }
-                  // Only show if not patient/relative
-                  if (!patientName) {
-                    if (ass.invited_email) {
-                      return (
-                        <span key={ass.id || idx} className="not-italic text-blue-700">
-                          {ass.invited_email}
-                        </span>
-                      );
-                    } else if (ass.user === a.user_id) {
-                      // Owner
-                      return (
-                        <span key={ass.id || idx} className="not-italic text-green-700">
-                          you ({userEmail || "owner"})
-                        </span>
-                      );
-                    } else if (ass.user) {
-                      return (
-                        <span key={ass.id || idx} className="not-italic text-gray-700">
-                          {ass.user}
-                        </span>
-                      );
-                    }
-                  }
-                  return null;
-                })
-                .filter(Boolean)}
-              
-              {dedupedAssignees.every(ass => ass.user !== a.user_id) && a.user_id && (
-                <span key={a.user_id} className="not-italic text-green-700">
-                  you ({userEmail || "owner"})
-                </span>
-              )}
-            </div>
-          )} */}
           {dedupedAssignees.length > 0 && (
-            <div className="flex items-center gap-2 text-xs text-gray-400 mb-1">
-              <FiUsers /> Assigned by:
+            <div className="flex items-center gap-1 text-xs text-gray-400 mb-1">
+              <Users className="h-4 w-4 text-gray-400" /> Assigned by:
               {a.user_id === userId ? (
                 // Owner view
                 <span className="not-italic text-green-700">
@@ -427,7 +347,7 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
             </div>
           )}
 
-          <div className="flex items-center gap-3 mt-2">
+          <div className="flex items-center gap-3">
             {/* Status checkbox - only show if user is owner, full, or write permission */}
             {(() => {
               // Check if user is the owner
@@ -449,16 +369,18 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
               }
 
               // Only owner, full, or write can toggle status
-              if (isOwner || userPermission === "full" || userPermission === "write") {
+              if (!userId || isOwner || userPermission === "full" || userPermission === "write") {
                 return (
-                  <label className="flex items-center gap-1">
-                    <input
-                      type="checkbox"
-                      className="accent-green-600 w-5 h-5"
-                      checked={isDone}
-                      onChange={() => onToggleStatus(a.id, isDone ? "pending" : "done")}
-                    />
-                    <span className="text-xs text-gray-500 select-none">
+                  <label className="inline-flex items-center gap-1 rounded-md px-1 py-0.5">
+                    <button
+                      type="button"
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-green-200 bg-green-50 text-green-600 transition hover:bg-green-100"
+                      onClick={() => onToggleStatus(a.id, isDone ? "pending" : "done")}
+                      aria-label={isDone ? "Mark as open" : "Mark as done"}
+                    >
+                      {isDone ? <CheckSquare className="size-4" /> : <Square className="size-4" />}
+                    </button>
+                    <span className="text-xs text-gray-600 select-none">
                       {isDone ? "Done" : "Open"}
                     </span>
                   </label>
@@ -488,16 +410,16 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
               }
 
               // Only owner or full can edit
-              if (isOwner || userPermission === "full") {
+              if (!userId || isOwner || userPermission === "full") {
                 return (
                   <Button
                     size="icon"
-                    variant="outline"
-                    className="rounded-full border-gray-300"
+                    variant="ghost"
+                    className="h-7 w-7 rounded-md border border-sky-200 bg-sky-50 text-sky-600 transition hover:bg-sky-100"
                     onClick={() => onEdit(a)}
                     aria-label="Edit"
                   >
-                    <FiEdit2 className="w-4 h-4" />
+                    <Pencil className="size-4" />
                   </Button>
                 );
               }
@@ -509,7 +431,9 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
               // Get user permission for this appointment
               let userPermission: "owner" | "full" | "write" | "read" | null = null;
 
-              if (a.user_id === userId) {
+              if (!userId) {
+                userPermission = "owner";
+              } else if (a.user_id === userId) {
                 userPermission = "owner";
               } else if (assignees && assignees.length > 0) {
                 // Find the current user's assignment
@@ -528,11 +452,11 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="rounded-full"
+                    className="h-7 w-7 rounded-md border border-red-200 bg-red-50 text-red-500 transition hover:bg-red-100"
                     onClick={() => onDelete(a.id)}
                     aria-label="Delete"
                   >
-                    <FiTrash2 className="w-4 h-4 text-red-500" />
+                    <Trash2 className="size-4" />
                   </Button>
                 );
               }

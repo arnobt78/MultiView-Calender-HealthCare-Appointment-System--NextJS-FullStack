@@ -18,8 +18,8 @@ const endpoints = [
   { name: "Appointment Permissions", url: "/api/appointments/[id]/permissions" },
   { name: "Dashboard Permissions", url: "/api/dashboard/[id]/permissions" },
   { name: "Invitations API", url: "/api/invitations" },
-  { name: "Users Search", url: "/api/users/search" },
-  { name: "Appointments Search", url: "/api/appointments/search" },
+  { name: "Users Search", url: "/api/users/search?query=test" },
+  { name: "Appointments Search", url: "/api/appointments/search?query=test" },
   { name: "OpenAPI Docs", url: "/api/openapi" },
 ];
 

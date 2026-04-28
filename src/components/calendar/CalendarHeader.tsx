@@ -106,8 +106,8 @@ export default function CalendarHeader({
     <div className="flex items-center justify-between py-3 px-2 sm:px-4 lg:px-8">
 
       {/* Date Navigation */}
-      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-2 sm:gap-4">
-        <div className="flex shrink-0 items-center gap-2 sm:gap-4">
+      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-2 sm:gap-3">
+        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
           <Button
             variant="outline"
             onClick={handlePrev}
@@ -116,12 +116,20 @@ export default function CalendarHeader({
           >
             ←
           </Button>
-          <div className="calendar-glass-badge calendar-glass-badge-sky">
-            {new Intl.DateTimeFormat("de-DE", {
-              day: "2-digit",
-              month: "long",
-              year: "numeric",
-            }).format(currentDate)}
+          <div className="text-base font-medium text-gray-700">
+            <span className="tracking-wide">
+              {new Intl.DateTimeFormat("en-US", { weekday: "short" }).format(
+                currentDate
+              )}
+              {", "}
+            </span>
+            <span className="">
+              {new Intl.DateTimeFormat("en-US", {
+                day: "2-digit",
+                month: "long",
+                year: "numeric",
+              }).format(currentDate)}
+            </span>
           </div>
           <Button
             variant="outline"
@@ -137,12 +145,12 @@ export default function CalendarHeader({
             type="button"
             variant="ghost"
             onClick={jumpToToday}
-            className="calendar-glass-badge calendar-glass-badge-blue group inline-flex h-auto min-w-0 max-w-full shrink items-center gap-2 whitespace-normal rounded-2xl text-left leading-snug cursor-pointer"
+            className="calendar-glass-badge calendar-glass-badge-blue group inline-flex h-auto min-w-0 max-w-full shrink items-center gap-1 whitespace-normal rounded-2xl text-left leading-snug cursor-pointer py-1 font-normal"
           >
             {view === "Day" && (
               <>
                 <Calendar
-                  className="size-4 shrink-0 text-sky-600 transition-colors group-hover:text-sky-700"
+                  className="size-3.5 shrink-0 text-sky-600 transition-colors group-hover:text-sky-700"
                   aria-hidden
                 />
                 <span className="text-sky-700 transition-colors group-hover:text-sky-800">
@@ -153,7 +161,7 @@ export default function CalendarHeader({
             {view === "Week" && (
               <>
                 <Columns3
-                  className="size-4 shrink-0 text-sky-600 transition-colors group-hover:text-sky-700"
+                  className="size-3.5 shrink-0 text-sky-600 transition-colors group-hover:text-sky-700"
                   aria-hidden
                 />
                 <span className="text-sky-700 transition-colors group-hover:text-sky-800">
@@ -164,7 +172,7 @@ export default function CalendarHeader({
             {view === "Month" && (
               <>
                 <CalendarDays
-                  className="size-4 shrink-0 text-sky-600 transition-colors group-hover:text-sky-700"
+                  className="size-3.5 shrink-0 text-sky-600 transition-colors group-hover:text-sky-700"
                   aria-hidden
                 />
                 <span className="text-sky-700 transition-colors group-hover:text-sky-800">

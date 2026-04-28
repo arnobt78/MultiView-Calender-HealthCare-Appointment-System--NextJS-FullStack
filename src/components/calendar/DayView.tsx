@@ -15,7 +15,6 @@ import { usePatients } from "@/hooks/usePatients";
 import { useRelatives } from "@/hooks/useRelatives";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import VideoCall from "./VideoCall";
 import GlobalCalendarFilters from "./GlobalCalendarFilters";
 import CalendarStickyHeader from "./CalendarStickyHeader";
@@ -34,6 +33,7 @@ import { MoreVertical, CheckCircle, Circle } from "lucide-react";
 import { FiEdit2, FiTrash2 } from "react-icons/fi";
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import AppointmentDialogController from "./AppointmentDialogController";
+import AppointmentHoverCard from "./AppointmentHoverCard";
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 const SLOT_HEIGHT = 64; // px per hour
@@ -82,19 +82,6 @@ export default function DayView() {
   const handleToggleStatus = (id: string, newStatus: "pending" | "done" | "alert") => {
     toggleStatus({ id, status: newStatus });
   };
-
-  if (isLoading) {
-    return (
-      <div className="px-2 sm:px-4 lg:px-8 pt-0 pb-4 space-y-2">
-        {Array.from({ length: 12 }).map((_, i) => (
-          <div key={i} className="flex gap-3 items-center">
-            <Skeleton className="h-5 w-12 shrink-0" />
-            <Skeleton className="h-14 flex-1 rounded-2xl" />
-          </div>
-        ))}
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-0 px-2 pt-0 pb-4 sm:px-4 lg:px-8">
@@ -177,93 +164,111 @@ export default function DayView() {
                       );
 
                       return (
-                        <div
+                        <AppointmentHoverCard
                           key={appt.id}
-                          className="absolute left-1 right-1 z-10 flex items-stretch overflow-hidden rounded-2xl border p-0 shadow-md"
-                          style={{
-                            top: slotTop,
-                            height: slotHeight,
-                            backgroundColor: colorToken.cardSurfaceColor,
-                            borderColor: colorToken.cardBorderColor,
-                          }}
-                        >
-                          <svg className="absolute left-0 top-0 bottom-0 h-full w-2 rounded-l-2xl" aria-hidden="true" preserveAspectRatio="none" viewBox="0 0 8 100">
-                            <rect width="8" height="100" fill={colorToken.lineColor} />
-                          </svg>
-                          <div className="min-w-0 flex-1 pl-6 pr-4 py-2">
-                            <div className="flex min-w-0 items-center gap-2">
-                              <Link
-                                href={`/control-panel/appointments/${appt.id}`}
-                                className="truncate text-sm font-medium text-gray-800 hover:underline"
-                              >
-                                {appt.title}
-                              </Link>
-                              <Badge
-                                variant="outline"
-                                className="calendar-glass-badge calendar-glass-badge-emerald shrink-0"
-                              >
-                                Today
-                              </Badge>
+                          appointment={appt as any}
+                          patients={patients}
+                          relatives={relatives}
+                          assignees={(appt as any).appointment_assignee ?? []}
+                          activities={(appt as any).activities ?? []}
+                          userEmail={null}
+                          userId={null}
+                          ownerUsers={[]}
+                          getDateTag={() => null}
+                          onEdit={(a) => setEditAppt(a as Appointment)}
+                          onDelete={(id) => setDeleteTargetId(id)}
+                          onToggleStatus={(id, next) =>
+                            handleToggleStatus(id, next as "pending" | "done" | "alert")
+                          }
+                          triggerContent={
+                            <div
+                              className="absolute left-1 right-1 z-10 flex cursor-pointer items-stretch overflow-hidden rounded-2xl border p-0 shadow-md transition hover:brightness-105 hover:shadow-lg"
+                              style={{
+                                top: slotTop,
+                                height: slotHeight,
+                                backgroundColor: colorToken.cardSurfaceColor,
+                                borderColor: colorToken.cardBorderColor,
+                              }}
+                            >
+                              <svg className="absolute left-0 top-0 bottom-0 h-full w-2 rounded-l-2xl" aria-hidden="true" preserveAspectRatio="none" viewBox="0 0 8 100">
+                                <rect width="8" height="100" fill={colorToken.lineColor} />
+                              </svg>
+                              <div className="min-w-0 flex-1 pl-6 pr-4 py-2">
+                                <div className="flex min-w-0 items-center gap-2">
+                                  <Link
+                                    href={`/control-panel/appointments/${appt.id}`}
+                                    className="truncate text-sm font-medium text-gray-800 hover:underline"
+                                  >
+                                    {appt.title}
+                                  </Link>
+                                  <Badge
+                                    variant="outline"
+                                    className="calendar-glass-badge calendar-glass-badge-emerald shrink-0"
+                                  >
+                                    Today
+                                  </Badge>
+                                </div>
+                                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 wrap-break-word text-xs text-gray-600">
+                                  <span className="inline-flex items-center gap-1">
+                                    <svg width="12" height="12" fill="none" viewBox="0 0 24 24" className="text-gray-400">
+                                      <path d="M12 6V12L16 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
+                                    </svg>
+                                    {format(start, "HH:mm")} - {format(end, "HH:mm")}
+                                  </span>
+                                  <span>Location: {appt.location || "--"}</span>
+                                  <span>Client: {patientName}</span>
+                                  <span>Category: {categoryLabel}</span>
+                                  <span>Refer to: {referTo}</span>
+                                </div>
+                              </div>
+                              <div className="flex shrink-0 items-center gap-1 border-l border-white/35 px-3">
+                                <VideoCall
+                                  appointmentId={appt.id}
+                                  appointmentTitle={appt.title ?? "Video Consultation"}
+                                />
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-black/5">
+                                      <MoreVertical className="h-4 w-4 text-gray-500" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end" className="w-48">
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        handleToggleStatus(appt.id, isDone ? "pending" : "done")
+                                      }
+                                    >
+                                      {isDone ? (
+                                        <>
+                                          <Circle className="mr-2 h-4 w-4" />
+                                          <span>Mark as open</span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <CheckCircle className="mr-2 h-4 w-4 text-green-600" />
+                                          <span className="text-green-600">Mark as done</span>
+                                        </>
+                                      )}
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={() => setEditAppt(appt)}>
+                                      <FiEdit2 className="mr-2 h-4 w-4" />
+                                      <span>Edit</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() => setDeleteTargetId(appt.id)}
+                                      className="text-red-600 focus:bg-red-50 focus:text-red-600"
+                                    >
+                                      <FiTrash2 className="mr-2 h-4 w-4" />
+                                      <span>Delete</span>
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
                             </div>
-                            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 wrap-break-word text-xs text-gray-600">
-                              <span className="inline-flex items-center gap-1">
-                                <svg width="12" height="12" fill="none" viewBox="0 0 24 24" className="text-gray-400">
-                                  <path d="M12 6V12L16 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
-                                </svg>
-                                {format(start, "HH:mm")} - {format(end, "HH:mm")}
-                              </span>
-                              <span>Location: {appt.location || "--"}</span>
-                              <span>Client: {patientName}</span>
-                              <span>Category: {categoryLabel}</span>
-                              <span>Refer to: {referTo}</span>
-                            </div>
-                          </div>
-                          <div className="flex shrink-0 items-center gap-1 border-l border-white/35 px-3">
-                            <VideoCall
-                              appointmentId={appt.id}
-                              appointmentTitle={appt.title ?? "Video Consultation"}
-                            />
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-black/5">
-                                  <MoreVertical className="h-4 w-4 text-gray-500" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-48">
-                                <DropdownMenuItem
-                                  onClick={() =>
-                                    handleToggleStatus(appt.id, isDone ? "pending" : "done")
-                                  }
-                                >
-                                  {isDone ? (
-                                    <>
-                                      <Circle className="mr-2 h-4 w-4" />
-                                      <span>Mark as open</span>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <CheckCircle className="mr-2 h-4 w-4 text-green-600" />
-                                      <span className="text-green-600">Mark as done</span>
-                                    </>
-                                  )}
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => setEditAppt(appt)}>
-                                  <FiEdit2 className="mr-2 h-4 w-4" />
-                                  <span>Edit</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => setDeleteTargetId(appt.id)}
-                                  className="text-red-600 focus:bg-red-50 focus:text-red-600"
-                                >
-                                  <FiTrash2 className="mr-2 h-4 w-4" />
-                                  <span>Delete</span>
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                        </div>
+                          }
+                        />
                       );
                     })}
                   </div>

@@ -740,7 +740,7 @@ export default function AppointmentList() {
                                           <div className="flex items-center gap-1.5">
                                             <FiFileText className={`w-3.5 h-3.5 shrink-0 ${isDone ? "text-gray-300" : "text-gray-400"}`} />
                                             <span className="text-gray-400 text-xs shrink-0">Note:</span>
-                                            <span className={`text-xs ${isDone ? "line-through text-gray-400" : "text-gray-600"}`}>{appt.notes}</span>
+                                            <span className={`text-xs ${isDone ? " text-gray-400" : "text-gray-600"}`}>{appt.notes}</span>
                                           </div>
                                         )}
 

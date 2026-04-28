@@ -3,9 +3,14 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 
 type RouteContext = { params: Promise<{ id: string }> };
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export async function GET(req: NextRequest, context: RouteContext) {
   const { id } = await context.params;
+  if (!id || !UUID_RE.test(id)) {
+    return NextResponse.json({ error: "Invalid appointment assignee ID" }, { status: 400 });
+  }
   const assignee = await prisma.appointmentAssignee.findUnique({
     where: { id },
     select: { permission: true, id: true },
@@ -24,8 +29,8 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
     }
 
     const { id } = await context.params;
-    if (!id) {
-      return NextResponse.json({ error: "Missing appointment ID" }, { status: 400 });
+    if (!id || !UUID_RE.test(id)) {
+      return NextResponse.json({ error: "Invalid appointment assignee ID" }, { status: 400 });
     }
 
     const result = await prisma.appointmentAssignee.deleteMany({
