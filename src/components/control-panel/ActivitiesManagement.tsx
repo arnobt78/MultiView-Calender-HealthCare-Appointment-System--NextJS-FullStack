@@ -29,6 +29,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Activity as ActivityIcon, Link as LinkIcon } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
+import { queryKeys } from "@/lib/query-keys";
 
 const columnHelper = createColumnHelper<Activity>();
 
@@ -44,7 +45,7 @@ const TYPE_COLORS: Record<string, string> = {
 
 export default function ActivitiesManagement() {
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: ["app", "activities", "all"],
+    queryKey: queryKeys.activities.list,
     queryFn: () =>
       apiClient<{ activities: Activity[] }>("/api/activities").then((d) => d.activities || []),
   });

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient, handleApiError } from "@/lib/api-client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -43,6 +43,8 @@ import type { Patient, Appointment } from "@/types/types";
 import { notify } from "@/lib/notify";
 import { appointmentCreateSchema } from "@/lib/schemas/appointment";
 import { useUsers } from "@/hooks/useUsers";
+import { queryKeys } from "@/lib/query-keys";
+import { invalidateAppointmentData } from "@/lib/query-client";
 
 interface PortalData {
   appointments: (Appointment & {
@@ -60,6 +62,7 @@ const STATUS_META: Record<string, { icon: React.ReactNode; cls: string; label: s
 };
 
 function BookAppointmentDialog() {
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [start, setStart] = useState("");
@@ -72,12 +75,14 @@ function BookAppointmentDialog() {
   const bookMutation = useMutation({
     mutationFn: (body: object) =>
       apiClient("/api/patient-portal", { method: "POST", body: JSON.stringify(body) }),
-    onSuccess: () => {
+    onSuccess: async () => {
       notify.crud({
         action: "created",
         entity: "Appointment request",
         detail: "Your appointment request was submitted successfully.",
       });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.patientPortal.all });
+      await invalidateAppointmentData(queryClient);
       setOpen(false);
       setTitle(""); setStart(""); setEnd(""); setNotes(""); setDoctorId("");
     },
@@ -282,7 +287,7 @@ function AppointmentTimeline({
 
 export default function PatientPortalPage() {
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: ["app", "patient-portal"],
+    queryKey: queryKeys.patientPortal.all,
     queryFn: () => apiClient<PortalData>("/api/patient-portal"),
   });
 

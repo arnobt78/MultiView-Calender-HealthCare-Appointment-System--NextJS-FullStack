@@ -8,14 +8,11 @@ export function createQueryClient() {
   return new QueryClient({
     defaultOptions: {
       queries: {
-        // Data is considered fresh for 1 minute
-        staleTime: 60 * 1000,
-        // Keep unused data in cache for 5 minutes
-        gcTime: 5 * 60 * 1000,
-        // Retry failed queries once by default
+        staleTime: 3 * 60 * 1000,
+        gcTime: 10 * 60 * 1000,
         retry: 1,
-        // Refetch on window focus is often confusing for users, disable unless explicitly needed
         refetchOnWindowFocus: false,
+        refetchOnMount: false,
       },
       mutations: {
         retry: 0,
@@ -24,17 +21,116 @@ export function createQueryClient() {
   });
 }
 
-/**
- * Invalidate all app queries (lists + details). Use after any CRUD so the whole UI updates without page refresh.
- */
+/** Full app sweep — use on session reset / logout only */
 export async function invalidateAllForCrud(queryClient: QueryClient) {
   await queryClient.invalidateQueries({ queryKey: queryKeys.root });
 }
 
-/**
- * Invalidate only calendar appointment data.
- * Use this after appointment CRUD/toggle actions to avoid full-app refetch storms.
- */
 export async function invalidateAppointmentData(queryClient: QueryClient) {
   await queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all });
+}
+
+export async function invalidateNotificationsData(queryClient: QueryClient) {
+  await queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
+}
+
+export async function invalidateActivitiesList(queryClient: QueryClient) {
+  await queryClient.invalidateQueries({ queryKey: queryKeys.activities.list });
+}
+
+export async function invalidateAssigneesData(queryClient: QueryClient) {
+  await queryClient.invalidateQueries({ queryKey: queryKeys.assignees.all });
+}
+
+export async function invalidateDashboardAccessData(queryClient: QueryClient) {
+  await queryClient.invalidateQueries({ queryKey: queryKeys.dashboardAccess.all });
+}
+
+export async function invalidateGoogleCalendarData(queryClient: QueryClient) {
+  await queryClient.invalidateQueries({ queryKey: queryKeys.googleCalendar.root });
+}
+
+export async function invalidateDashboardOverview(queryClient: QueryClient) {
+  await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.overview });
+}
+
+export async function invalidateInsightsAndAnalytics(queryClient: QueryClient) {
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: queryKeys.insights.all }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.analytics.all }),
+  ]);
+}
+
+/** After patient / relative / category CRUD — denormalized appointment list must refetch */
+export async function invalidateEntityAffectingAppointments(
+  queryClient: QueryClient,
+  resource: "patients" | "relatives" | "categories"
+) {
+  const key =
+    resource === "patients"
+      ? queryKeys.patients.all
+      : resource === "relatives"
+        ? queryKeys.relatives.all
+        : queryKeys.categories.all;
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: key }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all }),
+  ]);
+}
+
+/** Invitations, dashboard access, assignees — shared calendar semantics */
+export async function invalidateSharingAndAppointments(queryClient: QueryClient) {
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: queryKeys.invitations.all }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.dashboardAccess.all }),
+    invalidateAssigneesData(queryClient),
+    queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all }),
+  ]);
+}
+
+/** Users list/detail — control panel */
+export async function invalidateUsersAndAuth(queryClient: QueryClient) {
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: queryKeys.users.all }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.auth.me }),
+  ]);
+}
+
+/** Organizations — lists and nested member queries */
+export async function invalidateOrganizations(queryClient: QueryClient) {
+  await queryClient.invalidateQueries({ queryKey: queryKeys.organizations.all });
+}
+
+/** Invoices + dashboard overview KPIs */
+export async function invalidateInvoicesAndOverview(queryClient: QueryClient) {
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: queryKeys.invoices.all }),
+    invalidateDashboardOverview(queryClient),
+  ]);
+}
+
+/** Appointment CRUD, ICS import — calendar + activity log + optional notifications */
+export async function invalidateAfterAppointmentMutation(queryClient: QueryClient) {
+  await Promise.all([
+    invalidateAppointmentData(queryClient),
+    invalidateActivitiesList(queryClient),
+    invalidateNotificationsData(queryClient),
+  ]);
+}
+
+/** Assignee or per-appointment activity changes from dialog */
+export async function invalidateAssigneesActivitiesAppointment(
+  queryClient: QueryClient,
+  appointmentId?: string | null
+) {
+  await Promise.all([
+    invalidateAssigneesData(queryClient),
+    invalidateAppointmentData(queryClient),
+    invalidateActivitiesList(queryClient),
+  ]);
+  if (appointmentId) {
+    await queryClient.invalidateQueries({
+      queryKey: queryKeys.activities.byAppointment(appointmentId),
+    });
+  }
 }

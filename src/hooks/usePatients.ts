@@ -1,9 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient, handleApiError } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
-import { invalidateAllForCrud } from "@/lib/query-client";
+import { invalidateEntityAffectingAppointments } from "@/lib/query-client";
 import { Patient } from "@/types/types";
 import { notify } from "@/lib/notify";
+import { fetchPatients } from "@/lib/query-fetchers";
 
 export type PatientCreateInput = Pick<Patient, "firstname" | "lastname"> &
   Partial<Pick<Patient, "birth_date" | "care_level" | "pronoun" | "email" | "active" | "active_since">>;
@@ -16,10 +17,7 @@ export function usePatients() {
 
   const query = useQuery({
     queryKey: queryKeys.patients.all,
-    queryFn: async () => {
-      const res = await apiClient<{ patients: Patient[] }>("/api/patients");
-      return res.patients || [];
-    },
+    queryFn: () => fetchPatients(),
   });
 
   const createMutation = useMutation({
@@ -29,7 +27,7 @@ export function usePatients() {
         body: JSON.stringify(data),
       }),
     onSuccess: async (data) => {
-      await invalidateAllForCrud(queryClient);
+      await invalidateEntityAffectingAppointments(queryClient, "patients");
       notify.crud({ action: "created", entity: "Patient", detail: `${data.patient.firstname} ${data.patient.lastname} was added.` });
     },
     onError: (e) => handleApiError(e, "Failed to create patient"),
@@ -42,7 +40,7 @@ export function usePatients() {
         body: JSON.stringify(data),
       }),
     onSuccess: async (data) => {
-      await invalidateAllForCrud(queryClient);
+      await invalidateEntityAffectingAppointments(queryClient, "patients");
       notify.crud({ action: "updated", entity: "Patient", detail: `${data.patient.firstname} ${data.patient.lastname} was updated.` });
     },
     onError: (e) => handleApiError(e, "Failed to update patient"),
@@ -52,7 +50,7 @@ export function usePatients() {
     mutationFn: (id: string) =>
       apiClient(`/api/patients/${id}`, { method: "DELETE" }),
     onSuccess: async () => {
-      await invalidateAllForCrud(queryClient);
+      await invalidateEntityAffectingAppointments(queryClient, "patients");
       notify.crud({ action: "deleted", entity: "Patient", detail: "The patient record was deleted." });
     },
     onError: (e) => handleApiError(e, "Failed to delete patient"),

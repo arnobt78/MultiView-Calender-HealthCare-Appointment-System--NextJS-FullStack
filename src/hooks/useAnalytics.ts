@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 interface AnalyticsData {
   overview: {
@@ -18,7 +19,7 @@ interface AnalyticsData {
 
 export function useAnalytics() {
   return useQuery({
-    queryKey: ["app", "analytics"],
+    queryKey: queryKeys.analytics.all,
     queryFn: () => apiClient<AnalyticsData>("/api/analytics"),
     staleTime: 5 * 60_000, // 5 minutes
   });

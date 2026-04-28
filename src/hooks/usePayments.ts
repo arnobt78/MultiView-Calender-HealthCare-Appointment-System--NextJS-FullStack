@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient, handleApiError } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
-import { invalidateAllForCrud } from "@/lib/query-client";
+import { invalidateInvoicesAndOverview } from "@/lib/query-client";
 import { notify } from "@/lib/notify";
 
 export interface InvoicePayment {
@@ -56,9 +56,9 @@ export function usePayments() {
   const createInvoiceMutation = useMutation({
     mutationFn: (body: { amount: number; currency?: string; description?: string; appointment_id?: string; due_date?: string }) =>
       apiClient("/api/invoices", { method: "POST", body: JSON.stringify(body) }),
-    onSuccess: () => {
+    onSuccess: async () => {
       notify.crud({ action: "created", entity: "Invoice", detail: "The invoice is ready for payment." });
-      invalidateAllForCrud(queryClient);
+      await invalidateInvoicesAndOverview(queryClient);
     },
     onError: (error) => handleApiError(error, "Failed to create invoice"),
   });
@@ -66,9 +66,9 @@ export function usePayments() {
   const deleteInvoiceMutation = useMutation({
     mutationFn: (invoiceId: string) =>
       apiClient(`/api/invoices/${invoiceId}`, { method: "DELETE" }),
-    onSuccess: () => {
+    onSuccess: async () => {
       notify.crud({ action: "deleted", entity: "Invoice", detail: "The invoice record was removed." });
-      invalidateAllForCrud(queryClient);
+      await invalidateInvoicesAndOverview(queryClient);
     },
     onError: (error) => handleApiError(error, "Failed to delete invoice"),
   });

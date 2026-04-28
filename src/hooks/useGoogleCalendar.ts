@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient, handleApiError } from "@/lib/api-client";
 import { notify } from "@/lib/notify";
+import { queryKeys } from "@/lib/query-keys";
 
 interface GoogleCalendarStatus {
   connected: boolean;
@@ -11,7 +12,7 @@ export function useGoogleCalendar() {
   const queryClient = useQueryClient();
 
   const statusQuery = useQuery({
-    queryKey: ["app", "google-calendar", "status"],
+    queryKey: [...queryKeys.googleCalendar.root, "status"] as const,
     queryFn: async () => {
       try {
         const data = await apiClient<GoogleCalendarStatus>("/api/calendar/sync");
@@ -31,7 +32,7 @@ export function useGoogleCalendar() {
       }),
     onSuccess: () => {
       notify.success({ title: "Synced to Google Calendar", subtitle: "Appointment changes are now mirrored in Google Calendar." });
-      queryClient.invalidateQueries({ queryKey: ["app", "google-calendar"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.googleCalendar.root });
     },
     onError: (error) => handleApiError(error, "Failed to sync to Google Calendar"),
   });
@@ -41,7 +42,7 @@ export function useGoogleCalendar() {
       apiClient("/api/calendar/sync", { method: "DELETE" }),
     onSuccess: () => {
       notify.warning({ title: "Google Calendar disconnected", subtitle: "Calendar sync has been turned off." });
-      queryClient.invalidateQueries({ queryKey: ["app", "google-calendar"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.googleCalendar.root });
     },
     onError: (error) => handleApiError(error, "Failed to disconnect Google Calendar"),
   });
@@ -59,7 +60,7 @@ export function useGoogleCalendar() {
     },
     onSuccess: (data) => {
       notify.crud({ action: "imported", entity: "Appointments", detail: `${data.imported} appointment(s) were imported from your calendar file.` });
-      queryClient.invalidateQueries({ queryKey: ["app", "appointments"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all });
     },
     onError: (error) => handleApiError(error, "Failed to import calendar"),
   });

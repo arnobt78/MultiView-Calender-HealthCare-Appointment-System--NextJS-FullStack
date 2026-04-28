@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient, handleApiError } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
-import { invalidateAllForCrud } from "@/lib/query-client";
+import { invalidateOrganizations, invalidateDashboardOverview } from "@/lib/query-client";
 import { notify } from "@/lib/notify";
 
 export interface Organization {
@@ -38,9 +38,10 @@ export function useOrganization() {
         method: "POST",
         body: JSON.stringify({ name }),
       }),
-    onSuccess: () => {
+    onSuccess: async () => {
       notify.crud({ action: "created", entity: "Organization", detail: "A new organization was created." });
-      invalidateAllForCrud(queryClient);
+      await invalidateOrganizations(queryClient);
+      await invalidateDashboardOverview(queryClient);
     },
     onError: (error) => handleApiError(error, "Failed to create organization"),
   });
@@ -51,9 +52,10 @@ export function useOrganization() {
         method: "POST",
         body: JSON.stringify({ userId, role }),
       }),
-    onSuccess: () => {
+    onSuccess: async () => {
       notify.success({ title: "Member added", subtitle: "The member now has organization access." });
-      invalidateAllForCrud(queryClient);
+      await invalidateOrganizations(queryClient);
+      await invalidateDashboardOverview(queryClient);
     },
     onError: (error) => handleApiError(error, "Failed to add member"),
   });
@@ -64,9 +66,10 @@ export function useOrganization() {
         method: "DELETE",
         body: JSON.stringify({ userId }),
       }),
-    onSuccess: () => {
+    onSuccess: async () => {
       notify.warning({ title: "Member removed", subtitle: "The user no longer has organization access." });
-      invalidateAllForCrud(queryClient);
+      await invalidateOrganizations(queryClient);
+      await invalidateDashboardOverview(queryClient);
     },
     onError: (error) => handleApiError(error, "Failed to remove member"),
   });
@@ -74,9 +77,10 @@ export function useOrganization() {
   const deleteOrgMutation = useMutation({
     mutationFn: (orgId: string) =>
       apiClient(`/api/organizations/${orgId}`, { method: "DELETE" }),
-    onSuccess: () => {
+    onSuccess: async () => {
       notify.crud({ action: "deleted", entity: "Organization", detail: "The organization was deleted." });
-      invalidateAllForCrud(queryClient);
+      await invalidateOrganizations(queryClient);
+      await invalidateDashboardOverview(queryClient);
     },
     onError: (error) => handleApiError(error, "Failed to delete organization"),
   });

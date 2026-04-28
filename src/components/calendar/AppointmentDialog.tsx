@@ -29,11 +29,15 @@ import {
   Activity,
   Relative,
 } from "@/types/types";
+import { useQueryClient } from "@tanstack/react-query";
 import { usePatients } from "@/hooks/usePatients";
 import { useCategories } from "@/hooks/useCategories";
 import { useRelatives } from "@/hooks/useRelatives";
 import { useAppointments, FullAppointment } from "@/hooks/useAppointments";
 import { useAuth } from "@/hooks/useAuth";
+import { apiClient } from "@/lib/api-client";
+import { queryKeys } from "@/lib/query-keys";
+import { invalidateAssigneesActivitiesAppointment } from "@/lib/query-client";
 import { notify } from "@/lib/notify";
 import { appointmentCreateSchema } from "@/lib/schemas/appointment";
 // Using Vercel Blob for file storage (better for demo projects on Vercel)
@@ -66,6 +70,7 @@ export default function AppointmentDialog({
   const { patients = [] } = usePatients();
   const { categories = [] } = useCategories();
   const { relatives = [] } = useRelatives();
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const { createAppointmentAsync, updateAppointmentAsync } = useAppointments();
 
@@ -225,8 +230,13 @@ export default function AppointmentDialog({
 
         const isOwner = appointment?.user_id === user?.id;
         if (isOwner) {
-          const existingAssigneesRes = await fetch(`/api/appointments/${apptId}/assignees`);
-          const existingAssigneesData = await existingAssigneesRes.json();
+          const existingAssigneesData = await queryClient.fetchQuery({
+            queryKey: queryKeys.appointments.assignees(apptId),
+            queryFn: () =>
+              apiClient<{ assignees: AppointmentAssignee[] }>(
+                `/api/appointments/${apptId}/assignees`
+              ),
+          });
           const existingAssignees = existingAssigneesData.assignees || [];
 
           const allAssignees = [...existingAssignees, ...assignees];
@@ -339,11 +349,14 @@ export default function AppointmentDialog({
           content: act.content,
           created_by: act.created_by || user?.id,
         }));
-        await fetch(`/api/appointments/${apptId}/activities`, {
+        await apiClient(`/api/appointments/${apptId}/activities`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ activities: activitiesToInsert }),
         });
+      }
+
+      if (apptId) {
+        await invalidateAssigneesActivitiesAppointment(queryClient, apptId);
       }
 
       setSuccess(true);
@@ -429,20 +442,6 @@ export default function AppointmentDialog({
     }
   };
 
-  // Helper: get current user (if available)
-  const getCurrentUserId = async (): Promise<string> => {
-    try {
-      const response = await fetch("/api/auth/me");
-      if (response.ok) {
-        const data = await response.json();
-        return data?.user?.id || "";
-      }
-      return "";
-    } catch {
-      return "";
-    }
-  };
-
   const handleAddAssignee = (userId: string) => {
     if (!userId) return;
     if (assignees.some((a) => a.user === userId)) return;
@@ -475,7 +474,7 @@ export default function AppointmentDialog({
       setAssignees((prev) => prev.filter((a) => a.user !== userId));
     }
   };
-  const handleAddActivity = async () => {
+  const handleAddActivity = () => {
     if (!activityType || !activityContent) return;
     // Prevent duplicate activities (same type/content)
     if (
@@ -484,7 +483,7 @@ export default function AppointmentDialog({
       )
     )
       return;
-    const created_by = await getCurrentUserId();
+    const created_by = user?.id ?? "";
     setActivityList((prev) => [
       ...prev,
       {

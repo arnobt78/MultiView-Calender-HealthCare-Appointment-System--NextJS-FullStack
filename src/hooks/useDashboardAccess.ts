@@ -8,7 +8,7 @@ export interface DashboardAccessRow {
 }
 
 interface DashboardAccessResponse {
-  dashboardAccess: DashboardAccessRow[];
+  dashboard_access: DashboardAccessRow[];
 }
 
 export function useDashboardAccess() {
@@ -16,7 +16,8 @@ export function useDashboardAccess() {
     queryKey: queryKeys.dashboardAccess.all,
     queryFn: async () => {
       const response = await apiClient<DashboardAccessResponse>("/api/dashboard-access");
-      return response.dashboardAccess || [];
+      return response.dashboard_access || [];
     },
+    staleTime: 5 * 60 * 1000,
   });
 }

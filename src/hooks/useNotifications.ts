@@ -19,9 +19,9 @@ export function useNotifications() {
       const data = await apiClient<NotificationsResponse>("/api/notifications?limit=50");
       return data;
     },
-    // Poll every 30 seconds for new notifications
-    refetchInterval: 30_000,
-    staleTime: 15_000,
+    staleTime: 60_000,
+    gcTime: 10 * 60_000,
+    refetchOnMount: false,
   });
 
   const markAsReadMutation = useMutation({

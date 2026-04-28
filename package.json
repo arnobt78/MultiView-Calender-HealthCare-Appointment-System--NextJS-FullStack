@@ -15,7 +15,8 @@
     "db:seed": "tsx scripts/seed.ts",
     "db:check-users": "tsx scripts/check-users.ts",
     "db:manage-user": "tsx scripts/manage-user.ts",
-    "db:seed-test-user": "tsx scripts/seed-test-user.ts"
+    "db:seed-test-user": "tsx scripts/seed-test-user.ts",
+    "test:smoke-invalidation": "tsx scripts/smoke-cross-tab-invalidation.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

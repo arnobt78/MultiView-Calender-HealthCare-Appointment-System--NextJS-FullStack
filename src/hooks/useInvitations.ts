@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient, handleApiError } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
-import { invalidateAllForCrud } from "@/lib/query-client";
+import { invalidateSharingAndAppointments } from "@/lib/query-client";
 import { AppointmentAssignee } from "@/types/types";
 import { notify } from "@/lib/notify";
 import { InvitationRequest, InvitationType } from "@/types/invitation";
@@ -47,7 +47,7 @@ export function useInvitations(type: "appointment" | "dashboard") {
         body: JSON.stringify(request),
       }),
     onSuccess: async (_, variables) => {
-      await invalidateAllForCrud(queryClient);
+      await invalidateSharingAndAppointments(queryClient);
       notify.success({ title: "Invitation sent", subtitle: `An invitation was sent to ${variables.email}.` });
     },
     onError: (error) => handleApiError(error, "Failed to send invitation"),
@@ -57,7 +57,7 @@ export function useInvitations(type: "appointment" | "dashboard") {
     mutationFn: (id: string) =>
       apiClient(`/api/appointments/${id}/permissions`, { method: "DELETE" }),
     onSuccess: async () => {
-      await invalidateAllForCrud(queryClient);
+      await invalidateSharingAndAppointments(queryClient);
       notify.warning({ title: "Appointment invitation discarded", subtitle: "The invitation has been removed." });
     },
     onError: (error) => handleApiError(error, "Failed to discard appointment invitation"),
@@ -67,7 +67,7 @@ export function useInvitations(type: "appointment" | "dashboard") {
     mutationFn: (id: string) =>
       apiClient(`/api/dashboard/${id}/permissions`, { method: "DELETE" }),
     onSuccess: async () => {
-      await invalidateAllForCrud(queryClient);
+      await invalidateSharingAndAppointments(queryClient);
       notify.warning({ title: "Dashboard invitation discarded", subtitle: "The invitation has been removed." });
     },
     onError: (error) => handleApiError(error, "Failed to discard dashboard invitation"),

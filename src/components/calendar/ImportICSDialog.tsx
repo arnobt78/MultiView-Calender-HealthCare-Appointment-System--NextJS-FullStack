@@ -12,8 +12,9 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { useAppointments } from "@/hooks/useAppointments";
+import { useQueryClient } from "@tanstack/react-query";
 import { notify } from "@/lib/notify";
+import { invalidateAfterAppointmentMutation } from "@/lib/query-client";
 import { appointmentIcsImportSchema } from "@/lib/schemas/appointment";
 import { maxUploadSizeBytes } from "@/lib/schemas/upload";
 import { CalendarDays, FileUp, Info, UploadCloud, X } from "lucide-react";
@@ -27,7 +28,7 @@ export default function ImportICSDialog({ trigger }: Props) {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { refetch } = useAppointments();
+  const queryClient = useQueryClient();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0] ?? null;
@@ -88,7 +89,7 @@ export default function ImportICSDialog({ trigger }: Props) {
         entity: "Appointments",
         detail: data.message ?? "Appointments were imported successfully.",
       });
-      refetch();
+      await invalidateAfterAppointmentMutation(queryClient);
       setOpen(false);
       setFile(null);
       if (fileInputRef.current) fileInputRef.current.value = "";

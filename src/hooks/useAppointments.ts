@@ -1,8 +1,19 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient, handleApiError } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
-import { invalidateAppointmentData } from "@/lib/query-client";
-import { Appointment, Category, Patient, AppointmentAssignee, Activity, Relative } from "@/types/types";
+import {
+  invalidateAfterAppointmentMutation,
+  invalidateActivitiesList,
+  invalidateNotificationsData,
+} from "@/lib/query-client";
+import {
+  fetchAssignees,
+  fetchCategories,
+  fetchActivitiesList,
+  fetchPatients,
+  fetchDashboardAccessAccepted,
+} from "@/lib/query-fetchers";
+import { Appointment, Category, Patient, AppointmentAssignee, Activity } from "@/types/types";
 import { notify } from "@/lib/notify";
 import { useAuth } from "./useAuth";
 import { format } from "date-fns";
@@ -63,29 +74,32 @@ export function useAppointments() {
     queryFn: async () => {
       if (!user) return [];
 
-      // 1. Fetch base data
-      const [
-        ownedRes,
-        categoriesRes,
-        patientsRes,
-        allAssigneesRes,
-        activitiesRes,
-        dashboardAccessRes
-      ] = await Promise.all([
+      const [categories, patients, allAssignees, allActivities, ownedRes] = await Promise.all([
+        queryClient.ensureQueryData({
+          queryKey: queryKeys.categories.all,
+          queryFn: fetchCategories,
+        }),
+        queryClient.ensureQueryData({
+          queryKey: queryKeys.patients.all,
+          queryFn: fetchPatients,
+        }),
+        queryClient.ensureQueryData({
+          queryKey: queryKeys.assignees.all,
+          queryFn: fetchAssignees,
+        }),
+        queryClient.ensureQueryData({
+          queryKey: queryKeys.activities.list,
+          queryFn: fetchActivitiesList,
+        }),
         apiClient<{ appointments: Appointment[] }>("/api/appointments"),
-        apiClient<{ categories: Category[] }>("/api/categories"),
-        apiClient<{ patients: Patient[] }>("/api/patients"),
-        apiClient<{ assignees: AppointmentAssignee[] }>("/api/appointment-assignees"),
-        apiClient<{ activities: Activity[] }>("/api/activities"),
-        apiClient<{ dashboard_access: any[] }>("/api/dashboard-access?status=accepted")
       ]);
 
+      await queryClient.ensureQueryData({
+        queryKey: queryKeys.dashboardAccess.accepted,
+        queryFn: fetchDashboardAccessAccepted,
+      });
+
       const owned = ownedRes.appointments || [];
-      const categories = categoriesRes.categories || [];
-      const patients = patientsRes.patients || [];
-      const allAssignees = allAssigneesRes.assignees || [];
-      const allActivities = activitiesRes.activities || [];
-      const dashboardAccess = dashboardAccessRes.dashboard_access || [];
 
       // 2. Join for owned appointments
       const ownedWithDetails: FullAppointment[] = owned.map((appt) => ({
@@ -170,9 +184,9 @@ export function useAppointments() {
         method: "POST",
         body: JSON.stringify(newAppointment),
       }),
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       const appointment = data.appointment;
-      invalidateAppointmentData(queryClient);
+      await invalidateAfterAppointmentMutation(queryClient);
       notify.crud({
         action: "created",
         entity: "Appointment",
@@ -191,10 +205,10 @@ export function useAppointments() {
         method: "PATCH",
         body: JSON.stringify(updateData),
       }),
-    onSuccess: (data, variables) => {
+    onSuccess: async (data, variables) => {
       const appointment = data.appointment;
       const updatedLabels = getUpdatedFieldLabels(variables);
-      invalidateAppointmentData(queryClient);
+      await invalidateAfterAppointmentMutation(queryClient);
       notify.crud({
         action: "updated",
         entity: "Appointment",
@@ -215,10 +229,14 @@ export function useAppointments() {
       const deleted = current.find((appt) => appt.id === deletedId) || null;
       return { deleted };
     },
-    onSuccess: (_, deletedId, context) => {
+    onSuccess: async (_, deletedId, context) => {
       queryClient.setQueryData<FullAppointment[]>(queryKeys.appointments.all, (old) =>
         old ? old.filter((appt) => appt.id !== deletedId) : []
       );
+      await Promise.all([
+        invalidateActivitiesList(queryClient),
+        invalidateNotificationsData(queryClient),
+      ]);
       const deleted = context?.deleted;
       notify.crud({
         action: "deleted",

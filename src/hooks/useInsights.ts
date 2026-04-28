@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 interface InsightsData {
   overview: {
@@ -18,7 +19,7 @@ interface InsightsData {
 
 export function useInsights() {
   return useQuery({
-    queryKey: ["app", "insights"],
+    queryKey: queryKeys.insights.all,
     queryFn: () => apiClient<InsightsData>("/api/insights"),
     staleTime: 5 * 60_000,
   });

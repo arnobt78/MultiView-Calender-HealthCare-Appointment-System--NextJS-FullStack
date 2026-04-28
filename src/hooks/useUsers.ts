@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient, handleApiError } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
-import { invalidateAllForCrud } from "@/lib/query-client";
+import { invalidateUsersAndAuth } from "@/lib/query-client";
 import type { User } from "@/types/types";
 import { notify } from "@/lib/notify";
 
@@ -38,6 +38,7 @@ export function useUsers(filters: UserListFilters = {}) {
       );
       return res;
     },
+    staleTime: 5 * 60 * 1000,
   });
 
   const updateMutation = useMutation({
@@ -47,7 +48,7 @@ export function useUsers(filters: UserListFilters = {}) {
         body: JSON.stringify(data),
       }),
     onSuccess: async (data) => {
-      await invalidateAllForCrud(queryClient);
+      await invalidateUsersAndAuth(queryClient);
       notify.crud({ action: "updated", entity: "User", detail: `${data.user.display_name ?? data.user.email} was updated.` });
     },
     onError: (e) => handleApiError(e, "Failed to update user"),
@@ -75,6 +76,7 @@ export function useUser(id: string | null) {
       return res.user;
     },
     enabled: !!id,
+    staleTime: 5 * 60 * 1000,
   });
 
   const updateMutation = useMutation({
@@ -84,7 +86,7 @@ export function useUser(id: string | null) {
         body: JSON.stringify(data),
       }),
     onSuccess: async (data) => {
-      await invalidateAllForCrud(queryClient);
+      await invalidateUsersAndAuth(queryClient);
       notify.crud({ action: "updated", entity: "User", detail: `${data.user.display_name ?? data.user.email} was updated.` });
     },
     onError: (e) => handleApiError(e, "Failed to update user"),

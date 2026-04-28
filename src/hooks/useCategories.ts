@@ -1,9 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient, handleApiError } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
-import { invalidateAllForCrud } from "@/lib/query-client";
+import { invalidateEntityAffectingAppointments } from "@/lib/query-client";
 import { Category } from "@/types/types";
 import { notify } from "@/lib/notify";
+import { fetchCategories } from "@/lib/query-fetchers";
 
 export type CategoryCreateInput = Pick<Category, "label"> & Partial<Pick<Category, "description" | "color" | "icon">>;
 export type CategoryUpdateInput = Partial<Pick<Category, "label" | "description" | "color" | "icon">>;
@@ -13,10 +14,7 @@ export function useCategories() {
 
   const query = useQuery({
     queryKey: queryKeys.categories.all,
-    queryFn: async () => {
-      const res = await apiClient<{ categories: Category[] }>("/api/categories");
-      return res.categories || [];
-    },
+    queryFn: () => fetchCategories(),
     staleTime: 10 * 60 * 1000,
   });
 
@@ -27,7 +25,7 @@ export function useCategories() {
         body: JSON.stringify(data),
       }),
     onSuccess: async (data) => {
-      await invalidateAllForCrud(queryClient);
+      await invalidateEntityAffectingAppointments(queryClient, "categories");
       notify.crud({ action: "created", entity: "Category", detail: `"${data.category.label}" is ready to use.` });
     },
     onError: (e) => handleApiError(e, "Failed to create category"),
@@ -40,7 +38,7 @@ export function useCategories() {
         body: JSON.stringify(data),
       }),
     onSuccess: async (data) => {
-      await invalidateAllForCrud(queryClient);
+      await invalidateEntityAffectingAppointments(queryClient, "categories");
       notify.crud({ action: "updated", entity: "Category", detail: `"${data.category.label}" was updated.` });
     },
     onError: (e) => handleApiError(e, "Failed to update category"),
@@ -50,7 +48,7 @@ export function useCategories() {
     mutationFn: (id: string) =>
       apiClient(`/api/categories/${id}`, { method: "DELETE" }),
     onSuccess: async () => {
-      await invalidateAllForCrud(queryClient);
+      await invalidateEntityAffectingAppointments(queryClient, "categories");
       notify.crud({ action: "deleted", entity: "Category", detail: "The category has been removed." });
     },
     onError: (e) => handleApiError(e, "Failed to delete category"),

@@ -1,9 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient, handleApiError } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
-import { invalidateAllForCrud } from "@/lib/query-client";
+import { invalidateEntityAffectingAppointments } from "@/lib/query-client";
 import { Relative } from "@/types/types";
 import { notify } from "@/lib/notify";
+import { fetchRelatives } from "@/lib/query-fetchers";
 
 export type RelativeCreateInput = Pick<Relative, "firstname" | "lastname"> & Partial<Pick<Relative, "pronoun" | "notes">>;
 export type RelativeUpdateInput = Partial<Pick<Relative, "firstname" | "lastname" | "pronoun" | "notes">>;
@@ -13,10 +14,8 @@ export function useRelatives() {
 
   const query = useQuery({
     queryKey: queryKeys.relatives.all,
-    queryFn: async () => {
-      const res = await apiClient<{ relatives: Relative[] }>("/api/relatives");
-      return res.relatives || [];
-    },
+    queryFn: () => fetchRelatives(),
+    staleTime: 10 * 60 * 1000,
   });
 
   const createMutation = useMutation({
@@ -26,7 +25,7 @@ export function useRelatives() {
         body: JSON.stringify(data),
       }),
     onSuccess: async (data) => {
-      await invalidateAllForCrud(queryClient);
+      await invalidateEntityAffectingAppointments(queryClient, "relatives");
       notify.crud({ action: "created", entity: "Relative", detail: `${data.relative.firstname} ${data.relative.lastname} was added.` });
     },
     onError: (e) => handleApiError(e, "Failed to create relative"),
@@ -39,7 +38,7 @@ export function useRelatives() {
         body: JSON.stringify(data),
       }),
     onSuccess: async (data) => {
-      await invalidateAllForCrud(queryClient);
+      await invalidateEntityAffectingAppointments(queryClient, "relatives");
       notify.crud({ action: "updated", entity: "Relative", detail: `${data.relative.firstname} ${data.relative.lastname} was updated.` });
     },
     onError: (e) => handleApiError(e, "Failed to update relative"),
@@ -49,7 +48,7 @@ export function useRelatives() {
     mutationFn: (id: string) =>
       apiClient(`/api/relatives/${id}`, { method: "DELETE" }),
     onSuccess: async () => {
-      await invalidateAllForCrud(queryClient);
+      await invalidateEntityAffectingAppointments(queryClient, "relatives");
       notify.crud({ action: "deleted", entity: "Relative", detail: "The relative record was deleted." });
     },
     onError: (e) => handleApiError(e, "Failed to delete relative"),
