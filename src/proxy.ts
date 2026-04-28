@@ -33,6 +33,7 @@ const SECURITY_HEADERS: Record<string, string> = {
   "Content-Security-Policy": [
     "default-src 'self'",
     "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://meet.jit.si https://vercel.live https://vercel.com",
+    "script-src-elem 'self' 'unsafe-inline' https://meet.jit.si https://vercel.live https://vercel.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' data: blob: https: http:",
