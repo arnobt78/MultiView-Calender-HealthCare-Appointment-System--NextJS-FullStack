@@ -3,8 +3,8 @@
 // HomePage — main calendar area.  View mode is kept in the URL as ?view=list|day|week|month
 // so a refresh returns to the same tab.
 
-import React, { useCallback, useMemo, useTransition } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import MonthView from "@/components/calendar/MonthView";
 import WeekView from "@/components/calendar/WeekView";
 import DayView from "@/components/calendar/DayView";
@@ -21,28 +21,38 @@ function parseViewParam(v: string | null): ViewType {
 }
 
 const HomePage: React.FC = () => {
-  const router = useRouter();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
-  const view = useMemo(
+  const initialView = useMemo(
     () => parseViewParam(searchParams.get("view")),
     [searchParams]
   );
-  const [, startTransition] = useTransition();
+  const [view, setViewState] = useState<ViewType>(initialView);
+
+  useEffect(() => {
+    const onPopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      setViewState(parseViewParam(params.get("view")));
+    };
+
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
 
   const setView = useCallback(
     (v: ViewType) => {
       if (v === view) return;
+      setViewState(v);
       const p = new URLSearchParams(
         typeof window === "undefined" ? searchParams.toString() : window.location.search
       );
       p.set("view", v.toLowerCase());
       const q = p.toString();
-      startTransition(() => {
-        router.replace(q ? `${pathname}?${q}` : pathname, { scroll: false });
-      });
+      if (typeof window !== "undefined") {
+        const nextUrl = q ? `${window.location.pathname}?${q}` : window.location.pathname;
+        window.history.replaceState(window.history.state, "", nextUrl);
+      }
     },
-    [router, pathname, searchParams, startTransition, view]
+    [searchParams, view]
   );
 
   return (
