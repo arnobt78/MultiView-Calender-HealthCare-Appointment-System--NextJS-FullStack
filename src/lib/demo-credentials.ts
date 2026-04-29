@@ -11,12 +11,32 @@ export type DemoAccount = {
   email: string;
   role: DemoRole;
   label: string;
+  displayName: string;
+  avatarUrl: string;
 };
 
 export const DEMO_ACCOUNTS: readonly DemoAccount[] = [
-  { email: "test@admin.com", role: "admin", label: "Demo Admin" },
-  { email: "test@doctor.com", role: "doctor", label: "Demo Doctor" },
-  { email: "test@patient.com", role: "patient", label: "Demo Patient" },
+  {
+    email: "test@admin.com",
+    role: "admin",
+    label: "Demo Admin",
+    displayName: "User Admin",
+    avatarUrl: "/doctors/img-6.jpg",
+  },
+  {
+    email: "test@doctor.com",
+    role: "doctor",
+    label: "Demo Doctor",
+    displayName: "User Doctor",
+    avatarUrl: "/doctors/img-1.jpg",
+  },
+  {
+    email: "test@patient.com",
+    role: "patient",
+    label: "Demo Patient",
+    displayName: "User Patient",
+    avatarUrl: "/doctors/img-2.jpg",
+  },
 ] as const;
 
 /** Primary account for automated smoke tests (admin). */

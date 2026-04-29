@@ -53,6 +53,7 @@ async function checkUsers() {
     console.log(`Users (${users.length}):\n`);
     console.table(
       users.map((u) => ({
+        display_name: u.display_name ?? "",
         email: u.email,
         role: u.role ?? "",
         verified: u.email_verified,

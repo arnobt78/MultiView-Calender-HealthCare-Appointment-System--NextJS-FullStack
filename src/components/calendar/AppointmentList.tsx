@@ -495,9 +495,19 @@ export default function AppointmentList() {
         <>
           {/* Show empty state only once data has settled — guards against flash */}
           {appointments.length === 0 && !fetchingAppointments && (
-            <div className="flex items-center justify-center min-h-[50vh]">
-              <div className="text-center text-gray-500 text-lg">
-                No appointments found!
+            <div className="flex min-h-[50vh] items-center justify-center px-4">
+              <div className="mx-auto w-full max-w-md rounded-3xl border border-slate-200/80 bg-white/90 px-6 py-8 text-center shadow-[0_20px_50px_rgba(15,23,42,0.08)] backdrop-blur-sm">
+                {/* Friendly empty state for first-run or cleared database */}
+                <div className="mx-auto mb-4 inline-flex size-12 items-center justify-center rounded-2xl border border-sky-200/70 bg-sky-50/90 text-sky-600">
+                  <CalendarX2 className="size-6" aria-hidden />
+                </div>
+                <h3 className="text-base font-semibold tracking-tight text-slate-800">
+                  No appointments yet
+                </h3>
+                <p className="mt-1 text-sm leading-relaxed text-slate-500">
+                  Start by creating your first appointment using the{" "}
+                  <span className="font-medium text-slate-600">New Appointment</span> button.
+                </p>
               </div>
             </div>
           )}

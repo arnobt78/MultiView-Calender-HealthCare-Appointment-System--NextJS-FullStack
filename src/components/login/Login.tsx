@@ -55,13 +55,25 @@ function GoogleIcon({ className }: { className?: string }) {
   );
 }
 
-const testAccounts: Record<string, { email: string; password: string; label: string }> =
+const testAccounts: Record<
+  string,
+  { email: string; password: string; label: string; displayName: string; avatarUrl: string }
+> =
   Object.fromEntries(
     DEMO_ACCOUNTS.map((a) => [
       `demo-${a.role}`,
-      { email: a.email, password: DEMO_PASSWORD, label: a.label },
+      {
+        email: a.email,
+        password: DEMO_PASSWORD,
+        label: a.label,
+        displayName: a.displayName,
+        avatarUrl: a.avatarUrl,
+      },
     ])
-  ) as Record<string, { email: string; password: string; label: string }>;
+  ) as Record<
+    string,
+    { email: string; password: string; label: string; displayName: string; avatarUrl: string }
+  >;
 
 const features = [
   {
@@ -118,6 +130,7 @@ export default function Login({ redirect = null }: LoginProps) {
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const router = useRouter();
   const queryClient = useQueryClient();
+  const selectedAccount = selectedRole ? testAccounts[selectedRole] : null;
 
   const handleRoleSelect = (value: string) => {
     if (value === "clear") {
@@ -326,23 +339,64 @@ export default function Login({ redirect = null }: LoginProps) {
                           type="button"
                           className="flex w-full h-11 items-center justify-between gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-left shadow-sm transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:border-blue-400 cursor-pointer"
                         >
-                          <span className={selectedRole ? "text-gray-700" : "text-slate-400"}>
-                            {selectedRole
-                              ? testAccounts[selectedRole]?.label + " (" + testAccounts[selectedRole]?.email + ")"
-                              : "Select Role Based Test Account"}
+                          <span className="flex min-w-0 items-center gap-2">
+                            {selectedAccount ? (
+                              // Role splash image improves quick visual switching between personas.
+                              <Image
+                                src={selectedAccount.avatarUrl}
+                                alt={selectedAccount.displayName}
+                                width={20}
+                                height={20}
+                                className="size-5 rounded-full object-cover ring-1 ring-slate-300/70"
+                              />
+                            ) : null}
+                            <span
+                              className={selectedRole ? "truncate text-gray-700" : "truncate text-slate-400"}
+                            >
+                              {selectedRole
+                                ? `${selectedAccount?.displayName} (${selectedAccount?.email})`
+                                : "Select Role Based Test Account"}
+                            </span>
                           </span>
                           <ChevronDown className="size-4 shrink-0 text-slate-400" />
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start" className="w-[var(--radix-dropdown-menu-trigger-width)]" sideOffset={4}>
                         <DropdownMenuItem onSelect={() => handleRoleSelect("demo-admin")}>
-                          Demo Admin ({DEMO_ACCOUNTS[0].email})
+                          <span className="flex items-center gap-2">
+                            <Image
+                              src={DEMO_ACCOUNTS[0].avatarUrl}
+                              alt={DEMO_ACCOUNTS[0].displayName}
+                              width={20}
+                              height={20}
+                              className="size-5 rounded-full object-cover ring-1 ring-slate-300/70"
+                            />
+                            {DEMO_ACCOUNTS[0].displayName} ({DEMO_ACCOUNTS[0].email})
+                          </span>
                         </DropdownMenuItem>
                         <DropdownMenuItem onSelect={() => handleRoleSelect("demo-doctor")}>
-                          Demo Doctor ({DEMO_ACCOUNTS[1].email})
+                          <span className="flex items-center gap-2">
+                            <Image
+                              src={DEMO_ACCOUNTS[1].avatarUrl}
+                              alt={DEMO_ACCOUNTS[1].displayName}
+                              width={20}
+                              height={20}
+                              className="size-5 rounded-full object-cover ring-1 ring-slate-300/70"
+                            />
+                            {DEMO_ACCOUNTS[1].displayName} ({DEMO_ACCOUNTS[1].email})
+                          </span>
                         </DropdownMenuItem>
                         <DropdownMenuItem onSelect={() => handleRoleSelect("demo-patient")}>
-                          Demo Patient ({DEMO_ACCOUNTS[2].email})
+                          <span className="flex items-center gap-2">
+                            <Image
+                              src={DEMO_ACCOUNTS[2].avatarUrl}
+                              alt={DEMO_ACCOUNTS[2].displayName}
+                              width={20}
+                              height={20}
+                              className="size-5 rounded-full object-cover ring-1 ring-slate-300/70"
+                            />
+                            {DEMO_ACCOUNTS[2].displayName} ({DEMO_ACCOUNTS[2].email})
+                          </span>
                         </DropdownMenuItem>
                         {selectedRole && (
                           <>

@@ -32,6 +32,8 @@ async function seedDemoUsers() {
       await prisma.user.update({
         where: { id: existing.id },
         data: {
+          display_name: acc.displayName,
+          image: acc.avatarUrl,
           password_hash: passwordHash,
           email_verified: true,
           role: acc.role,
@@ -43,6 +45,8 @@ async function seedDemoUsers() {
         data: {
           id: randomUUID(),
           email: acc.email,
+          display_name: acc.displayName,
+          image: acc.avatarUrl,
           password_hash: passwordHash,
           email_verified: true,
           role: acc.role,
