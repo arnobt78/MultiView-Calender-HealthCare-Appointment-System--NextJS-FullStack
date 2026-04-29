@@ -246,13 +246,19 @@ export default function Navbar() {
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    className="rounded-full ring-2 ring-border shadow-xl hover:opacity-90 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer bg-gray-100 hover:bg-gray-200/50"
+                    className="h-10 w-10 overflow-hidden rounded-full bg-white ring-1 ring-slate-200 shadow-sm transition-opacity hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer"
                     aria-label="Account menu"
                     disabled={!user}
                   >
                     {user ? (
-                      <Avatar>
-                        <AvatarImage src={avatarSrc} alt="" referrerPolicy="no-referrer" />
+                      // Keep avatar framing stable so profile photos look natural in navbar.
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage
+                          src={avatarSrc}
+                          alt=""
+                          referrerPolicy="no-referrer"
+                          className="object-cover object-center"
+                        />
                         <AvatarFallback className="bg-primary/10 text-gray-700 font-medium">{initials}</AvatarFallback>
                       </Avatar>
                     ) : (

@@ -21,21 +21,21 @@ export const DEMO_ACCOUNTS: readonly DemoAccount[] = [
     role: "admin",
     label: "Demo Admin",
     displayName: "User Admin",
-    avatarUrl: "/doctors/img-6.jpg",
+    avatarUrl: "/users/img-1.avif",
   },
   {
     email: "test@doctor.com",
     role: "doctor",
     label: "Demo Doctor",
     displayName: "User Doctor",
-    avatarUrl: "/doctors/img-1.jpg",
+    avatarUrl: "/users/img-2.avif",
   },
   {
     email: "test@patient.com",
     role: "patient",
     label: "Demo Patient",
     displayName: "User Patient",
-    avatarUrl: "/doctors/img-2.jpg",
+    avatarUrl: "/users/img-3.avif",
   },
 ] as const;
 
