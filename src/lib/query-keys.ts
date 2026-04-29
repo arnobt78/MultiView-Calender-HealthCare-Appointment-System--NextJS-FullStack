@@ -83,4 +83,10 @@ export const queryKeys = {
   patientPortal: {
     all: ["app", "patient-portal"] as const,
   },
+  /** Slot picker — invalidate tree on appointment changes */
+  availability: {
+    root: ["app", "availability"] as const,
+    slots: (doctorId: string, dateStr: string, typeId: string) =>
+      [...queryKeys.availability.root, "slots", doctorId, dateStr, typeId] as const,
+  },
 } as const;

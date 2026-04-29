@@ -3,24 +3,26 @@ import { verifyPassword, getUserByEmail } from "@/lib/auth";
 import { setSession } from "@/lib/session";
 import { generateToken } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-
-const DEMO_EMAIL = "test@user.com";
-const DEMO_PASSWORD = "12345678";
+import { isAllowedDemoLogin } from "@/lib/demo-credentials";
 
 export async function POST(req: NextRequest) {
   try {
     const { email, password } = await req.json();
 
-    if (email !== DEMO_EMAIL || password !== DEMO_PASSWORD) {
+    if (
+      typeof email !== "string" ||
+      typeof password !== "string" ||
+      !isAllowedDemoLogin(email, password)
+    ) {
       return NextResponse.json({ error: "Invalid demo credentials" }, { status: 401 });
     }
 
-    const user = await getUserByEmail(DEMO_EMAIL);
+    const user = await getUserByEmail(email);
     if (!user || !user.password_hash) {
       return NextResponse.json({ error: "Demo account not found" }, { status: 404 });
     }
 
-    const valid = await verifyPassword(DEMO_PASSWORD, user.password_hash);
+    const valid = await verifyPassword(password, user.password_hash);
     if (!valid) {
       return NextResponse.json({ error: "Demo account misconfigured" }, { status: 500 });
     }

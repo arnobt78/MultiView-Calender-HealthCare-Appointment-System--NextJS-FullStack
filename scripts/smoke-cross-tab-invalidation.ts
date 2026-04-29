@@ -1,9 +1,21 @@
+import {
+  DEMO_DOCTOR_APPOINTMENT_TYPE_ID,
+  DEMO_DOCTOR_EMAIL,
+  DEMO_PASSWORD,
+  DEMO_PATIENT_EMAIL,
+  DEMO_SMOKE_EMAIL,
+} from "../src/lib/demo-credentials";
+
 type Json = Record<string, unknown>;
 
 const BASE_URL = process.env.SMOKE_BASE_URL ?? "http://localhost:3000";
 
 function isoAfter(minutesFromNow: number) {
   return new Date(Date.now() + minutesFromNow * 60 * 1000).toISOString();
+}
+
+function isoDateToday() {
+  return new Date().toISOString().slice(0, 10);
 }
 
 async function requestJson(
@@ -23,19 +35,37 @@ async function requestJson(
   return { ok: res.ok, status: res.status, data, setCookie };
 }
 
+async function sleep(ms: number) {
+  await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function loginWithRetry(email: string, password: string, attempts = 5) {
+  let lastStatus = 0;
+  for (let i = 1; i <= attempts; i += 1) {
+    try {
+      const login = await requestJson("/api/auth/demo", {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      });
+      lastStatus = login.status;
+      if (login.ok && login.setCookie) return login;
+    } catch {
+      // retry path for transient startup/fetch issues
+    }
+    await sleep(250 * i);
+  }
+  throw new Error(`Login failed (${lastStatus || "fetch-failed"}). Ensure dev server + demo users are ready.`);
+}
+
 async function main() {
   console.log(`Smoke test base URL: ${BASE_URL}`);
 
-  const login = await requestJson("/api/auth/demo", {
-    method: "POST",
-    body: JSON.stringify({ email: "test@user.com", password: "12345678" }),
-  });
+  const login = await loginWithRetry(DEMO_SMOKE_EMAIL, DEMO_PASSWORD);
 
-  if (!login.ok || !login.setCookie) {
-    throw new Error(`Login failed (${login.status}). Ensure dev server + demo user are ready.`);
+  const cookie = (login.setCookie ?? "").split(";")[0];
+  if (!cookie) {
+    throw new Error("Login missing auth cookie.");
   }
-
-  const cookie = login.setCookie.split(";")[0];
   const title = `Smoke ${Date.now()}`;
 
   const create = await requestJson(
@@ -103,6 +133,57 @@ async function main() {
   const rowsAfterDelete = (listAfterDelete.data.appointments ?? []) as Array<{ id: string }>;
   if (rowsAfterDelete.some((a) => a.id === id)) {
     throw new Error("Deleted appointment still present.");
+  }
+
+  // Doctor scenario: slots endpoint should return successfully.
+  const doctorLogin = await loginWithRetry(DEMO_DOCTOR_EMAIL, DEMO_PASSWORD);
+  const doctorCookie = (doctorLogin.setCookie ?? "").split(";")[0];
+  if (!doctorCookie) {
+    throw new Error("Doctor login missing auth cookie.");
+  }
+  const doctorUser = doctorLogin.data.user as { id?: string } | undefined;
+  const doctorId = doctorUser?.id;
+  if (!doctorId) {
+    throw new Error("Doctor login missing user.id");
+  }
+  const slots = await requestJson(
+    `/api/availability/slots?doctorId=${doctorId}&date=${isoDateToday()}&typeId=${DEMO_DOCTOR_APPOINTMENT_TYPE_ID}`,
+    { method: "GET" },
+    doctorCookie
+  );
+  if (!slots.ok) {
+    throw new Error(`Availability slots failed (${slots.status}).`);
+  }
+  if (!Array.isArray((slots.data as { slots?: unknown[] }).slots)) {
+    throw new Error("Availability slots payload invalid.");
+  }
+
+  // Patient scenario: dashboard appointment create should be blocked by RBAC.
+  const patientLogin = await loginWithRetry(DEMO_PATIENT_EMAIL, DEMO_PASSWORD);
+  const patientCookie = (patientLogin.setCookie ?? "").split(";")[0];
+  if (!patientCookie) {
+    throw new Error("Patient login missing auth cookie.");
+  }
+  const patientCreate = await requestJson(
+    "/api/appointments",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        title: `Patient blocked ${Date.now()}`,
+        start: isoAfter(45),
+        end: isoAfter(75),
+        location: "RBAC Smoke",
+        notes: "Should be forbidden",
+        status: "pending",
+        patient: null,
+        category: null,
+        attachements: [],
+      }),
+    },
+    patientCookie
+  );
+  if (patientCreate.status !== 403) {
+    throw new Error(`Patient RBAC expected 403, got ${patientCreate.status}.`);
   }
 
   console.log("Smoke CRUD/invalidation flow: PASS");

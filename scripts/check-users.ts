@@ -1,27 +1,22 @@
 /**
- * Check Users in Database
- * 
- * This script queries the PostgreSQL database to show all users
- * and their current status (email verified, has password, etc.)
- * 
+ * List users in the database; highlight demo accounts.
+ *
  * Usage: npm run db:check-users
- * or: npx tsx scripts/check-users.ts
  */
 
 import dotenv from "dotenv";
 import { resolve } from "path";
+import { DEMO_ACCOUNTS } from "../src/lib/demo-credentials";
 
-// Load environment variables FIRST
 const envPath = resolve(process.cwd(), ".env.local");
 dotenv.config({ path: envPath });
 
-// Verify DATABASE_URL is loaded
 if (!process.env.DATABASE_URL) {
   console.error("❌ Error: DATABASE_URL not found in .env.local");
   process.exit(1);
 }
 
-interface User {
+interface UserRow {
   id: string;
   email: string;
   email_verified: boolean;
@@ -33,11 +28,8 @@ interface User {
 
 async function checkUsers() {
   try {
-    // Import postgresClient after environment variables are loaded
     const { query } = await import("../src/lib/postgresClient");
-    
 
-    // Query all users
     const result = await query(
       `SELECT 
         id, 
@@ -51,41 +43,38 @@ async function checkUsers() {
       ORDER BY created_at DESC`
     );
 
-    const users: User[] = result.rows;
+    const users: UserRow[] = result.rows;
 
     if (users.length === 0) {
+      console.log("No users in database.");
       return;
     }
 
+    console.log(`Users (${users.length}):\n`);
+    console.table(
+      users.map((u) => ({
+        email: u.email,
+        role: u.role ?? "",
+        verified: u.email_verified,
+        has_password: Boolean(u.password_hash),
+      }))
+    );
 
-    users.forEach((user, index) => {
-      
-      // Login status
-      if (!user.email_verified) {
-      } else if (!user.password_hash) {
+    console.log("\nDemo accounts check:");
+    for (const demo of DEMO_ACCOUNTS) {
+      const row = users.find((u) => u.email === demo.email);
+      if (row) {
+        console.log(`  ✓ ${demo.email} (${demo.role})`);
       } else {
+        console.log(`  ✗ missing ${demo.email} — run npm run db:seed-test-user`);
       }
-    });
-
-
-    // Explicit check for dropdown test user
-    const TEST_EMAIL = "test@user.com";
-    const testUser = users.find((u) => u.email === TEST_EMAIL);
-    if (testUser) {
-    } else {
     }
-
-
-
   } catch (error) {
     console.error("❌ Error checking users:", error);
     process.exit(1);
   } finally {
-    // Close database connection
     process.exit(0);
   }
 }
 
-// Run the script
 checkUsers();
-

@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import { getUserRole, isPatientRole } from "@/lib/rbac";
 
 export async function GET() {
   try {
@@ -38,6 +39,11 @@ export async function POST(request: NextRequest) {
     const sessionUser = await getSessionUser();
     if (!sessionUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const role = await getUserRole(sessionUser.userId);
+    if (isPatientRole(role)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const { name } = await request.json();

@@ -384,3 +384,26 @@ Set by `proxy.ts` on every response. CDN headers use both `CDN-Cache-Control` an
   - `src/hooks/usePayments.ts`
   - `src/hooks/useAuth.ts` (logout goodbye messaging)
 
+---
+
+## Database reset & demo workflow
+
+Recommended order when wiping app data for clean QA:
+
+1. `CONFIRM_DB_CLEAR=YES npm run db:clear` — truncates all `public` tables (keeps `_prisma_migrations`).
+2. `npx prisma db push` — only if schema drift; normally handled by `npm run build`.
+3. `npm run db:seed-test-user` — creates/updates demo users and seeds doctor availability + default appointment type.
+4. `npm run db:check-users` — lists users and verifies demo emails exist.
+5. With dev server running: `npm run test:smoke-invalidation` (uses `test@admin.com` via `/api/auth/demo`).
+
+Shared demo credentials live in `src/lib/demo-credentials.ts` (`test@admin.com`, `test@doctor.com`, `test@patient.com`, password `12345678`).
+
+---
+
+## Cal-style availability (phase 1)
+
+- **Models** (`prisma/schema.prisma`): `DoctorAvailability` (weekly windows + IANA `timezone`), `DoctorTimeOff`, `AppointmentType` (duration, buffers, slot step, minimum notice).
+- **API**: `GET /api/availability/slots?doctorId=&date=YYYY-MM-DD&typeId=` — returns `{ slots: ISO[]; timezone }`.
+- **Client**: `useAvailabilitySlots` in `src/hooks/useAvailabilitySlots.ts` with keys under `queryKeys.availability`.
+- **Invalidation**: `invalidateAfterAppointmentMutation` also invalidates `queryKeys.availability` so slot pickers stay fresh after booking changes.
+- **RBAC (incremental)**: `users.role === 'patient'` cannot POST/PUT/PATCH/DELETE dashboard appointments or POST organizations; registration defaults new users to `role: admin`.

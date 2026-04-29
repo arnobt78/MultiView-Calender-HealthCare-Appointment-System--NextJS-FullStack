@@ -10,6 +10,7 @@ import { PAGINATION } from "@/lib/constants";
 import { serializeAppointment } from "@/lib/serializers";
 import { appointmentCreateSchema } from "@/lib/schemas/appointment";
 import { zodBadRequest } from "@/lib/schemas/parse";
+import { getUserRole, isPatientRole } from "@/lib/rbac";
 
 export async function GET(req: NextRequest) {
   try {
@@ -62,6 +63,11 @@ export async function POST(req: NextRequest) {
     const sessionUser = await getSessionUser();
     if (!sessionUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const role = await getUserRole(sessionUser.userId);
+    if (isPatientRole(role)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const parsed = appointmentCreateSchema.safeParse(await req.json());

@@ -109,12 +109,17 @@ export async function invalidateInvoicesAndOverview(queryClient: QueryClient) {
   ]);
 }
 
+export async function invalidateAvailabilitySlots(queryClient: QueryClient) {
+  await queryClient.invalidateQueries({ queryKey: queryKeys.availability.root });
+}
+
 /** Appointment CRUD, ICS import — calendar + activity log + optional notifications */
 export async function invalidateAfterAppointmentMutation(queryClient: QueryClient) {
   await Promise.all([
     invalidateAppointmentData(queryClient),
     invalidateActivitiesList(queryClient),
     invalidateNotificationsData(queryClient),
+    invalidateAvailabilitySlots(queryClient),
   ]);
 }
 
@@ -127,6 +132,7 @@ export async function invalidateAssigneesActivitiesAppointment(
     invalidateAssigneesData(queryClient),
     invalidateAppointmentData(queryClient),
     invalidateActivitiesList(queryClient),
+    invalidateAvailabilitySlots(queryClient),
   ]);
   if (appointmentId) {
     await queryClient.invalidateQueries({

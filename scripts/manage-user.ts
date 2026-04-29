@@ -7,7 +7,7 @@
  * Usage: 
  *   npm run db:manage-user -- --email your@email.com --verify
  *   npm run db:manage-user -- --email your@email.com --set-password "newpassword"
- *   npm run db:manage-user -- --email test@user.com --display-name "Guest User"
+ *   npm run db:manage-user -- --email test@admin.com --display-name "Guest User Admin"
  */
 
 import dotenv from "dotenv";

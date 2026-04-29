@@ -98,7 +98,8 @@ export async function createUser(
   email: string,
   passwordHash: string,
   emailVerificationToken: string,
-  displayName?: string | null
+  displayName?: string | null,
+  role?: string | null
 ) {
   const user = await prisma.user.create({
     data: {
@@ -108,6 +109,7 @@ export async function createUser(
       email_verified: false,
       email_verification_token: emailVerificationToken,
       display_name: displayName ?? null,
+      role: role ?? null,
     },
     select: { id: true, email: true, email_verified: true, display_name: true, role: true, created_at: true },
   });

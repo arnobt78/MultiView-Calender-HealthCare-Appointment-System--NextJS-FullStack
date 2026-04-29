@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { isValidUUID } from "@/lib/validation";
 import { serializeAppointment } from "@/lib/serializers";
+import { getUserRole, isPatientRole } from "@/lib/rbac";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -33,6 +34,11 @@ export async function PUT(req: NextRequest, context: RouteContext) {
     const sessionUser = await getSessionUser();
     if (!sessionUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const role = await getUserRole(sessionUser.userId);
+    if (isPatientRole(role)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const { id } = await context.params;
@@ -90,6 +96,11 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     const sessionUser = await getSessionUser();
     if (!sessionUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const role = await getUserRole(sessionUser.userId);
+    if (isPatientRole(role)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const { id } = await context.params;
@@ -161,6 +172,11 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
     const sessionUser = await getSessionUser();
     if (!sessionUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const role = await getUserRole(sessionUser.userId);
+    if (isPatientRole(role)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const { id } = await context.params;

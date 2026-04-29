@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
     const verificationToken = generateVerificationToken();
 
     // Create user in database
-    const user = await createUser(email, passwordHash, verificationToken, display_name || null);
+    const user = await createUser(email, passwordHash, verificationToken, display_name || null, "admin");
 
     // Send verification email
     try {

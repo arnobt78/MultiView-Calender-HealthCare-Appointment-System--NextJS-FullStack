@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
+import { DEMO_PASSWORD, DEMO_SMOKE_EMAIL } from "@/lib/demo-credentials";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -513,7 +514,7 @@ export default function LandingPage() {
       const res = await fetch("/api/auth/demo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: "test@user.com", password: "12345678" }),
+        body: JSON.stringify({ email: DEMO_SMOKE_EMAIL, password: DEMO_PASSWORD }),
       });
       if (res.ok) {
         const data = await res.json();

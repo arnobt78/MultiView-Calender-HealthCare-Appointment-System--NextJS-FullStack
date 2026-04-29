@@ -30,6 +30,7 @@ import {
   Home,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { DEMO_ACCOUNTS, DEMO_PASSWORD } from "@/lib/demo-credentials";
 
 function GoogleIcon({ className }: { className?: string }) {
   return (
@@ -54,13 +55,13 @@ function GoogleIcon({ className }: { className?: string }) {
   );
 }
 
-const testAccounts: Record<string, { email: string; password: string; label: string }> = {
-  "guest-user": {
-    email: "test@user.com",
-    password: "12345678",
-    label: "Guest User",
-  },
-};
+const testAccounts: Record<string, { email: string; password: string; label: string }> =
+  Object.fromEntries(
+    DEMO_ACCOUNTS.map((a) => [
+      `demo-${a.role}`,
+      { email: a.email, password: DEMO_PASSWORD, label: a.label },
+    ])
+  ) as Record<string, { email: string; password: string; label: string }>;
 
 const features = [
   {
@@ -334,8 +335,14 @@ export default function Login({ redirect = null }: LoginProps) {
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start" className="w-[var(--radix-dropdown-menu-trigger-width)]" sideOffset={4}>
-                        <DropdownMenuItem onSelect={() => handleRoleSelect("guest-user")}>
-                          Guest User (test@user.com)
+                        <DropdownMenuItem onSelect={() => handleRoleSelect("demo-admin")}>
+                          Demo Admin ({DEMO_ACCOUNTS[0].email})
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => handleRoleSelect("demo-doctor")}>
+                          Demo Doctor ({DEMO_ACCOUNTS[1].email})
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => handleRoleSelect("demo-patient")}>
+                          Demo Patient ({DEMO_ACCOUNTS[2].email})
                         </DropdownMenuItem>
                         {selectedRole && (
                           <>

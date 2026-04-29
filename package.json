@@ -14,8 +14,10 @@
     "db:migrate": "tsx scripts/migrate.ts",
     "db:seed": "tsx scripts/seed.ts",
     "db:check-users": "tsx scripts/check-users.ts",
+    "db:check-empty": "tsx scripts/check-db-empty.ts",
     "db:manage-user": "tsx scripts/manage-user.ts",
     "db:seed-test-user": "tsx scripts/seed-test-user.ts",
+    "db:clear": "tsx scripts/db-clear.ts",
     "test:smoke-invalidation": "tsx scripts/smoke-cross-tab-invalidation.ts"
   },
   "dependencies": {
@@ -33,6 +35,7 @@
     "clsx": "^2.1.1",
     "csv-parse": "^6.2.0",
     "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0",
     "dotenv": "^17.2.3",
     "framer-motion": "^12.38.0",
     "jose": "^6.2.2",
@@ -77,6 +80,7 @@
     "typescript": "^6.0.3"
   },
   "overrides": {
-    "undici": ">=7.24.0"
+    "undici": ">=7.24.0",
+    "postcss": "^8.5.12"
   }
 }
