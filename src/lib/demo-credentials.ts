@@ -28,7 +28,7 @@ export const DEMO_ACCOUNTS: readonly DemoAccount[] = [
     role: "doctor",
     label: "Demo Doctor",
     displayName: "User Doctor",
-    avatarUrl: "/users/img-2.avif",
+    avatarUrl: "/doctors/img-7.jpg",
   },
   {
     email: "test@patient.com",

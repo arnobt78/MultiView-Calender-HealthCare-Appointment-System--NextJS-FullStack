@@ -5,6 +5,8 @@ import Link from "next/link";
 import { usePatients } from "@/hooks/usePatients";
 import { DataTable } from "@/components/shared/DataTable";
 import { PageHeader } from "@/components/shared/PageHeader";
+import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
+import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -25,7 +27,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Patient } from "@/types/types";
-import { Plus, MoreHorizontal, Pencil, Trash2, Download } from "lucide-react";
+import { Plus, EllipsisVertical, Pencil, Trash2, Download, CircleCheck, CircleOff } from "lucide-react";
 import { useState } from "react";
 import {
   Dialog,
@@ -45,6 +47,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { DEMO_ACCOUNTS } from "@/lib/demo-credentials";
+
+const DEMO_AVATAR_BY_EMAIL = new Map(
+  DEMO_ACCOUNTS.map((account) => [account.email.toLowerCase(), account.avatarUrl])
+);
 
 function exportPatientsCSV(patients: Patient[]) {
   const headers = ["ID", "First Name", "Last Name", "Email", "Birth Date", "Care Level", "Pronoun", "Active", "Active Since", "Created At"];
@@ -82,8 +89,8 @@ function PatientActions({
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <MoreHorizontal className="h-4 w-4" />
+          <Button variant="ghost" size="icon" className="h-7 w-7">
+            <EllipsisVertical className="h-4 w-4" />
             <span className="sr-only">Open menu</span>
           </Button>
         </DropdownMenuTrigger>
@@ -143,21 +150,60 @@ export default function PatientManagement() {
   });
 
   const columns: ColumnDef<Patient>[] = [
-    { accessorKey: "firstname", header: "First name", cell: ({ row }) => row.original.firstname },
-    { accessorKey: "lastname", header: "Last name", cell: ({ row }) => row.original.lastname },
-    { accessorKey: "email", header: "Email", cell: ({ row }) => row.original.email ?? "—" },
     {
-      accessorKey: "birth_date",
-      header: "Birth date",
-      cell: ({ row }) => (row.original.birth_date ? String(row.original.birth_date).slice(0, 10) : "—"),
+      id: "image",
+      header: "",
+      enableSorting: false,
+      meta: { headClassName: "w-12", cellClassName: "w-12" },
+      cell: ({ row }) => {
+        const p = row.original;
+        const fallbackText = `${p.firstname || ""} ${p.lastname || ""}`.trim() || p.email || "?";
+        // Prefer curated local avatars for known demo users, fallback to initials only.
+        const avatarSrc = p.email ? DEMO_AVATAR_BY_EMAIL.get(p.email.toLowerCase()) ?? null : null;
+        return (
+          <UserAvatar
+            src={avatarSrc}
+            fallbackText={fallbackText}
+            sizeClassName="h-9 w-9"
+          />
+        );
+      },
     },
-    { accessorKey: "care_level", header: "Care level", cell: ({ row }) => row.original.care_level ?? "—" },
-    { accessorKey: "pronoun", header: "Pronoun", cell: ({ row }) => row.original.pronoun ?? "—" },
+    {
+      id: "name",
+      header: "Name",
+      meta: { headClassName: "min-w-[180px]", cellClassName: "min-w-[180px]" },
+      cell: ({ row }) => (
+        <EntityTitleLink
+          href={`/control-panel/patients/${row.original.id}`}
+          label={`${row.original.firstname} ${row.original.lastname}`.trim() || "—"}
+        />
+      ),
+    },
+    {
+      accessorKey: "email",
+      header: "Email",
+      meta: { headClassName: "min-w-[190px]", cellClassName: "min-w-[190px]" },
+      cell: ({ row }) => row.original.email ?? "—",
+    },
     {
       accessorKey: "active",
-      header: "Active",
+      header: "Status",
+      meta: { headClassName: "min-w-[120px]", cellClassName: "min-w-[120px]" },
       cell: ({ row }) => (
-        <Badge variant={row.original.active ? "default" : "secondary"}>
+        <Badge
+          variant="outline"
+          className={
+            row.original.active
+              ? "text-xs border-emerald-200 bg-emerald-50 text-emerald-700"
+              : "text-xs border-slate-200 bg-slate-50 text-slate-600"
+          }
+        >
+          {row.original.active ? (
+            <CircleCheck className="mr-1 h-3.5 w-3.5" />
+          ) : (
+            <CircleOff className="mr-1 h-3.5 w-3.5" />
+          )}
           {row.original.active ? "Active" : "Inactive"}
         </Badge>
       ),
@@ -165,6 +211,7 @@ export default function PatientManagement() {
     {
       accessorKey: "created_at",
       header: "Created",
+      meta: { headClassName: "min-w-[110px]", cellClassName: "min-w-[110px]" },
       cell: ({ row }) =>
         row.original.created_at ? new Date(row.original.created_at).toLocaleDateString() : "—",
     },
@@ -172,6 +219,7 @@ export default function PatientManagement() {
       id: "actions",
       header: "Actions",
       enableSorting: false,
+      meta: { headClassName: "w-12 text-right", cellClassName: "w-12 text-right" },
       cell: ({ row }) => (
         <PatientActions patient={row.original} onDelete={deletePatient} />
       ),
@@ -191,7 +239,7 @@ export default function PatientManagement() {
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 text-gray-700">
       <PageHeader
         title="Patient Management"
         description="Manage patients. All table schema properties are shown."
@@ -213,8 +261,8 @@ export default function PatientManagement() {
         columns={columns}
         data={patients}
         isLoading={isLoading}
-        searchColumnId="lastname"
-        searchPlaceholder="Search by last name…"
+        searchColumnId="email"
+        searchPlaceholder="Search by email…"
         emptyMessage="No patients yet. Add one to get started."
       />
 

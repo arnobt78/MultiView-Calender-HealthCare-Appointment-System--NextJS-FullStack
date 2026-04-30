@@ -20,7 +20,7 @@ export default function PatientDetailPage() {
     return (
       <div className="max-w-9xl mx-auto p-4">
         <p className="text-destructive">Invalid patient ID.</p>
-        <Button variant="link" asChild><Link href="/control-panel">Back to Control Panel</Link></Button>
+        <Button variant="link" asChild><Link href="/control-panel/patient-management">Back to Control Panel</Link></Button>
       </div>
     );
   }
@@ -29,7 +29,7 @@ export default function PatientDetailPage() {
     return (
       <div className="max-w-9xl mx-auto p-4">
         <p className="text-destructive">{error?.message ?? "Failed to load patient."}</p>
-        <Button variant="link" asChild><Link href="/control-panel">Back to Control Panel</Link></Button>
+        <Button variant="link" asChild><Link href="/control-panel/patient-management">Back to Control Panel</Link></Button>
       </div>
     );
   }
@@ -50,7 +50,7 @@ export default function PatientDetailPage() {
         actions={
           <>
             <Button variant="outline" asChild>
-              <Link href="/control-panel">
+              <Link href="/control-panel/patient-management">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back
               </Link>

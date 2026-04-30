@@ -12,7 +12,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -20,6 +19,7 @@ import { LayoutDashboard, Settings, BookOpen, Activity, LogOut, Bell, BellRing, 
 import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
 import { useAppStore } from "@/store/useAppStore";
 import GlobalSearch from "@/components/shared/GlobalSearch";
+import { UserAvatar } from "@/components/shared/UserAvatar";
 
 export default function Navbar() {
   const { user, logout, isLoggingOut, isLoading } = useAuth();
@@ -251,16 +251,12 @@ export default function Navbar() {
                     disabled={!user}
                   >
                     {user ? (
-                      // Keep avatar framing stable so profile photos look natural in navbar.
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage
-                          src={avatarSrc}
-                          alt=""
-                          referrerPolicy="no-referrer"
-                          className="object-cover object-center"
-                        />
-                        <AvatarFallback className="bg-primary/10 text-gray-700 font-medium">{initials}</AvatarFallback>
-                      </Avatar>
+                      // Shared avatar with safe-image fallback so profile photos stay resilient.
+                      <UserAvatar
+                        src={avatarSrc}
+                        fallbackText={initials}
+                        sizeClassName="h-10 w-10"
+                      />
                     ) : (
                       <div className="h-10 w-10 rounded-full bg-gray-200/90 animate-pulse" />
                     )}

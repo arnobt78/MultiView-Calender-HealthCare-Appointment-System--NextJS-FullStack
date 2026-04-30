@@ -26,6 +26,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
+
+type DataTableColumnMeta = {
+  headClassName?: string;
+  cellClassName?: string;
+};
 
 export interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -94,35 +100,91 @@ export function DataTable<TData, TValue>({
         </div>
       )}
       <div className="rounded-2xl border">
-        <Table>
+        <Table className="table-fixed">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
+                {headerGroup.headers.map((header) => {
+                  const columnMeta = header.column.columnDef.meta as DataTableColumnMeta | undefined;
+                  const columnId = header.column.id;
+                  const compactEdgeColumn = columnId === "image" || columnId === "actions";
+                  return (
+                  <TableHead
+                    key={header.id}
+                    className={cn(
+                      compactEdgeColumn && "w-12 min-w-12 px-2",
+                      columnMeta?.headClassName
+                    )}
+                  >
                     {header.isPlaceholder
                       ? null
                       : flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
-                ))}
+                )})}
               </TableRow>
             ))}
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
-                  Loading...
-                </TableCell>
-              </TableRow>
+              // Keep headers static and render fixed-size inline row skeletons.
+              Array.from({ length: 5 }).map((_, rowIdx) => (
+                <TableRow key={`skeleton-row-${rowIdx}`}>
+                  {table.getAllLeafColumns().map((column) => {
+                    const columnMeta = column.columnDef.meta as DataTableColumnMeta | undefined;
+                    const columnId = column.id;
+                    const compactEdgeColumn = columnId === "image" || columnId === "actions";
+                    return (
+                      <TableCell
+                        key={`skeleton-cell-${rowIdx}-${column.id}`}
+                        className={cn(
+                          compactEdgeColumn && "px-2",
+                          columnId === "actions" && "text-right",
+                          columnMeta?.cellClassName
+                        )}
+                      >
+                        {columnId === "image" ? (
+                          <div className="flex items-center">
+                            <Skeleton className="h-9 w-9 rounded-full" />
+                          </div>
+                        ) : columnId === "name" || columnId === "display_name" ? (
+                          <Skeleton className="h-4 w-28 rounded-sm" />
+                        ) : columnId === "email" ? (
+                          <Skeleton className="h-4 w-36 rounded-sm" />
+                        ) : columnId === "role" || columnId === "active" ? (
+                          <Skeleton className="h-5 w-16 rounded-full" />
+                        ) : columnId === "created_at" ? (
+                          <Skeleton className="h-4 w-20 rounded-sm" />
+                        ) : columnId === "actions" ? (
+                          <div className="flex justify-end">
+                            <Skeleton className="h-4 w-4 rounded-sm" />
+                          </div>
+                        ) : (
+                          <Skeleton className="h-4 w-24 rounded-sm" />
+                        )}
+                      </TableCell>
+                    );
+                  })}
+                </TableRow>
+              ))
             ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                  {row.getVisibleCells().map((cell) => {
+                    const columnMeta = cell.column.columnDef.meta as DataTableColumnMeta | undefined;
+                    const columnId = cell.column.id;
+                    const compactEdgeColumn = columnId === "image" || columnId === "actions";
+                    return (
+                    <TableCell
+                      key={cell.id}
+                      className={cn(
+                        compactEdgeColumn && "px-2",
+                        columnId === "actions" && "text-right",
+                        columnMeta?.cellClassName
+                      )}
+                    >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
-                  ))}
+                  )})}
                 </TableRow>
               ))
             ) : (

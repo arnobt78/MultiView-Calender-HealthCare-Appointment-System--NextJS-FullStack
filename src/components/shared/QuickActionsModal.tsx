@@ -86,8 +86,8 @@ export default function QuickActionsModal() {
     {
       icon: Stethoscope,
       label: "Doctor Management",
-      description: "Manage doctors, staff roles, permissions and availability.",
-      href: "/control-panel/doctor-user-management",
+      description: "Doctor accounts (role doctor). Use Staff tab for admin users.",
+      href: "/control-panel/doctor-management",
       color: "bg-purple-100 text-purple-700",
     },
     {

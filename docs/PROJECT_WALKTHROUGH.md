@@ -4,6 +4,29 @@
 
 Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Prisma (PostgreSQL), TanStack Query v5, Framer Motion, Shadcn/UI, Radix UI, Sonner (toasts), Zustand, jose (edge JWT), bcryptjs, Vercel Blob, Stripe, Resend.
 
+### Control panel entity split (users vs patients)
+
+- **`patients` table** (`Patient` model): clinical/client records used by Patient Management and appointments. Demo seed creates one row aligned with `test@patient.com` so `/control-panel/patient-management` lists a sample patient.
+- **`users` table** (`User` model): auth accounts with `role`. **Doctor Management** lists `GET /api/users?role=doctor`. **User / Admin Management** lists `GET /api/users?roles=admin,secretary` (staff; excludes doctor/patient rows).
+- **`ControlPanelPage` tabs**: `/control-panel/patient-management` renders TanStack `PatientManagement`; `/control-panel/doctor-management` and `/control-panel/user-admin-management` render filtered user tables. Legacy URL `/control-panel/doctor-user-management` still maps to the doctors tab.
+- **Hooks**: `useUsers({ role: "doctor" })`, `useUsers({ roles: ["admin", "secretary"] })`, or unfiltered list — query key includes the filter object; `invalidateUsersAndAuth` refreshes after PATCH.
+
+### Demo seed
+
+Run `npm run db:seed-test-user` after migrations: upserts three `users`, doctor availability + appointment type, and one `patients` row for the demo portal email so Patient Management is non-empty.
+
+### Avatar cropping (detail pages)
+
+User detail SSR page uses `Avatar` + `AvatarImage` with `className="object-cover object-center"` and `overflow-hidden` on the root so portrait photos are not stretched inside circles (same treatment as list rows and navbar).
+
+### Safe image fallback
+
+- `src/components/ui/safe-image.tsx`: `next/image` first, automatic native `<img>` fallback on `onError` for remote URLs.
+- `src/components/shared/UserAvatar.tsx`: reusable avatar wrapper with skeleton state, safe-image fallback, and initials fallback.
+- Applied in navbar and control-panel user/patient tables + user detail page for consistent image rendering.
+- `DataTable` loading state keeps table/header static and shows a lightweight inline loading row (no skeleton flash), preserving layout stability.
+- Management tables use shared fixed column sizing (`meta.headClassName` / `meta.cellClassName`) for stable layout and reduced reflow on filter/loading states.
+
 ---
 
 ## Auth + Proxy Architecture (single source of truth)

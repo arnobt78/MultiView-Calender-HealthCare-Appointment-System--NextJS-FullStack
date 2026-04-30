@@ -95,6 +95,32 @@ async function seedDemoUsers() {
       },
     });
   }
+
+  // Patient Management reads `patients` table; portal login stays on `users`. Keep one demo row in sync.
+  const demoPatientAcc = DEMO_ACCOUNTS.find((a) => a.role === "patient");
+  if (demoPatientAcc) {
+    const parts = demoPatientAcc.displayName.trim().split(/\s+/);
+    const firstname = parts[0] ?? "User";
+    const lastname = parts.slice(1).join(" ") || "Patient";
+    const existingRow = await prisma.patient.findFirst({
+      where: { email: demoPatientAcc.email },
+    });
+    if (!existingRow) {
+      await prisma.patient.create({
+        data: {
+          firstname,
+          lastname,
+          email: demoPatientAcc.email,
+          active: true,
+        },
+      });
+    } else {
+      await prisma.patient.update({
+        where: { id: existingRow.id },
+        data: { firstname, lastname, email: demoPatientAcc.email },
+      });
+    }
+  }
 }
 
 seedDemoUsers()

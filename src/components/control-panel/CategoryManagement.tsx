@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCategories } from "@/hooks/useCategories";
 import { DataTable } from "@/components/shared/DataTable";
 import { PageHeader } from "@/components/shared/PageHeader";
+import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { Button } from "@/components/ui/button";
 import { Category } from "@/types/types";
 import { Plus, Pencil, MoreHorizontal, Trash2 } from "lucide-react";
@@ -107,7 +108,17 @@ export default function CategoryManagement() {
   });
 
   const columns: ColumnDef<Category>[] = [
-    { accessorKey: "label", header: "Label", cell: ({ row }) => <span className="font-medium">{row.original.label}</span> },
+    {
+      accessorKey: "label",
+      header: "Label",
+      cell: ({ row }) => (
+        <EntityTitleLink
+          href={`/control-panel/categories/${row.original.id}`}
+          label={row.original.label}
+          className="font-medium"
+        />
+      ),
+    },
     { accessorKey: "description", header: "Description", cell: ({ row }) => row.original.description ?? "—" },
     {
       accessorKey: "color",

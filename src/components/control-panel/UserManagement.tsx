@@ -20,6 +20,9 @@ import {
 import type { User } from "@/types/types";
 import { EllipsisVertical, Pencil, ShieldCheck } from "lucide-react";
 
+/** Staff accounts (admin + secretary); doctors and portal patients use other control-panel tabs. */
+const STAFF_ROLES = ["admin", "secretary"] as const;
+
 function RoleCell({ user, onRoleChange }: { user: User; onRoleChange: (id: string, role: string) => void }) {
   const ROLES = ["admin", "doctor", "secretary", "patient"];
   return (
@@ -68,8 +71,11 @@ function ActionsCell({ user }: { user: User }) {
   );
 }
 
-export default function DoctorManagement() {
-  const { data, isLoading, updateUser } = useUsers({ role: "doctor", limit: 100 });
+export default function UserManagement() {
+  const { data, isLoading, updateUser } = useUsers({
+    roles: [...STAFF_ROLES],
+    limit: 100,
+  });
   const users = data?.users ?? [];
 
   const handleRoleChange = (id: string, role: string) => {
@@ -100,12 +106,7 @@ export default function DoctorManagement() {
       cell: ({ row }) => {
         const label = row.original.display_name ?? "—";
         if (!row.original.id) return label;
-        return (
-          <EntityTitleLink
-            href={`/control-panel/doctors/${row.original.id}`}
-            label={label}
-          />
-        );
+        return <EntityTitleLink href={`/control-panel/doctors/${row.original.id}`} label={label} />;
       },
     },
     {
@@ -118,18 +119,14 @@ export default function DoctorManagement() {
       accessorKey: "role",
       header: "Role",
       meta: { headClassName: "min-w-[130px]", cellClassName: "min-w-[130px]" },
-      cell: ({ row }) => (
-        <RoleCell user={row.original} onRoleChange={handleRoleChange} />
-      ),
+      cell: ({ row }) => <RoleCell user={row.original} onRoleChange={handleRoleChange} />,
     },
     {
       accessorKey: "created_at",
       header: "Created",
       meta: { headClassName: "min-w-[110px]", cellClassName: "min-w-[110px]" },
       cell: ({ row }) =>
-        row.original.created_at
-          ? new Date(row.original.created_at).toLocaleDateString()
-          : "—",
+        row.original.created_at ? new Date(row.original.created_at).toLocaleDateString() : "—",
     },
     {
       id: "actions",
@@ -143,8 +140,8 @@ export default function DoctorManagement() {
   return (
     <div className="space-y-2 text-gray-700">
       <PageHeader
-        title="Doctor Management"
-        description="Accounts with role doctor. Staff admins use User / Admin Management."
+        title="User / Admin Management"
+        description="Staff accounts (admin, secretary). Doctors and patients have dedicated tabs."
       />
       <DataTable<User, unknown>
         columns={columns}
@@ -152,9 +149,8 @@ export default function DoctorManagement() {
         isLoading={isLoading}
         searchColumnId="email"
         searchPlaceholder="Search by email…"
-        emptyMessage="No doctors found."
+        emptyMessage="No staff users found."
       />
     </div>
   );
 }
-

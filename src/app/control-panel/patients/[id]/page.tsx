@@ -14,6 +14,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft } from "lucide-react";
 import { PatientDetailForm } from "@/components/control-panel/PatientDetailForm";
+import { UserAvatar } from "@/components/shared/UserAvatar";
+import { DEMO_ACCOUNTS } from "@/lib/demo-credentials";
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -33,15 +35,20 @@ export default async function PatientDetailPage({ params }: PageProps) {
   if (!raw) notFound();
 
   const patient = serializePatient(raw);
+  const nameLabel = `${patient.firstname} ${patient.lastname}`.trim();
+  const fallbackText = nameLabel || patient.email || "?";
+  const avatarSrc = patient.email
+    ? DEMO_ACCOUNTS.find((a) => a.email.toLowerCase() === patient.email?.toLowerCase())?.avatarUrl ?? null
+    : null;
 
   return (
-    <div className="max-w-9xl mx-auto space-y-2 px-2 sm:px-4 lg:px-8">
+    <div className="max-w-9xl mx-auto space-y-2 px-2 sm:px-4 lg:px-8 text-gray-700">
       <PageHeader
-        title={`${patient.firstname} ${patient.lastname}`}
+        title={nameLabel}
         description="Patient — all table schema properties"
         actions={
           <Button variant="outline" asChild>
-            <Link href="/control-panel">
+            <Link href="/control-panel/patient-management">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back
             </Link>
@@ -57,6 +64,29 @@ export default async function PatientDetailPage({ params }: PageProps) {
           </p>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Match doctor/user detail header style: avatar + key identity fields. */}
+          <div className="flex items-center gap-4">
+            <UserAvatar
+              src={avatarSrc}
+              fallbackText={fallbackText}
+              sizeClassName="h-16 w-16"
+            />
+            <div>
+              <p className="font-semibold text-lg">{nameLabel || "—"}</p>
+              <p className="text-sm text-muted-foreground">{patient.email ?? "—"}</p>
+              <Badge
+                variant="outline"
+                className={
+                  patient.active
+                    ? "mt-1 border-emerald-200 bg-emerald-50 text-emerald-700"
+                    : "mt-1 border-slate-200 bg-slate-50 text-slate-600"
+                }
+              >
+                {patient.active ? "Active" : "Inactive"}
+              </Badge>
+            </div>
+          </div>
+
           {/* All schema fields */}
           <dl className="grid gap-3 text-sm sm:grid-cols-2">
             <div>

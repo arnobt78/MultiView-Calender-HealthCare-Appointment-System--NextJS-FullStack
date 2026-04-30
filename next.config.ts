@@ -4,6 +4,12 @@ import { securityHeaders } from "./src/lib/security-headers";
 const isProd = process.env.NODE_ENV === "production";
 
 const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [
+      // User fallback avatars in control-panel tables.
+      { protocol: "https", hostname: "robohash.org", pathname: "/**" },
+    ],
+  },
   async headers() {
     const rules = [
       {

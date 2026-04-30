@@ -1,6 +1,6 @@
 /**
- * SSR: Doctor / User detail page.
- * Server fetches the user via Prisma, passes to client component for editing.
+ * SSR: User account detail (all roles share this route).
+ * Server fetches the user via Prisma; DoctorDetailForm edits profile fields.
  */
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -12,7 +12,7 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/shared/UserAvatar";
 import { ArrowLeft } from "lucide-react";
 import { DoctorDetailForm } from "@/components/control-panel/DoctorDetailForm";
 
@@ -20,7 +20,7 @@ type PageProps = { params: Promise<{ id: string }> };
 
 export async function generateMetadata({ params }: PageProps) {
   const { id } = await params;
-  return { title: `Doctor / User — ${id.slice(0, 8)}` };
+  return { title: `User — ${id.slice(0, 8)}` };
 }
 
 export default async function DoctorDetailPage({ params }: PageProps) {
@@ -45,14 +45,22 @@ export default async function DoctorDetailPage({ params }: PageProps) {
 
   const user = serializeUser(raw);
 
+  const roleNorm = (user.role ?? "").toLowerCase();
+  const listBackHref =
+    roleNorm === "doctor"
+      ? "/control-panel/doctor-management"
+      : roleNorm === "admin" || roleNorm === "secretary"
+        ? "/control-panel/user-admin-management"
+        : "/control-panel/dashboard-overview";
+
   return (
-    <div className="max-w-9xl mx-auto  space-y-2 px-2 sm:px-4 lg:px-8">
+    <div className="max-w-9xl mx-auto space-y-2 px-2 sm:px-4 lg:px-8 text-gray-700">
       <PageHeader
         title={user.display_name ?? user.email ?? "User"}
-        description="Doctor / User — all table schema properties"
+        description="User account — all listed schema properties"
         actions={
           <Button variant="outline" asChild>
-            <Link href="/control-panel">
+            <Link href={listBackHref}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back
             </Link>
@@ -70,12 +78,12 @@ export default async function DoctorDetailPage({ params }: PageProps) {
         <CardContent className="space-y-6">
           {/* Profile avatar */}
           <div className="flex items-center gap-4">
-            <Avatar className="h-16 w-16">
-              <AvatarImage src={user.image ?? undefined} alt="" />
-              <AvatarFallback className="text-lg">
-                {(user.display_name || user.email || "?").slice(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
+            <UserAvatar
+              src={user.image}
+              fallbackText={user.display_name || user.email || "?"}
+              sizeClassName="h-16 w-16"
+              className="text-base"
+            />
             <div>
               <p className="font-semibold text-lg">{user.display_name ?? "—"}</p>
               <p className="text-sm text-muted-foreground">{user.email}</p>

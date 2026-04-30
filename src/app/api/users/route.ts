@@ -1,6 +1,7 @@
 /**
  * Users list for Control Panel (Prisma)
  * GET: List users (id, email, display_name, role, image, created_at).
+ * Query: role=doctor | roles=admin,secretary (comma-separated; roles wins when non-empty).
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -18,13 +19,16 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const role = searchParams.get("role") ?? undefined;
+    const rolesCsv = searchParams.get("roles") ?? "";
+    const rolesList = rolesCsv.split(",").map((r) => r.trim()).filter(Boolean);
     const limit = Math.min(
       Math.max(parseInt(searchParams.get("limit") ?? String(PAGINATION.DEFAULT_LIMIT), 10), 1),
       PAGINATION.MAX_LIMIT
     );
     const offset = Math.max(parseInt(searchParams.get("offset") ?? "0", 10), 0);
 
-    const where = role ? { role } : {};
+    const where =
+      rolesList.length > 0 ? { role: { in: rolesList } } : role ? { role } : {};
 
     const [users, total] = await Promise.all([
       prisma.user.findMany({

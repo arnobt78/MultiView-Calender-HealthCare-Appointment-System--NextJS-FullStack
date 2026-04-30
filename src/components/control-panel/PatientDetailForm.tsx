@@ -43,7 +43,8 @@ export function PatientDetailForm({ patient }: { patient: Patient }) {
   };
 
   const handleDelete = () => {
-    deletePatient(patient.id, { onSuccess: () => router.push("/control-panel") });
+    // Keep user in Patient Management context after delete.
+    deletePatient(patient.id, { onSuccess: () => router.push("/control-panel/patient-management") });
   };
 
   return (

@@ -7,6 +7,8 @@ import { notify } from "@/lib/notify";
 
 export type UserListFilters = {
   role?: string;
+  /** Passed as roles=a,b on GET /api/users */
+  roles?: string[];
   limit?: number;
   offset?: number;
 };
@@ -26,6 +28,7 @@ export function useUsers(filters: UserListFilters = {}) {
   const queryClient = useQueryClient();
   const params = new URLSearchParams();
   if (filters.role) params.set("role", filters.role);
+  if (filters.roles?.length) params.set("roles", filters.roles.join(","));
   if (filters.limit != null) params.set("limit", String(filters.limit));
   if (filters.offset != null) params.set("offset", String(filters.offset));
   const queryString = params.toString();

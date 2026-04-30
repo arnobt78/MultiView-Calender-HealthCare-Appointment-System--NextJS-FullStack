@@ -1,8 +1,8 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import Image, { type ImageProps } from "next/image";
 import { useCallback, useState, type SyntheticEvent } from "react";
+import { cn } from "@/lib/utils";
 
 type SafeImageProps = ImageProps;
 
@@ -26,7 +26,7 @@ export function SafeImage({
       onError?.(e);
       if (resolvedSrc) setUseNative(true);
     },
-    [onError, resolvedSrc],
+    [onError, resolvedSrc]
   );
 
   const eager = Boolean(priority || loading === "eager");
@@ -34,7 +34,7 @@ export function SafeImage({
   if (useNative && resolvedSrc) {
     if (fill) {
       return (
-        // eslint-disable-next-line @next/next/no-img-element -- fallback when /_next/image fails (e.g. 402)
+        // eslint-disable-next-line @next/next/no-img-element -- fallback when /_next/image fails
         <img
           alt={alt}
           src={resolvedSrc}
@@ -42,11 +42,12 @@ export function SafeImage({
           loading={eager ? "eager" : "lazy"}
           decoding="async"
           sizes={typeof rest.sizes === "string" ? rest.sizes : undefined}
+          referrerPolicy="no-referrer"
         />
       );
     }
     return (
-      // eslint-disable-next-line @next/next/no-img-element -- fallback when /_next/image fails (e.g. 402)
+      // eslint-disable-next-line @next/next/no-img-element -- fallback when /_next/image fails
       <img
         alt={alt}
         src={resolvedSrc}
@@ -55,6 +56,7 @@ export function SafeImage({
         className={cn(className)}
         loading={eager ? "eager" : "lazy"}
         decoding="async"
+        referrerPolicy="no-referrer"
       />
     );
   }

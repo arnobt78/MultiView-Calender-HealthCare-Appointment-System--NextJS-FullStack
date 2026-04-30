@@ -5,14 +5,13 @@ import { usePathname, useRouter } from "next/navigation";
 import PatientDetailView from "./PatientDetailView";
 import TelehealthDashboard from "./TelehealthDashboard";
 import { useAppStore } from "@/store/useAppStore";
-import { usePatients } from "@/hooks/usePatients";
-import { useDebounce } from "@/hooks/useDebounce";
 import AppointmentAccessPermission from "@/components/control-panel/AppointmentAccessPermission";
 import UserAccessPermission from "@/components/control-panel/UserAccessPermission";
 import InvitationList from "@/components/control-panel/InvitationList";
 import PatientManagement from "@/components/control-panel/PatientManagement";
 import CategoryManagement from "@/components/control-panel/CategoryManagement";
 import DoctorManagement from "@/components/control-panel/DoctorManagement";
+import UserManagement from "@/components/control-panel/UserManagement";
 import RelativesManagement from "@/components/control-panel/RelativesManagement";
 import OrganizationManagement from "@/components/control-panel/OrganizationManagement";
 import InvoiceManagement from "@/components/control-panel/InvoiceManagement";
@@ -32,10 +31,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Input } from "@/components/ui/input";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-
 const SIDEBAR_ITEMS = [
   { value: "overview", label: "Dashboard Overview" },
   { value: "telehealth", label: "Telehealth Queue" },
@@ -43,7 +38,8 @@ const SIDEBAR_ITEMS = [
   { value: "dashboard", label: "User Dashboard Access Invitation" },
   { value: "patients", label: "Patient Management" },
   { value: "categories", label: "Category Management" },
-  { value: "doctors", label: "Doctor / User Management" },
+  { value: "doctors", label: "Doctor Management" },
+  { value: "users_admin", label: "User / Admin Management" },
   { value: "relatives", label: "Relative Management" },
   { value: "organizations", label: "Organization Management" },
   { value: "invoices", label: "Invoices & Payments" },
@@ -60,7 +56,8 @@ const TAB_TO_SEGMENT: Record<string, string> = {
   dashboard: "user-dashboard-access-invitation",
   patients: "patient-management",
   categories: "category-management",
-  doctors: "doctor-user-management",
+  doctors: "doctor-management",
+  users_admin: "user-admin-management",
   relatives: "relative-management",
   organizations: "organization-management",
   invoices: "invoice-management",
@@ -70,9 +67,13 @@ const TAB_TO_SEGMENT: Record<string, string> = {
   "google-calendar": "google-calendar",
 };
 
-const SEGMENT_TO_TAB = Object.fromEntries(
-  Object.entries(TAB_TO_SEGMENT).map(([tab, segment]) => [segment, tab])
-) as Record<string, string>;
+const SEGMENT_TO_TAB = {
+  ...Object.fromEntries(
+    Object.entries(TAB_TO_SEGMENT).map(([tab, segment]) => [segment, tab])
+  ),
+  /** Older deployments linked here from Quick Actions / bookmarks */
+  "doctor-user-management": "doctors",
+} as Record<string, string>;
 
 type ControlPanelPageProps = {
   /** Optional session from SSR to avoid client round-trip */
@@ -81,14 +82,9 @@ type ControlPanelPageProps = {
 };
 
 export function PatientsTab() {
-  const { patients, isLoading, isError, error } = usePatients();
-  const [searchTerm, setSearchTerm] = useState("");
-  const debouncedSearch = useDebounce(searchTerm, 300) ?? "";
-
-  // Local state for editing form, global state for viewing entire record
-  const [editingPatient, setEditingPatient] = useState<string | null>(null);
-  const activePatientId = useAppStore(state => state.activePatientId);
-  const setActivePatient = useAppStore(state => state.setActivePatientId);
+  // Inline legacy detail when store pins a patient (rare); default list is TanStack PatientManagement.
+  const activePatientId = useAppStore((state) => state.activePatientId);
+  const setActivePatient = useAppStore((state) => state.setActivePatientId);
 
   if (activePatientId) {
     return (
@@ -105,47 +101,7 @@ export function PatientsTab() {
     );
   }
 
-  if (isLoading) return <div className="p-4"><Skeleton className="h-[400px] w-full" /></div>;
-  if (isError) return <div className="p-4 text-red-500">Error loading patients: {error?.message}</div>;
-
-  const search = (debouncedSearch ?? "").toLowerCase();
-  const filteredPatients = patients?.filter(patient =>
-    `${patient.firstname ?? ""} ${patient.lastname ?? ""}`.toLowerCase().includes(search) ||
-    (patient.email ?? "").toLowerCase().includes(search)
-  ) || [];
-
-  return (
-    <div className="space-y-2 animate-in fade-in">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-700">Patient Management</h2>
-        <Input
-          placeholder="Search patients..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-sm"
-        />
-      </div>
-      {filteredPatients.length === 0 ? (
-        <p className="text-center text-muted-foreground">No patients found.</p>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredPatients.map((patient) => (
-            <Card key={patient.id}>
-              <CardHeader>
-                <CardTitle>{patient.firstname} {patient.lastname}</CardTitle>
-                <CardDescription>{patient.email}</CardDescription>
-              </CardHeader>
-              <CardContent className="flex justify-end">
-                <Button variant="ghost" size="sm" onClick={() => setActivePatient(patient.id)}>
-                  View All Details
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+  return <PatientManagement />;
 }
 
 export default function ControlPanelPage({ initialSession, initialTab }: ControlPanelPageProps) {
@@ -242,7 +198,7 @@ export default function ControlPanelPage({ initialSession, initialTab }: Control
         </div>
 
         {/* Main content - dynamic width */}
-        <main className="flex-1 min-w-0">
+        <main className="flex-1 min-w-0 text-gray-700">
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
             <div className="md:hidden mb-4 overflow-x-auto">
               <TabsList className="inline-flex w-full min-w-max rounded-2xl shadow-xl gap-2 p-1">
@@ -253,6 +209,7 @@ export default function ControlPanelPage({ initialSession, initialTab }: Control
                 <TabsTrigger value="patients" className="py-2">Patients</TabsTrigger>
                 <TabsTrigger value="categories" className="py-2">Categories</TabsTrigger>
                 <TabsTrigger value="doctors" className="py-2">Doctors</TabsTrigger>
+                <TabsTrigger value="users_admin" className="py-2">Staff</TabsTrigger>
                 <TabsTrigger value="relatives" className="py-2">Relatives</TabsTrigger>
                 <TabsTrigger value="organizations" className="py-2">Organizations</TabsTrigger>
                 <TabsTrigger value="invoices" className="py-2">Invoices</TabsTrigger>
@@ -284,6 +241,9 @@ export default function ControlPanelPage({ initialSession, initialTab }: Control
             </TabsContent>
             <TabsContent value="doctors" className="mt-0 md:mt-0">
               <DoctorManagement />
+            </TabsContent>
+            <TabsContent value="users_admin" className="mt-0 md:mt-0">
+              <UserManagement />
             </TabsContent>
             <TabsContent value="relatives" className="mt-0 md:mt-0">
               <RelativesManagement />
