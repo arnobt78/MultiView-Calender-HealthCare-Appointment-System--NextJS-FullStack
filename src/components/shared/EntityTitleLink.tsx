@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { PrefetchingLink } from "@/components/shared/PrefetchingLink";
 
 type EntityTitleLinkProps = {
   href: string;
@@ -12,7 +12,7 @@ type EntityTitleLinkProps = {
 export function EntityTitleLink({ href, label, className }: EntityTitleLinkProps) {
   return (
     // Shared table title link style: sky text with subtle hover emphasis.
-    <Link
+    <PrefetchingLink
       href={href}
       className={cn(
         "inline-flex items-center text-sky-700 transition-colors hover:text-sky-800 hover:bg-sky-50/60 rounded-md px-1 py-0.5 no-underline",
@@ -20,7 +20,7 @@ export function EntityTitleLink({ href, label, className }: EntityTitleLinkProps
       )}
     >
       {label}
-    </Link>
+    </PrefetchingLink>
   );
 }
 

@@ -105,6 +105,10 @@ async function seedDemoUsers() {
     const existingRow = await prisma.patient.findFirst({
       where: { email: demoPatientAcc.email },
     });
+    const clinical_profile = {
+      allergies: ["penicillin (demo)"],
+      notes: "Seeded clinical profile for Patient Management / snapshot demos.",
+    };
     if (!existingRow) {
       await prisma.patient.create({
         data: {
@@ -112,12 +116,13 @@ async function seedDemoUsers() {
           lastname,
           email: demoPatientAcc.email,
           active: true,
+          clinical_profile,
         },
       });
     } else {
       await prisma.patient.update({
         where: { id: existingRow.id },
-        data: { firstname, lastname, email: demoPatientAcc.email },
+        data: { firstname, lastname, email: demoPatientAcc.email, clinical_profile },
       });
     }
   }

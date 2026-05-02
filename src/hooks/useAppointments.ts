@@ -4,7 +4,9 @@ import { queryKeys } from "@/lib/query-keys";
 import {
   invalidateAfterAppointmentMutation,
   invalidateActivitiesList,
+  invalidateInvoicesAndOverview,
   invalidateNotificationsData,
+  invalidatePatientDetailAndSnapshot,
 } from "@/lib/query-client";
 import {
   fetchAssignees,
@@ -186,7 +188,9 @@ export function useAppointments() {
       }),
     onSuccess: async (data) => {
       const appointment = data.appointment;
-      await invalidateAfterAppointmentMutation(queryClient);
+      await invalidateAfterAppointmentMutation(queryClient, {
+        patientId: appointment?.patient ?? undefined,
+      });
       notify.crud({
         action: "created",
         entity: "Appointment",
@@ -208,7 +212,9 @@ export function useAppointments() {
     onSuccess: async (data, variables) => {
       const appointment = data.appointment;
       const updatedLabels = getUpdatedFieldLabels(variables);
-      await invalidateAfterAppointmentMutation(queryClient);
+      await invalidateAfterAppointmentMutation(queryClient, {
+        patientId: appointment?.patient ?? undefined,
+      });
       notify.crud({
         action: "updated",
         entity: "Appointment",
@@ -233,9 +239,11 @@ export function useAppointments() {
       queryClient.setQueryData<FullAppointment[]>(queryKeys.appointments.all, (old) =>
         old ? old.filter((appt) => appt.id !== deletedId) : []
       );
+      const patientId = context?.deleted?.patient ?? undefined;
       await Promise.all([
         invalidateActivitiesList(queryClient),
         invalidateNotificationsData(queryClient),
+        invalidateInvoicesAndOverview(queryClient, { patientId }),
       ]);
       const deleted = context?.deleted;
       notify.crud({
@@ -275,11 +283,12 @@ export function useAppointments() {
       }
       return { previousAppointments };
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       const appt = data.appointment;
       queryClient.setQueryData<FullAppointment[]>(queryKeys.appointments.all, (old = []) =>
         old.map((item) => (item.id === appt.id ? { ...item, ...appt } : item))
       );
+      await invalidatePatientDetailAndSnapshot(queryClient, appt.patient ?? undefined);
       notify.success({
         title: "Status updated",
         subtitle: `"${getSafeAppointmentTitle(appt)}" is now marked as ${getStatusLabel(
@@ -305,7 +314,6 @@ export function useAppointments() {
     isError: query.isError,
     error: query.error,
     refetch: query.refetch,
-    // Mutations
     // Mutations
     createAppointment: createMutation.mutate,
     createAppointmentAsync: createMutation.mutateAsync,

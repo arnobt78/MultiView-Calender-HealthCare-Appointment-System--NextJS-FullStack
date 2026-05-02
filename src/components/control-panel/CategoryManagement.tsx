@@ -1,14 +1,15 @@
 "use client";
 
 import { type ColumnDef } from "@tanstack/react-table";
-import Link from "next/link";
+import { PrefetchingLink } from "@/components/shared/PrefetchingLink";
 import { useCategories } from "@/hooks/useCategories";
 import { DataTable } from "@/components/shared/DataTable";
+import { DataTableColumnHeader } from "@/components/shared/DataTableColumnHeader";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { Button } from "@/components/ui/button";
 import { Category } from "@/types/types";
-import { Plus, Pencil, MoreHorizontal, Trash2 } from "lucide-react";
+import { Plus, Pencil, MoreHorizontal, Trash2, Eye } from "lucide-react";
 import { useState } from "react";
 import {
   Dialog,
@@ -57,10 +58,22 @@ function CategoryActions({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem asChild>
-            <Link href={`/control-panel/categories/${category.id}`} className="flex items-center gap-2 cursor-pointer">
+            <PrefetchingLink
+              href={`/control-panel/categories/${category.id}`}
+              className="flex items-center gap-2 cursor-pointer"
+            >
+              <Eye className="h-4 w-4" />
+              View
+            </PrefetchingLink>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <PrefetchingLink
+              href={`/control-panel/categories/${category.id}?mode=edit`}
+              className="flex items-center gap-2 cursor-pointer"
+            >
               <Pencil className="h-4 w-4" />
-              View / Edit
-            </Link>
+              Edit
+            </PrefetchingLink>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
@@ -110,7 +123,7 @@ export default function CategoryManagement() {
   const columns: ColumnDef<Category>[] = [
     {
       accessorKey: "label",
-      header: "Label",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Label" />,
       cell: ({ row }) => (
         <EntityTitleLink
           href={`/control-panel/categories/${row.original.id}`}
@@ -119,7 +132,11 @@ export default function CategoryManagement() {
         />
       ),
     },
-    { accessorKey: "description", header: "Description", cell: ({ row }) => row.original.description ?? "—" },
+    {
+      accessorKey: "description",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Description" />,
+      cell: ({ row }) => row.original.description ?? "—",
+    },
     {
       accessorKey: "color",
       header: "Color",
@@ -142,7 +159,7 @@ export default function CategoryManagement() {
     { accessorKey: "icon", header: "Icon", cell: ({ row }) => row.original.icon ?? "—" },
     {
       accessorKey: "created_at",
-      header: "Created",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Created" />,
       cell: ({ row }) =>
         row.original.created_at ? new Date(row.original.created_at).toLocaleDateString() : "—",
     },
@@ -191,8 +208,13 @@ export default function CategoryManagement() {
         columns={columns}
         data={categories}
         isLoading={isLoading}
-        searchColumnId="label"
-        searchPlaceholder="Search by label…"
+        globalFilterFn={(row, q) => {
+          const s = q.trim().toLowerCase();
+          if (!s) return true;
+          const c = row;
+          return `${c.label} ${c.description ?? ""}`.toLowerCase().includes(s);
+        }}
+        searchPlaceholder="Search by label or description…"
         emptyMessage="No categories yet. Add one to get started."
       />
 

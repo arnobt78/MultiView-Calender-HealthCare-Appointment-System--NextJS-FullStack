@@ -1,6 +1,44 @@
 import { QueryClient } from "@tanstack/react-query";
 import { queryKeys } from "./query-keys";
 
+/** Appointment rows in cache — `patient` is FK to patients.id */
+type CachedAppointmentRow = { id: string; patient?: string | null };
+
+type CachedInvoiceRow = { id: string; appointment_id?: string | null };
+
+/** Resolve patient UUID from the appointments list cache (no extra fetch). */
+export function getPatientIdFromAppointmentCache(
+  queryClient: QueryClient,
+  appointmentId: string | null | undefined
+): string | undefined {
+  if (!appointmentId) return undefined;
+  const data = queryClient.getQueryData<CachedAppointmentRow[]>(queryKeys.appointments.all);
+  return data?.find((a) => a.id === appointmentId)?.patient ?? undefined;
+}
+
+/** Invoice list cache → appointment → patient (for targeted invalidation after invoice CRUD). */
+export function getPatientIdFromInvoiceCache(
+  queryClient: QueryClient,
+  invoiceId: string
+): string | undefined {
+  const invoices = queryClient.getQueryData<CachedInvoiceRow[]>(queryKeys.invoices.all);
+  const inv = invoices?.find((i) => i.id === invoiceId);
+  if (!inv?.appointment_id) return undefined;
+  return getPatientIdFromAppointmentCache(queryClient, inv.appointment_id);
+}
+
+/** Narrow invalidation: detail + snapshot only (avoids refetching full patient list when not needed). */
+export async function invalidatePatientDetailAndSnapshot(
+  queryClient: QueryClient,
+  patientId: string | null | undefined
+) {
+  if (!patientId) return;
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: queryKeys.patients.detail(patientId) }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.patients.snapshot(patientId) }),
+  ]);
+}
+
 /**
  * Creates and configures the default QueryClient for the application.
  */
@@ -101,11 +139,21 @@ export async function invalidateOrganizations(queryClient: QueryClient) {
   await queryClient.invalidateQueries({ queryKey: queryKeys.organizations.all });
 }
 
-/** Invoices + dashboard overview KPIs */
-export async function invalidateInvoicesAndOverview(queryClient: QueryClient) {
+/**
+ * Invoices + dashboard KPIs + patient UI tied to billing/appointments.
+ * When `patientId` is known, only that patient’s detail/snapshot refetch (fewer calls than `patients.all`).
+ */
+export async function invalidateInvoicesAndOverview(
+  queryClient: QueryClient,
+  opts?: { patientId?: string | null }
+) {
+  const patientId = opts?.patientId;
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: queryKeys.invoices.all }),
     invalidateDashboardOverview(queryClient),
+    patientId
+      ? invalidatePatientDetailAndSnapshot(queryClient, patientId)
+      : queryClient.invalidateQueries({ queryKey: queryKeys.patients.all }),
   ]);
 }
 
@@ -113,26 +161,37 @@ export async function invalidateAvailabilitySlots(queryClient: QueryClient) {
   await queryClient.invalidateQueries({ queryKey: queryKeys.availability.root });
 }
 
-/** Appointment CRUD, ICS import — calendar + activity log + optional notifications */
-export async function invalidateAfterAppointmentMutation(queryClient: QueryClient) {
+/**
+ * After appointment create/update/import — pass `patientId` when known for cheaper patient cache updates.
+ */
+export async function invalidateAfterAppointmentMutation(
+  queryClient: QueryClient,
+  opts?: { patientId?: string | null }
+) {
   await Promise.all([
     invalidateAppointmentData(queryClient),
     invalidateActivitiesList(queryClient),
     invalidateNotificationsData(queryClient),
     invalidateAvailabilitySlots(queryClient),
+    invalidateInvoicesAndOverview(queryClient, { patientId: opts?.patientId ?? undefined }),
   ]);
 }
 
-/** Assignee or per-appointment activity changes from dialog */
+/** Assignee or per-appointment activity changes — resolves patient from cache when possible */
 export async function invalidateAssigneesActivitiesAppointment(
   queryClient: QueryClient,
   appointmentId?: string | null
 ) {
+  const patientId =
+    getPatientIdFromAppointmentCache(queryClient, appointmentId ?? undefined) ?? undefined;
   await Promise.all([
     invalidateAssigneesData(queryClient),
     invalidateAppointmentData(queryClient),
     invalidateActivitiesList(queryClient),
     invalidateAvailabilitySlots(queryClient),
+    patientId
+      ? invalidatePatientDetailAndSnapshot(queryClient, patientId)
+      : queryClient.invalidateQueries({ queryKey: queryKeys.patients.all }),
   ]);
   if (appointmentId) {
     await queryClient.invalidateQueries({

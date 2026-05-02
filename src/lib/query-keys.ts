@@ -27,6 +27,7 @@ export const queryKeys = {
   patients: {
     all: ["app", "patients"] as const,
     detail: (id: string) => [...queryKeys.patients.all, id] as const,
+    snapshot: (id: string) => [...queryKeys.patients.all, id, "snapshot"] as const,
   },
   relatives: {
     all: ["app", "relatives"] as const,

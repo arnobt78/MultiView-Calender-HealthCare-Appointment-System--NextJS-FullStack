@@ -3,10 +3,11 @@
 import { type ColumnDef } from "@tanstack/react-table";
 import { useRelatives, type RelativeCreateInput } from "@/hooks/useRelatives";
 import { DataTable } from "@/components/shared/DataTable";
+import { DataTableColumnHeader } from "@/components/shared/DataTableColumnHeader";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Relative } from "@/types/types";
-import { Plus, MoreHorizontal, Trash2, Pencil } from "lucide-react";
+import { Plus, MoreHorizontal, Trash2, Pencil, Eye } from "lucide-react";
 import { useState } from "react";
 import {
   Dialog,
@@ -35,14 +36,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Skeleton } from "@/components/ui/skeleton";
-
 function RelativeActions({
   relative,
+  onView,
   onEdit,
   onDelete,
 }: {
   relative: Relative;
+  onView: (r: Relative) => void;
   onEdit: (r: Relative) => void;
   onDelete: (id: string) => void;
 }) {
@@ -57,6 +58,9 @@ function RelativeActions({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => onView(relative)}>
+            <Eye className="mr-2 h-4 w-4" /> View
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={() => onEdit(relative)}>
             <Pencil className="mr-2 h-4 w-4" /> Edit
           </DropdownMenuItem>
@@ -102,6 +106,7 @@ export default function RelativesManagement() {
 
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Relative | null>(null);
+  const [viewTarget, setViewTarget] = useState<Relative | null>(null);
 
   const [form, setForm] = useState<RelativeCreateInput>({ firstname: "", lastname: "", pronoun: "", notes: "" });
 
@@ -128,20 +133,20 @@ export default function RelativesManagement() {
   const columns: ColumnDef<Relative>[] = [
     {
       accessorKey: "firstname",
-      header: "First Name",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="First Name" />,
     },
     {
       accessorKey: "lastname",
-      header: "Last Name",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Last Name" />,
     },
     {
       accessorKey: "pronoun",
-      header: "Pronoun",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Pronoun" />,
       cell: ({ row }) => row.original.pronoun || <span className="text-muted-foreground">—</span>,
     },
     {
       accessorKey: "notes",
-      header: "Notes",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Notes" />,
       cell: ({ row }) =>
         row.original.notes ? (
           <span className="max-w-[240px] truncate block">{row.original.notes}</span>
@@ -151,7 +156,7 @@ export default function RelativesManagement() {
     },
     {
       accessorKey: "created_at",
-      header: "Created At",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Created At" />,
       cell: ({ row }) =>
         row.original.created_at ? new Date(row.original.created_at).toLocaleDateString() : "—",
     },
@@ -162,15 +167,13 @@ export default function RelativesManagement() {
       cell: ({ row }) => (
         <RelativeActions
           relative={row.original}
+          onView={(r) => setViewTarget(r)}
           onEdit={openEdit}
           onDelete={(id) => deleteRelative(id)}
         />
       ),
     },
   ];
-
-  if (isLoading) return <div className="p-4"><Skeleton className="h-[400px] w-full" /></div>;
-  if (isError) return <div className="p-4 text-red-500">Error: {error?.message}</div>;
 
   return (
     <div className="space-y-2 animate-in fade-in">
@@ -184,12 +187,45 @@ export default function RelativesManagement() {
         }
       />
 
+      {isError && (
+        <p className="text-sm text-red-600" role="alert">
+          Error: {error?.message ?? "Failed to load relatives"}
+        </p>
+      )}
+
       <DataTable
         columns={columns}
         data={relatives}
-        searchColumnId="firstname"
-        searchPlaceholder="Search by first name..."
+        isLoading={isLoading}
+        globalFilterFn={(row, q) => {
+          const s = q.trim().toLowerCase();
+          if (!s) return true;
+          const r = row;
+          return `${r.firstname} ${r.lastname} ${r.notes ?? ""}`.toLowerCase().includes(s);
+        }}
+        searchPlaceholder="Search by name or notes…"
       />
+
+      <Dialog open={!!viewTarget} onOpenChange={(o) => { if (!o) setViewTarget(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Relative</DialogTitle>
+          </DialogHeader>
+          {viewTarget && (
+            <div className="space-y-2 text-sm">
+              <p><span className="text-muted-foreground">Name:</span> {viewTarget.firstname} {viewTarget.lastname}</p>
+              <p><span className="text-muted-foreground">Pronoun:</span> {viewTarget.pronoun || "—"}</p>
+              <p><span className="text-muted-foreground">Notes:</span> {viewTarget.notes || "—"}</p>
+              <p><span className="text-muted-foreground">Created:</span>{" "}
+                {viewTarget.created_at ? new Date(viewTarget.created_at).toLocaleString() : "—"}
+              </p>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setViewTarget(null)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Create dialog */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>

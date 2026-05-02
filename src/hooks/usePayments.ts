@@ -1,7 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient, handleApiError } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
-import { invalidateInvoicesAndOverview } from "@/lib/query-client";
+import {
+  getPatientIdFromAppointmentCache,
+  getPatientIdFromInvoiceCache,
+  invalidateInvoicesAndOverview,
+} from "@/lib/query-client";
 import { notify } from "@/lib/notify";
 
 export interface InvoicePayment {
@@ -54,11 +58,19 @@ export function usePayments() {
   });
 
   const createInvoiceMutation = useMutation({
-    mutationFn: (body: { amount: number; currency?: string; description?: string; appointment_id?: string; due_date?: string }) =>
-      apiClient("/api/invoices", { method: "POST", body: JSON.stringify(body) }),
-    onSuccess: async () => {
+    mutationFn: (body: {
+      amount: number;
+      currency?: string;
+      description?: string;
+      appointment_id?: string;
+      due_date?: string;
+    }) =>
+      apiClient<{ invoice: Invoice }>("/api/invoices", { method: "POST", body: JSON.stringify(body) }),
+    onSuccess: async (data, variables) => {
       notify.crud({ action: "created", entity: "Invoice", detail: "The invoice is ready for payment." });
-      await invalidateInvoicesAndOverview(queryClient);
+      const apt = data.invoice.appointment_id ?? variables.appointment_id;
+      const patientId = apt ? getPatientIdFromAppointmentCache(queryClient, apt) : undefined;
+      await invalidateInvoicesAndOverview(queryClient, { patientId });
     },
     onError: (error) => handleApiError(error, "Failed to create invoice"),
   });
@@ -66,9 +78,10 @@ export function usePayments() {
   const deleteInvoiceMutation = useMutation({
     mutationFn: (invoiceId: string) =>
       apiClient(`/api/invoices/${invoiceId}`, { method: "DELETE" }),
-    onSuccess: async () => {
+    onSuccess: async (_, invoiceId) => {
       notify.crud({ action: "deleted", entity: "Invoice", detail: "The invoice record was removed." });
-      await invalidateInvoicesAndOverview(queryClient);
+      const patientId = getPatientIdFromInvoiceCache(queryClient, invoiceId);
+      await invalidateInvoicesAndOverview(queryClient, { patientId });
     },
     onError: (error) => handleApiError(error, "Failed to delete invoice"),
   });

@@ -9,6 +9,14 @@ export interface User {
 }
 export type UUID = string;
 
+/** Optional structured clinical/demo payload stored as JSON on Patient */
+export type PatientClinicalProfile = {
+  allergies?: string[];
+  conditions?: string[];
+  medications_current?: string[];
+  notes?: string;
+} | null;
+
 // Patient
 export interface Patient {
   id: UUID;
@@ -21,7 +29,43 @@ export interface Patient {
   active: boolean;
   active_since: string | null;
   created_at: string;
+  clinical_profile?: PatientClinicalProfile;
 }
+
+/** GET /api/patients/[id]/snapshot — aggregate for profile tabs */
+export type PatientSnapshotActivity = {
+  id: UUID;
+  created_at: string;
+  created_by: UUID | null;
+  appointment: UUID;
+  type: string;
+  content: string;
+  created_by_display?: string | null;
+};
+
+/** Serialized invoice row (matches `serializeInvoice` from API) */
+export type SnapshotInvoice = {
+  id: UUID;
+  created_at: string;
+  appointment_id: string | null;
+  user_id: UUID;
+  amount: number;
+  currency: string;
+  status: string;
+  due_date: string | null;
+  paid_at: string | null;
+  description: string | null;
+};
+
+/** Appointment row from snapshot API (adds category label for display) */
+export type AppointmentSnapshotRow = Appointment & { category_label?: string | null };
+
+export type PatientSnapshot = {
+  patient: Patient;
+  appointments: AppointmentSnapshotRow[];
+  activities: PatientSnapshotActivity[];
+  invoices: SnapshotInvoice[];
+};
 
 // Relative
 export interface Relative {

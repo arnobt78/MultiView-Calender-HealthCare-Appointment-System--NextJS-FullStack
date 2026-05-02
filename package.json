@@ -17,6 +17,7 @@
     "db:check-empty": "tsx scripts/check-db-empty.ts",
     "db:manage-user": "tsx scripts/manage-user.ts",
     "db:seed-test-user": "tsx scripts/seed-test-user.ts",
+    "db:seed-demo-clinical": "tsx scripts/seed-demo-patient-clinical.ts",
     "db:clear": "tsx scripts/db-clear.ts",
     "test:smoke-invalidation": "tsx scripts/smoke-cross-tab-invalidation.ts"
   },

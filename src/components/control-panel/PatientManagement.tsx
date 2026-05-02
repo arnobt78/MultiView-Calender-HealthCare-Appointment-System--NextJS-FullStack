@@ -1,9 +1,10 @@
 "use client";
 
 import { type ColumnDef } from "@tanstack/react-table";
-import Link from "next/link";
+import { PrefetchingLink } from "@/components/shared/PrefetchingLink";
 import { usePatients } from "@/hooks/usePatients";
 import { DataTable } from "@/components/shared/DataTable";
+import { DataTableColumnHeader } from "@/components/shared/DataTableColumnHeader";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { UserAvatar } from "@/components/shared/UserAvatar";
@@ -27,7 +28,16 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Patient } from "@/types/types";
-import { Plus, EllipsisVertical, Pencil, Trash2, Download, CircleCheck, CircleOff } from "lucide-react";
+import {
+  Plus,
+  EllipsisVertical,
+  Pencil,
+  Trash2,
+  Download,
+  CircleCheck,
+  CircleOff,
+  Eye,
+} from "lucide-react";
 import { useState } from "react";
 import {
   Dialog,
@@ -48,6 +58,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DEMO_ACCOUNTS } from "@/lib/demo-credentials";
+import {
+  PatientListFiltersProvider,
+  usePatientListFilters,
+} from "@/components/control-panel/PatientListFiltersContext";
 
 const DEMO_AVATAR_BY_EMAIL = new Map(
   DEMO_ACCOUNTS.map((account) => [account.email.toLowerCase(), account.avatarUrl])
@@ -96,10 +110,22 @@ function PatientActions({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem asChild>
-            <Link href={`/control-panel/patients/${patient.id}`} className="flex items-center gap-2 cursor-pointer">
+            <PrefetchingLink
+              href={`/control-panel/patients/${patient.id}`}
+              className="flex items-center gap-2 cursor-pointer"
+            >
+              <Eye className="h-4 w-4" />
+              View
+            </PrefetchingLink>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <PrefetchingLink
+              href={`/control-panel/patients/${patient.id}?mode=edit`}
+              className="flex items-center gap-2 cursor-pointer"
+            >
               <Pencil className="h-4 w-4" />
-              View / Edit
-            </Link>
+              Edit
+            </PrefetchingLink>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
@@ -136,8 +162,10 @@ function PatientActions({
   );
 }
 
-export default function PatientManagement() {
+function PatientManagementInner() {
   const { patients, isLoading, createPatient, isCreating, deletePatient } = usePatients();
+  const { status, setStatus, filterByStatus } = usePatientListFilters();
+  const filteredPatients = filterByStatus(patients);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<PatientCreateInput>({
     firstname: "",
@@ -171,7 +199,8 @@ export default function PatientManagement() {
     },
     {
       id: "name",
-      header: "Name",
+      accessorFn: (row) => `${row.firstname} ${row.lastname}`.trim(),
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Name" />,
       meta: { headClassName: "min-w-[180px]", cellClassName: "min-w-[180px]" },
       cell: ({ row }) => (
         <EntityTitleLink
@@ -182,13 +211,13 @@ export default function PatientManagement() {
     },
     {
       accessorKey: "email",
-      header: "Email",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Email" />,
       meta: { headClassName: "min-w-[190px]", cellClassName: "min-w-[190px]" },
       cell: ({ row }) => row.original.email ?? "—",
     },
     {
       accessorKey: "active",
-      header: "Status",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Status" />,
       meta: { headClassName: "min-w-[120px]", cellClassName: "min-w-[120px]" },
       cell: ({ row }) => (
         <Badge
@@ -210,7 +239,7 @@ export default function PatientManagement() {
     },
     {
       accessorKey: "created_at",
-      header: "Created",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Created" />,
       meta: { headClassName: "min-w-[110px]", cellClassName: "min-w-[110px]" },
       cell: ({ row }) =>
         row.original.created_at ? new Date(row.original.created_at).toLocaleDateString() : "—",
@@ -244,7 +273,20 @@ export default function PatientManagement() {
         title="Patient Management"
         description="Manage patients. All table schema properties are shown."
         actions={
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <Select
+              value={status}
+              onValueChange={(v) => setStatus(v as "all" | "active" | "inactive")}
+            >
+              <SelectTrigger className="w-[140px]" aria-label="Filter by status">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+              </SelectContent>
+            </Select>
             <Button variant="outline" size="sm" onClick={() => exportPatientsCSV(patients)} disabled={patients.length === 0} className="gap-2">
               <Download className="h-4 w-4" />
               Export CSV
@@ -259,10 +301,16 @@ export default function PatientManagement() {
 
       <DataTable<Patient, unknown>
         columns={columns}
-        data={patients}
+        data={filteredPatients}
         isLoading={isLoading}
-        searchColumnId="email"
-        searchPlaceholder="Search by email…"
+        globalFilterFn={(row, q) => {
+          const s = q.trim().toLowerCase();
+          if (!s) return true;
+          const p = row;
+          const blob = `${p.firstname} ${p.lastname} ${p.email ?? ""}`.toLowerCase();
+          return blob.includes(s);
+        }}
+        searchPlaceholder="Search by name or email…"
         emptyMessage="No patients yet. Add one to get started."
       />
 
@@ -376,3 +424,10 @@ export default function PatientManagement() {
   );
 }
 
+export default function PatientManagement() {
+  return (
+    <PatientListFiltersProvider>
+      <PatientManagementInner />
+    </PatientListFiltersProvider>
+  );
+}

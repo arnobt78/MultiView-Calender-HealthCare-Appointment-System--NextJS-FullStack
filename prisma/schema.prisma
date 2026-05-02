@@ -52,6 +52,8 @@ model Patient {
   email       String?   @db.Text
   active      Boolean   @default(true)
   active_since DateTime? @db.Timestamptz(6)
+  /// Flexible demo/clinical fields (allergies, meds, notes) — merged on PUT, not replaced blindly.
+  clinical_profile Json?
 
   appointments Appointment[]
 

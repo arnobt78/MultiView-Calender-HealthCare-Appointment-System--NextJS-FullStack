@@ -2,14 +2,20 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient, handleApiError } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import { invalidateEntityAffectingAppointments } from "@/lib/query-client";
-import { Patient } from "@/types/types";
+import { Patient, type PatientSnapshot } from "@/types/types";
 import { notify } from "@/lib/notify";
 import { fetchPatients } from "@/lib/query-fetchers";
 
 export type PatientCreateInput = Pick<Patient, "firstname" | "lastname"> &
-  Partial<Pick<Patient, "birth_date" | "care_level" | "pronoun" | "email" | "active" | "active_since">>;
+  Partial<
+    Pick<Patient, "birth_date" | "care_level" | "pronoun" | "email" | "active" | "active_since" | "clinical_profile">
+  >;
+/** Email omitted — API ignores email on PUT for demo safety */
 export type PatientUpdateInput = Partial<
-  Pick<Patient, "firstname" | "lastname" | "birth_date" | "care_level" | "pronoun" | "email" | "active" | "active_since">
+  Pick<
+    Patient,
+    "firstname" | "lastname" | "birth_date" | "care_level" | "pronoun" | "active" | "active_since" | "clinical_profile"
+  >
 >;
 
 export function usePatients() {
@@ -81,5 +87,15 @@ export function usePatient(id: string | null) {
       return res.patient;
     },
     enabled: !!id,
+  });
+}
+
+/** Aggregated appointments / activities / invoices for patient profile — invalidated with `queryKeys.patients.all` */
+export function usePatientSnapshot(id: string | null) {
+  return useQuery({
+    queryKey: queryKeys.patients.snapshot(id ?? ""),
+    queryFn: () => apiClient<PatientSnapshot>(`/api/patients/${id}/snapshot`),
+    enabled: !!id,
+    staleTime: 60_000,
   });
 }

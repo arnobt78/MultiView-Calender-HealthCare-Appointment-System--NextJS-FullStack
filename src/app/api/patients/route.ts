@@ -41,6 +41,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "firstname and lastname are required" }, { status: 400 });
     }
 
+    const clinical =
+      body.clinical_profile != null &&
+      typeof body.clinical_profile === "object" &&
+      !Array.isArray(body.clinical_profile)
+        ? (body.clinical_profile as object)
+        : undefined;
+
     const patient = await prisma.patient.create({
       data: {
         firstname: body.firstname.trim(),
@@ -51,6 +58,7 @@ export async function POST(req: NextRequest) {
         email: body.email ?? null,
         active: body.active !== false,
         active_since: body.active_since ? new Date(body.active_since) : null,
+        ...(clinical !== undefined ? { clinical_profile: clinical } : {}),
       },
     });
 

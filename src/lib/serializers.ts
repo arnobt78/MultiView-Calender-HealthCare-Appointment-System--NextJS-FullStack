@@ -30,12 +30,35 @@ export function serializePatient(p: {
   email: string | null;
   active: boolean;
   active_since: Date | null;
+  clinical_profile?: unknown | null;
 }) {
   return {
     ...p,
     created_at: p.created_at?.toISOString?.(),
     birth_date: p.birth_date ? p.birth_date.toISOString().slice(0, 10) : null,
     active_since: p.active_since?.toISOString?.() ?? null,
+    clinical_profile: p.clinical_profile ?? null,
+  };
+}
+
+/** Activity row for patient snapshot API — includes optional creator display name */
+export function serializeActivitySnapshot(a: {
+  id: string;
+  created_at: Date;
+  created_by_id: string | null;
+  appointment_id: string;
+  type: string;
+  content: string;
+  created_by?: { display_name: string | null; email: string } | null;
+}) {
+  return {
+    id: a.id,
+    created_at: a.created_at.toISOString(),
+    created_by: a.created_by_id,
+    appointment: a.appointment_id,
+    type: a.type,
+    content: a.content,
+    created_by_display: a.created_by?.display_name ?? a.created_by?.email ?? null,
   };
 }
 

@@ -37,7 +37,10 @@ export interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   searchPlaceholder?: string;
+  /** Single-column filter (legacy). Omit when using `globalFilterFn`. */
   searchColumnId?: string;
+  /** Multi-field search — drives TanStack `globalFilter` (name + email, etc.). */
+  globalFilterFn?: (row: TData, filterValue: string) => boolean;
   isLoading?: boolean;
   emptyMessage?: string;
   className?: string;
@@ -52,6 +55,7 @@ export function DataTable<TData, TValue>({
   data,
   searchPlaceholder = "Search...",
   searchColumnId,
+  globalFilterFn,
   isLoading,
   emptyMessage = "No results.",
   className,
@@ -62,6 +66,8 @@ export function DataTable<TData, TValue>({
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
+  const [globalFilter, setGlobalFilter] = React.useState("");
+  const useGlobal = typeof globalFilterFn === "function";
 
   const table = useReactTable({
     data,
@@ -71,11 +77,16 @@ export function DataTable<TData, TValue>({
       columnFilters,
       columnVisibility,
       rowSelection,
+      ...(useGlobal ? { globalFilter } : {}),
     },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
+    onGlobalFilterChange: useGlobal ? setGlobalFilter : undefined,
+    globalFilterFn: useGlobal
+      ? (row, _columnId, filterValue) => globalFilterFn!(row.original, String(filterValue ?? ""))
+      : undefined,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: pagination ? getPaginationRowModel() : undefined,
     getSortedRowModel: getSortedRowModel(),
@@ -83,7 +94,7 @@ export function DataTable<TData, TValue>({
     initialState: pagination ? { pagination: { pageSize } } : undefined,
   });
 
-  const showSearch = searchColumnId != null;
+  const showSearch = useGlobal || searchColumnId != null;
 
   return (
     <div className={cn("space-y-2", className)}>
@@ -91,10 +102,16 @@ export function DataTable<TData, TValue>({
         <div className="flex items-center gap-2">
           <Input
             placeholder={searchPlaceholder}
-            value={(table.getColumn(searchColumnId)?.getFilterValue() as string) ?? ""}
-            onChange={(e) =>
-              table.getColumn(searchColumnId)?.setFilterValue(e.target.value)
+            value={
+              useGlobal
+                ? (globalFilter as string)
+                : ((table.getColumn(searchColumnId!)?.getFilterValue() as string) ?? "")
             }
+            onChange={(e) => {
+              const v = e.target.value;
+              if (useGlobal) setGlobalFilter(v);
+              else table.getColumn(searchColumnId!)?.setFilterValue(v);
+            }}
             className="max-w-sm"
           />
         </div>

@@ -1,9 +1,10 @@
 "use client";
 
 import { type ColumnDef } from "@tanstack/react-table";
-import Link from "next/link";
+import { PrefetchingLink } from "@/components/shared/PrefetchingLink";
 import { useUsers } from "@/hooks/useUsers";
 import { DataTable } from "@/components/shared/DataTable";
+import { DataTableColumnHeader } from "@/components/shared/DataTableColumnHeader";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { UserRoleBadge } from "@/components/shared/UserRoleBadge";
@@ -18,7 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { User } from "@/types/types";
-import { EllipsisVertical, Pencil, ShieldCheck } from "lucide-react";
+import { EllipsisVertical, Eye, Pencil, ShieldCheck } from "lucide-react";
 
 /** Staff accounts (admin + secretary); doctors and portal patients use other control-panel tabs. */
 const STAFF_ROLES = ["admin", "secretary"] as const;
@@ -61,10 +62,16 @@ function ActionsCell({ user }: { user: User }) {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem asChild>
-          <Link href={`/control-panel/doctors/${user.id}`} className="flex items-center gap-2 cursor-pointer">
+          <PrefetchingLink href={`/control-panel/doctors/${user.id}`} className="flex items-center gap-2 cursor-pointer">
+            <Eye className="h-4 w-4" />
+            View
+          </PrefetchingLink>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <PrefetchingLink href={`/control-panel/doctors/${user.id}?mode=edit`} className="flex items-center gap-2 cursor-pointer">
             <Pencil className="h-4 w-4" />
-            View / Edit
-          </Link>
+            Edit
+          </PrefetchingLink>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -101,7 +108,7 @@ export default function UserManagement() {
     },
     {
       accessorKey: "display_name",
-      header: "Name",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Name" />,
       meta: { headClassName: "min-w-[180px]", cellClassName: "min-w-[180px]" },
       cell: ({ row }) => {
         const label = row.original.display_name ?? "—";
@@ -111,7 +118,7 @@ export default function UserManagement() {
     },
     {
       accessorKey: "email",
-      header: "Email",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Email" />,
       meta: { headClassName: "min-w-[190px]", cellClassName: "min-w-[190px]" },
       cell: ({ row }) => row.original.email,
     },
@@ -123,7 +130,7 @@ export default function UserManagement() {
     },
     {
       accessorKey: "created_at",
-      header: "Created",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Created" />,
       meta: { headClassName: "min-w-[110px]", cellClassName: "min-w-[110px]" },
       cell: ({ row }) =>
         row.original.created_at ? new Date(row.original.created_at).toLocaleDateString() : "—",
@@ -147,8 +154,16 @@ export default function UserManagement() {
         columns={columns}
         data={users}
         isLoading={isLoading}
-        searchColumnId="email"
-        searchPlaceholder="Search by email…"
+        globalFilterFn={(row, q) => {
+          const s = q.trim().toLowerCase();
+          if (!s) return true;
+          const u = row;
+          return (
+            (u.display_name?.toLowerCase().includes(s) ?? false) ||
+            u.email.toLowerCase().includes(s)
+          );
+        }}
+        searchPlaceholder="Search by name or email…"
         emptyMessage="No staff users found."
       />
     </div>

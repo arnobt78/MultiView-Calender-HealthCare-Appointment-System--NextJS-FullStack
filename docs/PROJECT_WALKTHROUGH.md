@@ -13,7 +13,17 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Prism
 
 ### Demo seed
 
-Run `npm run db:seed-test-user` after migrations: upserts three `users`, doctor availability + appointment type, and one `patients` row for the demo portal email so Patient Management is non-empty.
+Run `npm run db:seed-test-user` after migrations: upserts three `users`, doctor availability + appointment type, and one `patients` row for the demo portal email so Patient Management is non-empty. Optional: `npm run db:seed-demo-clinical` (or rely on seed-test-user) writes `clinical_profile` JSON on the demo patient for allergies/notes.
+
+### Patient pipeline (management + detail)
+
+- **Schema**: `Patient.clinical_profile` (`Json?`) — merged on `PUT /api/patients/[id]` (not fully replaced); **email is never updated from the client** on PUT (demo safety).
+- **API**: `GET /api/patients/[id]/snapshot` returns `{ patient, appointments, activities, invoices }` for the patient detail “Related” sections (activities scoped to this patient’s appointments; invoices matched via `appointment_id`).
+- **React Query**: `queryKeys.patients.snapshot(id)`, hook `usePatientSnapshot(id)` (`src/hooks/usePatients.ts`). Prefix invalidation `queryKeys.patients.all` refreshes list, detail, and snapshot together.
+- **Invalidation wiring**: `invalidateAfterAppointmentMutation` calls `invalidateInvoicesAndOverview`, which now also invalidates `queryKeys.patients.all` (appointments + invoices affect patient aggregates). `invalidateAssigneesActivitiesAppointment` invalidates `patients.all` so activity changes refresh snapshots without navigation.
+- **UI**: `PatientListFiltersProvider` + status dropdown (all/active/inactive); `DataTable` optional `globalFilterFn` for multi-column search (name + email). Sortable headers via `DataTableColumnHeader`. Row menu: View (`?mode` default), Edit (`?mode=edit`). **`PatientDetailScreen`** (client): view vs edit from URL, fixed footer actions, **`PatientDetailForm`** with read-only email + clinical fields mapped into `clinical_profile`.
+- **Shared table patterns**: Doctor/User/Category/Relative management tables reuse **`DataTableColumnHeader`** + **`globalFilterFn`** where applicable (name/email or label/description).
+- **Loading**: `src/app/control-panel/loading.tsx` returns `null` so route transitions don’t flash a full skeleton; tables keep localized skeleton rows via `DataTable` `isLoading`.
 
 ### Avatar cropping (detail pages)
 
@@ -428,5 +438,5 @@ Shared demo credentials live in `src/lib/demo-credentials.ts` (`test@admin.com`,
 - **Models** (`prisma/schema.prisma`): `DoctorAvailability` (weekly windows + IANA `timezone`), `DoctorTimeOff`, `AppointmentType` (duration, buffers, slot step, minimum notice).
 - **API**: `GET /api/availability/slots?doctorId=&date=YYYY-MM-DD&typeId=` — returns `{ slots: ISO[]; timezone }`.
 - **Client**: `useAvailabilitySlots` in `src/hooks/useAvailabilitySlots.ts` with keys under `queryKeys.availability`.
-- **Invalidation**: `invalidateAfterAppointmentMutation` also invalidates `queryKeys.availability` so slot pickers stay fresh after booking changes.
+- **Invalidation**: `invalidateAfterAppointmentMutation` refreshes appointments, activities, notifications, availability slots, **invoices + dashboard overview + all patient queries** (shared appointment/billing graph). Slot pickers use `queryKeys.availability`.
 - **RBAC (incremental)**: `users.role === 'patient'` cannot POST/PUT/PATCH/DELETE dashboard appointments or POST organizations; registration defaults new users to `role: admin`.
