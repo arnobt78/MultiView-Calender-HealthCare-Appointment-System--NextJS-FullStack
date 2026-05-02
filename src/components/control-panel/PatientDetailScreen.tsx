@@ -63,7 +63,7 @@ export function PatientDetailScreen({ patientId }: { patientId: string }) {
   const fallbackText = nameLabel || patient.email || "?";
   const avatarSrc = patient.email
     ? DEMO_ACCOUNTS.find((a) => a.email.toLowerCase() === patient.email?.toLowerCase())?.avatarUrl ??
-      null
+    null
     : null;
 
   const cp = patient.clinical_profile;
@@ -281,8 +281,17 @@ export function PatientDetailScreen({ patientId }: { patientId: string }) {
                       {isDeleting ? "Deleting…" : "Delete"}
                     </Button>
                   }
-                  title="Delete patient?"
-                  subtitle="This action cannot be undone."
+                  title="Permanently remove this patient?"
+                  subtitle={
+                    <>
+                      This will delete{" "}
+                      <span className="font-medium text-gray-800">
+                        {`${patient.firstname} ${patient.lastname}`.trim()}
+                        {patient.email ? ` (${patient.email})` : ""}
+                      </span>{" "}
+                      and all related data. You cannot undo this action.
+                    </>
+                  }
                   confirmLabel="Delete"
                   onConfirm={() =>
                     deletePatient(patient.id, {
@@ -299,16 +308,28 @@ export function PatientDetailScreen({ patientId }: { patientId: string }) {
               </Button>
               <div className="flex flex-wrap gap-2">
                 <Button type="submit" form={FORM_ID} disabled={isDeleting || isUpdating}>
-                  {isUpdating ? "Saving…" : "Save"}
+                  {isUpdating ? "Saving..." : "Save changes"}
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setMode("view")}>
+                  Cancel
                 </Button>
                 <ConfirmActionDialog
                   trigger={
                     <Button type="button" variant="destructive" disabled={isDeleting}>
-                      {isDeleting ? "Deleting…" : "Delete"}
+                      {isDeleting ? "Deleting..." : "Delete"}
                     </Button>
                   }
-                  title="Delete patient?"
-                  subtitle="This action cannot be undone."
+                  title="Permanently remove this patient?"
+                  subtitle={
+                    <>
+                      This will delete{" "}
+                      <span className="font-medium text-gray-800">
+                        {`${patient.firstname} ${patient.lastname}`.trim()}
+                        {patient.email ? ` (${patient.email})` : ""}
+                      </span>{" "}
+                      and all related data. You cannot undo this action.
+                    </>
+                  }
                   confirmLabel="Delete"
                   onConfirm={() =>
                     deletePatient(patient.id, {

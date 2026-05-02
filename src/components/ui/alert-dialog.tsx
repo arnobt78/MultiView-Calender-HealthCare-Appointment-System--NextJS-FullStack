@@ -173,7 +173,11 @@ function AlertDialogCancel({
     <Button variant={variant} size={size} asChild>
       <AlertDialogPrimitive.Cancel
         data-slot="alert-dialog-cancel"
-        className={cn(className)}
+        className={cn(
+          // Avoid thick focus ring when dialog auto-focuses Cancel on open (still keyboard-accessible via tab).
+          "focus-visible:!ring-0 focus-visible:!ring-offset-0 focus-visible:border-transparent focus-visible:outline-none",
+          className
+        )}
         {...props}
       />
     </Button>

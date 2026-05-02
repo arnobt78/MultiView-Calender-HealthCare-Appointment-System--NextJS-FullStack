@@ -17,16 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import { Patient } from "@/types/types";
 import {
   Plus,
@@ -138,26 +129,27 @@ function PatientActions({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete patient?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete{" "}
-              <strong>{patient.firstname} {patient.lastname}</strong> and all related data. This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive hover:bg-destructive/90"
-              onClick={() => onDelete(patient.id)}
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmActionDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Permanently remove this patient?"
+        subtitle={
+          <>
+            This will delete{" "}
+            <span className="font-medium text-gray-800">
+              {`${patient.firstname} ${patient.lastname}`.trim()}
+              {patient.email ? ` (${patient.email})` : ""}
+            </span>{" "}
+            and all related data tied to this record. You cannot undo this action.
+          </>
+        }
+        confirmLabel="Delete"
+        variant="destructive"
+        onConfirm={() => {
+          onDelete(patient.id);
+          setConfirmOpen(false);
+        }}
+      />
     </>
   );
 }

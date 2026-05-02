@@ -164,11 +164,11 @@ export default function AppointmentDialog({
     () =>
       Boolean(
         title.trim() &&
-          start &&
-          end &&
-          patientId &&
-          categoryId &&
-          new Date(localInputValueToUTC(start)).getTime() <= new Date(localInputValueToUTC(end)).getTime()
+        start &&
+        end &&
+        patientId &&
+        categoryId &&
+        new Date(localInputValueToUTC(start)).getTime() <= new Date(localInputValueToUTC(end)).getTime()
       ),
     [title, start, end, patientId, categoryId]
   );
@@ -806,10 +806,10 @@ export default function AppointmentDialog({
             className="cursor-pointer transition-colors"
           >
             {loading
-              ? "Save..."
+              ? "Saving..."
               : isEditMode
                 ? "Save changes"
-                : "Save"}
+                : "Save new appointment"}
           </Button>
         </div>
       </DialogContent>

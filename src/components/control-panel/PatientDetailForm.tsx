@@ -203,7 +203,7 @@ export function PatientDetailForm({
       {submitActions !== "none" && (
         <div className="flex flex-wrap gap-2 border-t pt-4">
           <Button type="submit" disabled={isUpdating}>
-            {isUpdating ? "Saving..." : "Save"}
+            {isUpdating ? "Saving..." : "Save changes"}
           </Button>
           <ConfirmActionDialog
             trigger={
@@ -211,8 +211,17 @@ export function PatientDetailForm({
                 {isDeleting ? "Deleting..." : "Delete"}
               </Button>
             }
-            title="Delete patient?"
-            subtitle="This action cannot be undone and removes this patient record."
+            title="Permanently remove this patient?"
+            subtitle={
+              <>
+                This will delete{" "}
+                <span className="font-medium text-gray-800">
+                  {`${patient.firstname} ${patient.lastname}`.trim()}
+                  {patient.email ? ` (${patient.email})` : ""}
+                </span>{" "}
+                and all related data. You cannot undo this action.
+              </>
+            }
             confirmLabel="Delete"
             onConfirm={handleDelete}
           />

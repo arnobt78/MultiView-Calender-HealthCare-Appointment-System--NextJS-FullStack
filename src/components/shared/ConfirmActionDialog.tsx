@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { AlertTriangle, ShieldAlert } from "lucide-react";
 import {
@@ -23,7 +24,8 @@ type ConfirmActionDialogProps = {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   title: string;
-  subtitle: string;
+  /** Plain text or JSX (e.g. wrap name/email in `font-medium`) */
+  subtitle: ReactNode;
   confirmLabel?: string;
   cancelLabel?: string;
   icon?: LucideIcon;
@@ -92,7 +94,7 @@ export function ConfirmActionDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="mt-2">
-          <AlertDialogCancel className="rounded-full border-violet-200/70 bg-white text-violet-700 hover:bg-violet-50 hover:text-violet-800">
+          <AlertDialogCancel className="rounded-full border-violet-200/70 bg-white text-violet-700 hover:bg-violet-50 hover:text-violet-800 focus-visible:!ring-0 focus-visible:!ring-offset-0">
             {cancelLabel}
           </AlertDialogCancel>
           <AlertDialogAction className={cn("rounded-full", style.action)} onClick={onConfirm}>
