@@ -36,6 +36,8 @@ import {
   ListFilter,
   UserPlus,
   X,
+  Activity,
+  Stethoscope,
 } from "lucide-react";
 import { useState } from "react";
 import {
@@ -60,12 +62,19 @@ import { DEMO_ACCOUNTS } from "@/lib/demo-credentials";
 import {
   PatientListFiltersProvider,
   usePatientListFilters,
+  type PatientCareTierFilter,
+  type PatientPrimaryDoctorFilter,
   type PatientStatusFilter,
 } from "@/components/control-panel/PatientListFiltersContext";
 import { PatientManagementStatsRow } from "@/components/control-panel/PatientManagementStatsRow";
 import { PatientCareLevelSelect } from "@/components/control-panel/PatientCareLevelSelect";
 import { PatientMetricsProvider } from "@/context/PatientMetricsContext";
 import { usePatientListMetrics } from "@/hooks/usePatientListMetrics";
+import { Textarea } from "@/components/ui/textarea";
+import { useUsers } from "@/hooks/useUsers";
+import { PATIENT_REFERRAL_SOURCES } from "@/lib/patient-referral-sources";
+import { PATIENT_CARE_LEVEL_STAGES, getPatientCareLevelLabel } from "@/lib/patient-care-level";
+import type { PatientClinicalProfile } from "@/types/types";
 
 const STATUS_FILTER_LABEL: Record<PatientStatusFilter, string> = {
   all: "All Statuses",
@@ -73,19 +82,49 @@ const STATUS_FILTER_LABEL: Record<PatientStatusFilter, string> = {
   inactive: "Inactive",
 };
 
+/** Shown inside the care-tier filter trigger — mirrors tier scale from `patient-care-level`. */
+function careTierTriggerLabel(tier: PatientCareTierFilter): string {
+  if (tier === "all") return "All Care Tiers";
+  if (tier === "unset") return "No Tier Set";
+  const n = Number(tier);
+  const s = PATIENT_CARE_LEVEL_STAGES.find((x) => x.value === n);
+  return s ? `${n} — ${s.shortLabel}` : `Tier ${n}`;
+}
+
 const DEMO_AVATAR_BY_EMAIL = new Map(
   DEMO_ACCOUNTS.map((account) => [account.email.toLowerCase(), account.avatarUrl])
 );
 
+/** Build `clinical_profile` JSON for POST /api/patients from add-dialog fields (allergies CSV, notes, referral). */
+function buildCreateClinicalProfile(extra: {
+  allergiesCsv: string;
+  clinicalNotes: string;
+  referralSource: string;
+  referralDetail: string;
+}): PatientClinicalProfile | undefined {
+  const allergies = extra.allergiesCsv.split(",").map((s) => s.trim()).filter(Boolean);
+  const notes = extra.clinicalNotes.trim();
+  const rd =
+    extra.referralSource === "external_partner" || extra.referralSource === "other"
+      ? extra.referralDetail.trim()
+      : "";
+  const o: Record<string, unknown> = { referral_source: extra.referralSource };
+  if (allergies.length) o.allergies = allergies;
+  if (notes) o.notes = notes;
+  if (rd) o.referral_detail = rd;
+  return Object.keys(o).length ? (o as PatientClinicalProfile) : undefined;
+}
+
 function exportPatientsCSV(patients: Patient[]) {
-  const headers = ["ID", "First Name", "Last Name", "Email", "Birth Date", "Care Level", "Pronoun", "Active", "Active Since", "Created At"];
+  const headers = ["ID", "First Name", "Last Name", "Email", "Care Tier", "Primary Doctor", "Birth Date", "Pronoun", "Active", "Active Since", "Created At"];
   const rows = patients.map((p) => [
     p.id,
     `"${p.firstname}"`,
     `"${p.lastname}"`,
     p.email ?? "",
+    getPatientCareLevelLabel(p.care_level).replace(/—/g, "-"),
+    p.primary_doctor_display ?? "",
     p.birth_date ? format(new Date(p.birth_date), "yyyy-MM-dd") : "",
-    p.care_level ?? "",
     p.pronoun ?? "",
     p.active ? "Yes" : "No",
     p.active_since ? format(new Date(p.active_since), "yyyy-MM-dd") : "",
@@ -175,8 +214,24 @@ function PatientActions({
 
 function PatientManagementInner() {
   const { patients, isLoading, isFetching, createPatient, isCreating, deletePatient } = usePatients();
-  const { status, setStatus, filterByStatus } = usePatientListFilters();
+  const { data: doctorsData } = useUsers({ role: "doctor", limit: 200 });
+  const doctors = doctorsData?.users ?? [];
+  const {
+    status,
+    setStatus,
+    careTier,
+    setCareTier,
+    primaryDoctorId,
+    setPrimaryDoctorId,
+    filterByStatus,
+  } = usePatientListFilters();
   const filteredPatients = filterByStatus(patients);
+  const primaryDoctorTriggerLabel: string =
+    primaryDoctorId === "all"
+      ? "All Doctors"
+      : doctors.find((d) => d.id === primaryDoctorId)?.display_name?.trim() ||
+        doctors.find((d) => d.id === primaryDoctorId)?.email ||
+        "Doctor";
   /** Toolbar search — controlled so header stays stable while table rows skeleton (no duplicate search under table). */
   const [listSearch, setListSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -188,6 +243,14 @@ function PatientManagementInner() {
     care_level: undefined,
     pronoun: "",
     active: true,
+  });
+  /** Add-dialog only — merged into `clinical_profile` + `primary_doctor_id` on create (not part of table row model). */
+  const [createExtra, setCreateExtra] = useState({
+    allergiesCsv: "",
+    clinicalNotes: "",
+    primaryDoctorId: "",
+    referralSource: "control_panel",
+    referralDetail: "",
   });
 
   const columns: ColumnDef<Patient>[] = [
@@ -212,21 +275,65 @@ function PatientManagementInner() {
     },
     {
       id: "name",
-      accessorFn: (row) => `${row.firstname} ${row.lastname}`.trim(),
+      // Include email so column sort / filter context stays aligned with toolbar search (email lives in this cell, not a separate column).
+      accessorFn: (row) =>
+        `${row.firstname} ${row.lastname} ${row.email ?? ""}`.trim(),
       header: ({ column }) => <DataTableColumnHeader column={column} title="Name" />,
-      meta: { headClassName: "min-w-[180px]", cellClassName: "min-w-[180px]" },
+      meta: { headClassName: "min-w-[220px]", cellClassName: "min-w-[220px]" },
+      cell: ({ row }) => {
+        const p = row.original;
+        const name = `${p.firstname} ${p.lastname}`.trim() || "—";
+        const email = p.email?.trim();
+        return (
+          <div className="flex min-w-0 max-w-[min(100%,320px)] flex-col gap-0.5">
+            <EntityTitleLink
+              href={`/control-panel/patients/${p.id}`}
+              label={name}
+              className="min-w-0 self-start truncate font-medium"
+            />
+            {email ? (
+              <span className="truncate text-xs text-muted-foreground" title={email}>
+                {email}
+              </span>
+            ) : (
+              <span className="text-xs text-muted-foreground">—</span>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "care_level",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Care Tier" />,
+      meta: { headClassName: "min-w-[140px] max-w-[220px]", cellClassName: "min-w-[140px] max-w-[220px]" },
       cell: ({ row }) => (
-        <EntityTitleLink
-          href={`/control-panel/patients/${row.original.id}`}
-          label={`${row.original.firstname} ${row.original.lastname}`.trim() || "—"}
-        />
+        <span className="line-clamp-2 text-sm" title={getPatientCareLevelLabel(row.original.care_level)}>
+          {getPatientCareLevelLabel(row.original.care_level)}
+        </span>
       ),
     },
     {
-      accessorKey: "email",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Email" />,
-      meta: { headClassName: "min-w-[190px]", cellClassName: "min-w-[190px]" },
-      cell: ({ row }) => row.original.email ?? "—",
+      id: "primary_doctor_display",
+      accessorFn: (row) => row.primary_doctor_display ?? "",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Primary Doctor" />,
+      meta: { headClassName: "min-w-[140px] max-w-[200px]", cellClassName: "min-w-[140px] max-w-[200px]" },
+      cell: ({ row }) => {
+        const p = row.original;
+        const d = p.primary_doctor_display;
+        if (!d?.trim()) {
+          return <span className="line-clamp-2 text-sm text-muted-foreground">—</span>;
+        }
+        if (p.primary_doctor_id) {
+          return (
+            <EntityTitleLink
+              href={`/control-panel/doctors/${p.primary_doctor_id}`}
+              label={d.trim()}
+              className="line-clamp-2 self-start text-sm font-normal"
+            />
+          );
+        }
+        return <span className="line-clamp-2 text-sm text-muted-foreground">{d}</span>;
+      },
     },
     {
       accessorKey: "active",
@@ -274,8 +381,19 @@ function PatientManagementInner() {
   const metrics = usePatientListMetrics(patients);
 
   const handleCreate = () => {
+    const clinical_profile = buildCreateClinicalProfile(createExtra);
+    const primary_doctor_id =
+      createExtra.primaryDoctorId && createExtra.primaryDoctorId !== "none"
+        ? createExtra.primaryDoctorId
+        : undefined;
     createPatient(
-      { ...form, firstname: form.firstname.trim(), lastname: form.lastname.trim() },
+      {
+        ...form,
+        firstname: form.firstname.trim(),
+        lastname: form.lastname.trim(),
+        primary_doctor_id,
+        ...(clinical_profile ? { clinical_profile } : {}),
+      },
       {
         onSuccess: () => {
           setDialogOpen(false);
@@ -288,6 +406,13 @@ function PatientManagementInner() {
             pronoun: "",
             active: true,
           });
+          setCreateExtra({
+            allergiesCsv: "",
+            clinicalNotes: "",
+            primaryDoctorId: "",
+            referralSource: "control_panel",
+            referralDetail: "",
+          });
         },
       }
     );
@@ -299,13 +424,39 @@ function PatientManagementInner() {
     >
       <div className="space-y-2 text-gray-700">
         <PageHeader
-          title="Patient Management"
+          title="Patients"
           description="Manage patients. All table schema properties are shown."
+          actions={
+            <>
+              {/* Primary list actions live in the page header row (justify-between with title) for a stable chrome on all breakpoints. */}
+              <Button
+                type="button"
+                variant="ghost"
+                size="lg"
+                disabled={patients.length === 0}
+                className={cn(violetGlassImportButtonClass, "cursor-pointer disabled:opacity-50")}
+                onClick={() => exportPatientsCSV(patients)}
+              >
+                <Download className="shrink-0" aria-hidden />
+                Export CSV
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="lg"
+                className={cn(emeraldGlassPrimaryButtonClass, "cursor-pointer")}
+                onClick={() => setDialogOpen(true)}
+              >
+                <UserPlus className="shrink-0" aria-hidden />
+                Add Patient
+              </Button>
+            </>
+          }
         />
 
         <PatientManagementStatsRow />
 
-        {/* Sticky toolbar: transparent + blur only — no fill or border on this wrapper. */}
+        {/* Sticky toolbar: filters + search only (export/add moved to PageHeader). */}
         <div className="sticky top-0 z-10 flex min-h-[52px] flex-wrap items-center gap-2 bg-transparent backdrop-blur-sm">
           <div className="relative min-w-0 w-full flex-1 sm:max-w-md sm:flex-1">
             <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
@@ -322,7 +473,7 @@ function PatientManagementInner() {
           </div>
           <Select value={status} onValueChange={(v) => setStatus(v as PatientStatusFilter)}>
             <SelectTrigger
-              className="h-10 w-auto min-w-[160px] shrink-0 rounded-2xl border-gray-200 bg-white text-gray-700 shadow-sm gap-2"
+              className="h-10 w-auto min-w-[160px] max-w-[200px] shrink-0 rounded-2xl border-gray-200 bg-white text-gray-700 shadow-sm gap-2"
               aria-label="Filter by status"
             >
               <ListFilter className="h-3.5 w-3.5 shrink-0 text-gray-400" aria-hidden />
@@ -334,52 +485,72 @@ function PatientManagementInner() {
               <SelectItem value="inactive">Inactive</SelectItem>
             </SelectContent>
           </Select>
-          <div className="ml-auto flex shrink-0 flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              variant="ghost"
-              size="lg"
-              disabled={patients.length === 0}
-              className={cn(violetGlassImportButtonClass, "cursor-pointer disabled:opacity-50")}
-              onClick={() => exportPatientsCSV(patients)}
+          <Select
+            value={careTier}
+            onValueChange={(v) => setCareTier(v as PatientCareTierFilter)}
+          >
+            <SelectTrigger
+              className="h-10 w-auto min-w-[200px] max-w-[min(42vw,280px)] shrink-0 rounded-2xl border-gray-200 bg-white text-gray-700 shadow-sm gap-2"
+              aria-label="Filter by care tier"
             >
-              <Download className="shrink-0" aria-hidden />
-              Export CSV
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="lg"
-              className={cn(emeraldGlassPrimaryButtonClass, "cursor-pointer")}
-              onClick={() => setDialogOpen(true)}
+              <Activity className="h-3.5 w-3.5 shrink-0 text-gray-400" aria-hidden />
+              <SelectValue>{careTierTriggerLabel(careTier)}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Care Tiers</SelectItem>
+              <SelectItem value="unset">No Tier Set</SelectItem>
+              {PATIENT_CARE_LEVEL_STAGES.map((s) => (
+                <SelectItem key={s.value} value={String(s.value)} title={s.detail}>
+                  {s.value} — {s.shortLabel}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select
+            value={primaryDoctorId}
+            onValueChange={(v) => setPrimaryDoctorId(v as PatientPrimaryDoctorFilter)}
+          >
+            <SelectTrigger
+              className="h-10 w-auto min-w-[200px] max-w-[min(42vw,280px)] shrink-0 rounded-2xl border-gray-200 bg-white text-gray-700 shadow-sm gap-2"
+              aria-label="Filter by primary doctor"
             >
-              <UserPlus className="shrink-0" aria-hidden />
-              Add Patient
-            </Button>
-          </div>
+              <Stethoscope className="h-3.5 w-3.5 shrink-0 text-gray-400" aria-hidden />
+              <SelectValue>{primaryDoctorTriggerLabel}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Doctors</SelectItem>
+              {doctors.map((d) => (
+                <SelectItem key={d.id} value={d.id}>
+                  {d.display_name?.trim() || d.email}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <DataTable<Patient, unknown>
           columns={columns}
           data={filteredPatients}
           isLoading={isLoading}
-          globalFilterFn={(row, q) => {
-            const s = q.trim().toLowerCase();
-            if (!s) return true;
-            const p = row;
-            const blob = `${p.firstname} ${p.lastname} ${p.email ?? ""}`.toLowerCase();
-            return blob.includes(s);
-          }}
+        globalFilterFn={(row, q) => {
+          const s = q.trim().toLowerCase();
+          if (!s) return true;
+          const p = row;
+          const tierText = getPatientCareLevelLabel(p.care_level).toLowerCase();
+          const blob = `${p.firstname} ${p.lastname} ${p.email ?? ""} ${p.primary_doctor_display ?? ""} ${String(p.care_level ?? "")} ${tierText}`;
+          return blob.includes(s);
+        }}
           externalGlobalFilter={{ value: listSearch, onChange: setListSearch }}
           searchPlaceholder="Search by name or email…"
           emptyMessage="No patients yet. Add one to get started."
+          tableClassName="min-w-[920px]"
         />
 
         {/* Shell matches Quick Actions / Global Search: custom close, tinted border + shadow, scroll body, tinted footer. */}
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogContent
             showCloseButton={false}
-            className="flex h-auto max-h-[90vh] w-[92vw] max-w-[640px] flex-col gap-0 overflow-hidden rounded-[28px] border border-emerald-400/30 bg-white p-0 shadow-[0_30px_80px_rgba(16,185,129,0.28)]"
+            className="flex h-auto max-h-[90vh] w-[92vw] max-w-[1200px] flex-col gap-0 overflow-hidden rounded-[28px] border border-emerald-400/30 bg-white p-0 shadow-[0_30px_80px_rgba(16,185,129,0.28)]"
             aria-describedby={undefined}
           >
             <div className="shrink-0 bg-white pt-6">
@@ -390,7 +561,7 @@ function PatientManagementInner() {
                   </span>
                   <div className="min-w-0">
                     <DialogTitle className="text-xl font-semibold text-gray-800">
-                      Add patient
+                      Add Patient
                     </DialogTitle>
                     <DialogDescription className="mt-1 text-sm text-muted-foreground">
                       Required: first and last name. Optional fields help scheduling and records stay accurate.
@@ -414,23 +585,23 @@ function PatientManagementInner() {
 
             <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">
               <div className="grid gap-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <Label>First name *</Label>
+                    <Label>First Name *</Label>
                     <Input
                       value={form.firstname}
                       onChange={(e) => setForm((p) => ({ ...p, firstname: e.target.value }))}
-                      placeholder="First name"
-                      className="rounded-2xl border-gray-200"
+                      placeholder="First Name"
+                      className="w-full min-w-0 rounded-2xl border-gray-200"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Last name *</Label>
+                    <Label>Last Name *</Label>
                     <Input
                       value={form.lastname}
                       onChange={(e) => setForm((p) => ({ ...p, lastname: e.target.value }))}
-                      placeholder="Last name"
-                      className="rounded-2xl border-gray-200"
+                      placeholder="Last Name"
+                      className="w-full min-w-0 rounded-2xl border-gray-200"
                     />
                   </div>
                 </div>
@@ -440,47 +611,69 @@ function PatientManagementInner() {
                     type="email"
                     value={form.email ?? ""}
                     onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
-                    placeholder="email@example.com"
-                    className="rounded-2xl border-gray-200"
+                    placeholder="name@example.com"
+                    className="w-full min-w-0 rounded-2xl border-gray-200"
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="pm-primary-doctor">Primary doctor (from staff list)</Label>
+                  <Select
+                    value={createExtra.primaryDoctorId || "none"}
+                    onValueChange={(v) =>
+                      setCreateExtra((x) => ({ ...x, primaryDoctorId: v === "none" ? "" : v }))
+                    }
+                  >
+                    <SelectTrigger id="pm-primary-doctor" className="w-full min-w-0 rounded-2xl border-gray-200">
+                      <SelectValue placeholder="Not Assigned" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Not Assigned</SelectItem>
+                      {doctors.map((d) => (
+                        <SelectItem key={d.id} value={d.id}>
+                          {d.display_name?.trim() || d.email}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="pm-birth-date">Birth date</Label>
+                    <Label htmlFor="pm-birth-date">Birth Date</Label>
                     <Input
                       id="pm-birth-date"
                       type="date"
-                      title="Birth date"
+                      title="Birth Date"
                       value={form.birth_date ?? ""}
                       onChange={(e) => setForm((p) => ({ ...p, birth_date: e.target.value }))}
-                      className="rounded-2xl border-gray-200"
+                      className="w-full min-w-0 rounded-2xl border-gray-200"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="pm-care-level">Care level (1–10)</Label>
+                    <Label htmlFor="pm-care-level">Care Level (1–10)</Label>
                     <PatientCareLevelSelect
                       id="pm-care-level"
                       value={form.care_level}
                       onValueChange={(next) => setForm((p) => ({ ...p, care_level: next }))}
                       aria-label="Care level tier from 1 to 10"
+                      className="w-full"
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label>Pronoun</Label>
                     <Select
                       value={form.pronoun ?? ""}
                       onValueChange={(v) => setForm((p) => ({ ...p, pronoun: v }))}
                     >
-                      <SelectTrigger className="rounded-2xl border-gray-200">
+                      <SelectTrigger className="w-full min-w-0 rounded-2xl border-gray-200">
                         <SelectValue placeholder="Pronoun" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="he/him">he/him</SelectItem>
-                        <SelectItem value="she/her">she/her</SelectItem>
-                        <SelectItem value="they/them">they/them</SelectItem>
-                        <SelectItem value="other">other</SelectItem>
+                        <SelectItem value="he/him">He/Him</SelectItem>
+                        <SelectItem value="she/her">She/Her</SelectItem>
+                        <SelectItem value="they/them">They/Them</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -490,8 +683,8 @@ function PatientManagementInner() {
                       value={form.active ? "true" : "false"}
                       onValueChange={(v) => setForm((p) => ({ ...p, active: v === "true" }))}
                     >
-                      <SelectTrigger className="rounded-2xl border-gray-200">
-                        <SelectValue placeholder="Active?" />
+                      <SelectTrigger className="w-full min-w-0 rounded-2xl border-gray-200">
+                        <SelectValue placeholder="Active" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="true">Active</SelectItem>
@@ -499,6 +692,67 @@ function PatientManagementInner() {
                       </SelectContent>
                     </Select>
                   </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Referral / Intake</Label>
+                  <Select
+                    value={createExtra.referralSource}
+                    onValueChange={(v) => setCreateExtra((x) => ({ ...x, referralSource: v }))}
+                  >
+                    <SelectTrigger className="w-full min-w-0 rounded-2xl border-gray-200">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PATIENT_REFERRAL_SOURCES.map((s) => (
+                        <SelectItem key={s.value} value={s.value}>
+                          {s.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {(createExtra.referralSource === "external_partner" ||
+                  createExtra.referralSource === "other") && (
+                  <div className="space-y-2">
+                    <Label htmlFor="pm-referral-detail">External / Other Detail</Label>
+                    <Input
+                      id="pm-referral-detail"
+                      title="Referral Detail"
+                      value={createExtra.referralDetail}
+                      onChange={(e) =>
+                        setCreateExtra((x) => ({ ...x, referralDetail: e.target.value }))
+                      }
+                      placeholder="Clinic, referrer, or how they reached you"
+                      className="w-full min-w-0 rounded-2xl border-gray-200"
+                    />
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <Label htmlFor="pm-allergies">Allergies (comma-separated)</Label>
+                  <Input
+                    id="pm-allergies"
+                    title="Allergies"
+                    value={createExtra.allergiesCsv}
+                    onChange={(e) =>
+                      setCreateExtra((x) => ({ ...x, allergiesCsv: e.target.value }))
+                    }
+                    placeholder="e.g. penicillin, latex"
+                    className="w-full min-w-0 rounded-2xl border-gray-200"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="pm-clinical-notes">Clinical Notes</Label>
+                  <Textarea
+                    id="pm-clinical-notes"
+                    title="Clinical Notes"
+                    rows={3}
+                    value={createExtra.clinicalNotes}
+                    onChange={(e) =>
+                      setCreateExtra((x) => ({ ...x, clinicalNotes: e.target.value }))
+                    }
+                    placeholder="Short clinical context for the team"
+                    className="w-full min-w-0 resize-y rounded-2xl border-gray-200"
+                  />
                 </div>
               </div>
             </div>
@@ -523,7 +777,7 @@ function PatientManagementInner() {
                 onClick={handleCreate}
                 disabled={isCreating || !form.firstname.trim() || !form.lastname.trim()}
               >
-                {isCreating ? "Creating…" : "Create"}
+                {isCreating ? "Creating…" : "Create Patient"}
               </Button>
             </div>
           </DialogContent>

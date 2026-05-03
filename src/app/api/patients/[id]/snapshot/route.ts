@@ -12,6 +12,7 @@ import {
   serializeInvoice,
   serializeActivitySnapshot,
 } from "@/lib/serializers";
+import { patientDetailInclude } from "@/lib/patient-api-include";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -27,7 +28,10 @@ export async function GET(_req: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Invalid patient ID" }, { status: 400 });
     }
 
-    const patientRaw = await prisma.patient.findUnique({ where: { id } });
+    const patientRaw = await prisma.patient.findUnique({
+      where: { id },
+      include: patientDetailInclude,
+    });
     if (!patientRaw) {
       return NextResponse.json({ error: "Patient not found" }, { status: 404 });
     }

@@ -165,6 +165,35 @@ async function seedUsers(query: any) {
 }
 
 /**
+ * After CSV import, enrich known demo rows with clinical JSON, care tier, and audit FKs when those columns exist (`prisma db push`).
+ */
+async function enrichDemoPatientAuditAndClinical(query: any) {
+  try {
+    const check = await query(
+      `SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'patients' AND column_name = 'updated_at' LIMIT 1`
+    );
+    if (!check.rows?.length) return;
+    const clinical = JSON.stringify({
+      allergies: ["penicillin (demo)"],
+      notes: "Seeded clinical profile for Patient Management / snapshot demos.",
+      referral_source: "control_panel",
+    });
+    await query(
+      `UPDATE patients SET
+        care_level = COALESCE(care_level, 1),
+        clinical_profile = $1::jsonb,
+        updated_at = NOW(),
+        created_by = COALESCE(created_by, (SELECT id FROM users WHERE role = $2 ORDER BY created_at ASC LIMIT 1)),
+        updated_by = COALESCE(updated_by, (SELECT id FROM users WHERE role = $2 ORDER BY created_at ASC LIMIT 1))
+      WHERE LOWER(TRIM(COALESCE(email, ''))) = LOWER(TRIM($3))`,
+      [clinical, "admin", "test@patient.com"]
+    );
+  } catch (e) {
+    console.warn("enrichDemoPatientAuditAndClinical skipped:", e);
+  }
+}
+
+/**
  * Seed patients table
  */
 async function seedPatients(query: any) {
@@ -369,6 +398,7 @@ async function runSeed() {
     // Seed in order to maintain foreign key relationships
     await seedUsers(query);
     await seedPatients(query);
+    await enrichDemoPatientAuditAndClinical(query);
     await seedCategories(query);
     await seedAppointments(query);
     await seedAppointmentAssignees(query);

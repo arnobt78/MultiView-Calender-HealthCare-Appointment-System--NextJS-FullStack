@@ -17,6 +17,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PatientCareLevelSelect } from "@/components/control-panel/PatientCareLevelSelect";
+import { useUsers } from "@/hooks/useUsers";
+import { PATIENT_REFERRAL_SOURCES } from "@/lib/patient-referral-sources";
 
 function clinicalToForm(cp: PatientClinicalProfile | undefined) {
   const o =
@@ -25,13 +27,18 @@ function clinicalToForm(cp: PatientClinicalProfile | undefined) {
       : {};
   const allergies = Array.isArray(o.allergies) ? (o.allergies as string[]).join(", ") : "";
   const notes = typeof o.notes === "string" ? o.notes : "";
-  return { allergies, notes };
+  const referral_source =
+    typeof o.referral_source === "string" && o.referral_source ? o.referral_source : "control_panel";
+  const referral_detail = typeof o.referral_detail === "string" ? o.referral_detail : "";
+  return { allergies, notes, referral_source, referral_detail };
 }
 
 function buildClinicalPayload(
   prev: PatientClinicalProfile | undefined,
   allergiesCsv: string,
-  notes: string
+  notes: string,
+  referral_source: string,
+  referral_detail: string
 ): PatientClinicalProfile {
   const base =
     prev && typeof prev === "object" && !Array.isArray(prev) ? { ...prev } : {};
@@ -39,7 +46,14 @@ function buildClinicalPayload(
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
-  return { ...base, allergies, notes };
+  const detail =
+    referral_source === "external_partner" || referral_source === "other"
+      ? referral_detail.trim()
+      : "";
+  const out: Record<string, unknown> = { ...base, allergies, notes, referral_source };
+  if (detail) out.referral_detail = detail;
+  else delete out.referral_detail;
+  return out as PatientClinicalProfile;
 }
 
 export function PatientDetailForm({
@@ -56,6 +70,8 @@ export function PatientDetailForm({
 }) {
   const router = useRouter();
   const { updatePatient, isUpdating, deletePatient, isDeleting } = usePatients();
+  const { data: doctorsData } = useUsers({ role: "doctor", limit: 200 });
+  const doctors = doctorsData?.users ?? [];
   const [form, setForm] = useState({
     firstname: patient.firstname,
     lastname: patient.lastname,
@@ -63,6 +79,7 @@ export function PatientDetailForm({
     care_level: patient.care_level ?? undefined,
     pronoun: patient.pronoun ?? "",
     active: patient.active,
+    primary_doctor_id: patient.primary_doctor_id ?? undefined as string | undefined,
     ...clinicalToForm(patient.clinical_profile),
   });
 
@@ -71,7 +88,9 @@ export function PatientDetailForm({
     const clinical_profile = buildClinicalPayload(
       patient.clinical_profile,
       form.allergies,
-      form.notes
+      form.notes,
+      form.referral_source,
+      form.referral_detail
     );
     updatePatient(
       {
@@ -83,6 +102,10 @@ export function PatientDetailForm({
         pronoun: form.pronoun || undefined,
         active: form.active,
         clinical_profile,
+        primary_doctor_id:
+          form.primary_doctor_id && form.primary_doctor_id.length > 0
+            ? form.primary_doctor_id
+            : null,
       },
       {
         onSuccess: () => {
@@ -141,19 +164,72 @@ export function PatientDetailForm({
             onChange={(e) => setForm((p) => ({ ...p, birth_date: e.target.value }))}
           />
         </div>
-        <div className="space-y-2">
+        <div className="space-y-2 sm:col-span-2">
           <Label htmlFor="patient-carelevel">Care level (1–10)</Label>
           <PatientCareLevelSelect
             id="patient-carelevel"
             value={form.care_level}
             onValueChange={(next) => setForm((p) => ({ ...p, care_level: next }))}
             aria-label="Care level tier from 1 to 10"
+            className="w-full"
           />
         </div>
+        <div className="space-y-2 sm:col-span-2">
+          <Label htmlFor="patient-primary-doctor">Primary doctor (care team)</Label>
+          <Select
+            value={form.primary_doctor_id ?? "none"}
+            onValueChange={(v) =>
+              setForm((p) => ({ ...p, primary_doctor_id: v === "none" ? undefined : v }))
+            }
+          >
+            <SelectTrigger id="patient-primary-doctor" className="w-full min-w-0 rounded-2xl border-gray-200">
+              <SelectValue placeholder="Not assigned" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Not assigned</SelectItem>
+              {doctors.map((d) => (
+                <SelectItem key={d.id} value={d.id}>
+                  {d.display_name?.trim() || d.email}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2 sm:col-span-2">
+          <Label>Referral / intake</Label>
+          <Select
+            value={form.referral_source}
+            onValueChange={(v) => setForm((p) => ({ ...p, referral_source: v }))}
+          >
+            <SelectTrigger className="w-full min-w-0 rounded-2xl border-gray-200">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {PATIENT_REFERRAL_SOURCES.map((s) => (
+                <SelectItem key={s.value} value={s.value}>
+                  {s.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        {(form.referral_source === "external_partner" || form.referral_source === "other") && (
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="patient-referral-detail">External / other detail</Label>
+            <Input
+              id="patient-referral-detail"
+              title="Referral detail"
+              value={form.referral_detail}
+              onChange={(e) => setForm((p) => ({ ...p, referral_detail: e.target.value }))}
+              placeholder="Clinic name, referrer, or context"
+              className="rounded-2xl border-gray-200"
+            />
+          </div>
+        )}
         <div className="space-y-2">
           <Label>Pronoun</Label>
           <Select value={form.pronoun} onValueChange={(v) => setForm((p) => ({ ...p, pronoun: v }))}>
-            <SelectTrigger>
+            <SelectTrigger className="w-full min-w-0 rounded-2xl border-gray-200">
               <SelectValue placeholder="Select" />
             </SelectTrigger>
             <SelectContent>
@@ -170,7 +246,7 @@ export function PatientDetailForm({
             value={form.active ? "yes" : "no"}
             onValueChange={(v) => setForm((p) => ({ ...p, active: v === "yes" }))}
           >
-            <SelectTrigger>
+            <SelectTrigger className="w-full min-w-0 rounded-2xl border-gray-200">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

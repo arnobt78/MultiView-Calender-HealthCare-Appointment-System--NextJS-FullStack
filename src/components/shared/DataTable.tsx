@@ -50,6 +50,11 @@ export interface DataTableProps<TData, TValue> {
   pagination?: boolean;
   /** Page size (default 10) */
   pageSize?: number;
+  /**
+   * Extra classes on the inner `<table>` (e.g. `min-w-[880px]`).
+   * With `table-fixed`, a min-width wider than the viewport lets the built-in `overflow-x-auto` on `Table` show a horizontal scrollbar only when needed.
+   */
+  tableClassName?: string;
 }
 
 export function DataTable<TData, TValue>({
@@ -64,6 +69,7 @@ export function DataTable<TData, TValue>({
   className,
   pagination = true,
   pageSize = 10,
+  tableClassName,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
@@ -122,8 +128,8 @@ export function DataTable<TData, TValue>({
           />
         </div>
       )}
-      <div className="rounded-2xl border">
-        <Table className="table-fixed">
+      <div className="rounded-2xl border max-w-full min-w-0">
+        <Table className={cn("table-fixed", tableClassName)}>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
@@ -170,9 +176,16 @@ export function DataTable<TData, TValue>({
                             <Skeleton className="h-9 w-9 rounded-full" />
                           </div>
                         ) : columnId === "name" || columnId === "display_name" ? (
-                          <Skeleton className="h-4 w-28 rounded-sm" />
+                          <div className="space-y-1">
+                            <Skeleton className="h-4 w-28 rounded-sm" />
+                            <Skeleton className="h-3 w-36 rounded-sm" />
+                          </div>
                         ) : columnId === "email" ? (
                           <Skeleton className="h-4 w-36 rounded-sm" />
+                        ) : columnId === "care_level" ? (
+                          <Skeleton className="h-4 w-32 rounded-sm" />
+                        ) : columnId === "primary_doctor_display" ? (
+                          <Skeleton className="h-4 w-28 rounded-sm" />
                         ) : columnId === "role" || columnId === "active" ? (
                           <Skeleton className="h-5 w-16 rounded-full" />
                         ) : columnId === "created_at" ? (

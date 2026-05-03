@@ -33,11 +33,15 @@ export function PatientCareLevelSelect({
       disabled={disabled}
       onValueChange={(s) => onValueChange(s === "none" ? undefined : Number(s))}
     >
-      <SelectTrigger id={id} className={cn("rounded-2xl border-gray-200", className)} aria-label={ariaLabel}>
-        <SelectValue placeholder="Not set" />
+      <SelectTrigger
+        id={id}
+        className={cn("w-full min-w-0 rounded-2xl border-gray-200", className)}
+        aria-label={ariaLabel}
+      >
+        <SelectValue placeholder="Not Set" />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="none">Not set</SelectItem>
+        <SelectItem value="none">Not Set</SelectItem>
         {PATIENT_CARE_LEVEL_STAGES.map((stage) => (
           <SelectItem key={stage.value} value={String(stage.value)} title={stage.detail}>
             {`${stage.value} — ${stage.shortLabel}`}

@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { isValidUUID } from "@/lib/validation";
 import { serializePatient } from "@/lib/serializers";
+import { patientDetailInclude } from "@/lib/patient-api-include";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -23,7 +24,10 @@ export async function GET(req: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Invalid patient ID" }, { status: 400 });
     }
 
-    const patient = await prisma.patient.findUnique({ where: { id } });
+    const patient = await prisma.patient.findUnique({
+      where: { id },
+      include: patientDetailInclude,
+    });
     if (!patient) {
       return NextResponse.json({ error: "Patient not found" }, { status: 404 });
     }
@@ -74,6 +78,13 @@ export async function PUT(req: NextRequest, context: RouteContext) {
       }
     }
 
+    const primaryDoctorId =
+      "primary_doctor_id" in body
+        ? body.primary_doctor_id && isValidUUID(String(body.primary_doctor_id))
+          ? String(body.primary_doctor_id)
+          : null
+        : undefined;
+
     const patient = await prisma.patient.update({
       where: { id },
       data: {
@@ -84,8 +95,11 @@ export async function PUT(req: NextRequest, context: RouteContext) {
         pronoun: body.pronoun ?? null,
         active: body.active !== false,
         active_since: body.active_since ? new Date(body.active_since) : null,
+        updated_by_id: sessionUser.userId,
         ...(nextClinical !== undefined ? { clinical_profile: nextClinical } : {}),
+        ...(primaryDoctorId !== undefined ? { primary_doctor_id: primaryDoctorId } : {}),
       },
+      include: patientDetailInclude,
     });
 
     return NextResponse.json({ patient: serializePatient(patient) });

@@ -15,6 +15,9 @@ export type PatientClinicalProfile = {
   conditions?: string[];
   medications_current?: string[];
   notes?: string;
+  /** Where the record originated — drives optional `referral_detail` */
+  referral_source?: string;
+  referral_detail?: string;
 } | null;
 
 // Patient
@@ -29,7 +32,15 @@ export interface Patient {
   active: boolean;
   active_since: string | null;
   created_at: string;
+  /** Server-maintained; shown on detail for audit */
+  updated_at?: string | null;
   clinical_profile?: PatientClinicalProfile;
+  created_by_id?: string | null;
+  updated_by_id?: string | null;
+  primary_doctor_id?: string | null;
+  created_by_display?: string | null;
+  updated_by_display?: string | null;
+  primary_doctor_display?: string | null;
 }
 
 /** GET /api/patients/[id]/snapshot — aggregate for profile tabs */

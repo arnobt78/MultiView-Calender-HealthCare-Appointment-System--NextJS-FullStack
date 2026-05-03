@@ -1,20 +1,41 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient, handleApiError } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
-import { invalidateEntityAffectingAppointments } from "@/lib/query-client";
+import {
+  invalidateEntityAffectingAppointments,
+  invalidatePatientDetailAndSnapshot,
+} from "@/lib/query-client";
 import { Patient, type PatientSnapshot } from "@/types/types";
 import { notify } from "@/lib/notify";
 import { fetchPatients } from "@/lib/query-fetchers";
 
 export type PatientCreateInput = Pick<Patient, "firstname" | "lastname"> &
   Partial<
-    Pick<Patient, "birth_date" | "care_level" | "pronoun" | "email" | "active" | "active_since" | "clinical_profile">
+    Pick<
+      Patient,
+      | "birth_date"
+      | "care_level"
+      | "pronoun"
+      | "email"
+      | "active"
+      | "active_since"
+      | "clinical_profile"
+      | "primary_doctor_id"
+    >
   >;
 /** Email omitted — API ignores email on PUT for demo safety */
 export type PatientUpdateInput = Partial<
   Pick<
     Patient,
-    "firstname" | "lastname" | "birth_date" | "care_level" | "pronoun" | "active" | "active_since" | "clinical_profile"
+    | "firstname"
+    | "lastname"
+    | "birth_date"
+    | "care_level"
+    | "pronoun"
+    | "active"
+    | "active_since"
+    | "clinical_profile"
+    | "primary_doctor_id"
   >
 >;
 
@@ -34,6 +55,7 @@ export function usePatients() {
       }),
     onSuccess: async (data) => {
       await invalidateEntityAffectingAppointments(queryClient, "patients");
+      await invalidatePatientDetailAndSnapshot(queryClient, data.patient.id);
       notify.crud({ action: "created", entity: "Patient", detail: `${data.patient.firstname} ${data.patient.lastname} was added.` });
     },
     onError: (e) => handleApiError(e, "Failed to create patient"),
@@ -47,6 +69,7 @@ export function usePatients() {
       }),
     onSuccess: async (data) => {
       await invalidateEntityAffectingAppointments(queryClient, "patients");
+      await invalidatePatientDetailAndSnapshot(queryClient, data.patient.id);
       notify.crud({ action: "updated", entity: "Patient", detail: `${data.patient.firstname} ${data.patient.lastname} was updated.` });
     },
     onError: (e) => handleApiError(e, "Failed to update patient"),

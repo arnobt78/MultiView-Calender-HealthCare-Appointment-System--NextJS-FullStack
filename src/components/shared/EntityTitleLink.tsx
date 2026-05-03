@@ -15,7 +15,8 @@ export function EntityTitleLink({ href, label, className }: EntityTitleLinkProps
     <PrefetchingLink
       href={href}
       className={cn(
-        "inline-flex items-center text-sky-700 transition-colors hover:text-sky-800 hover:bg-sky-50/60 rounded-md px-1 py-0.5 no-underline",
+        // No horizontal/vertical padding so stacked email lines in tables align with the name link.
+        "inline-flex max-w-full min-w-0 items-center rounded-md text-sky-700 no-underline transition-colors hover:bg-sky-50/60 hover:text-sky-800",
         className
       )}
     >

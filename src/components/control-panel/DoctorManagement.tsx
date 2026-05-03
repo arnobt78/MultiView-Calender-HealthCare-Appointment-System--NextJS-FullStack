@@ -101,25 +101,32 @@ export default function DoctorManagement() {
       },
     },
     {
-      accessorKey: "display_name",
+      id: "display_name",
+      accessorFn: (row) => `${row.display_name ?? ""} ${row.email}`.trim(),
       header: ({ column }) => <DataTableColumnHeader column={column} title="Name" />,
-      meta: { headClassName: "min-w-[180px]", cellClassName: "min-w-[180px]" },
+      meta: { headClassName: "min-w-[220px]", cellClassName: "min-w-[220px]" },
       cell: ({ row }) => {
-        const label = row.original.display_name ?? "—";
-        if (!row.original.id) return label;
+        const u = row.original;
+        const label = u.display_name ?? "—";
+        const link =
+          !u.id ? (
+            <span className="font-medium text-foreground">{label}</span>
+          ) : (
+            <EntityTitleLink
+              href={`/control-panel/doctors/${u.id}`}
+              label={label}
+              className="min-w-0 self-start truncate font-medium"
+            />
+          );
         return (
-          <EntityTitleLink
-            href={`/control-panel/doctors/${row.original.id}`}
-            label={label}
-          />
+          <div className="flex min-w-0 max-w-[min(100%,320px)] flex-col gap-0.5">
+            {link}
+            <span className="truncate text-xs text-muted-foreground" title={u.email}>
+              {u.email}
+            </span>
+          </div>
         );
       },
-    },
-    {
-      accessorKey: "email",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Email" />,
-      meta: { headClassName: "min-w-[190px]", cellClassName: "min-w-[190px]" },
-      cell: ({ row }) => row.original.email,
     },
     {
       accessorKey: "role",
@@ -150,7 +157,7 @@ export default function DoctorManagement() {
   return (
     <div className="space-y-2 text-gray-700">
       <PageHeader
-        title="Doctor Management"
+        title="Doctors"
         description="Accounts with role doctor. Staff admins use User / Admin Management."
       />
       <DataTable<User, unknown>
@@ -168,6 +175,7 @@ export default function DoctorManagement() {
         }}
         searchPlaceholder="Search by name or email…"
         emptyMessage="No doctors found."
+        tableClassName="min-w-[860px]"
       />
     </div>
   );

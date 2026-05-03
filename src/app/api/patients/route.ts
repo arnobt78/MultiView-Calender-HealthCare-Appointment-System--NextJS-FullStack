@@ -6,7 +6,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
+import { isValidUUID } from "@/lib/validation";
 import { serializePatient } from "@/lib/serializers";
+import { patientDetailInclude, patientUserPick } from "@/lib/patient-api-include";
 
 export async function GET() {
   try {
@@ -15,8 +17,10 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Light join: primary doctor label only (list + filters) — avoids N+1 client fetches
     const patients = await prisma.patient.findMany({
       orderBy: { created_at: "desc" },
+      include: { primary_doctor: patientUserPick },
     });
 
     return NextResponse.json({
@@ -48,6 +52,11 @@ export async function POST(req: NextRequest) {
         ? (body.clinical_profile as object)
         : undefined;
 
+    const primaryDoctorId =
+      body.primary_doctor_id && isValidUUID(String(body.primary_doctor_id))
+        ? String(body.primary_doctor_id)
+        : null;
+
     const patient = await prisma.patient.create({
       data: {
         firstname: body.firstname.trim(),
@@ -58,8 +67,12 @@ export async function POST(req: NextRequest) {
         email: body.email ?? null,
         active: body.active !== false,
         active_since: body.active_since ? new Date(body.active_since) : null,
+        created_by_id: sessionUser.userId,
+        updated_by_id: sessionUser.userId,
+        primary_doctor_id: primaryDoctorId,
         ...(clinical !== undefined ? { clinical_profile: clinical } : {}),
       },
+      include: patientDetailInclude,
     });
 
     return NextResponse.json({ patient: serializePatient(patient) });

@@ -22,7 +22,7 @@ export function PageHeader({
   if (loading) {
     return (
       <div className={cn("flex flex-col sm:flex-row sm:items-center justify-between gap-4", className)} {...props}>
-        <div className="space-y-2">
+        <div className="min-w-0 flex-1 space-y-2 pr-2">
           <Skeleton className="h-8 w-64" />
           <Skeleton className="h-4 w-96" />
         </div>
@@ -41,14 +41,14 @@ export function PageHeader({
       )}
       {...props}
     >
-      <div className="py-2">
+      <div className="min-w-0 flex-1 py-2 pr-2">
         <h1 className="text-lg sm:text-xl font-semibold tracking-tight text-gray-700">{title}</h1>
         {description && (
           <p className="text-gray-500 text-xs sm:text-sm">{description}</p>
         )}
       </div>
       {actions && (
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
           {actions}
         </div>
       )}

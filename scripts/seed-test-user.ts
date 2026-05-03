@@ -99,6 +99,12 @@ async function seedDemoUsers() {
   // Patient Management reads `patients` table; portal login stays on `users`. Keep one demo row in sync.
   const demoPatientAcc = DEMO_ACCOUNTS.find((a) => a.role === "patient");
   if (demoPatientAcc) {
+    // Matches main seed `enrichDemoPatientAuditAndClinical`: audit "Created · by …" needs `created_by_id` (API loads `created_by`).
+    const auditUser = await prisma.user.findFirst({
+      where: { role: "admin" },
+      orderBy: { created_at: "asc" },
+      select: { id: true },
+    });
     const parts = demoPatientAcc.displayName.trim().split(/\s+/);
     const firstname = parts[0] ?? "User";
     const lastname = parts.slice(1).join(" ") || "Patient";
@@ -117,12 +123,23 @@ async function seedDemoUsers() {
           email: demoPatientAcc.email,
           active: true,
           clinical_profile,
+          ...(auditUser
+            ? { created_by_id: auditUser.id, updated_by_id: auditUser.id }
+            : {}),
         },
       });
     } else {
       await prisma.patient.update({
         where: { id: existingRow.id },
-        data: { firstname, lastname, email: demoPatientAcc.email, clinical_profile },
+        data: {
+          firstname,
+          lastname,
+          email: demoPatientAcc.email,
+          clinical_profile,
+          // Backfill only when missing so we do not overwrite real editors on `updated_by`.
+          ...(auditUser && !existingRow.created_by_id ? { created_by_id: auditUser.id } : {}),
+          ...(auditUser && !existingRow.updated_by_id ? { updated_by_id: auditUser.id } : {}),
+        },
       });
     }
   }

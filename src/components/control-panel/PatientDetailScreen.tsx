@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft } from "lucide-react";
 import { PatientDetailForm } from "@/components/control-panel/PatientDetailForm";
 import { UserAvatar } from "@/components/shared/UserAvatar";
+import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
+import { ControlPanelStaffLink } from "@/components/shared/ControlPanelStaffLink";
 import { DEMO_ACCOUNTS } from "@/lib/demo-credentials";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -23,6 +25,8 @@ import {
 import { format } from "date-fns";
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import { usePatients } from "@/hooks/usePatients";
+import { getPatientCareLevelLabel } from "@/lib/patient-care-level";
+import { PATIENT_REFERRAL_SOURCES } from "@/lib/patient-referral-sources";
 
 const FORM_ID = "patient-detail-form";
 
@@ -85,10 +89,7 @@ export function PatientDetailScreen({ patientId }: { patientId: string }) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Profile</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            id · created_at · demographics · clinical_profile (JSON) · active
-          </p>
+          <CardTitle>Patient details</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex items-center gap-4">
@@ -112,27 +113,77 @@ export function PatientDetailScreen({ patientId }: { patientId: string }) {
           {mode === "view" ? (
             <>
               <dl className="grid gap-3 text-sm sm:grid-cols-2">
-                <div>
-                  <dt className="font-medium text-muted-foreground">id</dt>
-                  <dd className="font-mono break-all text-xs mt-0.5">{patient.id}</dd>
-                </div>
-                <div>
-                  <dt className="font-medium text-muted-foreground">created_at</dt>
-                  <dd className="mt-0.5">
-                    {patient.created_at ? new Date(patient.created_at).toLocaleString() : "—"}
+                <div className="sm:col-span-2 rounded-xl border border-slate-200/80 bg-slate-50/50 px-3 py-2">
+                  <dt className="font-medium text-muted-foreground">Record audit</dt>
+                  <dd className="mt-1 space-y-1 text-gray-800">
+                    <p>
+                      <span className="text-muted-foreground">Created: </span>
+                      {patient.created_at ? new Date(patient.created_at).toLocaleString() : "—"}
+                      {patient.created_by_display ? (
+                        <>
+                          <span className="text-muted-foreground"> · by </span>
+                          <ControlPanelStaffLink
+                            userId={patient.created_by_id}
+                            label={patient.created_by_display}
+                          />
+                        </>
+                      ) : null}
+                    </p>
+                    <p>
+                      <span className="text-muted-foreground">Last updated: </span>
+                      {patient.updated_at ? new Date(patient.updated_at).toLocaleString() : "—"}
+                      {patient.updated_by_display ? (
+                        <>
+                          <span className="text-muted-foreground"> · by </span>
+                          <ControlPanelStaffLink
+                            userId={patient.updated_by_id}
+                            label={patient.updated_by_display}
+                          />
+                        </>
+                      ) : null}
+                    </p>
                   </dd>
                 </div>
                 <div>
-                  <dt className="font-medium text-muted-foreground">birth_date</dt>
+                  <dt className="font-medium text-muted-foreground">Patient ID</dt>
+                  <dd className="font-mono break-all text-xs mt-0.5">{patient.id}</dd>
+                </div>
+                <div>
+                  <dt className="font-medium text-muted-foreground">Birth date</dt>
                   <dd className="mt-0.5">{patient.birth_date ?? "—"}</dd>
                 </div>
                 <div>
-                  <dt className="font-medium text-muted-foreground">care_level</dt>
-                  <dd className="mt-0.5">{patient.care_level ?? "—"}</dd>
+                  <dt className="font-medium text-muted-foreground">Care tier (1–10)</dt>
+                  <dd className="mt-0.5">{getPatientCareLevelLabel(patient.care_level)}</dd>
                 </div>
                 <div>
-                  <dt className="font-medium text-muted-foreground">pronoun</dt>
+                  <dt className="font-medium text-muted-foreground">Pronoun</dt>
                   <dd className="mt-0.5">{patient.pronoun ?? "—"}</dd>
+                </div>
+                <div className="sm:col-span-2">
+                  <dt className="font-medium text-muted-foreground">Primary doctor</dt>
+                  <dd className="mt-0.5">
+                    {patient.primary_doctor_id && patient.primary_doctor_display?.trim() ? (
+                      <EntityTitleLink
+                        href={`/control-panel/doctors/${patient.primary_doctor_id}`}
+                        label={patient.primary_doctor_display.trim()}
+                      />
+                    ) : (
+                      patient.primary_doctor_display ?? "—"
+                    )}
+                  </dd>
+                </div>
+                <div className="sm:col-span-2">
+                  <dt className="font-medium text-muted-foreground">Referral</dt>
+                  <dd className="mt-0.5">
+                    {cp && typeof cp === "object" && typeof cp.referral_source === "string"
+                      ? PATIENT_REFERRAL_SOURCES.find((x) => x.value === cp.referral_source)?.label ??
+                        cp.referral_source
+                      : "—"}
+                    {cp && typeof cp === "object" && typeof cp.referral_detail === "string" && cp.referral_detail
+                      ? ` — ${cp.referral_detail}`
+                      : ""}
+                  </dd>
                 </div>
                 <div>
                   <dt className="font-medium text-muted-foreground">Allergies</dt>
@@ -253,7 +304,7 @@ export function PatientDetailScreen({ patientId }: { patientId: string }) {
             </>
           ) : (
             <PatientDetailForm
-              key={`${patient.id}-${JSON.stringify(patient.clinical_profile)}`}
+              key={`${patient.id}-${patient.primary_doctor_id ?? ""}-${JSON.stringify(patient.clinical_profile)}`}
               patient={patient}
               formId={FORM_ID}
               onSaved={() => setMode("view")}

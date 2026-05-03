@@ -36,6 +36,9 @@ model User {
   doctor_availabilities       DoctorAvailability[]  @relation("DoctorAvailabilityUser")
   doctor_time_offs            DoctorTimeOff[]       @relation("DoctorTimeOffUser")
   appointment_types_owned     AppointmentType[]     @relation("AppointmentTypeUser")
+  patients_created            Patient[]             @relation("PatientCreatedBy")
+  patients_updated            Patient[]             @relation("PatientUpdatedBy")
+  patients_primary_doctor     Patient[]             @relation("PatientPrimaryDoctor")
 
   @@map("users")
 }
@@ -44,6 +47,7 @@ model User {
 model Patient {
   id          String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   created_at  DateTime  @default(now())
+  updated_at  DateTime  @default(now()) @updatedAt
   firstname   String    @db.Text
   lastname    String    @db.Text
   birth_date  DateTime? @db.Date
@@ -54,7 +58,13 @@ model Patient {
   active_since DateTime? @db.Timestamptz(6)
   /// Flexible demo/clinical fields (allergies, meds, notes) — merged on PUT, not replaced blindly.
   clinical_profile Json?
+  created_by_id     String? @map("created_by") @db.Uuid
+  updated_by_id     String? @map("updated_by") @db.Uuid
+  primary_doctor_id String? @map("primary_doctor") @db.Uuid
 
+  created_by     User? @relation("PatientCreatedBy", fields: [created_by_id], references: [id], onDelete: SetNull)
+  updated_by     User? @relation("PatientUpdatedBy", fields: [updated_by_id], references: [id], onDelete: SetNull)
+  primary_doctor User? @relation("PatientPrimaryDoctor", fields: [primary_doctor_id], references: [id], onDelete: SetNull)
   appointments Appointment[]
 
   @@map("patients")

@@ -13,8 +13,8 @@ export function PatientManagementStatsRow() {
       <PatientStatCard
         variant="violet"
         icon={Users}
-        title="Total patients"
-        subtitle="All records in this workspace"
+        title="Total Patients"
+        subtitle="All Records In This Workspace"
         value={metrics.total}
         valueSkeleton={skeleton}
       />
@@ -22,7 +22,7 @@ export function PatientManagementStatsRow() {
         variant="emerald"
         icon={UserCheck}
         title="Active"
-        subtitle="Currently marked active"
+        subtitle="Currently Marked Active"
         value={metrics.active}
         valueSkeleton={skeleton}
       />
@@ -30,16 +30,16 @@ export function PatientManagementStatsRow() {
         variant="sky"
         icon={UserMinus}
         title="Inactive"
-        subtitle="Archived or paused access"
+        subtitle="Archived Or Paused Access"
         value={metrics.inactive}
         valueSkeleton={skeleton}
       />
       <PatientStatCard
         variant="amber"
         icon={Activity}
-        title="Acuity on file"
-        subtitle="Patients with a 1–10 tier saved"
-        badge={metrics.highAcuity > 0 ? `${metrics.highAcuity} at tier 7+` : undefined}
+        title="Acuity On File"
+        subtitle="Patients With A 1–10 Tier Saved"
+        badge={metrics.highAcuity > 0 ? `${metrics.highAcuity} At Tier 7+` : undefined}
         value={metrics.withCareTier}
         valueSkeleton={skeleton}
       />

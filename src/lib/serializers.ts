@@ -19,25 +19,55 @@ export function serializeCategory(c: {
   };
 }
 
-export function serializePatient(p: {
-  id: string;
-  created_at: Date;
-  firstname: string;
-  lastname: string;
-  birth_date: Date | null;
-  care_level: number | null;
-  pronoun: string | null;
-  email: string | null;
-  active: boolean;
-  active_since: Date | null;
-  clinical_profile?: unknown | null;
-}) {
+type UserMini = { display_name: string | null; email: string } | null | undefined;
+
+function userDisplay(u: UserMini): string | null {
+  if (!u) return null;
+  return (u.display_name?.trim() || u.email) ?? null;
+}
+
+/** Patient row → API JSON; optional relation picks add audit / primary-doctor labels for detail views */
+export function serializePatient(
+  p: {
+    id: string;
+    created_at: Date;
+    updated_at?: Date;
+    firstname: string;
+    lastname: string;
+    birth_date: Date | null;
+    care_level: number | null;
+    pronoun: string | null;
+    email: string | null;
+    active: boolean;
+    active_since: Date | null;
+    clinical_profile?: unknown | null;
+    created_by_id?: string | null;
+    updated_by_id?: string | null;
+    primary_doctor_id?: string | null;
+    created_by?: UserMini;
+    updated_by?: UserMini;
+    primary_doctor?: UserMini;
+  }
+) {
   return {
-    ...p,
+    id: p.id,
     created_at: p.created_at?.toISOString?.(),
+    updated_at: p.updated_at?.toISOString?.() ?? null,
+    firstname: p.firstname,
+    lastname: p.lastname,
     birth_date: p.birth_date ? p.birth_date.toISOString().slice(0, 10) : null,
+    care_level: p.care_level,
+    pronoun: p.pronoun,
+    email: p.email,
+    active: p.active,
     active_since: p.active_since?.toISOString?.() ?? null,
     clinical_profile: p.clinical_profile ?? null,
+    created_by_id: p.created_by_id ?? null,
+    updated_by_id: p.updated_by_id ?? null,
+    primary_doctor_id: p.primary_doctor_id ?? null,
+    created_by_display: userDisplay(p.created_by),
+    updated_by_display: userDisplay(p.updated_by),
+    primary_doctor_display: userDisplay(p.primary_doctor),
   };
 }
 
