@@ -41,6 +41,8 @@ export interface DataTableProps<TData, TValue> {
   searchColumnId?: string;
   /** Multi-field search — drives TanStack `globalFilter` (name + email, etc.). */
   globalFilterFn?: (row: TData, filterValue: string) => boolean;
+  /** Parent-owned filter string — hides built-in search row (toolbar above table). */
+  externalGlobalFilter?: { value: string; onChange: (value: string) => void };
   isLoading?: boolean;
   emptyMessage?: string;
   className?: string;
@@ -56,6 +58,7 @@ export function DataTable<TData, TValue>({
   searchPlaceholder = "Search...",
   searchColumnId,
   globalFilterFn,
+  externalGlobalFilter,
   isLoading,
   emptyMessage = "No results.",
   className,
@@ -66,8 +69,10 @@ export function DataTable<TData, TValue>({
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
-  const [globalFilter, setGlobalFilter] = React.useState("");
+  const [internalGlobalFilter, setInternalGlobalFilter] = React.useState("");
   const useGlobal = typeof globalFilterFn === "function";
+  const globalFilter = externalGlobalFilter ? externalGlobalFilter.value : internalGlobalFilter;
+  const setGlobalFilter = externalGlobalFilter ? externalGlobalFilter.onChange : setInternalGlobalFilter;
 
   const table = useReactTable({
     data,
@@ -94,11 +99,12 @@ export function DataTable<TData, TValue>({
     initialState: pagination ? { pagination: { pageSize } } : undefined,
   });
 
-  const showSearch = useGlobal || searchColumnId != null;
+  const showBuiltInSearch =
+    (useGlobal && !externalGlobalFilter) || (!useGlobal && searchColumnId != null);
 
   return (
     <div className={cn("space-y-2", className)}>
-      {showSearch && (
+      {showBuiltInSearch && (
         <div className="flex items-center gap-2">
           <Input
             placeholder={searchPlaceholder}
@@ -124,12 +130,13 @@ export function DataTable<TData, TValue>({
                 {headerGroup.headers.map((header) => {
                   const columnMeta = header.column.columnDef.meta as DataTableColumnMeta | undefined;
                   const columnId = header.column.id;
-                  const compactEdgeColumn = columnId === "image" || columnId === "actions";
+                  const narrowImageCol = columnId === "image";
                   return (
                   <TableHead
                     key={header.id}
                     className={cn(
-                      compactEdgeColumn && "w-12 min-w-12 px-2",
+                      narrowImageCol && "w-12 min-w-12 px-2",
+                      columnId === "actions" && "px-2",
                       columnMeta?.headClassName
                     )}
                   >
@@ -149,13 +156,12 @@ export function DataTable<TData, TValue>({
                   {table.getAllLeafColumns().map((column) => {
                     const columnMeta = column.columnDef.meta as DataTableColumnMeta | undefined;
                     const columnId = column.id;
-                    const compactEdgeColumn = columnId === "image" || columnId === "actions";
                     return (
                       <TableCell
                         key={`skeleton-cell-${rowIdx}-${column.id}`}
                         className={cn(
-                          compactEdgeColumn && "px-2",
-                          columnId === "actions" && "text-right",
+                          columnId === "image" && "w-12 min-w-12 px-2",
+                          columnId === "actions" && "px-2 text-right",
                           columnMeta?.cellClassName
                         )}
                       >
@@ -189,13 +195,12 @@ export function DataTable<TData, TValue>({
                   {row.getVisibleCells().map((cell) => {
                     const columnMeta = cell.column.columnDef.meta as DataTableColumnMeta | undefined;
                     const columnId = cell.column.id;
-                    const compactEdgeColumn = columnId === "image" || columnId === "actions";
                     return (
                     <TableCell
                       key={cell.id}
                       className={cn(
-                        compactEdgeColumn && "px-2",
-                        columnId === "actions" && "text-right",
+                        columnId === "image" && "w-12 min-w-12 px-2",
+                        columnId === "actions" && "px-2 text-right",
                         columnMeta?.cellClassName
                       )}
                     >

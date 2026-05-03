@@ -18,7 +18,7 @@ export function DataTableColumnHeader<TData, TValue>({
   className?: string;
 }) {
   if (!column.getCanSort()) {
-    return <span className={className}>{title}</span>;
+    return <span className={cn("font-medium text-muted-foreground", className)}>{title}</span>;
   }
   return (
     <Button

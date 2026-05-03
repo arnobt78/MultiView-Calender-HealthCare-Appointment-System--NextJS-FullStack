@@ -110,9 +110,11 @@ export async function invalidateEntityAffectingAppointments(
       : resource === "relatives"
         ? queryKeys.relatives.all
         : queryKeys.categories.all;
+  // Activities list + appointments read denormalized labels; invalidate together so UI updates without navigation.
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: key }),
     queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all }),
+    invalidateActivitiesList(queryClient),
   ]);
 }
 

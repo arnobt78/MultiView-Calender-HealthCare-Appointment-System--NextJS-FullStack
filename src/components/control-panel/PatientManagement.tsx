@@ -10,6 +10,12 @@ import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import {
+  emeraldGlassPrimaryButtonClass,
+  violetGlassImportButtonClass,
+} from "@/lib/calendar-header-action-styles";
+import { FiSearch } from "react-icons/fi";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,7 +26,6 @@ import {
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import { Patient } from "@/types/types";
 import {
-  Plus,
   EllipsisVertical,
   Pencil,
   Trash2,
@@ -28,14 +33,17 @@ import {
   CircleCheck,
   CircleOff,
   Eye,
+  ListFilter,
+  UserPlus,
+  X,
 } from "lucide-react";
 import { useState } from "react";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
-  DialogHeader,
+  DialogDescription,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -52,7 +60,14 @@ import { DEMO_ACCOUNTS } from "@/lib/demo-credentials";
 import {
   PatientListFiltersProvider,
   usePatientListFilters,
+  type PatientStatusFilter,
 } from "@/components/control-panel/PatientListFiltersContext";
+
+const STATUS_FILTER_LABEL: Record<PatientStatusFilter, string> = {
+  all: "All statuses",
+  active: "Active",
+  inactive: "Inactive",
+};
 
 const DEMO_AVATAR_BY_EMAIL = new Map(
   DEMO_ACCOUNTS.map((account) => [account.email.toLowerCase(), account.avatarUrl])
@@ -158,6 +173,8 @@ function PatientManagementInner() {
   const { patients, isLoading, createPatient, isCreating, deletePatient } = usePatients();
   const { status, setStatus, filterByStatus } = usePatientListFilters();
   const filteredPatients = filterByStatus(patients);
+  /** Toolbar search — controlled so header stays stable while table rows skeleton (no duplicate search under table). */
+  const [listSearch, setListSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<PatientCreateInput>({
     firstname: "",
@@ -238,9 +255,12 @@ function PatientManagementInner() {
     },
     {
       id: "actions",
-      header: "Actions",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Actions" />,
       enableSorting: false,
-      meta: { headClassName: "w-12 text-right", cellClassName: "w-12 text-right" },
+      meta: {
+        headClassName: "min-w-[108px] w-[108px] max-w-[120px] text-right",
+        cellClassName: "min-w-[108px] w-[108px] max-w-[120px] text-right",
+      },
       cell: ({ row }) => (
         <PatientActions patient={row.original} onDelete={deletePatient} />
       ),
@@ -264,32 +284,61 @@ function PatientManagementInner() {
       <PageHeader
         title="Patient Management"
         description="Manage patients. All table schema properties are shown."
-        actions={
-          <div className="flex flex-wrap gap-2">
-            <Select
-              value={status}
-              onValueChange={(v) => setStatus(v as "all" | "active" | "inactive")}
-            >
-              <SelectTrigger className="w-[140px]" aria-label="Filter by status">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All statuses</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button variant="outline" size="sm" onClick={() => exportPatientsCSV(patients)} disabled={patients.length === 0} className="gap-2">
-              <Download className="h-4 w-4" />
-              Export CSV
-            </Button>
-            <Button onClick={() => setDialogOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add patient
-            </Button>
-          </div>
-        }
       />
+
+      {/* Sticky toolbar: transparent + blur only — no fill or border on this wrapper. */}
+      <div className="sticky top-0 z-10 flex min-h-[52px] flex-wrap items-center gap-2 bg-transparent backdrop-blur-sm">
+        <div className="relative min-w-0 w-full flex-1 sm:max-w-md sm:flex-1">
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+            <FiSearch className="h-4 w-4" aria-hidden />
+          </span>
+          <Input
+            type="search"
+            value={listSearch}
+            onChange={(e) => setListSearch(e.target.value)}
+            placeholder="Search… (name or email)"
+            className="h-10 w-full min-w-0 rounded-2xl border-gray-200 bg-white pl-8 pr-2 text-sm text-gray-700 shadow-sm placeholder:text-gray-400 focus:border-slate-400 focus:ring-slate-200"
+            aria-label="Search patients by name or email"
+          />
+        </div>
+        <Select value={status} onValueChange={(v) => setStatus(v as PatientStatusFilter)}>
+          <SelectTrigger
+            className="h-10 w-auto min-w-[160px] shrink-0 rounded-2xl border-gray-200 bg-white text-gray-700 shadow-sm gap-2"
+            aria-label="Filter by status"
+          >
+            <ListFilter className="h-3.5 w-3.5 shrink-0 text-gray-400" aria-hidden />
+            <SelectValue>{STATUS_FILTER_LABEL[status]}</SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All statuses</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="inactive">Inactive</SelectItem>
+          </SelectContent>
+        </Select>
+        <div className="ml-auto flex shrink-0 flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            size="lg"
+            disabled={patients.length === 0}
+            className={cn(violetGlassImportButtonClass, "cursor-pointer disabled:opacity-50")}
+            onClick={() => exportPatientsCSV(patients)}
+          >
+            <Download className="shrink-0" aria-hidden />
+            Export CSV
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="lg"
+            className={cn(emeraldGlassPrimaryButtonClass, "cursor-pointer")}
+            onClick={() => setDialogOpen(true)}
+          >
+            <UserPlus className="shrink-0" aria-hidden />
+            Add patient
+          </Button>
+        </div>
+      </div>
 
       <DataTable<Patient, unknown>
         columns={columns}
@@ -302,114 +351,169 @@ function PatientManagementInner() {
           const blob = `${p.firstname} ${p.lastname} ${p.email ?? ""}`.toLowerCase();
           return blob.includes(s);
         }}
+        externalGlobalFilter={{ value: listSearch, onChange: setListSearch }}
         searchPlaceholder="Search by name or email…"
         emptyMessage="No patients yet. Add one to get started."
       />
 
+      {/* Shell matches Quick Actions / Global Search: custom close, tinted border + shadow, scroll body, tinted footer. */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add patient</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>First name *</Label>
-                <Input
-                  value={form.firstname}
-                  onChange={(e) => setForm((p) => ({ ...p, firstname: e.target.value }))}
-                  placeholder="First name"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Last name *</Label>
-                <Input
-                  value={form.lastname}
-                  onChange={(e) => setForm((p) => ({ ...p, lastname: e.target.value }))}
-                  placeholder="Last name"
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <Input
-                type="email"
-                value={form.email ?? ""}
-                onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
-                placeholder="email@example.com"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="pm-birth-date">Birth date</Label>
-                <Input
-                  id="pm-birth-date"
-                  type="date"
-                  title="Birth date"
-                  value={form.birth_date ?? ""}
-                  onChange={(e) => setForm((p) => ({ ...p, birth_date: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Care level</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={form.care_level ?? ""}
-                  onChange={(e) =>
-                    setForm((p) => ({
-                      ...p,
-                      care_level: e.target.value === "" ? undefined : Number(e.target.value),
-                    }))
-                  }
-                  placeholder="0"
-                />
+        <DialogContent
+          showCloseButton={false}
+          className="flex h-auto max-h-[90vh] w-[92vw] max-w-[640px] flex-col gap-0 overflow-hidden rounded-[28px] border border-emerald-400/30 bg-white p-0 shadow-[0_30px_80px_rgba(16,185,129,0.28)]"
+          aria-describedby={undefined}
+        >
+          <div className="shrink-0 bg-white pt-6">
+            <div className="px-6">
+              <div className="flex items-start gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-emerald-200/70 bg-emerald-50 text-emerald-700">
+                  <UserPlus className="h-5 w-5" aria-hidden />
+                </span>
+                <div className="min-w-0">
+                  <DialogTitle className="text-xl font-semibold text-gray-800">
+                    Add patient
+                  </DialogTitle>
+                  <DialogDescription className="mt-1 text-sm text-muted-foreground">
+                    Required: first and last name. Optional fields help scheduling and records stay accurate.
+                  </DialogDescription>
+                </div>
+                <DialogClose asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="ml-auto h-8 w-8 shrink-0 rounded-full text-muted-foreground hover:bg-emerald-100 hover:text-emerald-700"
+                  >
+                    <X className="h-4 w-4" aria-hidden />
+                    <span className="sr-only">Close</span>
+                  </Button>
+                </DialogClose>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Pronoun</Label>
-                <Select
-                  value={form.pronoun ?? ""}
-                  onValueChange={(v) => setForm((p) => ({ ...p, pronoun: v }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Pronoun" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="he/him">he/him</SelectItem>
-                    <SelectItem value="she/her">she/her</SelectItem>
-                    <SelectItem value="they/them">they/them</SelectItem>
-                    <SelectItem value="other">other</SelectItem>
-                  </SelectContent>
-                </Select>
+            <div className="mx-6 mt-4 border-b border-emerald-200/60" />
+          </div>
+
+          <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">
+            <div className="grid gap-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>First name *</Label>
+                  <Input
+                    value={form.firstname}
+                    onChange={(e) => setForm((p) => ({ ...p, firstname: e.target.value }))}
+                    placeholder="First name"
+                    className="rounded-2xl border-gray-200"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Last name *</Label>
+                  <Input
+                    value={form.lastname}
+                    onChange={(e) => setForm((p) => ({ ...p, lastname: e.target.value }))}
+                    placeholder="Last name"
+                    className="rounded-2xl border-gray-200"
+                  />
+                </div>
               </div>
               <div className="space-y-2">
-                <Label>Status</Label>
-                <Select
-                  value={form.active ? "true" : "false"}
-                  onValueChange={(v) => setForm((p) => ({ ...p, active: v === "true" }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Active?" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="true">Active</SelectItem>
-                    <SelectItem value="false">Inactive</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label>Email</Label>
+                <Input
+                  type="email"
+                  value={form.email ?? ""}
+                  onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
+                  placeholder="email@example.com"
+                  className="rounded-2xl border-gray-200"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="pm-birth-date">Birth date</Label>
+                  <Input
+                    id="pm-birth-date"
+                    type="date"
+                    title="Birth date"
+                    value={form.birth_date ?? ""}
+                    onChange={(e) => setForm((p) => ({ ...p, birth_date: e.target.value }))}
+                    className="rounded-2xl border-gray-200"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Care level</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={form.care_level ?? ""}
+                    onChange={(e) =>
+                      setForm((p) => ({
+                        ...p,
+                        care_level: e.target.value === "" ? undefined : Number(e.target.value),
+                      }))
+                    }
+                    placeholder="0"
+                    className="rounded-2xl border-gray-200"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Pronoun</Label>
+                  <Select
+                    value={form.pronoun ?? ""}
+                    onValueChange={(v) => setForm((p) => ({ ...p, pronoun: v }))}
+                  >
+                    <SelectTrigger className="rounded-2xl border-gray-200">
+                      <SelectValue placeholder="Pronoun" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="he/him">he/him</SelectItem>
+                      <SelectItem value="she/her">she/her</SelectItem>
+                      <SelectItem value="they/them">they/them</SelectItem>
+                      <SelectItem value="other">other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Status</Label>
+                  <Select
+                    value={form.active ? "true" : "false"}
+                    onValueChange={(v) => setForm((p) => ({ ...p, active: v === "true" }))}
+                  >
+                    <SelectTrigger className="rounded-2xl border-gray-200">
+                      <SelectValue placeholder="Active?" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="true">Active</SelectItem>
+                      <SelectItem value="false">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 border-t border-emerald-200/60 bg-emerald-50/40 px-6 py-3">
             <Button
+              type="button"
+              variant="outline"
+              className="rounded-2xl border-emerald-200/70 bg-white"
+              onClick={() => setDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="lg"
+              className={cn(
+                emeraldGlassPrimaryButtonClass,
+                "cursor-pointer disabled:pointer-events-none disabled:opacity-50"
+              )}
               onClick={handleCreate}
               disabled={isCreating || !form.firstname.trim() || !form.lastname.trim()}
             >
               {isCreating ? "Creating…" : "Create"}
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
