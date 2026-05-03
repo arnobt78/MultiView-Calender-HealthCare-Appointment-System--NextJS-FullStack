@@ -65,6 +65,8 @@ export function usePatients() {
   return {
     patients: query.data ?? [],
     isLoading: query.isLoading,
+    /** True during background refetch after invalidation — stats UI can use without blocking static labels */
+    isFetching: query.isFetching,
     isError: query.isError,
     error: query.error,
     refetch: query.refetch,

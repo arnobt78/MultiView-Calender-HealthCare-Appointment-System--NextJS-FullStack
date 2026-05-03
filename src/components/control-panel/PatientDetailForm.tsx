@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { PatientCareLevelSelect } from "@/components/control-panel/PatientCareLevelSelect";
 
 function clinicalToForm(cp: PatientClinicalProfile | undefined) {
   const o =
@@ -59,7 +60,7 @@ export function PatientDetailForm({
     firstname: patient.firstname,
     lastname: patient.lastname,
     birth_date: patient.birth_date ?? "",
-    care_level: patient.care_level != null ? String(patient.care_level) : "",
+    care_level: patient.care_level ?? undefined,
     pronoun: patient.pronoun ?? "",
     active: patient.active,
     ...clinicalToForm(patient.clinical_profile),
@@ -78,7 +79,7 @@ export function PatientDetailForm({
         firstname: form.firstname,
         lastname: form.lastname,
         birth_date: form.birth_date || undefined,
-        care_level: form.care_level === "" ? undefined : Number(form.care_level),
+        care_level: form.care_level,
         pronoun: form.pronoun || undefined,
         active: form.active,
         clinical_profile,
@@ -141,13 +142,12 @@ export function PatientDetailForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="patient-carelevel">Care level</Label>
-          <Input
+          <Label htmlFor="patient-carelevel">Care level (1–10)</Label>
+          <PatientCareLevelSelect
             id="patient-carelevel"
-            type="number"
-            title="Care level"
             value={form.care_level}
-            onChange={(e) => setForm((p) => ({ ...p, care_level: e.target.value }))}
+            onValueChange={(next) => setForm((p) => ({ ...p, care_level: next }))}
+            aria-label="Care level tier from 1 to 10"
           />
         </div>
         <div className="space-y-2">
