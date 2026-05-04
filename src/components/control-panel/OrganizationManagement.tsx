@@ -137,7 +137,7 @@ function AddMemberDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-          <Users className="h-4 w-4 mr-2" /> Add Member
+          <Users className="h-4 w-4" /> Add Member
         </DropdownMenuItem>
       </DialogTrigger>
       <DialogContent className="max-w-md">

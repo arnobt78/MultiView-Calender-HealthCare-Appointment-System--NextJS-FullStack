@@ -7,3 +7,11 @@ export const violetGlassImportButtonClass =
 
 export const emeraldGlassPrimaryButtonClass =
   "inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-emerald-400/45 bg-linear-to-r from-emerald-500 to-emerald-700 px-4 text-sm font-medium text-white shadow-[0_10px_40px_rgba(16,185,129,0.42)] backdrop-blur-md transition-all duration-200 hover:from-emerald-500 hover:via-emerald-600 hover:to-emerald-700 hover:text-white hover:shadow-[0_14px_48px_rgba(16,185,129,0.58)] active:text-white [&_svg]:size-4";
+
+/** Calendar filter reset + control-panel list resets — visible text (not solid `default` fill). */
+export const skyGlassResetButtonClass =
+  "inline-flex h-9 shrink-0 items-center gap-2 rounded-full border border-sky-400/45 bg-sky-50/85 px-3.5 text-sm font-medium text-sky-800 shadow-[0_10px_28px_rgba(2,132,199,0.22)] backdrop-blur-md transition-all duration-200 hover:border-sky-500/55 hover:bg-sky-100/90 hover:text-sky-900 hover:shadow-[0_12px_34px_rgba(2,132,199,0.3)] [&_svg]:size-3.5";
+
+/** Optional outer frame for wide data tables (patient list, etc.). */
+export const skyGlassTableFrameClass =
+  "rounded-2xl border border-sky-200/55 bg-white/90 shadow-[0_14px_48px_-12px_rgba(14,165,233,0.38)]";

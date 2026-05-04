@@ -41,6 +41,7 @@ export interface Patient {
   created_by_display?: string | null;
   updated_by_display?: string | null;
   primary_doctor_display?: string | null;
+  primary_doctor_email?: string | null;
 }
 
 /** GET /api/patients/[id]/snapshot — aggregate for profile tabs */

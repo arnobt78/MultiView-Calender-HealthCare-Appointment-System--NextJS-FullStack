@@ -241,26 +241,26 @@ export default function DayView() {
                                     >
                                       {isDone ? (
                                         <>
-                                          <Circle className="mr-2 h-4 w-4" />
+                                          <Circle className="h-4 w-4" />
                                           <span>Mark as open</span>
                                         </>
                                       ) : (
                                         <>
-                                          <CheckCircle className="mr-2 h-4 w-4 text-green-600" />
+                                          <CheckCircle className="h-4 w-4 text-green-600" />
                                           <span className="text-green-600">Mark as done</span>
                                         </>
                                       )}
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem onClick={() => setEditAppt(appt)}>
-                                      <FiEdit2 className="mr-2 h-4 w-4" />
+                                      <FiEdit2 className="h-4 w-4" />
                                       <span>Edit</span>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
                                       onClick={() => setDeleteTargetId(appt.id)}
                                       className="text-red-600 focus:bg-red-50 focus:text-red-600"
                                     >
-                                      <FiTrash2 className="mr-2 h-4 w-4" />
+                                      <FiTrash2 className="h-4 w-4" />
                                       <span>Delete</span>
                                     </DropdownMenuItem>
                                   </DropdownMenuContent>

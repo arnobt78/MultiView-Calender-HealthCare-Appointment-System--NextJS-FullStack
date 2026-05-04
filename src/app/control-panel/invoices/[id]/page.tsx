@@ -73,7 +73,7 @@ export default async function InvoiceDetailPage({ params }: PageProps) {
         actions={
           <Button variant="outline" asChild>
             <Link href="/control-panel">
-              <ArrowLeft className="mr-2 h-4 w-4" />
+              <ArrowLeft className="h-4 w-4" />
               Back
             </Link>
           </Button>

@@ -198,7 +198,7 @@ export default function CategoryManagement() {
         description="Manage appointment categories. All table schema properties are shown."
         actions={
           <Button onClick={() => setDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus className="h-4 w-4" />
             Add category
           </Button>
         }

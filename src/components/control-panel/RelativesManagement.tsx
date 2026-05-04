@@ -59,17 +59,17 @@ function RelativeActions({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => onView(relative)}>
-            <Eye className="mr-2 h-4 w-4" /> View
+            <Eye className="h-4 w-4" /> View
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => onEdit(relative)}>
-            <Pencil className="mr-2 h-4 w-4" /> Edit
+            <Pencil className="h-4 w-4" /> Edit
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
             className="text-destructive focus:text-destructive"
             onClick={() => setConfirmOpen(true)}
           >
-            <Trash2 className="mr-2 h-4 w-4" /> Delete
+            <Trash2 className="h-4 w-4" /> Delete
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -182,7 +182,7 @@ export default function RelativesManagement() {
         description="Manage all relatives linked to patients and appointments."
         actions={
           <Button onClick={openCreate} size="sm">
-            <Plus className="mr-2 h-4 w-4" /> Add Relative
+            <Plus className="h-4 w-4" /> Add Relative
           </Button>
         }
       />

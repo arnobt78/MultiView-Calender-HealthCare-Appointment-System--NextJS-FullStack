@@ -80,7 +80,7 @@ export function PatientDetailScreen({ patientId }: { patientId: string }) {
         actions={
           <Button variant="outline" asChild>
             <PrefetchingLink href="/control-panel/patient-management">
-              <ArrowLeft className="mr-2 h-4 w-4" />
+              <ArrowLeft className="h-4 w-4" />
               Back
             </PrefetchingLink>
           </Button>
@@ -178,7 +178,7 @@ export function PatientDetailScreen({ patientId }: { patientId: string }) {
                   <dd className="mt-0.5">
                     {cp && typeof cp === "object" && typeof cp.referral_source === "string"
                       ? PATIENT_REFERRAL_SOURCES.find((x) => x.value === cp.referral_source)?.label ??
-                        cp.referral_source
+                      cp.referral_source
                       : "—"}
                     {cp && typeof cp === "object" && typeof cp.referral_detail === "string" && cp.referral_detail
                       ? ` — ${cp.referral_detail}`

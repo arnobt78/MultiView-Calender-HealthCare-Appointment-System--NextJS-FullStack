@@ -28,10 +28,36 @@ import {
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 
-type DataTableColumnMeta = {
+export type DataTableColumnMeta = {
+  /** One class string for both `<th>` and `<td>` — preferred when head/cell widths match (avoids load vs data drift). */
+  shellClassName?: string;
   headClassName?: string;
   cellClassName?: string;
 };
+
+function resolveColumnShellMeta(meta: DataTableColumnMeta | undefined, slot: "head" | "cell") {
+  if (meta?.shellClassName) return meta.shellClassName;
+  return slot === "head" ? meta?.headClassName : meta?.cellClassName;
+}
+
+/** Padding comes only from `TableHead`/`TableCell` (`p-2` / `px-2 py-2`) — no extra horizontal padding here. */
+function dataTableHeadShellClass(columnId: string, meta?: DataTableColumnMeta) {
+  return cn(
+    columnId === "image" && "w-12 min-w-12 shrink-0",
+    columnId === "actions" && "text-right",
+    resolveColumnShellMeta(meta, "head"),
+    "align-middle"
+  );
+}
+
+function dataTableCellShellClass(columnId: string, meta?: DataTableColumnMeta) {
+  return cn(
+    columnId === "image" && "w-12 min-w-12 shrink-0",
+    columnId === "actions" && "text-right",
+    resolveColumnShellMeta(meta, "cell"),
+    "align-middle"
+  );
+}
 
 export interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -55,6 +81,13 @@ export interface DataTableProps<TData, TValue> {
    * With `table-fixed`, a min-width wider than the viewport lets the built-in `overflow-x-auto` on `Table` show a horizontal scrollbar only when needed.
    */
   tableClassName?: string;
+  /** Merged onto the rounded card around the table (border, shadow, bg). */
+  tableFrameClassName?: string;
+  /**
+   * `fixed` (default): predictable widths from meta classes.
+   * `auto`: browser sizes from content + `min-w-*` / `w-[1%]` hints — better for name/email stacks and tight status/date columns.
+   */
+  tableLayout?: "fixed" | "auto";
 }
 
 export function DataTable<TData, TValue>({
@@ -70,6 +103,8 @@ export function DataTable<TData, TValue>({
   pagination = true,
   pageSize = 10,
   tableClassName,
+  tableFrameClassName,
+  tableLayout = "fixed",
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
@@ -128,23 +163,28 @@ export function DataTable<TData, TValue>({
           />
         </div>
       )}
-      <div className="rounded-2xl border max-w-full min-w-0">
-        <Table className={cn("table-fixed", tableClassName)}>
+      <div
+        className={cn(
+          "max-w-full min-w-0",
+          tableFrameClassName ?? "rounded-2xl border border-gray-200 bg-white"
+        )}
+      >
+        <Table
+          className={cn(
+            tableLayout === "auto" ? "table-auto w-full" : "table-fixed",
+            tableClassName
+          )}
+        >
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   const columnMeta = header.column.columnDef.meta as DataTableColumnMeta | undefined;
                   const columnId = header.column.id;
-                  const narrowImageCol = columnId === "image";
                   return (
                   <TableHead
                     key={header.id}
-                    className={cn(
-                      narrowImageCol && "w-12 min-w-12 px-2",
-                      columnId === "actions" && "px-2",
-                      columnMeta?.headClassName
-                    )}
+                    className={dataTableHeadShellClass(columnId, columnMeta)}
                   >
                     {header.isPlaceholder
                       ? null
@@ -165,37 +205,55 @@ export function DataTable<TData, TValue>({
                     return (
                       <TableCell
                         key={`skeleton-cell-${rowIdx}-${column.id}`}
-                        className={cn(
-                          columnId === "image" && "w-12 min-w-12 px-2",
-                          columnId === "actions" && "px-2 text-right",
-                          columnMeta?.cellClassName
-                        )}
+                        className={dataTableCellShellClass(columnId, columnMeta)}
                       >
                         {columnId === "image" ? (
-                          <div className="flex items-center">
+                          <div className="flex min-h-[2.75rem] items-center">
                             <Skeleton className="h-9 w-9 rounded-full" />
                           </div>
-                        ) : columnId === "name" || columnId === "display_name" ? (
-                          <div className="space-y-1">
-                            <Skeleton className="h-4 w-28 rounded-sm" />
-                            <Skeleton className="h-3 w-36 rounded-sm" />
+                        ) : columnId === "name" ? (
+                          // Patient list: avatar + lines grouped like the loaded cell (avoids a wide empty band on large screens).
+                          <div className="flex min-h-[2.75rem] w-full min-w-0 flex-row items-center gap-3">
+                            <Skeleton className="h-9 w-9 shrink-0 rounded-full" aria-hidden />
+                            <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
+                              <Skeleton className="h-4 w-full max-w-[14rem] rounded-sm" />
+                              <Skeleton className="h-3 w-full max-w-[16rem] rounded-sm" />
+                            </div>
+                          </div>
+                        ) : columnId === "display_name" ? (
+                          <div className="flex min-h-[2.75rem] w-full min-w-0 flex-col justify-center gap-1">
+                            <Skeleton className="h-4 w-full max-w-[14rem] rounded-sm" />
+                            <Skeleton className="h-3 w-full max-w-[16rem] rounded-sm" />
                           </div>
                         ) : columnId === "email" ? (
-                          <Skeleton className="h-4 w-36 rounded-sm" />
+                          <div className="flex min-h-[2.75rem] w-full min-w-0 flex-col justify-center">
+                            <Skeleton className="h-4 w-full max-w-xs rounded-sm" />
+                          </div>
                         ) : columnId === "care_level" ? (
-                          <Skeleton className="h-4 w-32 rounded-sm" />
+                          <div className="flex min-h-[2.75rem] w-full min-w-0 flex-col justify-center">
+                            <Skeleton className="h-4 w-full max-w-[14rem] rounded-sm" />
+                          </div>
                         ) : columnId === "primary_doctor_display" ? (
-                          <Skeleton className="h-4 w-28 rounded-sm" />
+                          <div className="flex min-h-[2.75rem] w-full min-w-0 flex-col justify-center gap-1">
+                            <Skeleton className="h-4 w-full max-w-[14rem] rounded-sm" />
+                            <Skeleton className="h-3 w-full max-w-[16rem] rounded-sm" />
+                          </div>
                         ) : columnId === "role" || columnId === "active" ? (
-                          <Skeleton className="h-5 w-16 rounded-full" />
+                          <div className="flex min-h-[2.75rem] w-full min-w-0 flex-col justify-center">
+                            <Skeleton className="h-5 w-[7.25rem] shrink-0 rounded-full" />
+                          </div>
                         ) : columnId === "created_at" ? (
-                          <Skeleton className="h-4 w-20 rounded-sm" />
+                          <div className="flex min-h-[2.75rem] w-full min-w-0 flex-col justify-center">
+                            <Skeleton className="h-4 w-[8.75rem] shrink-0 rounded-sm" />
+                          </div>
                         ) : columnId === "actions" ? (
-                          <div className="flex justify-end">
-                            <Skeleton className="h-4 w-4 rounded-sm" />
+                          <div className="flex min-h-[2.75rem] items-center justify-end">
+                            <Skeleton className="h-4 w-4 shrink-0 rounded-sm" />
                           </div>
                         ) : (
-                          <Skeleton className="h-4 w-24 rounded-sm" />
+                          <div className="flex min-h-[2.75rem] w-full min-w-0 flex-col justify-center">
+                            <Skeleton className="h-4 w-full max-w-[10rem] rounded-sm" />
+                          </div>
                         )}
                       </TableCell>
                     );
@@ -211,11 +269,7 @@ export function DataTable<TData, TValue>({
                     return (
                     <TableCell
                       key={cell.id}
-                      className={cn(
-                        columnId === "image" && "w-12 min-w-12 px-2",
-                        columnId === "actions" && "px-2 text-right",
-                        columnMeta?.cellClassName
-                      )}
+                      className={dataTableCellShellClass(columnId, columnMeta)}
                     >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>

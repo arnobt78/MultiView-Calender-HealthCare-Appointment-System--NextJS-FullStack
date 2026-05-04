@@ -68,6 +68,8 @@ export function serializePatient(
     created_by_display: userDisplay(p.created_by),
     updated_by_display: userDisplay(p.updated_by),
     primary_doctor_display: userDisplay(p.primary_doctor),
+    /** Same relation pick as display — list UI shows email under doctor name. */
+    primary_doctor_email: p.primary_doctor?.email ?? null,
   };
 }
 

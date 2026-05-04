@@ -88,7 +88,7 @@ export default function DoctorManagement() {
       accessorKey: "image",
       header: "",
       enableSorting: false,
-      meta: { headClassName: "w-12", cellClassName: "w-12" },
+      meta: { shellClassName: "w-12 min-w-12 shrink-0" },
       cell: ({ row }) => {
         const u = row.original;
         return (
@@ -104,7 +104,7 @@ export default function DoctorManagement() {
       id: "display_name",
       accessorFn: (row) => `${row.display_name ?? ""} ${row.email}`.trim(),
       header: ({ column }) => <DataTableColumnHeader column={column} title="Name" />,
-      meta: { headClassName: "min-w-[220px]", cellClassName: "min-w-[220px]" },
+      meta: { shellClassName: "min-w-[12rem]" },
       cell: ({ row }) => {
         const u = row.original;
         const label = u.display_name ?? "—";
@@ -119,7 +119,7 @@ export default function DoctorManagement() {
             />
           );
         return (
-          <div className="flex min-w-0 max-w-[min(100%,320px)] flex-col gap-0.5">
+          <div className="flex min-w-0 flex-col gap-0.5">
             {link}
             <span className="truncate text-xs text-muted-foreground" title={u.email}>
               {u.email}
@@ -131,7 +131,7 @@ export default function DoctorManagement() {
     {
       accessorKey: "role",
       header: "Role",
-      meta: { headClassName: "min-w-[130px]", cellClassName: "min-w-[130px]" },
+      meta: { shellClassName: "min-w-[8rem] whitespace-nowrap" },
       cell: ({ row }) => (
         <RoleCell user={row.original} onRoleChange={handleRoleChange} />
       ),
@@ -139,17 +139,25 @@ export default function DoctorManagement() {
     {
       accessorKey: "created_at",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Created" />,
-      meta: { headClassName: "min-w-[110px]", cellClassName: "min-w-[110px]" },
+      meta: {
+        shellClassName: "w-[1%] whitespace-nowrap",
+      },
       cell: ({ row }) =>
-        row.original.created_at
-          ? new Date(row.original.created_at).toLocaleDateString()
-          : "—",
+        row.original.created_at ? (
+          <span className="text-xs whitespace-nowrap">
+            {new Date(row.original.created_at).toLocaleDateString()}
+          </span>
+        ) : (
+          "—"
+        ),
     },
     {
       id: "actions",
       header: "Actions",
       enableSorting: false,
-      meta: { headClassName: "w-12 text-right", cellClassName: "w-12 text-right" },
+      meta: {
+        shellClassName: "w-[1%] whitespace-nowrap text-right",
+      },
       cell: ({ row }) => <ActionsCell user={row.original} />,
     },
   ];
@@ -176,6 +184,7 @@ export default function DoctorManagement() {
         searchPlaceholder="Search by name or email…"
         emptyMessage="No doctors found."
         tableClassName="min-w-[860px]"
+        tableLayout="auto"
       />
     </div>
   );

@@ -13,8 +13,10 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import {
   emeraldGlassPrimaryButtonClass,
+  skyGlassTableFrameClass,
   violetGlassImportButtonClass,
 } from "@/lib/calendar-header-action-styles";
+import { GlassResetFilterButton } from "@/components/shared/GlassResetFilterButton";
 import { FiSearch } from "react-icons/fi";
 import {
   DropdownMenu,
@@ -39,7 +41,7 @@ import {
   Activity,
   Stethoscope,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Dialog,
   DialogClose,
@@ -116,7 +118,20 @@ function buildCreateClinicalProfile(extra: {
 }
 
 function exportPatientsCSV(patients: Patient[]) {
-  const headers = ["ID", "First Name", "Last Name", "Email", "Care Tier", "Primary Doctor", "Birth Date", "Pronoun", "Active", "Active Since", "Created At"];
+  const headers = [
+    "ID",
+    "First Name",
+    "Last Name",
+    "Email",
+    "Care Tier",
+    "Primary Doctor",
+    "Primary Doctor Email",
+    "Birth Date",
+    "Pronoun",
+    "Active",
+    "Active Since",
+    "Created At",
+  ];
   const rows = patients.map((p) => [
     p.id,
     `"${p.firstname}"`,
@@ -124,6 +139,7 @@ function exportPatientsCSV(patients: Patient[]) {
     p.email ?? "",
     getPatientCareLevelLabel(p.care_level).replace(/—/g, "-"),
     p.primary_doctor_display ?? "",
+    p.primary_doctor_email ?? "",
     p.birth_date ? format(new Date(p.birth_date), "yyyy-MM-dd") : "",
     p.pronoun ?? "",
     p.active ? "Yes" : "No",
@@ -214,6 +230,13 @@ function PatientActions({
 
 function PatientManagementInner() {
   const { patients, isLoading, isFetching, createPatient, isCreating, deletePatient } = usePatients();
+  const [listUiMounted, setListUiMounted] = useState(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setListUiMounted(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+  /** Align SSR + first client paint with React Query (query can finish on client before mount). */
+  const listBodyLoading = !listUiMounted || isLoading;
   const { data: doctorsData } = useUsers({ role: "doctor", limit: 200 });
   const doctors = doctorsData?.users ?? [];
   const {
@@ -234,6 +257,20 @@ function PatientManagementInner() {
         "Doctor";
   /** Toolbar search — controlled so header stays stable while table rows skeleton (no duplicate search under table). */
   const [listSearch, setListSearch] = useState("");
+  const hasPatientToolbarFilters = useMemo(
+    () =>
+      listSearch.trim().length > 0 ||
+      status !== "all" ||
+      careTier !== "all" ||
+      primaryDoctorId !== "all",
+    [listSearch, status, careTier, primaryDoctorId]
+  );
+  const resetPatientToolbar = () => {
+    setListSearch("");
+    setStatus("all");
+    setCareTier("all");
+    setPrimaryDoctorId("all");
+  };
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<PatientCreateInput>({
     firstname: "",
@@ -255,45 +292,93 @@ function PatientManagementInner() {
 
   const columns: ColumnDef<Patient>[] = [
     {
-      id: "image",
-      header: "",
-      enableSorting: false,
-      meta: { headClassName: "w-12", cellClassName: "w-12" },
-      cell: ({ row }) => {
-        const p = row.original;
-        const fallbackText = `${p.firstname || ""} ${p.lastname || ""}`.trim() || p.email || "?";
-        // Prefer curated local avatars for known demo users, fallback to initials only.
-        const avatarSrc = p.email ? DEMO_AVATAR_BY_EMAIL.get(p.email.toLowerCase()) ?? null : null;
-        return (
-          <UserAvatar
-            src={avatarSrc}
-            fallbackText={fallbackText}
-            sizeClassName="h-9 w-9"
-          />
-        );
-      },
-    },
-    {
       id: "name",
-      // Include email so column sort / filter context stays aligned with toolbar search (email lives in this cell, not a separate column).
+      // Avatar + name + email in one column so layout stays grouped on wide screens (no split image / text columns).
       accessorFn: (row) =>
         `${row.firstname} ${row.lastname} ${row.email ?? ""}`.trim(),
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Name" />,
-      meta: { headClassName: "min-w-[220px]", cellClassName: "min-w-[220px]" },
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Patient Name" />,
+      meta: {
+        shellClassName: "w-[28.5%] min-w-[14rem] max-w-[28rem]",
+      },
       cell: ({ row }) => {
         const p = row.original;
         const name = `${p.firstname} ${p.lastname}`.trim() || "—";
         const email = p.email?.trim();
+        const fallbackText = `${p.firstname || ""} ${p.lastname || ""}`.trim() || p.email || "?";
+        const avatarSrc = p.email ? DEMO_AVATAR_BY_EMAIL.get(p.email.toLowerCase()) ?? null : null;
         return (
-          <div className="flex min-w-0 max-w-[min(100%,320px)] flex-col gap-0.5">
-            <EntityTitleLink
-              href={`/control-panel/patients/${p.id}`}
-              label={name}
-              className="min-w-0 self-start truncate font-medium"
+          <div className="flex min-h-[2.75rem] min-w-0 flex-row items-center gap-3">
+            <UserAvatar
+              src={avatarSrc}
+              fallbackText={fallbackText}
+              sizeClassName="h-9 w-9"
             />
-            {email ? (
-              <span className="truncate text-xs text-muted-foreground" title={email}>
-                {email}
+            <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5">
+              <EntityTitleLink
+                href={`/control-panel/patients/${p.id}`}
+                label={name}
+                className="min-w-0 self-start truncate font-medium"
+              />
+              {email ? (
+                <span className="truncate text-xs text-muted-foreground" title={email}>
+                  {email}
+                </span>
+              ) : (
+                <span className="text-xs text-muted-foreground">—</span>
+              )}
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "care_level",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Care Tier" />,
+      meta: {
+        shellClassName: "w-[17%] min-w-[10rem] whitespace-normal",
+      },
+      cell: ({ row }) => (
+        <div className="flex min-h-[2.75rem] w-full min-w-0 items-center">
+          <span
+            className="line-clamp-2 min-w-0 break-words text-sm"
+            title={getPatientCareLevelLabel(row.original.care_level)}
+          >
+            {getPatientCareLevelLabel(row.original.care_level)}
+          </span>
+        </div>
+      ),
+    },
+    {
+      id: "primary_doctor_display",
+      accessorFn: (row) =>
+        `${row.primary_doctor_display ?? ""} ${row.primary_doctor_email ?? ""}`.trim(),
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Primary Doctor" />,
+      meta: { shellClassName: "w-[23%] min-w-[11rem] min-w-0" },
+      cell: ({ row }) => {
+        const p = row.original;
+        const d = p.primary_doctor_display?.trim();
+        const em = p.primary_doctor_email?.trim();
+        if (!d && !em) {
+          return (
+            <div className="flex min-h-[2.75rem] items-center">
+              <span className="text-sm text-muted-foreground">—</span>
+            </div>
+          );
+        }
+        return (
+          <div className="flex min-h-[2.75rem] min-w-0 flex-col justify-center gap-0.5">
+            {p.primary_doctor_id && d ? (
+              <EntityTitleLink
+                href={`/control-panel/doctors/${p.primary_doctor_id}`}
+                label={d}
+                className="min-w-0 self-start truncate text-sm font-medium"
+              />
+            ) : d ? (
+              <span className="truncate text-sm font-medium text-muted-foreground">{d}</span>
+            ) : null}
+            {em ? (
+              <span className="truncate text-xs text-muted-foreground" title={em}>
+                {em}
               </span>
             ) : (
               <span className="text-xs text-muted-foreground">—</span>
@@ -303,77 +388,55 @@ function PatientManagementInner() {
       },
     },
     {
-      accessorKey: "care_level",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Care Tier" />,
-      meta: { headClassName: "min-w-[140px] max-w-[220px]", cellClassName: "min-w-[140px] max-w-[220px]" },
-      cell: ({ row }) => (
-        <span className="line-clamp-2 text-sm" title={getPatientCareLevelLabel(row.original.care_level)}>
-          {getPatientCareLevelLabel(row.original.care_level)}
-        </span>
-      ),
-    },
-    {
-      id: "primary_doctor_display",
-      accessorFn: (row) => row.primary_doctor_display ?? "",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Primary Doctor" />,
-      meta: { headClassName: "min-w-[140px] max-w-[200px]", cellClassName: "min-w-[140px] max-w-[200px]" },
-      cell: ({ row }) => {
-        const p = row.original;
-        const d = p.primary_doctor_display;
-        if (!d?.trim()) {
-          return <span className="line-clamp-2 text-sm text-muted-foreground">—</span>;
-        }
-        if (p.primary_doctor_id) {
-          return (
-            <EntityTitleLink
-              href={`/control-panel/doctors/${p.primary_doctor_id}`}
-              label={d.trim()}
-              className="line-clamp-2 self-start text-sm font-normal"
-            />
-          );
-        }
-        return <span className="line-clamp-2 text-sm text-muted-foreground">{d}</span>;
-      },
-    },
-    {
       accessorKey: "active",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Status" />,
-      meta: { headClassName: "min-w-[120px]", cellClassName: "min-w-[120px]" },
+      meta: { shellClassName: "w-[10%] min-w-[7.25rem] whitespace-nowrap" },
       cell: ({ row }) => (
-        <Badge
-          variant="outline"
-          className={
-            row.original.active
-              ? "text-xs border-emerald-200 bg-emerald-50 text-emerald-700"
-              : "text-xs border-slate-200 bg-slate-50 text-slate-600"
-          }
-        >
-          {row.original.active ? (
-            <CircleCheck className="mr-1 h-3.5 w-3.5" />
-          ) : (
-            <CircleOff className="mr-1 h-3.5 w-3.5" />
-          )}
-          {row.original.active ? "Active" : "Inactive"}
-        </Badge>
+        <div className="flex min-h-[2.75rem] items-center">
+          <Badge
+            variant="outline"
+            className={
+              row.original.active
+                ? "max-w-full truncate text-xs border-emerald-200 bg-emerald-50 text-emerald-700"
+                : "max-w-full truncate text-xs border-slate-200 bg-slate-50 text-slate-600"
+            }
+          >
+            {row.original.active ? (
+              <CircleCheck className="mr-1 h-3.5 w-3.5" />
+            ) : (
+              <CircleOff className="mr-1 h-3.5 w-3.5" />
+            )}
+            {row.original.active ? "Active" : "Inactive"}
+          </Badge>
+        </div>
       ),
     },
     {
       accessorKey: "created_at",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Created" />,
-      meta: { headClassName: "min-w-[110px]", cellClassName: "min-w-[110px]" },
+      meta: { shellClassName: "w-[13.5%] min-w-[9rem] whitespace-nowrap" },
       cell: ({ row }) =>
-        row.original.created_at ? new Date(row.original.created_at).toLocaleDateString() : "—",
+        row.original.created_at ? (
+          <div className="flex min-h-[2.75rem] items-center">
+            <span className="block whitespace-nowrap text-xs">
+              {format(new Date(row.original.created_at), "MMM d, yyyy")}
+            </span>
+          </div>
+        ) : (
+          <div className="flex min-h-[2.75rem] items-center text-muted-foreground">—</div>
+        ),
     },
     {
       id: "actions",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Actions" />,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Actions" className="text-right" />
+      ),
       enableSorting: false,
-      meta: {
-        headClassName: "min-w-[108px] w-[108px] max-w-[120px] text-right",
-        cellClassName: "min-w-[108px] w-[108px] max-w-[120px] text-right",
-      },
+      meta: { shellClassName: "w-[8%] min-w-[4.75rem] whitespace-nowrap text-right" },
       cell: ({ row }) => (
-        <PatientActions patient={row.original} onDelete={deletePatient} />
+        <div className="flex min-h-[2.75rem] items-center justify-end">
+          <PatientActions patient={row.original} onDelete={deletePatient} />
+        </div>
       ),
     },
   ];
@@ -420,7 +483,7 @@ function PatientManagementInner() {
 
   return (
     <PatientMetricsProvider
-      value={{ patients, metrics, isLoading, isFetching }}
+      value={{ patients, metrics, isLoading, isFetching, listBodyLoading }}
     >
       <div className="space-y-2 text-gray-700">
         <PageHeader
@@ -433,7 +496,7 @@ function PatientManagementInner() {
                 type="button"
                 variant="ghost"
                 size="lg"
-                disabled={patients.length === 0}
+                disabled={listBodyLoading || patients.length === 0}
                 className={cn(violetGlassImportButtonClass, "cursor-pointer disabled:opacity-50")}
                 onClick={() => exportPatientsCSV(patients)}
               >
@@ -526,24 +589,31 @@ function PatientManagementInner() {
               ))}
             </SelectContent>
           </Select>
+          {hasPatientToolbarFilters ? (
+            <GlassResetFilterButton
+              onClick={resetPatientToolbar}
+              className="ml-auto h-10 shrink-0 px-4 [&_svg]:size-4"
+            />
+          ) : null}
         </div>
 
         <DataTable<Patient, unknown>
           columns={columns}
           data={filteredPatients}
-          isLoading={isLoading}
+          isLoading={listBodyLoading}
         globalFilterFn={(row, q) => {
           const s = q.trim().toLowerCase();
           if (!s) return true;
           const p = row;
           const tierText = getPatientCareLevelLabel(p.care_level).toLowerCase();
-          const blob = `${p.firstname} ${p.lastname} ${p.email ?? ""} ${p.primary_doctor_display ?? ""} ${String(p.care_level ?? "")} ${tierText}`;
+          const blob = `${p.firstname} ${p.lastname} ${p.email ?? ""} ${p.primary_doctor_display ?? ""} ${p.primary_doctor_email ?? ""} ${String(p.care_level ?? "")} ${tierText}`;
           return blob.includes(s);
         }}
           externalGlobalFilter={{ value: listSearch, onChange: setListSearch }}
           searchPlaceholder="Search by name or email…"
           emptyMessage="No patients yet. Add one to get started."
-          tableClassName="min-w-[920px]"
+          tableClassName="min-w-[980px] w-full"
+          tableFrameClassName={skyGlassTableFrameClass}
         />
 
         {/* Shell matches Quick Actions / Global Search: custom close, tinted border + shadow, scroll body, tinted footer. */}

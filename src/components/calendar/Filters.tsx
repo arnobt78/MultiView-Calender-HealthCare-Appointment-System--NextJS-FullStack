@@ -9,8 +9,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Tag, User, CalendarDays, Circle, RotateCcw, CalendarRange } from "lucide-react";
+import { GlassResetFilterButton } from "@/components/shared/GlassResetFilterButton";
+import { Tag, User, CalendarDays, Circle, CalendarRange } from "lucide-react";
 
 type FiltersProps = {
   category: string | null;
@@ -159,17 +159,8 @@ export default function Filters({
         </SelectContent>
       </Select>
 
-      {/* Reset */}
-      {showReset && (
-        <Button
-          variant="default"
-          className="h-9 px-4 rounded-2xl shadow-sm flex items-center gap-2 shrink-0 cursor-pointer active:bg-gray-700 transition-colors"
-          onClick={onReset}
-        >
-          <RotateCcw className="w-3.5 h-3.5" />
-          Reset
-        </Button>
-      )}
+      {/* Reset — same glass control as patient management toolbar (`GlassResetFilterButton`). */}
+      {showReset && <GlassResetFilterButton onClick={onReset} />}
     </div>
   );
 }

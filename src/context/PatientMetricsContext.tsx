@@ -11,6 +11,12 @@ export type PatientMetricsContextValue = {
   /** First load — no successful list yet */
   isLoading: boolean;
   isFetching: boolean;
+  /**
+   * True while the list UI should show loading placeholders (stat skeletons + table body skeletons).
+   * Includes “not yet mounted on the client” so SSR and the first client paint match React Query
+   * (avoids hydration mismatch when the client cache resolves before mount).
+   */
+  listBodyLoading: boolean;
 };
 
 const PatientMetricsContext = createContext<PatientMetricsContextValue | null>(null);
@@ -28,8 +34,9 @@ export function PatientMetricsProvider({
       metrics: value.metrics,
       isLoading: value.isLoading,
       isFetching: value.isFetching,
+      listBodyLoading: value.listBodyLoading,
     }),
-    [value.patients, value.metrics, value.isLoading, value.isFetching]
+    [value.patients, value.metrics, value.isLoading, value.isFetching, value.listBodyLoading]
   );
   return <PatientMetricsContext.Provider value={memo}>{children}</PatientMetricsContext.Provider>;
 }

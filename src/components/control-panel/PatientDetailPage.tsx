@@ -55,7 +55,7 @@ export default function PatientDetailPage() {
           <>
             <Button variant="outline" asChild>
               <Link href="/control-panel/patient-management">
-                <ArrowLeft className="mr-2 h-4 w-4" />
+                <ArrowLeft className="size-4" />
                 Back
               </Link>
             </Button>
