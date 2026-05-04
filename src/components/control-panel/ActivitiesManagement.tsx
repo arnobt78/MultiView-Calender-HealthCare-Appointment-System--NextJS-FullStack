@@ -136,7 +136,7 @@ export default function ActivitiesManagement() {
     <div className="space-y-2 animate-in fade-in">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
+          <h2 className="text-xl font-bold flex items-center gap-2">
             <ActivityIcon className="h-6 w-6" />
             Activity Log
           </h2>

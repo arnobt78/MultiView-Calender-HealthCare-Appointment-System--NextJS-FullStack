@@ -16,6 +16,7 @@ import { useAppStore } from "@/store/useAppStore";
 import VideoCall from "@/components/calendar/VideoCall";
 import QuickActionsModal from "@/components/shared/QuickActionsModal";
 import { AppProviders } from "@/providers/AppProviders";
+import { dashboardShellClass } from "@/lib/dashboard-layout";
 import { cn } from "@/lib/utils";
 import { notify } from "@/lib/notify";
 
@@ -122,18 +123,28 @@ function AuthShellInner({ children }: { children: React.ReactNode }) {
   return (
     <div
       className={cn(
-        "flex h-dvh min-h-0 max-h-dvh flex-col overflow-x-hidden bg-gradient-to-br from-slate-50 via-white to-slate-100 text-gray-900",
+        "flex min-w-0 flex-col bg-gradient-to-br from-slate-50 via-white to-slate-100 text-gray-900",
+        /* Dashboard clips horizontal overflow on this shell; omit here for other routes so `sticky top-0` on Navbar can use the document scrollport. */
+        isDashboard && "overflow-x-hidden",
+        isDashboard ? "h-dvh min-h-0 max-h-dvh" : "min-h-dvh",
         inter.className
       )}
     >
       <Navbar />
+      {/* Dashboard: fixed viewport + inner calendar scroll. Other routes: document scroll on <html> (no nested main scrollbar) so width matches navbar. */}
       <main
         className={cn(
-          "min-h-0 flex-1",
-          isDashboard ? "flex flex-col overflow-hidden" : "overflow-y-auto"
+          "min-w-0 w-full px-0",
+          isDashboard
+            ? "flex min-h-0 flex-1 flex-col overflow-hidden"
+            : "flex-1 overflow-x-hidden overflow-y-visible"
         )}
       >
-        {children}
+        {isDashboard ? (
+          children
+        ) : (
+          <div className={dashboardShellClass}>{children}</div>
+        )}
       </main>
 
       {isVideoCallActive && activeVideoAppointmentId && (

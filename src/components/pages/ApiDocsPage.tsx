@@ -5,7 +5,7 @@ import Link from "next/link";
 
 export default function ApiDocsPage() {
   return (
-    <div className="max-w-9xl mx-auto py-8 px-2 sm:px-6 lg:px-8">
+    <div className="py-8">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-semibold">API Documentation</h1>
         <Button asChild variant="outline" size="sm">

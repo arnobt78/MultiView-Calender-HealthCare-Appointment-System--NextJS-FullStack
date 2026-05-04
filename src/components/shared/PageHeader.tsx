@@ -22,7 +22,7 @@ export function PageHeader({
   if (loading) {
     return (
       <div className={cn("flex flex-col sm:flex-row sm:items-center justify-between gap-4", className)} {...props}>
-        <div className="min-w-0 flex-1 space-y-2 pr-2">
+        <div className="min-w-0 flex-1 space-y-2">
           <Skeleton className="h-8 w-64" />
           <Skeleton className="h-4 w-96" />
         </div>
@@ -41,11 +41,18 @@ export function PageHeader({
       )}
       {...props}
     >
-      <div className="min-w-0 flex-1 py-2 pr-2">
-        <h1 className="text-lg sm:text-xl font-semibold tracking-tight text-gray-700">{title}</h1>
-        {description && (
-          <p className="text-gray-500 text-xs sm:text-sm">{description}</p>
-        )}
+      <div className="min-w-0 flex-1 py-2">
+        {/* `title` / `description` may be block nodes (e.g. Skeleton) — avoid <h1>/<p> so HTML stays valid and hydration matches. */}
+        <div
+          role="heading"
+          aria-level={1}
+          className="text-xl font-semibold tracking-tight text-gray-700"
+        >
+          {title}
+        </div>
+        {description ? (
+          <div className="text-gray-500 text-xs sm:text-sm">{description}</div>
+        ) : null}
       </div>
       {actions && (
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">

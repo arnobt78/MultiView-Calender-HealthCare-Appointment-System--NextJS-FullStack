@@ -15,3 +15,11 @@ export const skyGlassResetButtonClass =
 /** Optional outer frame for wide data tables (patient list, etc.). */
 export const skyGlassTableFrameClass =
   "rounded-2xl border border-sky-200/55 bg-white/90 shadow-[0_14px_48px_-12px_rgba(14,165,233,0.38)]";
+
+/** Control-panel back / cancel — matches navbar-adjacent h-10 rhythm. */
+export const skyGlassBackButtonClass =
+  "inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-sky-300/50 bg-white/75 px-4 text-sm font-medium text-sky-900 shadow-[0_10px_28px_rgba(2,132,199,0.2)] backdrop-blur-md transition-all duration-200 hover:border-sky-400/55 hover:bg-sky-50/90 hover:shadow-[0_12px_34px_rgba(2,132,199,0.28)] disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4";
+
+/** Destructive glass — delete / remove. */
+export const roseGlassDangerButtonClass =
+  "inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-rose-300/55 bg-rose-50/85 px-4 text-sm font-medium text-rose-800 shadow-[0_10px_28px_rgba(244,63,94,0.22)] backdrop-blur-md transition-all duration-200 hover:border-rose-400/60 hover:bg-rose-100/90 hover:shadow-[0_12px_34px_rgba(244,63,94,0.3)] disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4";

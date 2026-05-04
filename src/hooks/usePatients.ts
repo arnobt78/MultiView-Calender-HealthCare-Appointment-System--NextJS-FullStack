@@ -70,17 +70,29 @@ export function usePatients() {
     onSuccess: async (data) => {
       await invalidateEntityAffectingAppointments(queryClient, "patients");
       await invalidatePatientDetailAndSnapshot(queryClient, data.patient.id);
-      notify.crud({ action: "updated", entity: "Patient", detail: `${data.patient.firstname} ${data.patient.lastname} was updated.` });
+      const nm = `${data.patient.firstname} ${data.patient.lastname}`.trim();
+      const em = data.patient.email?.trim();
+      notify.crud({
+        action: "updated",
+        entity: "Patient",
+        detail: `${nm}${em ? ` (${em})` : ""} — profile updated.`,
+      });
     },
     onError: (e) => handleApiError(e, "Failed to update patient"),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) =>
-      apiClient(`/api/patients/${id}`, { method: "DELETE" }),
-    onSuccess: async () => {
+    mutationFn: (vars: { id: string; name?: string; email?: string | null }) =>
+      apiClient(`/api/patients/${vars.id}`, { method: "DELETE" }).then(() => vars),
+    onSuccess: async (vars) => {
+      // Drop detail/snapshot so nothing refetches a deleted id; list + appointments still invalidate below.
+      queryClient.removeQueries({ queryKey: queryKeys.patients.detail(vars.id) });
+      queryClient.removeQueries({ queryKey: queryKeys.patients.snapshot(vars.id) });
       await invalidateEntityAffectingAppointments(queryClient, "patients");
-      notify.crud({ action: "deleted", entity: "Patient", detail: "The patient record was deleted." });
+      const nm = vars.name?.trim();
+      const em = vars.email?.trim();
+      const who = nm ? `${nm}${em ? ` (${em})` : ""}` : "The patient record";
+      notify.crud({ action: "deleted", entity: "Patient", detail: `${who} was deleted.` });
     },
     onError: (e) => handleApiError(e, "Failed to delete patient"),
   });
@@ -99,7 +111,10 @@ export function usePatients() {
     updatePatient: updateMutation.mutate,
     updatePatientAsync: updateMutation.mutateAsync,
     isUpdating: updateMutation.isPending,
-    deletePatient: deleteMutation.mutate,
+    deletePatient: (
+      input: string | { id: string; name?: string; email?: string | null },
+      opts?: Parameters<typeof deleteMutation.mutate>[1]
+    ) => deleteMutation.mutate(typeof input === "string" ? { id: input } : input, opts),
     isDeleting: deleteMutation.isPending,
   };
 }

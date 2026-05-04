@@ -20,6 +20,8 @@ import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
 import { useAppStore } from "@/store/useAppStore";
 import GlobalSearch from "@/components/shared/GlobalSearch";
 import { UserAvatar } from "@/components/shared/UserAvatar";
+import { dashboardShellClass } from "@/lib/dashboard-layout";
+import { cn } from "@/lib/utils";
 
 export default function Navbar() {
   const { user, logout, isLoggingOut, isLoading } = useAuth();
@@ -38,8 +40,13 @@ export default function Navbar() {
     : "U";
 
   return (
-    <div className="w-full flex-col sticky top-0 z-40 bg-transparent backdrop-blur-sm">
-      <div className="flex py-2 items-center justify-between mx-2 sm:mx-4 lg:mx-8 border-b border-gray-100">
+    <div className="sticky top-0 z-40 flex w-full shrink-0 flex-col border-b border-gray-100/80 bg-white/90 backdrop-blur-md supports-backdrop-filter:bg-white/80">
+      <div
+        className={cn(
+          dashboardShellClass,
+          "flex items-center justify-between py-2"
+        )}
+      >
 
         {/* Left: logo */}
         <div className="flex flex-1 items-center">

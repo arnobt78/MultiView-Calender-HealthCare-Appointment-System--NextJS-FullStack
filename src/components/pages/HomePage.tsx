@@ -60,6 +60,7 @@ const HomePage: React.FC = () => {
       <div className="shrink-0">
         <CalendarHeader view={view} setView={setView} />
       </div>
+      {/* Only the calendar stack scrolls here (dashboard is height-locked); thin track via globals.css — rest of app scrolls the document. */}
       <div className="inner-dashboard-scroll flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-contain">
         {view === "List" && <AppointmentList />}
         {view === "Day" && <DayView />}

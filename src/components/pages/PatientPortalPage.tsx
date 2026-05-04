@@ -301,7 +301,7 @@ export default function PatientPortalPage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-9xl mx-auto py-8 px-2 sm:px-6 lg:px-8">
+      <div className="py-8">
         <div className="flex justify-between items-start pb-6 border-b">
           <div>
             <Skeleton className="h-8 w-64 mb-2" />
@@ -326,14 +326,14 @@ export default function PatientPortalPage() {
 
   if (isError) {
     return (
-      <div className="max-w-9xl mx-auto py-8 px-2 sm:px-6 lg:px-8">
+      <div className="py-8">
         <p className="text-red-500">Error: {(error as Error)?.message}</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-9xl mx-auto py-8 px-2 sm:px-6 lg:px-8 space-y-8 animate-in fade-in">
+    <div className="space-y-8 py-8 animate-in fade-in">
       {/* Header */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-6 border-b">
         <div>

@@ -54,7 +54,7 @@ export default async function DoctorDetailPage({ params }: PageProps) {
         : "/control-panel/dashboard-overview";
 
   return (
-    <div className="max-w-9xl mx-auto space-y-2 px-2 sm:px-4 lg:px-8 text-gray-700">
+    <div className="space-y-2 text-gray-700">
       <PageHeader
         title={user.display_name ?? user.email ?? "User"}
         description="User account — all listed schema properties"

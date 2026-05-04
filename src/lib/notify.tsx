@@ -155,9 +155,17 @@ export const notify = {
     const isDelete = action === "deleted";
     const icon: LucideIcon | undefined = isDelete ? Trash2 : undefined;
     const variant: NotifyVariant = isDelete ? "warning" : "success";
+    const actionTitle =
+      action === "created"
+        ? "Created"
+        : action === "updated"
+          ? "Updated"
+          : action === "deleted"
+            ? "Deleted"
+            : "Imported";
 
     return showRichToast(variant, {
-      title: `${entity} ${action}`,
+      title: `${entity} ${actionTitle}`,
       subtitle: detail,
       icon,
     });

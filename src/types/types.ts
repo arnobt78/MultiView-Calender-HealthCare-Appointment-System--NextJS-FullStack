@@ -40,6 +40,8 @@ export interface Patient {
   primary_doctor_id?: string | null;
   created_by_display?: string | null;
   updated_by_display?: string | null;
+  created_by_email?: string | null;
+  updated_by_email?: string | null;
   primary_doctor_display?: string | null;
   primary_doctor_email?: string | null;
 }

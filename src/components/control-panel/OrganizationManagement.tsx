@@ -318,7 +318,7 @@ export default function OrganizationManagement() {
     <div className="space-y-2 animate-in fade-in">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h2 className="text-2xl font-bold">Organization Management</h2>
+          <h2 className="text-xl font-bold">Organization Management</h2>
           <p className="text-sm text-muted-foreground">
             {organizations.length} organization{organizations.length !== 1 ? "s" : ""}
           </p>

@@ -66,7 +66,7 @@ export default async function InvoiceDetailPage({ params }: PageProps) {
   });
 
   return (
-    <div className="max-w-9xl mx-auto space-y-2 px-2 sm:px-4 lg:px-8">
+    <div className="space-y-2">
       <PageHeader
         title={`Invoice #${invoice.id.slice(0, 8)}`}
         description={invoice.description ?? "No description"}

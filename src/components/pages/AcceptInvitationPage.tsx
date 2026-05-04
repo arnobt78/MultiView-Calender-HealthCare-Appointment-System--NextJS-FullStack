@@ -51,7 +51,7 @@ export default function AcceptInvitationPage({ token = null }: AcceptInvitationP
   };
 
   return (
-    <div className="max-w-9xl mx-auto mt-16 py-8 px-2 sm:px-6 lg:px-8">
+    <div className="max-w-9xl mx-auto mt-16 py-8 px-2 sm:px-4 lg:px-8">
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl font-semibold">Accept Invitation</CardTitle>

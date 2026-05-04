@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { format, isToday, isTomorrow, isPast, isFuture, startOfDay } from "date-fns";
 import { useAppStore } from "@/store/useAppStore";
 import { useState, useMemo } from "react";
+import { PageHeader } from "@/components/shared/PageHeader";
 
 export default function TelehealthDashboard() {
   const { appointments, isLoading } = useAppointments();
@@ -41,41 +42,41 @@ export default function TelehealthDashboard() {
     .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())[0];
 
   return (
-    <div className="space-y-6 animate-in fade-in">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight text-gray-700">Telehealth Queue</h2>
-          <p className="text-muted-foreground">Manage your daily appointments and video calls</p>
-        </div>
-        <div className="flex bg-muted p-1 rounded-2xl">
-          <Button
-            variant={filter === "today" ? "secondary" : "ghost"}
-            size="sm"
-            onClick={() => setFilter("today")}
-            className="text-xs"
-          >
-            Today
-          </Button>
-          <Button
-            variant={filter === "upcoming" ? "secondary" : "ghost"}
-            size="sm"
-            onClick={() => setFilter("upcoming")}
-            className="text-xs"
-          >
-            Upcoming
-          </Button>
-          <Button
-            variant={filter === "all" ? "secondary" : "ghost"}
-            size="sm"
-            onClick={() => setFilter("all")}
-            className="text-xs"
-          >
-            All
-          </Button>
-        </div>
-      </div>
+    <div className="space-y-2 animate-in fade-in">
+      <PageHeader
+        title="Telehealth Queue"
+        description="Manage your daily appointments and video calls"
+        actions={
+          <div className="flex rounded-2xl bg-muted p-1">
+            <Button
+              variant={filter === "today" ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setFilter("today")}
+              className="text-xs"
+            >
+              Today
+            </Button>
+            <Button
+              variant={filter === "upcoming" ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setFilter("upcoming")}
+              className="text-xs"
+            >
+              Upcoming
+            </Button>
+            <Button
+              variant={filter === "all" ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setFilter("all")}
+              className="text-xs"
+            >
+              All
+            </Button>
+          </div>
+        }
+      />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 pt-2 lg:grid-cols-3">
 
         {/* Next/Current Appointment Highlight */}
         <div className="lg:col-span-1 border-b pb-6 lg:border-b-0 lg:border-r lg:pr-6 lg:pb-0">

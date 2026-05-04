@@ -22,7 +22,7 @@ export default function PatientDetailPage() {
 
   if (!id) {
     return (
-      <div className="max-w-9xl mx-auto p-4">
+      <div className="p-4">
         <p className="text-destructive">Invalid patient ID.</p>
         <Button variant="link" asChild><Link href="/control-panel/patient-management">Back to Control Panel</Link></Button>
       </div>
@@ -31,7 +31,7 @@ export default function PatientDetailPage() {
 
   if (isError) {
     return (
-      <div className="max-w-9xl mx-auto p-4">
+      <div className="p-4">
         <p className="text-destructive">{error?.message ?? "Failed to load patient."}</p>
         <Button variant="link" asChild><Link href="/control-panel/patient-management">Back to Control Panel</Link></Button>
       </div>
@@ -40,14 +40,14 @@ export default function PatientDetailPage() {
 
   if (isLoading || !patient) {
     return (
-      <div className="max-w-9xl mx-auto p-4">
+      <div className="p-4">
         <p className="text-muted-foreground">Loading patient...</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-9xl mx-auto space-y-2 px-2 sm:px-4 lg:px-8">
+    <div className="space-y-2">
       <PageHeader
         title={`Patient: ${patient.firstname} ${patient.lastname}`}
         description="Record overview — edit full profile in the form below"
@@ -80,6 +80,7 @@ export default function PatientDetailPage() {
                       <ControlPanelStaffLink
                         userId={patient.created_by_id}
                         label={patient.created_by_display}
+                        email={patient.created_by_email}
                       />
                     </>
                   ) : null}
@@ -93,6 +94,7 @@ export default function PatientDetailPage() {
                       <ControlPanelStaffLink
                         userId={patient.updated_by_id}
                         label={patient.updated_by_display}
+                        email={patient.updated_by_email}
                       />
                     </>
                   ) : null}
@@ -110,10 +112,16 @@ export default function PatientDetailPage() {
               <dt className="font-medium text-muted-foreground">Primary doctor</dt>
               <dd>
                 {patient.primary_doctor_id && patient.primary_doctor_display?.trim() ? (
-                  <EntityTitleLink
-                    href={`/control-panel/doctors/${patient.primary_doctor_id}`}
-                    label={patient.primary_doctor_display.trim()}
-                  />
+                  <>
+                    <EntityTitleLink
+                      href={`/control-panel/doctors/${patient.primary_doctor_id}`}
+                      label={patient.primary_doctor_display.trim()}
+                      className="font-normal"
+                    />
+                    {patient.primary_doctor_email?.trim() ? (
+                      <span className="text-gray-600"> ({patient.primary_doctor_email.trim()})</span>
+                    ) : null}
+                  </>
                 ) : (
                   patient.primary_doctor_display ?? "—"
                 )}

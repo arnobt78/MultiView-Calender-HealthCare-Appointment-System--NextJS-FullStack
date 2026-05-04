@@ -157,7 +157,7 @@ export default function NotificationsManagement() {
     <div className="space-y-2 animate-in fade-in">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
+          <h2 className="text-xl font-bold flex items-center gap-2">
             <Bell className="h-6 w-6" />
             Notifications
             {unreadCount > 0 && (

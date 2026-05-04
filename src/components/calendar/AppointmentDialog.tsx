@@ -750,7 +750,7 @@ export default function AppointmentDialog({
               <Label>Add activity</Label>
               <div className="flex gap-2">
                 <Input
-                  placeholder="Type (eg. Phone, Visit)"
+                  placeholder="Type (Phone, Visit, etc.)"
                   value={activityType}
                   onChange={(e) => setActivityType(e.target.value)}
                   className="cursor-pointer"

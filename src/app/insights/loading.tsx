@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 export default function InsightsLoading() {
   return (
-    <div className="max-w-9xl mx-auto px-4 py-8 space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-8 py-8 animate-in fade-in duration-500">
       <div>
         <Skeleton className="h-8 w-64 mb-2" />
         <Skeleton className="h-5 w-48" />

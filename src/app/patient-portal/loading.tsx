@@ -3,7 +3,7 @@ import { Card, CardHeader, CardContent } from "@/components/ui/card";
 
 export default function PatientPortalLoading() {
   return (
-    <div className="max-w-9xl mx-auto px-4 py-8 space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-8 py-8 animate-in fade-in duration-500">
       {/* Header Banner */}
       <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between pb-6 border-b">
         <div>

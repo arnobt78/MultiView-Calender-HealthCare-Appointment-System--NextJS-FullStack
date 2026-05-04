@@ -89,7 +89,7 @@ export default function ApiStatusPage() {
   };
 
   return (
-    <div className="max-w-9xl mx-auto py-8 px-2 sm:px-6 lg:px-8">
+    <div className="py-8">
       <h1 className="text-2xl font-semibold mb-4">API & Project Status</h1>
       <div className="mb-4">
         <div className="text-lg font-semibold">Project:</div>

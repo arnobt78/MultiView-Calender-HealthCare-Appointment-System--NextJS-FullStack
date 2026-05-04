@@ -277,32 +277,32 @@ export default function AppointmentsManagement() {
         <Card onClick={() => setStatusFilter("all")} className={`cursor-pointer transition-shadow hover:shadow-md ${statusFilter === "all" ? "ring-2 ring-primary" : ""}`}>
           <CardContent className="pt-3 pb-3">
             <div className="text-xs text-muted-foreground">Total</div>
-            <div className="text-2xl font-bold">{appointments.length}</div>
+            <div className="text-xl font-bold">{appointments.length}</div>
           </CardContent>
         </Card>
         <Card onClick={() => setStatusFilter("done")} className={`cursor-pointer transition-shadow hover:shadow-md ${statusFilter === "done" ? "ring-2 ring-primary" : ""}`}>
           <CardContent className="pt-3 pb-3">
             <div className="text-xs text-muted-foreground">Done</div>
-            <div className="text-2xl font-bold text-green-600">{doneCount}</div>
+            <div className="text-xl font-bold text-green-600">{doneCount}</div>
           </CardContent>
         </Card>
         <Card onClick={() => setStatusFilter("pending")} className={`cursor-pointer transition-shadow hover:shadow-md ${statusFilter === "pending" ? "ring-2 ring-primary" : ""}`}>
           <CardContent className="pt-3 pb-3">
             <div className="text-xs text-muted-foreground">Pending</div>
-            <div className="text-2xl font-bold text-yellow-600">{pendingCount}</div>
+            <div className="text-xl font-bold text-yellow-600">{pendingCount}</div>
           </CardContent>
         </Card>
         <Card onClick={() => setStatusFilter("alert")} className={`cursor-pointer transition-shadow hover:shadow-md ${statusFilter === "alert" ? "ring-2 ring-primary" : ""}`}>
           <CardContent className="pt-3 pb-3">
             <div className="text-xs text-muted-foreground">Alert</div>
-            <div className="text-2xl font-bold text-red-600">{alertCount}</div>
+            <div className="text-xl font-bold text-red-600">{alertCount}</div>
           </CardContent>
         </Card>
       </div>
 
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
+          <h2 className="text-xl font-bold flex items-center gap-2">
             <CalendarDays className="h-6 w-6" />
             Appointment Management
           </h2>

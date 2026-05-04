@@ -31,7 +31,7 @@ export default function AnalyticsPage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-9xl mx-auto py-8 px-2 sm:px-6 lg:px-8">
+      <div className="py-8">
         <h1 className="text-2xl font-bold mb-6">Insights</h1>
         <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -64,7 +64,7 @@ export default function AnalyticsPage() {
   const maxMonthly = Math.max(...monthlyData.map((m) => m.count), 1);
 
   return (
-    <div className="max-w-9xl mx-auto py-8 px-2 sm:px-6 lg:px-8">
+    <div className="space-y-8 py-8">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Insights</h1>
         <p className="text-muted-foreground">Appointment statistics</p>

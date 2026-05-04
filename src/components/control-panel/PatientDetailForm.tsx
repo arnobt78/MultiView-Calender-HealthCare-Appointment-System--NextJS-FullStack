@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Loader2, Save, Trash2 } from "lucide-react";
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import { Patient, type PatientClinicalProfile } from "@/types/types";
 import { usePatients } from "@/hooks/usePatients";
-import { Button } from "@/components/ui/button";
+import { ControlPanelGlassActionButton } from "@/components/shared/ControlPanelGlassActionButton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -116,14 +117,21 @@ export function PatientDetailForm({
   };
 
   const handleDelete = () => {
-    deletePatient(patient.id, { onSuccess: () => router.push("/control-panel/patient-management") });
+    deletePatient(
+      {
+        id: patient.id,
+        name: `${patient.firstname} ${patient.lastname}`.trim(),
+        email: patient.email,
+      },
+      { onSuccess: () => router.push("/control-panel/patient-management") }
+    );
   };
 
   return (
-    <form id={formId} onSubmit={handleSubmit} className="space-y-4">
+    <form id={formId} onSubmit={handleSubmit} className="space-y-4 text-gray-700">
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="patient-firstname">First name</Label>
+          <Label htmlFor="patient-firstname">First Name</Label>
           <Input
             id="patient-firstname"
             title="First name"
@@ -133,7 +141,7 @@ export function PatientDetailForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="patient-lastname">Last name</Label>
+          <Label htmlFor="patient-lastname">Last Name</Label>
           <Input
             id="patient-lastname"
             title="Last name"
@@ -155,7 +163,7 @@ export function PatientDetailForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="patient-birthdate">Birth date</Label>
+          <Label htmlFor="patient-birthdate">Birth Date</Label>
           <Input
             id="patient-birthdate"
             type="date"
@@ -165,7 +173,7 @@ export function PatientDetailForm({
           />
         </div>
         <div className="space-y-2 sm:col-span-2">
-          <Label htmlFor="patient-carelevel">Care level (1–10)</Label>
+          <Label htmlFor="patient-carelevel">Care Level (1–10)</Label>
           <PatientCareLevelSelect
             id="patient-carelevel"
             value={form.care_level}
@@ -175,7 +183,7 @@ export function PatientDetailForm({
           />
         </div>
         <div className="space-y-2 sm:col-span-2">
-          <Label htmlFor="patient-primary-doctor">Primary doctor (care team)</Label>
+          <Label htmlFor="patient-primary-doctor">Primary Doctor (Care Team)</Label>
           <Select
             value={form.primary_doctor_id ?? "none"}
             onValueChange={(v) =>
@@ -196,7 +204,7 @@ export function PatientDetailForm({
           </Select>
         </div>
         <div className="space-y-2 sm:col-span-2">
-          <Label>Referral / intake</Label>
+          <Label>Referral / Intake</Label>
           <Select
             value={form.referral_source}
             onValueChange={(v) => setForm((p) => ({ ...p, referral_source: v }))}
@@ -215,7 +223,7 @@ export function PatientDetailForm({
         </div>
         {(form.referral_source === "external_partner" || form.referral_source === "other") && (
           <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="patient-referral-detail">External / other detail</Label>
+            <Label htmlFor="patient-referral-detail">External / Other Detail</Label>
             <Input
               id="patient-referral-detail"
               title="Referral detail"
@@ -256,7 +264,7 @@ export function PatientDetailForm({
           </Select>
         </div>
         <div className="space-y-2 sm:col-span-2">
-          <Label htmlFor="patient-allergies">Allergies (comma-separated)</Label>
+          <Label htmlFor="patient-allergies">Allergies (Comma-Separated)</Label>
           <Input
             id="patient-allergies"
             title="Allergies"
@@ -266,7 +274,7 @@ export function PatientDetailForm({
           />
         </div>
         <div className="space-y-2 sm:col-span-2">
-          <Label htmlFor="patient-clinical-notes">Clinical notes</Label>
+          <Label htmlFor="patient-clinical-notes">Clinical Notes</Label>
           <Textarea
             id="patient-clinical-notes"
             title="Clinical notes"
@@ -277,21 +285,27 @@ export function PatientDetailForm({
         </div>
       </div>
       {submitActions !== "none" && (
-        <div className="flex flex-wrap gap-2 border-t pt-4">
-          <Button type="submit" disabled={isUpdating}>
-            {isUpdating ? "Saving..." : "Save changes"}
-          </Button>
+        <div className="flex flex-wrap gap-2 border-t border-slate-200/80 pt-4">
+          <ControlPanelGlassActionButton type="submit" variant="emerald" disabled={isUpdating}>
+            {isUpdating ? (
+              <Loader2 className="shrink-0 animate-spin" aria-hidden />
+            ) : (
+              <Save className="shrink-0" aria-hidden />
+            )}
+            {isUpdating ? "Saving Changes…" : "Save Changes"}
+          </ControlPanelGlassActionButton>
           <ConfirmActionDialog
             trigger={
-              <Button type="button" variant="destructive" disabled={isDeleting}>
-                {isDeleting ? "Deleting..." : "Delete"}
-              </Button>
+              <ControlPanelGlassActionButton type="button" variant="rose" disabled={isDeleting}>
+                <Trash2 className="shrink-0" aria-hidden />
+                {isDeleting ? "Deleting…" : "Delete"}
+              </ControlPanelGlassActionButton>
             }
-            title="Permanently remove this patient?"
+            title="Permanently Remove This Patient?"
             subtitle={
               <>
                 This will delete{" "}
-                <span className="font-medium text-gray-800">
+                <span className="text-gray-800">
                   {`${patient.firstname} ${patient.lastname}`.trim()}
                   {patient.email ? ` (${patient.email})` : ""}
                 </span>{" "}

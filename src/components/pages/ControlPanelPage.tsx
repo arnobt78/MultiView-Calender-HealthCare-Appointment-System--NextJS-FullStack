@@ -29,8 +29,27 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Menu } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import {
+  Bell,
+  Building2,
+  Calendar,
+  CalendarDays,
+  History,
+  LayoutDashboard,
+  Mail,
+  Menu,
+  PanelTop,
+  Receipt,
+  Stethoscope,
+  Tags,
+  UserCog,
+  Users,
+  UsersRound,
+  Video,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
+
 const SIDEBAR_ITEMS = [
   { value: "overview", label: "Dashboard Overview" },
   { value: "telehealth", label: "Telehealth Queue" },
@@ -48,6 +67,76 @@ const SIDEBAR_ITEMS = [
   { value: "activities", label: "Activity Log" },
   { value: "google-calendar", label: "Google Calendar" },
 ] as const;
+
+/** Single source of truth for tab labels (desktop sidebar, mobile sheet, horizontal tab strip). */
+const SIDEBAR_ITEM_LABEL = Object.fromEntries(
+  SIDEBAR_ITEMS.map((item) => [item.value, item.label])
+) as Record<(typeof SIDEBAR_ITEMS)[number]["value"], string>;
+
+/** Matches sticky navbar stack height so sidebar + main pane clear the bar without overlapping. */
+const CONTROL_PANEL_STICKY_TOP = "top-[4.5rem]";
+/** Same token as `Navbar` bottom rule (`border-b border-gray-100/80`). */
+const CONTROL_PANEL_NAV_BORDER = "border-gray-100/80";
+/** Desktop: row is at least viewport below navbar so the rail stretches with the layout. */
+const CONTROL_PANEL_ROW_MD_MIN_H = "md:min-h-[calc(100dvh-4.5rem)]";
+type SidebarTabValue = (typeof SIDEBAR_ITEMS)[number]["value"];
+
+const SIDEBAR_SECTIONS: readonly {
+  heading: string;
+  items: readonly { value: SidebarTabValue; icon: LucideIcon }[];
+}[] = [
+  {
+    heading: "Overview & Queue",
+    items: [
+      { value: "overview", icon: LayoutDashboard },
+      { value: "telehealth", icon: Video },
+    ],
+  },
+  {
+    heading: "Access & Invitations",
+    items: [
+      { value: "appointment", icon: Mail },
+      { value: "dashboard", icon: PanelTop },
+    ],
+  },
+  {
+    heading: "Entity Management",
+    items: [
+      { value: "patients", icon: Users },
+      { value: "categories", icon: Tags },
+      { value: "doctors", icon: Stethoscope },
+      { value: "users_admin", icon: UserCog },
+      { value: "relatives", icon: UsersRound },
+      { value: "organizations", icon: Building2 },
+    ],
+  },
+  {
+    heading: "Operations",
+    items: [
+      { value: "invoices", icon: Receipt },
+      { value: "appointments_mgmt", icon: CalendarDays },
+      { value: "notifications", icon: Bell },
+    ],
+  },
+  {
+    heading: "System & Audit",
+    items: [
+      { value: "activities", icon: History },
+      { value: "google-calendar", icon: Calendar },
+    ],
+  },
+] as const;
+
+/** Full-bleed row: no horizontal padding; icon + label only (`pl-2` on label vs icon). */
+const sidebarTriggerClass = cn(
+  "!m-0 !h-auto !min-h-0 !gap-0 !px-0 !py-2.5 w-full cursor-pointer items-center justify-start rounded-none border-0 text-left text-sm font-normal shadow-none transition-colors",
+  "text-gray-800 hover:bg-gray-50 hover:text-gray-900",
+  "data-[state=active]:rounded-md data-[state=active]:bg-sky-100 data-[state=active]:text-sky-800 data-[state=active]:shadow-none",
+  "[&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-gray-500 data-[state=active]:[&_svg]:text-sky-700",
+  "after:hidden! data-[state=active]:after:hidden!"
+);
+
+const sidebarItemLabelClass = "min-w-0 flex-1 pl-2 leading-snug whitespace-nowrap";
 
 const TAB_TO_SEGMENT: Record<string, string> = {
   overview: "dashboard-overview",
@@ -123,49 +212,68 @@ export default function ControlPanelPage({ initialSession, initialTab }: Control
   };
 
   return (
-    <div className="w-full max-w-9xl mx-auto px-2 sm:px-6 lg:px-8 py-2">
-      <div className="flex flex-col md:flex-row gap-2 md:gap-4 min-h-[60vh]">
-        {/* Desktop sidebar - shadcn Tabs as vertical tab menu */}
-        <aside className="hidden md:flex h-full min-w-[240px] w-64 shrink-0 flex-col rounded-2xl border bg-card text-card-foreground shadow-2xl sticky top-0">
+    <div className="w-full">
+      <div
+        className={cn(
+          "flex min-h-[60vh] flex-col gap-2 md:flex-row md:items-stretch md:gap-4",
+          CONTROL_PANEL_ROW_MD_MIN_H
+        )}
+      >
+        {/* Desktop: stretch to row height + sticky under navbar so the right border runs the full column. */}
+        <aside
+          className={cn(
+            "sticky z-30 hidden w-[min(100%,16rem)] shrink-0 border-r bg-transparent md:block md:self-stretch",
+            CONTROL_PANEL_NAV_BORDER,
+            CONTROL_PANEL_STICKY_TOP
+          )}
+        >
           <Tabs
             value={activeTab}
             onValueChange={handleTabChange}
             orientation="vertical"
-            className="flex-1 w-full"
+            className="flex h-full min-h-0 w-full flex-col"
           >
             <TabsList
               variant="line"
-              className="flex h-auto flex-col rounded-none rounded-t-lg border-0 bg-transparent p-2 gap-0.5 w-full"
+              className="flex h-auto w-full flex-col gap-0 rounded-none border-0 bg-transparent p-0"
             >
-              {SIDEBAR_ITEMS.map((item) => (
-                <TabsTrigger
-                  key={item.value}
-                  value={item.value}
-                  className={cn(
-                    "w-full justify-start rounded-2xl px-3 py-2 text-base font-medium text-left whitespace-normal h-auto min-h-10 cursor-pointer",
-                    "hover:bg-gray-100!",
-                    "data-[state=active]:bg-gray-200! data-[state=active]:text-foreground!",
-                    "data-[state=active]:after:content-none! data-[state=active]:after:hidden!"
-                  )}
+              {SIDEBAR_SECTIONS.map((section, sectionIndex) => (
+                <div
+                  key={section.heading}
+                  className={cn("w-full", sectionIndex === 0 && "pt-2", sectionIndex > 0 && "pt-4")}
                 >
-                  {item.label}
-                </TabsTrigger>
+                  <p className="text-sm font-semibold tracking-wider text-gray-400">{section.heading}</p>
+                  <div className="flex flex-col">
+                    {section.items.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <TabsTrigger key={item.value} value={item.value} className={sidebarTriggerClass}>
+                          <Icon className="size-4 shrink-0" aria-hidden />
+                          <span className={sidebarItemLabelClass}>{SIDEBAR_ITEM_LABEL[item.value]}</span>
+                        </TabsTrigger>
+                      );
+                    })}
+                  </div>
+                </div>
               ))}
             </TabsList>
           </Tabs>
         </aside>
 
-        {/* Mobile: Sheet for sidebar */}
-        <div className="md:hidden flex items-center gap-2">
+        {/* Mobile: Sheet mirrors desktop sections + icons. */}
+        <div className="flex items-center gap-2 md:hidden">
           <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
             <SheetTrigger asChild>
               <Button variant="outline" size="default" className="rounded-2xl shadow-xl" aria-label="Open menu">
-                <Menu className="h-5 w-5 mr-2" />
+                <Menu className="h-5 w-5" />
                 Menu
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-72 p-0">
-              <SheetHeader className="p-4 border-b">
+            <SheetContent
+              side="left"
+              className={cn("w-80 border-r bg-transparent p-0", CONTROL_PANEL_NAV_BORDER)}
+            >
+              <SheetHeader className="border-b p-4">
                 <SheetTitle>Control Panel</SheetTitle>
               </SheetHeader>
               <Tabs
@@ -175,21 +283,27 @@ export default function ControlPanelPage({ initialSession, initialTab }: Control
                   setSheetOpen(false);
                 }}
                 orientation="vertical"
-                className="flex-1"
+                className="w-full"
               >
-                <TabsList className="flex flex-col h-auto rounded-none border-0 bg-transparent p-2 gap-0.5 w-full">
-                  {SIDEBAR_ITEMS.map((item) => (
-                    <TabsTrigger
-                      key={item.value}
-                      value={item.value}
-                      className={cn(
-                        "w-full justify-start rounded-2xl px-3 py-2 text-sm cursor-pointer",
-                        "hover:bg-gray-100!",
-                        "data-[state=active]:bg-gray-200! data-[state=active]:text-foreground!"
-                      )}
+                <TabsList className="flex h-auto max-h-[min(70vh,calc(100dvh-8rem))] w-full flex-col gap-0 overflow-y-auto rounded-none border-0 bg-transparent p-0">
+                  {SIDEBAR_SECTIONS.map((section, sectionIndex) => (
+                    <div
+                      key={section.heading}
+                      className={cn("w-full", sectionIndex === 0 && "pt-2", sectionIndex > 0 && "pt-4")}
                     >
-                      {item.label}
-                    </TabsTrigger>
+                      <p className="text-sm font-semibold tracking-wider text-gray-400">{section.heading}</p>
+                      <div className="flex flex-col">
+                        {section.items.map((item) => {
+                          const Icon = item.icon;
+                          return (
+                            <TabsTrigger key={item.value} value={item.value} className={sidebarTriggerClass}>
+                              <Icon className="size-4 shrink-0" aria-hidden />
+                              <span className={sidebarItemLabelClass}>{SIDEBAR_ITEM_LABEL[item.value]}</span>
+                            </TabsTrigger>
+                          );
+                        })}
+                      </div>
+                    </div>
                   ))}
                 </TabsList>
               </Tabs>
@@ -197,26 +311,22 @@ export default function ControlPanelPage({ initialSession, initialTab }: Control
           </Sheet>
         </div>
 
-        {/* Main content - dynamic width */}
-        <main className="flex-1 min-w-0 text-gray-700">
+        {/* Main tab body: own scroll on md so sidebar stays pinned while long tables scroll here. */}
+        <main
+          className={cn(
+            "min-w-0 flex-1 text-gray-700",
+            "px-0",
+            "md:min-h-0 md:max-h-[calc(100dvh-4.5rem)] md:overflow-y-auto md:overscroll-contain"
+          )}
+        >
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
             <div className="md:hidden mb-4 overflow-x-auto">
-              <TabsList className="inline-flex w-full min-w-max rounded-2xl shadow-xl gap-2 p-1">
-                <TabsTrigger value="overview" className="py-2">Overview</TabsTrigger>
-                <TabsTrigger value="telehealth" className="py-2">Telehealth</TabsTrigger>
-                <TabsTrigger value="appointment" className="py-2">Appointments</TabsTrigger>
-                <TabsTrigger value="dashboard" className="py-2">Dashboard</TabsTrigger>
-                <TabsTrigger value="patients" className="py-2">Patients</TabsTrigger>
-                <TabsTrigger value="categories" className="py-2">Categories</TabsTrigger>
-                <TabsTrigger value="doctors" className="py-2">Doctors</TabsTrigger>
-                <TabsTrigger value="users_admin" className="py-2">Staff</TabsTrigger>
-                <TabsTrigger value="relatives" className="py-2">Relatives</TabsTrigger>
-                <TabsTrigger value="organizations" className="py-2">Organizations</TabsTrigger>
-                <TabsTrigger value="invoices" className="py-2">Invoices</TabsTrigger>
-                <TabsTrigger value="appointments_mgmt" className="py-2">All Appointments</TabsTrigger>
-                <TabsTrigger value="notifications" className="py-2">Notifications</TabsTrigger>
-                <TabsTrigger value="activities" className="py-2">Activity Log</TabsTrigger>
-                <TabsTrigger value="google-calendar" className="py-2">Google Calendar</TabsTrigger>
+              <TabsList className="inline-flex w-full min-w-max gap-2 rounded-2xl p-1 shadow-xl">
+                {SIDEBAR_ITEMS.map(({ value, label }) => (
+                  <TabsTrigger key={value} value={value} className="whitespace-nowrap py-2">
+                    {label}
+                  </TabsTrigger>
+                ))}
               </TabsList>
             </div>
             <TabsContent value="overview" className="mt-0 md:mt-0">

@@ -60,7 +60,7 @@ export default function GoogleCalendarSettings() {
   return (
     <div className="space-y-6 animate-in fade-in max-w-2xl">
       <div>
-        <h2 className="text-2xl font-bold flex items-center gap-2">
+        <h2 className="text-xl font-bold flex items-center gap-2">
           <Calendar className="h-6 w-6" />
           Google Calendar Integration
         </h2>

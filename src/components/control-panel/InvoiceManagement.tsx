@@ -315,7 +315,7 @@ export default function InvoiceManagement() {
         <Card>
           <CardContent className="pt-4">
             <div className="text-xs text-muted-foreground uppercase tracking-wide">Total Paid</div>
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-xl font-bold text-green-600">
               {(totalPaid / 100).toLocaleString("de-DE", { style: "currency", currency: "EUR" })}
             </div>
           </CardContent>
@@ -323,7 +323,7 @@ export default function InvoiceManagement() {
         <Card>
           <CardContent className="pt-4">
             <div className="text-xs text-muted-foreground uppercase tracking-wide">Outstanding</div>
-            <div className="text-2xl font-bold text-orange-600">
+            <div className="text-xl font-bold text-orange-600">
               {(totalOutstanding / 100).toLocaleString("de-DE", { style: "currency", currency: "EUR" })}
             </div>
           </CardContent>
@@ -332,7 +332,7 @@ export default function InvoiceManagement() {
 
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h2 className="text-2xl font-bold">Invoice Management</h2>
+          <h2 className="text-xl font-bold">Invoice Management</h2>
           <p className="text-sm text-muted-foreground">
             {invoices.length} invoice{invoices.length !== 1 ? "s" : ""}
           </p>

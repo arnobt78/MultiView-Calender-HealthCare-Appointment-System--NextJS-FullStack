@@ -161,7 +161,7 @@ function PatientActions({
   onDelete,
 }: {
   patient: Patient;
-  onDelete: (id: string) => void;
+  onDelete: (p: Patient) => void;
 }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   return (
@@ -220,7 +220,7 @@ function PatientActions({
         confirmLabel="Delete"
         variant="destructive"
         onConfirm={() => {
-          onDelete(patient.id);
+          onDelete(patient);
           setConfirmOpen(false);
         }}
       />
@@ -314,11 +314,11 @@ function PatientManagementInner() {
               sizeClassName="h-9 w-9"
             />
             <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5">
-              <EntityTitleLink
-                href={`/control-panel/patients/${p.id}`}
-                label={name}
-                className="min-w-0 self-start truncate font-medium"
-              />
+            <EntityTitleLink
+              href={`/control-panel/patients/${p.id}`}
+              label={name}
+              className="min-w-0 self-start truncate"
+            />
               {email ? (
                 <span className="truncate text-xs text-muted-foreground" title={email}>
                   {email}
@@ -371,10 +371,10 @@ function PatientManagementInner() {
               <EntityTitleLink
                 href={`/control-panel/doctors/${p.primary_doctor_id}`}
                 label={d}
-                className="min-w-0 self-start truncate text-sm font-medium"
+                className="min-w-0 self-start truncate text-sm"
               />
             ) : d ? (
-              <span className="truncate text-sm font-medium text-muted-foreground">{d}</span>
+              <span className="truncate text-sm text-muted-foreground">{d}</span>
             ) : null}
             {em ? (
               <span className="truncate text-xs text-muted-foreground" title={em}>
@@ -435,7 +435,16 @@ function PatientManagementInner() {
       meta: { shellClassName: "w-[8%] min-w-[4.75rem] whitespace-nowrap text-right" },
       cell: ({ row }) => (
         <div className="flex min-h-[2.75rem] items-center justify-end">
-          <PatientActions patient={row.original} onDelete={deletePatient} />
+          <PatientActions
+            patient={row.original}
+            onDelete={(pat) =>
+              deletePatient({
+                id: pat.id,
+                name: `${pat.firstname} ${pat.lastname}`.trim(),
+                email: pat.email,
+              })
+            }
+          />
         </div>
       ),
     },

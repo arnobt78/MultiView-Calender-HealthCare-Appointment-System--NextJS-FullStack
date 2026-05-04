@@ -1,0 +1,34 @@
+"use client";
+
+import * as React from "react";
+import { cn } from "@/lib/utils";
+import {
+  emeraldGlassPrimaryButtonClass,
+  roseGlassDangerButtonClass,
+  skyGlassBackButtonClass,
+} from "@/lib/calendar-header-action-styles";
+
+export type ControlPanelGlassActionVariant = "sky" | "emerald" | "rose";
+
+const VARIANT: Record<ControlPanelGlassActionVariant, string> = {
+  sky: skyGlassBackButtonClass,
+  emerald: emeraldGlassPrimaryButtonClass,
+  rose: roseGlassDangerButtonClass,
+};
+
+type ButtonProps = React.ComponentPropsWithoutRef<"button">;
+
+/** Glass action chip (h-10) — use with footer bars; links use `PrefetchingLink` + `skyGlassBackButtonClass`. */
+export const ControlPanelGlassActionButton = React.forwardRef<
+  HTMLButtonElement,
+  ButtonProps & { variant: ControlPanelGlassActionVariant }
+>(function ControlPanelGlassActionButton({ variant, className, type = "button", ...props }, ref) {
+  return (
+    <button
+      ref={ref}
+      type={type}
+      className={cn(VARIANT[variant], className)}
+      {...props}
+    />
+  );
+});
