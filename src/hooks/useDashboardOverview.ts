@@ -49,6 +49,8 @@ export function useDashboardOverview() {
   return {
     data: query.data,
     isLoading: query.isLoading,
+    isFetching: query.isFetching,
+    dataUpdatedAt: query.dataUpdatedAt,
     isError: query.isError,
     error: query.error,
     refetch: query.refetch,

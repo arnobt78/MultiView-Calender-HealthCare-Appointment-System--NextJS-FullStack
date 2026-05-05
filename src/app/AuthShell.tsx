@@ -110,12 +110,35 @@ function AuthShellInner({ children }: { children: React.ReactNode }) {
     }
   }, [pathname]);
 
+  const isDashboard = pathname === "/dashboard";
+  const isControlPanel = pathname.startsWith("/control-panel");
+
+  /*
+   * globals.css sets `html { overflow-y: scroll; scrollbar-gutter: stable }` to prevent
+   * layout shift on document-scrolling routes. On viewport-locked routes (dashboard,
+   * control-panel) the document never scrolls, but the gutter reservation still adds
+   * a ~6-15px dead space on the right edge of the viewport.
+   *
+   * Setting `overflow: hidden` on the html element inline-style releases that gutter so
+   * the layout fills the full viewport width. The cleanup removes the inline style so
+   * document-scrolling routes get their stable gutter back immediately on navigation.
+   *
+   * This hook MUST stay before any early return to satisfy Rules of Hooks.
+   */
+  useEffect(() => {
+    const html = document.documentElement;
+    if (isDashboard || isControlPanel) {
+      html.style.setProperty("overflow", "hidden");
+    } else {
+      html.style.removeProperty("overflow");
+    }
+    return () => { html.style.removeProperty("overflow"); };
+  }, [isDashboard, isControlPanel]);
+
   // Landing page and auth pages — render children as-is (no dashboard chrome)
   if (isBare(pathname)) {
     return <>{children}</>;
   }
-
-  const isDashboard = pathname === "/dashboard";
 
   // All protected pages — render with dashboard layout.
   // Middleware already verified auth before the browser received this HTML,
@@ -123,24 +146,37 @@ function AuthShellInner({ children }: { children: React.ReactNode }) {
   return (
     <div
       className={cn(
-        "flex min-w-0 flex-col bg-gradient-to-br from-slate-50 via-white to-slate-100 text-gray-900",
-        /* Dashboard clips horizontal overflow on this shell; omit here for other routes so `sticky top-0` on Navbar can use the document scrollport. */
-        isDashboard && "overflow-x-hidden",
-        isDashboard ? "h-dvh min-h-0 max-h-dvh" : "min-h-dvh",
+        "flex min-w-0 flex-col bg-gradient-to-br from-slate-50 via-white to-slate-100 text-gray-700",
+        /*
+         * Dashboard + Control-panel: lock the outer shell to `h-dvh` so that:
+         *   - Dashboard: inner calendar scroll works (overflow-hidden on main).
+         *   - Control panel: `control-panel/layout.tsx` can stretch to `h-full` of the
+         *     `<main>` and give its right pane `overflow-y-auto` a bounded height.
+         *     This mirrors the stock-inventory `Navbar` h-screen shell pattern.
+         * Other routes: `min-h-dvh` allows document scroll naturally.
+         */
+        (isDashboard || isControlPanel) && "overflow-x-hidden",
+        isDashboard || isControlPanel ? "h-dvh min-h-0 max-h-dvh" : "min-h-dvh",
         inter.className
       )}
     >
       <Navbar />
-      {/* Dashboard: fixed viewport + inner calendar scroll. Other routes: document scroll on <html> (no nested main scrollbar) so width matches navbar. */}
+      {/*
+       * Dashboard: viewport-locked flex column, inner calendar view scrolls.
+       * Control panel: viewport-locked flex column, `control-panel/layout.tsx`
+       *   owns the sidebar + scrollable right pane (no document scroll).
+       *   This is the same `AdminLayout` + PageWithSidebar pattern in stock-inventory.
+       * Other routes: natural document scroll with `dashboardShellClass` wrapper.
+       */}
       <main
         className={cn(
           "min-w-0 w-full px-0",
-          isDashboard
+          isDashboard || isControlPanel
             ? "flex min-h-0 flex-1 flex-col overflow-hidden"
-            : "flex-1 overflow-x-hidden overflow-y-visible"
+            : "flex-1 overflow-x-visible overflow-y-visible"
         )}
       >
-        {isDashboard ? (
+        {isDashboard || isControlPanel ? (
           children
         ) : (
           <div className={dashboardShellClass}>{children}</div>

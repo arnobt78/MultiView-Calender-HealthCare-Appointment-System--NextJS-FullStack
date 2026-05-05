@@ -401,6 +401,19 @@ html:hover {
   scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
 }
 
+/*
+ * Control panel right content pane — completely hidden scrollbar.
+ * Content still scrolls via mousewheel/trackpad; the visual track is invisible
+ * so no gutter space is reserved and no extra right padding appears.
+ * scrollbar-width: none (Firefox) + display:none on ::-webkit-scrollbar (Chrome/Safari/Edge).
+ */
+.cp-right-scroll {
+  scrollbar-width: none;
+}
+.cp-right-scroll::-webkit-scrollbar {
+  display: none;
+}
+
 /* Dashboard calendar pane — same thin transparent track, thumb on interaction */
 .inner-dashboard-scroll {
   scrollbar-gutter: stable;

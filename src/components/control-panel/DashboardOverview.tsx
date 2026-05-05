@@ -5,8 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { PageHeader } from "@/components/shared/PageHeader";
+import { skyGlassBackButtonClass } from "@/lib/calendar-header-action-styles";
 import Link from "next/link";
 import {
   CalendarDays,
@@ -33,6 +33,40 @@ const STATUS_COLORS: Record<string, string> = {
   pending: "bg-yellow-100 text-yellow-700 border-yellow-200",
   alert: "bg-red-100 text-red-700 border-red-200",
 };
+
+/** Reusable glassmorphic card surface (UI guide): subtle gradient, rounded corners, colored glow shadow. */
+const CONTROL_PANEL_GLASS_CARD_BASE_CLASS =
+  "rounded-[28px] border bg-gradient-to-br backdrop-blur-sm";
+/** Same card style system with per-card color variant. */
+const CONTROL_PANEL_GLASS_CARD_VARIANT: Record<string, string> = {
+  sky: "border-sky-400/20 from-sky-500/10 via-white to-white/95 shadow-[0_24px_60px_rgba(2,132,199,0.12)]",
+  blue: "border-blue-400/20 from-blue-500/10 via-white to-white/95 shadow-[0_24px_60px_rgba(59,130,246,0.12)]",
+  indigo: "border-indigo-400/20 from-indigo-500/10 via-white to-white/95 shadow-[0_24px_60px_rgba(99,102,241,0.12)]",
+  purple: "border-purple-400/20 from-purple-500/10 via-white to-white/95 shadow-[0_24px_60px_rgba(168,85,247,0.12)]",
+  violet: "border-violet-400/20 from-violet-500/10 via-white to-white/95 shadow-[0_24px_60px_rgba(139,92,246,0.12)]",
+  emerald: "border-emerald-400/20 from-emerald-500/10 via-white to-white/95 shadow-[0_24px_60px_rgba(16,185,129,0.12)]",
+  green: "border-green-400/20 from-green-500/10 via-white to-white/95 shadow-[0_24px_60px_rgba(34,197,94,0.12)]",
+  yellow: "border-yellow-400/20 from-yellow-500/10 via-white to-white/95 shadow-[0_24px_60px_rgba(234,179,8,0.12)]",
+  amber: "border-amber-400/20 from-amber-500/10 via-white to-white/95 shadow-[0_24px_60px_rgba(245,158,11,0.12)]",
+  orange: "border-orange-400/20 from-orange-500/10 via-white to-white/95 shadow-[0_24px_60px_rgba(249,115,22,0.12)]",
+  rose: "border-rose-400/20 from-rose-500/10 via-white to-white/95 shadow-[0_24px_60px_rgba(225,29,72,0.12)]",
+  teal: "border-teal-400/20 from-teal-500/10 via-white to-white/95 shadow-[0_24px_60px_rgba(20,184,166,0.12)]",
+  cyan: "border-cyan-400/20 from-cyan-500/10 via-white to-white/95 shadow-[0_24px_60px_rgba(6,182,212,0.12)]",
+  slate: "border-slate-400/20 from-slate-500/10 via-white to-white/95 shadow-[0_24px_60px_rgba(100,116,139,0.12)]",
+};
+/** Group row wrapper so each metric section has consistent spacing + glass surface. */
+const CONTROL_PANEL_GROUP_SURFACE_CLASS =
+  "space-y-3";
+
+/** Keep same glass style while tinting per metric color token. */
+function getControlPanelCardVariantClass(color: string) {
+  const match = color.match(/bg-([a-z]+)-/);
+  const variantKey = match?.[1] ?? "sky";
+  return (
+    CONTROL_PANEL_GLASS_CARD_VARIANT[variantKey] ??
+    CONTROL_PANEL_GLASS_CARD_VARIANT.sky
+  );
+}
 
 function StatCard({
   label,
@@ -65,7 +99,9 @@ function StatCard({
   );
 
   return (
-    <Card className={`transition-shadow hover:shadow-md ${href ? "cursor-pointer" : ""}`}>
+    <Card
+      className={`${CONTROL_PANEL_GLASS_CARD_BASE_CLASS} ${getControlPanelCardVariantClass(color)} transition-shadow hover:shadow-[0_30px_70px_rgba(2,132,199,0.18)] ${href ? "cursor-pointer" : ""}`}
+    >
       {href ? <Link href={href}>{inner}</Link> : inner}
     </Card>
   );
@@ -89,7 +125,7 @@ function StatCardSkeleton() {
 }
 
 export default function DashboardOverviewComponent() {
-  const { data, isLoading, refetch } = useDashboardOverview();
+  const { data, isLoading, isFetching, dataUpdatedAt, refetch } = useDashboardOverview();
 
   if (isLoading) {
     return (
@@ -125,21 +161,34 @@ export default function DashboardOverviewComponent() {
   const outstandingEur = (revenue.outstandingCents / 100).toFixed(2);
 
   return (
-    <div className="space-y-2 animate-in fade-in">
+    <div className="space-y-3 pb-3 animate-in fade-in">
       {/* Same chrome as other control-panel tabs (`PatientManagement`, etc.) via shared `PageHeader`. */}
       <PageHeader
+
         title="Dashboard Overview"
-        description={`Real-time system summary — last updated ${format(new Date(), "HH:mm")}`}
+        description={`Real-time system summary — last updated ${format(
+          dataUpdatedAt ? new Date(dataUpdatedAt) : new Date(),
+          "HH:mm:ss"
+        )}`}
         actions={
-          <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-2">
-            <RefreshCw className="h-4 w-4" />
-            Refresh
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={async () => {
+              await refetch();
+            }}
+            disabled={isFetching}
+            className={skyGlassBackButtonClass}
+            aria-busy={isFetching}
+          >
+            <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
+            {isFetching ? "Refreshing..." : "Refresh"}
           </Button>
         }
       />
 
       {/* Appointment Stats */}
-      <div className="space-y-3 pt-2">
+      <div className={CONTROL_PANEL_GROUP_SURFACE_CLASS}>
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Appointments</p>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           <StatCard label="Today" value={appointments.today} sub="appointments scheduled" icon={CalendarDays} color="bg-blue-100 text-blue-600" href="/control-panel" />
@@ -150,7 +199,7 @@ export default function DashboardOverviewComponent() {
       </div>
 
       {/* Status Stats */}
-      <div className="space-y-3">
+      <div className={CONTROL_PANEL_GROUP_SURFACE_CLASS}>
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Status Breakdown</p>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           <StatCard label="Done" value={appointments.done} sub="completed" icon={CalendarCheck} color="bg-green-100 text-green-600" />
@@ -160,10 +209,8 @@ export default function DashboardOverviewComponent() {
         </div>
       </div>
 
-      <Separator />
-
       {/* People & System Stats */}
-      <div className="space-y-3">
+      <div className={CONTROL_PANEL_GROUP_SURFACE_CLASS}>
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">System</p>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           <StatCard label="Total Patients" value={patients.total} sub={`${patients.active} active`} icon={Users} color="bg-teal-100 text-teal-600" href="/control-panel" />
@@ -174,7 +221,7 @@ export default function DashboardOverviewComponent() {
       </div>
 
       {/* Revenue Stats */}
-      <div className="space-y-3">
+      <div className={CONTROL_PANEL_GROUP_SURFACE_CLASS}>
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Revenue</p>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           <StatCard label="Paid Revenue" value={`€${paidEur}`} sub={`${revenue.paidInvoices} paid invoices`} icon={Banknote} color="bg-green-100 text-green-600" href="/control-panel" />
@@ -185,9 +232,9 @@ export default function DashboardOverviewComponent() {
       </div>
 
       {/* Next Appointment + Recent Appointments — bottom margin so last `shadow-xl` clears the tab scrollport. */}
-      <div className="mb-3 grid gap-4 lg:grid-cols-2">
+      <div className={`${CONTROL_PANEL_GROUP_SURFACE_CLASS} grid gap-4 lg:grid-cols-2`}>
         {/* Next Appointment */}
-        <Card>
+        <Card className={`${CONTROL_PANEL_GLASS_CARD_BASE_CLASS} ${CONTROL_PANEL_GLASS_CARD_VARIANT.indigo}`}>
           {/* CardHeader defaults to horizontal padding only; match `CardContent` (`p-4 sm:p-6`) so title block aligns with stat cards. */}
           <CardHeader className="border-b border-border/70 p-4 sm:p-6">
             <CardTitle className="text-base flex items-center gap-2">
@@ -228,7 +275,7 @@ export default function DashboardOverviewComponent() {
         </Card>
 
         {/* Recent Appointments */}
-        <Card>
+        <Card className={`${CONTROL_PANEL_GLASS_CARD_BASE_CLASS} ${CONTROL_PANEL_GLASS_CARD_VARIANT.violet}`}>
           <CardHeader className="border-b border-border/70 p-4 sm:p-6">
             <CardTitle className="text-base flex items-center gap-2">
               <CalendarDays className="h-4 w-4 text-purple-500" />
