@@ -19,6 +19,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAssignees } from "@/hooks/useAssignees";
 import { useActivitiesList } from "@/hooks/useActivities";
 import { useOwnerUserSummaries } from "@/hooks/useOwnerUserSummaries";
+import { cn } from "@/lib/utils";
 import AppointmentHoverCard from "./AppointmentHoverCard";
 import { Badge } from "../ui/badge";
 import GlobalCalendarFilters from "./GlobalCalendarFilters";
@@ -217,7 +218,7 @@ export default function WeekView() {
   }, []);
 
   return (
-    <div className="min-h-0 pt-0 pb-4 px-2 sm:px-4 lg:px-8">
+    <div className="min-h-0 pt-0 px-2 sm:px-4 lg:px-8">
       <CalendarStickyHeader >
         <div className="mb-2 flex flex-wrap items-center gap-2">
           <h2 className="text-xl font-semibold tracking-tight text-gray-700">
@@ -356,6 +357,7 @@ export default function WeekView() {
           ))}
         </div>
       </div>
+      <div className="h-3" />
 
       <ConfirmActionDialog
         open={Boolean(deleteTargetId)}

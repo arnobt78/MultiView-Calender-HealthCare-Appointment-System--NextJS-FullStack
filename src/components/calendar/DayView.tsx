@@ -278,12 +278,7 @@ export default function DayView() {
           );
         })}
       </div>
-
-      {dayAppointments.length === 0 && (
-        <p className="text-center text-muted-foreground text-sm mt-6">
-          No appointments on this day.
-        </p>
-      )}
+      <div className="h-3" />
       <ConfirmActionDialog
         open={Boolean(deleteTargetId)}
         onOpenChange={(open) => {
