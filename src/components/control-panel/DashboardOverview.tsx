@@ -110,12 +110,10 @@ function StatCard({
           ) : (
             <p className="text-2xl font-bold tracking-tight mt-1">{value}</p>
           )}
-          {/* Sub text slot: pulse or real */}
-          {loading ? (
-            <Skeleton className="h-3 w-20 mt-1.5 rounded" />
-          ) : (
-            sub && <p className="text-xs text-muted-foreground mt-1">{sub}</p>
-          )}
+          {/* Sub text always static — never skeletonized.
+              Keeping sub visible at all times means the card height stays identical
+              between skeleton and loaded states: no expand / contract layout shift. */}
+          {sub && <p className="text-xs text-muted-foreground mt-1">{sub}</p>}
         </div>
         {/* Icon stays static — never skeletonized */}
         <div className={`rounded-full p-2.5 ${color}`}>

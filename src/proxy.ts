@@ -23,9 +23,10 @@ const AUTH_ONLY_PATHS = ["/login", "/register"];
 
 // ─── security headers ─────────────────────────────────────────────────────────
 
+// X-Frame-Options is applied conditionally per-route below (step 4b) to allow
+// Vercel's deployment preview iframe on public pages while keeping DENY on protected pages.
 const SECURITY_HEADERS: Record<string, string> = {
   "X-Content-Type-Options": "nosniff",
-  "X-Frame-Options": "DENY",
   "X-XSS-Protection": "1; mode=block",
   "Referrer-Policy": "strict-origin-when-cross-origin",
   "Permissions-Policy": "camera=(self), microphone=(self), geolocation=(), payment=(self)",
@@ -139,6 +140,15 @@ export async function proxy(request: NextRequest) {
 
   // ── 4. Security headers ───────────────────────────────────────────────────
   Object.entries(SECURITY_HEADERS).forEach(([k, v]) => res.headers.set(k, v));
+
+  // ── 4b. X-Frame-Options — route-aware clickjacking protection ─────────────
+  // Protected pages: DENY — nobody may frame them (maximum clickjacking protection).
+  // Public pages (/login, /register, /accept-invitation, /):
+  //   SAMEORIGIN — still blocks cross-origin framing but allows Vercel's deployment
+  //   preview widget (which loads the page in an iframe from vercel.com).
+  //   Without this, the preview shows "Error: Forbidden / 403" because the browser
+  //   refuses to display the page inside Vercel's dashboard iframe.
+  res.headers.set("X-Frame-Options", isPublic(pathname) ? "SAMEORIGIN" : "DENY");
 
   // ── 5. Cache-Control for page routes ─────────────────────────────────────
   for (const { pattern, browser, cdn } of PAGE_CACHE) {

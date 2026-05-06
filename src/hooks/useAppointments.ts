@@ -308,7 +308,13 @@ export function useAppointments() {
   return {
     appointments: query.data || [],
     isLoading:
+      // Keep skeleton visible while:
+      //   1. Auth session is resolving (isAuthLoading)
+      //   2. user is null — covers the async localStorage persister window where
+      //      isAuthLoading may have flipped false but user data is not yet hydrated
+      //   3. user exists and query is loading or first-fetch with no cached rows
       isAuthLoading ||
+      !user ||
       (!!user && (query.isLoading || (query.isFetching && !query.data?.length))),
     isFetching: query.isFetching,
     isError: query.isError,

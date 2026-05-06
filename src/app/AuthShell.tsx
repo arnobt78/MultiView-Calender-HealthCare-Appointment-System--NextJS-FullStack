@@ -8,7 +8,19 @@
  * No redirects, no loading placeholders, no flash.
  */
 
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect } from "react";
+
+/**
+ * useIsomorphicLayoutEffect — useLayoutEffect on the client, useEffect on the server.
+ *
+ * "use client" components still render on the server (SSR) for the initial HTML, but
+ * effects never run during SSR.  Choosing useLayoutEffect on the client means the
+ * overflow:hidden assignment fires synchronously after React's DOM commit but
+ * BEFORE the browser paints — eliminating the visible scrollbar-gutter layout shift
+ * (the ~6-15px "bounce/vibrate") that useEffect caused on every page load.
+ */
+const useIsomorphicLayoutEffect =
+  typeof window !== "undefined" ? useLayoutEffect : useEffect;
 import { usePathname } from "next/navigation";
 import { Inter } from "next/font/google";
 import Navbar from "@/components/navbar/Navbar";
@@ -123,9 +135,14 @@ function AuthShellInner({ children }: { children: React.ReactNode }) {
    * the layout fills the full viewport width. The cleanup removes the inline style so
    * document-scrolling routes get their stable gutter back immediately on navigation.
    *
+   * useIsomorphicLayoutEffect (instead of useEffect) fires synchronously before the
+   * browser first paints — this is the key fix for the "screen bounce/vibrate" bug.
+   * Without it, useEffect fired AFTER the first paint with the scrollbar gutter still
+   * reserved, then removed it, causing a visible ~6-15px layout shift on every refresh.
+   *
    * This hook MUST stay before any early return to satisfy Rules of Hooks.
    */
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const html = document.documentElement;
     if (isDashboard || isControlPanel) {
       html.style.setProperty("overflow", "hidden");
@@ -146,7 +163,7 @@ function AuthShellInner({ children }: { children: React.ReactNode }) {
   return (
     <div
       className={cn(
-        "flex min-w-0 flex-col bg-gradient-to-br from-slate-50 via-white to-slate-100 text-gray-700",
+        "flex min-w-0 flex-col bg-linear-to-br from-slate-50 via-white to-slate-100 text-gray-700",
         /*
          * Dashboard + Control-panel: lock the outer shell to `h-dvh` so that:
          *   - Dashboard: inner calendar scroll works (overflow-hidden on main).
