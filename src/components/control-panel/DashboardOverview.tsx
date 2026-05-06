@@ -1,6 +1,16 @@
 "use client";
 
+/**
+ * DashboardOverview — inline skeleton pattern (same as PatientManagement):
+ *   - ALL chrome stays mounted: PageHeader, section headings, glass card shells, icon wrappers.
+ *   - ONLY the numeric value slots + list content areas pulse while data is loading.
+ *   - No full-tab skeleton replacement — no layout shift, no flicker on refetch.
+ *   - `isMounted` + `requestAnimationFrame` guard matches the PatientManagement approach:
+ *     ensures React hydrates with skeleton state on first paint, then swaps to real values.
+ */
+
 import { useDashboardOverview } from "@/hooks/useDashboardOverview";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -54,9 +64,8 @@ const CONTROL_PANEL_GLASS_CARD_VARIANT: Record<string, string> = {
   cyan: "border-cyan-400/20 from-cyan-500/10 via-white to-white/95 shadow-[0_24px_60px_rgba(6,182,212,0.12)]",
   slate: "border-slate-400/20 from-slate-500/10 via-white to-white/95 shadow-[0_24px_60px_rgba(100,116,139,0.12)]",
 };
-/** Group row wrapper so each metric section has consistent spacing + glass surface. */
-const CONTROL_PANEL_GROUP_SURFACE_CLASS =
-  "space-y-3";
+/** Group row wrapper so each metric section has consistent spacing. */
+const CONTROL_PANEL_GROUP_SURFACE_CLASS = "space-y-3";
 
 /** Keep same glass style while tinting per metric color token. */
 function getControlPanelCardVariantClass(color: string) {
@@ -68,6 +77,10 @@ function getControlPanelCardVariantClass(color: string) {
   );
 }
 
+/**
+ * StatCard — glass card that keeps its shell, icon, and label static at all times.
+ * When `loading` is true, the value + sub slots pulse as Skeletons; everything else stays.
+ */
 function StatCard({
   label,
   value,
@@ -75,6 +88,7 @@ function StatCard({
   icon: Icon,
   color,
   href,
+  loading,
 }: {
   label: string;
   value: number | string;
@@ -82,15 +96,28 @@ function StatCard({
   icon: React.ElementType;
   color: string;
   href?: string;
+  loading?: boolean;
 }) {
   const inner = (
     <CardContent className="">
       <div className="flex items-start justify-between">
         <div>
+          {/* Label stays static — never skeletonized */}
           <p className="text-sm font-medium text-muted-foreground">{label}</p>
-          <p className="text-2xl font-bold tracking-tight mt-1">{value}</p>
-          {sub && <p className="text-xs text-muted-foreground mt-1">{sub}</p>}
+          {/* Value slot: pulse skeleton or real value */}
+          {loading ? (
+            <Skeleton className="h-8 w-16 mt-1 rounded-lg" />
+          ) : (
+            <p className="text-2xl font-bold tracking-tight mt-1">{value}</p>
+          )}
+          {/* Sub text slot: pulse or real */}
+          {loading ? (
+            <Skeleton className="h-3 w-20 mt-1.5 rounded" />
+          ) : (
+            sub && <p className="text-xs text-muted-foreground mt-1">{sub}</p>
+          )}
         </div>
+        {/* Icon stays static — never skeletonized */}
         <div className={`rounded-full p-2.5 ${color}`}>
           <Icon className="h-5 w-5" />
         </div>
@@ -107,76 +134,50 @@ function StatCard({
   );
 }
 
-function StatCardSkeleton() {
-  return (
-    <Card>
-      <CardContent className="pt-6 pb-4">
-        <div className="flex items-start justify-between">
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-28" />
-            <Skeleton className="h-8 w-16" />
-            <Skeleton className="h-3 w-20" />
-          </div>
-          <Skeleton className="h-10 w-10 rounded-full" />
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
 export default function DashboardOverviewComponent() {
   const { data, isLoading, isFetching, dataUpdatedAt, refetch } = useDashboardOverview();
 
-  if (isLoading) {
-    return (
-      <div className="space-y-6 animate-in fade-in">
-        <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <Skeleton className="h-8 w-56" />
-            <Skeleton className="h-4 w-72" />
-          </div>
-          <Skeleton className="h-9 w-24" />
-        </div>
-        {/* Row 1 */}
-        <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)}
-        </div>
-        {/* Row 2 */}
-        <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)}
-        </div>
-        {/* Bottom cards */}
-        <div className="grid gap-4 lg:grid-cols-2">
-          <Card><CardContent className="pt-6"><Skeleton className="h-48 w-full" /></CardContent></Card>
-          <Card><CardContent className="pt-6"><Skeleton className="h-48 w-full" /></CardContent></Card>
-        </div>
-      </div>
-    );
-  }
+  /**
+   * Mount guard (mirrors PatientManagement `listUiMounted`):
+   * On first paint React hydrates with `isMounted=false` → loading=true → skeleton placeholders.
+   * After the next animation frame (DOM painted) isMounted flips → real values replace skeletons.
+   * This eliminates any server/client mismatch flash on hard refresh.
+   */
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    requestAnimationFrame(() => setIsMounted(true));
+  }, []);
 
-  if (!data) return null;
+  /** True whenever we should show skeleton in data slots. */
+  const loading = !isMounted || isLoading;
 
-  const { appointments, patients, doctors, categories, nextAppointment, recentAppointments, revenue } = data;
-  const paidEur = (revenue.paidCents / 100).toFixed(2);
-  const outstandingEur = (revenue.outstandingCents / 100).toFixed(2);
+  /** Safe-access helpers — while loading, these values are never rendered (skeletons show instead). */
+  const appointments = data?.appointments;
+  const patients = data?.patients;
+  const revenue = data?.revenue;
+  const paidEur = revenue ? (revenue.paidCents / 100).toFixed(2) : "0.00";
+  const outstandingEur = revenue ? (revenue.outstandingCents / 100).toFixed(2) : "0.00";
+  const nextAppointment = data?.nextAppointment;
+  const recentAppointments = data?.recentAppointments ?? [];
 
   return (
-    <div className="space-y-3 pb-3 animate-in fade-in">
-      {/* Same chrome as other control-panel tabs (`PatientManagement`, etc.) via shared `PageHeader`. */}
+    <div className="space-y-3 pb-3">
+      {/* PageHeader stays completely static — title, description timestamp, and Refresh button never flash. */}
       <PageHeader
-
         title="Dashboard Overview"
-        description={`Real-time system summary — last updated ${format(
-          dataUpdatedAt ? new Date(dataUpdatedAt) : new Date(),
-          "HH:mm:ss"
-        )}`}
+        description={
+          loading
+            ? "Real-time system summary"
+            : `Real-time system summary — last updated ${format(
+                dataUpdatedAt ? new Date(dataUpdatedAt) : new Date(),
+                "HH:mm:ss"
+              )}`
+        }
         actions={
           <Button
             variant="ghost"
             size="sm"
-            onClick={async () => {
-              await refetch();
-            }}
+            onClick={async () => { await refetch(); }}
             disabled={isFetching}
             className={skyGlassBackButtonClass}
             aria-busy={isFetching}
@@ -187,55 +188,54 @@ export default function DashboardOverviewComponent() {
         }
       />
 
-      {/* Appointment Stats */}
+      {/* ─── Appointments ─────────────────────────────────────────────────── */}
       <div className={CONTROL_PANEL_GROUP_SURFACE_CLASS}>
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Appointments</p>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <StatCard label="Today" value={appointments.today} sub="appointments scheduled" icon={CalendarDays} color="bg-blue-100 text-blue-600" href="/control-panel" />
-          <StatCard label="This Week" value={appointments.thisWeek} sub="this calendar week" icon={CalendarClock} color="bg-indigo-100 text-indigo-600" />
-          <StatCard label="This Month" value={appointments.thisMonth} sub={`of ${appointments.total} total`} icon={TrendingUp} color="bg-purple-100 text-purple-600" />
-          <StatCard label="Overdue" value={appointments.overdue} sub="need attention" icon={AlertTriangle} color="bg-orange-100 text-orange-600" />
+          <StatCard label="Today" value={appointments?.today ?? 0} sub="appointments scheduled" icon={CalendarDays} color="bg-blue-100 text-blue-600" href="/control-panel" loading={loading} />
+          <StatCard label="This Week" value={appointments?.thisWeek ?? 0} sub="this calendar week" icon={CalendarClock} color="bg-indigo-100 text-indigo-600" loading={loading} />
+          <StatCard label="This Month" value={appointments?.thisMonth ?? 0} sub={`of ${appointments?.total ?? 0} total`} icon={TrendingUp} color="bg-purple-100 text-purple-600" loading={loading} />
+          <StatCard label="Overdue" value={appointments?.overdue ?? 0} sub="need attention" icon={AlertTriangle} color="bg-orange-100 text-orange-600" loading={loading} />
         </div>
       </div>
 
-      {/* Status Stats */}
+      {/* ─── Status Breakdown ─────────────────────────────────────────────── */}
       <div className={CONTROL_PANEL_GROUP_SURFACE_CLASS}>
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Status Breakdown</p>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <StatCard label="Done" value={appointments.done} sub="completed" icon={CalendarCheck} color="bg-green-100 text-green-600" />
-          <StatCard label="Pending" value={appointments.pending} sub="in progress" icon={Clock} color="bg-yellow-100 text-yellow-600" />
-          <StatCard label="Alert" value={appointments.alert} sub="need action" icon={CalendarX} color="bg-red-100 text-red-600" />
-          <StatCard label="Total All Time" value={appointments.total} sub="all appointments" icon={CalendarDays} color="bg-gray-100 text-gray-600" />
+          <StatCard label="Done" value={appointments?.done ?? 0} sub="completed" icon={CalendarCheck} color="bg-green-100 text-green-600" loading={loading} />
+          <StatCard label="Pending" value={appointments?.pending ?? 0} sub="in progress" icon={Clock} color="bg-yellow-100 text-yellow-600" loading={loading} />
+          <StatCard label="Alert" value={appointments?.alert ?? 0} sub="need action" icon={CalendarX} color="bg-red-100 text-red-600" loading={loading} />
+          <StatCard label="Total All Time" value={appointments?.total ?? 0} sub="all appointments" icon={CalendarDays} color="bg-gray-100 text-gray-600" loading={loading} />
         </div>
       </div>
 
-      {/* People & System Stats */}
+      {/* ─── System ───────────────────────────────────────────────────────── */}
       <div className={CONTROL_PANEL_GROUP_SURFACE_CLASS}>
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">System</p>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <StatCard label="Total Patients" value={patients.total} sub={`${patients.active} active`} icon={Users} color="bg-teal-100 text-teal-600" href="/control-panel" />
-          <StatCard label="Active Patients" value={patients.active} sub="currently active" icon={UserCheck} color="bg-emerald-100 text-emerald-600" />
-          <StatCard label="Doctors" value={doctors} sub="registered staff" icon={Stethoscope} color="bg-cyan-100 text-cyan-600" href="/control-panel" />
-          <StatCard label="Categories" value={categories} sub="appointment types" icon={Tag} color="bg-violet-100 text-violet-600" />
+          <StatCard label="Total Patients" value={patients?.total ?? 0} sub={`${patients?.active ?? 0} active`} icon={Users} color="bg-teal-100 text-teal-600" href="/control-panel" loading={loading} />
+          <StatCard label="Active Patients" value={patients?.active ?? 0} sub="currently active" icon={UserCheck} color="bg-emerald-100 text-emerald-600" loading={loading} />
+          <StatCard label="Doctors" value={data?.doctors ?? 0} sub="registered staff" icon={Stethoscope} color="bg-cyan-100 text-cyan-600" href="/control-panel" loading={loading} />
+          <StatCard label="Categories" value={data?.categories ?? 0} sub="appointment types" icon={Tag} color="bg-violet-100 text-violet-600" loading={loading} />
         </div>
       </div>
 
-      {/* Revenue Stats */}
+      {/* ─── Revenue ──────────────────────────────────────────────────────── */}
       <div className={CONTROL_PANEL_GROUP_SURFACE_CLASS}>
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Revenue</p>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <StatCard label="Paid Revenue" value={`€${paidEur}`} sub={`${revenue.paidInvoices} paid invoices`} icon={Banknote} color="bg-green-100 text-green-600" href="/control-panel" />
-          <StatCard label="Outstanding" value={`€${outstandingEur}`} sub="awaiting payment" icon={Receipt} color="bg-amber-100 text-amber-600" />
-          <StatCard label="Total Invoices" value={revenue.totalInvoices} sub="all time" icon={Receipt} color="bg-blue-100 text-blue-600" />
-          <StatCard label="Paid Invoices" value={revenue.paidInvoices} sub={`of ${revenue.totalInvoices} total`} icon={CalendarCheck} color="bg-emerald-100 text-emerald-600" />
+          <StatCard label="Paid Revenue" value={`€${paidEur}`} sub={`${revenue?.paidInvoices ?? 0} paid invoices`} icon={Banknote} color="bg-green-100 text-green-600" href="/control-panel" loading={loading} />
+          <StatCard label="Outstanding" value={`€${outstandingEur}`} sub="awaiting payment" icon={Receipt} color="bg-amber-100 text-amber-600" loading={loading} />
+          <StatCard label="Total Invoices" value={revenue?.totalInvoices ?? 0} sub="all time" icon={Receipt} color="bg-blue-100 text-blue-600" loading={loading} />
+          <StatCard label="Paid Invoices" value={revenue?.paidInvoices ?? 0} sub={`of ${revenue?.totalInvoices ?? 0} total`} icon={CalendarCheck} color="bg-emerald-100 text-emerald-600" loading={loading} />
         </div>
       </div>
 
-      {/* Next Appointment + Recent Appointments — bottom margin so last `shadow-xl` clears the tab scrollport. */}
+      {/* ─── Bottom cards — Next Appointment + Recently Created ───────────── */}
       <div className={`${CONTROL_PANEL_GROUP_SURFACE_CLASS} grid gap-4 lg:grid-cols-2`}>
-        {/* Next Appointment */}
+        {/* Next Appointment — card frame + header stay static */}
         <Card className={`${CONTROL_PANEL_GLASS_CARD_BASE_CLASS} ${CONTROL_PANEL_GLASS_CARD_VARIANT.indigo}`}>
-          {/* CardHeader defaults to horizontal padding only; match `CardContent` (`p-4 sm:p-6`) so title block aligns with stat cards. */}
           <CardHeader className="border-b border-border/70 p-4 sm:p-6">
             <CardTitle className="text-base flex items-center gap-2">
               <CalendarClock className="h-4 w-4 text-blue-500" />
@@ -244,7 +244,19 @@ export default function DashboardOverviewComponent() {
             <CardDescription>Upcoming appointment from your queue</CardDescription>
           </CardHeader>
           <CardContent>
-            {nextAppointment ? (
+            {loading ? (
+              /* Inline skeleton — only the data content area pulses */
+              <div className="space-y-2 py-1">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-2 flex-1">
+                    <Skeleton className="h-4 w-3/4 rounded" />
+                    <Skeleton className="h-3 w-1/2 rounded" />
+                    <Skeleton className="h-3 w-1/3 rounded" />
+                  </div>
+                  <Skeleton className="h-8 w-16 rounded-lg shrink-0" />
+                </div>
+              </div>
+            ) : nextAppointment ? (
               <div className="space-y-3">
                 <div className="flex items-start justify-between gap-3">
                   <div className="space-y-1 flex-1 min-w-0">
@@ -274,7 +286,7 @@ export default function DashboardOverviewComponent() {
           </CardContent>
         </Card>
 
-        {/* Recent Appointments */}
+        {/* Recently Created — card frame + header stay static */}
         <Card className={`${CONTROL_PANEL_GLASS_CARD_BASE_CLASS} ${CONTROL_PANEL_GLASS_CARD_VARIANT.violet}`}>
           <CardHeader className="border-b border-border/70 p-4 sm:p-6">
             <CardTitle className="text-base flex items-center gap-2">
@@ -284,7 +296,19 @@ export default function DashboardOverviewComponent() {
             <CardDescription>Last 5 created appointments</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
-            {recentAppointments.length === 0 ? (
+            {loading ? (
+              /* Skeleton rows match real row layout: title line + meta line + badge */
+              Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3 py-1.5 border-b last:border-0">
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <Skeleton className="h-4 w-3/4 rounded" />
+                    <Skeleton className="h-3 w-1/2 rounded" />
+                  </div>
+                  <Skeleton className="h-5 w-16 rounded-full shrink-0" />
+                  <Skeleton className="h-7 w-7 rounded-md shrink-0" />
+                </div>
+              ))
+            ) : recentAppointments.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-4">No appointments yet.</p>
             ) : (
               recentAppointments.map((appt) => (

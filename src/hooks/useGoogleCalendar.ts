@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient, handleApiError } from "@/lib/api-client";
 import { notify } from "@/lib/notify";
 import { queryKeys } from "@/lib/query-keys";
+import { invalidateAfterAppointmentMutation, invalidateGoogleCalendarData } from "@/lib/query-client";
 
 interface GoogleCalendarStatus {
   connected: boolean;
@@ -30,9 +31,9 @@ export function useGoogleCalendar() {
         method: "POST",
         body: JSON.stringify({ appointmentId }),
       }),
-    onSuccess: () => {
+    onSuccess: async () => {
       notify.success({ title: "Synced to Google Calendar", subtitle: "Appointment changes are now mirrored in Google Calendar." });
-      queryClient.invalidateQueries({ queryKey: queryKeys.googleCalendar.root });
+      await invalidateGoogleCalendarData(queryClient);
     },
     onError: (error) => handleApiError(error, "Failed to sync to Google Calendar"),
   });
@@ -40,9 +41,9 @@ export function useGoogleCalendar() {
   const disconnectMutation = useMutation({
     mutationFn: () =>
       apiClient("/api/calendar/sync", { method: "DELETE" }),
-    onSuccess: () => {
+    onSuccess: async () => {
       notify.warning({ title: "Google Calendar disconnected", subtitle: "Calendar sync has been turned off." });
-      queryClient.invalidateQueries({ queryKey: queryKeys.googleCalendar.root });
+      await invalidateGoogleCalendarData(queryClient);
     },
     onError: (error) => handleApiError(error, "Failed to disconnect Google Calendar"),
   });
@@ -58,9 +59,14 @@ export function useGoogleCalendar() {
       if (!response.ok) throw new Error("Import failed");
       return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       notify.crud({ action: "imported", entity: "Appointments", detail: `${data.imported} appointment(s) were imported from your calendar file.` });
-      queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all });
+      /*
+       * Full invalidation after ICS import — same chain as a manual appointment create:
+       * appointments + activities + notifications + availability + invoices + dashboard overview + patients.
+       * Previously only invalidated `appointments.all`, leaving dashboard counts stale.
+       */
+      await invalidateAfterAppointmentMutation(queryClient);
     },
     onError: (error) => handleApiError(error, "Failed to import calendar"),
   });

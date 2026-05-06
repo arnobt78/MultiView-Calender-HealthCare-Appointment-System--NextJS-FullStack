@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import { redis } from "@/lib/redis";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -53,6 +54,9 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       include: { payments: true },
     });
 
+    /* Bust the server-side Redis overview cache so revenue/status changes reflect immediately. */
+    void redis.invalidateDashboardOverview(sessionUser.userId);
+
     return NextResponse.json({ invoice: updated });
   } catch (error) {
     console.error("Invoice PATCH error:", error);
@@ -75,6 +79,9 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     }
 
     await prisma.invoice.delete({ where: { id } });
+
+    /* Bust the server-side Redis overview cache so the deleted invoice is no longer counted. */
+    void redis.invalidateDashboardOverview(sessionUser.userId);
 
     return NextResponse.json({ success: true });
   } catch (error) {

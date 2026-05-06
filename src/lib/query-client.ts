@@ -99,7 +99,15 @@ export async function invalidateInsightsAndAnalytics(queryClient: QueryClient) {
   ]);
 }
 
-/** After patient / relative / category CRUD — denormalized appointment list must refetch */
+/**
+ * After patient / relative / category CRUD — denormalized appointment list must refetch.
+ *
+ * Also invalidates `dashboard.overview` because:
+ * - patients: "Total Patients" + "Active Patients" overview cards track patient counts.
+ * - categories: "Total Categories" overview card tracks category count.
+ * - relatives: not tracked in overview but the extra invalidation is a <5ms no-op (Redis hit)
+ *   and keeps the chain consistent without adding conditional branching.
+ */
 export async function invalidateEntityAffectingAppointments(
   queryClient: QueryClient,
   resource: "patients" | "relatives" | "categories"
@@ -115,6 +123,7 @@ export async function invalidateEntityAffectingAppointments(
     queryClient.invalidateQueries({ queryKey: key }),
     queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all }),
     invalidateActivitiesList(queryClient),
+    invalidateDashboardOverview(queryClient),
   ]);
 }
 

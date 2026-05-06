@@ -41,15 +41,12 @@ export default function ControlPanelLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // bg-gradient mirrors AuthShell's shell gradient so that during the hydration frame
+  // where TabsContent is active but the component hasn't painted yet, the dark html/body
+  // (#0f172a / #020617) cannot bleed through the transparent pane.
+  // This is the fix for the intermittent "black tab area on refresh" bug.
   return (
-    /*
-     * Outer row — fills the full height that AuthShell's `<main>` provides
-     * (`flex-1 overflow-hidden` when isControlPanel is true, same as dashboard).
-     * `max-w-9xl mx-auto` keeps content centred on ultra-wide screens.
-     * `h-full min-h-0` is required so the flex children can use `h-full` and the
-     * right pane's `overflow-y-auto` has a bounded height to scroll within.
-     */
-    <div className="flex h-full min-h-0 w-full max-w-9xl mx-auto">
+    <div className="flex h-full min-h-0 w-full max-w-9xl mx-auto bg-gradient-to-br from-slate-50 via-white to-slate-100">
       {/* Persistent desktop sidebar — see ControlPanelSidebarNav for routing logic */}
       <ControlPanelSidebarNav />
 

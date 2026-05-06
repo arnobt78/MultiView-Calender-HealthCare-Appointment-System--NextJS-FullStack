@@ -8,6 +8,7 @@ import { getSessionUser } from "@/lib/session";
 import { isValidUUID } from "@/lib/validation";
 import { serializeAppointment } from "@/lib/serializers";
 import { getUserRole, isPatientRole } from "@/lib/rbac";
+import { redis } from "@/lib/redis";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -81,6 +82,10 @@ export async function PUT(req: NextRequest, context: RouteContext) {
     }
     const updated = await prisma.appointment.findUnique({ where: { id } });
     if (!updated) return NextResponse.json({ error: "Appointment not found" }, { status: 404 });
+
+    /* Bust the server-side Redis overview cache so status/count changes reflect immediately. */
+    void redis.invalidateDashboardOverview(sessionUser.userId);
+
     return NextResponse.json({ appointment: serializeAppointment(updated) });
   } catch (err: unknown) {
     if (err && typeof err === "object" && "code" in err && err.code === "P2025") {
@@ -157,6 +162,10 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     }
     const updated = await prisma.appointment.findUnique({ where: { id } });
     if (!updated) return NextResponse.json({ error: "Appointment not found" }, { status: 404 });
+
+    /* Bust the server-side Redis overview cache so status/count changes reflect immediately. */
+    void redis.invalidateDashboardOverview(sessionUser.userId);
+
     return NextResponse.json({ appointment: serializeAppointment(updated) });
   } catch (err: unknown) {
     if (err && typeof err === "object" && "code" in err && err.code === "P2025") {
@@ -191,6 +200,10 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
     if (result.count === 0) {
       return NextResponse.json({ error: "Appointment not found or unauthorized" }, { status: 404 });
     }
+
+    /* Bust the server-side Redis overview cache so the removed appointment is not counted. */
+    void redis.invalidateDashboardOverview(sessionUser.userId);
+
     return NextResponse.json({ success: true });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Internal server error";

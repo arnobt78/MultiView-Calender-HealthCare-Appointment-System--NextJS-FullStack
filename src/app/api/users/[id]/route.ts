@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { isValidUUID } from "@/lib/validation";
 import { serializeUser } from "@/lib/serializers";
+import { redis } from "@/lib/redis";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -63,6 +64,15 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       },
       select: USER_SELECT,
     });
+
+    /*
+     * Bust the server-side Redis overview cache when a user's role is changed.
+     * The overview counts doctors (role = "doctor"); a role promotion/demotion
+     * must be reflected immediately in the dashboard card.
+     */
+    if (role !== undefined) {
+      void redis.invalidateDashboardOverview(sessionUser.userId);
+    }
 
     return NextResponse.json({ user: serializeUser(user) });
   } catch (error: unknown) {

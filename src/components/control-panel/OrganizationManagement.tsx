@@ -193,6 +193,18 @@ const ROLE_COLORS: Record<string, string> = {
   patient: "bg-green-100 text-green-700",
 };
 
+/**
+ * OrganizationManagement — inline skeleton pattern:
+ *   - Heading, filter input, "New Organization" button, and table headers stay mounted.
+ *   - Only table body rows pulse as skeletons while data is loading.
+ *   - `isMounted` + `requestAnimationFrame` guard prevents hydration flicker.
+ */
+
+import { useEffect } from "react";
+
+const ORG_GLASS_TABLE_CLASS =
+  "rounded-[28px] border bg-gradient-to-br from-blue-500/5 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(59,130,246,0.1)] overflow-hidden";
+
 export default function OrganizationManagement() {
   const {
     organizations,
@@ -207,6 +219,17 @@ export default function OrganizationManagement() {
 
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
+
+  /**
+   * Mount guard: hydrate with skeleton state on first paint, then swap to real data
+   * after the next animation frame — matches the PatientManagement pattern.
+   */
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    requestAnimationFrame(() => setIsMounted(true));
+  }, []);
+
+  const loading = !isMounted || isLoading;
 
   const columns = [
     columnHelper.accessor("name", {
@@ -301,27 +324,27 @@ export default function OrganizationManagement() {
     getFilteredRowModel: getFilteredRowModel(),
   });
 
-  if (isLoading) {
-    return (
-      <div className="space-y-2">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-[300px] w-full rounded-2xl" />
-      </div>
-    );
-  }
-
   if (isError) {
     return <div className="p-4 text-red-500">Error: {error?.message}</div>;
   }
 
   return (
-    <div className="space-y-2 animate-in fade-in">
+    <div className="space-y-2 pb-3">
+      {/* Chrome — heading, filter, and add button are always static */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h2 className="text-xl font-bold">Organization Management</h2>
-          <p className="text-sm text-muted-foreground">
-            {organizations.length} organization{organizations.length !== 1 ? "s" : ""}
-          </p>
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <Building2 className="h-5 w-5 text-blue-500" />
+            Organization Management
+          </h2>
+          {/* Count slot: pulse while loading */}
+          {loading ? (
+            <Skeleton className="h-4 w-32 mt-1 rounded" />
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              {organizations.length} organization{organizations.length !== 1 ? "s" : ""}
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-3 flex-wrap">
           <Input
@@ -334,62 +357,80 @@ export default function OrganizationManagement() {
         </div>
       </div>
 
-      {organizations.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <Building2 className="h-10 w-10 text-muted-foreground mb-3" />
-            <CardHeader className="p-0">
-              <CardTitle className="text-base">No organizations yet</CardTitle>
-            </CardHeader>
-            <p className="text-sm text-muted-foreground mt-1">
-              Create your first organization to manage teams and members.
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="rounded-2xl border bg-card shadow-sm overflow-hidden">
-          <Table>
-            <TableHeader>
-              {table.getHeaderGroups().map((hg) => (
-                <TableRow key={hg.id} className="bg-muted/40">
-                  {hg.headers.map((header) => (
-                    <TableHead
-                      key={header.id}
-                      className="font-semibold cursor-pointer select-none"
-                      onClick={header.column.getToggleSortingHandler()}
-                    >
-                      {flexRender(header.column.columnDef.header, header.getContext())}
-                      {header.column.getIsSorted() === "asc" ? " ↑" : header.column.getIsSorted() === "desc" ? " ↓" : ""}
-                    </TableHead>
+      {/* Table card — glassmorphic shell always visible */}
+      <div className={ORG_GLASS_TABLE_CLASS}>
+        <Table>
+          {/* Table headers always stay static */}
+          <TableHeader>
+            {table.getHeaderGroups().map((hg) => (
+              <TableRow key={hg.id} className="bg-muted/40">
+                {hg.headers.map((header) => (
+                  <TableHead
+                    key={header.id}
+                    className="font-semibold cursor-pointer select-none"
+                    onClick={header.column.getToggleSortingHandler()}
+                  >
+                    {flexRender(header.column.columnDef.header, header.getContext())}
+                    {header.column.getIsSorted() === "asc" ? " ↑" : header.column.getIsSorted() === "desc" ? " ↓" : ""}
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              /* Skeleton rows — 5 rows matching real row structure: name/slug, role badge, date, actions */
+              Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Skeleton className="h-4 w-4 rounded shrink-0" />
+                      <div className="space-y-1">
+                        <Skeleton className="h-4 w-36 rounded" />
+                        <Skeleton className="h-3 w-24 rounded" />
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell><Skeleton className="h-5 w-16 rounded-full" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-24 rounded" /></TableCell>
+                  <TableCell className="text-right"><Skeleton className="h-8 w-8 rounded-lg ml-auto" /></TableCell>
+                </TableRow>
+              ))
+            ) : !loading && organizations.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="text-center py-12">
+                  <div className="flex flex-col items-center gap-3 text-muted-foreground">
+                    <Building2 className="h-10 w-10 opacity-30" />
+                    <p className="font-medium">No organizations yet</p>
+                    <p className="text-sm">Create your first organization to manage teams and members.</p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : table.getRowModel().rows.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="text-center py-8 text-muted-foreground">
+                  No results found.
+                </TableCell>
+              </TableRow>
+            ) : (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id} className="hover:bg-muted/30 transition-colors">
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
                   ))}
                 </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={columns.length} className="text-center py-8 text-muted-foreground">
-                    No results found.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id} className="hover:bg-muted/30 transition-colors">
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+              ))
+            )}
+          </TableBody>
+        </Table>
+        {!loading && (
           <div className="px-4 py-2 border-t text-xs text-muted-foreground">
             {table.getRowModel().rows.length} of {organizations.length} organizations
           </div>
-        </div>
-      )}
+        )}
+      </div>
       {isCreating && <p className="text-sm text-muted-foreground">Creating organization…</p>}
     </div>
   );

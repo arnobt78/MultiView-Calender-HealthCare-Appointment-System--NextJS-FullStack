@@ -9,6 +9,7 @@ import { getSessionUser } from "@/lib/session";
 import { isValidUUID } from "@/lib/validation";
 import { serializePatient } from "@/lib/serializers";
 import { patientDetailInclude } from "@/lib/patient-api-include";
+import { redis } from "@/lib/redis";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -102,6 +103,12 @@ export async function PUT(req: NextRequest, context: RouteContext) {
       include: patientDetailInclude,
     });
 
+    /*
+     * Bust the server-side Redis overview cache so the updated patient's
+     * active status is reflected in the dashboard "Active Patients" count.
+     */
+    void redis.invalidateDashboardOverview(sessionUser.userId);
+
     return NextResponse.json({ patient: serializePatient(patient) });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Internal server error";
@@ -122,6 +129,10 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
     }
 
     await prisma.patient.delete({ where: { id } });
+
+    /* Bust the server-side Redis overview cache so the deleted patient is no longer counted. */
+    void redis.invalidateDashboardOverview(sessionUser.userId);
+
     return NextResponse.json({ success: true });
   } catch (error: unknown) {
     if (error && typeof error === "object" && "code" in error && error.code === "P2025") {

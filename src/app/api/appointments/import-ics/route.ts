@@ -9,6 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { appointmentIcsImportSchema } from "@/lib/schemas/appointment";
 import { zodBadRequest } from "@/lib/schemas/parse";
+import { redis } from "@/lib/redis";
 
 interface ParsedEvent {
   title: string;
@@ -153,6 +154,9 @@ export async function POST(req: NextRequest) {
         })
       )
     );
+
+    /* Bust the server-side Redis overview cache so imported appointments are counted immediately. */
+    void redis.invalidateDashboardOverview(sessionUser.userId);
 
     return NextResponse.json({
       imported: created.length,

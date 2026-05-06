@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { isValidUUID } from "@/lib/validation";
 import { serializeCategory } from "@/lib/serializers";
+import { redis } from "@/lib/redis";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -61,6 +62,9 @@ export async function PUT(req: NextRequest, context: RouteContext) {
       },
     });
 
+    /* Bust the server-side Redis overview cache so the updated category is reflected immediately. */
+    void redis.invalidateDashboardOverview(sessionUser.userId);
+
     return NextResponse.json({ category: serializeCategory(category) });
   } catch (error: unknown) {
     if (error && typeof error === "object" && "code" in error && error.code === "P2025") {
@@ -84,6 +88,10 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
     }
 
     await prisma.category.delete({ where: { id } });
+
+    /* Bust the server-side Redis overview cache so the deleted category is no longer counted. */
+    void redis.invalidateDashboardOverview(sessionUser.userId);
+
     return NextResponse.json({ success: true });
   } catch (error: unknown) {
     if (error && typeof error === "object" && "code" in error && error.code === "P2025") {

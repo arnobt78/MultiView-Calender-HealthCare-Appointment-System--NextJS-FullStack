@@ -75,4 +75,18 @@ export const redis = {
   async publish(channel: string, message: string): Promise<void> {
     await redisCommand(["PUBLISH", channel, message]);
   },
+
+  /**
+   * Bust the dashboard overview cache for a specific user.
+   *
+   * Call this on the server after any mutation that changes data surfaced
+   * by GET /api/dashboard/overview (appointments, invoices, patients, etc.)
+   * so the next request re-runs the Prisma aggregation instead of returning
+   * stale cached values. If Redis is not configured this is a no-op.
+   *
+   * Cache key pattern: `dashboard:overview:<userId>`
+   */
+  async invalidateDashboardOverview(userId: string): Promise<void> {
+    await redisCommand(["DEL", `dashboard:overview:${userId}`]);
+  },
 };

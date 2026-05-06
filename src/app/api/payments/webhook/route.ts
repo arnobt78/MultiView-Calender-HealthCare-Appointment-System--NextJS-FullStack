@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { redis } from "@/lib/redis";
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,6 +19,16 @@ export async function POST(request: NextRequest) {
         const invoiceId = session.metadata?.invoice_id;
 
         if (invoiceId) {
+          /*
+           * Fetch invoice first so we have user_id for cache invalidation —
+           * Stripe webhooks arrive without a session, so we resolve ownership
+           * from the invoice record itself.
+           */
+          const invoice = await prisma.invoice.findUnique({
+            where: { id: invoiceId },
+            select: { user_id: true },
+          });
+
           // Update invoice status
           await prisma.invoice.update({
             where: { id: invoiceId },
@@ -33,6 +44,15 @@ export async function POST(request: NextRequest) {
               status: "succeeded",
             },
           });
+
+          /*
+           * Bust the Redis overview cache for the invoice owner so the
+           * updated revenue totals (paid vs outstanding) reflect on the
+           * dashboard without waiting for the 90 s TTL to expire.
+           */
+          if (invoice?.user_id) {
+            void redis.invalidateDashboardOverview(invoice.user_id);
+          }
         }
         break;
       }

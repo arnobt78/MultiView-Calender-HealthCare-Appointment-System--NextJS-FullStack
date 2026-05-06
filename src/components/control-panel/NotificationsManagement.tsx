@@ -1,6 +1,13 @@
 "use client";
 
-import { useState } from "react";
+/**
+ * NotificationsManagement — inline skeleton pattern:
+ *   - Heading, unread badge, filter input, "Mark all read" button, and table headers stay mounted.
+ *   - Only table body rows pulse as skeletons while loading.
+ *   - `isMounted` + `requestAnimationFrame` guard prevents hydration flicker.
+ */
+
+import { useState, useEffect } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -141,30 +148,31 @@ export default function NotificationsManagement() {
     getFilteredRowModel: getFilteredRowModel(),
   });
 
-  if (isLoading) {
-    return (
-      <div className="space-y-2">
-        <div className="flex justify-between">
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-9 w-32" />
-        </div>
-        <Skeleton className="h-[300px] w-full rounded-2xl" />
-      </div>
-    );
-  }
+  /** Mount guard: prevents hydration flash — same as PatientManagement pattern. */
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    requestAnimationFrame(() => setIsMounted(true));
+  }, []);
+
+  const loading = !isMounted || isLoading;
 
   return (
-    <div className="space-y-2 animate-in fade-in">
+    <div className="space-y-2 pb-3">
+      {/* Chrome — heading, filter, and mark-all-read always static */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
           <h2 className="text-xl font-bold flex items-center gap-2">
-            <Bell className="h-6 w-6" />
+            <Bell className="h-5 w-5 text-purple-500" />
             Notifications
-            {unreadCount > 0 && (
-              <Badge className="bg-primary text-gray-700-foreground ml-1">{unreadCount} unread</Badge>
+            {!loading && unreadCount > 0 && (
+              <Badge className="bg-primary text-primary-foreground ml-1">{unreadCount} unread</Badge>
             )}
           </h2>
-          <p className="text-sm text-muted-foreground">{notifications.length} total notifications</p>
+          {loading ? (
+            <Skeleton className="h-4 w-40 mt-1 rounded" />
+          ) : (
+            <p className="text-sm text-muted-foreground">{notifications.length} total notifications</p>
+          )}
         </div>
         <div className="flex items-center gap-3 flex-wrap">
           <Input
@@ -197,66 +205,78 @@ export default function NotificationsManagement() {
         </div>
       </div>
 
-      {notifications.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <BellOff className="h-10 w-10 text-muted-foreground mb-3" />
-            <CardHeader className="p-0">
-              <CardTitle className="text-base">No notifications</CardTitle>
-            </CardHeader>
-            <p className="text-sm text-muted-foreground mt-1">
-              You&apos;re all caught up! Notifications will appear here.
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="rounded-2xl border bg-card shadow-sm overflow-hidden">
-          <Table>
-            <TableHeader>
-              {table.getHeaderGroups().map((hg) => (
-                <TableRow key={hg.id} className="bg-muted/40">
-                  {hg.headers.map((header) => (
-                    <TableHead
-                      key={header.id}
-                      className="font-semibold cursor-pointer select-none"
-                      onClick={header.column.getToggleSortingHandler()}
-                    >
-                      {flexRender(header.column.columnDef.header, header.getContext())}
-                      {header.column.getIsSorted() === "asc" ? " ↑" : header.column.getIsSorted() === "desc" ? " ↓" : ""}
-                    </TableHead>
+      {/* Table — glass card shell always visible; body rows pulse while loading */}
+      <div className="rounded-[28px] border bg-gradient-to-br from-purple-500/5 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(168,85,247,0.08)] overflow-hidden">
+        <Table>
+          {/* Table headers always stay static */}
+          <TableHeader>
+            {table.getHeaderGroups().map((hg) => (
+              <TableRow key={hg.id} className="bg-muted/40">
+                {hg.headers.map((header) => (
+                  <TableHead
+                    key={header.id}
+                    className="font-semibold cursor-pointer select-none"
+                    onClick={header.column.getToggleSortingHandler()}
+                  >
+                    {flexRender(header.column.columnDef.header, header.getContext())}
+                    {header.column.getIsSorted() === "asc" ? " ↑" : header.column.getIsSorted() === "desc" ? " ↓" : ""}
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              /* Skeleton rows: read dot, type badge, title, message, received, actions */
+              Array.from({ length: 6 }).map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell><Skeleton className="h-2 w-2 rounded-full" /></TableCell>
+                  <TableCell><Skeleton className="h-5 w-16 rounded-full" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-36 rounded" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-48 rounded" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-32 rounded" /></TableCell>
+                  <TableCell><Skeleton className="h-7 w-14 rounded-lg" /></TableCell>
+                </TableRow>
+              ))
+            ) : notifications.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="text-center py-12">
+                  <div className="flex flex-col items-center gap-3 text-muted-foreground">
+                    <BellOff className="h-10 w-10 opacity-30" />
+                    <p className="font-medium">No notifications</p>
+                    <p className="text-sm">You&apos;re all caught up!</p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : table.getRowModel().rows.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="text-center py-8 text-muted-foreground">
+                  No results found.
+                </TableCell>
+              </TableRow>
+            ) : (
+              table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  className={`hover:bg-muted/30 transition-colors ${!row.original.read ? "bg-primary/5" : ""}`}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
                   ))}
                 </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={columns.length} className="text-center py-8 text-muted-foreground">
-                    No results found.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    className={`hover:bg-muted/30 transition-colors ${!row.original.read ? "bg-primary/5" : ""}`}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+              ))
+            )}
+          </TableBody>
+        </Table>
+        {!loading && (
           <div className="px-4 py-2 border-t text-xs text-muted-foreground flex items-center gap-2">
             <Trash2 className="h-3 w-3" />
             {table.getRowModel().rows.length} of {notifications.length} notifications shown
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

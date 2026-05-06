@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { serializeCategory } from "@/lib/serializers";
+import { redis } from "@/lib/redis";
 
 export async function GET() {
   try {
@@ -49,6 +50,12 @@ export async function POST(req: NextRequest) {
         icon: body.icon ?? null,
       },
     });
+
+    /*
+     * Bust the server-side Redis overview cache so the new category
+     * is counted in the dashboard "Total Categories" card immediately.
+     */
+    void redis.invalidateDashboardOverview(sessionUser.userId);
 
     return NextResponse.json({
       category: serializeCategory(category),

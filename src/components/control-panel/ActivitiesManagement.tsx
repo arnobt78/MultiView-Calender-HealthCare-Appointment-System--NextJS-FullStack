@@ -1,6 +1,13 @@
 "use client";
 
-import { useState } from "react";
+/**
+ * ActivitiesManagement — inline skeleton pattern:
+ *   - Heading, type-filter pills, search input, and table headers stay mounted.
+ *   - Only table body rows pulse as skeletons while loading.
+ *   - `isMounted` + `requestAnimationFrame` guard prevents hydration flicker.
+ */
+
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   useReactTable,
@@ -116,35 +123,37 @@ export default function ActivitiesManagement() {
     getFilteredRowModel: getFilteredRowModel(),
   });
 
-  if (isLoading) {
-    return (
-      <div className="space-y-2">
-        <div className="flex justify-between">
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-9 w-48" />
-        </div>
-        <Skeleton className="h-[300px] w-full rounded-2xl" />
-      </div>
-    );
-  }
+  /** Mount guard: prevents hydration flash — same as PatientManagement pattern. */
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    requestAnimationFrame(() => setIsMounted(true));
+  }, []);
+
+  const loading = !isMounted || isLoading;
 
   if (isError) {
     return <p className="p-4 text-red-500">Error: {(error as Error)?.message}</p>;
   }
 
   return (
-    <div className="space-y-2 animate-in fade-in">
+    <div className="space-y-2 pb-3">
+      {/* Chrome — heading, type-filter pills, and search input always static */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
           <h2 className="text-xl font-bold flex items-center gap-2">
-            <ActivityIcon className="h-6 w-6" />
+            <ActivityIcon className="h-5 w-5 text-emerald-500" />
             Activity Log
           </h2>
-          <p className="text-sm text-muted-foreground">{activities.length} total activities</p>
+          {loading ? (
+            <Skeleton className="h-4 w-36 mt-1 rounded" />
+          ) : (
+            <p className="text-sm text-muted-foreground">{activities.length} total activities</p>
+          )}
         </div>
         <div className="flex items-center gap-3 flex-wrap">
+          {/* Type filter pills — always visible; pills are static chrome */}
           <div className="flex bg-muted rounded-2xl p-1 gap-1">
-            {["all", ...uniqueTypes].map((t) => (
+            {(loading ? ["all"] : ["all", ...uniqueTypes]).map((t) => (
               <button
                 key={t}
                 onClick={() => setTypeFilter(t)}
@@ -163,62 +172,73 @@ export default function ActivitiesManagement() {
         </div>
       </div>
 
-      {activities.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <ActivityIcon className="h-10 w-10 text-muted-foreground mb-3" />
-            <CardHeader className="p-0">
-              <CardTitle className="text-base">No activities yet</CardTitle>
-            </CardHeader>
-            <p className="text-sm text-muted-foreground mt-1">
-              Activity log entries will appear here as actions are performed.
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="rounded-2xl border bg-card shadow-sm overflow-hidden">
-          <Table>
-            <TableHeader>
-              {table.getHeaderGroups().map((hg) => (
-                <TableRow key={hg.id} className="bg-muted/40">
-                  {hg.headers.map((header) => (
-                    <TableHead
-                      key={header.id}
-                      className="font-semibold cursor-pointer select-none"
-                      onClick={header.column.getToggleSortingHandler()}
-                    >
-                      {flexRender(header.column.columnDef.header, header.getContext())}
-                      {header.column.getIsSorted() === "asc" ? " ↑" : header.column.getIsSorted() === "desc" ? " ↓" : ""}
-                    </TableHead>
+      {/* Table — glass card shell always visible; body rows pulse while loading */}
+      <div className="rounded-[28px] border bg-gradient-to-br from-emerald-500/5 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(16,185,129,0.08)] overflow-hidden">
+        <Table>
+          {/* Table headers always stay static */}
+          <TableHeader>
+            {table.getHeaderGroups().map((hg) => (
+              <TableRow key={hg.id} className="bg-muted/40">
+                {hg.headers.map((header) => (
+                  <TableHead
+                    key={header.id}
+                    className="font-semibold cursor-pointer select-none"
+                    onClick={header.column.getToggleSortingHandler()}
+                  >
+                    {flexRender(header.column.columnDef.header, header.getContext())}
+                    {header.column.getIsSorted() === "asc" ? " ↑" : header.column.getIsSorted() === "desc" ? " ↓" : ""}
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              /* Skeleton rows: type badge, description, appointment link, by user, time */
+              Array.from({ length: 6 }).map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell><Skeleton className="h-5 w-20 rounded-full" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-56 rounded" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-20 rounded" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-16 rounded" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-28 rounded" /></TableCell>
+                </TableRow>
+              ))
+            ) : activities.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="text-center py-12">
+                  <div className="flex flex-col items-center gap-3 text-muted-foreground">
+                    <ActivityIcon className="h-10 w-10 opacity-30" />
+                    <p className="font-medium">No activities yet</p>
+                    <p className="text-sm">Activity log entries will appear here as actions are performed.</p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : table.getRowModel().rows.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="text-center py-8 text-muted-foreground">
+                  No results found.
+                </TableCell>
+              </TableRow>
+            ) : (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id} className="hover:bg-muted/30 transition-colors">
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
                   ))}
                 </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={columns.length} className="text-center py-8 text-muted-foreground">
-                    No results found.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id} className="hover:bg-muted/30 transition-colors">
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+              ))
+            )}
+          </TableBody>
+        </Table>
+        {!loading && (
           <div className="px-4 py-2 border-t text-xs text-muted-foreground">
             {table.getRowModel().rows.length} of {filtered.length} activities
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

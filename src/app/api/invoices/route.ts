@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import { redis } from "@/lib/redis";
 
 export async function GET() {
   try {
@@ -49,6 +50,12 @@ export async function POST(req: NextRequest) {
       },
       include: { payments: true },
     });
+
+    /*
+     * Bust the server-side Redis overview cache so revenue totals
+     * and invoice counts in the dashboard card update immediately.
+     */
+    void redis.invalidateDashboardOverview(sessionUser.userId);
 
     return NextResponse.json({ invoice }, { status: 201 });
   } catch (error) {

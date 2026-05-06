@@ -1,6 +1,14 @@
 "use client";
 
-import { useState } from "react";
+/**
+ * PatientPortalPage — inline skeleton pattern:
+ *   - Page heading, "Book Appointment" button, "My Profile" card frame, "Summary" card frame,
+ *     and "Appointment History" heading always stay mounted.
+ *   - Only profile field values, stat badge values, and appointment timeline rows pulse.
+ *   - `isMounted` + `requestAnimationFrame` guard prevents hydration flicker on first paint.
+ */
+
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient, handleApiError } from "@/lib/api-client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -173,8 +181,10 @@ function BookAppointmentDialog() {
 
 function AppointmentTimeline({
   appointments,
+  loading,
 }: {
   appointments: PortalData["appointments"];
+  loading?: boolean;
 }) {
   const [filter, setFilter] = useState<"all" | "upcoming" | "past">("all");
 
@@ -185,20 +195,9 @@ function AppointmentTimeline({
     return true;
   });
 
-  if (appointments.length === 0) {
-    return (
-      <Card>
-        <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-          <Stethoscope className="h-10 w-10 text-muted-foreground mb-3" />
-          <p className="font-medium">No appointments yet</p>
-          <p className="text-sm text-muted-foreground mt-1">Your appointment history will appear here.</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <div className="space-y-2">
+      {/* Heading + filter tabs always static */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h3 className="text-lg font-semibold">Appointment History</h3>
         <div className="flex bg-muted rounded-2xl p-1 gap-1">
@@ -214,6 +213,38 @@ function AppointmentTimeline({
         </div>
       </div>
 
+      {/* Timeline rows: skeleton while loading, real data when ready */}
+      {loading ? (
+        <div className="space-y-2">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="relative pl-14">
+              <Skeleton className="absolute left-3 top-4 h-5 w-5 rounded-full" />
+              <Card>
+                <CardContent className="p-4 space-y-2">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-2 flex-1">
+                      <Skeleton className="h-5 w-48 rounded" />
+                      <Skeleton className="h-4 w-64 rounded" />
+                      <Skeleton className="h-3 w-40 rounded" />
+                    </div>
+                    <Skeleton className="h-4 w-16 rounded shrink-0" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          ))}
+        </div>
+      ) : appointments.length === 0 ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+            <Stethoscope className="h-10 w-10 text-muted-foreground mb-3" />
+            <p className="font-medium">No appointments yet</p>
+            <p className="text-sm text-muted-foreground mt-1">Your appointment history will appear here.</p>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {!loading && appointments.length > 0 && (
       <div className="relative space-y-2 before:absolute before:inset-y-0 before:left-5 before:w-0.5 before:bg-border">
         {filtered.map((appt) => {
           const status = appt.status ?? "pending";
@@ -281,6 +312,7 @@ function AppointmentTimeline({
           <p className="text-center text-muted-foreground py-8">No {filter} appointments.</p>
         )}
       </div>
+      )}
     </div>
   );
 }
@@ -291,38 +323,23 @@ export default function PatientPortalPage() {
     queryFn: () => apiClient<PortalData>("/api/patient-portal"),
   });
 
+  /**
+   * Mount guard: hydrate with skeleton state on first paint, swap to real data
+   * after the next animation frame — matches the PatientManagement pattern.
+   */
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    requestAnimationFrame(() => setIsMounted(true));
+  }, []);
+
+  const loading = !isMounted || isLoading;
+
   const patient = data?.patient ?? null;
   const appointments = data?.appointments ?? [];
 
-  // Stats
   const done = appointments.filter((a) => a.status === "done").length;
   const upcoming = appointments.filter((a) => isFuture(new Date(a.start)) || isToday(new Date(a.start))).length;
   const total = appointments.length;
-
-  if (isLoading) {
-    return (
-      <div className="py-8">
-        <div className="flex justify-between items-start pb-6 border-b">
-          <div>
-            <Skeleton className="h-8 w-64 mb-2" />
-            <Skeleton className="h-5 w-80" />
-          </div>
-          <Skeleton className="h-10 w-40" />
-        </div>
-        <div className="grid md:grid-cols-3 gap-6">
-          <div className="space-y-2">
-            <Skeleton className="h-48 rounded-2xl" />
-            <Skeleton className="h-32 rounded-2xl" />
-          </div>
-          <div className="md:col-span-2 space-y-2">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="h-28 rounded-2xl" />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   if (isError) {
     return (
@@ -333,8 +350,8 @@ export default function PatientPortalPage() {
   }
 
   return (
-    <div className="space-y-8 py-8 animate-in fade-in">
-      {/* Header */}
+    <div className="space-y-8 py-8 pb-3">
+      {/* Header — always static: heading, description, Book button */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-6 border-b">
         <div>
           <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
@@ -345,19 +362,40 @@ export default function PatientPortalPage() {
             View your appointment history and request new appointments
           </p>
         </div>
+        {/* Book button always static */}
         <BookAppointmentDialog />
       </div>
 
       <div className="grid md:grid-cols-3 gap-6">
         {/* Sidebar */}
         <div className="space-y-2">
-          {/* Patient profile */}
-          <Card>
+          {/* Profile card — shell + "My Profile" title always static; field values pulse */}
+          <Card className="rounded-[28px] border bg-gradient-to-br from-sky-500/8 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(2,132,199,0.1)]">
             <CardHeader>
               <CardTitle className="text-base">My Profile</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              {patient ? (
+              {loading ? (
+                /* Profile skeleton — avatar + name + field rows */
+                <>
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-12 w-12 rounded-full shrink-0" />
+                    <div className="space-y-1.5 flex-1">
+                      <Skeleton className="h-4 w-32 rounded" />
+                      <Skeleton className="h-3 w-16 rounded" />
+                    </div>
+                  </div>
+                  <Separator />
+                  <div className="space-y-2 text-sm">
+                    {["Email", "Date of Birth", "Care Level", "Status", "Since", "Patient ID"].map((label) => (
+                      <div key={label} className="flex justify-between items-center">
+                        <span className="text-muted-foreground">{label}</span>
+                        <Skeleton className="h-4 w-24 rounded" />
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : patient ? (
                 <>
                   <div className="flex items-center gap-3">
                     <Avatar className="h-12 w-12">
@@ -419,31 +457,37 @@ export default function PatientPortalPage() {
             </CardContent>
           </Card>
 
-          {/* Stats */}
-          <Card>
+          {/* Summary card — shell + labels always static; badge values pulse */}
+          <Card className="rounded-[28px] border bg-gradient-to-br from-emerald-500/8 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(16,185,129,0.1)]">
             <CardHeader>
               <CardTitle className="text-base">Summary</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Total Appointments</span>
-                <Badge variant="outline" className="font-semibold">{total}</Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Completed</span>
-                <Badge className="bg-green-100 text-green-700 font-semibold">{done}</Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Upcoming</span>
-                <Badge className="bg-blue-100 text-blue-700 font-semibold">{upcoming}</Badge>
-              </div>
+              {(
+                [
+                  { label: "Total Appointments", value: total, badgeCls: "" },
+                  { label: "Completed", value: done, badgeCls: "bg-green-100 text-green-700" },
+                  { label: "Upcoming", value: upcoming, badgeCls: "bg-blue-100 text-blue-700" },
+                ] as const
+              ).map(({ label, value, badgeCls }) => (
+                <div key={label} className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">{label}</span>
+                  {loading ? (
+                    <Skeleton className="h-5 w-10 rounded-full" />
+                  ) : (
+                    <Badge variant={badgeCls ? "outline" : "outline"} className={`font-semibold ${badgeCls}`}>
+                      {value}
+                    </Badge>
+                  )}
+                </div>
+              ))}
             </CardContent>
           </Card>
         </div>
 
-        {/* Timeline */}
+        {/* Timeline — pass loading state so it can render skeleton rows */}
         <div className="md:col-span-2">
-          <AppointmentTimeline appointments={appointments} />
+          <AppointmentTimeline appointments={appointments} loading={loading} />
         </div>
       </div>
     </div>

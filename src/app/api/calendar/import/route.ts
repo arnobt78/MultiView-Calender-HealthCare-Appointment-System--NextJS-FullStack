@@ -9,6 +9,7 @@ import { getSessionUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { uploadMetaSchema } from "@/lib/schemas/upload";
 import { zodBadRequest } from "@/lib/schemas/parse";
+import { redis } from "@/lib/redis";
 
 interface ParsedEvent {
   summary: string;
@@ -132,6 +133,12 @@ export async function POST(request: NextRequest) {
         status: "pending",
       })),
     });
+
+    /*
+     * Bust the server-side Redis overview cache so the newly imported
+     * appointments are counted in the dashboard totals immediately.
+     */
+    void redis.invalidateDashboardOverview(sessionUser.userId);
 
     return NextResponse.json({
       success: true,

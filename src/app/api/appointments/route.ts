@@ -11,6 +11,7 @@ import { serializeAppointment } from "@/lib/serializers";
 import { appointmentCreateSchema } from "@/lib/schemas/appointment";
 import { zodBadRequest } from "@/lib/schemas/parse";
 import { getUserRole, isPatientRole } from "@/lib/rbac";
+import { redis } from "@/lib/redis";
 
 export async function GET(req: NextRequest) {
   try {
@@ -93,6 +94,12 @@ export async function POST(req: NextRequest) {
         user_id: sessionUser.userId,
       },
     });
+
+    /*
+     * Bust the server-side Redis overview cache so the next dashboard
+     * fetch reflects the new appointment count immediately.
+     */
+    void redis.invalidateDashboardOverview(sessionUser.userId);
 
     return NextResponse.json({ appointment: serializeAppointment(appointment) });
   } catch (err: unknown) {

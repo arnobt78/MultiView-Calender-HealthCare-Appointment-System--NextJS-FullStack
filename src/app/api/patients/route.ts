@@ -9,6 +9,7 @@ import { getSessionUser } from "@/lib/session";
 import { isValidUUID } from "@/lib/validation";
 import { serializePatient } from "@/lib/serializers";
 import { patientDetailInclude, patientUserPick } from "@/lib/patient-api-include";
+import { redis } from "@/lib/redis";
 
 export async function GET() {
   try {
@@ -74,6 +75,12 @@ export async function POST(req: NextRequest) {
       },
       include: patientDetailInclude,
     });
+
+    /*
+     * Bust the server-side Redis overview cache so the new patient
+     * is counted in the dashboard's "Total Patients" card immediately.
+     */
+    void redis.invalidateDashboardOverview(sessionUser.userId);
 
     return NextResponse.json({ patient: serializePatient(patient) });
   } catch (error: unknown) {

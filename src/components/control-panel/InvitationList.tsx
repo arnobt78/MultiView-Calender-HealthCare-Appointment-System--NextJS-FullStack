@@ -1,7 +1,15 @@
 "use client";
 
-import React from "react";
+/**
+ * InvitationList — inline skeleton pattern:
+ *   - Table heading and table headers (Resource/Email, Status, Permission, Actions) stay mounted at all times.
+ *   - Only the table body rows pulse as skeletons while the invitation data is loading.
+ *   - `isMounted` + `requestAnimationFrame` guard prevents hydration flash on first paint.
+ */
+
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   useInvitations,
   type DashboardInvitation,
@@ -45,18 +53,25 @@ export default function InvitationList({ type }: { type: "appointment" | "dashbo
     discardDashboardInvitation,
   } = useInvitations(type);
 
-  if (isLoading) return <div className="text-muted-foreground">Loading invitations...</div>;
-  if (!invitations.length)
-    return (
-      <p className="mt-4 text-muted-foreground">No invitations found.</p>
-    );
+  /**
+   * Mount guard: hydrate with skeleton state on first paint (isMounted=false → loading=true),
+   * then swap to real rows after the next animation frame — prevents hydration flicker.
+   */
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    requestAnimationFrame(() => setIsMounted(true));
+  }, []);
+
+  const loading = !isMounted || isLoading;
 
   return (
     <div className="mt-6">
+      {/* Section heading always stays static */}
       <h3 className="font-semibold mb-2">
         Your {type === "appointment" ? "Appointment" : "Dashboard"} Invitations
       </h3>
       <Table>
+        {/* Table headers always stay static */}
         <TableHeader>
           <TableRow>
             <TableHead>Resource / Email</TableHead>
@@ -66,72 +81,76 @@ export default function InvitationList({ type }: { type: "appointment" | "dashbo
           </TableRow>
         </TableHeader>
         <TableBody>
-          {invitations.map((inv) => {
-            let key: string | undefined;
-            let displayValue = "";
-            let invitationToken: string | undefined;
-            if (isAppointmentInvitation(inv)) {
-              key = inv.id;
-              displayValue = `${inv.appointment_title ?? "Untitled"} (${inv.appointment})`;
-              invitationToken = undefined;
-            } else if (isDashboardInvitation(inv)) {
-              key = inv.id ?? inv.invitation_token;
-              displayValue = inv.invited_email ?? inv.owner_user_id;
-              invitationToken = inv.invitation_token;
-            } else {
-              return null;
-            }
-            const status = inv.status ?? "pending";
-            const permission = inv.permission ?? "read";
-            return (
-              <TableRow key={key}>
-                <TableCell className="font-medium">{displayValue}</TableCell>
-                <TableCell>
-                  <Badge variant={status === "accepted" ? "default" : "secondary"}>
-                    {status}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Badge variant="outline">{permission}</Badge>
-                </TableCell>
-                <TableCell className="text-right space-x-2">
-                  {status === "pending" && (invitationToken || (isAppointmentInvitation(inv) && key)) && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      asChild
-                    >
-                      <a
-                        href={`/accept-invitation?token=${invitationToken ?? key}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        Accept
-                      </a>
-                    </Button>
-                  )}
-                  {type === "appointment" && key && (
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => discardAppointmentInvitation(key!)}
-                    >
-                      Discard
-                    </Button>
-                  )}
-                  {type === "dashboard" && key && (
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => discardDashboardInvitation(key!)}
-                    >
-                      Discard
-                    </Button>
-                  )}
+          {loading ? (
+            /* Skeleton rows — 3 placeholder rows matching real row column layout */
+            Array.from({ length: 3 }).map((_, i) => (
+              <TableRow key={i}>
+                <TableCell><Skeleton className="h-4 w-48 rounded" /></TableCell>
+                <TableCell><Skeleton className="h-5 w-16 rounded-full" /></TableCell>
+                <TableCell><Skeleton className="h-5 w-14 rounded-full" /></TableCell>
+                <TableCell className="text-right">
+                  <Skeleton className="h-8 w-20 rounded-lg ml-auto" />
                 </TableCell>
               </TableRow>
-            );
-          })}
+            ))
+          ) : invitations.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={4} className="text-center text-muted-foreground py-6">
+                No invitations found.
+              </TableCell>
+            </TableRow>
+          ) : (
+            invitations.map((inv) => {
+              let key: string | undefined;
+              let displayValue = "";
+              let invitationToken: string | undefined;
+              if (isAppointmentInvitation(inv)) {
+                key = inv.id;
+                displayValue = `${inv.appointment_title ?? "Untitled"} (${inv.appointment})`;
+                invitationToken = undefined;
+              } else if (isDashboardInvitation(inv)) {
+                key = inv.id ?? inv.invitation_token;
+                displayValue = inv.invited_email ?? inv.owner_user_id;
+                invitationToken = inv.invitation_token;
+              } else {
+                return null;
+              }
+              const status = inv.status ?? "pending";
+              const permission = inv.permission ?? "read";
+              return (
+                <TableRow key={key}>
+                  <TableCell className="font-medium">{displayValue}</TableCell>
+                  <TableCell>
+                    <Badge variant={status === "accepted" ? "default" : "secondary"}>
+                      {status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline">{permission}</Badge>
+                  </TableCell>
+                  <TableCell className="text-right space-x-2">
+                    {status === "pending" && (invitationToken || (isAppointmentInvitation(inv) && key)) && (
+                      <Button size="sm" variant="outline" asChild>
+                        <a href={`/accept-invitation?token=${invitationToken ?? key}`} target="_blank" rel="noopener noreferrer">
+                          Accept
+                        </a>
+                      </Button>
+                    )}
+                    {type === "appointment" && key && (
+                      <Button size="sm" variant="destructive" onClick={() => discardAppointmentInvitation(key!)}>
+                        Discard
+                      </Button>
+                    )}
+                    {type === "dashboard" && key && (
+                      <Button size="sm" variant="destructive" onClick={() => discardDashboardInvitation(key!)}>
+                        Discard
+                      </Button>
+                    )}
+                  </TableCell>
+                </TableRow>
+              );
+            })
+          )}
         </TableBody>
       </Table>
     </div>
