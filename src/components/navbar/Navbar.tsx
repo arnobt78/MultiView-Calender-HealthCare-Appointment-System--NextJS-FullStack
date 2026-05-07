@@ -19,10 +19,11 @@ import {
   LayoutDashboard, Settings, BookOpen, Activity, LogOut,
   Bell, BellRing, CheckCheck, Search,
   // Notification type icons
-  CalendarPlus, CalendarCheck2, AlarmClock, RefreshCcw,
+  CalendarPlus, CalendarCheck2, AlarmClock, RefreshCcw, Trash2,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
+import { useState } from "react";
 
 /**
  * Per-type visual config for notification items.
@@ -91,6 +92,7 @@ function getNotifConfig(type: string) {
 import { useAppStore } from "@/store/useAppStore";
 import GlobalSearch from "@/components/shared/GlobalSearch";
 import { UserAvatar } from "@/components/shared/UserAvatar";
+import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import { dashboardShellClass } from "@/lib/dashboard-layout";
 import { cn } from "@/lib/utils";
 
@@ -100,7 +102,9 @@ export default function Navbar() {
   const router = useRouter();
   const openSearch = useAppStore((s) => s.openSearch);
   const toggleQuickActionModal = useAppStore((s) => s.toggleQuickActionModal);
-  const { notifications, total, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const { notifications, total, unreadCount, markAsRead, markAllAsRead, deleteRead, isDeletingRead } = useNotifications();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const readCount = Math.max(total - unreadCount, 0);
 
   // Avatar: use profile image, else Robohash by email (when user exists)
   const avatarSrc =
@@ -248,7 +252,10 @@ export default function Navbar() {
               </button>
             </DropdownMenuTrigger>
             {user && (
-              <DropdownMenuContent align="end" className="w-80 max-h-96 overflow-y-auto px-2 py-2">
+              <DropdownMenuContent
+                align="end"
+                className="w-80 max-h-96 overflow-y-auto px-2 py-2 [scrollbar-gutter:auto] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              >
                 <DropdownMenuLabel className="p-0 font-normal">
                   {/*
                    * Header row — show both counts in a meaningful compact way:
@@ -271,26 +278,76 @@ export default function Navbar() {
                         </Badge>
                       )}
                     </div>
-                    {unreadCount > 0 && (
+                    {/* Keep Delete Read in the main header row when there are no unread notifications. */}
+                    {unreadCount === 0 && readCount > 0 && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setIsDeleteDialogOpen(true);
+                        }}
+                        className="flex cursor-pointer items-center gap-1 text-xs text-gray-500 hover:text-red-600 transition-colors"
+                      >
+                        <Trash2 className="h-3 w-3" /> Delete Read
+                      </button>
+                    )}
+                  </div>
+                  {unreadCount > 0 && (
+                    /*
+                     * Action row behavior:
+                     * Keep actions visually stable: always render the row as justify-between.
+                     * - unread + read exist: both active.
+                     * - unread only: Delete Read remains visible but disabled.
+                     * - read-only state keeps Delete Read in header row above
+                     */
+                    <div className="flex items-center justify-between px-2">
                       <button
                         type="button"
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); markAllAsRead(); }}
                         className="flex cursor-pointer items-center gap-1 text-xs text-gray-500 hover:text-sky-600 transition-colors"
                       >
-                        <CheckCheck className="h-3 w-3" /> Mark all read
+                        <CheckCheck className="h-3 w-3" /> Mark All Read
                       </button>
-                    )}
-                  </div>
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (readCount > 0) setIsDeleteDialogOpen(true);
+                        }}
+                        disabled={readCount === 0}
+                        className="flex cursor-pointer items-center gap-1 text-xs text-gray-500 hover:text-red-600 transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        <Trash2 className="h-3 w-3" /> Delete Read
+                      </button>
+                    </div>
+                  )}
                 </DropdownMenuLabel>
+                {/* Reuse the same shared confirmation dialog style as appointment delete actions. */}
+                <ConfirmActionDialog
+                  open={isDeleteDialogOpen}
+                  onOpenChange={setIsDeleteDialogOpen}
+                  title="Delete all read notifications?"
+                  subtitle="This removes only read notifications. Unread items remain in your inbox."
+                  confirmLabel={isDeletingRead ? "Deleting..." : "Delete Read"}
+                  variant="destructive"
+                  disabled={isDeletingRead}
+                  onConfirm={() => {
+                    deleteRead();
+                    setIsDeleteDialogOpen(false);
+                  }}
+                />
                 {/* Inset divider to align with the popover's px-2 horizontal spacing */}
                 <DropdownMenuSeparator className="mx-1" />
                 {notifications.length === 0 ? (
-                  <div className="space-y-3 px-2 py-5 text-left text-sm text-muted-foreground">
+                  <div className="space-y-2 px-2 py-2 text-left text-sm text-muted-foreground">
                     <p className="text-center font-medium text-foreground">No notifications yet</p>
-                    <p className="text-xs leading-relaxed">
+                    <p className="text-xs ">
                       You will see updates here for in-app activity such as:
                     </p>
-                    <ul className="list-disc space-y-1 pl-4 text-xs leading-relaxed">
+                    <ul className="list-disc pl-4 text-xs leading-relaxed">
                       <li>New patient bookings from the patient portal</li>
                       <li>Upcoming appointment reminders for you and accepted assignees</li>
                       <li>Other alerts created by your workspace or integrations</li>

@@ -81,7 +81,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { id, markAllRead } = body;
+    const { id, markAllRead, deleteRead } = body;
 
     if (markAllRead) {
       await prisma.notification.updateMany({
@@ -89,6 +89,17 @@ export async function PATCH(request: NextRequest) {
         data: { read: true },
       });
       return NextResponse.json({ success: true, message: "All notifications marked as read" });
+    }
+
+    /*
+     * Delete only read notifications (safe default).
+     * This keeps unread items intact while letting users clean up log noise.
+     */
+    if (deleteRead) {
+      const result = await prisma.notification.deleteMany({
+        where: { user_id: sessionUser.userId, read: true },
+      });
+      return NextResponse.json({ success: true, deleted: result.count });
     }
 
     if (id) {

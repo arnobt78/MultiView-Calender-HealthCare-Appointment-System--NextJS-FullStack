@@ -28,6 +28,20 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    /*
+     * Storage retention policy for notification table.
+     * Keeps DB growth controlled without removing unread items.
+     * Override via NOTIFICATION_RETENTION_DAYS (default 30).
+     */
+    const retentionDays = Number(process.env.NOTIFICATION_RETENTION_DAYS ?? "30");
+    const retentionCutoff = new Date(Date.now() - Math.max(retentionDays, 1) * 24 * 60 * 60 * 1000);
+    const cleanup = await prisma.notification.deleteMany({
+      where: {
+        read: true,
+        created_at: { lt: retentionCutoff },
+      },
+    });
+
     const now = new Date();
     const in24Hours = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
@@ -99,9 +113,6 @@ export async function GET(request: NextRequest) {
             link: `/control-panel/appointments/${appt.id}`,
           },
         });
-        // #region agent log
-        fetch("http://127.0.0.1:7392/ingest/c84c51fb-9c07-4717-a332-daf0de786c09",{method:"POST",headers:{"Content-Type":"application/json","X-Debug-Session-Id":"2f41be"},body:JSON.stringify({sessionId:"2f41be",runId:"notif-nav-pre",hypothesisId:"H4",location:"cron/reminders/route.ts:GET:owner",message:"created owner reminder notification",data:{appointmentId:appt.id,userId:appt.user_id,link:"/",type:"reminder"},timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
         notificationsCreated++;
       } catch (err) {
         console.error(`Failed to create notification for ${appt.user_id}:`, err);
@@ -144,9 +155,6 @@ export async function GET(request: NextRequest) {
                 link: `/control-panel/appointments/${appt.id}`,
               },
             });
-            // #region agent log
-            fetch("http://127.0.0.1:7392/ingest/c84c51fb-9c07-4717-a332-daf0de786c09",{method:"POST",headers:{"Content-Type":"application/json","X-Debug-Session-Id":"2f41be"},body:JSON.stringify({sessionId:"2f41be",runId:"notif-nav-pre",hypothesisId:"H4",location:"cron/reminders/route.ts:GET:assignee",message:"created assignee reminder notification",data:{appointmentId:appt.id,userId:assignee.user_id,link:"/",type:"reminder"},timestamp:Date.now()})}).catch(()=>{});
-            // #endregion
             notificationsCreated++;
           } catch (err) {
             console.error(`Failed to create notification for assignee ${assignee.user_id}:`, err);
@@ -160,6 +168,8 @@ export async function GET(request: NextRequest) {
       appointmentsFound: upcomingAppointments.length,
       emailsSent,
       notificationsCreated,
+      notificationsCleaned: cleanup.count,
+      retentionDays: Math.max(retentionDays, 1),
       timestamp: now.toISOString(),
     });
   } catch (error) {

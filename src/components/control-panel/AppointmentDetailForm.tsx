@@ -55,6 +55,14 @@ export function AppointmentDetailForm({ appointment }: AppointmentDetailFormProp
   });
 
   const handleSave = () => {
+    /*
+     * The "Schema: appointments" block above this form is rendered by a Server Component
+     * (`app/control-panel/appointments/[id]/page.tsx`), so React Query cache invalidation
+     * alone cannot repaint that SSR snapshot in-place.
+     *
+     * `router.refresh()` revalidates the current route tree after PATCH success, which keeps
+     * the user on the same page while updating the server-rendered schema fields immediately.
+     */
     updateAppointment({
       id: appointment.id,
       title: form.title,
@@ -65,6 +73,10 @@ export function AppointmentDetailForm({ appointment }: AppointmentDetailFormProp
       status: form.status as "pending" | "done" | "alert",
       category: form.category || undefined,
       patient: form.patient || undefined,
+    }, {
+      onSuccess: () => {
+        router.refresh();
+      },
     });
   };
 

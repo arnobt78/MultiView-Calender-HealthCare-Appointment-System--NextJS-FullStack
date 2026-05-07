@@ -84,6 +84,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
     const updated = await prisma.appointment.findUnique({ where: { id } });
     if (!updated) return NextResponse.json({ error: "Appointment not found" }, { status: 404 });
 
+
     /* Bust the server-side Redis overview cache so status/count changes reflect immediately. */
     void redis.invalidateDashboardOverview(sessionUser.userId);
 
@@ -193,9 +194,6 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
             link: `/control-panel/appointments/${updated.id}`,
           },
         });
-        // #region agent log
-        fetch("http://127.0.0.1:7392/ingest/c84c51fb-9c07-4717-a332-daf0de786c09",{method:"POST",headers:{"Content-Type":"application/json","X-Debug-Session-Id":"2f41be"},body:JSON.stringify({sessionId:"2f41be",runId:"notif-nav-pre",hypothesisId:"H2",location:"appointments/[id]/route.ts:PATCH",message:"created status notification",data:{appointmentId:updated.id,link:"/dashboard",type:"status_update",status:updated.status ?? null},timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
       } catch {
         // Notification failure is non-critical — swallow silently.
       }

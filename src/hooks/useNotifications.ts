@@ -49,6 +49,23 @@ export function useNotifications() {
     onError: (error) => handleApiError(error, "Failed to mark notifications as read"),
   });
 
+  const deleteReadMutation = useMutation({
+    mutationFn: () =>
+      apiClient("/api/notifications", {
+        method: "PATCH",
+        body: JSON.stringify({ deleteRead: true }),
+      }),
+    onSuccess: () => {
+      // Refresh list/counts immediately so header badges and list stay in sync.
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
+      notify.warning({
+        title: "Read notifications deleted",
+        subtitle: "Unread notifications were kept.",
+      });
+    },
+    onError: (error) => handleApiError(error, "Failed to delete read notifications"),
+  });
+
   return {
     notifications: query.data?.notifications || [],
     total: query.data?.total || 0,
@@ -57,6 +74,8 @@ export function useNotifications() {
     refetch: query.refetch,
     markAsRead: markAsReadMutation.mutate,
     markAllAsRead: markAllAsReadMutation.mutate,
+    deleteRead: deleteReadMutation.mutate,
     isMarkingRead: markAsReadMutation.isPending,
+    isDeletingRead: deleteReadMutation.isPending,
   };
 }
