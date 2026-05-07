@@ -126,18 +126,19 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
         ? "text-red-500"
         : "text-amber-600";
   const triggerNode = useMemo(() => {
-    const withClick = (node: React.ReactElement) =>
+    const withClick = (node: React.ReactElement<{ onClick?: React.MouseEventHandler }>) =>
       React.cloneElement(node, {
         onClick: (e: React.MouseEvent) => {
           e.preventDefault();
           e.stopPropagation();
           setOpen((prev) => !prev);
-          if (typeof (node.props as any).onClick === "function") {
-            (node.props as any).onClick(e);
+          if (typeof node.props.onClick === "function") {
+            node.props.onClick(e);
           }
         },
-      } as any);
-    if (triggerContent && React.isValidElement(triggerContent)) return withClick(triggerContent);
+      });
+    if (triggerContent && React.isValidElement(triggerContent))
+      return withClick(triggerContent as React.ReactElement<{ onClick?: React.MouseEventHandler }>);
     return null;
   }, [triggerContent]);
 

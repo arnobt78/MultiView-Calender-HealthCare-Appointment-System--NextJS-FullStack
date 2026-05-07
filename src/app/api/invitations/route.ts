@@ -28,6 +28,15 @@ export async function POST(req: NextRequest) {
     const token = randomUUID();
 
     if (type === "appointment") {
+      // Verify the caller actually owns the appointment before creating an assignee row.
+      const appt = await prisma.appointment.findFirst({
+        where: { id: resourceId, user_id: sessionUser.userId },
+        select: { id: true },
+      });
+      if (!appt) {
+        return NextResponse.json({ error: "Appointment not found or forbidden" }, { status: 403 });
+      }
+
       await prisma.appointmentAssignee.create({
         data: {
           appointment_id: resourceId,
@@ -40,9 +49,10 @@ export async function POST(req: NextRequest) {
         },
       });
     } else if (type === "dashboard") {
+      // Always use the session user as owner — never trust resourceId as owner_user_id.
       await prisma.dashboardAccess.create({
         data: {
-          owner_user_id: resourceId,
+          owner_user_id: sessionUser.userId,
           invited_user_id: invitedUserId ?? null,
           invited_email: email,
           status: "pending",
@@ -62,8 +72,9 @@ export async function POST(req: NextRequest) {
       html: `<p>You have been invited to access a ${type} with ${permission} permission.<br />Click <a href="${link}">here</a> to accept the invitation.</p>`,
     });
     return NextResponse.json({ message: "Invitation sent", token });
-  } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : "Internal server error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 

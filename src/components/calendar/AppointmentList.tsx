@@ -696,7 +696,7 @@ export default function AppointmentList() {
                                                     return p && p.firstname && p.lastname ? `${p.firstname} ${p.lastname}` : "--";
                                                   }
                                                   return "--";
-                                                } catch (error) {
+                                                } catch (error: unknown) {
                                                   console.error('Error in client name lookup:', error);
                                                   return "--";
                                                 }
@@ -737,7 +737,7 @@ export default function AppointmentList() {
                                                   }
                                                 }
                                                 return <span className="text-xs text-red-500">Patient data not available</span>;
-                                              } catch (error) {
+                                              } catch (error: unknown) {
                                                 console.error('Error in patient lookup:', error);
                                                 return <span className="text-xs text-red-500">Error loading patient</span>;
                                               }

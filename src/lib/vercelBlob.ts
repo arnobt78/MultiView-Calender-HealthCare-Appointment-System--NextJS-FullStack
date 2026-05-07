@@ -69,7 +69,7 @@ export async function uploadFile(
     fileBuffer = file;
   }
 
-  const blob = await put(pathname, fileBuffer as any, {
+  const blob = await put(pathname, fileBuffer as Buffer, {
     access: "public",
     token: BLOB_READ_WRITE_TOKEN,
     contentType: file instanceof File ? file.type : undefined,

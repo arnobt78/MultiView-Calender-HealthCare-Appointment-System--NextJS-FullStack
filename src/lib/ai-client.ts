@@ -26,7 +26,7 @@ export async function generateCompletion(
   if (GROQ_API_KEY) {
     try {
       return await generateGroqCompletion(prompt, systemPrompt);
-    } catch (error) {
+    } catch (error: unknown) {
       console.warn("Groq failed, falling back to Gemini:", error);
     }
   }
@@ -35,7 +35,7 @@ export async function generateCompletion(
   if (GEMINI_API_KEY) {
     try {
       return await generateGeminiCompletion(prompt, systemPrompt);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Gemini also failed:", error);
     }
   }

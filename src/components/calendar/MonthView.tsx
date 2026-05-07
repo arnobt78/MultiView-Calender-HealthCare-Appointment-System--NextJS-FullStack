@@ -532,7 +532,7 @@ export default function MonthView() {
                                 Patient data not available
                               </span>
                             );
-                          } catch (error) {
+                          } catch (error: unknown) {
                             console.error('Error in MonthView patient lookup:', error);
                             return (
                               <span className="not-italic text-red-700">

@@ -64,18 +64,21 @@ export async function createCheckoutSession({
 }
 
 /**
- * Verify Stripe webhook signature
+ * Parse a Stripe webhook payload.
+ *
+ * ⚠️  MVP placeholder — this does NOT verify the Stripe-Signature header.
+ * For production, replace with:
+ *   `stripe.webhooks.constructEvent(rawBody, signature, STRIPE_WEBHOOK_SECRET)`
+ * and reject on `WebhookSignatureVerificationError`.
  */
 export async function verifyWebhookSignature(
   body: string,
-  signature: string
-): Promise<any> {
-  // For production, use stripe SDK or crypto-based verification
-  // This is a simplified version for the MVP
+  _signature: string
+): Promise<unknown> {
   if (!STRIPE_WEBHOOK_SECRET) {
-    console.warn("STRIPE_WEBHOOK_SECRET not set, skipping verification");
+    console.warn("STRIPE_WEBHOOK_SECRET not set — webhook payloads are unverified");
   }
-  return JSON.parse(body);
+  return JSON.parse(body) as unknown;
 }
 
 export { STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET };

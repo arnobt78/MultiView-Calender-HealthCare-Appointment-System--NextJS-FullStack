@@ -12,7 +12,7 @@ const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || "";
 
 const isConfigured = Boolean(REDIS_URL && REDIS_TOKEN);
 
-async function redisCommand(command: string[]): Promise<any> {
+async function redisCommand(command: string[]): Promise<unknown> {
   if (!isConfigured) return null;
 
   const response = await fetch(`${REDIS_URL}`, {
@@ -37,7 +37,8 @@ export const redis = {
   isConfigured,
 
   async get(key: string): Promise<string | null> {
-    return redisCommand(["GET", key]);
+    const result = await redisCommand(["GET", key]);
+    return typeof result === "string" ? result : null;
   },
 
   async set(key: string, value: string, exSeconds?: number): Promise<void> {
@@ -53,7 +54,8 @@ export const redis = {
   },
 
   async incr(key: string): Promise<number | null> {
-    return redisCommand(["INCR", key]);
+    const result = await redisCommand(["INCR", key]);
+    return typeof result === "number" ? result : null;
   },
 
   async expire(key: string, seconds: number): Promise<void> {
@@ -61,15 +63,18 @@ export const redis = {
   },
 
   async sadd(key: string, ...members: string[]): Promise<number | null> {
-    return redisCommand(["SADD", key, ...members]);
+    const result = await redisCommand(["SADD", key, ...members]);
+    return typeof result === "number" ? result : null;
   },
 
   async srem(key: string, ...members: string[]): Promise<number | null> {
-    return redisCommand(["SREM", key, ...members]);
+    const result = await redisCommand(["SREM", key, ...members]);
+    return typeof result === "number" ? result : null;
   },
 
   async smembers(key: string): Promise<string[]> {
-    return (await redisCommand(["SMEMBERS", key])) || [];
+    const result = await redisCommand(["SMEMBERS", key]);
+    return Array.isArray(result) ? (result as string[]) : [];
   },
 
   async publish(channel: string, message: string): Promise<void> {

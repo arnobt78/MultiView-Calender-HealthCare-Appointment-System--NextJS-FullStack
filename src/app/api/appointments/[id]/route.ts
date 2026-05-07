@@ -15,12 +15,37 @@ type RouteContext = { params: Promise<{ id: string }> };
 
 export async function GET(req: NextRequest, context: RouteContext) {
   try {
+    // Require authentication — appointment data is user-private.
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await context.params;
     if (!isValidUUID(id)) {
       return NextResponse.json({ error: "Invalid appointment ID format" }, { status: 400 });
     }
 
-    const appointment = await prisma.appointment.findUnique({ where: { id } });
+    // Scope to the session user's own appointments or those where they are an accepted assignee.
+    const appointment = await prisma.appointment.findFirst({
+      where: {
+        id,
+        OR: [
+          { user_id: sessionUser.userId },
+          {
+            appointment_assignees: {
+              some: {
+                OR: [
+                  { user_id: sessionUser.userId },
+                  { invited_email: sessionUser.email },
+                ],
+                status: "accepted",
+              },
+            },
+          },
+        ],
+      },
+    });
     if (!appointment) {
       return NextResponse.json({ error: "Appointment not found" }, { status: 404 });
     }

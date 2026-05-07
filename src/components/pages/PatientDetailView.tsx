@@ -2,6 +2,7 @@
 
 import { usePatients } from "@/hooks/usePatients";
 import { useAppointments } from "@/hooks/useAppointments";
+import type { FullAppointment } from "@/hooks/useAppointments";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Mail, Phone, Calendar, Clock, Video, FileText,
-  Activity, MoreHorizontal, User, AlertCircle
+  Activity, User, AlertCircle
 } from "lucide-react";
 import { format } from "date-fns";
 import { useAppStore } from "@/store/useAppStore";
@@ -34,8 +35,7 @@ export default function PatientDetailView({ patientId }: { patientId: string }) 
     );
   }
 
-  const upcomingAppts = patientAppts.filter((a: any) => new Date(a.start) > new Date());
-  const pastAppts = patientAppts.filter((a: any) => new Date(a.start) <= new Date());
+  const upcomingAppts = patientAppts.filter((a: FullAppointment) => new Date(a.start) > new Date());
 
   const initials = `${patient.firstname[0]}${patient.lastname[0]}`.toUpperCase();
 
@@ -124,7 +124,7 @@ export default function PatientDetailView({ patientId }: { patientId: string }) 
               </div>
             ) : (
               <div className="space-y-8 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-border before:to-transparent">
-                {patientAppts.sort((a: any, b: any) => new Date(b.start).getTime() - new Date(a.start).getTime()).map((appt: any) => {
+                {patientAppts.sort((a: FullAppointment, b: FullAppointment) => new Date(b.start).getTime() - new Date(a.start).getTime()).map((appt: FullAppointment) => {
                   const isUpcoming = new Date(appt.start) > new Date();
                   return (
                     <div key={appt.id} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
@@ -177,7 +177,7 @@ export default function PatientDetailView({ patientId }: { patientId: string }) 
               <p className="text-sm text-muted-foreground">No upcoming appointments.</p>
             ) : (
               <div className="space-y-2">
-                {upcomingAppts.map((appt: any) => (
+                {upcomingAppts.map((appt: FullAppointment) => (
                   <div key={appt.id} className="p-3 bg-muted/40 rounded-2xl border text-sm">
                     <p className="font-medium mb-1 truncate">{appt.title}</p>
                     <div className="flex items-center gap-1.5 text-muted-foreground text-xs mb-3">

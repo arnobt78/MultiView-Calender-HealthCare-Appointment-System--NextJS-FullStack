@@ -297,7 +297,7 @@ export default function DayView() {
       />
       {editAppt ? (
         <AppointmentDialogController
-          appointment={editAppt as any}
+          appointment={editAppt ?? undefined}
           onSuccess={() => setEditAppt(null)}
           isOpen={Boolean(editAppt)}
           onOpenChange={(open) => {

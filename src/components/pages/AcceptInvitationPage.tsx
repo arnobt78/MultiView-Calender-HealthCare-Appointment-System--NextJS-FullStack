@@ -43,7 +43,7 @@ export default function AcceptInvitationPage({ token = null }: AcceptInvitationP
         title: "Invitation accepted",
         subtitle: "You now have access to the shared workspace.",
       });
-    } catch (err) {
+    } catch (err: unknown) {
       setStatus("error");
       setMessage(err instanceof Error ? err.message : "Failed to accept invitation.");
       handleApiError(err, "Accept invitation");

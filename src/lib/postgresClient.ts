@@ -71,7 +71,7 @@ pool.on("error", (err: Error) => {
  * Example:
  * const result = await query('SELECT * FROM appointments WHERE id = $1', [appointmentId]);
  */
-export async function query(text: string, params?: any[]) {
+export async function query(text: string, params?: unknown[]) {
   const start = Date.now();
   try {
     const res = await pool.query(text, params);
@@ -87,7 +87,7 @@ export async function query(text: string, params?: any[]) {
     }
     
     return res;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Database query error", { 
       text: text.substring(0, 100), 
       error: error instanceof Error ? error.message : String(error) 

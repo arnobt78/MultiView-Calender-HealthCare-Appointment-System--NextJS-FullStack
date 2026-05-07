@@ -404,7 +404,7 @@ export default function AppointmentDialog({
         );
         // Store the Vercel Blob URL (full URL for easy access)
         uploadedFileNames.push(result.url);
-      } catch (error) {
+      } catch (error: unknown) {
         setError(`Error uploading: ${file.name}`);
         setFileProgress((prev) => ({ ...prev, [file.name]: 0 }));
         continue;
@@ -436,7 +436,7 @@ export default function AppointmentDialog({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: publicId }),
       });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error deleting file from Vercel Blob:", error);
       // Continue even if deletion fails - file is removed from UI
     }

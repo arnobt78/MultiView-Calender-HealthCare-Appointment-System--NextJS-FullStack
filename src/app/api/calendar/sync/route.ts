@@ -67,9 +67,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "appointmentId is required" }, { status: 400 });
     }
 
-    // Get the appointment
-    const appointment = await prisma.appointment.findUnique({
-      where: { id: appointmentId },
+    // Scope to the session user's own appointment — prevents syncing foreign data to someone's calendar.
+    const appointment = await prisma.appointment.findFirst({
+      where: { id: appointmentId, user_id: sessionUser.userId },
     });
 
     if (!appointment) {

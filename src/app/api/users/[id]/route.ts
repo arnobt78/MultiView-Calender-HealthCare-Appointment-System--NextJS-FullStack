@@ -9,6 +9,7 @@ import { getSessionUser } from "@/lib/session";
 import { isValidUUID } from "@/lib/validation";
 import { serializeUser } from "@/lib/serializers";
 import { redis } from "@/lib/redis";
+import { getUserRole } from "@/lib/rbac";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -53,6 +54,20 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     const ALLOWED_ROLES = ["admin", "doctor", "secretary", "patient"];
     if (role !== undefined && !ALLOWED_ROLES.includes(role)) {
       return NextResponse.json({ error: "Invalid role" }, { status: 400 });
+    }
+
+    const callerRole = await getUserRole(sessionUser.userId);
+    const isSelf = id === sessionUser.userId;
+    const isAdmin = callerRole === "admin";
+
+    // Role changes require admin privilege — prevents privilege escalation.
+    if (role !== undefined && !isAdmin) {
+      return NextResponse.json({ error: "Forbidden: only admins may change roles" }, { status: 403 });
+    }
+
+    // Profile field updates are allowed for self or admin only.
+    if (!isSelf && !isAdmin) {
+      return NextResponse.json({ error: "Forbidden: can only update your own profile" }, { status: 403 });
     }
 
     const user = await prisma.user.update({

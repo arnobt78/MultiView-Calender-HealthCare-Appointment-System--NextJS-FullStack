@@ -80,7 +80,8 @@ export async function POST(req: NextRequest, context: RouteContext) {
           appointment_id: id,
           type: activity.type ?? "note",
           content: activity.content ?? "",
-          created_by_id: activity.created_by ?? sessionUser.userId,
+          // Always attribute to the session user — never trust client-supplied created_by.
+          created_by_id: sessionUser.userId,
         },
       });
     }
