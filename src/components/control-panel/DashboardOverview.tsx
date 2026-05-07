@@ -149,6 +149,22 @@ export default function DashboardOverviewComponent() {
   /** True whenever we should show skeleton in data slots. */
   const loading = !isMounted || isLoading;
 
+  /**
+   * fetchingDisplay — gates all isFetching-dependent Refresh button props.
+   *
+   * useDashboardOverview has no `enabled` guard, so TanStack Query begins
+   * fetching immediately during SSR → isFetching=true on the server.
+   * The client has localStorage-cached data → isFetching=false on first render.
+   * Using raw `isFetching` on the button causes a hydration mismatch:
+   *   Server:  disabled="", aria-busy="true", animate-spin, "Refreshing..."
+   *   Client:  disabled={false}, aria-busy={false}, no spin, "Refresh"
+   *
+   * Gating with isMounted (false on both server and first client render) ensures
+   * the button always renders in the "Refresh" (idle) state until after hydration,
+   * making server and client HTML identical.
+   */
+  const fetchingDisplay = isMounted && isFetching;
+
   /** Safe-access helpers — while loading, these values are never rendered (skeletons show instead). */
   const appointments = data?.appointments;
   const patients = data?.patients;
@@ -176,12 +192,12 @@ export default function DashboardOverviewComponent() {
             variant="ghost"
             size="sm"
             onClick={async () => { await refetch(); }}
-            disabled={isFetching}
+            disabled={fetchingDisplay}
             className={skyGlassBackButtonClass}
-            aria-busy={isFetching}
+            aria-busy={fetchingDisplay}
           >
-            <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
-            {isFetching ? "Refreshing..." : "Refresh"}
+            <RefreshCw className={`h-4 w-4 ${fetchingDisplay ? "animate-spin" : ""}`} />
+            {fetchingDisplay ? "Refreshing..." : "Refresh"}
           </Button>
         }
       />
@@ -192,7 +208,13 @@ export default function DashboardOverviewComponent() {
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           <StatCard label="Today" value={appointments?.today ?? 0} sub="appointments scheduled" icon={CalendarDays} color="bg-blue-100 text-blue-600" href="/control-panel" loading={loading} />
           <StatCard label="This Week" value={appointments?.thisWeek ?? 0} sub="this calendar week" icon={CalendarClock} color="bg-indigo-100 text-indigo-600" loading={loading} />
-          <StatCard label="This Month" value={appointments?.thisMonth ?? 0} sub={`of ${appointments?.total ?? 0} total`} icon={TrendingUp} color="bg-purple-100 text-purple-600" loading={loading} />
+          {/*
+           * `sub` must not contain live data during SSR — it causes hydration mismatch because
+           * the server renders `of 0 total` (no cache) while the client reads `of N total` from
+           * localStorage immediately. Use the `loading` guard so both server and client render
+           * the same static placeholder until after hydration + data load.
+           */}
+          <StatCard label="This Month" value={appointments?.thisMonth ?? 0} sub={loading ? "vs. total appointments" : `of ${appointments?.total ?? 0} total`} icon={TrendingUp} color="bg-purple-100 text-purple-600" loading={loading} />
           <StatCard label="Overdue" value={appointments?.overdue ?? 0} sub="need attention" icon={AlertTriangle} color="bg-orange-100 text-orange-600" loading={loading} />
         </div>
       </div>

@@ -12,6 +12,7 @@ import { appointmentCreateSchema } from "@/lib/schemas/appointment";
 import { zodBadRequest } from "@/lib/schemas/parse";
 import { getUserRole, isPatientRole } from "@/lib/rbac";
 import { redis } from "@/lib/redis";
+import { format } from "date-fns";
 
 export async function GET(req: NextRequest) {
   try {
@@ -100,6 +101,31 @@ export async function POST(req: NextRequest) {
      * fetch reflects the new appointment count immediately.
      */
     void redis.invalidateDashboardOverview(sessionUser.userId);
+
+    /*
+     * Create an in-app notification so the bell reflects the new appointment.
+     * Awaited (not fire-and-forget) so the row exists in the DB before the
+     * response is sent — otherwise the client's immediate invalidateNotificationsData
+     * refetch races and returns before the notification is committed.
+     * Wrapped in try/catch so a notification failure never breaks the main response.
+     */
+    try {
+      await prisma.notification.create({
+        data: {
+          user_id: sessionUser.userId,
+          title: "Appointment Scheduled",
+          message: `"${appointment.title}" on ${format(appointment.start, "dd.MM.yyyy 'at' HH:mm")}`,
+          type: "appointment_created",
+          // Deep-link to the newly created appointment detail.
+          link: `/control-panel/appointments/${appointment.id}`,
+        },
+      });
+      // #region agent log
+      fetch("http://127.0.0.1:7392/ingest/c84c51fb-9c07-4717-a332-daf0de786c09",{method:"POST",headers:{"Content-Type":"application/json","X-Debug-Session-Id":"2f41be"},body:JSON.stringify({sessionId:"2f41be",runId:"notif-nav-pre",hypothesisId:"H2",location:"appointments/route.ts:POST",message:"created appointment notification",data:{appointmentId:appointment.id,link:"/dashboard",type:"appointment_created"},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
+    } catch {
+      // Notification failure is non-critical — swallow silently.
+    }
 
     return NextResponse.json({ appointment: serializeAppointment(appointment) });
   } catch (err: unknown) {

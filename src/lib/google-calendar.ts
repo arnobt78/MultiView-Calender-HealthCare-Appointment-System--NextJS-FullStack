@@ -14,7 +14,14 @@
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || "";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-const REDIRECT_URI = `${APP_URL}/api/auth/google/callback`;
+/*
+ * IMPORTANT: This URI must exactly match one of the "Authorized redirect URIs" in
+ * Google Cloud Console → Credentials → OAuth 2.0 Client IDs.
+ * Add both your local and production URIs:
+ *   http://localhost:3000/api/calendar/callback
+ *   https://your-production-domain.com/api/calendar/callback
+ */
+const REDIRECT_URI = `${APP_URL}/api/calendar/callback`;
 const SCOPES = [
   "https://www.googleapis.com/auth/calendar",
   "https://www.googleapis.com/auth/calendar.events",

@@ -95,9 +95,13 @@ export async function GET(request: NextRequest) {
             title: "Upcoming Appointment",
             message: `"${appt.title}" starts ${appointmentDate} at ${appointmentTime}`,
             type: "reminder",
-            link: "/",
+            // Deep-link reminder to the exact appointment detail.
+            link: `/control-panel/appointments/${appt.id}`,
           },
         });
+        // #region agent log
+        fetch("http://127.0.0.1:7392/ingest/c84c51fb-9c07-4717-a332-daf0de786c09",{method:"POST",headers:{"Content-Type":"application/json","X-Debug-Session-Id":"2f41be"},body:JSON.stringify({sessionId:"2f41be",runId:"notif-nav-pre",hypothesisId:"H4",location:"cron/reminders/route.ts:GET:owner",message:"created owner reminder notification",data:{appointmentId:appt.id,userId:appt.user_id,link:"/",type:"reminder"},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
         notificationsCreated++;
       } catch (err) {
         console.error(`Failed to create notification for ${appt.user_id}:`, err);
@@ -136,9 +140,13 @@ export async function GET(request: NextRequest) {
                 title: "Upcoming Appointment",
                 message: `"${appt.title}" starts ${appointmentDate} at ${appointmentTime}`,
                 type: "reminder",
-                link: "/",
+                // Deep-link reminder to the exact appointment detail.
+                link: `/control-panel/appointments/${appt.id}`,
               },
             });
+            // #region agent log
+            fetch("http://127.0.0.1:7392/ingest/c84c51fb-9c07-4717-a332-daf0de786c09",{method:"POST",headers:{"Content-Type":"application/json","X-Debug-Session-Id":"2f41be"},body:JSON.stringify({sessionId:"2f41be",runId:"notif-nav-pre",hypothesisId:"H4",location:"cron/reminders/route.ts:GET:assignee",message:"created assignee reminder notification",data:{appointmentId:appt.id,userId:assignee.user_id,link:"/",type:"reminder"},timestamp:Date.now()})}).catch(()=>{});
+            // #endregion
             notificationsCreated++;
           } catch (err) {
             console.error(`Failed to create notification for assignee ${assignee.user_id}:`, err);

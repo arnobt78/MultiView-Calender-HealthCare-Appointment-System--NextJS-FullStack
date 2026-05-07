@@ -94,9 +94,13 @@ export async function POST(request: NextRequest) {
           title: "New Patient Booking",
           message: `${user?.display_name || user?.email || "A patient"} booked "${title}"`,
           type: "info",
-          link: "/",
+          // Deep-link doctor to the booked appointment.
+          link: `/control-panel/appointments/${appointment.id}`,
         },
       });
+      // #region agent log
+      fetch("http://127.0.0.1:7392/ingest/c84c51fb-9c07-4717-a332-daf0de786c09",{method:"POST",headers:{"Content-Type":"application/json","X-Debug-Session-Id":"2f41be"},body:JSON.stringify({sessionId:"2f41be",runId:"notif-nav-pre",hypothesisId:"H3",location:"patient-portal/route.ts:POST",message:"created patient booking notification",data:{appointmentId:appointment.id,doctorId,link:"/",type:"info"},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
     } catch {
       // Non-critical, don't fail the booking
     }

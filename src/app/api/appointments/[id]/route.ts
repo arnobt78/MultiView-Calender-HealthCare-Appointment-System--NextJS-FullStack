@@ -9,6 +9,7 @@ import { isValidUUID } from "@/lib/validation";
 import { serializeAppointment } from "@/lib/serializers";
 import { getUserRole, isPatientRole } from "@/lib/rbac";
 import { redis } from "@/lib/redis";
+import { format } from "date-fns";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -165,6 +166,40 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 
     /* Bust the server-side Redis overview cache so status/count changes reflect immediately. */
     void redis.invalidateDashboardOverview(sessionUser.userId);
+
+    /*
+     * Notify only on status changes — status toggles (done / alert / pending) are the most
+     * meaningful PATCH events. General field edits (title, time, notes) are not notified to
+     * avoid noise.
+     * Awaited inside try/catch: ensures the notification row is committed before the
+     * response returns, so the client's immediate invalidateNotificationsData refetch
+     * sees it. A notification failure never breaks the main PATCH response.
+     */
+    const statusMessages: Record<string, string> = {
+      done: "marked as completed",
+      alert: "flagged as alert",
+      pending: "set back to pending",
+    };
+    if (body.status !== undefined && updated.status) {
+      const statusLabel = statusMessages[updated.status] ?? updated.status;
+      try {
+        await prisma.notification.create({
+          data: {
+            user_id: sessionUser.userId,
+            title: "Appointment Status Updated",
+            message: `"${updated.title}" was ${statusLabel} — ${format(updated.start, "dd.MM.yyyy")}`,
+            type: "status_update",
+            // Deep-link to the updated appointment detail.
+            link: `/control-panel/appointments/${updated.id}`,
+          },
+        });
+        // #region agent log
+        fetch("http://127.0.0.1:7392/ingest/c84c51fb-9c07-4717-a332-daf0de786c09",{method:"POST",headers:{"Content-Type":"application/json","X-Debug-Session-Id":"2f41be"},body:JSON.stringify({sessionId:"2f41be",runId:"notif-nav-pre",hypothesisId:"H2",location:"appointments/[id]/route.ts:PATCH",message:"created status notification",data:{appointmentId:updated.id,link:"/dashboard",type:"status_update",status:updated.status ?? null},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
+      } catch {
+        // Notification failure is non-critical — swallow silently.
+      }
+    }
 
     return NextResponse.json({ appointment: serializeAppointment(updated) });
   } catch (err: unknown) {
