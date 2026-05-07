@@ -124,7 +124,7 @@ export function serializeRelative(r: {
   };
 }
 
-/** Appointment: map Prisma field names to API (patient_id → patient, category_id → category) */
+/** Organization row → API JSON; converts created_at Date to ISO string. */
 export function serializeOrganization(o: {
   id: string;
   created_at: Date;

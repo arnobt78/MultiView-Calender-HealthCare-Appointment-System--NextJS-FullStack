@@ -2,7 +2,6 @@
 // It sets up global styles, metadata for SEO, and wraps all pages with authentication and context providers
 
 import "../styles/globals.css";
-import { DateProvider } from "@/context/DateContext";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { cn } from "@/lib/utils";

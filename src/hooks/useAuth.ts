@@ -1,17 +1,20 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiClient, handleApiError } from "@/lib/api-client";
+import { apiClient } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
-import { User, UUID } from "@/types/types";
+import type { UUID } from "@/types/types";
+
+/** Shape stored at queryKeys.auth.me — mirrors /api/auth/me response.user. */
+type MeUser = {
+  id: UUID;
+  email: string;
+  role?: string;
+  display_name?: string;
+  email_verified: boolean;
+  image?: string | null;
+} | null;
 
 interface AuthResponse {
-  user: {
-    id: UUID;
-    email: string;
-    role?: string;
-    display_name?: string;
-    email_verified: boolean;
-    image?: string | null;
-  } | null;
+  user: MeUser;
 }
 
 export function useAuth() {
@@ -23,39 +26,35 @@ export function useAuth() {
       try {
         const response = await apiClient<AuthResponse>("/api/auth/me");
         return response.user;
-      } catch (error) {
-        // me endpoint returns 401 when not logged in, which is expected
+      } catch {
+        // /api/auth/me returns 401 when not authenticated — treat as guest.
         return null;
       }
     },
-    // Don't retry auth checks
     retry: false,
-    // Keep auth state fresh for 5 minutes
     staleTime: 5 * 60 * 1000,
   });
+
+  /** Reads the cached me-user safely with the typed cache shape. */
+  function getCachedName(): string {
+    const me = queryClient.getQueryData<MeUser>(queryKeys.auth.me);
+    return me?.display_name ?? me?.email?.split("@")[0] ?? "there";
+  }
 
   const logoutMutation = useMutation({
     mutationFn: () => apiClient("/api/auth/logout", { method: "POST" }),
     onSuccess: () => {
-      const name =
-        queryClient.getQueryData<any>(queryKeys.auth.me)?.display_name ||
-        queryClient.getQueryData<any>(queryKeys.auth.me)?.email?.split("@")[0] ||
-        "there";
-      const payload = JSON.stringify({ name, timestamp: Date.now() });
+      const payload = JSON.stringify({ name: getCachedName(), timestamp: Date.now() });
       sessionStorage.setItem("post-logout-toast", payload);
       localStorage.setItem("post-logout-toast", payload);
-      // Navigate first — full reload clears all client state cleanly
+      // Full reload clears all client-side React Query / store state cleanly.
       window.location.href = "/login";
     },
     onError: () => {
-      const name =
-        queryClient.getQueryData<any>(queryKeys.auth.me)?.display_name ||
-        queryClient.getQueryData<any>(queryKeys.auth.me)?.email?.split("@")[0] ||
-        "there";
-      const payload = JSON.stringify({ name, timestamp: Date.now() });
+      const payload = JSON.stringify({ name: getCachedName(), timestamp: Date.now() });
       sessionStorage.setItem("post-logout-toast", payload);
       localStorage.setItem("post-logout-toast", payload);
-      // Even on API error, session cookie is cleared server-side; navigate away
+      // Session cookie is already cleared server-side even on API error; navigate away.
       window.location.href = "/login";
     },
   });

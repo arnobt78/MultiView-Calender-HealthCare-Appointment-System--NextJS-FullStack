@@ -272,7 +272,7 @@ export function useAppointments() {
         body: JSON.stringify({ status }),
       }),
     onMutate: async ({ id, status }) => {
-      // Cancel any outgoing refetches to avoid overwriting optimisitic update
+      // Cancel any outgoing refetches to avoid overwriting the optimistic update
       await queryClient.cancelQueries({ queryKey: queryKeys.appointments.all });
       
       // Snapshot previous value

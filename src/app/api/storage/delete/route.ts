@@ -26,10 +26,10 @@ export async function POST(req: NextRequest) {
     await deleteFile(url);
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("File deletion error:", error);
     return NextResponse.json(
-      { error: error.message || "Deletion failed" },
+      { error: error instanceof Error ? error.message : "Deletion failed" },
       { status: 500 }
     );
   }

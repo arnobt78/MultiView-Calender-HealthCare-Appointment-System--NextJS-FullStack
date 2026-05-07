@@ -35,17 +35,26 @@ export async function apiClient<T>(
     return {} as T;
   }
 
-  let data: any;
+  // `unknown` is safe here — we assert to T below only after the ok-check.
+  let data: unknown;
   try {
     data = await response.json();
-  } catch (err) {
-    data = {}; // Some endpoints might return non-JSON on success, but usually we expect JSON
+  } catch {
+    // Endpoint returned non-JSON (rare). Fall back to empty object so error
+    // extraction below still works and the generic cast to T is preserved.
+    data = {};
   }
 
   if (!response.ok) {
-    const error = new Error(data?.error || data?.message || "An unexpected error occurred") as ApiError;
+    // Narrow to a plain object for safe field access without using `any`.
+    const payload = (typeof data === "object" && data !== null ? data : {}) as Record<string, unknown>;
+    const message =
+      (typeof payload.error === "string" ? payload.error : null) ??
+      (typeof payload.message === "string" ? payload.message : null) ??
+      "An unexpected error occurred";
+    const error = new Error(message) as ApiError;
     error.statusCode = response.status;
-    error.details = data;
+    error.details = payload;
     throw error;
   }
 

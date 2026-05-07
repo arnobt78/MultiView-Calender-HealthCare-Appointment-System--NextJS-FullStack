@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
-  LayoutDashboard, Settings, BookOpen, Activity, LogOut,
+  LayoutDashboard, BookOpen, Activity, LogOut,
   Bell, BellRing, CheckCheck, Search,
   // Notification type icons
   CalendarPlus, CalendarCheck2, AlarmClock, RefreshCcw, Trash2,
@@ -97,7 +97,7 @@ import { dashboardShellClass } from "@/lib/dashboard-layout";
 import { cn } from "@/lib/utils";
 
 export default function Navbar() {
-  const { user, logout, isLoggingOut, isLoading } = useAuth();
+  const { user, logout, isLoggingOut } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
   const openSearch = useAppStore((s) => s.openSearch);

@@ -595,7 +595,7 @@ export default function MonthView() {
                         // Find the current user's assignment
                         const userAssignment = dedupedAssignees.find(
                           (ass) =>
-                            (ass.user === userId || ass.invited_email === userId) &&
+                            (ass.user === userId || (!!userEmail && ass.invited_email === userEmail)) &&
                             ass.appointment === a.id &&
                             ass.status === "accepted"
                         );
@@ -636,7 +636,7 @@ export default function MonthView() {
                         // Find the current user's assignment
                         const userAssignment = dedupedAssignees.find(
                           (ass) =>
-                            (ass.user === userId || ass.invited_email === userId) &&
+                            (ass.user === userId || (!!userEmail && ass.invited_email === userEmail)) &&
                             ass.appointment === a.id &&
                             ass.status === "accepted"
                         );
@@ -673,7 +673,7 @@ export default function MonthView() {
                         // Find the current user's assignment
                         const userAssignment = dedupedAssignees.find(
                           (ass) =>
-                            (ass.user === userId || ass.invited_email === userId) &&
+                            (ass.user === userId || (!!userEmail && ass.invited_email === userEmail)) &&
                             ass.appointment === a.id &&
                             ass.status === "accepted"
                         );

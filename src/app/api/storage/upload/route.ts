@@ -41,10 +41,10 @@ export async function POST(req: NextRequest) {
     const result = await uploadFile(file, file.name, folder);
 
     return NextResponse.json(result);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("File upload error:", error);
     return NextResponse.json(
-      { error: error.message || "Upload failed" },
+      { error: error instanceof Error ? error.message : "Upload failed" },
       { status: 500 }
     );
   }

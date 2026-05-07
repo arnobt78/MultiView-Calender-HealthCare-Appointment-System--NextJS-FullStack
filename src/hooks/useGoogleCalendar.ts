@@ -4,9 +4,18 @@ import { notify } from "@/lib/notify";
 import { queryKeys } from "@/lib/query-keys";
 import { invalidateAfterAppointmentMutation, invalidateGoogleCalendarData } from "@/lib/query-client";
 
+/** Minimal shape for a Google Calendar event as returned by the sync API. */
+interface GoogleCalendarEvent {
+  id?: string;
+  summary?: string;
+  start?: { dateTime?: string; date?: string };
+  end?: { dateTime?: string; date?: string };
+  [key: string]: unknown; // additional fields are forwarded as-is from the Google API
+}
+
 interface GoogleCalendarStatus {
   connected: boolean;
-  events?: any[];
+  events?: GoogleCalendarEvent[];
 }
 
 export function useGoogleCalendar() {
@@ -72,8 +81,8 @@ export function useGoogleCalendar() {
   });
 
   return {
-    isConnected: statusQuery.data?.connected || false,
-    events: statusQuery.data?.events || [],
+    isConnected: statusQuery.data?.connected ?? false,
+    events: statusQuery.data?.events ?? [],
     isLoading: statusQuery.isLoading,
     syncToGoogle: syncMutation.mutate,
     isSyncing: syncMutation.isPending,

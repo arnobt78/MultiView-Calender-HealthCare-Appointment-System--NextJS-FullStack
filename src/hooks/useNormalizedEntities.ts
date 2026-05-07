@@ -22,7 +22,7 @@ import {
  *
  * Example:
  *   const { entities, upsert, upsertMany, get, remove } = useNormalizedEntities<Patient>(
- *     queryKeys.patients.all(),
+ *     queryKeys.patients.all,   // tuple constant — no parentheses
  *   );
  *
  *   // After a list fetch:

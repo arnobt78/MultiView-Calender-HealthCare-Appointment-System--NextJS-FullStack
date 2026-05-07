@@ -22,21 +22,18 @@ const bgColors = [
 ];
 
 /**
- * randomBgColor Function
- * 
- * Generates a deterministic color based on a seed string.
- * Uses a hash-like algorithm to convert the seed into an array index.
- * 
- * Algorithm:
- * 1. Split seed string into characters
- * 2. Sum all character codes
- * 3. Use modulo to get index within bgColors array
- * 
- * Example:
- * randomBgColor("appointment-123") always returns the same color
- * 
- * @param seed - String used to deterministically select a color (e.g., appointment ID, category name)
- * @returns Hex color code from bgColors array
+ * randomBgColor (provider method)
+ *
+ * Selects a color for a given seed string. Within a single browser session
+ * the color is stable — the result is memoised in a `useRef` Map so the same
+ * seed always returns the same color without re-renders.
+ *
+ * Colors are NOT deterministic across page reloads: `Math.random()` picks the
+ * index on first call per session. If you need cross-reload determinism, replace
+ * `Math.random()` with a hash of the seed string (e.g. sum of char codes % length).
+ *
+ * @param seed - Stable identifier string (e.g. appointment ID, category ID).
+ * @returns Hex color code from bgColors.
  */
 function hexToRgb(hex: string) {
   const normalized = hex.replace("#", "");

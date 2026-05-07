@@ -105,10 +105,10 @@ export async function POST(req: NextRequest) {
         "X-RateLimit-Reset": rateLimit.resetTime.toString(),
       }
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Login error:", error);
     return NextResponse.json(
-      { error: error.message || "Internal server error" },
+      { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
     );
   }

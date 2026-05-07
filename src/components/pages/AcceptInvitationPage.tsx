@@ -69,7 +69,7 @@ export default function AcceptInvitationPage({ token = null }: AcceptInvitationP
               <p className="text-destructive">You must be logged in to accept this invitation.</p>
               <Button asChild className="w-full">
                 <Link
-                  href={`/login?redirect=/accept-invitation${token ? `?token=${encodeURIComponent(token)}` : ""}`}
+                  href={`/login?redirect=${encodeURIComponent(`/accept-invitation${token ? `?token=${token}` : ""}`)}`}
                 >
                   Login to continue
                 </Link>

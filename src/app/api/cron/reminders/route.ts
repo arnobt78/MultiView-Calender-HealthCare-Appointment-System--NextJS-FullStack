@@ -20,10 +20,18 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
-    // Verify cron secret (optional security layer)
+    // Verify cron secret.
+    // In production: fail-closed — always require a configured CRON_SECRET.
+    // In development: skip check when CRON_SECRET is unset (local convenience).
     const cronSecret = request.headers.get("authorization");
     const expectedSecret = process.env.CRON_SECRET;
-    
+    const isProd = process.env.NODE_ENV === "production";
+
+    if (isProd && !expectedSecret) {
+      // Misconfigured production deployment — reject all calls.
+      console.error("CRON_SECRET is not set in production. Rejecting cron request.");
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     if (expectedSecret && cronSecret !== `Bearer ${expectedSecret}`) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -70,9 +78,13 @@ export async function GET(request: NextRequest) {
     let emailsSent = 0;
     let notificationsCreated = 0;
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL 
-      ? `https://${process.env.VERCEL_URL}` 
-      : "http://localhost:3000";
+    // Explicit priority: NEXT_PUBLIC_APP_URL → VERCEL_URL → localhost.
+    // Previously used `||` + `?:` in one expression which caused operator-precedence
+    // ambiguity: a truthy NEXT_PUBLIC_APP_URL still picked the VERCEL_URL branch,
+    // producing `https://undefined` when VERCEL_URL was unset.
+    const baseUrl =
+      process.env.NEXT_PUBLIC_APP_URL ??
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
 
     for (const appt of upcomingAppointments) {
       const appointmentDate = format(new Date(appt.start), "dd.MM.yyyy");

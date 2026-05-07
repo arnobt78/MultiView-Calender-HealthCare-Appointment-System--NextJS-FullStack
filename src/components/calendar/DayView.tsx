@@ -28,6 +28,7 @@ import {
   calendarGridHalfHourLine,
 } from "./calendarGridTokens";
 import type { Appointment } from "@/types/types";
+import type { FullAppointment } from "@/hooks/useAppointments";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MoreVertical, CheckCircle, Circle } from "lucide-react";
 import { FiEdit2, FiTrash2 } from "react-icons/fi";
@@ -142,7 +143,7 @@ export default function DayView() {
 
                 {slotAppts.length > 0 && (
                   <div className="relative h-full p-1">
-                    {slotAppts.map((appt: Appointment) => {
+                    {slotAppts.map((appt: FullAppointment) => {
                       const start = new Date(appt.start);
                       const end = new Date(appt.end);
                       const isDone = appt.status === "done";
@@ -150,27 +151,27 @@ export default function DayView() {
                       const hourEnd = end.getHours() + end.getMinutes() / 60;
                       const slotTop = (hourStart - hour) * SLOT_HEIGHT;
                       const slotHeight = Math.max(44, (hourEnd - hourStart) * SLOT_HEIGHT);
-                      const matchedPatient = patients.find((p) => p.id === (appt as any).patient);
+                      const matchedPatient = patients.find((p) => p.id === appt.patient);
                       const patientName =
                         matchedPatient?.firstname && matchedPatient?.lastname
                           ? `${matchedPatient.firstname} ${matchedPatient.lastname}`
                           : "--";
                       const categoryLabel =
-                        categories.find((c) => c.id === (appt as any).category)?.label ?? "--";
+                        categories.find((c) => c.id === appt.category)?.label ?? "--";
                       const referTo = patientName !== "--" ? `Patient: ${patientName}` : "--";
                       const colorToken = getAppointmentColorToken(
                         appt.id,
-                        (appt as any)?.category_data?.color ?? null
+                        appt.category_data?.color ?? null
                       );
 
                       return (
                         <AppointmentHoverCard
                           key={appt.id}
-                          appointment={appt as any}
+                          appointment={appt}
                           patients={patients}
                           relatives={relatives}
-                          assignees={(appt as any).appointment_assignee ?? []}
-                          activities={(appt as any).activities ?? []}
+                          assignees={appt.appointment_assignee ?? []}
+                          activities={appt.activities ?? []}
                           userEmail={null}
                           userId={null}
                           ownerUsers={[]}

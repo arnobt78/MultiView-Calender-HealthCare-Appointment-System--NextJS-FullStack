@@ -360,7 +360,7 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
                 // Find the current user's assignment
                 const userAssignment = assignees.find(
                   (ass) =>
-                    (ass.user === userId || ass.invited_email === userId) &&
+                    (ass.user === userId || (!!userEmail && ass.invited_email === userEmail)) &&
                     ass.appointment === a.id &&
                     ass.status === "accepted"
                 );
@@ -401,7 +401,7 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
                 // Find the current user's assignment
                 const userAssignment = assignees.find(
                   (ass) =>
-                    (ass.user === userId || ass.invited_email === userId) &&
+                    (ass.user === userId || (!!userEmail && ass.invited_email === userEmail)) &&
                     ass.appointment === a.id &&
                     ass.status === "accepted"
                 );
@@ -439,7 +439,7 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
                 // Find the current user's assignment
                 const userAssignment = assignees.find(
                   (ass) =>
-                    (ass.user === userId || ass.invited_email === userId) &&
+                    (ass.user === userId || (!!userEmail && ass.invited_email === userEmail)) &&
                     ass.appointment === a.id &&
                     ass.status === "accepted"
                 );

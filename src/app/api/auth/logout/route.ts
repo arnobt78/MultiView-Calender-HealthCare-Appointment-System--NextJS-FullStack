@@ -14,10 +14,10 @@ export async function POST() {
     await clearSession();
 
     return NextResponse.json({ message: "Logged out successfully" });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Logout error:", error);
     return NextResponse.json(
-      { error: error.message || "Internal server error" },
+      { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
     );
   }

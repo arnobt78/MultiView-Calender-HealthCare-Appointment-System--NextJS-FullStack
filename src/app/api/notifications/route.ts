@@ -43,23 +43,31 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { user_id, title, message, type, link } = body;
+    // Require session — user_id is derived from the session, not the body,
+    // so a caller cannot create notifications for arbitrary users.
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-    if (!user_id || !title || !message || !type) {
+    const body = await request.json() as { title?: unknown; message?: unknown; type?: unknown; link?: unknown };
+    const { title, message, type, link } = body;
+
+    if (!title || !message || !type) {
       return NextResponse.json(
-        { error: "Missing required fields: user_id, title, message, type" },
+        { error: "Missing required fields: title, message, type" },
         { status: 400 }
       );
     }
 
     const notification = await prisma.notification.create({
       data: {
-        user_id,
-        title,
-        message,
-        type,
-        link: link || null,
+        // Always use the authenticated session user — never trust client-supplied user_id.
+        user_id: sessionUser.userId,
+        title: String(title),
+        message: String(message),
+        type: String(type),
+        link: link ? String(link) : null,
       },
     });
 

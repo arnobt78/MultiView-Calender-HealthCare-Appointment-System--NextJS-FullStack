@@ -4,7 +4,7 @@ import { queryKeys } from "@/lib/query-keys";
 import { invalidateSharingAndAppointments } from "@/lib/query-client";
 import { AppointmentAssignee } from "@/types/types";
 import { notify } from "@/lib/notify";
-import { InvitationRequest, InvitationType } from "@/types/invitation";
+import type { InvitationRequest } from "@/types/invitation";
 
 export type DashboardInvitation = {
   id?: string;

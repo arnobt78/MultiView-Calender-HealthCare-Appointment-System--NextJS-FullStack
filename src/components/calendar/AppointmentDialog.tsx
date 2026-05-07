@@ -278,13 +278,13 @@ export default function AppointmentDialog({
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                assignees: uniqueAssignees.map((a: any) => ({
+                assignees: uniqueAssignees.map((a: AppointmentAssignee) => ({
                   appointment: apptId,
                   user: a.user,
                   user_type: a.user_type,
                   invited_email: a.invited_email || null,
-                  status: typeof a.status === 'string' ? a.status : "pending",
-                  permission: typeof a.permission === 'string' ? a.permission : "read",
+                  status: typeof a.status === "string" ? a.status : "pending",
+                  permission: typeof a.permission === "string" ? a.permission : "read",
                 })),
               }),
             });
@@ -329,13 +329,13 @@ export default function AppointmentDialog({
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              assignees: uniqueAssignees.map((a: any) => ({
+              assignees: uniqueAssignees.map((a: AppointmentAssignee) => ({
                 appointment: apptId,
                 user: a.user,
                 user_type: a.user_type,
                 invited_email: a.invited_email || null,
-                status: typeof a.status === 'string' ? a.status : "pending",
-                permission: typeof a.permission === 'string' ? a.permission : "read",
+                status: typeof a.status === "string" ? a.status : "pending",
+                permission: typeof a.permission === "string" ? a.permission : "read",
               })),
             }),
           });

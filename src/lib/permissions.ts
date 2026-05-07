@@ -56,9 +56,11 @@ export function getUserAppointmentPermission({
   // Owner check: User created the appointment
   if (appointment.user_id === userId) return "owner";
   
-  // Check if user is an accepted assignee
-  // Search by both user ID (if they have an account) and email (if invited by email)
-  // Only count accepted invitations (not pending or declined)
+  // Check if the user is an accepted assignee.
+  // `a.user` is a UUID matched against the caller's userId.
+  // `a.invited_email === userId` intentionally keeps this fast path as a
+  // no-op (email ≠ UUID) — email-based assignee lookup is handled
+  // upstream in useAppointments by matching `a.invited_email === user.email`.
   const assignee = assignees?.find(
     (a) =>
       (a.user === userId || a.invited_email === userId) &&

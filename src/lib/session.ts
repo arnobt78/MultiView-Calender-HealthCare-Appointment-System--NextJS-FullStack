@@ -65,7 +65,12 @@ export async function clearSession() {
 
 /**
  * Get current user from session (client-side)
- * 
+ *
+ * ⚠️  NOTE: The session cookie is set `httpOnly: true` (see `setSession`), so
+ * `document.cookie` will never include it and this function always returns null
+ * in the browser. Use the server-side `getSessionUser()` instead, or rely on
+ * the `/api/auth/me` endpoint via `useAuth` for client-side auth state.
+ *
  * @returns User object or null if not authenticated
  */
 export function getClientSession(): { id: string; email: string } | null {
