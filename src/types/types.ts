@@ -72,7 +72,13 @@ export type SnapshotInvoice = {
 };
 
 /** Appointment row from snapshot API (adds category label for display) */
-export type AppointmentSnapshotRow = Appointment & { category_label?: string | null };
+export type AppointmentSnapshotRow = Appointment & {
+  category_label?: string | null;
+  /** Doctor (owner) fields joined by the snapshot API for display in the patient detail screen. */
+  doctor_id?: string | null;
+  doctor_display?: string | null;
+  doctor_email?: string | null;
+};
 
 export type PatientSnapshot = {
   patient: Patient;

@@ -1,23 +1,21 @@
+/**
+ * useDashboardAccess — fetches the current user's dashboard sharing records.
+ *
+ * Uses the richer DashboardAccessRow type from query-fetchers so both the
+ * hook and the ensureQueryData call in useAppointments share the same shape.
+ */
+
 import { useQuery } from "@tanstack/react-query";
-import { apiClient } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
+import { type DashboardAccessRow, fetchDashboardAccessAll } from "@/lib/query-fetchers";
 
-// DashboardAccessRow from the original API implementation
-export interface DashboardAccessRow {
-  owner_user_id: string;
-}
-
-interface DashboardAccessResponse {
-  dashboard_access: DashboardAccessRow[];
-}
+// Re-export so callers can import the type from this hook without knowing about query-fetchers.
+export type { DashboardAccessRow };
 
 export function useDashboardAccess() {
   return useQuery({
     queryKey: queryKeys.dashboardAccess.all,
-    queryFn: async () => {
-      const response = await apiClient<DashboardAccessResponse>("/api/dashboard-access");
-      return response.dashboard_access || [];
-    },
+    queryFn: () => fetchDashboardAccessAll(),
     staleTime: 5 * 60 * 1000,
   });
 }

@@ -24,7 +24,6 @@ export type Invitation = AppointmentInvitation | DashboardInvitation;
 interface InvitationsResponse {
   appointmentInvitations?: AppointmentInvitation[];
   dashboardInvitations?: DashboardInvitation[];
-  [key: string]: any; // Catch-all for other fields the API might send
 }
 
 export function useInvitations(type: "appointment" | "dashboard") {

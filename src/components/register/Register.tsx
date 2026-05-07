@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import Image from "next/image";
 import { notify } from "@/lib/notify";
+import { z } from "zod";
 import { registerRequestSchema } from "@/lib/schemas/auth";
 import {
   CalendarDays,
@@ -82,7 +83,8 @@ export function Register() {
         display_name: name.trim() || undefined,
       });
       if (!parsed.success) {
-        const fieldErrors = parsed.error.flatten().fieldErrors;
+        // z.flattenError is the Zod v4 replacement for the deprecated err.flatten()
+        const fieldErrors = z.flattenError(parsed.error).fieldErrors;
         setErrors({
           name: fieldErrors.display_name?.[0],
           email: fieldErrors.email?.[0],

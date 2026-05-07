@@ -1,4 +1,7 @@
-"use client";
+// ApiDocsPage — no "use client" needed.
+// This component uses zero hooks and zero browser APIs; it is purely static markup.
+// Removing the directive allows Next.js to render it as a Server Component and
+// tree-shake it from the client JS bundle.
 
 import { Button } from "@/components/ui/button";
 import Link from "next/link";

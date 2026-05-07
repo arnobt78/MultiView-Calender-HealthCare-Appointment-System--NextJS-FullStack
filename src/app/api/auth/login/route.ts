@@ -10,16 +10,16 @@ import { hashPassword, verifyPassword, generateToken, getUserByEmail } from "@/l
 import { setSession } from "@/lib/session";
 import { loginRequestSchema } from "@/lib/schemas/auth";
 import { zodBadRequest } from "@/lib/schemas/parse";
-import { checkRateLimit, getClientIP } from "@/lib/rateLimit";
+import { checkRateLimit, getClientIP } from "@/lib/rate-limit";
 import { RATE_LIMITS } from "@/lib/constants";
 
 export async function POST(req: NextRequest) {
   try {
     // Rate limiting: prevent brute force attacks
     const clientIP = getClientIP(req);
-    const rateLimit = checkRateLimit(
-      `login:${clientIP}`, 
-      RATE_LIMITS.LOGIN.maxRequests, 
+    const rateLimit = await checkRateLimit(
+      `login:${clientIP}`,
+      RATE_LIMITS.LOGIN.maxRequests,
       RATE_LIMITS.LOGIN.windowMs
     );
     

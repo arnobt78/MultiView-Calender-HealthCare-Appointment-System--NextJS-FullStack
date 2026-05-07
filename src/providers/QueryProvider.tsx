@@ -33,7 +33,7 @@ import { createQueryClient } from "@/lib/query-client";
  *
  * Cache key:  `cal-appt-query-cache`
  * Throttle:   1 000 ms (writes are batched, not every state change)
- * Max age:    10 min (mirrors gcTime — stale entries are evicted on restore)
+ * Max age:    24 h — returning users see instant cached data for a full day.
  * Buster:     "v1" — bump when shipping a breaking data-shape change to force
  *             all clients to drop their persisted caches.
  */
@@ -67,7 +67,10 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
         client={queryClient}
         persistOptions={{
           persister,
-          maxAge: 10 * 60 * 1000,
+          // 24h — matches stock-inventory pattern.
+          // Returning users see instant cached data for the full day rather
+          // than the previous 10-minute window.
+          maxAge: 24 * 60 * 60 * 1000,
           buster: "v1",
         }}
       >

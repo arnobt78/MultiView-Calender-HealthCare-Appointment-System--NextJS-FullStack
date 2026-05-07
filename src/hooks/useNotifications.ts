@@ -30,8 +30,9 @@ export function useNotifications() {
         method: "PATCH",
         body: JSON.stringify({ id }),
       }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
+    onSuccess: async () => {
+      // Await so the badge count and list refetch before onSuccess resolves.
+      await queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
     },
     onError: (error) => handleApiError(error, "Failed to mark notification as read"),
   });
@@ -42,8 +43,8 @@ export function useNotifications() {
         method: "PATCH",
         body: JSON.stringify({ markAllRead: true }),
       }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
       notify.info({ title: "Notifications updated", subtitle: "All notifications were marked as read." });
     },
     onError: (error) => handleApiError(error, "Failed to mark notifications as read"),
@@ -55,9 +56,9 @@ export function useNotifications() {
         method: "PATCH",
         body: JSON.stringify({ deleteRead: true }),
       }),
-    onSuccess: () => {
-      // Refresh list/counts immediately so header badges and list stay in sync.
-      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
+    onSuccess: async () => {
+      // Await so header badge and list both update before the toast appears.
+      await queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
       notify.warning({
         title: "Read notifications deleted",
         subtitle: "Unread notifications were kept.",

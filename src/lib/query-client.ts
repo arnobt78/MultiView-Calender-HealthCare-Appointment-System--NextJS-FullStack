@@ -119,11 +119,13 @@ export async function invalidateEntityAffectingAppointments(
         ? queryKeys.relatives.all
         : queryKeys.categories.all;
   // Activities list + appointments read denormalized labels; invalidate together so UI updates without navigation.
+  // Insights charts aggregate by patient/category — must refetch when those entities change.
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: key }),
     queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all }),
     invalidateActivitiesList(queryClient),
     invalidateDashboardOverview(queryClient),
+    invalidateInsightsAndAnalytics(queryClient),
   ]);
 }
 
@@ -174,6 +176,7 @@ export async function invalidateAvailabilitySlots(queryClient: QueryClient) {
 
 /**
  * After appointment create/update/import — pass `patientId` when known for cheaper patient cache updates.
+ * Also invalidates insights/analytics since all charts aggregate appointment data.
  */
 export async function invalidateAfterAppointmentMutation(
   queryClient: QueryClient,
@@ -185,6 +188,8 @@ export async function invalidateAfterAppointmentMutation(
     invalidateNotificationsData(queryClient),
     invalidateAvailabilitySlots(queryClient),
     invalidateInvoicesAndOverview(queryClient, { patientId: opts?.patientId ?? undefined }),
+    // Insights / analytics charts aggregate appointment data — must refetch after any mutation.
+    invalidateInsightsAndAnalytics(queryClient),
   ]);
 }
 

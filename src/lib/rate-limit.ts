@@ -1,69 +1,100 @@
 /**
- * Rate Limiter Middleware
- * 
- * Uses in-memory store (for single-instance) or Redis (for multi-instance).
- * Configurable limits per route group.
+ * Rate Limiter — single source of truth for all API routes.
+ *
+ * Strategy:
+ *  - Redis (Upstash) when configured: atomic, survives deploys, works across
+ *    multiple serverless instances.
+ *  - In-memory Map fallback: works in local dev without Redis credentials.
+ *
+ * windowMs uses milliseconds throughout to match constants.ts RATE_LIMITS
+ * and be consistent with standard Node/browser timing APIs.
  */
 
 import { redis } from "./redis";
 
 interface RateLimitResult {
+  /** Whether the request is within the rate limit window. */
   allowed: boolean;
+  /** How many more requests are allowed before the window resets. */
   remaining: number;
-  resetAt: Date;
+  /** Epoch ms timestamp when the current window expires. */
+  resetTime: number;
 }
 
-const memoryStore = new Map<string, { count: number; resetAt: number }>();
+// In-memory fallback — cleared on server restart, not shared across instances.
+const memoryStore = new Map<string, { count: number; resetTime: number }>();
+
+// Purge stale in-memory entries every 5 minutes to avoid unbounded growth.
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, val] of memoryStore.entries()) {
+    if (now > val.resetTime) memoryStore.delete(key);
+  }
+}, 5 * 60 * 1000);
 
 /**
- * Check rate limit for an identifier (e.g. IP + route)
+ * Check whether `identifier` (e.g. `"login:<IP>"`) is within its rate limit.
+ *
+ * @param identifier  - Unique key, usually action + IP.
+ * @param maxRequests - Maximum requests allowed in the window. Default 60.
+ * @param windowMs    - Window length in **milliseconds**. Default 60 000 (1 min).
  */
 export async function checkRateLimit(
   identifier: string,
   maxRequests: number = 60,
-  windowSeconds: number = 60
+  windowMs: number = 60_000
 ): Promise<RateLimitResult> {
-  const resetAt = new Date(Date.now() + windowSeconds * 1000);
+  const now = Date.now();
+  const resetTime = now + windowMs;
 
-  // Use Redis if available
+  // Redis path — preferred in production.
   if (redis.isConfigured) {
     const key = `ratelimit:${identifier}`;
+    const windowSeconds = Math.ceil(windowMs / 1000);
     const count = await redis.incr(key);
 
+    // Set TTL only on the first increment so the window is anchored correctly.
     if (count === 1) {
       await redis.expire(key, windowSeconds);
     }
 
+    const n = count ?? 0;
     return {
-      allowed: (count || 0) <= maxRequests,
-      remaining: Math.max(0, maxRequests - (count || 0)),
-      resetAt,
+      allowed: n <= maxRequests,
+      remaining: Math.max(0, maxRequests - n),
+      resetTime,
     };
   }
 
-  // Fallback: in-memory store
-  const now = Date.now();
+  // In-memory fallback path.
   const entry = memoryStore.get(identifier);
 
-  if (!entry || entry.resetAt <= now) {
-    memoryStore.set(identifier, { count: 1, resetAt: now + windowSeconds * 1000 });
-    return { allowed: true, remaining: maxRequests - 1, resetAt };
+  if (!entry || now > entry.resetTime) {
+    memoryStore.set(identifier, { count: 1, resetTime });
+    return { allowed: true, remaining: maxRequests - 1, resetTime };
   }
 
   entry.count++;
   return {
     allowed: entry.count <= maxRequests,
     remaining: Math.max(0, maxRequests - entry.count),
-    resetAt: new Date(entry.resetAt),
+    resetTime: entry.resetTime,
   };
 }
 
 /**
- * Rate limit configurations by route group
+ * Extract the real client IP from a Next.js Request.
+ *
+ * Checks `x-forwarded-for` (Vercel/CDN) and `x-real-ip` (nginx) before
+ * falling back to `"unknown"` for local dev or serverless environments
+ * that don't expose a remote address.
  */
-export const RATE_LIMITS = {
-  api: { maxRequests: 100, windowSeconds: 60 },
-  auth: { maxRequests: 10, windowSeconds: 60 },
-  ai: { maxRequests: 20, windowSeconds: 60 },
-  webhook: { maxRequests: 200, windowSeconds: 60 },
-} as const;
+export function getClientIP(req: Request): string {
+  const forwarded = req.headers.get("x-forwarded-for");
+  if (forwarded) return forwarded.split(",")[0]!.trim();
+
+  const realIP = req.headers.get("x-real-ip");
+  if (realIP) return realIP;
+
+  return "unknown";
+}

@@ -25,7 +25,7 @@ import { PrefetchingLink } from "@/components/shared/PrefetchingLink";
 import { useRouter, useSearchParams } from "next/navigation";
 import { usePatient, usePatientSnapshot } from "@/hooks/usePatients";
 import { PageHeader } from "@/components/shared/PageHeader";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PatientDetailForm } from "@/components/control-panel/PatientDetailForm";
 import { UserAvatar } from "@/components/shared/UserAvatar";
@@ -51,14 +51,20 @@ import { skyGlassBackButtonClass, skyGlassTableFrameClass } from "@/lib/calendar
 import { dashboardShellClass } from "@/lib/dashboard-layout";
 import { ControlPanelGlassActionButton } from "@/components/shared/ControlPanelGlassActionButton";
 import { cn } from "@/lib/utils";
-import type { Patient } from "@/types/types";
+import type { Patient, PatientSnapshot } from "@/types/types";
+import { useEffect, useLayoutEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 
 const FORM_ID = "patient-detail-form";
 
 function FieldLabel({ icon: Icon, children }: { icon: LucideIcon; children: React.ReactNode }) {
   return (
     <dt className="flex items-center gap-1.5 text-xs font-medium text-gray-500">
-      <Icon className="h-3.5 w-3.5 shrink-0 text-sky-600" aria-hidden />
+      {/* Glassmorphic icon circle — provides visual separation without heavy weight */}
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-sky-200/70 bg-sky-50/80 shadow-[0_2px_8px_rgba(14,165,233,0.15)]">
+        <Icon className="h-3 w-3 text-sky-600" aria-hidden />
+      </span>
       {children}
     </dt>
   );
@@ -67,9 +73,54 @@ function FieldLabel({ icon: Icon, children }: { icon: LucideIcon; children: Reac
 function SectionHeading({ icon: Icon, children }: { icon: LucideIcon; children: React.ReactNode }) {
   return (
     <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-      <Icon className="h-4 w-4 shrink-0 text-sky-600" aria-hidden />
+      {/* Slightly larger circle for section headings */}
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-sky-200/70 bg-sky-50/80 shadow-[0_2px_10px_rgba(14,165,233,0.18)]">
+        <Icon className="h-3.5 w-3.5 text-sky-600" aria-hidden />
+      </span>
       {children}
     </h3>
+  );
+}
+
+/**
+ * Colored badge for appointment status.
+ * pending → amber, done → emerald, alert → rose, unknown → slate.
+ */
+function AppointmentStatusBadge({ status }: { status?: string | null }) {
+  const cls =
+    status === "done"
+      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+      : status === "alert"
+        ? "border-rose-200 bg-rose-50 text-rose-700"
+        : status === "pending"
+          ? "border-amber-200 bg-amber-50 text-amber-700"
+          : "border-slate-200 bg-slate-50 text-gray-600";
+  return (
+    <Badge variant="outline" className={`capitalize text-xs ${cls}`}>
+      {status ?? "pending"}
+    </Badge>
+  );
+}
+
+/**
+ * Colored badge for invoice status.
+ * paid → emerald, overdue → rose, sent → sky, draft → slate, cancelled → slate (muted).
+ */
+function InvoiceStatusBadge({ status }: { status: string }) {
+  const cls =
+    status === "paid"
+      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+      : status === "overdue"
+        ? "border-rose-200 bg-rose-50 text-rose-700"
+        : status === "sent"
+          ? "border-sky-200 bg-sky-50 text-sky-700"
+          : status === "cancelled"
+            ? "border-slate-200 bg-slate-50 text-gray-400 line-through"
+            : "border-slate-200 bg-slate-50 text-gray-600";
+  return (
+    <Badge variant="outline" className={`capitalize text-xs ${cls}`}>
+      {status}
+    </Badge>
   );
 }
 
@@ -77,48 +128,172 @@ function SectionHeading({ icon: Icon, children }: { icon: LucideIcon; children: 
 function PatientDetailBodySkeleton() {
   return (
     <div className="space-y-6 text-gray-700">
-      <div className="flex items-center gap-4">
-        <Skeleton className="h-16 w-16 shrink-0 rounded-full" aria-hidden />
-        <div className="min-w-0 flex-1 space-y-2">
-          <Skeleton className="h-5 w-48" />
-          <Skeleton className="h-4 w-64" />
-          <div className="flex gap-2">
-            <Skeleton className="h-6 w-16 rounded-full" />
-            <Skeleton className="h-6 w-20 rounded-full" />
+      {/* Keep static schema labels/icons visible; only value slots skeletonize during refresh. */}
+      <dl className="grid gap-3 text-sm sm:grid-cols-2">
+        <div className="sm:col-span-2 rounded-xl border border-slate-200/80 bg-slate-50/50 px-3 py-2 text-gray-700">
+          <div className="flex items-center gap-2 text-xs font-medium text-gray-500">
+            {/* Keep audit icon style aligned with other schema icons and stable on refresh. */}
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-sky-200/70 bg-sky-50/80 shadow-[0_2px_8px_rgba(14,165,233,0.15)]">
+              <CalendarClock className="h-3 w-3 text-sky-600" aria-hidden />
+            </span>
+            Record Audit
           </div>
+          <dd className="mt-1 space-y-1 text-gray-700">
+            {/* Match real audit text rows more closely to reduce vertical shift on data hydrate. */}
+            <Skeleton className="h-5 w-full max-w-[560px] rounded-md" />
+            <Skeleton className="h-5 w-full max-w-[560px] rounded-md" />
+          </dd>
+        </div>
+        <div>
+          <FieldLabel icon={Fingerprint}>Patient ID</FieldLabel>
+          <Skeleton className="mt-1 h-4 w-full max-w-[320px]" />
+        </div>
+        <div>
+          <FieldLabel icon={Calendar}>Birth Date</FieldLabel>
+          <Skeleton className="mt-1 h-4 w-32" />
+        </div>
+        <div>
+          <FieldLabel icon={Activity}>Care Tier (1–10)</FieldLabel>
+          <Skeleton className="mt-1 h-4 w-44" />
+        </div>
+        <div>
+          <FieldLabel icon={User}>Pronoun</FieldLabel>
+          <Skeleton className="mt-1 h-4 w-24" />
+        </div>
+        <div className="sm:col-span-2">
+          <FieldLabel icon={Stethoscope}>Primary Doctor</FieldLabel>
+          <Skeleton className="mt-1 h-4 w-56" />
+        </div>
+        <div className="sm:col-span-2">
+          <FieldLabel icon={Share2}>Referral</FieldLabel>
+          <Skeleton className="mt-1 h-4 w-64" />
+        </div>
+        <div>
+          <FieldLabel icon={AlertCircle}>Allergies</FieldLabel>
+          <Skeleton className="mt-1 h-4 w-full max-w-[240px]" />
+        </div>
+        <div className="sm:col-span-2">
+          <FieldLabel icon={FileText}>Clinical Notes</FieldLabel>
+          <Skeleton className="mt-1 h-4 w-full max-w-[620px]" />
+          <Skeleton className="mt-2 h-4 w-full max-w-[540px]" />
+        </div>
+      </dl>
+
+      <div className="space-y-2">
+        <SectionHeading icon={Calendar}>Related Appointments</SectionHeading>
+        {/* Keep table chrome static; only data cells pulse, matching patient-management loading UX. */}
+        <div className="overflow-x-auto rounded-md border border-slate-200/80">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-gray-700">Title</TableHead>
+                <TableHead className="whitespace-nowrap text-gray-700">When</TableHead>
+                <TableHead className="text-gray-700">Category</TableHead>
+                <TableHead className="text-gray-700">Doctor</TableHead>
+                <TableHead className="text-gray-700">Location</TableHead>
+                <TableHead className="text-gray-700">Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {Array.from({ length: 3 }).map((_, i) => (
+                <TableRow key={i}>
+                  {Array.from({ length: 6 }).map((__, j) => (
+                    <TableCell key={j}>
+                      <Skeleton className="h-4 w-full rounded" aria-hidden />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        {Array.from({ length: 10 }).map((_, i) => (
-          <div key={i} className="space-y-1.5">
-            <Skeleton className="h-3 w-24" />
-            <Skeleton className="h-4 w-full" />
-          </div>
-        ))}
-      </div>
       <div className="space-y-2">
-        <Skeleton className="h-4 w-40" />
-        <Skeleton className="h-24 w-full rounded-md" />
-      </div>
-      <div className="space-y-2">
-        <Skeleton className="h-4 w-28" />
+        <SectionHeading icon={History}>Activities</SectionHeading>
         <Skeleton className="h-20 w-full rounded-md" />
       </div>
       <div className="space-y-2">
-        <Skeleton className="h-4 w-44" />
-        <Skeleton className="h-16 w-full rounded-md" />
+        <SectionHeading icon={Receipt}>Invoices (Via Appointments)</SectionHeading>
+        {/* Same static-frame table skeleton behavior as appointments for consistent hydration-safe loading. */}
+        <div className="overflow-x-auto rounded-md border border-slate-200/80">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-gray-700">Amount</TableHead>
+                <TableHead className="text-gray-700">Description</TableHead>
+                <TableHead className="text-gray-700">Appointment</TableHead>
+                <TableHead className="text-gray-700">Status</TableHead>
+                <TableHead className="whitespace-nowrap text-gray-700">Due</TableHead>
+                <TableHead className="whitespace-nowrap text-gray-700">Paid</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {Array.from({ length: 3 }).map((_, i) => (
+                <TableRow key={i}>
+                  {Array.from({ length: 6 }).map((__, j) => (
+                    <TableCell key={j}>
+                      <Skeleton className="h-4 w-full rounded" aria-hidden />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </div>
     </div>
   );
 }
 
-export function PatientDetailScreen({ patientId }: { patientId: string }) {
+type PatientDetailScreenProps = {
+  patientId: string;
+  /**
+   * Server-prefetched patient record — seeds queryKeys.patients.detail(patientId)
+   * so usePatient() finds data immediately without a network request.
+   */
+  initialPatient?: Patient | null;
+  /**
+   * Server-prefetched snapshot (appointments, activities, invoices) — seeds
+   * queryKeys.patients.snapshot(patientId) so the tables render on first paint.
+   */
+  initialSnapshot?: PatientSnapshot | null;
+};
+
+export function PatientDetailScreen({
+  patientId,
+  initialPatient,
+  initialSnapshot,
+}: PatientDetailScreenProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const mode = searchParams.get("mode") === "edit" ? "edit" : "view";
+
+  /**
+   * Seed the TanStack Query cache with server-prefetched data before the first
+   * paint. useLayoutEffect fires synchronously after DOM mutations so the hooks
+   * below (usePatient / usePatientSnapshot) find their data already populated —
+   * no loading flash, no extra round-trip on first visit.
+   */
+  useLayoutEffect(() => {
+    if (initialPatient != null) {
+      queryClient.setQueryData(queryKeys.patients.detail(patientId), initialPatient);
+    }
+    if (initialSnapshot != null) {
+      queryClient.setQueryData(queryKeys.patients.snapshot(patientId), initialSnapshot);
+    }
+  }, [queryClient, patientId, initialPatient, initialSnapshot]);
+
   const { data: patient, isLoading, isError, error } = usePatient(patientId);
   const snap = usePatientSnapshot(patientId);
   const { deletePatient, isDeleting, isUpdating } = usePatients();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    // Hydration guard: defer mounted flip to next frame to avoid sync setState-in-effect lint.
+    const raf = window.requestAnimationFrame(() => setIsMounted(true));
+    return () => window.cancelAnimationFrame(raf);
+  }, []);
 
   const setMode = (next: "view" | "edit") => {
     const q = new URLSearchParams(searchParams.toString());
@@ -129,6 +304,7 @@ export function PatientDetailScreen({ patientId }: { patientId: string }) {
   };
 
   const ready = Boolean(patient) && !isLoading;
+  const showLiveData = isMounted && ready;
   const p = patient as Patient | undefined;
   const nameLabel = p ? `${p.firstname} ${p.lastname}`.trim() : "";
   const fallbackText = p ? nameLabel || p.email || "?" : "?";
@@ -152,19 +328,14 @@ export function PatientDetailScreen({ patientId }: { patientId: string }) {
     <div className="space-y-4 pb-16 text-gray-700">
       <PageHeader
         title={
-          ready ? (
-            nameLabel || "—"
+          showLiveData ? (
+            <span className="block min-h-8 sm:min-h-9">{nameLabel || "—"}</span>
           ) : (
             <Skeleton className="h-8 w-56 max-w-full sm:h-9" aria-hidden />
           )
         }
-        description={
-          ready ? (
-            "Patient Record — Schema Fields, Clinical Profile, Related Activity"
-          ) : (
-            <Skeleton className="mt-1 h-4 w-full max-w-lg" aria-hidden />
-          )
-        }
+        // Static descriptor text should not flicker on refresh.
+        description="Patient Record — Schema Fields, Clinical Profile, Related Activity"
         actions={
           <PrefetchingLink
             href="/control-panel/patient-management"
@@ -182,20 +353,20 @@ export function PatientDetailScreen({ patientId }: { patientId: string }) {
           skyGlassTableFrameClass
         )}
       >
-        <CardHeader className="px-0">
-          <CardTitle className="text-gray-700">
-            {ready ? "Patient Details" : <Skeleton className="h-6 w-40" aria-hidden />}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6 px-0 text-gray-700">
+        <CardContent className="space-y-6 px-4 sm:px-6 text-gray-700">
+          {/* Keep section title inside the same content flow to avoid top-strip jump on refresh. */}
+          <div className="min-h-6">
+            {/* Static heading should stay rendered even while values are loading. */}
+            <h2 className="text-lg font-semibold text-gray-700">Patient Details</h2>
+          </div>
           <div className="flex items-center gap-4">
-            {ready ? (
+            {showLiveData ? (
               <UserAvatar src={avatarSrc} fallbackText={fallbackText} sizeClassName="h-16 w-16" />
             ) : (
               <Skeleton className="h-16 w-16 shrink-0 rounded-full" aria-hidden />
             )}
             <div className="min-w-0 flex-1">
-              {ready ? (
+              {showLiveData ? (
                 <>
                   <p className="text-lg font-semibold text-gray-700">{nameLabel || "—"}</p>
                   <p className="text-sm text-gray-600">{p!.email ?? "—"}</p>
@@ -221,11 +392,16 @@ export function PatientDetailScreen({ patientId }: { patientId: string }) {
                   </div>
                 </>
               ) : (
-                <div className="space-y-2">
-                  <Skeleton className="h-5 w-44" />
-                  <Skeleton className="h-4 w-56" />
-                  <div className="flex gap-2 pt-1">
-                    <Skeleton className="h-6 w-14 rounded-full" />
+                <div>
+                  {/*
+                   * No space-y here — Tailwind resets <p> margin to 0, so real text blocks
+                   * stack with no gap. Skeleton must do the same to avoid a 4px height surplus
+                   * that shifts all content below on the skeleton→live swap.
+                   */}
+                  <Skeleton className="h-7 w-40 rounded-md" />
+                  <Skeleton className="mt-0 h-5 w-52 rounded-md" />
+                  <div className="mt-1 flex flex-wrap items-center gap-2">
+                    <Skeleton className="h-6 w-16 rounded-full" />
                     <Skeleton className="h-6 w-20 rounded-full" />
                   </div>
                 </div>
@@ -233,14 +409,17 @@ export function PatientDetailScreen({ patientId }: { patientId: string }) {
             </div>
           </div>
 
-          {!ready ? (
+          {!showLiveData ? (
             <PatientDetailBodySkeleton />
           ) : mode === "view" ? (
             <>
               <dl className="grid gap-3 text-sm sm:grid-cols-2">
                 <div className="sm:col-span-2 rounded-xl border border-slate-200/80 bg-slate-50/50 px-3 py-2 text-gray-700">
                   <div className="flex items-center gap-2 text-xs font-medium text-gray-500">
-                    <CalendarClock className="h-3.5 w-3.5 shrink-0 text-sky-600" aria-hidden />
+                    {/* Keep audit icon style consistent with all other schema icon circles. */}
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-sky-200/70 bg-sky-50/80 shadow-[0_2px_8px_rgba(14,165,233,0.15)]">
+                      <CalendarClock className="h-3 w-3 text-sky-600" aria-hidden />
+                    </span>
                     Record Audit
                   </div>
                   <dd className="mt-1 space-y-1 text-gray-700">
@@ -340,32 +519,86 @@ export function PatientDetailScreen({ patientId }: { patientId: string }) {
               <div className="space-y-3">
                 <SectionHeading icon={Calendar}>Related Appointments</SectionHeading>
                 {snap.isLoading ? (
-                  <Skeleton className="h-24 w-full rounded-md" aria-hidden />
+                  /*
+                   * Inline skeleton mirrors the 6-column table shape so there is no
+                   * layout jump when real data loads. Only the body rows pulse — header stays stable.
+                   */
+                  <div className="overflow-x-auto rounded-md border border-slate-200/80">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          {["Title", "When", "Category", "Doctor", "Location", "Status"].map((h) => (
+                            <TableHead key={h} className="text-gray-700">{h}</TableHead>
+                          ))}
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {Array.from({ length: 3 }).map((_, i) => (
+                          <TableRow key={i}>
+                            {Array.from({ length: 6 }).map((__, j) => (
+                              <TableCell key={j}>
+                                <Skeleton className="h-4 w-full rounded" aria-hidden />
+                              </TableCell>
+                            ))}
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 ) : (
                   <div className="overflow-x-auto rounded-md border border-slate-200/80">
                     <Table>
                       <TableHeader>
                         <TableRow>
                           <TableHead className="text-gray-700">Title</TableHead>
-                          <TableHead className="text-gray-700">When</TableHead>
+                          <TableHead className="whitespace-nowrap text-gray-700">When</TableHead>
                           <TableHead className="text-gray-700">Category</TableHead>
+                          <TableHead className="text-gray-700">Referring Doctor</TableHead>
+                          <TableHead className="text-gray-700">Location</TableHead>
                           <TableHead className="text-gray-700">Status</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {(snap.data?.appointments ?? []).slice(0, 12).map((a) => (
                           <TableRow key={a.id}>
-                            <TableCell className="font-medium text-gray-700">{a.title}</TableCell>
-                            <TableCell className="whitespace-nowrap text-sm text-gray-700">
-                              {a.start ? format(new Date(a.start), "PPp") : "—"}
+                            {/* Title — deep-links to appointment detail */}
+                            <TableCell className="font-medium">
+                              <EntityTitleLink
+                                href={`/control-panel/appointments/${a.id}`}
+                                label={a.title}
+                              />
                             </TableCell>
-                            <TableCell className="text-gray-700">{a.category_label ?? "—"}</TableCell>
-                            <TableCell className="text-gray-700">{a.status ?? "—"}</TableCell>
+                            {/* When — start and end time on the same line */}
+                            <TableCell className="whitespace-nowrap text-xs text-gray-700">
+                              {a.start ? format(new Date(a.start), "PPp") : "—"}
+                              {a.end ? ` – ${format(new Date(a.end), "p")}` : ""}
+                            </TableCell>
+                            <TableCell className="text-xs text-gray-700">{a.category_label ?? "—"}</TableCell>
+                            {/* Doctor — name link + email line, same pattern as PatientManagement table */}
+                            <TableCell>
+                              {a.doctor_id && a.doctor_display ? (
+                                <div className="min-w-0">
+                                  <EntityTitleLink
+                                    href={`/control-panel/doctors/${a.doctor_id}`}
+                                    label={a.doctor_display}
+                                  />
+                                  {a.doctor_email && (
+                                    <p className="truncate text-xs text-gray-500">{a.doctor_email}</p>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-xs text-gray-500">—</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-xs text-gray-700">{a.location ?? "—"}</TableCell>
+                            <TableCell>
+                              <AppointmentStatusBadge status={a.status} />
+                            </TableCell>
                           </TableRow>
                         ))}
                         {(snap.data?.appointments ?? []).length === 0 && (
                           <TableRow>
-                            <TableCell colSpan={4} className="text-center text-gray-500">
+                            <TableCell colSpan={6} className="text-center text-gray-500">
                               No Appointments
                             </TableCell>
                           </TableRow>
@@ -402,30 +635,84 @@ export function PatientDetailScreen({ patientId }: { patientId: string }) {
               <div className="space-y-3">
                 <SectionHeading icon={Receipt}>Invoices (Via Appointments)</SectionHeading>
                 {snap.isLoading ? (
-                  <Skeleton className="h-16 w-full rounded-md" aria-hidden />
+                  /*
+                   * Inline skeleton mirrors the 6-column invoice table shape so
+                   * there is no layout jump when real data loads.
+                   */
+                  <div className="overflow-x-auto rounded-md border border-slate-200/80">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          {["Amount", "Description", "Appointment", "Status", "Due", "Paid"].map((h) => (
+                            <TableHead key={h} className="text-gray-700">{h}</TableHead>
+                          ))}
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {Array.from({ length: 3 }).map((_, i) => (
+                          <TableRow key={i}>
+                            {Array.from({ length: 6 }).map((__, j) => (
+                              <TableCell key={j}>
+                                <Skeleton className="h-4 w-full rounded" aria-hidden />
+                              </TableCell>
+                            ))}
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 ) : (
                   <div className="overflow-x-auto rounded-md border border-slate-200/80">
                     <Table>
                       <TableHeader>
                         <TableRow>
                           <TableHead className="text-gray-700">Amount</TableHead>
+                          <TableHead className="text-gray-700">Description</TableHead>
+                          <TableHead className="text-gray-700">Appointment</TableHead>
                           <TableHead className="text-gray-700">Status</TableHead>
-                          <TableHead className="text-gray-700">Due</TableHead>
+                          <TableHead className="whitespace-nowrap text-gray-700">Due</TableHead>
+                          <TableHead className="whitespace-nowrap text-gray-700">Paid</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {(snap.data?.invoices ?? []).slice(0, 12).map((inv) => (
                           <TableRow key={inv.id}>
-                            <TableCell className="text-gray-700">
-                              {(inv.amount / 100).toFixed(2)} {inv.currency}
+                            {/* Amount — deep-links to invoice detail */}
+                            <TableCell className="font-medium tabular-nums">
+                              <EntityTitleLink
+                                href={`/control-panel/invoices/${inv.id}`}
+                                label={`${(inv.amount / 100).toFixed(2)} ${inv.currency.toUpperCase()}`}
+                              />
                             </TableCell>
-                            <TableCell className="text-gray-700">{inv.status}</TableCell>
-                            <TableCell className="text-gray-700">{inv.due_date ?? "—"}</TableCell>
+                            <TableCell className="max-w-[160px] truncate text-xs text-gray-700">
+                              {inv.description ?? "—"}
+                            </TableCell>
+                            {/* Appointment — deep-links to appointment detail when linked */}
+                            <TableCell>
+                              {inv.appointment_id ? (
+                                <EntityTitleLink
+                                  href={`/control-panel/appointments/${inv.appointment_id}`}
+                                  label="View"
+                                  className="text-xs"
+                                />
+                              ) : (
+                                <span className="text-xs text-gray-500">—</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <InvoiceStatusBadge status={inv.status} />
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap text-xs text-gray-700">
+                              {inv.due_date ? format(new Date(inv.due_date), "PP") : "—"}
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap text-xs text-gray-700">
+                              {inv.paid_at ? format(new Date(inv.paid_at), "PP") : "—"}
+                            </TableCell>
                           </TableRow>
                         ))}
                         {(snap.data?.invoices ?? []).length === 0 && (
                           <TableRow>
-                            <TableCell colSpan={3} className="text-center text-gray-500">
+                            <TableCell colSpan={6} className="text-center text-gray-500">
                               No Invoices
                             </TableCell>
                           </TableRow>
@@ -448,12 +735,23 @@ export function PatientDetailScreen({ patientId }: { patientId: string }) {
         </CardContent>
       </Card>
 
-      <div className="fixed bottom-0 left-0 right-0 z-10 border-t border-sky-100/60 bg-white/95 py-3 text-gray-700 backdrop-blur supports-[backdrop-filter]:bg-white/85">
+      <div className="fixed bottom-0 left-0 right-0 z-10 border-t border-sky-100/60 bg-white/95 py-3 text-gray-700 backdrop-blur supports-backdrop-filter:bg-white/85">
         <div className={cn(dashboardShellClass, "flex flex-wrap items-center justify-between gap-2")}>
-          {!ready ? (
-            <div className="flex w-full justify-between gap-2">
-              <Skeleton className="h-10 w-36 rounded-full" />
-              <Skeleton className="h-10 w-40 rounded-full" />
+          {!showLiveData ? (
+            <div className="flex w-full items-center justify-between gap-2">
+              {/* Keep navigation action static while loading to match view mode and avoid flicker. */}
+              <PrefetchingLink
+                href="/control-panel/patient-management"
+                className={cn(skyGlassBackButtonClass, "no-underline")}
+              >
+                <List className="shrink-0" aria-hidden />
+                Back To List
+              </PrefetchingLink>
+              {/* Mirror the final action-group footprint: Update Profile + Delete */}
+              <div className="flex flex-wrap gap-2">
+                <Skeleton className="h-10 w-36 rounded-full" />
+                <Skeleton className="h-10 w-24 rounded-full" />
+              </div>
             </div>
           ) : mode === "view" ? (
             <>

@@ -7,8 +7,11 @@
  *   - `isMounted` + `requestAnimationFrame` guard prevents hydration flicker on first paint.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 import { useInsights } from "@/hooks/useInsights";
+import type { InsightsPayload } from "@/lib/insights-data";
 import {
   Card,
   CardContent,
@@ -46,7 +49,30 @@ const GLASS: Record<string, string> = {
   slate:   "rounded-[28px] border border-slate-400/20 bg-gradient-to-br from-slate-500/10 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(100,116,139,0.1)]",
 };
 
-export default function AnalyticsPage() {
+type AnalyticsPageProps = {
+  /**
+   * Server-prefetched insights — seeds queryKeys.insights.all so useInsights()
+   * finds data immediately, charts render on first paint with no loading flash.
+   */
+  initialInsights?: InsightsPayload | null;
+};
+
+export default function AnalyticsPage({ initialInsights }: AnalyticsPageProps = {}) {
+  const queryClient = useQueryClient();
+
+  /**
+   * Seed the insights cache with server-prefetched data before first paint.
+   * useLayoutEffect fires synchronously so useInsights() below finds the data
+   * already in cache — no skeleton flash on first load.
+   */
+  useLayoutEffect(() => {
+    if (initialInsights != null) {
+      // Seed both keys: useInsights (primary) and useAnalytics (legacy alias, same data shape).
+      queryClient.setQueryData(queryKeys.insights.all, initialInsights);
+      queryClient.setQueryData(queryKeys.analytics.all, initialInsights);
+    }
+  }, [queryClient, initialInsights]);
+
   const { data, isLoading } = useInsights();
 
   /**

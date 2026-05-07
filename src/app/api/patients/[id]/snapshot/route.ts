@@ -40,7 +40,11 @@ export async function GET(_req: NextRequest, context: RouteContext) {
       where: { patient_id: id },
       orderBy: { start: "desc" },
       take: 50,
-      include: { category: true },
+      include: {
+        category: true,
+        // Include owner (doctor) so the detail screen can render doctor name + email + link.
+        owner: { select: { id: true, display_name: true, email: true } },
+      },
     });
 
     const appointmentIds = appointmentsRaw.map((a) => a.id);
@@ -66,6 +70,10 @@ export async function GET(_req: NextRequest, context: RouteContext) {
     const appointments = appointmentsRaw.map((a) => ({
       ...serializeAppointment(a),
       category_label: a.category?.label ?? null,
+      // Doctor fields surfaced for the appointments table on the patient detail screen.
+      doctor_id: a.owner?.id ?? null,
+      doctor_display: a.owner?.display_name ?? null,
+      doctor_email: a.owner?.email ?? null,
     }));
 
     const activities = activitiesRaw.map(serializeActivitySnapshot);

@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import Image from "next/image";
 import { notify } from "@/lib/notify";
+import { z } from "zod";
 import { loginRequestSchema } from "@/lib/schemas/auth";
 import {
   DropdownMenu,
@@ -154,7 +155,8 @@ export default function Login({ redirect = null }: LoginProps) {
     try {
       const parsed = loginRequestSchema.safeParse({ email, password });
       if (!parsed.success) {
-        const fieldErrors = parsed.error.flatten().fieldErrors;
+        // z.flattenError is the Zod v4 replacement for the deprecated err.flatten()
+        const fieldErrors = z.flattenError(parsed.error).fieldErrors;
         setErrors({
           email: fieldErrors.email?.[0],
           password: fieldErrors.password?.[0],

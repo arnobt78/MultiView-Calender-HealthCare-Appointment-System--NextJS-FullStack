@@ -1,3 +1,12 @@
+/**
+ * Appointment validation schemas.
+ *
+ * Zod v4 migration note:
+ *  - `z.url("message")` replaces the deprecated `z.string().url("message")`.
+ *    `z.url()` is a standalone string-based URL validator that chains the same
+ *    way (e.g. inside `z.array()`).
+ */
+
 import { z } from "zod";
 import { isoDateSchema, notesSchema, statusSchema, titleSchema } from "./common";
 
@@ -11,7 +20,8 @@ export const appointmentCreateSchema = z
     category: z.string().trim().optional().nullable(),
     notes: notesSchema,
     status: statusSchema.optional().nullable(),
-    attachements: z.array(z.string().url("Invalid attachment URL")).max(20).optional(),
+    // z.url() is the Zod v4 standalone URL validator (replaces .string().url())
+    attachements: z.array(z.url("Invalid attachment URL")).max(20).optional(),
   })
   .refine((data) => new Date(data.end).getTime() > new Date(data.start).getTime(), {
     message: "End date must be after start date",

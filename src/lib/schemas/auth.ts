@@ -1,12 +1,20 @@
+/**
+ * Auth request validation schemas (login + registration).
+ *
+ * Zod v4 migration note:
+ *  - `z.email("message")` replaces the deprecated `z.string().email("message")`.
+ */
+
 import { z } from "zod";
 
 export const loginRequestSchema = z.object({
-  email: z.string().trim().email("Invalid email format").max(255),
+  // z.email() is the Zod v4 standalone email validator
+  email: z.email("Invalid email format").trim().max(255),
   password: z.string().min(6, "Password must be at least 6 characters").max(128),
 });
 
 export const registerRequestSchema = z.object({
-  email: z.string().trim().email("Invalid email format").max(255),
+  email: z.email("Invalid email format").trim().max(255),
   password: z
     .string()
     .min(6, "Password must be at least 6 characters")

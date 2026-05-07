@@ -126,6 +126,21 @@ export const metadata: Metadata = {
 import AuthShell from "./AuthShell";
 
 /**
+ * Force all routes to render dynamically (no static pre-rendering).
+ *
+ * This has two benefits:
+ * 1. `useSearchParams()` works in any client component without needing a
+ *    `<Suspense>` wrapper — removing the blank-before-Suspense flash on the
+ *    dashboard route.
+ * 2. Server pages that pre-fetch Prisma data always return fresh data per
+ *    request rather than a stale static snapshot.
+ *
+ * All routes in this app are authenticated, so there is no static content
+ * to lose by opting out of static generation globally.
+ */
+export const dynamic = "force-dynamic";
+
+/**
  * RootLayout Component
  * 
  * This is the root layout component that wraps all pages in the Next.js App Router.

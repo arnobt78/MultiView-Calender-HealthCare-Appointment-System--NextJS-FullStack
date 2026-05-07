@@ -8,8 +8,9 @@
  *   - `isMounted` + `requestAnimationFrame` guard prevents hydration flicker on first paint.
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useLayoutEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { PortalPrefetchData } from "@/lib/server-prefetch";
 import { apiClient, handleApiError } from "@/lib/api-client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -317,7 +318,28 @@ function AppointmentTimeline({
   );
 }
 
-export default function PatientPortalPage() {
+type PatientPortalPageProps = {
+  /**
+   * Server-prefetched portal data — seeds queryKeys.patientPortal.all so the
+   * profile card and appointment timeline render on first paint with no loading flash.
+   */
+  initialPortalData?: PortalPrefetchData | null;
+};
+
+export default function PatientPortalPage({ initialPortalData }: PatientPortalPageProps = {}) {
+  const queryClient = useQueryClient();
+
+  /**
+   * Seed the portal data cache before the first paint.
+   * useLayoutEffect fires synchronously so the useQuery below finds data already
+   * in cache — profile and timeline render instantly without a skeleton phase.
+   */
+  useLayoutEffect(() => {
+    if (initialPortalData != null) {
+      queryClient.setQueryData(queryKeys.patientPortal.all, initialPortalData);
+    }
+  }, [queryClient, initialPortalData]);
+
   const { data, isLoading, isError, error } = useQuery({
     queryKey: queryKeys.patientPortal.all,
     queryFn: () => apiClient<PortalData>("/api/patient-portal"),

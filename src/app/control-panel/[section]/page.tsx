@@ -1,5 +1,16 @@
+// Control Panel section page — Server Component (async)
+// Pre-fetches dashboard overview data and the patient list so ControlPanelPage
+// can seed the TanStack Query cache on first render — overview and patient tabs
+// both show data instantly without a loading flash.
+
 import ControlPanelPage from "@/components/pages/ControlPanelPage";
 import { getSessionUser } from "@/lib/session";
+import {
+  prefetchDashboardOverview,
+  prefetchPatients,
+} from "@/lib/server-prefetch";
+import type { Patient } from "@/types/types";
+import type { DashboardOverview } from "@/hooks/useDashboardOverview";
 
 const SECTION_TO_TAB: Record<string, string> = {
   "dashboard-overview": "overview",
@@ -28,5 +39,25 @@ export default async function Page({
   const { section } = await params;
   const sessionUser = await getSessionUser();
   const initialTab = SECTION_TO_TAB[section] ?? "overview";
-  return <ControlPanelPage initialSession={sessionUser} initialTab={initialTab} />;
+
+  // Pre-fetch overview + patient list in parallel so ControlPanelPage seeds
+  // the cache immediately — both tabs render from cache on first visit.
+  let initialDashboardOverview: DashboardOverview | null = null;
+  let initialPatients: Patient[] | null = null;
+
+  if (sessionUser) {
+    [initialDashboardOverview, initialPatients] = await Promise.all([
+      prefetchDashboardOverview(sessionUser.userId),
+      prefetchPatients(),
+    ]);
+  }
+
+  return (
+    <ControlPanelPage
+      initialSession={sessionUser}
+      initialTab={initialTab}
+      initialDashboardOverview={initialDashboardOverview}
+      initialPatients={initialPatients}
+    />
+  );
 }

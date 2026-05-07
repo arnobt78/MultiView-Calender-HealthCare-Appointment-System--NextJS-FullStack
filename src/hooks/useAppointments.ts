@@ -7,6 +7,8 @@ import {
   invalidateInvoicesAndOverview,
   invalidateNotificationsData,
   invalidatePatientDetailAndSnapshot,
+  invalidateInsightsAndAnalytics,
+  invalidateDashboardOverview,
 } from "@/lib/query-client";
 import {
   fetchAssignees,
@@ -244,6 +246,9 @@ export function useAppointments() {
         invalidateActivitiesList(queryClient),
         invalidateNotificationsData(queryClient),
         invalidateInvoicesAndOverview(queryClient, { patientId }),
+        // Insights charts and dashboard counters depend on appointment totals.
+        invalidateInsightsAndAnalytics(queryClient),
+        invalidateDashboardOverview(queryClient),
       ]);
       const deleted = context?.deleted;
       notify.crud({
@@ -288,7 +293,12 @@ export function useAppointments() {
       queryClient.setQueryData<FullAppointment[]>(queryKeys.appointments.all, (old = []) =>
         old.map((item) => (item.id === appt.id ? { ...item, ...appt } : item))
       );
-      await invalidatePatientDetailAndSnapshot(queryClient, appt.patient ?? undefined);
+      // Status changes affect done/pending/alert counters in overview and insights by-status chart.
+      await Promise.all([
+        invalidatePatientDetailAndSnapshot(queryClient, appt.patient ?? undefined),
+        invalidateInsightsAndAnalytics(queryClient),
+        invalidateDashboardOverview(queryClient),
+      ]);
       notify.success({
         title: "Status updated",
         subtitle: `"${getSafeAppointmentTitle(appt)}" is now marked as ${getStatusLabel(

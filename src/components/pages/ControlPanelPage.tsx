@@ -1,7 +1,11 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useLayoutEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
+import type { Patient } from "@/types/types";
+import type { DashboardOverview } from "@/hooks/useDashboardOverview";
 import PatientDetailView from "./PatientDetailView";
 import TelehealthDashboard from "./TelehealthDashboard";
 import { useAppStore } from "@/store/useAppStore";
@@ -176,9 +180,19 @@ const SEGMENT_TO_TAB = {
 } as Record<string, string>;
 
 type ControlPanelPageProps = {
-  /** Optional session from SSR to avoid client round-trip */
+  /** Optional session from SSR — kept for future use (e.g. seeding auth cache). */
   initialSession?: { userId: string; email: string } | null;
   initialTab?: string;
+  /**
+   * Server-prefetched dashboard overview — seeds queryKeys.dashboard.overview
+   * so the Overview tab renders from cache on first visit.
+   */
+  initialDashboardOverview?: DashboardOverview | null;
+  /**
+   * Server-prefetched patient list — seeds queryKeys.patients.all
+   * so the Patient Management tab renders from cache on first visit.
+   */
+  initialPatients?: Patient[] | null;
 };
 
 export function PatientsTab() {
@@ -204,9 +218,31 @@ export function PatientsTab() {
   return <PatientManagement />;
 }
 
-export default function ControlPanelPage({ initialSession, initialTab }: ControlPanelPageProps) {
+export default function ControlPanelPage({
+  initialSession,
+  initialTab,
+  initialDashboardOverview,
+  initialPatients,
+}: ControlPanelPageProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const queryClient = useQueryClient();
+
+  /**
+   * Seed the TanStack Query cache with server-prefetched data.
+   * useLayoutEffect runs before paint so child components that call
+   * useDashboardOverview() / usePatients() find data already in cache —
+   * no loading flash on the Overview or Patient Management tabs.
+   */
+  useLayoutEffect(() => {
+    if (initialDashboardOverview != null) {
+      queryClient.setQueryData(queryKeys.dashboard.overview, initialDashboardOverview);
+    }
+    if (initialPatients != null) {
+      queryClient.setQueryData(queryKeys.patients.all, initialPatients);
+    }
+  }, [queryClient, initialDashboardOverview, initialPatients]);
+
   const resolvedInitialTab = useMemo(() => {
     if (initialTab && TAB_TO_SEGMENT[initialTab]) return initialTab;
     const segment = pathname.split("/")[2] || "";

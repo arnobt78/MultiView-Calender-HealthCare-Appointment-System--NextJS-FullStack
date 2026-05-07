@@ -10,16 +10,16 @@ import { hashPassword, generateToken, getUserByEmail, createUser, generateVerifi
 import { sendInvitationEmail } from "@/lib/email";
 import { registerRequestSchema } from "@/lib/schemas/auth";
 import { zodBadRequest } from "@/lib/schemas/parse";
-import { checkRateLimit, getClientIP } from "@/lib/rateLimit";
+import { checkRateLimit, getClientIP } from "@/lib/rate-limit";
 import { RATE_LIMITS } from "@/lib/constants";
 
 export async function POST(req: NextRequest) {
   try {
     // Rate limiting: prevent spam registrations
     const clientIP = getClientIP(req);
-    const rateLimit = checkRateLimit(
-      `register:${clientIP}`, 
-      RATE_LIMITS.REGISTER.maxRequests, 
+    const rateLimit = await checkRateLimit(
+      `register:${clientIP}`,
+      RATE_LIMITS.REGISTER.maxRequests,
       RATE_LIMITS.REGISTER.windowMs
     );
     
