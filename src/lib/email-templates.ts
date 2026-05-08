@@ -59,7 +59,7 @@ function wrapTemplate(content: string): string {
   <div style="${baseStyle}">
     ${content}
     <div style="${footerStyle}">
-      <p>Vocare Calendar — Appointment Management</p>
+      <p>HealthCal Pro — Appointment Management</p>
       <p>This is an automated message. Please do not reply directly.</p>
     </div>
   </div>
@@ -164,7 +164,7 @@ export function welcomeEmailTemplate({
   loginUrl: string;
 }): { subject: string; html: string } {
   return {
-    subject: `Welcome to Vocare Calendar, ${userName}!`,
+    subject: `Welcome to HealthCal Pro, ${userName}!`,
     html: wrapTemplate(`
       <div style="${headerStyle}">
         <h1 style="color:#ffffff;margin:0;font-size:24px;">🎉 Welcome!</h1>
@@ -192,7 +192,7 @@ export function emailVerificationTemplate({
   verifyUrl: string;
 }): { subject: string; html: string } {
   return {
-    subject: "Verify your email — Vocare Calendar",
+    subject: "Verify your email — HealthCal Pro",
     html: wrapTemplate(`
       <div style="${headerStyle}">
         <h1 style="color:#ffffff;margin:0;font-size:24px;">✉️ Verify Your Email</h1>
@@ -222,7 +222,7 @@ export function passwordResetTemplate({
   resetUrl: string;
 }): { subject: string; html: string } {
   return {
-    subject: "Reset your password — Vocare Calendar",
+    subject: "Reset your password — HealthCal Pro",
     html: wrapTemplate(`
       <div style="${headerStyle}">
         <h1 style="color:#ffffff;margin:0;font-size:24px;">🔑 Password Reset</h1>

@@ -36,13 +36,13 @@ export async function GET() {
     const lines: string[] = [
       "BEGIN:VCALENDAR",
       "VERSION:2.0",
-      "PRODID:-//Vocare Calendar//EN",
+      "PRODID:-//HealthCal Pro//EN",
       "CALSCALE:GREGORIAN",
       "METHOD:PUBLISH",
     ];
 
     for (const appt of appointments) {
-      const uid = `${appt.id}@vocare`;
+      const uid = `${appt.id}@healthcalpro`;
       lines.push("BEGIN:VEVENT");
       lines.push(`UID:${uid}`);
       lines.push(`DTSTAMP:${now}`);

@@ -26,9 +26,13 @@ export function isSecretaryRole(role: string | null | undefined): boolean {
   return role === "secretary";
 }
 
-/** Staff = any role that is not patient. */
+/**
+ * Staff = admin | doctor | secretary.
+ * Explicitly enumerated so null/undefined/"unknown" roles are never treated as staff,
+ * which would open RBAC bypass vectors via !isPatientRole(null) → true.
+ */
 export function isStaffRole(role: string | null | undefined): boolean {
-  return !isPatientRole(role);
+  return role === "admin" || role === "doctor" || role === "secretary";
 }
 
 /**

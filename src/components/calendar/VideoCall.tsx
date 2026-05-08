@@ -42,7 +42,7 @@ export default function VideoCall({
   };
 
   // Generate a unique room name from the appointment ID
-  const roomName = `vocare-${appointmentId.replace(/-/g, "").substring(0, 16)}`;
+  const roomName = `healthcalpro-${appointmentId.replace(/-/g, "").substring(0, 16)}`;
   const jitsiUrl = `https://${jitsiDomain}/${roomName}#config.prejoinPageEnabled=false&config.startWithAudioMuted=true`;
 
   return (

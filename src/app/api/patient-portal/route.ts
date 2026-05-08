@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import { isValidUUID } from "@/lib/validation";
 
 export async function GET() {
   try {
@@ -44,7 +45,7 @@ export async function GET() {
     });
 
     return NextResponse.json({ appointments, patient });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Patient portal error:", error);
     return NextResponse.json({ error: "Failed to fetch history" }, { status: 500 });
   }
@@ -57,13 +58,38 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { title, start, end, notes, doctorId } = await request.json();
+    const body = await request.json() as {
+      title?: unknown; start?: unknown; end?: unknown; notes?: unknown; doctorId?: unknown;
+    };
+    const { title, start, end, notes, doctorId } = body;
 
-    if (!title || !start || !end || !doctorId) {
+    if (!title || typeof title !== "string" || !start || !end || !doctorId) {
       return NextResponse.json(
         { error: "title, start, end, and doctorId are required" },
         { status: 400 }
       );
+    }
+
+    // Validate doctorId is a UUID and points to a real user with doctor role.
+    if (typeof doctorId !== "string" || !isValidUUID(doctorId)) {
+      return NextResponse.json({ error: "Invalid doctorId" }, { status: 400 });
+    }
+    const doctor = await prisma.user.findUnique({
+      where: { id: doctorId },
+      select: { id: true, role: true },
+    });
+    if (!doctor || doctor.role !== "doctor") {
+      return NextResponse.json({ error: "Doctor not found" }, { status: 404 });
+    }
+
+    // Parse and validate dates before Prisma to avoid Invalid Date silently storing epoch.
+    const startDate = new Date(String(start));
+    const endDate = new Date(String(end));
+    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+      return NextResponse.json({ error: "Invalid start or end date" }, { status: 400 });
+    }
+    if (endDate <= startDate) {
+      return NextResponse.json({ error: "end must be after start" }, { status: 400 });
     }
 
     // Find patient record
@@ -77,9 +103,9 @@ export async function POST(request: NextRequest) {
     const appointment = await prisma.appointment.create({
       data: {
         title,
-        start: new Date(start),
-        end: new Date(end),
-        notes: notes || null,
+        start: startDate,
+        end: endDate,
+        notes: typeof notes === "string" ? notes : null,
         user_id: doctorId, // Doctor owns the appointment
         patient_id: patient?.id || null,
         status: "pending",
@@ -103,7 +129,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ appointment }, { status: 201 });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Patient booking error:", error);
     return NextResponse.json({ error: "Failed to book appointment" }, { status: 500 });
   }

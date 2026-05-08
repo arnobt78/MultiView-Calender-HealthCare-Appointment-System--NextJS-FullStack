@@ -19,7 +19,10 @@
     "db:seed-test-user": "tsx scripts/seed-test-user.ts",
     "db:seed-demo-clinical": "tsx scripts/seed-demo-patient-clinical.ts",
     "db:clear": "tsx scripts/db-clear.ts",
-    "test:smoke-invalidation": "tsx scripts/smoke-cross-tab-invalidation.ts"
+    "test:smoke-invalidation": "tsx scripts/smoke-cross-tab-invalidation.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
@@ -76,12 +79,14 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/uuid": "^10.0.0",
+    "@vitest/coverage-v8": "^4.1.5",
     "eslint": "^9.39.4",
     "eslint-config-next": "^16.2.4",
     "tailwindcss": "^4.2.2",
     "tsx": "^4.21.0",
     "tw-animate-css": "^1.3.4",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.5"
   },
   "overrides": {
     "undici": ">=7.24.0",

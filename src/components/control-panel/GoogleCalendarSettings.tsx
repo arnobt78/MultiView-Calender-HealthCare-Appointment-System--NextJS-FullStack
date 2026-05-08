@@ -187,7 +187,7 @@ export default function GoogleCalendarSettings() {
           </CardHeader>
           <CardContent>
             <Button variant="outline" className="gap-2" asChild>
-              <a href={exportUrl} download="vocare-appointments.ics">
+              <a href={exportUrl} download="healthcalpro-appointments.ics">
                 <Download className="h-4 w-4" />
                 Download .ics
               </a>

@@ -91,7 +91,7 @@ function CreateOrgDialog({ onCreate }: { onCreate: (name: string) => void }) {
             <Label htmlFor="org-name">Name</Label>
             <Input
               id="org-name"
-              placeholder="e.g. Vocare Clinic"
+              placeholder="e.g. HealthCal Pro Clinic"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required

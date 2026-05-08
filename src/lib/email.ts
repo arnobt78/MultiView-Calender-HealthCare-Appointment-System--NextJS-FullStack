@@ -57,7 +57,7 @@ function createTransporter() {
 export const transporter = createTransporter();
 
 /** The "from" address for outgoing emails */
-const fromAddress = process.env.EMAIL_FROM || gmailUser || brevoUser || "noreply@vocare.app";
+const fromAddress = process.env.EMAIL_FROM || gmailUser || brevoUser || "noreply@healthcalpro.app";
 
 /**
  * Send an invitation email to a recipient.

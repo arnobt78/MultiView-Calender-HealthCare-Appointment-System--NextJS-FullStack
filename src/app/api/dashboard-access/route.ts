@@ -18,9 +18,16 @@ function serializeDashboardAccess(d: {
   permission: string | null;
   invited_by_id: string | null;
 }) {
+  // invitation_token is intentionally excluded — it's a one-time secret used
+  // only in the accept-invitation flow and must not be broadcast to all callers.
   return {
-    ...d,
+    id: d.id,
     created_at: d.created_at?.toISOString?.(),
+    owner_user_id: d.owner_user_id,
+    invited_user_id: d.invited_user_id,
+    invited_email: d.invited_email,
+    status: d.status,
+    permission: d.permission,
     invited_by: d.invited_by_id,
   };
 }
