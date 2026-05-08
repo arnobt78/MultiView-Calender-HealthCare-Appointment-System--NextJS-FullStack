@@ -9,12 +9,19 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { PAGINATION } from "@/lib/constants";
 import { serializeUser } from "@/lib/serializers";
+import { getUserRole, isPatientRole } from "@/lib/rbac";
 
 export async function GET(req: NextRequest) {
   try {
     const sessionUser = await getSessionUser();
     if (!sessionUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Patient role must not enumerate staff — this endpoint is for staff use only.
+    const callerRole = await getUserRole(sessionUser.userId);
+    if (isPatientRole(callerRole)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const { searchParams } = new URL(req.url);

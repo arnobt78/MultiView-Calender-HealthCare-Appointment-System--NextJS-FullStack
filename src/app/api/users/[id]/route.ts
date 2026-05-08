@@ -30,6 +30,14 @@ export async function GET(req: NextRequest, context: RouteContext) {
     const { id } = await context.params;
     if (!isValidUUID(id)) return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
 
+    // Allow self-lookup always; admin may look up any user.
+    // All other callers are restricted to their own record to prevent email/role enumeration.
+    const callerRole = await getUserRole(sessionUser.userId);
+    const isSelf = id === sessionUser.userId;
+    if (!isSelf && callerRole !== "admin") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const user = await prisma.user.findUnique({ where: { id }, select: USER_SELECT });
     if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
 

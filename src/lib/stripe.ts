@@ -48,8 +48,10 @@ export async function createCheckoutSession({
       "line_items[0][quantity]": "1",
       mode: "payment",
       customer_email: customerEmail,
-      success_url: `${APP_URL}/billing?session_id={CHECKOUT_SESSION_ID}&status=success`,
-      cancel_url: `${APP_URL}/billing?status=cancelled`,
+      // Redirect to the invoice-management section (segment → tab: "invoices").
+      // ControlPanelPage reads status=success on mount to refetch invoice data.
+      success_url: `${APP_URL}/control-panel/invoice-management?session_id={CHECKOUT_SESSION_ID}&status=success`,
+      cancel_url: `${APP_URL}/control-panel/invoice-management?status=cancelled`,
       "metadata[invoice_id]": invoiceId,
     }),
   });

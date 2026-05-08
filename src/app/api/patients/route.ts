@@ -10,6 +10,7 @@ import { isValidUUID } from "@/lib/validation";
 import { serializePatient } from "@/lib/serializers";
 import { patientDetailInclude, patientUserPick } from "@/lib/patient-api-include";
 import { redis } from "@/lib/redis";
+import { getUserRole, isPatientRole } from "@/lib/rbac";
 
 export async function GET() {
   try {
@@ -18,8 +19,20 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const role = await getUserRole(sessionUser.userId);
+
+    /*
+     * Access control:
+     * - Staff (admin / doctor / secretary): can list all patients.
+     * - Patient role: scoped to their own record by email match (portal-style read-only).
+     */
+    const where = isPatientRole(role)
+      ? { email: sessionUser.email }
+      : {};
+
     // Light join: primary doctor label only (list + filters) — avoids N+1 client fetches
     const patients = await prisma.patient.findMany({
+      where,
       orderBy: { created_at: "desc" },
       include: { primary_doctor: patientUserPick },
     });

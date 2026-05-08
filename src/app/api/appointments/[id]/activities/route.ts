@@ -39,6 +39,28 @@ export async function GET(req: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Invalid appointment ID format" }, { status: 400 });
     }
 
+    // Scope to owner OR accepted assignee — same guard as the POST handler.
+    const appointment = await prisma.appointment.findFirst({
+      where: {
+        id,
+        OR: [
+          { user_id: sessionUser.userId },
+          {
+            assignees: {
+              some: {
+                user_id: sessionUser.userId,
+                status: "accepted",
+              },
+            },
+          },
+        ],
+      },
+      select: { id: true },
+    });
+    if (!appointment) {
+      return NextResponse.json({ error: "Appointment not found or forbidden" }, { status: 403 });
+    }
+
     const activities = await prisma.activity.findMany({
       where: { appointment_id: id },
       orderBy: { created_at: "desc" },

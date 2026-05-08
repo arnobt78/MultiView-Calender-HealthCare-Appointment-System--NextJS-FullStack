@@ -8,6 +8,7 @@ import { getSessionUser } from "@/lib/session";
 import { isValidUUID } from "@/lib/validation";
 import { serializeCategory } from "@/lib/serializers";
 import { redis } from "@/lib/redis";
+import { getUserRole, isPatientRole } from "@/lib/rbac";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -39,6 +40,12 @@ export async function PUT(req: NextRequest, context: RouteContext) {
     const sessionUser = await getSessionUser();
     if (!sessionUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Patients may not modify appointment categories.
+    const role = await getUserRole(sessionUser.userId);
+    if (isPatientRole(role)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const { id } = await context.params;
@@ -80,6 +87,12 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
     const sessionUser = await getSessionUser();
     if (!sessionUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Only admin/doctor/secretary may delete shared categories — patients cannot.
+    const deleteRole = await getUserRole(sessionUser.userId);
+    if (isPatientRole(deleteRole)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const { id } = await context.params;

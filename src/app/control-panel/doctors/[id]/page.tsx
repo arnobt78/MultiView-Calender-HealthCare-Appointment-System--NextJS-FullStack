@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { serializeUser } from "@/lib/serializers";
 import { isValidUUID } from "@/lib/validation";
+import { getUserRole } from "@/lib/rbac";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,6 +30,11 @@ export default async function DoctorDetailPage({ params }: PageProps) {
 
   const sessionUser = await getSessionUser();
   if (!sessionUser) notFound();
+
+  // Self-lookup always allowed; admin may view any user record.
+  // Doctors/secretaries can only view their own profile page.
+  const callerRole = await getUserRole(sessionUser.userId);
+  if (id !== sessionUser.userId && callerRole !== "admin") notFound();
 
   const raw = await prisma.user.findUnique({
     where: { id },

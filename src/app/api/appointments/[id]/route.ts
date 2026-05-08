@@ -33,7 +33,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
         OR: [
           { user_id: sessionUser.userId },
           {
-            appointment_assignees: {
+            assignees: {
               some: {
                 OR: [
                   { user_id: sessionUser.userId },

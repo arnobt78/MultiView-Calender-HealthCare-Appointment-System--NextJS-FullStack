@@ -18,15 +18,22 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
     const { id } = await params;
 
+    // Only return the org if the caller is the owner or a member — prevents enumeration.
     const org = await prisma.organization.findFirst({
-      where: { id },
+      where: {
+        id,
+        OR: [
+          { owner_user_id: sessionUser.userId },
+          { members: { some: { user_id: sessionUser.userId } } },
+        ],
+      },
       include: { members: true },
     });
 
     if (!org) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     return NextResponse.json({ organization: org });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Org GET error:", error);
     return NextResponse.json({ error: "Failed to fetch organization" }, { status: 500 });
   }
@@ -48,7 +55,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const updated = await prisma.organization.update({ where: { id }, data: { name, slug } });
 
     return NextResponse.json({ organization: updated });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Org PATCH error:", error);
     return NextResponse.json({ error: "Failed to update organization" }, { status: 500 });
   }
@@ -67,7 +74,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     await prisma.organization.delete({ where: { id } });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Org DELETE error:", error);
     return NextResponse.json({ error: "Failed to delete organization" }, { status: 500 });
   }

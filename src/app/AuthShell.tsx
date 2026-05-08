@@ -3,24 +3,17 @@
 /**
  * AuthShell — global layout wrapper.
  *
- * Route PROTECTION is handled entirely by src/middleware.ts (edge).
+ * Route PROTECTION is handled at two layers:
+ *   1. Edge (proxy.ts at repo root) — verifies auth-token cookie presence;
+ *      redirects unauthenticated visitors to /login before the page renders.
+ *   2. Server Component layouts (e.g. control-panel/layout.tsx) — enforce RBAC
+ *      (patient role → redirect to /patient-portal, etc.) using getSessionUser + getUserRole.
+ *
  * This component only decides which chrome (Navbar, etc.) to render.
  * No redirects, no loading placeholders, no flash.
  */
 
 import { useEffect, useLayoutEffect } from "react";
-
-/**
- * useIsomorphicLayoutEffect — useLayoutEffect on the client, useEffect on the server.
- *
- * "use client" components still render on the server (SSR) for the initial HTML, but
- * effects never run during SSR.  Choosing useLayoutEffect on the client means the
- * overflow:hidden assignment fires synchronously after React's DOM commit but
- * BEFORE the browser paints — eliminating the visible scrollbar-gutter layout shift
- * (the ~6-15px "bounce/vibrate") that useEffect caused on every page load.
- */
-const useIsomorphicLayoutEffect =
-  typeof window !== "undefined" ? useLayoutEffect : useEffect;
 import { usePathname } from "next/navigation";
 import { Inter } from "next/font/google";
 import Navbar from "@/components/navbar/Navbar";
@@ -33,6 +26,18 @@ import { cn } from "@/lib/utils";
 import { notify } from "@/lib/notify";
 
 const inter = Inter({ subsets: ["latin"] });
+
+/**
+ * useIsomorphicLayoutEffect — useLayoutEffect on the client, useEffect on the server.
+ *
+ * "use client" components still render on the server (SSR) for the initial HTML, but
+ * effects never run during SSR.  Choosing useLayoutEffect on the client means the
+ * overflow:hidden assignment fires synchronously after React's DOM commit but
+ * BEFORE the browser paints — eliminating the visible scrollbar-gutter layout shift
+ * (the ~6-15px "bounce/vibrate") that useEffect caused on every page load.
+ */
+const useIsomorphicLayoutEffect =
+  typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 // Paths that render without the dashboard chrome (Navbar, etc.)
 const BARE_PATHS = ["/", "/login", "/register", "/accept-invitation"];

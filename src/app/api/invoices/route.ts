@@ -21,7 +21,7 @@ export async function GET() {
     });
 
     return NextResponse.json({ invoices });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Invoices GET error:", error);
     return NextResponse.json({ error: "Failed to fetch invoices" }, { status: 500 });
   }
@@ -36,6 +36,17 @@ export async function POST(req: NextRequest) {
 
     if (!amount || typeof amount !== "number" || amount <= 0) {
       return NextResponse.json({ error: "Valid amount is required" }, { status: 400 });
+    }
+
+    // When an appointment is linked, verify the caller owns it to prevent cross-user references.
+    if (appointment_id) {
+      const appt = await prisma.appointment.findFirst({
+        where: { id: appointment_id, user_id: sessionUser.userId },
+        select: { id: true },
+      });
+      if (!appt) {
+        return NextResponse.json({ error: "Appointment not found or forbidden" }, { status: 403 });
+      }
     }
 
     const invoice = await prisma.invoice.create({
@@ -58,7 +69,7 @@ export async function POST(req: NextRequest) {
     void redis.invalidateDashboardOverview(sessionUser.userId);
 
     return NextResponse.json({ invoice }, { status: 201 });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Invoices POST error:", error);
     return NextResponse.json({ error: "Failed to create invoice" }, { status: 500 });
   }

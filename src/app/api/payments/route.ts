@@ -24,7 +24,7 @@ export async function GET() {
     });
 
     return NextResponse.json({ invoices });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Payments GET error:", error);
     return NextResponse.json({ error: "Failed to fetch invoices" }, { status: 500 });
   }
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({ sessionId: session.id, url: session.url });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Payments POST error:", error);
     return NextResponse.json({ error: "Failed to create payment session" }, { status: 500 });
   }

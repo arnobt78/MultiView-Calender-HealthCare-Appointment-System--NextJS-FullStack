@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { serializeCategory } from "@/lib/serializers";
 import { redis } from "@/lib/redis";
+import { getUserRole, isPatientRole } from "@/lib/rbac";
 
 export async function GET() {
   try {
@@ -35,6 +36,12 @@ export async function POST(req: NextRequest) {
     const sessionUser = await getSessionUser();
     if (!sessionUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Patients may not create appointment categories (staff-only operation).
+    const role = await getUserRole(sessionUser.userId);
+    if (isPatientRole(role)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const body = await req.json();

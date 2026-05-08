@@ -16,6 +16,7 @@ import {
   prefetchPatientSnapshot,
 } from "@/lib/server-prefetch";
 import type { Patient, PatientSnapshot } from "@/types/types";
+import { getUserRole, isPatientRole } from "@/lib/rbac";
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -23,13 +24,21 @@ export async function generateMetadata({ params }: PageProps) {
   const { id } = await params;
   let title = `Patient — ${id.slice(0, 8)}`;
   if (isValidUUID(id)) {
-    const p = await prisma.patient.findUnique({
-      where: { id },
-      select: { firstname: true, lastname: true },
-    });
-    if (p) {
-      const n = `${p.firstname} ${p.lastname}`.trim();
-      if (n) title = n;
+    const session = await getSessionUser();
+    if (session) {
+      const role = await getUserRole(session.userId);
+      // Patient role: only expose name in title if it matches their own record.
+      const where = isPatientRole(role)
+        ? { id, email: session.email }
+        : { id };
+      const p = await prisma.patient.findFirst({
+        where,
+        select: { firstname: true, lastname: true },
+      });
+      if (p) {
+        const n = `${p.firstname} ${p.lastname}`.trim();
+        if (n) title = n;
+      }
     }
   }
   return { title };
@@ -42,15 +51,23 @@ export default async function PatientDetailPage({ params }: PageProps) {
   const { id } = await params;
   if (!isValidUUID(id)) notFound();
 
-  // Pre-fetch patient + snapshot in parallel. If either returns null the patient
-  // doesn't exist — 404. PatientDetailScreen receives them as initial props and
-  // seeds the cache so hooks find data immediately without a network round-trip.
-  const [initialPatient, initialSnapshot] = await Promise.all<[
-    Promise<Patient | null>,
-    Promise<PatientSnapshot | null>,
-  ]>([prefetchPatient(id), prefetchPatientSnapshot(id)]);
+  const role = await getUserRole(sessionUser.userId);
 
-  if (!initialPatient) notFound();
+  /*
+   * Role-scoped server prefetch:
+   * - Staff (admin/doctor/secretary): any patient record.
+   * - Patient role: only allowed to see their own record (matched by email).
+   *   If they request another patient's ID they get a 404.
+   */
+  const [initialPatient, initialSnapshot] = await Promise.all([
+    prefetchPatient(id),
+    prefetchPatientSnapshot(id),
+  ]);
+
+  // For patient role, verify the returned record belongs to the session user.
+  if (!initialPatient || (isPatientRole(role) && initialPatient.email !== sessionUser.email)) {
+    notFound();
+  }
 
   return (
     <PatientDetailScreen

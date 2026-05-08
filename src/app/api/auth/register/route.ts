@@ -62,8 +62,12 @@ export async function POST(req: NextRequest) {
     // Generate email verification token
     const verificationToken = generateVerificationToken();
 
-    // Create user in database
-    const user = await createUser(email, passwordHash, verificationToken, display_name || null, "admin");
+    // Demo/showcase project: new accounts default to "admin" so every visitor
+    // can immediately explore the full feature set.
+    // In a production multi-tenant deployment, change this to "patient" (or read
+    // from DEFAULT_REGISTRATION_ROLE env var) and assign elevated roles via admin UI.
+    const defaultRole = process.env.DEFAULT_REGISTRATION_ROLE ?? "admin";
+    const user = await createUser(email, passwordHash, verificationToken, display_name || null, defaultRole);
 
     // Send verification email
     try {

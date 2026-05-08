@@ -16,7 +16,10 @@
  */
 
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import ControlPanelSidebarNav from "@/components/control-panel/ControlPanelSidebarNav";
+import { getSessionUser } from "@/lib/session";
+import { getUserRole, isPatientRole } from "@/lib/rbac";
 
 export const metadata: Metadata = {
   title: "Control Panel",
@@ -36,11 +39,25 @@ export const metadata: Metadata = {
   },
 };
 
-export default function ControlPanelLayout({
+export default async function ControlPanelLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  /*
+   * RBAC gate — server-side role check before rendering any control-panel chrome.
+   * Edge proxy (proxy.ts) only verifies cookie presence; role enforcement lives here.
+   * Patient-role users are redirected to the patient portal — they have no business
+   * in the admin/staff control panel.
+   */
+  const sessionUser = await getSessionUser();
+  if (sessionUser) {
+    const role = await getUserRole(sessionUser.userId);
+    if (isPatientRole(role)) {
+      redirect("/patient-portal");
+    }
+  }
+
   // bg-gradient mirrors AuthShell's shell gradient so that during the hydration frame
   // where TabsContent is active but the component hasn't painted yet, the dark html/body
   // (#0f172a / #020617) cannot bleed through the transparent pane.

@@ -22,12 +22,28 @@ export async function GET(
 
     const { id } = await params;
 
+    // Verify caller belongs to this org before returning the member list.
+    const membership = await prisma.organizationMember.findFirst({
+      where: { org_id: id, user_id: sessionUser.userId },
+      select: { role: true },
+    });
+
+    // Also allow the org owner (who may not be in the members table).
+    const isOwner = !membership && !!(await prisma.organization.findFirst({
+      where: { id, owner_user_id: sessionUser.userId },
+      select: { id: true },
+    }));
+
+    if (!membership && !isOwner) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const members = await prisma.organizationMember.findMany({
       where: { org_id: id },
     });
 
     return NextResponse.json({ members });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Members GET error:", error);
     return NextResponse.json({ error: "Failed to fetch members" }, { status: 500 });
   }
@@ -64,7 +80,7 @@ export async function POST(
     });
 
     return NextResponse.json({ member }, { status: 201 });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Members POST error:", error);
     return NextResponse.json({ error: "Failed to add member" }, { status: 500 });
   }
@@ -101,7 +117,7 @@ export async function DELETE(
     });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Members DELETE error:", error);
     return NextResponse.json({ error: "Failed to remove member" }, { status: 500 });
   }

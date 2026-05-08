@@ -184,7 +184,7 @@ export async function GET(request: NextRequest) {
       retentionDays: Math.max(retentionDays, 1),
       timestamp: now.toISOString(),
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Cron reminders error:", error);
     return NextResponse.json(
       { error: "Failed to process reminders" },

@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { isValidUUID } from "@/lib/validation";
+import { getUserRole, isPatientRole } from "@/lib/rbac";
 import {
   serializePatient,
   serializeAppointment,
@@ -28,10 +29,16 @@ export async function GET(_req: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Invalid patient ID" }, { status: 400 });
     }
 
-    const patientRaw = await prisma.patient.findUnique({
-      where: { id },
-      include: patientDetailInclude,
-    });
+    const role = await getUserRole(sessionUser.userId);
+
+    /*
+     * Staff (admin/doctor/secretary) can access any patient's snapshot.
+     * Patient role is scoped to their own record by email match.
+     */
+    const patientRaw = isPatientRole(role)
+      ? await prisma.patient.findFirst({ where: { id, email: sessionUser.email }, include: patientDetailInclude })
+      : await prisma.patient.findUnique({ where: { id }, include: patientDetailInclude });
+
     if (!patientRaw) {
       return NextResponse.json({ error: "Patient not found" }, { status: 404 });
     }

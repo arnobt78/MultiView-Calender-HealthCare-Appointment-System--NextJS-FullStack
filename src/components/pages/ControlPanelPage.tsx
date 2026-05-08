@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useLayoutEffect, useMemo, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import React, { useEffect, useLayoutEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
+import { invalidateInvoicesAndOverview } from "@/lib/query-client";
 import { queryKeys } from "@/lib/query-keys";
 import type { Patient } from "@/types/types";
 import type { DashboardOverview } from "@/hooks/useDashboardOverview";
@@ -226,7 +227,21 @@ export default function ControlPanelPage({
 }: ControlPanelPageProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
+
+  /**
+   * Stripe payment return handler.
+   * When Stripe redirects back with status=success, invalidate invoices & overview
+   * so the UI reflects the newly paid invoice without a manual refresh.
+   * Also strip the Stripe query params from the URL so a hard reload doesn't re-trigger.
+   */
+  useEffect(() => {
+    if (searchParams.get("status") === "success") {
+      void invalidateInvoicesAndOverview(queryClient);
+      router.replace(pathname, { scroll: false });
+    }
+  }, [searchParams, queryClient, router, pathname]);
 
   /**
    * Seed the TanStack Query cache with server-prefetched data.

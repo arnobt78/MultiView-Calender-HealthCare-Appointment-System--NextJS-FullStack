@@ -44,8 +44,15 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
   const sessionUser = await getSessionUser();
   if (!sessionUser) notFound();
 
-  const raw = await prisma.organization.findUnique({
-    where: { id },
+  // Only the org owner or an existing member may view the detail page.
+  const raw = await prisma.organization.findFirst({
+    where: {
+      id,
+      OR: [
+        { owner_user_id: sessionUser.userId },
+        { members: { some: { user_id: sessionUser.userId } } },
+      ],
+    },
     include: {
       members: true,
     },

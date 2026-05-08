@@ -35,11 +35,48 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const appointmentId = searchParams.get("appointment_id");
 
-    const where = appointmentId ? { appointment_id: appointmentId } : {};
+    if (appointmentId) {
+      // Appointment-scoped mode: verify the caller owns the appointment or is an accepted assignee.
+      const accessible = await prisma.appointment.findFirst({
+        where: {
+          id: appointmentId,
+          OR: [
+            { user_id: sessionUser.userId },
+            {
+              // Prisma relation field on Appointment is "assignees" (@@map: appointment_assignee)
+              assignees: {
+                some: {
+                  OR: [
+                    { user_id: sessionUser.userId },
+                    { invited_email: sessionUser.email },
+                  ],
+                  status: "accepted",
+                },
+              },
+            },
+          ],
+        },
+        select: { id: true },
+      });
 
+      if (!accessible) {
+        return NextResponse.json({ error: "Appointment not found or forbidden" }, { status: 403 });
+      }
+
+      const activities = await prisma.activity.findMany({
+        where: { appointment_id: appointmentId },
+        orderBy: { created_at: "desc" },
+      });
+      return NextResponse.json({ activities: activities.map(serializeActivity) });
+    }
+
+    // Global activity-log mode (no appointment_id): returns activities authored by the session user.
+    // Used by the "Activity Log" control-panel tab — scoped to created_by_id so only the
+    // caller's own activity history is returned, never a global dump.
     const activities = await prisma.activity.findMany({
-      where,
+      where: { created_by_id: sessionUser.userId },
       orderBy: { created_at: "desc" },
+      take: 200,
     });
 
     return NextResponse.json({

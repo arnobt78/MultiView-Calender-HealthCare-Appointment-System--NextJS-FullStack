@@ -234,7 +234,8 @@ export default function DashboardOverviewComponent() {
       <div className={CONTROL_PANEL_GROUP_SURFACE_CLASS}>
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">System</p>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <StatCard label="Total Patients" value={patients?.total ?? 0} sub={`${patients?.active ?? 0} active`} icon={Users} color="bg-teal-100 text-teal-600" href="/control-panel" loading={loading} />
+          {/* Gate dynamic sub-text with loading to avoid hydration mismatch on first paint */}
+          <StatCard label="Total Patients" value={patients?.total ?? 0} sub={loading ? "patients" : `${patients?.active ?? 0} active`} icon={Users} color="bg-teal-100 text-teal-600" href="/control-panel" loading={loading} />
           <StatCard label="Active Patients" value={patients?.active ?? 0} sub="currently active" icon={UserCheck} color="bg-emerald-100 text-emerald-600" loading={loading} />
           <StatCard label="Doctors" value={data?.doctors ?? 0} sub="registered staff" icon={Stethoscope} color="bg-cyan-100 text-cyan-600" href="/control-panel" loading={loading} />
           <StatCard label="Categories" value={data?.categories ?? 0} sub="appointment types" icon={Tag} color="bg-violet-100 text-violet-600" loading={loading} />
@@ -245,10 +246,11 @@ export default function DashboardOverviewComponent() {
       <div className={CONTROL_PANEL_GROUP_SURFACE_CLASS}>
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Revenue</p>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <StatCard label="Paid Revenue" value={`€${paidEur}`} sub={`${revenue?.paidInvoices ?? 0} paid invoices`} icon={Banknote} color="bg-green-100 text-green-600" href="/control-panel" loading={loading} />
+          {/* Gate dynamic sub-text with loading to avoid hydration mismatch on first paint */}
+          <StatCard label="Paid Revenue" value={`€${paidEur}`} sub={loading ? "paid invoices" : `${revenue?.paidInvoices ?? 0} paid invoices`} icon={Banknote} color="bg-green-100 text-green-600" href="/control-panel" loading={loading} />
           <StatCard label="Outstanding" value={`€${outstandingEur}`} sub="awaiting payment" icon={Receipt} color="bg-amber-100 text-amber-600" loading={loading} />
           <StatCard label="Total Invoices" value={revenue?.totalInvoices ?? 0} sub="all time" icon={Receipt} color="bg-blue-100 text-blue-600" loading={loading} />
-          <StatCard label="Paid Invoices" value={revenue?.paidInvoices ?? 0} sub={`of ${revenue?.totalInvoices ?? 0} total`} icon={CalendarCheck} color="bg-emerald-100 text-emerald-600" loading={loading} />
+          <StatCard label="Paid Invoices" value={revenue?.paidInvoices ?? 0} sub={loading ? "of total" : `of ${revenue?.totalInvoices ?? 0} total`} icon={CalendarCheck} color="bg-emerald-100 text-emerald-600" loading={loading} />
         </div>
       </div>
 

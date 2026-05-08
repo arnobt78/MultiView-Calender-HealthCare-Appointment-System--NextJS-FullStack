@@ -76,12 +76,11 @@ function exportToCSV(rows: FullAppointment[]) {
     format(new Date(a.end), "yyyy-MM-dd HH:mm"),
     `"${(a.location ?? "").replace(/"/g, '""')}"`,
     `"${(a.notes ?? "").replace(/"/g, '""')}"`,
-    typeof a.patient === "object" && a.patient
-      ? `"${(a.patient as { firstname?: string; lastname?: string }).firstname ?? ""} ${(a.patient as { firstname?: string; lastname?: string }).lastname ?? ""}"`
+    // patient_data / category_data are the resolved objects; a.patient / a.category are UUID strings.
+    a.patient_data
+      ? `"${(a.patient_data.firstname ?? "")} ${(a.patient_data.lastname ?? "")}"`
       : "",
-    typeof a.category === "object" && a.category
-      ? `"${(a.category as { label?: string }).label ?? ""}"`
-      : "",
+    a.category_data ? `"${a.category_data.label ?? ""}"` : "",
     format(new Date(a.created_at), "yyyy-MM-dd HH:mm"),
   ]);
   const csv = [headers.join(","), ...csvRows.map((r) => r.join(","))].join("\n");

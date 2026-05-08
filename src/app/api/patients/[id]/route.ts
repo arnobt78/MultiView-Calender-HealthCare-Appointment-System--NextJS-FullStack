@@ -10,6 +10,7 @@ import { isValidUUID } from "@/lib/validation";
 import { serializePatient } from "@/lib/serializers";
 import { patientDetailInclude } from "@/lib/patient-api-include";
 import { redis } from "@/lib/redis";
+import { getUserRole, isPatientRole } from "@/lib/rbac";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -25,10 +26,16 @@ export async function GET(req: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Invalid patient ID" }, { status: 400 });
     }
 
-    const patient = await prisma.patient.findUnique({
-      where: { id },
-      include: patientDetailInclude,
-    });
+    const role = await getUserRole(sessionUser.userId);
+
+    /*
+     * Staff (admin/doctor/secretary) can access any patient.
+     * Patient role is scoped to their own record by email match.
+     */
+    const patient = isPatientRole(role)
+      ? await prisma.patient.findFirst({ where: { id, email: sessionUser.email }, include: patientDetailInclude })
+      : await prisma.patient.findUnique({ where: { id }, include: patientDetailInclude });
+
     if (!patient) {
       return NextResponse.json({ error: "Patient not found" }, { status: 404 });
     }
@@ -49,6 +56,12 @@ export async function PUT(req: NextRequest, context: RouteContext) {
     const { id } = await context.params;
     if (!isValidUUID(id)) {
       return NextResponse.json({ error: "Invalid patient ID" }, { status: 400 });
+    }
+
+    // Patient role cannot update arbitrary records — blocked at API level.
+    const putRole = await getUserRole(sessionUser.userId);
+    if (isPatientRole(putRole)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const body = await req.json();
@@ -126,6 +139,12 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
     const { id } = await context.params;
     if (!isValidUUID(id)) {
       return NextResponse.json({ error: "Invalid patient ID" }, { status: 400 });
+    }
+
+    // Patient role cannot delete any patient record — staff only.
+    const delRole = await getUserRole(sessionUser.userId);
+    if (isPatientRole(delRole)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     await prisma.patient.delete({ where: { id } });

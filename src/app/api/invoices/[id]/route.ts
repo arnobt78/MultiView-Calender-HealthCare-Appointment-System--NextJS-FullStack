@@ -27,7 +27,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
     if (!invoice) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     return NextResponse.json({ invoice });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Invoice GET error:", error);
     return NextResponse.json({ error: "Failed to fetch invoice" }, { status: 500 });
   }
@@ -58,7 +58,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     void redis.invalidateDashboardOverview(sessionUser.userId);
 
     return NextResponse.json({ invoice: updated });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Invoice PATCH error:", error);
     return NextResponse.json({ error: "Failed to update invoice" }, { status: 500 });
   }
@@ -84,7 +84,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     void redis.invalidateDashboardOverview(sessionUser.userId);
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Invoice DELETE error:", error);
     return NextResponse.json({ error: "Failed to delete invoice" }, { status: 500 });
   }
