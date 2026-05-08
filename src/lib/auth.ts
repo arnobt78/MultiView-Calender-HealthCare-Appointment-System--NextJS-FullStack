@@ -34,9 +34,21 @@ export function generateToken(userId: string, email: string): string {
 
 export function verifyToken(token: string): { userId: string; email: string } | null {
   try {
-    const decoded = jwt.verify(token, getJwtSecret()) as { userId: string; email: string };
-    if (!decoded.userId || !decoded.email) return null;
-    return decoded;
+    const raw: unknown = jwt.verify(token, getJwtSecret());
+    // Type-narrow instead of casting — jwt.verify can return a string on certain algos.
+    if (
+      typeof raw !== "object" ||
+      raw === null ||
+      !("userId" in raw) ||
+      !("email" in raw) ||
+      typeof (raw as { userId: unknown }).userId !== "string" ||
+      typeof (raw as { email: unknown }).email !== "string"
+    ) {
+      return null;
+    }
+    const { userId, email } = raw as { userId: string; email: string };
+    if (!userId || !email) return null;
+    return { userId, email };
   } catch {
     return null;
   }

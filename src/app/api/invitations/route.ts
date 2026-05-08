@@ -71,7 +71,8 @@ export async function POST(req: NextRequest) {
       subject: `You are invited to access a ${type}`,
       html: `<p>You have been invited to access a ${type} with ${permission} permission.<br />Click <a href="${link}">here</a> to accept the invitation.</p>`,
     });
-    return NextResponse.json({ message: "Invitation sent", token });
+    // Do not return the token in the API response — it is a one-time secret delivered only via email.
+    return NextResponse.json({ message: "Invitation sent" });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Internal server error";
     return NextResponse.json({ error: message }, { status: 500 });

@@ -45,8 +45,9 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     if (!sessionUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { id } = await params;
-    const { name } = await req.json();
-    if (!name) return NextResponse.json({ error: "name is required" }, { status: 400 });
+    const body = await req.json() as { name?: unknown };
+    const name = typeof body.name === "string" ? body.name.trim() : "";
+    if (!name) return NextResponse.json({ error: "name must be a non-empty string" }, { status: 400 });
 
     const org = await prisma.organization.findFirst({ where: { id, owner_user_id: sessionUser.userId } });
     if (!org) return NextResponse.json({ error: "Not found or not owner" }, { status: 404 });

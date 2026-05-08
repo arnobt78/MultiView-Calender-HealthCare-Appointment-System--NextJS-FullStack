@@ -1,5 +1,8 @@
 /**
  * Relative by ID: GET, PATCH, DELETE (Prisma)
+ * All operations require staff role (admin/doctor/secretary).
+ * Relatives have no direct user_id FK so row-level ownership is not possible —
+ * restrict to staff until the schema is extended with tenancy.
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -7,14 +10,24 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { isValidUUID } from "@/lib/validation";
 import { serializeRelative } from "@/lib/serializers";
+import { isStaffRole, getUserRole } from "@/lib/rbac";
 
 type RouteContext = { params: Promise<{ id: string }> };
+
+/** Shared staff-role guard — resolves role once and reuses it. */
+async function requireStaff(userId: string): Promise<boolean> {
+  const role = await getUserRole(userId);
+  return isStaffRole(role);
+}
 
 export async function GET(_req: NextRequest, context: RouteContext) {
   try {
     const sessionUser = await getSessionUser();
     if (!sessionUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (!(await requireStaff(sessionUser.userId))) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const { id } = await context.params;
@@ -38,6 +51,9 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     const sessionUser = await getSessionUser();
     if (!sessionUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (!(await requireStaff(sessionUser.userId))) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const { id } = await context.params;
@@ -68,6 +84,9 @@ export async function DELETE(_req: NextRequest, context: RouteContext) {
     const sessionUser = await getSessionUser();
     if (!sessionUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (!(await requireStaff(sessionUser.userId))) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const { id } = await context.params;

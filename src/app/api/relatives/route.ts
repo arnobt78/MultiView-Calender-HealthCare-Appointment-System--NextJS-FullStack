@@ -15,6 +15,14 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Relative records are linked to a patient, not directly to a user.
+    // Restrict list access to admin/staff to prevent cross-patient data leakage.
+    const { isStaffRole, getUserRole } = await import("@/lib/rbac");
+    const callerRole = await getUserRole(sessionUser.userId);
+    if (!isStaffRole(callerRole)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const relatives = await prisma.relative.findMany({
       orderBy: { created_at: "desc" },
     });
@@ -34,6 +42,13 @@ export async function POST(req: NextRequest) {
     const sessionUser = await getSessionUser();
     if (!sessionUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Only staff (admin/doctor/secretary) can create relative records.
+    const { isStaffRole, getUserRole } = await import("@/lib/rbac");
+    const callerRole = await getUserRole(sessionUser.userId);
+    if (!isStaffRole(callerRole)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const body = await req.json();

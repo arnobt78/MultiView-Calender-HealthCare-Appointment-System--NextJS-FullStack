@@ -8,6 +8,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session";
+import { isValidUUID } from "@/lib/validation";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
@@ -91,7 +92,7 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json();
     const { id, markAllRead, deleteRead } = body;
 
-    if (markAllRead) {
+    if (markAllRead === true) {
       await prisma.notification.updateMany({
         where: { user_id: sessionUser.userId, read: false },
         data: { read: true },
@@ -103,14 +104,14 @@ export async function PATCH(request: NextRequest) {
      * Delete only read notifications (safe default).
      * This keeps unread items intact while letting users clean up log noise.
      */
-    if (deleteRead) {
+    if (deleteRead === true) {
       const result = await prisma.notification.deleteMany({
         where: { user_id: sessionUser.userId, read: true },
       });
       return NextResponse.json({ success: true, deleted: result.count });
     }
 
-    if (id) {
+    if (typeof id === "string" && isValidUUID(id)) {
       const result = await prisma.notification.updateMany({
         where: { id, user_id: sessionUser.userId },
         data: { read: true },
@@ -119,10 +120,10 @@ export async function PATCH(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: "Provide 'id' or set 'markAllRead' to true" },
+      { error: "Provide a valid 'id' or set 'markAllRead' to true" },
       { status: 400 }
     );
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error updating notification:", error);
     return NextResponse.json(
       { error: "Failed to update notification" },

@@ -58,10 +58,15 @@ export async function checkRateLimit(
       await redis.expire(key, windowSeconds);
     }
 
-    const n = count ?? 0;
+    // Fail-closed: if Redis returned null (connection error / network issue),
+    // treat as over-limit rather than letting every request through.
+    if (count === null) {
+      return { allowed: false, remaining: 0, resetTime };
+    }
+
     return {
-      allowed: n <= maxRequests,
-      remaining: Math.max(0, maxRequests - n),
+      allowed: count <= maxRequests,
+      remaining: Math.max(0, maxRequests - count),
       resetTime,
     };
   }

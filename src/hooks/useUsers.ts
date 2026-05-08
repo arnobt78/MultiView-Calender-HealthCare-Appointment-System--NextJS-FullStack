@@ -85,11 +85,14 @@ export function useUser(id: string | null) {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: UserUpdateInput) =>
-      apiClient<{ user: User }>(`/api/users/${id}`, {
+    mutationFn: (data: UserUpdateInput) => {
+      // Guard against null id so the request never hits /api/users/null.
+      if (!id) throw new Error("User id is required for update");
+      return apiClient<{ user: User }>(`/api/users/${id}`, {
         method: "PATCH",
         body: JSON.stringify(data),
-      }),
+      });
+    },
     onSuccess: async (data) => {
       await invalidateUsersAndAuth(queryClient);
       // Role changes affect dashboard overview aggregate counts (e.g. total doctors).

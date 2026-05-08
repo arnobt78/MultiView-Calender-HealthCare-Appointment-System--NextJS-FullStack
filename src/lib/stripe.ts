@@ -1,10 +1,14 @@
 /**
  * Stripe Client & Helpers
- * 
+ *
  * Initializes Stripe if STRIPE_SECRET_KEY is available.
- * Provides helpers for creating checkout sessions and handling webhooks.
+ * Provides helpers for creating checkout sessions and verifying webhooks.
+ * Uses the Stripe HTTP API directly (no SDK) — all secrets stay server-side.
  */
 
+import { createHmac, timingSafeEqual } from "crypto";
+
+// File-local only — never re-exported so secrets cannot be imported by client bundles.
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || "";
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || "";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -66,21 +70,52 @@ export async function createCheckoutSession({
 }
 
 /**
- * Parse a Stripe webhook payload.
+ * Verify a Stripe webhook payload using HMAC-SHA256 — mirrors the algorithm
+ * used by `stripe.webhooks.constructEvent` without the full SDK.
  *
- * ⚠️  MVP placeholder — this does NOT verify the Stripe-Signature header.
- * For production, replace with:
- *   `stripe.webhooks.constructEvent(rawBody, signature, STRIPE_WEBHOOK_SECRET)`
- * and reject on `WebhookSignatureVerificationError`.
+ * Stripe's `Stripe-Signature` header format:
+ *   `t=<unix-timestamp>,v1=<hex-signature>[,v1=...]`
+ *
+ * Signed payload: `<timestamp>.<rawBody>`
+ *
+ * Throws if the signature is missing, the secret is unconfigured, or the
+ * computed HMAC does not match (timing-safe comparison).
  */
-export async function verifyWebhookSignature(
-  body: string,
-  _signature: string
-): Promise<unknown> {
+export function verifyWebhookSignature(rawBody: string, signatureHeader: string): unknown {
   if (!STRIPE_WEBHOOK_SECRET) {
-    console.warn("STRIPE_WEBHOOK_SECRET not set — webhook payloads are unverified");
+    throw new Error("STRIPE_WEBHOOK_SECRET is not configured");
   }
-  return JSON.parse(body) as unknown;
-}
 
-export { STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET };
+  // Parse t=... and v1=... fields from the header.
+  const parts = signatureHeader.split(",");
+  const tPart = parts.find((p) => p.startsWith("t="));
+  const v1Parts = parts.filter((p) => p.startsWith("v1="));
+
+  if (!tPart || v1Parts.length === 0) {
+    throw new Error("Invalid Stripe-Signature header");
+  }
+
+  const timestamp = tPart.slice(2);
+  const signedPayload = `${timestamp}.${rawBody}`;
+  const expected = createHmac("sha256", STRIPE_WEBHOOK_SECRET)
+    .update(signedPayload, "utf8")
+    .digest("hex");
+
+  // Accept if any v1= value matches — Stripe can send multiple signatures during key rotation.
+  const matched = v1Parts.some((v1Part) => {
+    const provided = v1Part.slice(3);
+    try {
+      const a = Buffer.from(expected, "hex");
+      const b = Buffer.from(provided, "hex");
+      return a.length === b.length && timingSafeEqual(a, b);
+    } catch {
+      return false;
+    }
+  });
+
+  if (!matched) {
+    throw new Error("Stripe webhook signature verification failed");
+  }
+
+  return JSON.parse(rawBody) as unknown;
+}

@@ -5,6 +5,7 @@
 import { describe, it, expect, vi } from "vitest";
 
 vi.mock("@/lib/redis", () => ({
+  // isConfigured: false → tests use the in-memory fallback path, which is always available.
   redis: { isConfigured: false, incr: vi.fn(), expire: vi.fn() },
 }));
 
