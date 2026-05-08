@@ -128,7 +128,7 @@ export async function GET(req: NextRequest) {
     const isSafePath = state.startsWith("/") && !state.startsWith("//");
     const redirectTo = isSafePath ? state : "/dashboard";
     return NextResponse.redirect(new URL(redirectTo, req.url));
-  } catch (err) {
+  } catch (err: unknown) {
     console.error("Google callback error:", err);
     return NextResponse.redirect(
       new URL("/login?error=Google+sign-in+failed", req.url)

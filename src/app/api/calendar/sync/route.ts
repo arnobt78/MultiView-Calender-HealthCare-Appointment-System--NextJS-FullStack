@@ -47,7 +47,7 @@ export async function GET() {
     const events = await listGoogleEvents(accessToken, calendarId);
 
     return NextResponse.json({ events, connected: true });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Google Calendar sync GET error:", error);
     return NextResponse.json({ error: "Failed to fetch calendar events" }, { status: 500 });
   }
@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
     const created = await insertGoogleEvent(accessToken, calendarId, event);
 
     return NextResponse.json({ success: true, event: created });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Google Calendar sync POST error:", error);
     return NextResponse.json({ error: "Failed to sync appointment" }, { status: 500 });
   }
@@ -131,7 +131,7 @@ export async function DELETE() {
     });
 
     return NextResponse.json({ success: true, message: "Google Calendar disconnected" });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Google Calendar disconnect error:", error);
     return NextResponse.json({ error: "Failed to disconnect" }, { status: 500 });
   }

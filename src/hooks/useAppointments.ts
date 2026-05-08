@@ -4,6 +4,8 @@ import { queryKeys } from "@/lib/query-keys";
 import {
   invalidateAfterAppointmentMutation,
   invalidateActivitiesList,
+  invalidateAssigneesData,
+  invalidateAvailabilitySlots,
   invalidateInvoicesAndOverview,
   invalidateNotificationsData,
   invalidatePatientDetailAndSnapshot,
@@ -242,9 +244,16 @@ export function useAppointments() {
         old ? old.filter((appt) => appt.id !== deletedId) : []
       );
       const patientId = context?.deleted?.patient ?? undefined;
+      // Remove the per-appointment activity cache so stale entries don't surface in other views.
+      queryClient.removeQueries({ queryKey: queryKeys.activities.byAppointment(deletedId) });
+
       await Promise.all([
         invalidateActivitiesList(queryClient),
         invalidateNotificationsData(queryClient),
+        // Assignee rows are cascade-deleted in the DB; evict the client cache to match.
+        invalidateAssigneesData(queryClient),
+        // Appointment removal frees time slots — re-sync availability grid.
+        invalidateAvailabilitySlots(queryClient),
         invalidateInvoicesAndOverview(queryClient, { patientId }),
         // Insights charts and dashboard counters depend on appointment totals.
         invalidateInsightsAndAnalytics(queryClient),
@@ -294,8 +303,10 @@ export function useAppointments() {
         old.map((item) => (item.id === appt.id ? { ...item, ...appt } : item))
       );
       // Status changes affect done/pending/alert counters in overview and insights by-status chart.
+      // The PATCH handler also creates a notification row — invalidate so the bell reflects it instantly.
       await Promise.all([
         invalidatePatientDetailAndSnapshot(queryClient, appt.patient ?? undefined),
+        invalidateNotificationsData(queryClient),
         invalidateInsightsAndAnalytics(queryClient),
         invalidateDashboardOverview(queryClient),
       ]);

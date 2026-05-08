@@ -67,7 +67,7 @@ export async function GET() {
         "Content-Disposition": 'attachment; filename="appointments.ics"',
       },
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("ICS export error:", error);
     return NextResponse.json({ error: "Failed to export calendar" }, { status: 500 });
   }

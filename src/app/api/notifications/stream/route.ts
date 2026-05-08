@@ -51,8 +51,12 @@ export async function GET() {
 
           // Send heartbeat
           controller.enqueue(encoder.encode(`: heartbeat\n\n`));
-        } catch (error) {
+        } catch (error: unknown) {
           console.error("SSE poll error:", error);
+          // Stop the interval if the stream is broken — avoids orphaned Prisma
+          // connections and timer leaks when the client has already disconnected.
+          clearInterval(intervalId);
+          try { controller.close(); } catch { /* already closed */ }
         }
       }, 10_000);
     },

@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { hashPassword, verifyPassword, generateToken, getUserByEmail } from "@/lib/auth";
+import { verifyPassword, generateToken, getUserByEmail } from "@/lib/auth";
 import { setSession } from "@/lib/session";
 import { loginRequestSchema } from "@/lib/schemas/auth";
 import { zodBadRequest } from "@/lib/schemas/parse";
@@ -50,25 +50,19 @@ export async function POST(req: NextRequest) {
     // Get user from database
     const user = await getUserByEmail(email);
 
-    if (!user) {
-      return NextResponse.json(
-        { error: "Invalid email or password" },
-        { status: 401 }
-      );
-    }
+    /*
+     * Timing-safe authentication:
+     * Always run bcrypt compare — even for missing users or no-password accounts —
+     * so the response time is constant regardless of whether the email exists.
+     * A dummy hash is used so bcrypt does real work and can't be short-circuited.
+     * Ref: OWASP Authentication Cheat Sheet — prevent username enumeration via timing.
+     */
+    const DUMMY_HASH = "$2a$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012345";
+    const hashToCompare = user?.password_hash ?? DUMMY_HASH;
+    const isValidPassword = await verifyPassword(password, hashToCompare);
 
-    // Check if user has password (for users migrated from Supabase)
-    if (!user.password_hash) {
-      return NextResponse.json(
-        { error: "Please set a password first. Use password reset." },
-        { status: 401 }
-      );
-    }
-
-    // Verify password
-    const isValidPassword = await verifyPassword(password, user.password_hash);
-
-    if (!isValidPassword) {
+    // Unified error — same message and status for missing user, missing hash, bad password.
+    if (!user || !user.password_hash || !isValidPassword) {
       return NextResponse.json(
         { error: "Invalid email or password" },
         { status: 401 }

@@ -16,8 +16,17 @@ export const appointmentCreateSchema = z
     start: isoDateSchema,
     end: isoDateSchema,
     location: z.string().trim().max(255).optional().nullable(),
-    patient: z.string().trim().optional().nullable(),
-    category: z.string().trim().optional().nullable(),
+    // patient and category are UUID foreign keys.
+    // Empty string is coerced to null so the UI can clear a selection without
+    // Prisma rejecting an invalid UUID. Non-empty values must be a valid v4 UUID.
+    patient: z.preprocess(
+      (v) => (typeof v === "string" && v.trim() === "" ? null : v),
+      z.string().uuid("patient must be a valid UUID").optional().nullable()
+    ) as z.ZodType<string | null | undefined>,
+    category: z.preprocess(
+      (v) => (typeof v === "string" && v.trim() === "" ? null : v),
+      z.string().uuid("category must be a valid UUID").optional().nullable()
+    ) as z.ZodType<string | null | undefined>,
     notes: notesSchema,
     status: statusSchema.optional().nullable(),
     // z.url() is the Zod v4 standalone URL validator (replaces .string().url())

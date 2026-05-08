@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
 
     // Redirect back to dashboard with success
     return NextResponse.redirect(new URL("/?gcal=connected", request.url));
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Google Calendar callback error:", error);
     return NextResponse.redirect(new URL("/control-panel?error=gcal_failed", request.url));
   }

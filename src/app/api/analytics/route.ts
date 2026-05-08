@@ -10,7 +10,7 @@ export async function GET() {
     }
     const data = await getInsightsData(sessionUser.userId);
     return NextResponse.json(data);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Insights (legacy) error:", error);
     return NextResponse.json({ error: "Failed to load data" }, { status: 500 });
   }

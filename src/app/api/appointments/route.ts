@@ -26,11 +26,13 @@ export async function GET(req: NextRequest) {
     const category = searchParams.get("category") ?? undefined;
     const startDate = searchParams.get("start_date") ?? undefined;
     const endDate = searchParams.get("end_date") ?? undefined;
-    const limit = Math.min(
-      Math.max(parseInt(searchParams.get("limit") ?? PAGINATION.DEFAULT_LIMIT.toString(), 10), 1),
-      PAGINATION.MAX_LIMIT
-    );
-    const offset = Math.max(parseInt(searchParams.get("offset") ?? "0", 10), 0);
+    // parseInt returns NaN on non-numeric input; clamp only after verifying it's finite.
+    const rawLimit = Number.parseInt(searchParams.get("limit") ?? PAGINATION.DEFAULT_LIMIT.toString(), 10);
+    const rawOffset = Number.parseInt(searchParams.get("offset") ?? "0", 10);
+    const limit = Number.isFinite(rawLimit)
+      ? Math.min(Math.max(rawLimit, 1), PAGINATION.MAX_LIMIT)
+      : PAGINATION.DEFAULT_LIMIT;
+    const offset = Number.isFinite(rawOffset) ? Math.max(rawOffset, 0) : 0;
 
     const where: { user_id: string; status?: string; category_id?: string; start?: { gte?: Date }; end?: { lte?: Date } } = {
       user_id: sessionUser.userId,

@@ -181,7 +181,8 @@ export default function NotificationsManagement() {
             onChange={(e) => setGlobalFilter(e.target.value)}
             className="w-52"
           />
-          {unreadCount > 0 && (
+          {/* Gate by !loading so the server HTML (unreadCount=0) matches the initial client frame — prevents hydration mismatch. */}
+          {!loading && unreadCount > 0 && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="outline" size="sm" className="gap-2">

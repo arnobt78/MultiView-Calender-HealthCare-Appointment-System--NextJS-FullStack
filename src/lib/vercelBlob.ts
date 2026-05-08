@@ -21,7 +21,7 @@
  * - Simple API
  */
 
-import { put, del, list } from "@vercel/blob";
+import { put, del, list, type ListBlobResultBlob } from "@vercel/blob";
 import { VERCEL_BLOB_CONFIG } from "./constants";
 
 // Get Vercel Blob token from environment
@@ -56,8 +56,11 @@ export async function uploadFile(
   }
 
   const prefix = folder || getDefaultPrefix();
-  const pathname = filename 
-    ? `${prefix}/${filename}` 
+  // Sanitize filename: strip directory separators to prevent path-traversal
+  // (e.g. "../secret" or "a/b") that could escape the intended blob prefix.
+  const safeFilename = filename ? filename.replace(/[/\\]/g, "_") : null;
+  const pathname = safeFilename
+    ? `${prefix}/${safeFilename}`
     : `${prefix}/${Date.now()}-${Math.random().toString(36).substring(7)}`;
 
   // Convert File to Buffer if needed
@@ -125,7 +128,7 @@ export async function deleteFile(url: string): Promise<void> {
 
   try {
     await del(url, { token: BLOB_READ_WRITE_TOKEN });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error deleting file from Vercel Blob:", error);
     throw error;
   }
@@ -137,7 +140,7 @@ export async function deleteFile(url: string): Promise<void> {
  * @param prefix - Folder/prefix path to list
  * @returns Promise with list of blobs
  */
-export async function listFiles(prefix?: string): Promise<any[]> {
+export async function listFiles(prefix?: string): Promise<ListBlobResultBlob[]> {
   if (!BLOB_READ_WRITE_TOKEN) {
     throw new Error("BLOB_READ_WRITE_TOKEN is not configured.");
   }

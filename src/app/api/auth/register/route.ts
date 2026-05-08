@@ -47,17 +47,19 @@ export async function POST(req: NextRequest) {
 
     const { email, password, display_name } = parsed.data;
 
-    // Check if user already exists
+    // Always hash the password before checking for duplicates so the response
+    // time is the same whether the email exists or not (prevents timing enumeration).
+    const passwordHash = await hashPassword(password);
+
+    // Check if user already exists — after hashing to normalise timing.
     const existingUser = await getUserByEmail(email);
     if (existingUser) {
-      return NextResponse.json(
-        { error: "User with this email already exists" },
-        { status: 409 }
-      );
+      // Return a generic 200 so callers cannot enumerate registered emails.
+      // The real outcome (duplicate) is invisible to the client.
+      return NextResponse.json({
+        message: "If this email is not already registered, you will receive a verification email shortly.",
+      });
     }
-
-    // Hash password
-    const passwordHash = await hashPassword(password);
 
     // Generate email verification token
     const verificationToken = generateVerificationToken();
@@ -77,7 +79,7 @@ export async function POST(req: NextRequest) {
         subject: "Verify your email address",
         html: `Please click the following link to verify your email: <a href="${verificationUrl}">${verificationUrl}</a>`
       });
-    } catch (emailError) {
+    } catch (emailError: unknown) {
       console.error("Failed to send verification email:", emailError);
       // Continue even if email fails - user can request resend
     }

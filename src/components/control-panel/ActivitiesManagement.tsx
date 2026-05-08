@@ -60,12 +60,14 @@ export default function ActivitiesManagement() {
   const activities = data ?? [];
   const [sorting, setSorting] = useState<SortingState>([{ id: "created_at", desc: true }]);
   const [globalFilter, setGlobalFilter] = useState("");
-  const [typeFilter, setTypeFilter] = useState<string>("all");
+  // Sentinel — never collides with a real activity.type value from the API.
+  const ALL_TYPES = "__ALL__" as const;
+  const [typeFilter, setTypeFilter] = useState<string>(ALL_TYPES);
 
   const uniqueTypes = Array.from(new Set(activities.map((a) => a.type))).sort();
 
   const filtered =
-    typeFilter === "all" ? activities : activities.filter((a) => a.type === typeFilter);
+    typeFilter === ALL_TYPES ? activities : activities.filter((a) => a.type === typeFilter);
 
   const columns = [
     columnHelper.accessor("type", {
@@ -153,13 +155,14 @@ export default function ActivitiesManagement() {
         <div className="flex items-center gap-3 flex-wrap">
           {/* Type filter pills — always visible; pills are static chrome */}
           <div className="flex bg-muted rounded-2xl p-1 gap-1">
-            {(loading ? ["all"] : ["all", ...uniqueTypes]).map((t) => (
+            {/* "All" pill uses the sentinel constant so it never collides with a real type value. */}
+            {(loading ? [ALL_TYPES] : [ALL_TYPES, ...uniqueTypes]).map((t) => (
               <button
-                key={t}
+                key={t === ALL_TYPES ? "filter-all" : `type-${t}`}
                 onClick={() => setTypeFilter(t)}
                 className={`px-2.5 py-1 rounded text-xs font-medium capitalize transition-colors ${typeFilter === t ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
               >
-                {t === "all" ? "All" : t.replace(/_/g, " ")}
+                {t === ALL_TYPES ? "All" : t.replace(/_/g, " ")}
               </button>
             ))}
           </div>

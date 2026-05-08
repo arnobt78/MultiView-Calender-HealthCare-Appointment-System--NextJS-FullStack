@@ -17,7 +17,7 @@ export async function GET() {
 
     const authUrl = getGoogleAuthUrl(sessionUser.userId);
     return NextResponse.redirect(authUrl);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Google Calendar connect error:", error);
     return NextResponse.json({ error: "Failed to initiate connection" }, { status: 500 });
   }
