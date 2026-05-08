@@ -60,11 +60,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
+    const body = await request.json() as { appointmentId?: unknown };
     const { appointmentId } = body;
 
-    if (!appointmentId) {
+    // Validate presence and UUID format before touching Prisma.
+    if (!appointmentId || typeof appointmentId !== "string") {
       return NextResponse.json({ error: "appointmentId is required" }, { status: 400 });
+    }
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(appointmentId)) {
+      return NextResponse.json({ error: "Invalid appointmentId format" }, { status: 400 });
     }
 
     // Scope to the session user's own appointment — prevents syncing foreign data to someone's calendar.

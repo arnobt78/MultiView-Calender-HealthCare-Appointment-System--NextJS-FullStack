@@ -123,7 +123,10 @@ export async function GET(req: NextRequest) {
     const token = generateToken(user.id, user.email);
     await setSession(token);
 
-    const redirectTo = state.startsWith("/") ? state : "/dashboard";
+    // Guard against open redirect: accept only same-origin paths.
+    // "//evil.com" starts with "/" but resolves to an external origin; reject it.
+    const isSafePath = state.startsWith("/") && !state.startsWith("//");
+    const redirectTo = isSafePath ? state : "/dashboard";
     return NextResponse.redirect(new URL(redirectTo, req.url));
   } catch (err) {
     console.error("Google callback error:", err);

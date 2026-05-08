@@ -7,6 +7,12 @@ import { isAllowedDemoLogin } from "@/lib/demo-credentials";
 
 export async function POST(req: NextRequest) {
   try {
+    // Demo auth is opt-in: set ENABLE_DEMO_AUTH=true in .env to activate.
+    // Keep this OFF in production unless you explicitly want demo accounts accessible.
+    if (process.env.ENABLE_DEMO_AUTH !== "true") {
+      return NextResponse.json({ error: "Demo login is not enabled" }, { status: 403 });
+    }
+
     const { email, password } = await req.json();
 
     if (

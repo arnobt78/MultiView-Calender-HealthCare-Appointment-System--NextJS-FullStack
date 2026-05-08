@@ -203,7 +203,7 @@ export async function GET() {
     }
 
     return NextResponse.json(payload);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Dashboard overview error:", error);
     return NextResponse.json({ error: "Failed to load overview" }, { status: 500 });
   }

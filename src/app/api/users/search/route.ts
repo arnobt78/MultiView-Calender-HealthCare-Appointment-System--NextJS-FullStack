@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
+import { getUserRole, isPatientRole } from "@/lib/rbac";
 import { PAGINATION, VALIDATION } from "@/lib/constants";
 
 export async function GET(req: NextRequest) {
@@ -25,6 +26,12 @@ export async function GET(req: NextRequest) {
       }, { status: 400 });
     }
 
+    // Patients must not enumerate the global user directory.
+    const callerRole = await getUserRole(sessionUser.userId);
+    if (isPatientRole(callerRole)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const safeLimit = Math.min(Math.max(limit, 1), PAGINATION.MAX_SEARCH_LIMIT);
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(searchQuery);
 
@@ -36,7 +43,6 @@ export async function GET(req: NextRequest) {
         take: safeLimit,
       });
     } else {
-      const pattern = `%${searchQuery}%`;
       users = await prisma.user.findMany({
         where: {
           email_verified: true,

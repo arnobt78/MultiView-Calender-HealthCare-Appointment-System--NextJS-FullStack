@@ -13,7 +13,7 @@ import { prefetchPortalData } from "@/lib/server-prefetch";
 import type { PortalPrefetchData } from "@/lib/server-prefetch";
 import { getUserRole, isPatientRole } from "@/lib/rbac";
 
-export const metadata = { title: "Patient Portal — Vocare" };
+export const metadata = { title: "Patient Portal — HealthCal Pro" };
 
 export default async function PatientPortalRoute() {
   const session = await getSessionUser();
