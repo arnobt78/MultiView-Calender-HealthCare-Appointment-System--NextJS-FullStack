@@ -56,8 +56,12 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     const { id } = await context.params;
     if (!isValidUUID(id)) return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
 
-    const body = await req.json() as { role?: string; display_name?: string; image?: string };
-    const { role, display_name, image } = body;
+    const body = await req.json() as { role?: unknown; display_name?: unknown; image?: unknown };
+
+    // Type-narrow each field before use — body comes from JSON so values are `unknown`.
+    const role = typeof body.role === "string" ? body.role : undefined;
+    const display_name = typeof body.display_name === "string" ? body.display_name.trim() : undefined;
+    const image = typeof body.image === "string" ? body.image : undefined;
 
     const ALLOWED_ROLES = ["admin", "doctor", "secretary", "patient"];
     if (role !== undefined && !ALLOWED_ROLES.includes(role)) {

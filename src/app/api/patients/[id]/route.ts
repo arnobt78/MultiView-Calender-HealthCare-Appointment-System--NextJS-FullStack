@@ -105,7 +105,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
         firstname: body.firstname.trim(),
         lastname: body.lastname.trim(),
         birth_date: body.birth_date ? new Date(body.birth_date) : null,
-        care_level: body.care_level != null ? Number(body.care_level) : null,
+        care_level: body.care_level != null && Number.isFinite(Number(body.care_level)) ? Number(body.care_level) : null,
         pronoun: body.pronoun ?? null,
         active: body.active !== false,
         active_since: body.active_since ? new Date(body.active_since) : null,

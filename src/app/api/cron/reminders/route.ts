@@ -108,7 +108,7 @@ export async function GET(request: NextRequest) {
             html: template.html,
           });
           emailsSent++;
-        } catch (err) {
+        } catch (err: unknown) {
           console.error(`Failed to send reminder to ${appt.owner.email}:`, err);
         }
       }
@@ -126,7 +126,7 @@ export async function GET(request: NextRequest) {
           },
         });
         notificationsCreated++;
-      } catch (err) {
+      } catch (err: unknown) {
         console.error(`Failed to create notification for ${appt.user_id}:`, err);
       }
 
@@ -149,7 +149,7 @@ export async function GET(request: NextRequest) {
               html: template.html,
             });
             emailsSent++;
-          } catch (err) {
+          } catch (err: unknown) {
             console.error(`Failed to send reminder to assignee ${assignee.user.email}:`, err);
           }
         }
@@ -168,7 +168,7 @@ export async function GET(request: NextRequest) {
               },
             });
             notificationsCreated++;
-          } catch (err) {
+          } catch (err: unknown) {
             console.error(`Failed to create notification for assignee ${assignee.user_id}:`, err);
           }
         }

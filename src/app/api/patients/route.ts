@@ -76,7 +76,10 @@ export async function POST(req: NextRequest) {
         firstname: body.firstname.trim(),
         lastname: body.lastname.trim(),
         birth_date: body.birth_date ? new Date(body.birth_date) : null,
-        care_level: body.care_level != null ? Number(body.care_level) : null,
+        // Guard against NaN from Number(non-numeric) before writing to the DB integer column.
+        care_level: body.care_level != null && Number.isFinite(Number(body.care_level))
+          ? Number(body.care_level)
+          : null,
         pronoun: body.pronoun ?? null,
         email: body.email ?? null,
         active: body.active !== false,

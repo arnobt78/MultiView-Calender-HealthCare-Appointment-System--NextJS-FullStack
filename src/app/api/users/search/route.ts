@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const searchQuery = searchParams.get("query") || "";
-    const limit = parseInt(searchParams.get("limit") || PAGINATION.DEFAULT_LIMIT.toString());
+    const rawLimit = Number.parseInt(searchParams.get("limit") ?? PAGINATION.DEFAULT_LIMIT.toString(), 10);
 
     if (searchQuery.length < VALIDATION.MIN_SEARCH_QUERY_LENGTH) {
       return NextResponse.json({
@@ -32,7 +32,10 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const safeLimit = Math.min(Math.max(limit, 1), PAGINATION.MAX_SEARCH_LIMIT);
+    // Guard against NaN from parseInt on non-numeric query strings.
+    const safeLimit = Number.isFinite(rawLimit)
+      ? Math.min(Math.max(rawLimit, 1), PAGINATION.MAX_SEARCH_LIMIT)
+      : PAGINATION.DEFAULT_LIMIT;
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(searchQuery);
 
     let users;

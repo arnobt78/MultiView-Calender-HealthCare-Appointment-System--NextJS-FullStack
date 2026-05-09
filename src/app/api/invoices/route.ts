@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { redis } from "@/lib/redis";
+import { isValidUUID } from "@/lib/validation";
 
 export async function GET() {
   try {
@@ -38,7 +39,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Valid amount is required" }, { status: 400 });
     }
 
-    // When an appointment is linked, verify the caller owns it to prevent cross-user references.
+    // When an appointment is linked, validate UUID format first to prevent malformed Prisma queries.
+    if (appointment_id && (typeof appointment_id !== "string" || !isValidUUID(appointment_id))) {
+      return NextResponse.json({ error: "Invalid appointment_id format" }, { status: 400 });
+    }
     if (appointment_id) {
       const appt = await prisma.appointment.findFirst({
         where: { id: appointment_id, user_id: sessionUser.userId },
