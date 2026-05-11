@@ -539,10 +539,15 @@ export default function LandingPage() {
           localStorage.setItem("post-login-toast", payload);
           // Route patients to the patient portal; all other roles use the dashboard.
           const dest = data.user.role === "patient" ? "/patient-portal" : "/dashboard";
+          // Do NOT reset loading here — keep spinner visible until the new page mounts.
+          // router.push is async; resetting before unmount causes a brief button flash.
           router.push(dest);
+          return;
         }
       }
-    } finally {
+      // Only reach here on non-ok response or missing user — reset loading for retry.
+      setDemoLoading(false);
+    } catch {
       setDemoLoading(false);
     }
   }, [router, queryClient, selectedDemoIdx]);
@@ -689,31 +694,42 @@ export default function LandingPage() {
                 {/* Role selector — choose which demo account to sign in with */}
                 <DropdownMenu modal={false}>
                   <DropdownMenuTrigger asChild>
+                    {/* Match height of CTA buttons: text-sm + py-3 */}
                     <button
                       type="button"
                       disabled={demoLoading}
-                      className="inline-flex items-center gap-1.5 rounded-2xl border border-emerald-400/40 bg-emerald-900/40 px-3 py-3 text-xs font-medium text-emerald-100 backdrop-blur-sm transition hover:bg-emerald-800/50 disabled:opacity-60 cursor-pointer"
+                      className="inline-flex items-center gap-1.5 rounded-2xl border border-emerald-400/40 bg-emerald-900/40 px-4 py-3 text-sm font-medium text-emerald-100 backdrop-blur-sm transition hover:bg-emerald-800/50 disabled:opacity-60 cursor-pointer"
                     >
+                      {/* Role-specific icon beside the selected account label */}
+                      {DEMO_ACCOUNTS[selectedDemoIdx].role === "admin" && <ShieldCheck className="h-4 w-4 opacity-80" />}
+                      {DEMO_ACCOUNTS[selectedDemoIdx].role === "doctor" && <Stethoscope className="h-4 w-4 opacity-80" />}
+                      {DEMO_ACCOUNTS[selectedDemoIdx].role === "patient" && <HeartPulse className="h-4 w-4 opacity-80" />}
                       {DEMO_ACCOUNTS[selectedDemoIdx].label}
                       <ChevronDown className="h-3.5 w-3.5 opacity-70" />
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="min-w-[150px]" sideOffset={6}>
+                  <DropdownMenuContent align="start" className="min-w-[160px]" sideOffset={6}>
                     {DEMO_ACCOUNTS.map((acc, idx) => (
                       <DropdownMenuItem
                         key={acc.email}
                         onSelect={() => setSelectedDemoIdx(idx)}
-                        className={idx === selectedDemoIdx ? "bg-emerald-50 text-emerald-700" : ""}
+                        className={`gap-2 ${idx === selectedDemoIdx ? "bg-emerald-50 text-emerald-700" : ""}`}
                       >
+                        {acc.role === "admin" && <ShieldCheck className="h-4 w-4 shrink-0" />}
+                        {acc.role === "doctor" && <Stethoscope className="h-4 w-4 shrink-0" />}
+                        {acc.role === "patient" && <HeartPulse className="h-4 w-4 shrink-0" />}
                         {acc.label}
                       </DropdownMenuItem>
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
 
-                {/* One-click sign-in button */}
+                {/*
+                 * overflow-hidden clips the ripple effect to the rounded corners,
+                 * preventing the extra visible border that appeared around the button.
+                 */}
                 <div
-                  className="cta-shine-wrap rounded-2xl transition-shadow duration-300"
+                  className="cta-shine-wrap overflow-hidden rounded-2xl transition-shadow duration-300"
                   style={{ boxShadow: "0 12px 32px rgba(16,185,129,0.5), 0 0 28px rgba(16,185,129,0.28)" }}
                 >
                   <RippleButton
@@ -724,12 +740,12 @@ export default function LandingPage() {
                     {demoLoading ? (
                       <span className="flex items-center gap-2">
                         <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                        Signing in... <ArrowRight className="h-4 w-4" />
+                        Signing In... <ArrowRight className="h-4 w-4" />
                       </span>
                     ) : (
                       <>
                         <Zap className="h-4 w-4" />
-                        Try demo account <ArrowRight className="h-4 w-4" />
+                        Try Demo Account <ArrowRight className="h-4 w-4" />
                       </>
                     )}
                   </RippleButton>

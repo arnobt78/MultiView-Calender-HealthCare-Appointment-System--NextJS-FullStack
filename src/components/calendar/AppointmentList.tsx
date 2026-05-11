@@ -414,7 +414,8 @@ export default function AppointmentList() {
       {
         key: "passed" as const,
         title: "Passed Days",
-        subtitle: "Previous appointments",
+        // Auto-cleanup note: past appointments are purged on the 1st of each month via cron.
+        subtitle: "Previous appointments · Auto-deleted on the 1st of each month",
         icon: CalendarX2,
         headerClass:
           "border-gray-300/55 bg-gradient-to-r from-gray-50 via-gray-50/80 to-slate-100/70",

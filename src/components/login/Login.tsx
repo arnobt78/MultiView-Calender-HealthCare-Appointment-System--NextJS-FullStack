@@ -177,9 +177,10 @@ export default function Login({ redirect = null }: LoginProps) {
       });
 
       const data = await response.json();
-      setLoading(false);
 
       if (!response.ok) {
+        // Reset loading on error so the user can retry.
+        setLoading(false);
         notify.error({
           title: "Login failed",
           subtitle: data.error || "Please check your credentials and try again.",
@@ -200,8 +201,13 @@ export default function Login({ redirect = null }: LoginProps) {
         // Patients land on the portal; staff use the requested redirect or calendar home.
         const isPatient = data.user?.role === "patient";
         const dest = isPatient ? "/patient-portal" : redirect ?? "/dashboard";
+        // Do NOT reset loading here — keep spinner visible until the new page mounts.
+        // Resetting before unmount causes a brief button flash during navigation.
         router.push(dest);
+        return;
       }
+      // Fallback: unexpected shape — reset so form is interactive again.
+      setLoading(false);
     } catch (err: unknown) {
       setLoading(false);
       const message = err instanceof Error ? err.message : "An error occurred during login";
