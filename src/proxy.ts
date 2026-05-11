@@ -167,13 +167,16 @@ export async function proxy(request: NextRequest) {
   //   No framing allowed from any origin — maximum clickjacking protection.
   //   - CSP frame-ancestors 'none'
   //   - X-Frame-Options DENY
+  // #region agent log
+  res.headers.set("X-Debug-Proxy", `path=${pathname};public=${isPublic(pathname)};auth=${authenticated}`);
+  // #endregion
   if (isPublic(pathname)) {
     res.headers.set(
       "Content-Security-Policy",
       [
         ...BASE_CSP_DIRECTIVES,
-        // Allow Vercel preview iframe; block all other cross-origin frames.
-        "frame-ancestors 'self' https://vercel.com https://vercel.live",
+        // Allow Vercel preview iframe and deployment preview subdomains; block all other cross-origin frames.
+        "frame-ancestors 'self' https://vercel.com https://vercel.live https://*.vercel.app https://*.vercel-insights.com",
       ].join("; ")
     );
     res.headers.set("X-Frame-Options", "SAMEORIGIN");
