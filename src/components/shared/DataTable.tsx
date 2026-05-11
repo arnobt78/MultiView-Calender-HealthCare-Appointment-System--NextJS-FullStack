@@ -247,9 +247,9 @@ export function DataTable<TData, TValue>({
                             <Skeleton className="h-4 w-[8.75rem] shrink-0 rounded-sm" />
                           </div>
                         ) : columnId === "actions" ? (
-                          <div className="flex min-h-[2.75rem] items-center justify-end">
-                            <Skeleton className="h-4 w-4 shrink-0 rounded-sm" />
-                          </div>
+                          // Action buttons are static chrome — no skeleton placeholder needed;
+                          // an empty-height div keeps the row height consistent during load.
+                          <div className="flex min-h-[2.75rem] items-center justify-end" />
                         ) : (
                           <div className="flex min-h-[2.75rem] w-full min-w-0 flex-col justify-center">
                             <Skeleton className="h-4 w-full max-w-[10rem] rounded-sm" />

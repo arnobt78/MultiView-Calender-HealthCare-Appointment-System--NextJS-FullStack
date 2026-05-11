@@ -7,6 +7,9 @@ export function useAssignees() {
   const query = useQuery({
     queryKey: queryKeys.assignees.all,
     queryFn: () => fetchAssignees(),
+    // Assignee list is invalidated on every appointment mutation; 30 s window prevents
+    // redundant refetches on rapid re-mounts (e.g. tab switches).
+    staleTime: 30_000,
   });
 
   return {

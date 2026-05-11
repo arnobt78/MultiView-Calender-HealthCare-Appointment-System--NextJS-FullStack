@@ -45,6 +45,9 @@ export function usePatients() {
   const query = useQuery({
     queryKey: queryKeys.patients.all,
     queryFn: () => fetchPatients(),
+    // Patient list changes only on create/update/delete mutations which all call
+    // invalidatePatientsAndOverview; 30 s prevents redundant re-fetches.
+    staleTime: 30_000,
   });
 
   const createMutation = useMutation({

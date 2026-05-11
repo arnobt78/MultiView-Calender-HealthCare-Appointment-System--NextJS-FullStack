@@ -747,10 +747,10 @@ export function PatientDetailScreen({
                 <List className="shrink-0" aria-hidden />
                 Back To List
               </PrefetchingLink>
-              {/* Mirror the final action-group footprint: Update Profile + Delete */}
+              {/* Footer action placeholders — static chrome, no pulse */}
               <div className="flex flex-wrap gap-2">
-                <Skeleton className="h-10 w-36 rounded-full" />
-                <Skeleton className="h-10 w-24 rounded-full" />
+                <div className="h-10 w-36" />
+                <div className="h-10 w-24" />
               </div>
             </div>
           ) : mode === "view" ? (

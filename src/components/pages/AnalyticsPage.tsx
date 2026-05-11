@@ -30,6 +30,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  AlertCircle,
   CalendarCheck,
   CalendarClock,
   CalendarX,
@@ -37,6 +38,7 @@ import {
   Users,
   Activity,
 } from "lucide-react";
+import { PageHeader } from "@/components/shared/PageHeader";
 
 /** Glass card variant per color — matches DashboardOverview style. */
 const GLASS: Record<string, string> = {
@@ -73,7 +75,7 @@ export default function AnalyticsPage({ initialInsights }: AnalyticsPageProps = 
     }
   }, [queryClient, initialInsights]);
 
-  const { data, isLoading } = useInsights();
+  const { data, isLoading, isError } = useInsights();
 
   /**
    * Mount guard: hydrate with skeleton state on first paint, swap to real data
@@ -103,6 +105,18 @@ export default function AnalyticsPage({ initialInsights }: AnalyticsPageProps = 
   ];
 
   const maxMonthly = Math.max(...monthlyData.map((m) => m.count), 1);
+
+  if (isError) {
+    return (
+      <div className="space-y-4">
+        <PageHeader title="Analytics" description="Appointment insights and trends" />
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 flex items-center gap-2">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          Failed to load analytics data. Please refresh.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">

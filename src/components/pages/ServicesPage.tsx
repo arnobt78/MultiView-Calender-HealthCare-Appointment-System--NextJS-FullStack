@@ -8,13 +8,16 @@
  *     and a "Book with this doctor" button (opens the booking wizard pre-selected)
  *  2. Appointment Types / Services — global types (user_id = null) with name, duration, description
  *
- * Accessible to all authenticated roles.
+ * Accepts optional `initialDoctors` / `initialGlobalTypes` from the server page for SSR cache seeding
+ * (no loading flash on first paint — static text/icons stay visible while only dynamic data pulses).
  */
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useLayoutEffect } from "react";
 import Image from "next/image";
 import {
   Activity,
+  AlertCircle,
   CalendarClock,
   CalendarPlus,
   Clock,
@@ -216,7 +219,8 @@ function DoctorSkeletonGrid({ count = 8 }: { count?: number }) {
             <Skeleton className="h-3 w-24 rounded" />
             <Skeleton className="h-3 w-full rounded" />
             <Skeleton className="h-3 w-3/4 rounded" />
-            <Skeleton className="h-8 w-full rounded-lg mt-3" />
+            {/* CTA placeholder — static chrome, no pulse */}
+            <div className="h-8 w-full mt-3" />
           </div>
         </Card>
       ))}
@@ -224,15 +228,35 @@ function DoctorSkeletonGrid({ count = 8 }: { count?: number }) {
   );
 }
 
-export default function ServicesPage() {
-  const { data: doctorsData, isLoading: doctorsLoading } = useQuery({
+interface ServicesPageProps {
+  /** SSR-prefetched doctors — seeded into React Query cache to avoid loading flash */
+  initialDoctors?: unknown[];
+  /** SSR-prefetched global appointment types */
+  initialGlobalTypes?: unknown[];
+}
+
+export default function ServicesPage({ initialDoctors, initialGlobalTypes }: ServicesPageProps) {
+  const queryClient = useQueryClient();
+
+  // Seed server-prefetched data into React Query cache before first render.
+  // useLayoutEffect runs synchronously before paint so queries find data in cache immediately.
+  useLayoutEffect(() => {
+    if (initialDoctors?.length) {
+      queryClient.setQueryData(queryKeys.doctors.all, { doctors: initialDoctors as DoctorCard[] });
+    }
+    if (initialGlobalTypes?.length) {
+      queryClient.setQueryData(queryKeys.appointmentTypes.global, { types: initialGlobalTypes as AppointmentTypeCard[] });
+    }
+  }, [queryClient, initialDoctors, initialGlobalTypes]);
+
+  const { data: doctorsData, isLoading: doctorsLoading, isError: doctorsError } = useQuery({
     queryKey: queryKeys.doctors.all,
     queryFn: () => apiClient<{ doctors: DoctorCard[] }>("/api/doctors"),
     staleTime: 5 * 60 * 1000,
   });
 
   // Global appointment types (user_id = null) — rendered as "Services" section
-  const { data: globalTypesData, isLoading: typesLoading } = useQuery({
+  const { data: globalTypesData, isLoading: typesLoading, isError: typesError } = useQuery({
     queryKey: queryKeys.appointmentTypes.global,
     queryFn: () => apiClient<{ types: AppointmentTypeCard[] }>("/api/appointment-types/global"),
     staleTime: 5 * 60 * 1000,
@@ -275,6 +299,11 @@ export default function ServicesPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {doctorsLoading ? (
             <DoctorSkeletonGrid count={8} />
+          ) : doctorsError ? (
+            <div className="col-span-full rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              Failed to load doctors. Please refresh.
+            </div>
           ) : doctors.length === 0 ? (
             <div className="col-span-full text-center py-12 text-muted-foreground">
               <Stethoscope className="h-10 w-10 mx-auto mb-2 opacity-30" />
@@ -293,7 +322,8 @@ export default function ServicesPage() {
             <Activity className="h-3.5 w-3.5 text-violet-600" />
           </span>
           <h2 className="text-base font-semibold">Appointment Services</h2>
-          {!doctorsLoading && globalTypes.length > 0 && (
+          {/* Gate on typesLoading (not doctorsLoading) — these are independent queries */}
+          {!typesLoading && globalTypes.length > 0 && (
             <Badge variant="outline" className="bg-violet-50 text-violet-700 border-violet-200 font-bold">
               {globalTypes.length}
             </Badge>
@@ -305,6 +335,11 @@ export default function ServicesPage() {
             {Array.from({ length: 4 }).map((_, i) => (
               <Skeleton key={i} className="h-24 rounded-[16px]" />
             ))}
+          </div>
+        ) : typesError ? (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            Failed to load services. Please refresh.
           </div>
         ) : globalTypes.length === 0 ? (
           <p className="text-sm text-muted-foreground">No services listed yet.</p>

@@ -13,7 +13,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Category } from "@/types/types";
 import { cn } from "@/lib/utils";
 import { skyGlassTableFrameClass, emeraldGlassPrimaryButtonClass } from "@/lib/calendar-header-action-styles";
-import { Plus, Pencil, MoreHorizontal, Trash2, Eye, Layers, CheckCircle2, Clock, Tag } from "lucide-react";
+import { Plus, Pencil, MoreHorizontal, Trash2, Eye, Layers, CheckCircle2, Clock, Tag, AlertCircle } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
 import {
   Dialog,
@@ -45,9 +46,9 @@ import { Textarea } from "@/components/ui/textarea";
 import type { CategoryCreateInput } from "@/hooks/useCategories";
 
 // ---------------------------------------------------------------------------
-// Stat cards — amber/orange color scheme
+// Stat cards — amber/orange color scheme; only numeric values pulse during load
 // ---------------------------------------------------------------------------
-function CategoryStatCards({ categories }: { categories: Category[] }) {
+function CategoryStatCards({ categories, isLoading }: { categories: Category[]; isLoading: boolean }) {
   const active = categories.filter((c) => c.is_active !== false).length;
   const withDuration = categories.filter((c) => c.duration_minutes_default != null).length;
 
@@ -95,7 +96,11 @@ function CategoryStatCards({ categories }: { categories: Category[] }) {
               {icon}
             </span>
             <div>
-              <p className={cn("text-lg font-bold leading-none", valueCls)}>{value}</p>
+              {/* Only pulse the numeric value — label + icon stay fixed during load */}
+              {isLoading
+                ? <Skeleton className="h-5 w-8 rounded mb-1" />
+                : <p className={cn("text-lg font-bold leading-none", valueCls)}>{value}</p>
+              }
               <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
             </div>
           </CardContent>
@@ -177,7 +182,7 @@ function CategoryActions({
 }
 
 export default function CategoryManagement() {
-  const { categories, isLoading, createCategory, isCreating, deleteCategory } = useCategories();
+  const { categories, isLoading, isError, createCategory, isCreating, deleteCategory } = useCategories();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<CategoryCreateInput>({
     label: "",
@@ -281,6 +286,18 @@ export default function CategoryManagement() {
     );
   };
 
+  if (isError) {
+    return (
+      <div className="space-y-4">
+        <PageHeader title="Category Management" description="Manage appointment categories with status, duration, and display order." />
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center text-sm text-red-700">
+          <AlertCircle className="h-8 w-8 mx-auto mb-2 opacity-60" />
+          Failed to load categories. Please refresh the page.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <PageHeader
@@ -298,7 +315,7 @@ export default function CategoryManagement() {
         }
       />
 
-      <CategoryStatCards categories={categories} />
+      <CategoryStatCards categories={categories} isLoading={isLoading} />
 
       <div className={cn("rounded-2xl overflow-hidden", skyGlassTableFrameClass)}>
         <DataTable<Category, unknown>

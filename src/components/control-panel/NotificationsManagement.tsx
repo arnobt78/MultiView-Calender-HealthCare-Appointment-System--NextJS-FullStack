@@ -44,6 +44,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  AlertCircle,
   Bell,
   BellOff,
   CheckCheck,
@@ -64,7 +65,7 @@ const TYPE_COLORS: Record<string, string> = {
 };
 
 export default function NotificationsManagement() {
-  const { notifications, unreadCount, isLoading, markAsRead, markAllAsRead, isMarkingRead } = useNotifications();
+  const { notifications, unreadCount, isLoading, isError: notificationsError, markAsRead, markAllAsRead, isMarkingRead } = useNotifications();
   const [sorting, setSorting] = useState<SortingState>([{ id: "created_at", desc: true }]);
   const [globalFilter, setGlobalFilter] = useState("");
 
@@ -155,6 +156,17 @@ export default function NotificationsManagement() {
   }, []);
 
   const loading = !isMounted || isLoading;
+
+  if (notificationsError) {
+    return (
+      <div className="space-y-2 pb-3">
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 flex items-center gap-2">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          Failed to load notifications. Please refresh.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-2 pb-3">

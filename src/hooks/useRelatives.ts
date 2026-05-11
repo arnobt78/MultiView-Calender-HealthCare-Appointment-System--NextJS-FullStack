@@ -47,7 +47,9 @@ export function useRelatives() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) =>
       apiClient(`/api/relatives/${id}`, { method: "DELETE" }),
-    onSuccess: async () => {
+    onSuccess: async (_, id) => {
+      // Evict the detail cache entry immediately so stale data isn't served if the id is reused.
+      queryClient.removeQueries({ queryKey: queryKeys.relatives.detail(id) });
       await invalidateEntityAffectingAppointments(queryClient, "relatives");
       notify.crud({ action: "deleted", entity: "Relative", detail: "The relative record was deleted." });
     },

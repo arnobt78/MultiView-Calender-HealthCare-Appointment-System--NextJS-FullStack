@@ -57,7 +57,7 @@ export function useUsers(filters: UserListFilters = {}, options?: { enabled?: bo
     onSuccess: async (data) => {
       await invalidateUsersAndAuth(queryClient);
       // Role changes affect the "Doctors" and other aggregate counts in dashboard overview.
-      void invalidateDashboardOverview(queryClient);
+      await invalidateDashboardOverview(queryClient);
       notify.crud({ action: "updated", entity: "User", detail: `${data.user.display_name ?? data.user.email} was updated.` });
     },
     onError: (e) => handleApiError(e, "Failed to update user"),

@@ -17,14 +17,23 @@ import { format } from "date-fns";
 import { useAppStore } from "@/store/useAppStore";
 
 export default function PatientDetailView({ patientId }: { patientId: string }) {
-  const { patients, isLoading: patientsLoading } = usePatients();
-  const { appointments, isLoading: apptsLoading } = useAppointments();
+  const { patients, isLoading: patientsLoading, isError: patientsError } = usePatients();
+  const { appointments, isLoading: apptsLoading, isError: apptsError } = useAppointments();
   const startVideoCall = useAppStore((state) => state.startVideoCall);
 
   const patient = patients.find((p) => p.id === patientId);
   const patientAppts = appointments?.filter((a) => a.patient === patientId) || [];
 
   if (patientsLoading || apptsLoading) return <PatientDetailSkeleton />;
+
+  if (patientsError || apptsError) {
+    return (
+      <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 flex items-center gap-2">
+        <AlertCircle className="h-4 w-4 shrink-0" />
+        Failed to load patient data. Please refresh.
+      </div>
+    );
+  }
 
   if (!patient) {
     return (
@@ -238,9 +247,10 @@ function PatientDetailSkeleton() {
             <Skeleton className="h-5 w-1/2" />
             <Separator className="my-6 w-full" />
             <div className="w-full space-y-2">
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
+              {/* CTA buttons — static chrome, no pulse */}
+              <div className="h-10 w-full" />
+              <div className="h-10 w-full" />
+              <div className="h-10 w-full" />
             </div>
           </CardContent>
         </Card>

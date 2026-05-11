@@ -41,6 +41,7 @@ import {
   LogIn,
 } from "lucide-react";
 import { RippleButton } from "@/components/ui/RippleButton";
+import { notify } from "@/lib/notify";
 
 /* ─── motion tokens ─── */
 const ease = [0.22, 1, 0.36, 1] as const;
@@ -547,8 +548,10 @@ export default function LandingPage() {
       }
       // Only reach here on non-ok response or missing user — reset loading for retry.
       setDemoLoading(false);
+      notify.error({ title: "Demo login failed", subtitle: "Could not start the demo session. Please try again." });
     } catch {
       setDemoLoading(false);
+      notify.error({ title: "Demo login failed", subtitle: "Could not start the demo session. Please try again." });
     }
   }, [router, queryClient, selectedDemoIdx]);
 

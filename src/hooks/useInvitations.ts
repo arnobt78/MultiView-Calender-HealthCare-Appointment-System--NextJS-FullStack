@@ -37,6 +37,9 @@ export function useInvitations(type: "appointment" | "dashboard") {
         ? response.appointmentInvitations 
         : response.dashboardInvitations) || [];
     },
+    // Invitations change only on explicit send/discard mutations; 30 s prevents
+    // redundant fetches on rapid tab switches or re-mounts.
+    staleTime: 30_000,
   });
 
   const sendInvitationMutation = useMutation({
@@ -47,7 +50,7 @@ export function useInvitations(type: "appointment" | "dashboard") {
       }),
     onSuccess: async (_, variables) => {
       await invalidateSharingAndAppointments(queryClient);
-      notify.success({ title: "Invitation sent", subtitle: `An invitation was sent to ${variables.email}.` });
+      notify.crud({ action: "created", entity: "Invitation", detail: `An invitation was sent to ${variables.email}.` });
     },
     onError: (error) => handleApiError(error, "Failed to send invitation"),
   });
@@ -57,7 +60,7 @@ export function useInvitations(type: "appointment" | "dashboard") {
       apiClient(`/api/appointments/${id}/permissions`, { method: "DELETE" }),
     onSuccess: async () => {
       await invalidateSharingAndAppointments(queryClient);
-      notify.warning({ title: "Appointment invitation discarded", subtitle: "The invitation has been removed." });
+      notify.crud({ action: "deleted", entity: "Appointment invitation", detail: "The invitation has been removed." });
     },
     onError: (error) => handleApiError(error, "Failed to discard appointment invitation"),
   });
@@ -67,7 +70,7 @@ export function useInvitations(type: "appointment" | "dashboard") {
       apiClient(`/api/dashboard/${id}/permissions`, { method: "DELETE" }),
     onSuccess: async () => {
       await invalidateSharingAndAppointments(queryClient);
-      notify.warning({ title: "Dashboard invitation discarded", subtitle: "The invitation has been removed." });
+      notify.crud({ action: "deleted", entity: "Dashboard invitation", detail: "The invitation has been removed." });
     },
     onError: (error) => handleApiError(error, "Failed to discard dashboard invitation"),
   });
@@ -75,6 +78,7 @@ export function useInvitations(type: "appointment" | "dashboard") {
   return {
     invitations: query.data || [],
     isLoading: query.isLoading,
+    isError: query.isError,
     refetch: query.refetch,
     sendInvitation: sendInvitationMutation.mutate,
     isSending: sendInvitationMutation.isPending,

@@ -105,8 +105,8 @@ export async function invalidateInsightsAndAnalytics(queryClient: QueryClient) {
  * Also invalidates `dashboard.overview` because:
  * - patients: "Total Patients" + "Active Patients" overview cards track patient counts.
  * - categories: "Total Categories" overview card tracks category count.
- * - relatives: not tracked in overview but the extra invalidation is a <5ms no-op (Redis hit)
- *   and keeps the chain consistent without adding conditional branching.
+ * - relatives: not tracked in overview but the extra invalidation is a <1ms no-op (TanStack
+ *   cache miss) and keeps the chain consistent without adding conditional branching.
  */
 export async function invalidateEntityAffectingAppointments(
   queryClient: QueryClient,

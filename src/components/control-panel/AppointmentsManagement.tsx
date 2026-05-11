@@ -366,7 +366,8 @@ export default function AppointmentsManagement() {
                   <TableCell><Skeleton className="h-5 w-20 rounded-full" /></TableCell>
                   <TableCell><Skeleton className="h-4 w-24 rounded" /></TableCell>
                   <TableCell><Skeleton className="h-4 w-20 rounded" /></TableCell>
-                  <TableCell className="text-right"><Skeleton className="h-8 w-8 rounded-lg ml-auto" /></TableCell>
+                  {/* Actions column — static chrome, no pulse */}
+                  <TableCell className="text-right"><div className="h-8 w-8 ml-auto" /></TableCell>
                 </TableRow>
               ))
             ) : filtered.length === 0 ? (

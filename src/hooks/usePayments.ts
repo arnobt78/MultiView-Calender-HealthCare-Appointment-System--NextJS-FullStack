@@ -39,6 +39,9 @@ export function usePayments() {
       const data = await apiClient<{ invoices: Invoice[] }>("/api/payments");
       return data.invoices || [];
     },
+    // Invoice list is updated only via createInvoice / deleteInvoice mutations;
+    // 30 s prevents redundant re-fetches on tab switches.
+    staleTime: 30_000,
   });
 
   const payMutation = useMutation({

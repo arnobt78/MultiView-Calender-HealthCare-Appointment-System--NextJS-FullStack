@@ -42,7 +42,7 @@ const SLOT_ROW_HEIGHT = 65; // 64px row + 1px border
 
 export default function DayView() {
   const { currentDate } = useDateContext();
-  const { appointments, isLoading, toggleStatus, deleteAppointment } = useAppointmentData();
+  const { appointments, isLoading, isError: appointmentsError, toggleStatus, deleteAppointment } = useAppointmentData();
   const { category, patient, date, status, month, search } = useCalendarFilters();
   const { categories = [] } = useCategories();
   const { patients = [] } = usePatients();
@@ -86,6 +86,12 @@ export default function DayView() {
 
   return (
     <div className="min-h-0 px-2 pt-0 pb-4 sm:px-4 lg:px-8">
+      {appointmentsError && (
+        <div className="mb-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 flex items-center gap-2">
+          <span className="shrink-0">⚠</span>
+          Failed to load appointments. Please refresh.
+        </div>
+      )}
       <CalendarStickyHeader >
         {/* Day header */}
         <div className="mb-2 flex flex-wrap items-center gap-3">

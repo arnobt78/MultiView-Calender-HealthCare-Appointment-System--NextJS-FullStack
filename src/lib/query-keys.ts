@@ -58,7 +58,6 @@ export const queryKeys = {
   },
   notifications: {
     all: ["app", "notifications"] as const,
-    unreadCount: ["app", "notifications", "unread-count"] as const,
   },
   organizations: {
     all: ["app", "organizations"] as const,

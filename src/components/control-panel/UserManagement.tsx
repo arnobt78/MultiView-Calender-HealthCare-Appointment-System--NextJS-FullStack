@@ -40,11 +40,12 @@ import {
   UserCog,
   UserX,
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // ---------------------------------------------------------------------------
-// Stat cards
+// Stat cards — shows skeleton pulse on value while data loads (no misleading zeros)
 // ---------------------------------------------------------------------------
-function UserStatCards({ users }: { users: User[] }) {
+function UserStatCards({ users, isLoading }: { users: User[]; isLoading: boolean }) {
   const admins = users.filter((u) => u.role === "admin").length;
   const doctors = users.filter((u) => u.role === "doctor").length;
   const patients = users.filter((u) => u.role === "patient").length;
@@ -94,7 +95,11 @@ function UserStatCards({ users }: { users: User[] }) {
               {icon}
             </span>
             <div>
-              <p className={cn("text-lg font-bold leading-none", valueCls)}>{value}</p>
+              {/* Only pulse the dynamic numeric value — label/icon stay stable */}
+              {isLoading
+                ? <Skeleton className="h-5 w-8 rounded mb-1" />
+                : <p className={cn("text-lg font-bold leading-none", valueCls)}>{value}</p>
+              }
               <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
             </div>
           </CardContent>
@@ -163,7 +168,7 @@ function ActionsCell({ user }: { user: User }) {
 // Main component — shows ALL users (not filtered by role)
 // ---------------------------------------------------------------------------
 export default function UserManagement() {
-  const { data, isLoading, updateUser } = useUsers({ limit: 200 });
+  const { data, isLoading, isError, updateUser } = useUsers({ limit: 200 });
   const users = data?.users ?? [];
 
   const handleRoleChange = (id: string, role: string) => {
@@ -239,6 +244,18 @@ export default function UserManagement() {
     },
   ];
 
+  if (isError) {
+    return (
+      <div className="space-y-4 text-gray-700">
+        <PageHeader title="User & Admin Management" description="All user accounts — admins, doctors, secretaries, patients." />
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center text-sm text-red-700">
+          <UserX className="h-8 w-8 mx-auto mb-2 opacity-60" />
+          Failed to load users. Please refresh the page.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4 text-gray-700">
       <PageHeader
@@ -246,7 +263,7 @@ export default function UserManagement() {
         description="All user accounts — admins, doctors, secretaries, patients."
       />
 
-      <UserStatCards users={users} />
+      <UserStatCards users={users} isLoading={isLoading} />
 
       <div className={cn("rounded-2xl overflow-hidden", skyGlassTableFrameClass)}>
         <DataTable<User, unknown>

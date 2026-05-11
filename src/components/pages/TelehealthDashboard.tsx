@@ -21,7 +21,7 @@ import { useState, useMemo, useEffect } from "react";
 import { PageHeader } from "@/components/shared/PageHeader";
 
 export default function TelehealthDashboard() {
-  const { appointments, isLoading } = useAppointments();
+  const { appointments, isLoading, isError: appointmentsError } = useAppointments();
   const startVideoCall = useAppStore((state) => state.startVideoCall);
   const [filter, setFilter] = useState<"all" | "today" | "upcoming">("today");
 
@@ -54,6 +54,12 @@ export default function TelehealthDashboard() {
 
   return (
     <div className="space-y-2">
+      {appointmentsError && (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 flex items-center gap-2">
+          <span className="shrink-0">⚠</span>
+          Failed to load appointments. Please refresh.
+        </div>
+      )}
       {/* PageHeader + filter buttons always stay static */}
       <PageHeader
         title="Telehealth Queue"
@@ -97,7 +103,8 @@ export default function TelehealthDashboard() {
                   <Skeleton className="h-4 w-3/4 rounded" />
                   <Skeleton className="h-4 w-1/2 rounded" />
                 </div>
-                <Skeleton className="h-12 w-full rounded-2xl" />
+                {/* "Join Video Room" CTA — static chrome, no pulse */}
+                <div className="h-12 w-full" />
               </CardContent>
             </Card>
           ) : nextAppt ? (
@@ -167,8 +174,9 @@ export default function TelehealthDashboard() {
                     <Skeleton className="h-5 w-3/4 rounded" />
                     <Skeleton className="h-4 w-1/2 rounded" />
                   </div>
-                  <Skeleton className="h-9 w-20 rounded-lg shrink-0" />
-                  <Skeleton className="h-8 w-8 rounded-md shrink-0 hidden sm:block" />
+                  {/* Queue row actions — static chrome, no pulse */}
+                  <div className="h-9 w-20 shrink-0" />
+                  <div className="h-8 w-8 shrink-0 hidden sm:block" />
                 </div>
               ))
             ) : sortedAppointments.length === 0 ? (

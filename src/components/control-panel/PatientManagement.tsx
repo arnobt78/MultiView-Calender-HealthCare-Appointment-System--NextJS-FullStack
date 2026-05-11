@@ -28,6 +28,7 @@ import {
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import { Patient } from "@/types/types";
 import {
+  AlertCircle,
   EllipsisVertical,
   Pencil,
   Trash2,
@@ -229,7 +230,7 @@ function PatientActions({
 }
 
 function PatientManagementInner() {
-  const { patients, isLoading, isFetching, createPatient, isCreating, deletePatient } = usePatients();
+  const { patients, isLoading, isFetching, isError: patientsError, createPatient, isCreating, deletePatient } = usePatients();
   const [listUiMounted, setListUiMounted] = useState(false);
   useEffect(() => {
     const id = requestAnimationFrame(() => setListUiMounted(true));
@@ -489,6 +490,18 @@ function PatientManagementInner() {
       }
     );
   };
+
+  if (patientsError) {
+    return (
+      <div className="space-y-2 text-gray-700">
+        <PageHeader title="Patients" description="Manage patients." />
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 flex items-center gap-2">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          Failed to load patients. Please refresh.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <PatientMetricsProvider

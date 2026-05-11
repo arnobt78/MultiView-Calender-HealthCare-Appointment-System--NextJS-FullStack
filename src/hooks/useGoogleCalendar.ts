@@ -41,7 +41,7 @@ export function useGoogleCalendar() {
         body: JSON.stringify({ appointmentId }),
       }),
     onSuccess: async () => {
-      notify.success({ title: "Synced to Google Calendar", subtitle: "Appointment changes are now mirrored in Google Calendar." });
+      notify.crud({ action: "created", entity: "Google Calendar sync", detail: "Appointment changes are now mirrored in Google Calendar." });
       await invalidateGoogleCalendarData(queryClient);
     },
     onError: (error) => handleApiError(error, "Failed to sync to Google Calendar"),
@@ -51,7 +51,7 @@ export function useGoogleCalendar() {
     mutationFn: () =>
       apiClient("/api/calendar/sync", { method: "DELETE" }),
     onSuccess: async () => {
-      notify.warning({ title: "Google Calendar disconnected", subtitle: "Calendar sync has been turned off." });
+      notify.crud({ action: "deleted", entity: "Google Calendar", detail: "Calendar sync has been turned off." });
       await invalidateGoogleCalendarData(queryClient);
     },
     onError: (error) => handleApiError(error, "Failed to disconnect Google Calendar"),

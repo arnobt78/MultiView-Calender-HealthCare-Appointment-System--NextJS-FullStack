@@ -45,7 +45,10 @@ export async function GET(req: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Invalid appointment ID format" }, { status: 400 });
     }
 
-    // Scope to owner or accepted assignee — same pattern as POST/DELETE.
+    // Scope to owner, accepted user_id assignee, OR email-only accepted assignee.
+    // Email-only invitees (invited_email matches session email, status=accepted) must
+    // have the same read access as user_id assignees — mirrors the parity in
+    // /api/appointments/[id]/activities/route.ts.
     const appointment = await prisma.appointment.findFirst({
       where: {
         id,
@@ -54,6 +57,11 @@ export async function GET(req: NextRequest, context: RouteContext) {
           {
             assignees: {
               some: { user_id: sessionUser.userId, status: "accepted" },
+            },
+          },
+          {
+            assignees: {
+              some: { invited_email: sessionUser.email, status: "accepted" },
             },
           },
         ],

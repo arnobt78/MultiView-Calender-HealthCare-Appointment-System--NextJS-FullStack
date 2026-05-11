@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { isValidUUID } from "@/lib/validation";
+import { redis } from "@/lib/redis";
 
 export async function GET() {
   try {
@@ -133,6 +134,10 @@ export async function POST(request: NextRequest) {
     } catch {
       // Non-critical, don't fail the booking
     }
+
+    // Bust the doctor's server-side Redis overview cache so their dashboard
+    // reflects the new booking immediately on next load (non-critical, fire-and-forget).
+    void redis.invalidateDashboardOverview(doctorId);
 
     return NextResponse.json({ appointment }, { status: 201 });
   } catch (error: unknown) {

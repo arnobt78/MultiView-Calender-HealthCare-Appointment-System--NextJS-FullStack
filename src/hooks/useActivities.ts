@@ -13,6 +13,8 @@ export function useActivitiesList() {
   return useQuery({
     queryKey: queryKeys.activities.list,
     queryFn: () => fetchActivitiesList(),
+    // Activity log is append-only; 30 s prevents redundant refetches on re-mounts.
+    staleTime: 30_000,
   });
 }
 

@@ -182,6 +182,9 @@ export function useAppointments() {
       return deduped;
     },
     enabled: !!user,
+    // Appointments are invalidated after every create/update/delete/toggle mutation;
+    // 30 s prevents redundant re-fetches on rapid view switches.
+    staleTime: 30_000,
   });
 
   const createMutation = useMutation({
@@ -310,11 +313,10 @@ export function useAppointments() {
         invalidateInsightsAndAnalytics(queryClient),
         invalidateDashboardOverview(queryClient),
       ]);
-      notify.success({
-        title: "Status updated",
-        subtitle: `"${getSafeAppointmentTitle(appt)}" is now marked as ${getStatusLabel(
-          appt?.status
-        )} (${formatAppointmentRange(appt?.start, appt?.end)}).`,
+      notify.crud({
+        action: "updated",
+        entity: "Appointment status",
+        detail: `"${getSafeAppointmentTitle(appt)}" is now ${getStatusLabel(appt?.status)} (${formatAppointmentRange(appt?.start, appt?.end)}).`,
       });
     },
     onError: (error, variables, context) => {

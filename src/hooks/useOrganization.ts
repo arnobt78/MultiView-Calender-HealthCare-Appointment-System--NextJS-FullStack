@@ -30,6 +30,9 @@ export function useOrganization() {
       const data = await apiClient<{ organizations: Organization[] }>("/api/organizations");
       return data.organizations || [];
     },
+    // Org membership changes rarely; 60 s avoids redundant fetches while still
+    // picking up mutations via explicit invalidateOrganizations calls.
+    staleTime: 60_000,
   });
 
   const createOrgMutation = useMutation({
@@ -53,7 +56,7 @@ export function useOrganization() {
         body: JSON.stringify({ userId, role }),
       }),
     onSuccess: async () => {
-      notify.success({ title: "Member added", subtitle: "The member now has organization access." });
+      notify.crud({ action: "created", entity: "Member", detail: "The member now has organization access." });
       await invalidateOrganizations(queryClient);
       await invalidateDashboardOverview(queryClient);
     },
@@ -67,7 +70,7 @@ export function useOrganization() {
         body: JSON.stringify({ userId }),
       }),
     onSuccess: async () => {
-      notify.warning({ title: "Member removed", subtitle: "The user no longer has organization access." });
+      notify.crud({ action: "deleted", entity: "Member", detail: "The user no longer has organization access." });
       await invalidateOrganizations(queryClient);
       await invalidateDashboardOverview(queryClient);
     },

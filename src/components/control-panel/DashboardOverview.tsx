@@ -34,6 +34,7 @@ import {
   RefreshCw,
   Banknote,
   Receipt,
+  AlertCircle,
 } from "lucide-react";
 import { format } from "date-fns";
 import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
@@ -133,7 +134,7 @@ function StatCard({
 }
 
 export default function DashboardOverviewComponent() {
-  const { data, isLoading, isFetching, dataUpdatedAt, refetch } = useDashboardOverview();
+  const { data, isLoading, isFetching, dataUpdatedAt, refetch, isError } = useDashboardOverview();
 
   /**
    * Mount guard (mirrors PatientManagement `listUiMounted`):
@@ -173,6 +174,18 @@ export default function DashboardOverviewComponent() {
   const outstandingEur = revenue ? (revenue.outstandingCents / 100).toFixed(2) : "0.00";
   const nextAppointment = data?.nextAppointment;
   const recentAppointments = data?.recentAppointments ?? [];
+
+  if (isError) {
+    return (
+      <div className="space-y-3 pb-3">
+        <PageHeader title="Dashboard Overview" description="Real-time system summary" />
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 flex items-center gap-2">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          Failed to load dashboard data. Please refresh.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3 pb-3">
@@ -275,7 +288,8 @@ export default function DashboardOverviewComponent() {
                     <Skeleton className="h-3 w-1/2 rounded" />
                     <Skeleton className="h-3 w-1/3 rounded" />
                   </div>
-                  <Skeleton className="h-8 w-16 rounded-lg shrink-0" />
+                  {/* Quick-link CTA — static chrome, no pulse */}
+                  <div className="h-8 w-16 shrink-0" />
                 </div>
               </div>
             ) : nextAppointment ? (
@@ -327,7 +341,8 @@ export default function DashboardOverviewComponent() {
                     <Skeleton className="h-3 w-1/2 rounded" />
                   </div>
                   <Skeleton className="h-5 w-16 rounded-full shrink-0" />
-                  <Skeleton className="h-7 w-7 rounded-md shrink-0" />
+                  {/* Row action icon — static chrome, no pulse */}
+                  <div className="h-7 w-7 shrink-0" />
                 </div>
               ))
             ) : recentAppointments.length === 0 ? (

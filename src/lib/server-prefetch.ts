@@ -37,7 +37,7 @@ import {
   startOfMonth,
   endOfMonth,
 } from "date-fns";
-import type { Category, Patient, PatientSnapshot } from "@/types/types";
+import type { Category, Patient, PatientSnapshot, User } from "@/types/types";
 import type { DashboardOverview } from "@/hooks/useDashboardOverview";
 
 // ─── Shared types ─────────────────────────────────────────────────────────────
@@ -339,6 +339,94 @@ export async function prefetchDashboardOverview(userId: string): Promise<Dashboa
 export async function prefetchInsights(userId: string): Promise<InsightsPayload | null> {
   try {
     return await getInsightsData(userId);
+  } catch {
+    return null;
+  }
+}
+
+// ─── Doctors directory ────────────────────────────────────────────────────────
+
+/** Doctor card shape stored at queryKeys.doctors.all — mirrors /api/doctors response */
+export type DoctorPrefetchRow = {
+  id: string;
+  email: string;
+  display_name: string | null;
+  image: string | null;
+  specialty: string | null;
+  bio: string | null;
+  role: string | null;
+  created_at: string;
+  availabilities: { weekday: number; start_min: number; end_min: number; timezone: string }[];
+  appointment_types: { id: string; name: string; duration_minutes: number }[];
+  patient_count: number;
+};
+
+/**
+ * Mirrors GET /api/doctors.
+ * Cache key: queryKeys.doctors.all → stores { doctors: DoctorPrefetchRow[] } for ServicesPage.
+ * Returns doctors with specialty, bio, availabilities, and patient count.
+ */
+export async function prefetchDoctors(): Promise<{ doctors: DoctorPrefetchRow[] } | null> {
+  try {
+    const rows = await prisma.user.findMany({
+      where: { role: "doctor" },
+      select: {
+        id: true,
+        email: true,
+        display_name: true,
+        image: true,
+        specialty: true,
+        bio: true,
+        created_at: true,
+        role: true,
+        doctor_availabilities: { select: { weekday: true, start_min: true, end_min: true, timezone: true } },
+        appointment_types_owned: { select: { id: true, name: true, duration_minutes: true } },
+        _count: { select: { patients_primary_doctor: true } },
+      },
+      orderBy: [{ display_name: { sort: "asc", nulls: "last" } }, { email: "asc" }],
+    });
+
+    const doctors: DoctorPrefetchRow[] = rows.map((d) => ({
+      id: d.id,
+      email: d.email,
+      display_name: d.display_name,
+      image: d.image,
+      specialty: d.specialty,
+      bio: d.bio,
+      role: d.role,
+      created_at: d.created_at.toISOString(),
+      availabilities: d.doctor_availabilities,
+      appointment_types: d.appointment_types_owned,
+      patient_count: d._count.patients_primary_doctor,
+    }));
+
+    return { doctors };
+  } catch {
+    return null;
+  }
+}
+
+/** Appointment type shape for global types prefetch */
+export type GlobalAppointmentType = {
+  id: string;
+  name: string;
+  description: string | null;
+  duration_minutes: number;
+};
+
+/**
+ * Mirrors GET /api/appointment-types/global.
+ * Cache key: queryKeys.appointmentTypes.global → stores GlobalAppointmentType[].
+ * Returns only global types (user_id = null) for the Services page.
+ */
+export async function prefetchGlobalAppointmentTypes(): Promise<GlobalAppointmentType[] | null> {
+  try {
+    const types = await prisma.appointmentType.findMany({
+      where: { user_id: null },
+      select: { id: true, name: true, description: true, duration_minutes: true },
+      orderBy: [{ duration_minutes: "asc" }, { name: "asc" }],
+    });
+    return types;
   } catch {
     return null;
   }

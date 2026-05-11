@@ -10,6 +10,7 @@
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AlertCircle } from "lucide-react";
 import {
   useInvitations,
   type DashboardInvitation,
@@ -49,6 +50,7 @@ export default function InvitationList({ type }: { type: "appointment" | "dashbo
   const {
     invitations,
     isLoading,
+    isError: invitationsError,
     discardAppointmentInvitation,
     discardDashboardInvitation,
   } = useInvitations(type);
@@ -63,6 +65,15 @@ export default function InvitationList({ type }: { type: "appointment" | "dashbo
   }, []);
 
   const loading = !isMounted || isLoading;
+
+  if (invitationsError) {
+    return (
+      <div className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 flex items-center gap-2">
+        <AlertCircle className="h-4 w-4 shrink-0" />
+        Failed to load invitations. Please refresh.
+      </div>
+    );
+  }
 
   return (
     <div className="mt-6">
@@ -88,8 +99,9 @@ export default function InvitationList({ type }: { type: "appointment" | "dashbo
                 <TableCell><Skeleton className="h-4 w-48 rounded" /></TableCell>
                 <TableCell><Skeleton className="h-5 w-16 rounded-full" /></TableCell>
                 <TableCell><Skeleton className="h-5 w-14 rounded-full" /></TableCell>
+                {/* Actions column — static chrome, no pulse */}
                 <TableCell className="text-right">
-                  <Skeleton className="h-8 w-20 rounded-lg ml-auto" />
+                  <div className="h-8 w-20 ml-auto" />
                 </TableCell>
               </TableRow>
             ))

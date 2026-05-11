@@ -47,7 +47,9 @@ import {
   Users,
   CalendarClock,
   BookOpen,
+  AlertCircle,
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // ---------------------------------------------------------------------------
 // Types for the doctor detail data from /api/doctors
@@ -66,9 +68,9 @@ interface DoctorRow {
 const WEEKDAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 
 // ---------------------------------------------------------------------------
-// Stat cards
+// Stat cards — only pulse numeric values during load (icons + labels stay stable)
 // ---------------------------------------------------------------------------
-function DoctorStatCards({ doctors }: { doctors: DoctorRow[] }) {
+function DoctorStatCards({ doctors, isLoading }: { doctors: DoctorRow[]; isLoading: boolean }) {
   const withSpecialty = doctors.filter((d) => d.specialty).length;
   const withAvailability = doctors.filter((d) => d.availabilities.length > 0).length;
 
@@ -116,7 +118,11 @@ function DoctorStatCards({ doctors }: { doctors: DoctorRow[] }) {
               {icon}
             </span>
             <div>
-              <p className={cn("text-lg font-bold leading-none", valueCls)}>{value}</p>
+              {/* Only pulse the numeric value — label + icon stay fixed during load */}
+              {isLoading
+                ? <Skeleton className="h-5 w-8 rounded mb-1" />
+                : <p className={cn("text-lg font-bold leading-none", valueCls)}>{value}</p>
+              }
               <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
             </div>
           </CardContent>
@@ -180,17 +186,18 @@ function ActionsCell({ user }: { user: User }) {
 // Main component
 // ---------------------------------------------------------------------------
 export default function DoctorManagement() {
-  const { data: usersData, isLoading: usersLoading, updateUser } = useUsers({ role: "doctor", limit: 100 });
+  const { data: usersData, isLoading: usersLoading, isError: usersError, updateUser } = useUsers({ role: "doctor", limit: 100 });
   const usersRows: User[] = usersData?.users ?? [];
 
   // Enrich with specialty, bio, availability, patient_count from /api/doctors
-  const { data: doctorsData, isLoading: doctorsLoading } = useQuery({
+  const { data: doctorsData, isLoading: doctorsLoading, isError: doctorsError } = useQuery({
     queryKey: queryKeys.doctors.all,
     queryFn: () => apiClient<{ doctors: DoctorRow[] }>("/api/doctors"),
     staleTime: 2 * 60 * 1000,
   });
   const doctorMap = new Map((doctorsData?.doctors ?? []).map((d) => [d.id, d]));
   const isLoading = usersLoading || doctorsLoading;
+  const isError = usersError || doctorsError;
 
   const handleRoleChange = (id: string, role: string) => {
     updateUser({ id, role });
@@ -301,6 +308,18 @@ export default function DoctorManagement() {
 
   const enrichedDoctors: DoctorRow[] = (doctorsData?.doctors ?? []);
 
+  if (isError) {
+    return (
+      <div className="space-y-4 text-gray-700">
+        <PageHeader title="Doctor Management" description="Manage doctor profiles, specialties, and availability." />
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center text-sm text-red-700">
+          <AlertCircle className="h-8 w-8 mx-auto mb-2 opacity-60" />
+          Failed to load doctor data. Please refresh the page.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4 text-gray-700">
       <PageHeader
@@ -308,7 +327,7 @@ export default function DoctorManagement() {
         description="Manage doctor profiles, specialties, and availability."
       />
 
-      <DoctorStatCards doctors={enrichedDoctors} />
+      <DoctorStatCards doctors={enrichedDoctors} isLoading={isLoading} />
 
       <div className={cn("rounded-2xl overflow-hidden", skyGlassTableFrameClass)}>
         <DataTable<User, unknown>

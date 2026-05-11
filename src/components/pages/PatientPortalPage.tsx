@@ -47,6 +47,7 @@ import {
 import Link from "next/link";
 import {
   Activity,
+  AlertCircle,
   AlertTriangle,
   ArrowLeft,
   ArrowRight,
@@ -79,7 +80,7 @@ import { notify } from "@/lib/notify";
 import { useUsers } from "@/hooks/useUsers";
 import { useAvailabilitySlots } from "@/hooks/useAvailabilitySlots";
 import { queryKeys } from "@/lib/query-keys";
-import { invalidateAppointmentData } from "@/lib/query-client";
+import { invalidateAfterAppointmentMutation } from "@/lib/query-client";
 import { getPatientCareLevelLabel } from "@/lib/patient-care-level";
 import type { PatientClinicalProfile } from "@/types/types";
 
@@ -223,8 +224,17 @@ export function BookAppointmentDialog({ preselectedDoctorId, trigger }: BookAppo
     setStep(4);
   }
 
+  /** Portal booking payload — typed to match POST /api/patient-portal body */
+  interface BookingPayload {
+    title: string;
+    start: string;
+    end: string;
+    doctorId: string;
+    notes?: string;
+  }
+
   const bookMutation = useMutation({
-    mutationFn: (body: object) =>
+    mutationFn: (body: BookingPayload) =>
       apiClient("/api/patient-portal", { method: "POST", body: JSON.stringify(body) }),
     onSuccess: async () => {
       notify.crud({
@@ -232,8 +242,10 @@ export function BookAppointmentDialog({ preselectedDoctorId, trigger }: BookAppo
         entity: "Appointment request",
         detail: "Your appointment request was submitted successfully.",
       });
+      // Invalidate portal history + full appointment pipeline (activities, notifications,
+      // availability slots, invoices, overview, insights) so all views reflect the new booking.
       await queryClient.invalidateQueries({ queryKey: queryKeys.patientPortal.all });
-      await invalidateAppointmentData(queryClient);
+      await invalidateAfterAppointmentMutation(queryClient);
       handleOpenChange(false);
     },
     onError: (e) => handleApiError(e, "Failed to book appointment"),
@@ -248,8 +260,8 @@ export function BookAppointmentDialog({ preselectedDoctorId, trigger }: BookAppo
       title,
       start: startDt.toISOString(),
       end: endDt.toISOString(),
-      notes: notes || undefined,
       doctorId,
+      ...(notes ? { notes } : {}),
     });
   }
 
@@ -787,6 +799,9 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
   const { data, isLoading, isError, error } = useQuery({
     queryKey: queryKeys.patientPortal.all,
     queryFn: () => apiClient<PortalData>("/api/patient-portal"),
+    // SSR seed via setQueryData (above) means first paint is instant; 30 s window
+    // prevents redundant re-fetches on rapid tab switches / re-mounts.
+    staleTime: 30_000,
   });
 
   // Mount guard: shows skeleton on SSR first paint, then swaps to real data
@@ -796,7 +811,7 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
   }, []);
 
   // Fetch patient's invoices — enabled after mount to avoid SSR mismatch
-  const { data: invoicesData, isLoading: invoicesLoading } = useQuery({
+  const { data: invoicesData, isLoading: invoicesLoading, isError: invoicesError } = useQuery({
     queryKey: queryKeys.invoices.all,
     queryFn: () => apiClient<{ invoices: InvoiceRow[] }>("/api/invoices"),
     enabled: isMounted,
@@ -1119,6 +1134,11 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
                   {Array.from({ length: 2 }).map((_, i) => (
                     <Skeleton key={i} className="h-8 w-full rounded" />
                   ))}
+                </div>
+              ) : invoicesError ? (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700 flex items-center gap-2">
+                  <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                  Failed to load invoices. Please refresh.
                 </div>
               ) : invoices.length === 0 ? (
                 <div className="text-center py-4">

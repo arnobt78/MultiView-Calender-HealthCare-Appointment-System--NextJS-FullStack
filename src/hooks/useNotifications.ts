@@ -45,7 +45,7 @@ export function useNotifications() {
       }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
-      notify.info({ title: "Notifications updated", subtitle: "All notifications were marked as read." });
+      notify.crud({ action: "updated", entity: "Notifications", detail: "All notifications were marked as read." });
     },
     onError: (error) => handleApiError(error, "Failed to mark notifications as read"),
   });
@@ -59,10 +59,7 @@ export function useNotifications() {
     onSuccess: async () => {
       // Await so header badge and list both update before the toast appears.
       await queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
-      notify.warning({
-        title: "Read notifications deleted",
-        subtitle: "Unread notifications were kept.",
-      });
+      notify.crud({ action: "deleted", entity: "Read notifications", detail: "Unread notifications were kept." });
     },
     onError: (error) => handleApiError(error, "Failed to delete read notifications"),
   });
@@ -72,6 +69,7 @@ export function useNotifications() {
     total: query.data?.total || 0,
     unreadCount: query.data?.unreadCount || 0,
     isLoading: query.isLoading,
+    isError: query.isError,
     refetch: query.refetch,
     markAsRead: markAsReadMutation.mutate,
     markAllAsRead: markAllAsReadMutation.mutate,
