@@ -168,15 +168,19 @@ export async function proxy(request: NextRequest) {
   //   - CSP frame-ancestors 'none'
   //   - X-Frame-Options DENY
   if (isPublic(pathname)) {
+    // Public pages: allow Vercel's dashboard / preview iframe via CSP frame-ancestors.
+    // X-Frame-Options is intentionally omitted here — SAMEORIGIN would block vercel.com
+    // (a different origin) even when frame-ancestors explicitly allows it, because some
+    // renderers check both and the more-restrictive header wins.  CSP frame-ancestors
+    // is the modern standard; browsers that don't support it will allow framing freely,
+    // which is acceptable for the public landing/login pages.
     res.headers.set(
       "Content-Security-Policy",
       [
         ...BASE_CSP_DIRECTIVES,
-        // Allow Vercel preview iframe and deployment preview subdomains; block all other cross-origin frames.
         "frame-ancestors 'self' https://vercel.com https://vercel.live https://*.vercel.app https://*.vercel-insights.com",
       ].join("; ")
     );
-    res.headers.set("X-Frame-Options", "SAMEORIGIN");
   } else {
     res.headers.set(
       "Content-Security-Policy",

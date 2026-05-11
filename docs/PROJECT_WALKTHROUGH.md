@@ -676,3 +676,120 @@ Shared demo credentials live in `src/lib/demo-credentials.ts` (`test@admin.com`,
 **Root cause:** `html { background: #0f172a }` + `body { background: #020617 }` in globals.css. The control-panel right pane in `layout.tsx` had no background — during the hydration frame where `TabsContent` is active but empty, the dark body bleeds through.
 
 **Fix:** `app/control-panel/layout.tsx` outer `<div>` has `bg-gradient-to-br from-slate-50 via-white to-slate-100` — mirrors `AuthShell`'s gradient so dark background cannot show through during hydration.
+
+---
+
+## Security Header Architecture (current state)
+
+### Single source of truth: `src/proxy.ts`
+
+`Content-Security-Policy` and `X-Frame-Options` are set **only** in the edge proxy, never in `src/lib/security-headers.ts`. This prevents conflicting duplicate headers that browsers resolve in the most restrictive direction.
+
+`src/lib/security-headers.ts` (applied via `next.config.ts` to all routes) contains only:
+- `Strict-Transport-Security`
+- `X-Content-Type-Options`
+- `X-XSS-Protection`
+- `Referrer-Policy`
+- `Permissions-Policy`
+
+### Per-route framing policy (proxy.ts)
+
+| Route type | CSP `frame-ancestors` | `X-Frame-Options` |
+|---|---|---|
+| Public pages (`/`, `/login`, `/register`, `/accept-invitation`) | `'self' https://vercel.com https://vercel.live https://*.vercel.app https://*.vercel-insights.com` | **not set** — see note below |
+| Protected pages (`/dashboard`, `/control-panel/*`, etc.) | `'none'` | `DENY` |
+
+**Why `X-Frame-Options` is omitted for public pages:**
+`SAMEORIGIN` would block `vercel.com` (a different origin) from embedding the page in its deployment preview iframe even though `frame-ancestors` explicitly allows it, because some renderers check both headers and use the most restrictive. Modern browsers use CSP `frame-ancestors` and ignore `X-Frame-Options` when both are present, but Vercel's preview renderer does not fully follow this precedence. Omitting `X-Frame-Options` on public pages means legacy browsers allow all framing (acceptable for marketing pages) while modern browsers are governed by `frame-ancestors`.
+
+**IMPORTANT:** If you add back `X-Frame-Options` to `security-headers.ts` or set it to `SAMEORIGIN`/`DENY` for public pages in the proxy, the Vercel dashboard deployment preview thumbnail will show "Error: Forbidden" again.
+
+---
+
+## Role-Based Access Control (RBAC) — UI layer
+
+### Navbar (`src/components/navbar/Navbar.tsx`)
+
+| Role | Visible nav items |
+|---|---|
+| `admin` / `doctor` / `secretary` | Dashboard, Control Panel, Analytics, Patient Portal |
+| `patient` | Dashboard, Patient Portal only (Control Panel + Analytics hidden) |
+
+`isPatient = role === "patient"`, `isStaff = role === "admin" || role === "doctor" || role === "secretary"`. Staff do not see the "Patient Portal" nav link (they access it via the route directly if needed).
+
+### CalendarHeader (`src/components/calendar/CalendarHeader.tsx`)
+
+"Import .ics" and "New Appointment" buttons are hidden for `patient` role users. The calendar is read-only view for patients.
+
+### GlobalSearch (`src/components/shared/GlobalSearch.tsx`)
+
+`useUsers()` query is disabled when `isPatient` is true (prevents `GET /api/users 403`). `usePatients()` runs for all roles; the API scopes results server-side.
+
+---
+
+## API Access — Role-Scoped Endpoints
+
+### `GET /api/appointment-assignees`
+
+`appointment_id` query param is now **optional**:
+- With `appointment_id`: returns assignees for that specific appointment (existing access check: must own or be participant).
+- Without `appointment_id`: returns all assignee rows for every appointment the caller owns or is an accepted participant on. This is what `fetchAssignees()` calls on page load.
+
+**Previously**: always required `appointment_id` → caused `400 Bad Request` on every calendar page load. All appointment and telehealth queue pages now load correctly.
+
+### `GET /api/users`
+
+Patients are normally forbidden from listing all users. Exception: if the request includes `?role=doctor` or `?roles=doctor`, patients are allowed (scoped to `id` + `display_name` only). This lets the `BookAppointmentDialog` in the patient portal populate the doctor selector.
+
+### `GET /api/relatives`
+
+Patients can only fetch their own relatives. The 403 that appeared on patient login was caused by an unconditional `useUsers()` call; fixed by gating the hook with `enabled: !isPatient`.
+
+---
+
+## Demo Account & Landing Page
+
+### Landing page demo dropdown (`src/components/pages/LandingPage.tsx`)
+
+The "Try demo account" button is now a split dropdown with three roles:
+
+| Option | Credentials | Redirects to |
+|---|---|---|
+| Demo Admin | `test@admin.com` / `12345678` | `/dashboard` |
+| Demo Doctor | `test@doctor.com` / `12345678` | `/dashboard` |
+| Demo Patient | `test@patient.com` / `12345678` | `/patient-portal` |
+
+Uses `POST /api/auth/login` (same endpoint as the login form, no separate `/api/auth/demo` required). After login, seeds the React Query `auth/me` cache and routes by role.
+
+**Note:** The old `/api/auth/demo` endpoint still exists but was returning `403` in production because `ENABLE_DEMO_AUTH` env var was not set. The landing page no longer calls it.
+
+### Register page note (`src/components/register/Register.tsx`)
+
+A short info note below the password field informs new users: "New accounts are created with the Admin role by default. You can change your role later from the Control Panel."
+
+---
+
+## OAuth State Management (`src/lib/oauth-state.ts`)
+
+Stateless, signed JWT used as the `state` parameter for Google OAuth flows (both auth and calendar connect). Replaces ad-hoc cookie/session state. Key fields encoded in the token: `returnTo`, `provider`, `csrfToken`. Verified on callback before exchanging the code.
+
+Relevant routes:
+- `src/app/api/auth/google/route.ts` — generates state token, redirects to Google
+- `src/app/api/auth/callback/google/route.ts` — verifies state, exchanges code, sets session
+- `src/app/api/calendar/connect/route.ts` — generates state for calendar scope
+- `src/app/api/calendar/callback/route.ts` — verifies state, stores tokens
+
+---
+
+## Dashboard Layout (`src/app/dashboard/layout.tsx`)
+
+Thin server layout wrapper for the `/dashboard` route. Provides the outer structure for the dashboard page without additional auth checks (handled by proxy). Ensures consistent padding/background for the dashboard route group.
+
+---
+
+## Known Architecture Notes
+
+- **Doctor portal**: Doctor-specific dashboard view (analogous to PatientPortalPage) is not yet implemented. Doctors currently see the same dashboard as admins. Role-specific doctor UI is planned.
+- **`/api/auth/demo`**: Endpoint still present but no longer used by the landing page. Can be removed or kept for backwards compatibility.
+- **Vercel Deployment Protection**: The project is on the Hobby plan. "Require Log In" Vercel Authentication is toggled OFF so that deployment-specific preview URLs (`*.vercel.app`) load without Vercel login, allowing the Vercel dashboard preview thumbnail to render correctly.
+- **`src/lib/rate-limit.ts`**: In-memory rate limiter (resets on cold start). For production-grade rate limiting that survives cold starts, use the Redis-backed approach (`src/lib/redis.ts` + Upstash).
