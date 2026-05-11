@@ -26,14 +26,19 @@ export async function GET() {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Find patient by email match
+    // Find patient by email, joining primary_doctor for display in the profile card
     const patient = await prisma.patient.findFirst({
       where: { email: user.email },
+      include: {
+        primary_doctor: { select: { display_name: true, email: true } },
+      },
     });
 
     if (!patient) {
       return NextResponse.json({
         appointments: [],
+        patient: null,
+        userImage: user.image ?? null,
         message: "No patient record found for your email",
       });
     }
@@ -44,7 +49,8 @@ export async function GET() {
       orderBy: { start: "desc" },
     });
 
-    return NextResponse.json({ appointments, patient });
+    // Return userImage from the auth user row so the profile card can show the OAuth avatar
+    return NextResponse.json({ appointments, patient, userImage: user.image ?? null });
   } catch (error: unknown) {
     console.error("Patient portal error:", error);
     return NextResponse.json({ error: "Failed to fetch history" }, { status: 500 });

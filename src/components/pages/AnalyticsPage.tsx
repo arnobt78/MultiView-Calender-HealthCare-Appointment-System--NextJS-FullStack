@@ -40,13 +40,13 @@ import {
 
 /** Glass card variant per color — matches DashboardOverview style. */
 const GLASS: Record<string, string> = {
-  blue:    "rounded-[28px] border border-blue-400/20 bg-gradient-to-br from-blue-500/10 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(59,130,246,0.12)]",
-  indigo:  "rounded-[28px] border border-indigo-400/20 bg-gradient-to-br from-indigo-500/10 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(99,102,241,0.12)]",
-  green:   "rounded-[28px] border border-green-400/20 bg-gradient-to-br from-green-500/10 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(34,197,94,0.12)]",
-  yellow:  "rounded-[28px] border border-yellow-400/20 bg-gradient-to-br from-yellow-500/10 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(234,179,8,0.12)]",
-  red:     "rounded-[28px] border border-red-400/20 bg-gradient-to-br from-red-500/10 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(225,29,72,0.12)]",
-  purple:  "rounded-[28px] border border-purple-400/20 bg-gradient-to-br from-purple-500/10 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(168,85,247,0.12)]",
-  slate:   "rounded-[28px] border border-slate-400/20 bg-gradient-to-br from-slate-500/10 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(100,116,139,0.1)]",
+  blue: "rounded-[28px] border border-blue-400/20 bg-gradient-to-br from-blue-500/10 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(59,130,246,0.12)]",
+  indigo: "rounded-[28px] border border-indigo-400/20 bg-gradient-to-br from-indigo-500/10 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(99,102,241,0.12)]",
+  green: "rounded-[28px] border border-green-400/20 bg-gradient-to-br from-green-500/10 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(34,197,94,0.12)]",
+  yellow: "rounded-[28px] border border-yellow-400/20 bg-gradient-to-br from-yellow-500/10 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(234,179,8,0.12)]",
+  red: "rounded-[28px] border border-red-400/20 bg-gradient-to-br from-red-500/10 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(225,29,72,0.12)]",
+  purple: "rounded-[28px] border border-purple-400/20 bg-gradient-to-br from-purple-500/10 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(168,85,247,0.12)]",
+  slate: "rounded-[28px] border border-slate-400/20 bg-gradient-to-br from-slate-500/10 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(100,116,139,0.1)]",
 };
 
 type AnalyticsPageProps = {
@@ -94,22 +94,22 @@ export default function AnalyticsPage({ initialInsights }: AnalyticsPageProps = 
   const topPatients = data?.topPatients ?? [];
 
   const statCards = [
-    { label: "Total",      value: overview?.total     ?? 0, icon: Activity,     color: "text-blue-600",   glass: "blue"   },
-    { label: "Upcoming",   value: overview?.upcoming   ?? 0, icon: CalendarClock, color: "text-indigo-600", glass: "indigo" },
-    { label: "Done",       value: overview?.done       ?? 0, icon: CalendarCheck, color: "text-green-600",  glass: "green"  },
-    { label: "Pending",    value: overview?.pending    ?? 0, icon: CalendarClock, color: "text-yellow-600", glass: "yellow" },
-    { label: "Overdue",    value: overview?.overdue    ?? 0, icon: CalendarX,     color: "text-red-600",    glass: "red"    },
-    { label: "This Month", value: overview?.thisMonth  ?? 0, icon: TrendingUp,    color: "text-purple-600", glass: "purple" },
+    { label: "Total", value: overview?.total ?? 0, icon: Activity, color: "text-blue-600", glass: "blue" },
+    { label: "Upcoming", value: overview?.upcoming ?? 0, icon: CalendarClock, color: "text-indigo-600", glass: "indigo" },
+    { label: "Done", value: overview?.done ?? 0, icon: CalendarCheck, color: "text-green-600", glass: "green" },
+    { label: "Pending", value: overview?.pending ?? 0, icon: CalendarClock, color: "text-yellow-600", glass: "yellow" },
+    { label: "Overdue", value: overview?.overdue ?? 0, icon: CalendarX, color: "text-red-600", glass: "red" },
+    { label: "This Month", value: overview?.thisMonth ?? 0, icon: TrendingUp, color: "text-purple-600", glass: "purple" },
   ];
 
   const maxMonthly = Math.max(...monthlyData.map((m) => m.count), 1);
 
   return (
-    <div className="space-y-8 py-8 pb-3">
+    <div className="space-y-4">
       {/* Heading always static */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Insights</h1>
-        <p className="text-muted-foreground">Appointment statistics</p>
+        <h1 className="text-xl md:text-2xl font-semibold tracking-tight">Business Analytics</h1>
+        <p className="text-muted-foreground text-sm">Track your business performance, patient trends, appointment analytics and more.</p>
       </div>
 
       {/* ─── Overview stat cards — shells always visible; value pulses while loading ── */}
@@ -123,11 +123,11 @@ export default function AnalyticsPage({ initialInsights }: AnalyticsPageProps = 
                 {loading ? (
                   <Skeleton className="h-7 w-12 rounded" />
                 ) : (
-                  <span className="text-2xl font-bold">{stat.value}</span>
+                  <span className="text-xl md:text-2xl text-gray-700 font-semibold">{stat.value}</span>
                 )}
               </div>
               {/* Label stays static */}
-              <p className="text-sm text-muted-foreground mt-1">{stat.label}</p>
+              <p className="text-sm text-muted-foreground">{stat.label}</p>
             </CardContent>
           </Card>
         ))}
@@ -224,7 +224,7 @@ export default function AnalyticsPage({ initialInsights }: AnalyticsPageProps = 
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap gap-2">
                 {["done", "pending", "alert"].map((s) => (
                   <div key={s} className="flex items-center gap-2">
                     <Skeleton className="h-5 w-16 rounded-full" />
@@ -233,13 +233,13 @@ export default function AnalyticsPage({ initialInsights }: AnalyticsPageProps = 
                 ))}
               </div>
             ) : (
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap gap-2">
                 {Object.entries(byStatus).map(([status, count]) => (
                   <div key={status} className="flex items-center gap-2">
                     <Badge variant={status === "done" ? "default" : status === "pending" ? "secondary" : "outline"}>
                       {status}
                     </Badge>
-                    <span className="text-lg font-semibold">{count}</span>
+                    <span className="text-gray-700 font-semibold">{count}</span>
                   </div>
                 ))}
               </div>
@@ -283,7 +283,7 @@ export default function AnalyticsPage({ initialInsights }: AnalyticsPageProps = 
                 ) : (
                   topPatients.map((p, idx) => (
                     <TableRow key={idx}>
-                      <TableCell className="font-medium">{p.name}</TableCell>
+                      <TableCell className="text-gray-700 font-medium">{p.name}</TableCell>
                       <TableCell className="text-right">
                         <Badge variant="secondary">{p.count}</Badge>
                       </TableCell>

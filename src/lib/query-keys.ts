@@ -84,6 +84,10 @@ export const queryKeys = {
   patientPortal: {
     all: ["app", "patient-portal"] as const,
   },
+  /** Appointment types per doctor — used by the patient portal booking wizard */
+  appointmentTypes: {
+    byDoctor: (doctorId: string) => ["app", "appointment-types", doctorId] as const,
+  },
   /** Slot picker — invalidate tree on appointment changes */
   availability: {
     root: ["app", "availability"] as const,

@@ -34,9 +34,31 @@ export async function GET(req: NextRequest) {
       : PAGINATION.DEFAULT_LIMIT;
     const offset = Number.isFinite(rawOffset) ? Math.max(rawOffset, 0) : 0;
 
-    const where: { user_id: string; status?: string; category_id?: string; start?: { gte?: Date }; end?: { lte?: Date } } = {
-      user_id: sessionUser.userId,
-    };
+    const callerRole = await getUserRole(sessionUser.userId);
+
+    /*
+     * Patients have appointments linked via `patient_id` (the doctor owns the row via `user_id`).
+     * When the caller is a patient, resolve their patient record and filter by patient_id instead.
+     */
+    let where: Record<string, unknown>;
+    if (isPatientRole(callerRole)) {
+      const userRow = await prisma.user.findUnique({ where: { id: sessionUser.userId } });
+      const patientRecord = userRow
+        ? await prisma.patient.findFirst({ where: { email: userRow.email } })
+        : null;
+
+      if (!patientRecord) {
+        return NextResponse.json({
+          appointments: [],
+          pagination: { limit, offset, total: 0, count: 0 },
+        });
+      }
+
+      where = { patient_id: patientRecord.id } as Record<string, unknown>;
+    } else {
+      where = { user_id: sessionUser.userId } as Record<string, unknown>;
+    }
+
     if (status) where.status = status;
     if (category) where.category_id = category;
     if (startDate) where.start = { gte: new Date(startDate) };
