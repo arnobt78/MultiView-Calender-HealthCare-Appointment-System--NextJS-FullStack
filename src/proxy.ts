@@ -167,9 +167,6 @@ export async function proxy(request: NextRequest) {
   //   No framing allowed from any origin — maximum clickjacking protection.
   //   - CSP frame-ancestors 'none'
   //   - X-Frame-Options DENY
-  // #region agent log
-  res.headers.set("X-Debug-Proxy", `path=${pathname};public=${isPublic(pathname)};auth=${authenticated}`);
-  // #endregion
   if (isPublic(pathname)) {
     res.headers.set(
       "Content-Security-Policy",
