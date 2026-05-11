@@ -65,6 +65,15 @@ export async function PUT(req: NextRequest, context: RouteContext) {
         description: body.description ?? null,
         color: body.color ?? null,
         icon: body.icon ?? null,
+        // Schema-extended optional fields
+        is_active: body.is_active !== undefined ? Boolean(body.is_active) : undefined,
+        sort_order: body.sort_order !== undefined ? Number(body.sort_order) : undefined,
+        duration_minutes_default:
+          body.duration_minutes_default !== undefined
+            ? body.duration_minutes_default === null
+              ? null
+              : Number(body.duration_minutes_default)
+            : undefined,
         updated_at: new Date(),
       },
     });

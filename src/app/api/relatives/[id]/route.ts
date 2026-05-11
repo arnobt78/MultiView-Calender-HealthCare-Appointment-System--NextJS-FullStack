@@ -67,6 +67,12 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     if (typeof body.lastname === "string" && body.lastname.trim()) data.lastname = body.lastname.trim();
     if ("pronoun" in body) data.pronoun = body.pronoun ?? null;
     if ("notes" in body) data.notes = body.notes ?? null;
+    if ("relationship" in body) data.relationship = typeof body.relationship === "string" ? body.relationship.trim() || null : null;
+    if ("phone" in body) data.phone = typeof body.phone === "string" ? body.phone.trim() || null : null;
+    if ("email" in body) data.email = typeof body.email === "string" ? body.email.trim() || null : null;
+    if ("date_of_birth" in body) data.date_of_birth = body.date_of_birth ? new Date(body.date_of_birth as string) : null;
+    if ("is_emergency_contact" in body) data.is_emergency_contact = Boolean(body.is_emergency_contact);
+    if ("patient_id" in body) data.patient_id = typeof body.patient_id === "string" && body.patient_id ? body.patient_id : null;
 
     const relative = await prisma.relative.update({ where: { id }, data });
     return NextResponse.json({ relative: serializeRelative(relative) });

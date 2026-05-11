@@ -8,8 +8,12 @@ import { DataTableColumnHeader } from "@/components/shared/DataTableColumnHeader
 import { PageHeader } from "@/components/shared/PageHeader";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { Category } from "@/types/types";
-import { Plus, Pencil, MoreHorizontal, Trash2, Eye } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { skyGlassTableFrameClass, emeraldGlassPrimaryButtonClass } from "@/lib/calendar-header-action-styles";
+import { Plus, Pencil, MoreHorizontal, Trash2, Eye, Layers, CheckCircle2, Clock, Tag } from "lucide-react";
 import { useState } from "react";
 import {
   Dialog,
@@ -37,7 +41,69 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import type { CategoryCreateInput } from "@/hooks/useCategories";
+
+// ---------------------------------------------------------------------------
+// Stat cards — amber/orange color scheme
+// ---------------------------------------------------------------------------
+function CategoryStatCards({ categories }: { categories: Category[] }) {
+  const active = categories.filter((c) => c.is_active !== false).length;
+  const withDuration = categories.filter((c) => c.duration_minutes_default != null).length;
+
+  const stats = [
+    {
+      label: "Total Categories",
+      value: categories.length,
+      icon: <Tag className="h-4 w-4" />,
+      cls: "bg-amber-50/60 border-amber-200/60",
+      valueCls: "text-amber-700",
+      iconCls: "bg-amber-100 border-amber-200 text-amber-600",
+    },
+    {
+      label: "Active",
+      value: active,
+      icon: <CheckCircle2 className="h-4 w-4" />,
+      cls: "bg-emerald-50/60 border-emerald-200/60",
+      valueCls: "text-emerald-700",
+      iconCls: "bg-emerald-100 border-emerald-200 text-emerald-600",
+    },
+    {
+      label: "With Duration",
+      value: withDuration,
+      icon: <Clock className="h-4 w-4" />,
+      cls: "bg-sky-50/60 border-sky-200/60",
+      valueCls: "text-sky-700",
+      iconCls: "bg-sky-100 border-sky-200 text-sky-600",
+    },
+    {
+      label: "Inactive",
+      value: categories.length - active,
+      icon: <Layers className="h-4 w-4" />,
+      cls: "bg-slate-50/60 border-slate-200/60",
+      valueCls: "text-slate-700",
+      iconCls: "bg-slate-100 border-slate-200 text-slate-600",
+    },
+  ];
+
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {stats.map(({ label, value, icon, cls, valueCls, iconCls }) => (
+        <Card key={label} className={cn("rounded-[16px] border", cls)}>
+          <CardContent className="p-3 flex items-center gap-3">
+            <span className={cn("flex h-9 w-9 items-center justify-center rounded-xl border shrink-0", iconCls)}>
+              {icon}
+            </span>
+            <div>
+              <p className={cn("text-lg font-bold leading-none", valueCls)}>{value}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
 
 function CategoryActions({
   category,
@@ -116,66 +182,90 @@ export default function CategoryManagement() {
   const [form, setForm] = useState<CategoryCreateInput>({
     label: "",
     description: "",
-    color: "#6366f1",
+    color: "#f59e0b",
     icon: "",
+    is_active: true,
+    sort_order: 0,
+    duration_minutes_default: undefined,
   });
 
   const columns: ColumnDef<Category>[] = [
     {
       accessorKey: "label",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Label" />,
-      cell: ({ row }) => (
-        <EntityTitleLink
-          href={`/control-panel/categories/${row.original.id}`}
-          label={row.original.label}
-          className="font-medium"
-        />
-      ),
+      meta: { shellClassName: "min-w-[10rem]" },
+      cell: ({ row }) => {
+        const c = row.original;
+        return (
+          <div className="flex items-center gap-2">
+            {c.color && (
+              <span className="h-3 w-3 rounded-full border shrink-0" style={{ background: c.color }} />
+            )}
+            <EntityTitleLink href={`/control-panel/categories/${c.id}`} label={c.label} className="font-medium" />
+          </div>
+        );
+      },
     },
     {
       accessorKey: "description",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Description" />,
-      cell: ({ row }) => row.original.description ?? "—",
-    },
-    {
-      accessorKey: "color",
-      header: "Color",
+      header: "Description",
+      meta: { shellClassName: "min-w-[12rem]" },
       cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          {row.original.color && (
-            <input
-              type="color"
-              title="Category color"
-              value={row.original.color}
-              readOnly
-              disabled
-              className="h-4 w-5 rounded border p-0"
-            />
-          )}
-          <span className="text-xs font-mono">{row.original.color ?? "—"}</span>
-        </div>
+        <span className="text-xs text-muted-foreground truncate max-w-[200px] block">
+          {row.original.description ?? "—"}
+        </span>
       ),
     },
-    { accessorKey: "icon", header: "Icon", cell: ({ row }) => row.original.icon ?? "—" },
+    {
+      id: "status",
+      header: "Status",
+      meta: { shellClassName: "w-[7rem]" },
+      cell: ({ row }) => {
+        const active = row.original.is_active !== false;
+        return (
+          <Badge variant="outline" className={`text-[10px] py-0 ${active ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-gray-50 text-gray-500 border-gray-200"}`}>
+            {active ? "Active" : "Inactive"}
+          </Badge>
+        );
+      },
+    },
+    {
+      id: "duration",
+      header: "Default Duration",
+      meta: { shellClassName: "w-[9rem] text-right" },
+      cell: ({ row }) => {
+        const d = row.original.duration_minutes_default;
+        return d != null ? (
+          <Badge variant="outline" className="text-[10px] py-0 bg-sky-50 text-sky-700 border-sky-200">
+            <Clock className="h-2.5 w-2.5 mr-0.5" />{d} min
+          </Badge>
+        ) : (
+          <span className="text-xs text-muted-foreground">—</span>
+        );
+      },
+    },
+    {
+      accessorKey: "sort_order",
+      header: "Order",
+      meta: { shellClassName: "w-[5rem] text-center" },
+      cell: ({ row }) => (
+        <span className="text-sm font-medium">{row.original.sort_order ?? 0}</span>
+      ),
+    },
     {
       accessorKey: "created_at",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Created" />,
-      cell: ({ row }) =>
-        row.original.created_at ? new Date(row.original.created_at).toLocaleDateString() : "—",
-    },
-    {
-      accessorKey: "updated_at",
-      header: "Updated",
-      cell: ({ row }) =>
-        row.original.updated_at ? new Date(row.original.updated_at).toLocaleDateString() : "—",
+      meta: { shellClassName: "w-[1%] whitespace-nowrap" },
+      cell: ({ row }) => (
+        <span className="text-xs">{row.original.created_at ? new Date(row.original.created_at).toLocaleDateString() : "—"}</span>
+      ),
     },
     {
       id: "actions",
       header: "Actions",
       enableSorting: false,
-      cell: ({ row }) => (
-        <CategoryActions category={row.original} onDelete={deleteCategory} />
-      ),
+      meta: { shellClassName: "w-[1%] whitespace-nowrap text-right" },
+      cell: ({ row }) => <CategoryActions category={row.original} onDelete={deleteCategory} />,
     },
   ];
 
@@ -185,46 +275,56 @@ export default function CategoryManagement() {
       {
         onSuccess: () => {
           setDialogOpen(false);
-          setForm({ label: "", description: "", color: "#6366f1", icon: "" });
+          setForm({ label: "", description: "", color: "#f59e0b", icon: "", is_active: true, sort_order: 0 });
         },
       }
     );
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-4">
       <PageHeader
         title="Category Management"
-        description="Manage appointment categories. All table schema properties are shown."
+        description="Manage appointment categories with status, duration, and display order."
         actions={
-          <Button onClick={() => setDialogOpen(true)}>
+          <button
+            type="button"
+            onClick={() => setDialogOpen(true)}
+            className={emeraldGlassPrimaryButtonClass}
+          >
             <Plus className="h-4 w-4" />
-            Add category
-          </Button>
+            Add Category
+          </button>
         }
       />
 
-      <DataTable<Category, unknown>
-        columns={columns}
-        data={categories}
-        isLoading={isLoading}
-        globalFilterFn={(row, q) => {
-          const s = q.trim().toLowerCase();
-          if (!s) return true;
-          const c = row;
-          return `${c.label} ${c.description ?? ""}`.toLowerCase().includes(s);
-        }}
-        searchPlaceholder="Search by label or description…"
-        emptyMessage="No categories yet. Add one to get started."
-      />
+      <CategoryStatCards categories={categories} />
+
+      <div className={cn("rounded-2xl overflow-hidden", skyGlassTableFrameClass)}>
+        <DataTable<Category, unknown>
+          columns={columns}
+          data={categories}
+          isLoading={isLoading}
+          globalFilterFn={(row, q) => {
+            const s = q.trim().toLowerCase();
+            if (!s) return true;
+            const c = row;
+            return `${c.label} ${c.description ?? ""}`.toLowerCase().includes(s);
+          }}
+          searchPlaceholder="Search by label or description…"
+          emptyMessage="No categories yet. Add one to get started."
+          tableClassName="min-w-[800px]"
+          tableLayout="auto"
+        />
+      </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add category</DialogTitle>
+            <DialogTitle>Add Category</DialogTitle>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="space-y-2">
+          <div className="grid gap-4 py-2">
+            <div className="space-y-1.5">
               <Label>Label *</Label>
               <Input
                 value={form.label}
@@ -232,39 +332,61 @@ export default function CategoryManagement() {
                 placeholder="Category label"
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label>Description</Label>
-              <Input
+              <Textarea
                 value={form.description ?? ""}
                 onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
                 placeholder="Optional description"
+                rows={2}
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
                 <Label>Color</Label>
                 <div className="flex items-center gap-2">
                   <input
                     type="color"
                     title="Pick a color"
-                    value={form.color ?? "#6366f1"}
+                    value={form.color ?? "#f59e0b"}
                     onChange={(e) => setForm((p) => ({ ...p, color: e.target.value }))}
                     className="h-9 w-12 cursor-pointer rounded border p-1"
                   />
                   <Input
                     value={form.color ?? ""}
                     onChange={(e) => setForm((p) => ({ ...p, color: e.target.value }))}
-                    placeholder="#hex or name"
+                    placeholder="#hex"
                     className="flex-1"
                   />
                 </div>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label>Icon</Label>
                 <Input
                   value={form.icon ?? ""}
                   onChange={(e) => setForm((p) => ({ ...p, icon: e.target.value }))}
-                  placeholder="Icon name"
+                  placeholder="lucide icon name"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Default Duration (min)</Label>
+                <Input
+                  type="number"
+                  min={5}
+                  value={form.duration_minutes_default ?? ""}
+                  onChange={(e) => setForm((p) => ({ ...p, duration_minutes_default: e.target.value ? Number(e.target.value) : undefined }))}
+                  placeholder="e.g. 30"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Sort Order</Label>
+                <Input
+                  type="number"
+                  value={form.sort_order ?? 0}
+                  onChange={(e) => setForm((p) => ({ ...p, sort_order: Number(e.target.value) }))}
+                  placeholder="0"
                 />
               </div>
             </div>

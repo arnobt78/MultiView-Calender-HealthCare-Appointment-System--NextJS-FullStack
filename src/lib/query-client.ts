@@ -139,11 +139,12 @@ export async function invalidateSharingAndAppointments(queryClient: QueryClient)
   ]);
 }
 
-/** Users list/detail — control panel */
+/** Users list/detail + doctors cache (specialty/bio/role changes must reflect in /services + DoctorManagement) */
 export async function invalidateUsersAndAuth(queryClient: QueryClient) {
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: queryKeys.users.all }),
     queryClient.invalidateQueries({ queryKey: queryKeys.auth.me }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.doctors.all }),
   ]);
 }
 

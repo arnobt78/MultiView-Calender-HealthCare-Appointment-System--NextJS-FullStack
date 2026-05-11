@@ -134,18 +134,43 @@ export async function POST(req: NextRequest) {
      * Wrapped in try/catch so a notification failure never breaks the main response.
      */
     try {
+      // Notify the creator (admin/doctor) of the new appointment
       await prisma.notification.create({
         data: {
           user_id: sessionUser.userId,
           title: "Appointment Scheduled",
           message: `"${appointment.title}" on ${format(appointment.start, "dd.MM.yyyy 'at' HH:mm")}`,
           type: "appointment_created",
-          // Deep-link to the newly created appointment detail.
           link: `/control-panel/appointments/${appointment.id}`,
         },
       });
+
+      /*
+       * If the appointment has a patient_id, also notify the patient's user account.
+       * Looks up Patient.email → User.id so the patient sees the bell notification.
+       */
+      if (appointment.patient_id) {
+        const patientRow = await prisma.patient.findUnique({
+          where: { id: appointment.patient_id },
+          select: { email: true },
+        });
+        const patientUser = patientRow?.email
+          ? await prisma.user.findFirst({ where: { email: patientRow.email } })
+          : null;
+        if (patientUser && patientUser.id !== sessionUser.userId) {
+          await prisma.notification.create({
+            data: {
+              user_id: patientUser.id,
+              title: "New Appointment Scheduled",
+              message: `"${appointment.title}" on ${format(appointment.start, "dd.MM.yyyy 'at' HH:mm")}`,
+              type: "appointment_created",
+              link: `/patient-portal`,
+            },
+          });
+        }
+      }
     } catch {
-      // Notification failure is non-critical — swallow silently.
+      // Notification failures are non-critical — swallow silently.
     }
 
     return NextResponse.json({ appointment: serializeAppointment(appointment) });

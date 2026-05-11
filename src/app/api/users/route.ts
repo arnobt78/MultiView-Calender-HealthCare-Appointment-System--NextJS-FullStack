@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
     const [users, total] = await Promise.all([
       prisma.user.findMany({
         where,
-        select: { id: true, email: true, display_name: true, role: true, image: true, created_at: true },
+        select: { id: true, email: true, display_name: true, role: true, image: true, created_at: true, specialty: true, bio: true },
         orderBy: [{ display_name: { sort: "asc", nulls: "last" } }, { email: "asc" }],
         take: limit,
         skip: offset,

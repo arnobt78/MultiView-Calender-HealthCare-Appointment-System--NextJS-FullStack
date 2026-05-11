@@ -11,6 +11,9 @@ export function serializeCategory(c: {
   description: string | null;
   color: string | null;
   icon: string | null;
+  is_active?: boolean;
+  sort_order?: number;
+  duration_minutes_default?: number | null;
 }) {
   return {
     ...c,
@@ -103,6 +106,8 @@ export function serializeUser(u: {
   role: string | null;
   image: string | null;
   created_at: Date;
+  specialty?: string | null;
+  bio?: string | null;
 }) {
   return {
     ...u,
@@ -113,14 +118,23 @@ export function serializeUser(u: {
 export function serializeRelative(r: {
   id: string;
   created_at: Date;
+  updated_at?: Date | null;
   firstname: string;
   lastname: string;
   pronoun: string | null;
   notes: string | null;
+  relationship?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  date_of_birth?: Date | null;
+  is_emergency_contact?: boolean;
+  patient_id?: string | null;
 }) {
   return {
     ...r,
     created_at: r.created_at?.toISOString?.(),
+    updated_at: r.updated_at?.toISOString?.() ?? null,
+    date_of_birth: r.date_of_birth?.toISOString?.() ?? null,
   };
 }
 

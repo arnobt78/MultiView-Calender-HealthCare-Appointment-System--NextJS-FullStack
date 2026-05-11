@@ -2,6 +2,11 @@
  * Idempotent demo users (test@admin.com / test@doctor.com / test@patient.com).
  * Same password for all — see src/lib/demo-credentials.ts.
  *
+ * Also seeds:
+ *  - 7 additional demo doctor accounts (Demo Doctor 2–8) with specialties, bios, and stock photos
+ *  - 4 global AppointmentType rows shared across all doctors
+ *  - specialty / bio on the primary Demo Doctor account
+ *
  * Usage: npm run db:seed-test-user
  */
 
@@ -9,6 +14,105 @@ import { config } from "dotenv";
 import { resolve } from "path";
 
 config({ path: resolve(process.cwd(), ".env.local") });
+
+// ---------------------------------------------------------------------------
+// Extra demo doctors seeded with public/doctors/ stock images
+// ---------------------------------------------------------------------------
+const EXTRA_DOCTORS = [
+  {
+    email: "demo.doctor2@healthcal.dev",
+    displayName: "Demo Doctor 2",
+    image: "/doctors/img-2.jpg",
+    specialty: "Cardiology",
+    bio: "Specialist in heart disease prevention, cardiac imaging, and interventional procedures.",
+  },
+  {
+    email: "demo.doctor3@healthcal.dev",
+    displayName: "Demo Doctor 3",
+    image: "/doctors/img-3.jpg",
+    specialty: "Dermatology",
+    bio: "Expert in skin conditions, cosmetic dermatology, and advanced laser treatments.",
+  },
+  {
+    email: "demo.doctor4@healthcal.dev",
+    displayName: "Demo Doctor 4",
+    image: "/doctors/img-4.jpg",
+    specialty: "Neurology",
+    bio: "Focused on diagnosing and treating disorders of the nervous system and brain.",
+  },
+  {
+    email: "demo.doctor5@healthcal.dev",
+    displayName: "Demo Doctor 5",
+    image: "/doctors/img-5.jpg",
+    specialty: "Pediatrics",
+    bio: "Dedicated to the health and well-being of infants, children, and adolescents.",
+  },
+  {
+    email: "demo.doctor6@healthcal.dev",
+    displayName: "Demo Doctor 6",
+    image: "/doctors/img-6.jpg",
+    specialty: "Oncology",
+    bio: "Providing comprehensive cancer care including chemotherapy and targeted therapy.",
+  },
+  {
+    email: "demo.doctor7@healthcal.dev",
+    displayName: "Demo Doctor 7",
+    image: "/doctors/img-8.jpg",
+    specialty: "Orthopedics",
+    bio: "Specializing in musculoskeletal injuries, joint replacement, and sports medicine.",
+  },
+  {
+    email: "demo.doctor8@healthcal.dev",
+    displayName: "Demo Doctor 8",
+    image: "/doctors/img-7.jpg",
+    specialty: "Psychiatry",
+    bio: "Compassionate mental health care including therapy, medication management, and crisis support.",
+  },
+] as const;
+
+// Global appointment types — user_id = null means available to all doctors
+const GLOBAL_APPOINTMENT_TYPES = [
+  {
+    id: "22222222-2222-4222-8222-222222222201",
+    name: "Initial Consultation",
+    description: "First visit to discuss medical history, symptoms, and treatment goals.",
+    duration_minutes: 60,
+    buffer_before_minutes: 10,
+    buffer_after_minutes: 10,
+    slot_interval_minutes: 60,
+    minimum_notice_minutes: 120,
+  },
+  {
+    id: "22222222-2222-4222-8222-222222222202",
+    name: "Follow-up Visit",
+    description: "Review of treatment progress and adjustment of care plan.",
+    duration_minutes: 30,
+    buffer_before_minutes: 5,
+    buffer_after_minutes: 5,
+    slot_interval_minutes: 30,
+    minimum_notice_minutes: 60,
+  },
+  {
+    id: "22222222-2222-4222-8222-222222222203",
+    name: "Telehealth Session",
+    description: "Remote consultation via secure video call — no travel required.",
+    duration_minutes: 20,
+    buffer_before_minutes: 5,
+    buffer_after_minutes: 5,
+    slot_interval_minutes: 30,
+    minimum_notice_minutes: 30,
+  },
+  {
+    id: "22222222-2222-4222-8222-222222222204",
+    name: "Annual Check-up",
+    description: "Comprehensive yearly health assessment including lab work review.",
+    duration_minutes: 45,
+    buffer_before_minutes: 10,
+    buffer_after_minutes: 10,
+    slot_interval_minutes: 45,
+    minimum_notice_minutes: 1440,
+  },
+] as const;
 
 async function seedDemoUsers() {
   if (!process.env.DATABASE_URL) {
@@ -93,6 +197,72 @@ async function seedDemoUsers() {
         slot_interval_minutes: 30,
         minimum_notice_minutes: 60,
       },
+    });
+  }
+
+  // Update Demo Doctor 1 (test@doctor.com) with specialty + bio
+  if (doctor) {
+    await prisma.user.update({
+      where: { id: doctor.id },
+      data: {
+        specialty: "General Medicine",
+        bio: "Board-certified general practitioner with expertise in preventive care and chronic disease management.",
+      },
+    });
+  }
+
+  // Seed 7 additional demo doctors (Demo Doctor 2–8) — idempotent upsert by email
+  const { randomUUID } = await import("crypto");
+  for (const d of EXTRA_DOCTORS) {
+    const existing = await prisma.user.findFirst({ where: { email: d.email } });
+    if (existing) {
+      await prisma.user.update({
+        where: { id: existing.id },
+        data: {
+          display_name: d.displayName,
+          image: d.image,
+          role: "doctor",
+          email_verified: true,
+          specialty: d.specialty,
+          bio: d.bio,
+        },
+      });
+    } else {
+      const newId = randomUUID();
+      const demoHash = await hashPassword(DEMO_PASSWORD);
+      await prisma.user.create({
+        data: {
+          id: newId,
+          email: d.email,
+          display_name: d.displayName,
+          image: d.image,
+          role: "doctor",
+          email_verified: true,
+          password_hash: demoHash,
+          specialty: d.specialty,
+          bio: d.bio,
+        },
+      });
+      // Seed Mon–Fri 9–17 availability for each new doctor
+      const tz = "Europe/Berlin";
+      await prisma.doctorAvailability.createMany({
+        data: [1, 2, 3, 4, 5].map((weekday) => ({
+          user_id: newId,
+          weekday,
+          start_min: 9 * 60,
+          end_min: 17 * 60,
+          timezone: tz,
+        })),
+      });
+    }
+  }
+
+  // Seed global appointment types (user_id = null) — shared across all doctors
+  for (const t of GLOBAL_APPOINTMENT_TYPES) {
+    await prisma.appointmentType.upsert({
+      where: { id: t.id },
+      create: { ...t, user_id: null },
+      update: { name: t.name, description: t.description, duration_minutes: t.duration_minutes },
     });
   }
 

@@ -181,6 +181,14 @@ export default function Navbar() {
             </Link>
           )}
 
+          {/* Services: visible to all authenticated roles */}
+          <Link
+            href="/services"
+            className={`text-base transition-colors hover:text-gray-700 ${pathname?.includes("/services") ? "text-gray-700" : "text-muted-foreground"}`}
+          >
+            Services
+          </Link>
+
           {/* Patient Portal: patients + unauthenticated (role is null while loading → show by default) */}
           {!isStaff && (
             <Link

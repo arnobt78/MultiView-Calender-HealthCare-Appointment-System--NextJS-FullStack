@@ -44,6 +44,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import Link from "next/link";
 import {
   Activity,
   AlertTriangle,
@@ -56,6 +57,8 @@ import {
   CalendarPlus,
   CheckCircle2,
   Clock,
+  CreditCard,
+  ExternalLink,
   FileText,
   GitBranch,
   Hash,
@@ -63,6 +66,7 @@ import {
   Layers,
   List,
   MapPin,
+  Receipt,
   ShieldCheck,
   ShieldOff,
   Stethoscope,
@@ -82,6 +86,19 @@ import type { PatientClinicalProfile } from "@/types/types";
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
+
+/** Serialized invoice row from /api/invoices */
+interface InvoiceRow {
+  id: string;
+  created_at: string;
+  appointment_id: string | null;
+  amount: number;
+  currency: string;
+  status: string;
+  due_date: string | null;
+  paid_at: string | null;
+  description: string | null;
+}
 
 interface AppointmentType {
   id: string;
@@ -111,9 +128,9 @@ interface PortalData {
 // ---------------------------------------------------------------------------
 
 const STATUS_META: Record<string, { icon: React.ReactNode; cls: string; label: string; dotCls: string }> = {
-  done:    { icon: <CalendarCheck className="h-3.5 w-3.5" />, cls: "bg-emerald-100 text-emerald-700 border-emerald-200",  label: "Done",    dotCls: "bg-emerald-400" },
-  pending: { icon: <CalendarClock className="h-3.5 w-3.5" />, cls: "bg-amber-100 text-amber-700 border-amber-200",          label: "Pending", dotCls: "bg-amber-400"   },
-  alert:   { icon: <CalendarX className="h-3.5 w-3.5" />,     cls: "bg-red-100 text-red-700 border-red-200",               label: "Alert",   dotCls: "bg-red-400"     },
+  done: { icon: <CalendarCheck className="h-3.5 w-3.5" />, cls: "bg-emerald-100 text-emerald-700 border-emerald-200", label: "Done", dotCls: "bg-emerald-400" },
+  pending: { icon: <CalendarClock className="h-3.5 w-3.5" />, cls: "bg-amber-100 text-amber-700 border-amber-200", label: "Pending", dotCls: "bg-amber-400" },
+  alert: { icon: <CalendarX className="h-3.5 w-3.5" />, cls: "bg-red-100 text-red-700 border-red-200", label: "Alert", dotCls: "bg-red-400" },
 };
 
 // ---------------------------------------------------------------------------
@@ -127,13 +144,20 @@ const STATUS_META: Record<string, { icon: React.ReactNode; cls: string; label: s
  *   3. Available time slots fetched from /api/availability/slots
  *   4. Title + Notes + submit
  */
-function BookAppointmentDialog() {
+interface BookAppointmentDialogProps {
+  /** Pre-select a doctor when opened from the services page */
+  preselectedDoctorId?: string;
+  /** Custom trigger element — defaults to the sky-blue Request button */
+  trigger?: React.ReactNode;
+}
+
+export function BookAppointmentDialog({ preselectedDoctorId, trigger }: BookAppointmentDialogProps = {}) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(1);
 
-  // Step 1 state
-  const [doctorId, setDoctorId] = useState("");
+  // Step 1 state — preselect doctor if provided from services page
+  const [doctorId, setDoctorId] = useState(preselectedDoctorId ?? "");
   const [selectedType, setSelectedType] = useState<AppointmentType | null>(null);
   // For "flexible" bookings (no appointment types defined for the doctor)
   const [flexDuration, setFlexDuration] = useState(30);
@@ -238,11 +262,13 @@ function BookAppointmentDialog() {
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        {/* Glassmorphic glow on the trigger button */}
-        <Button className="gap-2 shadow-[0_0_20px_rgba(2,132,199,0.35)] hover:shadow-[0_0_32px_rgba(2,132,199,0.55)] transition-all duration-300">
-          <CalendarPlus className="h-4 w-4" />
-          Request / Book Appointment
-        </Button>
+        {trigger ?? (
+          /* Default sky-blue glassmorphic glow button */
+          <Button className="gap-2 bg-sky-600 hover:bg-sky-700 text-white shadow-[0_0_24px_rgba(2,132,199,0.4)] hover:shadow-[0_0_36px_rgba(2,132,199,0.65)] transition-all duration-300 px-5">
+            <CalendarPlus className="h-4 w-4" />
+            Request / Book Appointment
+          </Button>
+        )}
       </DialogTrigger>
 
       <DialogContent className="max-w-lg">
@@ -262,13 +288,12 @@ function BookAppointmentDialog() {
             return (
               <div key={n} className="flex items-center gap-1">
                 <div
-                  className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-semibold transition-all ${
-                    done
-                      ? "bg-sky-600 text-white"
-                      : active
+                  className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-semibold transition-all ${done
+                    ? "bg-sky-600 text-white"
+                    : active
                       ? "bg-sky-100 text-sky-700 ring-2 ring-sky-400"
                       : "bg-muted text-muted-foreground"
-                  }`}
+                    }`}
                   title={label}
                 >
                   {done ? <CheckCircle2 className="h-3.5 w-3.5" /> : n}
@@ -324,11 +349,10 @@ function BookAppointmentDialog() {
                           key={d}
                           type="button"
                           onClick={() => setFlexDuration(d)}
-                          className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
-                            flexDuration === d
-                              ? "bg-sky-600 text-white border-sky-600"
-                              : "border-sky-200 text-sky-700 hover:bg-sky-50"
-                          }`}
+                          className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${flexDuration === d
+                            ? "bg-sky-600 text-white border-sky-600"
+                            : "border-sky-200 text-sky-700 hover:bg-sky-50"
+                            }`}
                         >
                           {d} min
                         </button>
@@ -343,11 +367,10 @@ function BookAppointmentDialog() {
                         key={t.id}
                         type="button"
                         onClick={() => setSelectedType(t)}
-                        className={`w-full text-left rounded-xl border p-3 transition-all ${
-                          selectedType?.id === t.id
-                            ? "border-sky-500 bg-sky-50 ring-1 ring-sky-400"
-                            : "border-border hover:border-sky-300 hover:bg-sky-50/40"
-                        }`}
+                        className={`w-full text-left rounded-xl border p-3 transition-all ${selectedType?.id === t.id
+                          ? "border-sky-500 bg-sky-50 ring-1 ring-sky-400"
+                          : "border-border hover:border-sky-300 hover:bg-sky-50/40"
+                          }`}
                       >
                         <div className="flex items-center justify-between">
                           <span className="font-medium text-sm">{t.name}</span>
@@ -447,11 +470,10 @@ function BookAppointmentDialog() {
                         key={slot}
                         type="button"
                         onClick={() => setSelectedSlot(slot)}
-                        className={`rounded-lg border px-2 py-2 text-sm font-medium transition-all ${
-                          selectedSlot === slot
-                            ? "bg-sky-600 text-white border-sky-600"
-                            : "border-border hover:border-sky-400 hover:bg-sky-50"
-                        }`}
+                        className={`rounded-lg border px-2 py-2 text-sm font-medium transition-all ${selectedSlot === slot
+                          ? "bg-sky-600 text-white border-sky-600"
+                          : "border-border hover:border-sky-400 hover:bg-sky-50"
+                          }`}
                       >
                         <span className="block">{slotTime}</span>
                         <span className="block text-[10px] opacity-70">→ {endTime}</span>
@@ -590,19 +612,27 @@ function AppointmentTimeline({ appointments, loading }: { appointments: ApptRow[
   });
 
   const filterTabs: { key: "all" | "upcoming" | "past"; label: string; icon: React.ReactNode }[] = [
-    { key: "all",      label: "All",      icon: <List          className="h-3.5 w-3.5" /> },
+    { key: "all", label: "All", icon: <List className="h-3.5 w-3.5" /> },
     { key: "upcoming", label: "Upcoming", icon: <CalendarClock className="h-3.5 w-3.5" /> },
-    { key: "past",     label: "Past",     icon: <History       className="h-3.5 w-3.5" /> },
+    { key: "past", label: "Past", icon: <History className="h-3.5 w-3.5" /> },
   ];
 
   return (
-    /* Glassmorphic container wrapping the whole history section */
-    <div className="rounded-[24px] border bg-white/70 backdrop-blur-sm shadow-[0_8px_32px_rgba(2,132,199,0.08)] p-5 space-y-4">
-      {/* Heading + pill toggle */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <h3 className="text-base font-semibold flex items-center gap-2">
-          <CalendarDays className="h-4 w-4 text-sky-600" />
+    /* Purple-glow glassmorphic container */
+    <div className="rounded-[24px] border border-violet-100/60 bg-card shadow-[0_8px_32px_rgba(139,92,246,0.15)] overflow-hidden">
+      {/* Violet header: title + filtered count badge + pill toggle */}
+      <div className="bg-violet-50/60 border-b border-violet-100/60 px-5 py-3 flex items-center justify-between flex-wrap gap-3">
+        <h3 className="text-sm font-semibold flex items-center gap-2 text-violet-800">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-violet-100 border border-violet-200 shrink-0">
+            <CalendarDays className="h-3.5 w-3.5 text-violet-600" />
+          </span>
           Appointment History
+          {/* Dynamic filtered count — updates as tab changes */}
+          {!loading && (
+            <Badge variant="outline" className="bg-violet-50 text-violet-700 border-violet-200 font-bold ml-1">
+              {filtered.length}
+            </Badge>
+          )}
         </h3>
         {/* Pill-style filter tabs */}
         <div className="inline-flex bg-muted/60 rounded-full p-1 gap-1 border">
@@ -610,17 +640,17 @@ function AppointmentTimeline({ appointments, loading }: { appointments: ApptRow[
             <button
               key={key}
               onClick={() => setFilter(key)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                filter === key
-                  ? "bg-background shadow text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${filter === key
+                ? "bg-background shadow text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+                }`}
             >
               {icon} {label}
             </button>
           ))}
         </div>
       </div>
+      <div className="p-5 space-y-4">
 
       {/* Skeleton while loading */}
       {loading ? (
@@ -660,7 +690,11 @@ function AppointmentTimeline({ appointments, loading }: { appointments: ApptRow[
                 <div className={`absolute left-2 top-4 h-5 w-5 rounded-full border-2 border-background ${meta.dotCls} flex items-center justify-center shadow-sm z-10 text-white`}>
                   {meta.icon}
                 </div>
-                <Card className="transition-all hover:shadow-[0_4px_20px_rgba(2,132,199,0.12)] hover:-translate-y-0.5 duration-200">
+                <Card className={`transition-all hover:-translate-y-0.5 duration-200 ${
+                  status === "done" ? "bg-emerald-50/60 border-emerald-200 hover:shadow-[0_4px_20px_rgba(16,185,129,0.15)]" :
+                  status === "alert" ? "bg-red-50/60 border-red-200 hover:shadow-[0_4px_20px_rgba(239,68,68,0.15)]" :
+                  "bg-amber-50/60 border-amber-200 hover:shadow-[0_4px_20px_rgba(245,158,11,0.15)]"
+                }`}>
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between gap-4 flex-wrap">
                       <div className="space-y-1 flex-1 min-w-0">
@@ -682,7 +716,7 @@ function AppointmentTimeline({ appointments, loading }: { appointments: ApptRow[
                           )}
                         </div>
                         {/* Meta row */}
-                        <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                        <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <Clock className="h-3 w-3" />
                             {format(startDate, "dd MMM yyyy, HH:mm")}
@@ -703,7 +737,7 @@ function AppointmentTimeline({ appointments, loading }: { appointments: ApptRow[
                           )}
                         </div>
                         {appt.notes && (
-                          <p className="text-xs text-muted-foreground flex items-start gap-1 mt-1">
+                          <p className="text-xs text-muted-foreground flex items-start gap-1">
                             <FileText className="h-3 w-3 mt-0.5 shrink-0" />
                             {appt.notes}
                           </p>
@@ -723,6 +757,7 @@ function AppointmentTimeline({ appointments, loading }: { appointments: ApptRow[
           )}
         </div>
       )}
+      </div>{/* end inner p-5 */}
     </div>
   );
 }
@@ -760,25 +795,38 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
     requestAnimationFrame(() => setIsMounted(true));
   }, []);
 
+  // Fetch patient's invoices — enabled after mount to avoid SSR mismatch
+  const { data: invoicesData, isLoading: invoicesLoading } = useQuery({
+    queryKey: queryKeys.invoices.all,
+    queryFn: () => apiClient<{ invoices: InvoiceRow[] }>("/api/invoices"),
+    enabled: isMounted,
+    staleTime: 2 * 60 * 1000,
+  });
+
   const loading = !isMounted || isLoading;
 
   const patient = data?.patient ?? null;
   const userImage = data?.userImage ?? null;
   const appointments = data?.appointments ?? [];
 
-  const done     = appointments.filter((a) => a.status === "done").length;
+  const done = appointments.filter((a) => a.status === "done").length;
   const upcoming = appointments.filter((a) => isFuture(new Date(a.start)) || isToday(new Date(a.start))).length;
-  const total    = appointments.length;
+  const total = appointments.length;
 
   // Derive age from birth_date
   const age = patient?.birth_date
     ? differenceInYears(new Date(), new Date(patient.birth_date))
     : null;
 
-  // Robohash fallback avatar URL
-  const avatarSrc = userImage ?? (patient ? `https://robohash.org/${patient.id}.png?set=set4&size=100x100` : undefined);
+  // Avatar: user OAuth image > clinical_profile.image_url > dicebear professional avatar
+  const clinicalImageUrl = (patient?.clinical_profile as PatientClinicalProfile & { image_url?: string })?.image_url;
+  const avatarSrc =
+    userImage ??
+    clinicalImageUrl ??
+    (patient ? `https://api.dicebear.com/9.x/personas/svg?seed=${patient.id}&backgroundColor=b6e3f4` : undefined);
 
   const clinicalProfile = patient?.clinical_profile as PatientClinicalProfile;
+  const invoices = invoicesData?.invoices ?? [];
 
   if (isError) {
     return (
@@ -791,13 +839,13 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
   return (
     <div className="space-y-5 py-0 pb-0">
       {/* Page header — always static */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 pb-4 border-b">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 pb-4 border-b">
         <div>
           <h1 className="text-xl md:text-2xl font-semibold tracking-tight flex items-center gap-2">
             <Activity className="h-5 w-5 md:h-6 md:w-6 text-sky-600" />
             Patient Portal
           </h1>
-          <p className="text-muted-foreground text-sm mt-0.5">
+          <p className="text-muted-foreground text-sm">
             View your appointment history and request new appointments
           </p>
         </div>
@@ -808,15 +856,17 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
       <div className="grid md:grid-cols-3 gap-5">
         {/* Left sidebar: My Profile + Summary */}
         <div className="space-y-4">
-          {/* ── My Profile Card ───────────────────────────────── */}
-          <Card className="rounded-[24px] border bg-linear-to-br from-sky-500/10 via-white/95 to-white/90 backdrop-blur-sm shadow-[0_20px_60px_rgba(2,132,199,0.18)]">
-            <CardHeader className="pb-2">
+          {/* ── My Profile Card — sky glow glass ─────────────── */}
+          <Card className="rounded-[24px] border bg-card shadow-[0_8px_32px_rgba(99,102,241,0.13)] overflow-hidden">
+            <CardHeader className="pb-2 bg-sky-50/60 border-b border-sky-100/70">
               <CardTitle className="text-sm font-semibold flex items-center gap-2 text-sky-800">
-                <User className="h-4 w-4" />
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-100 border border-sky-200 shrink-0">
+                  <User className="h-3.5 w-3.5 text-sky-600" />
+                </span>
                 My Profile
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-3 p-4">
               {loading ? (
                 /* Skeleton */
                 <>
@@ -824,14 +874,15 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
                     <Skeleton className="h-16 w-16 rounded-full shrink-0" />
                     <div className="space-y-2 flex-1">
                       <Skeleton className="h-4 w-28 rounded" />
-                      <Skeleton className="h-3 w-16 rounded" />
+                      <Skeleton className="h-3 w-20 rounded" />
+                      <Skeleton className="h-3 w-14 rounded" />
                     </div>
                   </div>
                   <Separator />
                   <div className="space-y-2.5">
                     {Array.from({ length: 7 }).map((_, i) => (
                       <div key={i} className="flex items-center gap-2">
-                        <Skeleton className="h-3.5 w-3.5 rounded shrink-0" />
+                        <Skeleton className="h-6 w-6 rounded-full shrink-0" />
                         <Skeleton className="h-3.5 flex-1 rounded" />
                       </div>
                     ))}
@@ -839,137 +890,152 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
                 </>
               ) : patient ? (
                 <>
-                  {/* Avatar + name */}
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-16 w-16 ring-2 ring-sky-200 shadow-md">
+                  {/* Avatar + name + status badges — all in one row */}
+                  <div className="flex items-start gap-3">
+                    <Avatar className="h-16 w-16 ring-2 ring-sky-200 shadow-md shrink-0">
                       <AvatarImage src={avatarSrc} alt={`${patient.firstname} ${patient.lastname}`} />
-                      <AvatarFallback className="bg-sky-100 text-sky-700 font-bold text-lg">
+                      <AvatarFallback className="text-sky-700 bg-sky-100 font-bold text-lg">
                         {`${patient.firstname[0]}${patient.lastname[0]}`.toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="min-w-0">
-                      <p className="font-bold text-base leading-tight truncate">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-bold text-sm leading-tight truncate">
                         {patient.firstname} {patient.lastname}
                       </p>
                       {patient.email && (
-                        <p className="text-xs text-muted-foreground truncate">{patient.email}</p>
+                        <p className="text-xs text-muted-foreground truncate mt-0.5">{patient.email}</p>
                       )}
                       {patient.pronoun && (
                         <p className="text-xs text-muted-foreground/70">{patient.pronoun}</p>
                       )}
+                      {/* Status + age badges inline below name */}
+                      <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
+                        {patient.active ? (
+                          <Badge className="gap-1 text-[10px] py-0 bg-emerald-100 text-emerald-700 border-emerald-200">
+                            <ShieldCheck className="h-2.5 w-2.5" /> Active
+                          </Badge>
+                        ) : (
+                          <Badge className="gap-1 text-[10px] py-0 bg-gray-100 text-gray-600 border-gray-200">
+                            <ShieldOff className="h-2.5 w-2.5" /> Inactive
+                          </Badge>
+                        )}
+                        {age !== null && (
+                          <Badge variant="outline" className="text-[10px] py-0 gap-1">
+                            <Cake className="h-2.5 w-2.5" /> Age {age}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
-                  </div>
-
-                  {/* Status badge */}
-                  <div className="flex items-center gap-2">
-                    {patient.active ? (
-                      <Badge className="gap-1 bg-emerald-100 text-emerald-700 border-emerald-200">
-                        <ShieldCheck className="h-3 w-3" /> Active
-                      </Badge>
-                    ) : (
-                      <Badge className="gap-1 bg-gray-100 text-gray-600 border-gray-200">
-                        <ShieldOff className="h-3 w-3" /> Inactive
-                      </Badge>
-                    )}
-                    {age !== null && (
-                      <Badge variant="outline" className="text-xs gap-1">
-                        <Cake className="h-3 w-3" /> Age {age}
-                      </Badge>
-                    )}
                   </div>
 
                   <Separator />
 
-                  {/* Info fields */}
-                  <dl className="space-y-2 text-xs">
+                  {/* Info fields — icons have rounded bg pill like PatientDetailView */}
+                  <dl className="space-y-2.5 text-xs">
+
                     {/* Patient ID */}
-                    <div className="flex items-start gap-2">
-                      <Hash className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
+                    <div className="flex items-start gap-2.5">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-muted/60 border shrink-0 mt-0.5">
+                        <Hash className="h-3 w-3 text-muted-foreground" />
+                      </span>
                       <div className="min-w-0 flex-1">
                         <dt className="text-muted-foreground">Patient ID</dt>
-                        <dd className="font-mono text-[11px] text-muted-foreground break-all">{patient.id}</dd>
+                        <dd className="font-mono text-[10px] break-all text-muted-foreground">{patient.id}</dd>
                       </div>
                     </div>
 
                     {/* Birth Date */}
                     {patient.birth_date && (
-                      <div className="flex items-center gap-2">
-                        <Cake className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                      <div className="flex items-center gap-2.5">
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-orange-50 border border-orange-100 shrink-0">
+                          <Cake className="h-3 w-3 text-orange-500" />
+                        </span>
                         <div>
                           <dt className="text-muted-foreground">Birth Date</dt>
-                          <dd className="font-medium text-foreground">
-                            {format(new Date(patient.birth_date), "dd MMM yyyy")}
-                          </dd>
+                          <dd className="font-medium">{format(new Date(patient.birth_date), "dd MMM yyyy")}</dd>
                         </div>
                       </div>
                     )}
 
                     {/* Care Tier */}
                     {patient.care_level != null && (
-                      <div className="flex items-center gap-2">
-                        <Layers className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                      <div className="flex items-center gap-2.5">
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-violet-50 border border-violet-100 shrink-0">
+                          <Layers className="h-3 w-3 text-violet-500" />
+                        </span>
                         <div>
                           <dt className="text-muted-foreground">Care Tier (1–10)</dt>
-                          <dd className="font-medium text-foreground">
-                            {getPatientCareLevelLabel(patient.care_level)}
-                          </dd>
+                          <dd className="font-medium">{getPatientCareLevelLabel(patient.care_level)}</dd>
                         </div>
                       </div>
                     )}
 
-                    {/* Primary Doctor */}
-                    {patient.primary_doctor && (
-                      <div className="flex items-center gap-2">
-                        <Stethoscope className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                        <div className="min-w-0">
-                          <dt className="text-muted-foreground">Primary Doctor</dt>
-                          <dd className="font-medium text-foreground truncate">
-                            {patient.primary_doctor.display_name ?? patient.primary_doctor.email}
+                    {/* Primary Doctor — clickable link to doctor detail */}
+                    <div className="flex items-start gap-2.5">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-50 border border-sky-100 shrink-0 mt-0.5">
+                        <Stethoscope className="h-3 w-3 text-sky-500" />
+                      </span>
+                      <div className="min-w-0">
+                        <dt className="text-muted-foreground">Primary Doctor</dt>
+                        {patient.primary_doctor ? (
+                          <dd className="font-medium">
+                            <Link
+                              href={`/control-panel/doctors/${patient.primary_doctor_id ?? ""}`}
+                              className="text-sky-600 hover:text-sky-800 hover:underline flex items-center gap-1 truncate"
+                            >
+                              {patient.primary_doctor.display_name ?? patient.primary_doctor.email}
+                              <ExternalLink className="h-2.5 w-2.5 shrink-0" />
+                            </Link>
+                            <span className="text-[10px] text-muted-foreground">{patient.primary_doctor.email}</span>
                           </dd>
-                          <dd className="text-[10px] text-muted-foreground truncate">
-                            {patient.primary_doctor.email}
-                          </dd>
-                        </div>
+                        ) : (
+                          <dd className="text-muted-foreground">—</dd>
+                        )}
                       </div>
-                    )}
+                    </div>
 
-                    {/* Referral */}
-                    {clinicalProfile?.referral_source && (
-                      <div className="flex items-start gap-2">
-                        <GitBranch className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
-                        <div>
-                          <dt className="text-muted-foreground">Referral</dt>
-                          <dd className="font-medium text-foreground">
-                            {clinicalProfile.referral_source}
-                            {clinicalProfile.referral_detail && ` — ${clinicalProfile.referral_detail}`}
-                          </dd>
-                        </div>
+                    {/* Referral — always shown */}
+                    <div className="flex items-start gap-2.5">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-teal-50 border border-teal-100 shrink-0 mt-0.5">
+                        <GitBranch className="h-3 w-3 text-teal-500" />
+                      </span>
+                      <div>
+                        <dt className="text-muted-foreground">Referral</dt>
+                        <dd className="font-medium">
+                          {clinicalProfile?.referral_source
+                            ? `${clinicalProfile.referral_source}${clinicalProfile.referral_detail ? ` — ${clinicalProfile.referral_detail}` : ""}`
+                            : "—"}
+                        </dd>
                       </div>
-                    )}
+                    </div>
 
                     {/* Allergies */}
-                    {clinicalProfile?.allergies && clinicalProfile.allergies.length > 0 && (
-                      <div className="flex items-start gap-2">
-                        <AlertTriangle className="h-3.5 w-3.5 text-amber-500 mt-0.5 shrink-0" />
-                        <div>
-                          <dt className="text-muted-foreground">Allergies</dt>
-                          <dd className="font-medium text-foreground">
-                            {clinicalProfile.allergies.join(", ")}
-                          </dd>
-                        </div>
+                    <div className="flex items-start gap-2.5">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-50 border border-amber-100 shrink-0 mt-0.5">
+                        <AlertTriangle className="h-3 w-3 text-amber-500" />
+                      </span>
+                      <div>
+                        <dt className="text-muted-foreground">Allergies</dt>
+                        <dd className="font-medium">
+                          {clinicalProfile?.allergies?.length
+                            ? clinicalProfile.allergies.join(", ")
+                            : "—"}
+                        </dd>
                       </div>
-                    )}
+                    </div>
 
                     {/* Clinical Notes */}
-                    {clinicalProfile?.notes && (
-                      <div className="flex items-start gap-2">
-                        <FileText className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
-                        <div>
-                          <dt className="text-muted-foreground">Clinical Notes</dt>
-                          <dd className="text-muted-foreground leading-relaxed">{clinicalProfile.notes}</dd>
-                        </div>
+                    <div className="flex items-start gap-2.5">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-50 border border-slate-200 shrink-0 mt-0.5">
+                        <FileText className="h-3 w-3 text-slate-500" />
+                      </span>
+                      <div>
+                        <dt className="text-muted-foreground">Clinical Notes</dt>
+                        <dd className="leading-relaxed text-muted-foreground">
+                          {clinicalProfile?.notes ?? "—"}
+                        </dd>
                       </div>
-                    )}
+                    </div>
                   </dl>
                 </>
               ) : (
@@ -982,11 +1048,13 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
             </CardContent>
           </Card>
 
-          {/* ── Summary Card ─────────────────────────────────── */}
-          <Card className="rounded-[24px] border bg-linear-to-br from-emerald-500/10 via-white/95 to-white/90 backdrop-blur-sm shadow-[0_20px_60px_rgba(16,185,129,0.18)]">
-            <CardHeader className="pb-2">
+          {/* ── Summary Card — emerald glow glass ─────────────── */}
+          <Card className="rounded-[24px] border bg-card shadow-[0_8px_32px_rgba(16,185,129,0.16)] overflow-hidden">
+            <CardHeader className="pb-2 bg-emerald-50/60 border-b border-emerald-100/70">
               <CardTitle className="text-sm font-semibold flex items-center gap-2 text-emerald-800">
-                <Activity className="h-4 w-4" />
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 border border-emerald-200 shrink-0">
+                  <Activity className="h-3.5 w-3.5 text-emerald-600" />
+                </span>
                 Summary
               </CardTitle>
             </CardHeader>
@@ -1027,6 +1095,74 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
                   )}
                 </div>
               ))}
+            </CardContent>
+          </Card>
+
+          {/* ── Invoices Card — amber/gold glow glass ─────────── */}
+          <Card className="rounded-[24px] border bg-card shadow-[0_8px_32px_rgba(245,158,11,0.14)] overflow-hidden">
+            <CardHeader className="pb-2 bg-amber-50/60 border-b border-amber-100/70">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2 text-amber-800">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-100 border border-amber-200 shrink-0">
+                  <Receipt className="h-3.5 w-3.5 text-amber-600" />
+                </span>
+                Invoices
+                {!invoicesLoading && invoices.length > 0 && (
+                  <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 font-bold ml-1">
+                    {invoices.length}
+                  </Badge>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4">
+              {invoicesLoading ? (
+                <div className="space-y-2">
+                  {Array.from({ length: 2 }).map((_, i) => (
+                    <Skeleton key={i} className="h-8 w-full rounded" />
+                  ))}
+                </div>
+              ) : invoices.length === 0 ? (
+                <div className="text-center py-4">
+                  <CreditCard className="h-8 w-8 mx-auto text-muted-foreground/30 mb-2" />
+                  <p className="text-xs text-muted-foreground">No invoices on file.</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {invoices.map((inv) => (
+                    <div
+                      key={inv.id}
+                      className="flex items-center justify-between rounded-lg border bg-card px-3 py-2 text-xs"
+                    >
+                      <div className="min-w-0">
+                        <p className="font-medium truncate">{inv.description ?? "Invoice"}</p>
+                        {inv.due_date && (
+                          <p className="text-muted-foreground text-[10px]">
+                            Due {format(new Date(inv.due_date), "dd MMM yyyy")}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="font-semibold">
+                          {(inv.amount / 100).toFixed(2)} {inv.currency.toUpperCase()}
+                        </span>
+                        <Badge
+                          variant="outline"
+                          className={`text-[10px] py-0 ${
+                            inv.status === "paid"
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                              : inv.status === "overdue"
+                              ? "bg-red-50 text-red-700 border-red-200"
+                              : inv.status === "sent"
+                              ? "bg-sky-50 text-sky-700 border-sky-200"
+                              : "bg-gray-50 text-gray-600 border-gray-200"
+                          }`}
+                        >
+                          {inv.status}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

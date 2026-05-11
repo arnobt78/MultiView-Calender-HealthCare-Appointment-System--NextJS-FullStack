@@ -65,6 +65,12 @@ export async function POST(req: NextRequest) {
         lastname: body.lastname.trim(),
         pronoun: body.pronoun ?? null,
         notes: body.notes ?? null,
+        relationship: typeof body.relationship === "string" ? body.relationship.trim() || null : null,
+        phone: typeof body.phone === "string" ? body.phone.trim() || null : null,
+        email: typeof body.email === "string" ? body.email.trim() || null : null,
+        date_of_birth: body.date_of_birth ? new Date(body.date_of_birth) : null,
+        is_emergency_contact: Boolean(body.is_emergency_contact),
+        patient_id: typeof body.patient_id === "string" && body.patient_id ? body.patient_id : null,
       },
     });
 

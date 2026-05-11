@@ -6,7 +6,7 @@ import { Category } from "@/types/types";
 import { notify } from "@/lib/notify";
 import { fetchCategories } from "@/lib/query-fetchers";
 
-export type CategoryCreateInput = Pick<Category, "label"> & Partial<Pick<Category, "description" | "color" | "icon">>;
+export type CategoryCreateInput = Pick<Category, "label"> & Partial<Pick<Category, "description" | "color" | "icon" | "is_active" | "sort_order" | "duration_minutes_default">>;
 export type CategoryUpdateInput = Partial<Pick<Category, "label" | "description" | "color" | "icon">>;
 
 export function useCategories() {

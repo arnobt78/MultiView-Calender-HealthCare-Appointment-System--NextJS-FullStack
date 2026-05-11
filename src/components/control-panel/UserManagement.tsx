@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * User / Admin Management — redesigned to match PatientManagement style.
+ * Color scheme: slate/gray — distinct from doctors (sky) and patients (emerald).
+ *
+ * Shows all users (admin + secretary + any role), stat cards, searchable table.
+ */
+
 import { type ColumnDef } from "@tanstack/react-table";
 import { PrefetchingLink } from "@/components/shared/PrefetchingLink";
 import { useUsers } from "@/hooks/useUsers";
@@ -10,6 +17,8 @@ import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { UserRoleBadge } from "@/components/shared/UserRoleBadge";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,12 +27,86 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
+import { skyGlassTableFrameClass } from "@/lib/calendar-header-action-styles";
 import type { User } from "@/types/types";
-import { EllipsisVertical, Eye, Pencil, ShieldCheck } from "lucide-react";
+import {
+  EllipsisVertical,
+  Eye,
+  ShieldCheck,
+  ShieldQuestion,
+  Users,
+  UserCheck,
+  UserCog,
+  UserX,
+} from "lucide-react";
 
-/** Staff accounts (admin + secretary); doctors and portal patients use other control-panel tabs. */
-const STAFF_ROLES = ["admin", "secretary"] as const;
+// ---------------------------------------------------------------------------
+// Stat cards
+// ---------------------------------------------------------------------------
+function UserStatCards({ users }: { users: User[] }) {
+  const admins = users.filter((u) => u.role === "admin").length;
+  const doctors = users.filter((u) => u.role === "doctor").length;
+  const patients = users.filter((u) => u.role === "patient").length;
+  const other = users.length - admins - doctors - patients;
 
+  const stats = [
+    {
+      label: "Total Users",
+      value: users.length,
+      icon: <Users className="h-4 w-4" />,
+      cls: "bg-slate-50/60 border-slate-200/60",
+      valueCls: "text-slate-700",
+      iconCls: "bg-slate-100 border-slate-200 text-slate-600",
+    },
+    {
+      label: "Admins",
+      value: admins,
+      icon: <ShieldCheck className="h-4 w-4" />,
+      cls: "bg-red-50/60 border-red-200/60",
+      valueCls: "text-red-700",
+      iconCls: "bg-red-100 border-red-200 text-red-600",
+    },
+    {
+      label: "Doctors",
+      value: doctors,
+      icon: <UserCheck className="h-4 w-4" />,
+      cls: "bg-sky-50/60 border-sky-200/60",
+      valueCls: "text-sky-700",
+      iconCls: "bg-sky-100 border-sky-200 text-sky-600",
+    },
+    {
+      label: "Patients / Other",
+      value: patients + other,
+      icon: <UserCog className="h-4 w-4" />,
+      cls: "bg-amber-50/60 border-amber-200/60",
+      valueCls: "text-amber-700",
+      iconCls: "bg-amber-100 border-amber-200 text-amber-600",
+    },
+  ];
+
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {stats.map(({ label, value, icon, cls, valueCls, iconCls }) => (
+        <Card key={label} className={cn("rounded-[16px] border", cls)}>
+          <CardContent className="p-3 flex items-center gap-3">
+            <span className={cn("flex h-9 w-9 items-center justify-center rounded-xl border shrink-0", iconCls)}>
+              {icon}
+            </span>
+            <div>
+              <p className={cn("text-lg font-bold leading-none", valueCls)}>{value}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Role change cell
+// ---------------------------------------------------------------------------
 function RoleCell({ user, onRoleChange }: { user: User; onRoleChange: (id: string, role: string) => void }) {
   const ROLES = ["admin", "doctor", "secretary", "patient"];
   return (
@@ -38,11 +121,7 @@ function RoleCell({ user, onRoleChange }: { user: User; onRoleChange: (id: strin
         <DropdownMenuLabel>Change role</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {ROLES.map((r) => (
-          <DropdownMenuItem
-            key={r}
-            className="capitalize"
-            onSelect={() => onRoleChange(user.id, r)}
-          >
+          <DropdownMenuItem key={r} className="capitalize" onSelect={() => onRoleChange(user.id, r)}>
             {r}
           </DropdownMenuItem>
         ))}
@@ -51,7 +130,15 @@ function RoleCell({ user, onRoleChange }: { user: User; onRoleChange: (id: strin
   );
 }
 
+// ---------------------------------------------------------------------------
+// Actions cell
+// ---------------------------------------------------------------------------
 function ActionsCell({ user }: { user: User }) {
+  const isDoctor = user.role === "doctor";
+  const detailHref = isDoctor
+    ? `/control-panel/doctors/${user.id}`
+    : `/control-panel/users/${user.id}`;
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -62,15 +149,9 @@ function ActionsCell({ user }: { user: User }) {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem asChild>
-          <PrefetchingLink href={`/control-panel/doctors/${user.id}`} className="flex items-center gap-2 cursor-pointer">
+          <PrefetchingLink href={detailHref} className="flex items-center gap-2 cursor-pointer">
             <Eye className="h-4 w-4" />
-            View
-          </PrefetchingLink>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <PrefetchingLink href={`/control-panel/doctors/${user.id}?mode=edit`} className="flex items-center gap-2 cursor-pointer">
-            <Pencil className="h-4 w-4" />
-            Edit
+            View Detail
           </PrefetchingLink>
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -78,11 +159,11 @@ function ActionsCell({ user }: { user: User }) {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Main component — shows ALL users (not filtered by role)
+// ---------------------------------------------------------------------------
 export default function UserManagement() {
-  const { data, isLoading, updateUser } = useUsers({
-    roles: [...STAFF_ROLES],
-    limit: 100,
-  });
+  const { data, isLoading, updateUser } = useUsers({ limit: 200 });
   const users = data?.users ?? [];
 
   const handleRoleChange = (id: string, role: string) => {
@@ -114,22 +195,18 @@ export default function UserManagement() {
       cell: ({ row }) => {
         const u = row.original;
         const label = u.display_name ?? "—";
-        const link =
-          !u.id ? (
-            <span className="font-medium text-foreground">{label}</span>
-          ) : (
-            <EntityTitleLink
-              href={`/control-panel/doctors/${u.id}`}
-              label={label}
-              className="min-w-0 self-start truncate font-medium"
-            />
-          );
+        const isDoctor = u.role === "doctor";
+        const detailHref = isDoctor
+          ? `/control-panel/doctors/${u.id}`
+          : `/control-panel/users/${u.id}`;
         return (
           <div className="flex min-w-0 flex-col gap-0.5">
-            {link}
-            <span className="truncate text-xs text-muted-foreground" title={u.email}>
-              {u.email}
-            </span>
+            {u.id ? (
+              <EntityTitleLink href={detailHref} label={label} className="min-w-0 self-start truncate font-medium" />
+            ) : (
+              <span className="font-medium">{label}</span>
+            )}
+            <span className="truncate text-xs text-muted-foreground">{u.email}</span>
           </div>
         );
       },
@@ -142,10 +219,8 @@ export default function UserManagement() {
     },
     {
       accessorKey: "created_at",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Created" />,
-      meta: {
-        shellClassName: "w-[1%] whitespace-nowrap",
-      },
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Joined" />,
+      meta: { shellClassName: "w-[1%] whitespace-nowrap" },
       cell: ({ row }) =>
         row.original.created_at ? (
           <span className="text-xs whitespace-nowrap">
@@ -159,37 +234,41 @@ export default function UserManagement() {
       id: "actions",
       header: "Actions",
       enableSorting: false,
-      meta: {
-        shellClassName: "w-[1%] whitespace-nowrap text-right",
-      },
+      meta: { shellClassName: "w-[1%] whitespace-nowrap text-right" },
       cell: ({ row }) => <ActionsCell user={row.original} />,
     },
   ];
 
   return (
-    <div className="space-y-2 text-gray-700">
+    <div className="space-y-4 text-gray-700">
       <PageHeader
-        title="User Admin"
-        description="Staff accounts (admin, secretary). Doctors and patients have dedicated tabs."
+        title="User & Admin Management"
+        description="All user accounts — admins, doctors, secretaries, patients."
       />
-      <DataTable<User, unknown>
-        columns={columns}
-        data={users}
-        isLoading={isLoading}
-        globalFilterFn={(row, q) => {
-          const s = q.trim().toLowerCase();
-          if (!s) return true;
-          const u = row;
-          return (
-            (u.display_name?.toLowerCase().includes(s) ?? false) ||
-            u.email.toLowerCase().includes(s)
-          );
-        }}
-        searchPlaceholder="Search by name or email…"
-        emptyMessage="No staff users found."
-        tableClassName="min-w-[860px]"
-        tableLayout="auto"
-      />
+
+      <UserStatCards users={users} />
+
+      <div className={cn("rounded-2xl overflow-hidden", skyGlassTableFrameClass)}>
+        <DataTable<User, unknown>
+          columns={columns}
+          data={users}
+          isLoading={isLoading}
+          globalFilterFn={(row, q) => {
+            const s = q.trim().toLowerCase();
+            if (!s) return true;
+            const u = row;
+            return (
+              (u.display_name?.toLowerCase().includes(s) ?? false) ||
+              u.email.toLowerCase().includes(s) ||
+              (u.role?.toLowerCase().includes(s) ?? false)
+            );
+          }}
+          searchPlaceholder="Search by name, email, or role…"
+          emptyMessage="No users found."
+          tableClassName="min-w-[860px]"
+          tableLayout="auto"
+        />
+      </div>
     </div>
   );
 }

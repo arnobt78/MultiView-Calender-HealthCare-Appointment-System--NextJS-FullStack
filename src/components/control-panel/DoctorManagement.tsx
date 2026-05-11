@@ -1,8 +1,18 @@
 "use client";
 
+/**
+ * Doctor Management — redesigned to match PatientManagement style.
+ * Color scheme: sky/indigo (different from patient's emerald).
+ *
+ * Shows:
+ *  - Stat cards (total doctors, with specialty, with availability)
+ *  - Searchable DataTable with avatar, name/email, specialty, availability days
+ *  - Row actions: View detail, Edit role
+ */
+
 import { type ColumnDef } from "@tanstack/react-table";
+import { useQuery } from "@tanstack/react-query";
 import { PrefetchingLink } from "@/components/shared/PrefetchingLink";
-import { useUsers } from "@/hooks/useUsers";
 import { DataTable } from "@/components/shared/DataTable";
 import { DataTableColumnHeader } from "@/components/shared/DataTableColumnHeader";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -10,6 +20,7 @@ import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { UserRoleBadge } from "@/components/shared/UserRoleBadge";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,9 +29,106 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+import {
+  skyGlassTableFrameClass,
+  emeraldGlassPrimaryButtonClass,
+} from "@/lib/calendar-header-action-styles";
 import type { User } from "@/types/types";
-import { EllipsisVertical, Eye, Pencil, ShieldCheck } from "lucide-react";
+import { useUsers } from "@/hooks/useUsers";
+import { queryKeys } from "@/lib/query-keys";
+import { apiClient } from "@/lib/api-client";
+import {
+  EllipsisVertical,
+  Eye,
+  ShieldCheck,
+  Stethoscope,
+  Users,
+  CalendarClock,
+  BookOpen,
+} from "lucide-react";
 
+// ---------------------------------------------------------------------------
+// Types for the doctor detail data from /api/doctors
+// ---------------------------------------------------------------------------
+interface DoctorRow {
+  id: string;
+  email: string;
+  display_name: string | null;
+  image: string | null;
+  specialty: string | null;
+  bio: string | null;
+  availabilities: { weekday: number }[];
+  patient_count: number;
+}
+
+const WEEKDAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
+
+// ---------------------------------------------------------------------------
+// Stat cards
+// ---------------------------------------------------------------------------
+function DoctorStatCards({ doctors }: { doctors: DoctorRow[] }) {
+  const withSpecialty = doctors.filter((d) => d.specialty).length;
+  const withAvailability = doctors.filter((d) => d.availabilities.length > 0).length;
+
+  const stats = [
+    {
+      label: "Total Doctors",
+      value: doctors.length,
+      icon: <Stethoscope className="h-4 w-4" />,
+      cls: "bg-sky-50/60 border-sky-200/60",
+      valueCls: "text-sky-700",
+      iconCls: "bg-sky-100 border-sky-200 text-sky-600",
+    },
+    {
+      label: "With Specialty",
+      value: withSpecialty,
+      icon: <BookOpen className="h-4 w-4" />,
+      cls: "bg-indigo-50/60 border-indigo-200/60",
+      valueCls: "text-indigo-700",
+      iconCls: "bg-indigo-100 border-indigo-200 text-indigo-600",
+    },
+    {
+      label: "With Availability",
+      value: withAvailability,
+      icon: <CalendarClock className="h-4 w-4" />,
+      cls: "bg-violet-50/60 border-violet-200/60",
+      valueCls: "text-violet-700",
+      iconCls: "bg-violet-100 border-violet-200 text-violet-600",
+    },
+    {
+      label: "Total Patients",
+      value: doctors.reduce((s, d) => s + d.patient_count, 0),
+      icon: <Users className="h-4 w-4" />,
+      cls: "bg-emerald-50/60 border-emerald-200/60",
+      valueCls: "text-emerald-700",
+      iconCls: "bg-emerald-100 border-emerald-200 text-emerald-600",
+    },
+  ];
+
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {stats.map(({ label, value, icon, cls, valueCls, iconCls }) => (
+        <Card key={label} className={cn("rounded-[16px] border", cls)}>
+          <CardContent className="p-3 flex items-center gap-3">
+            <span className={cn("flex h-9 w-9 items-center justify-center rounded-xl border shrink-0", iconCls)}>
+              {icon}
+            </span>
+            <div>
+              <p className={cn("text-lg font-bold leading-none", valueCls)}>{value}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Role change cell
+// ---------------------------------------------------------------------------
 function RoleCell({ user, onRoleChange }: { user: User; onRoleChange: (id: string, role: string) => void }) {
   const ROLES = ["admin", "doctor", "secretary", "patient"];
   return (
@@ -35,11 +143,7 @@ function RoleCell({ user, onRoleChange }: { user: User; onRoleChange: (id: strin
         <DropdownMenuLabel>Change role</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {ROLES.map((r) => (
-          <DropdownMenuItem
-            key={r}
-            className="capitalize"
-            onSelect={() => onRoleChange(user.id, r)}
-          >
+          <DropdownMenuItem key={r} className="capitalize" onSelect={() => onRoleChange(user.id, r)}>
             {r}
           </DropdownMenuItem>
         ))}
@@ -48,6 +152,9 @@ function RoleCell({ user, onRoleChange }: { user: User; onRoleChange: (id: strin
   );
 }
 
+// ---------------------------------------------------------------------------
+// Actions cell
+// ---------------------------------------------------------------------------
 function ActionsCell({ user }: { user: User }) {
   return (
     <DropdownMenu>
@@ -61,13 +168,7 @@ function ActionsCell({ user }: { user: User }) {
         <DropdownMenuItem asChild>
           <PrefetchingLink href={`/control-panel/doctors/${user.id}`} className="flex items-center gap-2 cursor-pointer">
             <Eye className="h-4 w-4" />
-            View
-          </PrefetchingLink>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <PrefetchingLink href={`/control-panel/doctors/${user.id}?mode=edit`} className="flex items-center gap-2 cursor-pointer">
-            <Pencil className="h-4 w-4" />
-            Edit
+            View Detail
           </PrefetchingLink>
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -75,9 +176,21 @@ function ActionsCell({ user }: { user: User }) {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Main component
+// ---------------------------------------------------------------------------
 export default function DoctorManagement() {
-  const { data, isLoading, updateUser } = useUsers({ role: "doctor", limit: 100 });
-  const users = data?.users ?? [];
+  const { data: usersData, isLoading: usersLoading, updateUser } = useUsers({ role: "doctor", limit: 100 });
+  const usersRows: User[] = usersData?.users ?? [];
+
+  // Enrich with specialty, bio, availability, patient_count from /api/doctors
+  const { data: doctorsData, isLoading: doctorsLoading } = useQuery({
+    queryKey: queryKeys.doctors.all,
+    queryFn: () => apiClient<{ doctors: DoctorRow[] }>("/api/doctors"),
+    staleTime: 2 * 60 * 1000,
+  });
+  const doctorMap = new Map((doctorsData?.doctors ?? []).map((d) => [d.id, d]));
+  const isLoading = usersLoading || doctorsLoading;
 
   const handleRoleChange = (id: string, role: string) => {
     updateUser({ id, role });
@@ -108,23 +221,66 @@ export default function DoctorManagement() {
       cell: ({ row }) => {
         const u = row.original;
         const label = u.display_name ?? "—";
-        const link =
-          !u.id ? (
-            <span className="font-medium text-foreground">{label}</span>
-          ) : (
-            <EntityTitleLink
-              href={`/control-panel/doctors/${u.id}`}
-              label={label}
-              className="min-w-0 self-start truncate font-medium"
-            />
-          );
         return (
           <div className="flex min-w-0 flex-col gap-0.5">
-            {link}
-            <span className="truncate text-xs text-muted-foreground" title={u.email}>
-              {u.email}
-            </span>
+            {u.id ? (
+              <EntityTitleLink
+                href={`/control-panel/doctors/${u.id}`}
+                label={label}
+                className="min-w-0 self-start truncate font-medium"
+              />
+            ) : (
+              <span className="font-medium text-foreground">{label}</span>
+            )}
+            <span className="truncate text-xs text-muted-foreground">{u.email}</span>
           </div>
+        );
+      },
+    },
+    {
+      id: "specialty",
+      header: "Specialty",
+      meta: { shellClassName: "min-w-[9rem]" },
+      cell: ({ row }) => {
+        const d = doctorMap.get(row.original.id);
+        return d?.specialty ? (
+          <Badge variant="outline" className="bg-sky-50 text-sky-700 border-sky-200 text-xs">
+            <Stethoscope className="h-2.5 w-2.5 mr-1" />
+            {d.specialty}
+          </Badge>
+        ) : (
+          <span className="text-muted-foreground text-xs">—</span>
+        );
+      },
+    },
+    {
+      id: "availability",
+      header: "Available Days",
+      meta: { shellClassName: "min-w-[10rem]" },
+      cell: ({ row }) => {
+        const d = doctorMap.get(row.original.id);
+        if (!d || d.availabilities.length === 0)
+          return <span className="text-muted-foreground text-xs">—</span>;
+        const days = Array.from(new Set(d.availabilities.map((a) => a.weekday))).sort();
+        return (
+          <div className="flex flex-wrap gap-1">
+            {days.map((day) => (
+              <Badge key={day} variant="outline" className="text-[10px] px-1.5 py-0 bg-violet-50 text-violet-700 border-violet-200">
+                {WEEKDAY_SHORT[day]}
+              </Badge>
+            ))}
+          </div>
+        );
+      },
+    },
+    {
+      id: "patients",
+      header: "Patients",
+      meta: { shellClassName: "w-[5rem] text-center" },
+      cell: ({ row }) => {
+        const d = doctorMap.get(row.original.id);
+        return (
+          <span className="text-sm font-medium">{d?.patient_count ?? 0}</span>
         );
       },
     },
@@ -132,61 +288,50 @@ export default function DoctorManagement() {
       accessorKey: "role",
       header: "Role",
       meta: { shellClassName: "min-w-[8rem] whitespace-nowrap" },
-      cell: ({ row }) => (
-        <RoleCell user={row.original} onRoleChange={handleRoleChange} />
-      ),
-    },
-    {
-      accessorKey: "created_at",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Created" />,
-      meta: {
-        shellClassName: "w-[1%] whitespace-nowrap",
-      },
-      cell: ({ row }) =>
-        row.original.created_at ? (
-          <span className="text-xs whitespace-nowrap">
-            {new Date(row.original.created_at).toLocaleDateString()}
-          </span>
-        ) : (
-          "—"
-        ),
+      cell: ({ row }) => <RoleCell user={row.original} onRoleChange={handleRoleChange} />,
     },
     {
       id: "actions",
       header: "Actions",
       enableSorting: false,
-      meta: {
-        shellClassName: "w-[1%] whitespace-nowrap text-right",
-      },
+      meta: { shellClassName: "w-[1%] whitespace-nowrap text-right" },
       cell: ({ row }) => <ActionsCell user={row.original} />,
     },
   ];
 
+  const enrichedDoctors: DoctorRow[] = (doctorsData?.doctors ?? []);
+
   return (
-    <div className="space-y-2 text-gray-700">
+    <div className="space-y-4 text-gray-700">
       <PageHeader
-        title="Doctors"
-        description="Accounts with role doctor. Staff admins use User / Admin Management."
+        title="Doctor Management"
+        description="Manage doctor profiles, specialties, and availability."
       />
-      <DataTable<User, unknown>
-        columns={columns}
-        data={users}
-        isLoading={isLoading}
-        globalFilterFn={(row, q) => {
-          const s = q.trim().toLowerCase();
-          if (!s) return true;
-          const u = row;
-          return (
-            (u.display_name?.toLowerCase().includes(s) ?? false) ||
-            u.email.toLowerCase().includes(s)
-          );
-        }}
-        searchPlaceholder="Search by name or email…"
-        emptyMessage="No doctors found."
-        tableClassName="min-w-[860px]"
-        tableLayout="auto"
-      />
+
+      <DoctorStatCards doctors={enrichedDoctors} />
+
+      <div className={cn("rounded-2xl overflow-hidden", skyGlassTableFrameClass)}>
+        <DataTable<User, unknown>
+          columns={columns}
+          data={usersRows}
+          isLoading={isLoading}
+          globalFilterFn={(row, q) => {
+            const s = q.trim().toLowerCase();
+            if (!s) return true;
+            const u = row;
+            const d = doctorMap.get(u.id);
+            return (
+              (u.display_name?.toLowerCase().includes(s) ?? false) ||
+              u.email.toLowerCase().includes(s) ||
+              (d?.specialty?.toLowerCase().includes(s) ?? false)
+            );
+          }}
+          searchPlaceholder="Search by name, email, or specialty…"
+          emptyMessage="No doctors found."
+          tableClassName="min-w-[860px]"
+          tableLayout="auto"
+        />
+      </div>
     </div>
   );
 }
-

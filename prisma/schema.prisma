@@ -23,6 +23,10 @@ model User {
   email_verification_token String?  @db.Uuid
   password_reset_token    String?   @db.Uuid
   password_reset_expires   DateTime? @db.Timestamptz(6)
+  /// Medical specialty for doctors — e.g. "Cardiology", "Pediatrics"
+  specialty               String?   @db.Text
+  /// Short biography / intro paragraph for the doctor services page
+  bio                     String?   @db.Text
 
   appointments_owned       Appointment[]           @relation("AppointmentOwner")
   appointment_assignees   AppointmentAssignee[]   @relation("AssigneeUser")
@@ -65,32 +69,52 @@ model Patient {
   created_by     User? @relation("PatientCreatedBy", fields: [created_by_id], references: [id], onDelete: SetNull)
   updated_by     User? @relation("PatientUpdatedBy", fields: [updated_by_id], references: [id], onDelete: SetNull)
   primary_doctor User? @relation("PatientPrimaryDoctor", fields: [primary_doctor_id], references: [id], onDelete: SetNull)
-  appointments Appointment[]
+  appointments   Appointment[]
+  relatives      Relative[] @relation("PatientRelatives")
 
   @@map("patients")
 }
 
-// --- Relatives
+// --- Relatives (patient family members / emergency contacts)
 model Relative {
-  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  created_at DateTime @default(now())
-  firstname  String   @db.Text
-  lastname   String   @db.Text
-  pronoun    String?  @db.Text
-  notes      String?  @db.Text
+  id                  String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  created_at          DateTime  @default(now())
+  updated_at          DateTime  @default(now()) @updatedAt
+  firstname           String    @db.Text
+  lastname            String    @db.Text
+  pronoun             String?   @db.Text
+  notes               String?   @db.Text
+  /// Relationship to the patient — e.g. "Mother", "Spouse", "Guardian"
+  relationship        String?   @db.Text
+  phone               String?   @db.Text
+  email               String?   @db.Text
+  date_of_birth       DateTime? @db.Date
+  /// Marks this relative as an emergency contact for the linked patient
+  is_emergency_contact Boolean  @default(false)
+  /// Optional link to a patient record
+  patient_id          String?   @db.Uuid
 
+  patient Patient? @relation("PatientRelatives", fields: [patient_id], references: [id], onDelete: SetNull)
+
+  @@index([patient_id])
   @@map("relatives")
 }
 
-// --- Categories
+// --- Categories (appointment categories / service types)
 model Category {
-  id          String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  created_at  DateTime  @default(now())
-  updated_at  DateTime? @db.Timestamptz(6)
-  label       String    @db.Text
-  description String?   @db.Text
-  color       String?   @db.Text
-  icon        String?   @db.Text
+  id                      String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  created_at              DateTime  @default(now())
+  updated_at              DateTime? @db.Timestamptz(6)
+  label                   String    @db.Text
+  description             String?   @db.Text
+  color                   String?   @db.Text
+  icon                    String?   @db.Text
+  /// Whether this category is shown as an active service offering
+  is_active               Boolean   @default(true)
+  /// Controls display order in listings (lower = shown first)
+  sort_order              Int       @default(0)
+  /// Default appointment duration in minutes for this service type
+  duration_minutes_default Int?
 
   appointments Appointment[]
 
@@ -190,6 +214,8 @@ model AppointmentType {
   created_at             DateTime @default(now())
   user_id                String?  @db.Uuid
   name                   String   @db.Text
+  /// Short description shown on the services page
+  description            String?  @db.Text
   duration_minutes       Int
   buffer_before_minutes  Int      @default(0)
   buffer_after_minutes   Int      @default(0)
@@ -257,11 +283,15 @@ model GoogleCalendarToken {
 
 // --- Organization (multi-tenant support)
 model Organization {
-  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  created_at DateTime @default(now())
-  name       String   @db.Text
-  slug       String   @unique @db.Text
-  owner_user_id String @db.Uuid
+  id            String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  created_at    DateTime @default(now())
+  name          String   @db.Text
+  slug          String   @unique @db.Text
+  owner_user_id String   @db.Uuid
+  description   String?  @db.Text
+  website       String?  @db.Text
+  address       String?  @db.Text
+  phone         String?  @db.Text
 
   members OrganizationMember[]
 

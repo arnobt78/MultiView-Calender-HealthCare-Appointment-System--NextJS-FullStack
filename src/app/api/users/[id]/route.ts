@@ -19,6 +19,8 @@ const USER_SELECT = {
   display_name: true,
   role: true,
   image: true,
+  specialty: true,
+  bio: true,
   created_at: true,
 } as const;
 
@@ -56,12 +58,15 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     const { id } = await context.params;
     if (!isValidUUID(id)) return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
 
-    const body = await req.json() as { role?: unknown; display_name?: unknown; image?: unknown };
+    const body = await req.json() as { role?: unknown; display_name?: unknown; image?: unknown; specialty?: unknown; bio?: unknown };
 
     // Type-narrow each field before use — body comes from JSON so values are `unknown`.
     const role = typeof body.role === "string" ? body.role : undefined;
     const display_name = typeof body.display_name === "string" ? body.display_name.trim() : undefined;
     const image = typeof body.image === "string" ? body.image : undefined;
+    // specialty / bio — allow null to clear the field
+    const specialty = body.specialty === null ? null : typeof body.specialty === "string" ? body.specialty.trim() || null : undefined;
+    const bio = body.bio === null ? null : typeof body.bio === "string" ? body.bio.trim() || null : undefined;
 
     const ALLOWED_ROLES = ["admin", "doctor", "secretary", "patient"];
     if (role !== undefined && !ALLOWED_ROLES.includes(role)) {
@@ -88,6 +93,8 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
         ...(role !== undefined && { role }),
         ...(display_name !== undefined && { display_name }),
         ...(image !== undefined && { image }),
+        ...(specialty !== undefined && { specialty }),
+        ...(bio !== undefined && { bio }),
       },
       select: USER_SELECT,
     });

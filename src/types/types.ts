@@ -6,6 +6,10 @@ export interface User {
   display_name?: string | null;
   image?: string | null;
   created_at?: string;
+  /** Doctor specialty — e.g. "Cardiology", "Pediatrics" */
+  specialty?: string | null;
+  /** Short bio for the doctor services page */
+  bio?: string | null;
 }
 export type UUID = string;
 
@@ -87,17 +91,24 @@ export type PatientSnapshot = {
   invoices: SnapshotInvoice[];
 };
 
-// Relative
+// Relative (patient family member / emergency contact)
 export interface Relative {
   id: UUID;
   created_at: string;
+  updated_at?: string | null;
   firstname: string;
   lastname: string;
-  pronoun: string;
-  notes: string;
+  pronoun?: string | null;
+  notes?: string | null;
+  relationship?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  date_of_birth?: string | null;
+  is_emergency_contact?: boolean;
+  patient_id?: string | null;
 }
 
-// Category
+// Category (appointment category / service type)
 export interface Category {
   id: UUID;
   created_at: string;
@@ -106,6 +117,9 @@ export interface Category {
   description: string | null;
   color: string | null;
   icon: string | null;
+  is_active?: boolean;
+  sort_order?: number;
+  duration_minutes_default?: number | null;
 }
 
 // Appointment

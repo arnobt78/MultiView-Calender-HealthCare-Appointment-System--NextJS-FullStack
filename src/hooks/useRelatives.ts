@@ -6,8 +6,8 @@ import { Relative } from "@/types/types";
 import { notify } from "@/lib/notify";
 import { fetchRelatives } from "@/lib/query-fetchers";
 
-export type RelativeCreateInput = Pick<Relative, "firstname" | "lastname"> & Partial<Pick<Relative, "pronoun" | "notes">>;
-export type RelativeUpdateInput = Partial<Pick<Relative, "firstname" | "lastname" | "pronoun" | "notes">>;
+export type RelativeCreateInput = Pick<Relative, "firstname" | "lastname"> & Partial<Pick<Relative, "pronoun" | "notes" | "relationship" | "phone" | "email" | "date_of_birth" | "is_emergency_contact" | "patient_id">>;
+export type RelativeUpdateInput = Partial<Pick<Relative, "firstname" | "lastname" | "pronoun" | "notes" | "relationship" | "phone" | "email" | "date_of_birth" | "is_emergency_contact" | "patient_id">>;
 
 export function useRelatives() {
   const queryClient = useQueryClient();

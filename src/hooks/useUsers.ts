@@ -19,9 +19,11 @@ export interface UsersListResponse {
 }
 
 export type UserUpdateInput = {
-  role?: string;
-  display_name?: string;
-  image?: string;
+  role?: string | null;
+  display_name?: string | null;
+  image?: string | null;
+  specialty?: string | null;
+  bio?: string | null;
 };
 
 export function useUsers(filters: UserListFilters = {}, options?: { enabled?: boolean }) {
