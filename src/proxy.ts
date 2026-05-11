@@ -23,29 +23,41 @@ const AUTH_ONLY_PATHS = ["/login", "/register"];
 
 // ─── security headers ─────────────────────────────────────────────────────────
 
-// X-Frame-Options is applied conditionally per-route below (step 4b) to allow
-// Vercel's deployment preview iframe on public pages while keeping DENY on protected pages.
+/**
+ * Base security headers applied to every response.
+ * X-Frame-Options and CSP frame-ancestors are set conditionally per route
+ * in step 4b below — public pages allow Vercel's dashboard preview iframe
+ * (vercel.com/vercel.live), protected pages deny all framing.
+ *
+ * NOTE: CSP frame-ancestors supersedes X-Frame-Options in modern browsers.
+ * Both are set for maximum compatibility (old browsers fall back to X-Frame-Options).
+ */
 const SECURITY_HEADERS: Record<string, string> = {
   "X-Content-Type-Options": "nosniff",
   "X-XSS-Protection": "1; mode=block",
   "Referrer-Policy": "strict-origin-when-cross-origin",
   "Permissions-Policy": "camera=(self), microphone=(self), geolocation=(), payment=(self)",
   "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
-  "Content-Security-Policy": [
-    "default-src 'self'",
-    "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://meet.jit.si https://vercel.live https://vercel.com",
-    "script-src-elem 'self' 'unsafe-inline' https://meet.jit.si https://vercel.live https://vercel.com",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' https://fonts.gstatic.com",
-    "img-src 'self' data: blob: https: http:",
-    "connect-src 'self' https://api.groq.com https://generativelanguage.googleapis.com https://api.stripe.com https://*.upstash.io https://meet.jit.si https://vercel.live https://vercel.com",
-    "frame-src 'self' https://meet.jit.si https://checkout.stripe.com https://vercel.live https://vercel.com",
-    "media-src 'self' blob:",
-    "object-src 'none'",
-    "base-uri 'self'",
-    "form-action 'self'",
-  ].join("; "),
 };
+
+/**
+ * Base CSP directives shared by all routes.
+ * frame-ancestors is appended dynamically per route in step 4b.
+ */
+const BASE_CSP_DIRECTIVES = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://meet.jit.si https://vercel.live https://vercel.com",
+  "script-src-elem 'self' 'unsafe-inline' https://meet.jit.si https://vercel.live https://vercel.com",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com",
+  "img-src 'self' data: blob: https: http:",
+  "connect-src 'self' https://api.groq.com https://generativelanguage.googleapis.com https://api.stripe.com https://*.upstash.io https://meet.jit.si https://vercel.live https://vercel.com",
+  "frame-src 'self' https://meet.jit.si https://checkout.stripe.com https://vercel.live https://vercel.com",
+  "media-src 'self' blob:",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+];
 
 // ─── page-level cache policies ────────────────────────────────────────────────
 
@@ -141,14 +153,37 @@ export async function proxy(request: NextRequest) {
   // ── 4. Security headers ───────────────────────────────────────────────────
   Object.entries(SECURITY_HEADERS).forEach(([k, v]) => res.headers.set(k, v));
 
-  // ── 4b. X-Frame-Options — route-aware clickjacking protection ─────────────
-  // Protected pages: DENY — nobody may frame them (maximum clickjacking protection).
+  // ── 4b. Framing policy — route-aware clickjacking protection ──────────────
+  //
   // Public pages (/login, /register, /accept-invitation, /):
-  //   SAMEORIGIN — still blocks cross-origin framing but allows Vercel's deployment
-  //   preview widget (which loads the page in an iframe from vercel.com).
-  //   Without this, the preview shows "Error: Forbidden / 403" because the browser
-  //   refuses to display the page inside Vercel's dashboard iframe.
-  res.headers.set("X-Frame-Options", isPublic(pathname) ? "SAMEORIGIN" : "DENY");
+  //   Allow framing from Vercel's dashboard preview (vercel.com / vercel.live)
+  //   so the deployment thumbnail renders correctly.  All other cross-origin
+  //   frames are still blocked.
+  //   - CSP frame-ancestors: honoured by all modern browsers.
+  //   - X-Frame-Options SAMEORIGIN: legacy fallback (does NOT cover vercel.com,
+  //     but browsers that understand frame-ancestors will ignore X-Frame-Options).
+  //
+  // Protected pages (/dashboard, /control-panel, etc.):
+  //   No framing allowed from any origin — maximum clickjacking protection.
+  //   - CSP frame-ancestors 'none'
+  //   - X-Frame-Options DENY
+  if (isPublic(pathname)) {
+    res.headers.set(
+      "Content-Security-Policy",
+      [
+        ...BASE_CSP_DIRECTIVES,
+        // Allow Vercel preview iframe; block all other cross-origin frames.
+        "frame-ancestors 'self' https://vercel.com https://vercel.live",
+      ].join("; ")
+    );
+    res.headers.set("X-Frame-Options", "SAMEORIGIN");
+  } else {
+    res.headers.set(
+      "Content-Security-Policy",
+      [...BASE_CSP_DIRECTIVES, "frame-ancestors 'none'"].join("; ")
+    );
+    res.headers.set("X-Frame-Options", "DENY");
+  }
 
   // ── 5. Cache-Control for page routes ─────────────────────────────────────
   for (const { pattern, browser, cdn } of PAGE_CACHE) {
