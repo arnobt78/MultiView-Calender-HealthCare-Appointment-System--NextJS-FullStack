@@ -1,5 +1,5 @@
 /**
- * proxy.ts — Next.js 16+ edge proxy (replaces middleware.ts)
+ * proxy.ts — Next.js 15+ edge proxy (replaces middleware.ts)
  *
  * The matcher below is the primary gate: only PAGE routes ever reach this
  * function.  All static assets, API routes, image directories, and files
