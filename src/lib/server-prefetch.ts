@@ -57,6 +57,8 @@ export type PortalPrefetchData = {
   })[];
   patient: Patient | null;
   message?: string;
+  /** Same as GET /api/patient-portal — OAuth profile image for avatar parity with client fetch */
+  userImage?: string | null;
 };
 
 // ─── Categories ───────────────────────────────────────────────────────────────
@@ -450,6 +452,7 @@ export async function prefetchPortalData(userId: string): Promise<PortalPrefetch
         appointments: [],
         patient: null,
         message: "No patient record found for your email",
+        userImage: user.image ?? null,
       };
     }
 
@@ -473,6 +476,7 @@ export async function prefetchPortalData(userId: string): Promise<PortalPrefetch
           : undefined,
       })),
       patient: serializePatient(patient) as Patient,
+      userImage: user.image ?? null,
     };
   } catch {
     return null;

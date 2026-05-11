@@ -4,7 +4,7 @@
  * PatientPortalPage
  *
  * Redesigned with:
- * - Glassmorphic cards for My Profile, Summary, and Appointment History
+ * - One shadcn Card for sidebar (Profile + Summary + Invoices); Appointment History is its own Card
  * - Full patient data display (avatar/robohash, age, primary doctor, referral,
  *   allergies, clinical notes, invoices) using schema fields
  * - 4-step cal.com-style booking wizard:
@@ -21,15 +21,18 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { addMinutes, differenceInYears, format, isPast, isFuture, isToday } from "date-fns";
 import type { PortalPrefetchData } from "@/lib/server-prefetch";
 import { apiClient, handleApiError } from "@/lib/api-client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { UserAvatar } from "@/components/shared/UserAvatar";
+import { AppointmentListColorBar } from "@/components/shared/AppointmentListColorBar";
+import { useAppointmentColor } from "@/context/AppointmentColorContext";
 import {
   Dialog,
   DialogContent,
@@ -128,10 +131,32 @@ interface PortalData {
 // Status meta
 // ---------------------------------------------------------------------------
 
-const STATUS_META: Record<string, { icon: React.ReactNode; cls: string; label: string; dotCls: string }> = {
-  done: { icon: <CalendarCheck className="h-3.5 w-3.5" />, cls: "bg-emerald-100 text-emerald-700 border-emerald-200", label: "Done", dotCls: "bg-emerald-400" },
-  pending: { icon: <CalendarClock className="h-3.5 w-3.5" />, cls: "bg-amber-100 text-amber-700 border-amber-200", label: "Pending", dotCls: "bg-amber-400" },
-  alert: { icon: <CalendarX className="h-3.5 w-3.5" />, cls: "bg-red-100 text-red-700 border-red-200", label: "Alert", dotCls: "bg-red-400" },
+/**
+ * Status row badges — use the same `calendar-glass-badge*` utilities as MonthView /
+ * CalendarHeader so portal appointment chips match dashboard calendar styling.
+ */
+const STATUS_META: Record<
+  string,
+  { icon: React.ReactNode; glassCls: string; label: string; dotCls: string }
+> = {
+  done: {
+    icon: <CalendarCheck className="h-3.5 w-3.5" />,
+    glassCls: "calendar-glass-badge-emerald",
+    label: "Done",
+    dotCls: "bg-emerald-400",
+  },
+  pending: {
+    icon: <CalendarClock className="h-3.5 w-3.5" />,
+    glassCls: "calendar-glass-badge-amber",
+    label: "Pending",
+    dotCls: "bg-amber-400",
+  },
+  alert: {
+    icon: <CalendarX className="h-3.5 w-3.5" />,
+    glassCls: "calendar-glass-badge-rose",
+    label: "Alert",
+    dotCls: "bg-red-400",
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -275,8 +300,12 @@ export function BookAppointmentDialog({ preselectedDoctorId, trigger }: BookAppo
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {trigger ?? (
-          /* Default sky-blue glassmorphic glow button */
-          <Button className="gap-2 bg-sky-600 hover:bg-sky-700 text-white shadow-[0_0_24px_rgba(2,132,199,0.4)] hover:shadow-[0_0_36px_rgba(2,132,199,0.65)] transition-all duration-300 px-5">
+          /* Default sky-blue glassmorphic glow button — `has-[>svg]:px-5` overrides Button CVA `has-[>svg]:px-3` so horizontal padding matches design. */
+          <Button
+            className={cn(
+              "gap-2 from-sky-500 via-zinc-400 to-sky-800 bg-gradient-to-r hover:bg-sky-700 text-white shadow-[0_0_24px_rgba(2,132,199,0.4)] hover:shadow-[0_0_36px_rgba(2,132,199,0.65)] transition-all duration-200 cursor-pointer px-5 has-[>svg]:px-5"
+            )}
+          >
             <CalendarPlus className="h-4 w-4" />
             Request / Book Appointment
           </Button>
@@ -614,6 +643,7 @@ export function BookAppointmentDialog({ preselectedDoctorId, trigger }: BookAppo
 type ApptRow = PortalData["appointments"][number];
 
 function AppointmentTimeline({ appointments, loading }: { appointments: ApptRow[]; loading?: boolean }) {
+  const { getAppointmentColorToken } = useAppointmentColor();
   const [filter, setFilter] = useState<"all" | "upcoming" | "past">("all");
 
   const filtered = appointments.filter((a) => {
@@ -630,147 +660,172 @@ function AppointmentTimeline({ appointments, loading }: { appointments: ApptRow[
   ];
 
   return (
-    /* Purple-glow glassmorphic container */
-    <div className="rounded-[24px] border border-violet-100/60 bg-card shadow-[0_8px_32px_rgba(139,92,246,0.15)] overflow-hidden">
-      {/* Violet header: title + filtered count badge + pill toggle */}
-      <div className="bg-violet-50/60 border-b border-violet-100/60 px-5 py-3 flex items-center justify-between flex-wrap gap-3">
-        <h3 className="text-sm font-semibold flex items-center gap-2 text-violet-800">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-violet-100 border border-violet-200 shrink-0">
-            <CalendarDays className="h-3.5 w-3.5 text-violet-600" />
-          </span>
-          Appointment History
-          {/* Dynamic filtered count — updates as tab changes */}
-          {!loading && (
-            <Badge variant="outline" className="bg-violet-50 text-violet-700 border-violet-200 font-bold ml-1">
-              {filtered.length}
-            </Badge>
-          )}
-        </h3>
-        {/* Pill-style filter tabs */}
-        <div className="inline-flex bg-muted/60 rounded-full p-1 gap-1 border">
-          {filterTabs.map(({ key, label, icon }) => (
-            <button
-              key={key}
-              onClick={() => setFilter(key)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${filter === key
-                ? "bg-background shadow text-foreground"
-                : "text-muted-foreground hover:text-foreground"
-                }`}
-            >
-              {icon} {label}
-            </button>
-          ))}
+    /**
+     * Single shadcn `Card` — section title + toolbar + list live inside one `CardContent`
+     * so the heading is not visually split from the body (same pattern as sidebar).
+     */
+    <Card className="rounded-[24px] border border-violet-100/60 bg-card shadow-[0_8px_32px_rgba(139,92,246,0.15)] overflow-hidden">
+      <CardContent className="space-y-4 p-4 text-gray-700 sm:p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-violet-100/70 pb-3">
+          <h3 className="flex items-center gap-2 text-sm font-semibold text-violet-800">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-violet-100 border border-violet-200 shrink-0">
+              <CalendarDays className="h-3.5 w-3.5 text-violet-600" />
+            </span>
+            Appointment History
+            {!loading && (
+              <Badge
+                variant="outline"
+                className="calendar-glass-badge calendar-glass-badge-violet font-bold ml-1"
+              >
+                {filtered.length}
+              </Badge>
+            )}
+          </h3>
+          <div className="inline-flex bg-muted/60 rounded-full p-1 gap-1 border">
+            {filterTabs.map(({ key, label, icon }) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setFilter(key)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${filter === key
+                  ? "bg-background shadow text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+                  }`}
+              >
+                {icon} {label}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
-      <div className="p-5 space-y-4">
+        <div className="space-y-4">
 
-      {/* Skeleton while loading */}
-      {loading ? (
-        <div className="space-y-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="relative pl-12">
-              <Skeleton className="absolute left-2 top-3 h-5 w-5 rounded-full" />
-              <div className="rounded-xl border p-4 space-y-2">
-                <div className="flex justify-between gap-4">
-                  <div className="space-y-1.5 flex-1">
-                    <Skeleton className="h-4 w-40 rounded" />
-                    <Skeleton className="h-3 w-56 rounded" />
-                  </div>
-                  <Skeleton className="h-4 w-14 rounded" />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : appointments.length === 0 ? (
-        /* Empty state */
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <Stethoscope className="h-10 w-10 text-muted-foreground/40 mb-3" />
-          <p className="font-medium">No appointments yet</p>
-          <p className="text-xs text-muted-foreground mt-1">Your history will appear here once you&apos;ve had appointments.</p>
-        </div>
-      ) : (
-        /* Timeline */
-        <div className="relative space-y-3 before:absolute before:inset-y-0 before:left-[18px] before:w-0.5 before:bg-linear-to-b before:from-sky-300/60 before:via-sky-200/40 before:to-transparent">
-          {filtered.map((appt) => {
-            const status = appt.status ?? "pending";
-            const meta = STATUS_META[status] ?? STATUS_META.pending;
-            const startDate = new Date(appt.start);
-            return (
-              <div key={appt.id} className="relative pl-12">
-                {/* Timeline dot — colored by status */}
-                <div className={`absolute left-2 top-4 h-5 w-5 rounded-full border-2 border-background ${meta.dotCls} flex items-center justify-center shadow-sm z-10 text-white`}>
-                  {meta.icon}
-                </div>
-                <Card className={`transition-all hover:-translate-y-0.5 duration-200 ${
-                  status === "done" ? "bg-emerald-50/60 border-emerald-200 hover:shadow-[0_4px_20px_rgba(16,185,129,0.15)]" :
-                  status === "alert" ? "bg-red-50/60 border-red-200 hover:shadow-[0_4px_20px_rgba(239,68,68,0.15)]" :
-                  "bg-amber-50/60 border-amber-200 hover:shadow-[0_4px_20px_rgba(245,158,11,0.15)]"
-                }`}>
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between gap-4 flex-wrap">
-                      <div className="space-y-1 flex-1 min-w-0">
-                        {/* Title + badges */}
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h4 className="font-semibold text-sm">{appt.title}</h4>
-                          <Badge className={`text-xs border ${meta.cls}`}>
-                            {meta.icon}
-                            <span className="ml-1">{meta.label}</span>
-                          </Badge>
-                          {appt.category && (
-                            <Badge variant="outline" className="text-xs gap-1">
-                              <span
-                                className="h-2 w-2 rounded-full inline-block shrink-0"
-                                style={{ background: appt.category.color ?? "#888" }}
-                              />
-                              {appt.category.label}
-                            </Badge>
-                          )}
-                        </div>
-                        {/* Meta row */}
-                        <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {format(startDate, "dd MMM yyyy, HH:mm")}
-                            {" — "}
-                            {format(new Date(appt.end), "HH:mm")}
-                          </span>
-                          {appt.location && (
-                            <span className="flex items-center gap-1">
-                              <MapPin className="h-3 w-3" />
-                              {appt.location}
-                            </span>
-                          )}
-                          {appt.owner && (
-                            <span className="flex items-center gap-1">
-                              <Stethoscope className="h-3 w-3" />
-                              Dr. {appt.owner.display_name ?? appt.owner.email}
-                            </span>
-                          )}
-                        </div>
-                        {appt.notes && (
-                          <p className="text-xs text-muted-foreground flex items-start gap-1">
-                            <FileText className="h-3 w-3 mt-0.5 shrink-0" />
-                            {appt.notes}
-                          </p>
-                        )}
+          {/* Skeleton while loading */}
+          {loading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="relative pl-12">
+                  <Skeleton className="absolute left-2 top-3 h-5 w-5 rounded-full" />
+                  <div className="rounded-xl border p-4 space-y-2">
+                    <div className="flex justify-between gap-4">
+                      <div className="space-y-1.5 flex-1">
+                        <Skeleton className="h-4 w-40 rounded" />
+                        <Skeleton className="h-3 w-56 rounded" />
                       </div>
-                      <p className="text-xs text-muted-foreground shrink-0 font-medium">
-                        {isToday(startDate) ? "Today" : format(startDate, "EEE, dd MMM")}
-                      </p>
+                      <Skeleton className="h-4 w-14 rounded" />
                     </div>
-                  </CardContent>
-                </Card>
-              </div>
-            );
-          })}
-          {filtered.length === 0 && (
-            <p className="text-center text-sm text-muted-foreground py-6">No {filter} appointments.</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : appointments.length === 0 ? (
+            /* Empty state */
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <Stethoscope className="mb-3 h-10 w-10 text-gray-400" />
+              <p className="font-medium text-gray-700">No appointments yet</p>
+              <p className="mt-1 text-xs text-gray-600">Your history will appear here once you&apos;ve had appointments.</p>
+            </div>
+          ) : (
+            /* Timeline */
+            <div className="relative space-y-3 before:absolute before:inset-y-0 before:left-[18px] before:w-0.5 before:bg-linear-to-b before:from-sky-300/60 before:via-sky-200/40 before:to-transparent">
+              {filtered.map((appt) => {
+                const status = appt.status ?? "pending";
+                const meta = STATUS_META[status] ?? STATUS_META.pending;
+                const startDate = new Date(appt.start);
+                const colorToken = getAppointmentColorToken(
+                  appt.id,
+                  appt.category?.color ?? null
+                );
+                return (
+                  <div key={appt.id} className="relative pl-12">
+                    {/* Timeline dot — colored by status */}
+                    <div className={`absolute left-2 top-4 z-10 flex h-5 w-5 items-center justify-center rounded-full border-2 border-background text-white shadow-sm ${meta.dotCls}`}>
+                      {meta.icon}
+                    </div>
+                    {/*
+                      Dashboard list row: left color bar + token-tinted surface (same tokens as
+                      `AppointmentList` + `AppointmentListColorBar`).
+                    */}
+                    <div
+                      className="relative flex min-h-[100px] items-stretch overflow-hidden rounded-2xl border shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl"
+                      style={{
+                        backgroundColor: colorToken.cardBgColor,
+                        borderColor: colorToken.cardBorderColor,
+                      }}
+                    >
+                      <AppointmentListColorBar color={colorToken.lineColor} />
+                      <div className="flex min-w-0 flex-1 flex-col gap-1 p-4 pl-5">
+                        <div className="flex flex-wrap items-start justify-between gap-4">
+                          <div className="min-w-0 flex-1 space-y-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <h4 className="text-sm font-semibold text-gray-700">{appt.title}</h4>
+                              <Badge
+                                variant="outline"
+                                className={cn("calendar-glass-badge gap-1 text-xs", meta.glassCls)}
+                              >
+                                {meta.icon}
+                                <span className="ml-1">{meta.label}</span>
+                              </Badge>
+                              {appt.category && (
+                                <Badge
+                                  variant="outline"
+                                  className="calendar-glass-badge calendar-glass-badge-violet gap-1 text-xs"
+                                >
+                                  <span
+                                    className="inline-block h-2 w-2 shrink-0 rounded-full"
+                                    style={{ background: appt.category.color ?? "#888" }}
+                                  />
+                                  {appt.category.label}
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="flex flex-wrap gap-2 text-xs text-gray-600">
+                              <span className="flex items-center gap-1">
+                                <Clock className="h-3 w-3 shrink-0 text-gray-500" />
+                                <span className="font-medium text-gray-700">
+                                  {format(startDate, "dd MMM yyyy, HH:mm")}
+                                  {" — "}
+                                  {format(new Date(appt.end), "HH:mm")}
+                                </span>
+                              </span>
+                              {appt.location && (
+                                <span className="flex items-center gap-1">
+                                  <MapPin className="h-3 w-3 shrink-0 text-gray-500" />
+                                  <span className="font-medium text-gray-700">{appt.location}</span>
+                                </span>
+                              )}
+                              {appt.owner && (
+                                <span className="flex items-center gap-1">
+                                  <Stethoscope className="h-3 w-3 shrink-0 text-gray-500" />
+                                  <span className="font-medium text-gray-700">
+                                    Dr. {appt.owner.display_name ?? appt.owner.email}
+                                  </span>
+                                </span>
+                              )}
+                            </div>
+                            {appt.notes && (
+                              <p className="flex items-start gap-1 text-xs text-gray-600">
+                                <FileText className="mt-0.5 h-3 w-3 shrink-0 text-gray-500" />
+                                {appt.notes}
+                              </p>
+                            )}
+                          </div>
+                          <p className="shrink-0 text-xs font-medium text-gray-500">
+                            {isToday(startDate) ? "Today" : format(startDate, "EEE, dd MMM")}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              {filtered.length === 0 && (
+                <p className="py-6 text-center text-sm text-gray-700">No {filter} appointments.</p>
+              )}
+            </div>
           )}
         </div>
-      )}
-      </div>{/* end inner p-5 */}
-    </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -833,12 +888,20 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
     ? differenceInYears(new Date(), new Date(patient.birth_date))
     : null;
 
-  // Avatar: user OAuth image > clinical_profile.image_url > dicebear professional avatar
+  /**
+   * Avatar URL resolution for `UserAvatar` / `SafeImage` (same stack as PatientDetailScreen):
+   * - Treat empty strings like missing (DB sometimes stores "" for image).
+   * - `UserAvatar` applies `referrerPolicy="no-referrer"` for OAuth CDN images.
+   * - Robohash PNG fallback; prefetch includes `userImage` — see `prefetchPortalData`.
+   */
   const clinicalImageUrl = (patient?.clinical_profile as PatientClinicalProfile & { image_url?: string })?.image_url;
-  const avatarSrc =
-    userImage ??
-    clinicalImageUrl ??
-    (patient ? `https://api.dicebear.com/9.x/personas/svg?seed=${patient.id}&backgroundColor=b6e3f4` : undefined);
+  const trimmedOAuth = userImage?.trim() ? userImage : null;
+  const trimmedClinical = clinicalImageUrl?.trim() ? clinicalImageUrl : null;
+  const robohashFallback =
+    patient != null
+      ? `https://robohash.org/${encodeURIComponent(patient.email || patient.id)}.png?set=set4&size=128x128`
+      : undefined;
+  const avatarSrc = trimmedOAuth ?? trimmedClinical ?? robohashFallback;
 
   const clinicalProfile = patient?.clinical_profile as PatientClinicalProfile;
   const invoices = invoicesData?.invoices ?? [];
@@ -852,15 +915,15 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
   }
 
   return (
-    <div className="space-y-5 py-0 pb-0">
+    <div className="space-y-4 py-0 pb-0 text-gray-700">
       {/* Page header — always static */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 pb-4 border-b">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 border-b pb-4">
         <div>
-          <h1 className="text-xl md:text-2xl font-semibold tracking-tight flex items-center gap-2">
-            <Activity className="h-5 w-5 md:h-6 md:w-6 text-sky-600" />
+          <h1 className="flex items-center gap-2 text-xl font-semibold tracking-tight text-gray-700 md:text-2xl">
+            <Activity className="h-5 w-5 text-sky-600 md:h-6 md:w-6" />
             Patient Portal
           </h1>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-sm text-gray-600">
             View your appointment history and request new appointments
           </p>
         </div>
@@ -868,321 +931,352 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
         <BookAppointmentDialog />
       </div>
 
-      <div className="grid md:grid-cols-3 gap-5">
-        {/* Left sidebar: My Profile + Summary */}
-        <div className="space-y-4">
-          {/* ── My Profile Card — sky glow glass ─────────────── */}
-          <Card className="rounded-[24px] border bg-card shadow-[0_8px_32px_rgba(99,102,241,0.13)] overflow-hidden">
-            <CardHeader className="pb-2 bg-sky-50/60 border-b border-sky-100/70">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2 text-sky-800">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-100 border border-sky-200 shrink-0">
-                  <User className="h-3.5 w-3.5 text-sky-600" />
-                </span>
-                My Profile
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 p-4">
-              {loading ? (
-                /* Skeleton */
-                <>
-                  <div className="flex items-center gap-3">
-                    <Skeleton className="h-16 w-16 rounded-full shrink-0" />
-                    <div className="space-y-2 flex-1">
-                      <Skeleton className="h-4 w-28 rounded" />
-                      <Skeleton className="h-3 w-20 rounded" />
-                      <Skeleton className="h-3 w-14 rounded" />
-                    </div>
-                  </div>
-                  <Separator />
-                  <div className="space-y-2.5">
-                    {Array.from({ length: 7 }).map((_, i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        <Skeleton className="h-6 w-6 rounded-full shrink-0" />
-                        <Skeleton className="h-3.5 flex-1 rounded" />
-                      </div>
-                    ))}
-                  </div>
-                </>
-              ) : patient ? (
-                <>
-                  {/* Avatar + name + status badges — all in one row */}
-                  <div className="flex items-start gap-3">
-                    <Avatar className="h-16 w-16 ring-2 ring-sky-200 shadow-md shrink-0">
-                      <AvatarImage src={avatarSrc} alt={`${patient.firstname} ${patient.lastname}`} />
-                      <AvatarFallback className="text-sky-700 bg-sky-100 font-bold text-lg">
-                        {`${patient.firstname[0]}${patient.lastname[0]}`.toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-bold text-sm leading-tight truncate">
-                        {patient.firstname} {patient.lastname}
-                      </p>
-                      {patient.email && (
-                        <p className="text-xs text-muted-foreground truncate mt-0.5">{patient.email}</p>
-                      )}
-                      {patient.pronoun && (
-                        <p className="text-xs text-muted-foreground/70">{patient.pronoun}</p>
-                      )}
-                      {/* Status + age badges inline below name */}
-                      <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
-                        {patient.active ? (
-                          <Badge className="gap-1 text-[10px] py-0 bg-emerald-100 text-emerald-700 border-emerald-200">
-                            <ShieldCheck className="h-2.5 w-2.5" /> Active
-                          </Badge>
-                        ) : (
-                          <Badge className="gap-1 text-[10px] py-0 bg-gray-100 text-gray-600 border-gray-200">
-                            <ShieldOff className="h-2.5 w-2.5" /> Inactive
-                          </Badge>
-                        )}
-                        {age !== null && (
-                          <Badge variant="outline" className="text-[10px] py-0 gap-1">
-                            <Cake className="h-2.5 w-2.5" /> Age {age}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  {/* Info fields — icons have rounded bg pill like PatientDetailView */}
-                  <dl className="space-y-2.5 text-xs">
-
-                    {/* Patient ID */}
-                    <div className="flex items-start gap-2.5">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-muted/60 border shrink-0 mt-0.5">
-                        <Hash className="h-3 w-3 text-muted-foreground" />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <dt className="text-muted-foreground">Patient ID</dt>
-                        <dd className="font-mono text-[10px] break-all text-muted-foreground">{patient.id}</dd>
-                      </div>
-                    </div>
-
-                    {/* Birth Date */}
-                    {patient.birth_date && (
-                      <div className="flex items-center gap-2.5">
-                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-orange-50 border border-orange-100 shrink-0">
-                          <Cake className="h-3 w-3 text-orange-500" />
-                        </span>
-                        <div>
-                          <dt className="text-muted-foreground">Birth Date</dt>
-                          <dd className="font-medium">{format(new Date(patient.birth_date), "dd MMM yyyy")}</dd>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Care Tier */}
-                    {patient.care_level != null && (
-                      <div className="flex items-center gap-2.5">
-                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-violet-50 border border-violet-100 shrink-0">
-                          <Layers className="h-3 w-3 text-violet-500" />
-                        </span>
-                        <div>
-                          <dt className="text-muted-foreground">Care Tier (1–10)</dt>
-                          <dd className="font-medium">{getPatientCareLevelLabel(patient.care_level)}</dd>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Primary Doctor — clickable link to doctor detail */}
-                    <div className="flex items-start gap-2.5">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-50 border border-sky-100 shrink-0 mt-0.5">
-                        <Stethoscope className="h-3 w-3 text-sky-500" />
-                      </span>
-                      <div className="min-w-0">
-                        <dt className="text-muted-foreground">Primary Doctor</dt>
-                        {patient.primary_doctor ? (
-                          <dd className="font-medium">
-                            <Link
-                              href={`/control-panel/doctors/${patient.primary_doctor_id ?? ""}`}
-                              className="text-sky-600 hover:text-sky-800 hover:underline flex items-center gap-1 truncate"
-                            >
-                              {patient.primary_doctor.display_name ?? patient.primary_doctor.email}
-                              <ExternalLink className="h-2.5 w-2.5 shrink-0" />
-                            </Link>
-                            <span className="text-[10px] text-muted-foreground">{patient.primary_doctor.email}</span>
-                          </dd>
-                        ) : (
-                          <dd className="text-muted-foreground">—</dd>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Referral — always shown */}
-                    <div className="flex items-start gap-2.5">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-teal-50 border border-teal-100 shrink-0 mt-0.5">
-                        <GitBranch className="h-3 w-3 text-teal-500" />
-                      </span>
-                      <div>
-                        <dt className="text-muted-foreground">Referral</dt>
-                        <dd className="font-medium">
-                          {clinicalProfile?.referral_source
-                            ? `${clinicalProfile.referral_source}${clinicalProfile.referral_detail ? ` — ${clinicalProfile.referral_detail}` : ""}`
-                            : "—"}
-                        </dd>
-                      </div>
-                    </div>
-
-                    {/* Allergies */}
-                    <div className="flex items-start gap-2.5">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-50 border border-amber-100 shrink-0 mt-0.5">
-                        <AlertTriangle className="h-3 w-3 text-amber-500" />
-                      </span>
-                      <div>
-                        <dt className="text-muted-foreground">Allergies</dt>
-                        <dd className="font-medium">
-                          {clinicalProfile?.allergies?.length
-                            ? clinicalProfile.allergies.join(", ")
-                            : "—"}
-                        </dd>
-                      </div>
-                    </div>
-
-                    {/* Clinical Notes */}
-                    <div className="flex items-start gap-2.5">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-50 border border-slate-200 shrink-0 mt-0.5">
-                        <FileText className="h-3 w-3 text-slate-500" />
-                      </span>
-                      <div>
-                        <dt className="text-muted-foreground">Clinical Notes</dt>
-                        <dd className="leading-relaxed text-muted-foreground">
-                          {clinicalProfile?.notes ?? "—"}
-                        </dd>
-                      </div>
-                    </div>
-                  </dl>
-                </>
-              ) : (
-                /* No patient record */
-                <div className="text-center py-6">
-                  <User className="h-10 w-10 mx-auto text-muted-foreground/40 mb-2" />
-                  <p className="text-sm text-muted-foreground">No patient record linked to your account.</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* ── Summary Card — emerald glow glass ─────────────── */}
-          <Card className="rounded-[24px] border bg-card shadow-[0_8px_32px_rgba(16,185,129,0.16)] overflow-hidden">
-            <CardHeader className="pb-2 bg-emerald-50/60 border-b border-emerald-100/70">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2 text-emerald-800">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 border border-emerald-200 shrink-0">
-                  <Activity className="h-3.5 w-3.5 text-emerald-600" />
-                </span>
-                Summary
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {(
-                [
-                  {
-                    label: "Total Appointments",
-                    value: total,
-                    icon: <CalendarDays className="h-4 w-4 text-sky-500" />,
-                    badgeCls: "bg-sky-100 text-sky-700 border-sky-200",
-                  },
-                  {
-                    label: "Completed",
-                    value: done,
-                    icon: <CheckCircle2 className="h-4 w-4 text-emerald-500" />,
-                    badgeCls: "bg-emerald-100 text-emerald-700 border-emerald-200",
-                  },
-                  {
-                    label: "Upcoming",
-                    value: upcoming,
-                    icon: <CalendarClock className="h-4 w-4 text-blue-500" />,
-                    badgeCls: "bg-blue-100 text-blue-700 border-blue-200",
-                  },
-                ] as const
-              ).map(({ label, value, icon, badgeCls }) => (
-                <div key={label} className="flex items-center justify-between gap-2">
-                  <span className="flex items-center gap-2 text-sm text-muted-foreground">
-                    {icon}
-                    {label}
+      <div className="grid md:grid-cols-3 gap-4">
+        {/* Left sidebar: one shadcn Card — section titles sit inside the same CardContent
+            as their body (no separate tinted CardHeader strip above the white panel). */}
+        <div>
+          <Card className="rounded-[24px] border border-slate-200/80 bg-card shadow-[0_8px_32px_rgba(99,102,241,0.12)] overflow-hidden">
+            <CardContent className="space-y-6 p-4 text-gray-700 sm:p-6">
+              {/* ── My Profile ───────────────────────────────── */}
+              <section aria-labelledby="pp-profile-heading">
+                <h3
+                  id="pp-profile-heading"
+                  className="text-sm font-semibold flex items-center gap-2 text-sky-800 mb-3"
+                >
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-100 border border-sky-200 shrink-0">
+                    <User className="h-3.5 w-3.5 text-sky-600" />
                   </span>
+                  My Profile
+                </h3>
+                <div className="space-y-3">
                   {loading ? (
-                    <Skeleton className="h-5 w-10 rounded-full" />
+                    /* Skeleton */
+                    <>
+                      <div className="flex items-center gap-3">
+                        <Skeleton className="h-16 w-16 rounded-full shrink-0" />
+                        <div className="space-y-2 flex-1">
+                          <Skeleton className="h-4 w-28 rounded" />
+                          <Skeleton className="h-3 w-20 rounded" />
+                          <Skeleton className="h-3 w-14 rounded" />
+                        </div>
+                      </div>
+                      <Separator />
+                      <div className="space-y-2.5">
+                        {Array.from({ length: 7 }).map((_, i) => (
+                          <div key={i} className="flex items-center gap-2">
+                            <Skeleton className="h-6 w-6 rounded-full shrink-0" />
+                            <Skeleton className="h-3.5 flex-1 rounded" />
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  ) : patient ? (
+                    <>
+                      {/* Avatar + name — `UserAvatar` matches control-panel patient detail (`SafeImage` + object-cover). */}
+                      <div className="flex items-start gap-3">
+                        <UserAvatar
+                          src={avatarSrc}
+                          fallbackText={`${patient.firstname?.[0] ?? "?"}${patient.lastname?.[0] ?? "?"}`}
+                          sizeClassName="h-16 w-16"
+                          loading={false}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-bold leading-tight text-gray-700">
+                            {patient.firstname} {patient.lastname}
+                          </p>
+                          {patient.email && (
+                            <p className="mt-0.5 truncate text-xs text-gray-600">{patient.email}</p>
+                          )}
+                          {patient.pronoun && (
+                            <p className="text-xs text-gray-600">{patient.pronoun}</p>
+                          )}
+                          {/* Status + age badges inline below name */}
+                          <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
+                            {patient.active ? (
+                              <Badge
+                                variant="outline"
+                                className="calendar-glass-badge calendar-glass-badge-emerald gap-1 text-[10px] py-0"
+                              >
+                                <ShieldCheck className="h-2.5 w-2.5" /> Active
+                              </Badge>
+                            ) : (
+                              <Badge
+                                variant="outline"
+                                className="calendar-glass-badge calendar-glass-badge-slate gap-1 text-[10px] py-0"
+                              >
+                                <ShieldOff className="h-2.5 w-2.5" /> Inactive
+                              </Badge>
+                            )}
+                            {age !== null && (
+                              <Badge
+                                variant="outline"
+                                className="calendar-glass-badge calendar-glass-badge-sky gap-1 text-[10px] py-0"
+                              >
+                                <Cake className="h-2.5 w-2.5" /> Age {age}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      {/* Info fields — icons have rounded bg pill like PatientDetailView */}
+                      <dl className="space-y-2.5 text-xs">
+                        {/* Patient ID */}
+                        <div className="flex items-start gap-2.5">
+                          <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border bg-muted/60">
+                            <Hash className="h-3 w-3 text-gray-500" />
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <dt className="text-gray-600">Patient ID</dt>
+                            <dd className="break-all font-mono text-[10px] text-gray-700">{patient.id}</dd>
+                          </div>
+                        </div>
+
+                        {/* Birth Date */}
+                        {patient.birth_date && (
+                          <div className="flex items-center gap-2.5">
+                            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-orange-100 bg-orange-50">
+                              <Cake className="h-3 w-3 text-orange-500" />
+                            </span>
+                            <div>
+                              <dt className="text-gray-600">Birth Date</dt>
+                              <dd className="font-medium text-gray-700">
+                                {format(new Date(patient.birth_date), "dd MMM yyyy")}
+                              </dd>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Care Tier */}
+                        {patient.care_level != null && (
+                          <div className="flex items-center gap-2.5">
+                            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-violet-100 bg-violet-50">
+                              <Layers className="h-3 w-3 text-violet-500" />
+                            </span>
+                            <div>
+                              <dt className="text-gray-600">Care Tier (1–10)</dt>
+                              <dd className="font-medium text-gray-700">
+                                {getPatientCareLevelLabel(patient.care_level)}
+                              </dd>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Primary Doctor — clickable link to doctor detail */}
+                        <div className="flex items-start gap-2.5">
+                          <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-sky-100 bg-sky-50">
+                            <Stethoscope className="h-3 w-3 text-sky-500" />
+                          </span>
+                          <div className="min-w-0">
+                            <dt className="text-gray-600">Primary Doctor</dt>
+                            {patient.primary_doctor ? (
+                              <dd className="font-medium">
+                                <Link
+                                  href={`/control-panel/doctors/${patient.primary_doctor_id ?? ""}`}
+                                  className="flex items-center gap-1 truncate text-sky-600 hover:text-sky-800 hover:underline"
+                                >
+                                  {patient.primary_doctor.display_name ?? patient.primary_doctor.email}
+                                  <ExternalLink className="h-2.5 w-2.5 shrink-0" />
+                                </Link>
+                                <span className="text-[10px] text-gray-600">{patient.primary_doctor.email}</span>
+                              </dd>
+                            ) : (
+                              <dd className="text-gray-700">—</dd>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Referral — always shown */}
+                        <div className="flex items-start gap-2.5">
+                          <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-teal-100 bg-teal-50">
+                            <GitBranch className="h-3 w-3 text-teal-500" />
+                          </span>
+                          <div>
+                            <dt className="text-gray-600">Referral</dt>
+                            <dd className="font-medium text-gray-700">
+                              {clinicalProfile?.referral_source
+                                ? `${clinicalProfile.referral_source}${clinicalProfile.referral_detail ? ` — ${clinicalProfile.referral_detail}` : ""}`
+                                : "—"}
+                            </dd>
+                          </div>
+                        </div>
+
+                        {/* Allergies */}
+                        <div className="flex items-start gap-2.5">
+                          <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-amber-100 bg-amber-50">
+                            <AlertTriangle className="h-3 w-3 text-amber-500" />
+                          </span>
+                          <div>
+                            <dt className="text-gray-600">Allergies</dt>
+                            <dd className="font-medium text-gray-700">
+                              {clinicalProfile?.allergies?.length
+                                ? clinicalProfile.allergies.join(", ")
+                                : "—"}
+                            </dd>
+                          </div>
+                        </div>
+
+                        {/* Clinical Notes */}
+                        <div className="flex items-start gap-2.5">
+                          <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50">
+                            <FileText className="h-3 w-3 text-slate-500" />
+                          </span>
+                          <div>
+                            <dt className="text-gray-600">Clinical Notes</dt>
+                            <dd className="leading-relaxed text-gray-700">
+                              {clinicalProfile?.notes ?? "—"}
+                            </dd>
+                          </div>
+                        </div>
+                      </dl>
+                    </>
                   ) : (
-                    <Badge variant="outline" className={`font-bold text-sm ${badgeCls}`}>
-                      {value}
-                    </Badge>
+                    /* No patient record */
+                    <div className="py-6 text-center">
+                      <User className="mx-auto mb-2 h-10 w-10 text-gray-400" />
+                      <p className="text-sm text-gray-700">No patient record linked to your account.</p>
+                    </div>
                   )}
                 </div>
-              ))}
-            </CardContent>
-          </Card>
+              </section>
 
-          {/* ── Invoices Card — amber/gold glow glass ─────────── */}
-          <Card className="rounded-[24px] border bg-card shadow-[0_8px_32px_rgba(245,158,11,0.14)] overflow-hidden">
-            <CardHeader className="pb-2 bg-amber-50/60 border-b border-amber-100/70">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2 text-amber-800">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-100 border border-amber-200 shrink-0">
-                  <Receipt className="h-3.5 w-3.5 text-amber-600" />
-                </span>
-                Invoices
-                {!invoicesLoading && invoices.length > 0 && (
-                  <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 font-bold ml-1">
-                    {invoices.length}
-                  </Badge>
-                )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4">
-              {invoicesLoading ? (
-                <div className="space-y-2">
-                  {Array.from({ length: 2 }).map((_, i) => (
-                    <Skeleton key={i} className="h-8 w-full rounded" />
-                  ))}
-                </div>
-              ) : invoicesError ? (
-                <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700 flex items-center gap-2">
-                  <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-                  Failed to load invoices. Please refresh.
-                </div>
-              ) : invoices.length === 0 ? (
-                <div className="text-center py-4">
-                  <CreditCard className="h-8 w-8 mx-auto text-muted-foreground/30 mb-2" />
-                  <p className="text-xs text-muted-foreground">No invoices on file.</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {invoices.map((inv) => (
-                    <div
-                      key={inv.id}
-                      className="flex items-center justify-between rounded-lg border bg-card px-3 py-2 text-xs"
-                    >
-                      <div className="min-w-0">
-                        <p className="font-medium truncate">{inv.description ?? "Invoice"}</p>
-                        {inv.due_date && (
-                          <p className="text-muted-foreground text-[10px]">
-                            Due {format(new Date(inv.due_date), "dd MMM yyyy")}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className="font-semibold">
-                          {(inv.amount / 100).toFixed(2)} {inv.currency.toUpperCase()}
-                        </span>
+              <Separator />
+
+              {/* ── Summary ───────────────────────────────────── */}
+              <section aria-labelledby="pp-summary-heading">
+                <h3
+                  id="pp-summary-heading"
+                  className="text-sm font-semibold flex items-center gap-2 text-emerald-800 mb-3"
+                >
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 border border-emerald-200 shrink-0">
+                    <Activity className="h-3.5 w-3.5 text-emerald-600" />
+                  </span>
+                  Summary
+                </h3>
+                <div className="space-y-3">
+                  {(
+                    [
+                      {
+                        label: "Total Appointments",
+                        value: total,
+                        icon: <CalendarDays className="h-4 w-4 text-sky-500" />,
+                        glassCls: "calendar-glass-badge-sky",
+                      },
+                      {
+                        label: "Completed",
+                        value: done,
+                        icon: <CheckCircle2 className="h-4 w-4 text-emerald-500" />,
+                        glassCls: "calendar-glass-badge-emerald",
+                      },
+                      {
+                        label: "Upcoming",
+                        value: upcoming,
+                        icon: <CalendarClock className="h-4 w-4 text-blue-500" />,
+                        glassCls: "calendar-glass-badge-blue",
+                      },
+                    ] as const
+                  ).map(({ label, value, icon, glassCls }) => (
+                    <div key={label} className="flex items-center justify-between gap-2">
+                      <span className="flex items-center gap-2 text-sm text-gray-700">
+                        {icon}
+                        {label}
+                      </span>
+                      {loading ? (
+                        <Skeleton className="h-5 w-10 rounded-full" />
+                      ) : (
                         <Badge
                           variant="outline"
-                          className={`text-[10px] py-0 ${
-                            inv.status === "paid"
-                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                              : inv.status === "overdue"
-                              ? "bg-red-50 text-red-700 border-red-200"
-                              : inv.status === "sent"
-                              ? "bg-sky-50 text-sky-700 border-sky-200"
-                              : "bg-gray-50 text-gray-600 border-gray-200"
-                          }`}
+                          className={cn("calendar-glass-badge font-bold text-sm", glassCls)}
                         >
-                          {inv.status}
+                          {value}
                         </Badge>
-                      </div>
+                      )}
                     </div>
                   ))}
                 </div>
-              )}
+              </section>
+
+              <Separator />
+
+              {/* ── Invoices ──────────────────────────────────── */}
+              <section aria-labelledby="pp-invoices-heading">
+                <h3
+                  id="pp-invoices-heading"
+                  className="text-sm font-semibold flex items-center gap-2 text-amber-800 mb-3 flex-wrap"
+                >
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-100 border border-amber-200 shrink-0">
+                    <Receipt className="h-3.5 w-3.5 text-amber-600" />
+                  </span>
+                  Invoices
+                  {!invoicesLoading && invoices.length > 0 && (
+                    <Badge
+                      variant="outline"
+                      className="calendar-glass-badge calendar-glass-badge-amber font-bold ml-1"
+                    >
+                      {invoices.length}
+                    </Badge>
+                  )}
+                </h3>
+                <div>
+                  {invoicesLoading ? (
+                    <div className="space-y-2">
+                      {Array.from({ length: 2 }).map((_, i) => (
+                        <Skeleton key={i} className="h-8 w-full rounded" />
+                      ))}
+                    </div>
+                  ) : invoicesError ? (
+                    <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700 flex items-center gap-2">
+                      <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                      Failed to load invoices. Please refresh.
+                    </div>
+                  ) : invoices.length === 0 ? (
+                    <div className="py-4 text-center">
+                      <CreditCard className="mx-auto mb-2 h-8 w-8 text-gray-400" />
+                      <p className="text-xs text-gray-700">No invoices on file.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {invoices.map((inv) => (
+                        <div
+                          key={inv.id}
+                          className="flex items-center justify-between rounded-lg border bg-card px-3 py-2 text-xs"
+                        >
+                          <div className="min-w-0">
+                            <p className="truncate font-medium text-gray-700">{inv.description ?? "Invoice"}</p>
+                            {inv.due_date && (
+                              <p className="text-[10px] text-gray-600">
+                                Due {format(new Date(inv.due_date), "dd MMM yyyy")}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex shrink-0 items-center gap-2">
+                            <span className="font-semibold text-gray-700">
+                              {(inv.amount / 100).toFixed(2)} {inv.currency.toUpperCase()}
+                            </span>
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                "calendar-glass-badge text-[10px] py-0",
+                                inv.status === "paid"
+                                  ? "calendar-glass-badge-emerald"
+                                  : inv.status === "overdue"
+                                    ? "calendar-glass-badge-rose"
+                                    : inv.status === "sent"
+                                      ? "calendar-glass-badge-sky"
+                                      : "calendar-glass-badge-slate"
+                              )}
+                            >
+                              {inv.status}
+                            </Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </section>
             </CardContent>
           </Card>
         </div>

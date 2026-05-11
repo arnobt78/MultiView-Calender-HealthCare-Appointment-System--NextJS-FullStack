@@ -97,7 +97,7 @@ import { dashboardShellClass } from "@/lib/dashboard-layout";
 import { cn } from "@/lib/utils";
 
 export default function Navbar() {
-  const { user, logout, isLoggingOut } = useAuth();
+  const { user, logout, isLoggingOut, isLoading: authLoading } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
 
@@ -105,6 +105,19 @@ export default function Navbar() {
   // Patients only see patient-facing pages; staff (admin/doctor/secretary) skip the portal link.
   const isPatient = user?.role === "patient";
   const isStaff = user?.role === "admin" || user?.role === "doctor" || user?.role === "secretary";
+
+  /**
+   * During `authLoading`, `user` is still null — `isPatient` and `isStaff` are both false, which
+   * would incorrectly show Control Panel + Patient Portal together. Infer allowed chrome from
+   * pathname until `/api/auth/me` returns: server layouts already redirect unauthorized roles
+   * (`/patient-portal` is patient-only; `/control-panel` and `/insights` require staff). For
+   * shared routes (`/dashboard`, `/services`) show only links every role has until session resolves.
+   */
+  const inferredStaffNav =
+    pathname?.startsWith("/control-panel") === true || pathname?.startsWith("/insights") === true;
+  const inferredPatientNav = pathname?.startsWith("/patient-portal") === true;
+  const showStaffNavLinks = authLoading ? inferredStaffNav : isStaff;
+  const showPatientPortalNavLink = authLoading ? inferredPatientNav : !isStaff;
   const openSearch = useAppStore((s) => s.openSearch);
   const toggleQuickActionModal = useAppStore((s) => s.toggleQuickActionModal);
   const { notifications, total, unreadCount, markAsRead, markAllAsRead, deleteRead, isDeletingRead } = useNotifications();
@@ -164,7 +177,7 @@ export default function Navbar() {
           </Link>
 
           {/* Control Panel and Analytics: staff only — patients are redirected away by the layout */}
-          {!isPatient && (
+          {showStaffNavLinks && (
             <Link
               href="/control-panel"
               className={`text-base transition-colors hover:text-gray-700 ${pathname?.includes("/control-panel") ? "text-gray-700" : "text-muted-foreground"}`}
@@ -172,7 +185,7 @@ export default function Navbar() {
               Control Panel
             </Link>
           )}
-          {!isPatient && (
+          {showStaffNavLinks && (
             <Link
               href="/insights"
               className={`text-base transition-colors hover:text-gray-700 ${pathname?.includes("/insights") ? "text-gray-700" : "text-muted-foreground"}`}
@@ -189,8 +202,8 @@ export default function Navbar() {
             Services
           </Link>
 
-          {/* Patient Portal: patients + unauthenticated (role is null while loading → show by default) */}
-          {!isStaff && (
+          {/* Patient Portal: patients only when session is known; pathname hint while auth is loading */}
+          {showPatientPortalNavLink && (
             <Link
               href="/patient-portal"
               className={`text-base transition-colors hover:text-gray-700 ${pathname?.includes("/patient-portal") ? "text-gray-700" : "text-muted-foreground"}`}

@@ -59,6 +59,7 @@ import {
 import { MdCategory } from "react-icons/md";
 import GlobalCalendarFilters from "./GlobalCalendarFilters";
 import { useAppointmentColor } from "@/context/AppointmentColorContext";
+import { AppointmentListColorBar } from "@/components/shared/AppointmentListColorBar";
 import { motion } from "framer-motion";
 import CalendarStickyHeader from "./CalendarStickyHeader";
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
@@ -122,15 +123,6 @@ function DateHeadline({
       <StatBadge label="Done" value={dayStats.done} className="calendar-glass-badge-emerald" />
     </div>
   );
-}
-
-// Color bar for appointment cards — uses ref to avoid inline style lint warning  
-function ColorBar({ color }: { color: string }) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (ref.current) ref.current.style.backgroundColor = color;
-  }, [color]);
-  return <div ref={ref} className="w-2 rounded-l-2xl h-full absolute left-0 top-0 bottom-0 transition-colors" />;
 }
 
 // Helper to group appointments by date (ascending, today first)
@@ -648,7 +640,7 @@ export default function AppointmentList() {
                                       }}
                                     >
                                       {/* Color bar */}
-                                      <ColorBar color={colorToken.lineColor} />
+                                      <AppointmentListColorBar color={colorToken.lineColor} />
 
                                       {/* Main content */}
                                       <div className="pl-6 pr-4 py-3 flex-1 flex flex-col gap-2 min-w-0">
