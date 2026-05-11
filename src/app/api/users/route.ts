@@ -18,10 +18,20 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Patient role must not enumerate staff — this endpoint is for staff use only.
     const callerRole = await getUserRole(sessionUser.userId);
+
     if (isPatientRole(callerRole)) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      // Patients may only query the doctor list — needed for the "Book Appointment" dialog
+      // in the patient portal. All other user enumeration is staff-only.
+      const { searchParams: sp } = new URL(req.url);
+      const roleParam = sp.get("role");
+      const rolesParam = sp.get("roles");
+      const isDoctorOnlyQuery =
+        (roleParam === "doctor" && !rolesParam) ||
+        (!roleParam && rolesParam === "doctor");
+      if (!isDoctorOnlyQuery) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
     }
 
     const { searchParams } = new URL(req.url);

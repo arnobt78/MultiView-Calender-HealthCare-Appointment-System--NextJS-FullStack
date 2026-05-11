@@ -1,6 +1,12 @@
 /**
  * Appointment Assignees API (Prisma)
- * GET: List assignees, optional filter by appointment_id
+ *
+ * GET /api/appointment-assignees
+ *   - Without appointment_id: returns all assignee rows for every appointment the
+ *     current user owns or has been accepted onto. Used by useAppointments to build
+ *     the full assignee list for the calendar in a single round-trip.
+ *   - With ?appointment_id=<id>: returns assignees for that single appointment after
+ *     verifying the caller owns it or is an accepted assignee on it.
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -42,15 +48,46 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const appointmentId = searchParams.get("appointment_id");
 
-    // appointment_id is required to prevent a global dump of all assignee rows.
-    if (!appointmentId) {
-      return NextResponse.json({ error: "appointment_id query param is required" }, { status: 400 });
+    if (appointmentId) {
+      // Per-appointment fetch: verify the caller owns or has accepted access to this appointment.
+      const accessible = await prisma.appointment.findFirst({
+        where: {
+          id: appointmentId,
+          OR: [
+            { user_id: sessionUser.userId },
+            {
+              assignees: {
+                some: {
+                  OR: [
+                    { user_id: sessionUser.userId },
+                    { invited_email: sessionUser.email },
+                  ],
+                  status: "accepted",
+                },
+              },
+            },
+          ],
+        },
+        select: { id: true },
+      });
+
+      if (!accessible) {
+        return NextResponse.json({ error: "Appointment not found or forbidden" }, { status: 403 });
+      }
+
+      const assignees = await prisma.appointmentAssignee.findMany({
+        where: { appointment_id: appointmentId },
+        orderBy: { created_at: "desc" },
+      });
+
+      return NextResponse.json({ assignees: assignees.map(serializeAssignee) });
     }
 
-    // Verify the caller owns the appointment or is an accepted assignee on it.
-    const accessible = await prisma.appointment.findFirst({
+    // Global fetch (no appointment_id): return all assignees across every appointment
+    // the current user owns OR is an accepted participant on. This powers the calendar
+    // hook (useAppointments) which joins assignees client-side for each appointment row.
+    const accessibleAppointments = await prisma.appointment.findMany({
       where: {
-        id: appointmentId,
         OR: [
           { user_id: sessionUser.userId },
           {
@@ -69,18 +106,17 @@ export async function GET(req: NextRequest) {
       select: { id: true },
     });
 
-    if (!accessible) {
-      return NextResponse.json({ error: "Appointment not found or forbidden" }, { status: 403 });
-    }
+    const appointmentIds = accessibleAppointments.map((a) => a.id);
 
-    const assignees = await prisma.appointmentAssignee.findMany({
-      where: { appointment_id: appointmentId },
-      orderBy: { created_at: "desc" },
-    });
+    const assignees =
+      appointmentIds.length > 0
+        ? await prisma.appointmentAssignee.findMany({
+            where: { appointment_id: { in: appointmentIds } },
+            orderBy: { created_at: "desc" },
+          })
+        : [];
 
-    return NextResponse.json({
-      assignees: assignees.map(serializeAssignee),
-    });
+    return NextResponse.json({ assignees: assignees.map(serializeAssignee) });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Internal server error";
     console.error("Error fetching appointment assignees:", error);

@@ -62,6 +62,15 @@ export const redis = {
     await redisCommand(["EXPIRE", key, String(seconds)]);
   },
 
+  /**
+   * Milliseconds until key expiry (Redis PTTL). Returns null if Redis fails.
+   * -1 = no TTL, -2 = missing key.
+   */
+  async pttl(key: string): Promise<number | null> {
+    const result = await redisCommand(["PTTL", key]);
+    return typeof result === "number" ? result : null;
+  },
+
   async sadd(key: string, ...members: string[]): Promise<number | null> {
     const result = await redisCommand(["SADD", key, ...members]);
     return typeof result === "number" ? result : null;

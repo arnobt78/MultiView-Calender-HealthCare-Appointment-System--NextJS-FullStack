@@ -12,6 +12,18 @@ import {
   generateToken,
 } from "@/lib/auth";
 import { setSession } from "@/lib/session";
+import {
+  GOOGLE_LOGIN_OAUTH_COOKIE_NAME,
+  verifyGoogleLoginOAuthState,
+  oauthStateCookieOptions,
+} from "@/lib/oauth-state";
+
+function clearGoogleLoginCookie(res: NextResponse) {
+  res.cookies.set(GOOGLE_LOGIN_OAUTH_COOKIE_NAME, "", {
+    ...oauthStateCookieOptions(),
+    maxAge: 0,
+  });
+}
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_ID || process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_SECRET || process.env.GOOGLE_CLIENT_SECRET;
@@ -36,18 +48,34 @@ interface GoogleUserInfo {
 
 export async function GET(req: NextRequest) {
   const code = req.nextUrl.searchParams.get("code");
-  const state = req.nextUrl.searchParams.get("state") || "/dashboard";
+  const stateParam = req.nextUrl.searchParams.get("state");
   const errorParam = req.nextUrl.searchParams.get("error");
+  const csrfCookie = req.cookies.get(GOOGLE_LOGIN_OAUTH_COOKIE_NAME)?.value;
+  const oauthVerified = verifyGoogleLoginOAuthState(stateParam, csrfCookie);
 
   if (errorParam) {
     const errorDesc = req.nextUrl.searchParams.get("error_description") || errorParam;
-    return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(errorDesc)}`, req.url));
+    const res = NextResponse.redirect(
+      new URL(`/login?error=${encodeURIComponent(errorDesc)}`, req.url)
+    );
+    clearGoogleLoginCookie(res);
+    return res;
   }
 
   if (!code || !GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
-    return NextResponse.redirect(
+    const res = NextResponse.redirect(
       new URL("/login?error=Missing+code+or+Google+OAuth+config", req.url)
     );
+    clearGoogleLoginCookie(res);
+    return res;
+  }
+
+  if (!oauthVerified) {
+    const res = NextResponse.redirect(
+      new URL("/login?error=Invalid+or+expired+OAuth+state", req.url)
+    );
+    clearGoogleLoginCookie(res);
+    return res;
   }
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || req.nextUrl.origin;
@@ -70,9 +98,11 @@ export async function GET(req: NextRequest) {
     if (!tokenRes.ok) {
       const err = await tokenRes.text();
       console.error("Google token error:", err);
-      return NextResponse.redirect(
+      const bad = NextResponse.redirect(
         new URL("/login?error=Google+token+exchange+failed", req.url)
       );
+      clearGoogleLoginCookie(bad);
+      return bad;
     }
 
     const tokens = (await tokenRes.json()) as GoogleTokenResponse;
@@ -83,17 +113,21 @@ export async function GET(req: NextRequest) {
     });
 
     if (!userInfoRes.ok) {
-      return NextResponse.redirect(
+      const bad = NextResponse.redirect(
         new URL("/login?error=Failed+to+get+Google+profile", req.url)
       );
+      clearGoogleLoginCookie(bad);
+      return bad;
     }
 
     const profile = (await userInfoRes.json()) as GoogleUserInfo;
 
     if (!profile.email) {
-      return NextResponse.redirect(
+      const bad = NextResponse.redirect(
         new URL("/login?error=Google+account+has+no+email", req.url)
       );
+      clearGoogleLoginCookie(bad);
+      return bad;
     }
 
     type SessionUser = { id: string; email: string; display_name?: string | null; image?: string | null };
@@ -117,21 +151,25 @@ export async function GET(req: NextRequest) {
     }
 
     if (!user) {
-      return NextResponse.redirect(new URL("/login?error=Could+not+create+session", req.url));
+      const bad = NextResponse.redirect(new URL("/login?error=Could+not+create+session", req.url));
+      clearGoogleLoginCookie(bad);
+      return bad;
     }
 
     const token = generateToken(user.id, user.email);
     await setSession(token);
 
-    // Guard against open redirect: accept only same-origin paths.
-    // "//evil.com" starts with "/" but resolves to an external origin; reject it.
-    const isSafePath = state.startsWith("/") && !state.startsWith("//");
-    const redirectTo = isSafePath ? state : "/dashboard";
-    return NextResponse.redirect(new URL(redirectTo, req.url));
+    // Post-login path came from the signed cookie (verified against OAuth `state`).
+    const redirectTo = oauthVerified.redirect;
+    const res = NextResponse.redirect(new URL(redirectTo, req.url));
+    clearGoogleLoginCookie(res);
+    return res;
   } catch (err: unknown) {
     console.error("Google callback error:", err);
-    return NextResponse.redirect(
+    const res = NextResponse.redirect(
       new URL("/login?error=Google+sign-in+failed", req.url)
     );
+    clearGoogleLoginCookie(res);
+    return res;
   }
 }

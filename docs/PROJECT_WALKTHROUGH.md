@@ -443,6 +443,7 @@ Degrades gracefully to plain `QueryClientProvider` when `localStorage` is unavai
 #### Layer 2 — Redis server-side cache for dashboard overview (`/api/dashboard/overview`)
 
 The overview route aggregates 16+ Prisma queries against a remote VPS Postgres (600ms–2.4s raw). With Redis:
+
 - **Cache key**: `dashboard:overview:<userId>` — per-user, no data leak between accounts.
 - **TTL**: 90 seconds.
 - **Cache hit**: <5ms — returns serialised JSON directly, skips all Prisma queries.

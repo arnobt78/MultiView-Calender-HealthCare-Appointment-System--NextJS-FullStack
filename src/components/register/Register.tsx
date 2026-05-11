@@ -279,9 +279,9 @@ export function Register() {
                       required
                       autoComplete="email"
                       className="h-11 bg-slate-50 border-slate-200 rounded-2xl text-base focus-visible:ring-teal-500/30 focus-visible:border-teal-400"
-                      aria-invalid={Boolean(errors.name)}
+                      aria-invalid={Boolean(errors.email)}
                     />
-                    {errors.name ? <p className="text-xs font-medium text-rose-600">{errors.name}</p> : null}
+                    {errors.email ? <p className="text-xs font-medium text-rose-600">{errors.email}</p> : null}
                   </div>
 
                   <div className="flex flex-col gap-2">
@@ -298,10 +298,15 @@ export function Register() {
                       required
                       autoComplete="new-password"
                       className="h-11 bg-slate-50 border-slate-200 rounded-2xl text-base focus-visible:ring-teal-500/30 focus-visible:border-teal-400"
-                      aria-invalid={Boolean(errors.name)}
+                      aria-invalid={Boolean(errors.password)}
                     />
-                    {errors.name ? <p className="text-xs font-medium text-rose-600">{errors.name}</p> : null}
+                    {errors.password ? <p className="text-xs font-medium text-rose-600">{errors.password}</p> : null}
                   </div>
+
+                  {/* Role notice — new accounts (email or Google) are created as admin by default. */}
+                  <p className="rounded-2xl border border-teal-200/60 bg-teal-50/70 px-3 py-2.5 text-[11px] leading-relaxed text-teal-700">
+                    <span className="font-semibold">Note:</span> New accounts created here and one-click Google sign-in are assigned the <span className="font-semibold">Admin</span> role by default, giving full access to appointments, patients, and settings.
+                  </p>
 
                   <div className="pt-1">
                     <Button

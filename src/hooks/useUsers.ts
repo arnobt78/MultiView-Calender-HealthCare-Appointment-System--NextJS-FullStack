@@ -24,7 +24,7 @@ export type UserUpdateInput = {
   image?: string;
 };
 
-export function useUsers(filters: UserListFilters = {}) {
+export function useUsers(filters: UserListFilters = {}, options?: { enabled?: boolean }) {
   const queryClient = useQueryClient();
   const params = new URLSearchParams();
   if (filters.role) params.set("role", filters.role);
@@ -42,6 +42,8 @@ export function useUsers(filters: UserListFilters = {}) {
       return res;
     },
     staleTime: 5 * 60 * 1000,
+    // Allow callers to opt out of the query (e.g. patient role has no access to the users list).
+    enabled: options?.enabled !== false,
   });
 
   const updateMutation = useMutation({

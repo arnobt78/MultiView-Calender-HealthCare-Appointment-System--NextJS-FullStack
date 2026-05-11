@@ -7,8 +7,21 @@
  * - GEMINI_API_KEY → Google Gemini
  */
 
+import { z } from "zod";
+
 const GROQ_API_KEY = process.env.GROQ_API_KEY || "";
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
+
+/** Validates model JSON so partial/malicious shapes do not propagate as trusted fields. */
+const aiParsedAppointmentSchema = z.object({
+  title: z.string().optional(),
+  start: z.string().optional(),
+  end: z.string().optional(),
+  location: z.string().optional(),
+  notes: z.string().optional(),
+  suggestedCategory: z.string().optional(),
+  suggestedPatient: z.string().optional(),
+});
 
 interface AIResponse {
   text: string;
@@ -136,24 +149,30 @@ Respond with ONLY valid JSON (no markdown, no code blocks), with these fields:
 
   const result = await generateCompletion(text, systemPrompt);
 
+  const fallback = {
+    title: text,
+    start: new Date().toISOString(),
+    end: new Date(Date.now() + 3600000).toISOString(),
+  };
+
   try {
-    const parsed = JSON.parse(result.text.trim());
+    const raw: unknown = JSON.parse(result.text.trim());
+    const parsed = aiParsedAppointmentSchema.safeParse(raw);
+    if (!parsed.success) {
+      return fallback;
+    }
+    const p = parsed.data;
     return {
-      title: parsed.title || text,
-      start: parsed.start || new Date().toISOString(),
-      end: parsed.end || new Date(Date.now() + 3600000).toISOString(),
-      location: parsed.location,
-      notes: parsed.notes,
-      suggestedCategory: parsed.suggestedCategory,
-      suggestedPatient: parsed.suggestedPatient,
+      title: p.title ?? text,
+      start: p.start ?? fallback.start,
+      end: p.end ?? fallback.end,
+      location: p.location,
+      notes: p.notes,
+      suggestedCategory: p.suggestedCategory,
+      suggestedPatient: p.suggestedPatient,
     };
   } catch {
-    // If AI fails to return valid JSON, return a basic appointment
-    return {
-      title: text,
-      start: new Date().toISOString(),
-      end: new Date(Date.now() + 3600000).toISOString(),
-    };
+    return fallback;
   }
 }
 

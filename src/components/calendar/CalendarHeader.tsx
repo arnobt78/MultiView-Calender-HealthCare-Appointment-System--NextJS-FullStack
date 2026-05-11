@@ -26,6 +26,7 @@ import {
 } from "@/lib/calendar-header-action-styles";
 import AppointmentDialogController from "./AppointmentDialogController";
 import ImportICSDialog from "./ImportICSDialog";
+import { useAuth } from "@/hooks/useAuth";
 
 // View modes in display order
 const views = ["List", "Day", "Week", "Month"] as const;
@@ -55,6 +56,9 @@ export default function CalendarHeader({
   setView: (v: ViewType) => void;
 }) {
   const { currentDate, setCurrentDate } = useDateContext();
+  const { user } = useAuth();
+  // Patients view the calendar in read-only mode — CRUD buttons are hidden.
+  const isPatient = user?.role === "patient";
   const [isComposeOpen, setIsComposeOpen] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -213,27 +217,30 @@ export default function CalendarHeader({
             );
           })}
         </div>
-        {/* Import .ics button */}
-        <ImportICSDialog
-          trigger={
-            <Button type="button" variant="ghost" size="lg" className={cn(violetGlassImportButtonClass, "cursor-pointer")}>
-              <FileUp className="shrink-0" aria-hidden />
-              Import .ics
-            </Button>
-          }
-        />
+        {/* Import .ics and New Appointment — hidden for patient role (read-only access) */}
+        {!isPatient && (
+          <ImportICSDialog
+            trigger={
+              <Button type="button" variant="ghost" size="lg" className={cn(violetGlassImportButtonClass, "cursor-pointer")}>
+                <FileUp className="shrink-0" aria-hidden />
+                Import .ics
+              </Button>
+            }
+          />
+        )}
 
-        {/* New Appointment button */}
-        <AppointmentDialogController
-          isOpen={shouldComposeOpen || isComposeOpen}
-          onOpenChange={handleComposeOpenChange}
-          trigger={
-            <Button type="button" variant="ghost" size="lg" className={cn(emeraldGlassPrimaryButtonClass, "cursor-pointer")}>
-              <CalendarPlus className="shrink-0" aria-hidden />
-              New Appointment
-            </Button>
-          }
-        />
+        {!isPatient && (
+          <AppointmentDialogController
+            isOpen={shouldComposeOpen || isComposeOpen}
+            onOpenChange={handleComposeOpenChange}
+            trigger={
+              <Button type="button" variant="ghost" size="lg" className={cn(emeraldGlassPrimaryButtonClass, "cursor-pointer")}>
+                <CalendarPlus className="shrink-0" aria-hidden />
+                New Appointment
+              </Button>
+            }
+          />
+        )}
       </div>
 
     </div>

@@ -16,6 +16,7 @@ import { useAppStore } from "@/store/useAppStore";
 import { useAppointments } from "@/hooks/useAppointments";
 import { usePatients } from "@/hooks/usePatients";
 import { useUsers } from "@/hooks/useUsers";
+import { useAuth } from "@/hooks/useAuth";
 import { Search, Calendar, User, Stethoscope, ArrowRight, X } from "lucide-react";
 import { format } from "date-fns";
 
@@ -43,9 +44,13 @@ export default function GlobalSearch() {
 
   const [query, setQuery] = useState("");
 
+  const { user } = useAuth();
+  // Patients have no access to staff user/patient lists — disable those queries to avoid 403s.
+  const isPatient = user?.role === "patient";
+
   const { appointments } = useAppointments();
   const { patients } = usePatients();
-  const { data: usersData } = useUsers();
+  const { data: usersData } = useUsers({}, { enabled: !isPatient });
 
   // Keyboard shortcut: Cmd+K / Ctrl+K
   useEffect(() => {

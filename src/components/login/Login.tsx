@@ -197,7 +197,10 @@ export default function Login({ redirect = null }: LoginProps) {
         localStorage.setItem("post-login-toast", serialized);
         /* seed the auth cache so AuthShell sees isAuthenticated=true immediately */
         queryClient.setQueryData(queryKeys.auth.me, { ...data.user, email_verified: true });
-        router.push(redirect ?? "/dashboard");
+        // Patients land on the portal; staff use the requested redirect or calendar home.
+        const isPatient = data.user?.role === "patient";
+        const dest = isPatient ? "/patient-portal" : redirect ?? "/dashboard";
+        router.push(dest);
       }
     } catch (err: unknown) {
       setLoading(false);
@@ -448,9 +451,9 @@ export default function Login({ redirect = null }: LoginProps) {
                       required
                       autoComplete="current-password"
                       className="h-11 bg-slate-50 border-slate-200 rounded-2xl text-base focus-visible:ring-blue-500/30 focus-visible:border-blue-400"
-                      aria-invalid={Boolean(errors.email)}
+                      aria-invalid={Boolean(errors.password)}
                     />
-                    {errors.email ? <p className="text-xs font-medium text-rose-600">{errors.email}</p> : null}
+                    {errors.password ? <p className="text-xs font-medium text-rose-600">{errors.password}</p> : null}
                   </div>
 
                   <div className="pt-1 space-y-3">

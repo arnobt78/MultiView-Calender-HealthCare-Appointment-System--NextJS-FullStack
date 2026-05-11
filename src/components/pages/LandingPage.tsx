@@ -6,7 +6,13 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
-import { DEMO_PASSWORD, DEMO_SMOKE_EMAIL } from "@/lib/demo-credentials";
+import { DEMO_ACCOUNTS, DEMO_PASSWORD } from "@/lib/demo-credentials";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -20,6 +26,7 @@ import {
   CalendarDays,
   CalendarRange,
   CheckCircle2,
+  ChevronDown,
   Clock,
   HeartPulse,
   User,
@@ -492,6 +499,8 @@ export default function LandingPage() {
   const [navScrolled, setNavScrolled] = useState(false);
   const [demoLoading, setDemoLoading] = useState(false);
   const [aboutCardIdx, setAboutCardIdx] = useState(0);
+  // Track which demo account is selected; defaults to admin (index 0).
+  const [selectedDemoIdx, setSelectedDemoIdx] = useState(0);
 
   useEffect(() => {
     const handler = () => setNavScrolled(window.scrollY > 30);
@@ -510,11 +519,13 @@ export default function LandingPage() {
 
   const handleDemo = useCallback(async () => {
     setDemoLoading(true);
+    const account = DEMO_ACCOUNTS[selectedDemoIdx];
     try {
-      const res = await fetch("/api/auth/demo", {
+      // Use the standard login endpoint — works in all environments without feature flags.
+      const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: DEMO_SMOKE_EMAIL, password: DEMO_PASSWORD }),
+        body: JSON.stringify({ email: account.email, password: DEMO_PASSWORD }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -526,13 +537,15 @@ export default function LandingPage() {
           });
           sessionStorage.setItem("post-login-toast", payload);
           localStorage.setItem("post-login-toast", payload);
+          // Route patients to the patient portal; all other roles use the dashboard.
+          const dest = data.user.role === "patient" ? "/patient-portal" : "/dashboard";
+          router.push(dest);
         }
-        router.push("/dashboard");
       }
     } finally {
       setDemoLoading(false);
     }
-  }, [router, queryClient]);
+  }, [router, queryClient, selectedDemoIdx]);
 
   return (
     <div className="relative min-h-screen text-white">
@@ -661,7 +674,7 @@ export default function LandingPage() {
                 Create free account
               </Link>
 
-              {/* glow lives on the outer wrapper — cta-shine-wrap has overflow:hidden which clips box-shadow */}
+              {/* Demo account CTA — dropdown to select role + one-click login */}
               <motion.div
                 initial={{ scale: 0.3, rotate: -8, opacity: 0 }}
                 whileInView={{
@@ -671,26 +684,56 @@ export default function LandingPage() {
                 }}
                 viewport={{ once: false, amount: 0.6 }}
                 transition={{ duration: 0.62, delay: 0.45, ease: [0.22, 1, 0.36, 1] }}
-                className="cta-shine-wrap rounded-2xl transition-shadow duration-300"
-                style={{ boxShadow: "0 12px 32px rgba(16,185,129,0.5), 0 0 28px rgba(16,185,129,0.28)" }}
+                className="flex items-center gap-2"
               >
-                <RippleButton
-                  onClick={handleDemo}
-                  disabled={demoLoading}
-                  className="inline-flex items-center gap-2 rounded-2xl border border-emerald-400/55 bg-gradient-to-r from-emerald-500/80 via-emerald-500/65 to-emerald-600/50 px-6 py-3 text-sm font-semibold text-white backdrop-blur-sm transition hover:from-emerald-700/90 hover:to-emerald-500/60 disabled:opacity-60 cursor-pointer"
+                {/* Role selector — choose which demo account to sign in with */}
+                <DropdownMenu modal={false}>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      disabled={demoLoading}
+                      className="inline-flex items-center gap-1.5 rounded-2xl border border-emerald-400/40 bg-emerald-900/40 px-3 py-3 text-xs font-medium text-emerald-100 backdrop-blur-sm transition hover:bg-emerald-800/50 disabled:opacity-60 cursor-pointer"
+                    >
+                      {DEMO_ACCOUNTS[selectedDemoIdx].label}
+                      <ChevronDown className="h-3.5 w-3.5 opacity-70" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="min-w-[150px]" sideOffset={6}>
+                    {DEMO_ACCOUNTS.map((acc, idx) => (
+                      <DropdownMenuItem
+                        key={acc.email}
+                        onSelect={() => setSelectedDemoIdx(idx)}
+                        className={idx === selectedDemoIdx ? "bg-emerald-50 text-emerald-700" : ""}
+                      >
+                        {acc.label}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                {/* One-click sign-in button */}
+                <div
+                  className="cta-shine-wrap rounded-2xl transition-shadow duration-300"
+                  style={{ boxShadow: "0 12px 32px rgba(16,185,129,0.5), 0 0 28px rgba(16,185,129,0.28)" }}
                 >
-                  {demoLoading ? (
-                    <span className="flex items-center gap-2">
-                      <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                      Signing in... <ArrowRight className="h-4 w-4" />
-                    </span>
-                  ) : (
-                    <>
-                      <Zap className="h-4 w-4" />
-                      Try demo account <ArrowRight className="h-4 w-4" />
-                    </>
-                  )}
-                </RippleButton>
+                  <RippleButton
+                    onClick={handleDemo}
+                    disabled={demoLoading}
+                    className="inline-flex items-center gap-2 rounded-2xl border border-emerald-400/55 bg-gradient-to-r from-emerald-500/80 via-emerald-500/65 to-emerald-600/50 px-6 py-3 text-sm font-semibold text-white backdrop-blur-sm transition hover:from-emerald-700/90 hover:to-emerald-500/60 disabled:opacity-60 cursor-pointer"
+                  >
+                    {demoLoading ? (
+                      <span className="flex items-center gap-2">
+                        <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                        Signing in... <ArrowRight className="h-4 w-4" />
+                      </span>
+                    ) : (
+                      <>
+                        <Zap className="h-4 w-4" />
+                        Try demo account <ArrowRight className="h-4 w-4" />
+                      </>
+                    )}
+                  </RippleButton>
+                </div>
               </motion.div>
             </motion.div>
 

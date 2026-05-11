@@ -100,6 +100,11 @@ export default function Navbar() {
   const { user, logout, isLoggingOut } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
+
+  // Role flags used to conditionally render nav links and toolbar items.
+  // Patients only see patient-facing pages; staff (admin/doctor/secretary) skip the portal link.
+  const isPatient = user?.role === "patient";
+  const isStaff = user?.role === "admin" || user?.role === "doctor" || user?.role === "secretary";
   const openSearch = useAppStore((s) => s.openSearch);
   const toggleQuickActionModal = useAppStore((s) => s.toggleQuickActionModal);
   const { notifications, total, unreadCount, markAsRead, markAllAsRead, deleteRead, isDeletingRead } = useNotifications();
@@ -148,32 +153,43 @@ export default function Navbar() {
           </Link>
         </div>
 
-        {/* Center: nav links */}
+        {/* Center: nav links — visibility is role-gated client-side after session resolves */}
         <nav className="hidden md:flex flex-1 items-center justify-center gap-6">
+          {/* Dashboard is accessible to all authenticated roles */}
           <Link
             href="/dashboard"
             className={`text-base transition-colors hover:text-gray-700 ${pathname === "/dashboard" ? "text-gray-700" : "text-muted-foreground"}`}
           >
             Dashboard
           </Link>
-          <Link
-            href="/control-panel"
-            className={`text-base transition-colors hover:text-gray-700 ${pathname?.includes("/control-panel") ? "text-gray-700" : "text-muted-foreground"}`}
-          >
-            Control Panel
-          </Link>
-          <Link
-            href="/insights"
-            className={`text-base transition-colors hover:text-gray-700 ${pathname?.includes("/insights") ? "text-gray-700" : "text-muted-foreground"}`}
-          >
-            Analytics
-          </Link>
-          <Link
-            href="/patient-portal"
-            className={`text-base transition-colors hover:text-gray-700 ${pathname?.includes("/patient-portal") ? "text-gray-700" : "text-muted-foreground"}`}
-          >
-            Patient Portal
-          </Link>
+
+          {/* Control Panel and Analytics: staff only — patients are redirected away by the layout */}
+          {!isPatient && (
+            <Link
+              href="/control-panel"
+              className={`text-base transition-colors hover:text-gray-700 ${pathname?.includes("/control-panel") ? "text-gray-700" : "text-muted-foreground"}`}
+            >
+              Control Panel
+            </Link>
+          )}
+          {!isPatient && (
+            <Link
+              href="/insights"
+              className={`text-base transition-colors hover:text-gray-700 ${pathname?.includes("/insights") ? "text-gray-700" : "text-muted-foreground"}`}
+            >
+              Analytics
+            </Link>
+          )}
+
+          {/* Patient Portal: patients + unauthenticated (role is null while loading → show by default) */}
+          {!isStaff && (
+            <Link
+              href="/patient-portal"
+              className={`text-base transition-colors hover:text-gray-700 ${pathname?.includes("/patient-portal") ? "text-gray-700" : "text-muted-foreground"}`}
+            >
+              Patient Portal
+            </Link>
+          )}
         </nav>
 
         {/* Right: search + notifications + avatar */}

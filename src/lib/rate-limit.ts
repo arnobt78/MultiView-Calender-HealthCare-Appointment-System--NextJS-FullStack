@@ -64,10 +64,17 @@ export async function checkRateLimit(
       return { allowed: false, remaining: 0, resetTime };
     }
 
+    // Align resetTime with the key's real TTL (window anchored on first INCR).
+    let effectiveReset = resetTime;
+    const pttlMs = await redis.pttl(key);
+    if (typeof pttlMs === "number" && pttlMs > 0) {
+      effectiveReset = now + pttlMs;
+    }
+
     return {
       allowed: count <= maxRequests,
       remaining: Math.max(0, maxRequests - count),
-      resetTime,
+      resetTime: effectiveReset,
     };
   }
 
