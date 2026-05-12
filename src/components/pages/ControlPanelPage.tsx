@@ -5,6 +5,9 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { invalidateInvoicesAndOverview } from "@/lib/query-client";
 import { queryKeys } from "@/lib/query-keys";
+import { apiClient } from "@/lib/api-client";
+import { useAuth } from "@/hooks/useAuth";
+import type { AppointmentTypeApiRow } from "@/hooks/useAppointmentTypes";
 import type { Patient } from "@/types/types";
 import type { DashboardOverview } from "@/hooks/useDashboardOverview";
 import PatientDetailView from "./PatientDetailView";
@@ -24,6 +27,7 @@ import AppointmentsManagement from "@/components/control-panel/AppointmentsManag
 import NotificationsManagement from "@/components/control-panel/NotificationsManagement";
 import ActivitiesManagement from "@/components/control-panel/ActivitiesManagement";
 import GoogleCalendarSettings from "@/components/control-panel/GoogleCalendarSettings";
+import { GlobalAppointmentTypesEditor } from "@/components/control-panel/GlobalAppointmentTypesEditor";
 import DashboardOverviewComponent from "@/components/control-panel/DashboardOverview";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -42,6 +46,7 @@ import {
   CalendarDays,
   History,
   LayoutDashboard,
+  Layers,
   Mail,
   Menu,
   PanelTop,
@@ -62,7 +67,7 @@ import { cn } from "@/lib/utils";
  * `ControlPanelSidebarNav`. This component renders ONLY:
  *   - Mobile Sheet drawer (hamburger → sidebar nav)
  *   - Mobile horizontal tab strip
- *   - Tab content panels for all 15 control-panel sections
+ *   - Tab content panels for all 16 control-panel sections
  *
  * Having the sidebar in the layout (not here) means it NEVER remounts on section
  * navigation — eliminating the "sidebar jumps" regression.
@@ -75,6 +80,7 @@ const SIDEBAR_ITEMS = [
   { value: "dashboard", label: "User Dashboard Access Invitation" },
   { value: "patients", label: "Patient Management" },
   { value: "categories", label: "Category Management" },
+  { value: "visit_types_global", label: "Global Visit Types" },
   { value: "doctors", label: "Doctor Management" },
   { value: "users_admin", label: "User / Admin Management" },
   { value: "relatives", label: "Relative Management" },
@@ -118,6 +124,7 @@ const SIDEBAR_SECTIONS: readonly {
     items: [
       { value: "patients", icon: Users },
       { value: "categories", icon: Tags },
+      { value: "visit_types_global", icon: Layers },
       { value: "doctors", icon: Stethoscope },
       { value: "users_admin", icon: UserCog },
       { value: "relatives", icon: UsersRound },
@@ -161,6 +168,7 @@ const TAB_TO_SEGMENT: Record<string, string> = {
   dashboard: "user-dashboard-access-invitation",
   patients: "patient-management",
   categories: "category-management",
+  visit_types_global: "global-visit-types",
   doctors: "doctor-management",
   users_admin: "user-admin-management",
   relatives: "relative-management",
@@ -229,6 +237,7 @@ export default function ControlPanelPage({
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   /**
    * Stripe payment return handler.
@@ -257,6 +266,19 @@ export default function ControlPanelPage({
       queryClient.setQueryData(queryKeys.patients.all, initialPatients);
     }
   }, [queryClient, initialDashboardOverview, initialPatients]);
+
+  /**
+   * Optional cache warm-up for global visit types (GET is allowed for any signed-in user).
+   * Same queryKey + staleTime as `useGlobalAppointmentTypes`; improves first paint on that tab.
+   */
+  useEffect(() => {
+    if (!user) return;
+    void queryClient.prefetchQuery({
+      queryKey: queryKeys.appointmentTypes.global,
+      queryFn: () => apiClient<{ types: AppointmentTypeApiRow[] }>("/api/appointment-types/global"),
+      staleTime: 5 * 60 * 1000,
+    });
+  }, [queryClient, user]);
 
   const resolvedInitialTab = useMemo(() => {
     if (initialTab && TAB_TO_SEGMENT[initialTab]) return initialTab;
@@ -386,6 +408,18 @@ export default function ControlPanelPage({
         </TabsContent>
         <TabsContent value="categories" className="mt-0">
           <CategoryManagement />
+        </TabsContent>
+        <TabsContent value="visit_types_global" className="mt-0">
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-800">Global Visit Types</h2>
+              <p className="text-sm text-muted-foreground">
+                Admin-managed templates (`user_id` null) shared by every doctor for booking slots and the
+                public services page.
+              </p>
+            </div>
+            <GlobalAppointmentTypesEditor />
+          </div>
         </TabsContent>
         <TabsContent value="doctors" className="mt-0">
           <DoctorManagement />

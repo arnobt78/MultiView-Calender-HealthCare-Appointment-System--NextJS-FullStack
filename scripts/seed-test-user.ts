@@ -1,5 +1,5 @@
 /**
- * Idempotent demo users (test@admin.com / test@doctor.com / test@patient.com).
+ * Idempotent demo users (test@admin.com / test@doctor.com / test@patient.com / test@secretary.com).
  * Same password for all — see src/lib/demo-credentials.ts.
  *
  * Also seeds:

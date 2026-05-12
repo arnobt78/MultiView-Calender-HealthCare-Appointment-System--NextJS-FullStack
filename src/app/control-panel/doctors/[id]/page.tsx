@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Separator } from "@/components/ui/separator";
 import { DoctorDetailForm } from "@/components/control-panel/DoctorDetailForm";
+import { DoctorAppointmentTypesEditor } from "@/components/control-panel/DoctorAppointmentTypesEditor";
 import {
   ArrowLeft,
   BookOpen,
@@ -243,24 +244,7 @@ export default async function DoctorDetailPage({ params }: PageProps) {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4">
-              {raw.appointment_types_owned.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No custom appointment types defined.</p>
-              ) : (
-                <div className="space-y-2">
-                  {raw.appointment_types_owned.map((t) => (
-                    <div key={t.id} className="flex items-center justify-between rounded-lg border bg-emerald-50/40 px-3 py-2 text-xs">
-                      <span className="font-medium">{t.name}</span>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-[10px] py-0 bg-white">
-                          <Clock className="h-2.5 w-2.5 mr-0.5" />
-                          {t.duration_minutes} min
-                        </Badge>
-                        <span className="text-muted-foreground">Slot: {t.slot_interval_minutes} min</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <DoctorAppointmentTypesEditor doctorId={raw.id} />
             </CardContent>
           </Card>
 

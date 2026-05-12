@@ -190,6 +190,20 @@ export async function invalidateAppointmentTypesData(queryClient: QueryClient) {
 }
 
 /**
+ * Single choke-point after **AppointmentType** row changes (REST CRUD or appointment overlap shifts):
+ * - `appointmentTypes.*` lists (portal, compose dialog, global cards)
+ * - `availability` slot math (duration / buffers / intervals)
+ * - `doctors.all` directory (`GET /api/doctors` embeds `appointment_types` for /services + Doctor Management)
+ */
+export async function invalidateAppointmentTypeDerived(queryClient: QueryClient) {
+  await Promise.all([
+    invalidateAppointmentTypesData(queryClient),
+    invalidateAvailabilitySlots(queryClient),
+    queryClient.invalidateQueries({ queryKey: queryKeys.doctors.all }),
+  ]);
+}
+
+/**
  * After appointment create/update/import — pass `patientId` when known for cheaper patient cache updates.
  * Also invalidates insights/analytics since all charts aggregate appointment data.
  */
@@ -201,8 +215,7 @@ export async function invalidateAfterAppointmentMutation(
     invalidateAppointmentData(queryClient),
     invalidateActivitiesList(queryClient),
     invalidateNotificationsData(queryClient),
-    invalidateAvailabilitySlots(queryClient),
-    invalidateAppointmentTypesData(queryClient),
+    invalidateAppointmentTypeDerived(queryClient),
     invalidateInvoicesAndOverview(queryClient, { patientId: opts?.patientId ?? undefined }),
     // Insights / analytics charts aggregate appointment data — must refetch after any mutation.
     invalidateInsightsAndAnalytics(queryClient),
@@ -228,8 +241,7 @@ export async function invalidateAssigneesActivitiesAppointment(
     invalidateAssigneesData(queryClient),
     invalidateAppointmentData(queryClient),
     invalidateActivitiesList(queryClient),
-    invalidateAvailabilitySlots(queryClient),
-    invalidateAppointmentTypesData(queryClient),
+    invalidateAppointmentTypeDerived(queryClient),
     patientId
       ? invalidatePatientDetailAndSnapshot(queryClient, patientId)
       : queryClient.invalidateQueries({ queryKey: queryKeys.patients.all }),

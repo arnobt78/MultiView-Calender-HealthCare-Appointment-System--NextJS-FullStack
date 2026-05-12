@@ -18,7 +18,6 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown } from "lucide-react";
 import {
   CalendarDays,
   Clock,
@@ -29,6 +28,7 @@ import {
   Bell,
   Globe,
   Home,
+  ChevronDown,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { DEMO_ACCOUNTS, DEMO_PASSWORD } from "@/lib/demo-credentials";
@@ -373,42 +373,21 @@ export default function Login({ redirect = null }: LoginProps) {
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start" className="w-[var(--radix-dropdown-menu-trigger-width)]" sideOffset={4}>
-                        <DropdownMenuItem onSelect={() => handleRoleSelect("demo-admin")}>
-                          <span className="flex items-center gap-2">
-                            <Image
-                              src={DEMO_ACCOUNTS[0].avatarUrl}
-                              alt={DEMO_ACCOUNTS[0].displayName}
-                              width={20}
-                              height={20}
-                              className="size-5 rounded-full object-cover ring-1 ring-slate-300/70"
-                            />
-                            {DEMO_ACCOUNTS[0].displayName} ({DEMO_ACCOUNTS[0].email})
-                          </span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => handleRoleSelect("demo-doctor")}>
-                          <span className="flex items-center gap-2">
-                            <Image
-                              src={DEMO_ACCOUNTS[1].avatarUrl}
-                              alt={DEMO_ACCOUNTS[1].displayName}
-                              width={20}
-                              height={20}
-                              className="size-5 rounded-full object-cover ring-1 ring-slate-300/70"
-                            />
-                            {DEMO_ACCOUNTS[1].displayName} ({DEMO_ACCOUNTS[1].email})
-                          </span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => handleRoleSelect("demo-patient")}>
-                          <span className="flex items-center gap-2">
-                            <Image
-                              src={DEMO_ACCOUNTS[2].avatarUrl}
-                              alt={DEMO_ACCOUNTS[2].displayName}
-                              width={20}
-                              height={20}
-                              className="size-5 rounded-full object-cover ring-1 ring-slate-300/70"
-                            />
-                            {DEMO_ACCOUNTS[2].displayName} ({DEMO_ACCOUNTS[2].email})
-                          </span>
-                        </DropdownMenuItem>
+                        {/* One row per `DEMO_ACCOUNTS` entry — stays correct when new demo personas are added. */}
+                        {DEMO_ACCOUNTS.map((acc) => (
+                          <DropdownMenuItem key={acc.email} onSelect={() => handleRoleSelect(`demo-${acc.role}`)}>
+                            <span className="flex items-center gap-2">
+                              <Image
+                                src={acc.avatarUrl}
+                                alt={acc.displayName}
+                                width={20}
+                                height={20}
+                                className="size-5 rounded-full object-cover ring-1 ring-slate-300/70"
+                              />
+                              {acc.displayName} ({acc.email})
+                            </span>
+                          </DropdownMenuItem>
+                        ))}
                         {selectedRole && (
                           <>
                             <DropdownMenuSeparator />

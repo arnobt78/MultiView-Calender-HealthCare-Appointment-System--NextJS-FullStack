@@ -5,8 +5,7 @@ import {
   invalidateAfterAppointmentMutation,
   invalidateActivitiesList,
   invalidateAssigneesData,
-  invalidateAvailabilitySlots,
-  invalidateAppointmentTypesData,
+  invalidateAppointmentTypeDerived,
   invalidateInvoicesAndOverview,
   invalidateNotificationsData,
   invalidatePatientDetailAndSnapshot,
@@ -267,10 +266,7 @@ export function useAppointments() {
         invalidateNotificationsData(queryClient),
         // Assignee rows are cascade-deleted in the DB; evict the client cache to match.
         invalidateAssigneesData(queryClient),
-        // Appointment removal frees time slots — re-sync availability grid; bust type keys too so every
-        // consumer stays on the same invalidation contract as `invalidateAfterAppointmentMutation`.
-        invalidateAvailabilitySlots(queryClient),
-        invalidateAppointmentTypesData(queryClient),
+        invalidateAppointmentTypeDerived(queryClient),
         invalidateInvoicesAndOverview(queryClient, { patientId }),
         // Insights charts and dashboard counters depend on appointment totals.
         invalidateInsightsAndAnalytics(queryClient),
@@ -325,12 +321,15 @@ export function useAppointments() {
       // Status changes affect done/pending/alert counters in overview and insights by-status chart.
       // The PATCH handler also creates a notification row — invalidate so the bell reflects it instantly.
       // Portal timeline reads appointment status — invalidate so patient-facing portal refetches without navigation.
+      // Status labels can affect scheduling UX copy; also bust slot/type caches so any UI that keys off
+      // `invalidateAfterAppointmentMutation` stays on the same invalidation contract as full PATCH flows.
       await Promise.all([
         invalidatePatientDetailAndSnapshot(queryClient, appt.patient ?? undefined),
         invalidateNotificationsData(queryClient),
         invalidateInsightsAndAnalytics(queryClient),
         invalidateDashboardOverview(queryClient),
         invalidatePatientPortal(queryClient),
+        invalidateAppointmentTypeDerived(queryClient),
       ]);
       notify.crud({
         action: "updated",

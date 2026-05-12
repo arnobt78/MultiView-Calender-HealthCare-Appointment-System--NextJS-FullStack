@@ -19,6 +19,7 @@ const SECTION_TO_TAB: Record<string, string> = {
   "user-dashboard-access-invitation": "dashboard",
   "patient-management": "patients",
   "category-management": "categories",
+  "global-visit-types": "visit_types_global",
   "doctor-management": "doctors",
   "doctor-user-management": "doctors",
   "user-admin-management": "users_admin",

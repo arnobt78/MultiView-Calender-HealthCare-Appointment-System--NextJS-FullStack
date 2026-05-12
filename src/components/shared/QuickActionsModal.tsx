@@ -22,6 +22,7 @@ import {
   FileText,
   Stethoscope,
   CreditCard,
+  Layers,
   X,
 } from "lucide-react";
 
@@ -89,6 +90,14 @@ export default function QuickActionsModal() {
       description: "Doctor accounts (role doctor). Use Staff tab for admin users.",
       href: "/control-panel/doctor-management",
       color: "bg-purple-100 text-purple-700",
+    },
+    // Admin-only editor in control panel — same route as sidebar "Global Visit Types".
+    {
+      icon: Layers,
+      label: "Global Visit Types",
+      description: "Shared visit types (user_id null) applied across all doctors.",
+      href: "/control-panel/global-visit-types",
+      color: "bg-cyan-100 text-cyan-800",
     },
     {
       icon: LayoutDashboard,

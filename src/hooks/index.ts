@@ -27,6 +27,7 @@ export * from "./useAppointments";
 export * from "./useAssignees";
 export * from "./useAuth";
 export * from "./useAvailabilitySlots";
+export * from "./useAppointmentTypes";
 export * from "./useCategories";
 export * from "./useDashboardAccess";
 export * from "./useDashboardOverview";

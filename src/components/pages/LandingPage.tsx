@@ -27,6 +27,7 @@ import {
   CalendarRange,
   CheckCircle2,
   ChevronDown,
+  ClipboardList,
   Clock,
   HeartPulse,
   User,
@@ -707,6 +708,7 @@ export default function LandingPage() {
                       {DEMO_ACCOUNTS[selectedDemoIdx].role === "admin" && <ShieldCheck className="h-4 w-4 opacity-80" />}
                       {DEMO_ACCOUNTS[selectedDemoIdx].role === "doctor" && <Stethoscope className="h-4 w-4 opacity-80" />}
                       {DEMO_ACCOUNTS[selectedDemoIdx].role === "patient" && <HeartPulse className="h-4 w-4 opacity-80" />}
+                      {DEMO_ACCOUNTS[selectedDemoIdx].role === "secretary" && <ClipboardList className="h-4 w-4 opacity-80" />}
                       {DEMO_ACCOUNTS[selectedDemoIdx].label}
                       <ChevronDown className="h-3.5 w-3.5 opacity-70" />
                     </button>
@@ -721,6 +723,7 @@ export default function LandingPage() {
                         {acc.role === "admin" && <ShieldCheck className="h-4 w-4 shrink-0" />}
                         {acc.role === "doctor" && <Stethoscope className="h-4 w-4 shrink-0" />}
                         {acc.role === "patient" && <HeartPulse className="h-4 w-4 shrink-0" />}
+                        {acc.role === "secretary" && <ClipboardList className="h-4 w-4 shrink-0" />}
                         {acc.label}
                       </DropdownMenuItem>
                     ))}
