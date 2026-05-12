@@ -27,3 +27,22 @@ import { twMerge } from "tailwind-merge"
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
+
+/**
+ * Title-case each whitespace-delimited token for dialog chrome (labels, titles, buttons).
+ * Hyphenated segments are title-cased per segment; punctuation on tokens is preserved.
+ */
+export function toTitleCaseLabel(value: string): string {
+  return value
+    .split(/(\s+)/)
+    .map((segment) => {
+      if (/^\s+$/.test(segment)) return segment;
+      return segment
+        .split("-")
+        .map((part) =>
+          part ? part.charAt(0).toUpperCase() + part.slice(1).toLowerCase() : part
+        )
+        .join("-");
+    })
+    .join("");
+}

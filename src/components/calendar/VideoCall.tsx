@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -63,6 +64,9 @@ export default function VideoCall({
             : "max-w-9xl w-full h-[80vh] p-0"
         }
       >
+        <DialogDescription className="sr-only">
+          Embedded video call for appointment {appointmentTitle}. Grant camera and microphone if prompted.
+        </DialogDescription>
         <DialogHeader className="px-4 py-2 border-b flex-row items-center justify-between">
           <DialogTitle className="text-sm font-medium">
             📹 {appointmentTitle}

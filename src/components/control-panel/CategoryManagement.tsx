@@ -19,6 +19,7 @@ import { useState } from "react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -339,6 +340,9 @@ export default function CategoryManagement() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add Category</DialogTitle>
+            <DialogDescription className="sr-only">
+              Create a scheduling category with label, optional description, color, and sort order.
+            </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-2">
             <div className="space-y-1.5">

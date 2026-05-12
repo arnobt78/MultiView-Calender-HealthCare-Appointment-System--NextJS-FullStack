@@ -9,7 +9,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn, toTitleCaseLabel } from "@/lib/utils";
 import {
   skyGlassBackButtonClass,
   skyGlassPrimaryButtonClass,
@@ -125,7 +125,8 @@ export default function AppointmentDialog({
     setLocation("");
     setAttachments("");
     setStatus("pending");
-    setTreatingPhysicianId(user?.id ?? "");
+    // Empty shows "Select Doctor" in UI; create API still receives calendar owner via `treating_physician: id || user?.id`.
+    setTreatingPhysicianId("");
     setUploadedFiles([]);
     setAssignees([]);
     setActivityType("");
@@ -172,7 +173,7 @@ export default function AppointmentDialog({
     } else {
       setAssignees([]);
       setActivityList([]);
-      setTreatingPhysicianId(user?.id ?? "");
+      setTreatingPhysicianId("");
     }
   }, [appointment, user?.id]);
 
@@ -558,8 +559,8 @@ export default function AppointmentDialog({
       */}
       <DialogContent
         showCloseButton={false}
-        aria-describedby="appointment-dialog-desc"
-        className="flex h-[90vh] max-h-[90vh] w-[90vw] max-w-[1200px] flex-col gap-0 overflow-hidden rounded-[28px] border border-sky-400/30 bg-white p-0 shadow-[0_30px_80px_rgba(2,132,199,0.35)] backdrop-blur-sm"
+        aria-describedby={undefined}
+        className="flex h-[90vh] max-h-[90vh] w-[90vw] max-w-[90vw] flex-col gap-0 overflow-hidden rounded-[28px] border border-sky-400/30 bg-white p-0 shadow-[0_30px_80px_rgba(2,132,199,0.35)] backdrop-blur-sm"
       >
         <div className="shrink-0 bg-white pt-6 text-gray-700">
           <div className="px-6">
@@ -569,15 +570,21 @@ export default function AppointmentDialog({
               </span>
               <div className="min-w-0">
                 <DialogTitle className="text-left text-xl font-semibold text-gray-700">
-                  {isEditMode ? "Edit appointment" : "Create new appointment"}
+                  {isEditMode
+                    ? toTitleCaseLabel("Edit Appointment")
+                    : toTitleCaseLabel("Create New Appointment")}
                 </DialogTitle>
                 <DialogDescription
                   id="appointment-dialog-desc"
                   className="text-left text-sm text-muted-foreground"
                 >
                   {isEditMode
-                    ? "Update scheduling on the left; manage sharing and activity notes on the right."
-                    : "Set the client and time on the left; optionally share with relatives or add a first activity on the right."}
+                    ? toTitleCaseLabel(
+                        "Update scheduling on the left; manage sharing and activity notes on the right."
+                      )
+                    : toTitleCaseLabel(
+                        "Set the client and time on the left; optionally share with relatives or add a first activity on the right."
+                      )}
                 </DialogDescription>
               </div>
               <DialogClose asChild>
@@ -600,13 +607,15 @@ export default function AppointmentDialog({
         )}
         {success && (
           <div className="shrink-0 px-6 pt-2 text-xs text-green-600">
-            Successfully saved!
+            {toTitleCaseLabel("Successfully saved!")}
           </div>
         )}
         <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4 text-gray-700">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
             <section className="min-w-0">
-              <h3 className="mb-2 text-sm font-semibold tracking-tight text-gray-700">Core scheduling</h3>
+              <h3 className="mb-2 text-sm font-semibold tracking-tight text-gray-700">
+                {toTitleCaseLabel("Core scheduling")}
+              </h3>
               <AppointmentDialogGeneralSection
                 title={title}
                 setTitle={setTitle}
@@ -642,7 +651,7 @@ export default function AppointmentDialog({
             </section>
             <section className="flex min-w-0 flex-col gap-6 lg:border-l lg:border-sky-200/70 lg:pl-8">
               <div>
-                <h3 className="mb-2 text-sm font-semibold tracking-tight text-gray-700">Access &amp; sharing</h3>
+                <h3 className="mb-2 text-sm font-semibold tracking-tight text-gray-700">Access &amp; Sharing</h3>
                 <AppointmentDialogAssigneesSection
                   assignees={assignees}
                   patients={patients}
@@ -653,7 +662,9 @@ export default function AppointmentDialog({
                 />
               </div>
               <div>
-                <h3 className="mb-2 text-sm font-semibold tracking-tight text-gray-700">Activities</h3>
+                <h3 className="mb-2 text-sm font-semibold tracking-tight text-gray-700">
+                  {toTitleCaseLabel("Activities")}
+                </h3>
                 <AppointmentDialogActivitiesSection
                   isEditMode={isEditMode}
                   activityType={activityType}
@@ -681,7 +692,7 @@ export default function AppointmentDialog({
             disabled={loading || uploading}
           >
             <X className="size-4 shrink-0" aria-hidden />
-            Cancel
+            {toTitleCaseLabel("Cancel")}
           </Button>
           <Button
             type="button"
@@ -696,12 +707,14 @@ export default function AppointmentDialog({
             {loading ? (
               <>
                 <Loader2 className="size-4 shrink-0 animate-spin" aria-hidden />
-                Saving…
+                {toTitleCaseLabel("Saving…")}
               </>
             ) : (
               <>
                 <CalendarCheck className="size-4 shrink-0" aria-hidden />
-                {isEditMode ? "Update appointment" : "Save new appointment"}
+                {isEditMode
+                  ? toTitleCaseLabel("Update Appointment")
+                  : toTitleCaseLabel("Save New Appointment")}
               </>
             )}
           </Button>

@@ -5,11 +5,15 @@
  * appointment’s client (`patient_id`). The client is chosen in Core scheduling; this list is for relatives
  * or other collaborators who need portal/calendar visibility without replacing the client field.
  *
- * Styling aligns with the appointment dialog sky glass fields (read-only behavior — same handlers as before).
+ * Picker rows mirror the client select: optional `clinical_profile.image_url` for patients, robohash for
+ * patients without a portrait and for relatives. `h-11` trigger matches login + general section controls.
+ * The assign `Select` stays uncontrolled so the trigger returns to the placeholder after each add (Radix
+ * default); chips show the chosen portrait + label.
  */
 
 import { UserPlus } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import { SafeImage } from "@/components/ui/safe-image";
 import {
   Select,
   SelectContent,
@@ -17,10 +21,38 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { AppointmentAssignee, Patient, Relative } from "@/types/types";
+import { cn, toTitleCaseLabel } from "@/lib/utils";
+import type { AppointmentAssignee, Patient, PatientClinicalProfile, Relative } from "@/types/types";
 
 const glassSelectTriggerClass =
-  "w-full min-w-0 cursor-pointer rounded-2xl border border-sky-200/50 bg-white/75 text-gray-700 shadow-[0_8px_24px_rgba(2,132,199,0.14)] backdrop-blur-md hover:bg-white/90 data-[placeholder]:text-gray-500 focus-visible:border-sky-400/50 focus-visible:ring-2 focus-visible:ring-sky-200/40";
+  "h-11 min-h-[2.75rem] w-full min-w-0 cursor-pointer rounded-2xl border border-sky-200/50 bg-white/75 px-3 py-0 text-sm leading-none text-gray-700 shadow-[0_8px_24px_rgba(2,132,199,0.14)] backdrop-blur-md hover:bg-white/90 data-[placeholder]:text-gray-500 focus-visible:border-sky-400/50 focus-visible:ring-2 focus-visible:ring-sky-200/40";
+
+function patientPortraitSrc(p: Patient) {
+  const clinical = p.clinical_profile as (PatientClinicalProfile & { image_url?: string }) | null | undefined;
+  const url = clinical?.image_url;
+  if (typeof url === "string" && url.trim()) return url.trim();
+  return `https://robohash.org/${encodeURIComponent(p.email || p.id)}.png?set=set4&size=64x64`;
+}
+
+function relativePortraitSrc(r: Relative) {
+  return `https://robohash.org/${encodeURIComponent(r.email || r.id)}.png?set=set4&size=64x64`;
+}
+
+function PickerAvatar({ src, alt }: { src: string; alt: string }) {
+  return (
+    <span className="relative h-7 w-7 shrink-0 overflow-hidden rounded-full bg-white ring-1 ring-sky-200/80">
+      <SafeImage
+        src={src}
+        alt={alt}
+        fill
+        sizes="28px"
+        className="object-cover object-center"
+        loading="lazy"
+        referrerPolicy="no-referrer"
+      />
+    </span>
+  );
+}
 
 type Props = {
   assignees: AppointmentAssignee[];
@@ -48,27 +80,37 @@ export function AppointmentDialogAssigneesSection({
   return (
     <div className="space-y-3 text-gray-700">
       <p className="text-xs leading-relaxed text-gray-600">
-        Optional — share this appointment with relatives or another staff member for calendar access
-        (permissions). This is not the client field; the client is set under Core scheduling.
+        Optional — Share This Appointment With Relatives Or Another Staff Member For Calendar Access
+        (Permissions). This Is Not The Client Field; The Client Is Set Under Core Scheduling.
       </p>
       <div className="space-y-2">
         <div className="flex items-center gap-1.5 text-gray-700">
           <UserPlus className="h-3.5 w-3.5 shrink-0 text-sky-600" aria-hidden />
-          <Label className="text-gray-700">Assign (patients / relatives)</Label>
+          <Label className="text-gray-700">{toTitleCaseLabel("Assign (Patients / Relatives)")}</Label>
         </div>
         <Select onValueChange={onAddAssignee}>
           <SelectTrigger className={glassSelectTriggerClass}>
-            <SelectValue placeholder="Select person" />
+            <SelectValue placeholder={toTitleCaseLabel("Select Person")} />
           </SelectTrigger>
           <SelectContent>
             {patientsForPicker.map((p) => (
               <SelectItem key={p.id} value={p.id} textValue={`Patient: ${p.firstname} ${p.lastname}`}>
-                Patient: {p.firstname} {p.lastname}
+                <span className="flex items-center gap-2">
+                  <PickerAvatar src={patientPortraitSrc(p)} alt={`${p.firstname} ${p.lastname}`} />
+                  <span className="truncate">
+                    Patient: {p.firstname} {p.lastname}
+                  </span>
+                </span>
               </SelectItem>
             ))}
             {relatives.map((r) => (
               <SelectItem key={r.id} value={r.id} textValue={`Relative: ${r.firstname} ${r.lastname}`}>
-                Relative: {r.firstname} {r.lastname}
+                <span className="flex items-center gap-2">
+                  <PickerAvatar src={relativePortraitSrc(r)} alt={`${r.firstname} ${r.lastname}`} />
+                  <span className="truncate">
+                    Relative: {r.firstname} {r.lastname}
+                  </span>
+                </span>
               </SelectItem>
             ))}
           </SelectContent>
@@ -80,13 +122,27 @@ export function AppointmentDialogAssigneesSection({
             return (
               <span
                 key={a.id}
-                className="flex items-center gap-1 rounded-2xl border border-sky-200/40 bg-white/70 px-2 py-1 text-xs text-gray-700 shadow-[0_4px_16px_rgba(2,132,199,0.1)] backdrop-blur-sm"
+                className={cn(
+                  "flex items-center gap-1 rounded-2xl border border-sky-200/40 bg-white/70 px-2 py-1 text-xs text-gray-700 shadow-[0_4px_16px_rgba(2,132,199,0.1)] backdrop-blur-sm"
+                )}
               >
-                {p
-                  ? `Patient: ${p.firstname} ${p.lastname}`
-                  : r
-                    ? `Relative: ${r.firstname} ${r.lastname}`
-                    : a.user}
+                {p ? (
+                  <>
+                    <PickerAvatar src={patientPortraitSrc(p)} alt={`${p.firstname} ${p.lastname}`} />
+                    <span>
+                      Patient: {p.firstname} {p.lastname}
+                    </span>
+                  </>
+                ) : r ? (
+                  <>
+                    <PickerAvatar src={relativePortraitSrc(r)} alt={`${r.firstname} ${r.lastname}`} />
+                    <span>
+                      Relative: {r.firstname} {r.lastname}
+                    </span>
+                  </>
+                ) : (
+                  <span>{a.user}</span>
+                )}
                 <button
                   type="button"
                   className="ml-1 cursor-pointer text-red-500 hover:underline"

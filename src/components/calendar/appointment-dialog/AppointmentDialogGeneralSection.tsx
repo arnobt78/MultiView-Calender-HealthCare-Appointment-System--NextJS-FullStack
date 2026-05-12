@@ -7,10 +7,11 @@
  * contact when it differs from the owner. Dates are edited as local `datetime-local` strings and
  * converted to UTC on save in the parent dialog.
  *
- * UI: responsive two-column-ish rows (client+category, location+status, attachments+file), glass fields,
- * label icons, and required `*` markers that must stay aligned with `canSave` in `AppointmentDialog.tsx`.
- * Treating physician options use stored `image` when present, otherwise a stable **robohash** URL keyed
- * by `user.id` so avatars stay deterministic without extra API calls.
+ * UI: `h-11` controls match login card inputs (`Login.tsx`); `datetime-local` uses WebKit picker indicator
+ * positioning so the calendar control sits on the right like select chevrons. Client rows use portal
+ * `clinical_profile.image_url` when present else robohash (same strategy as `PatientPortalPage`). Treating
+ * physician trigger uses **only** `SelectValue` so Radix does not duplicate avatars already rendered inside
+ * each `SelectItem`.
  */
 
 import { type ChangeEvent, type ReactNode, type RefObject, useMemo } from "react";
@@ -27,7 +28,7 @@ import {
   UserRound,
   ListTodo,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, toTitleCaseLabel } from "@/lib/utils";
 import { SafeImage } from "@/components/ui/safe-image";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -40,10 +41,39 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { Category, Patient, User } from "@/types/types";
+import type { Category, Patient, PatientClinicalProfile, User } from "@/types/types";
 
 /** Matches `MAX_ATTACHMENT_BYTES` in `AppointmentDialog.tsx` — keep both in sync. */
 const MAX_ATTACHMENT_BYTES_LABEL = "1 MB";
+
+/** Shared vertical rhythm with login email/password rows (`h-11` / 2.75rem). */
+const glassRowControlBase =
+  "h-11 min-h-[2.75rem] w-full min-w-0 rounded-2xl border border-sky-200/50 bg-white/75 px-3 py-0 text-sm leading-none text-gray-700 shadow-[0_8px_24px_rgba(2,132,199,0.14)] backdrop-blur-md transition-colors";
+
+const glassInputClass = cn(
+  glassRowControlBase,
+  "placeholder:text-gray-500 focus-visible:border-sky-400/50 focus-visible:ring-2 focus-visible:ring-sky-200/40"
+);
+
+const glassSelectTriggerClass = cn(
+  glassRowControlBase,
+  "cursor-pointer hover:bg-white/90 data-[placeholder]:text-gray-500 focus-visible:border-sky-400/50 focus-visible:ring-2 focus-visible:ring-sky-200/40 flex w-full items-center gap-2 [&_[data-slot=select-value]]:line-clamp-1 [&_[data-slot=select-value]]:min-w-0 [&_[data-slot=select-value]]:flex-1 [&_[data-slot=select-value]]:text-left"
+);
+
+const glassDatetimeInputClass = cn(
+  glassInputClass,
+  "relative cursor-pointer pr-10 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-3 [&::-webkit-calendar-picker-indicator]:top-1/2 [&::-webkit-calendar-picker-indicator]:-translate-y-1/2 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+);
+
+const glassTextareaClass = cn(
+  "w-full min-w-0 rounded-2xl border border-sky-200/50 bg-white/75 px-3 py-2 text-sm text-gray-700 shadow-[0_8px_24px_rgba(2,132,199,0.14)] backdrop-blur-md transition-colors placeholder:text-gray-500 focus-visible:border-sky-400/50 focus-visible:ring-2 focus-visible:ring-sky-200/40 min-h-[88px] resize-y"
+);
+
+const glassCardClass =
+  "rounded-2xl border border-sky-200/55 bg-sky-50/35 p-3 shadow-[0_10px_32px_rgba(2,132,199,0.12)] backdrop-blur-md";
+
+const glassFileButtonClass =
+  "inline-flex h-11 min-h-[2.75rem] w-full shrink-0 items-center justify-center gap-2 rounded-2xl border border-sky-300/45 bg-white/80 px-4 text-sm font-medium text-sky-900 shadow-[0_8px_22px_rgba(2,132,199,0.18)] backdrop-blur-md transition-all hover:border-sky-400/55 hover:bg-sky-50/90 hover:shadow-[0_12px_28px_rgba(2,132,199,0.22)] disabled:pointer-events-none disabled:opacity-50 sm:w-auto sm:min-w-[10rem] [&_svg]:size-4";
 
 type Props = {
   title: string;
@@ -90,6 +120,46 @@ function doctorAvatarSrc(d: User) {
   return `https://robohash.org/${encodeURIComponent(d.id)}.png?size=64x64&set=set4`;
 }
 
+function patientPortraitSrc(p: Patient) {
+  const clinical = p.clinical_profile as (PatientClinicalProfile & { image_url?: string }) | null | undefined;
+  const url = clinical?.image_url;
+  if (typeof url === "string" && url.trim()) return url.trim();
+  return `https://robohash.org/${encodeURIComponent(p.email || p.id)}.png?set=set4&size=64x64`;
+}
+
+function relativePortraitSrc(r: { id: string; email?: string | null }) {
+  return `https://robohash.org/${encodeURIComponent(r.email || r.id)}.png?set=set4&size=64x64`;
+}
+
+function PickerAvatar({
+  src,
+  alt,
+  className,
+}: {
+  src: string;
+  alt: string;
+  className?: string;
+}) {
+  return (
+    <span
+      className={cn(
+        "relative h-7 w-7 shrink-0 overflow-hidden rounded-full bg-white ring-1 ring-sky-200/80",
+        className
+      )}
+    >
+      <SafeImage
+        src={src}
+        alt={alt}
+        fill
+        sizes="28px"
+        className="object-cover object-center"
+        loading="lazy"
+        referrerPolicy="no-referrer"
+      />
+    </span>
+  );
+}
+
 function DoctorMiniAvatar({ user, className }: { user: User; className?: string }) {
   const alt = doctorLabel(user);
   const src = doctorAvatarSrc(user);
@@ -112,20 +182,6 @@ function DoctorMiniAvatar({ user, className }: { user: User; className?: string 
     </span>
   );
 }
-
-const glassInputClass =
-  "w-full min-w-0 rounded-2xl border border-sky-200/50 bg-white/75 text-gray-700 shadow-[0_8px_24px_rgba(2,132,199,0.14)] backdrop-blur-md transition-colors placeholder:text-gray-500 focus-visible:border-sky-400/50 focus-visible:ring-2 focus-visible:ring-sky-200/40";
-
-const glassSelectTriggerClass =
-  "w-full min-w-0 cursor-pointer rounded-2xl border border-sky-200/50 bg-white/75 text-gray-700 shadow-[0_8px_24px_rgba(2,132,199,0.14)] backdrop-blur-md hover:bg-white/90 data-[placeholder]:text-gray-500 focus-visible:border-sky-400/50 focus-visible:ring-2 focus-visible:ring-sky-200/40";
-
-const glassTextareaClass = cn(glassInputClass, "min-h-[88px] resize-y");
-
-const glassCardClass =
-  "rounded-2xl border border-sky-200/55 bg-sky-50/35 p-3 shadow-[0_10px_32px_rgba(2,132,199,0.12)] backdrop-blur-md";
-
-const glassFileButtonClass =
-  "inline-flex h-10 w-full shrink-0 items-center justify-center gap-2 rounded-2xl border border-sky-300/45 bg-white/80 px-4 text-sm font-medium text-sky-900 shadow-[0_8px_22px_rgba(2,132,199,0.18)] backdrop-blur-md transition-all hover:border-sky-400/55 hover:bg-sky-50/90 hover:shadow-[0_12px_28px_rgba(2,132,199,0.22)] disabled:pointer-events-none disabled:opacity-50 sm:w-auto sm:min-w-[10rem] [&_svg]:size-4";
 
 function FieldLabel({
   htmlFor,
@@ -178,16 +234,16 @@ export function AppointmentDialogGeneralSection({
   treatingPhysicianId,
   setTreatingPhysicianId,
 }: Props) {
-  const selectedDoctor = useMemo(
-    () => doctors.find((d) => d.id === treatingPhysicianId),
-    [doctors, treatingPhysicianId]
+  const selectedPatient = useMemo(
+    () => patients.find((p) => p.id === patientId),
+    [patients, patientId]
   );
 
   return (
     <div className="space-y-4 text-gray-700">
       <div className="space-y-2">
         <FieldLabel htmlFor="title" icon={Heading2}>
-          Title <span className="text-gray-700">*</span>
+          {toTitleCaseLabel("Title")} <span className="text-gray-700">*</span>
         </FieldLabel>
         <Input
           id="title"
@@ -199,7 +255,7 @@ export function AppointmentDialogGeneralSection({
 
       <div className="space-y-2">
         <FieldLabel htmlFor="notes" icon={FileText}>
-          Notes
+          {toTitleCaseLabel("Notes")}
         </FieldLabel>
         <Textarea
           id="notes"
@@ -212,7 +268,7 @@ export function AppointmentDialogGeneralSection({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <FieldLabel htmlFor="start" icon={CalendarClock}>
-            Start <span className="text-gray-700">*</span>
+            {toTitleCaseLabel("Start")} <span className="text-gray-700">*</span>
           </FieldLabel>
           <Input
             type="datetime-local"
@@ -225,12 +281,12 @@ export function AppointmentDialogGeneralSection({
                 setEnd(nextStart);
               }
             }}
-            className={cn(glassInputClass, "cursor-pointer")}
+            className={cn(glassDatetimeInputClass)}
           />
         </div>
         <div className="space-y-2">
           <FieldLabel htmlFor="end" icon={CalendarClock}>
-            End <span className="text-gray-700">*</span>
+            {toTitleCaseLabel("End")} <span className="text-gray-700">*</span>
           </FieldLabel>
           <Input
             type="datetime-local"
@@ -246,7 +302,7 @@ export function AppointmentDialogGeneralSection({
             }}
             disabled={!start}
             min={start || undefined}
-            className={cn(glassInputClass, "cursor-pointer")}
+            className={cn(glassDatetimeInputClass)}
           />
         </div>
       </div>
@@ -254,16 +310,30 @@ export function AppointmentDialogGeneralSection({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <FieldLabel icon={UserRound}>
-            Client <span className="text-gray-700">*</span>
+            {toTitleCaseLabel("Client")} <span className="text-gray-700">*</span>
           </FieldLabel>
-          <Select value={patientId} onValueChange={setPatientId}>
+          <Select value={patientId || undefined} onValueChange={setPatientId}>
             <SelectTrigger className={glassSelectTriggerClass}>
-              <SelectValue placeholder="Select client" />
+              {selectedPatient ? (
+                <PickerAvatar
+                  src={patientPortraitSrc(selectedPatient)}
+                  alt={`${selectedPatient.firstname} ${selectedPatient.lastname}`}
+                />
+              ) : null}
+              <SelectValue placeholder={toTitleCaseLabel("Select Client")} />
             </SelectTrigger>
             <SelectContent>
               {patients.map((p) => (
                 <SelectItem key={p.id} value={p.id} textValue={`${p.firstname} ${p.lastname}`}>
-                  {p.firstname} {p.lastname}
+                  <span className="flex items-center gap-2">
+                    <PickerAvatar
+                      src={patientPortraitSrc(p)}
+                      alt={`${p.firstname} ${p.lastname}`}
+                    />
+                    <span className="truncate">
+                      {p.firstname} {p.lastname}
+                    </span>
+                  </span>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -271,11 +341,11 @@ export function AppointmentDialogGeneralSection({
         </div>
         <div className="space-y-2">
           <FieldLabel icon={LayoutGrid}>
-            Category <span className="text-gray-700">*</span>
+            {toTitleCaseLabel("Category")} <span className="text-gray-700">*</span>
           </FieldLabel>
-          <Select value={categoryId} onValueChange={setCategoryId}>
+          <Select value={categoryId || undefined} onValueChange={setCategoryId}>
             <SelectTrigger className={glassSelectTriggerClass}>
-              <SelectValue placeholder="Select category" />
+              <SelectValue placeholder={toTitleCaseLabel("Select Category")} />
             </SelectTrigger>
             <SelectContent>
               {categories.map((c) => (
@@ -290,17 +360,21 @@ export function AppointmentDialogGeneralSection({
 
       {showTreatingPhysicianPicker && (
         <div className={cn("space-y-2", glassCardClass)}>
-          <FieldLabel icon={Stethoscope}>Treating physician</FieldLabel>
+          <FieldLabel icon={Stethoscope}>{toTitleCaseLabel("Treating Physician")}</FieldLabel>
           <p className="text-xs leading-relaxed text-gray-600">
-            Clinical contact for this visit (B2). Calendar ownership stays on the scheduling account
-            (`user_id`); change this only when someone else is the treating clinician.
+            Clinical Contact For This Visit (B2). Calendar Ownership Stays On The Scheduling Account
+            (`user_id`); Change This Only When Someone Else Is The Treating Clinician.
           </p>
-          <Select value={treatingPhysicianId} onValueChange={setTreatingPhysicianId}>
+          <Select
+            value={treatingPhysicianId || undefined}
+            onValueChange={setTreatingPhysicianId}
+          >
+            {/*
+              Trigger shows a single `SelectValue` so the selected item’s row (with avatar inside `SelectItem`)
+              is not duplicated next to a second manual avatar.
+            */}
             <SelectTrigger className={glassSelectTriggerClass}>
-              <div className="flex min-w-0 flex-1 items-center gap-2">
-                {selectedDoctor ? <DoctorMiniAvatar user={selectedDoctor} /> : null}
-                <SelectValue placeholder="Select doctor" />
-              </div>
+              <SelectValue placeholder={toTitleCaseLabel("Select Doctor")} />
             </SelectTrigger>
             <SelectContent>
               {doctors.map((d) => (
@@ -319,7 +393,7 @@ export function AppointmentDialogGeneralSection({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <FieldLabel htmlFor="location" icon={MapPin}>
-            Location
+            {toTitleCaseLabel("Location")}
           </FieldLabel>
           <Input
             id="location"
@@ -329,15 +403,15 @@ export function AppointmentDialogGeneralSection({
           />
         </div>
         <div className="space-y-2">
-          <FieldLabel icon={ListTodo}>Status</FieldLabel>
+          <FieldLabel icon={ListTodo}>{toTitleCaseLabel("Status")}</FieldLabel>
           <Select value={status} onValueChange={setStatus}>
             <SelectTrigger className={glassSelectTriggerClass}>
-              <SelectValue placeholder="Select status" />
+              <SelectValue placeholder={toTitleCaseLabel("Select Status")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="pending">Open</SelectItem>
-              <SelectItem value="done">Done</SelectItem>
-              <SelectItem value="alert">Alert</SelectItem>
+              <SelectItem value="pending">{toTitleCaseLabel("Open")}</SelectItem>
+              <SelectItem value="done">{toTitleCaseLabel("Done")}</SelectItem>
+              <SelectItem value="alert">{toTitleCaseLabel("Alert")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -346,7 +420,7 @@ export function AppointmentDialogGeneralSection({
       <div className="grid grid-cols-1 items-end gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <FieldLabel htmlFor="attachments" icon={Paperclip}>
-            Attachments (comma-separated)
+            Attachments (Comma-Separated)
           </FieldLabel>
           <Input
             id="attachments"
@@ -356,7 +430,7 @@ export function AppointmentDialogGeneralSection({
           />
         </div>
         <div className="space-y-2">
-          <FieldLabel icon={Upload}>Choose files</FieldLabel>
+          <FieldLabel icon={Upload}>{toTitleCaseLabel("Choose Files")}</FieldLabel>
           <input
             id="appointment-file-upload"
             type="file"
@@ -376,15 +450,15 @@ export function AppointmentDialogGeneralSection({
             onClick={() => fileInputRef.current?.click()}
           >
             <Upload className="shrink-0" aria-hidden />
-            {uploading ? "Uploading…" : "Choose files"}
+            {uploading ? toTitleCaseLabel("Uploading…") : toTitleCaseLabel("Choose Files")}
           </Button>
         </div>
       </div>
       <p className="text-xs text-gray-600">
-        Note: each uploaded file must be at most {MAX_ATTACHMENT_BYTES_LABEL}; larger files are skipped
-        before upload.
+        Note: Each Uploaded File Must Be At Most {MAX_ATTACHMENT_BYTES_LABEL}; Larger Files Are Skipped Before
+        Upload.
       </p>
-      {uploading && <div className="text-xs text-sky-700">Uploading…</div>}
+      {uploading && <div className="text-xs text-sky-700">{toTitleCaseLabel("Uploading…")}</div>}
       {Object.keys(fileProgress).length > 0 && (
         <div className="mt-1 text-xs text-sky-700">
           {Object.entries(fileProgress).map(([name, prog]) => (
@@ -396,7 +470,7 @@ export function AppointmentDialogGeneralSection({
       )}
       {uploadedFiles.length > 0 && (
         <div className="mt-1 text-xs text-emerald-700">
-          Uploaded:{" "}
+          {toTitleCaseLabel("Uploaded")}:{" "}
           {uploadedFiles.map((f) => (
             <span key={f} className="mr-2 inline-flex items-center">
               <a
@@ -405,7 +479,7 @@ export function AppointmentDialogGeneralSection({
                 rel="noopener noreferrer"
                 className="cursor-pointer underline hover:text-sky-800"
               >
-                File
+                {toTitleCaseLabel("File")}
               </a>
               <button
                 type="button"

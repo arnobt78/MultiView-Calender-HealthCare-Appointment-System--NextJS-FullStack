@@ -10,6 +10,7 @@ import Image from "next/image";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -68,6 +69,10 @@ export default function FilePreview({ url, filename, fileType }: FilePreviewProp
             <DialogTitle className="text-sm font-medium flex items-center gap-2">
               {getFileIcon(type)} {filename}
             </DialogTitle>
+            {/* Satisfies Radix `DialogContent` description requirement; preview body is self-explanatory visually. */}
+            <DialogDescription className="sr-only">
+              File preview for {filename}. Use download or zoom controls when available.
+            </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col items-center gap-4">
             {type === "image" && (
