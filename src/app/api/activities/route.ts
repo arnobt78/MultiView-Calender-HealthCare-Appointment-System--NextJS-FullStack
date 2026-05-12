@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
         where: {
           id: appointmentId,
           OR: [
-            { user_id: sessionUser.userId },
+            { owner_id: sessionUser.userId },
             {
               // Prisma relation field on Appointment is "assignees" (@@map: appointment_assignee)
               assignees: {

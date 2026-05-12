@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
         where: {
           id: appointmentId,
           OR: [
-            { user_id: sessionUser.userId },
+            { owner_id: sessionUser.userId },
             {
               assignees: {
                 some: {
@@ -89,7 +89,7 @@ export async function GET(req: NextRequest) {
     const accessibleAppointments = await prisma.appointment.findMany({
       where: {
         OR: [
-          { user_id: sessionUser.userId },
+          { owner_id: sessionUser.userId },
           {
             assignees: {
               some: {

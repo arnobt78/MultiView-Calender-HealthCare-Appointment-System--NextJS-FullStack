@@ -520,14 +520,14 @@ export function PatientDetailScreen({
                 <SectionHeading icon={Calendar}>Related Appointments</SectionHeading>
                 {snap.isLoading ? (
                   /*
-                   * Inline skeleton mirrors the 6-column table shape so there is no
+                   * Inline skeleton mirrors the 7-column table shape so there is no
                    * layout jump when real data loads. Only the body rows pulse — header stays stable.
                    */
                   <div className="overflow-x-auto rounded-md border border-slate-200/80">
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          {["Title", "When", "Category", "Doctor", "Location", "Status"].map((h) => (
+                          {["Title", "When", "Category", "Calendar owner", "Treating physician", "Location", "Status"].map((h) => (
                             <TableHead key={h} className="text-gray-700">{h}</TableHead>
                           ))}
                         </TableRow>
@@ -535,7 +535,7 @@ export function PatientDetailScreen({
                       <TableBody>
                         {Array.from({ length: 3 }).map((_, i) => (
                           <TableRow key={i}>
-                            {Array.from({ length: 6 }).map((__, j) => (
+                            {Array.from({ length: 7 }).map((__, j) => (
                               <TableCell key={j}>
                                 <Skeleton className="h-4 w-full rounded" aria-hidden />
                               </TableCell>
@@ -553,7 +553,8 @@ export function PatientDetailScreen({
                           <TableHead className="text-gray-700">Title</TableHead>
                           <TableHead className="whitespace-nowrap text-gray-700">When</TableHead>
                           <TableHead className="text-gray-700">Category</TableHead>
-                          <TableHead className="text-gray-700">Referring Doctor</TableHead>
+                          <TableHead className="text-gray-700">Calendar owner</TableHead>
+                          <TableHead className="text-gray-700">Treating physician</TableHead>
                           <TableHead className="text-gray-700">Location</TableHead>
                           <TableHead className="text-gray-700">Status</TableHead>
                         </TableRow>
@@ -574,7 +575,23 @@ export function PatientDetailScreen({
                               {a.end ? ` – ${format(new Date(a.end), "p")}` : ""}
                             </TableCell>
                             <TableCell className="text-xs text-gray-700">{a.category_label ?? "—"}</TableCell>
-                            {/* Doctor — name link + email line, same pattern as PatientManagement table */}
+                            {/* B3 deferred: DB column remains `user_id`; API exposes calendar owner here (B2 snapshot fields). */}
+                            <TableCell>
+                              {a.calendar_owner_id && a.calendar_owner_display ? (
+                                <div className="min-w-0">
+                                  <EntityTitleLink
+                                    href={`/control-panel/doctors/${a.calendar_owner_id}`}
+                                    label={a.calendar_owner_display}
+                                  />
+                                  {a.calendar_owner_email && (
+                                    <p className="truncate text-xs text-gray-500">{a.calendar_owner_email}</p>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-xs text-gray-500">—</span>
+                              )}
+                            </TableCell>
+                            {/* B2: `doctor_*` = `treating_physician_id ?? user_id` (see `appointment-display-doctor.ts`). */}
                             <TableCell>
                               {a.doctor_id && a.doctor_display ? (
                                 <div className="min-w-0">
@@ -585,6 +602,19 @@ export function PatientDetailScreen({
                                   {a.doctor_email && (
                                     <p className="truncate text-xs text-gray-500">{a.doctor_email}</p>
                                   )}
+                                  {snap.data?.patient?.primary_doctor_id &&
+                                    a.doctor_id &&
+                                    snap.data.patient.primary_doctor_id !== a.doctor_id &&
+                                    snap.data.patient.primary_doctor_display?.trim() && (
+                                      <p className="mt-1.5 text-[10px] leading-snug text-gray-600">
+                                        Primary care:{" "}
+                                        <EntityTitleLink
+                                          href={`/control-panel/doctors/${snap.data.patient.primary_doctor_id}`}
+                                          label={snap.data.patient.primary_doctor_display.trim()}
+                                          className="font-normal"
+                                        />
+                                      </p>
+                                    )}
                                 </div>
                               ) : (
                                 <span className="text-xs text-gray-500">—</span>
@@ -598,7 +628,7 @@ export function PatientDetailScreen({
                         ))}
                         {(snap.data?.appointments ?? []).length === 0 && (
                           <TableRow>
-                            <TableCell colSpan={6} className="text-center text-gray-500">
+                            <TableCell colSpan={7} className="text-center text-gray-500">
                               No Appointments
                             </TableCell>
                           </TableRow>
@@ -783,7 +813,7 @@ export function PatientDetailScreen({
                   subtitle={
                     <>
                       This will delete{" "}
-                      <span className="text-gray-800">
+                      <span className="text-gray-700">
                         {`${p!.firstname} ${p!.lastname}`.trim()}
                         {p!.email ? ` (${p!.email})` : ""}
                       </span>{" "}
@@ -843,7 +873,7 @@ export function PatientDetailScreen({
                   subtitle={
                     <>
                       This will delete{" "}
-                      <span className="text-gray-800">
+                      <span className="text-gray-700">
                         {`${p!.firstname} ${p!.lastname}`.trim()}
                         {p!.email ? ` (${p!.email})` : ""}
                       </span>{" "}

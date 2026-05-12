@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
     const callerRole = await getUserRole(sessionUser.userId);
 
     /*
-     * Patients have appointments linked via `patient_id` (the doctor owns the row via `user_id`).
+     * Patients have appointments linked via `patient_id` (the doctor owns the row via `owner_id` / DB column `user_id`).
      * When the caller is a patient, resolve their patient record and filter by patient_id instead.
      */
     let where: Record<string, unknown>;
@@ -56,7 +56,7 @@ export async function GET(req: NextRequest) {
 
       where = { patient_id: patientRecord.id } as Record<string, unknown>;
     } else {
-      where = { user_id: sessionUser.userId } as Record<string, unknown>;
+      where = { owner_id: sessionUser.userId } as Record<string, unknown>;
     }
 
     if (status) where.status = status;
@@ -115,8 +115,9 @@ export async function POST(req: NextRequest) {
         category_id: body.category ?? null,
         notes: body.notes ?? null,
         status: body.status ?? null,
-        attachements: body.attachements ?? [],
-        user_id: sessionUser.userId,
+        attachments: body.attachments ?? [],
+        owner_id: sessionUser.userId,
+        treating_physician_id: body.treating_physician ?? sessionUser.userId,
       },
     });
 

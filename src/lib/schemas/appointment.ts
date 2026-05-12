@@ -23,6 +23,11 @@ export const appointmentCreateSchema = z
       (v) => (typeof v === "string" && v.trim() === "" ? null : v),
       z.string().uuid("patient must be a valid UUID").optional().nullable()
     ) as z.ZodType<string | null | undefined>,
+    /** B2: optional FK to `users.id` (typically a doctor); defaults server-side to calendar owner when omitted. */
+    treating_physician: z.preprocess(
+      (v) => (typeof v === "string" && v.trim() === "" ? null : v),
+      z.string().uuid("treating_physician must be a valid UUID").optional().nullable()
+    ) as z.ZodType<string | null | undefined>,
     category: z.preprocess(
       (v) => (typeof v === "string" && v.trim() === "" ? null : v),
       z.string().uuid("category must be a valid UUID").optional().nullable()
@@ -30,7 +35,7 @@ export const appointmentCreateSchema = z
     notes: notesSchema,
     status: statusSchema.optional().nullable(),
     // z.url() is the Zod v4 standalone URL validator (replaces .string().url())
-    attachements: z.array(z.url("Invalid attachment URL")).max(20).optional(),
+    attachments: z.array(z.url("Invalid attachment URL")).max(20).optional(),
   })
   .refine((data) => new Date(data.end).getTime() > new Date(data.start).getTime(), {
     message: "End date must be after start date",

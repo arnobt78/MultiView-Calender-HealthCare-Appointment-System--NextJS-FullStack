@@ -76,7 +76,7 @@ export async function computeAvailabilitySlots(
 
   const appts = await prisma.appointment.findMany({
     where: {
-      user_id: doctorId,
+      owner_id: doctorId,
       start: { lt: addMinutes(dayEnd, 1) },
       end: { gt: dayStart },
     },

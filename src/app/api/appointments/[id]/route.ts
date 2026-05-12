@@ -31,7 +31,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
       where: {
         id,
         OR: [
-          { user_id: sessionUser.userId },
+          { owner_id: sessionUser.userId },
           {
             assignees: {
               some: {
@@ -96,10 +96,24 @@ export async function PUT(req: NextRequest, context: RouteContext) {
     if (body.category !== undefined) data.category_id = body.category ?? null;
     if (body.notes !== undefined) data.notes = body.notes ?? null;
     if (body.status !== undefined) data.status = body.status ?? null;
-    if (body.attachements !== undefined) data.attachements = body.attachements ?? [];
+    if (body.attachments !== undefined) data.attachments = body.attachments ?? [];
+    if (body.treating_physician !== undefined) {
+      const v = body.treating_physician as unknown;
+      if (v === null || v === "") {
+        data.treating_physician_id = null;
+      } else if (typeof v === "string" && isValidUUID(v)) {
+        const u = await prisma.user.findUnique({ where: { id: v }, select: { id: true } });
+        if (!u) {
+          return NextResponse.json({ error: "treating_physician user not found" }, { status: 400 });
+        }
+        data.treating_physician_id = v;
+      } else {
+        return NextResponse.json({ error: "Invalid treating_physician" }, { status: 400 });
+      }
+    }
 
     const appointment = await prisma.appointment.updateMany({
-      where: { id, user_id: sessionUser.userId },
+      where: { id, owner_id: sessionUser.userId },
       data,
     });
 
@@ -148,10 +162,12 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       end?: Date;
       location?: string | null;
       patient_id?: string | null;
-      attachements?: string[];
+      attachments?: string[];
       category_id?: string | null;
       notes?: string | null;
       status?: string | null;
+      /** B2: optional FK; `null` clears explicit treating (display falls back to calendar owner). */
+      treating_physician_id?: string | null;
     } = { updated_at: new Date() };
     if (body.title !== undefined) data.title = body.title;
     if (body.start !== undefined) {
@@ -170,17 +186,32 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     }
     if (body.location !== undefined) data.location = body.location;
     if (body.patient !== undefined) data.patient_id = body.patient;
-    if (body.attachements !== undefined) data.attachements = body.attachements;
+    if (body.attachments !== undefined) data.attachments = body.attachments;
     if (body.category !== undefined) data.category_id = body.category;
     if (body.notes !== undefined) data.notes = body.notes;
     if (body.status !== undefined) data.status = body.status;
+    // B2: `treating_physician` mirrors `patient` / `category` wire names (UUID or null to clear).
+    if (body.treating_physician !== undefined) {
+      const v = body.treating_physician as unknown;
+      if (v === null || v === "") {
+        data.treating_physician_id = null;
+      } else if (typeof v === "string" && isValidUUID(v)) {
+        const u = await prisma.user.findUnique({ where: { id: v }, select: { id: true } });
+        if (!u) {
+          return NextResponse.json({ error: "treating_physician user not found" }, { status: 400 });
+        }
+        data.treating_physician_id = v;
+      } else {
+        return NextResponse.json({ error: "Invalid treating_physician" }, { status: 400 });
+      }
+    }
 
     if (Object.keys(data).length <= 1) {
       return NextResponse.json({ error: "No fields to update" }, { status: 400 });
     }
 
     const result = await prisma.appointment.updateMany({
-      where: { id, user_id: sessionUser.userId },
+      where: { id, owner_id: sessionUser.userId },
       data,
     });
 
@@ -252,7 +283,7 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
     }
 
     const result = await prisma.appointment.deleteMany({
-      where: { id, user_id: sessionUser.userId },
+      where: { id, owner_id: sessionUser.userId },
     });
 
     if (result.count === 0) {

@@ -172,7 +172,10 @@ export function serializeInvoice(i: {
   };
 }
 
-/** Appointment: map Prisma field names to API (patient_id → patient, category_id → category) */
+/**
+ * Appointment: map Prisma field names to API (`patient_id` → `patient`, etc.).
+ * B3: Prisma calendar-owner field is `owner_id` (@map("user_id")); JSON keeps stable `user_id` for clients.
+ */
 export function serializeAppointment(a: {
   id: string;
   created_at: Date;
@@ -185,8 +188,10 @@ export function serializeAppointment(a: {
   notes: string | null;
   title: string;
   status: string | null;
-  user_id: string;
-  attachements: string[];
+  owner_id: string;
+  /** B2: optional FK to `users.id` — defaults to calendar owner on create / backfill. */
+  treating_physician_id?: string | null;
+  attachments: string[];
 }) {
   return {
     id: a.id,
@@ -200,7 +205,35 @@ export function serializeAppointment(a: {
     notes: a.notes,
     title: a.title,
     status: a.status,
-    user_id: a.user_id,
-    attachements: a.attachements ?? [],
+    user_id: a.owner_id,
+    treating_physician_id: a.treating_physician_id ?? null,
+    attachments: a.attachments ?? [],
   };
+}
+
+/** Prisma appointment row + optional `category` / `owner` / `treating_physician` includes for portal responses */
+export type PortalAppointmentIncludeRow = Parameters<typeof serializeAppointment>[0] & {
+  category?: { label: string; color: string | null } | null;
+  owner?: { display_name: string | null; email: string } | null;
+  /** B2: joined user row for `treating_physician_id` when set (display chip). */
+  treating_physician?: { display_name: string | null; email: string } | null;
+};
+
+/**
+ * Patient portal GET + SSR prefetch: one serialized shape for `appointments`.
+ * `owner` = calendar owner (`owner_id` in Prisma → `user_id` in JSON). `treating_physician` = B2 clinical contact when distinct from owner.
+ */
+export function mapPortalAppointmentsFromRows(rows: PortalAppointmentIncludeRow[]) {
+  return rows.map((a) => ({
+    ...serializeAppointment(a),
+    category: a.category
+      ? { label: a.category.label, color: a.category.color }
+      : undefined,
+    owner: a.owner
+      ? { display_name: a.owner.display_name, email: a.owner.email }
+      : undefined,
+    treating_physician: a.treating_physician
+      ? { display_name: a.treating_physician.display_name, email: a.treating_physician.email }
+      : undefined,
+  }));
 }

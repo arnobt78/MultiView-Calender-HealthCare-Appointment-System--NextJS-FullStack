@@ -11,6 +11,8 @@
  *
  * Note: This script uses upsert (INSERT ... ON CONFLICT), so it's safe to run multiple times.
  * It will update existing records or create new ones.
+ *
+ * Appointments CSV may optionally include `treating_physician_id` (B2); when absent, seed sets it to `user_id`.
  */
 
 import { config } from "dotenv";
@@ -42,12 +44,18 @@ interface AppointmentRow {
   end: string;
   location: string | null;
   patient: string | null;
-  attachements: string; // JSON array string
+  attachments: string; // JSON array string
   category: string | null;
   notes: string | null;
   title: string;
   status: string | null;
+  /** DB column `user_id` — calendar owner (matches Prisma `owner_id` @map). */
   user_id: string;
+  /**
+   * Optional B2 FK to `users.id` (DB `treating_physician_id`). When omitted in CSV, seed defaults to `user_id`
+   * so portal / snapshot “treating” columns never stay NULL for legacy exports.
+   */
+  treating_physician_id?: string | null;
 }
 
 interface AppointmentAssigneeRow {
@@ -104,7 +112,7 @@ async function parseCSV<T>(filePath: string): Promise<T[]> {
 }
 
 /**
- * Parse JSON field (for arrays like attachements)
+ * Parse JSON field (for arrays like attachments)
  */
 function parseJSONField(field: string): any {
   if (!field || field === "null" || field === "" || field === "[]") {
@@ -276,7 +284,7 @@ async function seedCategories(query: any) {
 }
 
 /**
- * Seed appointments table
+ * Seed appointments table (`user_id` = calendar owner; `treating_physician_id` = B2 clinical FK when present in CSV).
  */
 async function seedAppointments(query: any) {
   const appointments = await parseCSV<AppointmentRow>(join(CSV_DIR, "appointments.csv"));
@@ -287,9 +295,11 @@ async function seedAppointments(query: any) {
 
   for (const appointment of appointments) {
     try {
+      const treatingId =
+        appointment.treating_physician_id?.trim() || appointment.user_id;
       await query(
-        `INSERT INTO appointments (id, created_at, updated_at, "start", "end", location, patient, attachements, category, notes, title, status, user_id)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        `INSERT INTO appointments (id, created_at, updated_at, "start", "end", location, patient, attachments, category, notes, title, status, user_id, treating_physician_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
          ON CONFLICT (id) 
          DO UPDATE SET 
            updated_at = EXCLUDED.updated_at,
@@ -297,12 +307,13 @@ async function seedAppointments(query: any) {
            "end" = EXCLUDED."end",
            location = EXCLUDED.location,
            patient = EXCLUDED.patient,
-           attachements = EXCLUDED.attachements,
+           attachments = EXCLUDED.attachments,
            category = EXCLUDED.category,
            notes = EXCLUDED.notes,
            title = EXCLUDED.title,
            status = EXCLUDED.status,
-           user_id = EXCLUDED.user_id`,
+           user_id = EXCLUDED.user_id,
+           treating_physician_id = EXCLUDED.treating_physician_id`,
         [
           appointment.id,
           new Date(appointment.created_at),
@@ -311,12 +322,13 @@ async function seedAppointments(query: any) {
           new Date(appointment.end),
           appointment.location || null,
           appointment.patient || null,
-          parseJSONField(appointment.attachements),
+          parseJSONField(appointment.attachments),
           appointment.category || null,
           appointment.notes || null,
           appointment.title,
           appointment.status || null,
           appointment.user_id,
+          treatingId,
         ]
       );
     } catch (error) {

@@ -25,7 +25,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
         { user_id: sessionUser.userId },
         { invited_by_id: sessionUser.userId },
         { invited_email: sessionUser.email },
-        { appointment: { user_id: sessionUser.userId } },
+        { appointment: { owner_id: sessionUser.userId } },
       ],
     },
     select: { permission: true, id: true },
@@ -54,7 +54,7 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
         id,
         OR: [
           { invited_by_id: sessionUser.userId },
-          { appointment: { user_id: sessionUser.userId } },
+          { appointment: { owner_id: sessionUser.userId } },
         ],
       },
     });

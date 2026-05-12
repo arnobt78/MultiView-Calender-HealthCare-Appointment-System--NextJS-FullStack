@@ -1,5 +1,5 @@
 {
-  "name": "multiview-calender-appointment",
+  "name": "healthcal-pro",
   "version": "0.2.1",
   "private": true,
   "scripts": {
@@ -17,9 +17,11 @@
     "db:check-empty": "tsx scripts/check-db-empty.ts",
     "db:manage-user": "tsx scripts/manage-user.ts",
     "db:seed-test-user": "tsx scripts/seed-test-user.ts",
+    "db:prepare": "npm run prisma:push && npm run db:seed-test-user",
     "db:seed-demo-clinical": "tsx scripts/seed-demo-patient-clinical.ts",
     "db:clear": "tsx scripts/db-clear.ts",
     "test:smoke-invalidation": "tsx scripts/smoke-cross-tab-invalidation.ts",
+    "qa:local": "npm run prisma:push && npm run db:seed-test-user && npm run test",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"

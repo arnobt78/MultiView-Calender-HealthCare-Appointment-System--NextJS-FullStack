@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS appointments (
   "end" TIMESTAMP WITH TIME ZONE NOT NULL,
   location TEXT,
   patient UUID REFERENCES patients(id) ON DELETE SET NULL,
-  attachements TEXT[],
+  attachments TEXT[],
   category UUID REFERENCES categories(id) ON DELETE SET NULL,
   notes TEXT,
   title TEXT NOT NULL,

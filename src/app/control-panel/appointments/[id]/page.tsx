@@ -40,7 +40,7 @@ export default async function AppointmentDetailPage({ params }: PageProps) {
     where: {
       id,
       OR: [
-        { user_id: sessionUser.userId },
+        { owner_id: sessionUser.userId },
         { assignees: { some: { user_id: sessionUser.userId } } },
       ],
     },
@@ -105,7 +105,7 @@ export default async function AppointmentDetailPage({ params }: PageProps) {
         <CardHeader>
           <CardTitle>Schema: appointments</CardTitle>
           <p className="text-sm text-muted-foreground">
-            id · created_at · updated_at · start · end · location · patient · category · title · status · notes · user_id · attachements
+            id · created_at · updated_at · start · end · location · patient · category · title · status · notes · user_id · attachments
           </p>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -188,10 +188,10 @@ export default async function AppointmentDetailPage({ params }: PageProps) {
               </dd>
             </div>
             <div className="sm:col-span-2">
-              <dt className="font-medium text-muted-foreground">attachements</dt>
+              <dt className="font-medium text-muted-foreground">attachments</dt>
               <dd className="mt-0.5">
-                {appointment.attachements?.length ? (
-                  <span>{appointment.attachements.length} file(s)</span>
+                {appointment.attachments?.length ? (
+                  <span>{appointment.attachments.length} file(s)</span>
                 ) : "—"}
               </dd>
             </div>

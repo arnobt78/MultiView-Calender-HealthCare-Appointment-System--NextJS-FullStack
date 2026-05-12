@@ -470,10 +470,10 @@ export default function MonthView() {
                       </div>
                     )}
 
-                    {a.attachements && a.attachements.length > 0 && (
+                    {a.attachments && a.attachments.length > 0 && (
                       <div className="flex items-center gap-2 text-xs text-gray-400 mb-1">
                         <FiPaperclip /> Attachments:
-                        {a.attachements.map((file, idx) => {
+                        {a.attachments.map((file, idx) => {
                           // Get Vercel Blob public URL
                           const publicUrl = getPublicUrl(file);
                           const fileName = file.split("/").pop() || file;
@@ -502,7 +502,7 @@ export default function MonthView() {
                       </span>
                     </div>
 
-                    {/* Refer to: patient name from appointment.patient field */}
+                    {/* Client row — `appointment.patient` is FK / embedded patient name (not calendar owner). */}
                     {a.patient && (
                       <div className="flex items-center gap-2 text-xs text-gray-400 mb-1">
                         <FiUser /> Client:

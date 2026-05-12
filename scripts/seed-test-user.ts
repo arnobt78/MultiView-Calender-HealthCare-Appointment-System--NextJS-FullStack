@@ -6,6 +6,7 @@
  *  - 7 additional demo doctor accounts (Demo Doctor 2–8) with specialties, bios, and stock photos
  *  - 4 global AppointmentType rows shared across all doctors
  *  - specialty / bio on the primary Demo Doctor account
+ *  - Up to two idempotent `appointments` rows (B2 `treating_physician_id` + B3 `owner_id`) for calendar / portal QA when category + demo patient exist
  *
  * Usage: npm run db:seed-test-user
  */
@@ -126,6 +127,7 @@ async function seedDemoUsers() {
     DEMO_ACCOUNTS,
     DEMO_PASSWORD,
     DEMO_DOCTOR_APPOINTMENT_TYPE_ID,
+    DEMO_PATIENT_EMAIL,
   } = await import("../src/lib/demo-credentials");
 
   const passwordHash = await hashPassword(DEMO_PASSWORD);
@@ -293,6 +295,7 @@ async function seedDemoUsers() {
           email: demoPatientAcc.email,
           active: true,
           clinical_profile,
+          ...(doctor ? { primary_doctor_id: doctor.id } : {}),
           ...(auditUser
             ? { created_by_id: auditUser.id, updated_by_id: auditUser.id }
             : {}),
@@ -306,11 +309,71 @@ async function seedDemoUsers() {
           lastname,
           email: demoPatientAcc.email,
           clinical_profile,
+          // Link primary care doctor for Patient Management / portal parity when unset (FK → users.id).
+          ...(doctor && !existingRow.primary_doctor_id ? { primary_doctor_id: doctor.id } : {}),
           // Backfill only when missing so we do not overwrite real editors on `updated_by`.
           ...(auditUser && !existingRow.created_by_id ? { created_by_id: auditUser.id } : {}),
           ...(auditUser && !existingRow.updated_by_id ? { updated_by_id: auditUser.id } : {}),
         },
       });
+    }
+  }
+
+  /**
+   * Demo `appointments` for manual QA: Prisma uses `owner_id` (DB `user_id`) and B2 `treating_physician_id`.
+   * Skips silently if category or patient row is missing — keeps script safe on empty DBs.
+   */
+  if (doctor) {
+    const cat = await prisma.category.findFirst({
+      where: { is_active: true },
+      orderBy: { sort_order: "asc" },
+    });
+    const patientRow = await prisma.patient.findFirst({
+      where: { email: DEMO_PATIENT_EMAIL },
+    });
+    const colleague = await prisma.user.findFirst({
+      where: { email: "demo.doctor2@healthcal.dev" },
+    });
+    if (cat && patientRow) {
+      const seedSpecs: { title: string; treatingId: string; notes: string }[] = [
+        {
+          title: "Demo seed — owner equals treating (baseline B2)",
+          treatingId: doctor.id,
+          notes:
+            "Seeded: calendar owner and treating physician are the same user (default B2 backfill behavior).",
+        },
+        {
+          title: "Demo seed — treating physician delegated to colleague",
+          treatingId: colleague?.id ?? doctor.id,
+          notes: colleague
+            ? "Seeded: calendar owner remains Demo Doctor; treating physician is Demo Doctor 2 for UI drift demos."
+            : "Seeded: no colleague doctor yet — treating matches owner until demo.doctor2@healthcal.dev exists.",
+        },
+      ];
+      for (let i = 0; i < seedSpecs.length; i += 1) {
+        const spec = seedSpecs[i];
+        const existingAppt = await prisma.appointment.findFirst({
+          where: { owner_id: doctor.id, title: spec.title },
+        });
+        if (existingAppt) continue;
+        const start = new Date(Date.now() + (2 + i) * 24 * 60 * 60 * 1000);
+        const end = new Date(start.getTime() + 45 * 60 * 1000);
+        await prisma.appointment.create({
+          data: {
+            title: spec.title,
+            start,
+            end,
+            location: "Demo Clinic — Room 1",
+            patient_id: patientRow.id,
+            category_id: cat.id,
+            notes: spec.notes,
+            status: "pending",
+            owner_id: doctor.id,
+            treating_physician_id: spec.treatingId,
+            attachments: [],
+          },
+        });
+      }
     }
   }
 }

@@ -9,6 +9,7 @@ import {
   invalidateInvoicesAndOverview,
   invalidateNotificationsData,
   invalidatePatientDetailAndSnapshot,
+  invalidatePatientPortal,
   invalidateInsightsAndAnalytics,
   invalidateDashboardOverview,
 } from "@/lib/query-client";
@@ -53,21 +54,31 @@ function getStatusLabel(status?: string | null) {
   return "pending";
 }
 
-function getUpdatedFieldLabels(updateData: Partial<Appointment>) {
-  const labels: Array<{ key: keyof Partial<Appointment>; label: string }> = [
-    { key: "title", label: "Title" },
-    { key: "start", label: "Start" },
-    { key: "end", label: "End" },
-    { key: "patient", label: "Client" },
-    { key: "category", label: "Category" },
-    { key: "location", label: "Location" },
-    { key: "notes", label: "Notes" },
-    { key: "status", label: "Status" },
-    { key: "attachements", label: "Attachments" },
+/**
+ * Human-readable PATCH field names for toast copy. Supports B2 `treating_physician` (wire) and
+ * `treating_physician_id` (Prisma-shaped) without duplicate labels.
+ */
+function getUpdatedFieldLabels(
+  updateData: Partial<Appointment> & { treating_physician?: string | null }
+) {
+  const pairs: Array<[string, string]> = [
+    ["title", "Title"],
+    ["start", "Start"],
+    ["end", "End"],
+    ["patient", "Client"],
+    ["category", "Category"],
+    ["location", "Location"],
+    ["notes", "Notes"],
+    ["status", "Status"],
+    ["attachments", "Attachments"],
+    ["treating_physician_id", "Treating physician"],
+    ["treating_physician", "Treating physician"],
   ];
-  return labels
-    .filter(({ key }) => key in updateData)
-    .map(({ label }) => label);
+  const labels: string[] = [];
+  for (const [key, label] of pairs) {
+    if (key in updateData && !labels.includes(label)) labels.push(label);
+  }
+  return labels;
 }
 
 export function useAppointments() {
@@ -261,6 +272,9 @@ export function useAppointments() {
         // Insights charts and dashboard counters depend on appointment totals.
         invalidateInsightsAndAnalytics(queryClient),
         invalidateDashboardOverview(queryClient),
+        // Portal timeline lists this patient's appointments — drop stale rows without a full reload.
+        invalidatePatientPortal(queryClient),
+        ...(patientId ? [invalidatePatientDetailAndSnapshot(queryClient, patientId)] : []),
       ]);
       const deleted = context?.deleted;
       notify.crud({
@@ -307,11 +321,13 @@ export function useAppointments() {
       );
       // Status changes affect done/pending/alert counters in overview and insights by-status chart.
       // The PATCH handler also creates a notification row — invalidate so the bell reflects it instantly.
+      // Portal timeline reads appointment status — invalidate so patient-facing portal refetches without navigation.
       await Promise.all([
         invalidatePatientDetailAndSnapshot(queryClient, appt.patient ?? undefined),
         invalidateNotificationsData(queryClient),
         invalidateInsightsAndAnalytics(queryClient),
         invalidateDashboardOverview(queryClient),
+        invalidatePatientPortal(queryClient),
       ]);
       notify.crud({
         action: "updated",

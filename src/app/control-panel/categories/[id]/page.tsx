@@ -210,7 +210,7 @@ export default async function CategoryDetailPage({ params }: PageProps) {
                       <div className="min-w-0">
                         <p className="font-medium truncate">{appt.title}</p>
                         <p className="text-muted-foreground">
-                          Dr. {appt.owner.display_name ?? appt.owner.email} · {format(new Date(appt.start), "dd MMM yyyy, HH:mm")}
+                          Calendar owner: {appt.owner.display_name ?? appt.owner.email} · {format(new Date(appt.start), "dd MMM yyyy, HH:mm")}
                         </p>
                       </div>
                       <Badge

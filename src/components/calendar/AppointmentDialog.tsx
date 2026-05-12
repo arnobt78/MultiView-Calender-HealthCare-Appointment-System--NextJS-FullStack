@@ -2,23 +2,18 @@
 
 import {
   Dialog,
+  DialogClose,
   DialogContent,
-  DialogHeader,
+  DialogDescription,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
+import {
+  skyGlassBackButtonClass,
+  skyGlassPrimaryButtonClass,
+} from "@/lib/calendar-header-action-styles";
 
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -33,6 +28,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { usePatients } from "@/hooks/usePatients";
 import { useCategories } from "@/hooks/useCategories";
 import { useRelatives } from "@/hooks/useRelatives";
+import { useUsers } from "@/hooks/useUsers";
 import { useAppointments, FullAppointment } from "@/hooks/useAppointments";
 import { useAuth } from "@/hooks/useAuth";
 import { apiClient } from "@/lib/api-client";
@@ -40,8 +36,15 @@ import { queryKeys } from "@/lib/query-keys";
 import { invalidateAssigneesActivitiesAppointment } from "@/lib/query-client";
 import { notify } from "@/lib/notify";
 import { appointmentCreateSchema } from "@/lib/schemas/appointment";
+import { Calendar, CalendarCheck, Loader2, X } from "lucide-react";
+
+/** Client-side upload cap (bytes) — keep in sync with UI note in `AppointmentDialogGeneralSection`. */
+const MAX_ATTACHMENT_BYTES = 1048576;
 // Using Vercel Blob for file storage (better for demo projects on Vercel)
-import { uploadFileViaAPI, deleteFile } from "@/lib/vercelBlob";
+import { uploadFileViaAPI } from "@/lib/vercelBlob";
+import { AppointmentDialogGeneralSection } from "@/components/calendar/appointment-dialog/AppointmentDialogGeneralSection";
+import { AppointmentDialogAssigneesSection } from "@/components/calendar/appointment-dialog/AppointmentDialogAssigneesSection";
+import { AppointmentDialogActivitiesSection } from "@/components/calendar/appointment-dialog/AppointmentDialogActivitiesSection";
 
 type Props = {
   trigger?: React.ReactNode;
@@ -51,6 +54,14 @@ type Props = {
   onOpenChange?: (open: boolean) => void;
 };
 
+/**
+ * Appointment create/edit host: two-column layout with General vs Access & extras.
+ * State stays here so save/assignee/activity mutations remain one place; child sections are presentational.
+ *
+ * Modal chrome: sky border + glow (see `GlobalSearch`), inner layout rhythm aligned with Add Patient dialog
+ * (`PatientManagement`): custom close, scroll body, sky-tinted footer. Uploads enforce `MAX_ATTACHMENT_BYTES`
+ * per file before `uploadFileViaAPI` (see `handleFileChange`).
+ */
 export default function AppointmentDialog({
   trigger,
   appointment,
@@ -72,6 +83,12 @@ export default function AppointmentDialog({
   const { relatives = [] } = useRelatives();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { data: doctorsData } = useUsers(
+    { role: "doctor", limit: 200 },
+    // Staff-only list: patients must not hit `/api/users` from this dialog.
+    { enabled: Boolean(user) && (user?.role ?? "") !== "patient" }
+  );
+  const doctors = useMemo(() => doctorsData?.users ?? [], [doctorsData]);
   const { createAppointmentAsync, updateAppointmentAsync } = useAppointments();
 
   const [assignees, setAssignees] = useState<AppointmentAssignee[]>([]); // type-safe
@@ -86,8 +103,10 @@ export default function AppointmentDialog({
   const [patientId, setPatientId] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [location, setLocation] = useState("");
-  const [attachements, setattachements] = useState(""); // comma-separated string
+  const [attachments, setAttachments] = useState(""); // comma-separated string
   const [status, setStatus] = useState("pending");
+  /** B2: User.id of treating physician — persisted as `treating_physician_id`; defaults to calendar owner when unset. */
+  const [treatingPhysicianId, setTreatingPhysicianId] = useState("");
   const [uploading, setUploading] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -104,8 +123,9 @@ export default function AppointmentDialog({
     setPatientId("");
     setCategoryId("");
     setLocation("");
-    setattachements("");
+    setAttachments("");
     setStatus("pending");
+    setTreatingPhysicianId(user?.id ?? "");
     setUploadedFiles([]);
     setAssignees([]);
     setActivityType("");
@@ -131,7 +151,7 @@ export default function AppointmentDialog({
       setPatientId(appointment.patient || "");
       setCategoryId(appointment.category || "");
       setLocation(appointment.location || "");
-      setattachements((appointment.attachements || []).join(", "));
+      setAttachments((appointment.attachments || []).join(", "));
       setStatus(appointment.status || "pending");
       setOpen(true);
 
@@ -146,11 +166,15 @@ export default function AppointmentDialog({
       } else {
         setActivityList([]);
       }
+      setTreatingPhysicianId(
+        appointment.treating_physician_id ?? appointment.user_id ?? user?.id ?? ""
+      );
     } else {
       setAssignees([]);
       setActivityList([]);
+      setTreatingPhysicianId(user?.id ?? "");
     }
-  }, [appointment]);
+  }, [appointment, user?.id]);
 
   const handleDialogOpenChange = (nextOpen: boolean) => {
     setOpen(nextOpen);
@@ -160,6 +184,10 @@ export default function AppointmentDialog({
     }
   };
 
+  /**
+   * Required for save — asterisks in `AppointmentDialogGeneralSection` must match this set exactly:
+   * title, start, end, patient (client), category; end must be on/after start (same rule as here).
+   */
   const canSave = useMemo(
     () =>
       Boolean(
@@ -186,7 +214,7 @@ export default function AppointmentDialog({
 
       const safeStart = localInputValueToUTC(start);
       const safeEnd = localInputValueToUTC(end);
-      const attachementArray = attachements.split(",").map((s) => s.trim()).filter(Boolean);
+      const attachementArray = attachments.split(",").map((s) => s.trim()).filter(Boolean);
 
       const parsed = appointmentCreateSchema.safeParse({
         title,
@@ -197,7 +225,7 @@ export default function AppointmentDialog({
         location: location || null,
         notes: notes || "",
         status: status as "pending" | "done" | "alert",
-        attachements: attachementArray,
+        attachments: attachementArray,
       });
       if (!parsed.success) {
         setError(parsed.error.issues[0]?.message || "Please check the form fields.");
@@ -220,9 +248,16 @@ export default function AppointmentDialog({
         if (patientId !== appointment?.patient) updates.patient = patientId;
         if (categoryId !== appointment?.category) updates.category = categoryId;
         if (location !== appointment?.location) updates.location = location;
-        if (attachements !== (appointment?.attachements || []).join(", ")) updates.attachements = attachementArray;
+        if (attachments !== (appointment?.attachments || []).join(", ")) updates.attachments = attachementArray;
         if (status !== appointment?.status) updates.status = status as "pending" | "done" | "alert";
         updates.updated_at = new Date().toISOString();
+
+        const prevTreating =
+          appointment?.treating_physician_id ?? appointment?.user_id ?? "";
+        if (treatingPhysicianId !== prevTreating) {
+          (updates as Partial<Appointment> & { treating_physician?: string | null }).treating_physician =
+            treatingPhysicianId || null;
+        }
 
         if (Object.keys(updates).length > 0) {
           await updateAppointmentAsync({ id: apptId, ...updates });
@@ -299,10 +334,10 @@ export default function AppointmentDialog({
           patient: patientId,
           category: categoryId,
           location,
-          attachements: attachementArray,
+          attachments: attachementArray,
           status: status as "pending" | "done" | "alert",
-          user_id: user?.id,
-        });
+          treating_physician: treatingPhysicianId || user?.id,
+        } as Partial<Appointment> & { treating_physician?: string });
         apptId = createResult.appointment.id;
 
         if (assignees.length > 0) {
@@ -381,15 +416,21 @@ export default function AppointmentDialog({
     }
   };
 
-  // Handle file upload
+  // Handle file upload — reject individual files over MAX_ATTACHMENT_BYTES before hitting the API.
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
     setUploading(true);
     setError(null);
     const files = Array.from(e.target.files);
     const uploadedFileNames: string[] = [];
+    const skippedOversized: string[] = [];
     for (const file of files) {
       setFileProgress((prev) => ({ ...prev, [file.name]: 0 }));
+      if (file.size > MAX_ATTACHMENT_BYTES) {
+        skippedOversized.push(file.name);
+        setFileProgress((prev) => ({ ...prev, [file.name]: 0 }));
+        continue;
+      }
       try {
         // Upload to Vercel Blob with progress tracking
         // Uses project-specific folder from environment variable
@@ -410,18 +451,23 @@ export default function AppointmentDialog({
         continue;
       }
     }
+    if (skippedOversized.length > 0) {
+      const skipMsg = `Skipped (over 1MB): ${skippedOversized.join(", ")}`;
+      setError((prev) => (prev?.trim() ? `${prev} ${skipMsg}` : skipMsg));
+    }
     setUploadedFiles((prev) => [...prev, ...uploadedFileNames]);
-    setattachements((prev: string) =>
+    setAttachments((prev: string) =>
       prev
         ? prev + ", " + uploadedFileNames.join(", ")
         : uploadedFileNames.join(", ")
     );
     setUploading(false);
+    e.target.value = "";
   };
 
   const handleRemoveUploadedFile = async (publicId: string) => {
     setUploadedFiles((prev) => prev.filter((f) => f !== publicId));
-    setattachements((prev) =>
+    setAttachments((prev) =>
       prev
         .split(",")
         .map((s) => s.trim())
@@ -505,311 +551,158 @@ export default function AppointmentDialog({
   return (
     <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      <DialogContent aria-describedby="">
-        <DialogHeader>
-          <DialogTitle>
-            {isEditMode ? "Edit appointment" : "Create new appointment"}
-          </DialogTitle>
-        </DialogHeader>
-        {error && <div className="text-red-600 text-xs mb-2">{error}</div>}
+      {/*
+        Shell: same rhythm as Add Patient dialog (custom close, header band, scroll body, tinted footer)
+        with Global Search sky border + outer glow — `showCloseButton={false}` avoids duplicate X controls.
+      */}
+      <DialogContent
+        showCloseButton={false}
+        aria-describedby="appointment-dialog-desc"
+        className="flex h-[90vh] max-h-[90vh] w-[90vw] max-w-[1200px] flex-col gap-0 overflow-hidden rounded-[28px] border border-sky-400/30 bg-white p-0 shadow-[0_30px_80px_rgba(2,132,199,0.35)] backdrop-blur-sm"
+      >
+        <div className="shrink-0 bg-white pt-6 text-gray-700">
+          <div className="px-6">
+            <div className="flex items-start gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-sky-200/70 bg-sky-50 text-sky-700">
+                <Calendar className="h-5 w-5" aria-hidden />
+              </span>
+              <div className="min-w-0">
+                <DialogTitle className="text-left text-xl font-semibold text-gray-700">
+                  {isEditMode ? "Edit appointment" : "Create new appointment"}
+                </DialogTitle>
+                <DialogDescription
+                  id="appointment-dialog-desc"
+                  className="text-left text-sm text-muted-foreground"
+                >
+                  {isEditMode
+                    ? "Update scheduling on the left; manage sharing and activity notes on the right."
+                    : "Set the client and time on the left; optionally share with relatives or add a first activity on the right."}
+                </DialogDescription>
+              </div>
+              <DialogClose asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="ml-auto h-8 w-8 shrink-0 rounded-full text-muted-foreground hover:bg-sky-100 hover:text-sky-800"
+                >
+                  <X className="h-4 w-4" aria-hidden />
+                  <span className="sr-only">Close</span>
+                </Button>
+              </DialogClose>
+            </div>
+          </div>
+          <div className="mx-6 mt-4 border-b border-sky-200/60" />
+        </div>
+        {error && (
+          <div className="shrink-0 px-6 pt-2 text-xs text-red-600">{error}</div>
+        )}
         {success && (
-          <div className="text-green-600 text-xs mb-2">
+          <div className="shrink-0 px-6 pt-2 text-xs text-green-600">
             Successfully saved!
           </div>
         )}
-        <Tabs defaultValue="general" className="w-full pt-2">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="general" className="cursor-pointer">General</TabsTrigger>
-            <TabsTrigger value="assignees" className="cursor-pointer">Assignments</TabsTrigger>
-            <TabsTrigger value="activities" className="cursor-pointer">Activities</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="general" className="space-y-2 py-2 mt-0">
-            <div className="space-y-2">
-              <Label htmlFor="title">Title</Label>
-              <Input
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="cursor-pointer"
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4 text-gray-700">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
+            <section className="min-w-0">
+              <h3 className="mb-2 text-sm font-semibold tracking-tight text-gray-700">Core scheduling</h3>
+              <AppointmentDialogGeneralSection
+                title={title}
+                setTitle={setTitle}
+                notes={notes}
+                setNotes={setNotes}
+                start={start}
+                setStart={setStart}
+                end={end}
+                setEnd={setEnd}
+                patientId={patientId}
+                setPatientId={setPatientId}
+                categoryId={categoryId}
+                setCategoryId={setCategoryId}
+                location={location}
+                setLocation={setLocation}
+                attachments={attachments}
+                setAttachments={setAttachments}
+                status={status}
+                setStatus={setStatus}
+                patients={patients}
+                categories={categories}
+                uploading={uploading}
+                fileProgress={fileProgress}
+                uploadedFiles={uploadedFiles}
+                fileInputRef={fileInputRef}
+                onFileChange={handleFileChange}
+                onRemoveUploadedFile={handleRemoveUploadedFile}
+                showTreatingPhysicianPicker={Boolean(user) && (user?.role ?? "") !== "patient"}
+                doctors={doctors}
+                treatingPhysicianId={treatingPhysicianId}
+                setTreatingPhysicianId={setTreatingPhysicianId}
               />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
-              <Textarea
-                id="notes"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                className="cursor-pointer"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="start">Start</Label>
-                <Input
-                  type="datetime-local"
-                  id="start"
-                  value={start}
-                  onChange={(e) => {
-                    const nextStart = e.target.value;
-                    setStart(nextStart);
-                    if (end && nextStart && end < nextStart) {
-                      setEnd(nextStart);
-                    }
-                  }}
+            </section>
+            <section className="flex min-w-0 flex-col gap-6 lg:border-l lg:border-sky-200/70 lg:pl-8">
+              <div>
+                <h3 className="mb-2 text-sm font-semibold tracking-tight text-gray-700">Access &amp; sharing</h3>
+                <AppointmentDialogAssigneesSection
+                  assignees={assignees}
+                  patients={patients}
+                  relatives={relatives}
+                  selectedPatientId={patientId}
+                  onAddAssignee={handleAddAssignee}
+                  onRemoveAssignee={handleRemoveAssignee}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="end">End</Label>
-                <Input
-                  type="datetime-local"
-                  id="end"
-                  value={end}
-                  onChange={(e) => {
-                    const newEnd = e.target.value;
-                    if (start && newEnd < start) {
-                      setEnd(start);
-                    } else {
-                      setEnd(newEnd);
-                    }
-                  }}
-                  disabled={!start}
-                  min={start || undefined}
+              <div>
+                <h3 className="mb-2 text-sm font-semibold tracking-tight text-gray-700">Activities</h3>
+                <AppointmentDialogActivitiesSection
+                  isEditMode={isEditMode}
+                  activityType={activityType}
+                  setActivityType={setActivityType}
+                  activityContent={activityContent}
+                  setActivityContent={setActivityContent}
+                  activityList={activityList}
+                  loading={loading}
+                  onAddActivity={handleAddActivity}
+                  onRemoveActivity={handleRemoveActivity}
                 />
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Client</Label>
-              <Select value={patientId} onValueChange={setPatientId}>
-                <SelectTrigger className="cursor-pointer hover:bg-gray-100 transition-colors">
-                  <SelectValue placeholder="Select client" />
-                </SelectTrigger>
-                <SelectContent>
-                  {patients.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.firstname} {p.lastname}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Category</Label>
-              <Select value={categoryId} onValueChange={setCategoryId}>
-                <SelectTrigger className="cursor-pointer hover:bg-gray-100 transition-colors">
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="location">Location</Label>
-              <Input
-                id="location"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                className="cursor-pointer"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="attachements">Attachments (comma-separated)</Label>
-              <Input
-                id="attachements"
-                value={attachements}
-                onChange={(e) => setattachements(e.target.value)}
-                className="cursor-pointer"
-              />
-              <Input
-                id="appointment-file-upload"
-                type="file"
-                multiple
-                ref={fileInputRef}
-                aria-label="Upload attachment files"
-                title="Upload attachment files"
-                onChange={handleFileChange}
-                disabled={uploading}
-                className="cursor-pointer"
-              />
-              {uploading && (
-                <div className="text-xs text-blue-600">Uploading...</div>
-              )}
-              {Object.keys(fileProgress).length > 0 && (
-                <div className="text-xs text-blue-600 mt-1">
-                  {Object.entries(fileProgress).map(([name, prog]) => (
-                    <div key={name}>
-                      {name}: {prog}%
-                    </div>
-                  ))}
-                </div>
-              )}
-              {uploadedFiles.length > 0 && (
-                <div className="text-xs text-green-600 mt-1">
-                  Uploaded:{" "}
-                  {uploadedFiles.map((f) => (
-                    <span key={f} className="inline-flex items-center mr-2">
-                      <a
-                        href={f}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="underline cursor-pointer hover:text-blue-700"
-                      >
-                        File
-                      </a>
-                      <button
-                        type="button"
-                        className="ml-1 text-red-500 cursor-pointer hover:bg-red-100 rounded"
-                        onClick={() => handleRemoveUploadedFile(f)}
-                      >
-                        &times;
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
-              <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger className="cursor-pointer hover:bg-gray-100 transition-colors">
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pending">Open</SelectItem>
-                  <SelectItem value="done">Done</SelectItem>
-                  <SelectItem value="alert">Alert</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-          </TabsContent>
-
-          <TabsContent value="assignees" className="space-y-2 py-2 mt-0">
-            <div className="space-y-2">
-              <Label>Assign (Patients/Relatives)</Label>
-              <Select onValueChange={handleAddAssignee}>
-                <SelectTrigger className="cursor-pointer hover:bg-gray-100 transition-colors">
-                  <SelectValue placeholder="Select person" />
-                </SelectTrigger>
-                <SelectContent>
-                  {patients.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      Patient: {p.firstname} {p.lastname}
-                    </SelectItem>
-                  ))}
-                  {relatives.map((r) => (
-                    <SelectItem key={r.id} value={r.id}>
-                      Relative: {r.firstname} {r.lastname}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <div className="flex flex-wrap gap-2 mt-1">
-                {assignees.map((a) => {
-                  const p = patients.find((x) => x.id === a.user);
-                  const r = relatives.find((x) => x.id === a.user);
-                  return (
-                    <span
-                      key={a.user}
-                      className="bg-gray-200 px-2 py-1 rounded text-xs flex items-center gap-1"
-                    >
-                      {p
-                        ? `Patient: ${p.firstname} ${p.lastname}`
-                        : r
-                          ? `Relative: ${r.firstname} ${r.lastname}`
-                          : a.user}
-                      <span className="ml-1 text-gray-400">[{a.user_type}]</span>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveAssignee(a.user, a.id)}
-                        className="ml-1 text-red-500 cursor-pointer hover:bg-red-100 rounded"
-                      >
-                        &times;
-                      </button>
-                    </span>
-                  );
-                })}
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="activities" className="space-y-2 py-2 mt-0">
-            <div className="space-y-2">
-              <Label>Add activity</Label>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Type (Phone, Visit, etc.)"
-                  value={activityType}
-                  onChange={(e) => setActivityType(e.target.value)}
-                  className="cursor-pointer"
-                />
-                <Input
-                  placeholder="Content"
-                  value={activityContent}
-                  onChange={(e) => setActivityContent(e.target.value)}
-                  className="cursor-pointer"
-                />
-                <Button
-                  type="button"
-                  onClick={handleAddActivity}
-                  disabled={loading}
-                  className="cursor-pointer transition-colors"
-                >
-                  Add
-                </Button>
-              </div>
-              <div className="flex flex-col gap-1 mt-1">
-                {activityList.map((a) => (
-                  <span
-                    key={a.id}
-                    className="bg-gray-100 px-2 py-1 rounded text-xs flex items-center gap-1"
-                  >
-                    {a.type}: {a.content}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveActivity(a.id)}
-                      className="ml-1 text-red-500 cursor-pointer hover:bg-red-100 rounded"
-                    >
-                      &times;
-                    </button>
-                  </span>
-                ))}
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
-        <div className="flex items-center justify-end gap-2 pt-1">
+            </section>
+          </div>
+        </div>
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 border-t border-sky-200/60 bg-sky-50/40 px-6 py-3">
           <Button
             type="button"
-            variant="outline"
-            className="cursor-pointer"
+            variant="ghost"
+            className={cn(
+              skyGlassBackButtonClass,
+              "cursor-pointer rounded-full disabled:pointer-events-none disabled:opacity-50"
+            )}
             onClick={() => handleDialogOpenChange(false)}
             disabled={loading || uploading}
           >
+            <X className="size-4 shrink-0" aria-hidden />
             Cancel
           </Button>
           <Button
+            type="button"
+            variant="ghost"
             onClick={handleSave}
             disabled={loading || uploading || !canSave}
-            className="cursor-pointer transition-colors"
+            className={cn(
+              skyGlassPrimaryButtonClass,
+              "cursor-pointer rounded-full disabled:pointer-events-none disabled:opacity-50"
+            )}
           >
-            {loading
-              ? "Saving..."
-              : isEditMode
-                ? "Save changes"
-                : "Save new appointment"}
+            {loading ? (
+              <>
+                <Loader2 className="size-4 shrink-0 animate-spin" aria-hidden />
+                Saving…
+              </>
+            ) : (
+              <>
+                <CalendarCheck className="size-4 shrink-0" aria-hidden />
+                {isEditMode ? "Update appointment" : "Save new appointment"}
+              </>
+            )}
           </Button>
         </div>
       </DialogContent>

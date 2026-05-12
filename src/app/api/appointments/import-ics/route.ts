@@ -148,8 +148,9 @@ export async function POST(req: NextRequest) {
             location: ev.location ?? null,
             notes: ev.notes ?? null,
             status: null,
-            attachements: [],
-            user_id: sessionUser.userId,
+            attachments: [],
+            owner_id: sessionUser.userId,
+            treating_physician_id: sessionUser.userId,
           },
         })
       )

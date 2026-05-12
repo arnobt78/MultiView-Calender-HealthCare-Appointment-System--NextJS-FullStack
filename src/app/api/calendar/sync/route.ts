@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
 
     // Scope to the session user's own appointment — prevents syncing foreign data to someone's calendar.
     const appointment = await prisma.appointment.findFirst({
-      where: { id: appointmentId, user_id: sessionUser.userId },
+      where: { id: appointmentId, owner_id: sessionUser.userId },
     });
 
     if (!appointment) {

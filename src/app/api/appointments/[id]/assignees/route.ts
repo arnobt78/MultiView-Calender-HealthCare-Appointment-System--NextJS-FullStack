@@ -53,7 +53,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
       where: {
         id,
         OR: [
-          { user_id: sessionUser.userId },
+          { owner_id: sessionUser.userId },
           {
             assignees: {
               some: { user_id: sessionUser.userId, status: "accepted" },
@@ -96,9 +96,9 @@ export async function POST(req: NextRequest, context: RouteContext) {
 
     const appointment = await prisma.appointment.findUnique({
       where: { id },
-      select: { user_id: true },
+      select: { owner_id: true },
     });
-    if (!appointment || appointment.user_id !== sessionUser.userId) {
+    if (!appointment || appointment.owner_id !== sessionUser.userId) {
       return NextResponse.json({ error: "Appointment not found or forbidden" }, { status: 403 });
     }
 
@@ -141,9 +141,9 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
 
     const appointment = await prisma.appointment.findUnique({
       where: { id },
-      select: { user_id: true },
+      select: { owner_id: true },
     });
-    if (!appointment || appointment.user_id !== sessionUser.userId) {
+    if (!appointment || appointment.owner_id !== sessionUser.userId) {
       return NextResponse.json({ error: "Appointment not found or forbidden" }, { status: 403 });
     }
 

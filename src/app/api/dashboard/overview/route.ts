@@ -81,24 +81,24 @@ export async function GET() {
       totalInvoices,
       paidInvoices,
     ] = await Promise.all([
-      prisma.appointment.count({ where: { user_id: sessionUser.userId } }),
+      prisma.appointment.count({ where: { owner_id: sessionUser.userId } }),
       prisma.appointment.count({
-        where: { user_id: sessionUser.userId, start: { gte: todayStart, lte: todayEnd } },
+        where: { owner_id: sessionUser.userId, start: { gte: todayStart, lte: todayEnd } },
       }),
       prisma.appointment.count({
-        where: { user_id: sessionUser.userId, start: { gte: weekStart, lte: weekEnd } },
+        where: { owner_id: sessionUser.userId, start: { gte: weekStart, lte: weekEnd } },
       }),
       prisma.appointment.count({
-        where: { user_id: sessionUser.userId, start: { gte: monthStart, lte: monthEnd } },
+        where: { owner_id: sessionUser.userId, start: { gte: monthStart, lte: monthEnd } },
       }),
       prisma.appointment.count({
-        where: { user_id: sessionUser.userId, status: "done" },
+        where: { owner_id: sessionUser.userId, status: "done" },
       }),
       prisma.appointment.count({
-        where: { user_id: sessionUser.userId, status: "pending" },
+        where: { owner_id: sessionUser.userId, status: "pending" },
       }),
       prisma.appointment.count({
-        where: { user_id: sessionUser.userId, status: "alert" },
+        where: { owner_id: sessionUser.userId, status: "alert" },
       }),
       prisma.patient.count(),
       prisma.patient.count({ where: { active: true } }),
@@ -106,7 +106,7 @@ export async function GET() {
       prisma.category.count(),
       prisma.appointment.findFirst({
         where: {
-          user_id: sessionUser.userId,
+          owner_id: sessionUser.userId,
           start: { gt: now },
           status: { not: "done" },
         },
@@ -114,7 +114,7 @@ export async function GET() {
         select: { id: true, title: true, start: true, end: true, location: true },
       }),
       prisma.appointment.findMany({
-        where: { user_id: sessionUser.userId },
+        where: { owner_id: sessionUser.userId },
         orderBy: { created_at: "desc" },
         take: 5,
         select: {
@@ -128,7 +128,7 @@ export async function GET() {
       }),
       prisma.appointment.count({
         where: {
-          user_id: sessionUser.userId,
+          owner_id: sessionUser.userId,
           end: { lt: now },
           status: { not: "done" },
         },

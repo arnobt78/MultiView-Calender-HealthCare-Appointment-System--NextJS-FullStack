@@ -145,7 +145,7 @@ const SIDEBAR_SECTIONS: readonly {
 const sidebarTriggerClass = cn(
   /* tabs.tsx emits `whitespace-normal` for vertical orientation; items-start keeps the icon at top of wrapped labels. */
   "!m-0 !h-auto !min-h-0 !gap-0 !px-0 !py-2.5 w-full cursor-pointer items-start justify-start rounded-none border-0 text-left text-sm font-normal shadow-none transition-colors",
-  "text-gray-800 hover:bg-gray-50 hover:text-gray-900",
+  "text-gray-700 hover:bg-gray-50 hover:text-gray-700",
   "data-[state=active]:rounded-md data-[state=active]:bg-sky-100 data-[state=active]:text-sky-800 data-[state=active]:shadow-none",
   "[&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-gray-500 data-[state=active]:[&_svg]:text-sky-700",
   "after:hidden! data-[state=active]:after:hidden!"
@@ -313,8 +313,8 @@ export default function ControlPanelPage({
               orientation="vertical"
               className="w-full"
             >
-                {/* px-3 pb-3: same padding as desktop sidebar so icons/labels aren't flush against the sheet edge. overflow-x-hidden prevents horizontal shift from overflow-y-auto. */}
-                <TabsList className="flex h-auto max-h-[min(70vh,calc(100dvh-8rem))] w-full flex-col gap-0 overflow-y-auto overflow-x-hidden rounded-none border-0 bg-transparent px-3 pb-3">
+              {/* px-3 pb-3: same padding as desktop sidebar so icons/labels aren't flush against the sheet edge. overflow-x-hidden prevents horizontal shift from overflow-y-auto. */}
+              <TabsList className="flex h-auto max-h-[min(70vh,calc(100dvh-8rem))] w-full flex-col gap-0 overflow-y-auto overflow-x-hidden rounded-none border-0 bg-transparent px-3 pb-3">
                 {SIDEBAR_SECTIONS.map((section, sectionIndex) => (
                   <div
                     key={section.heading}

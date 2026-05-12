@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     if (type === "appointment") {
       // Verify the caller actually owns the appointment before creating an assignee row.
       const appt = await prisma.appointment.findFirst({
-        where: { id: resourceId, user_id: sessionUser.userId },
+        where: { id: resourceId, owner_id: sessionUser.userId },
         select: { id: true },
       });
       if (!appt) {

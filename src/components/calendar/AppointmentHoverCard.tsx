@@ -1,3 +1,7 @@
+/**
+ * Hover summary for a calendar block or list row. Shows the appointment client as **Client** (`patient_id` / roster).
+ * Calendar owner appears under **Assigned by** when sharing metadata exists — avoid a second line that repeated the client as "Refer to" (Phase D / B1 label clarity).
+ */
 import React, { useMemo, useState } from "react";
 import clsx from "clsx";
 import { format } from "date-fns";
@@ -118,7 +122,6 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
         "lastname" in a.patient
         ? `${(a.patient as Patient).firstname} ${(a.patient as Patient).lastname}`
         : "--";
-  const referToText = patientName !== "--" ? `Patient: ${patientName}` : "Patient data not available";
   const statusTextClass =
     a.status === "done"
       ? "text-green-600"
@@ -275,12 +278,6 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
             <span className="text-gray-700">{patientName}</span>
           </div>
 
-          <div className="mb-1 flex items-center gap-1 text-xs text-gray-500">
-            <Users className="h-4 w-4 text-gray-400" />
-            <span>Refer To</span>
-            <span className="text-purple-700">{referToText}</span>
-          </div>
-
           {a.notes && (
             <div className="mb-1 flex items-center gap-1 text-xs text-gray-600">
               <NotebookPen className="h-4 w-4 text-gray-400" />
@@ -288,10 +285,10 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
             </div>
           )}
 
-          {a.attachements && a.attachements.length > 0 && (
+          {a.attachments && a.attachments.length > 0 && (
             <div className="flex items-center gap-1 text-xs text-gray-400 mb-1">
               <FiPaperclip /> Attachments:
-              {a.attachements.map((file, idx) => {
+              {a.attachments.map((file, idx) => {
                 // Get Vercel Blob public URL
                 const publicUrl = getPublicUrl(file);
                 const fileName = file.split("/").pop() || file;

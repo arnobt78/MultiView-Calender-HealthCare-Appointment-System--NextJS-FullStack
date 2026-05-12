@@ -39,6 +39,11 @@ export async function invalidatePatientDetailAndSnapshot(
   ]);
 }
 
+/** Linked patient profile + portal appointment list — invalidate when staff edits patient or appointments change. */
+export async function invalidatePatientPortal(queryClient: QueryClient) {
+  await queryClient.invalidateQueries({ queryKey: queryKeys.patientPortal.all });
+}
+
 /**
  * Creates and configures the default QueryClient for the application.
  */
@@ -126,6 +131,7 @@ export async function invalidateEntityAffectingAppointments(
     invalidateActivitiesList(queryClient),
     invalidateDashboardOverview(queryClient),
     invalidateInsightsAndAnalytics(queryClient),
+    ...(resource === "patients" ? [invalidatePatientPortal(queryClient)] : []),
   ]);
 }
 
@@ -191,10 +197,18 @@ export async function invalidateAfterAppointmentMutation(
     invalidateInvoicesAndOverview(queryClient, { patientId: opts?.patientId ?? undefined }),
     // Insights / analytics charts aggregate appointment data — must refetch after any mutation.
     invalidateInsightsAndAnalytics(queryClient),
+    invalidatePatientPortal(queryClient),
   ]);
 }
 
-/** Assignee or per-appointment activity changes — resolves patient from cache when possible */
+/**
+ * After assignee rows or per-appointment activities are mutated outside the main appointment PATCH.
+ * Resolves `patientId` from the appointments list cache so patient detail/snapshot refetch without navigation.
+ *
+ * When `patientId` is known, also invalidates `patientPortal.all`: the portal timeline is keyed to that
+ * patient’s appointments; sharing/activity edits can change labels or counts the patient should see on
+ * the next fetch (TanStack marks stale → refetch in background; no full page reload).
+ */
 export async function invalidateAssigneesActivitiesAppointment(
   queryClient: QueryClient,
   appointmentId?: string | null
@@ -209,6 +223,7 @@ export async function invalidateAssigneesActivitiesAppointment(
     patientId
       ? invalidatePatientDetailAndSnapshot(queryClient, patientId)
       : queryClient.invalidateQueries({ queryKey: queryKeys.patients.all }),
+    ...(patientId ? [invalidatePatientPortal(queryClient)] : []),
   ]);
   if (appointmentId) {
     await queryClient.invalidateQueries({

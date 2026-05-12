@@ -1,3 +1,8 @@
+/**
+ * HTTP smoke: create appointment → PATCH → DELETE while asserting TanStack invalidation side effects.
+ * Requires a running Next dev server and seeded demo users (`npm run db:seed-test-user`).
+ * Complements `npm run test` (Vitest unit) — not a substitute for full browser QA (portal book, assignees, activities).
+ */
 import {
   DEMO_DOCTOR_APPOINTMENT_TYPE_ID,
   DEMO_DOCTOR_EMAIL,
@@ -81,7 +86,7 @@ async function main() {
         status: "pending",
         patient: null,
         category: null,
-        attachements: [],
+        attachments: [],
       }),
     },
     cookie
@@ -177,7 +182,7 @@ async function main() {
         status: "pending",
         patient: null,
         category: null,
-        attachements: [],
+        attachments: [],
       }),
     },
     patientCookie

@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     // Fetch the user's existing appointments for the target day to build busy slots.
     const existingAppointments = await prisma.appointment.findMany({
       where: {
-        user_id: sessionUser.userId,
+        owner_id: sessionUser.userId,
         start: { gte: dayStart, lte: dayEnd },
       },
       select: { start: true, end: true, title: true },

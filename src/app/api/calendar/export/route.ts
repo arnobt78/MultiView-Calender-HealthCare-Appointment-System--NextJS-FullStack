@@ -27,7 +27,7 @@ export async function GET() {
     }
 
     const appointments = await prisma.appointment.findMany({
-      where: { user_id: sessionUser.userId },
+      where: { owner_id: sessionUser.userId },
       include: { category: true, patient: true },
       orderBy: { start: "desc" },
     });

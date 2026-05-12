@@ -13,7 +13,7 @@ export async function getInsightsData(userId: string): Promise<InsightsPayload> 
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
   const appointments = await prisma.appointment.findMany({
-    where: { user_id: userId },
+    where: { owner_id: userId },
     include: { category: true, patient: true },
     orderBy: { start: "desc" },
   });

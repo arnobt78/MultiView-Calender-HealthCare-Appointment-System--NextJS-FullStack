@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     }
     if (appointment_id) {
       const appt = await prisma.appointment.findFirst({
-        where: { id: appointment_id, user_id: sessionUser.userId },
+        where: { id: appointment_id, owner_id: sessionUser.userId },
         select: { id: true },
       });
       if (!appt) {

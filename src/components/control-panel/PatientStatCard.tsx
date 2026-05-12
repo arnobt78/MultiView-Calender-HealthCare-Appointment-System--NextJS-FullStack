@@ -71,7 +71,7 @@ export function PatientStatCard({
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-sm font-medium text-gray-800">{title}</p>
+            <p className="text-sm font-medium text-gray-700">{title}</p>
             {badge ? (
               <Badge variant="outline" className="text-[10px] font-normal text-muted-foreground">
                 {badge}
@@ -87,7 +87,7 @@ export function PatientStatCard({
         {valueSkeleton ? (
           <Skeleton className="h-9 w-16 shrink-0 rounded-xl" aria-hidden />
         ) : (
-          <span className="text-3xl font-semibold tabular-nums tracking-tight text-gray-900">{value}</span>
+          <span className="text-3xl font-semibold tabular-nums tracking-tight text-gray-700">{value}</span>
         )}
       </div>
     </div>

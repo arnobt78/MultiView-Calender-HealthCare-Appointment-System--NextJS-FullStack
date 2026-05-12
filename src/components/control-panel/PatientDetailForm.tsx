@@ -305,7 +305,7 @@ export function PatientDetailForm({
             subtitle={
               <>
                 This will delete{" "}
-                <span className="text-gray-800">
+                <span className="text-gray-700">
                   {`${patient.firstname} ${patient.lastname}`.trim()}
                   {patient.email ? ` (${patient.email})` : ""}
                 </span>{" "}

@@ -1,5 +1,9 @@
 "use client";
 
+/**
+ * Single-day column: compact meta uses **Client** for `appointment.patient` (same meaning as hover card / list).
+ */
+
 import { useMemo, useState } from "react";
 import { format, isSameDay } from "date-fns";
 import Link from "next/link";
@@ -164,7 +168,6 @@ export default function DayView() {
                           : "--";
                       const categoryLabel =
                         categories.find((c) => c.id === appt.category)?.label ?? "--";
-                      const referTo = patientName !== "--" ? `Patient: ${patientName}` : "--";
                       const colorToken = getAppointmentColorToken(
                         appt.id,
                         appt.category_data?.color ?? null
@@ -204,7 +207,7 @@ export default function DayView() {
                                 <div className="flex min-w-0 items-center gap-2">
                                   <Link
                                     href={`/control-panel/appointments/${appt.id}`}
-                                    className="truncate text-sm font-medium text-gray-800 hover:underline"
+                                    className="truncate text-sm font-medium text-gray-700 hover:underline"
                                   >
                                     {appt.title}
                                   </Link>
@@ -226,7 +229,6 @@ export default function DayView() {
                                   <span>Location: {appt.location || "--"}</span>
                                   <span>Client: {patientName}</span>
                                   <span>Category: {categoryLabel}</span>
-                                  <span>Refer to: {referTo}</span>
                                 </div>
                               </div>
                               <div className="flex shrink-0 items-center gap-1 border-l border-white/35 px-3">

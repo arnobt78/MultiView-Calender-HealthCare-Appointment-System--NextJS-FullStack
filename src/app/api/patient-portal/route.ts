@@ -10,6 +10,8 @@ import { getSessionUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { isValidUUID } from "@/lib/validation";
 import { redis } from "@/lib/redis";
+import { mapPortalAppointmentsFromRows, serializePatient, serializeAppointment } from "@/lib/serializers";
+import { patientDetailInclude } from "@/lib/patient-api-include";
 
 export async function GET() {
   try {
@@ -27,15 +29,17 @@ export async function GET() {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Find patient by email, joining primary_doctor for display in the profile card
-    const patient = await prisma.patient.findFirst({
+    /**
+     * Same include + serializer as GET /api/patients/:id so the portal profile card reads
+     * `primary_doctor_display` / `primary_doctor_email` / `primary_doctor_id` — not a nested
+     * Prisma-only `primary_doctor` object that diverges from SSR prefetch (`serializePatient`).
+     */
+    const patientRow = await prisma.patient.findFirst({
       where: { email: user.email },
-      include: {
-        primary_doctor: { select: { display_name: true, email: true } },
-      },
+      include: patientDetailInclude,
     });
 
-    if (!patient) {
+    if (!patientRow) {
       return NextResponse.json({
         appointments: [],
         patient: null,
@@ -44,14 +48,21 @@ export async function GET() {
       });
     }
 
-    const appointments = await prisma.appointment.findMany({
-      where: { patient_id: patient.id },
-      include: { category: true, owner: { select: { display_name: true, email: true } } },
+    const appointmentsRaw = await prisma.appointment.findMany({
+      where: { patient_id: patientRow.id },
+      include: { category: true, owner: { select: { display_name: true, email: true } }, treating_physician: { select: { display_name: true, email: true } } },
       orderBy: { start: "desc" },
     });
 
+    // Same `appointments` map as `prefetchPortalData` — `owner` is calendar owner (`owner_id` / JSON `user_id`), not primary doctor.
+    const appointments = mapPortalAppointmentsFromRows(appointmentsRaw);
+
     // Return userImage from the auth user row so the profile card can show the OAuth avatar
-    return NextResponse.json({ appointments, patient, userImage: user.image ?? null });
+    return NextResponse.json({
+      appointments,
+      patient: serializePatient(patientRow),
+      userImage: user.image ?? null,
+    });
   } catch (error: unknown) {
     console.error("Patient portal error:", error);
     return NextResponse.json({ error: "Failed to fetch history" }, { status: 500 });
@@ -113,7 +124,8 @@ export async function POST(request: NextRequest) {
         start: startDate,
         end: endDate,
         notes: typeof notes === "string" ? notes : null,
-        user_id: doctorId, // Doctor owns the appointment
+        owner_id: doctorId, // B3 Prisma field; DB column remains `user_id`
+        treating_physician_id: doctorId, // B2: portal booking — same doctor until product allows decoupling
         patient_id: patient?.id || null,
         status: "pending",
       },
@@ -139,7 +151,7 @@ export async function POST(request: NextRequest) {
     // reflects the new booking immediately on next load (non-critical, fire-and-forget).
     void redis.invalidateDashboardOverview(doctorId);
 
-    return NextResponse.json({ appointment }, { status: 201 });
+    return NextResponse.json({ appointment: serializeAppointment(appointment) }, { status: 201 });
   } catch (error: unknown) {
     console.error("Patient booking error:", error);
     return NextResponse.json({ error: "Failed to book appointment" }, { status: 500 });

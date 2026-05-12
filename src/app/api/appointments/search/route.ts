@@ -34,14 +34,14 @@ export async function GET(req: NextRequest) {
     let appointments;
     if (isValidUUID(searchQuery)) {
       appointments = await prisma.appointment.findMany({
-        where: { user_id: sessionUser.userId, id: searchQuery },
+        where: { owner_id: sessionUser.userId, id: searchQuery },
         select: { id: true, title: true, start: true, end: true, status: true },
         take: safeLimit,
       });
     } else {
       appointments = await prisma.appointment.findMany({
         where: {
-          user_id: sessionUser.userId,
+          owner_id: sessionUser.userId,
           title: { contains: searchQuery, mode: "insensitive" },
         },
         select: { id: true, title: true, start: true, end: true, status: true },

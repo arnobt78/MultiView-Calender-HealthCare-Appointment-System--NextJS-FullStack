@@ -77,7 +77,7 @@ export default async function UserDetailPage({ params }: PageProps) {
   });
 
   // Appointment count for this user
-  const appointmentCount = await prisma.appointment.count({ where: { user_id: id } });
+  const appointmentCount = await prisma.appointment.count({ where: { owner_id: id } });
 
   const backHref =
     raw.role === "doctor"

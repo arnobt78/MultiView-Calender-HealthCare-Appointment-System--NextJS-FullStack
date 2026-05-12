@@ -133,14 +133,14 @@ export default function ImportICSDialog({ trigger }: Props) {
                 </span>
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <DialogTitle className="text-xl font-semibold text-gray-800">
+                    <DialogTitle className="text-xl font-semibold text-gray-700">
                       Import .ics Calendar
                     </DialogTitle>
                     <kbd className="rounded border bg-muted px-1.5 py-0.5 font-mono text-xs text-muted-foreground">
                       File Upload
                     </kbd>
                   </div>
-                  <DialogDescription className="mt-1 text-sm">
+                  <DialogDescription className="text-sm">
                     Upload an iCalendar file from Google, Outlook or Apple Calendar
                     to create appointments instantly.
                   </DialogDescription>

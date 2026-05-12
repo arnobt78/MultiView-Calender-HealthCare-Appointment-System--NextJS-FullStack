@@ -1,5 +1,9 @@
 /**
  * Patient aggregate: appointments for this patient, activities on those appointments, invoices linked by appointment_id.
+ *
+ * Each appointment row adds denormalized labels for the control-panel table:
+ * - `calendar_owner_*`: always the calendar owner (`Appointment.owner_id` in Prisma → `user_id` in JSON).
+ * - `doctor_*`: B2 resolved treating / clinical contact (`resolveTreatingPhysicianUserId` → joined user row).
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -14,6 +18,7 @@ import {
   serializeActivitySnapshot,
 } from "@/lib/serializers";
 import { patientDetailInclude } from "@/lib/patient-api-include";
+import { resolveTreatingPhysicianUserId } from "@/lib/appointment-display-doctor";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -49,8 +54,8 @@ export async function GET(_req: NextRequest, context: RouteContext) {
       take: 50,
       include: {
         category: true,
-        // Include owner (doctor) so the detail screen can render doctor name + email + link.
         owner: { select: { id: true, display_name: true, email: true } },
+        treating_physician: { select: { id: true, display_name: true, email: true } },
       },
     });
 
@@ -74,14 +79,24 @@ export async function GET(_req: NextRequest, context: RouteContext) {
             }),
           ]);
 
-    const appointments = appointmentsRaw.map((a) => ({
-      ...serializeAppointment(a),
-      category_label: a.category?.label ?? null,
-      // Doctor fields surfaced for the appointments table on the patient detail screen.
-      doctor_id: a.owner?.id ?? null,
-      doctor_display: a.owner?.display_name ?? null,
-      doctor_email: a.owner?.email ?? null,
-    }));
+    const appointments = appointmentsRaw.map((a) => {
+      const row = serializeAppointment(a);
+      const clinicalId = resolveTreatingPhysicianUserId(row);
+      const clinical =
+        a.treating_physician_id && a.treating_physician?.id === clinicalId
+          ? a.treating_physician
+          : a.owner;
+      return {
+        ...row,
+        category_label: a.category?.label ?? null,
+        calendar_owner_id: a.owner?.id ?? null,
+        calendar_owner_display: a.owner?.display_name ?? null,
+        calendar_owner_email: a.owner?.email ?? null,
+        doctor_id: clinical?.id ?? null,
+        doctor_display: clinical?.display_name ?? null,
+        doctor_email: clinical?.email ?? null,
+      };
+    });
 
     const activities = activitiesRaw.map(serializeActivitySnapshot);
     const invoices = invoicesRaw.map(serializeInvoice);

@@ -35,7 +35,7 @@ type SearchableAppointment = {
   patient_data?: { firstname?: string | null; lastname?: string | null; email?: string | null };
   appointment_assignee?: { user?: string | null; invited_email?: string | null }[];
   activities?: { type?: string | null; content?: string | null }[];
-  attachements?: string[];
+  attachments?: string[];
 };
 
 const CalendarFiltersContext = createContext<CalendarFiltersContextValue | null>(
@@ -149,11 +149,11 @@ export function applyCalendarFilters<T extends SearchableAppointment>(
     const patientMatchFromId =
       typeof appt.patient === "string"
         ? patients.some(
-            (p) =>
-              p.id === appt.patient &&
-              (`${p.firstname} ${p.lastname}`.toLowerCase().includes(lowerSearch) ||
-                match(p.email))
-          )
+          (p) =>
+            p.id === appt.patient &&
+            (`${p.firstname} ${p.lastname}`.toLowerCase().includes(lowerSearch) ||
+              match(p.email))
+        )
         : false;
 
     const relativesMatch = relatives.some((r) =>
@@ -174,7 +174,7 @@ export function applyCalendarFilters<T extends SearchableAppointment>(
         (a) => match(a.user || "") || match(a.invited_email || "")
       ) ||
       (appt.activities || []).some((a) => match(a.type || "") || match(a.content || "")) ||
-      (appt.attachements || []).some((a) => match(a))
+      (appt.attachments || []).some((a) => match(a))
     );
   });
 }

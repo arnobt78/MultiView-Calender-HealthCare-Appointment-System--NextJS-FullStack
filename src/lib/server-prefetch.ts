@@ -26,9 +26,11 @@ import {
   serializeAppointment,
   serializeInvoice,
   serializeActivitySnapshot,
+  mapPortalAppointmentsFromRows,
 } from "@/lib/serializers";
 import { patientDetailInclude, patientUserPick } from "@/lib/patient-api-include";
 import { getInsightsData, type InsightsPayload } from "@/lib/insights-data";
+import { resolveTreatingPhysicianUserId } from "@/lib/appointment-display-doctor";
 import {
   startOfDay,
   endOfDay,
@@ -51,10 +53,7 @@ import type { DashboardOverview } from "@/hooks/useDashboardOverview";
  * so we Omit the string `category` field and re-declare it as the object shape.
  */
 export type PortalPrefetchData = {
-  appointments: (Omit<ReturnType<typeof serializeAppointment>, "category"> & {
-    category?: { label: string; color: string | null };
-    owner?: { display_name: string | null; email: string };
-  })[];
+  appointments: ReturnType<typeof mapPortalAppointmentsFromRows>;
   patient: Patient | null;
   message?: string;
   /** Same as GET /api/patient-portal — OAuth profile image for avatar parity with client fetch */
@@ -122,7 +121,7 @@ export async function prefetchPatient(patientId: string): Promise<Patient | null
 /**
  * Mirrors GET /api/patients/:id/snapshot.
  * Cache key: queryKeys.patients.snapshot(patientId) → stores PatientSnapshot.
- * Includes the owner (doctor) join added for the appointments table columns.
+ * Includes calendar owner + B2 treating physician joins (same projection as GET snapshot).
  */
 export async function prefetchPatientSnapshot(patientId: string): Promise<PatientSnapshot | null> {
   try {
@@ -138,8 +137,8 @@ export async function prefetchPatientSnapshot(patientId: string): Promise<Patien
       take: 50,
       include: {
         category: true,
-        // Doctor join for the "Refer Doctor" column in the patient detail screen.
         owner: { select: { id: true, display_name: true, email: true } },
+        treating_physician: { select: { id: true, display_name: true, email: true } },
       },
     });
 
@@ -167,13 +166,24 @@ export async function prefetchPatientSnapshot(patientId: string): Promise<Patien
 
     return {
       patient: serializePatient(patientRaw) as Patient,
-      appointments: appointmentsRaw.map((a) => ({
-        ...serializeAppointment(a),
-        category_label: a.category?.label ?? null,
-        doctor_id: a.owner?.id ?? null,
-        doctor_display: a.owner?.display_name ?? null,
-        doctor_email: a.owner?.email ?? null,
-      })),
+      appointments: appointmentsRaw.map((a) => {
+        const row = serializeAppointment(a);
+        const clinicalId = resolveTreatingPhysicianUserId(row);
+        const clinical =
+          a.treating_physician_id && a.treating_physician?.id === clinicalId
+            ? a.treating_physician
+            : a.owner;
+        return {
+          ...row,
+          category_label: a.category?.label ?? null,
+          calendar_owner_id: a.owner?.id ?? null,
+          calendar_owner_display: a.owner?.display_name ?? null,
+          calendar_owner_email: a.owner?.email ?? null,
+          doctor_id: clinical?.id ?? null,
+          doctor_display: clinical?.display_name ?? null,
+          doctor_email: clinical?.email ?? null,
+        };
+      }),
       activities: activitiesRaw.map(serializeActivitySnapshot),
       invoices: invoicesRaw.map(serializeInvoice),
     } as PatientSnapshot;
@@ -233,24 +243,24 @@ export async function prefetchDashboardOverview(userId: string): Promise<Dashboa
       totalInvoices,
       paidInvoices,
     ] = await Promise.all([
-      prisma.appointment.count({ where: { user_id: userId } }),
-      prisma.appointment.count({ where: { user_id: userId, start: { gte: todayStart, lte: todayEnd } } }),
-      prisma.appointment.count({ where: { user_id: userId, start: { gte: weekStart, lte: weekEnd } } }),
-      prisma.appointment.count({ where: { user_id: userId, start: { gte: monthStart, lte: monthEnd } } }),
-      prisma.appointment.count({ where: { user_id: userId, status: "done" } }),
-      prisma.appointment.count({ where: { user_id: userId, status: "pending" } }),
-      prisma.appointment.count({ where: { user_id: userId, status: "alert" } }),
+      prisma.appointment.count({ where: { owner_id: userId } }),
+      prisma.appointment.count({ where: { owner_id: userId, start: { gte: todayStart, lte: todayEnd } } }),
+      prisma.appointment.count({ where: { owner_id: userId, start: { gte: weekStart, lte: weekEnd } } }),
+      prisma.appointment.count({ where: { owner_id: userId, start: { gte: monthStart, lte: monthEnd } } }),
+      prisma.appointment.count({ where: { owner_id: userId, status: "done" } }),
+      prisma.appointment.count({ where: { owner_id: userId, status: "pending" } }),
+      prisma.appointment.count({ where: { owner_id: userId, status: "alert" } }),
       prisma.patient.count(),
       prisma.patient.count({ where: { active: true } }),
       prisma.user.count({ where: { role: "doctor" } }),
       prisma.category.count(),
       prisma.appointment.findFirst({
-        where: { user_id: userId, start: { gt: now }, status: { not: "done" } },
+        where: { owner_id: userId, start: { gt: now }, status: { not: "done" } },
         orderBy: { start: "asc" },
         select: { id: true, title: true, start: true, end: true, location: true },
       }),
       prisma.appointment.findMany({
-        where: { user_id: userId },
+        where: { owner_id: userId },
         orderBy: { created_at: "desc" },
         take: 5,
         select: {
@@ -263,7 +273,7 @@ export async function prefetchDashboardOverview(userId: string): Promise<Dashboa
         },
       }),
       prisma.appointment.count({
-        where: { user_id: userId, end: { lt: now }, status: { not: "done" } },
+        where: { owner_id: userId, end: { lt: now }, status: { not: "done" } },
       }),
       prisma.invoice.count({ where: { user_id: userId } }),
       prisma.invoice.count({ where: { user_id: userId, status: "paid" } }),
@@ -446,8 +456,11 @@ export async function prefetchPortalData(userId: string): Promise<PortalPrefetch
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) return null;
 
-    const patient = await prisma.patient.findFirst({ where: { email: user.email } });
-    if (!patient) {
+    const patientRow = await prisma.patient.findFirst({
+      where: { email: user.email },
+      include: patientDetailInclude,
+    });
+    if (!patientRow) {
       return {
         appointments: [],
         patient: null,
@@ -457,25 +470,18 @@ export async function prefetchPortalData(userId: string): Promise<PortalPrefetch
     }
 
     const appointmentsRaw = await prisma.appointment.findMany({
-      where: { patient_id: patient.id },
+      where: { patient_id: patientRow.id },
       include: {
         category: true,
         owner: { select: { display_name: true, email: true } },
+        treating_physician: { select: { display_name: true, email: true } },
       },
       orderBy: { start: "desc" },
     });
 
     return {
-      appointments: appointmentsRaw.map((a) => ({
-        ...serializeAppointment(a),
-        category: a.category
-          ? { label: a.category.label, color: a.category.color }
-          : undefined,
-        owner: a.owner
-          ? { display_name: a.owner.display_name, email: a.owner.email }
-          : undefined,
-      })),
-      patient: serializePatient(patient) as Patient,
+      appointments: mapPortalAppointmentsFromRows(appointmentsRaw),
+      patient: serializePatient(patientRow) as Patient,
       userImage: user.image ?? null,
     };
   } catch {

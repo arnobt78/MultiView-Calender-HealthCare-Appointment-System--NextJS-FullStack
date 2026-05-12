@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
       },
       today_appointments: await prisma.appointment.count({
         where: {
-          user_id: user.id,
+          owner_id: user.id,
           start: {
             gte: new Date(new Date().setHours(0, 0, 0, 0)),
             lt: new Date(new Date().setHours(24, 0, 0, 0)),

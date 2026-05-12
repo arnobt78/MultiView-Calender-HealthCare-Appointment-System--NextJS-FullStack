@@ -29,6 +29,7 @@ model User {
   bio                     String?   @db.Text
 
   appointments_owned       Appointment[]           @relation("AppointmentOwner")
+  appointments_as_treating_physician Appointment[] @relation("AppointmentTreatingPhysician")
   appointment_assignees   AppointmentAssignee[]   @relation("AssigneeUser")
   appointment_assignees_invited_by AppointmentAssignee[] @relation("AssigneeInvitedBy")
   activities              Activity[]              @relation("ActivityCreatedBy")
@@ -121,7 +122,8 @@ model Category {
   @@map("categories")
 }
 
-// --- Appointments (DB columns: patient, category)
+// --- Appointments (DB: patient, category; physical column `user_id` = calendar owner — Prisma field is `owner_id` (B3).)
+// B2: optional `treating_physician_id` = clinical FK. API JSON still exposes `user_id` via serializers for stable clients.
 model Appointment {
   id          String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   created_at  DateTime  @default(now())
@@ -134,15 +136,20 @@ model Appointment {
   notes       String?   @db.Text
   title       String    @db.Text
   status      String?   @db.Text // 'done' | 'pending' | 'alert'
-  user_id     String    @db.Uuid
-  attachements String[] @default([])
+  /// Calendar owner — maps to DB column `user_id` (B3: Prisma name `owner_id` only; no migration).
+  owner_id    String    @map("user_id") @db.Uuid
+  /// B2: optional treating / referring physician; display rule: `treating_physician_id ?? owner_id` (see `appointment-display-doctor.ts`).
+  treating_physician_id String? @db.Uuid
+  attachments String[] @default([])
 
   patient     Patient?   @relation(fields: [patient_id], references: [id], onDelete: SetNull)
   category    Category?  @relation(fields: [category_id], references: [id], onDelete: SetNull)
-  owner       User       @relation("AppointmentOwner", fields: [user_id], references: [id], onDelete: Cascade)
+  owner       User       @relation("AppointmentOwner", fields: [owner_id], references: [id], onDelete: Cascade)
+  treating_physician User? @relation("AppointmentTreatingPhysician", fields: [treating_physician_id], references: [id], onDelete: SetNull)
   assignees   AppointmentAssignee[]
   activities  Activity[]
 
+  @@index([treating_physician_id])
   @@map("appointments")
 }
 

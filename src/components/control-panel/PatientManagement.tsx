@@ -211,7 +211,7 @@ function PatientActions({
         subtitle={
           <>
             This will delete{" "}
-            <span className="font-medium text-gray-800">
+            <span className="font-medium text-gray-700">
               {`${patient.firstname} ${patient.lastname}`.trim()}
               {patient.email ? ` (${patient.email})` : ""}
             </span>{" "}
@@ -254,8 +254,8 @@ function PatientManagementInner() {
     primaryDoctorId === "all"
       ? "All Doctors"
       : doctors.find((d) => d.id === primaryDoctorId)?.display_name?.trim() ||
-        doctors.find((d) => d.id === primaryDoctorId)?.email ||
-        "Doctor";
+      doctors.find((d) => d.id === primaryDoctorId)?.email ||
+      "Doctor";
   /** Toolbar search — controlled so header stays stable while table rows skeleton (no duplicate search under table). */
   const [listSearch, setListSearch] = useState("");
   const hasPatientToolbarFilters = useMemo(
@@ -315,11 +315,11 @@ function PatientManagementInner() {
               sizeClassName="h-9 w-9"
             />
             <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5">
-            <EntityTitleLink
-              href={`/control-panel/patients/${p.id}`}
-              label={name}
-              className="min-w-0 self-start truncate"
-            />
+              <EntityTitleLink
+                href={`/control-panel/patients/${p.id}`}
+                label={name}
+                className="min-w-0 self-start truncate"
+              />
               {email ? (
                 <span className="truncate text-xs text-muted-foreground" title={email}>
                   {email}
@@ -623,14 +623,14 @@ function PatientManagementInner() {
           columns={columns}
           data={filteredPatients}
           isLoading={listBodyLoading}
-        globalFilterFn={(row, q) => {
-          const s = q.trim().toLowerCase();
-          if (!s) return true;
-          const p = row;
-          const tierText = getPatientCareLevelLabel(p.care_level).toLowerCase();
-          const blob = `${p.firstname} ${p.lastname} ${p.email ?? ""} ${p.primary_doctor_display ?? ""} ${p.primary_doctor_email ?? ""} ${String(p.care_level ?? "")} ${tierText}`;
-          return blob.includes(s);
-        }}
+          globalFilterFn={(row, q) => {
+            const s = q.trim().toLowerCase();
+            if (!s) return true;
+            const p = row;
+            const tierText = getPatientCareLevelLabel(p.care_level).toLowerCase();
+            const blob = `${p.firstname} ${p.lastname} ${p.email ?? ""} ${p.primary_doctor_display ?? ""} ${p.primary_doctor_email ?? ""} ${String(p.care_level ?? "")} ${tierText}`;
+            return blob.includes(s);
+          }}
           externalGlobalFilter={{ value: listSearch, onChange: setListSearch }}
           searchPlaceholder="Search by name or email…"
           emptyMessage="No patients yet. Add one to get started."
@@ -652,10 +652,10 @@ function PatientManagementInner() {
                     <UserPlus className="h-5 w-5" aria-hidden />
                   </span>
                   <div className="min-w-0">
-                    <DialogTitle className="text-xl font-semibold text-gray-800">
+                    <DialogTitle className="text-xl font-semibold text-gray-700">
                       Add Patient
                     </DialogTitle>
-                    <DialogDescription className="mt-1 text-sm text-muted-foreground">
+                    <DialogDescription className="text-sm text-muted-foreground">
                       Required: first and last name. Optional fields help scheduling and records stay accurate.
                     </DialogDescription>
                   </div>
@@ -805,20 +805,20 @@ function PatientManagementInner() {
                 </div>
                 {(createExtra.referralSource === "external_partner" ||
                   createExtra.referralSource === "other") && (
-                  <div className="space-y-2">
-                    <Label htmlFor="pm-referral-detail">External / Other Detail</Label>
-                    <Input
-                      id="pm-referral-detail"
-                      title="Referral Detail"
-                      value={createExtra.referralDetail}
-                      onChange={(e) =>
-                        setCreateExtra((x) => ({ ...x, referralDetail: e.target.value }))
-                      }
-                      placeholder="Clinic, referrer, or how they reached you"
-                      className="w-full min-w-0 rounded-2xl border-gray-200"
-                    />
-                  </div>
-                )}
+                    <div className="space-y-2">
+                      <Label htmlFor="pm-referral-detail">External / Other Detail</Label>
+                      <Input
+                        id="pm-referral-detail"
+                        title="Referral Detail"
+                        value={createExtra.referralDetail}
+                        onChange={(e) =>
+                          setCreateExtra((x) => ({ ...x, referralDetail: e.target.value }))
+                        }
+                        placeholder="Clinic, referrer, or how they reached you"
+                        className="w-full min-w-0 rounded-2xl border-gray-200"
+                      />
+                    </div>
+                  )}
                 <div className="space-y-2">
                   <Label htmlFor="pm-allergies">Allergies (comma-separated)</Label>
                   <Input

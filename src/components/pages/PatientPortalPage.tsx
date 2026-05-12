@@ -47,7 +47,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import Link from "next/link";
+
 import {
   Activity,
   AlertCircle,
@@ -55,6 +55,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Cake,
+  Calendar,
   CalendarCheck,
   CalendarClock,
   CalendarDays,
@@ -62,7 +63,6 @@ import {
   CheckCircle2,
   Clock,
   CreditCard,
-  ExternalLink,
   FileText,
   GitBranch,
   Hash,
@@ -78,14 +78,14 @@ import {
   User,
   CalendarX,
 } from "lucide-react";
-import type { Patient, Appointment } from "@/types/types";
+import type { Patient, PatientClinicalProfile, User as AppUser } from "@/types/types";
+import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { notify } from "@/lib/notify";
 import { useUsers } from "@/hooks/useUsers";
 import { useAvailabilitySlots } from "@/hooks/useAvailabilitySlots";
 import { queryKeys } from "@/lib/query-keys";
 import { invalidateAfterAppointmentMutation } from "@/lib/query-client";
 import { getPatientCareLevelLabel } from "@/lib/patient-care-level";
-import type { PatientClinicalProfile } from "@/types/types";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -113,18 +113,6 @@ interface AppointmentType {
   slot_interval_minutes: number;
   minimum_notice_minutes: number;
   user_id: string | null;
-}
-
-interface PortalData {
-  appointments: (Appointment & {
-    category?: { label: string; color: string | null };
-    owner?: { display_name: string | null; email: string };
-  })[];
-  patient: (Patient & {
-    primary_doctor?: { display_name: string | null; email: string } | null;
-  }) | null;
-  userImage?: string | null;
-  message?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -200,7 +188,7 @@ export function BookAppointmentDialog({ preselectedDoctorId, trigger }: BookAppo
 
   // Doctors list
   const { data: usersData } = useUsers({ role: "doctor" });
-  const doctors = usersData?.users ?? [];
+  const doctors: AppUser[] = usersData?.users ?? [];
 
   // Appointment types for selected doctor
   const { data: typesData, isLoading: typesLoading } = useQuery({
@@ -303,7 +291,7 @@ export function BookAppointmentDialog({ preselectedDoctorId, trigger }: BookAppo
           /* Default sky-blue glassmorphic glow button — `has-[>svg]:px-5` overrides Button CVA `has-[>svg]:px-3` so horizontal padding matches design. */
           <Button
             className={cn(
-              "gap-2 from-sky-500 via-zinc-400 to-sky-800 bg-gradient-to-r hover:bg-sky-700 text-white shadow-[0_0_24px_rgba(2,132,199,0.4)] hover:shadow-[0_0_36px_rgba(2,132,199,0.65)] transition-all duration-200 cursor-pointer px-5 has-[>svg]:px-5"
+              "gap-2 from-sky-500 via-zinc-400 to-sky-800 bg-linear-to-r hover:bg-sky-700 text-white shadow-[0_0_24px_rgba(2,132,199,0.4)] hover:shadow-[0_0_36px_rgba(2,132,199,0.65)] transition-all duration-200 cursor-pointer px-5 has-[>svg]:px-5"
             )}
           >
             <CalendarPlus className="h-4 w-4" />
@@ -640,7 +628,7 @@ export function BookAppointmentDialog({ preselectedDoctorId, trigger }: BookAppo
 // APPOINTMENT TIMELINE
 // ---------------------------------------------------------------------------
 
-type ApptRow = PortalData["appointments"][number];
+type ApptRow = PortalPrefetchData["appointments"][number];
 
 function AppointmentTimeline({ appointments, loading }: { appointments: ApptRow[]; loading?: boolean }) {
   const { getAppointmentColorToken } = useAppointmentColor();
@@ -795,12 +783,29 @@ function AppointmentTimeline({ appointments, loading }: { appointments: ApptRow[
                               )}
                               {appt.owner && (
                                 <span className="flex items-center gap-1">
-                                  <Stethoscope className="h-3 w-3 shrink-0 text-gray-500" />
+                                  <Calendar className="h-3 w-3 shrink-0 text-gray-500" />
+                                  <span className="text-gray-600">Calendar owner</span>
                                   <span className="font-medium text-gray-700">
-                                    Dr. {appt.owner.display_name ?? appt.owner.email}
+                                    {appt.owner.display_name ?? appt.owner.email}
                                   </span>
                                 </span>
                               )}
+                              {/*
+                                B2: When `treating_physician_id` differs from `user_id`, show the clinical
+                                contact so portal copy matches staff snapshot / serializers.
+                              */}
+                              {appt.treating_physician &&
+                                appt.treating_physician_id &&
+                                appt.treating_physician_id !== appt.user_id && (
+                                  <span className="flex items-center gap-1">
+                                    <Stethoscope className="h-3 w-3 shrink-0 text-gray-500" />
+                                    <span className="text-gray-600">Treating physician</span>
+                                    <span className="font-medium text-gray-700">
+                                      {appt.treating_physician.display_name ??
+                                        appt.treating_physician.email}
+                                    </span>
+                                  </span>
+                                )}
                             </div>
                             {appt.notes && (
                               <p className="flex items-start gap-1 text-xs text-gray-600">
@@ -853,7 +858,7 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: queryKeys.patientPortal.all,
-    queryFn: () => apiClient<PortalData>("/api/patient-portal"),
+    queryFn: () => apiClient<PortalPrefetchData>("/api/patient-portal"),
     // SSR seed via setQueryData (above) means first paint is instant; 30 s window
     // prevents redundant re-fetches on rapid tab switches / re-mounts.
     staleTime: 30_000,
@@ -1064,27 +1069,50 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
                           </div>
                         )}
 
-                        {/* Primary Doctor — clickable link to doctor detail */}
+                        {/* Primary Doctor — prefer serializePatient flat fields; tolerate legacy nested primary_doctor from older API responses until all callers align. */}
                         <div className="flex items-start gap-2.5">
                           <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-sky-100 bg-sky-50">
                             <Stethoscope className="h-3 w-3 text-sky-500" />
                           </span>
                           <div className="min-w-0">
                             <dt className="text-gray-600">Primary Doctor</dt>
-                            {patient.primary_doctor ? (
-                              <dd className="font-medium">
-                                <Link
-                                  href={`/control-panel/doctors/${patient.primary_doctor_id ?? ""}`}
-                                  className="flex items-center gap-1 truncate text-sky-600 hover:text-sky-800 hover:underline"
-                                >
-                                  {patient.primary_doctor.display_name ?? patient.primary_doctor.email}
-                                  <ExternalLink className="h-2.5 w-2.5 shrink-0" />
-                                </Link>
-                                <span className="text-[10px] text-gray-600">{patient.primary_doctor.email}</span>
-                              </dd>
-                            ) : (
-                              <dd className="text-gray-700">—</dd>
-                            )}
+                            <dd className="font-medium text-gray-700">
+                              {(() => {
+                                type LegacyNested = {
+                                  primary_doctor?: { display_name?: string | null; email?: string } | null;
+                                };
+                                const pRow = patient as Patient & LegacyNested;
+                                const nested = pRow.primary_doctor;
+                                if (pRow.primary_doctor_id && pRow.primary_doctor_display?.trim()) {
+                                  return (
+                                    <>
+                                      <EntityTitleLink
+                                        href={`/control-panel/doctors/${pRow.primary_doctor_id}`}
+                                        label={pRow.primary_doctor_display.trim()}
+                                        className="font-normal"
+                                      />
+                                      {pRow.primary_doctor_email?.trim() ? (
+                                        <span className="text-gray-600">
+                                          {" "}
+                                          ({pRow.primary_doctor_email.trim()})
+                                        </span>
+                                      ) : null}
+                                    </>
+                                  );
+                                }
+                                if (nested && (nested.display_name?.trim() || nested.email)) {
+                                  return (
+                                    <>
+                                      {nested.display_name?.trim() || nested.email}
+                                      {nested.email && nested.display_name?.trim() ? (
+                                        <span className="text-gray-600"> ({nested.email.trim()})</span>
+                                      ) : null}
+                                    </>
+                                  );
+                                }
+                                return pRow.primary_doctor_display ?? "—";
+                              })()}
+                            </dd>
                           </div>
                         </div>
 

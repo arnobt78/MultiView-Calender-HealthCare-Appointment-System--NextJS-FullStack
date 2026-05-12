@@ -117,7 +117,7 @@ export async function GET(request: NextRequest) {
       try {
         await prisma.notification.create({
           data: {
-            user_id: appt.user_id,
+            user_id: appt.owner_id,
             title: "Upcoming Appointment",
             message: `"${appt.title}" starts ${appointmentDate} at ${appointmentTime}`,
             type: "reminder",
@@ -127,7 +127,7 @@ export async function GET(request: NextRequest) {
         });
         notificationsCreated++;
       } catch (err: unknown) {
-        console.error(`Failed to create notification for ${appt.user_id}:`, err);
+        console.error(`Failed to create notification for ${appt.owner_id}:`, err);
       }
 
       // Send reminders to assignees with accepted status

@@ -324,7 +324,7 @@ export default function AppointmentList() {
         appt.appointment_assignee.some((a: AppointmentAssignee) => a.user && match(a.user))) ||
       (appt.activities &&
         appt.activities.some((a: Activity) => match(a.type) || match(a.content))) ||
-      (appt.attachements && appt.attachements.some((a: string) => match(a)))
+      (appt.attachments && appt.attachments.some((a: string) => match(a)))
     );
   });
 
@@ -544,7 +544,7 @@ export default function AppointmentList() {
                       </span>
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <p className="text-sm font-semibold text-gray-800">{section.title}</p>
+                          <p className="text-sm font-semibold text-gray-700">{section.title}</p>
                           <Badge variant="outline" className={`border-transparent ${section.countClass}`}>
                             {sectionCount}
                           </Badge>
@@ -712,33 +712,7 @@ export default function AppointmentList() {
                                           </span>
                                         </div>
 
-                                        {/* Row 4: Refer to (only if patient exists) */}
-                                        {appt.patient && (
-                                          <div className="flex items-center gap-1.5">
-                                            <FiUsers className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                                            <span className="text-gray-400 text-xs shrink-0">Refer to:</span>
-                                            {(() => {
-                                              try {
-                                                if (appt.patient && typeof appt.patient === 'object' && 'firstname' in appt.patient && 'lastname' in appt.patient) {
-                                                  const patientObj = appt.patient as Patient;
-                                                  return <span className="text-xs text-purple-700 font-medium">Patient: {patientObj.firstname} {patientObj.lastname}</span>;
-                                                }
-                                                if (typeof appt.patient === 'string' && patients.length > 0) {
-                                                  const patient = patients.find((p: Patient) => p.id === appt.patient);
-                                                  if (patient && patient.firstname && patient.lastname) {
-                                                    return <span className="text-xs text-purple-700 font-medium">Patient: {patient.firstname} {patient.lastname}</span>;
-                                                  }
-                                                }
-                                                return <span className="text-xs text-red-500">Patient data not available</span>;
-                                              } catch (error: unknown) {
-                                                console.error('Error in patient lookup:', error);
-                                                return <span className="text-xs text-red-500">Error loading patient</span>;
-                                              }
-                                            })()}
-                                          </div>
-                                        )}
-
-                                        {/* Row 5: Notes (only if present) */}
+                                        {/* Row 4: Notes (only if present) */}
                                         {appt.notes && (
                                           <div className="flex items-center gap-1.5">
                                             <FiFileText className={`w-3.5 h-3.5 shrink-0 ${isDone ? "text-gray-300" : "text-gray-400"}`} />
@@ -748,11 +722,11 @@ export default function AppointmentList() {
                                         )}
 
                                         {/* Attachments (only if present) */}
-                                        {appt.attachements && appt.attachements.length > 0 && (
+                                        {appt.attachments && appt.attachments.length > 0 && (
                                           <div className="flex items-center gap-1.5 flex-wrap">
                                             <FiPaperclip className="w-3.5 h-3.5 text-gray-400 shrink-0" />
                                             <span className="text-gray-400 text-xs shrink-0">Attachments:</span>
-                                            {appt.attachements.map((file, idx) => {
+                                            {appt.attachments.map((file, idx) => {
                                               const publicUrl = getPublicUrl(file);
                                               const fileName = file.split("/").pop() || file;
                                               return publicUrl ? (

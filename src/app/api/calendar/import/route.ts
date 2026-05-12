@@ -129,7 +129,8 @@ export async function POST(request: NextRequest) {
         end: new Date(event.dtend),
         notes: event.description || null,
         location: event.location || null,
-        user_id: sessionUser.userId,
+        owner_id: sessionUser.userId,
+        treating_physician_id: sessionUser.userId,
         status: "pending",
       })),
     });

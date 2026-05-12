@@ -75,10 +75,14 @@ export type SnapshotInvoice = {
   description: string | null;
 };
 
-/** Appointment row from snapshot API (adds category label for display) */
+/** Appointment row from snapshot API (adds category label + B2 owner / treating columns for patient detail table). */
 export type AppointmentSnapshotRow = Appointment & {
   category_label?: string | null;
-  /** Doctor (owner) fields joined by the snapshot API for display in the patient detail screen. */
+  /** Calendar row owner (wire `user_id`; Prisma `owner_id`). */
+  calendar_owner_id?: string | null;
+  calendar_owner_display?: string | null;
+  calendar_owner_email?: string | null;
+  /** Resolved treating / clinical user (`treating_physician_id ?? user_id`). */
   doctor_id?: string | null;
   doctor_display?: string | null;
   doctor_email?: string | null;
@@ -131,12 +135,15 @@ export interface Appointment {
   end: string;
   location: string | null;
   patient: UUID | null;
-  attachements: string[];
+  attachments: string[];
   category: UUID | null;
   notes: string | null;
   title: string;
   status?: "done" | "pending" | "alert" | string | null;
+  /** Calendar row owner — JSON `user_id` (Prisma field `owner_id` @map user_id). */
   user_id: UUID;
+  /** B2: optional treating physician FK; display uses `resolveTreatingPhysicianUserId` (defaults to calendar owner). */
+  treating_physician_id?: string | null;
 }
 
 // Appointment Assignee
