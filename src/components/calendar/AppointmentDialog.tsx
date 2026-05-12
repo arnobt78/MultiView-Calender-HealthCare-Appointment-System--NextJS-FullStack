@@ -214,7 +214,8 @@ export default function AppointmentDialog({
 
       const safeStart = localInputValueToUTC(start);
       const safeEnd = localInputValueToUTC(end);
-      const attachementArray = attachments.split(",").map((s) => s.trim()).filter(Boolean);
+      /** Comma-separated UI string → URL list for Zod + API (same field name end-to-end: `attachments`). */
+      const parsedAttachments = attachments.split(",").map((s) => s.trim()).filter(Boolean);
 
       const parsed = appointmentCreateSchema.safeParse({
         title,
@@ -225,7 +226,7 @@ export default function AppointmentDialog({
         location: location || null,
         notes: notes || "",
         status: status as "pending" | "done" | "alert",
-        attachments: attachementArray,
+        attachments: parsedAttachments,
       });
       if (!parsed.success) {
         setError(parsed.error.issues[0]?.message || "Please check the form fields.");
@@ -248,7 +249,7 @@ export default function AppointmentDialog({
         if (patientId !== appointment?.patient) updates.patient = patientId;
         if (categoryId !== appointment?.category) updates.category = categoryId;
         if (location !== appointment?.location) updates.location = location;
-        if (attachments !== (appointment?.attachments || []).join(", ")) updates.attachments = attachementArray;
+        if (attachments !== (appointment?.attachments || []).join(", ")) updates.attachments = parsedAttachments;
         if (status !== appointment?.status) updates.status = status as "pending" | "done" | "alert";
         updates.updated_at = new Date().toISOString();
 
@@ -334,7 +335,7 @@ export default function AppointmentDialog({
           patient: patientId,
           category: categoryId,
           location,
-          attachments: attachementArray,
+          attachments: parsedAttachments,
           status: status as "pending" | "done" | "alert",
           treating_physician: treatingPhysicianId || user?.id,
         } as Partial<Appointment> & { treating_physician?: string });

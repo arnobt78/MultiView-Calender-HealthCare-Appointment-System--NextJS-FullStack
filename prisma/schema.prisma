@@ -140,7 +140,8 @@ model Appointment {
   owner_id    String    @map("user_id") @db.Uuid
   /// B2: optional treating / referring physician; display rule: `treating_physician_id ?? owner_id` (see `appointment-display-doctor.ts`).
   treating_physician_id String? @db.Uuid
-  attachments String[] @default([])
+  /// File / blob URLs (text[]). DB column remains `attachements` until an explicit `ALTER TABLE … RENAME COLUMN` migration; Prisma + app use correct spelling `attachments`.
+  attachments String[] @default([]) @map("attachements")
 
   patient     Patient?   @relation(fields: [patient_id], references: [id], onDelete: SetNull)
   category    Category?  @relation(fields: [category_id], references: [id], onDelete: SetNull)

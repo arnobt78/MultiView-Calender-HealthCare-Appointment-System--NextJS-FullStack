@@ -175,6 +175,7 @@ export function serializeInvoice(i: {
 /**
  * Appointment: map Prisma field names to API (`patient_id` → `patient`, etc.).
  * B3: Prisma calendar-owner field is `owner_id` (@map("user_id")); JSON keeps stable `user_id` for clients.
+ * `attachments` is the Postgres text[] column (URLs from blob upload or manual entry), serialized as the same key.
  */
 export function serializeAppointment(a: {
   id: string;
@@ -191,8 +192,9 @@ export function serializeAppointment(a: {
   owner_id: string;
   /** B2: optional FK to `users.id` — defaults to calendar owner on create / backfill. */
   treating_physician_id?: string | null;
-  attachments: string[];
+  attachments?: string[] | null;
 }) {
+  const attachmentList = a.attachments ?? [];
   return {
     id: a.id,
     created_at: a.created_at?.toISOString?.(),
@@ -207,7 +209,7 @@ export function serializeAppointment(a: {
     status: a.status,
     user_id: a.owner_id,
     treating_physician_id: a.treating_physician_id ?? null,
-    attachments: a.attachments ?? [],
+    attachments: attachmentList,
   };
 }
 

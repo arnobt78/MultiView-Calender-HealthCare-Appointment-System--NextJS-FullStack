@@ -1,4 +1,7 @@
 {
+  // When true, Git can open Cursor’s `git-editor.sh` bridge; if its IPC socket is gone (reload, crash),
+  // commits fail with ECONNREFUSED. Prefer the SCM input so `git commit` from the UI does not need that socket.
+  "git.useEditorAsCommitInput": false,
   "editor.defaultFormatter": "rvest.vs-code-prettier-eslint",
   "editor.formatOnSave": true,
   "[typescript]": {
