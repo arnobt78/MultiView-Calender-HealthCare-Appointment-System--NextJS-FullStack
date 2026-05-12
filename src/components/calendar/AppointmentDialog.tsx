@@ -33,6 +33,7 @@ import { useAppointments, FullAppointment } from "@/hooks/useAppointments";
 import { useAuth } from "@/hooks/useAuth";
 import { apiClient } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
+import { isValidUUID } from "@/lib/validation";
 import { invalidateAssigneesActivitiesAppointment } from "@/lib/query-client";
 import { notify } from "@/lib/notify";
 import { appointmentCreateSchema } from "@/lib/schemas/appointment";
@@ -91,6 +92,23 @@ export default function AppointmentDialog({
   );
   const doctors = useMemo(() => doctorsData?.users ?? [], [doctorsData]);
   const { createAppointmentAsync, updateAppointmentAsync } = useAppointments();
+
+  /**
+   * When the sheet opens, prefetch visit types for the calendar owner — matches the child `useQuery` key /
+   * `staleTime` so the first paint often skips a loading skeleton (TanStack dedupes with `CalendarHeader`).
+   */
+  useEffect(() => {
+    if (!open || !user?.id) return;
+    if (!isValidUUID(user.id)) return;
+    void queryClient.prefetchQuery({
+      queryKey: queryKeys.appointmentTypes.byDoctor(user.id),
+      queryFn: () =>
+        apiClient<{ types: unknown[] }>(
+          `/api/appointment-types?doctorId=${encodeURIComponent(user.id)}`
+        ),
+      staleTime: 5 * 60 * 1000,
+    });
+  }, [open, user?.id, queryClient]);
 
   const [assignees, setAssignees] = useState<AppointmentAssignee[]>([]); // type-safe
   const [activityType, setActivityType] = useState("");

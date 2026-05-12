@@ -9,8 +9,9 @@ import {
   startOfWeek,
 } from "date-fns";
 import { Button } from "@/components/ui/button";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   LayoutList,
   Calendar,
@@ -27,6 +28,9 @@ import {
 import AppointmentDialogController from "./AppointmentDialogController";
 import ImportICSDialog from "./ImportICSDialog";
 import { useAuth } from "@/hooks/useAuth";
+import { apiClient } from "@/lib/api-client";
+import { queryKeys } from "@/lib/query-keys";
+import { isValidUUID } from "@/lib/validation";
 
 // View modes in display order
 const views = ["List", "Day", "Week", "Month"] as const;
@@ -57,8 +61,27 @@ export default function CalendarHeader({
 }) {
   const { currentDate, setCurrentDate } = useDateContext();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   // Patients view the calendar in read-only mode — CRUD buttons are hidden.
   const isPatient = user?.role === "patient";
+
+  /**
+   * One lightweight GET per dashboard session: seeds `queryKeys.appointmentTypes.byDoctor(owner)` so the
+   * compose dialog / slot strip can reuse cache (same `staleTime` as `AppointmentDialogGeneralSection`).
+   */
+  useEffect(() => {
+    if (isPatient || !user?.id) return;
+    if (!isValidUUID(user.id)) return;
+    void queryClient.prefetchQuery({
+      queryKey: queryKeys.appointmentTypes.byDoctor(user.id),
+      queryFn: () =>
+        apiClient<{ types: unknown[] }>(
+          `/api/appointment-types?doctorId=${encodeURIComponent(user.id)}`
+        ),
+      staleTime: 5 * 60 * 1000,
+    });
+  }, [isPatient, user?.id, queryClient]);
+
   const [isComposeOpen, setIsComposeOpen] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();

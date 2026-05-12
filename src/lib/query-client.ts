@@ -182,6 +182,14 @@ export async function invalidateAvailabilitySlots(queryClient: QueryClient) {
 }
 
 /**
+ * Busts all `GET /api/appointment-types?doctorId=*` caches plus `global` — keeps slot pickers / portal /
+ * services page in sync after any appointment mutation (overlap rules depend on persisted appointments).
+ */
+export async function invalidateAppointmentTypesData(queryClient: QueryClient) {
+  await queryClient.invalidateQueries({ queryKey: queryKeys.appointmentTypes.all });
+}
+
+/**
  * After appointment create/update/import — pass `patientId` when known for cheaper patient cache updates.
  * Also invalidates insights/analytics since all charts aggregate appointment data.
  */
@@ -194,6 +202,7 @@ export async function invalidateAfterAppointmentMutation(
     invalidateActivitiesList(queryClient),
     invalidateNotificationsData(queryClient),
     invalidateAvailabilitySlots(queryClient),
+    invalidateAppointmentTypesData(queryClient),
     invalidateInvoicesAndOverview(queryClient, { patientId: opts?.patientId ?? undefined }),
     // Insights / analytics charts aggregate appointment data — must refetch after any mutation.
     invalidateInsightsAndAnalytics(queryClient),
@@ -220,6 +229,7 @@ export async function invalidateAssigneesActivitiesAppointment(
     invalidateAppointmentData(queryClient),
     invalidateActivitiesList(queryClient),
     invalidateAvailabilitySlots(queryClient),
+    invalidateAppointmentTypesData(queryClient),
     patientId
       ? invalidatePatientDetailAndSnapshot(queryClient, patientId)
       : queryClient.invalidateQueries({ queryKey: queryKeys.patients.all }),

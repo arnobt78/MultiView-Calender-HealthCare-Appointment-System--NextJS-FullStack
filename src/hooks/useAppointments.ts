@@ -6,6 +6,7 @@ import {
   invalidateActivitiesList,
   invalidateAssigneesData,
   invalidateAvailabilitySlots,
+  invalidateAppointmentTypesData,
   invalidateInvoicesAndOverview,
   invalidateNotificationsData,
   invalidatePatientDetailAndSnapshot,
@@ -266,8 +267,10 @@ export function useAppointments() {
         invalidateNotificationsData(queryClient),
         // Assignee rows are cascade-deleted in the DB; evict the client cache to match.
         invalidateAssigneesData(queryClient),
-        // Appointment removal frees time slots — re-sync availability grid.
+        // Appointment removal frees time slots — re-sync availability grid; bust type keys too so every
+        // consumer stays on the same invalidation contract as `invalidateAfterAppointmentMutation`.
         invalidateAvailabilitySlots(queryClient),
+        invalidateAppointmentTypesData(queryClient),
         invalidateInvoicesAndOverview(queryClient, { patientId }),
         // Insights charts and dashboard counters depend on appointment totals.
         invalidateInsightsAndAnalytics(queryClient),

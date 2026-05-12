@@ -87,8 +87,12 @@ export const queryKeys = {
     all: ["app", "doctors"] as const,
     detail: (id: string) => ["app", "doctors", id] as const,
   },
-  /** Appointment types per doctor — used by the patient portal booking wizard */
+  /**
+   * Appointment types: per-doctor lists (`GET /api/appointment-types?doctorId=`) + global card data.
+   * Use `appointmentTypes.all` in invalidators so every doctor-specific key refetches without enumerating UUIDs.
+   */
   appointmentTypes: {
+    all: ["app", "appointment-types"] as const,
     byDoctor: (doctorId: string) => ["app", "appointment-types", doctorId] as const,
     /** Global types shared across all doctors (user_id = null) */
     global: ["app", "appointment-types", "global"] as const,
