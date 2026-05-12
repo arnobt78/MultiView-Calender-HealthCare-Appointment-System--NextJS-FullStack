@@ -5,8 +5,8 @@
  * appointment’s client (`patient_id`). The client is chosen in Core scheduling; this list is for relatives
  * or other collaborators who need portal/calendar visibility without replacing the client field.
  *
- * Picker rows mirror the client select: optional `clinical_profile.image_url` for patients, robohash for
- * patients without a portrait and for relatives. `h-11` trigger matches login + general section controls.
+ * Picker rows mirror the client select: `resolvePatientPortraitUrl` for patients (demo + clinical JSON),
+ * robohash for relatives without email portraits. `h-11` trigger matches login + general section controls.
  * The assign `Select` stays uncontrolled so the trigger returns to the placeholder after each add (Radix
  * default); chips show the chosen portrait + label.
  */
@@ -22,17 +22,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn, toTitleCaseLabel } from "@/lib/utils";
-import type { AppointmentAssignee, Patient, PatientClinicalProfile, Relative } from "@/types/types";
+import { resolvePatientPortraitUrl } from "@/lib/patient-portrait";
+import type { AppointmentAssignee, Patient, Relative } from "@/types/types";
 
 const glassSelectTriggerClass =
   "h-11 min-h-[2.75rem] w-full min-w-0 cursor-pointer rounded-2xl border border-sky-200/50 bg-white/75 px-3 py-0 text-sm leading-none text-gray-700 shadow-[0_8px_24px_rgba(2,132,199,0.14)] backdrop-blur-md hover:bg-white/90 data-[placeholder]:text-gray-500 focus-visible:border-sky-400/50 focus-visible:ring-2 focus-visible:ring-sky-200/40";
-
-function patientPortraitSrc(p: Patient) {
-  const clinical = p.clinical_profile as (PatientClinicalProfile & { image_url?: string }) | null | undefined;
-  const url = clinical?.image_url;
-  if (typeof url === "string" && url.trim()) return url.trim();
-  return `https://robohash.org/${encodeURIComponent(p.email || p.id)}.png?set=set4&size=64x64`;
-}
 
 function relativePortraitSrc(r: Relative) {
   return `https://robohash.org/${encodeURIComponent(r.email || r.id)}.png?set=set4&size=64x64`;
@@ -96,7 +90,7 @@ export function AppointmentDialogAssigneesSection({
             {patientsForPicker.map((p) => (
               <SelectItem key={p.id} value={p.id} textValue={`Patient: ${p.firstname} ${p.lastname}`}>
                 <span className="flex items-center gap-2">
-                  <PickerAvatar src={patientPortraitSrc(p)} alt={`${p.firstname} ${p.lastname}`} />
+                  <PickerAvatar src={resolvePatientPortraitUrl(p)} alt={`${p.firstname} ${p.lastname}`} />
                   <span className="truncate">
                     Patient: {p.firstname} {p.lastname}
                   </span>
@@ -128,7 +122,7 @@ export function AppointmentDialogAssigneesSection({
               >
                 {p ? (
                   <>
-                    <PickerAvatar src={patientPortraitSrc(p)} alt={`${p.firstname} ${p.lastname}`} />
+                    <PickerAvatar src={resolvePatientPortraitUrl(p)} alt={`${p.firstname} ${p.lastname}`} />
                     <span>
                       Patient: {p.firstname} {p.lastname}
                     </span>

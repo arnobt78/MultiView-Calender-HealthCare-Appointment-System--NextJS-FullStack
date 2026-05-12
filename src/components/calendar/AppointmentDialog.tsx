@@ -45,6 +45,7 @@ import { uploadFileViaAPI } from "@/lib/vercelBlob";
 import { AppointmentDialogGeneralSection } from "@/components/calendar/appointment-dialog/AppointmentDialogGeneralSection";
 import { AppointmentDialogAssigneesSection } from "@/components/calendar/appointment-dialog/AppointmentDialogAssigneesSection";
 import { AppointmentDialogActivitiesSection } from "@/components/calendar/appointment-dialog/AppointmentDialogActivitiesSection";
+import { utcToLocalInputValue, localInputValueToUTC } from "@/lib/datetime-local";
 
 type Props = {
   trigger?: React.ReactNode;
@@ -107,6 +108,9 @@ export default function AppointmentDialog({
   const [status, setStatus] = useState("pending");
   /** B2: User.id of treating physician — persisted as `treating_physician_id`; defaults to calendar owner when unset. */
   const [treatingPhysicianId, setTreatingPhysicianId] = useState("");
+  /** Cal-style slot picker — reset in `resetFormState` when the dialog closes so the next open is clean. */
+  const [slotPickDateStr, setSlotPickDateStr] = useState("");
+  const [slotPickTypeId, setSlotPickTypeId] = useState("");
   const [uploading, setUploading] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -127,6 +131,8 @@ export default function AppointmentDialog({
     setStatus("pending");
     // Empty shows "Select Doctor" in UI; create API still receives calendar owner via `treating_physician: id || user?.id`.
     setTreatingPhysicianId("");
+    setSlotPickDateStr("");
+    setSlotPickTypeId("");
     setUploadedFiles([]);
     setAssignees([]);
     setActivityType("");
@@ -647,6 +653,16 @@ export default function AppointmentDialog({
                 doctors={doctors}
                 treatingPhysicianId={treatingPhysicianId}
                 setTreatingPhysicianId={setTreatingPhysicianId}
+                /**
+                 * Cal-style slot engine (`/api/availability/slots`) keys busy intervals by `owner_id`
+                 * — staff creates on the signed-in calendar (`POST /api/appointments`), so this must
+                 * match the session user, not the optional treating physician row.
+                 */
+                availabilityDoctorId={user?.id ?? ""}
+                slotPickDateStr={slotPickDateStr}
+                setSlotPickDateStr={setSlotPickDateStr}
+                slotPickTypeId={slotPickTypeId}
+                setSlotPickTypeId={setSlotPickTypeId}
               />
             </section>
             <section className="flex min-w-0 flex-col gap-6 lg:border-l lg:border-sky-200/70 lg:pl-8">
@@ -722,30 +738,4 @@ export default function AppointmentDialog({
       </DialogContent>
     </Dialog>
   );
-}
-
-// Helper: Convert UTC ISO string to local datetime-local input value (YYYY-MM-DDTHH:mm)
-function utcToLocalInputValue(utcString: string) {
-  if (!utcString) return "";
-  const date = new Date(utcString);
-  // Get local time in YYYY-MM-DDTHH:mm
-  const pad = (n: number) => n.toString().padStart(2, "0");
-  return (
-    date.getFullYear() +
-    "-" +
-    pad(date.getMonth() + 1) +
-    "-" +
-    pad(date.getDate()) +
-    "T" +
-    pad(date.getHours()) +
-    ":" +
-    pad(date.getMinutes())
-  );
-}
-// Helper: Convert local datetime-local input value to UTC ISO string
-function localInputValueToUTC(localValue: string) {
-  if (!localValue) return "";
-  // localValue is YYYY-MM-DDTHH:mm
-  const date = new Date(localValue);
-  return date.toISOString();
 }

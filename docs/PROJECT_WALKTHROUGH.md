@@ -666,6 +666,7 @@ Shared demo credentials live in `src/lib/demo-credentials.ts` (`test@admin.com`,
 - **Models** (`prisma/schema.prisma`): `DoctorAvailability` (weekly windows + IANA `timezone`), `DoctorTimeOff`, `AppointmentType` (duration, buffers, slot step, minimum notice).
 - **API**: `GET /api/availability/slots?doctorId=&date=YYYY-MM-DD&typeId=` — returns `{ slots: ISO[]; timezone }`.
 - **Client**: `useAvailabilitySlots` in `src/hooks/useAvailabilitySlots.ts` with keys under `queryKeys.availability`.
+- **Staff create/edit**: `AppointmentDialogGeneralSection` wires the same `GET /api/appointment-types` + slot chips into `AppointmentDialog` (doctor id = session user / appointment `owner_id` for busy overlap math).
 - **Invalidation**: `invalidateAfterAppointmentMutation` refreshes appointments, activities, notifications, availability slots, **invoices + dashboard overview + all patient queries** (shared appointment/billing graph). Slot pickers use `queryKeys.availability`.
 - **RBAC (incremental)**: `users.role === 'patient'` cannot POST/PUT/PATCH/DELETE dashboard appointments or POST organizations; registration defaults new users to `role: admin`.
 

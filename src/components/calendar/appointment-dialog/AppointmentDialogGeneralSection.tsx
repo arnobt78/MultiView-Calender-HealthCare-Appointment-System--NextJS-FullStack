@@ -8,13 +8,16 @@
  * converted to UTC on save in the parent dialog.
  *
  * UI: `h-11` controls match login card inputs (`Login.tsx`); `datetime-local` uses WebKit picker indicator
- * positioning so the calendar control sits on the right like select chevrons. Client rows use portal
- * `clinical_profile.image_url` when present else robohash (same strategy as `PatientPortalPage`). Treating
- * physician trigger uses **only** `SelectValue` so Radix does not duplicate avatars already rendered inside
- * each `SelectItem`.
+ * positioning so the calendar control sits on the right like select chevrons. Client avatars use
+ * `resolvePatientPortraitUrl` (demo table avatars + clinical JSON + robohash). Optional **Cal-style** slot
+ * row reuses `GET /api/availability/slots` (see `docs/PROJECT_WALKTHROUGH.md`) with the **calendar owner**
+ * id so busy intervals match `POST /api/appointments` ownership. Treating physician trigger uses **only**
+ * `SelectValue` so Radix does not duplicate avatars already rendered inside each `SelectItem`.
  */
 
-import { type ChangeEvent, type ReactNode, type RefObject, useMemo } from "react";
+import { type ChangeEvent, type CSSProperties, type ReactNode, type RefObject, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { addMinutes, format } from "date-fns";
 import type { LucideIcon } from "lucide-react";
 import {
   CalendarClock,
@@ -24,16 +27,24 @@ import {
   MapPin,
   Paperclip,
   Stethoscope,
+  Timer,
   Upload,
   UserRound,
   ListTodo,
 } from "lucide-react";
 import { cn, toTitleCaseLabel } from "@/lib/utils";
+import { apiClient } from "@/lib/api-client";
+import { queryKeys } from "@/lib/query-keys";
+import { isValidUUID } from "@/lib/validation";
+import { utcToLocalInputValue } from "@/lib/datetime-local";
+import { resolvePatientPortraitUrl } from "@/lib/patient-portrait";
+import { useAvailabilitySlots } from "@/hooks/useAvailabilitySlots";
 import { SafeImage } from "@/components/ui/safe-image";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -41,7 +52,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { Category, Patient, PatientClinicalProfile, User } from "@/types/types";
+import type { Category, Patient, User } from "@/types/types";
+
+/** Mirrors `PatientPortalPage` / GET `/api/appointment-types` — drives slot duration + buffers server-side. */
+type AppointmentTypeRow = {
+  id: string;
+  name: string;
+  duration_minutes: number;
+  buffer_before_minutes: number;
+  buffer_after_minutes: number;
+  slot_interval_minutes: number;
+  minimum_notice_minutes: number;
+  user_id: string | null;
+};
 
 /** Matches `MAX_ATTACHMENT_BYTES` in `AppointmentDialog.tsx` — keep both in sync. */
 const MAX_ATTACHMENT_BYTES_LABEL = "1 MB";
@@ -107,6 +130,16 @@ type Props = {
   doctors: User[];
   treatingPhysicianId: string;
   setTreatingPhysicianId: (v: string) => void;
+  /**
+   * Session user id passed from `AppointmentDialog` — must equal appointment `owner_id` on create so
+   * `/api/availability/slots` busy detection matches this calendar (see `computeAvailabilitySlots`).
+   */
+  availabilityDoctorId: string;
+  /** Lifted to parent so `resetFormState` clears slot UI when the dialog closes. */
+  slotPickDateStr: string;
+  setSlotPickDateStr: (v: string) => void;
+  slotPickTypeId: string;
+  setSlotPickTypeId: (v: string) => void;
 };
 
 function doctorLabel(d: User) {
@@ -120,15 +153,11 @@ function doctorAvatarSrc(d: User) {
   return `https://robohash.org/${encodeURIComponent(d.id)}.png?size=64x64&set=set4`;
 }
 
-function patientPortraitSrc(p: Patient) {
-  const clinical = p.clinical_profile as (PatientClinicalProfile & { image_url?: string }) | null | undefined;
-  const url = clinical?.image_url;
-  if (typeof url === "string" && url.trim()) return url.trim();
-  return `https://robohash.org/${encodeURIComponent(p.email || p.id)}.png?set=set4&size=64x64`;
-}
-
-function relativePortraitSrc(r: { id: string; email?: string | null }) {
-  return `https://robohash.org/${encodeURIComponent(r.email || r.id)}.png?set=set4&size=64x64`;
+/** Safe swatch for category `color` (hex) — invalid values fall back to neutral slate. */
+function categorySwatchStyle(color: string | null | undefined): CSSProperties {
+  const raw = color?.trim();
+  if (raw && /^#[0-9a-fA-F]{3,8}$/.test(raw)) return { backgroundColor: raw };
+  return { backgroundColor: "rgb(203 213 225)" };
 }
 
 function PickerAvatar({
@@ -233,10 +262,49 @@ export function AppointmentDialogGeneralSection({
   doctors,
   treatingPhysicianId,
   setTreatingPhysicianId,
+  availabilityDoctorId,
+  slotPickDateStr,
+  setSlotPickDateStr,
+  slotPickTypeId,
+  setSlotPickTypeId,
 }: Props) {
+  const { data: typesData, isLoading: typesLoading } = useQuery({
+    queryKey: queryKeys.appointmentTypes.byDoctor(availabilityDoctorId),
+    queryFn: () =>
+      apiClient<{ types: AppointmentTypeRow[] }>(
+        `/api/appointment-types?doctorId=${encodeURIComponent(availabilityDoctorId)}`
+      ),
+    enabled: isValidUUID(availabilityDoctorId),
+    staleTime: 5 * 60 * 1000,
+  });
+  const types = useMemo(() => typesData?.types ?? [], [typesData]);
+
+  /** When the user has not chosen a type yet, default to the first returned type (portal parity). */
+  const resolvedSlotTypeId = useMemo(
+    () => slotPickTypeId || types[0]?.id || "",
+    [slotPickTypeId, types]
+  );
+
+  const { data: slotsPayload, isLoading: slotsLoading } = useAvailabilitySlots(
+    resolvedSlotTypeId && slotPickDateStr ? availabilityDoctorId : null,
+    resolvedSlotTypeId && slotPickDateStr ? slotPickDateStr : null,
+    resolvedSlotTypeId && slotPickDateStr ? resolvedSlotTypeId : null
+  );
+  const slots = slotsPayload?.slots ?? [];
+
   const selectedPatient = useMemo(
     () => patients.find((p) => p.id === patientId),
     [patients, patientId]
+  );
+
+  const selectedCategory = useMemo(
+    () => categories.find((c) => c.id === categoryId),
+    [categories, categoryId]
+  );
+
+  const selectedSlotType = useMemo(
+    () => types.find((t) => t.id === resolvedSlotTypeId),
+    [types, resolvedSlotTypeId]
   );
 
   return (
@@ -307,6 +375,98 @@ export function AppointmentDialogGeneralSection({
         </div>
       </div>
 
+      {/*
+        Cal-style optional path: same `/api/availability/slots` contract as `BookAppointmentDialog` in
+        `PatientPortalPage`. `availabilityDoctorId` is the calendar owner (session user), matching how
+        `computeAvailabilitySlots` loads busy rows (`owner_id`), not the optional treating physician FK.
+      */}
+      {isValidUUID(availabilityDoctorId) ? (
+        <div className={cn("space-y-3", glassCardClass)}>
+          <FieldLabel icon={Timer}>
+            {toTitleCaseLabel("Suggested start times (availability)")}
+          </FieldLabel>
+          <p className="text-xs leading-relaxed text-gray-600">
+            Pick a visit length and day, then a chip fills Start/End above. Empty lists mean no weekly hours,
+            time off, or open gaps for that configuration — you can still type times manually.
+          </p>
+          {typesLoading ? (
+            <Skeleton className="h-11 w-full rounded-2xl" />
+          ) : types.length === 0 ? (
+            <p className="text-xs text-gray-600">
+              No appointment types for this account — seed or create types + weekly availability in Control
+              Panel to enable slot suggestions.
+            </p>
+          ) : (
+            <>
+              <Select value={resolvedSlotTypeId || undefined} onValueChange={setSlotPickTypeId}>
+                <SelectTrigger className={glassSelectTriggerClass} aria-label="Appointment type for slots">
+                  <SelectValue placeholder={toTitleCaseLabel("Visit type (duration)")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {types.map((t) => (
+                    <SelectItem key={t.id} value={t.id} textValue={t.name}>
+                      <span className="flex w-full min-w-0 items-center justify-between gap-2">
+                        <span className="truncate">{t.name}</span>
+                        <span className="shrink-0 text-xs text-gray-500">{t.duration_minutes} min</span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="space-y-1">
+                <Label htmlFor="slot-pick-date-input" className="text-xs text-gray-600">
+                  {toTitleCaseLabel("Date for slot list")}
+                </Label>
+                <Input
+                  id="slot-pick-date-input"
+                  type="date"
+                  value={slotPickDateStr}
+                  min={new Date().toISOString().slice(0, 10)}
+                  onChange={(e) => setSlotPickDateStr(e.target.value)}
+                  className={cn(glassInputClass, "cursor-pointer")}
+                />
+              </div>
+              {resolvedSlotTypeId && slotPickDateStr ? (
+                slotsLoading ? (
+                  <Skeleton className="h-14 w-full rounded-2xl" />
+                ) : (
+                  <div className="flex max-h-36 flex-wrap gap-2 overflow-y-auto pr-0.5">
+                    {slots.length === 0 ? (
+                      <p className="text-xs text-amber-800">{toTitleCaseLabel("No open slots this day.")}</p>
+                    ) : (
+                      slots.map((iso) => (
+                        <Button
+                          key={iso}
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="cursor-pointer rounded-full border-sky-200/80 bg-white/90 text-xs font-medium text-sky-900 hover:bg-sky-50"
+                          onClick={() => {
+                            const dur = selectedSlotType?.duration_minutes ?? 30;
+                            const endUtc = addMinutes(new Date(iso), dur).toISOString();
+                            setStart(utcToLocalInputValue(iso));
+                            setEnd(utcToLocalInputValue(endUtc));
+                          }}
+                        >
+                          {format(new Date(iso), "HH:mm")}
+                        </Button>
+                      ))
+                    )}
+                  </div>
+                )
+              ) : null}
+              {slotsPayload?.timezone ? (
+                <p className="text-[10px] text-gray-500">
+                  {toTitleCaseLabel("Availability math uses IANA zone")}: {slotsPayload.timezone}
+                  {" — "}
+                  {toTitleCaseLabel("chip labels use your browser local clock")}
+                </p>
+              ) : null}
+            </>
+          )}
+        </div>
+      ) : null}
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <FieldLabel icon={UserRound}>
@@ -316,7 +476,7 @@ export function AppointmentDialogGeneralSection({
             <SelectTrigger className={glassSelectTriggerClass}>
               {selectedPatient ? (
                 <PickerAvatar
-                  src={patientPortraitSrc(selectedPatient)}
+                  src={resolvePatientPortraitUrl(selectedPatient)}
                   alt={`${selectedPatient.firstname} ${selectedPatient.lastname}`}
                 />
               ) : null}
@@ -327,7 +487,7 @@ export function AppointmentDialogGeneralSection({
                 <SelectItem key={p.id} value={p.id} textValue={`${p.firstname} ${p.lastname}`}>
                   <span className="flex items-center gap-2">
                     <PickerAvatar
-                      src={patientPortraitSrc(p)}
+                      src={resolvePatientPortraitUrl(p)}
                       alt={`${p.firstname} ${p.lastname}`}
                     />
                     <span className="truncate">
@@ -345,12 +505,26 @@ export function AppointmentDialogGeneralSection({
           </FieldLabel>
           <Select value={categoryId || undefined} onValueChange={setCategoryId}>
             <SelectTrigger className={glassSelectTriggerClass}>
+              {selectedCategory ? (
+                <span
+                  className="h-2.5 w-2.5 shrink-0 rounded-full ring-1 ring-sky-200/80"
+                  style={categorySwatchStyle(selectedCategory.color)}
+                  aria-hidden
+                />
+              ) : null}
               <SelectValue placeholder={toTitleCaseLabel("Select Category")} />
             </SelectTrigger>
             <SelectContent>
               {categories.map((c) => (
                 <SelectItem key={c.id} value={c.id} textValue={c.label}>
-                  {c.label}
+                  <span className="flex min-w-0 items-center gap-2">
+                    <span
+                      className="h-2.5 w-2.5 shrink-0 rounded-full ring-1 ring-sky-200/80"
+                      style={categorySwatchStyle(c.color)}
+                      aria-hidden
+                    />
+                    <span className="truncate">{c.label}</span>
+                  </span>
                 </SelectItem>
               ))}
             </SelectContent>

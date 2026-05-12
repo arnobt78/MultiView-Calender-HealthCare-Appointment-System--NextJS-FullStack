@@ -22,6 +22,8 @@ export type PatientClinicalProfile = {
   /** Where the record originated — drives optional `referral_detail` */
   referral_source?: string;
   referral_detail?: string;
+  /** Optional portrait URL stored in JSON (portal, uploads, or integrations). */
+  image_url?: string;
 } | null;
 
 // Patient
