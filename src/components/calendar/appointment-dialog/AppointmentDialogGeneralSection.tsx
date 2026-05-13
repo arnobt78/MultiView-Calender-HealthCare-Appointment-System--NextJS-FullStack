@@ -25,6 +25,7 @@ import {
   Heading2,
   LayoutGrid,
   MapPin,
+  MessageSquare,
   Paperclip,
   Stethoscope,
   Timer,
@@ -140,6 +141,9 @@ type Props = {
   setSlotPickDateStr: (v: string) => void;
   slotPickTypeId: string;
   setSlotPickTypeId: (v: string) => void;
+  /** Chief complaint / presenting symptom from the patient — stored on appointment for clinical context. */
+  chiefComplaint: string;
+  setChiefComplaint: (v: string) => void;
 };
 
 function doctorLabel(d: User) {
@@ -267,6 +271,8 @@ export function AppointmentDialogGeneralSection({
   setSlotPickDateStr,
   slotPickTypeId,
   setSlotPickTypeId,
+  chiefComplaint,
+  setChiefComplaint,
 }: Props) {
   const { data: typesData, isLoading: typesLoading } = useQuery({
     queryKey: queryKeys.appointmentTypes.byDoctor(availabilityDoctorId),
@@ -330,6 +336,21 @@ export function AppointmentDialogGeneralSection({
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           className={cn(glassTextareaClass, "cursor-text")}
+        />
+      </div>
+
+      {/* Chief complaint — presenting symptom / reason for visit stored on appointment for clinical context */}
+      <div className="space-y-2">
+        <FieldLabel htmlFor="chief-complaint" icon={MessageSquare}>
+          {toTitleCaseLabel("Chief Complaint")}
+        </FieldLabel>
+        <Input
+          id="chief-complaint"
+          value={chiefComplaint}
+          onChange={(e) => setChiefComplaint(e.target.value)}
+          placeholder="Presenting symptom or reason for visit…"
+          maxLength={500}
+          className={cn(glassInputClass, "cursor-text")}
         />
       </div>
 

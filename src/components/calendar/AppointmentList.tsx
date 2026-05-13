@@ -41,6 +41,7 @@ import {
   CalendarX2,
   CalendarDays,
   ChevronDown,
+  Video,
 } from "lucide-react";
 import { getUserAppointmentPermission } from "@/lib/permissions";
 import VideoCall from "./VideoCall";
@@ -710,6 +711,13 @@ export default function AppointmentList() {
                                               {appt.status || "pending"}
                                             </span>
                                           </span>
+                                          {/* Telehealth badge — shown only when appointment is telehealth */}
+                                          {appt.is_telehealth && (
+                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-sky-100/80 text-sky-700 border border-sky-200/60 flex-shrink-0">
+                                              <Video className="h-3 w-3" />
+                                              Telehealth
+                                            </span>
+                                          )}
                                         </div>
 
                                         {/* Row 4: Notes (only if present) */}
@@ -805,10 +813,13 @@ export default function AppointmentList() {
                                             })()}
                                           </DropdownMenuContent>
                                         </DropdownMenu>
-                                        <VideoCall
-                                          appointmentId={appt.id}
-                                          appointmentTitle={appt.title ?? "Video Consultation"}
-                                        />
+                                        {/* Video call button only shown for telehealth appointments */}
+                                        {appt.is_telehealth && (
+                                          <VideoCall
+                                            appointmentId={appt.id}
+                                            appointmentTitle={appt.title ?? "Video Consultation"}
+                                          />
+                                        )}
                                       </div>
                                     </motion.div>
                                   );

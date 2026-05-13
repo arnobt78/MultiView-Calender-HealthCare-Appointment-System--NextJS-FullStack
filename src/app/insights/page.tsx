@@ -7,6 +7,7 @@ import type { Metadata } from "next";
 import AnalyticsPage from "@/components/pages/AnalyticsPage";
 import { getSessionUser } from "@/lib/session";
 import { prefetchInsights } from "@/lib/server-prefetch";
+import { getUserRole, isDoctorRole } from "@/lib/rbac";
 import type { InsightsPayload } from "@/lib/insights-data";
 
 export const metadata: Metadata = {
@@ -30,7 +31,11 @@ export default async function InsightsRoute() {
   const session = await getSessionUser();
   let initialInsights: InsightsPayload | null = null;
   if (session) {
-    initialInsights = await prefetchInsights(session.userId);
+    // Match the same scoping logic as GET /api/insights:
+    // doctors see only their own appointments; admin/secretary see global data.
+    const role = await getUserRole(session.userId);
+    const ownOnly = isDoctorRole(role);
+    initialInsights = await prefetchInsights(session.userId, { ownOnly });
   }
   return <AnalyticsPage initialInsights={initialInsights} />;
 }

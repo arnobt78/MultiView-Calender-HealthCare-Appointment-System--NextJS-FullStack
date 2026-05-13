@@ -232,10 +232,13 @@ export default function DayView() {
                                 </div>
                               </div>
                               <div className="flex shrink-0 items-center gap-1 border-l border-white/35 px-3">
-                                <VideoCall
-                                  appointmentId={appt.id}
-                                  appointmentTitle={appt.title ?? "Video Consultation"}
-                                />
+                                {/* Video call button only shown for telehealth appointments */}
+                                {appt.is_telehealth && (
+                                  <VideoCall
+                                    appointmentId={appt.id}
+                                    appointmentTitle={appt.title ?? "Video Consultation"}
+                                  />
+                                )}
                                 <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-black/5">

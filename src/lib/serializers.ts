@@ -193,6 +193,16 @@ export function serializeAppointment(a: {
   /** B2: optional FK to `users.id` — defaults to calendar owner on create / backfill. */
   treating_physician_id?: string | null;
   attachments?: string[] | null;
+  /** FK to appointment_types — drives slot math and telehealth flag */
+  appointment_type_id?: string | null;
+  /** Denormalised from appointment_type.is_telehealth — stored for fast queries without a join */
+  is_telehealth?: boolean;
+  /** Presenting complaint / reason for visit */
+  chief_complaint?: string | null;
+  /** Actual appointment duration in minutes */
+  duration_minutes?: number | null;
+  /** Video call meeting URL — shown as Join Call button when is_telehealth = true */
+  telehealth_link?: string | null;
 }) {
   const attachmentList = a.attachments ?? [];
   return {
@@ -210,6 +220,11 @@ export function serializeAppointment(a: {
     user_id: a.owner_id,
     treating_physician_id: a.treating_physician_id ?? null,
     attachments: attachmentList,
+    appointment_type_id: a.appointment_type_id ?? null,
+    is_telehealth: a.is_telehealth ?? false,
+    chief_complaint: a.chief_complaint ?? null,
+    duration_minutes: a.duration_minutes ?? null,
+    telehealth_link: a.telehealth_link ?? null,
   };
 }
 

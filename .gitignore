@@ -42,7 +42,15 @@ yarn-error.log*
 next-env.d.ts
 .next
 
+
+# Cursor
 .cursorignore
+.cursor
+
+# Claude
+.claude
+.claudeignore
+CLAUDE.md
 
 # Documentation
 HETZNER_VPS_MIGRATION_GUIDE.md
@@ -55,7 +63,9 @@ PROJECT_PLAN.md
 Implementation_plan.md
 Task.md
 
-.cursor
+
+
+# OS
 .DS_Store
 .github
 .npm-cache

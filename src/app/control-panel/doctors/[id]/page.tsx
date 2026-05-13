@@ -16,6 +16,7 @@ import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Separator } from "@/components/ui/separator";
 import { DoctorDetailForm } from "@/components/control-panel/DoctorDetailForm";
 import { DoctorAppointmentTypesEditor } from "@/components/control-panel/DoctorAppointmentTypesEditor";
+import { DoctorGlobalTypeConfigEditor } from "@/components/control-panel/DoctorGlobalTypeConfigEditor";
 import {
   ArrowLeft,
   BookOpen,
@@ -245,6 +246,22 @@ export default async function DoctorDetailPage({ params }: PageProps) {
             </CardHeader>
             <CardContent className="p-4">
               <DoctorAppointmentTypesEditor doctorId={raw.id} />
+            </CardContent>
+          </Card>
+
+          {/* Global visit type enable/disable — admin or self */}
+          <Card className="rounded-[20px] border bg-card shadow-[0_4px_20px_rgba(14,165,233,0.1)] overflow-hidden">
+            <CardHeader className="pb-2 bg-sky-50/60 border-b border-sky-100/60">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2 text-sky-800">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-100 border border-sky-200">
+                  <Stethoscope className="h-3.5 w-3.5 text-sky-600" />
+                </span>
+                Global Visit Type Access
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4">
+              {/* Toggle which global (shared) appointment types this doctor accepts */}
+              <DoctorGlobalTypeConfigEditor doctorId={raw.id} />
             </CardContent>
           </Card>
 

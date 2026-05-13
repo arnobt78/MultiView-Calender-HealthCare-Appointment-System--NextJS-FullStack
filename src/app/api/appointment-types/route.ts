@@ -3,8 +3,13 @@
  *
  * Returns appointment types for a specific doctor: their own types (user_id = doctorId)
  * plus any global types (user_id = null) shared across all doctors.
- * Used by the patient portal booking wizard so patients can see the type of visit
- * (e.g. "Initial Consultation – 60 min", "Follow-up – 30 min") before picking a time slot.
+ * Global types include an `is_enabled` flag derived from DoctorAppointmentTypeConfig.
+ * Absence of a config row = enabled by default.
+ *
+ * Used by:
+ *   - Patient portal booking wizard (filters to is_enabled = true types)
+ *   - Doctor portal appointment type manager (shows all with checkbox state)
+ *   - Admin/staff appointment dialog (doctor's available types)
  *
  * POST /api/appointment-types
  *
@@ -40,10 +45,18 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "doctorId must be a valid UUID" }, { status: 400 });
     }
 
-    // Return doctor-specific types first, then fall back to global (user_id = null) types
+    // Fetch doctor-specific types + global types in one query
     const types = await prisma.appointmentType.findMany({
       where: {
         OR: [{ user_id: doctorId }, { user_id: null }],
+        is_active: true,
+      },
+      include: {
+        // Load only this doctor's config rows for the is_enabled join
+        doctor_configs: {
+          where: { doctor_id: doctorId },
+          select: { is_enabled: true },
+        },
       },
       orderBy: [
         // Doctor-owned types first, then globals
@@ -52,7 +65,30 @@ export async function GET(req: NextRequest) {
       ],
     });
 
-    return NextResponse.json({ types });
+    // Merge is_enabled: doctor-specific types are always enabled;
+    // global types default to enabled unless a config row says otherwise
+    const serialized = types.map((t) => ({
+      id: t.id,
+      created_at: t.created_at.toISOString(),
+      user_id: t.user_id,
+      name: t.name,
+      description: t.description,
+      duration_minutes: t.duration_minutes,
+      buffer_before_minutes: t.buffer_before_minutes,
+      buffer_after_minutes: t.buffer_after_minutes,
+      slot_interval_minutes: t.slot_interval_minutes,
+      minimum_notice_minutes: t.minimum_notice_minutes,
+      is_telehealth: t.is_telehealth,
+      color: t.color,
+      icon: t.icon,
+      is_active: t.is_active,
+      // Doctor-owned types are always enabled; for global types check config row (absent = enabled)
+      is_enabled: t.user_id === doctorId
+        ? true
+        : (t.doctor_configs[0]?.is_enabled ?? true),
+    }));
+
+    return NextResponse.json({ types: serialized });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Internal server error";
     return NextResponse.json({ error: message }, { status: 500 });
@@ -114,6 +150,13 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    const isTelehealth =
+      typeof body.is_telehealth === "boolean" ? body.is_telehealth : false;
+    const color =
+      typeof body.color === "string" && body.color.trim() ? body.color.trim() : null;
+    const icon =
+      typeof body.icon === "string" && body.icon.trim() ? body.icon.trim() : null;
+
     const type = await prisma.appointmentType.create({
       data: {
         user_id,
@@ -124,6 +167,9 @@ export async function POST(req: NextRequest) {
         buffer_after_minutes: numField(body.buffer_after_minutes, 0, 240, 0),
         slot_interval_minutes: numField(body.slot_interval_minutes, 5, 12 * 60, 30),
         minimum_notice_minutes: numField(body.minimum_notice_minutes, 0, 7 * 24 * 60, 60),
+        is_telehealth: isTelehealth,
+        color,
+        icon,
       },
     });
 

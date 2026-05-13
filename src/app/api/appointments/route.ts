@@ -105,6 +105,16 @@ export async function POST(req: NextRequest) {
     const startDate = new Date(body.start);
     const endDate = new Date(body.end);
 
+    // Resolve telehealth flag from the linked appointment type (if provided)
+    let isTelehealth = false;
+    if (body.appointment_type_id) {
+      const apptType = await prisma.appointmentType.findUnique({
+        where: { id: body.appointment_type_id },
+        select: { is_telehealth: true },
+      });
+      isTelehealth = apptType?.is_telehealth ?? false;
+    }
+
     const appointment = await prisma.appointment.create({
       data: {
         title: body.title,
@@ -118,6 +128,11 @@ export async function POST(req: NextRequest) {
         attachments: body.attachments ?? [],
         owner_id: sessionUser.userId,
         treating_physician_id: body.treating_physician ?? sessionUser.userId,
+        appointment_type_id: body.appointment_type_id ?? null,
+        is_telehealth: isTelehealth,
+        chief_complaint: body.chief_complaint ?? null,
+        duration_minutes: body.duration_minutes ?? null,
+        telehealth_link: body.telehealth_link ?? null,
       },
     });
 

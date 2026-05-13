@@ -33,13 +33,32 @@ export async function GET() {
         specialty: true,
         bio: true,
         created_at: true,
+        // Extended professional fields added in migration 006
+        phone: true,
+        license_number: true,
+        consultation_fee: true,
+        languages_spoken: true,
+        years_of_experience: true,
+        office_location: true,
+        department: true,
         doctor_availabilities: {
           select: { weekday: true, start_min: true, end_min: true, timezone: true },
           orderBy: { weekday: "asc" },
         },
         appointment_types_owned: {
-          where: { user_id: { not: null } },
-          select: { id: true, name: true, duration_minutes: true, description: true },
+          where: { user_id: { not: null }, is_active: true },
+          select: {
+            id: true,
+            name: true,
+            duration_minutes: true,
+            description: true,
+            is_telehealth: true,
+          },
+        },
+        // Count enabled global types from the junction table
+        doctor_type_configs: {
+          where: { is_enabled: true },
+          select: { id: true },
         },
         // Count patients assigned to this doctor
         patients_primary_doctor: {
@@ -57,8 +76,16 @@ export async function GET() {
       specialty: d.specialty,
       bio: d.bio,
       created_at: d.created_at.toISOString(),
+      phone: d.phone,
+      license_number: d.license_number,
+      consultation_fee: d.consultation_fee,
+      languages_spoken: d.languages_spoken,
+      years_of_experience: d.years_of_experience,
+      office_location: d.office_location,
+      department: d.department,
       availabilities: d.doctor_availabilities,
       appointment_types: d.appointment_types_owned,
+      enabled_type_count: d.doctor_type_configs.length,
       patient_count: d.patients_primary_doctor.length,
     }));
 

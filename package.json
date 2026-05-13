@@ -19,6 +19,7 @@
     "db:seed-test-user": "tsx scripts/seed-test-user.ts",
     "db:prepare": "npm run prisma:push && npm run db:seed-test-user",
     "db:seed-demo-clinical": "tsx scripts/seed-demo-patient-clinical.ts",
+    "db:seed-extended": "tsx scripts/seed-extended-schema.ts",
     "db:clear": "tsx scripts/db-clear.ts",
     "test:smoke-invalidation": "tsx scripts/smoke-cross-tab-invalidation.ts",
     "qa:local": "npm run prisma:push && npm run db:seed-test-user && npm run test",

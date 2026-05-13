@@ -20,6 +20,8 @@ import {
   Bell, BellRing, CheckCheck, Search,
   // Notification type icons
   CalendarPlus, CalendarCheck2, AlarmClock, RefreshCcw, Trash2,
+  // Role portal icons
+  ShieldCheck, Stethoscope, ClipboardList,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
@@ -101,23 +103,37 @@ export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
 
-  // Role flags used to conditionally render nav links and toolbar items.
-  // Patients only see patient-facing pages; staff (admin/doctor/secretary) skip the portal link.
+  // Role flags — drive nav link visibility once session resolves.
   const isPatient = user?.role === "patient";
-  const isStaff = user?.role === "admin" || user?.role === "doctor" || user?.role === "secretary";
+  const isAdmin = user?.role === "admin";
+  const isDoctor = user?.role === "doctor";
+  const isSecretary = user?.role === "secretary";
+  const isStaff = isAdmin || isDoctor || isSecretary;
 
   /**
-   * During `authLoading`, `user` is still null — `isPatient` and `isStaff` are both false, which
-   * would incorrectly show Control Panel + Patient Portal together. Infer allowed chrome from
-   * pathname until `/api/auth/me` returns: server layouts already redirect unauthorized roles
-   * (`/patient-portal` is patient-only; `/control-panel` and `/insights` require staff). For
-   * shared routes (`/dashboard`, `/services`) show only links every role has until session resolves.
+   * During `authLoading`, `user` is still null — role flags are all false.
+   * Infer chrome from pathname until /api/auth/me returns so that SSR → client
+   * hydration produces the same DOM structure and avoids a layout shift.
+   * Server-side redirects enforce RBAC; these hints are cosmetic only.
    */
   const inferredStaffNav =
-    pathname?.startsWith("/control-panel") === true || pathname?.startsWith("/insights") === true;
+    pathname?.startsWith("/control-panel") === true ||
+    pathname?.startsWith("/insights") === true ||
+    pathname?.startsWith("/admin-portal") === true ||
+    pathname?.startsWith("/doctor-portal") === true ||
+    pathname?.startsWith("/secretary-portal") === true;
   const inferredPatientNav = pathname?.startsWith("/patient-portal") === true;
+  const inferredAdminNav = pathname?.startsWith("/admin-portal") === true;
+  const inferredDoctorNav = pathname?.startsWith("/doctor-portal") === true;
+  const inferredSecretaryNav = pathname?.startsWith("/secretary-portal") === true;
+
   const showStaffNavLinks = authLoading ? inferredStaffNav : isStaff;
   const showPatientPortalNavLink = authLoading ? inferredPatientNav : !isStaff;
+  const showAdminPortalLink = authLoading ? inferredAdminNav : isAdmin;
+  const showDoctorPortalLink = authLoading ? inferredDoctorNav : isDoctor;
+  const showSecretaryPortalLink = authLoading ? inferredSecretaryNav : isSecretary;
+  // Doctors use their own portal; admin and secretary still have access to Control Panel
+  const showControlPanelLink = authLoading ? inferredStaffNav : (isAdmin || isSecretary);
   const openSearch = useAppStore((s) => s.openSearch);
   const toggleQuickActionModal = useAppStore((s) => s.toggleQuickActionModal);
   const { notifications, total, unreadCount, markAsRead, markAllAsRead, deleteRead, isDeletingRead } = useNotifications();
@@ -166,9 +182,9 @@ export default function Navbar() {
           </Link>
         </div>
 
-        {/* Center: nav links — visibility is role-gated client-side after session resolves */}
+        {/* Center: nav links — role-gated; pathname hints keep hydration stable while auth loads */}
         <nav className="hidden md:flex flex-1 items-center justify-center gap-6">
-          {/* Dashboard is accessible to all authenticated roles */}
+          {/* Dashboard — all authenticated roles */}
           <Link
             href="/dashboard"
             className={`text-base transition-colors hover:text-gray-700 ${pathname === "/dashboard" ? "text-gray-700" : "text-muted-foreground"}`}
@@ -176,8 +192,41 @@ export default function Navbar() {
             Dashboard
           </Link>
 
-          {/* Control Panel and Analytics: staff only — patients are redirected away by the layout */}
-          {showStaffNavLinks && (
+          {/* Admin Portal — admin role only */}
+          {showAdminPortalLink && (
+            <Link
+              href="/admin-portal"
+              className={`flex items-center gap-1.5 text-base transition-colors hover:text-gray-700 ${pathname?.startsWith("/admin-portal") ? "text-gray-700" : "text-muted-foreground"}`}
+            >
+              <ShieldCheck className="h-4 w-4" />
+              Admin Portal
+            </Link>
+          )}
+
+          {/* Doctor Portal — doctor role only (replaces Control Panel for doctors) */}
+          {showDoctorPortalLink && (
+            <Link
+              href="/doctor-portal"
+              className={`flex items-center gap-1.5 text-base transition-colors hover:text-gray-700 ${pathname?.startsWith("/doctor-portal") ? "text-gray-700" : "text-muted-foreground"}`}
+            >
+              <Stethoscope className="h-4 w-4" />
+              Doctor Portal
+            </Link>
+          )}
+
+          {/* Secretary Portal — secretary role only */}
+          {showSecretaryPortalLink && (
+            <Link
+              href="/secretary-portal"
+              className={`flex items-center gap-1.5 text-base transition-colors hover:text-gray-700 ${pathname?.startsWith("/secretary-portal") ? "text-gray-700" : "text-muted-foreground"}`}
+            >
+              <ClipboardList className="h-4 w-4" />
+              Secretary Portal
+            </Link>
+          )}
+
+          {/* Control Panel — admin + secretary; hidden for doctors (they use Doctor Portal) */}
+          {showControlPanelLink && (
             <Link
               href="/control-panel"
               className={`text-base transition-colors hover:text-gray-700 ${pathname?.includes("/control-panel") ? "text-gray-700" : "text-muted-foreground"}`}
@@ -185,6 +234,8 @@ export default function Navbar() {
               Control Panel
             </Link>
           )}
+
+          {/* Analytics — all staff roles (doctor sees own-scoped data via ?scope=own) */}
           {showStaffNavLinks && (
             <Link
               href="/insights"
@@ -194,7 +245,7 @@ export default function Navbar() {
             </Link>
           )}
 
-          {/* Services: visible to all authenticated roles */}
+          {/* Services — all authenticated roles */}
           <Link
             href="/services"
             className={`text-base transition-colors hover:text-gray-700 ${pathname?.includes("/services") ? "text-gray-700" : "text-muted-foreground"}`}
@@ -202,7 +253,7 @@ export default function Navbar() {
             Services
           </Link>
 
-          {/* Patient Portal: patients only when session is known; pathname hint while auth is loading */}
+          {/* Patient Portal — patients only */}
           {showPatientPortalNavLink && (
             <Link
               href="/patient-portal"

@@ -10,6 +10,20 @@ export interface User {
   specialty?: string | null;
   /** Short bio for the doctor services page */
   bio?: string | null;
+  /** Contact phone number */
+  phone?: string | null;
+  /** Medical license or registration number */
+  license_number?: string | null;
+  /** Department or unit within the clinic/hospital */
+  department?: string | null;
+  /** Consultation fee in cents (for Services page display) */
+  consultation_fee?: number | null;
+  /** Physical office or room location */
+  office_location?: string | null;
+  /** Languages the doctor consults in */
+  languages_spoken?: string[];
+  /** Years of clinical practice experience */
+  years_of_experience?: number | null;
 }
 export type UUID = string;
 
@@ -50,6 +64,22 @@ export interface Patient {
   updated_by_email?: string | null;
   primary_doctor_display?: string | null;
   primary_doctor_email?: string | null;
+  /** ABO/Rh blood type — e.g. "A+", "O-" */
+  blood_type?: string | null;
+  /** Height in centimetres */
+  height_cm?: number | null;
+  /** Body weight in kilograms */
+  weight_kg?: number | null;
+  /** Health insurance provider name */
+  insurance_provider?: string | null;
+  /** Insurance membership / policy ID */
+  insurance_id?: string | null;
+  /** Preferred language for consultations */
+  preferred_language?: string | null;
+  /** National ID or passport number */
+  national_id?: string | null;
+  /** Patient occupation or profession */
+  occupation?: string | null;
 }
 
 /** GET /api/patients/[id]/snapshot — aggregate for profile tabs */
@@ -146,6 +176,16 @@ export interface Appointment {
   user_id: UUID;
   /** B2: optional treating physician FK; display uses `resolveTreatingPhysicianUserId` (defaults to calendar owner). */
   treating_physician_id?: string | null;
+  /** FK to appointment_types — drives slot math and telehealth flag */
+  appointment_type_id?: string | null;
+  /** Denormalised from appointment_type.is_telehealth — true = show telehealth badge and Join Call button */
+  is_telehealth?: boolean;
+  /** Presenting complaint / reason for visit from the patient */
+  chief_complaint?: string | null;
+  /** Actual appointment duration in minutes (may differ from type default) */
+  duration_minutes?: number | null;
+  /** Video call / telehealth meeting URL */
+  telehealth_link?: string | null;
 }
 
 // Appointment Assignee
@@ -168,4 +208,107 @@ export interface Activity {
   appointment: UUID;
   type: string;
   content: string;
+}
+
+// AppointmentType — visit/service type (global or doctor-owned)
+export interface AppointmentType {
+  id: UUID;
+  created_at: string;
+  user_id: string | null;
+  name: string;
+  description: string | null;
+  duration_minutes: number;
+  buffer_before_minutes: number;
+  buffer_after_minutes: number;
+  slot_interval_minutes: number;
+  minimum_notice_minutes: number;
+  /** When true: conducted via video call — shows telehealth badge */
+  is_telehealth: boolean;
+  /** Hex color for calendar chip display (e.g. "#4F46E5") */
+  color?: string | null;
+  /** Lucide icon name displayed beside the type label */
+  icon?: string | null;
+  /** Soft-delete — inactive types hidden from booking */
+  is_active: boolean;
+  /** For patient booking: whether this doctor has enabled this global type */
+  is_enabled?: boolean;
+}
+
+// DoctorAppointmentTypeConfig — junction: doctor ↔ global appointment type
+export interface DoctorAppointmentTypeConfig {
+  id: UUID;
+  doctor_id: UUID;
+  appointment_type_id: UUID;
+  is_enabled: boolean;
+  created_at: string;
+}
+
+// Doctor card row (returned by GET /api/doctors)
+export interface DoctorRow {
+  id: UUID;
+  email: string;
+  display_name: string | null;
+  image: string | null;
+  specialty: string | null;
+  bio: string | null;
+  created_at: string;
+  phone?: string | null;
+  license_number?: string | null;
+  consultation_fee?: number | null;
+  languages_spoken?: string[];
+  years_of_experience?: number | null;
+  office_location?: string | null;
+  availabilities: { weekday: number; start_min: number; end_min: number; timezone: string }[];
+  appointment_types: Pick<AppointmentType, "id" | "name" | "duration_minutes" | "is_telehealth">[];
+  patient_count: number;
+}
+
+// DoctorPortalData — shape returned by GET /api/doctor-portal (SSR prefetch)
+export interface DoctorPortalData {
+  doctor: User;
+  todayAppointments: Appointment[];
+  upcomingAppointments: Appointment[];
+  patients: Patient[];
+  enabledTypes: AppointmentType[];
+  allGlobalTypes: AppointmentType[];
+  typeConfigs: DoctorAppointmentTypeConfig[];
+  metrics: {
+    today: number;
+    thisWeek: number;
+    thisMonth: number;
+    pending: number;
+    done: number;
+    overdue: number;
+  };
+}
+
+// SecretaryPortalData — shape returned by GET /api/secretary-portal (SSR prefetch)
+export interface SecretaryPortalData {
+  todayAppointments: Appointment[];
+  upcomingAppointments: Appointment[];
+  patients: Patient[];
+  doctors: DoctorRow[];
+  recentActivities: Activity[];
+  metrics: {
+    today: number;
+    pending: number;
+    totalPatients: number;
+    totalDoctors: number;
+  };
+}
+
+// AdminPortalData — shape returned by GET /api/admin-portal (SSR prefetch)
+export interface AdminPortalData {
+  overview: {
+    totalAppointments: number;
+    todayAppointments: number;
+    totalPatients: number;
+    totalDoctors: number;
+    pendingAppointments: number;
+    overdueAppointments: number;
+    paidRevenueCents: number;
+    outstandingRevenueCents: number;
+  };
+  doctors: DoctorRow[];
+  recentAppointments: Appointment[];
 }

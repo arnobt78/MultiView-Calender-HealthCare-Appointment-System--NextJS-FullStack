@@ -168,6 +168,11 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       status?: string | null;
       /** B2: optional FK; `null` clears explicit treating (display falls back to calendar owner). */
       treating_physician_id?: string | null;
+      appointment_type_id?: string | null;
+      is_telehealth?: boolean;
+      chief_complaint?: string | null;
+      duration_minutes?: number | null;
+      telehealth_link?: string | null;
     } = { updated_at: new Date() };
     if (body.title !== undefined) data.title = body.title;
     if (body.start !== undefined) {
@@ -190,6 +195,26 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     if (body.category !== undefined) data.category_id = body.category;
     if (body.notes !== undefined) data.notes = body.notes;
     if (body.status !== undefined) data.status = body.status;
+    if (body.chief_complaint !== undefined) data.chief_complaint = body.chief_complaint ?? null;
+    if (body.duration_minutes !== undefined) data.duration_minutes = body.duration_minutes ?? null;
+    if (body.telehealth_link !== undefined) data.telehealth_link = body.telehealth_link ?? null;
+    // appointment_type_id: resolve is_telehealth from the new type when switching types
+    if (body.appointment_type_id !== undefined) {
+      const typeId = body.appointment_type_id as unknown;
+      if (typeId === null || typeId === "") {
+        data.appointment_type_id = null;
+        data.is_telehealth = false;
+      } else if (typeof typeId === "string" && isValidUUID(typeId)) {
+        const apptType = await prisma.appointmentType.findUnique({
+          where: { id: typeId },
+          select: { is_telehealth: true },
+        });
+        data.appointment_type_id = typeId;
+        data.is_telehealth = apptType?.is_telehealth ?? false;
+      } else {
+        return NextResponse.json({ error: "Invalid appointment_type_id" }, { status: 400 });
+      }
+    }
     // B2: `treating_physician` mirrors `patient` / `category` wire names (UUID or null to clear).
     if (body.treating_physician !== undefined) {
       const v = body.treating_physician as unknown;

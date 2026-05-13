@@ -39,7 +39,18 @@ import {
   startOfMonth,
   endOfMonth,
 } from "date-fns";
-import type { Category, Patient, PatientSnapshot, User } from "@/types/types";
+import type {
+  Category,
+  Patient,
+  PatientSnapshot,
+  User,
+  DoctorPortalData,
+  SecretaryPortalData,
+  AdminPortalData,
+  DoctorRow,
+  AppointmentType,
+  DoctorAppointmentTypeConfig,
+} from "@/types/types";
 import type { DashboardOverview } from "@/hooks/useDashboardOverview";
 
 // ─── Shared types ─────────────────────────────────────────────────────────────
@@ -347,10 +358,14 @@ export async function prefetchDashboardOverview(userId: string): Promise<Dashboa
 /**
  * Mirrors GET /api/insights via the shared getInsightsData() helper.
  * Cache key: queryKeys.insights.all → stores InsightsPayload.
+ * Pass ownOnly = true for doctor role so the SSR cache matches what the API route returns.
  */
-export async function prefetchInsights(userId: string): Promise<InsightsPayload | null> {
+export async function prefetchInsights(
+  userId: string,
+  opts: { ownOnly?: boolean } = {}
+): Promise<InsightsPayload | null> {
   try {
-    return await getInsightsData(userId);
+    return await getInsightsData(userId, opts);
   } catch {
     return null;
   }
@@ -483,6 +498,330 @@ export async function prefetchPortalData(userId: string): Promise<PortalPrefetch
       appointments: mapPortalAppointmentsFromRows(appointmentsRaw),
       patient: serializePatient(patientRow) as Patient,
       userImage: user.image ?? null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+// ─── Doctor portal ────────────────────────────────────────────────────────────
+
+/**
+ * Mirrors GET /api/doctor-portal.
+ * Cache key: queryKeys.doctorPortal.all → stores DoctorPortalData.
+ * Called by the doctor-portal SSR page to seed the TanStack Query cache before first paint.
+ */
+export async function prefetchDoctorPortal(userId: string): Promise<DoctorPortalData | null> {
+  try {
+    const now = new Date();
+    const todayStart = startOfDay(now);
+    const todayEnd = endOfDay(now);
+    const weekStart = startOfWeek(now, { weekStartsOn: 1 });
+    const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
+    const monthStart = startOfMonth(now);
+    const monthEnd = endOfMonth(now);
+
+    const [
+      doctor,
+      todayAppts,
+      upcomingAppts,
+      patients,
+      globalTypes,
+      typeConfigs,
+      metricToday,
+      metricWeek,
+      metricMonth,
+      metricPending,
+      metricDone,
+      metricOverdue,
+    ] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true, email: true, display_name: true, image: true, role: true,
+          specialty: true, bio: true, phone: true, license_number: true,
+          department: true, consultation_fee: true, office_location: true,
+          languages_spoken: true, years_of_experience: true, created_at: true,
+        },
+      }),
+      prisma.appointment.findMany({
+        where: { owner_id: userId, start: { gte: todayStart, lte: todayEnd } },
+        orderBy: { start: "asc" },
+      }),
+      prisma.appointment.findMany({
+        where: { owner_id: userId, start: { gt: todayEnd }, status: { not: "done" } },
+        orderBy: { start: "asc" },
+        take: 20,
+      }),
+      prisma.patient.findMany({
+        where: { primary_doctor_id: userId },
+        orderBy: { firstname: "asc" },
+        take: 50,
+      }),
+      prisma.appointmentType.findMany({
+        where: { user_id: null, is_active: true },
+        orderBy: { name: "asc" },
+      }),
+      prisma.doctorAppointmentTypeConfig.findMany({
+        where: { doctor_id: userId },
+        select: { id: true, doctor_id: true, appointment_type_id: true, is_enabled: true, created_at: true },
+      }),
+      prisma.appointment.count({ where: { owner_id: userId, start: { gte: todayStart, lte: todayEnd } } }),
+      prisma.appointment.count({ where: { owner_id: userId, start: { gte: weekStart, lte: weekEnd } } }),
+      prisma.appointment.count({ where: { owner_id: userId, start: { gte: monthStart, lte: monthEnd } } }),
+      prisma.appointment.count({ where: { owner_id: userId, status: "pending" } }),
+      prisma.appointment.count({ where: { owner_id: userId, status: "done" } }),
+      prisma.appointment.count({ where: { owner_id: userId, end: { lt: now }, status: { not: "done" } } }),
+    ]);
+
+    if (!doctor) return null;
+
+    const configMap = new Map(typeConfigs.map((c) => [c.appointment_type_id, c.is_enabled]));
+    const mapType = (t: typeof globalTypes[number]): AppointmentType => ({
+      id: t.id,
+      created_at: t.created_at.toISOString(),
+      user_id: t.user_id,
+      name: t.name,
+      description: t.description,
+      duration_minutes: t.duration_minutes,
+      buffer_before_minutes: t.buffer_before_minutes,
+      buffer_after_minutes: t.buffer_after_minutes,
+      slot_interval_minutes: t.slot_interval_minutes,
+      minimum_notice_minutes: t.minimum_notice_minutes,
+      is_telehealth: t.is_telehealth,
+      color: t.color,
+      icon: t.icon,
+      is_active: t.is_active,
+      is_enabled: configMap.get(t.id) ?? true,
+    });
+
+    return {
+      doctor: {
+        id: doctor.id,
+        email: doctor.email,
+        display_name: doctor.display_name,
+        image: doctor.image,
+        role: doctor.role,
+        specialty: doctor.specialty,
+        bio: doctor.bio,
+        phone: doctor.phone,
+        license_number: doctor.license_number,
+        department: doctor.department,
+        consultation_fee: doctor.consultation_fee,
+        office_location: doctor.office_location,
+        languages_spoken: doctor.languages_spoken,
+        years_of_experience: doctor.years_of_experience,
+        created_at: doctor.created_at.toISOString(),
+      } as User,
+      todayAppointments: todayAppts.map(serializeAppointment),
+      upcomingAppointments: upcomingAppts.map(serializeAppointment),
+      patients: patients.map(serializePatient) as Patient[],
+      enabledTypes: globalTypes.filter((t) => configMap.get(t.id) !== false).map(mapType),
+      allGlobalTypes: globalTypes.map(mapType),
+      typeConfigs: typeConfigs.map((c) => ({
+        ...c,
+        created_at: c.created_at.toISOString(),
+      })) as DoctorAppointmentTypeConfig[],
+      metrics: {
+        today: metricToday,
+        thisWeek: metricWeek,
+        thisMonth: metricMonth,
+        pending: metricPending,
+        done: metricDone,
+        overdue: metricOverdue,
+      },
+    };
+  } catch {
+    return null;
+  }
+}
+
+// ─── Secretary portal ─────────────────────────────────────────────────────────
+
+/**
+ * Mirrors GET /api/secretary-portal.
+ * Cache key: queryKeys.secretaryPortal.all → stores SecretaryPortalData.
+ */
+export async function prefetchSecretaryPortal(userId: string): Promise<SecretaryPortalData | null> {
+  // userId is used to verify role upstream; secretary sees clinic-wide data
+  void userId;
+  try {
+    const now = new Date();
+    const todayStart = startOfDay(now);
+    const todayEnd = endOfDay(now);
+
+    const [
+      todayAppts,
+      upcomingAppts,
+      patients,
+      doctors,
+      recentActivities,
+      metricToday,
+      metricPending,
+      totalPatients,
+      totalDoctors,
+    ] = await Promise.all([
+      prisma.appointment.findMany({
+        where: { start: { gte: todayStart, lte: todayEnd } },
+        orderBy: { start: "asc" },
+        take: 50,
+      }),
+      prisma.appointment.findMany({
+        where: { start: { gt: todayEnd }, status: { not: "done" } },
+        orderBy: { start: "asc" },
+        take: 20,
+      }),
+      prisma.patient.findMany({ orderBy: { created_at: "desc" }, take: 50 }),
+      prisma.user.findMany({
+        where: { role: "doctor" },
+        select: {
+          id: true, email: true, display_name: true, image: true, specialty: true,
+          bio: true, phone: true, created_at: true,
+          doctor_availabilities: { select: { weekday: true, start_min: true, end_min: true, timezone: true } },
+          appointment_types_owned: {
+            where: { is_active: true },
+            select: { id: true, name: true, duration_minutes: true, is_telehealth: true },
+          },
+          patients_primary_doctor: { select: { id: true } },
+        },
+        orderBy: { display_name: "asc" },
+      }),
+      prisma.activity.findMany({
+        orderBy: { created_at: "desc" },
+        take: 20,
+        select: {
+          id: true, created_at: true, created_by_id: true, appointment_id: true, type: true, content: true,
+          created_by: { select: { display_name: true, email: true } },
+        },
+      }),
+      prisma.appointment.count({ where: { start: { gte: todayStart, lte: todayEnd } } }),
+      prisma.appointment.count({ where: { status: "pending" } }),
+      prisma.patient.count(),
+      prisma.user.count({ where: { role: "doctor" } }),
+    ]);
+
+    return {
+      todayAppointments: todayAppts.map(serializeAppointment),
+      upcomingAppointments: upcomingAppts.map(serializeAppointment),
+      patients: patients.map(serializePatient) as Patient[],
+      doctors: doctors.map((d) => ({
+        id: d.id,
+        email: d.email,
+        display_name: d.display_name,
+        image: d.image,
+        specialty: d.specialty,
+        bio: d.bio,
+        phone: d.phone,
+        created_at: d.created_at.toISOString(),
+        availabilities: d.doctor_availabilities,
+        appointment_types: d.appointment_types_owned as Pick<AppointmentType, "id" | "name" | "duration_minutes" | "is_telehealth">[],
+        patient_count: d.patients_primary_doctor.length,
+      })) as DoctorRow[],
+      recentActivities: recentActivities.map((a) => ({
+        id: a.id,
+        created_at: a.created_at.toISOString(),
+        created_by: a.created_by_id ?? "",
+        appointment: a.appointment_id,
+        type: a.type,
+        content: a.content,
+      })),
+      metrics: {
+        today: metricToday,
+        pending: metricPending,
+        totalPatients,
+        totalDoctors,
+      },
+    };
+  } catch {
+    return null;
+  }
+}
+
+// ─── Admin portal ─────────────────────────────────────────────────────────────
+
+/**
+ * Mirrors GET /api/admin-portal.
+ * Cache key: queryKeys.adminPortal.all → stores AdminPortalData.
+ */
+export async function prefetchAdminPortal(): Promise<AdminPortalData | null> {
+  try {
+    const now = new Date();
+    const todayStart = startOfDay(now);
+    const todayEnd = endOfDay(now);
+
+    const [
+      totalAppointments,
+      todayCount,
+      pendingCount,
+      overdueCount,
+      totalPatients,
+      totalDoctors,
+      doctors,
+      recentAppointments,
+      paidAgg,
+      outstandingAgg,
+    ] = await Promise.all([
+      prisma.appointment.count(),
+      prisma.appointment.count({ where: { start: { gte: todayStart, lte: todayEnd } } }),
+      prisma.appointment.count({ where: { status: "pending" } }),
+      prisma.appointment.count({ where: { end: { lt: now }, status: { not: "done" } } }),
+      prisma.patient.count(),
+      prisma.user.count({ where: { role: "doctor" } }),
+      prisma.user.findMany({
+        where: { role: "doctor" },
+        select: {
+          id: true, email: true, display_name: true, image: true, specialty: true,
+          bio: true, phone: true, license_number: true, consultation_fee: true,
+          languages_spoken: true, years_of_experience: true, office_location: true,
+          department: true, created_at: true,
+          doctor_availabilities: { select: { weekday: true, start_min: true, end_min: true, timezone: true } },
+          appointment_types_owned: {
+            where: { is_active: true },
+            select: { id: true, name: true, duration_minutes: true, is_telehealth: true },
+          },
+          patients_primary_doctor: { select: { id: true } },
+        },
+        orderBy: { display_name: "asc" },
+      }),
+      prisma.appointment.findMany({
+        orderBy: { created_at: "desc" },
+        take: 15,
+      }),
+      prisma.invoice.aggregate({ where: { status: "paid" }, _sum: { amount: true } }),
+      prisma.invoice.aggregate({ where: { status: { in: ["draft", "sent"] } }, _sum: { amount: true } }),
+    ]);
+
+    return {
+      overview: {
+        totalAppointments,
+        todayAppointments: todayCount,
+        totalPatients,
+        totalDoctors,
+        pendingAppointments: pendingCount,
+        overdueAppointments: overdueCount,
+        paidRevenueCents: paidAgg._sum.amount ?? 0,
+        outstandingRevenueCents: outstandingAgg._sum.amount ?? 0,
+      },
+      doctors: doctors.map((d) => ({
+        id: d.id,
+        email: d.email,
+        display_name: d.display_name,
+        image: d.image,
+        specialty: d.specialty,
+        bio: d.bio,
+        phone: d.phone,
+        license_number: d.license_number,
+        consultation_fee: d.consultation_fee,
+        languages_spoken: d.languages_spoken,
+        years_of_experience: d.years_of_experience,
+        office_location: d.office_location,
+        department: d.department,
+        created_at: d.created_at.toISOString(),
+        availabilities: d.doctor_availabilities,
+        appointment_types: d.appointment_types_owned as Pick<AppointmentType, "id" | "name" | "duration_minutes" | "is_telehealth">[],
+        patient_count: d.patients_primary_doctor.length,
+      })) as DoctorRow[],
+      recentAppointments: recentAppointments.map(serializeAppointment),
     };
   } catch {
     return null;

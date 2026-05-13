@@ -27,6 +27,20 @@ model User {
   specialty               String?   @db.Text
   /// Short biography / intro paragraph for the doctor services page
   bio                     String?   @db.Text
+  /// Contact phone number (staff/doctor)
+  phone                   String?   @db.Text
+  /// Medical license or registration number (doctors)
+  license_number          String?   @db.Text
+  /// Department or unit within the clinic/hospital
+  department              String?   @db.Text
+  /// Consultation fee in cents (used for Services page pricing display)
+  consultation_fee        Int?
+  /// Physical office or room location string
+  office_location         String?   @db.Text
+  /// Languages the doctor can consult in (e.g. ["English", "French"])
+  languages_spoken        String[]  @default([])
+  /// Years of clinical practice experience
+  years_of_experience     Int?
 
   appointments_owned       Appointment[]           @relation("AppointmentOwner")
   appointments_as_treating_physician Appointment[] @relation("AppointmentTreatingPhysician")
@@ -44,6 +58,8 @@ model User {
   patients_created            Patient[]             @relation("PatientCreatedBy")
   patients_updated            Patient[]             @relation("PatientUpdatedBy")
   patients_primary_doctor     Patient[]             @relation("PatientPrimaryDoctor")
+  /// Junction table: which global appointment types this doctor has enabled
+  doctor_type_configs         DoctorAppointmentTypeConfig[] @relation("DoctorTypeConfigUser")
 
   @@map("users")
 }
@@ -66,6 +82,22 @@ model Patient {
   created_by_id     String? @map("created_by") @db.Uuid
   updated_by_id     String? @map("updated_by") @db.Uuid
   primary_doctor_id String? @map("primary_doctor") @db.Uuid
+  /// ABO/Rh blood type — e.g. "A+", "O-", "AB+"
+  blood_type          String?  @db.Text
+  /// Height in centimetres
+  height_cm           Int?
+  /// Body weight in kilograms (up to 999.99 kg)
+  weight_kg           Decimal? @db.Decimal(5, 2)
+  /// Insurance provider name (e.g. "AXA", "Allianz")
+  insurance_provider  String?  @db.Text
+  /// Insurance membership / policy ID
+  insurance_id        String?  @db.Text
+  /// Patient's preferred language for consultations
+  preferred_language  String?  @db.Text
+  /// National ID or passport number (PII — handle with care)
+  national_id         String?  @db.Text
+  /// Patient's occupation or profession
+  occupation          String?  @db.Text
 
   created_by     User? @relation("PatientCreatedBy", fields: [created_by_id], references: [id], onDelete: SetNull)
   updated_by     User? @relation("PatientUpdatedBy", fields: [updated_by_id], references: [id], onDelete: SetNull)
@@ -142,15 +174,27 @@ model Appointment {
   treating_physician_id String? @db.Uuid
   /// File / blob URLs (text[]). DB column remains `attachements` until an explicit `ALTER TABLE … RENAME COLUMN` migration; Prisma + app use correct spelling `attachments`.
   attachments String[] @default([]) @map("attachements")
+  /// FK to appointment_types — drives duration, slot math, and telehealth flag
+  appointment_type_id   String?  @db.Uuid
+  /// Denormalised from appointment_type.is_telehealth — stored for fast filtering without a join
+  is_telehealth         Boolean  @default(false)
+  /// Reason / presenting complaint from the patient (visible in dialog and appointment card)
+  chief_complaint       String?  @db.Text
+  /// Actual appointment duration in minutes (may differ from appointment type default)
+  duration_minutes      Int?
+  /// Video / telehealth meeting URL — shown as "Join Call" button when is_telehealth = true
+  telehealth_link       String?  @db.Text
 
   patient     Patient?   @relation(fields: [patient_id], references: [id], onDelete: SetNull)
   category    Category?  @relation(fields: [category_id], references: [id], onDelete: SetNull)
   owner       User       @relation("AppointmentOwner", fields: [owner_id], references: [id], onDelete: Cascade)
   treating_physician User? @relation("AppointmentTreatingPhysician", fields: [treating_physician_id], references: [id], onDelete: SetNull)
+  appointment_type    AppointmentType? @relation("AppointmentTypeAppointments", fields: [appointment_type_id], references: [id], onDelete: SetNull)
   assignees   AppointmentAssignee[]
   activities  Activity[]
 
   @@index([treating_physician_id])
+  @@index([appointment_type_id])
   @@map("appointments")
 }
 
@@ -229,11 +273,42 @@ model AppointmentType {
   buffer_after_minutes   Int      @default(0)
   slot_interval_minutes  Int      @default(30)
   minimum_notice_minutes Int      @default(60)
+  /// When true: appointment is conducted via video call — shows telehealth badge and Join Call button
+  is_telehealth          Boolean  @default(false)
+  /// Hex color used to tint appointment type chips in the calendar UI (e.g. "#4F46E5")
+  color                  String?  @db.Text
+  /// Lucide icon name displayed alongside the appointment type label
+  icon                   String?  @db.Text
+  /// Soft-delete flag — inactive types are hidden from booking but preserved in historical appointments
+  is_active              Boolean  @default(true)
 
-  user User? @relation("AppointmentTypeUser", fields: [user_id], references: [id], onDelete: Cascade)
+  user         User?                        @relation("AppointmentTypeUser", fields: [user_id], references: [id], onDelete: Cascade)
+  /// Junction rows tracking which doctors have enabled this (global) type
+  doctor_configs DoctorAppointmentTypeConfig[] @relation("DoctorTypeConfigAppointmentType")
+  /// Appointments booked using this type
+  appointments   Appointment[]               @relation("AppointmentTypeAppointments")
 
   @@index([user_id])
   @@map("appointment_types")
+}
+
+// --- Doctor appointment type enablement (junction: doctor ↔ global appointment type)
+// When is_enabled = false the type is hidden from patient booking for that doctor.
+// Absence of a row = default enabled (global types visible to all doctors unless explicitly disabled).
+model DoctorAppointmentTypeConfig {
+  id                   String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  doctor_id            String          @db.Uuid
+  appointment_type_id  String          @db.Uuid
+  /// false = doctor has opted out of this global appointment type
+  is_enabled           Boolean         @default(true)
+  created_at           DateTime        @default(now())
+
+  doctor           User            @relation("DoctorTypeConfigUser", fields: [doctor_id], references: [id], onDelete: Cascade)
+  appointment_type AppointmentType @relation("DoctorTypeConfigAppointmentType", fields: [appointment_type_id], references: [id], onDelete: Cascade)
+
+  @@unique([doctor_id, appointment_type_id])
+  @@index([doctor_id])
+  @@map("doctor_appointment_type_configs")
 }
 
 // --- Dashboard Access (DB: invited_by)
@@ -300,6 +375,12 @@ model Organization {
   website       String?  @db.Text
   address       String?  @db.Text
   phone         String?  @db.Text
+  /// IANA timezone string for the clinic (e.g. "Europe/Berlin") — used for slot display
+  timezone      String?  @db.Text
+  /// Public logo image URL for the clinic/hospital brand
+  logo_url      String?  @db.Text
+  /// Organisation type — "clinic" | "hospital" | "private_practice"
+  org_type      String?  @db.Text
 
   members OrganizationMember[]
 

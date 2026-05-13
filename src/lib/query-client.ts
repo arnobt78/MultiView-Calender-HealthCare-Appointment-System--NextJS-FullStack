@@ -125,12 +125,16 @@ export async function invalidateEntityAffectingAppointments(
         : queryKeys.categories.all;
   // Activities list + appointments read denormalized labels; invalidate together so UI updates without navigation.
   // Insights charts aggregate by patient/category — must refetch when those entities change.
+  // Portal caches depend on patient/category counts and appointment lists.
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: key }),
     queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all }),
     invalidateActivitiesList(queryClient),
     invalidateDashboardOverview(queryClient),
     invalidateInsightsAndAnalytics(queryClient),
+    invalidateDoctorPortal(queryClient),
+    invalidateSecretaryPortal(queryClient),
+    invalidateAdminPortal(queryClient),
     ...(resource === "patients" ? [invalidatePatientPortal(queryClient)] : []),
   ]);
 }
@@ -181,6 +185,21 @@ export async function invalidateAvailabilitySlots(queryClient: QueryClient) {
   await queryClient.invalidateQueries({ queryKey: queryKeys.availability.root });
 }
 
+/** Doctor's own portal — invalidate after appointment mutations or type config changes */
+export async function invalidateDoctorPortal(queryClient: QueryClient) {
+  await queryClient.invalidateQueries({ queryKey: queryKeys.doctorPortal.all });
+}
+
+/** Secretary portal — invalidate after appointment or patient mutations */
+export async function invalidateSecretaryPortal(queryClient: QueryClient) {
+  await queryClient.invalidateQueries({ queryKey: queryKeys.secretaryPortal.all });
+}
+
+/** Admin portal — invalidate after major mutations that affect global KPIs */
+export async function invalidateAdminPortal(queryClient: QueryClient) {
+  await queryClient.invalidateQueries({ queryKey: queryKeys.adminPortal.all });
+}
+
 /**
  * Busts all `GET /api/appointment-types?doctorId=*` caches plus `global` — keeps slot pickers / portal /
  * services page in sync after any appointment mutation (overlap rules depend on persisted appointments).
@@ -206,6 +225,7 @@ export async function invalidateAppointmentTypeDerived(queryClient: QueryClient)
 /**
  * After appointment create/update/import — pass `patientId` when known for cheaper patient cache updates.
  * Also invalidates insights/analytics since all charts aggregate appointment data.
+ * Portal caches (doctor, secretary, admin) are included because all portals show appointment counts and lists.
  */
 export async function invalidateAfterAppointmentMutation(
   queryClient: QueryClient,
@@ -220,6 +240,10 @@ export async function invalidateAfterAppointmentMutation(
     // Insights / analytics charts aggregate appointment data — must refetch after any mutation.
     invalidateInsightsAndAnalytics(queryClient),
     invalidatePatientPortal(queryClient),
+    // Role-specific portals show appointment counts and today's schedule.
+    invalidateDoctorPortal(queryClient),
+    invalidateSecretaryPortal(queryClient),
+    invalidateAdminPortal(queryClient),
   ]);
 }
 

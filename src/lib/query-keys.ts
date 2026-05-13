@@ -83,6 +83,18 @@ export const queryKeys = {
   patientPortal: {
     all: ["app", "patient-portal"] as const,
   },
+  /** Doctor's own portal dashboard (today's schedule, metrics, type config) */
+  doctorPortal: {
+    all: ["app", "doctor-portal"] as const,
+  },
+  /** Secretary's portal dashboard (appointments, patients, doctor directory) */
+  secretaryPortal: {
+    all: ["app", "secretary-portal"] as const,
+  },
+  /** Admin's portal dashboard (global KPIs, recent activity, org settings) */
+  adminPortal: {
+    all: ["app", "admin-portal"] as const,
+  },
   doctors: {
     all: ["app", "doctors"] as const,
     detail: (id: string) => ["app", "doctors", id] as const,

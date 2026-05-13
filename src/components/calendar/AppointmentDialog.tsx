@@ -124,6 +124,8 @@ export default function AppointmentDialog({
   const [location, setLocation] = useState("");
   const [attachments, setAttachments] = useState(""); // comma-separated string
   const [status, setStatus] = useState("pending");
+  /** Chief complaint / presenting symptom stored on the appointment row for clinical context. */
+  const [chiefComplaint, setChiefComplaint] = useState("");
   /** B2: User.id of treating physician — persisted as `treating_physician_id`; defaults to calendar owner when unset. */
   const [treatingPhysicianId, setTreatingPhysicianId] = useState("");
   /** Cal-style slot picker — reset in `resetFormState` when the dialog closes so the next open is clean. */
@@ -147,6 +149,7 @@ export default function AppointmentDialog({
     setLocation("");
     setAttachments("");
     setStatus("pending");
+    setChiefComplaint("");
     // Empty shows "Select Doctor" in UI; create API still receives calendar owner via `treating_physician: id || user?.id`.
     setTreatingPhysicianId("");
     setSlotPickDateStr("");
@@ -178,6 +181,8 @@ export default function AppointmentDialog({
       setLocation(appointment.location || "");
       setAttachments((appointment.attachments || []).join(", "));
       setStatus(appointment.status || "pending");
+      setChiefComplaint(appointment.chief_complaint || "");
+      setSlotPickTypeId(appointment.appointment_type_id || "");
       setOpen(true);
 
       if (appointment.appointment_assignee) {
@@ -276,6 +281,12 @@ export default function AppointmentDialog({
         if (location !== appointment?.location) updates.location = location;
         if (attachments !== (appointment?.attachments || []).join(", ")) updates.attachments = parsedAttachments;
         if (status !== appointment?.status) updates.status = status as "pending" | "done" | "alert";
+        if (chiefComplaint !== (appointment?.chief_complaint ?? "")) {
+          (updates as Record<string, unknown>).chief_complaint = chiefComplaint.trim() || null;
+        }
+        if (slotPickTypeId && slotPickTypeId !== (appointment?.appointment_type_id ?? "")) {
+          (updates as Record<string, unknown>).appointment_type_id = slotPickTypeId;
+        }
         updates.updated_at = new Date().toISOString();
 
         const prevTreating =
@@ -363,7 +374,10 @@ export default function AppointmentDialog({
           attachments: parsedAttachments,
           status: status as "pending" | "done" | "alert",
           treating_physician: treatingPhysicianId || user?.id,
-        } as Partial<Appointment> & { treating_physician?: string });
+          // New clinical fields — appointment_type_id drives is_telehealth derivation server-side
+          ...(slotPickTypeId ? { appointment_type_id: slotPickTypeId } : {}),
+          ...(chiefComplaint.trim() ? { chief_complaint: chiefComplaint.trim() } : {}),
+        } as Partial<Appointment> & { treating_physician?: string; appointment_type_id?: string; chief_complaint?: string });
         apptId = createResult.appointment.id;
 
         if (assignees.length > 0) {
@@ -681,6 +695,8 @@ export default function AppointmentDialog({
                 setSlotPickDateStr={setSlotPickDateStr}
                 slotPickTypeId={slotPickTypeId}
                 setSlotPickTypeId={setSlotPickTypeId}
+                chiefComplaint={chiefComplaint}
+                setChiefComplaint={setChiefComplaint}
               />
             </section>
             <section className="flex min-w-0 flex-col gap-6 lg:border-l lg:border-sky-200/70 lg:pl-8">

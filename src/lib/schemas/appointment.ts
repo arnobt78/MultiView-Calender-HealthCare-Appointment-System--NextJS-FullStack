@@ -36,6 +36,17 @@ export const appointmentCreateSchema = z
     status: statusSchema.optional().nullable(),
     // z.url() is the Zod v4 standalone URL validator (replaces .string().url())
     attachments: z.array(z.url("Invalid attachment URL")).max(20).optional(),
+    /** FK to appointment_types — used to derive is_telehealth and duration_minutes */
+    appointment_type_id: z.preprocess(
+      (v) => (typeof v === "string" && v.trim() === "" ? null : v),
+      z.string().uuid("appointment_type_id must be a valid UUID").optional().nullable()
+    ) as z.ZodType<string | null | undefined>,
+    /** Chief complaint / reason for visit from the patient */
+    chief_complaint: z.string().trim().max(500).optional().nullable(),
+    /** Actual appointment duration in minutes */
+    duration_minutes: z.number().int().min(5).max(720).optional().nullable(),
+    /** Video / telehealth meeting URL (only relevant when is_telehealth = true) */
+    telehealth_link: z.string().trim().max(2048).optional().nullable(),
   })
   .refine((data) => new Date(data.end).getTime() > new Date(data.start).getTime(), {
     message: "End date must be after start date",
