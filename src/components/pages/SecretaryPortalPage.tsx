@@ -12,6 +12,11 @@
  *
  * Cache seeding: useLayoutEffect sets queryKeys.secretaryPortal.all from SSR initialData
  * before first paint to eliminate loading flash.
+ *
+ * Stale data: `invalidateSecretaryPortal` (see `src/lib/query-client.ts`) runs after shared appointment /
+ * activity / assignee mutations so today's list, upcoming, and Recent Activity refetch without navigation.
+ *
+ * Date strings: `parseISO` / `format` / `isToday` use `date-fns` v4 built-in typings — avoid legacy `@types/date-fns`.
  */
 
 import { useState, useLayoutEffect } from "react";
@@ -297,17 +302,17 @@ export default function SecretaryPortalPage({ initialData }: SecretaryPortalPage
 
   const filteredPatients = patientSearch.trim()
     ? patients.filter((p) => {
-        const q = patientSearch.toLowerCase();
-        return (
-          p.firstname.toLowerCase().includes(q) ||
-          p.lastname.toLowerCase().includes(q) ||
-          (p.email ?? "").toLowerCase().includes(q)
-        );
-      })
+      const q = patientSearch.toLowerCase();
+      return (
+        p.firstname.toLowerCase().includes(q) ||
+        p.lastname.toLowerCase().includes(q) ||
+        (p.email ?? "").toLowerCase().includes(q)
+      );
+    })
     : patients;
 
   return (
-    <div className="space-y-8 p-6 max-w-7xl mx-auto">
+    <div className="space-y-4 max-w-9xl mx-auto">
       {/* ------------------------------------------------------------------ */}
       {/* Header — quick stats                                                 */}
       {/* ------------------------------------------------------------------ */}

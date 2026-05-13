@@ -15,6 +15,9 @@
  *
  * Invalidation: type-config toggles call invalidateAppointmentTypeDerived + invalidateDoctorPortal
  * so slot pickers and the portal header metrics update without navigation.
+ * Shared appointment / activity flows also call `invalidateDoctorPortal` from `src/lib/query-client.ts`.
+ *
+ * Date strings: `date-fns` v4 provides `parseISO` typings natively; do not add `@types/date-fns` (TS2305 risk).
  */
 
 import { useState, useLayoutEffect } from "react";
@@ -343,7 +346,7 @@ export default function DoctorPortalPage({ initialData }: DoctorPortalPageProps)
   );
 
   return (
-    <div className="space-y-8 p-6 max-w-7xl mx-auto">
+    <div className="space-y-4 max-w-9xl mx-auto">
       {/* ------------------------------------------------------------------ */}
       {/* Header                                                               */}
       {/* ------------------------------------------------------------------ */}

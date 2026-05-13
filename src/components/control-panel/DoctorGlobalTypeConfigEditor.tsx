@@ -3,7 +3,8 @@
 /**
  * Renders a checkbox grid of global appointment types (user_id === null) for a specific doctor.
  * An admin or the doctor can toggle each type on/off; toggling calls POST /api/appointment-types/doctor-config
- * to upsert the per-doctor override row, then invalidates downstream appointment-type and doctor-portal queries.
+ * to upsert the per-doctor override row, then invalidates downstream appointment-type and portal caches
+ * (doctor, secretary, admin) so directory cards and KPIs refetch without navigation.
  */
 
 import { useState, useMemo } from "react";
@@ -12,7 +13,12 @@ import { Video, Loader2 } from "lucide-react";
 import { useAppointmentTypesForDoctor } from "@/hooks/useAppointmentTypes";
 import { apiClient, handleApiError } from "@/lib/api-client";
 import { notify } from "@/lib/notify";
-import { invalidateAppointmentTypeDerived, invalidateDoctorPortal } from "@/lib/query-client";
+import {
+  invalidateAppointmentTypeDerived,
+  invalidateDoctorPortal,
+  invalidateSecretaryPortal,
+  invalidateAdminPortal,
+} from "@/lib/query-client";
 
 type GlobalTypeRow = {
   id: string;
@@ -62,6 +68,8 @@ export function DoctorGlobalTypeConfigEditor({ doctorId }: Props) {
       });
       void invalidateAppointmentTypeDerived(queryClient);
       void invalidateDoctorPortal(queryClient);
+      void invalidateSecretaryPortal(queryClient);
+      void invalidateAdminPortal(queryClient);
     },
     onError: (error, { appointment_type_id }) => {
       handleApiError(error);

@@ -261,11 +261,16 @@ export async function invalidateAssigneesActivitiesAppointment(
 ) {
   const patientId =
     getPatientIdFromAppointmentCache(queryClient, appointmentId ?? undefined) ?? undefined;
+  // Role portals embed appointment-derived metrics and secretary "Recent Activity"; keep them in sync with
+  // assignee/activity mutations without requiring a full page navigation or manual refresh.
   await Promise.all([
     invalidateAssigneesData(queryClient),
     invalidateAppointmentData(queryClient),
     invalidateActivitiesList(queryClient),
     invalidateAppointmentTypeDerived(queryClient),
+    invalidateDoctorPortal(queryClient),
+    invalidateSecretaryPortal(queryClient),
+    invalidateAdminPortal(queryClient),
     patientId
       ? invalidatePatientDetailAndSnapshot(queryClient, patientId)
       : queryClient.invalidateQueries({ queryKey: queryKeys.patients.all }),

@@ -10,6 +10,12 @@
  *
  * Cache seeding: useLayoutEffect sets queryKeys.adminPortal.all from SSR initialData
  * before first paint so KPI cards render immediately with no loading flash.
+ *
+ * Stale data: `invalidateAdminPortal` (see `src/lib/query-client.ts`) runs after appointment CRUD,
+ * assignee/activity edits, entity mutations, and doctor visit-type toggles so this page refetches in place.
+ *
+ * Date strings: `parseISO` / `format` come from `date-fns` v4, which ships its own TypeScript types
+ * (do not install the legacy `@types/date-fns` package alongside v4 — it shadows real exports and causes TS2305).
  */
 
 import { useLayoutEffect } from "react";
@@ -241,7 +247,7 @@ export default function AdminPortalPage({ initialData }: AdminPortalPageProps) {
   const recent = data?.recentAppointments ?? [];
 
   return (
-    <div className="space-y-8 p-6 max-w-7xl mx-auto">
+    <div className="space-y-4 max-w-9xl mx-auto">
       {/* ------------------------------------------------------------------ */}
       {/* Page header                                                          */}
       {/* ------------------------------------------------------------------ */}

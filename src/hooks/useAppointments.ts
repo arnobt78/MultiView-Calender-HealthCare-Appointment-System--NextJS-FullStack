@@ -12,6 +12,9 @@ import {
   invalidatePatientPortal,
   invalidateInsightsAndAnalytics,
   invalidateDashboardOverview,
+  invalidateDoctorPortal,
+  invalidateSecretaryPortal,
+  invalidateAdminPortal,
 } from "@/lib/query-client";
 import {
   fetchAssignees,
@@ -273,6 +276,10 @@ export function useAppointments() {
         invalidateDashboardOverview(queryClient),
         // Portal timeline lists this patient's appointments — drop stale rows without a full reload.
         invalidatePatientPortal(queryClient),
+        // Staff portals surface aggregated appointment rows and KPIs — refetch in background after delete.
+        invalidateDoctorPortal(queryClient),
+        invalidateSecretaryPortal(queryClient),
+        invalidateAdminPortal(queryClient),
         ...(patientId ? [invalidatePatientDetailAndSnapshot(queryClient, patientId)] : []),
       ]);
       const deleted = context?.deleted;
@@ -330,6 +337,11 @@ export function useAppointments() {
         invalidateDashboardOverview(queryClient),
         invalidatePatientPortal(queryClient),
         invalidateAppointmentTypeDerived(queryClient),
+        // Activity log entries and portal widgets may reflect status transitions — bust caches immediately.
+        invalidateActivitiesList(queryClient),
+        invalidateDoctorPortal(queryClient),
+        invalidateSecretaryPortal(queryClient),
+        invalidateAdminPortal(queryClient),
       ]);
       notify.crud({
         action: "updated",
