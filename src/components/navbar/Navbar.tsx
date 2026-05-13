@@ -198,7 +198,6 @@ export default function Navbar() {
               href="/admin-portal"
               className={`flex items-center gap-1.5 text-base transition-colors hover:text-gray-700 ${pathname?.startsWith("/admin-portal") ? "text-gray-700" : "text-muted-foreground"}`}
             >
-              <ShieldCheck className="h-4 w-4" />
               Admin Portal
             </Link>
           )}
@@ -209,7 +208,6 @@ export default function Navbar() {
               href="/doctor-portal"
               className={`flex items-center gap-1.5 text-base transition-colors hover:text-gray-700 ${pathname?.startsWith("/doctor-portal") ? "text-gray-700" : "text-muted-foreground"}`}
             >
-              <Stethoscope className="h-4 w-4" />
               Doctor Portal
             </Link>
           )}
@@ -220,7 +218,6 @@ export default function Navbar() {
               href="/secretary-portal"
               className={`flex items-center gap-1.5 text-base transition-colors hover:text-gray-700 ${pathname?.startsWith("/secretary-portal") ? "text-gray-700" : "text-muted-foreground"}`}
             >
-              <ClipboardList className="h-4 w-4" />
               Secretary Portal
             </Link>
           )}
