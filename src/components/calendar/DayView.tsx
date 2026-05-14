@@ -16,7 +16,6 @@ import { useDateContext } from "@/context/DateContext";
 import { useAppointmentColor } from "@/context/AppointmentColorContext";
 import { useCategories } from "@/hooks/useCategories";
 import { usePatients } from "@/hooks/usePatients";
-import { useRelatives } from "@/hooks/useRelatives";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import VideoCall from "./VideoCall";
@@ -50,7 +49,6 @@ export default function DayView() {
   const { category, patient, date, status, month, search } = useCalendarFilters();
   const { categories = [] } = useCategories();
   const { patients = [] } = usePatients();
-  const { relatives = [] } = useRelatives();
   const { getAppointmentColorToken } = useAppointmentColor();
   const [editAppt, setEditAppt] = useState<Appointment | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
@@ -59,10 +57,9 @@ export default function DayView() {
       applyCalendarFilters(
         appointments,
         { category, patient, date, status, month, search },
-        patients,
-        relatives
+        patients
       ),
-    [appointments, category, patient, date, status, month, search, patients, relatives]
+    [appointments, category, patient, date, status, month, search, patients]
   );
 
   const dayAppointments = useMemo(() => {
@@ -178,9 +175,7 @@ export default function DayView() {
                           key={appt.id}
                           appointment={appt}
                           patients={patients}
-                          relatives={relatives}
                           assignees={appt.appointment_assignee ?? []}
-                          activities={appt.activities ?? []}
                           userEmail={null}
                           userId={null}
                           ownerUsers={[]}

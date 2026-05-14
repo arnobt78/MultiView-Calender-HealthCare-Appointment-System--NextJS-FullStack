@@ -20,12 +20,10 @@ import PatientManagement from "@/components/control-panel/PatientManagement";
 import CategoryManagement from "@/components/control-panel/CategoryManagement";
 import DoctorManagement from "@/components/control-panel/DoctorManagement";
 import UserManagement from "@/components/control-panel/UserManagement";
-import RelativesManagement from "@/components/control-panel/RelativesManagement";
 import OrganizationManagement from "@/components/control-panel/OrganizationManagement";
 import InvoiceManagement from "@/components/control-panel/InvoiceManagement";
 import AppointmentsManagement from "@/components/control-panel/AppointmentsManagement";
 import NotificationsManagement from "@/components/control-panel/NotificationsManagement";
-import ActivitiesManagement from "@/components/control-panel/ActivitiesManagement";
 import GoogleCalendarSettings from "@/components/control-panel/GoogleCalendarSettings";
 import { GlobalAppointmentTypesEditor } from "@/components/control-panel/GlobalAppointmentTypesEditor";
 import DashboardOverviewComponent from "@/components/control-panel/DashboardOverview";
@@ -44,7 +42,6 @@ import {
   Building2,
   Calendar,
   CalendarDays,
-  History,
   LayoutDashboard,
   Layers,
   Mail,
@@ -55,7 +52,6 @@ import {
   Tags,
   UserCog,
   Users,
-  UsersRound,
   Video,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -83,12 +79,10 @@ const SIDEBAR_ITEMS = [
   { value: "visit_types_global", label: "Global Visit Types" },
   { value: "doctors", label: "Doctor Management" },
   { value: "users_admin", label: "User / Admin Management" },
-  { value: "relatives", label: "Relative Management" },
   { value: "organizations", label: "Organization Management" },
   { value: "invoices", label: "Invoices & Payments" },
   { value: "appointments_mgmt", label: "Appointment Management" },
   { value: "notifications", label: "Notifications" },
-  { value: "activities", label: "Activity Log" },
   { value: "google-calendar", label: "Google Calendar" },
 ] as const;
 
@@ -127,7 +121,6 @@ const SIDEBAR_SECTIONS: readonly {
       { value: "visit_types_global", icon: Layers },
       { value: "doctors", icon: Stethoscope },
       { value: "users_admin", icon: UserCog },
-      { value: "relatives", icon: UsersRound },
       { value: "organizations", icon: Building2 },
     ],
   },
@@ -142,7 +135,6 @@ const SIDEBAR_SECTIONS: readonly {
   {
     heading: "System & Audit",
     items: [
-      { value: "activities", icon: History },
       { value: "google-calendar", icon: Calendar },
     ],
   },
@@ -171,12 +163,10 @@ const TAB_TO_SEGMENT: Record<string, string> = {
   visit_types_global: "global-visit-types",
   doctors: "doctor-management",
   users_admin: "user-admin-management",
-  relatives: "relative-management",
   organizations: "organization-management",
   invoices: "invoice-management",
   appointments_mgmt: "appointment-management",
   notifications: "notifications",
-  activities: "activity-log",
   "google-calendar": "google-calendar",
 };
 
@@ -427,9 +417,6 @@ export default function ControlPanelPage({
         <TabsContent value="users_admin" className="mt-0">
           <UserManagement />
         </TabsContent>
-        <TabsContent value="relatives" className="mt-0">
-          <RelativesManagement />
-        </TabsContent>
         <TabsContent value="organizations" className="mt-0">
           <OrganizationManagement />
         </TabsContent>
@@ -441,9 +428,6 @@ export default function ControlPanelPage({
         </TabsContent>
         <TabsContent value="notifications" className="mt-0">
           <NotificationsManagement />
-        </TabsContent>
-        <TabsContent value="activities" className="mt-0">
-          <ActivitiesManagement />
         </TabsContent>
         <TabsContent value="google-calendar" className="mt-0">
           <GoogleCalendarSettings />

@@ -113,7 +113,7 @@ function UserStatCards({ users, isLoading }: { users: User[]; isLoading: boolean
 // Role change cell
 // ---------------------------------------------------------------------------
 function RoleCell({ user, onRoleChange }: { user: User; onRoleChange: (id: string, role: string) => void }) {
-  const ROLES = ["admin", "doctor", "secretary", "patient"];
+  const ROLES = ["admin", "doctor", "patient"];
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

@@ -21,13 +21,10 @@ import {
   Patient,
   Appointment,
   AppointmentAssignee,
-  Activity,
-  Relative,
 } from "@/types/types";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePatients } from "@/hooks/usePatients";
 import { useCategories } from "@/hooks/useCategories";
-import { useRelatives } from "@/hooks/useRelatives";
 import { useUsers } from "@/hooks/useUsers";
 import { useAppointments, FullAppointment } from "@/hooks/useAppointments";
 import { useAuth } from "@/hooks/useAuth";
@@ -45,7 +42,6 @@ const MAX_ATTACHMENT_BYTES = 1048576;
 import { uploadFileViaAPI } from "@/lib/vercelBlob";
 import { AppointmentDialogGeneralSection } from "@/components/calendar/appointment-dialog/AppointmentDialogGeneralSection";
 import { AppointmentDialogAssigneesSection } from "@/components/calendar/appointment-dialog/AppointmentDialogAssigneesSection";
-import { AppointmentDialogActivitiesSection } from "@/components/calendar/appointment-dialog/AppointmentDialogActivitiesSection";
 import { utcToLocalInputValue, localInputValueToUTC } from "@/lib/datetime-local";
 
 type Props = {
@@ -82,7 +78,6 @@ export default function AppointmentDialog({
 
   const { patients = [] } = usePatients();
   const { categories = [] } = useCategories();
-  const { relatives = [] } = useRelatives();
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { data: doctorsData } = useUsers(
@@ -111,9 +106,6 @@ export default function AppointmentDialog({
   }, [open, user?.id, queryClient]);
 
   const [assignees, setAssignees] = useState<AppointmentAssignee[]>([]); // type-safe
-  const [activityType, setActivityType] = useState("");
-  const [activityContent, setActivityContent] = useState("");
-  const [activityList, setActivityList] = useState<Activity[]>([]);
 
   const [title, setTitle] = useState("");
   const [notes, setNotes] = useState("");
@@ -156,9 +148,6 @@ export default function AppointmentDialog({
     setSlotPickTypeId("");
     setUploadedFiles([]);
     setAssignees([]);
-    setActivityType("");
-    setActivityContent("");
-    setActivityList([]);
     setError(null);
     setSuccess(false);
     setUploading(false);
@@ -191,17 +180,11 @@ export default function AppointmentDialog({
         setAssignees([]);
       }
 
-      if (appointment.activities) {
-        setActivityList(appointment.activities);
-      } else {
-        setActivityList([]);
-      }
       setTreatingPhysicianId(
         appointment.treating_physician_id ?? appointment.user_id ?? user?.id ?? ""
       );
     } else {
       setAssignees([]);
-      setActivityList([]);
       setTreatingPhysicianId("");
     }
   }, [appointment, user?.id]);
@@ -332,10 +315,7 @@ export default function AppointmentDialog({
           }
           const mergedAssignees = Array.from(dedupedMap.values());
 
-          await Promise.all([
-            fetch(`/api/appointments/${apptId}/assignees`, { method: "DELETE" }),
-            fetch(`/api/appointments/${apptId}/activities`, { method: "DELETE" }),
-          ]);
+          await fetch(`/api/appointments/${apptId}/assignees`, { method: "DELETE" });
 
           const uniqueAssigneesMap = new Map();
           for (const a of mergedAssignees) {
@@ -417,19 +397,6 @@ export default function AppointmentDialog({
         }
       }
 
-      if (activityList.length > 0 && apptId) {
-        const activitiesToInsert = activityList.map((act) => ({
-          appointment: apptId,
-          type: act.type,
-          content: act.content,
-          created_by: act.created_by || user?.id,
-        }));
-        await apiClient(`/api/appointments/${apptId}/activities`, {
-          method: "POST",
-          body: JSON.stringify({ activities: activitiesToInsert }),
-        });
-      }
-
       if (apptId) {
         await invalidateAssigneesActivitiesAppointment(queryClient, apptId);
       }
@@ -440,13 +407,13 @@ export default function AppointmentDialog({
     } catch (e: unknown) {
       if (typeof e === "object" && e && "message" in e) {
         notify.error({
-          title: "Activity save failed",
+          title: "Save failed",
           subtitle: (e as { message: string }).message || "Unknown error",
         });
         setError((e as { message: string }).message || "Unknown error");
       } else {
         notify.error({
-          title: "Activity save failed",
+          title: "Save failed",
           subtitle: "Unknown error",
         });
         setError("Unknown error");
@@ -531,61 +498,24 @@ export default function AppointmentDialog({
   const handleAddAssignee = (userId: string) => {
     if (!userId) return;
     if (assignees.some((a) => a.user === userId)) return;
-    const user_type = patients.find((p) => p.id === userId)
-      ? "patients"
-      : "relatives";
-    // Important: When user_type is "patients" or "relatives", the "user" field should be null
-    // because the appointment_assignee.user field has a foreign key to users.id
-    // Patients and relatives are not users, so we store null and use user_type to identify them
+    // Patients are not users — store null for user FK, use user_type to identify the assignee kind
     setAssignees((prev) => [
       ...prev,
       {
         id: "temp-" + Date.now(),
         created_at: new Date().toISOString(),
         appointment: appointment?.id || "",
-        user: null, // Always null for patients/relatives (they're not users)
-        user_type,
-        // Store the patient/relative ID in a way that can be retrieved later if needed
-        // Note: The current schema doesn't have a separate field for patient/relative ID
-        // This might need schema changes if you need to track which specific patient/relative
+        user: null,
+        user_type: "patients",
       },
     ]);
   };
   const handleRemoveAssignee = (userId: string | null, assigneeId?: string) => {
     if (assigneeId) {
-      // Remove by assignee ID (more reliable for patients/relatives)
       setAssignees((prev) => prev.filter((a) => a.id !== assigneeId));
     } else if (userId) {
-      // Remove by user ID (for backward compatibility)
       setAssignees((prev) => prev.filter((a) => a.user !== userId));
     }
-  };
-  const handleAddActivity = () => {
-    if (!activityType || !activityContent) return;
-    // Prevent duplicate activities (same type/content)
-    if (
-      activityList.some(
-        (a) => a.type === activityType && a.content === activityContent
-      )
-    )
-      return;
-    const created_by = user?.id ?? "";
-    setActivityList((prev) => [
-      ...prev,
-      {
-        id: "temp-" + Date.now(),
-        created_at: new Date().toISOString(),
-        created_by,
-        appointment: appointment?.id || "",
-        type: activityType,
-        content: activityContent,
-      },
-    ]);
-    setActivityType("");
-    setActivityContent("");
-  };
-  const handleRemoveActivity = (id: string) => {
-    setActivityList((prev) => prev.filter((a) => a.id !== id));
   };
 
   return (
@@ -621,7 +551,7 @@ export default function AppointmentDialog({
                         "Update scheduling on the left; manage sharing and activity notes on the right."
                       )
                     : toTitleCaseLabel(
-                        "Set the client and time on the left; optionally share with relatives or add a first activity on the right."
+                        "Set the client and time on the left; optionally share with another patient on the right."
                       )}
                 </DialogDescription>
               </div>
@@ -705,26 +635,9 @@ export default function AppointmentDialog({
                 <AppointmentDialogAssigneesSection
                   assignees={assignees}
                   patients={patients}
-                  relatives={relatives}
                   selectedPatientId={patientId}
                   onAddAssignee={handleAddAssignee}
                   onRemoveAssignee={handleRemoveAssignee}
-                />
-              </div>
-              <div>
-                <h3 className="mb-2 text-sm font-semibold tracking-tight text-gray-700">
-                  {toTitleCaseLabel("Activities")}
-                </h3>
-                <AppointmentDialogActivitiesSection
-                  isEditMode={isEditMode}
-                  activityType={activityType}
-                  setActivityType={setActivityType}
-                  activityContent={activityContent}
-                  setActivityContent={setActivityContent}
-                  activityList={activityList}
-                  loading={loading}
-                  onAddActivity={handleAddActivity}
-                  onRemoveActivity={handleRemoveActivity}
                 />
               </div>
             </section>

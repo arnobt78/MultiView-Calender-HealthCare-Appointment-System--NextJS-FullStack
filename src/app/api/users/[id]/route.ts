@@ -68,7 +68,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     const specialty = body.specialty === null ? null : typeof body.specialty === "string" ? body.specialty.trim() || null : undefined;
     const bio = body.bio === null ? null : typeof body.bio === "string" ? body.bio.trim() || null : undefined;
 
-    const ALLOWED_ROLES = ["admin", "doctor", "secretary", "patient"];
+    const ALLOWED_ROLES = ["admin", "doctor", "patient"];
     if (role !== undefined && !ALLOWED_ROLES.includes(role)) {
       return NextResponse.json({ error: "Invalid role" }, { status: 400 });
     }

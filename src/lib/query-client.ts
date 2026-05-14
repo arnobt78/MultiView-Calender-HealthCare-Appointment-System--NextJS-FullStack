@@ -77,10 +77,6 @@ export async function invalidateNotificationsData(queryClient: QueryClient) {
   await queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
 }
 
-export async function invalidateActivitiesList(queryClient: QueryClient) {
-  await queryClient.invalidateQueries({ queryKey: queryKeys.activities.list });
-}
-
 export async function invalidateAssigneesData(queryClient: QueryClient) {
   await queryClient.invalidateQueries({ queryKey: queryKeys.assignees.all });
 }
@@ -105,35 +101,21 @@ export async function invalidateInsightsAndAnalytics(queryClient: QueryClient) {
 }
 
 /**
- * After patient / relative / category CRUD — denormalized appointment list must refetch.
- *
- * Also invalidates `dashboard.overview` because:
- * - patients: "Total Patients" + "Active Patients" overview cards track patient counts.
- * - categories: "Total Categories" overview card tracks category count.
- * - relatives: not tracked in overview but the extra invalidation is a <1ms no-op (TanStack
- *   cache miss) and keeps the chain consistent without adding conditional branching.
+ * After patient / category CRUD — denormalized appointment list must refetch.
+ * Insights charts aggregate by patient/category — must refetch when those entities change.
+ * Portal caches depend on patient/category counts and appointment lists.
  */
 export async function invalidateEntityAffectingAppointments(
   queryClient: QueryClient,
-  resource: "patients" | "relatives" | "categories"
+  resource: "patients" | "categories"
 ) {
-  const key =
-    resource === "patients"
-      ? queryKeys.patients.all
-      : resource === "relatives"
-        ? queryKeys.relatives.all
-        : queryKeys.categories.all;
-  // Activities list + appointments read denormalized labels; invalidate together so UI updates without navigation.
-  // Insights charts aggregate by patient/category — must refetch when those entities change.
-  // Portal caches depend on patient/category counts and appointment lists.
+  const key = resource === "patients" ? queryKeys.patients.all : queryKeys.categories.all;
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: key }),
     queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all }),
-    invalidateActivitiesList(queryClient),
     invalidateDashboardOverview(queryClient),
     invalidateInsightsAndAnalytics(queryClient),
     invalidateDoctorPortal(queryClient),
-    invalidateSecretaryPortal(queryClient),
     invalidateAdminPortal(queryClient),
     ...(resource === "patients" ? [invalidatePatientPortal(queryClient)] : []),
   ]);
@@ -190,11 +172,6 @@ export async function invalidateDoctorPortal(queryClient: QueryClient) {
   await queryClient.invalidateQueries({ queryKey: queryKeys.doctorPortal.all });
 }
 
-/** Secretary portal — invalidate after appointment or patient mutations */
-export async function invalidateSecretaryPortal(queryClient: QueryClient) {
-  await queryClient.invalidateQueries({ queryKey: queryKeys.secretaryPortal.all });
-}
-
 /** Admin portal — invalidate after major mutations that affect global KPIs */
 export async function invalidateAdminPortal(queryClient: QueryClient) {
   await queryClient.invalidateQueries({ queryKey: queryKeys.adminPortal.all });
@@ -233,7 +210,6 @@ export async function invalidateAfterAppointmentMutation(
 ) {
   await Promise.all([
     invalidateAppointmentData(queryClient),
-    invalidateActivitiesList(queryClient),
     invalidateNotificationsData(queryClient),
     invalidateAppointmentTypeDerived(queryClient),
     invalidateInvoicesAndOverview(queryClient, { patientId: opts?.patientId ?? undefined }),
@@ -242,17 +218,16 @@ export async function invalidateAfterAppointmentMutation(
     invalidatePatientPortal(queryClient),
     // Role-specific portals show appointment counts and today's schedule.
     invalidateDoctorPortal(queryClient),
-    invalidateSecretaryPortal(queryClient),
     invalidateAdminPortal(queryClient),
   ]);
 }
 
 /**
- * After assignee rows or per-appointment activities are mutated outside the main appointment PATCH.
+ * After assignee rows are mutated outside the main appointment PATCH.
  * Resolves `patientId` from the appointments list cache so patient detail/snapshot refetch without navigation.
  *
  * When `patientId` is known, also invalidates `patientPortal.all`: the portal timeline is keyed to that
- * patient’s appointments; sharing/activity edits can change labels or counts the patient should see on
+ * patient’s appointments; sharing edits can change labels or counts the patient should see on
  * the next fetch (TanStack marks stale → refetch in background; no full page reload).
  */
 export async function invalidateAssigneesActivitiesAppointment(
@@ -261,24 +236,17 @@ export async function invalidateAssigneesActivitiesAppointment(
 ) {
   const patientId =
     getPatientIdFromAppointmentCache(queryClient, appointmentId ?? undefined) ?? undefined;
-  // Role portals embed appointment-derived metrics and secretary "Recent Activity"; keep them in sync with
-  // assignee/activity mutations without requiring a full page navigation or manual refresh.
+  // Role portals embed appointment-derived metrics; keep them in sync with
+  // assignee mutations without requiring a full page navigation or manual refresh.
   await Promise.all([
     invalidateAssigneesData(queryClient),
     invalidateAppointmentData(queryClient),
-    invalidateActivitiesList(queryClient),
     invalidateAppointmentTypeDerived(queryClient),
     invalidateDoctorPortal(queryClient),
-    invalidateSecretaryPortal(queryClient),
     invalidateAdminPortal(queryClient),
     patientId
       ? invalidatePatientDetailAndSnapshot(queryClient, patientId)
       : queryClient.invalidateQueries({ queryKey: queryKeys.patients.all }),
     ...(patientId ? [invalidatePatientPortal(queryClient)] : []),
   ]);
-  if (appointmentId) {
-    await queryClient.invalidateQueries({
-      queryKey: queryKeys.activities.byAppointment(appointmentId),
-    });
-  }
 }

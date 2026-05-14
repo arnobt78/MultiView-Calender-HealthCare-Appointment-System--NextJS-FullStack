@@ -16,7 +16,6 @@ import { notify } from "@/lib/notify";
 import {
   invalidateAppointmentTypeDerived,
   invalidateDoctorPortal,
-  invalidateSecretaryPortal,
   invalidateAdminPortal,
 } from "@/lib/query-client";
 
@@ -68,7 +67,6 @@ export function DoctorGlobalTypeConfigEditor({ doctorId }: Props) {
       });
       void invalidateAppointmentTypeDerived(queryClient);
       void invalidateDoctorPortal(queryClient);
-      void invalidateSecretaryPortal(queryClient);
       void invalidateAdminPortal(queryClient);
     },
     onError: (error, { appointment_type_id }) => {

@@ -21,7 +21,6 @@ export * from "./useMediaQuery";
 export * from "./useAbortController";
 
 export * from "./useAI";
-export * from "./useActivities";
 export * from "./useAnalytics";
 export * from "./useAppointments";
 export * from "./useAssignees";
@@ -41,5 +40,4 @@ export * from "./useOwnerUserSummaries";
 export * from "./usePatientListMetrics";
 export * from "./usePatients";
 export * from "./usePayments";
-export * from "./useRelatives";
 export * from "./useUsers";

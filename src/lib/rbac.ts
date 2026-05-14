@@ -21,18 +21,13 @@ export function isDoctorRole(role: string | null | undefined): boolean {
   return role === "doctor";
 }
 
-/** Secretary accounts handle scheduling and patient records; limited admin access. */
-export function isSecretaryRole(role: string | null | undefined): boolean {
-  return role === "secretary";
-}
-
 /**
- * Staff = admin | doctor | secretary.
+ * Staff = admin | doctor.
  * Explicitly enumerated so null/undefined/"unknown" roles are never treated as staff,
  * which would open RBAC bypass vectors via !isPatientRole(null) → true.
  */
 export function isStaffRole(role: string | null | undefined): boolean {
-  return role === "admin" || role === "doctor" || role === "secretary";
+  return role === "admin" || role === "doctor";
 }
 
 /**

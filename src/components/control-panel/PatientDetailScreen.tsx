@@ -9,7 +9,6 @@ import {
   CalendarClock,
   FileText,
   Fingerprint,
-  History,
   List,
   Loader2,
   Pencil,
@@ -207,10 +206,6 @@ function PatientDetailBodySkeleton() {
             </TableBody>
           </Table>
         </div>
-      </div>
-      <div className="space-y-2">
-        <SectionHeading icon={History}>Activities</SectionHeading>
-        <Skeleton className="h-20 w-full rounded-md" />
       </div>
       <div className="space-y-2">
         <SectionHeading icon={Receipt}>Invoices (Via Appointments)</SectionHeading>
@@ -636,29 +631,6 @@ export function PatientDetailScreen({
                       </TableBody>
                     </Table>
                   </div>
-                )}
-              </div>
-
-              <div className="space-y-3">
-                <SectionHeading icon={History}>Activities</SectionHeading>
-                {snap.isLoading ? (
-                  <Skeleton className="h-20 w-full rounded-md" aria-hidden />
-                ) : (
-                  <ul className="space-y-2 text-sm text-gray-700">
-                    {(snap.data?.activities ?? []).slice(0, 12).map((act) => (
-                      <li key={act.id} className="rounded-lg border border-slate-200/80 p-2">
-                        <p className="text-xs text-gray-500">
-                          {act.created_at ? format(new Date(act.created_at), "PPp") : ""}
-                          {act.created_by_display ? ` · ${act.created_by_display}` : ""}
-                        </p>
-                        <p className="font-medium text-gray-700">{act.type}</p>
-                        <p className="line-clamp-2 text-gray-600">{act.content}</p>
-                      </li>
-                    ))}
-                    {(snap.data?.activities ?? []).length === 0 && (
-                      <p className="text-sm text-gray-500">No Activities</p>
-                    )}
-                  </ul>
                 )}
               </div>
 

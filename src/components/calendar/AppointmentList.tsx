@@ -5,7 +5,6 @@ import { format } from "date-fns";
 import { FullAppointment } from "@/hooks/useAppointments";
 import { useCategories } from "@/hooks/useCategories";
 import { usePatients } from "@/hooks/usePatients";
-import { useRelatives } from "@/hooks/useRelatives";
 import { useAuth } from "@/hooks/useAuth";
 import { useAppointmentData } from "@/context/AppointmentDataContext";
 import {
@@ -16,8 +15,6 @@ import { summarizeDayAppointments } from "@/lib/appointment-stats";
 import {
   Patient,
   AppointmentAssignee,
-  Activity,
-  Relative,
 } from "@/types/types";
 import Filters from "./Filters";
 import AppointmentDialogController from "./AppointmentDialogController";
@@ -215,7 +212,6 @@ export default function AppointmentList() {
 
   const { categories = [] } = useCategories();
   const { patients = [] } = usePatients();
-  const { relatives = [] } = useRelatives();
   const { category, patient, date, status, month, search } = useCalendarFilters();
 
   // Keep ownerUsers state empty for now, or we can fetch them separately if needed, 
@@ -240,10 +236,9 @@ export default function AppointmentList() {
       applyCalendarFilters(
         appointments,
         { category, patient, date, status, month, search: "" },
-        patients,
-        relatives
+        patients
       ),
-    [appointments, category, patient, date, status, month, patients, relatives]
+    [appointments, category, patient, date, status, month, patients]
   );
 
   // Helper: get permission for current user on an appointment
@@ -302,14 +297,10 @@ export default function AppointmentList() {
       }
     }
 
-    // Also search within patient and relative names directly from the fetched lists
-    const patientOrRelativeNameMatch =
-      patients.some((p: Patient) =>
-        (`${p.firstname} ${p.lastname}`).toLowerCase().includes(lower)
-      ) ||
-      relatives.some((r: Relative) =>
-        (`${r.firstname} ${r.lastname}`).toLowerCase().includes(lower)
-      );
+    // Also search within patient names directly from the fetched list
+    const patientNameListMatch = patients.some((p: Patient) =>
+      (`${p.firstname} ${p.lastname}`).toLowerCase().includes(lower)
+    );
 
     return (
       match(appt.title) ||
@@ -320,11 +311,9 @@ export default function AppointmentList() {
         (match(appt.category_data.label) ||
           match(appt.category_data.description))) ||
       patientNameMatch ||
-      patientOrRelativeNameMatch || // Include the direct patient/relative name search
+      patientNameListMatch ||
       (appt.appointment_assignee &&
         appt.appointment_assignee.some((a: AppointmentAssignee) => a.user && match(a.user))) ||
-      (appt.activities &&
-        appt.activities.some((a: Activity) => match(a.type) || match(a.content))) ||
       (appt.attachments && appt.attachments.some((a: string) => match(a)))
     );
   });
@@ -764,14 +753,6 @@ export default function AppointmentList() {
                                           </div>
                                         )}
 
-                                        {/* Activities */}
-                                        {appt.activities && appt.activities.length > 0 && (
-                                          <div className="flex flex-col gap-0.5">
-                                            {appt.activities.map((act, idx) => (
-                                              <span key={idx} className="text-xs text-pink-700">{act.type}: {act.content}</span>
-                                            ))}
-                                          </div>
-                                        )}
                                       </div>
 
                                       {/* Actions column: 3-dot on top, Video Call on bottom */}

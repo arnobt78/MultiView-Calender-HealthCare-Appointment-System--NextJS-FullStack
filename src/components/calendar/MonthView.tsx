@@ -39,11 +39,9 @@ import { Button } from "@/components/ui/button";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useAssignees } from "@/hooks/useAssignees";
-import { useActivitiesList } from "@/hooks/useActivities";
 import { useOwnerUserSummaries } from "@/hooks/useOwnerUserSummaries";
 import { useCategories } from "@/hooks/useCategories";
 import { usePatients } from "@/hooks/usePatients";
-import { useRelatives } from "@/hooks/useRelatives";
 import {
   FiEdit2,
   FiTrash2,
@@ -79,9 +77,7 @@ export default function MonthView() {
   const userEmail = user?.email ?? null;
   const { categories = [] } = useCategories();
   const { patients: filterPatients = [] } = usePatients();
-  const { relatives: filterRelatives = [] } = useRelatives();
   const { assignees } = useAssignees();
-  const { data: activities = [] } = useActivitiesList();
   const ownerUsers = useOwnerUserSummaries(globalAppointments.map((a) => a.user_id), user);
   const { category, patient, date, status, month, search } = useCalendarFilters();
   const queryClient = useQueryClient();
@@ -97,8 +93,7 @@ export default function MonthView() {
       applyCalendarFilters(
         globalAppointments,
         { category, patient, date, status, month, search },
-        filterPatients,
-        filterRelatives
+        filterPatients
       ),
     [
       globalAppointments,
@@ -109,7 +104,6 @@ export default function MonthView() {
       month,
       search,
       filterPatients,
-      filterRelatives,
     ]
   );
 
@@ -312,9 +306,7 @@ export default function MonthView() {
                           key={a.id}
                           appointment={a}
                           patients={filterPatients}
-                          relatives={filterRelatives}
                           assignees={appointmentAssignees}
-                          activities={activities}
                           userEmail={userEmail}
                           userId={userId}
                           ownerUsers={ownerUsers}
@@ -568,22 +560,6 @@ export default function MonthView() {
                             })()}
                           </span>
                         )}
-                      </div>
-                    )}
-
-                    {activities.length > 0 && (
-                      <div className="flex flex-col gap-1 text-xs text-gray-400 mb-1">
-                        <span>Activities:</span>
-                        {activities
-                          .filter((act) => act.appointment === a.id)
-                          .map((act, idx) => (
-                            <span
-                              key={idx}
-                              className="not-italic text-pink-700"
-                            >
-                              {act.type}: {act.content}
-                            </span>
-                          ))}
                       </div>
                     )}
                   </div>

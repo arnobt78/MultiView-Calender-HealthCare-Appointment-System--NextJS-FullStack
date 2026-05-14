@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useMemo, useState } from "react";
-import type { Patient, Relative } from "@/types/types";
+import type { Patient } from "@/types/types";
 
 export type CalendarFiltersState = {
   category: string | null;
@@ -34,7 +34,6 @@ type SearchableAppointment = {
   category_data?: { label?: string | null; description?: string | null };
   patient_data?: { firstname?: string | null; lastname?: string | null; email?: string | null };
   appointment_assignee?: { user?: string | null; invited_email?: string | null }[];
-  activities?: { type?: string | null; content?: string | null }[];
   attachments?: string[];
 };
 
@@ -109,8 +108,7 @@ export function useCalendarFilters() {
 export function applyCalendarFilters<T extends SearchableAppointment>(
   appointments: T[],
   filters: CalendarFiltersState,
-  patients: Patient[] = [],
-  relatives: Relative[] = []
+  patients: Patient[] = []
 ): T[] {
   const { category, patient, date, status, month, search } = filters;
   const lowerSearch = search.trim().toLowerCase();
@@ -156,10 +154,6 @@ export function applyCalendarFilters<T extends SearchableAppointment>(
         )
         : false;
 
-    const relativesMatch = relatives.some((r) =>
-      `${r.firstname} ${r.lastname}`.toLowerCase().includes(lowerSearch)
-    );
-
     return (
       match(appt.title || "") ||
       match(appt.notes || "") ||
@@ -169,11 +163,9 @@ export function applyCalendarFilters<T extends SearchableAppointment>(
       match(appt.category_data?.description || "") ||
       patientMatchFromData ||
       patientMatchFromId ||
-      relativesMatch ||
       (appt.appointment_assignee || []).some(
         (a) => match(a.user || "") || match(a.invited_email || "")
       ) ||
-      (appt.activities || []).some((a) => match(a.type || "") || match(a.content || "")) ||
       (appt.attachments || []).some((a) => match(a))
     );
   });

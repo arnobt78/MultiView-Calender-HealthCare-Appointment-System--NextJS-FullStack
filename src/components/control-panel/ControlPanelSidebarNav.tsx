@@ -23,7 +23,6 @@ import {
   Calendar,
   CalendarDays,
   ChevronDown,
-  History,
   LayoutDashboard,
   Layers,
   Mail,
@@ -33,7 +32,6 @@ import {
   Tags,
   UserCog,
   Users,
-  UsersRound,
   Video,
 } from "lucide-react";
 
@@ -49,12 +47,10 @@ const SIDEBAR_ITEMS = [
   { value: "visit_types_global", label: "Global Visit Types" },
   { value: "doctors", label: "Doctor Management" },
   { value: "users_admin", label: "User / Admin Management" },
-  { value: "relatives", label: "Relative Management" },
   { value: "organizations", label: "Organization Management" },
   { value: "invoices", label: "Invoices & Payments" },
   { value: "appointments_mgmt", label: "Appointment Management" },
   { value: "notifications", label: "Notifications" },
-  { value: "activities", label: "Activity Log" },
   { value: "google-calendar", label: "Google Calendar" },
 ] as const;
 
@@ -90,7 +86,6 @@ const SIDEBAR_SECTIONS: readonly {
       { value: "visit_types_global", icon: Layers },
       { value: "doctors", icon: Stethoscope },
       { value: "users_admin", icon: UserCog },
-      { value: "relatives", icon: UsersRound },
       { value: "organizations", icon: Building2 },
     ],
   },
@@ -105,7 +100,6 @@ const SIDEBAR_SECTIONS: readonly {
   {
     heading: "System & Audit",
     items: [
-      { value: "activities", icon: History },
       { value: "google-calendar", icon: Calendar },
     ],
   },
@@ -123,12 +117,10 @@ const SEGMENT_TO_TAB: Record<string, SidebarTabValue> = {
   "global-visit-types": "visit_types_global",
   "doctor-management": "doctors",
   "user-admin-management": "users_admin",
-  "relative-management": "relatives",
   "organization-management": "organizations",
   "invoice-management": "invoices",
   "appointment-management": "appointments_mgmt",
   notifications: "notifications",
-  "activity-log": "activities",
   "google-calendar": "google-calendar",
   // legacy alias
   "doctor-user-management": "doctors",
@@ -152,12 +144,10 @@ const TAB_TO_SEGMENT: Record<string, string> = {
   visit_types_global: "global-visit-types",
   doctors: "doctor-management",
   users_admin: "user-admin-management",
-  relatives: "relative-management",
   organizations: "organization-management",
   invoices: "invoice-management",
   appointments_mgmt: "appointment-management",
   notifications: "notifications",
-  activities: "activity-log",
   "google-calendar": "google-calendar",
 };
 

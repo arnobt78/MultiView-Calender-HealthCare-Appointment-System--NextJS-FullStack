@@ -7,7 +7,6 @@
  *   - Global AppointmentType metadata (is_telehealth, color, icon)
  *   - Patient clinical fields (blood_type, height_cm, weight_kg, insurance_*, etc.)
  *   - Extra demo patients (4 additional) with full new fields
- *   - Relatives linked to demo patients
  *   - DoctorAppointmentTypeConfig rows (per-doctor type enable/disable)
  *   - Appointments with appointment_type_id, chief_complaint, is_telehealth
  *
@@ -308,48 +307,7 @@ async function seedExtendedSchema() {
     }
   }
 
-  // ── 5. Seed relatives for the demo patient ───────────────────────────────
-  console.log("\n👨‍👩‍👧  Seeding relatives for demo patient…");
-  if (demoPatient) {
-    const relativeSpecs = [
-      {
-        firstname: "Sarah",
-        lastname: "Patient",
-        relationship: "sister",
-        email: "sarah.patient@demo.healthcal",
-        phone: "+49 30 111 222 33",
-      },
-      {
-        firstname: "Michael",
-        lastname: "Patient",
-        relationship: "brother",
-        email: "michael.patient@demo.healthcal",
-        phone: "+49 30 111 222 44",
-      },
-    ];
-    for (const rel of relativeSpecs) {
-      const existingRel = await prisma.relative.findFirst({
-        where: { patient_id: demoPatient.id, email: rel.email },
-      });
-      if (!existingRel) {
-        await prisma.relative.create({
-          data: {
-            patient_id: demoPatient.id,
-            firstname: rel.firstname,
-            lastname: rel.lastname,
-            relationship: rel.relationship,
-            email: rel.email,
-            phone: rel.phone,
-          },
-        });
-        console.log(`  ✔ ${rel.firstname} ${rel.lastname} (${rel.relationship})`);
-      } else {
-        console.log(`  – ${rel.firstname} ${rel.lastname} already exists`);
-      }
-    }
-  }
-
-  // ── 6. Seed DoctorAppointmentTypeConfig (per-doctor type toggle demos) ───
+  // ── 5. Seed DoctorAppointmentTypeConfig (per-doctor type toggle demos) ───
   console.log("\n🔧  Seeding DoctorAppointmentTypeConfig rows…");
   const configSpecs = [
     // Demo Doctor 3 (Dermatology) disables Annual Check-up — not relevant to skin conditions

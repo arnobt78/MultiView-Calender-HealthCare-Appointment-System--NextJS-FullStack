@@ -14,10 +14,8 @@ import { invalidateAppointmentData } from "@/lib/query-client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCategories } from "@/hooks/useCategories";
 import { usePatients } from "@/hooks/usePatients";
-import { useRelatives } from "@/hooks/useRelatives";
 import { useAuth } from "@/hooks/useAuth";
 import { useAssignees } from "@/hooks/useAssignees";
-import { useActivitiesList } from "@/hooks/useActivities";
 import { useOwnerUserSummaries } from "@/hooks/useOwnerUserSummaries";
 import { cn } from "@/lib/utils";
 import AppointmentHoverCard from "./AppointmentHoverCard";
@@ -55,9 +53,7 @@ export default function WeekView() {
   const userEmail = user?.email ?? null;
   const { categories = [] } = useCategories();
   const { patients: filterPatients = [] } = usePatients();
-  const { relatives: filterRelatives = [] } = useRelatives();
   const { assignees } = useAssignees();
-  const { data: activities = [] } = useActivitiesList();
   const ownerUsers = useOwnerUserSummaries(globalAppointments.map((a) => a.user_id), user);
   const { category, patient, date, status, month, search } = useCalendarFilters();
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
@@ -72,10 +68,9 @@ export default function WeekView() {
       applyCalendarFilters(
         globalAppointments,
         { category, patient, date, status, month, search },
-        filterPatients,
-        filterRelatives
+        filterPatients
       ),
-    [globalAppointments, category, patient, date, status, month, search, filterPatients, filterRelatives]
+    [globalAppointments, category, patient, date, status, month, search, filterPatients]
   );
   const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
   const weekAppointments = useMemo(
@@ -342,9 +337,7 @@ export default function WeekView() {
                           <AppointmentHoverCard
                             appointment={a}
                             patients={filterPatients}
-                            relatives={filterRelatives}
                             assignees={assignees.filter((ass) => ass.appointment === a.id)}
-                            activities={activities}
                             userEmail={userEmail}
                             userId={userId}
                             ownerUsers={ownerUsers}

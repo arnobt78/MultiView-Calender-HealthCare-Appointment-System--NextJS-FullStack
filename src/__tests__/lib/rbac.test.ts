@@ -7,12 +7,10 @@ import {
   isPatientRole,
   isAdminRole,
   isDoctorRole,
-  isSecretaryRole,
   isStaffRole,
 } from "@/lib/rbac";
 
 describe("RBAC role helpers", () => {
-  const roles = ["admin", "doctor", "secretary", "patient", null, undefined, ""];
 
   describe("isPatientRole", () => {
     it("returns true for 'patient'", () => expect(isPatientRole("patient")).toBe(true));
@@ -30,15 +28,9 @@ describe("RBAC role helpers", () => {
     it("returns false for 'admin'", () => expect(isDoctorRole("admin")).toBe(false));
   });
 
-  describe("isSecretaryRole", () => {
-    it("returns true for 'secretary'", () => expect(isSecretaryRole("secretary")).toBe(true));
-    it("returns false for 'patient'", () => expect(isSecretaryRole("patient")).toBe(false));
-  });
-
   describe("isStaffRole", () => {
     it("returns true for 'admin'", () => expect(isStaffRole("admin")).toBe(true));
     it("returns true for 'doctor'", () => expect(isStaffRole("doctor")).toBe(true));
-    it("returns true for 'secretary'", () => expect(isStaffRole("secretary")).toBe(true));
     it("returns false for 'patient'", () => expect(isStaffRole("patient")).toBe(false));
     it("returns false for null", () => expect(isStaffRole(null)).toBe(false));
   });
@@ -51,4 +43,5 @@ describe("RBAC role helpers", () => {
         expect(isStaffRole(role as string | null)).toBe(false));
     }
   });
+
 });

@@ -5,8 +5,8 @@
 
 export const DEMO_PASSWORD = "12345678";
 
-/** Seeded demo personas — includes `secretary` staff (see `npm run db:seed-test-user`). */
-export type DemoRole = "admin" | "doctor" | "patient" | "secretary";
+/** Seeded demo personas — admin / doctor / patient roles only */
+export type DemoRole = "admin" | "doctor" | "patient";
 
 export type DemoAccount = {
   email: string;
@@ -38,21 +38,12 @@ export const DEMO_ACCOUNTS: readonly DemoAccount[] = [
     displayName: "Demo Patient",
     avatarUrl: "/users/img-3.avif",
   },
-  {
-    email: "test@secretary.com",
-    role: "secretary",
-    label: "Demo Secretary",
-    displayName: "Demo Secretary",
-    avatarUrl: "/users/img-10.avif",
-  },
 ] as const;
 
 /** Primary account for automated smoke tests (admin). */
 export const DEMO_SMOKE_EMAIL = "test@admin.com";
 export const DEMO_DOCTOR_EMAIL = "test@doctor.com";
 export const DEMO_PATIENT_EMAIL = "test@patient.com";
-/** Demo secretary staff — same password as other demo rows; seeded by `db:seed-test-user`. */
-export const DEMO_SECRETARY_EMAIL = "test@secretary.com";
 
 /** Stable seeded type id used by smoke tests for slot endpoint checks. */
 export const DEMO_DOCTOR_APPOINTMENT_TYPE_ID =

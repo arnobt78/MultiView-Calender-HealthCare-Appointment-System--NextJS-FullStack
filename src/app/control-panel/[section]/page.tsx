@@ -23,12 +23,10 @@ const SECTION_TO_TAB: Record<string, string> = {
   "doctor-management": "doctors",
   "doctor-user-management": "doctors",
   "user-admin-management": "users_admin",
-  "relative-management": "relatives",
   "organization-management": "organizations",
   "invoice-management": "invoices",
   "appointment-management": "appointments_mgmt",
   notifications: "notifications",
-  "activity-log": "activities",
   "google-calendar": "google-calendar",
 };
 

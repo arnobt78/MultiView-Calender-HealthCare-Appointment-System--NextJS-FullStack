@@ -7,9 +7,9 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Prism
 ### Control panel entity split (users vs patients)
 
 - **`patients` table** (`Patient` model): clinical/client records used by Patient Management and appointments. Demo seed creates one row aligned with `test@patient.com` so `/control-panel/patient-management` lists a sample patient.
-- **`users` table** (`User` model): auth accounts with `role`. **Doctor Management** lists `GET /api/users?role=doctor`. **User / Admin Management** lists `GET /api/users?roles=admin,secretary` (staff; excludes doctor/patient rows).
+- **`users` table** (`User` model): auth accounts with `role`. **Doctor Management** lists `GET /api/users?role=doctor`. **User / Admin Management** lists `GET /api/users?role=admin` (admin only; excludes doctor/patient rows).
 - **`ControlPanelPage` tabs**: `/control-panel/patient-management` renders TanStack `PatientManagement`; `/control-panel/doctor-management` and `/control-panel/user-admin-management` render filtered user tables. Legacy URL `/control-panel/doctor-user-management` still maps to the doctors tab.
-- **Hooks**: `useUsers({ role: "doctor" })`, `useUsers({ roles: ["admin", "secretary"] })`, or unfiltered list — query key includes the filter object; `invalidateUsersAndAuth` refreshes after PATCH.
+- **Hooks**: `useUsers({ role: "doctor" })`, `useUsers({ role: "admin" })`, or unfiltered list — query key includes the filter object; `invalidateUsersAndAuth` refreshes after PATCH.
 
 ### Demo seed
 
@@ -18,11 +18,11 @@ Run `npm run db:seed-test-user` after migrations: upserts three `users`, doctor 
 ### Patient pipeline (management + detail)
 
 - **Schema**: `Patient.clinical_profile` (`Json?`) — merged on `PUT /api/patients/[id]` (not fully replaced); **email is never updated from the client** on PUT (demo safety).
-- **API**: `GET /api/patients/[id]/snapshot` returns `{ patient, appointments, activities, invoices }` for the patient detail "Related" sections (activities scoped to this patient's appointments; invoices matched via `appointment_id`).
+- **API**: `GET /api/patients/[id]/snapshot` returns `{ patient, appointments, invoices }` for the patient detail "Related" sections (invoices matched via `appointment_id`).
 - **React Query**: `queryKeys.patients.snapshot(id)`, hook `usePatientSnapshot(id)` (`src/hooks/usePatients.ts`). Prefix invalidation `queryKeys.patients.all` refreshes list, detail, and snapshot together.
-- **Invalidation wiring**: `invalidateAfterAppointmentMutation` calls `invalidateInvoicesAndOverview`, which now also invalidates `queryKeys.patients.all` (appointments + invoices affect patient aggregates). `invalidateAssigneesActivitiesAppointment` invalidates `patients.all` so activity changes refresh snapshots without navigation.
+- **Invalidation wiring**: `invalidateAfterAppointmentMutation` calls `invalidateInvoicesAndOverview`, which now also invalidates `queryKeys.patients.all` (appointments + invoices affect patient aggregates). `invalidateSharingAndAppointments` invalidates `patients.all` so assignee changes refresh snapshots without navigation.
 - **UI**: `PatientListFiltersProvider` + status dropdown (all/active/inactive); `DataTable` optional `globalFilterFn` for multi-column search (name + email). Sortable headers via `DataTableColumnHeader`. Row menu: View (`?mode` default), Edit (`?mode=edit`). **`PatientDetailScreen`** (client): view vs edit from URL, fixed footer actions, **`PatientDetailForm`** with read-only email + clinical fields mapped into `clinical_profile`.
-- **Shared table patterns**: Doctor/User/Category/Relative management tables reuse **`DataTableColumnHeader`** + **`globalFilterFn`** where applicable (name/email or label/description).
+- **Shared table patterns**: Doctor/User/Category management tables reuse **`DataTableColumnHeader`** + **`globalFilterFn`** where applicable (name/email or label/description).
 - **Loading**: `src/app/control-panel/loading.tsx` returns `null` so route transitions don't flash a full skeleton; tables keep localized skeleton rows via `DataTable` `isLoading`.
 
 ### Avatar cropping (detail pages)
@@ -124,7 +124,6 @@ const loading = !isMounted || isLoading;
 | Invoice Mgmt | `control-panel/InvoiceManagement.tsx` | Summary card values + table rows |
 | Appointments Mgmt | `control-panel/AppointmentsManagement.tsx` | Stat card values + table rows |
 | Notifications | `control-panel/NotificationsManagement.tsx` | Table rows |
-| Activity Log | `control-panel/ActivitiesManagement.tsx` | Table rows |
 | Google Calendar | `control-panel/GoogleCalendarSettings.tsx` | Status badge + description + action button |
 | Insights | `pages/AnalyticsPage.tsx` | Stat values + chart bars + category rows + patient table rows |
 | Patient Portal | `pages/PatientPortalPage.tsx` | Profile field values + summary badge values + appointment timeline rows |
@@ -300,8 +299,6 @@ src/
 │   │   ├── InvoiceManagement.tsx       Inline skeleton + glassmorphic
 │   │   ├── OrganizationManagement.tsx  Inline skeleton + glassmorphic
 │   │   ├── NotificationsManagement.tsx Inline skeleton
-│   │   ├── RelativesManagement.tsx
-│   │   ├── ActivitiesManagement.tsx    Inline skeleton
 │   │   ├── GoogleCalendarSettings.tsx  Inline skeleton
 │   │   └── InvitationList.tsx          Inline skeleton (shared by Appt + User access)
 │   ├── navbar/Navbar.tsx
@@ -318,7 +315,6 @@ src/
 │   ├── useAppointments.ts      React Query — /api/appointments
 │   ├── useUsers.ts             React Query — /api/users (filterable by role/roles)
 │   ├── usePatients.ts          + usePatientSnapshot(id)
-│   ├── useRelatives.ts
 │   ├── useNotifications.ts     SSE + React Query
 │   ├── useOrganization.ts
 │   ├── useAnalytics.ts
@@ -397,7 +393,6 @@ queryKeys = {
   organizations:{ all: ["app","organizations"], detail/members subkeys },
   notifications:{ all: ["app","notifications"], unreadCount: [...,"unread-count"] },
   invitations:  { all: ["app","invitations"] },
-  activities:   { list: ["app","activities","list"], byAppointment: id => [...] },
   availability: { root: ["app","availability"], slots: (doctorId,date,typeId) => [...] },
   googleCalendar: { root: ["app","google-calendar"] },
   insights:     { all: ["app","insights"] },
@@ -410,10 +405,10 @@ queryKeys = {
 
 | Helper | What it invalidates |
 |---|---|
-| `invalidateAfterAppointmentMutation` | appointments + activities + notifications + availability + invoices + dashboard overview + patients |
+| `invalidateAfterAppointmentMutation` | appointments + notifications + availability + invoices + dashboard overview + patients + all portals |
 | `invalidateInvoicesAndOverview` | invoices + dashboard overview + patient detail/snapshot (scoped by patientId when known) |
 | `invalidateUsersAndAuth` | users + auth/me |
-| `invalidateEntityAffectingAppointments` | entity list + appointments + activities |
+| `invalidateEntityAffectingAppointments` | entity list + appointments (`resource: "patients" \| "categories"`) |
 | `invalidateSharingAndAppointments` | invitations + dashboard-access + assignees + appointments |
 | `invalidateOrganizations` | organizations |
 | `invalidateDashboardOverview` | dashboard overview only |
@@ -474,7 +469,7 @@ The overview route aggregates 16+ Prisma queries against a remote VPS Postgres (
 | `DELETE /api/categories/[id]` | delete | total category count changes |
 | `PATCH /api/users/[id]` | role change | doctor count (`role = "doctor"`) changes |
 
-All other routes confirmed **not needed**: they either read-only, or write to tables not tracked in the overview (`activities`, `notifications`, `assignees`, `organisations`, `relatives`, `invitations`, `dashboard-access`, `google-calendar-tokens`, etc.).
+All other routes confirmed **not needed**: they either read-only, or write to tables not tracked in the overview (`notifications`, `assignees`, `organisations`, `invitations`, `dashboard-access`, `google-calendar-tokens`, etc.).
 
 ---
 
@@ -532,7 +527,7 @@ User clicks link → router.push("/some-protected-route")
 
 ## Prisma Schema (prisma/schema.prisma)
 
-Core models: User, Appointment, Doctor, Patient, Category, Relative, Invitation, Organization, OrganizationMember, Invoice, Notification, Activity, DoctorAvailability, DoctorTimeOff, AppointmentType.
+Core models: User, Appointment, Doctor, Patient, Category, Invitation, Organization, OrganizationMember, Invoice, Notification, DoctorAvailability, DoctorTimeOff, AppointmentType.
 
 All models use UUID primary keys (`@default(uuid())`), have `createdAt`/`updatedAt` timestamps, and are joined by foreign keys with explicit `@relation` names for clarity.
 
@@ -636,7 +631,6 @@ Set by `proxy.ts` on every response. CDN headers use both `CDN-Cache-Control` an
   - `src/hooks/useAppointments.ts`
   - `src/hooks/useCategories.ts`
   - `src/hooks/usePatients.ts`
-  - `src/hooks/useRelatives.ts`
   - `src/hooks/useOrganization.ts`
   - `src/hooks/useUsers.ts`
   - `src/hooks/useInvitations.ts`
@@ -657,7 +651,7 @@ Recommended order when wiping app data for clean QA:
 4. `npm run db:check-users` — lists users and verifies demo emails exist.
 5. With dev server running: `npm run test:smoke-invalidation` (uses `test@admin.com` via `/api/auth/demo`).
 
-Shared demo credentials live in `src/lib/demo-credentials.ts` (`test@admin.com`, `test@doctor.com`, `test@patient.com`, password `12345678`).
+Shared demo credentials live in `src/lib/demo-credentials.ts` (`test@admin.com`, `test@doctor.com`, `test@patient.com` + 7 extra doctors, password `12345678`).
 
 ---
 
@@ -667,7 +661,7 @@ Shared demo credentials live in `src/lib/demo-credentials.ts` (`test@admin.com`,
 - **API**: `GET /api/availability/slots?doctorId=&date=YYYY-MM-DD&typeId=` — returns `{ slots: ISO[]; timezone }`.
 - **Client**: `useAvailabilitySlots` in `src/hooks/useAvailabilitySlots.ts` with keys under `queryKeys.availability`.
 - **Staff create/edit**: `AppointmentDialogGeneralSection` wires the same `GET /api/appointment-types` + slot chips into `AppointmentDialog` (doctor id = session user / appointment `owner_id` for busy overlap math).
-- **Invalidation**: `invalidateAfterAppointmentMutation` refreshes appointments, activities, notifications, availability slots, **invoices + dashboard overview + all patient queries** (shared appointment/billing graph). Slot pickers use `queryKeys.availability`.
+- **Invalidation**: `invalidateAfterAppointmentMutation` refreshes appointments, notifications, availability slots, **invoices + dashboard overview + all patient queries** (shared appointment/billing graph). Slot pickers use `queryKeys.availability`.
 - **RBAC (incremental)**: `users.role === 'patient'` cannot POST/PUT/PATCH/DELETE dashboard appointments or POST organizations; registration defaults new users to `role: admin`.
 
 ---
@@ -713,10 +707,11 @@ Shared demo credentials live in `src/lib/demo-credentials.ts` (`test@admin.com`,
 
 | Role | Visible nav items |
 |---|---|
-| `admin` / `doctor` / `secretary` | Dashboard, Control Panel, Analytics, Patient Portal |
-| `patient` | Dashboard, Patient Portal only (Control Panel + Analytics hidden) |
+| `admin` | Dashboard, Control Panel, Admin Portal, Insights |
+| `doctor` | Dashboard, Doctor Portal, Insights (own-scoped) |
+| `patient` | Patient Portal only |
 
-`isPatient = role === "patient"`, `isStaff = role === "admin" || role === "doctor" || role === "secretary"`. Staff do not see the "Patient Portal" nav link (they access it via the route directly if needed).
+`isPatient = role === "patient"`, `isStaff = role === "admin" || role === "doctor"`. Staff do not see the "Patient Portal" nav link.
 
 ### CalendarHeader (`src/components/calendar/CalendarHeader.tsx`)
 
@@ -742,17 +737,13 @@ Shared demo credentials live in `src/lib/demo-credentials.ts` (`test@admin.com`,
 
 Patients are normally forbidden from listing all users. Exception: if the request includes `?role=doctor` or `?roles=doctor`, patients are allowed (scoped to `id` + `display_name` only). This lets the `BookAppointmentDialog` in the patient portal populate the doctor selector.
 
-### `GET /api/relatives`
-
-Patients can only fetch their own relatives. The 403 that appeared on patient login was caused by an unconditional `useUsers()` call; fixed by gating the hook with `enabled: !isPatient`.
-
 ---
 
 ## Demo Account & Landing Page
 
 ### Landing page demo dropdown (`src/components/pages/LandingPage.tsx`)
 
-The "Try demo account" button is now a split dropdown with three roles:
+The "Try demo account" button is a split dropdown with three roles (secretary removed):
 
 | Option | Credentials | Redirects to |
 |---|---|---|

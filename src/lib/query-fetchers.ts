@@ -3,11 +3,9 @@
  */
 import { apiClient } from "@/lib/api-client";
 import type {
-  Activity,
   AppointmentAssignee,
   Category,
   Patient,
-  Relative,
 } from "@/types/types";
 
 export async function fetchCategories(): Promise<Category[]> {
@@ -20,19 +18,9 @@ export async function fetchPatients(): Promise<Patient[]> {
   return res.patients || [];
 }
 
-export async function fetchRelatives(): Promise<Relative[]> {
-  const res = await apiClient<{ relatives: Relative[] }>("/api/relatives");
-  return res.relatives || [];
-}
-
 export async function fetchAssignees(): Promise<AppointmentAssignee[]> {
   const res = await apiClient<{ assignees: AppointmentAssignee[] }>("/api/appointment-assignees");
   return res.assignees || [];
-}
-
-export async function fetchActivitiesList(): Promise<Activity[]> {
-  const res = await apiClient<{ activities: Activity[] }>("/api/activities");
-  return res.activities || [];
 }
 
 export type DashboardAccessRow = {

@@ -3,7 +3,6 @@ import { apiClient, handleApiError } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import {
   invalidateAfterAppointmentMutation,
-  invalidateActivitiesList,
   invalidateAssigneesData,
   invalidateAppointmentTypeDerived,
   invalidateInvoicesAndOverview,
@@ -13,17 +12,15 @@ import {
   invalidateInsightsAndAnalytics,
   invalidateDashboardOverview,
   invalidateDoctorPortal,
-  invalidateSecretaryPortal,
   invalidateAdminPortal,
 } from "@/lib/query-client";
 import {
   fetchAssignees,
   fetchCategories,
-  fetchActivitiesList,
   fetchPatients,
   fetchDashboardAccessAccepted,
 } from "@/lib/query-fetchers";
-import { Appointment, Category, Patient, AppointmentAssignee, Activity } from "@/types/types";
+import { Appointment, Category, Patient, AppointmentAssignee } from "@/types/types";
 import { notify } from "@/lib/notify";
 import { useAuth } from "./useAuth";
 import { format } from "date-fns";
@@ -34,7 +31,6 @@ export type FullAppointment = Appointment & {
   patient_data?: Patient;
   appointment_assignee?: (AppointmentAssignee & { invited_email?: string })[];
   invited_email?: string;
-  activities?: Activity[];
 };
 
 function formatAppointmentRange(start?: string, end?: string) {
@@ -94,7 +90,7 @@ export function useAppointments() {
     queryFn: async () => {
       if (!user) return [];
 
-      const [categories, patients, allAssignees, allActivities, ownedRes] = await Promise.all([
+      const [categories, patients, allAssignees, ownedRes] = await Promise.all([
         queryClient.ensureQueryData({
           queryKey: queryKeys.categories.all,
           queryFn: fetchCategories,
@@ -106,10 +102,6 @@ export function useAppointments() {
         queryClient.ensureQueryData({
           queryKey: queryKeys.assignees.all,
           queryFn: fetchAssignees,
-        }),
-        queryClient.ensureQueryData({
-          queryKey: queryKeys.activities.list,
-          queryFn: fetchActivitiesList,
         }),
         apiClient<{ appointments: Appointment[] }>("/api/appointments"),
       ]);
@@ -127,7 +119,6 @@ export function useAppointments() {
         category_data: categories.find((c) => c.id === appt.category),
         patient_data: patients.find((p) => p.id === appt.patient),
         appointment_assignee: allAssignees.filter((a) => a.appointment === appt.id),
-        activities: allActivities.filter((act) => act.appointment === appt.id),
       }));
 
       // 3. Find assigned appointments (user id or email)
@@ -172,7 +163,6 @@ export function useAppointments() {
             category_data: categories.find((c) => c.id === appt.category),
             patient_data: patients.find((p) => p.id === appt.patient),
             appointment_assignee: relatedAssignees,
-            activities: allActivities.filter((act) => act.appointment === appt.id),
           };
         });
 
@@ -261,11 +251,8 @@ export function useAppointments() {
         old ? old.filter((appt) => appt.id !== deletedId) : []
       );
       const patientId = context?.deleted?.patient ?? undefined;
-      // Remove the per-appointment activity cache so stale entries don't surface in other views.
-      queryClient.removeQueries({ queryKey: queryKeys.activities.byAppointment(deletedId) });
 
       await Promise.all([
-        invalidateActivitiesList(queryClient),
         invalidateNotificationsData(queryClient),
         // Assignee rows are cascade-deleted in the DB; evict the client cache to match.
         invalidateAssigneesData(queryClient),
@@ -278,7 +265,6 @@ export function useAppointments() {
         invalidatePatientPortal(queryClient),
         // Staff portals surface aggregated appointment rows and KPIs — refetch in background after delete.
         invalidateDoctorPortal(queryClient),
-        invalidateSecretaryPortal(queryClient),
         invalidateAdminPortal(queryClient),
         ...(patientId ? [invalidatePatientDetailAndSnapshot(queryClient, patientId)] : []),
       ]);
@@ -337,10 +323,7 @@ export function useAppointments() {
         invalidateDashboardOverview(queryClient),
         invalidatePatientPortal(queryClient),
         invalidateAppointmentTypeDerived(queryClient),
-        // Activity log entries and portal widgets may reflect status transitions — bust caches immediately.
-        invalidateActivitiesList(queryClient),
         invalidateDoctorPortal(queryClient),
-        invalidateSecretaryPortal(queryClient),
         invalidateAdminPortal(queryClient),
       ]);
       notify.crud({

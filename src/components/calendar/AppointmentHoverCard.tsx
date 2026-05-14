@@ -31,9 +31,7 @@ import type {
   Appointment,
   Category,
   Patient,
-  Relative,
   AppointmentAssignee,
-  Activity,
 } from "@/types/types";
 import { useAppointmentColor } from "@/context/AppointmentColorContext";
 // Using Vercel Blob for file storage
@@ -44,9 +42,7 @@ import { getPublicUrl } from "@/lib/vercelBlob";
 export interface AppointmentHoverCardProps {
   appointment: Appointment & { category_data?: Category; appointment_assignee?: AppointmentAssignee[] };
   patients: Patient[];
-  relatives: Relative[];
   assignees: AppointmentAssignee[];
-  activities: Activity[];
   userEmail: string | null;
   userId: string | null;
   ownerUsers: { id: string, email: string }[]; // Add owner users data
@@ -91,9 +87,7 @@ export function dedupeAssignees(
 const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
   appointment: a,
   patients,
-  relatives,
   assignees,
-  activities,
   userEmail,
   userId,
   ownerUsers,
@@ -332,18 +326,6 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
             </div>
           )}
 
-          {activities.length > 0 && (
-            <div className="flex flex-col gap-1 text-xs text-gray-400 mb-1">
-              <span>Activities:</span>
-              {activities
-                .filter((act) => act.appointment === a.id)
-                .map((act, idx) => (
-                  <span key={idx} className="not-italic text-pink-700">
-                    {act.type}: {act.content}
-                  </span>
-                ))}
-            </div>
-          )}
 
           <div className="flex items-center gap-3">
             {/* Status checkbox - only show if user is owner, full, or write permission */}

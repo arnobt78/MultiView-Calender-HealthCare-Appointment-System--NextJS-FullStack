@@ -46,7 +46,6 @@ model User {
   appointments_as_treating_physician Appointment[] @relation("AppointmentTreatingPhysician")
   appointment_assignees   AppointmentAssignee[]   @relation("AssigneeUser")
   appointment_assignees_invited_by AppointmentAssignee[] @relation("AssigneeInvitedBy")
-  activities              Activity[]              @relation("ActivityCreatedBy")
   dashboard_access_owned   DashboardAccess[]       @relation("DashboardOwner")
   dashboard_access_invited DashboardAccess[]      @relation("DashboardInvitedUser")
   dashboard_access_invited_by DashboardAccess[]    @relation("DashboardInvitedBy")
@@ -103,34 +102,8 @@ model Patient {
   updated_by     User? @relation("PatientUpdatedBy", fields: [updated_by_id], references: [id], onDelete: SetNull)
   primary_doctor User? @relation("PatientPrimaryDoctor", fields: [primary_doctor_id], references: [id], onDelete: SetNull)
   appointments   Appointment[]
-  relatives      Relative[] @relation("PatientRelatives")
 
   @@map("patients")
-}
-
-// --- Relatives (patient family members / emergency contacts)
-model Relative {
-  id                  String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  created_at          DateTime  @default(now())
-  updated_at          DateTime  @default(now()) @updatedAt
-  firstname           String    @db.Text
-  lastname            String    @db.Text
-  pronoun             String?   @db.Text
-  notes               String?   @db.Text
-  /// Relationship to the patient — e.g. "Mother", "Spouse", "Guardian"
-  relationship        String?   @db.Text
-  phone               String?   @db.Text
-  email               String?   @db.Text
-  date_of_birth       DateTime? @db.Date
-  /// Marks this relative as an emergency contact for the linked patient
-  is_emergency_contact Boolean  @default(false)
-  /// Optional link to a patient record
-  patient_id          String?   @db.Uuid
-
-  patient Patient? @relation("PatientRelatives", fields: [patient_id], references: [id], onDelete: SetNull)
-
-  @@index([patient_id])
-  @@map("relatives")
 }
 
 // --- Categories (appointment categories / service types)
@@ -191,7 +164,6 @@ model Appointment {
   treating_physician User? @relation("AppointmentTreatingPhysician", fields: [treating_physician_id], references: [id], onDelete: SetNull)
   appointment_type    AppointmentType? @relation("AppointmentTypeAppointments", fields: [appointment_type_id], references: [id], onDelete: SetNull)
   assignees   AppointmentAssignee[]
-  activities  Activity[]
 
   @@index([treating_physician_id])
   @@index([appointment_type_id])
@@ -204,7 +176,7 @@ model AppointmentAssignee {
   created_at        DateTime @default(now())
   appointment_id    String   @map("appointment") @db.Uuid
   user_id           String?  @map("user") @db.Uuid
-  user_type         String?  @db.Text // 'relatives' | 'patients'
+  user_type         String?  @db.Text // 'patients'
   invited_email     String?  @db.Text
   status            String?  @db.Text // 'pending' | 'accepted' | 'declined'
   invitation_token  String?  @unique @db.Uuid
@@ -216,21 +188,6 @@ model AppointmentAssignee {
   invited_by  User?      @relation("AssigneeInvitedBy", fields: [invited_by_id], references: [id], onDelete: SetNull)
 
   @@map("appointment_assignee")
-}
-
-// --- Activities (DB: created_by, appointment)
-model Activity {
-  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  created_at     DateTime @default(now())
-  created_by_id  String?  @map("created_by") @db.Uuid
-  appointment_id String   @map("appointment") @db.Uuid
-  type           String   @db.Text
-  content        String   @db.Text
-
-  created_by  User?       @relation("ActivityCreatedBy", fields: [created_by_id], references: [id], onDelete: SetNull)
-  appointment Appointment @relation(fields: [appointment_id], references: [id], onDelete: Cascade)
-
-  @@map("activities")
 }
 
 // --- Scheduling (weekly availability, time off, event types)

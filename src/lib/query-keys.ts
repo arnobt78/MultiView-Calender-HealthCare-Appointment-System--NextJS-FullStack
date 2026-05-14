@@ -29,10 +29,6 @@ export const queryKeys = {
     detail: (id: string) => [...queryKeys.patients.all, id] as const,
     snapshot: (id: string) => [...queryKeys.patients.all, id, "snapshot"] as const,
   },
-  relatives: {
-    all: ["app", "relatives"] as const,
-    detail: (id: string) => [...queryKeys.relatives.all, id] as const,
-  },
   users: {
     all: ["app", "users"] as const,
     detail: (id: string) => [...queryKeys.users.all, id] as const,
@@ -41,12 +37,6 @@ export const queryKeys = {
   invitations: {
     all: ["app", "invitations"] as const,
     byType: (type: "appointment" | "dashboard") => [...queryKeys.invitations.all, type] as const,
-  },
-  /** Global activity log (GET /api/activities) vs per-appointment sub-resource */
-  activities: {
-    list: ["app", "activities", "list"] as const,
-    byAppointment: (appointmentId: string) =>
-      ["app", "activities", "appointment", appointmentId] as const,
   },
   assignees: {
     all: ["app", "appointment-assignees"] as const,
@@ -86,10 +76,6 @@ export const queryKeys = {
   /** Doctor's own portal dashboard (today's schedule, metrics, type config) */
   doctorPortal: {
     all: ["app", "doctor-portal"] as const,
-  },
-  /** Secretary's portal dashboard (appointments, patients, doctor directory) */
-  secretaryPortal: {
-    all: ["app", "secretary-portal"] as const,
   },
   /** Admin's portal dashboard (global KPIs, recent activity, org settings) */
   adminPortal: {

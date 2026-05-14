@@ -50,11 +50,6 @@ export default async function AppointmentDetailPage({ params }: PageProps) {
       assignees: {
         include: { user: { select: { id: true, email: true, display_name: true } } },
       },
-      activities: {
-        orderBy: { created_at: "desc" },
-        take: 10,
-        include: { created_by: { select: { id: true, email: true, display_name: true } } },
-      },
     },
   });
 
@@ -217,26 +212,6 @@ export default async function AppointmentDetailPage({ params }: PageProps) {
             </div>
           )}
 
-          {/* Recent activities */}
-          {raw.activities?.length > 0 && (
-            <div>
-              <h4 className="font-semibold text-sm mb-2">Recent Activity ({raw.activities.length})</h4>
-              <div className="space-y-1.5">
-                {raw.activities.map((act) => (
-                  <div key={act.id} className="flex items-start gap-3 text-sm py-1.5 border-b last:border-0">
-                    <span className="text-muted-foreground text-xs w-28 shrink-0 mt-0.5">
-                      {new Date(act.created_at).toLocaleString()}
-                    </span>
-                    <span className="flex-1">
-                      <span className="font-medium">{act.created_by?.display_name ?? act.created_by?.email ?? "System"} </span>
-                      <span className="text-muted-foreground capitalize">{act.type?.replace(/_/g, " ")}</span>
-                      {act.content && <span className="text-muted-foreground"> · {act.content}</span>}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* Edit form (client component) */}
           <AppointmentDetailForm appointment={appointment} />

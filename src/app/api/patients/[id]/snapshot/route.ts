@@ -1,5 +1,5 @@
 /**
- * Patient aggregate: appointments for this patient, activities on those appointments, invoices linked by appointment_id.
+ * Patient aggregate: appointments + invoices for this patient.
  *
  * Each appointment row adds denormalized labels for the control-panel table:
  * - `calendar_owner_*`: always the calendar owner (`Appointment.owner_id` in Prisma → `user_id` in JSON).
@@ -15,7 +15,6 @@ import {
   serializePatient,
   serializeAppointment,
   serializeInvoice,
-  serializeActivitySnapshot,
 } from "@/lib/serializers";
 import { patientDetailInclude } from "@/lib/patient-api-include";
 import { resolveTreatingPhysicianUserId } from "@/lib/appointment-display-doctor";
@@ -37,7 +36,7 @@ export async function GET(_req: NextRequest, context: RouteContext) {
     const role = await getUserRole(sessionUser.userId);
 
     /*
-     * Staff (admin/doctor/secretary) can access any patient's snapshot.
+     * Staff (admin/doctor) can access any patient's snapshot.
      * Patient role is scoped to their own record by email match.
      */
     const patientRaw = isPatientRole(role)
@@ -61,23 +60,13 @@ export async function GET(_req: NextRequest, context: RouteContext) {
 
     const appointmentIds = appointmentsRaw.map((a) => a.id);
 
-    const [activitiesRaw, invoicesRaw] =
+    const invoicesRaw =
       appointmentIds.length === 0
-        ? [[], []]
-        : await Promise.all([
-            prisma.activity.findMany({
-              where: { appointment_id: { in: appointmentIds } },
-              orderBy: { created_at: "desc" },
-              take: 200,
-              include: {
-                created_by: { select: { display_name: true, email: true } },
-              },
-            }),
-            prisma.invoice.findMany({
-              where: { appointment_id: { in: appointmentIds } },
-              orderBy: { created_at: "desc" },
-            }),
-          ]);
+        ? []
+        : await prisma.invoice.findMany({
+            where: { appointment_id: { in: appointmentIds } },
+            orderBy: { created_at: "desc" },
+          });
 
     const appointments = appointmentsRaw.map((a) => {
       const row = serializeAppointment(a);
@@ -98,13 +87,11 @@ export async function GET(_req: NextRequest, context: RouteContext) {
       };
     });
 
-    const activities = activitiesRaw.map(serializeActivitySnapshot);
     const invoices = invoicesRaw.map(serializeInvoice);
 
     return NextResponse.json({
       patient: serializePatient(patientRaw),
       appointments,
-      activities,
       invoices,
     });
   } catch (error: unknown) {

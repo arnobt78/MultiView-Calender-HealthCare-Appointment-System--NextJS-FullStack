@@ -32,12 +32,6 @@ export function UserRoleBadge({ role, className }: UserRoleBadgeProps) {
       styles:
         "border-sky-300/70 bg-sky-50 text-sky-700",
     },
-    secretary: {
-      label: "Secretary",
-      icon: Users,
-      styles:
-        "border-amber-300/70 bg-amber-50 text-amber-700",
-    },
   } as const;
 
   const entry = map[normalized as keyof typeof map];

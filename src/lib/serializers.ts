@@ -78,27 +78,6 @@ export function serializePatient(
   };
 }
 
-/** Activity row for patient snapshot API — includes optional creator display name */
-export function serializeActivitySnapshot(a: {
-  id: string;
-  created_at: Date;
-  created_by_id: string | null;
-  appointment_id: string;
-  type: string;
-  content: string;
-  created_by?: { display_name: string | null; email: string } | null;
-}) {
-  return {
-    id: a.id,
-    created_at: a.created_at.toISOString(),
-    created_by: a.created_by_id,
-    appointment: a.appointment_id,
-    type: a.type,
-    content: a.content,
-    created_by_display: a.created_by?.display_name ?? a.created_by?.email ?? null,
-  };
-}
-
 export function serializeUser(u: {
   id: string;
   email: string;
@@ -112,29 +91,6 @@ export function serializeUser(u: {
   return {
     ...u,
     created_at: u.created_at?.toISOString?.(),
-  };
-}
-
-export function serializeRelative(r: {
-  id: string;
-  created_at: Date;
-  updated_at?: Date | null;
-  firstname: string;
-  lastname: string;
-  pronoun: string | null;
-  notes: string | null;
-  relationship?: string | null;
-  phone?: string | null;
-  email?: string | null;
-  date_of_birth?: Date | null;
-  is_emergency_contact?: boolean;
-  patient_id?: string | null;
-}) {
-  return {
-    ...r,
-    created_at: r.created_at?.toISOString?.(),
-    updated_at: r.updated_at?.toISOString?.() ?? null,
-    date_of_birth: r.date_of_birth?.toISOString?.() ?? null,
   };
 }
 

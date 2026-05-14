@@ -61,11 +61,6 @@ export async function GET(request: NextRequest) {
       where: { appointment_id: { in: expiredIds } },
     });
 
-    // Remove activity rows linked to the expired appointments.
-    await prisma.activity.deleteMany({
-      where: { appointment_id: { in: expiredIds } },
-    });
-
     // Nullify notification deep-links that pointed to deleted appointments
     // rather than deleting notifications (users may still want to read them).
     await prisma.notification.updateMany({

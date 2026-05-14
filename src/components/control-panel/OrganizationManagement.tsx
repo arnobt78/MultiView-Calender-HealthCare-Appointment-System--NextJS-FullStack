@@ -169,7 +169,6 @@ function AddMemberDialog({
               <SelectContent>
                 <SelectItem value="admin">Admin</SelectItem>
                 <SelectItem value="doctor">Doctor</SelectItem>
-                <SelectItem value="secretary">Secretary</SelectItem>
                 <SelectItem value="patient">Patient</SelectItem>
               </SelectContent>
             </Select>
@@ -189,7 +188,6 @@ function AddMemberDialog({
 const ROLE_COLORS: Record<string, string> = {
   admin: "bg-red-100 text-red-700",
   doctor: "bg-blue-100 text-blue-700",
-  secretary: "bg-yellow-100 text-yellow-700",
   patient: "bg-green-100 text-green-700",
 };
 

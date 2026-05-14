@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import type { User } from "@/types/types";
 
-const ROLES = ["admin", "doctor", "secretary", "patient"] as const;
+const ROLES = ["admin", "doctor", "patient"] as const;
 
 const SPECIALTIES = [
   "General Medicine",

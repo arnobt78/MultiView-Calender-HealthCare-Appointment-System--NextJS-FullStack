@@ -107,8 +107,7 @@ export default function Navbar() {
   const isPatient = user?.role === "patient";
   const isAdmin = user?.role === "admin";
   const isDoctor = user?.role === "doctor";
-  const isSecretary = user?.role === "secretary";
-  const isStaff = isAdmin || isDoctor || isSecretary;
+  const isStaff = isAdmin || isDoctor;
 
   /**
    * During `authLoading`, `user` is still null — role flags are all false.
@@ -120,20 +119,17 @@ export default function Navbar() {
     pathname?.startsWith("/control-panel") === true ||
     pathname?.startsWith("/insights") === true ||
     pathname?.startsWith("/admin-portal") === true ||
-    pathname?.startsWith("/doctor-portal") === true ||
-    pathname?.startsWith("/secretary-portal") === true;
+    pathname?.startsWith("/doctor-portal") === true;
   const inferredPatientNav = pathname?.startsWith("/patient-portal") === true;
   const inferredAdminNav = pathname?.startsWith("/admin-portal") === true;
   const inferredDoctorNav = pathname?.startsWith("/doctor-portal") === true;
-  const inferredSecretaryNav = pathname?.startsWith("/secretary-portal") === true;
 
   const showStaffNavLinks = authLoading ? inferredStaffNav : isStaff;
   const showPatientPortalNavLink = authLoading ? inferredPatientNav : !isStaff;
   const showAdminPortalLink = authLoading ? inferredAdminNav : isAdmin;
   const showDoctorPortalLink = authLoading ? inferredDoctorNav : isDoctor;
-  const showSecretaryPortalLink = authLoading ? inferredSecretaryNav : isSecretary;
-  // Doctors use their own portal; admin and secretary still have access to Control Panel
-  const showControlPanelLink = authLoading ? inferredStaffNav : (isAdmin || isSecretary);
+  // Doctors use their own portal; only admin has access to Control Panel
+  const showControlPanelLink = authLoading ? inferredAdminNav : isAdmin;
   const openSearch = useAppStore((s) => s.openSearch);
   const toggleQuickActionModal = useAppStore((s) => s.toggleQuickActionModal);
   const { notifications, total, unreadCount, markAsRead, markAllAsRead, deleteRead, isDeletingRead } = useNotifications();
@@ -212,17 +208,7 @@ export default function Navbar() {
             </Link>
           )}
 
-          {/* Secretary Portal — secretary role only */}
-          {showSecretaryPortalLink && (
-            <Link
-              href="/secretary-portal"
-              className={`flex items-center gap-1.5 text-base transition-colors hover:text-gray-700 ${pathname?.startsWith("/secretary-portal") ? "text-gray-700" : "text-muted-foreground"}`}
-            >
-              Secretary Portal
-            </Link>
-          )}
-
-          {/* Control Panel — admin + secretary; hidden for doctors (they use Doctor Portal) */}
+          {/* Control Panel — admin only; doctors use Doctor Portal */}
           {showControlPanelLink && (
             <Link
               href="/control-panel"

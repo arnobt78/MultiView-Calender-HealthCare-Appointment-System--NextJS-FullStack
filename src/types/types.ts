@@ -82,17 +82,6 @@ export interface Patient {
   occupation?: string | null;
 }
 
-/** GET /api/patients/[id]/snapshot — aggregate for profile tabs */
-export type PatientSnapshotActivity = {
-  id: UUID;
-  created_at: string;
-  created_by: UUID | null;
-  appointment: UUID;
-  type: string;
-  content: string;
-  created_by_display?: string | null;
-};
-
 /** Serialized invoice row (matches `serializeInvoice` from API) */
 export type SnapshotInvoice = {
   id: UUID;
@@ -123,26 +112,8 @@ export type AppointmentSnapshotRow = Appointment & {
 export type PatientSnapshot = {
   patient: Patient;
   appointments: AppointmentSnapshotRow[];
-  activities: PatientSnapshotActivity[];
   invoices: SnapshotInvoice[];
 };
-
-// Relative (patient family member / emergency contact)
-export interface Relative {
-  id: UUID;
-  created_at: string;
-  updated_at?: string | null;
-  firstname: string;
-  lastname: string;
-  pronoun?: string | null;
-  notes?: string | null;
-  relationship?: string | null;
-  phone?: string | null;
-  email?: string | null;
-  date_of_birth?: string | null;
-  is_emergency_contact?: boolean;
-  patient_id?: string | null;
-}
 
 // Category (appointment category / service type)
 export interface Category {
@@ -193,21 +164,11 @@ export interface AppointmentAssignee {
   id: UUID;
   created_at: string;
   appointment: UUID;
-  user: UUID | null; // Can be null when user_type is "patients" or "relatives" (they're not users)
-  user_type: "relatives" | "patients";
+  user: UUID | null; // Can be null when user_type is "patients"
+  user_type: "patients";
   status?: "pending" | "accepted" | "declined";
   permission?: "read" | "write" | "full";
   invited_email?: string;
-}
-
-// Activity
-export interface Activity {
-  id: UUID;
-  created_at: string;
-  created_by: UUID;
-  appointment: UUID;
-  type: string;
-  content: string;
 }
 
 // AppointmentType — visit/service type (global or doctor-owned)
@@ -279,21 +240,6 @@ export interface DoctorPortalData {
     pending: number;
     done: number;
     overdue: number;
-  };
-}
-
-// SecretaryPortalData — shape returned by GET /api/secretary-portal (SSR prefetch)
-export interface SecretaryPortalData {
-  todayAppointments: Appointment[];
-  upcomingAppointments: Appointment[];
-  patients: Patient[];
-  doctors: DoctorRow[];
-  recentActivities: Activity[];
-  metrics: {
-    today: number;
-    pending: number;
-    totalPatients: number;
-    totalDoctors: number;
   };
 }
 
