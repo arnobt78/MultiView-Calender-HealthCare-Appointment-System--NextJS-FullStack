@@ -354,52 +354,10 @@ export function AppointmentDialogGeneralSection({
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <FieldLabel htmlFor="start" icon={CalendarClock}>
-            {toTitleCaseLabel("Start")} <span className="text-gray-700">*</span>
-          </FieldLabel>
-          <Input
-            type="datetime-local"
-            id="start"
-            value={start}
-            onChange={(e) => {
-              const nextStart = e.target.value;
-              setStart(nextStart);
-              if (end && nextStart && end < nextStart) {
-                setEnd(nextStart);
-              }
-            }}
-            className={cn(glassDatetimeInputClass)}
-          />
-        </div>
-        <div className="space-y-2">
-          <FieldLabel htmlFor="end" icon={CalendarClock}>
-            {toTitleCaseLabel("End")} <span className="text-gray-700">*</span>
-          </FieldLabel>
-          <Input
-            type="datetime-local"
-            id="end"
-            value={end}
-            onChange={(e) => {
-              const newEnd = e.target.value;
-              if (start && newEnd < start) {
-                setEnd(start);
-              } else {
-                setEnd(newEnd);
-              }
-            }}
-            disabled={!start}
-            min={start || undefined}
-            className={cn(glassDatetimeInputClass)}
-          />
-        </div>
-      </div>
-
       {/*
-        Cal-style optional path: same `/api/availability/slots` contract as `BookAppointmentDialog` in
-        `PatientPortalPage`. `availabilityDoctorId` is the calendar owner (session user), matching how
-        `computeAvailabilitySlots` loads busy rows (`owner_id`), not the optional treating physician FK.
+        Cal-style slot picker — primary scheduling path.
+        Selecting a chip auto-fills Start/End below. Doctor slots load from the
+        treating physician's availability (availabilityDoctorId = treatingPhysicianId || session user).
       */}
       {isValidUUID(availabilityDoctorId) ? (
         <div className={cn("space-y-3", glassCardClass)}>
@@ -407,7 +365,7 @@ export function AppointmentDialogGeneralSection({
             {toTitleCaseLabel("Suggested start times (availability)")}
           </FieldLabel>
           <p className="text-xs leading-relaxed text-gray-600">
-            Pick a visit length and day, then a chip fills Start/End above. Empty lists mean no weekly hours,
+            Pick a visit length and day, then a chip fills Start/End below. Empty lists mean no weekly hours,
             time off, or open gaps for that configuration — you can still type times manually.
           </p>
           {typesLoading ? (
@@ -487,6 +445,50 @@ export function AppointmentDialogGeneralSection({
           )}
         </div>
       ) : null}
+
+      <p className="text-xs text-gray-500">Or enter date &amp; time manually:</p>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <FieldLabel htmlFor="start" icon={CalendarClock}>
+            {toTitleCaseLabel("Start")} <span className="text-gray-700">*</span>
+          </FieldLabel>
+          <Input
+            type="datetime-local"
+            id="start"
+            value={start}
+            onChange={(e) => {
+              const nextStart = e.target.value;
+              setStart(nextStart);
+              if (end && nextStart && end < nextStart) {
+                setEnd(nextStart);
+              }
+            }}
+            className={cn(glassDatetimeInputClass)}
+          />
+        </div>
+        <div className="space-y-2">
+          <FieldLabel htmlFor="end" icon={CalendarClock}>
+            {toTitleCaseLabel("End")} <span className="text-gray-700">*</span>
+          </FieldLabel>
+          <Input
+            type="datetime-local"
+            id="end"
+            value={end}
+            onChange={(e) => {
+              const newEnd = e.target.value;
+              if (start && newEnd < start) {
+                setEnd(start);
+              } else {
+                setEnd(newEnd);
+              }
+            }}
+            disabled={!start}
+            min={start || undefined}
+            className={cn(glassDatetimeInputClass)}
+          />
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-2">

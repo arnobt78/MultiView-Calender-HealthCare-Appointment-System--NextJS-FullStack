@@ -230,6 +230,24 @@ export async function invalidateAfterAppointmentMutation(
  * patient’s appointments; sharing edits can change labels or counts the patient should see on
  * the next fetch (TanStack marks stale → refetch in background; no full page reload).
  */
+/**
+ * After DoctorAvailability or DoctorTimeOff rows are created/deleted:
+ * - bust the CRUD list caches on the doctor detail editor
+ * - bust the slot picker cache so AppointmentDialog and PatientPortalPage show fresh chips
+ * - bust doctors.all so the management table's availability pills update
+ */
+export async function invalidateDoctorSchedule(
+  queryClient: QueryClient,
+  doctorId: string
+) {
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: queryKeys.doctors.availability(doctorId) }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.doctors.timeOff(doctorId) }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.availability.root }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.doctors.all }),
+  ]);
+}
+
 export async function invalidateAssigneesActivitiesAppointment(
   queryClient: QueryClient,
   appointmentId?: string | null

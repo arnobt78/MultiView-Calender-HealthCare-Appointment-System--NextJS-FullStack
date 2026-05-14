@@ -20,7 +20,6 @@ import {
   Category,
   Patient,
   Appointment,
-  AppointmentAssignee,
 } from "@/types/types";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePatients } from "@/hooks/usePatients";
@@ -41,7 +40,6 @@ const MAX_ATTACHMENT_BYTES = 1048576;
 // Using Vercel Blob for file storage (better for demo projects on Vercel)
 import { uploadFileViaAPI } from "@/lib/vercelBlob";
 import { AppointmentDialogGeneralSection } from "@/components/calendar/appointment-dialog/AppointmentDialogGeneralSection";
-import { AppointmentDialogAssigneesSection } from "@/components/calendar/appointment-dialog/AppointmentDialogAssigneesSection";
 import { utcToLocalInputValue, localInputValueToUTC } from "@/lib/datetime-local";
 
 type Props = {
@@ -105,8 +103,6 @@ export default function AppointmentDialog({
     });
   }, [open, user?.id, queryClient]);
 
-  const [assignees, setAssignees] = useState<AppointmentAssignee[]>([]); // type-safe
-
   const [title, setTitle] = useState("");
   const [notes, setNotes] = useState("");
   const [start, setStart] = useState("");
@@ -147,7 +143,6 @@ export default function AppointmentDialog({
     setSlotPickDateStr("");
     setSlotPickTypeId("");
     setUploadedFiles([]);
-    setAssignees([]);
     setError(null);
     setSuccess(false);
     setUploading(false);
@@ -174,17 +169,10 @@ export default function AppointmentDialog({
       setSlotPickTypeId(appointment.appointment_type_id || "");
       setOpen(true);
 
-      if (appointment.appointment_assignee) {
-        setAssignees(appointment.appointment_assignee);
-      } else {
-        setAssignees([]);
-      }
-
       setTreatingPhysicianId(
         appointment.treating_physician_id ?? appointment.user_id ?? user?.id ?? ""
       );
     } else {
-      setAssignees([]);
       setTreatingPhysicianId("");
     }
   }, [appointment, user?.id]);
@@ -283,65 +271,6 @@ export default function AppointmentDialog({
           await updateAppointmentAsync({ id: apptId, ...updates });
         }
 
-        const isOwner = appointment?.user_id === user?.id;
-        if (isOwner) {
-          const existingAssigneesData = await queryClient.fetchQuery({
-            queryKey: queryKeys.appointments.assignees(apptId),
-            queryFn: () =>
-              apiClient<{ assignees: AppointmentAssignee[] }>(
-                `/api/appointments/${apptId}/assignees`
-              ),
-          });
-          const existingAssignees = existingAssigneesData.assignees || [];
-
-          const allAssignees = [...existingAssignees, ...assignees];
-          const dedupedMap = new Map();
-          for (const a of allAssignees) {
-            const key = `${a.user || ''}|${a.invited_email || ''}`;
-            if (!dedupedMap.has(key)) {
-              dedupedMap.set(key, a);
-            } else {
-              const prev = dedupedMap.get(key);
-              const statusOrder: Record<'accepted' | 'pending', number> = { accepted: 2, pending: 1 };
-              const permOrder: Record<'full' | 'write' | 'read', number> = { full: 3, write: 2, read: 1 };
-              const prevStatus = prev && typeof prev.status === 'string' && (prev.status === 'accepted' || prev.status === 'pending') ? statusOrder[prev.status as 'accepted' | 'pending'] : 0;
-              const currStatus = typeof a.status === 'string' && (a.status === 'accepted' || a.status === 'pending') ? statusOrder[a.status as 'accepted' | 'pending'] : 0;
-              const prevPerm = prev && typeof prev.permission === 'string' && (prev.permission === 'full' || prev.permission === 'write' || prev.permission === 'read') ? permOrder[prev.permission as 'full' | 'write' | 'read'] : 0;
-              const currPerm = typeof a.permission === 'string' && (a.permission === 'full' || a.permission === 'write' || a.permission === 'read') ? permOrder[a.permission as 'full' | 'write' | 'read'] : 0;
-              if (currStatus > prevStatus || (currStatus === prevStatus && currPerm > prevPerm)) {
-                dedupedMap.set(key, a);
-              }
-            }
-          }
-          const mergedAssignees = Array.from(dedupedMap.values());
-
-          await fetch(`/api/appointments/${apptId}/assignees`, { method: "DELETE" });
-
-          const uniqueAssigneesMap = new Map();
-          for (const a of mergedAssignees) {
-            const key = `${a.user || ''}|${a.invited_email || ''}`;
-            if (!uniqueAssigneesMap.has(key)) {
-              uniqueAssigneesMap.set(key, a);
-            }
-          }
-          const uniqueAssignees = Array.from(uniqueAssigneesMap.values());
-          if (uniqueAssignees.length > 0) {
-            await fetch(`/api/appointments/${apptId}/assignees`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                assignees: uniqueAssignees.map((a: AppointmentAssignee) => ({
-                  appointment: apptId,
-                  user: a.user,
-                  user_type: a.user_type,
-                  invited_email: a.invited_email || null,
-                  status: typeof a.status === "string" ? a.status : "pending",
-                  permission: typeof a.permission === "string" ? a.permission : "read",
-                })),
-              }),
-            });
-          }
-        }
       } else {
         const createResult = await createAppointmentAsync({
           title,
@@ -359,42 +288,6 @@ export default function AppointmentDialog({
           ...(chiefComplaint.trim() ? { chief_complaint: chiefComplaint.trim() } : {}),
         } as Partial<Appointment> & { treating_physician?: string; appointment_type_id?: string; chief_complaint?: string });
         apptId = createResult.appointment.id;
-
-        if (assignees.length > 0) {
-          const dedupedMap = new Map();
-          for (const a of assignees) {
-            const key = `${a.user || ''}|${a.invited_email || ''}`;
-            if (!dedupedMap.has(key)) {
-              dedupedMap.set(key, a);
-            } else {
-              const prev = dedupedMap.get(key);
-              const statusOrder: Record<'accepted' | 'pending', number> = { accepted: 2, pending: 1 };
-              const permOrder: Record<'full' | 'write' | 'read', number> = { full: 3, write: 2, read: 1 };
-              const prevStatus = typeof prev?.status === 'string' && (prev.status === 'accepted' || prev.status === 'pending') ? statusOrder[prev.status as 'accepted' | 'pending'] : 0;
-              const currStatus = typeof a.status === 'string' && (a.status === 'accepted' || a.status === 'pending') ? statusOrder[a.status as 'accepted' | 'pending'] : 0;
-              const prevPerm = typeof prev?.permission === 'string' && (prev.permission === 'full' || prev.permission === 'write' || prev.permission === 'read') ? permOrder[prev.permission as 'full' | 'write' | 'read'] : 0;
-              const currPerm = typeof a.permission === 'string' && (a.permission === 'full' || a.permission === 'write' || a.permission === 'read') ? permOrder[a.permission as 'full' | 'write' | 'read'] : 0;
-              if (currStatus > prevStatus || (currStatus === prevStatus && currPerm > prevPerm)) {
-                dedupedMap.set(key, a);
-              }
-            }
-          }
-          const uniqueAssignees = Array.from(dedupedMap.values());
-          await fetch(`/api/appointments/${apptId}/assignees`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              assignees: uniqueAssignees.map((a: AppointmentAssignee) => ({
-                appointment: apptId,
-                user: a.user,
-                user_type: a.user_type,
-                invited_email: a.invited_email || null,
-                status: typeof a.status === "string" ? a.status : "pending",
-                permission: typeof a.permission === "string" ? a.permission : "read",
-              })),
-            }),
-          });
-        }
       }
 
       if (apptId) {
@@ -495,29 +388,6 @@ export default function AppointmentDialog({
     }
   };
 
-  const handleAddAssignee = (userId: string) => {
-    if (!userId) return;
-    if (assignees.some((a) => a.user === userId)) return;
-    // Patients are not users — store null for user FK, use user_type to identify the assignee kind
-    setAssignees((prev) => [
-      ...prev,
-      {
-        id: "temp-" + Date.now(),
-        created_at: new Date().toISOString(),
-        appointment: appointment?.id || "",
-        user: null,
-        user_type: "patients",
-      },
-    ]);
-  };
-  const handleRemoveAssignee = (userId: string | null, assigneeId?: string) => {
-    if (assigneeId) {
-      setAssignees((prev) => prev.filter((a) => a.id !== assigneeId));
-    } else if (userId) {
-      setAssignees((prev) => prev.filter((a) => a.user !== userId));
-    }
-  };
-
   return (
     <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
@@ -547,12 +417,8 @@ export default function AppointmentDialog({
                   className="text-left text-sm text-muted-foreground"
                 >
                   {isEditMode
-                    ? toTitleCaseLabel(
-                        "Update scheduling on the left; manage sharing and activity notes on the right."
-                      )
-                    : toTitleCaseLabel(
-                        "Set the client and time on the left; optionally share with another patient on the right."
-                      )}
+                    ? toTitleCaseLabel("Update scheduling details and appointment type.")
+                    : toTitleCaseLabel("Set the client, time, and appointment type.")}
                 </DialogDescription>
               </div>
               <DialogClose asChild>
@@ -579,7 +445,7 @@ export default function AppointmentDialog({
           </div>
         )}
         <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4 text-gray-700">
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
+          <div className="grid grid-cols-1 gap-6">
             <section className="min-w-0">
               <h3 className="mb-2 text-sm font-semibold tracking-tight text-gray-700">
                 {toTitleCaseLabel("Core scheduling")}
@@ -616,11 +482,10 @@ export default function AppointmentDialog({
                 treatingPhysicianId={treatingPhysicianId}
                 setTreatingPhysicianId={setTreatingPhysicianId}
                 /**
-                 * Cal-style slot engine (`/api/availability/slots`) keys busy intervals by `owner_id`
-                 * — staff creates on the signed-in calendar (`POST /api/appointments`), so this must
-                 * match the session user, not the optional treating physician row.
+                 * Prefer treating physician so admin scheduling for a specific doctor sees that
+                 * doctor's available slots. Fall back to session user if no physician selected.
                  */
-                availabilityDoctorId={user?.id ?? ""}
+                availabilityDoctorId={treatingPhysicianId || user?.id || ""}
                 slotPickDateStr={slotPickDateStr}
                 setSlotPickDateStr={setSlotPickDateStr}
                 slotPickTypeId={slotPickTypeId}
@@ -628,18 +493,6 @@ export default function AppointmentDialog({
                 chiefComplaint={chiefComplaint}
                 setChiefComplaint={setChiefComplaint}
               />
-            </section>
-            <section className="flex min-w-0 flex-col gap-6 lg:border-l lg:border-sky-200/70 lg:pl-8">
-              <div>
-                <h3 className="mb-2 text-sm font-semibold tracking-tight text-gray-700">Access &amp; Sharing</h3>
-                <AppointmentDialogAssigneesSection
-                  assignees={assignees}
-                  patients={patients}
-                  selectedPatientId={patientId}
-                  onAddAssignee={handleAddAssignee}
-                  onRemoveAssignee={handleRemoveAssignee}
-                />
-              </div>
             </section>
           </div>
         </div>

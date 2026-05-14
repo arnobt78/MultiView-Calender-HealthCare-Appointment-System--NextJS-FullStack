@@ -17,10 +17,10 @@ import { Separator } from "@/components/ui/separator";
 import { DoctorDetailForm } from "@/components/control-panel/DoctorDetailForm";
 import { DoctorAppointmentTypesEditor } from "@/components/control-panel/DoctorAppointmentTypesEditor";
 import { DoctorGlobalTypeConfigEditor } from "@/components/control-panel/DoctorGlobalTypeConfigEditor";
+import { DoctorAvailabilityEditor } from "@/components/control-panel/DoctorAvailabilityEditor";
 import {
   ArrowLeft,
   BookOpen,
-  CalendarClock,
   Clock,
   Hash,
   Mail,
@@ -38,11 +38,6 @@ export async function generateMetadata({ params }: PageProps) {
   return { title: doc?.display_name ? `Dr. ${doc.display_name}` : `Doctor — ${id.slice(0, 8)}` };
 }
 
-const WEEKDAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] as const;
-const WEEKDAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
-function minToTime(m: number) {
-  return `${Math.floor(m / 60).toString().padStart(2, "0")}:${(m % 60).toString().padStart(2, "0")}`;
-}
 
 export default async function DoctorDetailPage({ params }: PageProps) {
   const { id } = await params;
@@ -66,9 +61,6 @@ export default async function DoctorDetailPage({ params }: PageProps) {
       specialty: true,
       bio: true,
       created_at: true,
-      doctor_availabilities: {
-        orderBy: { weekday: "asc" },
-      },
       appointment_types_owned: {
         orderBy: { name: "asc" },
       },
@@ -199,37 +191,8 @@ export default async function DoctorDetailPage({ params }: PageProps) {
 
         {/* Right: Availability + Appointment Types + Patients */}
         <div className="md:col-span-2 space-y-5">
-          {/* Availability windows */}
-          <Card className="rounded-[20px] border bg-card shadow-[0_4px_20px_rgba(139,92,246,0.1)] overflow-hidden">
-            <CardHeader className="pb-2 bg-violet-50/60 border-b border-violet-100/60">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2 text-violet-800">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-violet-100 border border-violet-200">
-                  <CalendarClock className="h-3.5 w-3.5 text-violet-600" />
-                </span>
-                Availability Schedule
-                <Badge variant="outline" className="bg-violet-50 text-violet-700 border-violet-200 font-bold ml-1">
-                  {raw.doctor_availabilities.length}
-                </Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4">
-              {raw.doctor_availabilities.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No availability windows set.</p>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {raw.doctor_availabilities.map((a) => (
-                    <div key={a.id} className="flex items-center gap-3 rounded-lg border bg-violet-50/40 px-3 py-2 text-xs">
-                      <Badge variant="outline" className="text-[10px] py-0 bg-white border-violet-200 text-violet-700 min-w-12 justify-center">
-                        {WEEKDAY_SHORT[a.weekday]}
-                      </Badge>
-                      <span className="font-medium">{minToTime(a.start_min)} – {minToTime(a.end_min)}</span>
-                      <span className="text-muted-foreground truncate">{a.timezone}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          {/* Availability CRUD editor — weekly windows + time-off blocks */}
+          <DoctorAvailabilityEditor doctorId={id} />
 
           {/* Appointment types */}
           <Card className="rounded-[20px] border bg-card shadow-[0_4px_20px_rgba(16,185,129,0.1)] overflow-hidden">
