@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     const cutoff = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0, 0));
 
     // Delete related records first to satisfy foreign-key constraints:
-    //   AppointmentAssignee, Activity, Notification links → then Appointment itself.
+    //   AppointmentAssignee, Notification links → then Appointment itself.
     const expiredAppointments = await prisma.appointment.findMany({
       where: { end: { lt: cutoff } },
       select: { id: true },

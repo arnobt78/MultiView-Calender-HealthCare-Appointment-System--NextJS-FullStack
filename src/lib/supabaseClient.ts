@@ -7,7 +7,6 @@
  * All components should use API routes instead:
  * - /api/patients
  * - /api/categories
- * - /api/relatives
  * - /api/appointments
  * - /api/appointments/[id]
  * 
