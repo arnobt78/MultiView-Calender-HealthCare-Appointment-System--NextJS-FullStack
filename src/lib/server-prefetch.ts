@@ -146,6 +146,7 @@ export async function prefetchPatientSnapshot(patientId: string): Promise<Patien
       take: 50,
       include: {
         category: true,
+        appointment_type: { select: { name: true } },
         owner: { select: { id: true, display_name: true, email: true } },
         treating_physician: { select: { id: true, display_name: true, email: true } },
       },
@@ -173,6 +174,8 @@ export async function prefetchPatientSnapshot(patientId: string): Promise<Patien
         return {
           ...row,
           category_label: a.category?.label ?? null,
+          category_color: a.category?.color ?? null,
+          appointment_type_name: a.appointment_type?.name ?? null,
           calendar_owner_id: a.owner?.id ?? null,
           calendar_owner_display: a.owner?.display_name ?? null,
           calendar_owner_email: a.owner?.email ?? null,

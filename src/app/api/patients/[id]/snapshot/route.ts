@@ -4,6 +4,8 @@
  * Each appointment row adds denormalized labels for the control-panel table:
  * - `calendar_owner_*`: always the calendar owner (`Appointment.owner_id` in Prisma → `user_id` in JSON).
  * - `doctor_*`: B2 resolved treating / clinical contact (`resolveTreatingPhysicianUserId` → joined user row).
+ * - `category_label` / `category_color`: patient detail Related Appointments category column (color swatch).
+ * - `appointment_type_name`: two-line Title column (type on row 1, patient name on row 2 in `PatientDetailScreen`).
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -53,6 +55,7 @@ export async function GET(_req: NextRequest, context: RouteContext) {
       take: 50,
       include: {
         category: true,
+        appointment_type: { select: { name: true } },
         owner: { select: { id: true, display_name: true, email: true } },
         treating_physician: { select: { id: true, display_name: true, email: true } },
       },
@@ -78,6 +81,8 @@ export async function GET(_req: NextRequest, context: RouteContext) {
       return {
         ...row,
         category_label: a.category?.label ?? null,
+        category_color: a.category?.color ?? null,
+        appointment_type_name: a.appointment_type?.name ?? null,
         calendar_owner_id: a.owner?.id ?? null,
         calendar_owner_display: a.owner?.display_name ?? null,
         calendar_owner_email: a.owner?.email ?? null,

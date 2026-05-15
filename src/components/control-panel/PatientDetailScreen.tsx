@@ -50,7 +50,7 @@ import { skyGlassBackButtonClass, skyGlassTableFrameClass } from "@/lib/calendar
 import { dashboardShellClass } from "@/lib/dashboard-layout";
 import { ControlPanelGlassActionButton } from "@/components/shared/ControlPanelGlassActionButton";
 import { cn } from "@/lib/utils";
-import type { Patient, PatientSnapshot } from "@/types/types";
+import type { AppointmentSnapshotRow, Patient, PatientSnapshot } from "@/types/types";
 import { useEffect, useLayoutEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
@@ -105,6 +105,64 @@ function AppointmentStatusBadge({ status }: { status?: string | null }) {
  * Colored badge for invoice status.
  * paid → emerald, overdue → rose, sent → sky, draft → slate, cancelled → slate (muted).
  */
+/** Safe hex for inline category swatch — invalid DB values fall back to neutral slate. */
+function categorySwatchFill(color: string | null | undefined): string {
+  if (!color?.trim()) return "#94a3b8";
+  const hex = color.trim();
+  return /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/.test(hex) ? hex : "#94a3b8";
+}
+
+/**
+ * Two-line Title column: visit type on row 1, patient name on row 2 (matches doctor name + email layout).
+ * Prefers `appointment_type_name` from snapshot; falls back to parsing seeded `title` ("Type — Patient").
+ */
+function appointmentTitleLines(
+  appt: AppointmentSnapshotRow,
+  patientDisplayName: string
+): { typeLine: string; patientLine: string } {
+  const typeFromFk = appt.appointment_type_name?.trim();
+  if (typeFromFk) {
+    return { typeLine: typeFromFk, patientLine: patientDisplayName };
+  }
+  const title = appt.title?.trim() ?? "";
+  const sep = " — ";
+  const idx = title.indexOf(sep);
+  if (idx >= 0) {
+    return {
+      typeLine: title.slice(0, idx).trim() || title || "—",
+      patientLine: title.slice(idx + sep.length).trim() || patientDisplayName,
+    };
+  }
+  return { typeLine: title || "—", patientLine: patientDisplayName };
+}
+
+/** Category pill with color dot — same visual language as AppointmentsManagement. */
+function CategoryCell({
+  label,
+  color,
+}: {
+  label: string | null | undefined;
+  color: string | null | undefined;
+}) {
+  if (!label?.trim()) {
+    return <span className="text-xs text-gray-500">—</span>;
+  }
+  return (
+    <span className="inline-flex max-w-full min-w-0 items-center gap-1.5 text-xs text-gray-700">
+      <svg
+        width="8"
+        height="8"
+        viewBox="0 0 8 8"
+        aria-hidden
+        className="inline-block shrink-0"
+      >
+        <circle cx="4" cy="4" r="4" fill={categorySwatchFill(color)} />
+      </svg>
+      <span className="truncate">{label}</span>
+    </span>
+  );
+}
+
 function InvoiceStatusBadge({ status }: { status: string }) {
   const cls =
     status === "paid"
@@ -555,21 +613,44 @@ export function PatientDetailScreen({
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {(snap.data?.appointments ?? []).slice(0, 12).map((a) => (
+                        {(snap.data?.appointments ?? []).slice(0, 12).map((a) => {
+                          const patientDisplayName =
+                            nameLabel.trim() ||
+                            `${snap.data?.patient?.firstname ?? ""} ${snap.data?.patient?.lastname ?? ""}`.trim() ||
+                            "—";
+                          const { typeLine, patientLine } = appointmentTitleLines(a, patientDisplayName);
+                          return (
                           <TableRow key={a.id}>
-                            {/* Title — deep-links to appointment detail */}
-                            <TableCell className="font-medium">
-                              <EntityTitleLink
-                                href={`/control-panel/appointments/${a.id}`}
-                                label={a.title}
-                              />
+                            {/* Title — visit type + patient on two lines; link keeps full `title` for accessibility */}
+                            <TableCell>
+                              <div className="min-w-0">
+                                <EntityTitleLink
+                                  href={`/control-panel/appointments/${a.id}`}
+                                  label={typeLine}
+                                  className="block truncate text-sm font-medium"
+                                />
+                                <p className="truncate text-xs text-gray-500">{patientLine}</p>
+                              </div>
                             </TableCell>
-                            {/* When — start and end time on the same line */}
-                            <TableCell className="whitespace-nowrap text-xs text-gray-700">
-                              {a.start ? format(new Date(a.start), "PPp") : "—"}
-                              {a.end ? ` – ${format(new Date(a.end), "p")}` : ""}
+                            {/* When — localized date on row 1, time range on row 2 */}
+                            <TableCell>
+                              {a.start ? (
+                                <div className="min-w-0 whitespace-nowrap">
+                                  <p className="text-xs font-medium text-gray-700">
+                                    {format(new Date(a.start), "PP")}
+                                  </p>
+                                  <p className="text-xs text-gray-500">
+                                    {format(new Date(a.start), "p")}
+                                    {a.end ? ` – ${format(new Date(a.end), "p")}` : ""}
+                                  </p>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-gray-500">—</span>
+                              )}
                             </TableCell>
-                            <TableCell className="text-xs text-gray-700">{a.category_label ?? "—"}</TableCell>
+                            <TableCell>
+                              <CategoryCell label={a.category_label} color={a.category_color} />
+                            </TableCell>
                             {/* B3 deferred: DB column remains `user_id`; API exposes calendar owner here (B2 snapshot fields). */}
                             <TableCell>
                               {a.calendar_owner_id && a.calendar_owner_display ? (
@@ -620,7 +701,8 @@ export function PatientDetailScreen({
                               <AppointmentStatusBadge status={a.status} />
                             </TableCell>
                           </TableRow>
-                        ))}
+                          );
+                        })}
                         {(snap.data?.appointments ?? []).length === 0 && (
                           <TableRow>
                             <TableCell colSpan={7} className="text-center text-gray-500">

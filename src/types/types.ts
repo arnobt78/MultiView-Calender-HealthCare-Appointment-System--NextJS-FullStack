@@ -99,6 +99,10 @@ export type SnapshotInvoice = {
 /** Appointment row from snapshot API (adds category label + B2 owner / treating columns for patient detail table). */
 export type AppointmentSnapshotRow = Appointment & {
   category_label?: string | null;
+  /** Hex swatch for category column (from `categories.color`). */
+  category_color?: string | null;
+  /** Visit type name for two-line Title column (from `appointment_types.name`). */
+  appointment_type_name?: string | null;
   /** Calendar row owner (wire `user_id`; Prisma `owner_id`). */
   calendar_owner_id?: string | null;
   calendar_owner_display?: string | null;
