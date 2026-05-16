@@ -28,6 +28,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/shared/UserAvatar";
+import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
+import { appointmentDetailHref, doctorDetailHref } from "@/lib/entity-routes";
 import {
   Activity,
   AlertCircle,
@@ -122,7 +124,11 @@ function RecentAppointmentRow({ appt }: { appt: Appointment & { patient_name?: s
       </div>
       <div className="mt-0.5 flex-shrink-0 h-2 w-2 rounded-full bg-primary/60" />
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate">{appt.title}</p>
+        <EntityTitleLink
+          href={appointmentDetailHref("admin", appt.id)}
+          label={appt.title}
+          className="text-sm font-medium block truncate"
+        />
         <div className="flex items-center gap-2 flex-wrap mt-0.5">
           {(appt as { patient_name?: string | null }).patient_name && (
             <span className="text-[11px] text-muted-foreground">
@@ -168,7 +174,11 @@ function DoctorSummaryCard({ doctor }: { doctor: DoctorRow }) {
           className="flex-shrink-0"
         />
         <div className="min-w-0">
-          <p className="text-sm font-semibold truncate">{doctor.display_name ?? doctor.email}</p>
+          <EntityTitleLink
+            href={doctorDetailHref("admin", doctor.id)}
+            label={doctor.display_name ?? doctor.email}
+            className="text-sm font-semibold block truncate"
+          />
           {doctor.specialty && (
             <p className="text-[11px] text-muted-foreground flex items-center gap-1">
               <Stethoscope className="h-3 w-3" />

@@ -4,6 +4,17 @@
 
 Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Prisma (PostgreSQL), TanStack Query v5, Framer Motion, Shadcn/UI, Radix UI, Sonner (toasts), Zustand, jose (edge JWT), bcryptjs, Vercel Blob, Stripe, Resend.
 
+### Role-based entity detail routing
+
+- **Href map:** `src/lib/entity-routes.ts` — `appointmentDetailHref`, `patientDetailHref`, `categoryDetailHref`, `doctorDetailHref`.
+- **Access:** `src/lib/appointment-access.ts` — `resolveAppointmentAccess` / `computeAppointmentAccessLevel` (`none` | `view` | `mutate`). Used by `GET|PUT|PATCH|DELETE /api/appointments/[id]` and SSR detail pages.
+- **Patient gates:** `src/lib/patient-access.ts` — `canViewPatientDetail`, `doctorIsRelatedToPatient`.
+- **Routes:** Admin stays on `/control-panel/*`. Doctors/patients use `/appointments/[id]`, `/patients/[id]`, `/categories/[id]`, `/doctors/[id]` with thin layouts (no CP sidebar). `control-panel/layout.tsx` redirects non-admins away.
+- **UI:** `AppointmentDetailScreen`, `CategoryDetailScreen`, `PatientDetailScreen`; `RoleEntityLink` on client surfaces; `PrefetchingLink` + `prefetchQueriesForControlPanelHref` for hover prefetch.
+- **Invalidation:** unchanged — `invalidateAfterAppointmentMutation` still busts appointments, portals, dashboard, patient snapshots.
+- **Links wired:** calendar (`AppointmentList`, `DayView`, `WeekView`/`MonthView` via `AppointmentHoverCard`), portals, global search, notification deep links (create/booking/cron).
+- **Verify:** `npm test && npx tsc --noEmit && npm run lint && npm run build`.
+
 ### Control panel entity split (users vs patients)
 
 - **`patients` table** (`Patient` model): clinical/client records used by Patient Management and appointments. Demo seed creates one row aligned with `test@patient.com` so `/control-panel/patient-management` lists a sample patient.

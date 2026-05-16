@@ -19,7 +19,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import ControlPanelSidebarNav from "@/components/control-panel/ControlPanelSidebarNav";
 import { getSessionUser } from "@/lib/session";
-import { getUserRole, isPatientRole } from "@/lib/rbac";
+import { getUserRole, isDoctorRole, isPatientRole } from "@/lib/rbac";
 
 export const metadata: Metadata = {
   title: "Control Panel",
@@ -47,14 +47,17 @@ export default async function ControlPanelLayout({
   /*
    * RBAC gate — server-side role check before rendering any control-panel chrome.
    * Edge proxy (proxy.ts) only verifies cookie presence; role enforcement lives here.
-   * Patient-role users are redirected to the patient portal — they have no business
-   * in the admin/staff control panel.
+   * Patient-role users → patient portal; doctors → doctor portal.
+   * Control panel is admin-only (management shell + sidebar).
    */
   const sessionUser = await getSessionUser();
   if (sessionUser) {
     const role = await getUserRole(sessionUser.userId);
     if (isPatientRole(role)) {
       redirect("/patient-portal");
+    }
+    if (isDoctorRole(role)) {
+      redirect("/doctor-portal");
     }
   }
 

@@ -22,6 +22,7 @@
 
 import { useState, useLayoutEffect } from "react";
 import Link from "next/link";
+import { RoleEntityLink } from "@/components/shared/RoleEntityLink";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, isToday, isPast, parseISO } from "date-fns";
 import { queryKeys } from "@/lib/query-keys";
@@ -139,7 +140,12 @@ function AppointmentRow({ appt }: { appt: Appointment }) {
       <div className="mt-1 flex-shrink-0 h-2 w-2 rounded-full bg-primary/60" />
       {/* Body */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate">{appt.title}</p>
+        <RoleEntityLink
+          kind="appointment"
+          id={appt.id}
+          label={appt.title}
+          className="text-sm font-medium block truncate"
+        />
         {appt.location && (
           <p className="flex items-center gap-1 text-[11px] text-muted-foreground mt-0.5">
             <MapPin className="h-3 w-3" />
@@ -231,12 +237,12 @@ function PatientRow({ patient }: { patient: Patient }) {
           <div className="h-7 w-7 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white text-[10px] font-semibold flex-shrink-0">
             {patient.firstname[0]}{patient.lastname[0]}
           </div>
-          <Link
-            href={`/control-panel/patients/${patient.id}`}
-            className="text-sm font-medium hover:underline text-foreground truncate max-w-[180px]"
-          >
-            {fullName}
-          </Link>
+          <RoleEntityLink
+            kind="patient"
+            id={patient.id}
+            label={fullName}
+            className="text-sm font-medium truncate max-w-[180px]"
+          />
         </div>
       </td>
       <td className="py-2.5 pr-4">
@@ -532,7 +538,7 @@ export default function DoctorPortalPage({ initialData }: DoctorPortalPageProps)
               </table>
               {patients.length > 20 && (
                 <p className="text-xs text-muted-foreground text-center pt-3">
-                  +{patients.length - 20} more — <Link href="/control-panel/patients" className="underline hover:text-foreground">View all</Link>
+                  +{patients.length - 20} more patients in your panel
                 </p>
               )}
             </div>
@@ -588,7 +594,12 @@ export default function DoctorPortalPage({ initialData }: DoctorPortalPageProps)
                     </div>
                     <div className="mt-0.5 flex-shrink-0 h-2 w-2 rounded-full bg-indigo-400/60" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{appt.title}</p>
+                      <RoleEntityLink
+                        kind="appointment"
+                        id={appt.id}
+                        label={appt.title}
+                        className="text-sm font-medium block truncate"
+                      />
                       {appt.chief_complaint && (
                         <p className="text-[11px] text-muted-foreground truncate">{appt.chief_complaint}</p>
                       )}

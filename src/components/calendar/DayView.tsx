@@ -6,7 +6,7 @@
 
 import { useMemo, useState } from "react";
 import { format, isSameDay } from "date-fns";
-import Link from "next/link";
+import { RoleEntityLink } from "@/components/shared/RoleEntityLink";
 import { useAppointmentData } from "@/context/AppointmentDataContext";
 import {
   useCalendarFilters,
@@ -200,12 +200,12 @@ export default function DayView() {
                               </svg>
                               <div className="min-w-0 flex-1 pl-6 pr-4 py-2">
                                 <div className="flex min-w-0 items-center gap-2">
-                                  <Link
-                                    href={`/control-panel/appointments/${appt.id}`}
-                                    className="truncate text-sm font-medium text-gray-700 hover:underline"
-                                  >
-                                    {appt.title}
-                                  </Link>
+                                  <RoleEntityLink
+                                    kind="appointment"
+                                    id={appt.id}
+                                    label={appt.title}
+                                    className="truncate text-sm font-medium"
+                                  />
                                   <Badge
                                     variant="outline"
                                     className="calendar-glass-badge calendar-glass-badge-emerald shrink-0"
@@ -222,8 +222,32 @@ export default function DayView() {
                                     {format(start, "HH:mm")} - {format(end, "HH:mm")}
                                   </span>
                                   <span>Location: {appt.location || "--"}</span>
-                                  <span>Client: {patientName}</span>
-                                  <span>Category: {categoryLabel}</span>
+                                  <span>
+                                    Client:{" "}
+                                    {typeof appt.patient === "string" && appt.patient ? (
+                                      <RoleEntityLink
+                                        kind="patient"
+                                        id={appt.patient}
+                                        label={patientName}
+                                        className="inline text-xs"
+                                      />
+                                    ) : (
+                                      patientName
+                                    )}
+                                  </span>
+                                  <span>
+                                    Category:{" "}
+                                    {appt.category && categoryLabel !== "--" ? (
+                                      <RoleEntityLink
+                                        kind="category"
+                                        id={appt.category}
+                                        label={categoryLabel}
+                                        className="inline text-xs"
+                                      />
+                                    ) : (
+                                      categoryLabel
+                                    )}
+                                  </span>
                                 </div>
                               </div>
                               <div className="flex shrink-0 items-center gap-1 border-l border-white/35 px-3">

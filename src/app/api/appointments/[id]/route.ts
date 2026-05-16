@@ -1,5 +1,7 @@
 /**
  * Appointment by ID: GET, PUT, PATCH, DELETE (Prisma)
+ *
+ * Access: `resolveAppointmentAccess` — admin views all; mutate only owner or assignee write|full.
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -8,16 +10,33 @@ import { getSessionUser } from "@/lib/session";
 import { isValidUUID } from "@/lib/validation";
 import { serializeAppointment } from "@/lib/serializers";
 import { getUserRole, isPatientRole } from "@/lib/rbac";
+import { resolveAppointmentAccess } from "@/lib/appointment-access";
+import { appointmentNotificationLink } from "@/lib/entity-routes";
 import { redis } from "@/lib/redis";
 import { format } from "date-fns";
 
+export const dynamic = "force-dynamic";
+
 type RouteContext = { params: Promise<{ id: string }> };
 
-export async function GET(req: NextRequest, context: RouteContext) {
+async function sessionWithRole() {
+  const sessionUser = await getSessionUser();
+  if (!sessionUser) return null;
+  const role = await getUserRole(sessionUser.userId);
+  return {
+    sessionUser,
+    accessSession: {
+      userId: sessionUser.userId,
+      email: sessionUser.email,
+      role,
+    },
+  };
+}
+
+export async function GET(_req: NextRequest, context: RouteContext) {
   try {
-    // Require authentication — appointment data is user-private.
-    const sessionUser = await getSessionUser();
-    if (!sessionUser) {
+    const ctx = await sessionWithRole();
+    if (!ctx) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -26,30 +45,12 @@ export async function GET(req: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Invalid appointment ID format" }, { status: 400 });
     }
 
-    // Scope to the session user's own appointments or those where they are an accepted assignee.
-    const appointment = await prisma.appointment.findFirst({
-      where: {
-        id,
-        OR: [
-          { owner_id: sessionUser.userId },
-          {
-            assignees: {
-              some: {
-                OR: [
-                  { user_id: sessionUser.userId },
-                  { invited_email: sessionUser.email },
-                ],
-                status: "accepted",
-              },
-            },
-          },
-        ],
-      },
-    });
-    if (!appointment) {
+    const { level, raw } = await resolveAppointmentAccess(ctx.accessSession, id);
+    if (level === "none" || !raw) {
       return NextResponse.json({ error: "Appointment not found" }, { status: 404 });
     }
-    return NextResponse.json({ appointment: serializeAppointment(appointment) });
+
+    return NextResponse.json({ appointment: serializeAppointment(raw) });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Internal server error";
     return NextResponse.json({ error: message }, { status: 500 });
@@ -58,19 +59,23 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
 export async function PUT(req: NextRequest, context: RouteContext) {
   try {
-    const sessionUser = await getSessionUser();
-    if (!sessionUser) {
+    const ctx = await sessionWithRole();
+    if (!ctx) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const role = await getUserRole(sessionUser.userId);
-    if (isPatientRole(role)) {
+    if (isPatientRole(ctx.accessSession.role)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const { id } = await context.params;
     if (!isValidUUID(id)) {
       return NextResponse.json({ error: "Invalid appointment ID format" }, { status: 400 });
+    }
+
+    const { level } = await resolveAppointmentAccess(ctx.accessSession, id);
+    if (level !== "mutate") {
+      return NextResponse.json({ error: "Appointment not found or unauthorized" }, { status: 404 });
     }
 
     const body = await req.json();
@@ -112,20 +117,12 @@ export async function PUT(req: NextRequest, context: RouteContext) {
       }
     }
 
-    const appointment = await prisma.appointment.updateMany({
-      where: { id, owner_id: sessionUser.userId },
+    const updated = await prisma.appointment.update({
+      where: { id },
       data,
     });
 
-    if (appointment.count === 0) {
-      return NextResponse.json({ error: "Appointment not found or unauthorized" }, { status: 404 });
-    }
-    const updated = await prisma.appointment.findUnique({ where: { id } });
-    if (!updated) return NextResponse.json({ error: "Appointment not found" }, { status: 404 });
-
-
-    /* Bust the server-side Redis overview cache so status/count changes reflect immediately. */
-    void redis.invalidateDashboardOverview(sessionUser.userId);
+    void redis.invalidateDashboardOverview(ctx.sessionUser.userId);
 
     return NextResponse.json({ appointment: serializeAppointment(updated) });
   } catch (err: unknown) {
@@ -139,19 +136,23 @@ export async function PUT(req: NextRequest, context: RouteContext) {
 
 export async function PATCH(req: NextRequest, context: RouteContext) {
   try {
-    const sessionUser = await getSessionUser();
-    if (!sessionUser) {
+    const ctx = await sessionWithRole();
+    if (!ctx) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const role = await getUserRole(sessionUser.userId);
-    if (isPatientRole(role)) {
+    if (isPatientRole(ctx.accessSession.role)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const { id } = await context.params;
     if (!isValidUUID(id)) {
       return NextResponse.json({ error: "Invalid appointment ID format" }, { status: 400 });
+    }
+
+    const { level } = await resolveAppointmentAccess(ctx.accessSession, id);
+    if (level !== "mutate") {
+      return NextResponse.json({ error: "Appointment not found or unauthorized" }, { status: 404 });
     }
 
     const body = await req.json();
@@ -166,7 +167,6 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       category_id?: string | null;
       notes?: string | null;
       status?: string | null;
-      /** B2: optional FK; `null` clears explicit treating (display falls back to calendar owner). */
       treating_physician_id?: string | null;
       appointment_type_id?: string | null;
       is_telehealth?: boolean;
@@ -198,7 +198,6 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     if (body.chief_complaint !== undefined) data.chief_complaint = body.chief_complaint ?? null;
     if (body.duration_minutes !== undefined) data.duration_minutes = body.duration_minutes ?? null;
     if (body.telehealth_link !== undefined) data.telehealth_link = body.telehealth_link ?? null;
-    // appointment_type_id: resolve is_telehealth from the new type when switching types
     if (body.appointment_type_id !== undefined) {
       const typeId = body.appointment_type_id as unknown;
       if (typeId === null || typeId === "") {
@@ -215,7 +214,6 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
         return NextResponse.json({ error: "Invalid appointment_type_id" }, { status: 400 });
       }
     }
-    // B2: `treating_physician` mirrors `patient` / `category` wire names (UUID or null to clear).
     if (body.treating_physician !== undefined) {
       const v = body.treating_physician as unknown;
       if (v === null || v === "") {
@@ -235,28 +233,13 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "No fields to update" }, { status: 400 });
     }
 
-    const result = await prisma.appointment.updateMany({
-      where: { id, owner_id: sessionUser.userId },
+    const updated = await prisma.appointment.update({
+      where: { id },
       data,
     });
 
-    if (result.count === 0) {
-      return NextResponse.json({ error: "Appointment not found or unauthorized" }, { status: 404 });
-    }
-    const updated = await prisma.appointment.findUnique({ where: { id } });
-    if (!updated) return NextResponse.json({ error: "Appointment not found" }, { status: 404 });
+    void redis.invalidateDashboardOverview(ctx.sessionUser.userId);
 
-    /* Bust the server-side Redis overview cache so status/count changes reflect immediately. */
-    void redis.invalidateDashboardOverview(sessionUser.userId);
-
-    /*
-     * Notify only on status changes — status toggles (done / alert / pending) are the most
-     * meaningful PATCH events. General field edits (title, time, notes) are not notified to
-     * avoid noise.
-     * Awaited inside try/catch: ensures the notification row is committed before the
-     * response returns, so the client's immediate invalidateNotificationsData refetch
-     * sees it. A notification failure never breaks the main PATCH response.
-     */
     const statusMessages: Record<string, string> = {
       done: "marked as completed",
       alert: "flagged as alert",
@@ -267,16 +250,15 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       try {
         await prisma.notification.create({
           data: {
-            user_id: sessionUser.userId,
+            user_id: ctx.sessionUser.userId,
             title: "Appointment Status Updated",
             message: `"${updated.title}" was ${statusLabel} — ${format(updated.start, "dd.MM.yyyy")}`,
             type: "status_update",
-            // Deep-link to the updated appointment detail.
-            link: `/control-panel/appointments/${updated.id}`,
+            link: appointmentNotificationLink(ctx.accessSession.role, updated.id),
           },
         });
       } catch {
-        // Notification failure is non-critical — swallow silently.
+        /* notification failure is non-critical */
       }
     }
 
@@ -290,15 +272,14 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
   }
 }
 
-export async function DELETE(req: NextRequest, context: RouteContext) {
+export async function DELETE(_req: NextRequest, context: RouteContext) {
   try {
-    const sessionUser = await getSessionUser();
-    if (!sessionUser) {
+    const ctx = await sessionWithRole();
+    if (!ctx) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const role = await getUserRole(sessionUser.userId);
-    if (isPatientRole(role)) {
+    if (isPatientRole(ctx.accessSession.role)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -307,16 +288,14 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Invalid appointment ID format" }, { status: 400 });
     }
 
-    const result = await prisma.appointment.deleteMany({
-      where: { id, owner_id: sessionUser.userId },
-    });
-
-    if (result.count === 0) {
+    const { level } = await resolveAppointmentAccess(ctx.accessSession, id);
+    if (level !== "mutate") {
       return NextResponse.json({ error: "Appointment not found or unauthorized" }, { status: 404 });
     }
 
-    /* Bust the server-side Redis overview cache so the removed appointment is not counted. */
-    void redis.invalidateDashboardOverview(sessionUser.userId);
+    await prisma.appointment.delete({ where: { id } });
+
+    void redis.invalidateDashboardOverview(ctx.sessionUser.userId);
 
     return NextResponse.json({ success: true });
   } catch (error: unknown) {

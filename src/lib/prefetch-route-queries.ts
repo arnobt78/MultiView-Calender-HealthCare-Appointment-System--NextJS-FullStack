@@ -6,21 +6,25 @@ import type { Category, Patient, PatientSnapshot, User } from "@/types/types";
 
 /**
  * Warm TanStack caches before navigation (hover/focus) — best-effort, no throw to UI.
- * Matches hooks: usePatient, usePatientSnapshot, useUser, useCategory.
+ * Supports control-panel and portal detail paths (`/patients/:id`, `/categories/:id`, etc.).
  */
 export function prefetchQueriesForControlPanelHref(
   queryClient: QueryClient,
   href: string
 ): void {
   const path = href.split("?")[0] ?? href;
-  const last = path.split("/").filter(Boolean).pop();
+  const segments = path.split("/").filter(Boolean);
+  const last = segments.pop();
   if (!last || !isValidUUID(last)) return;
 
   const id = last;
+  const isPatients = segments.includes("patients");
+  const isDoctors = segments.includes("doctors");
+  const isCategories = segments.includes("categories");
 
   const run = async () => {
     try {
-      if (path.includes("/control-panel/patients/")) {
+      if (isPatients) {
         await Promise.all([
           queryClient.prefetchQuery({
             queryKey: queryKeys.patients.detail(id),
@@ -36,7 +40,7 @@ export function prefetchQueriesForControlPanelHref(
         ]);
         return;
       }
-      if (path.includes("/control-panel/doctors/")) {
+      if (isDoctors) {
         await queryClient.prefetchQuery({
           queryKey: queryKeys.users.detail(id),
           queryFn: async () => {
@@ -46,7 +50,7 @@ export function prefetchQueriesForControlPanelHref(
         });
         return;
       }
-      if (path.includes("/control-panel/categories/")) {
+      if (isCategories) {
         await queryClient.prefetchQuery({
           queryKey: queryKeys.categories.detail(id),
           queryFn: async () => {

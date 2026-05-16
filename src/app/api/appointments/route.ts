@@ -11,6 +11,7 @@ import { serializeAppointment } from "@/lib/serializers";
 import { appointmentCreateSchema } from "@/lib/schemas/appointment";
 import { zodBadRequest } from "@/lib/schemas/parse";
 import { getUserRole, isPatientRole } from "@/lib/rbac";
+import { appointmentDetailHref, appointmentNotificationLink } from "@/lib/entity-routes";
 import { redis } from "@/lib/redis";
 import { format } from "date-fns";
 
@@ -157,7 +158,7 @@ export async function POST(req: NextRequest) {
           title: "Appointment Scheduled",
           message: `"${appointment.title}" on ${format(appointment.start, "dd.MM.yyyy 'at' HH:mm")}`,
           type: "appointment_created",
-          link: `/control-panel/appointments/${appointment.id}`,
+          link: appointmentNotificationLink(role, appointment.id),
         },
       });
 
@@ -180,7 +181,7 @@ export async function POST(req: NextRequest) {
               title: "New Appointment Scheduled",
               message: `"${appointment.title}" on ${format(appointment.start, "dd.MM.yyyy 'at' HH:mm")}`,
               type: "appointment_created",
-              link: `/patient-portal`,
+              link: appointmentDetailHref("patient", appointment.id),
             },
           });
         }

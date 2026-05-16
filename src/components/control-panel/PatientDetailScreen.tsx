@@ -50,6 +50,13 @@ import { skyGlassBackButtonClass, skyGlassTableFrameClass } from "@/lib/calendar
 import { dashboardShellClass } from "@/lib/dashboard-layout";
 import { ControlPanelGlassActionButton } from "@/components/shared/ControlPanelGlassActionButton";
 import { cn } from "@/lib/utils";
+import {
+  appointmentDetailHref,
+  doctorDetailHref,
+  invoiceDetailHref,
+  patientDetailHref,
+} from "@/lib/entity-routes";
+import { isAdminRole } from "@/lib/rbac";
 import type { AppointmentSnapshotRow, Patient, PatientSnapshot } from "@/types/types";
 import { useEffect, useLayoutEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -300,6 +307,10 @@ function PatientDetailBodySkeleton() {
 
 type PatientDetailScreenProps = {
   patientId: string;
+  /** Session role — drives `/control-panel/*` vs portal detail hrefs in related tables. */
+  viewerRole: string | null;
+  /** List back-navigation target (admin → patient management, doctor → doctor portal). */
+  listBackHref: string;
   /**
    * Server-prefetched patient record — seeds queryKeys.patients.detail(patientId)
    * so usePatient() finds data immediately without a network request.
@@ -314,6 +325,8 @@ type PatientDetailScreenProps = {
 
 export function PatientDetailScreen({
   patientId,
+  viewerRole,
+  listBackHref,
   initialPatient,
   initialSnapshot,
 }: PatientDetailScreenProps) {
@@ -353,7 +366,7 @@ export function PatientDetailScreen({
     if (next === "view") q.delete("mode");
     else q.set("mode", "edit");
     const qs = q.toString();
-    router.replace(`/control-panel/patients/${patientId}${qs ? `?${qs}` : ""}`);
+    router.replace(`${patientDetailHref(viewerRole, patientId)}${qs ? `?${qs}` : ""}`);
   };
 
   const ready = Boolean(patient) && !isLoading;
@@ -391,7 +404,7 @@ export function PatientDetailScreen({
         description="Patient Record — Schema Fields, Clinical Profile, Related Activity"
         actions={
           <PrefetchingLink
-            href="/control-panel/patient-management"
+            href={listBackHref}
             className={cn(skyGlassBackButtonClass, "no-underline")}
           >
             <ArrowLeft className="shrink-0" aria-hidden />
@@ -528,7 +541,7 @@ export function PatientDetailScreen({
                     {p!.primary_doctor_id && p!.primary_doctor_display?.trim() ? (
                       <>
                         <EntityTitleLink
-                          href={`/control-panel/doctors/${p!.primary_doctor_id}`}
+                          href={doctorDetailHref(viewerRole, p!.primary_doctor_id)}
                           label={p!.primary_doctor_display.trim()}
                           className="font-normal"
                         />
@@ -625,7 +638,7 @@ export function PatientDetailScreen({
                             <TableCell>
                               <div className="min-w-0">
                                 <EntityTitleLink
-                                  href={`/control-panel/appointments/${a.id}`}
+                                  href={appointmentDetailHref(viewerRole, a.id)}
                                   label={typeLine}
                                   className="block truncate text-sm font-medium"
                                 />
@@ -656,7 +669,7 @@ export function PatientDetailScreen({
                               {a.calendar_owner_id && a.calendar_owner_display ? (
                                 <div className="min-w-0">
                                   <EntityTitleLink
-                                    href={`/control-panel/doctors/${a.calendar_owner_id}`}
+                                    href={doctorDetailHref(viewerRole, a.calendar_owner_id)}
                                     label={a.calendar_owner_display}
                                   />
                                   {a.calendar_owner_email && (
@@ -672,7 +685,7 @@ export function PatientDetailScreen({
                               {a.doctor_id && a.doctor_display ? (
                                 <div className="min-w-0">
                                   <EntityTitleLink
-                                    href={`/control-panel/doctors/${a.doctor_id}`}
+                                    href={doctorDetailHref(viewerRole, a.doctor_id)}
                                     label={a.doctor_display}
                                   />
                                   {a.doctor_email && (
@@ -685,7 +698,10 @@ export function PatientDetailScreen({
                                       <p className="mt-1.5 text-[10px] leading-snug text-gray-600">
                                         Primary care:{" "}
                                         <EntityTitleLink
-                                          href={`/control-panel/doctors/${snap.data.patient.primary_doctor_id}`}
+                                          href={doctorDetailHref(
+                                            viewerRole,
+                                            snap.data.patient.primary_doctor_id
+                                          )}
                                           label={snap.data.patient.primary_doctor_display.trim()}
                                           className="font-normal"
                                         />
@@ -763,10 +779,16 @@ export function PatientDetailScreen({
                           <TableRow key={inv.id}>
                             {/* Amount — deep-links to invoice detail */}
                             <TableCell className="font-medium tabular-nums">
-                              <EntityTitleLink
-                                href={`/control-panel/invoices/${inv.id}`}
-                                label={`${(inv.amount / 100).toFixed(2)} ${inv.currency.toUpperCase()}`}
-                              />
+                              {isAdminRole(viewerRole) ? (
+                                <EntityTitleLink
+                                  href={invoiceDetailHref(viewerRole, inv.id)}
+                                  label={`${(inv.amount / 100).toFixed(2)} ${inv.currency.toUpperCase()}`}
+                                />
+                              ) : (
+                                <span>
+                                  {(inv.amount / 100).toFixed(2)} {inv.currency.toUpperCase()}
+                                </span>
+                              )}
                             </TableCell>
                             <TableCell className="max-w-[160px] truncate text-xs text-gray-700">
                               {inv.description ?? "—"}
@@ -775,7 +797,7 @@ export function PatientDetailScreen({
                             <TableCell>
                               {inv.appointment_id ? (
                                 <EntityTitleLink
-                                  href={`/control-panel/appointments/${inv.appointment_id}`}
+                                  href={appointmentDetailHref(viewerRole, inv.appointment_id)}
                                   label="View"
                                   className="text-xs"
                                 />
@@ -825,7 +847,7 @@ export function PatientDetailScreen({
             <div className="flex w-full items-center justify-between gap-2">
               {/* Keep navigation action static while loading to match view mode and avoid flicker. */}
               <PrefetchingLink
-                href="/control-panel/patient-management"
+                href={listBackHref}
                 className={cn(skyGlassBackButtonClass, "no-underline")}
               >
                 <List className="shrink-0" aria-hidden />
@@ -840,7 +862,7 @@ export function PatientDetailScreen({
           ) : mode === "view" ? (
             <>
               <PrefetchingLink
-                href="/control-panel/patient-management"
+                href={listBackHref}
                 className={cn(skyGlassBackButtonClass, "no-underline")}
               >
                 <List className="shrink-0" aria-hidden />
@@ -883,7 +905,7 @@ export function PatientDetailScreen({
                         email: p!.email,
                       },
                       {
-                        onSuccess: () => router.push("/control-panel/patient-management"),
+                        onSuccess: () => router.push(listBackHref),
                       }
                     )
                   }
@@ -943,7 +965,7 @@ export function PatientDetailScreen({
                         email: p!.email,
                       },
                       {
-                        onSuccess: () => router.push("/control-panel/patient-management"),
+                        onSuccess: () => router.push(listBackHref),
                       }
                     )
                   }

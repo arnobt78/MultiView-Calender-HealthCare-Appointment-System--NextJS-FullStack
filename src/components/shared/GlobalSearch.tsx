@@ -17,6 +17,11 @@ import { useAppointments } from "@/hooks/useAppointments";
 import { usePatients } from "@/hooks/usePatients";
 import { useUsers } from "@/hooks/useUsers";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  appointmentDetailHref,
+  doctorDetailHref,
+  patientDetailHref,
+} from "@/lib/entity-routes";
 import { Search, Calendar, User, Stethoscope, ArrowRight, X } from "lucide-react";
 import { format } from "date-fns";
 
@@ -99,7 +104,7 @@ export default function GlobalSearch() {
           id: a.id,
           label: a.title,
           sub: `${format(new Date(a.start), "dd MMM yyyy · HH:mm")}${a.location ? ` · ${a.location}` : ""}`,
-          href: `/control-panel/appointments/${a.id}`,
+          href: appointmentDetailHref(user?.role, a.id),
         });
       }
     });
@@ -113,7 +118,7 @@ export default function GlobalSearch() {
           id: p.id,
           label: `${p.firstname} ${p.lastname}`,
           sub: p.email ?? (p.active ? "Active" : "Inactive"),
-          href: `/control-panel/patients/${p.id}`,
+          href: patientDetailHref(user?.role, p.id),
         });
       }
     });
@@ -127,13 +132,13 @@ export default function GlobalSearch() {
           id: u.id,
           label: u.display_name ?? u.email,
           sub: u.role ? `${u.role} · ${u.email}` : u.email,
-          href: `/control-panel/doctors/${u.id}`,
+          href: doctorDetailHref(user?.role, u.id),
         });
       }
     });
 
     return out.slice(0, 20);
-  }, [query, appointments, patients, usersData]);
+  }, [query, appointments, patients, usersData, user?.role]);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) { setQuery(""); closeSearch(); } }}>

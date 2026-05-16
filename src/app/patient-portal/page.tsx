@@ -11,7 +11,7 @@ import { getSessionUser } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { prefetchPortalData } from "@/lib/server-prefetch";
 import type { PortalPrefetchData } from "@/lib/server-prefetch";
-import { getUserRole, isPatientRole } from "@/lib/rbac";
+import { getUserRole, isAdminRole, isDoctorRole, isPatientRole } from "@/lib/rbac";
 
 export const metadata = { title: "Patient Portal — HealthCal Pro" };
 
@@ -19,9 +19,10 @@ export default async function PatientPortalRoute() {
   const session = await getSessionUser();
   if (!session) redirect("/login");
 
-  // Redirect non-patient roles (admin, doctor, secretary) to the control panel.
   const role = await getUserRole(session.userId);
-  if (!isPatientRole(role)) redirect("/control-panel/dashboard-overview");
+  if (isAdminRole(role)) redirect("/control-panel/dashboard-overview");
+  if (isDoctorRole(role)) redirect("/doctor-portal");
+  if (!isPatientRole(role)) redirect("/login");
 
   // Pre-fetch portal data — best-effort, returns null if no patient record found
   const initialPortalData: PortalPrefetchData | null = await prefetchPortalData(session.userId);

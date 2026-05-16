@@ -19,6 +19,7 @@ import {
 } from "@/types/types";
 // Using Vercel Blob for file storage
 import { getPublicUrl } from "@/lib/vercelBlob";
+import { RoleEntityLink } from "@/components/shared/RoleEntityLink";
 import { useMemo, useState, useCallback } from "react";
 import { useDateContext } from "@/context/DateContext";
 import { useAppointmentData } from "@/context/AppointmentDataContext";
@@ -411,8 +412,8 @@ export default function MonthView() {
                   {/* Main content */}
                   <div className="pl-6 pr-2 py-4 flex-1 flex flex-col justify-center min-h-[110px]">
                     <div className="flex items-center gap-2">
-                      <span className="text-md font-medium text-gray-700 flex items-center mb-1">
-                        {a.title}
+                      <span className="text-md font-medium flex items-center gap-2 mb-1">
+                        <RoleEntityLink kind="appointment" id={a.id} label={a.title} />
                         {getDateTag(new Date(a.start))}
                       </span>
                     </div>
@@ -441,16 +442,23 @@ export default function MonthView() {
 
                     <div className="flex items-center gap-2 text-xs text-gray-400 italic mb-1">
                       <FiUser /> Client:{" "}
-                      <span className="not-italic text-gray-700">
-                        {a.patient && filterPatients.length > 0
-                          ? (() => {
-                            const p = filterPatients.find(
-                              (x) => x.id === a.patient
-                            );
-                            return p ? `${p.firstname} ${p.lastname}` : "--";
-                          })()
-                          : "--"}
-                      </span>
+                      {typeof a.patient === "string" && a.patient && filterPatients.length > 0
+                        ? (() => {
+                          const p = filterPatients.find((x) => x.id === a.patient);
+                          return p ? (
+                            <RoleEntityLink
+                              kind="patient"
+                              id={p.id}
+                              label={`${p.firstname} ${p.lastname}`}
+                              className="not-italic text-gray-700 text-xs"
+                            />
+                          ) : (
+                            <span className="not-italic text-gray-700">--</span>
+                          );
+                        })()
+                        : (
+                          <span className="not-italic text-gray-700">--</span>
+                        )}
                     </div>
 
                     {a.location && (

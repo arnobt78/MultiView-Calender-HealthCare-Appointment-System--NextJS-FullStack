@@ -15,6 +15,7 @@ import { prisma } from "@/lib/prisma";
 import { sendReminderEmail } from "@/lib/email";
 import { appointmentReminderTemplate } from "@/lib/email-templates";
 import { format } from "date-fns";
+import { appointmentNotificationLink } from "@/lib/entity-routes";
 
 export const dynamic = "force-dynamic";
 
@@ -122,7 +123,7 @@ export async function GET(request: NextRequest) {
             message: `"${appt.title}" starts ${appointmentDate} at ${appointmentTime}`,
             type: "reminder",
             // Deep-link reminder to the exact appointment detail.
-            link: `/control-panel/appointments/${appt.id}`,
+            link: appointmentNotificationLink(appt.owner?.role ?? "doctor", appt.id),
           },
         });
         notificationsCreated++;
@@ -164,7 +165,7 @@ export async function GET(request: NextRequest) {
                 message: `"${appt.title}" starts ${appointmentDate} at ${appointmentTime}`,
                 type: "reminder",
                 // Deep-link reminder to the exact appointment detail.
-                link: `/control-panel/appointments/${appt.id}`,
+                link: appointmentNotificationLink(assignee.user?.role ?? "doctor", appt.id),
               },
             });
             notificationsCreated++;

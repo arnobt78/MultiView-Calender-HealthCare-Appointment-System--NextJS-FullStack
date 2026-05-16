@@ -1,12 +1,12 @@
 /**
- * Admin appointment detail — control-panel shell.
- * Access: `resolveAppointmentAccess` (admin views all; mutate only when owner/assignee editor).
+ * Doctor / patient appointment detail — dashboard shell (no control-panel sidebar).
  */
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/session";
 import { getUserRole, isAdminRole } from "@/lib/rbac";
 import { isValidUUID } from "@/lib/validation";
 import { resolveAppointmentAccess } from "@/lib/appointment-access";
+import { appointmentDetailHref } from "@/lib/entity-routes";
 import { AppointmentDetailScreen } from "@/components/detail/AppointmentDetailScreen";
 
 type PageProps = { params: Promise<{ id: string }> };
@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: PageProps) {
   return { title: `Appointment — ${id.slice(0, 8)}` };
 }
 
-export default async function ControlPanelAppointmentDetailPage({ params }: PageProps) {
+export default async function PortalAppointmentDetailPage({ params }: PageProps) {
   const { id } = await params;
   if (!isValidUUID(id)) notFound();
 
@@ -24,7 +24,11 @@ export default async function ControlPanelAppointmentDetailPage({ params }: Page
   if (!sessionUser) notFound();
 
   const role = await getUserRole(sessionUser.userId);
-  if (!isAdminRole(role)) notFound();
+
+  /* Admins use the control-panel route exclusively. */
+  if (isAdminRole(role)) {
+    redirect(appointmentDetailHref(role, id));
+  }
 
   const { level, raw } = await resolveAppointmentAccess(
     { userId: sessionUser.userId, email: sessionUser.email, role },
@@ -33,12 +37,14 @@ export default async function ControlPanelAppointmentDetailPage({ params }: Page
 
   if (level === "none" || !raw) notFound();
 
+  const backHref = role === "patient" ? "/patient-portal" : "/doctor-portal";
+
   return (
     <AppointmentDetailScreen
       accessLevel={level}
       viewerRole={role}
-      backHref="/control-panel/appointment-management"
-      variant="control-panel"
+      backHref={backHref}
+      variant="portal"
       raw={raw}
     />
   );

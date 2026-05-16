@@ -63,10 +63,12 @@ export async function GET(request: NextRequest) {
 
     // Nullify notification deep-links that pointed to deleted appointments
     // rather than deleting notifications (users may still want to read them).
+    const staleLinks = expiredIds.flatMap((id) => [
+      `/control-panel/appointments/${id}`,
+      `/appointments/${id}`,
+    ]);
     await prisma.notification.updateMany({
-      where: {
-        link: { in: expiredIds.map((id) => `/control-panel/appointments/${id}`) },
-      },
+      where: { link: { in: staleLinks } },
       data: { link: "/dashboard" },
     });
 

@@ -1,5 +1,5 @@
 /**
- * Admin category detail — control-panel shell.
+ * Doctor category detail (read-only) — `/categories/:id`.
  */
 import { notFound, redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/session";
@@ -11,15 +11,7 @@ import { CategoryDetailScreen } from "@/components/detail/CategoryDetailScreen";
 
 type PageProps = { params: Promise<{ id: string }> };
 
-export async function generateMetadata({ params }: PageProps) {
-  const { id } = await params;
-  const data = isValidUUID(id) ? await loadCategoryDetailData(id) : null;
-  return {
-    title: data?.cat.label ? `Category: ${data.cat.label}` : `Category — ${id.slice(0, 8)}`,
-  };
-}
-
-export default async function ControlPanelCategoryDetailPage({ params }: PageProps) {
+export default async function PortalCategoryDetailPage({ params }: PageProps) {
   const { id } = await params;
   if (!isValidUUID(id)) notFound();
 
@@ -27,10 +19,8 @@ export default async function ControlPanelCategoryDetailPage({ params }: PagePro
   if (!sessionUser) notFound();
 
   const role = await getUserRole(sessionUser.userId);
-  if (isDoctorRole(role) || isPatientRole(role)) {
-    redirect(categoryDetailHref(role, id));
-  }
-  if (!isAdminRole(role)) notFound();
+  if (isAdminRole(role)) redirect(categoryDetailHref(role, id));
+  if (!isDoctorRole(role) || isPatientRole(role)) notFound();
 
   const data = await loadCategoryDetailData(id);
   if (!data) notFound();
@@ -41,7 +31,7 @@ export default async function ControlPanelCategoryDetailPage({ params }: PagePro
       appointments={data.appointments}
       totalCount={data.totalCount}
       viewerRole={role}
-      backHref="/control-panel/category-management"
+      backHref="/dashboard"
     />
   );
 }

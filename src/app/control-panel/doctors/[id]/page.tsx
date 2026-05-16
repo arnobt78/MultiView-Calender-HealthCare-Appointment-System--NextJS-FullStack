@@ -2,7 +2,9 @@
  * Doctor Detail Page — profile, specialty, bio, availability, assigned patients, types
  * Accessible to: admin (any doctor), doctor (own profile only)
  */
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { isAdminRole, isDoctorRole } from "@/lib/rbac";
+import { doctorDetailHref } from "@/lib/entity-routes";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
@@ -47,8 +49,10 @@ export default async function DoctorDetailPage({ params }: PageProps) {
   if (!sessionUser) notFound();
 
   const callerRole = await getUserRole(sessionUser.userId);
-  // Allow self-view (any role), admin can view any
-  if (id !== sessionUser.userId && callerRole !== "admin") notFound();
+  if (isDoctorRole(callerRole) && id !== sessionUser.userId) {
+    redirect(doctorDetailHref(callerRole, id));
+  }
+  if (!isAdminRole(callerRole) && id !== sessionUser.userId) notFound();
 
   const raw = await prisma.user.findUnique({
     where: { id },

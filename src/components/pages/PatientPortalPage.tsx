@@ -80,6 +80,7 @@ import {
 } from "lucide-react";
 import type { Patient, PatientClinicalProfile, User as AppUser } from "@/types/types";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
+import { RoleEntityLink } from "@/components/shared/RoleEntityLink";
 import { notify } from "@/lib/notify";
 import { useUsers } from "@/hooks/useUsers";
 import { useAvailabilitySlots } from "@/hooks/useAvailabilitySlots";
@@ -745,7 +746,12 @@ function AppointmentTimeline({ appointments, loading }: { appointments: ApptRow[
                         <div className="flex flex-wrap items-start justify-between gap-4">
                           <div className="min-w-0 flex-1 space-y-1">
                             <div className="flex flex-wrap items-center gap-2">
-                              <h4 className="text-sm font-semibold text-gray-700">{appt.title}</h4>
+                              <RoleEntityLink
+                                kind="appointment"
+                                id={appt.id}
+                                label={appt.title}
+                                className="text-sm font-semibold"
+                              />
                               <Badge
                                 variant="outline"
                                 className={cn("calendar-glass-badge gap-1 text-xs", meta.glassCls)}
@@ -1086,8 +1092,9 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
                                 if (pRow.primary_doctor_id && pRow.primary_doctor_display?.trim()) {
                                   return (
                                     <>
-                                      <EntityTitleLink
-                                        href={`/control-panel/doctors/${pRow.primary_doctor_id}`}
+                                      <RoleEntityLink
+                                        kind="doctor"
+                                        id={pRow.primary_doctor_id}
                                         label={pRow.primary_doctor_display.trim()}
                                         className="font-normal"
                                       />

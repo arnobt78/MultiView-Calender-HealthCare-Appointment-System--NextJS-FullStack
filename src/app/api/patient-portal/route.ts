@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
           message: `${user?.display_name || user?.email || "A patient"} booked "${title}"`,
           type: "info",
           // Deep-link doctor to the booked appointment.
-          link: `/control-panel/appointments/${appointment.id}`,
+          link: `/appointments/${appointment.id}`,
         },
       });
     } catch {

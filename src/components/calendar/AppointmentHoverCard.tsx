@@ -34,6 +34,7 @@ import type {
   AppointmentAssignee,
 } from "@/types/types";
 import { useAppointmentColor } from "@/context/AppointmentColorContext";
+import { RoleEntityLink } from "@/components/shared/RoleEntityLink";
 // Using Vercel Blob for file storage
 import { getPublicUrl } from "@/lib/vercelBlob";
 
@@ -167,14 +168,15 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
 
               <div>
                 <div className="flex w-full items-center gap-2">
-                  <span
+                  <RoleEntityLink
+                    kind="appointment"
+                    id={a.id}
+                    label={a.title}
                     className={clsx(
-                      "truncate text-sm font-medium text-gray-700",
+                      "truncate text-sm font-medium",
                       isDone && "line-through text-gray-400"
                     )}
-                  >
-                    {a.title}
-                  </span>
+                  />
                   {getDateTag(new Date(a.start))}
                 </div>
                 <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
@@ -214,9 +216,12 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
             <svg width="8" height="24" viewBox="0 0 8 24" aria-hidden="true" className="rounded-l-2xl mr-2 shrink-0">
               <rect width="8" height="24" fill={color} />
             </svg>
-            <span className="truncate text-sm font-medium text-gray-700 text-left">
-              {a.title}
-            </span>
+            <RoleEntityLink
+              kind="appointment"
+              id={a.id}
+              label={a.title}
+              className="truncate text-sm font-medium text-left"
+            />
           </div>
         )}
       </HoverCardTrigger>
@@ -233,8 +238,8 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
         </svg>
         <div className="px-1">
           <div className="flex items-center gap-1 mb-1">
-            <span className="text-base font-medium text-gray-700 flex items-center gap-1">
-              {a.title}
+            <span className="flex items-center gap-1 text-base font-medium">
+              <RoleEntityLink kind="appointment" id={a.id} label={a.title} />
               {getDateTag(new Date(a.start))}
             </span>
           </div>
@@ -269,7 +274,16 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
           <div className="mb-1 flex items-center gap-1 text-xs text-gray-500">
             <UserRound className="h-4 w-4 text-gray-400" />
             <span>Client</span>
-            <span className="text-gray-700">{patientName}</span>
+            {typeof a.patient === "string" && a.patient ? (
+              <RoleEntityLink
+                kind="patient"
+                id={a.patient}
+                label={patientName}
+                className="text-gray-700"
+              />
+            ) : (
+              <span className="text-gray-700">{patientName}</span>
+            )}
           </div>
 
           {a.notes && (

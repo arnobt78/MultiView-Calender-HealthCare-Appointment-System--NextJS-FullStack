@@ -59,6 +59,7 @@ import GlobalCalendarFilters from "./GlobalCalendarFilters";
 import { useAppointmentColor } from "@/context/AppointmentColorContext";
 import { AppointmentListColorBar } from "@/components/shared/AppointmentListColorBar";
 import { motion } from "framer-motion";
+import { RoleEntityLink } from "@/components/shared/RoleEntityLink";
 import CalendarStickyHeader from "./CalendarStickyHeader";
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 
@@ -637,9 +638,12 @@ export default function AppointmentList() {
 
                                         {/* Row 1: Title + date tag */}
                                         <div className="flex items-center gap-2 flex-wrap">
-                                          <span className={`text-md font-medium text-gray-700 ${isDone ? "line-through text-gray-400" : ""}`}>
-                                            {appt.title}
-                                          </span>
+                                          <RoleEntityLink
+                                            kind="appointment"
+                                            id={appt.id}
+                                            label={appt.title}
+                                            className={`text-md font-medium ${isDone ? "line-through text-gray-400" : ""}`}
+                                          />
                                           {getDateTag(start)}
                                         </div>
 
@@ -667,30 +671,51 @@ export default function AppointmentList() {
                                           <span className="flex items-center gap-1.5 shrink-0">
                                             <FiUser className="w-3.5 h-3.5 text-gray-400 shrink-0" />
                                             <span className="text-gray-400 text-xs shrink-0">Client:</span>
-                                            <span className="text-xs text-gray-700 font-medium">
-                                              {(() => {
-                                                try {
-                                                  if (!appt.patient) return "--";
-                                                  if (typeof appt.patient === "object" && "firstname" in appt.patient && "lastname" in appt.patient) {
-                                                    return `${(appt.patient as Patient).firstname} ${(appt.patient as Patient).lastname}`;
-                                                  }
-                                                  if (typeof appt.patient === "string" && patients.length > 0) {
-                                                    const p = patients.find((x: Patient) => x.id === appt.patient);
-                                                    return p && p.firstname && p.lastname ? `${p.firstname} ${p.lastname}` : "--";
-                                                  }
-                                                  return "--";
-                                                } catch (error: unknown) {
-                                                  console.error('Error in client name lookup:', error);
-                                                  return "--";
+                                            {(() => {
+                                              try {
+                                                if (!appt.patient) return <span className="text-xs text-gray-700 font-medium">--</span>;
+                                                if (typeof appt.patient === "object" && "id" in appt.patient && "firstname" in appt.patient) {
+                                                  const p = appt.patient as Patient;
+                                                  return (
+                                                    <RoleEntityLink
+                                                      kind="patient"
+                                                      id={p.id}
+                                                      label={`${p.firstname} ${p.lastname}`}
+                                                      className="text-xs font-medium"
+                                                    />
+                                                  );
                                                 }
-                                              })()}
-                                            </span>
+                                                if (typeof appt.patient === "string" && patients.length > 0) {
+                                                  const p = patients.find((x: Patient) => x.id === appt.patient);
+                                                  const label = p && p.firstname && p.lastname ? `${p.firstname} ${p.lastname}` : "--";
+                                                  if (p && label !== "--") {
+                                                    return (
+                                                      <RoleEntityLink
+                                                        kind="patient"
+                                                        id={p.id}
+                                                        label={label}
+                                                        className="text-xs font-medium"
+                                                      />
+                                                    );
+                                                  }
+                                                }
+                                                return <span className="text-xs text-gray-700 font-medium">--</span>;
+                                              } catch (error: unknown) {
+                                                console.error("Error in client name lookup:", error);
+                                                return <span className="text-xs text-gray-700 font-medium">--</span>;
+                                              }
+                                            })()}
                                           </span>
                                           {appt.category_data && (
                                             <span className="flex items-center gap-1.5 shrink-0">
                                               <MdCategory className="w-3.5 h-3.5 text-gray-400 shrink-0" />
                                               <span className="text-gray-400 text-xs shrink-0">Category:</span>
-                                              <span className="text-xs text-gray-700 font-medium">{appt.category_data.label}</span>
+                                              <RoleEntityLink
+                                                kind="category"
+                                                id={appt.category_data.id}
+                                                label={appt.category_data.label}
+                                                className="text-xs font-medium"
+                                              />
                                             </span>
                                           )}
                                           <span className="flex items-center gap-1.5 shrink-0">
