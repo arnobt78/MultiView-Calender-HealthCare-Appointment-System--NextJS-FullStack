@@ -25,20 +25,9 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import type { User } from "@/types/types";
+import { SPECIALTIES } from "@/lib/doctor-specialty";
 
 const ROLES = ["admin", "doctor", "patient"] as const;
-
-const SPECIALTIES = [
-  "General Medicine",
-  "Cardiology",
-  "Dermatology",
-  "Neurology",
-  "Pediatrics",
-  "Oncology",
-  "Orthopedics",
-  "Psychiatry",
-  "Other",
-] as const;
 
 interface DoctorDetailFormProps {
   initialUser: User;

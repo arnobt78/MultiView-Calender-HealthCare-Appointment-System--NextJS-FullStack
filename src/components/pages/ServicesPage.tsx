@@ -12,6 +12,7 @@
  * (no loading flash on first paint — static text/icons stay visible while only dynamic data pulses).
  */
 
+import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLayoutEffect } from "react";
 import Image from "next/image";
@@ -20,21 +21,28 @@ import {
   AlertCircle,
   CalendarClock,
   CalendarPlus,
+  Check,
   Clock,
+  Copy,
   Stethoscope,
   Users,
 } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { queryKeys } from "@/lib/query-keys";
 import { apiClient } from "@/lib/api-client";
 import { BookAppointmentDialog } from "@/components/pages/PatientPortalPage";
-
-// Weekday label lookup (0=Sun … 6=Sat)
-const WEEKDAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
+import { RoleEntityLink } from "@/components/shared/RoleEntityLink";
+import { DoctorSpecialtyBadge } from "@/components/shared/doctor-display/DoctorSpecialtyBadge";
+import { DoctorAvailabilityGroups } from "@/components/shared/doctor-display/DoctorAvailabilityGroups";
+import { getDoctorAvatarSrc } from "@/lib/doctor-avatar";
+import {
+  ServicesDoctorFilters,
+  defaultServicesDoctorFilters,
+  type ServicesDoctorFilterState,
+} from "@/components/services/ServicesDoctorFilters";
 
 interface DoctorAvailability {
   weekday: number;
@@ -50,7 +58,7 @@ interface AppointmentTypeCard {
   duration_minutes: number;
 }
 
-interface DoctorCard {
+export interface DoctorCard {
   id: string;
   email: string;
   display_name: string | null;
@@ -63,31 +71,31 @@ interface DoctorCard {
   patient_count: number;
 }
 
-function minToTime(min: number): string {
-  const h = Math.floor(min / 60)
-    .toString()
-    .padStart(2, "0");
-  const m = (min % 60).toString().padStart(2, "0");
-  return `${h}:${m}`;
-}
+/** Copy email with brief check icon feedback — local state only (no navigation). */
+function DoctorEmailRow({ email }: { email: string }) {
+  const [copied, setCopied] = useState(false);
 
-/** Compact availability badge row — shows working weekday pills */
-function AvailabilityRow({ availabilities }: { availabilities: DoctorAvailability[] }) {
-  const days = Array.from(new Set(availabilities.map((a) => a.weekday))).sort();
-  if (days.length === 0) return <p className="text-xs text-muted-foreground">No availability set</p>;
-
-  // Derive start/end from first slot for display
-  const first = availabilities.find((a) => a.weekday === days[0]);
-  const hours = first ? `${minToTime(first.start_min)} – ${minToTime(first.end_min)}` : "";
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(email);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* clipboard denied — ignore */
+    }
+  };
 
   return (
-    <div className="flex items-center gap-1.5 flex-wrap">
-      {days.map((d) => (
-        <Badge key={d} variant="outline" className="text-[10px] px-1.5 py-0 bg-sky-50 text-sky-700 border-sky-200">
-          {WEEKDAY_SHORT[d]}
-        </Badge>
-      ))}
-      {hours && <span className="text-[10px] text-muted-foreground ml-1">{hours}</span>}
+    <div className="flex items-center gap-1 min-w-0">
+      <p className="text-xs text-muted-foreground truncate">{email}</p>
+      <button
+        type="button"
+        onClick={handleCopy}
+        className="shrink-0 rounded-md p-1 text-muted-foreground hover:bg-sky-50 hover:text-sky-700 transition-colors"
+        aria-label={copied ? "Copied" : "Copy email"}
+      >
+        {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+      </button>
     </div>
   );
 }
@@ -95,65 +103,51 @@ function AvailabilityRow({ availabilities }: { availabilities: DoctorAvailabilit
 /** Single doctor card */
 function DoctorProfileCard({ doctor }: { doctor: DoctorCard }) {
   const name = doctor.display_name ?? doctor.email;
-  const initials = name
-    .split(" ")
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
+  const avatarSrc = getDoctorAvatarSrc(doctor);
 
   return (
-    <Card className="rounded-[20px] border bg-card shadow-[0_4px_24px_rgba(2,132,199,0.09)] hover:shadow-[0_8px_32px_rgba(2,132,199,0.18)] transition-all duration-300 overflow-hidden flex flex-col">
-      {/* Doctor photo */}
-      <div className="relative h-40 bg-sky-50 overflow-hidden">
-        {doctor.image ? (
-          <Image
-            src={doctor.image}
-            alt={name}
-            fill
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, 33vw"
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center">
-            <Avatar className="h-20 w-20">
-              <AvatarFallback className="text-xl bg-sky-100 text-sky-700 font-bold">{initials}</AvatarFallback>
-            </Avatar>
-          </div>
-        )}
-        {/* Specialty pill overlay */}
+    <Card className="rounded-[20px] border-0 bg-card shadow-[0_4px_24px_rgba(2,132,199,0.09)] hover:shadow-[0_8px_32px_rgba(2,132,199,0.18)] transition-all duration-300 overflow-hidden flex flex-col p-0 gap-0">
+      {/* Flush top image — no Card padding gap above photo */}
+      <div className="relative h-40 w-full bg-sky-50 overflow-hidden rounded-t-[20px]">
+        <Image
+          src={avatarSrc}
+          alt={name}
+          fill
+          className="object-cover"
+          sizes="(max-width: 768px) 100vw, 33vw"
+          unoptimized={avatarSrc.includes("robohash.org")}
+        />
         {doctor.specialty && (
           <div className="absolute bottom-2 left-2">
-            <Badge className="bg-sky-600/90 text-white border-0 text-xs backdrop-blur-sm">
-              <Stethoscope className="h-3 w-3 mr-1" />
-              {doctor.specialty}
-            </Badge>
+            <DoctorSpecialtyBadge specialty={doctor.specialty} className="backdrop-blur-md" />
           </div>
         )}
       </div>
 
       <CardContent className="p-4 flex flex-col gap-3 flex-1">
-        {/* Name + email */}
         <div>
-          <p className="font-bold text-sm leading-tight">{name}</p>
-          <p className="text-xs text-muted-foreground">{doctor.email}</p>
+          <RoleEntityLink
+            kind="doctor"
+            id={doctor.id}
+            label={name}
+            className="font-bold text-sm leading-tight block truncate"
+          />
+          <DoctorEmailRow email={doctor.email} />
         </div>
 
-        {/* Bio */}
         {doctor.bio && (
           <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">{doctor.bio}</p>
         )}
 
-        {/* Availability */}
         <div>
           <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
             <CalendarClock className="h-3 w-3" /> Availability
           </p>
-          <AvailabilityRow availabilities={doctor.availabilities} />
+          <DoctorAvailabilityGroups availabilities={doctor.availabilities} />
         </div>
 
-        {/* Stats row */}
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+        {/* `appointment_types` = bookable visit types (Initial Consultation, etc.), not specialty */}
+        <div className="flex items-center gap-3 text-xs text-muted-foreground" aria-label="Appointment types offered">
           <span className="flex items-center gap-1">
             <Users className="h-3.5 w-3.5" />
             {doctor.patient_count} patient{doctor.patient_count !== 1 ? "s" : ""}
@@ -164,10 +158,8 @@ function DoctorProfileCard({ doctor }: { doctor: DoctorCard }) {
           </span>
         </div>
 
-        {/* Spacer pushes button to bottom */}
         <div className="flex-1" />
 
-        {/* Book with this doctor button — opens booking wizard pre-selected */}
         <BookAppointmentDialog
           preselectedDoctorId={doctor.id}
           trigger={
@@ -207,19 +199,17 @@ function ServiceCard({ type }: { type: AppointmentTypeCard }) {
   );
 }
 
-/** Skeleton grid for loading state */
 function DoctorSkeletonGrid({ count = 8 }: { count?: number }) {
   return (
     <>
       {Array.from({ length: count }).map((_, i) => (
-        <Card key={i} className="rounded-[20px] overflow-hidden">
+        <Card key={i} className="rounded-[20px] overflow-hidden p-0 gap-0">
           <Skeleton className="h-40 w-full rounded-none" />
           <div className="p-4 space-y-2">
             <Skeleton className="h-4 w-32 rounded" />
             <Skeleton className="h-3 w-24 rounded" />
             <Skeleton className="h-3 w-full rounded" />
             <Skeleton className="h-3 w-3/4 rounded" />
-            {/* CTA placeholder — static chrome, no pulse */}
             <div className="h-8 w-full mt-3" />
           </div>
         </Card>
@@ -228,18 +218,37 @@ function DoctorSkeletonGrid({ count = 8 }: { count?: number }) {
   );
 }
 
+function filterDoctors(doctors: DoctorCard[], filters: ServicesDoctorFilterState): DoctorCard[] {
+  const q = filters.search.trim().toLowerCase();
+  return doctors.filter((d) => {
+    if (filters.specialty && d.specialty !== filters.specialty) return false;
+    if (filters.weekday != null) {
+      const hasDay = d.availabilities.some((a) => a.weekday === filters.weekday);
+      if (!hasDay) return false;
+    }
+    if (!q) return true;
+    const blob = [
+      d.display_name,
+      d.email,
+      d.specialty,
+      d.bio,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+    return blob.includes(q);
+  });
+}
+
 interface ServicesPageProps {
-  /** SSR-prefetched doctors — seeded into React Query cache to avoid loading flash */
   initialDoctors?: unknown[];
-  /** SSR-prefetched global appointment types */
   initialGlobalTypes?: unknown[];
 }
 
 export default function ServicesPage({ initialDoctors, initialGlobalTypes }: ServicesPageProps) {
   const queryClient = useQueryClient();
+  const [filters, setFilters] = useState<ServicesDoctorFilterState>(defaultServicesDoctorFilters);
 
-  // Seed server-prefetched data into React Query cache before first render.
-  // useLayoutEffect runs synchronously before paint so queries find data in cache immediately.
   useLayoutEffect(() => {
     if (initialDoctors?.length) {
       queryClient.setQueryData(queryKeys.doctors.all, { doctors: initialDoctors as DoctorCard[] });
@@ -255,45 +264,65 @@ export default function ServicesPage({ initialDoctors, initialGlobalTypes }: Ser
     staleTime: 5 * 60 * 1000,
   });
 
-  // Global appointment types (user_id = null) — rendered as "Services" section
   const { data: globalTypesData, isLoading: typesLoading, isError: typesError } = useQuery({
     queryKey: queryKeys.appointmentTypes.global,
     queryFn: () => apiClient<{ types: AppointmentTypeCard[] }>("/api/appointment-types/global"),
     staleTime: 5 * 60 * 1000,
   });
 
-  const doctors = doctorsData?.doctors ?? [];
+  const filteredDoctors = useMemo(() => {
+    const list = doctorsData?.doctors ?? [];
+    return filterDoctors(list, filters);
+  }, [doctorsData?.doctors, filters]);
+
   const globalTypes: AppointmentTypeCard[] = globalTypesData?.types ?? [];
+  const doctors = doctorsData?.doctors ?? [];
+
+  const hasActiveFilters =
+    filters.search.trim().length > 0 ||
+    filters.specialty != null ||
+    filters.weekday != null ||
+    filters.date != null;
 
   return (
-    <div className="space-y-8 py-0 pb-6">
-      {/* Page header */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 pb-4 border-b">
-        <div>
-          <h1 className="text-xl md:text-2xl font-semibold tracking-tight flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-sky-100 border border-sky-200">
-              <Stethoscope className="h-5 w-5 text-sky-600" />
-            </span>
+    <div className="space-y-4 py-0 pb-3">
+      {/* Page header — icon height spans title + subtitle */}
+      <div className="flex gap-3 py-2 border-b items-stretch">
+        <span className="flex w-12 shrink-0 items-center justify-center rounded-xl bg-sky-100 border border-sky-200 self-stretch min-h-[3.5rem]">
+          <Stethoscope className="h-6 w-6 text-sky-600" />
+        </span>
+        <div className="flex flex-col justify-center min-w-0">
+          <h1 className="text-xl md:text-2xl text-gray-700 font-semibold tracking-tight">
             Doctors &amp; Services
           </h1>
-          <p className="text-muted-foreground text-sm mt-0.5">
-            Browse our specialist doctors and available appointment services
+          <p className="text-muted-foreground text-sm">
+            Browse our specialist doctors and available appointment services and book your appointment with ease.
           </p>
         </div>
       </div>
 
-      {/* ── Our Doctors ───────────────────────────────────────── */}
       <section>
-        <div className="flex items-center gap-2 mb-4">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-100 border border-sky-200 shrink-0">
-            <Stethoscope className="h-3.5 w-3.5 text-sky-600" />
-          </span>
-          <h2 className="text-base font-semibold">Our Doctors</h2>
-          {!doctorsLoading && (
-            <Badge variant="outline" className="bg-sky-50 text-sky-700 border-sky-200 font-bold">
-              {doctors.length}
-            </Badge>
-          )}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-4">
+          <div className="flex items-center gap-2">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-100 border border-sky-200 shrink-0">
+              <Stethoscope className="h-3.5 w-3.5 text-sky-600" />
+            </span>
+            <h2 className="text-base text-gray-700 font-semibold">Our Doctors</h2>
+            {doctorsLoading ? (
+              <Skeleton className="h-5 w-8 rounded-full" />
+            ) : (
+              <Badge variant="outline" className="bg-sky-50 text-sky-700 border-sky-200 font-bold">
+                {filteredDoctors.length}
+              </Badge>
+            )}
+          </div>
+
+          <ServicesDoctorFilters
+            filters={filters}
+            onChange={setFilters}
+            onReset={() => setFilters(defaultServicesDoctorFilters())}
+            hasActiveFilters={hasActiveFilters}
+          />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
@@ -304,25 +333,23 @@ export default function ServicesPage({ initialDoctors, initialGlobalTypes }: Ser
               <AlertCircle className="h-4 w-4 shrink-0" />
               Failed to load doctors. Please refresh.
             </div>
-          ) : doctors.length === 0 ? (
+          ) : filteredDoctors.length === 0 ? (
             <div className="col-span-full text-center py-12 text-muted-foreground">
               <Stethoscope className="h-10 w-10 mx-auto mb-2 opacity-30" />
-              No doctors found.
+              No doctors match your filters.
             </div>
           ) : (
-            doctors.map((doc) => <DoctorProfileCard key={doc.id} doctor={doc} />)
+            filteredDoctors.map((doc) => <DoctorProfileCard key={doc.id} doctor={doc} />)
           )}
         </div>
       </section>
 
-      {/* ── Appointment Types / Services ──────────────────────── */}
       <section>
         <div className="flex items-center gap-2 mb-4">
           <span className="flex h-6 w-6 items-center justify-center rounded-full bg-violet-100 border border-violet-200 shrink-0">
             <Activity className="h-3.5 w-3.5 text-violet-600" />
           </span>
-          <h2 className="text-base font-semibold">Appointment Services</h2>
-          {/* Gate on typesLoading (not doctorsLoading) — these are independent queries */}
+          <h2 className="text-base text-gray-700 font-semibold">Appointment Services</h2>
           {!typesLoading && globalTypes.length > 0 && (
             <Badge variant="outline" className="bg-violet-50 text-violet-700 border-violet-200 font-bold">
               {globalTypes.length}

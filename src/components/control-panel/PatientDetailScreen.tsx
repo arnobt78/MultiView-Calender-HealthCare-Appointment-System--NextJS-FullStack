@@ -29,6 +29,8 @@ import { Badge } from "@/components/ui/badge";
 import { PatientDetailForm } from "@/components/control-panel/PatientDetailForm";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
+import { DoctorSpecialtyBadge } from "@/components/shared/doctor-display/DoctorSpecialtyBadge";
+import { useUsers } from "@/hooks/useUsers";
 import { ControlPanelStaffLink } from "@/components/shared/ControlPanelStaffLink";
 import { DEMO_ACCOUNTS } from "@/lib/demo-credentials";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -58,7 +60,7 @@ import {
 } from "@/lib/entity-routes";
 import { isAdminRole } from "@/lib/rbac";
 import type { AppointmentSnapshotRow, Patient, PatientSnapshot } from "@/types/types";
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
 
@@ -352,6 +354,12 @@ export function PatientDetailScreen({
 
   const { data: patient, isLoading, isError, error } = usePatient(patientId);
   const snap = usePatientSnapshot(patientId);
+  const { data: doctorsData } = useUsers({ role: "doctor", limit: 200 });
+  const primaryDoctorUser = useMemo(() => {
+    const id = patient?.primary_doctor_id;
+    if (!id) return undefined;
+    return doctorsData?.users?.find((u) => u.id === id);
+  }, [patient?.primary_doctor_id, doctorsData?.users]);
   const { deletePatient, isDeleting, isUpdating } = usePatients();
   const [isMounted, setIsMounted] = useState(false);
 
@@ -539,16 +547,20 @@ export function PatientDetailScreen({
                   <FieldLabel icon={Stethoscope}>Primary Doctor</FieldLabel>
                   <dd className="mt-0.5 text-gray-700">
                     {p!.primary_doctor_id && p!.primary_doctor_display?.trim() ? (
-                      <>
+                      <span className="inline-flex flex-wrap items-center gap-2">
                         <EntityTitleLink
                           href={doctorDetailHref(viewerRole, p!.primary_doctor_id)}
                           label={p!.primary_doctor_display.trim()}
                           className="font-normal"
                         />
+                        <DoctorSpecialtyBadge
+                          specialty={primaryDoctorUser?.specialty ?? null}
+                          showIcon={false}
+                        />
                         {p!.primary_doctor_email?.trim() ? (
                           <span className="text-gray-600"> ({p!.primary_doctor_email.trim()})</span>
                         ) : null}
-                      </>
+                      </span>
                     ) : (
                       (p!.primary_doctor_display ?? "—")
                     )}

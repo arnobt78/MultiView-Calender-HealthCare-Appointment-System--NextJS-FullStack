@@ -15,6 +15,16 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Prism
 - **Links wired:** calendar (`AppointmentList`, `DayView`, `WeekView`/`MonthView` via `AppointmentHoverCard`), portals, global search, notification deep links (create/booking/cron).
 - **Verify:** `npm test && npx tsc --noEmit && npm run lint && npm run build`.
 
+### Doctor display + `/services`
+
+- **Route:** `/services` — `src/app/services/page.tsx` SSR-prefetches doctors + global types; client `ServicesPage.tsx`.
+- **API:** `GET /api/doctors` → specialty, bio, image, `doctor_availabilities`, `appointment_types_owned`, `patient_count` (`queryKeys.doctors.all`).
+- **Provider:** `DoctorDisplayProvider` (`src/context/DoctorDisplayContext.tsx`) in `AppProviders` — specialty glass classes + robohash helper (no extra network).
+- **Components:** `src/components/shared/doctor-display/*` — badges, avatars, identity row, availability groups; `ServicesDoctorFilters` for client-side grid filters.
+- **Card UX:** flush hero image, glass specialty overlay, `RoleEntityLink` doctor name, copy-email, grouped availability rows, book CTA via `BookAppointmentDialog`.
+- **Global reuse:** patient primary-doctor column/detail, portal doctor picker, appointment dialog treating-physician select, admin portal doctor cards.
+- **Invalidation:** doctor PATCH / availability mutations → `invalidateUsersAndAuth` / `invalidateDoctorSchedule` → `doctors.all` refetch (no new keys).
+
 ### Control panel entity split (users vs patients)
 
 - **`patients` table** (`Patient` model): clinical/client records used by Patient Management and appointments. Demo seed creates one row aligned with `test@patient.com` so `/control-panel/patient-management` lists a sample patient.

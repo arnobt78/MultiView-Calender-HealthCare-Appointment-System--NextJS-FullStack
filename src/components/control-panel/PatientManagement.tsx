@@ -7,6 +7,7 @@ import { DataTable } from "@/components/shared/DataTable";
 import { DataTableColumnHeader } from "@/components/shared/DataTableColumnHeader";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
+import { DoctorIdentityRow } from "@/components/shared/doctor-display/DoctorIdentityRow";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -239,6 +240,10 @@ function PatientManagementInner() {
   /** Align SSR + first client paint with React Query (query can finish on client before mount). */
   const listBodyLoading = !listUiMounted || isLoading;
   const { data: doctorsData } = useUsers({ role: "doctor", limit: 200 });
+  const doctorById = useMemo(() => {
+    const list = doctorsData?.users ?? [];
+    return new Map(list.map((d) => [d.id, d]));
+  }, [doctorsData?.users]);
   const doctors = doctorsData?.users ?? [];
   const {
     status,
@@ -368,22 +373,36 @@ function PatientManagementInner() {
         }
         return (
           <div className="flex min-h-[2.75rem] min-w-0 flex-col justify-center gap-0.5">
-            {p.primary_doctor_id && d ? (
-              <EntityTitleLink
-                href={`/control-panel/doctors/${p.primary_doctor_id}`}
-                label={d}
-                className="min-w-0 self-start truncate text-sm"
-              />
-            ) : d ? (
-              <span className="truncate text-sm text-muted-foreground">{d}</span>
-            ) : null}
-            {em ? (
-              <span className="truncate text-xs text-muted-foreground" title={em}>
-                {em}
-              </span>
-            ) : (
-              <span className="text-xs text-muted-foreground">—</span>
-            )}
+            {(() => {
+              const doc = p.primary_doctor_id ? doctorById.get(p.primary_doctor_id) : undefined;
+              if (p.primary_doctor_id && doc) {
+                return (
+                  <DoctorIdentityRow
+                    doctor={{
+                      id: doc.id,
+                      email: doc.email,
+                      display_name: doc.display_name,
+                      image: doc.image,
+                      specialty: doc.specialty,
+                    }}
+                    linkKind="admin-cp"
+                    size="sm"
+                  />
+                );
+              }
+              return (
+                <>
+                  {d ? <span className="truncate text-sm text-muted-foreground">{d}</span> : null}
+                  {em ? (
+                    <span className="truncate text-xs text-muted-foreground" title={em}>
+                      {em}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">—</span>
+                  )}
+                </>
+              );
+            })()}
           </div>
         );
       },

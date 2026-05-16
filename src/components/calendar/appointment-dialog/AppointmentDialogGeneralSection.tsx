@@ -54,6 +54,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Category, Patient, User } from "@/types/types";
+import { DoctorMiniAvatar } from "@/components/shared/doctor-display/DoctorMiniAvatar";
+import { DoctorSpecialtyBadge } from "@/components/shared/doctor-display/DoctorSpecialtyBadge";
 
 /** Mirrors `PatientPortalPage` / GET `/api/appointment-types` — drives slot duration + buffers server-side. */
 type AppointmentTypeRow = {
@@ -150,13 +152,6 @@ function doctorLabel(d: User) {
   return d.display_name?.trim() ? d.display_name : d.email;
 }
 
-/** Prefer stored profile image; otherwise deterministic robohash (set4) for list + trigger consistency. */
-function doctorAvatarSrc(d: User) {
-  const trimmed = d.image?.trim();
-  if (trimmed) return trimmed;
-  return `https://robohash.org/${encodeURIComponent(d.id)}.png?size=64x64&set=set4`;
-}
-
 /** Safe swatch for category `color` (hex) — invalid values fall back to neutral slate. */
 function categorySwatchStyle(color: string | null | undefined): CSSProperties {
   const raw = color?.trim();
@@ -185,29 +180,6 @@ function PickerAvatar({
         alt={alt}
         fill
         sizes="28px"
-        className="object-cover object-center"
-        loading="lazy"
-        referrerPolicy="no-referrer"
-      />
-    </span>
-  );
-}
-
-function DoctorMiniAvatar({ user, className }: { user: User; className?: string }) {
-  const alt = doctorLabel(user);
-  const src = doctorAvatarSrc(user);
-  return (
-    <span
-      className={cn(
-        "relative h-8 w-8 shrink-0 overflow-hidden rounded-full bg-white ring-1 ring-sky-200/80",
-        className
-      )}
-    >
-      <SafeImage
-        src={src}
-        alt={alt}
-        fill
-        sizes="32px"
         className="object-cover object-center"
         loading="lazy"
         referrerPolicy="no-referrer"
@@ -576,9 +548,10 @@ export function AppointmentDialogGeneralSection({
             <SelectContent>
               {doctors.map((d) => (
                 <SelectItem key={d.id} value={d.id} textValue={doctorLabel(d)}>
-                  <span className="flex items-center gap-2">
-                    <DoctorMiniAvatar user={d} className="h-7 w-7" />
-                    <span className="truncate">{doctorLabel(d)}</span>
+                  <span className="flex items-center gap-2 min-w-0">
+                    <DoctorMiniAvatar doctor={d} className="h-7 w-7" />
+                    <span className="truncate flex-1">{doctorLabel(d)}</span>
+                    <DoctorSpecialtyBadge specialty={d.specialty} showIcon={false} className="shrink-0" />
                   </span>
                 </SelectItem>
               ))}

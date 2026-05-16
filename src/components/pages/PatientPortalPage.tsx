@@ -81,6 +81,8 @@ import {
 import type { Patient, PatientClinicalProfile, User as AppUser } from "@/types/types";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { RoleEntityLink } from "@/components/shared/RoleEntityLink";
+import { DoctorSelectOption } from "@/components/shared/doctor-display/DoctorSelectOption";
+import { DoctorSpecialtyBadge } from "@/components/shared/doctor-display/DoctorSpecialtyBadge";
 import { notify } from "@/lib/notify";
 import { useUsers } from "@/hooks/useUsers";
 import { useAvailabilitySlots } from "@/hooks/useAvailabilitySlots";
@@ -350,8 +352,8 @@ export function BookAppointmentDialog({ preselectedDoctorId, trigger }: BookAppo
                 </SelectTrigger>
                 <SelectContent>
                   {doctors.map((d) => (
-                    <SelectItem key={d.id} value={d.id}>
-                      {d.display_name ?? d.email}
+                    <SelectItem key={d.id} value={d.id} textValue={d.display_name ?? d.email}>
+                      <DoctorSelectOption doctor={d} />
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -884,6 +886,9 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
     staleTime: 2 * 60 * 1000,
   });
 
+  const { data: portalDoctorsData } = useUsers({ role: "doctor", limit: 200 });
+  const portalDoctors = portalDoctorsData?.users ?? [];
+
   const loading = !isMounted || isLoading;
 
   const patient = data?.patient ?? null;
@@ -1092,12 +1097,20 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
                                 if (pRow.primary_doctor_id && pRow.primary_doctor_display?.trim()) {
                                   return (
                                     <>
-                                      <RoleEntityLink
-                                        kind="doctor"
-                                        id={pRow.primary_doctor_id}
-                                        label={pRow.primary_doctor_display.trim()}
-                                        className="font-normal"
-                                      />
+                                      <span className="inline-flex flex-wrap items-center gap-2">
+                                        <RoleEntityLink
+                                          kind="doctor"
+                                          id={pRow.primary_doctor_id}
+                                          label={pRow.primary_doctor_display.trim()}
+                                          className="font-normal"
+                                        />
+                                        {(() => {
+                                          const doc = portalDoctors.find((x) => x.id === pRow.primary_doctor_id);
+                                          return doc?.specialty ? (
+                                            <DoctorSpecialtyBadge specialty={doc.specialty} showIcon={false} />
+                                          ) : null;
+                                        })()}
+                                      </span>
                                       {pRow.primary_doctor_email?.trim() ? (
                                         <span className="text-gray-600">
                                           {" "}

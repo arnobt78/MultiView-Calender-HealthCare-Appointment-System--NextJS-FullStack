@@ -30,6 +30,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { appointmentDetailHref, doctorDetailHref } from "@/lib/entity-routes";
+import { DoctorSpecialtyBadge } from "@/components/shared/doctor-display/DoctorSpecialtyBadge";
 import {
   Activity,
   AlertCircle,
@@ -180,10 +181,7 @@ function DoctorSummaryCard({ doctor }: { doctor: DoctorRow }) {
             className="text-sm font-semibold block truncate"
           />
           {doctor.specialty && (
-            <p className="text-[11px] text-muted-foreground flex items-center gap-1">
-              <Stethoscope className="h-3 w-3" />
-              {doctor.specialty}
-            </p>
+            <DoctorSpecialtyBadge specialty={doctor.specialty} className="mt-0.5" showIcon={false} />
           )}
         </div>
         <Badge variant="secondary" className="ml-auto text-[10px] flex-shrink-0">

@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { PatientCareLevelSelect } from "@/components/control-panel/PatientCareLevelSelect";
 import { useUsers } from "@/hooks/useUsers";
+import { DoctorSelectOption } from "@/components/shared/doctor-display/DoctorSelectOption";
 import { PATIENT_REFERRAL_SOURCES } from "@/lib/patient-referral-sources";
 
 function clinicalToForm(cp: PatientClinicalProfile | undefined) {
@@ -196,8 +197,8 @@ export function PatientDetailForm({
             <SelectContent>
               <SelectItem value="none">Not assigned</SelectItem>
               {doctors.map((d) => (
-                <SelectItem key={d.id} value={d.id}>
-                  {d.display_name?.trim() || d.email}
+                <SelectItem key={d.id} value={d.id} textValue={d.display_name?.trim() || d.email}>
+                  <DoctorSelectOption doctor={d} />
                 </SelectItem>
               ))}
             </SelectContent>

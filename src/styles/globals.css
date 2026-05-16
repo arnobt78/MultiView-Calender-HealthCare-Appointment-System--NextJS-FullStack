@@ -360,6 +360,14 @@
     @apply border-slate-400/35 bg-linear-to-r from-slate-500/20 via-slate-500/10 to-slate-500/5 text-slate-600;
     box-shadow: 0 10px 28px rgba(100, 116, 139, 0.16);
   }
+  .calendar-glass-badge-indigo {
+    @apply border-indigo-400/35 bg-linear-to-r from-indigo-500/20 via-indigo-500/10 to-indigo-500/5 text-indigo-700;
+    box-shadow: 0 10px 28px rgba(99, 102, 241, 0.18);
+  }
+  .calendar-glass-badge-teal {
+    @apply border-teal-400/35 bg-linear-to-r from-teal-500/20 via-teal-500/10 to-teal-500/5 text-teal-700;
+    box-shadow: 0 10px 28px rgba(20, 184, 166, 0.18);
+  }
 }
 
 /* ===== Landing page — smooth scroll ===== */
