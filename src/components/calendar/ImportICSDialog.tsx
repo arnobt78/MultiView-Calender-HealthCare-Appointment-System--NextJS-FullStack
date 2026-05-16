@@ -165,7 +165,7 @@ export default function ImportICSDialog({ trigger }: Props) {
         <div className="space-y-5 px-6 py-5">
           <div className="rounded-2xl border border-violet-200/70 bg-violet-50/60 p-3 text-xs text-violet-900 shadow-[0_8px_24px_rgba(139,92,246,0.12)]">
             <div className="flex items-start gap-2">
-              <Info className="mt-0.5 h-4 w-4 shrink-0 text-violet-700" />
+              <Info className=" h-4 w-4 shrink-0 text-violet-700" />
               <p className="leading-relaxed">
                 Choose a <strong>.ics</strong> file. Imported events are added as new
                 appointments in your calendar.

@@ -6,9 +6,9 @@
  * Two sections:
  *  1. Our Doctors — cards with photo, specialty, bio, availability days, patient count
  *     and a "Book with this doctor" button (opens the booking wizard pre-selected)
- *  2. Appointment Types / Services — global types (user_id = null) with name, duration, description
+ *  2. Appointment Services — merged catalog (`queryKeys.appointmentTypes.catalog`): globals + deduped additional types
  *
- * Accepts optional `initialDoctors` / `initialGlobalTypes` from the server page for SSR cache seeding
+ * Accepts optional `initialDoctors` / `initialServiceCatalog` from the server page for SSR cache seeding
  * (no loading flash on first paint — static text/icons stay visible while only dynamic data pulses).
  */
 
@@ -32,6 +32,18 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { queryKeys } from "@/lib/query-keys";
 import { apiClient } from "@/lib/api-client";
+import {
+  defaultServicesCatalogFilter,
+  filterServiceCatalog,
+  SERVICES_CATALOG_FILTER_ALL,
+  type ServiceCatalogRow,
+} from "@/lib/appointment-service-catalog";
+import { useAppointmentServiceCatalog } from "@/hooks/useAppointmentServiceCatalog";
+import { ServiceCatalogCard } from "@/components/services/ServiceCatalogCard";
+import {
+  ServicesServiceFilters,
+  type ServicesCatalogFilterState,
+} from "@/components/services/ServicesServiceFilters";
 import { BookAppointmentDialog } from "@/components/pages/PatientPortalPage";
 import { RoleEntityLink } from "@/components/shared/RoleEntityLink";
 import { DoctorSpecialtyBadge } from "@/components/shared/doctor-display/DoctorSpecialtyBadge";
@@ -50,13 +62,6 @@ interface DoctorAvailability {
   timezone: string;
 }
 
-interface AppointmentTypeCard {
-  id: string;
-  name: string;
-  description: string | null;
-  duration_minutes: number;
-}
-
 export interface DoctorCard {
   id: string;
   email: string;
@@ -66,7 +71,7 @@ export interface DoctorCard {
   bio: string | null;
   created_at: string;
   availabilities: DoctorAvailability[];
-  appointment_types: AppointmentTypeCard[];
+  appointment_types: { id: string; name: string; description: string | null; duration_minutes: number }[];
   patient_count: number;
 }
 
@@ -158,31 +163,6 @@ function DoctorProfileCard({ doctor }: { doctor: DoctorCard }) {
   );
 }
 
-/** Single appointment-type service card */
-function ServiceCard({ type }: { type: AppointmentTypeCard }) {
-  return (
-    <Card className="rounded-[16px] border bg-card shadow-[0_4px_16px_rgba(139,92,246,0.08)] hover:shadow-[0_8px_24px_rgba(139,92,246,0.16)] transition-all duration-300">
-      <CardContent className="p-4 flex items-start gap-2">
-        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 border border-violet-200 shrink-0">
-          <Clock className="h-5 w-5 text-violet-600" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="font-semibold text-sm leading-tight">{type.name}</p>
-          {type.description && (
-            <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{type.description}</p>
-          )}
-          <div className="flex items-center gap-1.5 mt-1.5">
-            <Badge variant="outline" className="text-[10px] py-0 bg-violet-50 text-violet-700 border-violet-200">
-              <Clock className="h-2.5 w-2.5 mr-0.5" />
-              {type.duration_minutes} min
-            </Badge>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
 function DoctorSkeletonGrid({ count = 8 }: { count?: number }) {
   return (
     <>
@@ -226,21 +206,26 @@ function filterDoctors(doctors: DoctorCard[], filters: ServicesDoctorFilterState
 
 interface ServicesPageProps {
   initialDoctors?: unknown[];
-  initialGlobalTypes?: unknown[];
+  initialServiceCatalog?: ServiceCatalogRow[];
 }
 
-export default function ServicesPage({ initialDoctors, initialGlobalTypes }: ServicesPageProps) {
+export default function ServicesPage({ initialDoctors, initialServiceCatalog }: ServicesPageProps) {
   const queryClient = useQueryClient();
   const [filters, setFilters] = useState<ServicesDoctorFilterState>(defaultServicesDoctorFilters);
+  const [catalogFilters, setCatalogFilters] = useState<ServicesCatalogFilterState>(
+    defaultServicesCatalogFilter
+  );
 
   useLayoutEffect(() => {
     if (initialDoctors?.length) {
       queryClient.setQueryData(queryKeys.doctors.all, { doctors: initialDoctors as DoctorCard[] });
     }
-    if (initialGlobalTypes?.length) {
-      queryClient.setQueryData(queryKeys.appointmentTypes.global, { types: initialGlobalTypes as AppointmentTypeCard[] });
+    if (initialServiceCatalog?.length) {
+      queryClient.setQueryData(queryKeys.appointmentTypes.catalog, {
+        services: initialServiceCatalog,
+      });
     }
-  }, [queryClient, initialDoctors, initialGlobalTypes]);
+  }, [queryClient, initialDoctors, initialServiceCatalog]);
 
   const { data: doctorsData, isLoading: doctorsLoading, isError: doctorsError } = useQuery({
     queryKey: queryKeys.doctors.all,
@@ -248,19 +233,27 @@ export default function ServicesPage({ initialDoctors, initialGlobalTypes }: Ser
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: globalTypesData, isLoading: typesLoading, isError: typesError } = useQuery({
-    queryKey: queryKeys.appointmentTypes.global,
-    queryFn: () => apiClient<{ types: AppointmentTypeCard[] }>("/api/appointment-types/global"),
-    staleTime: 5 * 60 * 1000,
-  });
+  const {
+    data: catalogData,
+    isLoading: catalogLoading,
+    isError: catalogError,
+  } = useAppointmentServiceCatalog();
 
   const filteredDoctors = useMemo(() => {
     const list = doctorsData?.doctors ?? [];
     return filterDoctors(list, filters);
   }, [doctorsData?.doctors, filters]);
 
-  const globalTypes: AppointmentTypeCard[] = globalTypesData?.types ?? [];
+  const catalogServices = catalogData?.services;
+  const filteredServices = useMemo(
+    () => filterServiceCatalog(catalogServices ?? [], catalogFilters),
+    [catalogServices, catalogFilters]
+  );
+  const allServices = catalogServices ?? [];
+
   const doctors = doctorsData?.doctors ?? [];
+
+  const hasActiveCatalogFilter = catalogFilters.selection !== SERVICES_CATALOG_FILTER_ALL;
 
   const hasActiveFilters =
     filters.search.trim().length > 0 ||
@@ -329,35 +322,48 @@ export default function ServicesPage({ initialDoctors, initialGlobalTypes }: Ser
       </section>
 
       <section>
-        <div className="flex items-center gap-2 mb-4">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-violet-100 border border-violet-200 shrink-0">
-            <Activity className="h-3.5 w-3.5 text-violet-600" />
-          </span>
-          <h2 className="text-base text-gray-700 font-semibold">Appointment Services</h2>
-          {!typesLoading && globalTypes.length > 0 && (
-            <Badge variant="outline" className="bg-violet-50 text-violet-700 border-violet-200 font-bold">
-              {globalTypes.length}
-            </Badge>
-          )}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+          <div className="flex items-center gap-2">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-violet-100 border border-violet-200 shrink-0">
+              <Activity className="h-3.5 w-3.5 text-violet-600" />
+            </span>
+            <h2 className="text-base text-gray-700 font-semibold">Appointment Services</h2>
+            {catalogLoading ? (
+              <Skeleton className="h-5 w-8 rounded-full" />
+            ) : (
+              <Badge variant="outline" className="bg-violet-50 text-violet-700 border-violet-200 font-bold">
+                {filteredServices.length}
+              </Badge>
+            )}
+          </div>
+          <ServicesServiceFilters
+            services={allServices}
+            filters={catalogFilters}
+            onChange={setCatalogFilters}
+            onReset={() => setCatalogFilters(defaultServicesCatalogFilter())}
+            hasActiveFilter={hasActiveCatalogFilter}
+          />
         </div>
 
-        {doctorsLoading || typesLoading ? (
+        {catalogLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {Array.from({ length: 4 }).map((_, i) => (
               <Skeleton key={i} className="h-24 rounded-[16px]" />
             ))}
           </div>
-        ) : typesError ? (
+        ) : catalogError ? (
           <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 flex items-center gap-2">
             <AlertCircle className="h-4 w-4 shrink-0" />
             Failed to load services. Please refresh.
           </div>
-        ) : globalTypes.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No services listed yet.</p>
+        ) : filteredServices.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            {allServices.length === 0 ? "No services listed yet." : "No services match this filter."}
+          </p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {globalTypes.map((t) => (
-              <ServiceCard key={t.id} type={t} />
+            {filteredServices.map((s) => (
+              <ServiceCatalogCard key={`${s.source}-${s.id}`} service={s} />
             ))}
           </div>
         )}

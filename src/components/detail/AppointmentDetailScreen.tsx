@@ -119,43 +119,43 @@ export function AppointmentDetailScreen({
           <dl className="grid gap-3 text-sm sm:grid-cols-2">
             <div>
               <dt className="font-medium text-muted-foreground">id</dt>
-              <dd className="font-mono break-all text-xs mt-0.5">{appointment.id}</dd>
+              <dd className="font-mono break-all text-xs ">{appointment.id}</dd>
             </div>
             <div>
               <dt className="font-medium text-muted-foreground">user_id</dt>
-              <dd className="font-mono break-all text-xs mt-0.5">{appointment.user_id}</dd>
+              <dd className="font-mono break-all text-xs ">{appointment.user_id}</dd>
             </div>
             <div>
               <dt className="font-medium text-muted-foreground">created_at</dt>
-              <dd className="mt-0.5">
+              <dd className="">
                 {appointment.created_at ? new Date(appointment.created_at).toLocaleString() : "—"}
               </dd>
             </div>
             <div>
               <dt className="font-medium text-muted-foreground">updated_at</dt>
-              <dd className="mt-0.5">
+              <dd className="">
                 {appointment.updated_at ? new Date(appointment.updated_at).toLocaleString() : "—"}
               </dd>
             </div>
             <div>
               <dt className="font-medium text-muted-foreground">start</dt>
-              <dd className="mt-0.5">
+              <dd className="">
                 {appointment.start ? new Date(appointment.start).toLocaleString() : "—"}
               </dd>
             </div>
             <div>
               <dt className="font-medium text-muted-foreground">end</dt>
-              <dd className="mt-0.5">
+              <dd className="">
                 {appointment.end ? new Date(appointment.end).toLocaleString() : "—"}
               </dd>
             </div>
             <div>
               <dt className="font-medium text-muted-foreground">title</dt>
-              <dd className="mt-0.5 font-medium">{appointment.title}</dd>
+              <dd className=" font-medium">{appointment.title}</dd>
             </div>
             <div>
               <dt className="font-medium text-muted-foreground">status</dt>
-              <dd className="mt-0.5">
+              <dd className="">
                 <Badge
                   variant={STATUS_VARIANTS[appointment.status ?? "pending"] ?? "secondary"}
                   className="capitalize"
@@ -166,15 +166,15 @@ export function AppointmentDetailScreen({
             </div>
             <div>
               <dt className="font-medium text-muted-foreground">location</dt>
-              <dd className="mt-0.5">{appointment.location ?? "—"}</dd>
+              <dd className="">{appointment.location ?? "—"}</dd>
             </div>
             <div>
               <dt className="font-medium text-muted-foreground">notes</dt>
-              <dd className="mt-0.5 text-muted-foreground">{appointment.notes ?? "—"}</dd>
+              <dd className=" text-muted-foreground">{appointment.notes ?? "—"}</dd>
             </div>
             <div>
               <dt className="font-medium text-muted-foreground">patient</dt>
-              <dd className="mt-0.5">
+              <dd className="">
                 {patientData ? (
                   <EntityTitleLink
                     href={patientDetailHref(viewerRole, patientData.id)}
@@ -187,7 +187,7 @@ export function AppointmentDetailScreen({
             </div>
             <div>
               <dt className="font-medium text-muted-foreground">category</dt>
-              <dd className="mt-0.5">
+              <dd className="">
                 {categoryData ? (
                   <span className="flex items-center gap-2">
                     {categoryData.color && (
@@ -212,7 +212,7 @@ export function AppointmentDetailScreen({
             </div>
             <div className="sm:col-span-2">
               <dt className="font-medium text-muted-foreground">attachments</dt>
-              <dd className="mt-0.5">
+              <dd className="">
                 {appointment.attachments?.length ? (
                   <span>{appointment.attachments.length} file(s)</span>
                 ) : (

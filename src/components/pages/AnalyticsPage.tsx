@@ -206,7 +206,7 @@ export default function AnalyticsPage({ initialInsights }: AnalyticsPageProps = 
               )}
             </div>
             {!loading && revenuePrevMonth > 0 && (
-              <p className="text-[11px] text-muted-foreground mt-0.5">vs {formatCents(revenuePrevMonth)} last month</p>
+              <p className="text-[11px] text-muted-foreground ">vs {formatCents(revenuePrevMonth)} last month</p>
             )}
           </CardContent>
         </Card>

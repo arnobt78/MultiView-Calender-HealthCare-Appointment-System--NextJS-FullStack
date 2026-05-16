@@ -404,8 +404,8 @@ export default function ControlPanelPage({
             <div>
               <h2 className="text-lg font-semibold text-gray-800">Global Visit Types</h2>
               <p className="text-sm text-muted-foreground">
-                Admin-managed templates (`user_id` null) shared by every doctor for booking slots and the
-                public services page.
+                Organization-wide visit templates available to every doctor for booking and the public
+                Services page. Only admins can add or remove templates here.
               </p>
             </div>
             <GlobalAppointmentTypesEditor />

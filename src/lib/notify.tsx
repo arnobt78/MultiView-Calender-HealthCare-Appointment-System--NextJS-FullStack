@@ -84,7 +84,7 @@ function RichToast({
       <div className="flex items-start gap-3">
         <span
           className={cn(
-            "mt-0.5 inline-flex size-8 shrink-0 items-center justify-center rounded-xl border",
+            " inline-flex size-8 shrink-0 items-center justify-center rounded-xl border",
             styles.iconWrap
           )}
         >

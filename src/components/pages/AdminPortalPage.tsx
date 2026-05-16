@@ -103,7 +103,7 @@ function KpiCard({ label, value, icon, color, isLoading, sub }: KpiCardProps) {
         ) : (
           <p className="text-2xl font-bold tracking-tight">{value ?? 0}</p>
         )}
-        {sub && <p className="text-[10px] text-muted-foreground mt-0.5">{sub}</p>}
+        {sub && <p className="text-[10px] text-muted-foreground ">{sub}</p>}
       </div>
     </div>
   );
@@ -123,14 +123,14 @@ function RecentAppointmentRow({ appt }: { appt: Appointment & { patient_name?: s
         <p className="text-[10px] text-muted-foreground">{format(start, "MMM d")}</p>
         <p className="text-xs font-semibold">{format(start, "HH:mm")}</p>
       </div>
-      <div className="mt-0.5 flex-shrink-0 h-2 w-2 rounded-full bg-primary/60" />
+      <div className=" flex-shrink-0 h-2 w-2 rounded-full bg-primary/60" />
       <div className="flex-1 min-w-0">
         <EntityTitleLink
           href={appointmentDetailHref("admin", appt.id)}
           label={appt.title}
           className="text-sm font-medium block truncate"
         />
-        <div className="flex items-center gap-2 flex-wrap mt-0.5">
+        <div className="flex items-center gap-2 flex-wrap ">
           {(appt as { patient_name?: string | null }).patient_name && (
             <span className="text-[11px] text-muted-foreground">
               Patient: {(appt as { patient_name?: string | null }).patient_name}
@@ -181,7 +181,7 @@ function DoctorSummaryCard({ doctor }: { doctor: DoctorRow }) {
             className="text-sm font-semibold block truncate"
           />
           {doctor.specialty && (
-            <DoctorSpecialtyBadge specialty={doctor.specialty} className="mt-0.5" />
+            <DoctorSpecialtyBadge specialty={doctor.specialty} className="" />
           )}
         </div>
         <Badge variant="secondary" className="ml-auto text-[10px] flex-shrink-0">
@@ -262,7 +262,7 @@ export default function AdminPortalPage({ initialData }: AdminPortalPageProps) {
       <div className={cn("p-6", GLASS.blue)}>
         <div className="mb-1">
           <h1 className="text-2xl font-bold tracking-tight">Admin Portal</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
+          <p className="text-sm text-muted-foreground ">
             Clinic-wide overview · {format(new Date(), "EEEE, MMMM d yyyy")}
           </p>
         </div>

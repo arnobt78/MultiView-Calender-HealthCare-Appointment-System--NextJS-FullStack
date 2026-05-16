@@ -98,6 +98,8 @@ export const queryKeys = {
     byDoctor: (doctorId: string) => ["app", "appointment-types", doctorId] as const,
     /** Global types shared across all doctors (user_id = null) */
     global: ["app", "appointment-types", "global"] as const,
+    /** Merged global + deduped additional types for `/services` */
+    catalog: ["app", "appointment-types", "catalog"] as const,
   },
   /** Slot picker — invalidate tree on appointment changes */
   availability: {

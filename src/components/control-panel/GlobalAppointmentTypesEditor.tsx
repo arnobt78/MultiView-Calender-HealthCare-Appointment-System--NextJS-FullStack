@@ -18,6 +18,7 @@ import {
   useGlobalAppointmentTypes,
   type AppointmentTypeApiRow,
 } from "@/hooks/useAppointmentTypes";
+import { APPOINTMENT_TYPE_COPY } from "@/lib/appointment-type-copy";
 
 export function GlobalAppointmentTypesEditor() {
   const { user } = useAuth();
@@ -84,8 +85,7 @@ export function GlobalAppointmentTypesEditor() {
   return (
     <div className="space-y-4">
       <p className="text-xs text-muted-foreground leading-relaxed">
-        Global templates apply to every doctor&apos;s slot picker alongside their own types. Only admins may
-        add, edit, or remove rows here — doctors manage per-doctor types on their profile screen.
+        {APPOINTMENT_TYPE_COPY.globalSectionBlurb}
       </p>
 
       {!isAdmin ? (

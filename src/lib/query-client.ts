@@ -137,6 +137,8 @@ export async function invalidateUsersAndAuth(queryClient: QueryClient) {
     queryClient.invalidateQueries({ queryKey: queryKeys.users.all }),
     queryClient.invalidateQueries({ queryKey: queryKeys.auth.me }),
     queryClient.invalidateQueries({ queryKey: queryKeys.doctors.all }),
+    /** Doctor display_name / specialty on `/services` catalog cards */
+    queryClient.invalidateQueries({ queryKey: queryKeys.appointmentTypes.catalog }),
   ]);
 }
 
@@ -187,7 +189,7 @@ export async function invalidateAppointmentTypesData(queryClient: QueryClient) {
 
 /**
  * Single choke-point after **AppointmentType** row changes (REST CRUD or appointment overlap shifts):
- * - `appointmentTypes.*` lists (portal, compose dialog, global cards)
+ * - `appointmentTypes.*` lists (portal, compose dialog, global cards, `/services` catalog)
  * - `availability` slot math (duration / buffers / intervals)
  * - `doctors.all` directory (`GET /api/doctors` embeds `appointment_types` for /services + Doctor Management)
  */

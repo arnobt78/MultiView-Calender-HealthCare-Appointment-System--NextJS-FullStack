@@ -205,7 +205,7 @@ export default async function DoctorDetailPage({ params }: PageProps) {
                 <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 border border-emerald-200">
                   <Clock className="h-3.5 w-3.5 text-emerald-600" />
                 </span>
-                Appointment Types
+                Additional Appointment Types
                 <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 font-bold ml-1">
                   {raw.appointment_types_owned.length}
                 </Badge>

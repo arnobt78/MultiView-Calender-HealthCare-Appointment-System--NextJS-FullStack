@@ -17,6 +17,7 @@ import {
   useAppointmentTypesForDoctor,
   type AppointmentTypeApiRow,
 } from "@/hooks/useAppointmentTypes";
+import { APPOINTMENT_TYPE_COPY } from "@/lib/appointment-type-copy";
 
 type Props = {
   /** Prisma `users.id` for the doctor profile being viewed — POST `user_id` must match this value. */
@@ -74,24 +75,25 @@ export function DoctorAppointmentTypesEditor({ doctorId }: Props) {
     return (
       <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
         <Loader2 className="h-4 w-4 animate-spin shrink-0" aria-hidden />
-        Loading appointment types…
+        Loading additional appointment types…
       </div>
     );
   }
 
   if (isError) {
-    return <p className="py-2 text-sm text-red-600">Could not load appointment types.</p>;
+    return <p className="py-2 text-sm text-red-600">Could not load additional appointment types.</p>;
   }
 
   return (
     <div className="space-y-4">
       <p className="text-xs text-muted-foreground leading-relaxed">
-        Custom visit lengths power the Cal-style slot engine (`/api/availability/slots`). Global templates
-        (`user_id` null) still apply to this doctor but are edited outside this panel.
+        {APPOINTMENT_TYPE_COPY.additionalSectionBlurb}
       </p>
 
       {ownedTypes.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No custom appointment types yet — add one below.</p>
+        <p className="text-sm text-muted-foreground">
+          No additional appointment types yet — add your first visit type below.
+        </p>
       ) : (
         <ul className="space-y-2">
           {ownedTypes.map((t) => (

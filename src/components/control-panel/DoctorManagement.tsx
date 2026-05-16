@@ -124,7 +124,7 @@ function DoctorStatCards({ doctors, isLoading }: { doctors: DoctorRow[]; isLoadi
                 ? <Skeleton className="h-5 w-8 rounded mb-1" />
                 : <p className={cn("text-lg font-bold leading-none", valueCls)}>{value}</p>
               }
-              <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
+              <p className="text-xs text-muted-foreground ">{label}</p>
             </div>
           </CardContent>
         </Card>

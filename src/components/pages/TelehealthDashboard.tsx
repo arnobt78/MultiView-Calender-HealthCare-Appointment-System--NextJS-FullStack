@@ -133,7 +133,7 @@ export default function TelehealthDashboard() {
                   </div>
                   {nextAppt.notes && (
                     <div className="flex items-start gap-2">
-                      <FileText className="h-4 w-4 mt-0.5" />
+                      <FileText className="h-4 w-4 " />
                       <span className="line-clamp-2" title={nextAppt.notes}>{nextAppt.notes}</span>
                     </div>
                   )}

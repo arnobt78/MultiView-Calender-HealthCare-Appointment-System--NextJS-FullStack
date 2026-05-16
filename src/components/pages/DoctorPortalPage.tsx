@@ -147,13 +147,13 @@ function AppointmentRow({ appt }: { appt: Appointment }) {
           className="text-sm font-medium block truncate"
         />
         {appt.location && (
-          <p className="flex items-center gap-1 text-[11px] text-muted-foreground mt-0.5">
+          <p className="flex items-center gap-1 text-[11px] text-muted-foreground ">
             <MapPin className="h-3 w-3" />
             {appt.location}
           </p>
         )}
         {appt.chief_complaint && (
-          <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
+          <p className="text-[11px] text-muted-foreground  truncate">
             {appt.chief_complaint}
           </p>
         )}
@@ -384,13 +384,13 @@ export default function DoctorPortalPage({ initialData }: DoctorPortalPageProps)
                   {doctor?.display_name ?? "Doctor"}
                 </h1>
                 {doctor?.specialty && (
-                  <p className="flex items-center gap-1.5 text-sm text-muted-foreground mt-0.5">
+                  <p className="flex items-center gap-1.5 text-sm text-muted-foreground ">
                     <Stethoscope className="h-3.5 w-3.5" />
                     {doctor.specialty}
                   </p>
                 )}
                 {doctor?.department && (
-                  <p className="text-xs text-muted-foreground mt-0.5">{doctor.department}</p>
+                  <p className="text-xs text-muted-foreground ">{doctor.department}</p>
                 )}
               </>
             )}
@@ -592,7 +592,7 @@ export default function DoctorPortalPage({ initialData }: DoctorPortalPageProps)
                       </p>
                       <p className="text-xs font-semibold">{format(start, "HH:mm")}</p>
                     </div>
-                    <div className="mt-0.5 flex-shrink-0 h-2 w-2 rounded-full bg-indigo-400/60" />
+                    <div className=" flex-shrink-0 h-2 w-2 rounded-full bg-indigo-400/60" />
                     <div className="flex-1 min-w-0">
                       <RoleEntityLink
                         kind="appointment"

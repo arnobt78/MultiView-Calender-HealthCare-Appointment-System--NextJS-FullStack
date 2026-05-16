@@ -208,7 +208,7 @@ export function Register() {
                   </div>
                   <div>
                     <p className="text-xs font-semibold text-white/90 leading-snug">{title}</p>
-                    <p className="text-[11px] text-teal-200/60 leading-relaxed hidden xl:block mt-0.5">{description}</p>
+                    <p className="text-[11px] text-teal-200/60 leading-relaxed hidden xl:block ">{description}</p>
                   </div>
                 </motion.div>
               ))}

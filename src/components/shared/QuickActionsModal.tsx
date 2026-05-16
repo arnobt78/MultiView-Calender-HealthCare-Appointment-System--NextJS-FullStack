@@ -195,7 +195,7 @@ export default function QuickActionsModal() {
               </span>
               <div className="min-w-0 flex-1">
                 <p className="break-words text-sm font-medium leading-tight">{item.label}</p>
-                <p className="mt-0.5 break-words text-xs leading-tight text-muted-foreground">
+                <p className=" break-words text-xs leading-tight text-muted-foreground">
                   {item.description}
                 </p>
               </div>

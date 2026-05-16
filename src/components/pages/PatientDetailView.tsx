@@ -77,7 +77,7 @@ export default function PatientDetailView({ patientId }: { patientId: string }) 
 
             <div className="space-y-2 text-sm">
               <div className="flex items-start gap-3">
-                <Mail className="h-4 w-4 text-muted-foreground mt-0.5" />
+                <Mail className="h-4 w-4 text-muted-foreground " />
                 <div className="flex-1 overflow-hidden">
                   <p className="font-medium">Email</p>
                   <p className="text-muted-foreground truncate" title={patient.email || "N/A"}>
@@ -86,7 +86,7 @@ export default function PatientDetailView({ patientId }: { patientId: string }) 
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <Phone className="h-4 w-4 text-muted-foreground mt-0.5" />
+                <Phone className="h-4 w-4 text-muted-foreground " />
                 <div>
                   <p className="font-medium">Phone</p>
                   <p className="text-muted-foreground">
@@ -97,7 +97,7 @@ export default function PatientDetailView({ patientId }: { patientId: string }) 
               </div>
               {patient.birth_date && (
                 <div className="flex items-start gap-3">
-                  <User className="h-4 w-4 text-muted-foreground mt-0.5" />
+                  <User className="h-4 w-4 text-muted-foreground " />
                   <div>
                     <p className="font-medium">Date of Birth</p>
                     <p className="text-muted-foreground">
@@ -160,7 +160,7 @@ export default function PatientDetailView({ patientId }: { patientId: string }) 
                           </div>
                           {appt.notes && (
                             <div className="text-sm bg-background p-2 rounded-2xl border text-muted-foreground mt-2 inline-flex items-start gap-2 w-full">
-                              <FileText className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                              <FileText className="h-3.5 w-3.5  shrink-0" />
                               <p className="line-clamp-2">{appt.notes}</p>
                             </div>
                           )}

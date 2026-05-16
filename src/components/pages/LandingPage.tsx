@@ -368,7 +368,7 @@ function AppointmentDeck() {
                           </div>
                           <div className="text-right shrink-0">
                             <p className={`text-xs font-bold ${apt.ic}`}>{apt.time}</p>
-                            <span className="inline-block mt-0.5 text-[10px] px-1.5 py-0.5 rounded-full bg-white/10 text-white/60">
+                            <span className="inline-block  text-[10px] px-1.5 py-0.5 rounded-full bg-white/10 text-white/60">
                               {apt.status}
                             </span>
                           </div>
@@ -766,7 +766,7 @@ export default function LandingPage() {
                 >
                   <p className="text-[10px] uppercase tracking-[0.2em] text-white/70">{s.label}</p>
                   <p className="mt-1.5 text-2xl font-black text-white">{s.value}</p>
-                  <p className="mt-0.5 text-[10px] leading-snug text-white/70">{s.sub}</p>
+                  <p className=" text-[10px] leading-snug text-white/70">{s.sub}</p>
                 </motion.div>
               ))}
             </motion.div>
@@ -1021,7 +1021,7 @@ export default function LandingPage() {
                       </span>
                       <div>
                         <p className="text-sm font-semibold text-white">{ABOUT_CARDS[aboutCardIdx].title}</p>
-                        <p className="mt-0.5 text-xs text-white/55">{ABOUT_CARDS[aboutCardIdx].desc}</p>
+                        <p className=" text-xs text-white/55">{ABOUT_CARDS[aboutCardIdx].desc}</p>
                       </div>
                     </div>
                   </div>

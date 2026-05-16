@@ -79,7 +79,7 @@ export function PatientStatCard({
             ) : null}
           </div>
           {subtitle ? (
-            <p className="mt-0.5 text-xs leading-snug text-muted-foreground">{subtitle}</p>
+            <p className=" text-xs leading-snug text-muted-foreground">{subtitle}</p>
           ) : null}
         </div>
       </div>

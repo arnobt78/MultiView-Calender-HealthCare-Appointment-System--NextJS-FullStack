@@ -40,7 +40,7 @@ export function DoctorIdentityRow({
 
   return (
     <div className={cn("flex items-start gap-2 min-w-0", className)}>
-      <DoctorAvatar doctor={doctor} sizeClassName={avatarSize} className="mt-0.5" />
+      <DoctorAvatar doctor={doctor} sizeClassName={avatarSize} className="" />
       {linkKind === "none" ? (
         <div className="min-w-0 flex flex-col gap-1">
           <span

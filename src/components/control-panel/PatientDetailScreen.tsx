@@ -537,23 +537,23 @@ export function PatientDetailScreen({
                 </div>
                 <div>
                   <FieldLabel icon={Fingerprint}>Patient ID</FieldLabel>
-                  <dd className="mt-0.5 font-mono text-xs break-all text-gray-700">{p!.id}</dd>
+                  <dd className=" font-mono text-xs break-all text-gray-700">{p!.id}</dd>
                 </div>
                 <div>
                   <FieldLabel icon={Calendar}>Birth Date</FieldLabel>
-                  <dd className="mt-0.5 text-gray-700">{p!.birth_date ?? "—"}</dd>
+                  <dd className=" text-gray-700">{p!.birth_date ?? "—"}</dd>
                 </div>
                 <div>
                   <FieldLabel icon={Activity}>Care Tier (1–10)</FieldLabel>
-                  <dd className="mt-0.5 text-gray-700">{getPatientCareLevelLabel(p!.care_level)}</dd>
+                  <dd className=" text-gray-700">{getPatientCareLevelLabel(p!.care_level)}</dd>
                 </div>
                 <div>
                   <FieldLabel icon={User}>Pronoun</FieldLabel>
-                  <dd className="mt-0.5 text-gray-700">{p!.pronoun ?? "—"}</dd>
+                  <dd className=" text-gray-700">{p!.pronoun ?? "—"}</dd>
                 </div>
                 <div className="sm:col-span-2">
                   <FieldLabel icon={Stethoscope}>Primary Doctor</FieldLabel>
-                  <dd className="mt-0.5 text-gray-700">
+                  <dd className=" text-gray-700">
                     {p!.primary_doctor_id && p!.primary_doctor_display?.trim() ? (
                       <DoctorLinkStack
                         doctorId={p!.primary_doctor_id}
@@ -570,7 +570,7 @@ export function PatientDetailScreen({
                 </div>
                 <div className="sm:col-span-2">
                   <FieldLabel icon={Share2}>Referral</FieldLabel>
-                  <dd className="mt-0.5 text-gray-700">
+                  <dd className=" text-gray-700">
                     {cp && typeof cp === "object" && typeof cp.referral_source === "string"
                       ? PATIENT_REFERRAL_SOURCES.find((x) => x.value === cp.referral_source)?.label ??
                       cp.referral_source
@@ -582,7 +582,7 @@ export function PatientDetailScreen({
                 </div>
                 <div>
                   <FieldLabel icon={AlertCircle}>Allergies</FieldLabel>
-                  <dd className="mt-0.5 text-gray-700">
+                  <dd className=" text-gray-700">
                     {cp && typeof cp === "object" && Array.isArray(cp.allergies)
                       ? cp.allergies.join(", ")
                       : "—"}
@@ -590,7 +590,7 @@ export function PatientDetailScreen({
                 </div>
                 <div className="sm:col-span-2">
                   <FieldLabel icon={FileText}>Clinical Notes</FieldLabel>
-                  <dd className="mt-0.5 whitespace-pre-wrap text-gray-700">
+                  <dd className=" whitespace-pre-wrap text-gray-700">
                     {cp && typeof cp === "object" && typeof cp.notes === "string" ? cp.notes : "—"}
                   </dd>
                 </div>
@@ -647,94 +647,94 @@ export function PatientDetailScreen({
                             "—";
                           const { typeLine, patientLine } = appointmentTitleLines(a, patientDisplayName);
                           return (
-                          <TableRow key={a.id}>
-                            {/* Title — visit type + patient on two lines; link keeps full `title` for accessibility */}
-                            <TableCell>
-                              <div className="min-w-0">
-                                <EntityTitleLink
-                                  href={appointmentDetailHref(viewerRole, a.id)}
-                                  label={typeLine}
-                                  className="block truncate text-sm font-medium"
-                                />
-                                <p className="truncate text-xs text-gray-500">{patientLine}</p>
-                              </div>
-                            </TableCell>
-                            {/* When — localized date on row 1, time range on row 2 */}
-                            <TableCell>
-                              {a.start ? (
-                                <div className="min-w-0 whitespace-nowrap">
-                                  <p className="text-xs font-medium text-gray-700">
-                                    {format(new Date(a.start), "PP")}
-                                  </p>
-                                  <p className="text-xs text-gray-500">
-                                    {format(new Date(a.start), "p")}
-                                    {a.end ? ` – ${format(new Date(a.end), "p")}` : ""}
-                                  </p>
-                                </div>
-                              ) : (
-                                <span className="text-xs text-gray-500">—</span>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              <CategoryCell label={a.category_label} color={a.category_color} />
-                            </TableCell>
-                            {/* B3 deferred: DB column remains `user_id`; API exposes calendar owner here (B2 snapshot fields). */}
-                            <TableCell>
-                              {a.calendar_owner_id && a.calendar_owner_display ? (
+                            <TableRow key={a.id}>
+                              {/* Title — visit type + patient on two lines; link keeps full `title` for accessibility */}
+                              <TableCell>
                                 <div className="min-w-0">
                                   <EntityTitleLink
-                                    href={doctorDetailHref(viewerRole, a.calendar_owner_id)}
-                                    label={a.calendar_owner_display}
+                                    href={appointmentDetailHref(viewerRole, a.id)}
+                                    label={typeLine}
+                                    className="block truncate text-sm font-medium"
                                   />
-                                  {a.calendar_owner_email && (
-                                    <p className="truncate text-xs text-gray-500">{a.calendar_owner_email}</p>
-                                  )}
+                                  <p className="truncate text-xs text-gray-500">{patientLine}</p>
                                 </div>
-                              ) : (
-                                <span className="text-xs text-gray-500">—</span>
-                              )}
-                            </TableCell>
-                            {/* B2: `doctor_*` = `treating_physician_id ?? user_id` (see `appointment-display-doctor.ts`). */}
-                            <TableCell>
-                              {a.doctor_id && a.doctor_display ? (
-                                <div className="min-w-0">
-                                  <DoctorLinkStack
-                                    doctorId={a.doctor_id}
-                                    name={a.doctor_display}
-                                    email={a.doctor_email}
-                                    specialty={
-                                      a.doctor_specialty ??
-                                      doctorById.get(a.doctor_id)?.specialty ??
-                                      null
-                                    }
-                                    linkKind={isAdminRole(viewerRole) ? "admin-cp" : "role"}
-                                  />
-                                  {snap.data?.patient?.primary_doctor_id &&
-                                    a.doctor_id &&
-                                    snap.data.patient.primary_doctor_id !== a.doctor_id &&
-                                    snap.data.patient.primary_doctor_display?.trim() && (
-                                      <p className="mt-1.5 text-[10px] leading-snug text-gray-600">
-                                        Primary care:{" "}
-                                        <EntityTitleLink
-                                          href={doctorDetailHref(
-                                            viewerRole,
-                                            snap.data.patient.primary_doctor_id
-                                          )}
-                                          label={snap.data.patient.primary_doctor_display.trim()}
-                                          className="font-normal"
-                                        />
-                                      </p>
+                              </TableCell>
+                              {/* When — localized date on row 1, time range on row 2 */}
+                              <TableCell>
+                                {a.start ? (
+                                  <div className="min-w-0 whitespace-nowrap">
+                                    <p className="text-xs font-medium text-gray-700">
+                                      {format(new Date(a.start), "PP")}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                      {format(new Date(a.start), "p")}
+                                      {a.end ? ` – ${format(new Date(a.end), "p")}` : ""}
+                                    </p>
+                                  </div>
+                                ) : (
+                                  <span className="text-xs text-gray-500">—</span>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                <CategoryCell label={a.category_label} color={a.category_color} />
+                              </TableCell>
+                              {/* B3 deferred: DB column remains `user_id`; API exposes calendar owner here (B2 snapshot fields). */}
+                              <TableCell>
+                                {a.calendar_owner_id && a.calendar_owner_display ? (
+                                  <div className="min-w-0">
+                                    <EntityTitleLink
+                                      href={doctorDetailHref(viewerRole, a.calendar_owner_id)}
+                                      label={a.calendar_owner_display}
+                                    />
+                                    {a.calendar_owner_email && (
+                                      <p className="truncate text-xs text-gray-500">{a.calendar_owner_email}</p>
                                     )}
-                                </div>
-                              ) : (
-                                <span className="text-xs text-gray-500">—</span>
-                              )}
-                            </TableCell>
-                            <TableCell className="text-xs text-gray-700">{a.location ?? "—"}</TableCell>
-                            <TableCell>
-                              <AppointmentStatusBadge status={a.status} />
-                            </TableCell>
-                          </TableRow>
+                                  </div>
+                                ) : (
+                                  <span className="text-xs text-gray-500">—</span>
+                                )}
+                              </TableCell>
+                              {/* B2: `doctor_*` = `treating_physician_id ?? user_id` (see `appointment-display-doctor.ts`). */}
+                              <TableCell>
+                                {a.doctor_id && a.doctor_display ? (
+                                  <div className="min-w-0">
+                                    <DoctorLinkStack
+                                      doctorId={a.doctor_id}
+                                      name={a.doctor_display}
+                                      email={a.doctor_email}
+                                      specialty={
+                                        a.doctor_specialty ??
+                                        doctorById.get(a.doctor_id)?.specialty ??
+                                        null
+                                      }
+                                      linkKind={isAdminRole(viewerRole) ? "admin-cp" : "role"}
+                                    />
+                                    {snap.data?.patient?.primary_doctor_id &&
+                                      a.doctor_id &&
+                                      snap.data.patient.primary_doctor_id !== a.doctor_id &&
+                                      snap.data.patient.primary_doctor_display?.trim() && (
+                                        <p className="mt-1.5 text-[10px] leading-snug text-gray-600">
+                                          Primary care:{" "}
+                                          <EntityTitleLink
+                                            href={doctorDetailHref(
+                                              viewerRole,
+                                              snap.data.patient.primary_doctor_id
+                                            )}
+                                            label={snap.data.patient.primary_doctor_display.trim()}
+                                            className="font-normal"
+                                          />
+                                        </p>
+                                      )}
+                                  </div>
+                                ) : (
+                                  <span className="text-xs text-gray-500">—</span>
+                                )}
+                              </TableCell>
+                              <TableCell className="text-xs text-gray-700">{a.location ?? "—"}</TableCell>
+                              <TableCell>
+                                <AppointmentStatusBadge status={a.status} />
+                              </TableCell>
+                            </TableRow>
                           );
                         })}
                         {(snap.data?.appointments ?? []).length === 0 && (

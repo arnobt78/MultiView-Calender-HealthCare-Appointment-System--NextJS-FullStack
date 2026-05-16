@@ -412,7 +412,7 @@ export function BookAppointmentDialog({ preselectedDoctorId, trigger }: BookAppo
                           </Badge>
                         </div>
                         {t.buffer_before_minutes > 0 || t.buffer_after_minutes > 0 ? (
-                          <p className="text-xs text-muted-foreground mt-0.5">
+                          <p className="text-xs text-muted-foreground ">
                             Buffer: {t.buffer_before_minutes}m before · {t.buffer_after_minutes}m after
                           </p>
                         ) : null}
@@ -817,7 +817,7 @@ function AppointmentTimeline({ appointments, loading }: { appointments: ApptRow[
                             </div>
                             {appt.notes && (
                               <p className="flex items-start gap-1 text-xs text-gray-600">
-                                <FileText className="mt-0.5 h-3 w-3 shrink-0 text-gray-500" />
+                                <FileText className=" h-3 w-3 shrink-0 text-gray-500" />
                                 {appt.notes}
                               </p>
                             )}
@@ -1001,7 +1001,7 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
                             {patient.firstname} {patient.lastname}
                           </p>
                           {patient.email && (
-                            <p className="mt-0.5 truncate text-xs text-gray-600">{patient.email}</p>
+                            <p className=" truncate text-xs text-gray-600">{patient.email}</p>
                           )}
                           {patient.pronoun && (
                             <p className="text-xs text-gray-600">{patient.pronoun}</p>
@@ -1041,7 +1041,7 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
                       <dl className="space-y-2.5 text-xs">
                         {/* Patient ID */}
                         <div className="flex items-start gap-2.5">
-                          <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border bg-muted/60">
+                          <span className=" flex h-6 w-6 shrink-0 items-center justify-center rounded-full border bg-muted/60">
                             <Hash className="h-3 w-3 text-gray-500" />
                           </span>
                           <div className="min-w-0 flex-1">
@@ -1082,7 +1082,7 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
 
                         {/* Primary Doctor — prefer serializePatient flat fields; tolerate legacy nested primary_doctor from older API responses until all callers align. */}
                         <div className="flex items-start gap-2.5">
-                          <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-sky-100 bg-sky-50">
+                          <span className=" flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-sky-100 bg-sky-50">
                             <Stethoscope className="h-3 w-3 text-sky-500" />
                           </span>
                           <div className="min-w-0">
@@ -1125,7 +1125,7 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
 
                         {/* Referral — always shown */}
                         <div className="flex items-start gap-2.5">
-                          <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-teal-100 bg-teal-50">
+                          <span className=" flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-teal-100 bg-teal-50">
                             <GitBranch className="h-3 w-3 text-teal-500" />
                           </span>
                           <div>
@@ -1140,7 +1140,7 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
 
                         {/* Allergies */}
                         <div className="flex items-start gap-2.5">
-                          <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-amber-100 bg-amber-50">
+                          <span className=" flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-amber-100 bg-amber-50">
                             <AlertTriangle className="h-3 w-3 text-amber-500" />
                           </span>
                           <div>
@@ -1155,7 +1155,7 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
 
                         {/* Clinical Notes */}
                         <div className="flex items-start gap-2.5">
-                          <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50">
+                          <span className=" flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50">
                             <FileText className="h-3 w-3 text-slate-500" />
                           </span>
                           <div>

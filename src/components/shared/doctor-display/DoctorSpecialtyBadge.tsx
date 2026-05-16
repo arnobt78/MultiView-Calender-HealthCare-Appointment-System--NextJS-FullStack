@@ -11,7 +11,7 @@ type DoctorSpecialtyBadgeProps = {
   showIcon?: boolean;
 };
 
-/** Glassmorphic specialty pill — color keyed by medical specialty via DoctorDisplayContext. */
+/** Glassmorphic specialty pill — color keyed by specialty; normal weight (not medium/bold) app-wide. */
 export function DoctorSpecialtyBadge({
   specialty,
   className,
@@ -24,7 +24,7 @@ export function DoctorSpecialtyBadge({
     <span
       className={cn(
         getSpecialtyGlassClassName(specialty),
-        "inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium shrink-0",
+        "inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-normal shrink-0",
         className
       )}
     >

@@ -18,6 +18,12 @@
  * failure never crashes the page — the client falls back to its normal fetch.
  */
 
+import {
+  buildServiceCatalog,
+  type AdditionalCatalogInput,
+  type GlobalCatalogInput,
+  type ServiceCatalogRow,
+} from "@/lib/appointment-service-catalog";
 import { prisma } from "@/lib/prisma";
 import { redis } from "@/lib/redis";
 import {
@@ -442,6 +448,70 @@ export async function prefetchGlobalAppointmentTypes(): Promise<GlobalAppointmen
       orderBy: [{ duration_minutes: "asc" }, { name: "asc" }],
     });
     return types;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Mirrors GET /api/appointment-types/catalog — global + deduped additional types for `/services`.
+ * Cache key: queryKeys.appointmentTypes.catalog → `{ services: ServiceCatalogRow[] }`.
+ */
+export async function prefetchAppointmentServiceCatalog(): Promise<ServiceCatalogRow[] | null> {
+  try {
+    const typeSelect = {
+      id: true,
+      name: true,
+      description: true,
+      duration_minutes: true,
+      slot_interval_minutes: true,
+      is_telehealth: true,
+      user_id: true,
+    } as const;
+
+    const [globalRows, additionalRaw] = await Promise.all([
+      prisma.appointmentType.findMany({
+        where: { user_id: null, is_active: true },
+        select: typeSelect,
+        orderBy: [{ duration_minutes: "asc" }, { name: "asc" }],
+      }),
+      prisma.appointmentType.findMany({
+        where: { user_id: { not: null }, is_active: true },
+        select: {
+          ...typeSelect,
+          user: { select: { id: true, display_name: true, email: true, specialty: true } },
+        },
+        orderBy: [{ duration_minutes: "asc" }, { name: "asc" }],
+      }),
+    ]);
+
+    const globals: GlobalCatalogInput[] = globalRows.map((g) => ({
+      id: g.id,
+      name: g.name,
+      description: g.description,
+      duration_minutes: g.duration_minutes,
+      slot_interval_minutes: g.slot_interval_minutes,
+      is_telehealth: g.is_telehealth,
+    }));
+
+    const additionals: AdditionalCatalogInput[] = additionalRaw
+      .filter((r): r is typeof r & { user_id: string; user: NonNullable<typeof r.user> } =>
+        Boolean(r.user_id && r.user)
+      )
+      .map((r) => ({
+        id: r.id,
+        name: r.name,
+        description: r.description,
+        duration_minutes: r.duration_minutes,
+        slot_interval_minutes: r.slot_interval_minutes,
+        is_telehealth: r.is_telehealth,
+        user_id: r.user_id,
+        owner_display_name: r.user.display_name,
+        owner_email: r.user.email,
+        owner_specialty: r.user.specialty,
+      }));
+
+    return buildServiceCatalog(globals, additionals);
   } catch {
     return null;
   }

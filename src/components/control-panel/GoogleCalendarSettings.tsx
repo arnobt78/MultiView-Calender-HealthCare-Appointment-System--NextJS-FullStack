@@ -200,10 +200,10 @@ export default function GoogleCalendarSettings() {
       {!loading && isConnected && (
         <Card className="border-blue-200 bg-blue-50/40 rounded-[28px]">
           <CardContent className="pt-4 flex items-start gap-3">
-            <RefreshCw className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
+            <RefreshCw className="h-5 w-5 text-blue-600  shrink-0" />
             <div>
               <p className="font-medium text-blue-800 text-sm">Auto-sync enabled</p>
-              <p className="text-xs text-blue-700 mt-0.5">
+              <p className="text-xs text-blue-700 ">
                 New appointments are automatically synced to your Google Calendar when created.
                 Use the sync button on individual appointments for manual sync.
               </p>

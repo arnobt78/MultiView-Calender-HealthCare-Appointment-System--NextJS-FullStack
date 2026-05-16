@@ -102,23 +102,23 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
           <dl className="grid gap-3 text-sm sm:grid-cols-2">
             <div>
               <dt className="font-medium text-muted-foreground">id</dt>
-              <dd className="font-mono break-all text-xs mt-0.5">{org.id}</dd>
+              <dd className="font-mono break-all text-xs ">{org.id}</dd>
             </div>
             <div>
               <dt className="font-medium text-muted-foreground">created_at</dt>
-              <dd className="mt-0.5">{new Date(org.created_at).toLocaleString()}</dd>
+              <dd className="">{new Date(org.created_at).toLocaleString()}</dd>
             </div>
             <div>
               <dt className="font-medium text-muted-foreground">name</dt>
-              <dd className="mt-0.5 font-semibold">{org.name}</dd>
+              <dd className=" font-semibold">{org.name}</dd>
             </div>
             <div>
               <dt className="font-medium text-muted-foreground">slug</dt>
-              <dd className="mt-0.5 font-mono text-xs">{org.slug}</dd>
+              <dd className=" font-mono text-xs">{org.slug}</dd>
             </div>
             <div>
               <dt className="font-medium text-muted-foreground">owner_user_id</dt>
-              <dd className="mt-0.5 font-mono text-xs break-all">
+              <dd className=" font-mono text-xs break-all">
                 {userMap[org.owner_user_id]?.display_name ??
                   userMap[org.owner_user_id]?.email ??
                   org.owner_user_id}

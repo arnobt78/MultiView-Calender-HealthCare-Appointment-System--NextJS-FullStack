@@ -1,7 +1,7 @@
 /**
  * /services — Doctors & Appointment Types directory
  *
- * Server component: prefetches doctors and global appointment types on the server
+ * Server component: prefetches doctors and merged service catalog on the server
  * so the page renders without a loading flash. Data is passed as initialXxx props
  * and seeded into the React Query cache via useLayoutEffect in the client component.
  */
@@ -10,7 +10,12 @@ import type { Metadata } from "next";
 import { getSessionUser } from "@/lib/session";
 import { redirect } from "next/navigation";
 import ServicesPage from "@/components/pages/ServicesPage";
-import { prefetchDoctors, prefetchGlobalAppointmentTypes, type DoctorPrefetchRow, type GlobalAppointmentType } from "@/lib/server-prefetch";
+import {
+  prefetchAppointmentServiceCatalog,
+  prefetchDoctors,
+  type DoctorPrefetchRow,
+} from "@/lib/server-prefetch";
+import type { ServiceCatalogRow } from "@/lib/appointment-service-catalog";
 
 export const metadata: Metadata = {
   title: "Doctors & Services",
@@ -21,15 +26,15 @@ export default async function Page() {
   const sessionUser = await getSessionUser();
   if (!sessionUser) redirect("/login");
 
-  const [doctorsResult, initialGlobalTypes] = await Promise.all([
+  const [doctorsResult, initialServiceCatalog] = await Promise.all([
     prefetchDoctors(),
-    prefetchGlobalAppointmentTypes(),
+    prefetchAppointmentServiceCatalog(),
   ]);
 
   return (
     <ServicesPage
       initialDoctors={(doctorsResult?.doctors ?? undefined) as DoctorPrefetchRow[] | undefined}
-      initialGlobalTypes={(initialGlobalTypes ?? undefined) as GlobalAppointmentType[] | undefined}
+      initialServiceCatalog={(initialServiceCatalog ?? undefined) as ServiceCatalogRow[] | undefined}
     />
   );
 }

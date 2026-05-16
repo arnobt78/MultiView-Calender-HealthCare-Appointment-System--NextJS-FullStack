@@ -21,7 +21,7 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Prism
 - **API:** `GET /api/doctors` → specialty, bio, image, `doctor_availabilities`, `appointment_types_owned`, `patient_count` (`queryKeys.doctors.all`).
 - **Provider:** `DoctorDisplayProvider` (`src/context/DoctorDisplayContext.tsx`) in `AppProviders` — specialty glass classes + robohash helper (no extra network).
 - **Components:** `src/components/shared/doctor-display/*` — badges, avatars, `DoctorIdentityRow`, `DoctorLinkStack`, `DoctorCardHeroImage`, availability groups; `ServicesDoctorFilters` for client-side grid filters.
-- **Layout:** specialty badge always on its own line below name/email (`showIcon` default true). `/services` hero uses `object-contain` (no head crop); badge is in the card body under email, not on the image.
+- **Layout:** specialty badge always on its own line below name/email (`showIcon` default true). `/services` hero uses full-bleed cover with blurred backdrop fill (uniform tiles, face-biased crop); badge is in the card body under email, not on the image.
 - **Card UX:** flush hero image, `RoleEntityLink` doctor name, copy-email, grouped availability rows, book CTA via `BookAppointmentDialog`. Date filter matches calendar chrome (left calendar icon, `pl-8`, `min-w-[155px]`).
 - **Global reuse:** patient primary-doctor column/detail (`DoctorLinkStack`), Related Appointments treating physician + `doctor_specialty` from snapshot API, portal doctor picker, appointment dialog treating-physician select, admin portal doctor cards, Doctor Management specialty column (`DoctorSpecialtyBadge`).
 - **Invalidation:** doctor PATCH / availability mutations → `invalidateUsersAndAuth` / `invalidateDoctorSchedule` → `doctors.all` refetch (no new keys).

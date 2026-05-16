@@ -95,19 +95,19 @@ export default async function InvoiceDetailPage({ params }: PageProps) {
           <dl className="grid gap-3 text-sm sm:grid-cols-2">
             <div>
               <dt className="font-medium text-muted-foreground">id</dt>
-              <dd className="font-mono break-all text-xs mt-0.5">{invoice.id}</dd>
+              <dd className="font-mono break-all text-xs ">{invoice.id}</dd>
             </div>
             <div>
               <dt className="font-medium text-muted-foreground">created_at</dt>
-              <dd className="mt-0.5">{new Date(invoice.created_at).toLocaleString()}</dd>
+              <dd className="">{new Date(invoice.created_at).toLocaleString()}</dd>
             </div>
             <div>
               <dt className="font-medium text-muted-foreground">amount</dt>
-              <dd className="mt-0.5 font-semibold text-lg">{amountFormatted}</dd>
+              <dd className=" font-semibold text-lg">{amountFormatted}</dd>
             </div>
             <div>
               <dt className="font-medium text-muted-foreground">status</dt>
-              <dd className="mt-0.5">
+              <dd className="">
                 <Badge className={STATUS_COLORS[invoice.status] ?? "bg-gray-100 text-gray-700"}>
                   {invoice.status}
                 </Badge>
@@ -115,29 +115,29 @@ export default async function InvoiceDetailPage({ params }: PageProps) {
             </div>
             <div>
               <dt className="font-medium text-muted-foreground">currency</dt>
-              <dd className="mt-0.5 uppercase font-mono">{invoice.currency}</dd>
+              <dd className=" uppercase font-mono">{invoice.currency}</dd>
             </div>
             <div>
               <dt className="font-medium text-muted-foreground">due_date</dt>
-              <dd className="mt-0.5">{invoice.due_date ?? "—"}</dd>
+              <dd className="">{invoice.due_date ?? "—"}</dd>
             </div>
             <div>
               <dt className="font-medium text-muted-foreground">paid_at</dt>
-              <dd className="mt-0.5">
+              <dd className="">
                 {invoice.paid_at ? new Date(invoice.paid_at).toLocaleString() : "—"}
               </dd>
             </div>
             <div>
               <dt className="font-medium text-muted-foreground">description</dt>
-              <dd className="mt-0.5">{invoice.description ?? "—"}</dd>
+              <dd className="">{invoice.description ?? "—"}</dd>
             </div>
             <div>
               <dt className="font-medium text-muted-foreground">user_id</dt>
-              <dd className="mt-0.5 font-mono text-xs break-all">{invoice.user_id}</dd>
+              <dd className=" font-mono text-xs break-all">{invoice.user_id}</dd>
             </div>
             <div>
               <dt className="font-medium text-muted-foreground">appointment_id</dt>
-              <dd className="mt-0.5">
+              <dd className="">
                 {invoice.appointment_id ? (
                   <Link
                     href={`/control-panel/appointments/${invoice.appointment_id}`}
