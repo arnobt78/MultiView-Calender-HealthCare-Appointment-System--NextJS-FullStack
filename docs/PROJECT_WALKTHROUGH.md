@@ -20,9 +20,10 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Prism
 - **Route:** `/services` — `src/app/services/page.tsx` SSR-prefetches doctors + global types; client `ServicesPage.tsx`.
 - **API:** `GET /api/doctors` → specialty, bio, image, `doctor_availabilities`, `appointment_types_owned`, `patient_count` (`queryKeys.doctors.all`).
 - **Provider:** `DoctorDisplayProvider` (`src/context/DoctorDisplayContext.tsx`) in `AppProviders` — specialty glass classes + robohash helper (no extra network).
-- **Components:** `src/components/shared/doctor-display/*` — badges, avatars, identity row, availability groups; `ServicesDoctorFilters` for client-side grid filters.
-- **Card UX:** flush hero image, glass specialty overlay, `RoleEntityLink` doctor name, copy-email, grouped availability rows, book CTA via `BookAppointmentDialog`.
-- **Global reuse:** patient primary-doctor column/detail, portal doctor picker, appointment dialog treating-physician select, admin portal doctor cards.
+- **Components:** `src/components/shared/doctor-display/*` — badges, avatars, `DoctorIdentityRow`, `DoctorLinkStack`, `DoctorCardHeroImage`, availability groups; `ServicesDoctorFilters` for client-side grid filters.
+- **Layout:** specialty badge always on its own line below name/email (`showIcon` default true). `/services` hero uses `object-contain` (no head crop); badge is in the card body under email, not on the image.
+- **Card UX:** flush hero image, `RoleEntityLink` doctor name, copy-email, grouped availability rows, book CTA via `BookAppointmentDialog`. Date filter matches calendar chrome (left calendar icon, `pl-8`, `min-w-[155px]`).
+- **Global reuse:** patient primary-doctor column/detail (`DoctorLinkStack`), Related Appointments treating physician + `doctor_specialty` from snapshot API, portal doctor picker, appointment dialog treating-physician select, admin portal doctor cards, Doctor Management specialty column (`DoctorSpecialtyBadge`).
 - **Invalidation:** doctor PATCH / availability mutations → `invalidateUsersAndAuth` / `invalidateDoctorSchedule` → `doctors.all` refetch (no new keys).
 
 ### Control panel entity split (users vs patients)
@@ -39,7 +40,7 @@ Run `npm run db:seed-test-user` after migrations: upserts three `users`, doctor 
 ### Patient pipeline (management + detail)
 
 - **Schema**: `Patient.clinical_profile` (`Json?`) — merged on `PUT /api/patients/[id]` (not fully replaced); **email is never updated from the client** on PUT (demo safety).
-- **API**: `GET /api/patients/[id]/snapshot` returns `{ patient, appointments, invoices }` for the patient detail "Related" sections (invoices matched via `appointment_id`).
+- **API**: `GET /api/patients/[id]/snapshot` returns `{ patient, appointments, invoices }` for the patient detail "Related" sections (invoices matched via `appointment_id`). Each appointment row includes `doctor_specialty` (resolved treating/owner user) for glass badges in the Treating physician column.
 - **React Query**: `queryKeys.patients.snapshot(id)`, hook `usePatientSnapshot(id)` (`src/hooks/usePatients.ts`). Prefix invalidation `queryKeys.patients.all` refreshes list, detail, and snapshot together.
 - **Invalidation wiring**: `invalidateAfterAppointmentMutation` calls `invalidateInvoicesAndOverview`, which now also invalidates `queryKeys.patients.all` (appointments + invoices affect patient aggregates). `invalidateSharingAndAppointments` invalidates `patients.all` so assignee changes refresh snapshots without navigation.
 - **UI**: `PatientListFiltersProvider` + status dropdown (all/active/inactive); `DataTable` optional `globalFilterFn` for multi-column search (name + email). Sortable headers via `DataTableColumnHeader`. Row menu: View (`?mode` default), Edit (`?mode=edit`). **`PatientDetailScreen`** (client): view vs edit from URL, fixed footer actions, **`PatientDetailForm`** with read-only email + clinical fields mapped into `clinical_profile`.

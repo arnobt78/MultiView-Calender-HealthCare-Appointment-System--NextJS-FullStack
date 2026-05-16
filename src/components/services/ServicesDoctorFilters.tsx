@@ -53,7 +53,7 @@ export function ServicesDoctorFilters({ filters, onChange, onReset, hasActiveFil
       : "All Days";
 
   return (
-    <div className="flex flex-wrap items-center justify-end gap-2 w-full lg:w-auto">
+    <div className="flex flex-wrap items-center justify-end gap-2 w-full lg:w-auto shrink-0">
       <div className="relative w-full sm:w-[200px] lg:w-[220px]">
         <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
         <Input
@@ -106,18 +106,22 @@ export function ServicesDoctorFilters({ filters, onChange, onReset, hasActiveFil
         </SelectContent>
       </Select>
 
-      <Input
-        type="date"
-        value={filters.date ?? ""}
-        onChange={(e) => {
-          const date = e.target.value || null;
-          const weekday =
-            date != null && date.length > 0 ? new Date(`${date}T12:00:00`).getDay() : null;
-          onChange({ ...filters, date, weekday });
-        }}
-        className="h-9 w-[140px] rounded-2xl border-gray-200 bg-white text-gray-700 shadow-sm"
-        aria-label="Filter by date"
-      />
+      <div className="relative flex items-center shrink-0">
+        <CalendarDays className="absolute left-3 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+        <Input
+          type="date"
+          value={filters.date ?? ""}
+          onChange={(e) => {
+            const date = e.target.value || null;
+            const weekday =
+              date != null && date.length > 0 ? new Date(`${date}T12:00:00`).getDay() : null;
+            onChange({ ...filters, date, weekday });
+          }}
+          className="h-9 pl-8 w-auto min-w-[155px] rounded-2xl border-gray-200 bg-white text-gray-700 shadow-sm cursor-pointer"
+          aria-label="Filter by date"
+          title="Filter by date"
+        />
+      </div>
 
       {hasActiveFilters && <GlassResetFilterButton onClick={onReset} label="Reset" />}
     </div>

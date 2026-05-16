@@ -82,7 +82,7 @@ import type { Patient, PatientClinicalProfile, User as AppUser } from "@/types/t
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { RoleEntityLink } from "@/components/shared/RoleEntityLink";
 import { DoctorSelectOption } from "@/components/shared/doctor-display/DoctorSelectOption";
-import { DoctorSpecialtyBadge } from "@/components/shared/doctor-display/DoctorSpecialtyBadge";
+import { DoctorLinkStack } from "@/components/shared/doctor-display/DoctorLinkStack";
 import { notify } from "@/lib/notify";
 import { useUsers } from "@/hooks/useUsers";
 import { useAvailabilitySlots } from "@/hooks/useAvailabilitySlots";
@@ -1095,29 +1095,16 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
                                 const pRow = patient as Patient & LegacyNested;
                                 const nested = pRow.primary_doctor;
                                 if (pRow.primary_doctor_id && pRow.primary_doctor_display?.trim()) {
+                                  const doc = portalDoctors.find((x) => x.id === pRow.primary_doctor_id);
                                   return (
-                                    <>
-                                      <span className="inline-flex flex-wrap items-center gap-2">
-                                        <RoleEntityLink
-                                          kind="doctor"
-                                          id={pRow.primary_doctor_id}
-                                          label={pRow.primary_doctor_display.trim()}
-                                          className="font-normal"
-                                        />
-                                        {(() => {
-                                          const doc = portalDoctors.find((x) => x.id === pRow.primary_doctor_id);
-                                          return doc?.specialty ? (
-                                            <DoctorSpecialtyBadge specialty={doc.specialty} showIcon={false} />
-                                          ) : null;
-                                        })()}
-                                      </span>
-                                      {pRow.primary_doctor_email?.trim() ? (
-                                        <span className="text-gray-600">
-                                          {" "}
-                                          ({pRow.primary_doctor_email.trim()})
-                                        </span>
-                                      ) : null}
-                                    </>
+                                    <DoctorLinkStack
+                                      doctorId={pRow.primary_doctor_id}
+                                      name={pRow.primary_doctor_display.trim()}
+                                      email={pRow.primary_doctor_email}
+                                      specialty={doc?.specialty ?? null}
+                                      linkKind="role"
+                                      nameClassName="font-normal"
+                                    />
                                   );
                                 }
                                 if (nested && (nested.display_name?.trim() || nested.email)) {

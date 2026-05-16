@@ -4,6 +4,7 @@
  * Each appointment row adds denormalized labels for the control-panel table:
  * - `calendar_owner_*`: always the calendar owner (`Appointment.owner_id` in Prisma → `user_id` in JSON).
  * - `doctor_*`: B2 resolved treating / clinical contact (`resolveTreatingPhysicianUserId` → joined user row).
+ * - `doctor_specialty`: clinical user's `specialty` for stacked badge in patient detail table.
  * - `category_label` / `category_color`: patient detail Related Appointments category column (color swatch).
  * - `appointment_type_name`: two-line Title column (type on row 1, patient name on row 2 in `PatientDetailScreen`).
  */
@@ -56,8 +57,8 @@ export async function GET(_req: NextRequest, context: RouteContext) {
       include: {
         category: true,
         appointment_type: { select: { name: true } },
-        owner: { select: { id: true, display_name: true, email: true } },
-        treating_physician: { select: { id: true, display_name: true, email: true } },
+        owner: { select: { id: true, display_name: true, email: true, specialty: true } },
+        treating_physician: { select: { id: true, display_name: true, email: true, specialty: true } },
       },
     });
 
@@ -89,6 +90,7 @@ export async function GET(_req: NextRequest, context: RouteContext) {
         doctor_id: clinical?.id ?? null,
         doctor_display: clinical?.display_name ?? null,
         doctor_email: clinical?.email ?? null,
+        doctor_specialty: clinical?.specialty ?? null,
       };
     });
 

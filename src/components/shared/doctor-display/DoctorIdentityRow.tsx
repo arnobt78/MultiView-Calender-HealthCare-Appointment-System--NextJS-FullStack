@@ -1,10 +1,8 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { RoleEntityLink } from "@/components/shared/RoleEntityLink";
-import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
-import { doctorDetailHref } from "@/lib/entity-routes";
 import { DoctorAvatar } from "./DoctorAvatar";
+import { DoctorLinkStack } from "./DoctorLinkStack";
 import { DoctorSpecialtyBadge } from "./DoctorSpecialtyBadge";
 import type { DoctorAvatarInput } from "@/lib/doctor-avatar";
 
@@ -21,11 +19,12 @@ type DoctorIdentityRowProps = {
   size?: "sm" | "md";
   className?: string;
   showSpecialty?: boolean;
+  /** Show email line (default: true for md, false for sm). */
+  showEmail?: boolean;
 };
 
 /**
- * Reusable doctor chip: avatar + name (+ optional link) + glass specialty badge.
- * Used on /services cards, patient tables, and select dropdown rows.
+ * Reusable doctor row: avatar + stacked name / email / glass specialty badge (badge always on its own line).
  */
 export function DoctorIdentityRow({
   doctor,
@@ -33,44 +32,40 @@ export function DoctorIdentityRow({
   size = "md",
   className,
   showSpecialty = true,
+  showEmail,
 }: DoctorIdentityRowProps) {
   const label = doctor.display_name?.trim() || doctor.email?.trim() || "Doctor";
   const avatarSize = size === "sm" ? "h-7 w-7" : "h-9 w-9";
+  const emailVisible = showEmail ?? size === "md";
 
   return (
-    <div className={cn("flex items-center gap-2 min-w-0", className)}>
-      <DoctorAvatar doctor={doctor} sizeClassName={avatarSize} />
-      <div className="min-w-0 flex flex-col gap-0.5">
-        <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-          {linkKind === "none" ? (
-            <span
-              className={cn(
-                "font-medium truncate text-foreground",
-                size === "sm" ? "text-xs" : "text-sm"
-              )}
-            >
-              {label}
-            </span>
-          ) : linkKind === "admin-cp" ? (
-            <EntityTitleLink
-              href={doctorDetailHref("admin", doctor.id)}
-              label={label}
-              className={size === "sm" ? "text-xs font-medium" : "text-sm font-medium"}
-            />
-          ) : (
-            <RoleEntityLink
-              kind="doctor"
-              id={doctor.id}
-              label={label}
-              className={size === "sm" ? "text-xs font-medium" : "text-sm font-medium"}
-            />
-          )}
-          {showSpecialty && <DoctorSpecialtyBadge specialty={doctor.specialty} showIcon={size !== "sm"} />}
+    <div className={cn("flex items-start gap-2 min-w-0", className)}>
+      <DoctorAvatar doctor={doctor} sizeClassName={avatarSize} className="mt-0.5" />
+      {linkKind === "none" ? (
+        <div className="min-w-0 flex flex-col gap-1">
+          <span
+            className={cn(
+              "font-medium truncate text-foreground",
+              size === "sm" ? "text-xs" : "text-sm"
+            )}
+          >
+            {label}
+          </span>
+          {emailVisible && doctor.email ? (
+            <span className="text-[10px] text-muted-foreground truncate">{doctor.email}</span>
+          ) : null}
+          {showSpecialty ? <DoctorSpecialtyBadge specialty={doctor.specialty} className="self-start" /> : null}
         </div>
-        {doctor.email && size === "md" && (
-          <span className="text-[10px] text-muted-foreground truncate">{doctor.email}</span>
-        )}
-      </div>
+      ) : (
+        <DoctorLinkStack
+          doctorId={doctor.id}
+          name={label}
+          email={emailVisible ? doctor.email : null}
+          specialty={showSpecialty ? doctor.specialty : null}
+          linkKind={linkKind}
+          nameClassName={size === "sm" ? "text-xs" : "text-sm"}
+        />
+      )}
     </div>
   );
 }

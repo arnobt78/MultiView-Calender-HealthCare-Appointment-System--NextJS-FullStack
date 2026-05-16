@@ -15,7 +15,6 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLayoutEffect } from "react";
-import Image from "next/image";
 import {
   Activity,
   AlertCircle,
@@ -36,8 +35,8 @@ import { apiClient } from "@/lib/api-client";
 import { BookAppointmentDialog } from "@/components/pages/PatientPortalPage";
 import { RoleEntityLink } from "@/components/shared/RoleEntityLink";
 import { DoctorSpecialtyBadge } from "@/components/shared/doctor-display/DoctorSpecialtyBadge";
+import { DoctorCardHeroImage } from "@/components/shared/doctor-display/DoctorCardHeroImage";
 import { DoctorAvailabilityGroups } from "@/components/shared/doctor-display/DoctorAvailabilityGroups";
-import { getDoctorAvatarSrc } from "@/lib/doctor-avatar";
 import {
   ServicesDoctorFilters,
   defaultServicesDoctorFilters,
@@ -103,36 +102,21 @@ function DoctorEmailRow({ email }: { email: string }) {
 /** Single doctor card */
 function DoctorProfileCard({ doctor }: { doctor: DoctorCard }) {
   const name = doctor.display_name ?? doctor.email;
-  const avatarSrc = getDoctorAvatarSrc(doctor);
 
   return (
     <Card className="rounded-[20px] border-0 bg-card shadow-[0_4px_24px_rgba(2,132,199,0.09)] hover:shadow-[0_8px_32px_rgba(2,132,199,0.18)] transition-all duration-300 overflow-hidden flex flex-col p-0 gap-0">
-      {/* Flush top image — no Card padding gap above photo */}
-      <div className="relative h-40 w-full bg-sky-50 overflow-hidden rounded-t-[20px]">
-        <Image
-          src={avatarSrc}
-          alt={name}
-          fill
-          className="object-cover"
-          sizes="(max-width: 768px) 100vw, 33vw"
-          unoptimized={avatarSrc.includes("robohash.org")}
-        />
-        {doctor.specialty && (
-          <div className="absolute bottom-2 left-2">
-            <DoctorSpecialtyBadge specialty={doctor.specialty} className="backdrop-blur-md" />
-          </div>
-        )}
-      </div>
+      <DoctorCardHeroImage doctor={doctor} />
 
-      <CardContent className="p-4 flex flex-col gap-3 flex-1">
-        <div>
+      <CardContent className="p-4 flex flex-col gap-2 flex-1">
+        <div className="flex flex-col gap-1">
           <RoleEntityLink
             kind="doctor"
             id={doctor.id}
             label={name}
-            className="font-bold text-sm leading-tight block truncate"
+            className="font-semibold text-sm leading-tight block truncate"
           />
           <DoctorEmailRow email={doctor.email} />
+          <DoctorSpecialtyBadge specialty={doctor.specialty} className="self-start" />
         </div>
 
         {doctor.bio && (
@@ -147,7 +131,7 @@ function DoctorProfileCard({ doctor }: { doctor: DoctorCard }) {
         </div>
 
         {/* `appointment_types` = bookable visit types (Initial Consultation, etc.), not specialty */}
-        <div className="flex items-center gap-3 text-xs text-muted-foreground" aria-label="Appointment types offered">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground" aria-label="Appointment types offered">
           <span className="flex items-center gap-1">
             <Users className="h-3.5 w-3.5" />
             {doctor.patient_count} patient{doctor.patient_count !== 1 ? "s" : ""}
@@ -178,7 +162,7 @@ function DoctorProfileCard({ doctor }: { doctor: DoctorCard }) {
 function ServiceCard({ type }: { type: AppointmentTypeCard }) {
   return (
     <Card className="rounded-[16px] border bg-card shadow-[0_4px_16px_rgba(139,92,246,0.08)] hover:shadow-[0_8px_24px_rgba(139,92,246,0.16)] transition-all duration-300">
-      <CardContent className="p-4 flex items-start gap-3">
+      <CardContent className="p-4 flex items-start gap-2">
         <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 border border-violet-200 shrink-0">
           <Clock className="h-5 w-5 text-violet-600" />
         </span>
@@ -287,7 +271,7 @@ export default function ServicesPage({ initialDoctors, initialGlobalTypes }: Ser
   return (
     <div className="space-y-4 py-0 pb-3">
       {/* Page header — icon height spans title + subtitle */}
-      <div className="flex gap-3 py-2 border-b items-stretch">
+      <div className="flex gap-2 py-2 border-b items-stretch">
         <span className="flex w-12 shrink-0 items-center justify-center rounded-xl bg-sky-100 border border-sky-200 self-stretch min-h-[3.5rem]">
           <Stethoscope className="h-6 w-6 text-sky-600" />
         </span>
@@ -302,7 +286,7 @@ export default function ServicesPage({ initialDoctors, initialGlobalTypes }: Ser
       </div>
 
       <section>
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 mb-4">
           <div className="flex items-center gap-2">
             <span className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-100 border border-sky-200 shrink-0">
               <Stethoscope className="h-3.5 w-3.5 text-sky-600" />

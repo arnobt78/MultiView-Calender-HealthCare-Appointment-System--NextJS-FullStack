@@ -54,8 +54,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Category, Patient, User } from "@/types/types";
-import { DoctorMiniAvatar } from "@/components/shared/doctor-display/DoctorMiniAvatar";
-import { DoctorSpecialtyBadge } from "@/components/shared/doctor-display/DoctorSpecialtyBadge";
+import { DoctorSelectOption } from "@/components/shared/doctor-display/DoctorSelectOption";
 
 /** Mirrors `PatientPortalPage` / GET `/api/appointment-types` — drives slot duration + buffers server-side. */
 type AppointmentTypeRow = {
@@ -548,11 +547,7 @@ export function AppointmentDialogGeneralSection({
             <SelectContent>
               {doctors.map((d) => (
                 <SelectItem key={d.id} value={d.id} textValue={doctorLabel(d)}>
-                  <span className="flex items-center gap-2 min-w-0">
-                    <DoctorMiniAvatar doctor={d} className="h-7 w-7" />
-                    <span className="truncate flex-1">{doctorLabel(d)}</span>
-                    <DoctorSpecialtyBadge specialty={d.specialty} showIcon={false} className="shrink-0" />
-                  </span>
+                  <DoctorSelectOption doctor={d} />
                 </SelectItem>
               ))}
             </SelectContent>

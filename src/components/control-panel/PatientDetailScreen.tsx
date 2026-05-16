@@ -29,7 +29,7 @@ import { Badge } from "@/components/ui/badge";
 import { PatientDetailForm } from "@/components/control-panel/PatientDetailForm";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
-import { DoctorSpecialtyBadge } from "@/components/shared/doctor-display/DoctorSpecialtyBadge";
+import { DoctorLinkStack } from "@/components/shared/doctor-display/DoctorLinkStack";
 import { useUsers } from "@/hooks/useUsers";
 import { ControlPanelStaffLink } from "@/components/shared/ControlPanelStaffLink";
 import { DEMO_ACCOUNTS } from "@/lib/demo-credentials";
@@ -360,6 +360,14 @@ export function PatientDetailScreen({
     if (!id) return undefined;
     return doctorsData?.users?.find((u) => u.id === id);
   }, [patient?.primary_doctor_id, doctorsData?.users]);
+
+  const doctorById = useMemo(() => {
+    const map = new Map<string, { specialty?: string | null }>();
+    for (const u of doctorsData?.users ?? []) {
+      if (u.id) map.set(u.id, { specialty: u.specialty ?? null });
+    }
+    return map;
+  }, [doctorsData?.users]);
   const { deletePatient, isDeleting, isUpdating } = usePatients();
   const [isMounted, setIsMounted] = useState(false);
 
@@ -547,20 +555,14 @@ export function PatientDetailScreen({
                   <FieldLabel icon={Stethoscope}>Primary Doctor</FieldLabel>
                   <dd className="mt-0.5 text-gray-700">
                     {p!.primary_doctor_id && p!.primary_doctor_display?.trim() ? (
-                      <span className="inline-flex flex-wrap items-center gap-2">
-                        <EntityTitleLink
-                          href={doctorDetailHref(viewerRole, p!.primary_doctor_id)}
-                          label={p!.primary_doctor_display.trim()}
-                          className="font-normal"
-                        />
-                        <DoctorSpecialtyBadge
-                          specialty={primaryDoctorUser?.specialty ?? null}
-                          showIcon={false}
-                        />
-                        {p!.primary_doctor_email?.trim() ? (
-                          <span className="text-gray-600"> ({p!.primary_doctor_email.trim()})</span>
-                        ) : null}
-                      </span>
+                      <DoctorLinkStack
+                        doctorId={p!.primary_doctor_id}
+                        name={p!.primary_doctor_display.trim()}
+                        email={p!.primary_doctor_email}
+                        specialty={primaryDoctorUser?.specialty ?? null}
+                        linkKind={isAdminRole(viewerRole) ? "admin-cp" : "role"}
+                        nameClassName="font-normal"
+                      />
                     ) : (
                       (p!.primary_doctor_display ?? "—")
                     )}
@@ -696,13 +698,17 @@ export function PatientDetailScreen({
                             <TableCell>
                               {a.doctor_id && a.doctor_display ? (
                                 <div className="min-w-0">
-                                  <EntityTitleLink
-                                    href={doctorDetailHref(viewerRole, a.doctor_id)}
-                                    label={a.doctor_display}
+                                  <DoctorLinkStack
+                                    doctorId={a.doctor_id}
+                                    name={a.doctor_display}
+                                    email={a.doctor_email}
+                                    specialty={
+                                      a.doctor_specialty ??
+                                      doctorById.get(a.doctor_id)?.specialty ??
+                                      null
+                                    }
+                                    linkKind={isAdminRole(viewerRole) ? "admin-cp" : "role"}
                                   />
-                                  {a.doctor_email && (
-                                    <p className="truncate text-xs text-gray-500">{a.doctor_email}</p>
-                                  )}
                                   {snap.data?.patient?.primary_doctor_id &&
                                     a.doctor_id &&
                                     snap.data.patient.primary_doctor_id !== a.doctor_id &&

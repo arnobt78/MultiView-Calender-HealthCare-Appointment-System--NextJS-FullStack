@@ -21,6 +21,7 @@ import { UserRoleBadge } from "@/components/shared/UserRoleBadge";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { DoctorSpecialtyBadge } from "@/components/shared/doctor-display/DoctorSpecialtyBadge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -251,10 +252,7 @@ export default function DoctorManagement() {
       cell: ({ row }) => {
         const d = doctorMap.get(row.original.id);
         return d?.specialty ? (
-          <Badge variant="outline" className="bg-sky-50 text-sky-700 border-sky-200 text-xs">
-            <Stethoscope className="h-2.5 w-2.5 mr-1" />
-            {d.specialty}
-          </Badge>
+          <DoctorSpecialtyBadge specialty={d.specialty} className="text-xs" />
         ) : (
           <span className="text-muted-foreground text-xs">—</span>
         );

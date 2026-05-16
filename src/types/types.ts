@@ -111,6 +111,7 @@ export type AppointmentSnapshotRow = Appointment & {
   doctor_id?: string | null;
   doctor_display?: string | null;
   doctor_email?: string | null;
+  doctor_specialty?: string | null;
 };
 
 export type PatientSnapshot = {

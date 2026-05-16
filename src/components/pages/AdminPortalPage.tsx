@@ -181,7 +181,7 @@ function DoctorSummaryCard({ doctor }: { doctor: DoctorRow }) {
             className="text-sm font-semibold block truncate"
           />
           {doctor.specialty && (
-            <DoctorSpecialtyBadge specialty={doctor.specialty} className="mt-0.5" showIcon={false} />
+            <DoctorSpecialtyBadge specialty={doctor.specialty} className="mt-0.5" />
           )}
         </div>
         <Badge variant="secondary" className="ml-auto text-[10px] flex-shrink-0">
