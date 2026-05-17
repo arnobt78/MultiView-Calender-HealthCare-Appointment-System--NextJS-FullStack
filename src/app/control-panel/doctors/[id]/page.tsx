@@ -6,6 +6,7 @@ import { notFound, redirect } from "next/navigation";
 import { isAdminRole, isDoctorRole } from "@/lib/rbac";
 import { doctorDetailHref } from "@/lib/entity-routes";
 import Link from "next/link";
+import { BackNavigationLink } from "@/components/shared/BackNavigationLink";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { isValidUUID } from "@/lib/validation";
@@ -90,10 +91,10 @@ export default async function DoctorDetailPage({ params }: PageProps) {
         description={raw.specialty ? `${raw.specialty} · Doctor Profile` : "Doctor Profile"}
         actions={
           <Button variant="outline" asChild size="sm">
-            <Link href="/control-panel/doctor-management">
+            <BackNavigationLink href="/control-panel/doctor-management">
               <ArrowLeft className="h-4 w-4" />
               Back to Doctors
-            </Link>
+            </BackNavigationLink>
           </Button>
         }
       />

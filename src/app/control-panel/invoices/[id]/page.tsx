@@ -4,6 +4,7 @@
  */
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { BackNavigationLink } from "@/components/shared/BackNavigationLink";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { serializeInvoice } from "@/lib/serializers";
@@ -72,10 +73,10 @@ export default async function InvoiceDetailPage({ params }: PageProps) {
         description={invoice.description ?? "No description"}
         actions={
           <Button variant="outline" asChild>
-            <Link href="/control-panel">
+            <BackNavigationLink href="/control-panel">
               <ArrowLeft className="h-4 w-4" />
               Back
-            </Link>
+            </BackNavigationLink>
           </Button>
         }
       />

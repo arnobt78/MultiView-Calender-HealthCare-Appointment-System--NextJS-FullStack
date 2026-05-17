@@ -3,7 +3,7 @@
  * Server-fetches org + members, passes to client form.
  */
 import { notFound } from "next/navigation";
-import Link from "next/link";
+import { BackNavigationLink } from "@/components/shared/BackNavigationLink";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { serializeOrganization } from "@/lib/serializers";
@@ -79,10 +79,10 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
         description={`Slug: ${org.slug}`}
         actions={
           <Button variant="outline" asChild>
-            <Link href="/control-panel">
+            <BackNavigationLink href="/control-panel">
               <ArrowLeft className="h-4 w-4" />
               Back
-            </Link>
+            </BackNavigationLink>
           </Button>
         }
       />

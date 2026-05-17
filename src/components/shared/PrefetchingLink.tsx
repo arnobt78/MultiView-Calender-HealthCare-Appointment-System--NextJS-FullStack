@@ -3,7 +3,7 @@
 import Link from "next/link";
 import type { ComponentProps } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { prefetchQueriesForControlPanelHref } from "@/lib/prefetch-route-queries";
+import { prefetchQueriesForDetailHref } from "@/lib/prefetch-route-queries";
 
 type PrefetchingLinkProps = ComponentProps<typeof Link>;
 
@@ -20,11 +20,11 @@ export function PrefetchingLink({ href, onMouseEnter, onFocus, ...rest }: Prefet
       prefetch
       href={href}
       onMouseEnter={(e) => {
-        prefetchQueriesForControlPanelHref(queryClient, hrefStr);
+        prefetchQueriesForDetailHref(queryClient, hrefStr);
         onMouseEnter?.(e);
       }}
       onFocus={(e) => {
-        prefetchQueriesForControlPanelHref(queryClient, hrefStr);
+        prefetchQueriesForDetailHref(queryClient, hrefStr);
         onFocus?.(e);
       }}
       {...rest}

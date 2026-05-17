@@ -21,6 +21,20 @@ export function patientDetailHref(role: EntityRole, id: string): string {
   return `/patients/${id}`;
 }
 
+/**
+ * Portal patient link with optional roster context (`/doctors/:id` patient list).
+ * `fromDoctor` enables view-only directory browse per `resolvePatientAccess`.
+ */
+export function patientDetailHrefWithContext(
+  role: EntityRole,
+  patientId: string,
+  fromDoctorId?: string | null
+): string {
+  const base = patientDetailHref(role, patientId);
+  if (!fromDoctorId || isAdminRole(role)) return base;
+  return `${base}?fromDoctor=${encodeURIComponent(fromDoctorId)}`;
+}
+
 /** Category detail — admin in CP; staff doctor reads `/categories/:id`. */
 export function categoryDetailHref(role: EntityRole, id: string): string {
   if (isAdminRole(role)) return `/control-panel/categories/${id}`;

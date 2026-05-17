@@ -24,7 +24,7 @@ export function DoctorSpecialtyBadge({
     <span
       className={cn(
         getSpecialtyGlassClassName(specialty),
-        "inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-normal shrink-0",
+        "inline-flex items-center gap-1 px-2 py-0 text-[10px] font-normal shrink-0",
         className
       )}
     >

@@ -122,11 +122,17 @@ export function usePatients() {
   };
 }
 
-export function usePatient(id: string | null) {
+function patientRosterQuery(rosterDoctorId?: string | null): string {
+  if (!rosterDoctorId) return "";
+  return `?fromDoctor=${encodeURIComponent(rosterDoctorId)}`;
+}
+
+export function usePatient(id: string | null, rosterDoctorId?: string | null) {
+  const rosterQ = patientRosterQuery(rosterDoctorId);
   return useQuery({
     queryKey: queryKeys.patients.detail(id ?? ""),
     queryFn: async () => {
-      const res = await apiClient<{ patient: Patient }>(`/api/patients/${id}`);
+      const res = await apiClient<{ patient: Patient }>(`/api/patients/${id}${rosterQ}`);
       return res.patient;
     },
     enabled: !!id,
@@ -134,10 +140,11 @@ export function usePatient(id: string | null) {
 }
 
 /** Aggregated appointments / activities / invoices for patient profile — invalidated with `queryKeys.patients.all` */
-export function usePatientSnapshot(id: string | null) {
+export function usePatientSnapshot(id: string | null, rosterDoctorId?: string | null) {
+  const rosterQ = patientRosterQuery(rosterDoctorId);
   return useQuery({
     queryKey: queryKeys.patients.snapshot(id ?? ""),
-    queryFn: () => apiClient<PatientSnapshot>(`/api/patients/${id}/snapshot`),
+    queryFn: () => apiClient<PatientSnapshot>(`/api/patients/${id}/snapshot${rosterQ}`),
     enabled: !!id,
     staleTime: 60_000,
   });

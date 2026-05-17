@@ -250,6 +250,62 @@ export async function invalidateDoctorSchedule(
   ]);
 }
 
+/**
+ * Bust list/overview caches when navigating back from a detail screen — keeps stale
+ * TanStack data fresh without changing global `refetchOnMount`.
+ */
+export async function invalidateQueriesForRoute(queryClient: QueryClient, href: string) {
+  const path = (href.split("?")[0] ?? href).replace(/\/$/, "") || "/";
+
+  if (path === "/services") {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.appointmentTypes.catalog }),
+      invalidateUsersAndAuth(queryClient),
+    ]);
+    return;
+  }
+  if (path === "/doctor-portal") {
+    await Promise.all([invalidateDoctorPortal(queryClient), invalidateDashboardOverview(queryClient)]);
+    return;
+  }
+  if (path === "/patient-portal") {
+    await Promise.all([invalidatePatientPortal(queryClient), invalidateDashboardOverview(queryClient)]);
+    return;
+  }
+  if (path === "/dashboard" || path === "/dashboard-overview") {
+    await invalidateDashboardOverview(queryClient);
+    return;
+  }
+  if (path === "/control-panel/patient-management") {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.patients.all }),
+      invalidateDashboardOverview(queryClient),
+    ]);
+    return;
+  }
+  if (path === "/control-panel/doctor-management") {
+    await invalidateUsersAndAuth(queryClient);
+    return;
+  }
+  if (path === "/control-panel/appointment-management") {
+    await Promise.all([
+      invalidateAppointmentData(queryClient),
+      invalidateDashboardOverview(queryClient),
+    ]);
+    return;
+  }
+  if (path === "/control-panel/category-management") {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.categories.all }),
+      invalidateDashboardOverview(queryClient),
+    ]);
+    return;
+  }
+  if (path === "/control-panel" || path.startsWith("/control-panel/")) {
+    await invalidateDashboardOverview(queryClient);
+  }
+}
+
 export async function invalidateAssigneesActivitiesAppointment(
   queryClient: QueryClient,
   appointmentId?: string | null

@@ -10,7 +10,9 @@ import { isValidUUID } from "@/lib/validation";
 import { serializePatient } from "@/lib/serializers";
 import { patientDetailInclude } from "@/lib/patient-api-include";
 import { redis } from "@/lib/redis";
-import { getUserRole, isPatientRole } from "@/lib/rbac";
+import { getUserRole } from "@/lib/rbac";
+import { resolvePatientAccess } from "@/lib/patient-access";
+import { rosterDoctorIdFromRequest } from "@/lib/patient-api-access";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -27,14 +29,20 @@ export async function GET(req: NextRequest, context: RouteContext) {
     }
 
     const role = await getUserRole(sessionUser.userId);
+    const rosterDoctorId = rosterDoctorIdFromRequest(req);
+    const level = await resolvePatientAccess(
+      { userId: sessionUser.userId, email: sessionUser.email, role },
+      id,
+      { rosterDoctorId }
+    );
+    if (level === "none") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
-    /*
-     * Staff (admin/doctor/secretary) can access any patient.
-     * Patient role is scoped to their own record by email match.
-     */
-    const patient = isPatientRole(role)
-      ? await prisma.patient.findFirst({ where: { id, email: sessionUser.email }, include: patientDetailInclude })
-      : await prisma.patient.findUnique({ where: { id }, include: patientDetailInclude });
+    const patient = await prisma.patient.findUnique({
+      where: { id },
+      include: patientDetailInclude,
+    });
 
     if (!patient) {
       return NextResponse.json({ error: "Patient not found" }, { status: 404 });
@@ -58,9 +66,12 @@ export async function PUT(req: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Invalid patient ID" }, { status: 400 });
     }
 
-    // Patient role cannot update arbitrary records — blocked at API level.
     const putRole = await getUserRole(sessionUser.userId);
-    if (isPatientRole(putRole)) {
+    const putLevel = await resolvePatientAccess(
+      { userId: sessionUser.userId, email: sessionUser.email, role: putRole },
+      id
+    );
+    if (putLevel !== "mutate") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -141,9 +152,12 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Invalid patient ID" }, { status: 400 });
     }
 
-    // Patient role cannot delete any patient record — staff only.
     const delRole = await getUserRole(sessionUser.userId);
-    if (isPatientRole(delRole)) {
+    const delLevel = await resolvePatientAccess(
+      { userId: sessionUser.userId, email: sessionUser.email, role: delRole },
+      id
+    );
+    if (delLevel !== "mutate") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

@@ -2,6 +2,7 @@
  * Shared category detail — admin (control panel) and doctor (portal) routes.
  */
 import Link from "next/link";
+import { BackNavigationLink } from "@/components/shared/BackNavigationLink";
 import { format } from "date-fns";
 import { appointmentDetailHref } from "@/lib/entity-routes";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -52,10 +53,10 @@ export function CategoryDetailScreen({
         description="Category details and associated appointments"
         actions={
           <Button variant="outline" asChild size="sm">
-            <Link href={backHref}>
+            <BackNavigationLink href={backHref}>
               <ArrowLeft className="h-4 w-4" />
               Back
-            </Link>
+            </BackNavigationLink>
           </Button>
         }
       />

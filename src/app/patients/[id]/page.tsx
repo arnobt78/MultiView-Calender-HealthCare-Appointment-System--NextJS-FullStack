@@ -6,30 +6,38 @@ import { notFound, redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/session";
 import { getUserRole, isAdminRole } from "@/lib/rbac";
 import { isValidUUID } from "@/lib/validation";
-import { canViewPatientDetail } from "@/lib/patient-access";
+import { resolvePatientAccess } from "@/lib/patient-access";
 import { patientDetailHref } from "@/lib/entity-routes";
 import { PatientDetailScreen } from "@/components/control-panel/PatientDetailScreen";
 import { prefetchPatient, prefetchPatientSnapshot } from "@/lib/server-prefetch";
 
-type PageProps = { params: Promise<{ id: string }> };
+type PageProps = {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ fromDoctor?: string }>;
+};
 
-export default async function PortalPatientDetailPage({ params }: PageProps) {
+export default async function PortalPatientDetailPage({ params, searchParams }: PageProps) {
   const sessionUser = await getSessionUser();
   if (!sessionUser) notFound();
 
   const { id } = await params;
   if (!isValidUUID(id)) notFound();
 
+  const { fromDoctor } = await searchParams;
+  const rosterDoctorId =
+    fromDoctor && isValidUUID(fromDoctor) ? fromDoctor : null;
+
   const role = await getUserRole(sessionUser.userId);
   if (isAdminRole(role)) {
     redirect(patientDetailHref(role, id));
   }
 
-  const allowed = await canViewPatientDetail(
+  const accessLevel = await resolvePatientAccess(
     { userId: sessionUser.userId, email: sessionUser.email, role },
-    id
+    id,
+    { rosterDoctorId }
   );
-  if (!allowed) notFound();
+  if (accessLevel === "none") notFound();
 
   const [initialPatient, initialSnapshot] = await Promise.all([
     prefetchPatient(id),
@@ -43,6 +51,7 @@ export default async function PortalPatientDetailPage({ params }: PageProps) {
   return (
     <PatientDetailScreen
       patientId={id}
+      accessLevel={accessLevel}
       viewerRole={role}
       listBackHref={listBackHref}
       initialPatient={initialPatient}

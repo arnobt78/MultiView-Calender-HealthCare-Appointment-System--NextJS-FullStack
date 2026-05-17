@@ -5,6 +5,7 @@
  */
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { BackNavigationLink } from "@/components/shared/BackNavigationLink";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { isValidUUID } from "@/lib/validation";
@@ -75,10 +76,10 @@ export default async function UserDetailPage({ params }: PageProps) {
         description={`${raw.role ? raw.role.charAt(0).toUpperCase() + raw.role.slice(1) : "User"} Account`}
         actions={
           <Button variant="outline" asChild size="sm">
-            <Link href={backHref}>
+            <BackNavigationLink href={backHref}>
               <ArrowLeft className="h-4 w-4" />
               Back
-            </Link>
+            </BackNavigationLink>
           </Button>
         }
       />

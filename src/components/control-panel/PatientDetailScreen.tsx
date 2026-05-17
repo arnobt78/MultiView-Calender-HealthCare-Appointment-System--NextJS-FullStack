@@ -11,6 +11,7 @@ import {
   Fingerprint,
   List,
   Loader2,
+  Lock,
   Pencil,
   Receipt,
   Save,
@@ -20,7 +21,7 @@ import {
   User,
   X,
 } from "lucide-react";
-import { PrefetchingLink } from "@/components/shared/PrefetchingLink";
+import { BackNavigationLink } from "@/components/shared/BackNavigationLink";
 import { useRouter, useSearchParams } from "next/navigation";
 import { usePatient, usePatientSnapshot } from "@/hooks/usePatients";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -59,6 +60,9 @@ import {
   patientDetailHref,
 } from "@/lib/entity-routes";
 import { isAdminRole } from "@/lib/rbac";
+import type { PatientAccessLevel } from "@/lib/patient-access";
+import { isValidUUID } from "@/lib/validation";
+import { invalidateQueriesForRoute } from "@/lib/query-client";
 import type { AppointmentSnapshotRow, Patient, PatientSnapshot } from "@/types/types";
 import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -309,6 +313,8 @@ function PatientDetailBodySkeleton() {
 
 type PatientDetailScreenProps = {
   patientId: string;
+  /** Resolved on SSR — drives read-only banner and footer CRUD visibility. */
+  accessLevel: PatientAccessLevel;
   /** Session role — drives `/control-panel/*` vs portal detail hrefs in related tables. */
   viewerRole: string | null;
   /** List back-navigation target (admin → patient management, doctor → doctor portal). */
@@ -327,6 +333,7 @@ type PatientDetailScreenProps = {
 
 export function PatientDetailScreen({
   patientId,
+  accessLevel,
   viewerRole,
   listBackHref,
   initialPatient,
@@ -335,7 +342,12 @@ export function PatientDetailScreen({
   const router = useRouter();
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
-  const mode = searchParams.get("mode") === "edit" ? "edit" : "view";
+  const rosterDoctorIdRaw = searchParams.get("fromDoctor");
+  const rosterDoctorId =
+    rosterDoctorIdRaw && isValidUUID(rosterDoctorIdRaw) ? rosterDoctorIdRaw : null;
+  const canEdit = accessLevel === "mutate";
+  const modeParam = searchParams.get("mode") === "edit" ? "edit" : "view";
+  const mode = canEdit ? modeParam : "view";
 
   /**
    * Seed the TanStack Query cache with server-prefetched data before the first
@@ -352,8 +364,8 @@ export function PatientDetailScreen({
     }
   }, [queryClient, patientId, initialPatient, initialSnapshot]);
 
-  const { data: patient, isLoading, isError, error } = usePatient(patientId);
-  const snap = usePatientSnapshot(patientId);
+  const { data: patient, isLoading, isError, error } = usePatient(patientId, rosterDoctorId);
+  const snap = usePatientSnapshot(patientId, rosterDoctorId);
   const { data: doctorsData } = useUsers({ role: "doctor", limit: 200 });
   const primaryDoctorUser = useMemo(() => {
     const id = patient?.primary_doctor_id;
@@ -377,13 +389,27 @@ export function PatientDetailScreen({
     return () => window.cancelAnimationFrame(raf);
   }, []);
 
-  const setMode = (next: "view" | "edit") => {
-    const q = new URLSearchParams(searchParams.toString());
-    if (next === "view") q.delete("mode");
-    else q.set("mode", "edit");
+  const buildPatientUrl = (next: "view" | "edit") => {
+    const q = new URLSearchParams();
+    if (rosterDoctorId) q.set("fromDoctor", rosterDoctorId);
+    if (next === "edit" && canEdit) q.set("mode", "edit");
     const qs = q.toString();
-    router.replace(`${patientDetailHref(viewerRole, patientId)}${qs ? `?${qs}` : ""}`);
+    return `${patientDetailHref(viewerRole, patientId)}${qs ? `?${qs}` : ""}`;
   };
+
+  const setMode = (next: "view" | "edit") => {
+    if (next === "edit" && !canEdit) return;
+    router.replace(buildPatientUrl(next));
+  };
+
+  useEffect(() => {
+    if (canEdit || modeParam !== "edit") return;
+    const q = new URLSearchParams();
+    if (rosterDoctorId) q.set("fromDoctor", rosterDoctorId);
+    const qs = q.toString();
+    const base = patientDetailHref(viewerRole, patientId);
+    router.replace(`${base}${qs ? `?${qs}` : ""}`);
+  }, [canEdit, modeParam, patientId, rosterDoctorId, router, viewerRole]);
 
   const ready = Boolean(patient) && !isLoading;
   const showLiveData = isMounted && ready;
@@ -419,15 +445,23 @@ export function PatientDetailScreen({
         // Static descriptor text should not flicker on refresh.
         description="Patient Record — Schema Fields, Clinical Profile, Related Activity"
         actions={
-          <PrefetchingLink
+          <BackNavigationLink
             href={listBackHref}
             className={cn(skyGlassBackButtonClass, "no-underline")}
           >
             <ArrowLeft className="shrink-0" aria-hidden />
             Back
-          </PrefetchingLink>
+          </BackNavigationLink>
         }
       />
+
+      {accessLevel === "view" && showLiveData && (
+        <div className="flex items-center gap-2 rounded-lg border border-amber-200/80 bg-amber-50/90 px-3 py-2 text-sm text-amber-900">
+          <Lock className="h-4 w-4 shrink-0" aria-hidden />
+          Read-only — you can view this patient chart but only the primary doctor or an admin can
+          update or delete it.
+        </div>
+      )}
 
       <Card
         className={cn(
@@ -864,13 +898,13 @@ export function PatientDetailScreen({
           {!showLiveData ? (
             <div className="flex w-full items-center justify-between gap-2">
               {/* Keep navigation action static while loading to match view mode and avoid flicker. */}
-              <PrefetchingLink
+              <BackNavigationLink
                 href={listBackHref}
                 className={cn(skyGlassBackButtonClass, "no-underline")}
               >
                 <List className="shrink-0" aria-hidden />
                 Back To List
-              </PrefetchingLink>
+              </BackNavigationLink>
               {/* Footer action placeholders — static chrome, no pulse */}
               <div className="flex flex-wrap gap-2">
                 <div className="h-10 w-36" />
@@ -879,13 +913,14 @@ export function PatientDetailScreen({
             </div>
           ) : mode === "view" ? (
             <>
-              <PrefetchingLink
+              <BackNavigationLink
                 href={listBackHref}
                 className={cn(skyGlassBackButtonClass, "no-underline")}
               >
                 <List className="shrink-0" aria-hidden />
                 Back To List
-              </PrefetchingLink>
+              </BackNavigationLink>
+              {canEdit ? (
               <div className="flex flex-wrap gap-2">
                 <ControlPanelGlassActionButton
                   type="button"
@@ -923,14 +958,18 @@ export function PatientDetailScreen({
                         email: p!.email,
                       },
                       {
-                        onSuccess: () => router.push(listBackHref),
+                        onSuccess: async () => {
+                          await invalidateQueriesForRoute(queryClient, listBackHref);
+                          router.push(listBackHref);
+                        },
                       }
                     )
                   }
                 />
               </div>
+              ) : null}
             </>
-          ) : (
+          ) : canEdit ? (
             <>
               <ControlPanelGlassActionButton
                 type="button"
@@ -983,14 +1022,17 @@ export function PatientDetailScreen({
                         email: p!.email,
                       },
                       {
-                        onSuccess: () => router.push(listBackHref),
+                        onSuccess: async () => {
+                          await invalidateQueriesForRoute(queryClient, listBackHref);
+                          router.push(listBackHref);
+                        },
                       }
                     )
                   }
                 />
               </div>
             </>
-          )}
+          ) : null}
         </div>
       </div>
     </div>

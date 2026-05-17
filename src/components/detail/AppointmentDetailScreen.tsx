@@ -6,7 +6,7 @@
  *   - view → read-only schema (admin viewing doctor-owned rows, dashboard assignees with read, patients)
  */
 
-import Link from "next/link";
+import { BackNavigationLink } from "@/components/shared/BackNavigationLink";
 import { format } from "date-fns";
 import type { AppointmentAccessLevel, AppointmentDetailRaw } from "@/lib/appointment-access";
 import {
@@ -68,10 +68,10 @@ export function AppointmentDetailScreen({
         }
         actions={
           <Button variant="outline" asChild>
-            <Link href={backHref}>
+            <BackNavigationLink href={backHref}>
               <ArrowLeft className="size-4" />
               Back
-            </Link>
+            </BackNavigationLink>
           </Button>
         }
       />

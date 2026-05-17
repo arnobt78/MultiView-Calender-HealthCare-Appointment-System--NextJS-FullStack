@@ -13,7 +13,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { isValidUUID } from "@/lib/validation";
-import { getUserRole, isPatientRole } from "@/lib/rbac";
+import { getUserRole } from "@/lib/rbac";
+import { resolvePatientAccess } from "@/lib/patient-access";
+import { rosterDoctorIdFromRequest } from "@/lib/patient-api-access";
 import {
   serializePatient,
   serializeAppointment,
@@ -24,7 +26,7 @@ import { resolveTreatingPhysicianUserId } from "@/lib/appointment-display-doctor
 
 type RouteContext = { params: Promise<{ id: string }> };
 
-export async function GET(_req: NextRequest, context: RouteContext) {
+export async function GET(req: NextRequest, context: RouteContext) {
   try {
     const sessionUser = await getSessionUser();
     if (!sessionUser) {
@@ -37,14 +39,20 @@ export async function GET(_req: NextRequest, context: RouteContext) {
     }
 
     const role = await getUserRole(sessionUser.userId);
+    const rosterDoctorId = rosterDoctorIdFromRequest(req);
+    const level = await resolvePatientAccess(
+      { userId: sessionUser.userId, email: sessionUser.email, role },
+      id,
+      { rosterDoctorId }
+    );
+    if (level === "none") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
-    /*
-     * Staff (admin/doctor) can access any patient's snapshot.
-     * Patient role is scoped to their own record by email match.
-     */
-    const patientRaw = isPatientRole(role)
-      ? await prisma.patient.findFirst({ where: { id, email: sessionUser.email }, include: patientDetailInclude })
-      : await prisma.patient.findUnique({ where: { id }, include: patientDetailInclude });
+    const patientRaw = await prisma.patient.findUnique({
+      where: { id },
+      include: patientDetailInclude,
+    });
 
     if (!patientRaw) {
       return NextResponse.json({ error: "Patient not found" }, { status: 404 });

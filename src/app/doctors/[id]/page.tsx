@@ -3,18 +3,18 @@
  * Doctor: self or clinically related colleagues. Patient: primary doctor only.
  */
 import { notFound, redirect } from "next/navigation";
-import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { isValidUUID } from "@/lib/validation";
-import { getUserRole, isAdminRole, isDoctorRole, isPatientRole } from "@/lib/rbac";
-import { doctorDetailHref, patientDetailHref } from "@/lib/entity-routes";
-import { doctorCanViewDoctorProfile } from "@/lib/appointment-access";
+import { getUserRole, isAdminRole, isDoctorRole } from "@/lib/rbac";
+import { doctorDetailHref, patientDetailHrefWithContext } from "@/lib/entity-routes";
+import { canViewDoctorPortalProfile } from "@/lib/doctor-access";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
+import { BackNavigationLink } from "@/components/shared/BackNavigationLink";
 import { ArrowLeft, Stethoscope } from "lucide-react";
 
 type PageProps = { params: Promise<{ id: string }> };
@@ -29,20 +29,11 @@ export default async function PortalDoctorDetailPage({ params }: PageProps) {
   const role = await getUserRole(sessionUser.userId);
   if (isAdminRole(role)) redirect(doctorDetailHref(role, id));
 
-  if (isPatientRole(role)) {
-    const patient = await prisma.patient.findFirst({
-      where: { email: sessionUser.email },
-      select: { primary_doctor_id: true },
-    });
-    if (!patient?.primary_doctor_id || patient.primary_doctor_id !== id) notFound();
-  } else if (isDoctorRole(role)) {
-    const ok =
-      sessionUser.userId === id ||
-      (await doctorCanViewDoctorProfile(sessionUser.userId, id));
-    if (!ok) notFound();
-  } else {
-    notFound();
-  }
+  const canView = await canViewDoctorPortalProfile(
+    { userId: sessionUser.userId, email: sessionUser.email, role },
+    id
+  );
+  if (!canView) notFound();
 
   const doc = await prisma.user.findUnique({
     where: { id },
@@ -62,7 +53,11 @@ export default async function PortalDoctorDetailPage({ params }: PageProps) {
   });
   if (!doc) notFound();
 
-  const backHref = role === "patient" ? "/patient-portal" : "/doctor-portal";
+  /** Directory links from `/services` — back to catalog for all portal roles. */
+  const backHref =
+    role === "patient" ? "/services" : role === "doctor" ? "/services" : "/dashboard";
+
+  const viewerIsProfileDoctor = sessionUser.userId === doc.id;
 
   return (
     <div className="space-y-4 text-gray-700">
@@ -71,10 +66,10 @@ export default async function PortalDoctorDetailPage({ params }: PageProps) {
         description={doc.specialty ?? "Doctor profile"}
         actions={
           <Button variant="outline" asChild size="sm">
-            <Link href={backHref}>
+            <BackNavigationLink href={backHref}>
               <ArrowLeft className="h-4 w-4" />
               Back
-            </Link>
+            </BackNavigationLink>
           </Button>
         }
       />
@@ -106,7 +101,11 @@ export default async function PortalDoctorDetailPage({ params }: PageProps) {
                 {doc.patients_primary_doctor.map((p) => (
                   <li key={p.id}>
                     <EntityTitleLink
-                      href={patientDetailHref(role, p.id)}
+                      href={patientDetailHrefWithContext(
+                        role,
+                        p.id,
+                        viewerIsProfileDoctor ? null : doc.id
+                      )}
                       label={`${p.firstname} ${p.lastname}`}
                     />
                   </li>

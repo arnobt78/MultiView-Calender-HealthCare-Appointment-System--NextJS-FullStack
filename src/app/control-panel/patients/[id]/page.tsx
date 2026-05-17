@@ -9,6 +9,7 @@ import { PatientDetailScreen } from "@/components/control-panel/PatientDetailScr
 import { prefetchPatient, prefetchPatientSnapshot } from "@/lib/server-prefetch";
 import { getUserRole, isAdminRole, isDoctorRole, isPatientRole } from "@/lib/rbac";
 import { patientDetailHref } from "@/lib/entity-routes";
+import { resolvePatientAccess } from "@/lib/patient-access";
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -55,9 +56,15 @@ export default async function ControlPanelPatientDetailPage({ params }: PageProp
 
   if (!initialPatient) notFound();
 
+  const accessLevel = await resolvePatientAccess(
+    { userId: sessionUser.userId, email: sessionUser.email, role },
+    id
+  );
+
   return (
     <PatientDetailScreen
       patientId={id}
+      accessLevel={accessLevel}
       viewerRole={role}
       listBackHref="/control-panel/patient-management"
       initialPatient={initialPatient}

@@ -7,11 +7,14 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Prism
 ### Role-based entity detail routing
 
 - **Href map:** `src/lib/entity-routes.ts` — `appointmentDetailHref`, `patientDetailHref`, `categoryDetailHref`, `doctorDetailHref`.
-- **Access:** `src/lib/appointment-access.ts` — `resolveAppointmentAccess` / `computeAppointmentAccessLevel` (`none` | `view` | `mutate`). Used by `GET|PUT|PATCH|DELETE /api/appointments/[id]` and SSR detail pages.
-- **Patient gates:** `src/lib/patient-access.ts` — `canViewPatientDetail`, `doctorIsRelatedToPatient`.
+- **Access (appointments):** `src/lib/appointment-access.ts` — `resolveAppointmentAccess` (`none` | `view` | `mutate`). Used by `GET|PUT|PATCH|DELETE /api/appointments/[id]` and SSR detail pages.
+- **Access (patients):** `src/lib/patient-access.ts` — `resolvePatientAccess` (`none` | `view` | `mutate`). Admin mutate all; doctor mutate **only** when `primary_doctor_id === viewer`; doctor view when related or roster browse (`?fromDoctor=` from `/doctors/[id]`); patient view own email only. `canViewPatientDetail` → `resolvePatientAccess !== "none"`.
+- **Access (doctor profile):** `src/lib/doctor-access.ts` — `canViewDoctorPortalProfile` for `/doctors/[id]` directory browse.
 - **Routes:** Admin stays on `/control-panel/*`. Doctors/patients use `/appointments/[id]`, `/patients/[id]`, `/categories/[id]`, `/doctors/[id]` with thin layouts (no CP sidebar). `control-panel/layout.tsx` redirects non-admins away.
-- **UI:** `AppointmentDetailScreen`, `CategoryDetailScreen`, `PatientDetailScreen`; `RoleEntityLink` on client surfaces; `PrefetchingLink` + `prefetchQueriesForControlPanelHref` for hover prefetch.
-- **Invalidation:** unchanged — `invalidateAfterAppointmentMutation` still busts appointments, portals, dashboard, patient snapshots.
+- **Href helpers:** `patientDetailHrefWithContext(role, id, fromDoctorId?)` for roster-aware patient links.
+- **UI:** `AppointmentDetailScreen`, `CategoryDetailScreen`, `PatientDetailScreen` (required `accessLevel`); `RoleEntityLink` on client surfaces; `PrefetchingLink` + `prefetchQueriesForDetailHref` (alias of `prefetchQueriesForControlPanelHref`) for hover prefetch; `BackNavigationLink` on detail backs (click → `invalidateQueriesForRoute` then navigate).
+- **API patient gates:** `GET /api/patients/[id]` + snapshot require view+; `PUT`/`DELETE` require mutate; optional `?fromDoctor=` on GET (see `patient-api-access.ts`).
+- **Invalidation:** mutation helpers unchanged; add `invalidateQueriesForRoute` for back-navigation list refresh without `refetchOnMount`.
 - **Links wired:** calendar (`AppointmentList`, `DayView`, `WeekView`/`MonthView` via `AppointmentHoverCard`), portals, global search, notification deep links (create/booking/cron).
 - **Verify:** `npm test && npx tsc --noEmit && npm run lint && npm run build`.
 
@@ -40,10 +43,10 @@ Run `npm run db:seed-test-user` after migrations: upserts three `users`, doctor 
 ### Patient pipeline (management + detail)
 
 - **Schema**: `Patient.clinical_profile` (`Json?`) — merged on `PUT /api/patients/[id]` (not fully replaced); **email is never updated from the client** on PUT (demo safety).
-- **API**: `GET /api/patients/[id]/snapshot` returns `{ patient, appointments, invoices }` for the patient detail "Related" sections (invoices matched via `appointment_id`). Each appointment row includes `doctor_specialty` (resolved treating/owner user) for glass badges in the Treating physician column.
-- **React Query**: `queryKeys.patients.snapshot(id)`, hook `usePatientSnapshot(id)` (`src/hooks/usePatients.ts`). Prefix invalidation `queryKeys.patients.all` refreshes list, detail, and snapshot together.
+- **API**: `GET /api/patients/[id]` and `GET /api/patients/[id]/snapshot` gated by `resolvePatientAccess` (403 when `none`; `?fromDoctor=` for roster-only view). Snapshot returns `{ patient, appointments, invoices }` (invoices via `appointment_id`). Appointment rows include `doctor_specialty` for Treating physician badges.
+- **React Query**: `usePatient(id, rosterDoctorId?)` / `usePatientSnapshot(id, rosterDoctorId?)` forward roster query to API. Prefix invalidation `queryKeys.patients.all` refreshes list, detail, and snapshot together.
 - **Invalidation wiring**: `invalidateAfterAppointmentMutation` calls `invalidateInvoicesAndOverview`, which now also invalidates `queryKeys.patients.all` (appointments + invoices affect patient aggregates). `invalidateSharingAndAppointments` invalidates `patients.all` so assignee changes refresh snapshots without navigation.
-- **UI**: `PatientListFiltersProvider` + status dropdown (all/active/inactive); `DataTable` optional `globalFilterFn` for multi-column search (name + email). Sortable headers via `DataTableColumnHeader`. Row menu: View (`?mode` default), Edit (`?mode=edit`). **`PatientDetailScreen`** (client): view vs edit from URL, fixed footer actions, **`PatientDetailForm`** with read-only email + clinical fields mapped into `clinical_profile`.
+- **UI**: `PatientListFiltersProvider` + status dropdown (all/active/inactive); `DataTable` optional `globalFilterFn` for multi-column search (name + email). Sortable headers via `DataTableColumnHeader`. Row menu: View (`?mode` default), Edit (`?mode=edit`). **`PatientDetailScreen`** (client): SSR `accessLevel` prop; `canEdit = accessLevel === "mutate"`; read-only amber banner when `view`; footer Update/Delete hidden when view-only; `?mode=edit` stripped when not mutate; **`BackNavigationLink`** on header/footer back; **`PatientDetailForm`** with read-only email + clinical fields in `clinical_profile`.
 - **Shared table patterns**: Doctor/User/Category management tables reuse **`DataTableColumnHeader`** + **`globalFilterFn`** where applicable (name/email or label/description).
 - **Loading**: `src/app/control-panel/loading.tsx` returns `null` so route transitions don't flash a full skeleton; tables keep localized skeleton rows via `DataTable` `isLoading`.
 
