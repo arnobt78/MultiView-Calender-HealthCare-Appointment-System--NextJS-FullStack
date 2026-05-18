@@ -49,6 +49,8 @@ import { RoleEntityLink } from "@/components/shared/RoleEntityLink";
 import { DoctorSpecialtyBadge } from "@/components/shared/doctor-display/DoctorSpecialtyBadge";
 import { DoctorCardHeroImage } from "@/components/shared/doctor-display/DoctorCardHeroImage";
 import { DoctorAvailabilityGroups } from "@/components/shared/doctor-display/DoctorAvailabilityGroups";
+import { PortalChromeHeader } from "@/components/shared/PortalChromeHeader";
+import { DoctorProfileCardSkeleton } from "@/components/shared/services/DoctorProfileCardSkeleton";
 import {
   ServicesDoctorFilters,
   defaultServicesDoctorFilters,
@@ -163,25 +165,6 @@ function DoctorProfileCard({ doctor }: { doctor: DoctorCard }) {
   );
 }
 
-function DoctorSkeletonGrid({ count = 8 }: { count?: number }) {
-  return (
-    <>
-      {Array.from({ length: count }).map((_, i) => (
-        <Card key={i} className="rounded-[20px] overflow-hidden p-0 gap-0">
-          <Skeleton className="h-40 w-full rounded-none" />
-          <div className="p-4 space-y-2">
-            <Skeleton className="h-4 w-32 rounded" />
-            <Skeleton className="h-3 w-24 rounded" />
-            <Skeleton className="h-3 w-full rounded" />
-            <Skeleton className="h-3 w-3/4 rounded" />
-            <div className="h-8 w-full mt-3" />
-          </div>
-        </Card>
-      ))}
-    </>
-  );
-}
-
 function filterDoctors(doctors: DoctorCard[], filters: ServicesDoctorFilterState): DoctorCard[] {
   const q = filters.search.trim().toLowerCase();
   return doctors.filter((d) => {
@@ -230,6 +213,9 @@ export default function ServicesPage({ initialDoctors, initialServiceCatalog }: 
   const { data: doctorsData, isLoading: doctorsLoading, isError: doctorsError } = useQuery({
     queryKey: queryKeys.doctors.all,
     queryFn: () => apiClient<{ doctors: DoctorCard[] }>("/api/doctors"),
+    initialData: initialDoctors?.length
+      ? { doctors: initialDoctors as DoctorCard[] }
+      : undefined,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -237,7 +223,7 @@ export default function ServicesPage({ initialDoctors, initialServiceCatalog }: 
     data: catalogData,
     isLoading: catalogLoading,
     isError: catalogError,
-  } = useAppointmentServiceCatalog();
+  } = useAppointmentServiceCatalog(initialServiceCatalog);
 
   const filteredDoctors = useMemo(() => {
     const list = doctorsData?.doctors ?? [];
@@ -263,20 +249,11 @@ export default function ServicesPage({ initialDoctors, initialServiceCatalog }: 
 
   return (
     <div className="space-y-4 py-0 pb-3">
-      {/* Page header — icon height spans title + subtitle */}
-      <div className="flex gap-2 py-2 border-b items-stretch">
-        <span className="flex w-12 shrink-0 items-center justify-center rounded-xl bg-sky-100 border border-sky-200 self-stretch min-h-[3.5rem]">
-          <Stethoscope className="h-6 w-6 text-sky-600" />
-        </span>
-        <div className="flex flex-col justify-center min-w-0">
-          <h1 className="text-xl md:text-2xl text-gray-700 font-semibold tracking-tight">
-            Doctors &amp; Services
-          </h1>
-          <p className="text-muted-foreground text-sm">
-            Browse our specialist doctors and available appointment services and book your appointment with ease.
-          </p>
-        </div>
-      </div>
+      <PortalChromeHeader
+        icon={Stethoscope}
+        title="Doctors & Services"
+        description="Browse our specialist doctors and available appointment services and book your appointment with ease."
+      />
 
       <section>
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 mb-4">
@@ -285,7 +262,7 @@ export default function ServicesPage({ initialDoctors, initialServiceCatalog }: 
               <Stethoscope className="h-3.5 w-3.5 text-sky-600" />
             </span>
             <h2 className="text-base text-gray-700 font-semibold">Our Doctors</h2>
-            {doctorsLoading ? (
+            {doctorsLoading && !doctors.length ? (
               <Skeleton className="h-5 w-8 rounded-full" />
             ) : (
               <Badge variant="outline" className="bg-sky-50 text-sky-700 border-sky-200 font-bold">
@@ -303,8 +280,8 @@ export default function ServicesPage({ initialDoctors, initialServiceCatalog }: 
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-          {doctorsLoading ? (
-            <DoctorSkeletonGrid count={8} />
+          {doctorsLoading && !doctors.length ? (
+            Array.from({ length: 8 }).map((_, i) => <DoctorProfileCardSkeleton key={i} />)
           ) : doctorsError ? (
             <div className="col-span-full rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 flex items-center gap-2">
               <AlertCircle className="h-4 w-4 shrink-0" />
@@ -328,7 +305,7 @@ export default function ServicesPage({ initialDoctors, initialServiceCatalog }: 
               <Activity className="h-3.5 w-3.5 text-violet-600" />
             </span>
             <h2 className="text-base text-gray-700 font-semibold">Appointment Services</h2>
-            {catalogLoading ? (
+            {catalogLoading && !allServices.length ? (
               <Skeleton className="h-5 w-8 rounded-full" />
             ) : (
               <Badge variant="outline" className="bg-violet-50 text-violet-700 border-violet-200 font-bold">
@@ -345,7 +322,7 @@ export default function ServicesPage({ initialDoctors, initialServiceCatalog }: 
           />
         </div>
 
-        {catalogLoading ? (
+        {catalogLoading && !allServices.length ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {Array.from({ length: 4 }).map((_, i) => (
               <Skeleton key={i} className="h-24 rounded-[16px]" />

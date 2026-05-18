@@ -16,7 +16,7 @@
  * - Inline skeleton pattern: structural chrome always mounted, only data values pulse
  */
 
-import { useState, useEffect, useLayoutEffect } from "react";
+import { useState, useEffect, useLayoutEffect, type ReactNode } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { addMinutes, differenceInYears, format, isPast, isFuture, isToday } from "date-fns";
 import type { PortalPrefetchData } from "@/lib/server-prefetch";
@@ -82,7 +82,9 @@ import type { Patient, PatientClinicalProfile, User as AppUser } from "@/types/t
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { RoleEntityLink } from "@/components/shared/RoleEntityLink";
 import { DoctorSelectOption } from "@/components/shared/doctor-display/DoctorSelectOption";
-import { DoctorLinkStack } from "@/components/shared/doctor-display/DoctorLinkStack";
+import { DoctorIdentityRow } from "@/components/shared/doctor-display/DoctorIdentityRow";
+import { PortalChromeHeader } from "@/components/shared/PortalChromeHeader";
+import { ProfileDefinitionRow } from "@/components/shared/profile/ProfileDefinitionRow";
 import { notify } from "@/lib/notify";
 import { useUsers } from "@/hooks/useUsers";
 import { useAvailabilitySlots } from "@/hooks/useAvailabilitySlots";
@@ -298,7 +300,7 @@ export function BookAppointmentDialog({ preselectedDoctorId, trigger }: BookAppo
             )}
           >
             <CalendarPlus className="h-4 w-4" />
-            Request / Book Appointment
+            Book Appointment
           </Button>
         )}
       </DialogTrigger>
@@ -846,6 +848,42 @@ function AppointmentTimeline({ appointments, loading }: { appointments: ApptRow[
 // MAIN PAGE
 // ---------------------------------------------------------------------------
 
+function renderPrimaryDoctor(patient: Patient, portalDoctors: AppUser[]): ReactNode {
+  type LegacyNested = {
+    primary_doctor?: { display_name?: string | null; email?: string } | null;
+  };
+  const pRow = patient as Patient & LegacyNested;
+  const nested = pRow.primary_doctor;
+  if (pRow.primary_doctor_id && pRow.primary_doctor_display?.trim()) {
+    const doc = portalDoctors.find((x) => x.id === pRow.primary_doctor_id);
+    return (
+      <DoctorIdentityRow
+        doctor={{
+          id: pRow.primary_doctor_id,
+          display_name: pRow.primary_doctor_display.trim(),
+          email: pRow.primary_doctor_email ?? null,
+          specialty: doc?.specialty ?? null,
+          image: doc?.image ?? null,
+        }}
+        size="sm"
+        showEmail
+        linkKind="role"
+      />
+    );
+  }
+  if (nested && (nested.display_name?.trim() || nested.email)) {
+    return (
+      <>
+        {nested.display_name?.trim() || nested.email}
+        {nested.email && nested.display_name?.trim() ? (
+          <span className="text-gray-600"> ({nested.email.trim()})</span>
+        ) : null}
+      </>
+    );
+  }
+  return pRow.primary_doctor_display ?? "—";
+}
+
 type PatientPortalPageProps = {
   /**
    * Server-prefetched portal data — seeds queryKeys.patientPortal.all so the
@@ -867,12 +905,12 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
   const { data, isLoading, isError, error } = useQuery({
     queryKey: queryKeys.patientPortal.all,
     queryFn: () => apiClient<PortalPrefetchData>("/api/patient-portal"),
-    // SSR seed via setQueryData (above) means first paint is instant; 30 s window
-    // prevents redundant re-fetches on rapid tab switches / re-mounts.
+    initialData: initialPortalData ?? undefined,
+    // SSR seed + initialData keeps profile chrome stable; 30 s window avoids redundant refetch.
     staleTime: 30_000,
   });
 
-  // Mount guard: shows skeleton on SSR first paint, then swaps to real data
+  // Mount guard for invoices query only — avoids SSR/client mismatch on /api/invoices
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
     requestAnimationFrame(() => setIsMounted(true));
@@ -889,9 +927,9 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
   const { data: portalDoctorsData } = useUsers({ role: "doctor", limit: 200 });
   const portalDoctors = portalDoctorsData?.users ?? [];
 
-  const loading = !isMounted || isLoading;
-
   const patient = data?.patient ?? null;
+  const portalLoading = isLoading && !data;
+  const profileLoading = isLoading && !patient;
   const userImage = data?.userImage ?? null;
   const appointments = data?.appointments ?? [];
 
@@ -932,20 +970,12 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
 
   return (
     <div className="space-y-4 py-0 pb-0 text-gray-700">
-      {/* Page header — always static */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 border-b pb-4">
-        <div>
-          <h1 className="flex items-center gap-2 text-xl font-semibold tracking-tight text-gray-700 md:text-2xl">
-            <Activity className="h-5 w-5 text-sky-600 md:h-6 md:w-6" />
-            Patient Portal
-          </h1>
-          <p className="text-sm text-gray-600">
-            View your appointment history and request new appointments
-          </p>
-        </div>
-        {/* Glassmorphic Book button */}
-        <BookAppointmentDialog />
-      </div>
+      <PortalChromeHeader
+        icon={Activity}
+        title="Patient Portal"
+        description="View your appointment history and request new appointments"
+        actions={<BookAppointmentDialog />}
+      />
 
       <div className="grid md:grid-cols-3 gap-4">
         {/* Left sidebar: one shadcn Card — section titles sit inside the same CardContent
@@ -965,206 +995,146 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
                   My Profile
                 </h3>
                 <div className="space-y-3">
-                  {loading ? (
-                    /* Skeleton */
+                  {profileLoading || patient ? (
                     <>
-                      <div className="flex items-center gap-3">
-                        <Skeleton className="h-16 w-16 rounded-full shrink-0" />
-                        <div className="space-y-2 flex-1">
-                          <Skeleton className="h-4 w-28 rounded" />
-                          <Skeleton className="h-3 w-20 rounded" />
-                          <Skeleton className="h-3 w-14 rounded" />
-                        </div>
-                      </div>
-                      <Separator />
-                      <div className="space-y-2.5">
-                        {Array.from({ length: 7 }).map((_, i) => (
-                          <div key={i} className="flex items-center gap-2">
-                            <Skeleton className="h-6 w-6 rounded-full shrink-0" />
-                            <Skeleton className="h-3.5 flex-1 rounded" />
-                          </div>
-                        ))}
-                      </div>
-                    </>
-                  ) : patient ? (
-                    <>
-                      {/* Avatar + name — `UserAvatar` matches control-panel patient detail (`SafeImage` + object-cover). */}
                       <div className="flex items-start gap-3">
-                        <UserAvatar
-                          src={avatarSrc}
-                          fallbackText={`${patient.firstname?.[0] ?? "?"}${patient.lastname?.[0] ?? "?"}`}
-                          sizeClassName="h-16 w-16"
-                          loading={false}
-                        />
+                        {profileLoading && !patient ? (
+                          <Skeleton className="h-16 w-16 shrink-0 rounded-full" />
+                        ) : patient ? (
+                          <UserAvatar
+                            src={avatarSrc}
+                            fallbackText={`${patient.firstname?.[0] ?? "?"}${patient.lastname?.[0] ?? "?"}`}
+                            sizeClassName="h-16 w-16"
+                            loading={false}
+                          />
+                        ) : null}
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-bold leading-tight text-gray-700">
-                            {patient.firstname} {patient.lastname}
-                          </p>
-                          {patient.email && (
-                            <p className=" truncate text-xs text-gray-600">{patient.email}</p>
-                          )}
-                          {patient.pronoun && (
-                            <p className="text-xs text-gray-600">{patient.pronoun}</p>
-                          )}
-                          {/* Status + age badges inline below name */}
-                          <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
-                            {patient.active ? (
-                              <Badge
-                                variant="outline"
-                                className="calendar-glass-badge calendar-glass-badge-emerald gap-1 text-[10px] py-0"
-                              >
-                                <ShieldCheck className="h-2.5 w-2.5" /> Active
-                              </Badge>
-                            ) : (
-                              <Badge
-                                variant="outline"
-                                className="calendar-glass-badge calendar-glass-badge-slate gap-1 text-[10px] py-0"
-                              >
-                                <ShieldOff className="h-2.5 w-2.5" /> Inactive
-                              </Badge>
-                            )}
-                            {age !== null && (
-                              <Badge
-                                variant="outline"
-                                className="calendar-glass-badge calendar-glass-badge-sky gap-1 text-[10px] py-0"
-                              >
-                                <Cake className="h-2.5 w-2.5" /> Age {age}
-                              </Badge>
-                            )}
-                          </div>
+                          {profileLoading ? (
+                            <div className="space-y-2">
+                              <Skeleton className="h-4 w-28 rounded" />
+                              <Skeleton className="h-3 w-36 rounded" />
+                              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                                <Skeleton className="h-5 w-14 rounded-full" />
+                                <Skeleton className="h-5 w-16 rounded-full" />
+                              </div>
+                            </div>
+                          ) : patient ? (
+                            <>
+                              <p className="truncate text-sm font-bold leading-tight text-gray-700">
+                                {patient.firstname} {patient.lastname}
+                              </p>
+                              {patient.email ? (
+                                <p className="truncate text-xs text-gray-600">{patient.email}</p>
+                              ) : null}
+                              {patient.pronoun ? (
+                                <p className="text-xs text-gray-600">{patient.pronoun}</p>
+                              ) : null}
+                              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                                {patient.active ? (
+                                  <Badge
+                                    variant="outline"
+                                    className="calendar-glass-badge calendar-glass-badge-emerald gap-1 py-0 text-[10px]"
+                                  >
+                                    <ShieldCheck className="h-2.5 w-2.5" /> Active
+                                  </Badge>
+                                ) : (
+                                  <Badge
+                                    variant="outline"
+                                    className="calendar-glass-badge calendar-glass-badge-slate gap-1 py-0 text-[10px]"
+                                  >
+                                    <ShieldOff className="h-2.5 w-2.5" /> Inactive
+                                  </Badge>
+                                )}
+                                {age !== null ? (
+                                  <Badge
+                                    variant="outline"
+                                    className="calendar-glass-badge calendar-glass-badge-sky gap-1 py-0 text-[10px]"
+                                  >
+                                    <Cake className="h-2.5 w-2.5" /> Age {age}
+                                  </Badge>
+                                ) : null}
+                              </div>
+                            </>
+                          ) : null}
                         </div>
                       </div>
 
                       <Separator />
 
-                      {/* Info fields — icons have rounded bg pill like PatientDetailView */}
                       <dl className="space-y-2.5 text-xs">
-                        {/* Patient ID */}
-                        <div className="flex items-start gap-2.5">
-                          <span className=" flex h-6 w-6 shrink-0 items-center justify-center rounded-full border bg-muted/60">
-                            <Hash className="h-3 w-3 text-gray-500" />
-                          </span>
-                          <div className="min-w-0 flex-1">
-                            <dt className="text-gray-600">Patient ID</dt>
-                            <dd className="break-all font-mono text-[10px] text-gray-700">{patient.id}</dd>
-                          </div>
-                        </div>
+                        <ProfileDefinitionRow
+                          icon={Hash}
+                          iconClassName="bg-muted/60"
+                          label="Patient ID"
+                          variant="mono"
+                          loading={profileLoading}
+                        >
+                          {patient?.id ?? "—"}
+                        </ProfileDefinitionRow>
 
-                        {/* Birth Date */}
-                        {patient.birth_date && (
-                          <div className="flex items-center gap-2.5">
-                            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-orange-100 bg-orange-50">
-                              <Cake className="h-3 w-3 text-orange-500" />
-                            </span>
-                            <div>
-                              <dt className="text-gray-600">Birth Date</dt>
-                              <dd className="font-medium text-gray-700">
-                                {format(new Date(patient.birth_date), "dd MMM yyyy")}
-                              </dd>
-                            </div>
-                          </div>
-                        )}
+                        <ProfileDefinitionRow
+                          icon={Cake}
+                          iconClassName="border-orange-100 bg-orange-50 [&_svg]:text-orange-500"
+                          label="Birth Date"
+                          loading={profileLoading}
+                        >
+                          {patient?.birth_date
+                            ? format(new Date(patient.birth_date), "dd MMM yyyy")
+                            : "—"}
+                        </ProfileDefinitionRow>
 
-                        {/* Care Tier */}
-                        {patient.care_level != null && (
-                          <div className="flex items-center gap-2.5">
-                            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-violet-100 bg-violet-50">
-                              <Layers className="h-3 w-3 text-violet-500" />
-                            </span>
-                            <div>
-                              <dt className="text-gray-600">Care Tier (1–10)</dt>
-                              <dd className="font-medium text-gray-700">
-                                {getPatientCareLevelLabel(patient.care_level)}
-                              </dd>
-                            </div>
-                          </div>
-                        )}
+                        <ProfileDefinitionRow
+                          icon={Layers}
+                          iconClassName="border-violet-100 bg-violet-50 [&_svg]:text-violet-500"
+                          label="Care Tier (1–10)"
+                          loading={profileLoading}
+                        >
+                          {patient?.care_level != null
+                            ? getPatientCareLevelLabel(patient.care_level)
+                            : "—"}
+                        </ProfileDefinitionRow>
 
-                        {/* Primary Doctor — prefer serializePatient flat fields; tolerate legacy nested primary_doctor from older API responses until all callers align. */}
-                        <div className="flex items-start gap-2.5">
-                          <span className=" flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-sky-100 bg-sky-50">
-                            <Stethoscope className="h-3 w-3 text-sky-500" />
-                          </span>
-                          <div className="min-w-0">
-                            <dt className="text-gray-600">Primary Doctor</dt>
-                            <dd className="font-medium text-gray-700">
-                              {(() => {
-                                type LegacyNested = {
-                                  primary_doctor?: { display_name?: string | null; email?: string } | null;
-                                };
-                                const pRow = patient as Patient & LegacyNested;
-                                const nested = pRow.primary_doctor;
-                                if (pRow.primary_doctor_id && pRow.primary_doctor_display?.trim()) {
-                                  const doc = portalDoctors.find((x) => x.id === pRow.primary_doctor_id);
-                                  return (
-                                    <DoctorLinkStack
-                                      doctorId={pRow.primary_doctor_id}
-                                      name={pRow.primary_doctor_display.trim()}
-                                      email={pRow.primary_doctor_email}
-                                      specialty={doc?.specialty ?? null}
-                                      linkKind="role"
-                                      nameClassName="font-normal"
-                                    />
-                                  );
-                                }
-                                if (nested && (nested.display_name?.trim() || nested.email)) {
-                                  return (
-                                    <>
-                                      {nested.display_name?.trim() || nested.email}
-                                      {nested.email && nested.display_name?.trim() ? (
-                                        <span className="text-gray-600"> ({nested.email.trim()})</span>
-                                      ) : null}
-                                    </>
-                                  );
-                                }
-                                return pRow.primary_doctor_display ?? "—";
-                              })()}
-                            </dd>
-                          </div>
-                        </div>
+                        <ProfileDefinitionRow
+                          icon={Stethoscope}
+                          iconClassName="border-sky-100 bg-sky-50 [&_svg]:text-sky-500"
+                          label="Primary Doctor"
+                          variant="doctorStack"
+                          loading={profileLoading}
+                        >
+                          {patient ? renderPrimaryDoctor(patient, portalDoctors) : "—"}
+                        </ProfileDefinitionRow>
 
-                        {/* Referral — always shown */}
-                        <div className="flex items-start gap-2.5">
-                          <span className=" flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-teal-100 bg-teal-50">
-                            <GitBranch className="h-3 w-3 text-teal-500" />
-                          </span>
-                          <div>
-                            <dt className="text-gray-600">Referral</dt>
-                            <dd className="font-medium text-gray-700">
-                              {clinicalProfile?.referral_source
-                                ? `${clinicalProfile.referral_source}${clinicalProfile.referral_detail ? ` — ${clinicalProfile.referral_detail}` : ""}`
-                                : "—"}
-                            </dd>
-                          </div>
-                        </div>
+                        <ProfileDefinitionRow
+                          icon={GitBranch}
+                          iconClassName="border-teal-100 bg-teal-50 [&_svg]:text-teal-500"
+                          label="Referral"
+                          loading={profileLoading}
+                        >
+                          {clinicalProfile?.referral_source
+                            ? `${clinicalProfile.referral_source}${clinicalProfile.referral_detail ? ` — ${clinicalProfile.referral_detail}` : ""}`
+                            : "—"}
+                        </ProfileDefinitionRow>
 
-                        {/* Allergies */}
-                        <div className="flex items-start gap-2.5">
-                          <span className=" flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-amber-100 bg-amber-50">
-                            <AlertTriangle className="h-3 w-3 text-amber-500" />
-                          </span>
-                          <div>
-                            <dt className="text-gray-600">Allergies</dt>
-                            <dd className="font-medium text-gray-700">
-                              {clinicalProfile?.allergies?.length
-                                ? clinicalProfile.allergies.join(", ")
-                                : "—"}
-                            </dd>
-                          </div>
-                        </div>
+                        <ProfileDefinitionRow
+                          icon={AlertTriangle}
+                          iconClassName="border-amber-100 bg-amber-50 [&_svg]:text-amber-500"
+                          label="Allergies"
+                          loading={profileLoading}
+                        >
+                          {clinicalProfile?.allergies?.length
+                            ? clinicalProfile.allergies.join(", ")
+                            : "—"}
+                        </ProfileDefinitionRow>
 
-                        {/* Clinical Notes */}
-                        <div className="flex items-start gap-2.5">
-                          <span className=" flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50">
-                            <FileText className="h-3 w-3 text-slate-500" />
-                          </span>
-                          <div>
-                            <dt className="text-gray-600">Clinical Notes</dt>
-                            <dd className="leading-relaxed text-gray-700">
-                              {clinicalProfile?.notes ?? "—"}
-                            </dd>
-                          </div>
-                        </div>
+                        <ProfileDefinitionRow
+                          icon={FileText}
+                          iconClassName="border-slate-200 bg-slate-50 [&_svg]:text-slate-500"
+                          label="Clinical Notes"
+                          variant="multiline"
+                          loading={profileLoading}
+                        >
+                          {clinicalProfile?.notes ?? "—"}
+                        </ProfileDefinitionRow>
                       </dl>
                     </>
                   ) : (
@@ -1218,7 +1188,7 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
                         {icon}
                         {label}
                       </span>
-                      {loading ? (
+                      {portalLoading ? (
                         <Skeleton className="h-5 w-10 rounded-full" />
                       ) : (
                         <Badge
@@ -1318,7 +1288,7 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
 
         {/* Appointment History — spans 2 columns */}
         <div className="md:col-span-2">
-          <AppointmentTimeline appointments={appointments} loading={loading} />
+          <AppointmentTimeline appointments={appointments} loading={portalLoading} />
         </div>
       </div>
     </div>

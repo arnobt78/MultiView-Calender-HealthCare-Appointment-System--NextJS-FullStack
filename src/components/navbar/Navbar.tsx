@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/hooks/useAuth";
+import { useNavSession } from "@/hooks/useNavSession";
 import { useNotifications } from "@/hooks/useNotifications";
 import {
   DropdownMenu,
@@ -99,37 +100,17 @@ import { dashboardShellClass } from "@/lib/dashboard-layout";
 import { cn } from "@/lib/utils";
 
 export default function Navbar() {
-  const { user, logout, isLoggingOut, isLoading: authLoading } = useAuth();
+  const { logout, isLoggingOut } = useAuth();
+  const {
+    effectiveUser: user,
+    showStaffNavLinks,
+    showPatientPortalNavLink,
+    showAdminPortalLink,
+    showDoctorPortalLink,
+    showControlPanelLink,
+  } = useNavSession();
   const pathname = usePathname();
   const router = useRouter();
-
-  // Role flags — drive nav link visibility once session resolves.
-  const isPatient = user?.role === "patient";
-  const isAdmin = user?.role === "admin";
-  const isDoctor = user?.role === "doctor";
-  const isStaff = isAdmin || isDoctor;
-
-  /**
-   * During `authLoading`, `user` is still null — role flags are all false.
-   * Infer chrome from pathname until /api/auth/me returns so that SSR → client
-   * hydration produces the same DOM structure and avoids a layout shift.
-   * Server-side redirects enforce RBAC; these hints are cosmetic only.
-   */
-  const inferredStaffNav =
-    pathname?.startsWith("/control-panel") === true ||
-    pathname?.startsWith("/insights") === true ||
-    pathname?.startsWith("/admin-portal") === true ||
-    pathname?.startsWith("/doctor-portal") === true;
-  const inferredPatientNav = pathname?.startsWith("/patient-portal") === true;
-  const inferredAdminNav = pathname?.startsWith("/admin-portal") === true;
-  const inferredDoctorNav = pathname?.startsWith("/doctor-portal") === true;
-
-  const showStaffNavLinks = authLoading ? inferredStaffNav : isStaff;
-  const showPatientPortalNavLink = authLoading ? inferredPatientNav : !isStaff;
-  const showAdminPortalLink = authLoading ? inferredAdminNav : isAdmin;
-  const showDoctorPortalLink = authLoading ? inferredDoctorNav : isDoctor;
-  // Doctors use their own portal; only admin has access to Control Panel
-  const showControlPanelLink = authLoading ? inferredAdminNav : isAdmin;
   const openSearch = useAppStore((s) => s.openSearch);
   const toggleQuickActionModal = useAppStore((s) => s.toggleQuickActionModal);
   const { notifications, total, unreadCount, markAsRead, markAllAsRead, deleteRead, isDeletingRead } = useNotifications();
@@ -178,7 +159,7 @@ export default function Navbar() {
           </Link>
         </div>
 
-        {/* Center: nav links — role-gated; pathname hints keep hydration stable while auth loads */}
+        {/* Center: nav links — role from useNavSession (persisted auth.me when /api/auth/me is in flight) */}
         <nav className="hidden md:flex flex-1 items-center justify-center gap-6">
           {/* Dashboard — all authenticated roles */}
           <Link

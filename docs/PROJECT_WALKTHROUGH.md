@@ -188,12 +188,28 @@ const loading = !isMounted || isLoading;
 | Notifications | `control-panel/NotificationsManagement.tsx` | Table rows |
 | Google Calendar | `control-panel/GoogleCalendarSettings.tsx` | Status badge + description + action button |
 | Insights | `pages/AnalyticsPage.tsx` | Stat values + chart bars + category rows + patient table rows |
-| Patient Portal | `pages/PatientPortalPage.tsx` | Profile field values + summary badge values + appointment timeline rows |
+| Patient Portal | `pages/PatientPortalPage.tsx` | `ProfileDefinitionRow` value slots + avatar name/badges + summary badges + timeline rows |
+| Services | `pages/ServicesPage.tsx` | `DoctorProfileCardSkeleton` text slots; filter bar + card chrome static |
 
 ### Deleted loading.tsx files
 
 - `src/app/insights/loading.tsx` — deleted; replaced by inline skeleton in `AnalyticsPage.tsx`
 - `src/app/patient-portal/loading.tsx` — deleted; replaced by inline skeleton in `PatientPortalPage.tsx`
+
+### Portal chrome / nav stability
+
+Shared primitives keep layout fixed while data loads:
+
+| Piece | File | Role |
+|-------|------|------|
+| `PortalChromeHeader` | `src/components/shared/PortalChromeHeader.tsx` | Tall icon column + `border-b` for `/services` and `/patient-portal` |
+| `ProfileDefinitionRow` | `src/components/shared/profile/ProfileDefinitionRow.tsx` | `<dl>` row: icon + label static; variant-matched skeleton in `dd` only (`doctorStack` = Primary Doctor height) |
+| `DoctorProfileCardSkeleton` | `src/components/shared/services/DoctorProfileCardSkeleton.tsx` | 1:1 `/services` doctor card shell |
+| `useNavSession` | `src/hooks/useNavSession.ts` | `effectiveUser` from `useAuth` + persisted `queryKeys.auth.me` — stable navbar links on refresh |
+
+**SSR + client:** portal pages pass `initialData` on `useQuery` (in addition to `useLayoutEffect` `setQueryData`). Profile loading uses `profileLoading = isLoading && !patient` (not `!isMounted`). Navbar hides role-specific links until a role is known (`navLoading`).
+
+**Audit (agent glance):** All plan phases wired — prefetch in `src/app/patient-portal/page.tsx` + `src/app/services/page.tsx`; no new query keys or invalidation helpers; `DoctorSkeletonGrid` removed; `DoctorLinkStack` removed from Patient Portal only. **134 tests**, `tsc`, `lint`, `build` pass. No dedicated unit tests for chrome primitives (display-only). Doctor/Admin portals not migrated to `PortalChromeHeader` (out of scope).
 
 ---
 
