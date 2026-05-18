@@ -28,6 +28,8 @@ import {
 import AppointmentDialogController from "./AppointmentDialogController";
 import ImportICSDialog from "./ImportICSDialog";
 import { useAuth } from "@/hooks/useAuth";
+import { useInitialNavRole } from "@/context/NavRoleContext";
+import { isPatientRole } from "@/lib/rbac";
 import { apiClient } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import { isValidUUID } from "@/lib/validation";
@@ -61,9 +63,11 @@ export default function CalendarHeader({
 }) {
   const { currentDate, setCurrentDate } = useDateContext();
   const { user } = useAuth();
+  const initialNavRole = useInitialNavRole();
   const queryClient = useQueryClient();
-  // Patients view the calendar in read-only mode — CRUD buttons are hidden.
-  const isPatient = user?.role === "patient";
+  // SSR `initialNavRole` + live auth — same rule as Navbar (no Import / New Appointment flash on refresh).
+  const role = user?.role ?? initialNavRole;
+  const isPatient = isPatientRole(role);
 
   /**
    * One lightweight GET per dashboard session: seeds `queryKeys.appointmentTypes.byDoctor(owner)` so the

@@ -23,16 +23,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
-import {
-  MoreVertical,
-  CheckCircle,
-  Circle,
   CalendarCheck2,
   CalendarClock,
   CalendarX2,
@@ -40,13 +30,13 @@ import {
   ChevronDown,
   Video,
 } from "lucide-react";
-import { getUserAppointmentPermission } from "@/lib/permissions";
 import VideoCall from "./VideoCall";
+import { AppointmentActionsMenu } from "@/components/shared/AppointmentActionsMenu";
+import { AppointmentTitleRow } from "@/components/shared/AppointmentTitleRow";
+import { TruncatedText } from "@/components/shared/TruncatedText";
 // Using Vercel Blob for file storage
 import { getPublicUrl } from "@/lib/vercelBlob";
 import {
-  FiEdit2,
-  FiTrash2,
   FiFileText,
   FiUser,
   FiMapPin,
@@ -144,42 +134,6 @@ function groupAppointmentsByDate(appts: FullAppointment[]) {
   return sortedKeys.map((key) => ({ date: new Date(key), appts: groups[key] }));
 }
 
-// Day tags helper (Today, Tomorrow, Later, Passed)
-function getDateTag(date: Date) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  const diffDays = Math.floor(
-    (d.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-  );
-  if (diffDays === 0)
-    return (
-      <Badge variant="outline" className="calendar-glass-badge calendar-glass-badge-emerald ">
-        Today
-      </Badge>
-    );
-  if (diffDays === 1)
-    return (
-      <Badge variant="outline" className="calendar-glass-badge calendar-glass-badge-blue ">
-        Tomorrow
-      </Badge>
-    );
-  if (diffDays > 1)
-    return (
-      <Badge variant="outline" className="calendar-glass-badge calendar-glass-badge-violet ">
-        Later
-      </Badge>
-    );
-  if (diffDays < 0)
-    return (
-      <Badge variant="outline" className="calendar-glass-badge calendar-glass-badge-slate ">
-        Passed
-      </Badge>
-    );
-  return null;
-}
-
 type ListSectionKey = "today" | "tomorrow" | "passed" | "later";
 
 function dayDiffFromToday(date: Date) {
@@ -241,15 +195,6 @@ export default function AppointmentList() {
       ),
     [appointments, category, patient, date, status, month, patients]
   );
-
-  // Helper: get permission for current user on an appointment
-  function getUserPermission(appt: FullAppointment): "owner" | "full" | "write" | "read" | null {
-    return getUserAppointmentPermission({
-      appointment: appt,
-      assignees: appt.appointment_assignee,
-      userId: user?.id,
-    });
-  }
 
   const handleToggleStatus = (id: string, newStatus: string) => {
     // Only pass id and status, casting generic string to required union
@@ -636,16 +581,13 @@ export default function AppointmentList() {
                                       {/* Main content */}
                                       <div className="pl-6 pr-4 py-3 flex-1 flex flex-col gap-2 min-w-0">
 
-                                        {/* Row 1: Title + date tag */}
-                                        <div className="flex items-center gap-2 flex-wrap">
-                                          <RoleEntityLink
-                                            kind="appointment"
-                                            id={appt.id}
-                                            label={appt.title}
-                                            className={`text-md font-medium ${isDone ? "line-through text-gray-400" : ""}`}
-                                          />
-                                          {getDateTag(start)}
-                                        </div>
+                                        {/* Row 1: title truncates; day badge pinned right */}
+                                        <AppointmentTitleRow
+                                          appointmentId={appt.id}
+                                          title={appt.title}
+                                          appointmentStart={start}
+                                          isDone={isDone}
+                                        />
 
                                         {/* Row 2: Date · Time · Location */}
                                         <div className="flex items-center gap-5 flex-wrap text-sm text-gray-600">
@@ -736,10 +678,15 @@ export default function AppointmentList() {
 
                                         {/* Row 4: Notes (only if present) */}
                                         {appt.notes && (
-                                          <div className="flex items-center gap-1.5">
-                                            <FiFileText className={`w-3.5 h-3.5 shrink-0 ${isDone ? "text-gray-300" : "text-gray-400"}`} />
+                                          <div className="flex min-w-0 items-center gap-1.5">
+                                            <FiFileText className={`h-3.5 w-3.5 shrink-0 ${isDone ? "text-gray-300" : "text-gray-400"}`} />
                                             <span className="text-gray-400 text-xs shrink-0">Note:</span>
-                                            <span className={`text-xs ${isDone ? " text-gray-400" : "text-gray-600"}`}>{appt.notes}</span>
+                                            <TruncatedText
+                                              title={appt.notes}
+                                              className={`text-xs ${isDone ? "text-gray-400" : "text-gray-600"}`}
+                                            >
+                                              {appt.notes}
+                                            </TruncatedText>
                                           </div>
                                         )}
 
@@ -782,43 +729,17 @@ export default function AppointmentList() {
 
                                       {/* Actions column: 3-dot on top, Video Call on bottom */}
                                       <div className="flex flex-col items-center justify-between py-3 px-2 border-l border-gray-100 bg-gray-50/80 rounded-r-2xl min-w-[56px]">
-                                        <DropdownMenu>
-                                          <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-black/10">
-                                              <MoreVertical className="h-4 w-4 text-gray-500" />
-                                              <span className="sr-only">Open menu</span>
-                                            </Button>
-                                          </DropdownMenuTrigger>
-                                          <DropdownMenuContent align="end" className="w-48">
-                                            {(() => {
-                                              const perm = getUserPermission(appt);
-                                              return (
-                                                <>
-                                                  {(perm === "owner" || perm === "full" || perm === "write") && (
-                                                    <DropdownMenuItem onClick={() => handleToggleStatus(appt.id, isDone ? "pending" : "done")}>
-                                                      {isDone ? (
-                                                        <><Circle className="h-4 w-4" /><span>Mark as open</span></>
-                                                      ) : (
-                                                        <><CheckCircle className="h-4 w-4 text-green-600" /><span className="text-green-600">Mark as done</span></>
-                                                      )}
-                                                    </DropdownMenuItem>
-                                                  )}
-                                                  {(perm === "owner" || perm === "full") && (
-                                                    <>
-                                                      {(perm === "owner" || perm === "full" || perm === "write") && <DropdownMenuSeparator />}
-                                                      <DropdownMenuItem onClick={() => handleEdit(appt)}>
-                                                        <FiEdit2 className="h-4 w-4" /><span>Edit</span>
-                                                      </DropdownMenuItem>
-                                                      <DropdownMenuItem onClick={() => handleDelete(appt.id)} className="text-red-600 focus:bg-red-50 focus:text-red-600">
-                                                        <FiTrash2 className="h-4 w-4" /><span>Delete</span>
-                                                      </DropdownMenuItem>
-                                                    </>
-                                                  )}
-                                                </>
-                                              );
-                                            })()}
-                                          </DropdownMenuContent>
-                                        </DropdownMenu>
+                                        <AppointmentActionsMenu
+                                          appointment={appt}
+                                          userId={user?.id}
+                                          userEmail={user?.email}
+                                          userRole={user?.role}
+                                          onToggleStatus={(id, status) =>
+                                            handleToggleStatus(id, status)
+                                          }
+                                          onEdit={() => handleEdit(appt)}
+                                          onDelete={handleDelete}
+                                        />
                                         {/* Video call button only shown for telehealth appointments */}
                                         {appt.is_telehealth && (
                                           <VideoCall

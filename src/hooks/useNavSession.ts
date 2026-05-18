@@ -1,6 +1,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
+import { useInitialNavRole } from "@/context/NavRoleContext";
 import { useAuth } from "@/hooks/useAuth";
 import { queryKeys } from "@/lib/query-keys";
 import { isAdminRole, isDoctorRole, isPatientRole } from "@/lib/rbac";
@@ -15,17 +16,20 @@ type NavUser = {
 } | null;
 
 /**
- * Navbar role resolution — prefers live `useAuth` user, falls back to persisted `queryKeys.auth.me`
- * so link chrome does not flicker on refresh before `/api/auth/me` returns.
+ * Navbar role resolution — `useInitialNavRole()` (SSR) + `useAuth` / query cache (client).
+ * Role links stay visible when `role` is known; never read localStorage during render (hydration-safe).
  */
 export function useNavSession() {
   const { user, isLoading: authLoading } = useAuth();
   const queryClient = useQueryClient();
+  const initialNavRole = useInitialNavRole();
   const cachedUser = queryClient.getQueryData<NavUser>(queryKeys.auth.me);
-  const effectiveUser = user ?? cachedUser ?? null;
-  const navLoading = authLoading && effectiveUser == null;
 
-  const role = effectiveUser?.role;
+  const role = user?.role ?? cachedUser?.role ?? initialNavRole ?? undefined;
+  const effectiveUser: NavUser =
+    user ?? cachedUser ?? (role ? { id: "" as UUID, email: "", role } : null);
+  const navLoading = authLoading && role == null;
+
   const isAdmin = isAdminRole(role);
   const isDoctor = isDoctorRole(role);
   const isPatient = isPatientRole(role);
@@ -38,10 +42,10 @@ export function useNavSession() {
     isDoctor,
     isPatient,
     isStaff,
-    showAdminPortalLink: navLoading ? false : isAdmin,
-    showDoctorPortalLink: navLoading ? false : isDoctor,
-    showControlPanelLink: navLoading ? false : isAdmin,
-    showStaffNavLinks: navLoading ? false : isStaff,
-    showPatientPortalNavLink: navLoading ? false : isPatient,
+    showAdminPortalLink: isAdmin,
+    showDoctorPortalLink: isDoctor,
+    showControlPanelLink: isAdmin,
+    showStaffNavLinks: isStaff,
+    showPatientPortalNavLink: isPatient,
   };
 }

@@ -341,7 +341,7 @@ export default function WeekView() {
                             userEmail={userEmail}
                             userId={userId}
                             ownerUsers={ownerUsers}
-                            getDateTag={getDateTag}
+                            detailWrap
                             onEdit={setEditAppt}
                             onDelete={(id) => setDeleteTargetId(id)}
                             onToggleStatus={toggleStatus}

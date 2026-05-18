@@ -20,7 +20,7 @@ export function EntityTitleLink({ href, label, className }: EntityTitleLinkProps
         className
       )}
     >
-      {label}
+      <span className="truncate">{label}</span>
     </PrefetchingLink>
   );
 }

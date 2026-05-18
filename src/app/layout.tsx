@@ -123,6 +123,8 @@ export const metadata: Metadata = {
 };
 
 import AuthShell from "./AuthShell";
+import { getSessionUser } from "@/lib/session";
+import { getUserRole } from "@/lib/rbac";
 
 /**
  * Force all routes to render dynamically (no static pre-rendering).
@@ -150,7 +152,10 @@ export const dynamic = "force-dynamic";
  * 
  * @param children - All page components are passed as children and rendered here
  */
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const session = await getSessionUser();
+  const initialNavRole = session ? await getUserRole(session.userId) : null;
+
   return (
     /*
      * style={{ backgroundColor }} is inlined in the SSR HTML so the browser
@@ -173,7 +178,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="theme-color" content="#0f172a" />
       </head>
       <body suppressHydrationWarning>
-        <AuthShell>{children}</AuthShell>
+        <AuthShell initialNavRole={initialNavRole}>{children}</AuthShell>
       </body>
     </html>
   );

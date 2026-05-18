@@ -159,7 +159,7 @@ export default function Navbar() {
           </Link>
         </div>
 
-        {/* Center: nav links — role from useNavSession (persisted auth.me when /api/auth/me is in flight) */}
+        {/* Center: nav links — role from SSR NavRoleContext + useAuth; same DOM on server and client */}
         <nav className="hidden md:flex flex-1 items-center justify-center gap-6">
           {/* Dashboard — all authenticated roles */}
           <Link

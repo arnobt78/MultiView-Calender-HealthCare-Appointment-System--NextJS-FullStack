@@ -24,6 +24,7 @@ import { AppProviders } from "@/providers/AppProviders";
 import { dashboardShellClass } from "@/lib/dashboard-layout";
 import { cn } from "@/lib/utils";
 import { notify } from "@/lib/notify";
+import { NavRoleProvider } from "@/context/NavRoleContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -218,10 +219,19 @@ function AuthShellInner({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function AuthShell({ children }: { children: React.ReactNode }) {
+export default function AuthShell({
+  children,
+  initialNavRole = null,
+}: {
+  children: React.ReactNode;
+  /** From root layout — same on SSR and hydration for stable navbar role links. */
+  initialNavRole?: string | null;
+}) {
   return (
     <AppProviders>
-      <AuthShellInner>{children}</AuthShellInner>
+      <NavRoleProvider role={initialNavRole}>
+        <AuthShellInner>{children}</AuthShellInner>
+      </NavRoleProvider>
     </AppProviders>
   );
 }

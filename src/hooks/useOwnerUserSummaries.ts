@@ -2,16 +2,25 @@ import { useMemo } from "react";
 import { useQueries } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
+import { useAuth } from "@/hooks/useAuth";
+import { useInitialNavRole } from "@/context/NavRoleContext";
+import { isPatientRole } from "@/lib/rbac";
 
 export type OwnerUserSummary = { id: string; email: string };
 
 /**
- * Resolves owner emails for appointment user_id values via cached user search queries.
+ * Resolves owner emails for appointment `user_id` via `/api/users/search` (staff only).
+ * Patients: no user-directory API — returns current user only; "Assigned by" may show owner id.
  */
 export function useOwnerUserSummaries(
   userIds: (string | undefined | null)[],
   currentUser?: { id?: string | null; email?: string | null } | null
 ) {
+  const { user: authUser } = useAuth();
+  const initialNavRole = useInitialNavRole();
+  const role = authUser?.role ?? initialNavRole;
+  const canResolveOwnerDirectory = !isPatientRole(role);
+
   const ids = useMemo(
     () => [...new Set(userIds.filter((id): id is string => Boolean(id)))],
     [userIds]
@@ -32,7 +41,10 @@ export function useOwnerUserSummaries(
         const user = res.users?.find((u) => u.id === id);
         return user ? { id: user.id, email: user.email } : null;
       },
-      enabled: ids.length > 0 && id !== currentSummary?.id,
+      enabled:
+        canResolveOwnerDirectory &&
+        ids.length > 0 &&
+        id !== currentSummary?.id,
       staleTime: 5 * 60 * 1000,
     })),
   });

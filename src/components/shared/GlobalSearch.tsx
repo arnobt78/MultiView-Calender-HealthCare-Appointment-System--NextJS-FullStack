@@ -17,6 +17,8 @@ import { useAppointments } from "@/hooks/useAppointments";
 import { usePatients } from "@/hooks/usePatients";
 import { useUsers } from "@/hooks/useUsers";
 import { useAuth } from "@/hooks/useAuth";
+import { useInitialNavRole } from "@/context/NavRoleContext";
+import { isPatientRole } from "@/lib/rbac";
 import {
   appointmentDetailHref,
   doctorDetailHref,
@@ -50,11 +52,14 @@ export default function GlobalSearch() {
   const [query, setQuery] = useState("");
 
   const { user } = useAuth();
-  // Patients have no access to staff user/patient lists — disable those queries to avoid 403s.
-  const isPatient = user?.role === "patient";
+  const initialNavRole = useInitialNavRole();
+  // SSR `initialNavRole` + live auth — skip staff list fetches for patients (avoids 403 while auth loads).
+  const role = user?.role ?? initialNavRole;
+  const isPatient = isPatientRole(role);
 
   const { appointments } = useAppointments();
-  const { patients } = usePatients();
+  const { patients: allPatients } = usePatients();
+  const patients = isPatient ? [] : allPatients;
   const { data: usersData } = useUsers({}, { enabled: !isPatient });
 
   // Keyboard shortcut: Cmd+K / Ctrl+K

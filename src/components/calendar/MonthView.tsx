@@ -20,6 +20,8 @@ import {
 // Using Vercel Blob for file storage
 import { getPublicUrl } from "@/lib/vercelBlob";
 import { RoleEntityLink } from "@/components/shared/RoleEntityLink";
+import { AppointmentTitleRow } from "@/components/shared/AppointmentTitleRow";
+import { WrappingText } from "@/components/shared/TruncatedText";
 import { useMemo, useState, useCallback } from "react";
 import { useDateContext } from "@/context/DateContext";
 import { useAppointmentData } from "@/context/AppointmentDataContext";
@@ -311,7 +313,7 @@ export default function MonthView() {
                           userEmail={userEmail}
                           userId={userId}
                           ownerUsers={ownerUsers}
-                          getDateTag={getDateTag}
+                          detailWrap
                           onEdit={setEditAppt}
                           onDelete={(id) => setDeleteTargetId(id)}
                           onToggleStatus={toggleStatus}
@@ -410,13 +412,15 @@ export default function MonthView() {
                     <rect width="8" height="100" fill={colorToken.lineColor} />
                   </svg>
                   {/* Main content */}
-                  <div className="pl-6 pr-2 py-4 flex-1 flex flex-col justify-center min-h-[110px]">
-                    <div className="flex items-center gap-2">
-                      <span className="text-md font-medium flex items-center gap-2 mb-1">
-                        <RoleEntityLink kind="appointment" id={a.id} label={a.title} />
-                        {getDateTag(new Date(a.start))}
-                      </span>
-                    </div>
+                  <div className="flex min-w-0 flex-1 flex-col justify-center py-4 pl-6 pr-2 min-h-[110px]">
+                    <AppointmentTitleRow
+                        appointmentId={a.id}
+                        title={a.title}
+                        appointmentStart={new Date(a.start)}
+                        isDone={isDone}
+                        wrapTitle
+                        className="mb-1 w-full"
+                      />
                     <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500 mb-1">
                       <span className="flex items-center gap-1">
                         <FiFileText />
@@ -430,18 +434,18 @@ export default function MonthView() {
                     </div>
 
                     {a.notes && (
-                      <div className="flex items-center gap-2 text-sm text-gray-400 mb-1">
+                      <div className="mb-1 flex min-w-0 flex-wrap items-start gap-2 text-sm text-gray-400">
                         <span className="shrink-0 flex items-center justify-center">
                           <FiFileText className="w-4 h-4 " />
                         </span>
-                        <span className="text-xs text-gray-700 wrap-break-word">
+                        <WrappingText className="text-xs text-gray-700">
                           Notes: {a.notes}
-                        </span>
+                        </WrappingText>
                       </div>
                     )}
 
-                    <div className="flex items-center gap-2 text-xs text-gray-400 italic mb-1">
-                      <FiUser /> Client:{" "}
+                    <div className="mb-1 flex min-w-0 flex-wrap items-start gap-2 text-xs text-gray-400 italic">
+                      <FiUser className="shrink-0" /> <span className="shrink-0">Client:</span>{" "}
                       {typeof a.patient === "string" && a.patient && filterPatients.length > 0
                         ? (() => {
                           const p = filterPatients.find((x) => x.id === a.patient);
@@ -450,7 +454,7 @@ export default function MonthView() {
                               kind="patient"
                               id={p.id}
                               label={`${p.firstname} ${p.lastname}`}
-                              className="not-italic text-gray-700 text-xs"
+                              className="not-italic text-gray-700 text-xs break-words [overflow-wrap:anywhere] whitespace-normal"
                             />
                           ) : (
                             <span className="not-italic text-gray-700">--</span>
@@ -462,11 +466,12 @@ export default function MonthView() {
                     </div>
 
                     {a.location && (
-                      <div className="flex items-center gap-2 text-xs text-gray-400 italic mb-1">
-                        <FiMapPin /> Location:{" "}
-                        <span className="not-italic text-gray-700">
+                      <div className="mb-1 flex min-w-0 flex-wrap items-start gap-2 text-xs text-gray-400 italic">
+                        <FiMapPin className="shrink-0" />{" "}
+                        <span className="shrink-0">Location:</span>
+                        <WrappingText className="not-italic text-gray-700">
                           {a.location}
-                        </span>
+                        </WrappingText>
                       </div>
                     )}
 

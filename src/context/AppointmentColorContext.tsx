@@ -1,40 +1,18 @@
 /**
  * AppointmentColorContext - Color Management for Appointments
- * 
- * This context provides a deterministic color assignment system for appointments.
- * Instead of random colors, it uses a seed-based algorithm to ensure the same
- * appointment/category always gets the same color, improving visual consistency.
- * 
- * Key Features:
- * - Deterministic: Same input always produces same color
- * - Consistent: Colors persist across page refreshes
- * - Visual distinction: Helps users quickly identify appointment types/categories
+ *
+ * Deterministic seed → color mapping so SSR and client hydration produce identical
+ * inline styles (no Math.random — that caused Patient Portal timeline mismatches).
  */
 
 import React, { createContext, useContext, useRef } from "react";
 
-// Predefined color palette for appointments
-// These colors are chosen for good contrast and visual distinction
 const bgColors = [
   "#F59E0B", "#10B981", "#3B82F6", "#EC4899", "#8B5CF6", "#EF4444",
   "#14B8A6", "#6366F1", "#F97316", "#A78BFA", "#22D3EE",
   "#00FF00", "#FFFF00", "#00FFFF", "#FF00FF",
 ];
 
-/**
- * randomBgColor (provider method)
- *
- * Selects a color for a given seed string. Within a single browser session
- * the color is stable — the result is memoised in a `useRef` Map so the same
- * seed always returns the same color without re-renders.
- *
- * Colors are NOT deterministic across page reloads: `Math.random()` picks the
- * index on first call per session. If you need cross-reload determinism, replace
- * `Math.random()` with a hash of the seed string (e.g. sum of char codes % length).
- *
- * @param seed - Stable identifier string (e.g. appointment ID, category ID).
- * @returns Hex color code from bgColors.
- */
 function hexToRgb(hex: string) {
   const normalized = hex.replace("#", "");
   const value =
@@ -61,44 +39,58 @@ function mixWithWhite(hex: string, colorRatio: number) {
   return `rgb(${ch(r)}, ${ch(g)}, ${ch(b)})`;
 }
 
-const getAppointmentColorToken = (
-  randomBgColor: (seed: string) => string,
+/** Stable palette pick from seed string — identical on server and client. */
+export function colorFromSeed(seed: string): string {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = (hash * 31 + seed.charCodeAt(i)) | 0;
+  }
+  return bgColors[Math.abs(hash) % bgColors.length] ?? bgColors[0];
+}
+
+function normalizeHexColor(hex: string | null | undefined): string | null {
+  if (!hex?.trim()) return null;
+  const t = hex.trim();
+  if (/^#[0-9A-Fa-f]{6}$/.test(t)) return t;
+  if (/^#[0-9A-Fa-f]{3}$/.test(t)) {
+    const body = t.slice(1);
+    return `#${body[0]}${body[0]}${body[1]}${body[1]}${body[2]}${body[2]}`;
+  }
+  return null;
+}
+
+/** Category hex from API when present; otherwise deterministic seed color. */
+export function resolveAppointmentLineColor(
   seed: string,
   preferredColor?: string | null
-) => {
-  void preferredColor;
-  const lineColor = randomBgColor(seed);
+): string {
+  return normalizeHexColor(preferredColor) ?? colorFromSeed(seed);
+}
+
+function buildColorToken(lineColor: string) {
   return {
     lineColor,
     cardBgColor: toRgba(lineColor, 0.03),
     cardSurfaceColor: mixWithWhite(lineColor, 0.1),
     cardBorderColor: toRgba(lineColor, 0.45),
   };
-};
+}
 
-// Create context with color utilities
 const AppointmentColorContext = createContext({
   bgColors,
-  randomBgColor: (_seed: string) => bgColors[0],
+  randomBgColor: (seed: string) => colorFromSeed(seed),
   getAppointmentColorToken: (seed: string, preferredColor?: string | null) =>
-    getAppointmentColorToken((_s: string) => bgColors[0], seed, preferredColor),
+    buildColorToken(resolveAppointmentLineColor(seed, preferredColor)),
 });
 
-/**
- * AppointmentColorProvider Component
- * 
- * Provides color management utilities to all child components.
- * 
- * @param children - Child components that need access to color utilities
- */
 export const AppointmentColorProvider = ({ children }: { children: React.ReactNode }) => {
-  const randomColorBySeedRef = useRef<Map<string, string>>(new Map());
+  const colorBySeedRef = useRef<Map<string, string>>(new Map());
 
   const randomBgColor = (seed: string) => {
-    const existing = randomColorBySeedRef.current.get(seed);
-    if (existing) return existing;
-    const color = bgColors[Math.floor(Math.random() * bgColors.length)];
-    randomColorBySeedRef.current.set(seed, color);
+    const cached = colorBySeedRef.current.get(seed);
+    if (cached) return cached;
+    const color = colorFromSeed(seed);
+    colorBySeedRef.current.set(seed, color);
     return color;
   };
 
@@ -108,7 +100,7 @@ export const AppointmentColorProvider = ({ children }: { children: React.ReactNo
         bgColors,
         randomBgColor,
         getAppointmentColorToken: (seed: string, preferredColor?: string | null) =>
-          getAppointmentColorToken(randomBgColor, seed, preferredColor),
+          buildColorToken(resolveAppointmentLineColor(seed, preferredColor)),
       }}
     >
       {children}
@@ -116,15 +108,4 @@ export const AppointmentColorProvider = ({ children }: { children: React.ReactNo
   );
 };
 
-/**
- * useAppointmentColor Hook
- * 
- * Custom hook to access appointment color utilities.
- * 
- * Usage:
- * const { randomBgColor, bgColors } = useAppointmentColor();
- * const color = randomBgColor(appointment.category || appointment.id);
- * 
- * @returns Object with bgColors array and randomBgColor function
- */
 export const useAppointmentColor = () => useContext(AppointmentColorContext);

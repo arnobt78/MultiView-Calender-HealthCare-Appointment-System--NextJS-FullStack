@@ -7,6 +7,8 @@
 import { useMemo, useState } from "react";
 import { format, isSameDay } from "date-fns";
 import { RoleEntityLink } from "@/components/shared/RoleEntityLink";
+import { AppointmentTitleRow } from "@/components/shared/AppointmentTitleRow";
+import { TruncatedText } from "@/components/shared/TruncatedText";
 import { useAppointmentData } from "@/context/AppointmentDataContext";
 import {
   useCalendarFilters,
@@ -179,7 +181,6 @@ export default function DayView() {
                           userEmail={null}
                           userId={null}
                           ownerUsers={[]}
-                          getDateTag={() => null}
                           onEdit={(a) => setEditAppt(a as Appointment)}
                           onDelete={(id) => setDeleteTargetId(id)}
                           onToggleStatus={(id, next) =>
@@ -200,18 +201,12 @@ export default function DayView() {
                               </svg>
                               <div className="min-w-0 flex-1 pl-6 pr-4 py-2">
                                 <div className="flex min-w-0 items-center gap-2">
-                                  <RoleEntityLink
-                                    kind="appointment"
-                                    id={appt.id}
-                                    label={appt.title}
-                                    className="truncate text-sm font-medium"
+                                  <AppointmentTitleRow
+                                    appointmentId={appt.id}
+                                    title={appt.title}
+                                    appointmentStart={start}
+                                    isDone={isDone}
                                   />
-                                  <Badge
-                                    variant="outline"
-                                    className="calendar-glass-badge calendar-glass-badge-emerald shrink-0"
-                                  >
-                                    Today
-                                  </Badge>
                                 </div>
                                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 wrap-break-word text-xs text-gray-600">
                                   <span className="inline-flex items-center gap-1">
@@ -221,7 +216,9 @@ export default function DayView() {
                                     </svg>
                                     {format(start, "HH:mm")} - {format(end, "HH:mm")}
                                   </span>
-                                  <span>Location: {appt.location || "--"}</span>
+                                  <TruncatedText className="min-w-0 max-w-[12rem]">
+                                    Location: {appt.location || "--"}
+                                  </TruncatedText>
                                   <span>
                                     Client:{" "}
                                     {typeof appt.patient === "string" && appt.patient ? (

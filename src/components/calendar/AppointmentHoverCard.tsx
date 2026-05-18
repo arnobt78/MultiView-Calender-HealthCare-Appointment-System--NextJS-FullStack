@@ -35,6 +35,8 @@ import type {
 } from "@/types/types";
 import { useAppointmentColor } from "@/context/AppointmentColorContext";
 import { RoleEntityLink } from "@/components/shared/RoleEntityLink";
+import { AppointmentTitleRow } from "@/components/shared/AppointmentTitleRow";
+import { WrappingText } from "@/components/shared/TruncatedText";
 // Using Vercel Blob for file storage
 import { getPublicUrl } from "@/lib/vercelBlob";
 
@@ -47,7 +49,12 @@ export interface AppointmentHoverCardProps {
   userEmail: string | null;
   userId: string | null;
   ownerUsers: { id: string, email: string }[]; // Add owner users data
-  getDateTag: (date: Date) => React.ReactNode;
+  /** @deprecated Unused — badges use real calendar today via `AppointmentDateTag`. */
+  getDateTag?: (date: Date) => React.ReactNode;
+  /** @deprecated Unused — do not pass `DateContext.currentDate`. */
+  referenceDate?: Date;
+  /** Week/month hover popover: full wrapped text (grid trigger stays truncated). */
+  detailWrap?: boolean;
   onEdit: (appt: Appointment & { category_data?: Category; appointment_assignee?: AppointmentAssignee[] }) => void;
   onDelete: (id: string) => void;
   onToggleStatus: (id: string, newStatus: string) => void;
@@ -92,7 +99,9 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
   userEmail,
   userId,
   ownerUsers,
-  getDateTag,
+  getDateTag: _getDateTag,
+  referenceDate: _referenceDate,
+  detailWrap = false,
   onEdit,
   onDelete,
   onToggleStatus,
@@ -164,21 +173,15 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
             <svg className="absolute left-0 top-0 bottom-0 h-full w-2 rounded-l-2xl" aria-hidden="true" preserveAspectRatio="none" viewBox="0 0 8 100">
               <rect width="8" height="100" fill={color} />
             </svg>
-            <div className="hover-card-content-inner">
+            <div className="hover-card-content-inner min-w-0 px-2 py-1.5">
 
-              <div>
-                <div className="flex w-full items-center gap-2">
-                  <RoleEntityLink
-                    kind="appointment"
-                    id={a.id}
-                    label={a.title}
-                    className={clsx(
-                      "truncate text-sm font-medium",
-                      isDone && "line-through text-gray-400"
-                    )}
-                  />
-                  {getDateTag(new Date(a.start))}
-                </div>
+              <div className="min-w-0">
+                <AppointmentTitleRow
+                  appointmentId={a.id}
+                  title={a.title}
+                  appointmentStart={new Date(a.start)}
+                  isDone={isDone}
+                />
                 <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
                   <span className="inline-flex items-center gap-1">
                     <CalendarDays className="h-3.5 w-3.5 text-gray-400" />
@@ -200,7 +203,7 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
           // MonthView: Simple card
           <div
             className={clsx(
-              "relative z-10 flex items-center w-full overflow-hidden rounded-2xl cursor-pointer shadow-xl transition hover:brightness-110 border hover-card-simple",
+              "relative z-10 flex min-w-0 items-center w-full overflow-hidden rounded-2xl cursor-pointer shadow-xl transition hover:brightness-110 border hover-card-simple",
               { "line-through": isDone }
             )}
             onClick={(e) => {
@@ -220,7 +223,10 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
               kind="appointment"
               id={a.id}
               label={a.title}
-              className="truncate text-sm font-medium text-left"
+              className={clsx(
+                "min-w-0 flex-1 truncate text-sm font-normal text-left",
+                isDone && "line-through text-gray-400"
+              )}
             />
           </div>
         )}
@@ -231,20 +237,27 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
         side="bottom"
         sideOffset={8}
         align="center"
-        className="relative min-w-[320px] rounded-2xl border border-gray-200 bg-white p-4 shadow-xl"
+        className={clsx(
+          "relative min-w-[280px] rounded-2xl border border-gray-200 bg-white p-4 shadow-xl",
+          detailWrap
+            ? "max-w-[min(100vw-2rem,32rem)]"
+            : "max-w-[min(100vw-2rem,26rem)]"
+        )}
       >
         <svg className="absolute left-0 top-0 bottom-0 h-full w-1.5 rounded-l-2xl" aria-hidden="true" preserveAspectRatio="none" viewBox="0 0 6 100">
           <rect width="6" height="100" fill={color} />
         </svg>
-        <div className="px-1">
-          <div className="flex items-center gap-1 mb-1">
-            <span className="flex items-center gap-1 text-base font-medium">
-              <RoleEntityLink kind="appointment" id={a.id} label={a.title} />
-              {getDateTag(new Date(a.start))}
-            </span>
-          </div>
+        <div className="min-w-0 px-1">
+          <AppointmentTitleRow
+            appointmentId={a.id}
+            title={a.title}
+            appointmentStart={new Date(a.start)}
+            isDone={isDone}
+            wrapTitle={detailWrap}
+            className="mb-1"
+          />
 
-          <div className="mb-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-600">
+          <div className="mb-1 flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-600">
             <span className="inline-flex items-center gap-1.5">
               <CalendarDays className="h-4 w-4 text-gray-400" />
               <span className={isDone ? "line-through text-gray-400" : undefined}>
@@ -258,38 +271,65 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
               </span>
             </span>
           </div>
-          <div className="mb-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-600">
-            <span className="inline-flex items-center gap-1.5">
-              <MapPin className="h-4 w-4 text-gray-400" />
-              <span className={isDone ? " text-gray-400" : undefined}>
-                {a.location || "--"}
-              </span>
+          <div className="mb-1 flex min-w-0 flex-wrap items-start gap-x-4 gap-y-1 text-xs text-gray-600">
+            <span className="inline-flex min-w-0 flex-1 basis-full items-start gap-1.5 sm:basis-auto sm:max-w-full">
+              <MapPin className="h-4 w-4 shrink-0 text-gray-400" />
+              {detailWrap ? (
+                <WrappingText className={isDone ? "text-gray-400" : undefined}>
+                  {a.location || "--"}
+                </WrappingText>
+              ) : (
+                <span className={clsx("min-w-0 truncate", isDone && "text-gray-400")}>
+                  {a.location || "--"}
+                </span>
+              )}
             </span>
-            <span className="inline-flex items-center gap-1.5">
+            <span className="inline-flex shrink-0 items-center gap-1.5">
               <Flag className="h-4 w-4 text-gray-400" />
-              <span className={clsx("capitalize font-medium", statusTextClass)}>{a.status}</span>
+              <span className={clsx("capitalize font-normal", statusTextClass)}>{a.status}</span>
             </span>
           </div>
 
-          <div className="mb-1 flex items-center gap-1 text-xs text-gray-500">
-            <UserRound className="h-4 w-4 text-gray-400" />
-            <span>Client</span>
+          <div
+            className={clsx(
+              "mb-1 flex min-w-0 gap-1 text-xs text-gray-500",
+              detailWrap ? "flex-wrap items-start" : "items-center"
+            )}
+          >
+            <UserRound className="h-4 w-4 shrink-0 text-gray-400" />
+            <span className="shrink-0">Client</span>
             {typeof a.patient === "string" && a.patient ? (
               <RoleEntityLink
                 kind="patient"
                 id={a.patient}
                 label={patientName}
-                className="text-gray-700"
+                className={clsx(
+                  "min-w-0 text-gray-700",
+                  detailWrap
+                    ? "break-words [overflow-wrap:anywhere] whitespace-normal"
+                    : "truncate"
+                )}
               />
+            ) : detailWrap ? (
+              <WrappingText className="text-gray-700">{patientName}</WrappingText>
             ) : (
-              <span className="text-gray-700">{patientName}</span>
+              <span className="min-w-0 truncate text-gray-700">{patientName}</span>
             )}
           </div>
 
           {a.notes && (
-            <div className="mb-1 flex items-center gap-1 text-xs text-gray-600">
-              <NotebookPen className="h-4 w-4 text-gray-400" />
-              <span className="wrap-break-word">{a.notes}</span>
+            <div
+              className={clsx(
+                "mb-1 flex min-w-0 gap-1 text-xs text-gray-600",
+                detailWrap ? "flex-wrap items-start" : "items-center"
+              )}
+            >
+              <NotebookPen className="h-4 w-4 shrink-0 text-gray-400" />
+              {detailWrap ? (
+                <WrappingText>{a.notes}</WrappingText>
+              ) : (
+                <span className="min-w-0 truncate">{a.notes}</span>
+              )}
             </div>
           )}
 

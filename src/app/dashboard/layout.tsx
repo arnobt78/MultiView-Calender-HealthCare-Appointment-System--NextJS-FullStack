@@ -2,8 +2,8 @@
  * Dashboard route group layout.
  *
  * All authenticated roles — including patients — can access /dashboard.
- * Patients see the calendar in read-only view (CalendarHeader hides the
- * "New Appointment" and "Import .ics" buttons for the patient role, and
+ * Patients see the calendar in read-only view (`CalendarHeader` uses
+ * `NavRoleContext` / `initialNavRole` so Import / New Appointment stay hidden on refresh;
  * RBAC in the API layer rejects any write attempts).
  *
  * Patients are still sent to /patient-portal after login by default, but

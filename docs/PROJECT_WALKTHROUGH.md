@@ -205,11 +205,27 @@ Shared primitives keep layout fixed while data loads:
 | `PortalChromeHeader` | `src/components/shared/PortalChromeHeader.tsx` | Tall icon column + `border-b` for `/services` and `/patient-portal` |
 | `ProfileDefinitionRow` | `src/components/shared/profile/ProfileDefinitionRow.tsx` | `<dl>` row: icon + label static; variant-matched skeleton in `dd` only (`doctorStack` = Primary Doctor height) |
 | `DoctorProfileCardSkeleton` | `src/components/shared/services/DoctorProfileCardSkeleton.tsx` | 1:1 `/services` doctor card shell |
-| `useNavSession` | `src/hooks/useNavSession.ts` | `effectiveUser` from `useAuth` + persisted `queryKeys.auth.me` — stable navbar links on refresh |
+| `useNavSession` | `src/hooks/useNavSession.ts` | Role from `NavRoleContext` (SSR) + `useAuth` / query cache — no localStorage during render |
+| `NavRoleProvider` | `src/context/NavRoleContext.tsx` | `initialNavRole` from root layout — hydration-safe navbar |
 
-**SSR + client:** portal pages pass `initialData` on `useQuery` (in addition to `useLayoutEffect` `setQueryData`). Profile loading uses `profileLoading = isLoading && !patient` (not `!isMounted`). Navbar hides role-specific links until a role is known (`navLoading`).
+**SSR + client:** root `layout.tsx` passes `initialNavRole` into `AuthShell`. Portal pages pass `initialData` on `useQuery`. Profile: `profileLoading = isLoading && !patient`. Navbar role links render when `role` is known (server + client match).
 
-**Audit (agent glance):** All plan phases wired — prefetch in `src/app/patient-portal/page.tsx` + `src/app/services/page.tsx`; no new query keys or invalidation helpers; `DoctorSkeletonGrid` removed; `DoctorLinkStack` removed from Patient Portal only. **134 tests**, `tsc`, `lint`, `build` pass. No dedicated unit tests for chrome primitives (display-only). Doctor/Admin portals not migrated to `PortalChromeHeader` (out of scope).
+**Audit (agent glance):** Navbar role uses SSR `initialNavRole` via `NavRoleContext`. Appointment timeline colors use `colorFromSeed()` in `AppointmentColorContext` (no `Math.random`). `GlobalSearch` + `useOwnerUserSummaries` skip staff user-directory APIs for patients (no console 403). **137 tests**, `tsc` + `build` pass.
+
+### Dashboard calendar shared UI
+
+| Piece | File | Role |
+|-------|------|------|
+| `appointment-date-tags.ts` | `src/lib/appointment-date-tags.ts` | Today / Tomorrow / Later / Passed day diff + badge classes |
+| `AppointmentDateTag` | `src/components/shared/AppointmentDateTag.tsx` | Badge pill for title row |
+| `AppointmentTitleRow` | `src/components/shared/AppointmentTitleRow.tsx` | `truncate` title + badge right (list, hover, day, month side panel) |
+| `appointment-menu-permissions.ts` | `src/lib/appointment-menu-permissions.ts` | View / toggle / edit / delete flags per role + assignee |
+| `AppointmentActionsMenu` | `src/components/shared/AppointmentActionsMenu.tsx` | Global ⋮ menu on list cards; View Details → `appointmentDetailHref(role, id)` |
+| `TruncatedText` | `src/components/shared/TruncatedText.tsx` | Long notes/location ellipsis in cards |
+
+**Wiring:** `AppointmentList` (menu + title row), `AppointmentHoverCard` (popover + week trigger, `referenceDate`), `WeekView` / `MonthView` (`referenceDate` + `useOwnerUserSummaries`), `DayView` title row. Invalidation unchanged — appointment CRUD still via `invalidateAfterAppointmentMutation`.
+
+**Optional follow-up (not blocking):** `AppointmentList` still keeps empty `ownerUsers` state for “Assigned by” on list (staff email lookup not wired); day view passes `ownerUsers={[]}`.
 
 ---
 
