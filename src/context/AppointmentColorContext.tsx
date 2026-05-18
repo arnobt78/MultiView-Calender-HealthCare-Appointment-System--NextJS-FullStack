@@ -3,14 +3,24 @@
  *
  * Deterministic seed → color mapping so SSR and client hydration produce identical
  * inline styles (no Math.random — that caused Patient Portal timeline mismatches).
+ *
+ * Colors are consistent across ALL calendar tabs (List / Day / Week / Month) because:
+ * - colorFromSeed is a pure hash function: same appointment ID → same palette index always.
+ * - AppointmentColorProvider is mounted once at the AppProviders root, so all tabs share one instance.
+ * - No Zustand needed — the value never changes for a given ID, so there is nothing to "sync".
+ *
+ * motion.div vs div in calendar views:
+ * - AppointmentList uses motion.div for entrance animations (fade + slide).
+ * - Day/Week/Month grids use plain div — animating grid blocks per slot hurts scroll perf.
  */
 
-import React, { createContext, useContext, useRef } from "react";
+import React, { createContext, useCallback, useContext, useMemo, useRef } from "react";
 
+// Curated palette: all colours readable on white card backgrounds, no neon.
 const bgColors = [
   "#F59E0B", "#10B981", "#3B82F6", "#EC4899", "#8B5CF6", "#EF4444",
   "#14B8A6", "#6366F1", "#F97316", "#A78BFA", "#22D3EE",
-  "#00FF00", "#FFFF00", "#00FFFF", "#FF00FF",
+  "#0EA5E9", "#84CC16", "#F43F5E", "#7C3AED",
 ];
 
 function hexToRgb(hex: string) {
@@ -86,23 +96,30 @@ const AppointmentColorContext = createContext({
 export const AppointmentColorProvider = ({ children }: { children: React.ReactNode }) => {
   const colorBySeedRef = useRef<Map<string, string>>(new Map());
 
-  const randomBgColor = (seed: string) => {
+  // useCallback so the function reference is stable — prevents every AppointmentCard
+  // from re-running its useMemo(colorToken) on each AppointmentColorProvider render.
+  const randomBgColor = useCallback((seed: string) => {
     const cached = colorBySeedRef.current.get(seed);
     if (cached) return cached;
     const color = colorFromSeed(seed);
     colorBySeedRef.current.set(seed, color);
     return color;
-  };
+  }, []);
+
+  const getAppointmentColorToken = useCallback(
+    (seed: string, preferredColor?: string | null) =>
+      buildColorToken(resolveAppointmentLineColor(seed, preferredColor)),
+    []
+  );
+
+  // Stable context value — only recreated if callbacks change (they don't).
+  const value = useMemo(
+    () => ({ bgColors, randomBgColor, getAppointmentColorToken }),
+    [randomBgColor, getAppointmentColorToken]
+  );
 
   return (
-    <AppointmentColorContext.Provider
-      value={{
-        bgColors,
-        randomBgColor,
-        getAppointmentColorToken: (seed: string, preferredColor?: string | null) =>
-          buildColorToken(resolveAppointmentLineColor(seed, preferredColor)),
-      }}
-    >
+    <AppointmentColorContext.Provider value={value}>
       {children}
     </AppointmentColorContext.Provider>
   );

@@ -419,7 +419,7 @@ export default function Navbar() {
                     return (
                       <DropdownMenuItem
                         key={n.id}
-                        className={`mb-1 flex flex-col items-start rounded-xl px-2 py-2 cursor-pointer last:mb-0 ${!n.read ? "bg-primary/5" : ""}`}
+                        className={`flex flex-col items-start rounded-xl px-2 py-2 cursor-pointer last:mb-0 ${!n.read ? "bg-primary/5" : ""}`}
                         onClick={() => {
                           /*
                            * Navigate to the notification's deep-link when available.

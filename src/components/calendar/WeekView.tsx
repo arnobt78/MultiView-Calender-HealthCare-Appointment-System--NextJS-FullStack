@@ -10,14 +10,13 @@ import {
   useCalendarFilters,
   applyCalendarFilters,
 } from "@/context/CalendarFiltersContext";
-import { invalidateAppointmentData } from "@/lib/query-client";
-import { useQueryClient } from "@tanstack/react-query";
 import { useCategories } from "@/hooks/useCategories";
 import { usePatients } from "@/hooks/usePatients";
 import { useAuth } from "@/hooks/useAuth";
 import { useAssignees } from "@/hooks/useAssignees";
 import { useOwnerUserSummaries } from "@/hooks/useOwnerUserSummaries";
 import { cn } from "@/lib/utils";
+import { collectAppointmentStaffUserIds } from "@/lib/appointment-card";
 import AppointmentHoverCard from "./AppointmentHoverCard";
 import { Badge } from "../ui/badge";
 import GlobalCalendarFilters from "./GlobalCalendarFilters";
@@ -54,7 +53,10 @@ export default function WeekView() {
   const { categories = [] } = useCategories();
   const { patients: filterPatients = [] } = usePatients();
   const { assignees } = useAssignees();
-  const ownerUsers = useOwnerUserSummaries(globalAppointments.map((a) => a.user_id), user);
+  const ownerUsers = useOwnerUserSummaries(
+    collectAppointmentStaffUserIds(globalAppointments),
+    user
+  );
   const { category, patient, date, status, month, search } = useCalendarFilters();
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const hours = Array.from({ length: 24 }, (_, i) => i);
@@ -62,7 +64,6 @@ export default function WeekView() {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
-  const queryClient = useQueryClient();
   const filteredGlobalAppointments = useMemo(
     () =>
       applyCalendarFilters(
@@ -342,6 +343,7 @@ export default function WeekView() {
                             userId={userId}
                             ownerUsers={ownerUsers}
                             detailWrap
+                            slotHeightPx={slotHeight}
                             onEdit={setEditAppt}
                             onDelete={(id) => setDeleteTargetId(id)}
                             onToggleStatus={toggleStatus}
@@ -378,10 +380,7 @@ export default function WeekView() {
         editAppt && (
           <AppointmentDialogController
             appointment={editAppt}
-            onSuccess={() => {
-              setEditAppt(null);
-              void invalidateAppointmentData(queryClient);
-            }}
+            onSuccess={() => setEditAppt(null)}
             isOpen={editOpen}
             onOpenChange={handleEditDialogChange}
           />

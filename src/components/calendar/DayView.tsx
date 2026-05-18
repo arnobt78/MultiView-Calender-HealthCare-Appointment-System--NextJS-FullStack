@@ -6,21 +6,19 @@
 
 import { useMemo, useState } from "react";
 import { format, isSameDay } from "date-fns";
-import { RoleEntityLink } from "@/components/shared/RoleEntityLink";
-import { AppointmentTitleRow } from "@/components/shared/AppointmentTitleRow";
-import { TruncatedText } from "@/components/shared/TruncatedText";
+import { useAssignees } from "@/hooks/useAssignees";
+import { useOwnerUserSummaries } from "@/hooks/useOwnerUserSummaries";
+import { useAuth } from "@/hooks/useAuth";
+import { collectAppointmentStaffUserIds } from "@/lib/appointment-card";
 import { useAppointmentData } from "@/context/AppointmentDataContext";
 import {
   useCalendarFilters,
   applyCalendarFilters,
 } from "@/context/CalendarFiltersContext";
 import { useDateContext } from "@/context/DateContext";
-import { useAppointmentColor } from "@/context/AppointmentColorContext";
 import { useCategories } from "@/hooks/useCategories";
 import { usePatients } from "@/hooks/usePatients";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import VideoCall from "./VideoCall";
 import GlobalCalendarFilters from "./GlobalCalendarFilters";
 import CalendarStickyHeader from "./CalendarStickyHeader";
 import { useLiveNow } from "./useLiveNow";
@@ -34,9 +32,6 @@ import {
 } from "./calendarGridTokens";
 import type { Appointment } from "@/types/types";
 import type { FullAppointment } from "@/hooks/useAppointments";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreVertical, CheckCircle, Circle } from "lucide-react";
-import { FiEdit2, FiTrash2 } from "react-icons/fi";
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import AppointmentDialogController from "./AppointmentDialogController";
 import AppointmentHoverCard from "./AppointmentHoverCard";
@@ -48,10 +43,15 @@ const SLOT_ROW_HEIGHT = 65; // 64px row + 1px border
 export default function DayView() {
   const { currentDate } = useDateContext();
   const { appointments, isLoading, isError: appointmentsError, toggleStatus, deleteAppointment } = useAppointmentData();
+  const { user } = useAuth();
   const { category, patient, date, status, month, search } = useCalendarFilters();
   const { categories = [] } = useCategories();
   const { patients = [] } = usePatients();
-  const { getAppointmentColorToken } = useAppointmentColor();
+  const { assignees } = useAssignees();
+  const ownerUsers = useOwnerUserSummaries(
+    collectAppointmentStaffUserIds(appointments),
+    user
+  );
   const [editAppt, setEditAppt] = useState<Appointment | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const filteredAppointments = useMemo(
@@ -155,149 +155,34 @@ export default function DayView() {
                     {slotAppts.map((appt: FullAppointment) => {
                       const start = new Date(appt.start);
                       const end = new Date(appt.end);
-                      const isDone = appt.status === "done";
                       const hourStart = start.getHours() + start.getMinutes() / 60;
                       const hourEnd = end.getHours() + end.getMinutes() / 60;
                       const slotTop = (hourStart - hour) * SLOT_HEIGHT;
                       const slotHeight = Math.max(44, (hourEnd - hourStart) * SLOT_HEIGHT);
-                      const matchedPatient = patients.find((p) => p.id === appt.patient);
-                      const patientName =
-                        matchedPatient?.firstname && matchedPatient?.lastname
-                          ? `${matchedPatient.firstname} ${matchedPatient.lastname}`
-                          : "--";
-                      const categoryLabel =
-                        categories.find((c) => c.id === appt.category)?.label ?? "--";
-                      const colorToken = getAppointmentColorToken(
-                        appt.id,
-                        appt.category_data?.color ?? null
-                      );
 
                       return (
-                        <AppointmentHoverCard
+                        <div
                           key={appt.id}
-                          appointment={appt}
-                          patients={patients}
-                          assignees={appt.appointment_assignee ?? []}
-                          userEmail={null}
-                          userId={null}
-                          ownerUsers={[]}
-                          onEdit={(a) => setEditAppt(a as Appointment)}
-                          onDelete={(id) => setDeleteTargetId(id)}
-                          onToggleStatus={(id, next) =>
-                            handleToggleStatus(id, next as "pending" | "done" | "alert")
-                          }
-                          triggerContent={
-                            <div
-                              className="absolute left-1 right-1 z-10 flex cursor-pointer items-stretch overflow-hidden rounded-2xl border p-0 shadow-md transition hover:brightness-105 hover:shadow-lg"
-                              style={{
-                                top: slotTop,
-                                height: slotHeight,
-                                backgroundColor: colorToken.cardSurfaceColor,
-                                borderColor: colorToken.cardBorderColor,
-                              }}
-                            >
-                              <svg className="absolute left-0 top-0 bottom-0 h-full w-2 rounded-l-2xl" aria-hidden="true" preserveAspectRatio="none" viewBox="0 0 8 100">
-                                <rect width="8" height="100" fill={colorToken.lineColor} />
-                              </svg>
-                              <div className="min-w-0 flex-1 pl-6 pr-4 py-2">
-                                <div className="flex min-w-0 items-center gap-2">
-                                  <AppointmentTitleRow
-                                    appointmentId={appt.id}
-                                    title={appt.title}
-                                    appointmentStart={start}
-                                    isDone={isDone}
-                                  />
-                                </div>
-                                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 wrap-break-word text-xs text-gray-600">
-                                  <span className="inline-flex items-center gap-1">
-                                    <svg width="12" height="12" fill="none" viewBox="0 0 24 24" className="text-gray-400">
-                                      <path d="M12 6V12L16 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
-                                    </svg>
-                                    {format(start, "HH:mm")} - {format(end, "HH:mm")}
-                                  </span>
-                                  <TruncatedText className="min-w-0 max-w-[12rem]">
-                                    Location: {appt.location || "--"}
-                                  </TruncatedText>
-                                  <span>
-                                    Client:{" "}
-                                    {typeof appt.patient === "string" && appt.patient ? (
-                                      <RoleEntityLink
-                                        kind="patient"
-                                        id={appt.patient}
-                                        label={patientName}
-                                        className="inline text-xs"
-                                      />
-                                    ) : (
-                                      patientName
-                                    )}
-                                  </span>
-                                  <span>
-                                    Category:{" "}
-                                    {appt.category && categoryLabel !== "--" ? (
-                                      <RoleEntityLink
-                                        kind="category"
-                                        id={appt.category}
-                                        label={categoryLabel}
-                                        className="inline text-xs"
-                                      />
-                                    ) : (
-                                      categoryLabel
-                                    )}
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="flex shrink-0 items-center gap-1 border-l border-white/35 px-3">
-                                {/* Video call button only shown for telehealth appointments */}
-                                {appt.is_telehealth && (
-                                  <VideoCall
-                                    appointmentId={appt.id}
-                                    appointmentTitle={appt.title ?? "Video Consultation"}
-                                  />
-                                )}
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-black/5">
-                                      <MoreVertical className="h-4 w-4 text-gray-500" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end" className="w-48">
-                                    <DropdownMenuItem
-                                      onClick={() =>
-                                        handleToggleStatus(appt.id, isDone ? "pending" : "done")
-                                      }
-                                    >
-                                      {isDone ? (
-                                        <>
-                                          <Circle className="h-4 w-4" />
-                                          <span>Mark as open</span>
-                                        </>
-                                      ) : (
-                                        <>
-                                          <CheckCircle className="h-4 w-4 text-green-600" />
-                                          <span className="text-green-600">Mark as done</span>
-                                        </>
-                                      )}
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem onClick={() => setEditAppt(appt)}>
-                                      <FiEdit2 className="h-4 w-4" />
-                                      <span>Edit</span>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      onClick={() => setDeleteTargetId(appt.id)}
-                                      className="text-red-600 focus:bg-red-50 focus:text-red-600"
-                                    >
-                                      <FiTrash2 className="h-4 w-4" />
-                                      <span>Delete</span>
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </div>
-                            </div>
-                          }
-                        />
-                      );
+                          className="absolute left-1 right-1 z-10"
+                          style={{ top: slotTop, height: slotHeight }}
+                        >
+                          <AppointmentHoverCard
+                            appointment={appt}
+                            patients={patients}
+                            assignees={assignees}
+                            userEmail={user?.email ?? null}
+                            userId={user?.id ?? null}
+                            ownerUsers={ownerUsers}
+                            slotHeightPx={slotHeight}
+                            onEdit={(a) => setEditAppt(a as Appointment)}
+                            onDelete={(id) => setDeleteTargetId(id)}
+                            onToggleStatus={(id, next) =>
+                              handleToggleStatus(id, next as "pending" | "done" | "alert")
+                            }
+                            showDetails
+                          />
+                        </div>
+                      )
                     })}
                   </div>
                 )}

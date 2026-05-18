@@ -59,9 +59,9 @@ export default function HomePageSkeleton() {
               >
                 <div className="w-2 rounded-l-xl h-full absolute left-0 top-0 bottom-0 bg-gray-200 animate-pulse" />
                 <div className="pl-6 pr-2 py-4 flex-1 flex flex-col justify-center min-h-[110px]">
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className="h-5 w-32 bg-gray-200 rounded animate-pulse" />
-                    <div className="h-4 w-16 bg-gray-100 rounded animate-pulse" />
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="h-5 w-32 rounded bg-gray-200 animate-pulse" />
+                    <div className="h-8 w-8 shrink-0 rounded-full bg-gray-200 animate-pulse" />
                   </div>
                   <div className="flex flex-col gap-1 mb-1">
                     <div className="h-4 w-24 bg-gray-100 rounded animate-pulse" />
@@ -70,11 +70,6 @@ export default function HomePageSkeleton() {
                   <div className="h-4 w-40 bg-gray-100 rounded mb-1 animate-pulse" />
                   <div className="h-4 w-28 bg-gray-100 rounded mb-1 animate-pulse" />
                   <div className="h-4 w-32 bg-gray-100 rounded mb-1 animate-pulse" />
-                </div>
-                <div className="flex flex-col items-center gap-3 min-w-[56px] py-4 px-2 justify-center">
-                  <div className="h-8 w-8 bg-gray-200 rounded-full animate-pulse" />
-                  <div className="h-8 w-8 bg-gray-100 rounded-full animate-pulse" />
-                  <div className="h-8 w-8 bg-gray-100 rounded-full animate-pulse" />
                 </div>
               </div>
             ))}

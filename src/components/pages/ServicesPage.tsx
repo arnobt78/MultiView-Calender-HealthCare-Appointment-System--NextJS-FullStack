@@ -131,7 +131,7 @@ function DoctorProfileCard({ doctor }: { doctor: DoctorCard }) {
         )}
 
         <div>
-          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
+          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
             <CalendarClock className="h-3 w-3" /> Availability
           </p>
           <DoctorAvailabilityGroups availabilities={doctor.availabilities} />

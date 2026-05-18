@@ -1,503 +1,140 @@
 /**
- * Hover summary for a calendar block or list row. Shows the appointment client as **Client** (`patient_id` / roster).
- * Calendar owner appears under **Assigned by** when sharing metadata exists — avoid a second line that repeated the client as "Refer to" (Phase D / B1 label clarity).
+ * Radix hover wrapper around shared `AppointmentCard`.
+ * Grid triggers use compact/minimal density; popover body is always full meta at fixed width.
+ *
+ * IMPORTANT — why we wrap AppointmentCard in a plain <div> for the trigger:
+ * Radix HoverCard with `asChild` uses Slot to merge its pointer-event handlers
+ * (onPointerEnter / onPointerLeave) into the immediate child. When the child is a
+ * React component (AppointmentCard), those handlers land on the component props but
+ * are never forwarded to the actual DOM node, so hover never fires. Wrapping in a
+ * native <div> lets Radix attach its events directly to the DOM element.
+ *
+ * Uncontrolled open state — Radix handles pointer hover
+ * (controlled + click toggle broke hover on calendar grid blocks).
  */
-import React, { useMemo, useState } from "react";
-import clsx from "clsx";
-import { format } from "date-fns";
+import React, { useMemo } from "react";
 import {
   HoverCard,
   HoverCardTrigger,
   HoverCardContent,
 } from "@/components/ui/hover-card";
-import { Button } from "@/components/ui/button";
+import { AppointmentCard } from "@/components/shared/AppointmentCard";
+import type { FullAppointment } from "@/hooks/useAppointments";
+import type { OwnerUserSummary } from "@/hooks/useOwnerUserSummaries";
 import {
-  FiPaperclip,
-} from "react-icons/fi";
-import {
-  CalendarDays,
-  Clock3,
-  MapPin,
-  Flag,
-  UserRound,
-  Users,
-  NotebookPen,
-  CheckSquare,
-  Square,
-  Pencil,
-  Trash2,
-} from "lucide-react";
-import type {
-  Appointment,
-  Category,
-  Patient,
-  AppointmentAssignee,
-} from "@/types/types";
-import { useAppointmentColor } from "@/context/AppointmentColorContext";
-import { RoleEntityLink } from "@/components/shared/RoleEntityLink";
-import { AppointmentTitleRow } from "@/components/shared/AppointmentTitleRow";
-import { WrappingText } from "@/components/shared/TruncatedText";
-// Using Vercel Blob for file storage
-import { getPublicUrl } from "@/lib/vercelBlob";
+  APPOINTMENT_CARD_POPOVER_MAX_WIDTH,
+  APPOINTMENT_CARD_POPOVER_WIDTH,
+} from "@/lib/appointment-card";
+import { dedupeAssignees } from "@/lib/appointment-assignees";
+import type { Appointment, AppointmentAssignee, Category, Patient } from "@/types/types";
 
-
+export { dedupeAssignees };
 
 export interface AppointmentHoverCardProps {
-  appointment: Appointment & { category_data?: Category; appointment_assignee?: AppointmentAssignee[] };
+  appointment: Appointment & {
+    category_data?: Category;
+    appointment_assignee?: AppointmentAssignee[];
+  };
   patients: Patient[];
   assignees: AppointmentAssignee[];
   userEmail: string | null;
   userId: string | null;
-  ownerUsers: { id: string, email: string }[]; // Add owner users data
+  ownerUsers: OwnerUserSummary[];
   /** @deprecated Unused — badges use real calendar today via `AppointmentDateTag`. */
   getDateTag?: (date: Date) => React.ReactNode;
   /** @deprecated Unused — do not pass `DateContext.currentDate`. */
   referenceDate?: Date;
-  /** Week/month hover popover: full wrapped text (grid trigger stays truncated). */
+  /** Week/month: full wrapped popover text. */
   detailWrap?: boolean;
-  onEdit: (appt: Appointment & { category_data?: Category; appointment_assignee?: AppointmentAssignee[] }) => void;
+  /** Day/week block height — drives compact vs minimal trigger. */
+  slotHeightPx?: number;
+  onEdit: (
+    appt: Appointment & { category_data?: Category; appointment_assignee?: AppointmentAssignee[] }
+  ) => void;
   onDelete: (id: string) => void;
   onToggleStatus: (id: string, newStatus: string) => void;
-  showDetails?: boolean; // default false
+  showDetails?: boolean;
   triggerContent?: React.ReactNode;
-}
-
-export function dedupeAssignees(
-  assignees: AppointmentAssignee[],
-  appointmentId: string
-): AppointmentAssignee[] {
-  const filteredAssignees = assignees.filter((ass) => ass.appointment === appointmentId);
-  const dedupedMap = new Map<string, AppointmentAssignee>();
-  for (const ass of filteredAssignees) {
-    const key = `${ass.user || ''}|${ass.invited_email || ''}`;
-    if (!dedupedMap.has(key)) {
-      dedupedMap.set(key, ass);
-    } else {
-      // Prefer accepted over pending, prefer higher permission
-      const prev = dedupedMap.get(key)!;
-      const statusOrder: Record<string, number> = { accepted: 2, pending: 1, declined: 0 };
-      const permOrder: Record<string, number> = { full: 3, write: 2, read: 1 };
-      const prevStatus = typeof prev.status === 'string' && statusOrder[prev.status] !== undefined ? statusOrder[prev.status] : 0;
-      const currStatus = typeof ass.status === 'string' && statusOrder[ass.status] !== undefined ? statusOrder[ass.status] : 0;
-      const prevPerm = typeof prev.permission === 'string' && permOrder[prev.permission] !== undefined ? permOrder[prev.permission] : 0;
-      const currPerm = typeof ass.permission === 'string' && permOrder[ass.permission] !== undefined ? permOrder[ass.permission] : 0;
-      if (
-        currStatus > prevStatus ||
-        (currStatus === prevStatus && currPerm > prevPerm)
-      ) {
-        dedupedMap.set(key, ass);
-      }
-    }
-  }
-  return Array.from(dedupedMap.values());
 }
 
 const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
   appointment: a,
   patients,
   assignees,
-  userEmail,
-  userId,
+  userEmail: _userEmail,
+  userId: _userId,
   ownerUsers,
   getDateTag: _getDateTag,
   referenceDate: _referenceDate,
-  detailWrap = false,
+  detailWrap: _detailWrap,
+  slotHeightPx,
   onEdit,
   onDelete,
   onToggleStatus,
   showDetails = false,
   triggerContent,
 }) => {
-  const [open, setOpen] = useState(false);
-  const { getAppointmentColorToken } = useAppointmentColor();
-  const colorToken = getAppointmentColorToken(a.id, a.category_data?.color ?? null);
-  const color = colorToken.lineColor;
-  const isDone = a.status === "done";
-  const dedupedAssignees = dedupeAssignees(assignees, a.id);
-  const patientName =
-    typeof a.patient === "string" && patients.length > 0
-      ? (() => {
-        const p = patients.find((x) => x.id === a.patient);
-        return p ? `${p.firstname} ${p.lastname}` : "--";
-      })()
-      : a.patient &&
-        typeof a.patient === "object" &&
-        "firstname" in a.patient &&
-        "lastname" in a.patient
-        ? `${(a.patient as Patient).firstname} ${(a.patient as Patient).lastname}`
-        : "--";
-  const statusTextClass =
-    a.status === "done"
-      ? "text-green-600"
-      : a.status === "alert"
-        ? "text-red-500"
-        : "text-amber-600";
+  const fullAppt = a as FullAppointment;
+
+  const handleToggle = (id: string, status: "pending" | "done" | "alert") => {
+    onToggleStatus(id, status);
+  };
+
+  const triggerVariant = showDetails ? "compact" : "minimal";
+
   const triggerNode = useMemo(() => {
-    const withClick = (node: React.ReactElement<{ onClick?: React.MouseEventHandler }>) =>
-      React.cloneElement(node, {
-        onClick: (e: React.MouseEvent) => {
-          e.preventDefault();
-          e.stopPropagation();
-          setOpen((prev) => !prev);
-          if (typeof node.props.onClick === "function") {
-            node.props.onClick(e);
-          }
-        },
-      });
-    if (triggerContent && React.isValidElement(triggerContent))
-      return withClick(triggerContent as React.ReactElement<{ onClick?: React.MouseEventHandler }>);
+    if (triggerContent && React.isValidElement(triggerContent)) {
+      return triggerContent;
+    }
     return null;
   }, [triggerContent]);
 
+  // Non-minimal triggers fill their parent slot (day/week grid block); minimal triggers auto-size.
+  const triggerWrapClass = triggerVariant !== "minimal" ? "h-full w-full" : undefined;
+
   return (
-    <HoverCard key={a.id} open={open} onOpenChange={setOpen} openDelay={0} closeDelay={80}>
+    <HoverCard key={a.id} openDelay={0} closeDelay={150}>
+      {/* Native div wrapper so Radix can attach onPointerEnter/onPointerLeave directly to DOM */}
       <HoverCardTrigger asChild>
-        {triggerNode ? (
-          triggerNode
-        ) : showDetails ? (
-          // WeekView: compact responsive card
-          <div className={clsx(
-            "relative z-10 flex flex-col w-full h-full overflow-hidden rounded-2xl cursor-pointer shadow-xl transition hover:brightness-110 border hover-card-rich",
-            { "line-through": isDone }
-          )}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setOpen((prev) => !prev);
-            }}
-            style={{
-              backgroundColor: colorToken.cardSurfaceColor,
-              borderColor: colorToken.cardBorderColor,
-            }}
-          >
-            <svg className="absolute left-0 top-0 bottom-0 h-full w-2 rounded-l-2xl" aria-hidden="true" preserveAspectRatio="none" viewBox="0 0 8 100">
-              <rect width="8" height="100" fill={color} />
-            </svg>
-            <div className="hover-card-content-inner min-w-0 px-2 py-1.5">
-
-              <div className="min-w-0">
-                <AppointmentTitleRow
-                  appointmentId={a.id}
-                  title={a.title}
-                  appointmentStart={new Date(a.start)}
-                  isDone={isDone}
-                />
-                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
-                  <span className="inline-flex items-center gap-1">
-                    <CalendarDays className="h-3.5 w-3.5 text-gray-400" />
-                    <span className={isDone ? "line-through text-gray-400" : undefined}>
-                      {format(new Date(a.start), "dd.MM.yyyy")}
-                    </span>
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <Clock3 className="h-3.5 w-3.5 text-gray-400" />
-                    <span className={isDone ? "line-through text-gray-400" : undefined}>
-                      {format(new Date(a.start), "HH:mm")} – {format(new Date(a.end), "HH:mm")}
-                    </span>
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : (
-          // MonthView: Simple card
-          <div
-            className={clsx(
-              "relative z-10 flex min-w-0 items-center w-full overflow-hidden rounded-2xl cursor-pointer shadow-xl transition hover:brightness-110 border hover-card-simple",
-              { "line-through": isDone }
-            )}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setOpen((prev) => !prev);
-            }}
-            style={{
-              backgroundColor: colorToken.cardSurfaceColor,
-              borderColor: colorToken.cardBorderColor,
-            }}
-          >
-            <svg width="8" height="24" viewBox="0 0 8 24" aria-hidden="true" className="rounded-l-2xl mr-2 shrink-0">
-              <rect width="8" height="24" fill={color} />
-            </svg>
-            <RoleEntityLink
-              kind="appointment"
-              id={a.id}
-              label={a.title}
-              className={clsx(
-                "min-w-0 flex-1 truncate text-sm font-normal text-left",
-                isDone && "line-through text-gray-400"
-              )}
+        <div className={triggerWrapClass}>
+          {triggerNode ?? (
+            <AppointmentCard
+              variant={triggerVariant}
+              appointment={fullAppt}
+              patients={patients}
+              assignees={assignees}
+              ownerUsers={ownerUsers}
+              slotHeightPx={slotHeightPx}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onToggleStatus={handleToggle}
+              asTrigger
+              asHoverTrigger
+              onTriggerClick={(e) => {
+                e.stopPropagation();
+              }}
             />
-          </div>
-        )}
+          )}
+        </div>
       </HoverCardTrigger>
-
 
       <HoverCardContent
         side="bottom"
         sideOffset={8}
         align="center"
-        className={clsx(
-          "relative min-w-[280px] rounded-2xl border border-gray-200 bg-white p-4 shadow-xl",
-          detailWrap
-            ? "max-w-[min(100vw-2rem,32rem)]"
-            : "max-w-[min(100vw-2rem,26rem)]"
-        )}
+        // p-0 overflow-hidden: AppointmentCard popover variant owns all padding so SVG bar sits at true card edge:
+        className={`relative z-[60] overflow-hidden border border-gray-200 bg-white shadow-xl ${APPOINTMENT_CARD_POPOVER_WIDTH} ${APPOINTMENT_CARD_POPOVER_MAX_WIDTH}`}
       >
-        <svg className="absolute left-0 top-0 bottom-0 h-full w-1.5 rounded-l-2xl" aria-hidden="true" preserveAspectRatio="none" viewBox="0 0 6 100">
-          <rect width="6" height="100" fill={color} />
-        </svg>
-        <div className="min-w-0 px-1">
-          <AppointmentTitleRow
-            appointmentId={a.id}
-            title={a.title}
-            appointmentStart={new Date(a.start)}
-            isDone={isDone}
-            wrapTitle={detailWrap}
-            className="mb-1"
-          />
-
-          <div className="mb-1 flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-600">
-            <span className="inline-flex items-center gap-1.5">
-              <CalendarDays className="h-4 w-4 text-gray-400" />
-              <span className={isDone ? "line-through text-gray-400" : undefined}>
-                {format(new Date(a.start), "dd.MM.yyyy")}
-              </span>
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <Clock3 className="h-4 w-4 text-gray-400" />
-              <span className={isDone ? "line-through text-gray-400" : undefined}>
-                {format(new Date(a.start), "HH:mm")} – {format(new Date(a.end), "HH:mm")}
-              </span>
-            </span>
-          </div>
-          <div className="mb-1 flex min-w-0 flex-wrap items-start gap-x-4 gap-y-1 text-xs text-gray-600">
-            <span className="inline-flex min-w-0 flex-1 basis-full items-start gap-1.5 sm:basis-auto sm:max-w-full">
-              <MapPin className="h-4 w-4 shrink-0 text-gray-400" />
-              {detailWrap ? (
-                <WrappingText className={isDone ? "text-gray-400" : undefined}>
-                  {a.location || "--"}
-                </WrappingText>
-              ) : (
-                <span className={clsx("min-w-0 truncate", isDone && "text-gray-400")}>
-                  {a.location || "--"}
-                </span>
-              )}
-            </span>
-            <span className="inline-flex shrink-0 items-center gap-1.5">
-              <Flag className="h-4 w-4 text-gray-400" />
-              <span className={clsx("capitalize font-normal", statusTextClass)}>{a.status}</span>
-            </span>
-          </div>
-
-          <div
-            className={clsx(
-              "mb-1 flex min-w-0 gap-1 text-xs text-gray-500",
-              detailWrap ? "flex-wrap items-start" : "items-center"
-            )}
-          >
-            <UserRound className="h-4 w-4 shrink-0 text-gray-400" />
-            <span className="shrink-0">Client</span>
-            {typeof a.patient === "string" && a.patient ? (
-              <RoleEntityLink
-                kind="patient"
-                id={a.patient}
-                label={patientName}
-                className={clsx(
-                  "min-w-0 text-gray-700",
-                  detailWrap
-                    ? "break-words [overflow-wrap:anywhere] whitespace-normal"
-                    : "truncate"
-                )}
-              />
-            ) : detailWrap ? (
-              <WrappingText className="text-gray-700">{patientName}</WrappingText>
-            ) : (
-              <span className="min-w-0 truncate text-gray-700">{patientName}</span>
-            )}
-          </div>
-
-          {a.notes && (
-            <div
-              className={clsx(
-                "mb-1 flex min-w-0 gap-1 text-xs text-gray-600",
-                detailWrap ? "flex-wrap items-start" : "items-center"
-              )}
-            >
-              <NotebookPen className="h-4 w-4 shrink-0 text-gray-400" />
-              {detailWrap ? (
-                <WrappingText>{a.notes}</WrappingText>
-              ) : (
-                <span className="min-w-0 truncate">{a.notes}</span>
-              )}
-            </div>
-          )}
-
-          {a.attachments && a.attachments.length > 0 && (
-            <div className="flex items-center gap-1 text-xs text-gray-400 mb-1">
-              <FiPaperclip /> Attachments:
-              {a.attachments.map((file, idx) => {
-                // Get Vercel Blob public URL
-                const publicUrl = getPublicUrl(file);
-                const fileName = file.split("/").pop() || file;
-                return publicUrl ? (
-                  <a
-                    key={idx}
-                    href={publicUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="not-italic text-blue-700 underline"
-                  >
-                    {fileName}
-                  </a>
-                ) : (
-                  <span key={idx} className="text-red-600">
-                    [Error: File not found]
-                  </span>
-                );
-              })}
-            </div>
-          )}
-
-          {dedupedAssignees.length > 0 && (
-            <div className="flex items-center gap-1 text-xs text-gray-400 mb-1">
-              <Users className="h-4 w-4 text-gray-400" /> Assigned by:
-              {a.user_id === userId ? (
-                // Owner view
-                <span className="not-italic text-green-700">
-                  you ({userEmail || "owner"})
-                </span>
-              ) : (
-                // Invitee view: show owner's email
-                <span className="not-italic text-blue-700">
-                  {(() => {
-                    // Find owner's email from ownerUsers
-                    const owner = ownerUsers.find(u => u.id === a.user_id);
-                    return owner?.email || a.user_id;
-                  })()}
-                </span>
-              )}
-            </div>
-          )}
-
-
-          <div className="flex items-center gap-3">
-            {/* Status checkbox - only show if user is owner, full, or write permission */}
-            {(() => {
-              // Check if user is the owner
-              const isOwner = a.user_id === userId;
-
-              // Get user permission from assignees if not owner
-              let userPermission: "full" | "write" | "read" | null = null;
-
-              if (!isOwner && assignees && assignees.length > 0) {
-                // Find the current user's assignment
-                const userAssignment = assignees.find(
-                  (ass) =>
-                    (ass.user === userId || (!!userEmail && ass.invited_email === userEmail)) &&
-                    ass.appointment === a.id &&
-                    ass.status === "accepted"
-                );
-                userPermission = userAssignment?.permission || null;
-
-              }
-
-              // Only owner, full, or write can toggle status
-              if (!userId || isOwner || userPermission === "full" || userPermission === "write") {
-                return (
-                  <label className="inline-flex items-center gap-1 rounded-md px-1 py-0.5">
-                    <button
-                      type="button"
-                      className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-green-200 bg-green-50 text-green-600 transition hover:bg-green-100"
-                      onClick={() => onToggleStatus(a.id, isDone ? "pending" : "done")}
-                      aria-label={isDone ? "Mark as open" : "Mark as done"}
-                    >
-                      {isDone ? <CheckSquare className="size-4" /> : <Square className="size-4" />}
-                    </button>
-                    <span className="text-xs text-gray-600 select-none">
-                      {isDone ? "Done" : "Open"}
-                    </span>
-                  </label>
-                );
-              }
-              return null;
-            })()}
-
-            {/* Edit button - only show if user is owner or has full permission */}
-            {(() => {
-              // Check if user is the owner
-              const isOwner = a.user_id === userId;
-
-              // Get user permission from assignees if not owner
-              let userPermission: "full" | "write" | "read" | null = null;
-
-              if (!isOwner && assignees && assignees.length > 0) {
-                // Find the current user's assignment
-                const userAssignment = assignees.find(
-                  (ass) =>
-                    (ass.user === userId || (!!userEmail && ass.invited_email === userEmail)) &&
-                    ass.appointment === a.id &&
-                    ass.status === "accepted"
-                );
-                userPermission = userAssignment?.permission || null;
-
-              }
-
-              // Only owner or full can edit
-              if (!userId || isOwner || userPermission === "full") {
-                return (
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-7 w-7 rounded-md border border-sky-200 bg-sky-50 text-sky-600 transition hover:bg-sky-100"
-                    onClick={() => onEdit(a)}
-                    aria-label="Edit"
-                  >
-                    <Pencil className="size-4" />
-                  </Button>
-                );
-              }
-              return null;
-            })()}
-
-            {/* Delete button - only show if user is owner or has full permission */}
-            {(() => {
-              // Get user permission for this appointment
-              let userPermission: "owner" | "full" | "write" | "read" | null = null;
-
-              if (!userId) {
-                userPermission = "owner";
-              } else if (a.user_id === userId) {
-                userPermission = "owner";
-              } else if (assignees && assignees.length > 0) {
-                // Find the current user's assignment
-                const userAssignment = assignees.find(
-                  (ass) =>
-                    (ass.user === userId || (!!userEmail && ass.invited_email === userEmail)) &&
-                    ass.appointment === a.id &&
-                    ass.status === "accepted"
-                );
-                userPermission = userAssignment?.permission || null;
-              }
-
-              // Only owner or full can delete
-              if (userPermission === "owner" || userPermission === "full") {
-                return (
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-7 w-7 rounded-md border border-red-200 bg-red-50 text-red-500 transition hover:bg-red-100"
-                    onClick={() => onDelete(a.id)}
-                    aria-label="Delete"
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
-                );
-              }
-              return null;
-            })()}
-          </div>
-        </div>
+        <AppointmentCard
+          variant="popover"
+          appointment={fullAppt}
+          patients={patients}
+          assignees={assignees}
+          ownerUsers={ownerUsers}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          onToggleStatus={handleToggle}
+        />
       </HoverCardContent>
     </HoverCard>
   );

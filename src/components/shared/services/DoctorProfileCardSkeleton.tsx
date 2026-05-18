@@ -24,7 +24,7 @@ export function DoctorProfileCardSkeleton() {
         <Skeleton className="h-3 w-4/5 rounded-sm" />
 
         <div>
-          <p className="mb-1 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <p className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
             <CalendarClock className="h-3 w-3" aria-hidden />
             Availability
           </p>

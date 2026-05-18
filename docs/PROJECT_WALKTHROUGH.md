@@ -210,22 +210,35 @@ Shared primitives keep layout fixed while data loads:
 
 **SSR + client:** root `layout.tsx` passes `initialNavRole` into `AuthShell`. Portal pages pass `initialData` on `useQuery`. Profile: `profileLoading = isLoading && !patient`. Navbar role links render when `role` is known (server + client match).
 
-**Audit (agent glance):** Navbar role uses SSR `initialNavRole` via `NavRoleContext`. Appointment timeline colors use `colorFromSeed()` in `AppointmentColorContext` (no `Math.random`). `GlobalSearch` + `useOwnerUserSummaries` skip staff user-directory APIs for patients (no console 403). **137 tests**, `tsc` + `build` pass.
+**Audit (agent glance):** Navbar role uses SSR `initialNavRole` via `NavRoleContext`. Appointment timeline colors use `colorFromSeed()` in `AppointmentColorContext` (no `Math.random`). `GlobalSearch` + `useOwnerUserSummaries` skip staff user-directory APIs for patients (no console 403). Dashboard cards unified via `AppointmentCard` (List / Month panel / hover / Day–Week triggers). **144 tests**, `tsc` + `lint` + `build` pass.
 
-### Dashboard calendar shared UI
+### Dashboard calendar shared UI (unified `AppointmentCard`)
 
 | Piece | File | Role |
 |-------|------|------|
-| `appointment-date-tags.ts` | `src/lib/appointment-date-tags.ts` | Today / Tomorrow / Later / Passed day diff + badge classes |
-| `AppointmentDateTag` | `src/components/shared/AppointmentDateTag.tsx` | Badge pill for title row |
-| `AppointmentTitleRow` | `src/components/shared/AppointmentTitleRow.tsx` | `truncate` title + badge right (list, hover, day, month side panel) |
-| `appointment-menu-permissions.ts` | `src/lib/appointment-menu-permissions.ts` | View / toggle / edit / delete flags per role + assignee |
-| `AppointmentActionsMenu` | `src/components/shared/AppointmentActionsMenu.tsx` | Global ⋮ menu on list cards; View Details → `appointmentDetailHref(role, id)` |
-| `TruncatedText` | `src/components/shared/TruncatedText.tsx` | Long notes/location ellipsis in cards |
+| `AppointmentCard` | `src/components/shared/AppointmentCard.tsx` | Single card UI — variants `list` \| `month-panel` \| `popover` \| `compact` \| `minimal` |
+| `AppointmentHoverCard` | `src/components/calendar/AppointmentHoverCard.tsx` | Radix hover wrapper; popover body + grid triggers delegate to `AppointmentCard` |
+| `appointment-card.ts` | `src/lib/appointment-card.ts` | `deriveCardDensity`, `w-[320px]` popover, patient/status helpers |
+| `appointment-assignees.ts` | `src/lib/appointment-assignees.ts` | `dedupeAssignees` |
+| `useAppointmentCardModel` | `src/hooks/useAppointmentCardModel.ts` | Colors, labels, RBAC capabilities per card |
+| `AppointmentCardMetaRow` | `src/components/shared/AppointmentCardMetaRow.tsx` | Lucide meta rows (date, time, client, category, status, notes, …) |
+| `CategoryInlineLink` | `src/components/shared/CategoryInlineLink.tsx` | Category color dot + `RoleEntityLink` |
+| `appointment-date-tags.ts` | `src/lib/appointment-date-tags.ts` | Today / Tomorrow / Later / Passed |
+| `AppointmentDateTag` / `AppointmentTitleRow` | `src/components/shared/` | Title row; `titleLayout: stacked` on month side panel |
+| `appointment-menu-permissions.ts` | `src/lib/appointment-menu-permissions.ts` | Menu capability flags |
+| `AppointmentActionsMenu` | `src/components/shared/AppointmentActionsMenu.tsx` | ⋮ always shown; items disabled when denied |
+| `appointment-card.test.ts` | `src/lib/__tests__/appointment-card.test.ts` | `dedupeAssignees`, `deriveCardDensity` |
 
-**Wiring:** `AppointmentList` (menu + title row), `AppointmentHoverCard` (popover + week trigger, `referenceDate`), `WeekView` / `MonthView` (`referenceDate` + `useOwnerUserSummaries`), `DayView` title row. Invalidation unchanged — appointment CRUD still via `invalidateAfterAppointmentMutation`.
+**Wiring:** `HomePage` → `AppointmentDataProvider` → `useAppointments` seeds `queryKeys.appointments.all`; SSR `dashboard/page.tsx` prefetches patients + categories. All four views read same cache; mutations use `invalidateAfterAppointmentMutation` (not narrow `invalidateAppointmentData` from calendar edit handlers).
 
-**Optional follow-up (not blocking):** `AppointmentList` still keeps empty `ownerUsers` state for “Assigned by” on list (staff email lookup not wired); day view passes `ownerUsers={[]}`.
+| Tab | Entry | Notes |
+|-----|-------|-------|
+| List | `AppointmentList` | `variant="list"`; `useOwnerUserSummaries` + `useAssignees` |
+| Month | `MonthView` side panel | `variant="month-panel"`; ⋮ top-right in card header |
+| Month/Day/Week cells | `AppointmentHoverCard` | Fixed-width popover; `slotHeightPx` for compact/minimal triggers |
+| Day / Week | `DayView` / `WeekView` | `useOwnerUserSummaries`; hover replaces old inline dropdown |
+
+**Not migrated:** `PatientPortalPage` appointment timeline (separate layout; still uses `AppointmentListColorBar` only).
 
 ---
 
@@ -374,10 +387,10 @@ src/
 │   │   ├── PatientDetailView.tsx
 │   │   └── TelehealthDashboard.tsx  Telehealth queue — inline skeleton
 │   ├── calendar/
-│   │   ├── AppointmentList.tsx      Main calendar list view
-│   │   ├── WeekView.tsx / MonthView.tsx / DayView.tsx
+│   │   ├── AppointmentList.tsx      List tab → `AppointmentCard variant="list"`
+│   │   ├── WeekView.tsx / MonthView.tsx / DayView.tsx  Grid + side panel → `AppointmentHoverCard` + `AppointmentCard`
 │   │   ├── AppointmentDialog.tsx    Create/edit appointment modal
-│   │   ├── AppointmentHoverCard.tsx
+│   │   ├── AppointmentHoverCard.tsx Thin hover wrapper → shared `AppointmentCard`
 │   │   ├── CalendarHeader.tsx       Fixed sticky header row
 │   │   ├── Filters.tsx / SearchBar.tsx
 │   │   ├── ImportICSDialog.tsx

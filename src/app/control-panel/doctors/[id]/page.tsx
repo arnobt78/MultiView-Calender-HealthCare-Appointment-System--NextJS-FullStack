@@ -142,7 +142,7 @@ export default async function DoctorDetailPage({ params }: PageProps) {
               {/* Bio */}
               {raw.bio && (
                 <div>
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
                     <BookOpen className="h-3 w-3" /> Bio
                   </p>
                   <p className="text-sm text-muted-foreground leading-relaxed">{raw.bio}</p>

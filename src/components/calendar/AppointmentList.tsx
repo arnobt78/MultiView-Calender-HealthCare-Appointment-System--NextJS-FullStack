@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState, useRef, useMemo } from "react";
-import { format } from "date-fns";
+import { useState, useRef, useMemo } from "react";
 import { FullAppointment } from "@/hooks/useAppointments";
+import { useAssignees } from "@/hooks/useAssignees";
+import { useOwnerUserSummaries } from "@/hooks/useOwnerUserSummaries";
 import { useCategories } from "@/hooks/useCategories";
 import { usePatients } from "@/hooks/usePatients";
 import { useAuth } from "@/hooks/useAuth";
@@ -12,10 +13,8 @@ import {
   applyCalendarFilters,
 } from "@/context/CalendarFiltersContext";
 import { summarizeDayAppointments } from "@/lib/appointment-stats";
-import {
-  Patient,
-  AppointmentAssignee,
-} from "@/types/types";
+import { collectAppointmentStaffUserIds } from "@/lib/appointment-card";
+import type { AppointmentAssignee, Patient } from "@/types/types";
 import Filters from "./Filters";
 import AppointmentDialogController from "./AppointmentDialogController";
 import { useDateContext } from "@/context/DateContext";
@@ -28,28 +27,11 @@ import {
   CalendarX2,
   CalendarDays,
   ChevronDown,
-  Video,
 } from "lucide-react";
 import VideoCall from "./VideoCall";
-import { AppointmentActionsMenu } from "@/components/shared/AppointmentActionsMenu";
-import { AppointmentTitleRow } from "@/components/shared/AppointmentTitleRow";
-import { TruncatedText } from "@/components/shared/TruncatedText";
-// Using Vercel Blob for file storage
-import { getPublicUrl } from "@/lib/vercelBlob";
-import {
-  FiFileText,
-  FiUser,
-  FiMapPin,
-  FiPaperclip,
-  FiFlag,
-  FiUsers,
-} from "react-icons/fi";
-import { MdCategory } from "react-icons/md";
+import { AppointmentCard } from "@/components/shared/AppointmentCard";
 import GlobalCalendarFilters from "./GlobalCalendarFilters";
-import { useAppointmentColor } from "@/context/AppointmentColorContext";
-import { AppointmentListColorBar } from "@/components/shared/AppointmentListColorBar";
 import { motion } from "framer-motion";
-import { RoleEntityLink } from "@/components/shared/RoleEntityLink";
 import CalendarStickyHeader from "./CalendarStickyHeader";
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 
@@ -152,7 +134,6 @@ export default function AppointmentList() {
   const [editOpen, setEditOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { currentDate } = useDateContext();
-  const { getAppointmentColorToken } = useAppointmentColor();
 
   // Queries
   const {
@@ -168,23 +149,17 @@ export default function AppointmentList() {
   const { categories = [] } = useCategories();
   const { patients = [] } = usePatients();
   const { category, patient, date, status, month, search } = useCalendarFilters();
-
-  // Keep ownerUsers state empty for now, or we can fetch them separately if needed, 
-  // but useAppointments currently just returns user IDs. We'll simplify to just showing the user ID or email if invited_email is populated.
-  const [ownerUsers, setOwnerUsers] = useState<{ id: string, email: string }[]>([]);
+  const { assignees } = useAssignees();
+  const ownerUsers = useOwnerUserSummaries(
+    collectAppointmentStaffUserIds(appointments),
+    user
+  );
   const [collapsedSections, setCollapsedSections] = useState<Record<ListSectionKey, boolean>>({
     today: false,
     tomorrow: false,
     passed: true,
     later: false,
   });
-
-  // We can fetch owner users for shared appointments if needed, 
-  // but for now we'll just rely on the existing invited_email or user_id.
-  useEffect(() => {
-    // Optional: Fetch emails for owner users if this is a shared appointment
-    // This is a simplified version of the previous logic.
-  }, [appointments]);
 
   const filteredBySidebar = useMemo(
     () =>
@@ -514,52 +489,12 @@ export default function AppointmentList() {
                               <DateHeadline date={date} dayStats={summarizeDayAppointments(appts)} />
                               <div className="flex flex-col gap-4">
                                 {appts.map((appt: FullAppointment, i: number) => {
-                                  // --- Begin: Restored full-featured appointment card ---
                                   const start = new Date(appt.start);
                                   const now = new Date();
                                   const isToday =
                                     start.getFullYear() === now.getFullYear() &&
                                     start.getMonth() === now.getMonth() &&
                                     start.getDate() === now.getDate();
-                                  const colorToken = getAppointmentColorToken(
-                                    appt.id,
-                                    appt.category_data?.color ?? null
-                                  );
-                                  const isDone = appt.status === "done";
-                                  const categoryIcon = appt.category_data?.icon ? (
-                                    <span className="inline-flex items-center mr-1">
-                                      <MdCategory className="w-4 h-4 text-gray-400" />
-                                    </span>
-                                  ) : null;
-
-                                  // Deduplicate assignees by user + invited_email
-                                  const filteredAssignees = appt.appointment_assignee || [];
-                                  const dedupedMap = new Map();
-                                  for (const ass of filteredAssignees) {
-                                    const key = `${ass.user || ""}|${ass.invited_email || ""}`;
-                                    if (!dedupedMap.has(key)) {
-                                      dedupedMap.set(key, ass);
-                                      continue;
-                                    }
-                                    // Prefer accepted over pending, prefer higher permission
-                                    const prev = dedupedMap.get(key) as AppointmentAssignee;
-                                    const statusOrder: Record<'accepted' | 'pending', number> = { accepted: 2, pending: 1 };
-                                    const permOrder: Record<'full' | 'write' | 'read', number> = { full: 3, write: 2, read: 1 };
-                                    // Type guards for status and permission
-                                    const isValidStatus = (s: unknown): s is 'accepted' | 'pending' => s === 'accepted' || s === 'pending';
-                                    const isValidPerm = (p: unknown): p is 'full' | 'write' | 'read' => p === 'full' || p === 'write' || p === 'read';
-                                    const prevStatus = isValidStatus(prev.status) ? statusOrder[prev.status] : 0;
-                                    const currStatus = isValidStatus(ass.status) ? statusOrder[ass.status] : 0;
-                                    const prevPerm = isValidPerm(prev.permission) ? permOrder[prev.permission] : 0;
-                                    const currPerm = isValidPerm(ass.permission) ? permOrder[ass.permission] : 0;
-                                    if (
-                                      currStatus > prevStatus ||
-                                      (currStatus === prevStatus && currPerm > prevPerm)
-                                    ) {
-                                      dedupedMap.set(key, ass);
-                                    }
-                                  }
-                                  const dedupedAssignees = Array.from(dedupedMap.values());
 
                                   return (
                                     <motion.div
@@ -569,185 +504,25 @@ export default function AppointmentList() {
                                       initial={{ opacity: 0, y: 14 }}
                                       animate={{ opacity: 1, y: 0 }}
                                       transition={{ duration: 0.32, delay: i * 0.07 }}
-                                      className="relative rounded-2xl border shadow-md hover:shadow-xl transition-all duration-200 p-0 flex items-stretch min-h-[130px]"
-                                      style={{
-                                        backgroundColor: colorToken.cardBgColor,
-                                        borderColor: colorToken.cardBorderColor,
-                                      }}
                                     >
-                                      {/* Color bar */}
-                                      <AppointmentListColorBar color={colorToken.lineColor} />
-
-                                      {/* Main content */}
-                                      <div className="pl-6 pr-4 py-3 flex-1 flex flex-col gap-2 min-w-0">
-
-                                        {/* Row 1: title truncates; day badge pinned right */}
-                                        <AppointmentTitleRow
-                                          appointmentId={appt.id}
-                                          title={appt.title}
-                                          appointmentStart={start}
-                                          isDone={isDone}
-                                        />
-
-                                        {/* Row 2: Date · Time · Location */}
-                                        <div className="flex items-center gap-5 flex-wrap text-sm text-gray-600">
-                                          <span className="flex items-center gap-1.5 shrink-0">
-                                            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" className="text-gray-400 shrink-0"><path d="M8 7V3M16 7V3M3 11H21M5 19H19C20.1046 19 21 18.1046 21 17V7C21 5.89543 20.1046 5 19 5H5C3.89543 5 3 5.89543 3 7V17C3 18.1046 3.89543 19 5 19Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                                            <span className="text-gray-400 text-xs">Date:</span>
-                                            <span className={`text-xs ${isDone ? "line-through text-gray-400" : "text-gray-700 font-medium"}`}>{format(start, "dd.MM.yyyy")}</span>
-                                          </span>
-                                          <span className="flex items-center gap-1.5 shrink-0">
-                                            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" className="text-gray-400 shrink-0"><path d="M12 6V12L16 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" /></svg>
-                                            <span className="text-gray-400 text-xs">Time:</span>
-                                            <span className={`text-xs ${isDone ? "line-through text-gray-400" : "text-gray-700 font-medium"}`}>{format(start, "HH:mm")} – {format(new Date(appt.end), "HH:mm")}</span>
-                                          </span>
-                                          <span className="flex items-center gap-1.5 min-w-0">
-                                            <FiMapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                                            <span className="text-gray-400 text-xs shrink-0">Location:</span>
-                                            <span className="text-xs text-gray-700 font-medium truncate">{appt.location || "--"}</span>
-                                          </span>
-                                        </div>
-
-                                        {/* Row 3: Client · Category · Status */}
-                                        <div className="flex items-center gap-5 flex-wrap">
-                                          <span className="flex items-center gap-1.5 shrink-0">
-                                            <FiUser className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                                            <span className="text-gray-400 text-xs shrink-0">Client:</span>
-                                            {(() => {
-                                              try {
-                                                if (!appt.patient) return <span className="text-xs text-gray-700 font-medium">--</span>;
-                                                if (typeof appt.patient === "object" && "id" in appt.patient && "firstname" in appt.patient) {
-                                                  const p = appt.patient as Patient;
-                                                  return (
-                                                    <RoleEntityLink
-                                                      kind="patient"
-                                                      id={p.id}
-                                                      label={`${p.firstname} ${p.lastname}`}
-                                                      className="text-xs font-medium"
-                                                    />
-                                                  );
-                                                }
-                                                if (typeof appt.patient === "string" && patients.length > 0) {
-                                                  const p = patients.find((x: Patient) => x.id === appt.patient);
-                                                  const label = p && p.firstname && p.lastname ? `${p.firstname} ${p.lastname}` : "--";
-                                                  if (p && label !== "--") {
-                                                    return (
-                                                      <RoleEntityLink
-                                                        kind="patient"
-                                                        id={p.id}
-                                                        label={label}
-                                                        className="text-xs font-medium"
-                                                      />
-                                                    );
-                                                  }
-                                                }
-                                                return <span className="text-xs text-gray-700 font-medium">--</span>;
-                                              } catch (error: unknown) {
-                                                console.error("Error in client name lookup:", error);
-                                                return <span className="text-xs text-gray-700 font-medium">--</span>;
-                                              }
-                                            })()}
-                                          </span>
-                                          {appt.category_data && (
-                                            <span className="flex items-center gap-1.5 shrink-0">
-                                              <MdCategory className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                                              <span className="text-gray-400 text-xs shrink-0">Category:</span>
-                                              <RoleEntityLink
-                                                kind="category"
-                                                id={appt.category_data.id}
-                                                label={appt.category_data.label}
-                                                className="text-xs font-medium"
-                                              />
-                                            </span>
-                                          )}
-                                          <span className="flex items-center gap-1.5 shrink-0">
-                                            <FiFlag className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                                            <span className="text-gray-400 text-xs shrink-0">Status:</span>
-                                            <span className={`text-xs font-semibold ${appt.status === "done" ? "text-green-600" : appt.status === "alert" ? "text-red-500" : "text-amber-600"}`}>
-                                              {appt.status || "pending"}
-                                            </span>
-                                          </span>
-                                          {/* Telehealth badge — shown only when appointment is telehealth */}
-                                          {appt.is_telehealth && (
-                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-sky-100/80 text-sky-700 border border-sky-200/60 flex-shrink-0">
-                                              <Video className="h-3 w-3" />
-                                              Telehealth
-                                            </span>
-                                          )}
-                                        </div>
-
-                                        {/* Row 4: Notes (only if present) */}
-                                        {appt.notes && (
-                                          <div className="flex min-w-0 items-center gap-1.5">
-                                            <FiFileText className={`h-3.5 w-3.5 shrink-0 ${isDone ? "text-gray-300" : "text-gray-400"}`} />
-                                            <span className="text-gray-400 text-xs shrink-0">Note:</span>
-                                            <TruncatedText
-                                              title={appt.notes}
-                                              className={`text-xs ${isDone ? "text-gray-400" : "text-gray-600"}`}
-                                            >
-                                              {appt.notes}
-                                            </TruncatedText>
-                                          </div>
-                                        )}
-
-                                        {/* Attachments (only if present) */}
-                                        {appt.attachments && appt.attachments.length > 0 && (
-                                          <div className="flex items-center gap-1.5 flex-wrap">
-                                            <FiPaperclip className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                                            <span className="text-gray-400 text-xs shrink-0">Attachments:</span>
-                                            {appt.attachments.map((file, idx) => {
-                                              const publicUrl = getPublicUrl(file);
-                                              const fileName = file.split("/").pop() || file;
-                                              return publicUrl ? (
-                                                <a key={idx} href={publicUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline">{fileName}</a>
-                                              ) : (
-                                                <span key={idx} className="text-xs text-red-500">[File not found]</span>
-                                              );
-                                            })}
-                                          </div>
-                                        )}
-
-                                        {/* Assigned by */}
-                                        {dedupedAssignees.length > 0 && (
-                                          <div className="flex items-center gap-1.5">
-                                            <FiUsers className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                                            <span className="text-gray-400 text-xs shrink-0">Assigned by:</span>
-                                            {appt.user_id === user?.id ? (
-                                              <span className="text-xs text-green-700 font-medium">you ({user?.email || "owner"})</span>
-                                            ) : (
-                                              <span className="text-xs text-blue-700 font-medium">
-                                                {(() => {
-                                                  const owner = ownerUsers.find(u => u.id === appt.user_id);
-                                                  return owner?.email || appt.user_id;
-                                                })()}
-                                              </span>
-                                            )}
-                                          </div>
-                                        )}
-
-                                      </div>
-
-                                      {/* Actions column: 3-dot on top, Video Call on bottom */}
-                                      <div className="flex flex-col items-center justify-between py-3 px-2 border-l border-gray-100 bg-gray-50/80 rounded-r-2xl min-w-[56px]">
-                                        <AppointmentActionsMenu
-                                          appointment={appt}
-                                          userId={user?.id}
-                                          userEmail={user?.email}
-                                          userRole={user?.role}
-                                          onToggleStatus={(id, status) =>
-                                            handleToggleStatus(id, status)
-                                          }
-                                          onEdit={() => handleEdit(appt)}
-                                          onDelete={handleDelete}
-                                        />
-                                        {/* Video call button only shown for telehealth appointments */}
-                                        {appt.is_telehealth && (
-                                          <VideoCall
-                                            appointmentId={appt.id}
-                                            appointmentTitle={appt.title ?? "Video Consultation"}
-                                          />
-                                        )}
-                                      </div>
+                                      <AppointmentCard
+                                        variant="list"
+                                        appointment={appt}
+                                        patients={patients}
+                                        assignees={assignees}
+                                        ownerUsers={ownerUsers}
+                                        onEdit={handleEdit}
+                                        onDelete={handleDelete}
+                                        onToggleStatus={handleToggleStatus}
+                                        telehealthSlot={
+                                          appt.is_telehealth ? (
+                                            <VideoCall
+                                              appointmentId={appt.id}
+                                              appointmentTitle={appt.title ?? "Video Consultation"}
+                                            />
+                                          ) : undefined
+                                        }
+                                      />
                                     </motion.div>
                                   );
                                 })}

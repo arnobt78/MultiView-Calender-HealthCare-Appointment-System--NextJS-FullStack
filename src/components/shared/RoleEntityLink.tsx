@@ -15,6 +15,8 @@ import {
 type BaseProps = {
   label: string;
   className?: string;
+  /** Full multi-line label (hover/month detail). Default: table ellipsis. */
+  wrapLabel?: boolean;
 };
 
 type AppointmentProps = BaseProps & { kind: "appointment"; id: string };
@@ -37,5 +39,12 @@ export function RoleEntityLink(props: RoleEntityLinkProps) {
           ? categoryDetailHref(role, props.id)
           : doctorDetailHref(role, props.id);
 
-  return <EntityTitleLink href={href} label={props.label} className={props.className} />;
+  return (
+    <EntityTitleLink
+      href={href}
+      label={props.label}
+      className={props.className}
+      wrapLabel={props.wrapLabel}
+    />
+  );
 }
