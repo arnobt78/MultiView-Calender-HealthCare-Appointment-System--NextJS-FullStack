@@ -1,5 +1,6 @@
 /**
- * Shared category detail — admin (control panel) and doctor (portal) routes.
+ * Shared category detail — admin (control panel) and doctor/patient portal routes.
+ * View-only: no edit/delete actions; admin CRUD lives on Category Management list (`?mode=edit`).
  */
 import Link from "next/link";
 import { BackNavigationLink } from "@/components/shared/BackNavigationLink";

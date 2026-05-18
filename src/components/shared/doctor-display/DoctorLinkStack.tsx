@@ -18,6 +18,7 @@ type DoctorLinkStackProps = {
 
 /**
  * Stacked doctor text for table cells (no avatar): name link → email → specialty badge (own lines).
+ * Default `gap-1` between rows; pass `className="gap-0"` to match Calendar Owner–style tight stacks.
  */
 export function DoctorLinkStack({
   doctorId,

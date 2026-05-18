@@ -20,10 +20,17 @@ export default async function PortalCategoryDetailPage({ params }: PageProps) {
 
   const role = await getUserRole(sessionUser.userId);
   if (isAdminRole(role)) redirect(categoryDetailHref(role, id));
-  if (!isDoctorRole(role) || isPatientRole(role)) notFound();
+  // Portal category detail is read-only for doctor and patient (no CP edit routes).
+  if (!isDoctorRole(role) && !isPatientRole(role)) notFound();
 
   const data = await loadCategoryDetailData(id);
   if (!data) notFound();
+
+  const backHref = isPatientRole(role)
+    ? "/patient-portal"
+    : isDoctorRole(role)
+      ? "/doctor-portal"
+      : "/dashboard";
 
   return (
     <CategoryDetailScreen
@@ -31,7 +38,7 @@ export default async function PortalCategoryDetailPage({ params }: PageProps) {
       appointments={data.appointments}
       totalCount={data.totalCount}
       viewerRole={role}
-      backHref="/dashboard"
+      backHref={backHref}
     />
   );
 }

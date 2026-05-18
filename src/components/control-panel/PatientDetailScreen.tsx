@@ -55,10 +55,12 @@ import { ControlPanelGlassActionButton } from "@/components/shared/ControlPanelG
 import { cn } from "@/lib/utils";
 import {
   appointmentDetailHref,
+  categoryDetailHref,
   doctorDetailHref,
   invoiceDetailHref,
   patientDetailHref,
 } from "@/lib/entity-routes";
+import { DoctorSpecialtyBadge } from "@/components/shared/doctor-display/DoctorSpecialtyBadge";
 import { isAdminRole } from "@/lib/rbac";
 import type { PatientAccessLevel } from "@/lib/patient-access";
 import { isValidUUID } from "@/lib/validation";
@@ -149,29 +151,48 @@ function appointmentTitleLines(
   return { typeLine: title || "—", patientLine: patientDisplayName };
 }
 
-/** Category pill with color dot — same visual language as AppointmentsManagement. */
+/**
+ * Category pill with color dot — links to role-aware category detail when `categoryId` is set.
+ * Admin → `/control-panel/categories/:id`; doctor/patient → `/categories/:id` (read-only portal page).
+ */
 function CategoryCell({
   label,
   color,
+  categoryId,
+  viewerRole,
 }: {
   label: string | null | undefined;
   color: string | null | undefined;
+  categoryId?: string | null;
+  viewerRole?: string | null;
 }) {
   if (!label?.trim()) {
     return <span className="text-xs text-gray-500">—</span>;
   }
+  const dot = (
+    <svg
+      width="8"
+      height="8"
+      viewBox="0 0 8 8"
+      aria-hidden
+      className="inline-block shrink-0"
+    >
+      <circle cx="4" cy="4" r="4" fill={categorySwatchFill(color)} />
+    </svg>
+  );
+  const canLink = categoryId && isValidUUID(categoryId);
   return (
     <span className="inline-flex max-w-full min-w-0 items-center gap-1.5 text-xs text-gray-700">
-      <svg
-        width="8"
-        height="8"
-        viewBox="0 0 8 8"
-        aria-hidden
-        className="inline-block shrink-0"
-      >
-        <circle cx="4" cy="4" r="4" fill={categorySwatchFill(color)} />
-      </svg>
-      <span className="truncate">{label}</span>
+      {dot}
+      {canLink ? (
+        <EntityTitleLink
+          href={categoryDetailHref(viewerRole, categoryId)}
+          label={label.trim()}
+          className="truncate font-normal"
+        />
+      ) : (
+        <span className="truncate">{label}</span>
+      )}
     </span>
   );
 }
@@ -589,14 +610,28 @@ export function PatientDetailScreen({
                   <FieldLabel icon={Stethoscope}>Primary Doctor</FieldLabel>
                   <dd className=" text-gray-700">
                     {p!.primary_doctor_id && p!.primary_doctor_display?.trim() ? (
-                      <DoctorLinkStack
-                        doctorId={p!.primary_doctor_id}
-                        name={p!.primary_doctor_display.trim()}
-                        email={p!.primary_doctor_email}
-                        specialty={primaryDoctorUser?.specialty ?? null}
-                        linkKind={isAdminRole(viewerRole) ? "admin-cp" : "role"}
-                        nameClassName="font-normal"
-                      />
+                      <div className="min-w-0">
+                        {/*
+                         * Schema block (not table): name + email on one responsive row; specialty badge below.
+                         * Matches Calendar Owner link styling; table rows keep `DoctorLinkStack`.
+                         */}
+                        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                          <EntityTitleLink
+                            href={doctorDetailHref(viewerRole, p!.primary_doctor_id)}
+                            label={p!.primary_doctor_display.trim()}
+                            className="font-normal"
+                          />
+                          {p!.primary_doctor_email?.trim() ? (
+                            <span className="truncate text-xs text-gray-500">
+                              {p!.primary_doctor_email.trim()}
+                            </span>
+                          ) : null}
+                        </div>
+                        <DoctorSpecialtyBadge
+                          specialty={primaryDoctorUser?.specialty ?? null}
+                          className="mt-1 self-start"
+                        />
+                      </div>
                     ) : (
                       (p!.primary_doctor_display ?? "—")
                     )}
@@ -641,7 +676,7 @@ export function PatientDetailScreen({
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          {["Title", "When", "Category", "Calendar owner", "Treating physician", "Location", "Status"].map((h) => (
+                          {["Title", "When", "Category", "Calendar Owner", "Treating Physician", "Location", "Status"].map((h) => (
                             <TableHead key={h} className="text-gray-700">{h}</TableHead>
                           ))}
                         </TableRow>
@@ -667,8 +702,8 @@ export function PatientDetailScreen({
                           <TableHead className="text-gray-700">Title</TableHead>
                           <TableHead className="whitespace-nowrap text-gray-700">When</TableHead>
                           <TableHead className="text-gray-700">Category</TableHead>
-                          <TableHead className="text-gray-700">Calendar owner</TableHead>
-                          <TableHead className="text-gray-700">Treating physician</TableHead>
+                          <TableHead className="text-gray-700">Calendar Owner</TableHead>
+                          <TableHead className="text-gray-700">Treating Physician</TableHead>
                           <TableHead className="text-gray-700">Location</TableHead>
                           <TableHead className="text-gray-700">Status</TableHead>
                         </TableRow>
@@ -688,7 +723,7 @@ export function PatientDetailScreen({
                                   <EntityTitleLink
                                     href={appointmentDetailHref(viewerRole, a.id)}
                                     label={typeLine}
-                                    className="block truncate text-sm font-medium"
+                                    className="block truncate text-sm "
                                   />
                                   <p className="truncate text-xs text-gray-500">{patientLine}</p>
                                 </div>
@@ -697,7 +732,7 @@ export function PatientDetailScreen({
                               <TableCell>
                                 {a.start ? (
                                   <div className="min-w-0 whitespace-nowrap">
-                                    <p className="text-xs font-medium text-gray-700">
+                                    <p className="text-xs text-gray-700">
                                       {format(new Date(a.start), "PP")}
                                     </p>
                                     <p className="text-xs text-gray-500">
@@ -710,7 +745,12 @@ export function PatientDetailScreen({
                                 )}
                               </TableCell>
                               <TableCell>
-                                <CategoryCell label={a.category_label} color={a.category_color} />
+                                <CategoryCell
+                                  label={a.category_label}
+                                  color={a.category_color}
+                                  categoryId={a.category}
+                                  viewerRole={viewerRole}
+                                />
                               </TableCell>
                               {/* B3 deferred: DB column remains `user_id`; API exposes calendar owner here (B2 snapshot fields). */}
                               <TableCell>
@@ -732,6 +772,10 @@ export function PatientDetailScreen({
                               <TableCell>
                                 {a.doctor_id && a.doctor_display ? (
                                   <div className="min-w-0">
+                                    {/*
+                                     * Align with Calendar Owner column: normal link weight, no stack gap.
+                                     * `className` / `nameClassName` override DoctorLinkStack defaults via twMerge.
+                                     */}
                                     <DoctorLinkStack
                                       doctorId={a.doctor_id}
                                       name={a.doctor_display}
@@ -742,6 +786,8 @@ export function PatientDetailScreen({
                                         null
                                       }
                                       linkKind={isAdminRole(viewerRole) ? "admin-cp" : "role"}
+                                      className="gap-0"
+                                      nameClassName="font-normal"
                                     />
                                     {snap.data?.patient?.primary_doctor_id &&
                                       a.doctor_id &&
@@ -921,52 +967,52 @@ export function PatientDetailScreen({
                 Back To List
               </BackNavigationLink>
               {canEdit ? (
-              <div className="flex flex-wrap gap-2">
-                <ControlPanelGlassActionButton
-                  type="button"
-                  variant="emerald"
-                  onClick={() => setMode("edit")}
-                  className="cursor-pointer"
-                >
-                  <Pencil className="shrink-0" aria-hidden />
-                  Update Profile
-                </ControlPanelGlassActionButton>
-                <ConfirmActionDialog
-                  trigger={
-                    <ControlPanelGlassActionButton type="button" variant="rose" disabled={isDeleting} className="cursor-pointer">
-                      <Trash2 className="shrink-0" aria-hidden />
-                      {isDeleting ? "Deleting…" : "Delete"}
-                    </ControlPanelGlassActionButton>
-                  }
-                  title="Permanently Remove This Patient?"
-                  subtitle={
-                    <>
-                      This will delete{" "}
-                      <span className="text-gray-700">
-                        {`${p!.firstname} ${p!.lastname}`.trim()}
-                        {p!.email ? ` (${p!.email})` : ""}
-                      </span>{" "}
-                      and all related data. You cannot undo this action.
-                    </>
-                  }
-                  confirmLabel="Delete"
-                  onConfirm={() =>
-                    deletePatient(
-                      {
-                        id: p!.id,
-                        name: `${p!.firstname} ${p!.lastname}`.trim(),
-                        email: p!.email,
-                      },
-                      {
-                        onSuccess: async () => {
-                          await invalidateQueriesForRoute(queryClient, listBackHref);
-                          router.push(listBackHref);
+                <div className="flex flex-wrap gap-2">
+                  <ControlPanelGlassActionButton
+                    type="button"
+                    variant="emerald"
+                    onClick={() => setMode("edit")}
+                    className="cursor-pointer"
+                  >
+                    <Pencil className="shrink-0" aria-hidden />
+                    Update Profile
+                  </ControlPanelGlassActionButton>
+                  <ConfirmActionDialog
+                    trigger={
+                      <ControlPanelGlassActionButton type="button" variant="rose" disabled={isDeleting} className="cursor-pointer">
+                        <Trash2 className="shrink-0" aria-hidden />
+                        {isDeleting ? "Deleting…" : "Delete"}
+                      </ControlPanelGlassActionButton>
+                    }
+                    title="Permanently Remove This Patient?"
+                    subtitle={
+                      <>
+                        This will delete{" "}
+                        <span className="text-gray-700">
+                          {`${p!.firstname} ${p!.lastname}`.trim()}
+                          {p!.email ? ` (${p!.email})` : ""}
+                        </span>{" "}
+                        and all related data. You cannot undo this action.
+                      </>
+                    }
+                    confirmLabel="Delete"
+                    onConfirm={() =>
+                      deletePatient(
+                        {
+                          id: p!.id,
+                          name: `${p!.firstname} ${p!.lastname}`.trim(),
+                          email: p!.email,
                         },
-                      }
-                    )
-                  }
-                />
-              </div>
+                        {
+                          onSuccess: async () => {
+                            await invalidateQueriesForRoute(queryClient, listBackHref);
+                            router.push(listBackHref);
+                          },
+                        }
+                      )
+                    }
+                  />
+                </div>
               ) : null}
             </>
           ) : canEdit ? (
