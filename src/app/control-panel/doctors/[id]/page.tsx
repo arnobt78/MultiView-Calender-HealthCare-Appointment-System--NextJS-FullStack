@@ -31,8 +31,6 @@ import {
   User,
   Users,
 } from "lucide-react";
-import Image from "next/image";
-
 type PageProps = { params: Promise<{ id: string }> };
 
 export async function generateMetadata({ params }: PageProps) {
@@ -114,13 +112,14 @@ export default async function DoctorDetailPage({ params }: PageProps) {
             <CardContent className="p-4 space-y-4">
               {/* Photo + name */}
               <div className="flex items-start gap-3">
-                {raw.image ? (
-                  <div className="relative h-20 w-20 rounded-xl overflow-hidden ring-2 ring-sky-200 shrink-0">
-                    <Image src={raw.image} alt={raw.display_name ?? "doctor"} fill className="object-cover" sizes="80px" />
-                  </div>
-                ) : (
-                  <UserAvatar src={null} fallbackText={raw.display_name || raw.email || "?"} sizeClassName="h-20 w-20" className="text-lg ring-2 ring-sky-200 rounded-xl" />
-                )}
+                {/* `UserAvatar` wraps `SafeImage` — blob/robohash URLs get optimizer fallback without extra SSR client bundle. */}
+                <UserAvatar
+                  src={raw.image}
+                  alt={raw.display_name ?? "doctor"}
+                  fallbackText={raw.display_name || raw.email || "?"}
+                  sizeClassName="h-20 w-20"
+                  className="text-lg ring-2 ring-sky-200 rounded-xl shrink-0"
+                />
                 <div className="min-w-0">
                   <p className="font-bold leading-tight">{raw.display_name ?? "—"}</p>
                   <p className="text-xs text-muted-foreground">{raw.email}</p>

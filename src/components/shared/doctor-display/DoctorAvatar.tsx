@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { SafeImage } from "@/components/ui/safe-image";
 import { cn } from "@/lib/utils";
 import { useDoctorDisplayOptional } from "@/context/DoctorDisplayContext";
 import type { DoctorAvatarInput } from "@/lib/doctor-avatar";
@@ -11,10 +11,14 @@ type DoctorAvatarProps = {
   className?: string;
 };
 
-/** Round doctor portrait — uploaded image or robohash fallback. */
+/**
+ * Round doctor portrait — uploaded image or robohash fallback.
+ * Uses `SafeImage` for remote URLs (identity rows, services cards); see `docs/SAFE_IMAGE_REUSABLE_COMPONENT.md`.
+ */
 export function DoctorAvatar({ doctor, sizeClassName = "h-8 w-8", className }: DoctorAvatarProps) {
   const { getDoctorAvatarSrc } = useDoctorDisplayOptional();
   const src = getDoctorAvatarSrc(doctor);
+  const isRobohash = src.includes("robohash.org");
   const name = doctor.display_name ?? doctor.email ?? "Doctor";
   const initials = name
     .split(" ")
@@ -31,13 +35,14 @@ export function DoctorAvatar({ doctor, sizeClassName = "h-8 w-8", className }: D
         className
       )}
     >
-      <Image
+      <SafeImage
         src={src}
         alt={name}
         fill
         className="object-cover"
         sizes="64px"
-        unoptimized={src.includes("robohash.org")}
+        unoptimized={isRobohash}
+        referrerPolicy="no-referrer"
       />
       <span className="sr-only">{initials}</span>
     </span>

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import Image from "next/image";
+import { SafeImage } from "@/components/ui/safe-image";
 import { notify } from "@/lib/notify";
 import { z } from "zod";
 import { loginRequestSchema } from "@/lib/schemas/auth";
@@ -353,7 +354,7 @@ export default function Login({ redirect = null }: LoginProps) {
                           <span className="flex min-w-0 items-center gap-2">
                             {selectedAccount ? (
                               // Role splash image improves quick visual switching between personas.
-                              <Image
+                              <SafeImage
                                 src={selectedAccount.avatarUrl}
                                 alt={selectedAccount.displayName}
                                 width={20}
@@ -377,7 +378,7 @@ export default function Login({ redirect = null }: LoginProps) {
                         {DEMO_ACCOUNTS.map((acc) => (
                           <DropdownMenuItem key={acc.email} onSelect={() => handleRoleSelect(`demo-${acc.role}`)}>
                             <span className="flex items-center gap-2">
-                              <Image
+                              <SafeImage
                                 src={acc.avatarUrl}
                                 alt={acc.displayName}
                                 width={20}

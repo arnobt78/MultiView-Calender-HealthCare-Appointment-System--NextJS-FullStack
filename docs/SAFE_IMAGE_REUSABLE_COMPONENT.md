@@ -170,7 +170,8 @@ export function SafeImage({
 
 ## This repo
 
-- Implementation: `src/Components/ui/safe-image.tsx`
-- Current usage: `src/Components/pages/home-page.tsx`, `src/Components/pages/gallery-page.tsx`
+- Implementation: `src/components/ui/safe-image.tsx`
+- Wrappers: `src/components/shared/UserAvatar.tsx`, `src/components/shared/doctor-display/DoctorAvatar.tsx`, `DoctorCardHeroImage`, `DoctorMiniAvatar`, `PatientPortraitAvatar` (via UserAvatar)
+- Usage: control-panel detail, identity tables, `/services`, appointment dialog, `FilePreview`, login demo avatars, landing about cards
 
 You can **copy this entire `.md` file** into another repository’s `docs/` folder and attach the same `safe-image.tsx` next to it.

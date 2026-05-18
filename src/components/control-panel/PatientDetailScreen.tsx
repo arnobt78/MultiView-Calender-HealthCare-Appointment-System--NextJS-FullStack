@@ -28,21 +28,16 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PatientDetailForm } from "@/components/control-panel/PatientDetailForm";
-import { UserAvatar } from "@/components/shared/UserAvatar";
-import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
-import { DoctorLinkStack } from "@/components/shared/doctor-display/DoctorLinkStack";
+import { DoctorIdentityRow } from "@/components/shared/doctor-display/DoctorIdentityRow";
+import { ClinicalDataTable } from "@/components/shared/ClinicalDataTable";
+import {
+  buildPatientInvoicesColumns,
+  buildRelatedAppointmentsColumns,
+} from "@/components/control-panel/patient-detail-snapshot-columns";
+import { PatientPortraitAvatar } from "@/components/shared/person-display/PatientPortraitAvatar";
 import { useUsers } from "@/hooks/useUsers";
 import { ControlPanelStaffLink } from "@/components/shared/ControlPanelStaffLink";
-import { DEMO_ACCOUNTS } from "@/lib/demo-credentials";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { format } from "date-fns";
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import { usePatients } from "@/hooks/usePatients";
@@ -53,19 +48,12 @@ import { skyGlassBackButtonClass, skyGlassTableFrameClass } from "@/lib/calendar
 import { dashboardShellClass } from "@/lib/dashboard-layout";
 import { ControlPanelGlassActionButton } from "@/components/shared/ControlPanelGlassActionButton";
 import { cn } from "@/lib/utils";
-import {
-  appointmentDetailHref,
-  categoryDetailHref,
-  doctorDetailHref,
-  invoiceDetailHref,
-  patientDetailHref,
-} from "@/lib/entity-routes";
-import { DoctorSpecialtyBadge } from "@/components/shared/doctor-display/DoctorSpecialtyBadge";
+import { patientDetailHref } from "@/lib/entity-routes";
 import { isAdminRole } from "@/lib/rbac";
 import type { PatientAccessLevel } from "@/lib/patient-access";
 import { isValidUUID } from "@/lib/validation";
 import { invalidateQueriesForRoute } from "@/lib/query-client";
-import type { AppointmentSnapshotRow, Patient, PatientSnapshot } from "@/types/types";
+import type { Patient, PatientSnapshot } from "@/types/types";
 import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
@@ -93,125 +81,6 @@ function SectionHeading({ icon: Icon, children }: { icon: LucideIcon; children: 
       </span>
       {children}
     </h3>
-  );
-}
-
-/**
- * Colored badge for appointment status.
- * pending → amber, done → emerald, alert → rose, unknown → slate.
- */
-function AppointmentStatusBadge({ status }: { status?: string | null }) {
-  const cls =
-    status === "done"
-      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-      : status === "alert"
-        ? "border-rose-200 bg-rose-50 text-rose-700"
-        : status === "pending"
-          ? "border-amber-200 bg-amber-50 text-amber-700"
-          : "border-slate-200 bg-slate-50 text-gray-600";
-  return (
-    <Badge variant="outline" className={`capitalize text-xs ${cls}`}>
-      {status ?? "pending"}
-    </Badge>
-  );
-}
-
-/**
- * Colored badge for invoice status.
- * paid → emerald, overdue → rose, sent → sky, draft → slate, cancelled → slate (muted).
- */
-/** Safe hex for inline category swatch — invalid DB values fall back to neutral slate. */
-function categorySwatchFill(color: string | null | undefined): string {
-  if (!color?.trim()) return "#94a3b8";
-  const hex = color.trim();
-  return /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/.test(hex) ? hex : "#94a3b8";
-}
-
-/**
- * Two-line Title column: visit type on row 1, patient name on row 2 (matches doctor name + email layout).
- * Prefers `appointment_type_name` from snapshot; falls back to parsing seeded `title` ("Type — Patient").
- */
-function appointmentTitleLines(
-  appt: AppointmentSnapshotRow,
-  patientDisplayName: string
-): { typeLine: string; patientLine: string } {
-  const typeFromFk = appt.appointment_type_name?.trim();
-  if (typeFromFk) {
-    return { typeLine: typeFromFk, patientLine: patientDisplayName };
-  }
-  const title = appt.title?.trim() ?? "";
-  const sep = " — ";
-  const idx = title.indexOf(sep);
-  if (idx >= 0) {
-    return {
-      typeLine: title.slice(0, idx).trim() || title || "—",
-      patientLine: title.slice(idx + sep.length).trim() || patientDisplayName,
-    };
-  }
-  return { typeLine: title || "—", patientLine: patientDisplayName };
-}
-
-/**
- * Category pill with color dot — links to role-aware category detail when `categoryId` is set.
- * Admin → `/control-panel/categories/:id`; doctor/patient → `/categories/:id` (read-only portal page).
- */
-function CategoryCell({
-  label,
-  color,
-  categoryId,
-  viewerRole,
-}: {
-  label: string | null | undefined;
-  color: string | null | undefined;
-  categoryId?: string | null;
-  viewerRole?: string | null;
-}) {
-  if (!label?.trim()) {
-    return <span className="text-xs text-gray-500">—</span>;
-  }
-  const dot = (
-    <svg
-      width="8"
-      height="8"
-      viewBox="0 0 8 8"
-      aria-hidden
-      className="inline-block shrink-0"
-    >
-      <circle cx="4" cy="4" r="4" fill={categorySwatchFill(color)} />
-    </svg>
-  );
-  const canLink = categoryId && isValidUUID(categoryId);
-  return (
-    <span className="inline-flex max-w-full min-w-0 items-center gap-1.5 text-xs text-gray-700">
-      {dot}
-      {canLink ? (
-        <EntityTitleLink
-          href={categoryDetailHref(viewerRole, categoryId)}
-          label={label.trim()}
-          className="truncate font-normal"
-        />
-      ) : (
-        <span className="truncate">{label}</span>
-      )}
-    </span>
-  );
-}
-
-function InvoiceStatusBadge({ status }: { status: string }) {
-  const cls =
-    status === "paid"
-      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-      : status === "overdue"
-        ? "border-rose-200 bg-rose-50 text-rose-700"
-        : status === "sent"
-          ? "border-sky-200 bg-sky-50 text-sky-700"
-          : status === "cancelled"
-            ? "border-slate-200 bg-slate-50 text-gray-400 line-through"
-            : "border-slate-200 bg-slate-50 text-gray-600";
-  return (
-    <Badge variant="outline" className={`capitalize text-xs ${cls}`}>
-      {status}
-    </Badge>
   );
 }
 
@@ -270,64 +139,6 @@ function PatientDetailBodySkeleton() {
         </div>
       </dl>
 
-      <div className="space-y-2">
-        <SectionHeading icon={Calendar}>Related Appointments</SectionHeading>
-        {/* Keep table chrome static; only data cells pulse, matching patient-management loading UX. */}
-        <div className="overflow-x-auto rounded-md border border-slate-200/80">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-gray-700">Title</TableHead>
-                <TableHead className="whitespace-nowrap text-gray-700">When</TableHead>
-                <TableHead className="text-gray-700">Category</TableHead>
-                <TableHead className="text-gray-700">Doctor</TableHead>
-                <TableHead className="text-gray-700">Location</TableHead>
-                <TableHead className="text-gray-700">Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {Array.from({ length: 3 }).map((_, i) => (
-                <TableRow key={i}>
-                  {Array.from({ length: 6 }).map((__, j) => (
-                    <TableCell key={j}>
-                      <Skeleton className="h-4 w-full rounded" aria-hidden />
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
-      <div className="space-y-2">
-        <SectionHeading icon={Receipt}>Invoices (Via Appointments)</SectionHeading>
-        {/* Same static-frame table skeleton behavior as appointments for consistent hydration-safe loading. */}
-        <div className="overflow-x-auto rounded-md border border-slate-200/80">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-gray-700">Amount</TableHead>
-                <TableHead className="text-gray-700">Description</TableHead>
-                <TableHead className="text-gray-700">Appointment</TableHead>
-                <TableHead className="text-gray-700">Status</TableHead>
-                <TableHead className="whitespace-nowrap text-gray-700">Due</TableHead>
-                <TableHead className="whitespace-nowrap text-gray-700">Paid</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {Array.from({ length: 3 }).map((_, i) => (
-                <TableRow key={i}>
-                  {Array.from({ length: 6 }).map((__, j) => (
-                    <TableCell key={j}>
-                      <Skeleton className="h-4 w-full rounded" aria-hidden />
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
     </div>
   );
 }
@@ -395,9 +206,26 @@ export function PatientDetailScreen({
   }, [patient?.primary_doctor_id, doctorsData?.users]);
 
   const doctorById = useMemo(() => {
-    const map = new Map<string, { specialty?: string | null }>();
+    const map = new Map<
+      string,
+      {
+        id: string;
+        email?: string | null;
+        display_name?: string | null;
+        image?: string | null;
+        specialty?: string | null;
+      }
+    >();
     for (const u of doctorsData?.users ?? []) {
-      if (u.id) map.set(u.id, { specialty: u.specialty ?? null });
+      if (u.id) {
+        map.set(u.id, {
+          id: u.id,
+          email: u.email,
+          display_name: u.display_name,
+          image: u.image,
+          specialty: u.specialty ?? null,
+        });
+      }
     }
     return map;
   }, [doctorsData?.users]);
@@ -436,11 +264,28 @@ export function PatientDetailScreen({
   const showLiveData = isMounted && ready;
   const p = patient as Patient | undefined;
   const nameLabel = p ? `${p.firstname} ${p.lastname}`.trim() : "";
-  const fallbackText = p ? nameLabel || p.email || "?" : "?";
-  const avatarSrc = p?.email
-    ? DEMO_ACCOUNTS.find((a) => a.email.toLowerCase() === p.email?.toLowerCase())?.avatarUrl ?? null
-    : null;
   const age = p ? patientAgeYears(p.birth_date) : null;
+
+  const patientDisplayName =
+    nameLabel.trim() ||
+    `${snap.data?.patient?.firstname ?? ""} ${snap.data?.patient?.lastname ?? ""}`.trim() ||
+    "—";
+
+  const appointmentColumns = useMemo(
+    () =>
+      buildRelatedAppointmentsColumns({
+        viewerRole,
+        patientDisplayName,
+        primaryPatient: snap.data?.patient ?? p ?? null,
+        doctorById,
+      }),
+    [viewerRole, patientDisplayName, snap.data?.patient, p, doctorById]
+  );
+
+  const invoiceColumns = useMemo(
+    () => buildPatientInvoicesColumns(viewerRole),
+    [viewerRole]
+  );
   const cp = p?.clinical_profile;
 
   if (isError) {
@@ -497,8 +342,8 @@ export function PatientDetailScreen({
             <h2 className="text-lg font-semibold text-gray-700">Patient Details</h2>
           </div>
           <div className="flex items-center gap-4">
-            {showLiveData ? (
-              <UserAvatar src={avatarSrc} fallbackText={fallbackText} sizeClassName="h-16 w-16" />
+            {showLiveData && p ? (
+              <PatientPortraitAvatar patient={p} sizeClassName="h-16 w-16" />
             ) : (
               <Skeleton className="h-16 w-16 shrink-0 rounded-full" aria-hidden />
             )}
@@ -609,29 +454,19 @@ export function PatientDetailScreen({
                 <div className="sm:col-span-2">
                   <FieldLabel icon={Stethoscope}>Primary Doctor</FieldLabel>
                   <dd className=" text-gray-700">
+                    {/* Schema block (not table): avatar + name → email → badge stack; matches list/table doctor cells. */}
                     {p!.primary_doctor_id && p!.primary_doctor_display?.trim() ? (
-                      <div className="min-w-0">
-                        {/*
-                         * Schema block (not table): name + email on one responsive row; specialty badge below.
-                         * Matches Calendar Owner link styling; table rows keep `DoctorLinkStack`.
-                         */}
-                        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                          <EntityTitleLink
-                            href={doctorDetailHref(viewerRole, p!.primary_doctor_id)}
-                            label={p!.primary_doctor_display.trim()}
-                            className="font-normal"
-                          />
-                          {p!.primary_doctor_email?.trim() ? (
-                            <span className="truncate text-xs text-gray-500">
-                              {p!.primary_doctor_email.trim()}
-                            </span>
-                          ) : null}
-                        </div>
-                        <DoctorSpecialtyBadge
-                          specialty={primaryDoctorUser?.specialty ?? null}
-                          className="mt-1 self-start"
-                        />
-                      </div>
+                      <DoctorIdentityRow
+                        doctor={{
+                          id: p!.primary_doctor_id,
+                          email: p!.primary_doctor_email ?? primaryDoctorUser?.email ?? null,
+                          display_name: p!.primary_doctor_display.trim(),
+                          image: primaryDoctorUser?.image ?? null,
+                          specialty: primaryDoctorUser?.specialty ?? null,
+                        }}
+                        linkKind={isAdminRole(viewerRole) ? "admin-cp" : "role"}
+                        showEmail
+                      />
                     ) : (
                       (p!.primary_doctor_display ?? "—")
                     )}
@@ -667,264 +502,28 @@ export function PatientDetailScreen({
 
               <div className="space-y-3">
                 <SectionHeading icon={Calendar}>Related Appointments</SectionHeading>
-                {snap.isLoading ? (
-                  /*
-                   * Inline skeleton mirrors the 7-column table shape so there is no
-                   * layout jump when real data loads. Only the body rows pulse — header stays stable.
-                   */
-                  <div className="overflow-x-auto rounded-md border border-slate-200/80">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          {["Title", "When", "Category", "Calendar Owner", "Treating Physician", "Location", "Status"].map((h) => (
-                            <TableHead key={h} className="text-gray-700">{h}</TableHead>
-                          ))}
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {Array.from({ length: 3 }).map((_, i) => (
-                          <TableRow key={i}>
-                            {Array.from({ length: 7 }).map((__, j) => (
-                              <TableCell key={j}>
-                                <Skeleton className="h-4 w-full rounded" aria-hidden />
-                              </TableCell>
-                            ))}
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto rounded-md border border-slate-200/80">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="text-gray-700">Title</TableHead>
-                          <TableHead className="whitespace-nowrap text-gray-700">When</TableHead>
-                          <TableHead className="text-gray-700">Category</TableHead>
-                          <TableHead className="text-gray-700">Calendar Owner</TableHead>
-                          <TableHead className="text-gray-700">Treating Physician</TableHead>
-                          <TableHead className="text-gray-700">Location</TableHead>
-                          <TableHead className="text-gray-700">Status</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {(snap.data?.appointments ?? []).slice(0, 12).map((a) => {
-                          const patientDisplayName =
-                            nameLabel.trim() ||
-                            `${snap.data?.patient?.firstname ?? ""} ${snap.data?.patient?.lastname ?? ""}`.trim() ||
-                            "—";
-                          const { typeLine, patientLine } = appointmentTitleLines(a, patientDisplayName);
-                          return (
-                            <TableRow key={a.id}>
-                              {/* Title — visit type + patient on two lines; link keeps full `title` for accessibility */}
-                              <TableCell>
-                                <div className="min-w-0">
-                                  <EntityTitleLink
-                                    href={appointmentDetailHref(viewerRole, a.id)}
-                                    label={typeLine}
-                                    className="block truncate text-sm "
-                                  />
-                                  <p className="truncate text-xs text-gray-500">{patientLine}</p>
-                                </div>
-                              </TableCell>
-                              {/* When — localized date on row 1, time range on row 2 */}
-                              <TableCell>
-                                {a.start ? (
-                                  <div className="min-w-0 whitespace-nowrap">
-                                    <p className="text-xs text-gray-700">
-                                      {format(new Date(a.start), "PP")}
-                                    </p>
-                                    <p className="text-xs text-gray-500">
-                                      {format(new Date(a.start), "p")}
-                                      {a.end ? ` – ${format(new Date(a.end), "p")}` : ""}
-                                    </p>
-                                  </div>
-                                ) : (
-                                  <span className="text-xs text-gray-500">—</span>
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                <CategoryCell
-                                  label={a.category_label}
-                                  color={a.category_color}
-                                  categoryId={a.category}
-                                  viewerRole={viewerRole}
-                                />
-                              </TableCell>
-                              {/* B3 deferred: DB column remains `user_id`; API exposes calendar owner here (B2 snapshot fields). */}
-                              <TableCell>
-                                {a.calendar_owner_id && a.calendar_owner_display ? (
-                                  <div className="min-w-0">
-                                    <EntityTitleLink
-                                      href={doctorDetailHref(viewerRole, a.calendar_owner_id)}
-                                      label={a.calendar_owner_display}
-                                    />
-                                    {a.calendar_owner_email && (
-                                      <p className="truncate text-xs text-gray-500">{a.calendar_owner_email}</p>
-                                    )}
-                                  </div>
-                                ) : (
-                                  <span className="text-xs text-gray-500">—</span>
-                                )}
-                              </TableCell>
-                              {/* B2: `doctor_*` = `treating_physician_id ?? user_id` (see `appointment-display-doctor.ts`). */}
-                              <TableCell>
-                                {a.doctor_id && a.doctor_display ? (
-                                  <div className="min-w-0">
-                                    {/*
-                                     * Align with Calendar Owner column: normal link weight, no stack gap.
-                                     * `className` / `nameClassName` override DoctorLinkStack defaults via twMerge.
-                                     */}
-                                    <DoctorLinkStack
-                                      doctorId={a.doctor_id}
-                                      name={a.doctor_display}
-                                      email={a.doctor_email}
-                                      specialty={
-                                        a.doctor_specialty ??
-                                        doctorById.get(a.doctor_id)?.specialty ??
-                                        null
-                                      }
-                                      linkKind={isAdminRole(viewerRole) ? "admin-cp" : "role"}
-                                      className="gap-0"
-                                      nameClassName="font-normal"
-                                    />
-                                    {snap.data?.patient?.primary_doctor_id &&
-                                      a.doctor_id &&
-                                      snap.data.patient.primary_doctor_id !== a.doctor_id &&
-                                      snap.data.patient.primary_doctor_display?.trim() && (
-                                        <p className="mt-1.5 text-[10px] leading-snug text-gray-600">
-                                          Primary care:{" "}
-                                          <EntityTitleLink
-                                            href={doctorDetailHref(
-                                              viewerRole,
-                                              snap.data.patient.primary_doctor_id
-                                            )}
-                                            label={snap.data.patient.primary_doctor_display.trim()}
-                                            className="font-normal"
-                                          />
-                                        </p>
-                                      )}
-                                  </div>
-                                ) : (
-                                  <span className="text-xs text-gray-500">—</span>
-                                )}
-                              </TableCell>
-                              <TableCell className="text-xs text-gray-700">{a.location ?? "—"}</TableCell>
-                              <TableCell>
-                                <AppointmentStatusBadge status={a.status} />
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                        {(snap.data?.appointments ?? []).length === 0 && (
-                          <TableRow>
-                            <TableCell colSpan={7} className="text-center text-gray-500">
-                              No Appointments
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
+                <ClinicalDataTable
+                  columns={appointmentColumns}
+                  data={(snap.data?.appointments ?? []).slice(0, 12)}
+                  isLoading={snap.isLoading}
+                  pagination={false}
+                  emptyMessage="No Appointments"
+                  tableClassName="min-w-[900px] w-full"
+                  className="overflow-x-auto rounded-md border border-slate-200/80"
+                />
               </div>
 
               <div className="space-y-3">
                 <SectionHeading icon={Receipt}>Invoices (Via Appointments)</SectionHeading>
-                {snap.isLoading ? (
-                  /*
-                   * Inline skeleton mirrors the 6-column invoice table shape so
-                   * there is no layout jump when real data loads.
-                   */
-                  <div className="overflow-x-auto rounded-md border border-slate-200/80">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          {["Amount", "Description", "Appointment", "Status", "Due", "Paid"].map((h) => (
-                            <TableHead key={h} className="text-gray-700">{h}</TableHead>
-                          ))}
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {Array.from({ length: 3 }).map((_, i) => (
-                          <TableRow key={i}>
-                            {Array.from({ length: 6 }).map((__, j) => (
-                              <TableCell key={j}>
-                                <Skeleton className="h-4 w-full rounded" aria-hidden />
-                              </TableCell>
-                            ))}
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto rounded-md border border-slate-200/80">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="text-gray-700">Amount</TableHead>
-                          <TableHead className="text-gray-700">Description</TableHead>
-                          <TableHead className="text-gray-700">Appointment</TableHead>
-                          <TableHead className="text-gray-700">Status</TableHead>
-                          <TableHead className="whitespace-nowrap text-gray-700">Due</TableHead>
-                          <TableHead className="whitespace-nowrap text-gray-700">Paid</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {(snap.data?.invoices ?? []).slice(0, 12).map((inv) => (
-                          <TableRow key={inv.id}>
-                            {/* Amount — deep-links to invoice detail */}
-                            <TableCell className="font-medium tabular-nums">
-                              {isAdminRole(viewerRole) ? (
-                                <EntityTitleLink
-                                  href={invoiceDetailHref(viewerRole, inv.id)}
-                                  label={`${(inv.amount / 100).toFixed(2)} ${inv.currency.toUpperCase()}`}
-                                />
-                              ) : (
-                                <span>
-                                  {(inv.amount / 100).toFixed(2)} {inv.currency.toUpperCase()}
-                                </span>
-                              )}
-                            </TableCell>
-                            <TableCell className="max-w-[160px] truncate text-xs text-gray-700">
-                              {inv.description ?? "—"}
-                            </TableCell>
-                            {/* Appointment — deep-links to appointment detail when linked */}
-                            <TableCell>
-                              {inv.appointment_id ? (
-                                <EntityTitleLink
-                                  href={appointmentDetailHref(viewerRole, inv.appointment_id)}
-                                  label="View"
-                                  className="text-xs"
-                                />
-                              ) : (
-                                <span className="text-xs text-gray-500">—</span>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              <InvoiceStatusBadge status={inv.status} />
-                            </TableCell>
-                            <TableCell className="whitespace-nowrap text-xs text-gray-700">
-                              {inv.due_date ? format(new Date(inv.due_date), "PP") : "—"}
-                            </TableCell>
-                            <TableCell className="whitespace-nowrap text-xs text-gray-700">
-                              {inv.paid_at ? format(new Date(inv.paid_at), "PP") : "—"}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                        {(snap.data?.invoices ?? []).length === 0 && (
-                          <TableRow>
-                            <TableCell colSpan={6} className="text-center text-gray-500">
-                              No Invoices
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
+                <ClinicalDataTable
+                  columns={invoiceColumns}
+                  data={(snap.data?.invoices ?? []).slice(0, 12)}
+                  isLoading={snap.isLoading}
+                  pagination={false}
+                  emptyMessage="No Invoices"
+                  tableClassName="min-w-[720px] w-full"
+                  className="overflow-x-auto rounded-md border border-slate-200/80"
+                />
               </div>
             </>
           ) : (

@@ -16,6 +16,12 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { UserRoleBadge } from "@/components/shared/UserRoleBadge";
 import { UserAvatar } from "@/components/shared/UserAvatar";
+import {
+  clinicalCellMutedTextClass,
+  clinicalStackGapClass,
+  clinicalTableCellMinRowClass,
+} from "@/lib/table-display-styles";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -27,7 +33,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
 import { skyGlassTableFrameClass } from "@/lib/calendar-header-action-styles";
 import type { User } from "@/types/types";
 import {
@@ -177,25 +182,9 @@ export default function UserManagement() {
 
   const columns: ColumnDef<User>[] = [
     {
-      accessorKey: "image",
-      header: "",
-      enableSorting: false,
-      meta: { shellClassName: "w-12 min-w-12 shrink-0" },
-      cell: ({ row }) => {
-        const u = row.original;
-        return (
-          <UserAvatar
-            src={u.image}
-            fallbackText={u.display_name || u.email || "?"}
-            sizeClassName="h-9 w-9"
-          />
-        );
-      },
-    },
-    {
       id: "display_name",
       accessorFn: (row) => `${row.display_name ?? ""} ${row.email}`.trim(),
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Name" />,
+      header: ({ column }) => <DataTableColumnHeader column={column} title="User" />,
       meta: { shellClassName: "min-w-[12rem]" },
       cell: ({ row }) => {
         const u = row.original;
@@ -205,13 +194,24 @@ export default function UserManagement() {
           ? `/control-panel/doctors/${u.id}`
           : `/control-panel/users/${u.id}`;
         return (
-          <div className="flex min-w-0 flex-col gap-0.5">
-            {u.id ? (
-              <EntityTitleLink href={detailHref} label={label} className="min-w-0 self-start truncate font-medium" />
-            ) : (
-              <span className="font-medium">{label}</span>
-            )}
-            <span className="truncate text-xs text-muted-foreground">{u.email}</span>
+          <div className={cn("flex min-w-0 items-center gap-3", clinicalTableCellMinRowClass)}>
+            <UserAvatar
+              src={u.image}
+              fallbackText={u.display_name || u.email || "?"}
+              sizeClassName="h-9 w-9 shrink-0"
+            />
+            <div className={cn("flex min-w-0 flex-col", clinicalStackGapClass)}>
+              {u.id ? (
+                <EntityTitleLink
+                  href={detailHref}
+                  label={label}
+                  className="min-w-0 self-start truncate font-normal"
+                />
+              ) : (
+                <span className="text-sm text-gray-700">{label}</span>
+              )}
+              <span className={cn("truncate", clinicalCellMutedTextClass)}>{u.email}</span>
+            </div>
           </div>
         );
       },

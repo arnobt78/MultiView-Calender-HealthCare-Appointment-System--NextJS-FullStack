@@ -6,9 +6,12 @@ import { usePatients } from "@/hooks/usePatients";
 import { DataTable } from "@/components/shared/DataTable";
 import { DataTableColumnHeader } from "@/components/shared/DataTableColumnHeader";
 import { PageHeader } from "@/components/shared/PageHeader";
-import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { DoctorIdentityRow } from "@/components/shared/doctor-display/DoctorIdentityRow";
-import { UserAvatar } from "@/components/shared/UserAvatar";
+import { PatientIdentityCell } from "@/components/shared/person-display/PatientIdentityCell";
+import {
+  clinicalCellMutedTextClass,
+  clinicalCellPrimaryTextClass,
+} from "@/lib/table-display-styles";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -62,7 +65,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DEMO_ACCOUNTS } from "@/lib/demo-credentials";
 import {
   PatientListFiltersProvider,
   usePatientListFilters,
@@ -94,10 +96,6 @@ function careTierTriggerLabel(tier: PatientCareTierFilter): string {
   const s = PATIENT_CARE_LEVEL_STAGES.find((x) => x.value === n);
   return s ? `${n} — ${s.shortLabel}` : `Tier ${n}`;
 }
-
-const DEMO_AVATAR_BY_EMAIL = new Map(
-  DEMO_ACCOUNTS.map((account) => [account.email.toLowerCase(), account.avatarUrl])
-);
 
 /** Build `clinical_profile` JSON for POST /api/patients from add-dialog fields (allergies CSV, notes, referral). */
 function buildCreateClinicalProfile(extra: {
@@ -309,31 +307,13 @@ function PatientManagementInner() {
       cell: ({ row }) => {
         const p = row.original;
         const name = `${p.firstname} ${p.lastname}`.trim() || "—";
-        const email = p.email?.trim();
-        const fallbackText = `${p.firstname || ""} ${p.lastname || ""}`.trim() || p.email || "?";
-        const avatarSrc = p.email ? DEMO_AVATAR_BY_EMAIL.get(p.email.toLowerCase()) ?? null : null;
         return (
-          <div className="flex min-h-[2.75rem] min-w-0 flex-row items-center gap-3">
-            <UserAvatar
-              src={avatarSrc}
-              fallbackText={fallbackText}
-              sizeClassName="h-9 w-9"
-            />
-            <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5">
-              <EntityTitleLink
-                href={`/control-panel/patients/${p.id}`}
-                label={name}
-                className="min-w-0 self-start truncate"
-              />
-              {email ? (
-                <span className="truncate text-xs text-muted-foreground" title={email}>
-                  {email}
-                </span>
-              ) : (
-                <span className="text-xs text-muted-foreground">—</span>
-              )}
-            </div>
-          </div>
+          <PatientIdentityCell
+            name={name}
+            email={p.email}
+            href={`/control-panel/patients/${p.id}`}
+            patient={p}
+          />
         );
       },
     },
@@ -346,7 +326,7 @@ function PatientManagementInner() {
       cell: ({ row }) => (
         <div className="flex min-h-[2.75rem] w-full min-w-0 items-center">
           <span
-            className="line-clamp-2 min-w-0 break-words text-sm"
+            className={cn("line-clamp-2 min-w-0 break-words", clinicalCellPrimaryTextClass)}
             title={getPatientCareLevelLabel(row.original.care_level)}
           >
             {getPatientCareLevelLabel(row.original.care_level)}
@@ -367,7 +347,7 @@ function PatientManagementInner() {
         if (!d && !em) {
           return (
             <div className="flex min-h-[2.75rem] items-center">
-              <span className="text-sm text-muted-foreground">—</span>
+              <span className={clinicalCellMutedTextClass}>—</span>
             </div>
           );
         }
@@ -387,18 +367,19 @@ function PatientManagementInner() {
                     }}
                     linkKind="admin-cp"
                     size="sm"
+                    showEmail
                   />
                 );
               }
               return (
                 <>
-                  {d ? <span className="truncate text-sm text-muted-foreground">{d}</span> : null}
+                  {d ? <span className={cn("truncate", clinicalCellPrimaryTextClass)}>{d}</span> : null}
                   {em ? (
-                    <span className="truncate text-xs text-muted-foreground" title={em}>
+                    <span className={cn("truncate", clinicalCellMutedTextClass)} title={em}>
                       {em}
                     </span>
                   ) : (
-                    <span className="text-xs text-muted-foreground">—</span>
+                    <span className={clinicalCellMutedTextClass}>—</span>
                   )}
                 </>
               );

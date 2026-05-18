@@ -1,5 +1,9 @@
 "use client";
 
+/**
+ * Remote URL images: try `next/image` first; on failure (e.g. Vercel optimizer 402) use native `<img>`.
+ * See `docs/SAFE_IMAGE_REUSABLE_COMPONENT.md`. Use raw `next/image` only for local static imports.
+ */
 import Image, { type ImageProps } from "next/image";
 import { useCallback, useState, type SyntheticEvent } from "react";
 import { cn } from "@/lib/utils";

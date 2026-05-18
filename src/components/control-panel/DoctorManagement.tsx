@@ -16,9 +16,8 @@ import { PrefetchingLink } from "@/components/shared/PrefetchingLink";
 import { DataTable } from "@/components/shared/DataTable";
 import { DataTableColumnHeader } from "@/components/shared/DataTableColumnHeader";
 import { PageHeader } from "@/components/shared/PageHeader";
-import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
+import { DoctorIdentityRow } from "@/components/shared/doctor-display/DoctorIdentityRow";
 import { UserRoleBadge } from "@/components/shared/UserRoleBadge";
-import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DoctorSpecialtyBadge } from "@/components/shared/doctor-display/DoctorSpecialtyBadge";
@@ -206,42 +205,27 @@ export default function DoctorManagement() {
 
   const columns: ColumnDef<User>[] = [
     {
-      accessorKey: "image",
-      header: "",
-      enableSorting: false,
-      meta: { shellClassName: "w-12 min-w-12 shrink-0" },
-      cell: ({ row }) => {
-        const u = row.original;
-        return (
-          <UserAvatar
-            src={u.image}
-            fallbackText={u.display_name || u.email || "?"}
-            sizeClassName="h-9 w-9"
-          />
-        );
-      },
-    },
-    {
       id: "display_name",
       accessorFn: (row) => `${row.display_name ?? ""} ${row.email}`.trim(),
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Name" />,
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Doctor" />,
       meta: { shellClassName: "min-w-[12rem]" },
       cell: ({ row }) => {
         const u = row.original;
-        const label = u.display_name ?? "—";
+        const d = doctorMap.get(u.id);
         return (
-          <div className="flex min-w-0 flex-col gap-0.5">
-            {u.id ? (
-              <EntityTitleLink
-                href={`/control-panel/doctors/${u.id}`}
-                label={label}
-                className="min-w-0 self-start truncate font-medium"
-              />
-            ) : (
-              <span className="font-medium text-foreground">{label}</span>
-            )}
-            <span className="truncate text-xs text-muted-foreground">{u.email}</span>
-          </div>
+          <DoctorIdentityRow
+            doctor={{
+              id: u.id,
+              email: u.email,
+              display_name: u.display_name,
+              image: u.image,
+              specialty: d?.specialty ?? null,
+            }}
+            linkKind="admin-cp"
+            size="sm"
+            showEmail
+            showSpecialty={false}
+          />
         );
       },
     },

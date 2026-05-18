@@ -1,5 +1,9 @@
 "use client";
 
+/**
+ * Circular avatar — initials fallback + `SafeImage` for remote/blob URLs.
+ * See `docs/SAFE_IMAGE_REUSABLE_COMPONENT.md`.
+ */
 import { cn } from "@/lib/utils";
 import { SafeImage } from "@/components/ui/safe-image";
 

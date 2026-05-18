@@ -26,7 +26,7 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Prism
 - **Components:** `src/components/shared/doctor-display/*` — badges, avatars, `DoctorIdentityRow`, `DoctorLinkStack`, `DoctorCardHeroImage`, availability groups; `ServicesDoctorFilters` for client-side grid filters.
 - **Layout:** specialty badge always on its own line below name/email (`showIcon` default true). `/services` hero uses full-bleed cover with blurred backdrop fill (uniform tiles, face-biased crop); badge is in the card body under email, not on the image.
 - **Card UX:** flush hero image, `RoleEntityLink` doctor name, copy-email, grouped availability rows, book CTA via `BookAppointmentDialog`. Date filter matches calendar chrome (left calendar icon, `pl-8`, `min-w-[155px]`).
-- **Global reuse:** patient primary-doctor column/detail (`DoctorLinkStack`), Related Appointments treating physician + `doctor_specialty` from snapshot API, portal doctor picker, appointment dialog treating-physician select, admin portal doctor cards, Doctor Management specialty column (`DoctorSpecialtyBadge`).
+- **Global reuse:** CP patient list/detail primary doctor + snapshot tables (`DoctorIdentityRow` / `DoctorIdentityCell`); portals/dialogs may still use `DoctorLinkStack` (out of clinical-table pass). Related Appointments `doctor_specialty` from snapshot API; Doctor Management doctor column + specialty column.
 - **Invalidation:** doctor PATCH / availability mutations → `invalidateUsersAndAuth` / `invalidateDoctorSchedule` → `doctors.all` refetch (no new keys).
 
 ### Control panel entity split (users vs patients)
@@ -47,8 +47,23 @@ Run `npm run db:seed-test-user` after migrations: upserts three `users`, doctor 
 - **React Query**: `usePatient(id, rosterDoctorId?)` / `usePatientSnapshot(id, rosterDoctorId?)` forward roster query to API. Prefix invalidation `queryKeys.patients.all` refreshes list, detail, and snapshot together.
 - **Invalidation wiring**: `invalidateAfterAppointmentMutation` calls `invalidateInvoicesAndOverview`, which now also invalidates `queryKeys.patients.all` (appointments + invoices affect patient aggregates). `invalidateSharingAndAppointments` invalidates `patients.all` so assignee changes refresh snapshots without navigation.
 - **UI**: `PatientListFiltersProvider` + status dropdown (all/active/inactive); `DataTable` optional `globalFilterFn` for multi-column search (name + email). Sortable headers via `DataTableColumnHeader`. Row menu: View (`?mode` default), Edit (`?mode=edit`). **`PatientDetailScreen`** (client): SSR `accessLevel` prop; `canEdit = accessLevel === "mutate"`; read-only amber banner when `view`; footer Update/Delete hidden when view-only; `?mode=edit` stripped when not mutate; **`BackNavigationLink`** on header/footer back; **`PatientDetailForm`** with read-only email + clinical fields in `clinical_profile`.
-- **Shared table patterns**: Doctor/User/Category management tables reuse **`DataTableColumnHeader`** + **`globalFilterFn`** where applicable (name/email or label/description).
+- **Shared table patterns**: **`table-display-styles.ts`** (`clinicalTableHeadClass`, `clinicalStackGapClass`, cell min-height/muted text). Person columns: **`PatientIdentityCell`** + **`PatientPortraitAvatar`** (robohash fallback), **`DoctorIdentityRow`** / **`DoctorIdentityCell`**. **`PatientDetailScreen`** Related Appointments + Invoices use **`ClinicalDataTable`** + `patient-detail-snapshot-columns.tsx` (headers match patient list via `DataTableColumnHeader`). Doctor/User management: combined avatar+identity columns; Category management already uses `DataTableColumnHeader`.
 - **Loading**: `src/app/control-panel/loading.tsx` returns `null` so route transitions don't flash a full skeleton; tables keep localized skeleton rows via `DataTable` `isLoading`.
+
+### Clinical table UI (audit glance — display-only)
+
+| Phase | Status | Files |
+|-------|--------|-------|
+| Tokens | ✓ | `src/lib/table-display-styles.ts` (`clinicalTableHeadClass` → `DataTableColumnHeader`) |
+| Identity cells | ✓ | `person-display/*`, `DoctorIdentityRow.tsx` |
+| Patient list | ✓ | `PatientManagement.tsx` |
+| Patient detail snapshots | ✓ | `PatientDetailScreen.tsx`, `patient-detail-snapshot-columns.tsx`, `ClinicalDataTable.tsx` |
+| CP rollout | ✓ | `DoctorManagement.tsx`, `UserManagement.tsx`; Category unchanged (`DataTableColumnHeader`) |
+| Out of scope | — | Calendar/portals `DoctorLinkStack`; invoice detail raw `<Table>` |
+
+**Data layer:** no API/query-key/cache-version changes. Portrait/snapshot refresh via existing `invalidateEntityAffectingAppointments`, `invalidateAfterAppointmentMutation`, `queryKeys.patients.snapshot` — unchanged.
+
+**Verify:** `npm test` (134) · `npx tsc --noEmit` · `npm run lint` · `npm run build`.
 
 ### Avatar cropping (detail pages)
 
@@ -56,11 +71,33 @@ User detail SSR page uses `Avatar` + `AvatarImage` with `className="object-cover
 
 ### Safe image fallback
 
-- `src/components/ui/safe-image.tsx`: `next/image` first, automatic native `<img>` fallback on `onError` for remote URLs.
-- `src/components/shared/UserAvatar.tsx`: reusable avatar wrapper with skeleton state, safe-image fallback, and initials fallback.
-- Applied in navbar and control-panel user/patient tables + user detail page for consistent image rendering.
-- `DataTable` loading state keeps table/header static and shows a lightweight inline loading row (no skeleton flash), preserving layout stability.
-- Management tables use shared fixed column sizing (`meta.headClassName` / `meta.cellClassName`) for stable layout and reduced reflow on filter/loading states.
+- `src/components/ui/safe-image.tsx`: `next/image` first, automatic native `<img>` fallback on `onError` for remote URLs (Vercel optimizer 402 / quota). See `docs/SAFE_IMAGE_REUSABLE_COMPONENT.md`.
+- `src/components/shared/UserAvatar.tsx`: skeleton + initials + `SafeImage` for remote `src`.
+- **Consumers:** `DoctorAvatar`, `DoctorCardHeroImage`, `DoctorMiniAvatar`, `PatientPortraitAvatar`, CP doctor/user detail, appointment dialog, `FilePreview` (blob previews), login demo avatars, landing about cards. Local static assets (`/logo.svg`, `/images/*`) stay on raw `next/image`.
+- `next.config.ts` `images.remotePatterns`: `robohash.org`, `*.public.blob.vercel-storage.com` (sync with `src/lib/vercelBlob.ts`).
+
+### Production guardrails (Vercel)
+
+| Layer | Location | Role |
+|-------|----------|------|
+| Edge proxy | `src/proxy.ts` | JWT, route guards, CSP + framing (public vs protected), page `Cache-Control`; matcher skips `_next`, `api`, static files |
+| Next headers | `next.config.ts` | `securityHeaders` from `src/lib/security-headers.ts`; prod `/_next/static` immutable |
+| Vercel edge | `vercel.json` | Same security headers + `/_next/static` immutable; crons |
+| Crawlers | `src/app/robots.ts` | Disallow `/_next/`, `/api/`, CP, dashboards, portals, UUID entity routes; block AI scrapers |
+| Layout | `src/app/layout.tsx` | `data-scroll-behavior="smooth"` |
+| Rate limits | `src/lib/rate-limit.ts` | Auth + API caps (in-memory; Redis optional per `src/lib/redis.ts`) |
+| Dashboard (manual) | Vercel → Firewall | Bot Protection ON, AI Bots ON — not in repo |
+
+**Not changed by guardrails pass:** TanStack invalidation, query keys, prefetch, Redis dashboard cache — existing mutation helpers still bust all affected views without navigation.
+
+**Verify after deploy:** `npm test && npx tsc --noEmit && npm run lint && npm run build`. Post-deploy: Observability → Edge Requests / Bot Name (T+15m, T+1h). Full checklist: `docs/VERCEL_PRODUCTION_GUARDRAILS.md`.
+
+**Implementation audit (SafeImage + guardrails):** All plan phases done. Remaining raw `next/image`: local static only (navbar logo, login/register hero, `safe-image.tsx` internal). Out of scope: `PatientPortalPage` `DoctorLinkStack`. Invalidation unchanged.
+
+### Table / list UX (related)
+
+- `DataTable` loading: headers static, skeleton body rows only.
+- Management tables: `meta.headClassName` / `meta.cellClassName` for stable layout.
 
 ---
 

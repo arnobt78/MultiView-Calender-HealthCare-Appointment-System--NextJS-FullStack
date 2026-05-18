@@ -6,7 +6,7 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
+import { SafeImage } from "@/components/ui/safe-image";
 import {
   Dialog,
   DialogContent,
@@ -82,13 +82,15 @@ export default function FilePreview({ url, filename, fileType }: FilePreviewProp
                     className={`${zoomClass} max-w-full cursor-zoom-in`}
                     onClick={() => setZoom((z) => (z >= 3 ? 1 : z + 0.5))}
                   >
-                    <Image
+                    {/* Blob/CDN URLs — SafeImage bypasses failed `/_next/image` (Vercel quota / 402). */}
+                    <SafeImage
                       src={url}
                       alt={filename}
                       width={800}
                       height={600}
                       className="max-w-full object-contain"
                       unoptimized
+                      referrerPolicy="no-referrer"
                     />
                   </div>
                 </div>

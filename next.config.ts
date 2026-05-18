@@ -6,8 +6,10 @@ const isProd = process.env.NODE_ENV === "production";
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
-      // User fallback avatars in control-panel tables.
+      // Robohash fallbacks — `src/lib/doctor-avatar.ts`, `src/lib/patient-portrait.ts`.
       { protocol: "https", hostname: "robohash.org", pathname: "/**" },
+      // User uploads via Vercel Blob — keep in sync with `src/lib/vercelBlob.ts` public URLs.
+      { protocol: "https", hostname: "*.public.blob.vercel-storage.com", pathname: "/**" },
     ],
   },
   async headers() {

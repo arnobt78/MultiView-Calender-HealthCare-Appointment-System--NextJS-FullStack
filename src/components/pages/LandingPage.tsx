@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { SafeImage } from "@/components/ui/safe-image";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
@@ -1002,7 +1003,7 @@ export default function LandingPage() {
                   transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
                   className="absolute inset-0"
                 >
-                  <Image
+                  <SafeImage
                     src={ABOUT_CARDS[aboutCardIdx].img}
                     alt={ABOUT_CARDS[aboutCardIdx].title}
                     fill
