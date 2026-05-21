@@ -99,7 +99,7 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
           </p>
         </CardHeader>
         <CardContent>
-          <dl className="grid gap-3 text-sm sm:grid-cols-2">
+          <dl className="grid gap-2 text-sm sm:grid-cols-2">
             <div>
               <dt className="font-medium text-muted-foreground">id</dt>
               <dd className="font-mono break-all text-xs ">{org.id}</dd>

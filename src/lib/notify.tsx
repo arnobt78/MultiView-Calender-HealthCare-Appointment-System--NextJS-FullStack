@@ -81,7 +81,7 @@ function RichToast({
         styles.shell
       )}
     >
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-2">
         <span
           className={cn(
             " inline-flex size-8 shrink-0 items-center justify-center rounded-xl border",

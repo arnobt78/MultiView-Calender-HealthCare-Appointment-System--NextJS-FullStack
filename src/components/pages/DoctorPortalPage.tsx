@@ -130,7 +130,7 @@ function AppointmentRow({ appt }: { appt: Appointment }) {
   const overdue = isPast(end) && appt.status !== "done";
 
   return (
-    <div className="flex items-start gap-3 py-3 border-b border-border/40 last:border-0">
+    <div className="flex items-start gap-2 py-3 border-b border-border/40 last:border-0">
       {/* Time column */}
       <div className="flex-shrink-0 w-16 text-right">
         <p className="text-xs font-semibold text-foreground">{format(start, "HH:mm")}</p>
@@ -196,7 +196,7 @@ interface TypeToggleProps {
 function TypeToggle({ type, isEnabled, doctorId: _doctorId, isPending, onToggle }: TypeToggleProps) {
   return (
     <div className={cn(
-      "flex items-center gap-3 p-3 rounded-2xl border transition-colors",
+      "flex items-center gap-2 p-3 rounded-2xl border transition-colors",
       isEnabled
         ? "border-primary/20 bg-primary/5"
         : "border-border/40 bg-muted/30 opacity-70"
@@ -417,7 +417,7 @@ export default function DoctorPortalPage({ initialData }: DoctorPortalPageProps)
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Today's Schedule */}
         <Card className={cn("overflow-hidden", GLASS.slate)}>
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base font-semibold">
               <Calendar className="h-4 w-4 text-blue-500" />
               Today&apos;s Schedule
@@ -432,7 +432,7 @@ export default function DoctorPortalPage({ initialData }: DoctorPortalPageProps)
             {isLoading ? (
               <div className="space-y-3">
                 {[...Array(3)].map((_, i) => (
-                  <div key={i} className="flex gap-3 py-3">
+                  <div key={i} className="flex gap-2 py-3">
                     <Skeleton className="h-10 w-16 rounded" />
                     <div className="flex-1 space-y-2">
                       <Skeleton className="h-4 w-full" />
@@ -458,7 +458,7 @@ export default function DoctorPortalPage({ initialData }: DoctorPortalPageProps)
 
         {/* Appointment Types Manager */}
         <Card className={cn("overflow-hidden", GLASS.purple)}>
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base font-semibold">
               <Layers className="h-4 w-4 text-purple-500" />
               Visit Types
@@ -499,7 +499,7 @@ export default function DoctorPortalPage({ initialData }: DoctorPortalPageProps)
       {/* My Patients                                                          */}
       {/* ------------------------------------------------------------------ */}
       <Card className={cn("overflow-hidden", GLASS.green)}>
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base font-semibold">
             <Users className="h-4 w-4 text-green-500" />
             My Patients
@@ -550,7 +550,7 @@ export default function DoctorPortalPage({ initialData }: DoctorPortalPageProps)
       {/* Upcoming Appointments                                                */}
       {/* ------------------------------------------------------------------ */}
       <Card className={cn("overflow-hidden", GLASS.indigo)}>
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base font-semibold">
             <CalendarClock className="h-4 w-4 text-indigo-500" />
             Upcoming Appointments
@@ -565,7 +565,7 @@ export default function DoctorPortalPage({ initialData }: DoctorPortalPageProps)
           {isLoading ? (
             <div className="space-y-3">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="flex gap-3 py-3">
+                <div key={i} className="flex gap-2 py-3">
                   <Skeleton className="h-10 w-20 rounded" />
                   <div className="flex-1 space-y-2">
                     <Skeleton className="h-4 w-full" />
@@ -585,7 +585,7 @@ export default function DoctorPortalPage({ initialData }: DoctorPortalPageProps)
                 const start = parseISO(appt.start);
                 const apptIsToday = isToday(start);
                 return (
-                  <div key={appt.id} className="flex items-start gap-3 py-3 border-b border-border/40 last:border-0">
+                  <div key={appt.id} className="flex items-start gap-2 py-3 border-b border-border/40 last:border-0">
                     <div className="flex-shrink-0 w-20 text-right">
                       <p className="text-[10px] font-medium text-muted-foreground">
                         {apptIsToday ? "Today" : format(start, "EEE, MMM d")}

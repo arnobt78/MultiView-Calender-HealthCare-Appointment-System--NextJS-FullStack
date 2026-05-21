@@ -84,7 +84,7 @@ export function AppointmentDetailScreen({
         </div>
       )}
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-2 sm:grid-cols-3">
         <Card className="flex flex-col gap-1 p-4">
           <div className="flex items-center gap-2 text-muted-foreground text-sm">
             <Calendar className="h-4 w-4" /> Date
@@ -116,7 +116,7 @@ export function AppointmentDetailScreen({
           </p>
         </CardHeader>
         <CardContent className="space-y-6">
-          <dl className="grid gap-3 text-sm sm:grid-cols-2">
+          <dl className="grid gap-2 text-sm sm:grid-cols-2">
             <div>
               <dt className="font-medium text-muted-foreground">id</dt>
               <dd className="font-mono break-all text-xs ">{appointment.id}</dd>

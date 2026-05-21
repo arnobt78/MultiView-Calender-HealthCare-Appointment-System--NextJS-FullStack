@@ -127,7 +127,7 @@ export default function ImportICSDialog({ trigger }: Props) {
         <DialogHeader className="space-y-0 p-0 text-left">
           <div className="bg-white pt-6">
             <div className="px-6">
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-2">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-violet-200/70 bg-violet-50 text-violet-700">
                   <CalendarDays className="h-5 w-5" />
                 </span>

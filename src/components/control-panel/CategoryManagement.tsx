@@ -89,10 +89,10 @@ function CategoryStatCards({ categories, isLoading }: { categories: Category[]; 
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
       {stats.map(({ label, value, icon, cls, valueCls, iconCls }) => (
         <Card key={label} className={cn("rounded-[16px] border", cls)}>
-          <CardContent className="p-3 flex items-center gap-3">
+          <CardContent className="p-3 flex items-center gap-2">
             <span className={cn("flex h-9 w-9 items-center justify-center rounded-xl border shrink-0", iconCls)}>
               {icon}
             </span>
@@ -362,7 +362,7 @@ export default function CategoryManagement() {
                 rows={2}
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1.5">
                 <Label>Color</Label>
                 <div className="flex items-center gap-2">
@@ -390,7 +390,7 @@ export default function CategoryManagement() {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1.5">
                 <Label>Default Duration (min)</Label>
                 <Input

@@ -111,7 +111,7 @@ export default async function DoctorDetailPage({ params }: PageProps) {
             </CardHeader>
             <CardContent className="p-4 space-y-4">
               {/* Photo + name */}
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-2">
                 {/* `UserAvatar` wraps `SafeImage` — blob/robohash URLs get optimizer fallback without extra SSR client bundle. */}
                 <UserAvatar
                   src={raw.image}

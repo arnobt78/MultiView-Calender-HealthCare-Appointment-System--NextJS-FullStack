@@ -402,7 +402,7 @@ export default function AppointmentDialog({
       >
         <div className="shrink-0 bg-white pt-6 text-gray-700">
           <div className="px-6">
-            <div className="flex items-start gap-3">
+            <div className="flex items-start gap-2">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-sky-200/70 bg-sky-50 text-sky-700">
                 <Calendar className="h-5 w-5" aria-hidden />
               </span>

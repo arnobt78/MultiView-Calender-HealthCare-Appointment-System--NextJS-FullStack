@@ -455,14 +455,14 @@ export default function AnalyticsPage({ initialInsights }: AnalyticsPageProps = 
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="flex items-end gap-3 h-32">
+              <div className="flex items-end gap-2 h-32">
                 {Array.from({ length: 6 }).map((_, i) => (
                   <Skeleton key={i} className="flex-1 rounded-t" style={{ height: `${24 + (i % 3) * 20}px` }} />
                 ))}
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="flex items-end gap-3 h-32">
+                <div className="flex items-end gap-2 h-32">
                   {statusOverTime.map((m) => {
                     const total = m.done + m.pending + m.alert;
                     const barH = Math.max(4, Math.round((total / maxStatusTotal) * 112));
@@ -554,7 +554,7 @@ export default function AnalyticsPage({ initialInsights }: AnalyticsPageProps = 
             {loading ? (
               <div className="space-y-3">
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="flex items-center gap-3">
+                  <div key={i} className="flex items-center gap-2">
                     <Skeleton className="h-4 w-10 rounded flex-shrink-0" />
                     <Skeleton className="h-5 flex-1 rounded" />
                     <Skeleton className="h-4 w-8 rounded flex-shrink-0" />
@@ -566,7 +566,7 @@ export default function AnalyticsPage({ initialInsights }: AnalyticsPageProps = 
                 {ageDistribution.map((b) => {
                   const pct = maxAgeBucket > 0 ? Math.round((b.count / maxAgeBucket) * 100) : 0;
                   return (
-                    <div key={b.label} className="flex items-center gap-3 text-sm">
+                    <div key={b.label} className="flex items-center gap-2 text-sm">
                       <span className="w-10 text-xs text-muted-foreground shrink-0 text-right">{b.label}</span>
                       <div className="flex-1 h-5 rounded-full bg-muted overflow-hidden">
                         <div

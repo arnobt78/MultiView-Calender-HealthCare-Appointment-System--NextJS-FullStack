@@ -50,7 +50,11 @@ export async function GET() {
 
     const appointmentsRaw = await prisma.appointment.findMany({
       where: { patient_id: patientRow.id },
-      include: { category: true, owner: { select: { display_name: true, email: true } }, treating_physician: { select: { display_name: true, email: true } } },
+      include: {
+        category: true,
+        owner: { select: { id: true, display_name: true, email: true, role: true } },
+        treating_physician: { select: { id: true, display_name: true, email: true, role: true } },
+      },
       orderBy: { start: "desc" },
     });
 

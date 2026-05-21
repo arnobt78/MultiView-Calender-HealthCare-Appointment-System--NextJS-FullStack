@@ -47,6 +47,19 @@ export function doctorDetailHref(role: EntityRole, id: string): string {
   return `/doctors/${id}`;
 }
 
+/**
+ * Patient portal staff link — only doctor accounts get `/doctors/:id`.
+ * Admin/non-doctor calendar owners stay unlinked (no patient-safe CP user page).
+ */
+export function portalDoctorProfileHref(
+  viewerRole: EntityRole,
+  staffUserId: string,
+  staffRole: string | null | undefined
+): string | null {
+  if (staffRole !== "doctor") return null;
+  return doctorDetailHref(viewerRole, staffUserId);
+}
+
 /** Admin/staff user record — control panel only (doctors/patients should not link here). */
 export function userDetailHref(role: EntityRole, id: string): string {
   if (isAdminRole(role)) return `/control-panel/users/${id}`;

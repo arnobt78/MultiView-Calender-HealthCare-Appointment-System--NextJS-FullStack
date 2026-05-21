@@ -327,7 +327,7 @@ export default function OrganizationManagement() {
   }
 
   return (
-    <div className="space-y-2 pb-3">
+    <div className="space-y-2 pb-2">
       {/* Chrome — heading, filter, and add button are always static */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
@@ -344,7 +344,7 @@ export default function OrganizationManagement() {
             </p>
           )}
         </div>
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
           <Input
             placeholder="Filter organizations..."
             value={globalFilter}
@@ -398,7 +398,7 @@ export default function OrganizationManagement() {
             ) : !loading && organizations.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={columns.length} className="text-center py-12">
-                  <div className="flex flex-col items-center gap-3 text-muted-foreground">
+                  <div className="flex flex-col items-center gap-2 text-muted-foreground">
                     <Building2 className="h-10 w-10 opacity-30" />
                     <p className="font-medium">No organizations yet</p>
                     <p className="text-sm">Create your first organization to manage teams and members.</p>

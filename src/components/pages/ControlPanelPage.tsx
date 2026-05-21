@@ -325,8 +325,8 @@ export default function ControlPanelPage({
               orientation="vertical"
               className="w-full"
             >
-              {/* px-3 pb-3: same padding as desktop sidebar so icons/labels aren't flush against the sheet edge. overflow-x-hidden prevents horizontal shift from overflow-y-auto. */}
-              <TabsList className="flex h-auto max-h-[min(70vh,calc(100dvh-8rem))] w-full flex-col gap-0 overflow-y-auto overflow-x-hidden rounded-none border-0 bg-transparent px-3 pb-3">
+              {/* px-3 pb-2: same padding as desktop sidebar so icons/labels aren't flush against the sheet edge. overflow-x-hidden prevents horizontal shift from overflow-y-auto. */}
+              <TabsList className="flex h-auto max-h-[min(70vh,calc(100dvh-8rem))] w-full flex-col gap-0 overflow-y-auto overflow-x-hidden rounded-none border-0 bg-transparent px-3 pb-2">
                 {SIDEBAR_SECTIONS.map((section, sectionIndex) => (
                   <div
                     key={section.heading}

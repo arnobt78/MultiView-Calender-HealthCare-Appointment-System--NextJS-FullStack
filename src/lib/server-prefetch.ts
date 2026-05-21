@@ -546,8 +546,8 @@ export async function prefetchPortalData(userId: string): Promise<PortalPrefetch
       where: { patient_id: patientRow.id },
       include: {
         category: true,
-        owner: { select: { display_name: true, email: true } },
-        treating_physician: { select: { display_name: true, email: true } },
+        owner: { select: { id: true, display_name: true, email: true, role: true } },
+        treating_physician: { select: { id: true, display_name: true, email: true, role: true } },
       },
       orderBy: { start: "desc" },
     });

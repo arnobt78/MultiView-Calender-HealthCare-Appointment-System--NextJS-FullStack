@@ -60,7 +60,7 @@ export function PatientStatCard({
         v.shell
       )}
     >
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-2">
         <span
           className={cn(
             "flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border",

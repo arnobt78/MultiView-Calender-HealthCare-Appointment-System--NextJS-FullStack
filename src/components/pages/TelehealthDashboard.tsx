@@ -206,7 +206,7 @@ export default function TelehealthDashboard() {
                         <h4 className="font-semibold truncate text-base">{appt.title}</h4>
                         {isCurrent && <Badge variant="default" className="text-[10px] ml-1 h-5 px-1.5">NOW</Badge>}
                       </div>
-                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         {appt.patient_data && (
                           <span className="flex items-center gap-1.5 truncate">
                             <User className="h-3.5 w-3.5" />

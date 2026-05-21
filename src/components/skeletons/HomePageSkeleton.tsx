@@ -11,7 +11,7 @@ export default function HomePageSkeleton() {
       <div className="shrink-0 px-2 py-3 sm:px-4 lg:px-8">
         {/* CalendarHeader skeleton */}
         <div className="mb-2 flex items-center justify-between">
-          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-2 sm:gap-3">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-2 sm:gap-2">
             <div className="flex items-center gap-1 sm:gap-2">
               <div className="h-9 w-9 animate-pulse rounded-xl border bg-gray-100" />
               <div className="h-6 min-w-[170px] animate-pulse rounded-md bg-gray-200" />

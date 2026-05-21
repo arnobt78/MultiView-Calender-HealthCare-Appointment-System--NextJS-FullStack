@@ -40,10 +40,12 @@ import { TruncatedText, WrappingText } from "@/components/shared/TruncatedText";
 import type { FullAppointment } from "@/hooks/useAppointments";
 import {
   useAppointmentCardModel,
+  type AppointmentCardAudience,
   type UseAppointmentCardModelParams,
 } from "@/hooks/useAppointmentCardModel";
 import type { OwnerUserSummary } from "@/hooks/useOwnerUserSummaries";
-import type { AppointmentCardVariant } from "@/lib/appointment-card";
+import { appointmentCardMetaGroupClass, type AppointmentCardVariant } from "@/lib/appointment-card";
+import { PortalStaffLink } from "@/components/shared/PortalStaffLink";
 import { getPublicUrl } from "@/lib/vercelBlob";
 import type { AppointmentAssignee, Patient } from "@/types/types";
 
@@ -60,6 +62,13 @@ export type AppointmentCardProps = {
   onToggleStatus: (id: string, nextStatus: "pending" | "done" | "alert") => void;
   /** List rail only — telehealth VideoCall below ⋮ menu */
   telehealthSlot?: ReactNode;
+  /** Dashboard calendar vs patient portal timeline — portal shows staff rows for patients. */
+  audience?: AppointmentCardAudience;
+  /** Patient portal: hide right ⋮ rail (read-only history). */
+  hideActionsRail?: boolean;
+  /** Portal API labels — avoids `/api/users/search` for patients. */
+  portalOwnerLabel?: string;
+  portalTreatingLabel?: string;
   /** When set, card is a hover/grid trigger only (no outer chrome) */
   /** Inside `AppointmentHoverCard` — no role=button so Radix hover pointer events work. */
   asHoverTrigger?: boolean;
@@ -94,12 +103,17 @@ function AppointmentCardMeta({
     primaryDoctorLabel,
     referralLabel,
     user,
+    audience,
+    portalOwner,
+    portalTreating,
   } = model;
+  const showStaffForPortal = audience === "patient-portal";
+  const showStaffForDashboard = user?.role !== "patient";
   const TextWrap = wrapValues ? WrappingText : TruncatedText;
 
   return (
     <>
-      <div className="flex min-w-0 flex-wrap items-center gap-x-4 text-xs text-gray-600">
+      <div className={appointmentCardMetaGroupClass}>
         <AppointmentCardMetaRow icon={<CalendarDays className="h-3.5 w-3.5" />}>
           <span className={clsx(isDone && "line-through text-gray-400")}>{formattedDate}</span>
         </AppointmentCardMetaRow>
@@ -119,7 +133,7 @@ function AppointmentCardMeta({
         </AppointmentCardMetaRow>
       </div>
 
-      <div className="flex min-w-0 flex-wrap items-center gap-x-4">
+      <div className={clsx(appointmentCardMetaGroupClass, "text-gray-700")}>
         <AppointmentCardMetaRow icon={<UserRound className="h-3.5 w-3.5" />} label="Client:">
           {patientId ? (
             <RoleEntityLink
@@ -159,13 +173,35 @@ function AppointmentCardMeta({
         ) : null}
       </div>
 
-      {user?.role !== "patient" && calendarOwnerId ? (
+      {showStaffForPortal && calendarOwnerId && portalOwner ? (
+        <AppointmentCardMetaRow icon={<UserCog className="h-3.5 w-3.5" />} label="Calendar owner:">
+          <PortalStaffLink
+            staffUserId={portalOwner.id}
+            staffRole={portalOwner.role}
+            label={ownerLabel}
+            wrapLabel={wrapValues}
+          />
+        </AppointmentCardMetaRow>
+      ) : null}
+
+      {showStaffForPortal && treatingDiffersFromOwner && portalTreating ? (
+        <AppointmentCardMetaRow icon={<Stethoscope className="h-3.5 w-3.5" />} label="Treating physician:">
+          <PortalStaffLink
+            staffUserId={portalTreating.id}
+            staffRole={portalTreating.role}
+            label={treatingPhysicianLabel}
+            wrapLabel={wrapValues}
+          />
+        </AppointmentCardMetaRow>
+      ) : null}
+
+      {showStaffForDashboard && calendarOwnerId ? (
         <AppointmentCardMetaRow icon={<UserCog className="h-3.5 w-3.5" />} label="Calendar owner:">
           <RoleEntityLink kind="doctor" id={calendarOwnerId} label={ownerLabel} wrapLabel={wrapValues} className="text-xs font-medium" />
         </AppointmentCardMetaRow>
       ) : null}
 
-      {user?.role !== "patient" && treatingDiffersFromOwner ? (
+      {showStaffForDashboard && treatingDiffersFromOwner ? (
         <AppointmentCardMetaRow icon={<Stethoscope className="h-3.5 w-3.5" />} label="Treating physician:">
           <RoleEntityLink
             kind="doctor"
@@ -281,6 +317,10 @@ export function AppointmentCard({
   onDelete,
   onToggleStatus,
   telehealthSlot,
+  audience = "dashboard",
+  hideActionsRail = false,
+  portalOwnerLabel,
+  portalTreatingLabel,
   asHoverTrigger,
   asTrigger,
   triggerClassName,
@@ -293,6 +333,9 @@ export function AppointmentCard({
     ownerUsers,
     variant,
     slotHeightPx,
+    audience,
+    portalOwnerLabel,
+    portalTreatingLabel,
   } as UseAppointmentCardModelParams);
 
   const { density, colorToken, isDone, start, user } = model;
@@ -455,8 +498,15 @@ export function AppointmentCard({
       }}
     >
       <AppointmentListColorBar color={colorToken.lineColor} />
-      <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 py-3 pl-6 pr-4">{inner}</div>
-      {variant === "list" ? (
+      <div
+        className={clsx(
+          "flex min-w-0 flex-1 flex-col justify-center gap-1 py-3 pl-6",
+          hideActionsRail ? "pr-4" : "pr-4"
+        )}
+      >
+        {inner}
+      </div>
+      {variant === "list" && !hideActionsRail ? (
         <div className="flex min-w-[56px] flex-col items-center justify-between rounded-r-2xl border-l border-gray-100 bg-gray-50/80 px-2 py-3">
           {menu}
           {telehealthSlot}

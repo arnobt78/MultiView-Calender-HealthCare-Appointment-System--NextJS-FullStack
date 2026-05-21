@@ -177,7 +177,7 @@ export default function DashboardOverviewComponent() {
 
   if (isError) {
     return (
-      <div className="space-y-3 pb-3">
+      <div className="space-y-3 pb-2">
         <PageHeader title="Dashboard Overview" description="Real-time system summary" />
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 flex items-center gap-2">
           <AlertCircle className="h-4 w-4 shrink-0" />
@@ -188,7 +188,7 @@ export default function DashboardOverviewComponent() {
   }
 
   return (
-    <div className="space-y-3 pb-3">
+    <div className="space-y-3 pb-2">
       {/* PageHeader stays completely static — title, description timestamp, and Refresh button never flash. */}
       <PageHeader
         title="Dashboard Overview"
@@ -196,9 +196,9 @@ export default function DashboardOverviewComponent() {
           loading
             ? "Real-time system summary"
             : `Real-time system summary — last updated ${format(
-                dataUpdatedAt ? new Date(dataUpdatedAt) : new Date(),
-                "HH:mm:ss"
-              )}`
+              dataUpdatedAt ? new Date(dataUpdatedAt) : new Date(),
+              "HH:mm:ss"
+            )}`
         }
         actions={
           <Button
@@ -282,7 +282,7 @@ export default function DashboardOverviewComponent() {
             {loading ? (
               /* Inline skeleton — only the data content area pulses */
               <div className="space-y-2 py-1">
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start justify-between gap-2">
                   <div className="space-y-2 flex-1">
                     <Skeleton className="h-4 w-3/4 rounded" />
                     <Skeleton className="h-3 w-1/2 rounded" />
@@ -294,7 +294,7 @@ export default function DashboardOverviewComponent() {
               </div>
             ) : nextAppointment ? (
               <div className="space-y-3">
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start justify-between gap-2">
                   <div className="space-y-1 flex-1 min-w-0">
                     <p className="font-semibold text-sm truncate">{nextAppointment.title}</p>
                     <p className="text-xs text-muted-foreground">
@@ -335,7 +335,7 @@ export default function DashboardOverviewComponent() {
             {loading ? (
               /* Skeleton rows match real row layout: title line + meta line + badge */
               Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-3 py-1.5 border-b last:border-0">
+                <div key={i} className="flex items-center gap-2 py-1.5 border-b last:border-0">
                   <div className="flex-1 min-w-0 space-y-1">
                     <Skeleton className="h-4 w-3/4 rounded" />
                     <Skeleton className="h-3 w-1/2 rounded" />
@@ -349,7 +349,7 @@ export default function DashboardOverviewComponent() {
               <p className="text-sm text-muted-foreground text-center py-4">No appointments yet.</p>
             ) : (
               recentAppointments.map((appt) => (
-                <div key={appt.id} className="flex items-center gap-3 py-1.5 border-b last:border-0">
+                <div key={appt.id} className="flex items-center gap-2 py-1.5 border-b last:border-0">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{appt.title}</p>
                     <p className="text-xs text-muted-foreground">

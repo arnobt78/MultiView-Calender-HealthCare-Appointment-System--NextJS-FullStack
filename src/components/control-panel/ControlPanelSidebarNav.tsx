@@ -262,7 +262,7 @@ export default function ControlPanelSidebarNav() {
          */}
         <TabsList
           variant="line"
-          className="flex h-auto w-full flex-col gap-0 rounded-none border-0 bg-transparent pl-2 sm:pl-4 lg:pl-8 pb-3"
+          className="flex h-auto w-full flex-col gap-0 rounded-none border-0 bg-transparent pl-2 sm:pl-4 lg:pl-8 pb-2"
         >
           {SIDEBAR_SECTIONS.map((section, idx) => (
             <div

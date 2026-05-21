@@ -76,7 +76,7 @@ export default function PatientDetailView({ patientId }: { patientId: string }) 
             <Separator className="my-6" />
 
             <div className="space-y-2 text-sm">
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-2">
                 <Mail className="h-4 w-4 text-muted-foreground " />
                 <div className="flex-1 overflow-hidden">
                   <p className="font-medium">Email</p>
@@ -85,7 +85,7 @@ export default function PatientDetailView({ patientId }: { patientId: string }) 
                   </p>
                 </div>
               </div>
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-2">
                 <Phone className="h-4 w-4 text-muted-foreground " />
                 <div>
                   <p className="font-medium">Phone</p>
@@ -96,7 +96,7 @@ export default function PatientDetailView({ patientId }: { patientId: string }) 
                 </div>
               </div>
               {patient.birth_date && (
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-2">
                   <User className="h-4 w-4 text-muted-foreground " />
                   <div>
                     <p className="font-medium">Date of Birth</p>
@@ -178,7 +178,7 @@ export default function PatientDetailView({ patientId }: { patientId: string }) 
       {/* RIGHT COLUMN: Upcoming & Quick Actions (3 cols) */}
       <div className="lg:col-span-3 space-y-6">
         <Card className="shadow-sm border-muted">
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-2">
             <CardTitle className="text-base">Upcoming</CardTitle>
           </CardHeader>
           <CardContent>
@@ -215,7 +215,7 @@ export default function PatientDetailView({ patientId }: { patientId: string }) 
         </Card>
 
         <Card className="shadow-sm border-muted bg-primary/5">
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-2">
             <CardTitle className="text-base text-gray-700">Quick Actions</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">

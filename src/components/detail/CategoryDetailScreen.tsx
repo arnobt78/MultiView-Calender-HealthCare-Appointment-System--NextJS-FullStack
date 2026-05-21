@@ -74,7 +74,7 @@ export function CategoryDetailScreen({
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 space-y-3">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 {cat.color && (
                   <span
                     className="h-10 w-10 rounded-xl border shrink-0 shadow-sm"

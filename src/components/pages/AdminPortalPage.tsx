@@ -118,7 +118,7 @@ function RecentAppointmentRow({ appt }: { appt: Appointment & { patient_name?: s
   const meta = STATUS_META[appt.status ?? "pending"] ?? STATUS_META.pending;
 
   return (
-    <div className="flex items-start gap-3 py-3 border-b border-border/40 last:border-0">
+    <div className="flex items-start gap-2 py-3 border-b border-border/40 last:border-0">
       <div className="flex-shrink-0 w-20 text-right">
         <p className="text-[10px] text-muted-foreground">{format(start, "MMM d")}</p>
         <p className="text-xs font-semibold">{format(start, "HH:mm")}</p>
@@ -166,7 +166,7 @@ function RecentAppointmentRow({ appt }: { appt: Appointment & { patient_name?: s
 function DoctorSummaryCard({ doctor }: { doctor: DoctorRow }) {
   return (
     <div className={cn("p-4 flex flex-col gap-2", GLASS.slate)}>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         <UserAvatar
           src={doctor.image}
           alt={doctor.display_name ?? doctor.email}
@@ -339,7 +339,7 @@ export default function AdminPortalPage({ initialData }: AdminPortalPageProps) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Appointments */}
         <Card className={cn("overflow-hidden", GLASS.slate)}>
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base font-semibold">
               <Activity className="h-4 w-4 text-slate-500" />
               Recent Appointments
@@ -352,7 +352,7 @@ export default function AdminPortalPage({ initialData }: AdminPortalPageProps) {
             {isLoading ? (
               <div className="space-y-3">
                 {[...Array(5)].map((_, i) => (
-                  <div key={i} className="flex gap-3 py-3">
+                  <div key={i} className="flex gap-2 py-3">
                     <Skeleton className="h-10 w-20 rounded" />
                     <div className="flex-1 space-y-2">
                       <Skeleton className="h-4 w-full" />
@@ -378,7 +378,7 @@ export default function AdminPortalPage({ initialData }: AdminPortalPageProps) {
 
         {/* Doctor Directory */}
         <Card className={cn("overflow-hidden", GLASS.purple)}>
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base font-semibold">
               <Stethoscope className="h-4 w-4 text-purple-500" />
               Doctor Directory

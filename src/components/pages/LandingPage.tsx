@@ -355,7 +355,7 @@ function AppointmentDeck() {
                   >
                     {i === 0 ? (
                       <div className={`rounded-[18px] bg-linear-to-br ${apt.accent} border ${apt.bc} p-4`}>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
                           <motion.div
                             animate={{ scale: [1, 1.09, 1] }}
                             transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
@@ -376,7 +376,7 @@ function AppointmentDeck() {
                         </div>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-3 rounded-2xl bg-white/5 px-3 py-2.5">
+                      <div className="flex items-center gap-2 rounded-2xl bg-white/5 px-3 py-2.5">
                         <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-2xl bg-white/5 ${apt.ic}`}>
                           <apt.Icon className="h-3.5 w-3.5" />
                         </div>
@@ -591,7 +591,7 @@ export default function LandingPage() {
           }`}
       >
         <div className="mx-auto flex w-full max-w-[1440px] items-center justify-between px-6 py-4 lg:px-10">
-          <Link href="/" className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-2">
             <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-md border border-white/20">
               <CalendarDays className="h-[18px] w-[18px] text-white" />
             </span>
@@ -674,7 +674,7 @@ export default function LandingPage() {
             </motion.p>
 
             {/* CTAs */}
-            <motion.div variants={fadeUp} className="flex flex-wrap items-center gap-3 pt-1">
+            <motion.div variants={fadeUp} className="flex flex-wrap items-center gap-2 pt-1">
               <Link
                 href="/register"
                 className="inline-flex items-center gap-2 rounded-2xl border border-blue-400/40 bg-gradient-to-r from-blue-500/80 via-blue-500/60 to-blue-500/40 px-6 py-3 text-sm font-semibold shadow-[0_15px_35px_rgba(59,130,246,0.45)] backdrop-blur-sm transition hover:from-blue-500/90"
@@ -941,7 +941,7 @@ export default function LandingPage() {
               ))}
             </div>
 
-            <motion.div variants={fadeUp} className="flex flex-wrap gap-3 pt-2">
+            <motion.div variants={fadeUp} className="flex flex-wrap gap-2 pt-2">
               <Link
                 href="/register"
                 className="inline-flex items-center gap-2 rounded-2xl border border-emerald-400/40 bg-gradient-to-r from-emerald-500/70 via-emerald-500/50 to-emerald-500/30 px-5 py-2.5 text-sm font-semibold shadow-[0_15px_35px_rgba(16,185,129,0.32)] backdrop-blur-sm transition hover:from-emerald-500/80"

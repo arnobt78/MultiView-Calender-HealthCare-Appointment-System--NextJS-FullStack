@@ -154,7 +154,7 @@ export default function GlobalSearch() {
       >
         <div className="bg-white pt-6">
           <div className="px-6">
-            <div className="flex items-start gap-3">
+            <div className="flex items-start gap-2">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-sky-200/70 bg-sky-50 text-sky-700">
                 <Search className="h-5 w-5" />
               </span>
@@ -189,7 +189,7 @@ export default function GlobalSearch() {
 
         {/* Search input */}
         <div className="mx-6 border-b border-sky-200/60">
-          <div className="flex items-center gap-3 py-4">
+          <div className="flex items-center gap-2 py-4">
             <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
             <Input
               autoFocus
@@ -237,7 +237,7 @@ export default function GlobalSearch() {
                   <li key={`${item.kind}-${item.id}`}>
                     <button
                       type="button"
-                      className="group flex w-full items-center gap-3 border-b border-sky-100/70 px-6 py-3 text-left transition-colors hover:bg-sky-50/60 last:border-b-0"
+                      className="group flex w-full items-center gap-2 border-b border-sky-100/70 px-6 py-3 text-left transition-colors hover:bg-sky-50/60 last:border-b-0"
                       onClick={() => navigate(item.href)}
                     >
                       <span className={`rounded-full p-1.5 shrink-0 ${KIND_COLORS[item.kind]}`}>

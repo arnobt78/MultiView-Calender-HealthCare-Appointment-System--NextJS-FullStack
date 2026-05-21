@@ -159,7 +159,7 @@ export default function NotificationsManagement() {
 
   if (notificationsError) {
     return (
-      <div className="space-y-2 pb-3">
+      <div className="space-y-2 pb-2">
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 flex items-center gap-2">
           <AlertCircle className="h-4 w-4 shrink-0" />
           Failed to load notifications. Please refresh.
@@ -169,7 +169,7 @@ export default function NotificationsManagement() {
   }
 
   return (
-    <div className="space-y-2 pb-3">
+    <div className="space-y-2 pb-2">
       {/* Chrome — heading, filter, and mark-all-read always static */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
@@ -186,7 +186,7 @@ export default function NotificationsManagement() {
             <p className="text-sm text-muted-foreground">{notifications.length} total notifications</p>
           )}
         </div>
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
           <Input
             placeholder="Filter notifications…"
             value={globalFilter}
@@ -254,7 +254,7 @@ export default function NotificationsManagement() {
             ) : notifications.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={columns.length} className="text-center py-12">
-                  <div className="flex flex-col items-center gap-3 text-muted-foreground">
+                  <div className="flex flex-col items-center gap-2 text-muted-foreground">
                     <BellOff className="h-10 w-10 opacity-30" />
                     <p className="font-medium">No notifications</p>
                     <p className="text-sm">You&apos;re all caught up!</p>

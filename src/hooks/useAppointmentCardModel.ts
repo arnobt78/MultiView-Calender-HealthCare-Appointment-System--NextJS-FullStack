@@ -20,6 +20,8 @@ import { getAppointmentMenuCapabilities } from "@/lib/appointment-menu-permissio
 import { PATIENT_REFERRAL_SOURCES } from "@/lib/patient-referral-sources";
 import type { AppointmentAssignee, Patient } from "@/types/types";
 
+export type AppointmentCardAudience = "dashboard" | "patient-portal";
+
 export type UseAppointmentCardModelParams = {
   appointment: FullAppointment;
   patients: Patient[];
@@ -28,6 +30,10 @@ export type UseAppointmentCardModelParams = {
   variant: AppointmentCardVariant;
   slotHeightPx?: number;
   densityOverride?: AppointmentCardDensity;
+  /** Portal timeline uses category hex on color bar; dashboard uses seed-only tint. */
+  audience?: AppointmentCardAudience;
+  portalOwnerLabel?: string;
+  portalTreatingLabel?: string;
 };
 
 /**
@@ -42,6 +48,9 @@ export function useAppointmentCardModel({
   variant,
   slotHeightPx,
   densityOverride,
+  audience = "dashboard",
+  portalOwnerLabel,
+  portalTreatingLabel,
 }: UseAppointmentCardModelParams) {
   const { user } = useAuth();
   const { getAppointmentColorToken } = useAppointmentColor();
@@ -56,10 +65,14 @@ export function useAppointmentCardModel({
   );
 
   const colorToken = useMemo(
-    // Pass null so card color is always seed-derived from appointment.id, not category color.
-    // Category color is shown via CategoryInlineLink swatch inside the card body instead.
-    () => getAppointmentColorToken(appointment.id, null),
-    [appointment.id, getAppointmentColorToken]
+    () =>
+      getAppointmentColorToken(
+        appointment.id,
+        audience === "patient-portal"
+          ? (appointment.category_data?.color ?? null)
+          : null
+      ),
+    [appointment.id, appointment.category_data?.color, audience, getAppointmentColorToken]
   );
 
   const patientLabel = useMemo(
@@ -91,15 +104,15 @@ export function useAppointmentCardModel({
   );
   const treatingDiffersFromOwner = treatingPhysicianId !== calendarOwnerId;
 
-  const ownerLabel = useMemo(
-    () => resolveStaffLabel(calendarOwnerId),
-    [calendarOwnerId, resolveStaffLabel]
-  );
+  const ownerLabel = useMemo(() => {
+    if (portalOwnerLabel) return portalOwnerLabel;
+    return resolveStaffLabel(calendarOwnerId);
+  }, [portalOwnerLabel, calendarOwnerId, resolveStaffLabel]);
 
-  const treatingPhysicianLabel = useMemo(
-    () => resolveStaffLabel(treatingPhysicianId),
-    [treatingPhysicianId, resolveStaffLabel]
-  );
+  const treatingPhysicianLabel = useMemo(() => {
+    if (portalTreatingLabel) return portalTreatingLabel;
+    return resolveStaffLabel(treatingPhysicianId);
+  }, [portalTreatingLabel, treatingPhysicianId, resolveStaffLabel]);
 
   const primaryDoctorId = appointment.patient_data?.primary_doctor_id?.trim() || null;
   const primaryDoctorLabel = useMemo(() => {
@@ -158,5 +171,8 @@ export function useAppointmentCardModel({
     formattedTime,
     statusClass,
     user,
+    audience,
+    portalOwner: appointment.portal_owner,
+    portalTreating: appointment.portal_treating_physician,
   };
 }

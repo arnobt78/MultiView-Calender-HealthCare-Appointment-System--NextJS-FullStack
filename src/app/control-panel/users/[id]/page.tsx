@@ -96,7 +96,7 @@ export default async function UserDetailPage({ params }: PageProps) {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 space-y-4">
-            <div className="flex items-start gap-3">
+            <div className="flex items-start gap-2">
               <UserAvatar
                 src={raw.image}
                 fallbackText={raw.display_name || raw.email || "?"}

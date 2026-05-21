@@ -207,7 +207,7 @@ export default function MonthView() {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col pb-3 px-2 sm:px-4 lg:px-8 md:flex-row md:items-stretch md:space-x-8">
+    <div className="flex h-full min-h-0 flex-1 flex-col pb-2 px-2 sm:px-4 lg:px-8 md:flex-row md:items-stretch md:space-x-8">
       {appointmentsError && (
         <div className="mb-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 flex items-center gap-2">
           <span className="shrink-0">⚠</span>

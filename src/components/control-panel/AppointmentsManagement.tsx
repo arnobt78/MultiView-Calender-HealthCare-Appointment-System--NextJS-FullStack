@@ -274,9 +274,9 @@ export default function AppointmentsManagement() {
   }
 
   return (
-    <div className="space-y-2 pb-3">
+    <div className="space-y-2 pb-2">
       {/* Stats row — card shells always visible; value slots pulse while loading */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {(
           [
             { label: "Total", value: appointments.length, color: "text-foreground", variant: "border-slate-400/20 from-slate-500/10 via-white to-white/95 shadow-[0_24px_60px_rgba(100,116,139,0.1)]", filter: "all" },
@@ -290,7 +290,7 @@ export default function AppointmentsManagement() {
             onClick={() => setStatusFilter(filter)}
             className={`cursor-pointer rounded-[28px] border bg-gradient-to-br backdrop-blur-sm transition-shadow hover:shadow-[0_30px_70px_rgba(2,132,199,0.18)] ${variant} ${statusFilter === filter ? "ring-2 ring-primary" : ""}`}
           >
-            <CardContent className="pt-3 pb-3">
+            <CardContent className="pt-3 pb-2">
               <div className="text-xs text-muted-foreground">{label}</div>
               {/* Value slot: pulse while loading */}
               {loading ? (
@@ -373,7 +373,7 @@ export default function AppointmentsManagement() {
             ) : filtered.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={columns.length} className="text-center py-12">
-                  <div className="flex flex-col items-center gap-3 text-muted-foreground">
+                  <div className="flex flex-col items-center gap-2 text-muted-foreground">
                     <CalendarDays className="h-10 w-10 opacity-30" />
                     <p className="font-medium">No appointments</p>
                     <p className="text-sm">Appointments will appear here.</p>

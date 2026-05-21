@@ -184,29 +184,69 @@ export function serializeAppointment(a: {
   };
 }
 
+/** Joined staff user on portal appointment rows — `id` + `role` drive `/doctors/:id` links for patients. */
+export type PortalAppointmentStaffUser = {
+  id: string;
+  display_name: string | null;
+  email: string;
+  role: string | null;
+};
+
 /** Prisma appointment row + optional `category` / `owner` / `treating_physician` includes for portal responses */
 export type PortalAppointmentIncludeRow = Parameters<typeof serializeAppointment>[0] & {
-  category?: { label: string; color: string | null } | null;
-  owner?: { display_name: string | null; email: string } | null;
+  category?: {
+    id: string;
+    label: string;
+    color: string | null;
+    icon?: string | null;
+    created_at?: Date;
+    updated_at?: Date | null;
+    description?: string | null;
+  } | null;
+  owner?: PortalAppointmentStaffUser | null;
   /** B2: joined user row for `treating_physician_id` when set (display chip). */
-  treating_physician?: { display_name: string | null; email: string } | null;
+  treating_physician?: PortalAppointmentStaffUser | null;
 };
+
+/** Serialized portal appointment — `category` stays UUID; rich chip uses `category_data`. */
+export type PortalAppointmentRow = ReturnType<typeof mapPortalAppointmentsFromRows>[number];
 
 /**
  * Patient portal GET + SSR prefetch: one serialized shape for `appointments`.
  * `owner` = calendar owner (`owner_id` in Prisma → `user_id` in JSON). `treating_physician` = B2 clinical contact when distinct from owner.
  */
 export function mapPortalAppointmentsFromRows(rows: PortalAppointmentIncludeRow[]) {
-  return rows.map((a) => ({
-    ...serializeAppointment(a),
-    category: a.category
-      ? { label: a.category.label, color: a.category.color }
-      : undefined,
-    owner: a.owner
-      ? { display_name: a.owner.display_name, email: a.owner.email }
-      : undefined,
-    treating_physician: a.treating_physician
-      ? { display_name: a.treating_physician.display_name, email: a.treating_physician.email }
-      : undefined,
-  }));
+  return rows.map((a) => {
+    const base = serializeAppointment(a);
+    return {
+      ...base,
+      category_data: a.category
+        ? {
+            id: a.category.id,
+            label: a.category.label,
+            color: a.category.color,
+            icon: a.category.icon ?? null,
+            created_at: a.category.created_at?.toISOString?.() ?? new Date().toISOString(),
+            updated_at: a.category.updated_at?.toISOString?.() ?? null,
+            description: a.category.description ?? null,
+          }
+        : undefined,
+      owner: a.owner
+        ? {
+            id: a.owner.id,
+            display_name: a.owner.display_name,
+            email: a.owner.email,
+            role: a.owner.role,
+          }
+        : undefined,
+      treating_physician: a.treating_physician
+        ? {
+            id: a.treating_physician.id,
+            display_name: a.treating_physician.display_name,
+            email: a.treating_physician.email,
+            role: a.treating_physician.role,
+          }
+        : undefined,
+    };
+  });
 }

@@ -188,7 +188,7 @@ const loading = !isMounted || isLoading;
 | Notifications | `control-panel/NotificationsManagement.tsx` | Table rows |
 | Google Calendar | `control-panel/GoogleCalendarSettings.tsx` | Status badge + description + action button |
 | Insights | `pages/AnalyticsPage.tsx` | Stat values + chart bars + category rows + patient table rows |
-| Patient Portal | `pages/PatientPortalPage.tsx` | `ProfileDefinitionRow` value slots + avatar name/badges + summary badges + timeline rows |
+| Patient Portal | `pages/PatientPortalPage.tsx` | Profile/summary chrome + **Appointment History** via `AppointmentCard` `audience="patient-portal"` |
 | Services | `pages/ServicesPage.tsx` | `DoctorProfileCardSkeleton` text slots; filter bar + card chrome static |
 
 ### Deleted loading.tsx files
@@ -202,7 +202,9 @@ Shared primitives keep layout fixed while data loads:
 
 | Piece | File | Role |
 |-------|------|------|
-| `PortalChromeHeader` | `src/components/shared/PortalChromeHeader.tsx` | Tall icon column + `border-b` for `/services` and `/patient-portal` |
+| `PortalChromeHeader` | `src/components/shared/PortalChromeHeader.tsx` | Icon tile + title stack with `py-2` (aligned with CP `PageHeader`) |
+| `PortalStaffLink` | `src/components/shared/PortalStaffLink.tsx` | Sky link to `/doctors/:id` for doctor staff on portal cards |
+| `portal-appointment.ts` | `src/lib/portal-appointment.ts` | `portalAppointmentToFullAppointment` adapter for timeline cards |
 | `ProfileDefinitionRow` | `src/components/shared/profile/ProfileDefinitionRow.tsx` | `<dl>` row: icon + label static; variant-matched skeleton in `dd` only (`doctorStack` = Primary Doctor height) |
 | `DoctorProfileCardSkeleton` | `src/components/shared/services/DoctorProfileCardSkeleton.tsx` | 1:1 `/services` doctor card shell |
 | `useNavSession` | `src/hooks/useNavSession.ts` | Role from `NavRoleContext` (SSR) + `useAuth` / query cache — no localStorage during render |
@@ -210,7 +212,7 @@ Shared primitives keep layout fixed while data loads:
 
 **SSR + client:** root `layout.tsx` passes `initialNavRole` into `AuthShell`. Portal pages pass `initialData` on `useQuery`. Profile: `profileLoading = isLoading && !patient`. Navbar role links render when `role` is known (server + client match).
 
-**Audit (agent glance):** Navbar role uses SSR `initialNavRole` via `NavRoleContext`. Appointment timeline colors use `colorFromSeed()` in `AppointmentColorContext` (no `Math.random`). `GlobalSearch` + `useOwnerUserSummaries` skip staff user-directory APIs for patients (no console 403). Dashboard cards unified via `AppointmentCard` (List / Month panel / hover / Day–Week triggers). **144 tests**, `tsc` + `lint` + `build` pass.
+**Audit (agent glance):** Navbar role uses SSR `initialNavRole` via `NavRoleContext`. Dashboard + **patient portal history** use `AppointmentCard` (portal: category hex on color bar; `PortalStaffLink` for Calendar owner / Treating physician). `GlobalSearch` + `useOwnerUserSummaries` skip staff user-directory APIs for patients. **150 tests**, `tsc` + `lint` + `build` pass.
 
 ### Dashboard calendar shared UI (unified `AppointmentCard`)
 
@@ -228,6 +230,8 @@ Shared primitives keep layout fixed while data loads:
 | `appointment-menu-permissions.ts` | `src/lib/appointment-menu-permissions.ts` | Menu capability flags |
 | `AppointmentActionsMenu` | `src/components/shared/AppointmentActionsMenu.tsx` | ⋮ always shown; items disabled when denied |
 | `appointment-card.test.ts` | `src/lib/__tests__/appointment-card.test.ts` | `dedupeAssignees`, `deriveCardDensity` |
+| `portal-appointment.test.ts` | `src/lib/__tests__/portal-appointment.test.ts` | Portal serializer + `portalDoctorProfileHref` |
+| `appointmentCardMetaGroupClass` | `src/lib/appointment-card.ts` | Shared `gap-x-4` meta row wrapper (dashboard + portal) |
 
 **Wiring:** `HomePage` → `AppointmentDataProvider` → `useAppointments` seeds `queryKeys.appointments.all`; SSR `dashboard/page.tsx` prefetches patients + categories. All four views read same cache; mutations use `invalidateAfterAppointmentMutation` (not narrow `invalidateAppointmentData` from calendar edit handlers).
 
@@ -238,7 +242,7 @@ Shared primitives keep layout fixed while data loads:
 | Month/Day/Week cells | `AppointmentHoverCard` | Fixed-width popover; `slotHeightPx` for compact/minimal triggers |
 | Day / Week | `DayView` / `WeekView` | `useOwnerUserSummaries`; hover replaces old inline dropdown |
 
-**Not migrated:** `PatientPortalPage` appointment timeline (separate layout; still uses `AppointmentListColorBar` only).
+**Patient portal:** Timeline rail (status dot) wraps `AppointmentCard` `variant="list"` `hideActionsRail`. API `mapPortalAppointmentsFromRows` includes `category_data`, `portal_owner` / `portal_treating_physician` (`id`, `role`). Booking still uses `invalidatePatientPortal`.
 
 ---
 

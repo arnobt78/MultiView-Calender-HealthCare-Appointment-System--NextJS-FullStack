@@ -135,7 +135,7 @@ export default function CalendarHeader({
     <div className="flex items-center justify-between py-3 px-2 sm:px-4 lg:px-8">
 
       {/* Date Navigation */}
-      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-2 sm:gap-3">
+      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-2 sm:gap-2">
         <div className="flex shrink-0 items-center gap-1 sm:gap-2">
           <Button
             variant="outline"

@@ -311,7 +311,7 @@ export default function InvoiceManagement() {
   }
 
   return (
-    <div className="space-y-2 pb-3">
+    <div className="space-y-2 pb-2">
       {/* Summary cards — shells always visible; value slots pulse while loading */}
       <div className="grid gap-4 sm:grid-cols-2">
         <Card className="rounded-[28px] border bg-gradient-to-br from-green-500/10 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(34,197,94,0.12)]">
@@ -359,7 +359,7 @@ export default function InvoiceManagement() {
             </p>
           )}
         </div>
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
           <Input
             placeholder="Filter invoices..."
             value={globalFilter}
@@ -408,7 +408,7 @@ export default function InvoiceManagement() {
             ) : invoices.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={columns.length} className="text-center py-12">
-                  <div className="flex flex-col items-center gap-3 text-muted-foreground">
+                  <div className="flex flex-col items-center gap-2 text-muted-foreground">
                     <Receipt className="h-10 w-10 opacity-30" />
                     <p className="font-medium">No invoices yet</p>
                     <p className="text-sm">Create your first invoice to track payments.</p>

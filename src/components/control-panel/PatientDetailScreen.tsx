@@ -89,7 +89,7 @@ function PatientDetailBodySkeleton() {
   return (
     <div className="space-y-6 text-gray-700">
       {/* Keep static schema labels/icons visible; only value slots skeletonize during refresh. */}
-      <dl className="grid gap-3 text-sm sm:grid-cols-2">
+      <dl className="grid gap-2 text-sm sm:grid-cols-2">
         <div className="sm:col-span-2 rounded-xl border border-slate-200/80 bg-slate-50/50 px-3 py-2 text-gray-700">
           <div className="flex items-center gap-2 text-xs font-medium text-gray-500">
             {/* Keep audit icon style aligned with other schema icons and stable on refresh. */}
@@ -395,7 +395,7 @@ export function PatientDetailScreen({
             <PatientDetailBodySkeleton />
           ) : mode === "view" ? (
             <>
-              <dl className="grid gap-3 text-sm sm:grid-cols-2">
+              <dl className="grid gap-2 text-sm sm:grid-cols-2">
                 <div className="sm:col-span-2 rounded-xl border border-slate-200/80 bg-slate-50/50 px-3 py-2 text-gray-700">
                   <div className="flex items-center gap-2 text-xs font-medium text-gray-500">
                     {/* Keep audit icon style consistent with all other schema icon circles. */}

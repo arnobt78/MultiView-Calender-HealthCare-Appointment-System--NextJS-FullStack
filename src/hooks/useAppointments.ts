@@ -21,6 +21,7 @@ import {
   fetchDashboardAccessAccepted,
 } from "@/lib/query-fetchers";
 import { Appointment, Category, Patient, AppointmentAssignee } from "@/types/types";
+import type { PortalAppointmentStaffUser } from "@/lib/serializers";
 import { notify } from "@/lib/notify";
 import { useAuth } from "./useAuth";
 import { format } from "date-fns";
@@ -31,6 +32,9 @@ export type FullAppointment = Appointment & {
   patient_data?: Patient;
   appointment_assignee?: (AppointmentAssignee & { invited_email?: string })[];
   invited_email?: string;
+  /** Patient portal joins — staff links without `/api/users/search`. */
+  portal_owner?: PortalAppointmentStaffUser;
+  portal_treating_physician?: PortalAppointmentStaffUser;
 };
 
 function formatAppointmentRange(start?: string, end?: string) {

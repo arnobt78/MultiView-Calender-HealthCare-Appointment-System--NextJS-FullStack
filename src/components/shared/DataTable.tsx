@@ -182,15 +182,16 @@ export function DataTable<TData, TValue>({
                   const columnMeta = header.column.columnDef.meta as DataTableColumnMeta | undefined;
                   const columnId = header.column.id;
                   return (
-                  <TableHead
-                    key={header.id}
-                    className={dataTableHeadShellClass(columnId, columnMeta)}
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
-                  </TableHead>
-                )})}
+                    <TableHead
+                      key={header.id}
+                      className={dataTableHeadShellClass(columnId, columnMeta)}
+                    >
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(header.column.columnDef.header, header.getContext())}
+                    </TableHead>
+                  )
+                })}
               </TableRow>
             ))}
           </TableHeader>
@@ -213,7 +214,7 @@ export function DataTable<TData, TValue>({
                           </div>
                         ) : columnId === "name" ? (
                           // Patient list: avatar + lines grouped like the loaded cell (avoids a wide empty band on large screens).
-                          <div className="flex min-h-[2.75rem] w-full min-w-0 flex-row items-center gap-3">
+                          <div className="flex min-h-[2.75rem] w-full min-w-0 flex-row items-center gap-2">
                             <Skeleton className="h-9 w-9 shrink-0 rounded-full" aria-hidden />
                             <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
                               <Skeleton className="h-4 w-full max-w-[14rem] rounded-sm" />
@@ -267,13 +268,14 @@ export function DataTable<TData, TValue>({
                     const columnMeta = cell.column.columnDef.meta as DataTableColumnMeta | undefined;
                     const columnId = cell.column.id;
                     return (
-                    <TableCell
-                      key={cell.id}
-                      className={dataTableCellShellClass(columnId, columnMeta)}
-                    >
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  )})}
+                      <TableCell
+                        key={cell.id}
+                        className={dataTableCellShellClass(columnId, columnMeta)}
+                      >
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    )
+                  })}
                 </TableRow>
               ))
             ) : (

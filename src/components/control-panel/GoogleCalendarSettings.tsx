@@ -66,7 +66,7 @@ export default function GoogleCalendarSettings() {
   }
 
   return (
-    <div className="space-y-6 max-w-2xl pb-3">
+    <div className="space-y-6 max-w-2xl pb-2">
       {/* Heading stays static */}
       <div>
         <h2 className="text-xl font-bold flex items-center gap-2">
@@ -103,7 +103,7 @@ export default function GoogleCalendarSettings() {
             </CardDescription>
           )}
         </CardHeader>
-        <CardContent className="flex flex-wrap gap-3">
+        <CardContent className="flex flex-wrap gap-2">
           {loading ? (
             /* Action button: pulse while loading */
             <Skeleton className="h-9 w-48 rounded-lg" />
@@ -199,7 +199,7 @@ export default function GoogleCalendarSettings() {
       {/* Sync info — only visible when connected (data-driven, no skeleton needed — it appears after loading) */}
       {!loading && isConnected && (
         <Card className="border-blue-200 bg-blue-50/40 rounded-[28px]">
-          <CardContent className="pt-4 flex items-start gap-3">
+          <CardContent className="pt-4 flex items-start gap-2">
             <RefreshCw className="h-5 w-5 text-blue-600  shrink-0" />
             <div>
               <p className="font-medium text-blue-800 text-sm">Auto-sync enabled</p>

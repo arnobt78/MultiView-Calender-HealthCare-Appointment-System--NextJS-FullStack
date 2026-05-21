@@ -112,7 +112,7 @@ export function DoctorGlobalTypeConfigEditor({ doctorId }: Props) {
         return (
           <li
             key={t.id}
-            className="flex items-center gap-3 rounded-lg border bg-emerald-50/40 px-3 py-2 text-xs"
+            className="flex items-center gap-2 rounded-lg border bg-emerald-50/40 px-3 py-2 text-xs"
           >
             <span className="relative flex shrink-0 items-center">
               {isPending ? (

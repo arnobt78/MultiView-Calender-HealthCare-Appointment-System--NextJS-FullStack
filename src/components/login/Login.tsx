@@ -269,7 +269,7 @@ export default function Login({ redirect = null }: LoginProps) {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.7, ease: "easeOut" }}
             >
-              <div className="flex items-center gap-3 mb-8">
+              <div className="flex items-center gap-2 mb-8">
                 <div className="p-2.5 bg-white/15 rounded-2xl backdrop-blur-md border border-white/20">
                   <CalendarDays className="h-6 w-6 text-white" />
                 </div>
@@ -288,7 +288,7 @@ export default function Login({ redirect = null }: LoginProps) {
               </p>
             </motion.div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2">
               {features.map(({ icon: Icon, title, description }, i) => (
                 <motion.div
                   key={title}

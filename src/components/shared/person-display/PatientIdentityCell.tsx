@@ -57,7 +57,7 @@ export function PatientIdentityCell({
   return (
     <div
       className={cn(
-        "flex min-w-0 flex-row items-center gap-3",
+        "flex min-w-0 flex-row items-center gap-2",
         clinicalTableCellMinRowClass,
         className
       )}

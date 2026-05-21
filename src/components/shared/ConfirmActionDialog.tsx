@@ -84,7 +84,7 @@ export function ConfirmActionDialog({
       <AlertDialogContent
         className="rounded-[24px] border border-white/20 bg-white/95 p-6 shadow-[0_26px_70px_rgba(15,23,42,0.24)]"
       >
-        <AlertDialogHeader className="gap-3">
+        <AlertDialogHeader className="gap-2">
           <AlertDialogMedia className={cn("size-14 rounded-2xl", style.media)}>
             <Icon className={cn("size-7", style.icon)} />
           </AlertDialogMedia>

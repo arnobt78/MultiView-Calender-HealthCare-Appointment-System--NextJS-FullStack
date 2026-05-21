@@ -35,7 +35,7 @@ export default function GlobalError({ error, reset }: ErrorProps) {
           <p className="text-xs text-muted-foreground/60 mt-2 font-mono">Error ID: {error.digest}</p>
         )}
       </div>
-      <div className="flex gap-3">
+      <div className="flex gap-2">
         <Button variant="outline" onClick={() => window.history.back()}>
           Go back
         </Button>

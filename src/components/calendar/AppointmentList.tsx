@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, type ComponentType } from "react";
 import { FullAppointment } from "@/hooks/useAppointments";
 import { useAssignees } from "@/hooks/useAssignees";
 import { useOwnerUserSummaries } from "@/hooks/useOwnerUserSummaries";
@@ -14,6 +14,14 @@ import {
 } from "@/context/CalendarFiltersContext";
 import { summarizeDayAppointments } from "@/lib/appointment-stats";
 import { collectAppointmentStaffUserIds } from "@/lib/appointment-card";
+import {
+  APPOINTMENT_LIST_SECTION_UI,
+  bucketDateGroupsByListSection,
+  groupRowsByStartDate,
+  prioritizeTodayGroup,
+  type AppointmentListSectionKey,
+} from "@/lib/appointment-list-sections";
+import { AppointmentListSectionAccordion } from "@/components/shared/AppointmentListSectionAccordion";
 import type { AppointmentAssignee, Patient } from "@/types/types";
 import Filters from "./Filters";
 import AppointmentDialogController from "./AppointmentDialogController";
@@ -26,8 +34,14 @@ import {
   CalendarClock,
   CalendarX2,
   CalendarDays,
-  ChevronDown,
 } from "lucide-react";
+
+const LIST_SECTION_ICONS: Record<ListSectionKey, ComponentType<{ className?: string }>> = {
+  today: CalendarCheck2,
+  tomorrow: CalendarClock,
+  passed: CalendarX2,
+  later: CalendarDays,
+};
 import VideoCall from "./VideoCall";
 import { AppointmentCard } from "@/components/shared/AppointmentCard";
 import GlobalCalendarFilters from "./GlobalCalendarFilters";
@@ -96,35 +110,7 @@ function DateHeadline({
   );
 }
 
-// Helper to group appointments by date (ascending, today first)
-function groupAppointmentsByDate(appts: FullAppointment[]) {
-  const groups: { [date: string]: FullAppointment[] } = {};
-  appts.forEach((appt) => {
-    const d = new Date(appt.start);
-    d.setHours(0, 0, 0, 0);
-    const key = d.toISOString();
-    if (!groups[key]) groups[key] = [];
-    groups[key].push(appt);
-  });
-
-  // Removed stray today.setHours(0, 0, 0, 0); // 'today' is not defined here and not needed
-  const sortedKeys = Object.keys(groups).sort((a, b) => {
-    const da = new Date(a);
-    const db = new Date(b);
-    return da.getTime() - db.getTime();
-  });
-  return sortedKeys.map((key) => ({ date: new Date(key), appts: groups[key] }));
-}
-
-type ListSectionKey = "today" | "tomorrow" | "passed" | "later";
-
-function dayDiffFromToday(date: Date) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  return Math.floor((d.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-}
+type ListSectionKey = AppointmentListSectionKey;
 
 export default function AppointmentList() {
   const { user } = useAuth();
@@ -258,88 +244,22 @@ export default function AppointmentList() {
   // Removed Supabase Storage bucket listing code
 
   // Group appointments by date (descending)
-  const grouped = groupAppointmentsByDate(filteredAppointments);
-  const groupedWithTodayFirst = useMemo(() => {
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
-    const todayIdx = grouped.findIndex((g) => {
-      const d = new Date(g.date);
-      d.setHours(0, 0, 0, 0);
-      return d.getTime() === now.getTime();
-    });
-    if (todayIdx <= 0) return grouped;
-    const copy = [...grouped];
-    const [todayGroup] = copy.splice(todayIdx, 1);
-    return [todayGroup, ...copy];
-  }, [grouped]);
+  const groupedWithTodayFirst = useMemo(
+    () => prioritizeTodayGroup(groupRowsByStartDate(filteredAppointments)),
+    [filteredAppointments]
+  );
 
   const groupedSections = useMemo(() => {
-    const today: { date: Date; appts: FullAppointment[] }[] = [];
-    const tomorrow: { date: Date; appts: FullAppointment[] }[] = [];
-    const passed: { date: Date; appts: FullAppointment[] }[] = [];
-    const later: { date: Date; appts: FullAppointment[] }[] = [];
-
-    groupedWithTodayFirst.forEach((group) => {
-      const diff = dayDiffFromToday(group.date);
-      if (diff === 0) today.push(group);
-      else if (diff === 1) tomorrow.push(group);
-      else if (diff < 0) passed.push(group);
-      else later.push(group);
-    });
-
-    return { today, tomorrow, passed, later };
+    const raw = bucketDateGroupsByListSection(groupedWithTodayFirst);
+    return {
+      today: raw.today.map((g) => ({ date: g.date, appts: g.items })),
+      tomorrow: raw.tomorrow.map((g) => ({ date: g.date, appts: g.items })),
+      passed: raw.passed.map((g) => ({ date: g.date, appts: g.items })),
+      later: raw.later.map((g) => ({ date: g.date, appts: g.items })),
+    };
   }, [groupedWithTodayFirst]);
 
-  const sectionConfig = useMemo(
-    () => [
-      {
-        key: "today" as const,
-        title: "Today's Appointments",
-        subtitle: "Scheduled for today",
-        icon: CalendarCheck2,
-        headerClass:
-          "border-emerald-300/55 bg-gradient-to-r from-emerald-50 via-emerald-50/80 to-emerald-100/70",
-        iconClass: "border-emerald-200 bg-emerald-100 text-emerald-700",
-        countClass: "bg-emerald-100 text-emerald-700",
-        emptyMessage: "No appointments for today.",
-      },
-      {
-        key: "tomorrow" as const,
-        title: "Tomorrow",
-        subtitle: "Upcoming appointments for Tomorrow",
-        icon: CalendarClock,
-        headerClass:
-          "border-blue-300/55 bg-gradient-to-r from-blue-50 via-blue-50/80 to-sky-100/70",
-        iconClass: "border-blue-200 bg-blue-100 text-blue-700",
-        countClass: "bg-blue-100 text-blue-700",
-        emptyMessage: "No appointments planned for tomorrow.",
-      },
-      {
-        key: "passed" as const,
-        title: "Passed Days",
-        // Auto-cleanup note: past appointments are purged on the 1st of each month via cron.
-        subtitle: "Previous appointments · Auto-deleted on the 1st of each month",
-        icon: CalendarX2,
-        headerClass:
-          "border-gray-300/55 bg-gradient-to-r from-gray-50 via-gray-50/80 to-slate-100/70",
-        iconClass: "border-gray-200 bg-gray-100 text-gray-700",
-        countClass: "bg-gray-200 text-gray-700",
-        emptyMessage: "No passed appointments.",
-      },
-      {
-        key: "later" as const,
-        title: "Later",
-        subtitle: "Future appointments after tomorrow",
-        icon: CalendarDays,
-        headerClass:
-          "border-violet-300/55 bg-gradient-to-r from-violet-50 via-violet-50/80 to-violet-100/70",
-        iconClass: "border-violet-200 bg-violet-100 text-violet-700",
-        countClass: "bg-violet-100 text-violet-700",
-        emptyMessage: "No later appointments.",
-      },
-    ],
-    []
-  );
+  const sectionConfig = APPOINTMENT_LIST_SECTION_UI;
 
   const toggleSection = (key: ListSectionKey) => {
     setCollapsedSections((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -388,7 +308,7 @@ export default function AppointmentList() {
                   <div className="h-3.5 w-20 bg-gray-100 rounded" />
                 </div>
               </div>
-              <div className="flex flex-col items-center justify-center gap-3 min-w-[68px] py-4 px-3 border-l border-gray-100">
+              <div className="flex flex-col items-center justify-center gap-2 min-w-[68px] py-4 px-3 border-l border-gray-100">
                 <div className="h-9 w-20 bg-gray-100 rounded-2xl" />
                 <div className="h-8 w-8 bg-gray-100 rounded-full" />
               </div>
@@ -438,101 +358,69 @@ export default function AppointmentList() {
                 const groups = groupedSections[section.key];
                 const sectionCount = groups.reduce((acc, g) => acc + g.appts.length, 0);
                 const isCollapsed = collapsedSections[section.key];
-                const SectionIcon = section.icon;
+                const SectionIcon = LIST_SECTION_ICONS[section.key];
                 return (
-                  <div
+                  <AppointmentListSectionAccordion
                     key={section.key}
-                    className={`overflow-hidden rounded-2xl border ${section.headerClass}`}
+                    section={section}
+                    icon={<SectionIcon className="h-4.5 w-4.5" />}
+                    count={sectionCount}
+                    collapsed={isCollapsed}
+                    onToggle={() => toggleSection(section.key)}
                   >
-                    <button
-                      type="button"
-                      aria-expanded={!isCollapsed}
-                      onClick={() => toggleSection(section.key)}
-                      className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-white/35"
-                    >
-                      <span className={`flex h-9 w-9 items-center justify-center rounded-2xl border ${section.iconClass}`}>
-                        <SectionIcon className="h-4.5 w-4.5" />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className="text-sm font-semibold text-gray-700">{section.title}</p>
-                          <Badge variant="outline" className={`border-transparent ${section.countClass}`}>
-                            {sectionCount}
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-gray-500">{section.subtitle}</p>
+                    {groups.length === 0 ? (
+                      <div className="mt-2 flex items-center gap-2 rounded-2xl border border-dashed border-gray-300/80 bg-gray-50/80 px-3 py-2.5 text-sm text-gray-500">
+                        <SectionIcon className="h-4 w-4 text-gray-400" aria-hidden />
+                        <span>{section.emptyMessage}</span>
                       </div>
-                      <span className="inline-flex h-7 w-24 shrink-0 items-center justify-center gap-1 rounded-full bg-white/70 px-2 text-xs font-medium text-gray-700 shadow-lg">
-                        <ChevronDown
-                          className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ease-out will-change-transform ${isCollapsed ? "-rotate-90" : "rotate-0"}`}
-                          aria-hidden
-                        />
-                        <span className="whitespace-nowrap text-center">{isCollapsed ? "Expand" : "Collapse"}</span>
-                      </span>
-                    </button>
+                    ) : (
+                      groups.map(({ date, appts }) => (
+                        <div key={`${section.key}-${date.toISOString()}`}>
+                          <DateHeadline date={date} dayStats={summarizeDayAppointments(appts)} />
+                          <div className="flex flex-col gap-4">
+                            {appts.map((appt: FullAppointment, i: number) => {
+                              const start = new Date(appt.start);
+                              const now = new Date();
+                              const isTodayAppt =
+                                start.getFullYear() === now.getFullYear() &&
+                                start.getMonth() === now.getMonth() &&
+                                start.getDate() === now.getDate();
 
-                    <motion.div
-                      initial={false}
-                      animate={isCollapsed ? { height: 0, opacity: 0 } : { height: "auto", opacity: 1 }}
-                      transition={{ duration: 0.25, ease: "easeInOut" }}
-                      className="overflow-hidden bg-white/95"
-                    >
-                      <div className="px-3 pb-3">
-                        {groups.length === 0 ? (
-                          <div className="mt-2 flex items-center gap-2 rounded-2xl border border-dashed border-gray-300/80 bg-gray-50/80 px-3 py-2.5 text-sm text-gray-500">
-                            <SectionIcon className="h-4 w-4 text-gray-400" />
-                            <span>{section.emptyMessage}</span>
+                              return (
+                                <motion.div
+                                  key={appt.id}
+                                  data-today={isTodayAppt ? "true" : undefined}
+                                  ref={isTodayAppt && i === 0 ? scrollRef : null}
+                                  initial={{ opacity: 0, y: 14 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  transition={{ duration: 0.32, delay: i * 0.07 }}
+                                >
+                                  <AppointmentCard
+                                    variant="list"
+                                    appointment={appt}
+                                    patients={patients}
+                                    assignees={assignees}
+                                    ownerUsers={ownerUsers}
+                                    onEdit={handleEdit}
+                                    onDelete={handleDelete}
+                                    onToggleStatus={handleToggleStatus}
+                                    telehealthSlot={
+                                      appt.is_telehealth ? (
+                                        <VideoCall
+                                          appointmentId={appt.id}
+                                          appointmentTitle={appt.title ?? "Video Consultation"}
+                                        />
+                                      ) : undefined
+                                    }
+                                  />
+                                </motion.div>
+                              );
+                            })}
                           </div>
-                        ) : (
-                          groups.map(({ date, appts }) => (
-                            <div key={`${section.key}-${date.toISOString()}`}>
-                              <DateHeadline date={date} dayStats={summarizeDayAppointments(appts)} />
-                              <div className="flex flex-col gap-4">
-                                {appts.map((appt: FullAppointment, i: number) => {
-                                  const start = new Date(appt.start);
-                                  const now = new Date();
-                                  const isToday =
-                                    start.getFullYear() === now.getFullYear() &&
-                                    start.getMonth() === now.getMonth() &&
-                                    start.getDate() === now.getDate();
-
-                                  return (
-                                    <motion.div
-                                      key={appt.id}
-                                      data-today={isToday ? "true" : undefined}
-                                      ref={isToday && i === 0 ? scrollRef : null}
-                                      initial={{ opacity: 0, y: 14 }}
-                                      animate={{ opacity: 1, y: 0 }}
-                                      transition={{ duration: 0.32, delay: i * 0.07 }}
-                                    >
-                                      <AppointmentCard
-                                        variant="list"
-                                        appointment={appt}
-                                        patients={patients}
-                                        assignees={assignees}
-                                        ownerUsers={ownerUsers}
-                                        onEdit={handleEdit}
-                                        onDelete={handleDelete}
-                                        onToggleStatus={handleToggleStatus}
-                                        telehealthSlot={
-                                          appt.is_telehealth ? (
-                                            <VideoCall
-                                              appointmentId={appt.id}
-                                              appointmentTitle={appt.title ?? "Video Consultation"}
-                                            />
-                                          ) : undefined
-                                        }
-                                      />
-                                    </motion.div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </motion.div>
-                  </div>
+                        </div>
+                      ))
+                    )}
+                  </AppointmentListSectionAccordion>
                 );
               })}
             </motion.div>

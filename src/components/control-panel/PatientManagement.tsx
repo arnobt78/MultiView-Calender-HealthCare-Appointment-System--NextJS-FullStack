@@ -647,7 +647,7 @@ function PatientManagementInner() {
           >
             <div className="shrink-0 bg-white pt-6">
               <div className="px-6">
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-2">
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-emerald-200/70 bg-emerald-50 text-emerald-700">
                     <UserPlus className="h-5 w-5" aria-hidden />
                   </span>

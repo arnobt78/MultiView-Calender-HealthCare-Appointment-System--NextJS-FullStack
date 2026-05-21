@@ -248,7 +248,7 @@ export default function ServicesPage({ initialDoctors, initialServiceCatalog }: 
     filters.date != null;
 
   return (
-    <div className="space-y-4 py-0 pb-3">
+    <div className="space-y-2 pb-2">
       <PortalChromeHeader
         icon={Stethoscope}
         title="Doctors & Services"

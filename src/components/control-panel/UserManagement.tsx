@@ -92,10 +92,10 @@ function UserStatCards({ users, isLoading }: { users: User[]; isLoading: boolean
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
       {stats.map(({ label, value, icon, cls, valueCls, iconCls }) => (
         <Card key={label} className={cn("rounded-[16px] border", cls)}>
-          <CardContent className="p-3 flex items-center gap-3">
+          <CardContent className="p-3 flex items-center gap-2">
             <span className={cn("flex h-9 w-9 items-center justify-center rounded-xl border shrink-0", iconCls)}>
               {icon}
             </span>
@@ -194,7 +194,7 @@ export default function UserManagement() {
           ? `/control-panel/doctors/${u.id}`
           : `/control-panel/users/${u.id}`;
         return (
-          <div className={cn("flex min-w-0 items-center gap-3", clinicalTableCellMinRowClass)}>
+          <div className={cn("flex min-w-0 items-center gap-2", clinicalTableCellMinRowClass)}>
             <UserAvatar
               src={u.image}
               fallbackText={u.display_name || u.email || "?"}

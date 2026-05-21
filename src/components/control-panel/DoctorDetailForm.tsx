@@ -57,7 +57,7 @@ export function DoctorDetailForm({ initialUser }: DoctorDetailFormProps) {
   return (
     <div className="space-y-3">
       <h3 className="font-semibold text-sm">Edit Profile</h3>
-      <div className="grid gap-3">
+      <div className="grid gap-2">
         <div className="space-y-1.5">
           <Label htmlFor="display_name">Display Name</Label>
           <Input

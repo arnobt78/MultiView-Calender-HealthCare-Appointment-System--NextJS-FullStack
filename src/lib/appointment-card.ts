@@ -1,6 +1,10 @@
 import type { FullAppointment } from "@/hooks/useAppointments";
 import type { Patient } from "@/types/types";
 
+/** Shared meta row group wrapper — dashboard list + patient portal timeline. */
+export const appointmentCardMetaGroupClass =
+  "flex min-w-0 flex-wrap items-center gap-x-4 text-xs text-gray-600";
+
 /** Tailwind width for hover/popover surfaces — fixed so text wraps with break-words inside. */
 export const APPOINTMENT_CARD_POPOVER_WIDTH = "w-[320px]";
 

@@ -13,7 +13,8 @@ type PortalChromeHeaderProps = {
 };
 
 /**
- * Page chrome for `/services` and `/patient-portal` — tall icon column spans title + subtitle, then `border-b`.
+ * Page chrome for `/services` and `/patient-portal` — icon tile + title stack, then `border-b`.
+ * Padding matches control-panel `PageHeader` inner `py-2` (not `pb-4`).
  * Static shell always mounts; only inner page data slots pulse elsewhere.
  */
 export function PortalChromeHeader({
@@ -26,7 +27,7 @@ export function PortalChromeHeader({
   return (
     <div
       className={cn(
-        "flex flex-col gap-3 border-b pb-4 md:flex-row md:items-stretch md:justify-between",
+        "flex flex-col gap-2 border-b py-2 md:flex-row md:items-stretch md:justify-between",
         className
       )}
     >
@@ -34,7 +35,7 @@ export function PortalChromeHeader({
         <span className="flex w-12 shrink-0 items-center justify-center self-stretch min-h-[3.5rem] rounded-xl border border-sky-200 bg-sky-100">
           <Icon className="h-6 w-6 text-sky-600" aria-hidden />
         </span>
-        <div className="flex min-w-0 flex-col justify-center">
+        <div className="flex min-w-0 flex-1 flex-col justify-center">
           <h1 className="text-xl font-semibold tracking-tight text-gray-700 md:text-2xl">{title}</h1>
           <p className="text-sm text-muted-foreground">{description}</p>
         </div>

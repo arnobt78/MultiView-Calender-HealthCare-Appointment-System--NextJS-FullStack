@@ -16,7 +16,7 @@
  * - Inline skeleton pattern: structural chrome always mounted, only data values pulse
  */
 
-import { useState, useEffect, useLayoutEffect, type ReactNode } from "react";
+import { useState, useEffect, useLayoutEffect, useMemo, type ReactNode } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { addMinutes, differenceInYears, format, isPast, isFuture, isToday } from "date-fns";
 import type { PortalPrefetchData } from "@/lib/server-prefetch";
@@ -31,8 +31,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { UserAvatar } from "@/components/shared/UserAvatar";
-import { AppointmentListColorBar } from "@/components/shared/AppointmentListColorBar";
+import { AppointmentListSectionAccordion } from "@/components/shared/AppointmentListSectionAccordion";
+import { PortalAppointmentTimelineCard } from "@/components/shared/PortalAppointmentTimelineCard";
 import { useAppointmentColor } from "@/context/AppointmentColorContext";
+import {
+  appointmentListSectionConfig,
+  bucketDateGroupsByListSection,
+  groupRowsByStartDate,
+  listSectionsForPortalFilter,
+  prioritizeTodayGroup,
+  type AppointmentListSectionKey,
+} from "@/lib/appointment-list-sections";
 import {
   Dialog,
   DialogContent,
@@ -57,8 +66,10 @@ import {
   Cake,
   Calendar,
   CalendarCheck,
+  CalendarCheck2,
   CalendarClock,
   CalendarDays,
+  CalendarX2,
   CalendarPlus,
   CheckCircle2,
   Clock,
@@ -80,7 +91,6 @@ import {
 } from "lucide-react";
 import type { Patient, PatientClinicalProfile, User as AppUser } from "@/types/types";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
-import { RoleEntityLink } from "@/components/shared/RoleEntityLink";
 import { DoctorSelectOption } from "@/components/shared/doctor-display/DoctorSelectOption";
 import { DoctorIdentityRow } from "@/components/shared/doctor-display/DoctorIdentityRow";
 import { PortalChromeHeader } from "@/components/shared/PortalChromeHeader";
@@ -630,14 +640,59 @@ export function BookAppointmentDialog({ preselectedDoctorId, trigger }: BookAppo
 }
 
 // ---------------------------------------------------------------------------
-// APPOINTMENT TIMELINE
+// APPOINTMENT TIMELINE — dashboard list sections + per-id color palette
 // ---------------------------------------------------------------------------
 
 type ApptRow = PortalPrefetchData["appointments"][number];
 
-function AppointmentTimeline({ appointments, loading }: { appointments: ApptRow[]; loading?: boolean }) {
+const PORTAL_LIST_SECTION_ICONS: Record<
+  AppointmentListSectionKey,
+  React.ComponentType<{ className?: string }>
+> = {
+  today: CalendarCheck2,
+  tomorrow: CalendarClock,
+  passed: CalendarX2,
+  later: CalendarDays,
+};
+
+function PortalTimelineRailItem({
+  appt,
+  statusMeta,
+}: {
+  appt: ApptRow;
+  statusMeta: { icon: ReactNode };
+}) {
   const { getAppointmentColorToken } = useAppointmentColor();
+  const lineColor = getAppointmentColorToken(appt.id, null).lineColor;
+  return (
+    <div className="relative pl-12">
+      <div
+        className="absolute left-2 top-4 z-10 flex h-5 w-5 items-center justify-center rounded-full border-2 border-background text-white shadow-sm"
+        style={{ backgroundColor: lineColor }}
+      >
+        {statusMeta.icon}
+      </div>
+      <PortalAppointmentTimelineCard appointment={appt} />
+    </div>
+  );
+}
+
+function AppointmentTimeline({
+  appointments,
+  loading,
+}: {
+  appointments: ApptRow[];
+  loading?: boolean;
+}) {
   const [filter, setFilter] = useState<"all" | "upcoming" | "past">("all");
+  const [collapsedSections, setCollapsedSections] = useState<
+    Record<AppointmentListSectionKey, boolean>
+  >({
+    today: false,
+    tomorrow: false,
+    passed: false,
+    later: false,
+  });
 
   const filtered = appointments.filter((a) => {
     const d = new Date(a.start);
@@ -645,6 +700,13 @@ function AppointmentTimeline({ appointments, loading }: { appointments: ApptRow[
     if (filter === "past") return isPast(d) && !isToday(d);
     return true;
   });
+
+  const sectionBuckets = useMemo(() => {
+    const grouped = prioritizeTodayGroup(groupRowsByStartDate(filtered));
+    return bucketDateGroupsByListSection(grouped);
+  }, [filtered]);
+
+  const visibleSectionKeys = listSectionsForPortalFilter(filter);
 
   const filterTabs: { key: "all" | "upcoming" | "past"; label: string; icon: React.ReactNode }[] = [
     { key: "all", label: "All", icon: <List className="h-3.5 w-3.5" /> },
@@ -657,18 +719,18 @@ function AppointmentTimeline({ appointments, loading }: { appointments: ApptRow[
      * Single shadcn `Card` — section title + toolbar + list live inside one `CardContent`
      * so the heading is not visually split from the body (same pattern as sidebar).
      */
-    <Card className="rounded-[24px] border border-violet-100/60 bg-card shadow-[0_8px_32px_rgba(139,92,246,0.15)] overflow-hidden">
+    <Card className="rounded-[24px] border border-slate-200/80 bg-card shadow-md overflow-hidden">
       <CardContent className="space-y-4 p-4 text-gray-700 sm:p-6">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-violet-100/70 pb-3">
-          <h3 className="flex items-center gap-2 text-sm font-semibold text-violet-800">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-violet-100 border border-violet-200 shrink-0">
-              <CalendarDays className="h-3.5 w-3.5 text-violet-600" />
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/70 pb-2">
+          <h3 className="flex items-center gap-2 text-sm font-semibold text-sky-800">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-100 border border-sky-200 shrink-0">
+              <CalendarDays className="h-3.5 w-3.5 text-sky-600" />
             </span>
             Appointment History
             {!loading && (
               <Badge
                 variant="outline"
-                className="calendar-glass-badge calendar-glass-badge-violet font-bold ml-1"
+                className="calendar-glass-badge calendar-glass-badge-sky font-bold ml-1"
               >
                 {filtered.length}
               </Badge>
@@ -717,125 +779,55 @@ function AppointmentTimeline({ appointments, loading }: { appointments: ApptRow[
               <p className="font-medium text-gray-700">No appointments yet</p>
               <p className="mt-1 text-xs text-gray-600">Your history will appear here once you&apos;ve had appointments.</p>
             </div>
+          ) : filtered.length === 0 ? (
+            <p className="py-6 text-center text-sm text-gray-700">No {filter} appointments.</p>
           ) : (
-            /* Timeline */
-            <div className="relative space-y-3 before:absolute before:inset-y-0 before:left-[18px] before:w-0.5 before:bg-linear-to-b before:from-sky-300/60 before:via-sky-200/40 before:to-transparent">
-              {filtered.map((appt) => {
-                const status = appt.status ?? "pending";
-                const meta = STATUS_META[status] ?? STATUS_META.pending;
-                const startDate = new Date(appt.start);
-                const colorToken = getAppointmentColorToken(
-                  appt.id,
-                  appt.category?.color ?? null
-                );
+            <div className="flex flex-col gap-4">
+              {visibleSectionKeys.map((sectionKey) => {
+                const section = appointmentListSectionConfig(sectionKey);
+                const groups = sectionBuckets[sectionKey];
+                const sectionCount = groups.reduce((acc, g) => acc + g.items.length, 0);
+                const isCollapsed = collapsedSections[sectionKey];
+                const SectionIcon = PORTAL_LIST_SECTION_ICONS[sectionKey];
                 return (
-                  <div key={appt.id} className="relative pl-12">
-                    {/* Timeline dot — colored by status */}
-                    <div className={`absolute left-2 top-4 z-10 flex h-5 w-5 items-center justify-center rounded-full border-2 border-background text-white shadow-sm ${meta.dotCls}`}>
-                      {meta.icon}
-                    </div>
-                    {/*
-                      Dashboard list row: left color bar + token-tinted surface (same tokens as
-                      `AppointmentList` + `AppointmentListColorBar`).
-                    */}
-                    <div
-                      className="relative flex min-h-[100px] items-stretch overflow-hidden rounded-2xl border shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl"
-                      style={{
-                        backgroundColor: colorToken.cardBgColor,
-                        borderColor: colorToken.cardBorderColor,
-                      }}
-                    >
-                      <AppointmentListColorBar color={colorToken.lineColor} />
-                      <div className="flex min-w-0 flex-1 flex-col gap-1 p-4 pl-5">
-                        <div className="flex flex-wrap items-start justify-between gap-4">
-                          <div className="min-w-0 flex-1 space-y-1">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <RoleEntityLink
-                                kind="appointment"
-                                id={appt.id}
-                                label={appt.title}
-                                className="text-sm font-semibold"
-                              />
-                              <Badge
-                                variant="outline"
-                                className={cn("calendar-glass-badge gap-1 text-xs", meta.glassCls)}
-                              >
-                                {meta.icon}
-                                <span className="ml-1">{meta.label}</span>
-                              </Badge>
-                              {appt.category && (
-                                <Badge
-                                  variant="outline"
-                                  className="calendar-glass-badge calendar-glass-badge-violet gap-1 text-xs"
-                                >
-                                  <span
-                                    className="inline-block h-2 w-2 shrink-0 rounded-full"
-                                    style={{ background: appt.category.color ?? "#888" }}
-                                  />
-                                  {appt.category.label}
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="flex flex-wrap gap-2 text-xs text-gray-600">
-                              <span className="flex items-center gap-1">
-                                <Clock className="h-3 w-3 shrink-0 text-gray-500" />
-                                <span className="font-medium text-gray-700">
-                                  {format(startDate, "dd MMM yyyy, HH:mm")}
-                                  {" — "}
-                                  {format(new Date(appt.end), "HH:mm")}
-                                </span>
-                              </span>
-                              {appt.location && (
-                                <span className="flex items-center gap-1">
-                                  <MapPin className="h-3 w-3 shrink-0 text-gray-500" />
-                                  <span className="font-medium text-gray-700">{appt.location}</span>
-                                </span>
-                              )}
-                              {appt.owner && (
-                                <span className="flex items-center gap-1">
-                                  <Calendar className="h-3 w-3 shrink-0 text-gray-500" />
-                                  <span className="text-gray-600">Calendar owner</span>
-                                  <span className="font-medium text-gray-700">
-                                    {appt.owner.display_name ?? appt.owner.email}
-                                  </span>
-                                </span>
-                              )}
-                              {/*
-                                B2: When `treating_physician_id` differs from `user_id`, show the clinical
-                                contact so portal copy matches staff snapshot / serializers.
-                              */}
-                              {appt.treating_physician &&
-                                appt.treating_physician_id &&
-                                appt.treating_physician_id !== appt.user_id && (
-                                  <span className="flex items-center gap-1">
-                                    <Stethoscope className="h-3 w-3 shrink-0 text-gray-500" />
-                                    <span className="text-gray-600">Treating physician</span>
-                                    <span className="font-medium text-gray-700">
-                                      {appt.treating_physician.display_name ??
-                                        appt.treating_physician.email}
-                                    </span>
-                                  </span>
-                                )}
-                            </div>
-                            {appt.notes && (
-                              <p className="flex items-start gap-1 text-xs text-gray-600">
-                                <FileText className=" h-3 w-3 shrink-0 text-gray-500" />
-                                {appt.notes}
-                              </p>
-                            )}
-                          </div>
-                          <p className="shrink-0 text-xs font-medium text-gray-500">
-                            {isToday(startDate) ? "Today" : format(startDate, "EEE, dd MMM")}
-                          </p>
-                        </div>
+                  <AppointmentListSectionAccordion
+                    key={sectionKey}
+                    section={section}
+                    icon={<SectionIcon className="h-4.5 w-4.5" />}
+                    count={sectionCount}
+                    collapsed={isCollapsed}
+                    onToggle={() =>
+                      setCollapsedSections((prev) => ({
+                        ...prev,
+                        [sectionKey]: !prev[sectionKey],
+                      }))
+                    }
+                  >
+                    {groups.length === 0 ? (
+                      <div className="mt-1 flex items-center gap-2 rounded-2xl border border-dashed border-gray-300/80 bg-gray-50/80 px-3 py-2.5 text-sm text-gray-500">
+                        <SectionIcon className="h-4 w-4 text-gray-400" aria-hidden />
+                        <span>{section.emptyMessage}</span>
                       </div>
-                    </div>
-                  </div>
+                    ) : (
+                      <div className="relative space-y-3 before:absolute before:inset-y-0 before:left-[18px] before:w-0.5 before:bg-linear-to-b before:from-sky-300/60 before:via-sky-200/40 before:to-transparent">
+                        {groups.flatMap((group) =>
+                          group.items.map((appt) => {
+                            const status = appt.status ?? "pending";
+                            const meta = STATUS_META[status] ?? STATUS_META.pending;
+                            return (
+                              <PortalTimelineRailItem
+                                key={appt.id}
+                                appt={appt}
+                                statusMeta={meta}
+                              />
+                            );
+                          })
+                        )}
+                      </div>
+                    )}
+                  </AppointmentListSectionAccordion>
                 );
               })}
-              {filtered.length === 0 && (
-                <p className="py-6 text-center text-sm text-gray-700">No {filter} appointments.</p>
-              )}
             </div>
           )}
         </div>
@@ -969,7 +961,7 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
   }
 
   return (
-    <div className="space-y-4 py-0 pb-0 text-gray-700">
+    <div className="space-y-2 pb-2 text-gray-700">
       <PortalChromeHeader
         icon={Activity}
         title="Patient Portal"
@@ -997,7 +989,7 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
                 <div className="space-y-3">
                   {profileLoading || patient ? (
                     <>
-                      <div className="flex items-start gap-3">
+                      <div className="flex items-start gap-2">
                         {profileLoading && !patient ? (
                           <Skeleton className="h-16 w-16 shrink-0 rounded-full" />
                         ) : patient ? (
