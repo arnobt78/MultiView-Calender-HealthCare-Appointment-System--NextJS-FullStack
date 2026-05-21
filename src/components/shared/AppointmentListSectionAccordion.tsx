@@ -80,7 +80,7 @@ export function AppointmentListSectionAccordion({
           collapsed ? "max-h-0 opacity-0" : "max-h-[9999px] opacity-100"
         )}
       >
-        <div className="px-3 pb-3 pt-1">{children}</div>
+        <div className="px-3 pb-2">{children}</div>
       </div>
     </div>
   );

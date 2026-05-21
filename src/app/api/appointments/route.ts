@@ -7,13 +7,22 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { PAGINATION } from "@/lib/constants";
-import { serializeAppointment } from "@/lib/serializers";
+import { mapPortalAppointmentsFromRows, serializeAppointment } from "@/lib/serializers";
 import { appointmentCreateSchema } from "@/lib/schemas/appointment";
 import { zodBadRequest } from "@/lib/schemas/parse";
 import { getUserRole, isPatientRole } from "@/lib/rbac";
 import { appointmentDetailHref, appointmentNotificationLink } from "@/lib/entity-routes";
 import { redis } from "@/lib/redis";
 import { format } from "date-fns";
+
+export const dynamic = "force-dynamic";
+
+/** Patient callers: same joins as GET /api/patient-portal for RBAC-safe staff labels on dashboard cards. */
+const PATIENT_APPOINTMENT_INCLUDE = {
+  category: true,
+  owner: { select: { id: true, display_name: true, email: true, role: true } },
+  treating_physician: { select: { id: true, display_name: true, email: true, role: true } },
+} as const;
 
 export async function GET(req: NextRequest) {
   try {
@@ -41,8 +50,10 @@ export async function GET(req: NextRequest) {
      * Patients have appointments linked via `patient_id` (the doctor owns the row via `owner_id` / DB column `user_id`).
      * When the caller is a patient, resolve their patient record and filter by patient_id instead.
      */
+    const patientCaller = isPatientRole(callerRole);
     let where: Record<string, unknown>;
-    if (isPatientRole(callerRole)) {
+
+    if (patientCaller) {
       const userRow = await prisma.user.findUnique({ where: { id: sessionUser.userId } });
       const patientRecord = userRow
         ? await prisma.patient.findFirst({ where: { email: userRow.email } })
@@ -71,12 +82,19 @@ export async function GET(req: NextRequest) {
         orderBy: { start: "asc" },
         take: limit,
         skip: offset,
+        ...(patientCaller ? { include: PATIENT_APPOINTMENT_INCLUDE } : {}),
       }),
       prisma.appointment.count({ where }),
     ]);
 
+    const serialized = patientCaller
+      ? mapPortalAppointmentsFromRows(
+          appointments as Parameters<typeof mapPortalAppointmentsFromRows>[0]
+        )
+      : appointments.map(serializeAppointment);
+
     return NextResponse.json({
-      appointments: appointments.map(serializeAppointment),
+      appointments: serialized,
       pagination: { limit, offset, total, count: appointments.length },
     });
   } catch (error: unknown) {

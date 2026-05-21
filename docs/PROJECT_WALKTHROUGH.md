@@ -25,7 +25,17 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Prism
 - **Provider:** `DoctorDisplayProvider` (`src/context/DoctorDisplayContext.tsx`) in `AppProviders` — specialty glass classes + robohash helper (no extra network).
 - **Components:** `src/components/shared/doctor-display/*` — badges, avatars, `DoctorIdentityRow`, `DoctorLinkStack`, `DoctorCardHeroImage`, availability groups; `ServicesDoctorFilters` for client-side grid filters.
 - **Layout:** specialty badge always on its own line below name/email (`showIcon` default true). `/services` hero uses full-bleed cover with blurred backdrop fill (uniform tiles, face-biased crop); badge is in the card body under email, not on the image.
-- **Card UX:** flush hero image, `RoleEntityLink` doctor name, copy-email, grouped availability rows, book CTA via `BookAppointmentDialog`. Date filter matches calendar chrome (left calendar icon, `pl-8`, `min-w-[155px]`).
+- **Card UX:** flush hero image, `RoleEntityLink` doctor name, copy-email, grouped availability rows, book CTA via `PatientBookingDialog` (`preselectedDoctorId` + `lockDoctor`). Date filter matches calendar chrome (left calendar icon, `pl-8`, `min-w-[155px]`).
+
+### Patient booking dialog (`PatientBookingDialog`)
+
+- **Location:** `src/components/shared/patient-booking/` — shell `PatientBookingDialog.tsx`; sections `PatientBookingDoctorTypeSection`, `PatientBookingScheduleSection`, `PatientBookingConfirmSection`; `PatientBookingStepper`; styles `patient-booking-dialog-styles.ts`.
+- **Logic:** `src/lib/patient-booking-wizard.ts` — `canAdvanceFromStep`, `getNextStep`, `getBackStep`, `shouldFetchAvailabilitySlots`; tests in `src/lib/__tests__/patient-booking-wizard.test.ts`.
+- **Consumers:** `/patient-portal` (`BookAppointmentDialog` default trigger); `/services` (`preselectedDoctorId`, `lockDoctor`, custom trigger). Re-export from `PatientPortalPage` for backward imports.
+- **UI:** Sky glass 90% dialog (same rhythm as `AppointmentDialog` / `GlobalSearch`); stepper under title; progressive stacked sections; date picker loads slots inline via `useAvailabilitySlots` (no separate “See Slots” step).
+- **Data:** `useUsers({ role: "doctor" })`, `queryKeys.appointmentTypes.byDoctor(doctorId)`, `queryKeys.availability.slots`; submit `POST /api/patient-portal`.
+- **Invalidation:** `invalidateQueries({ queryKey: queryKeys.patientPortal.all })` + `invalidateAfterAppointmentMutation` on success (timeline + dashboard + slots bust).
+- **A11y:** `DialogDescription` + `aria-describedby="patient-booking-dialog-desc"` on `DialogContent`.
 - **Global reuse:** CP patient list/detail primary doctor + snapshot tables (`DoctorIdentityRow` / `DoctorIdentityCell`); portals/dialogs may still use `DoctorLinkStack` (out of clinical-table pass). Related Appointments `doctor_specialty` from snapshot API; Doctor Management doctor column + specialty column.
 - **Invalidation:** doctor PATCH / availability mutations → `invalidateUsersAndAuth` / `invalidateDoctorSchedule` → `doctors.all` refetch (no new keys).
 
@@ -188,7 +198,7 @@ const loading = !isMounted || isLoading;
 | Notifications | `control-panel/NotificationsManagement.tsx` | Table rows |
 | Google Calendar | `control-panel/GoogleCalendarSettings.tsx` | Status badge + description + action button |
 | Insights | `pages/AnalyticsPage.tsx` | Stat values + chart bars + category rows + patient table rows |
-| Patient Portal | `pages/PatientPortalPage.tsx` | Profile/summary chrome + **Appointment History** via `AppointmentCard` `audience="patient-portal"` |
+| Patient Portal | `pages/PatientPortalPage.tsx` | Profile/summary chrome + **Appointment History** via `PortalAppointmentTimelineCard`; booking via `PatientBookingDialog` |
 | Services | `pages/ServicesPage.tsx` | `DoctorProfileCardSkeleton` text slots; filter bar + card chrome static |
 
 ### Deleted loading.tsx files
@@ -203,6 +213,7 @@ Shared primitives keep layout fixed while data loads:
 | Piece | File | Role |
 |-------|------|------|
 | `PortalChromeHeader` | `src/components/shared/PortalChromeHeader.tsx` | Icon tile + title stack with `py-2` (aligned with CP `PageHeader`) |
+| `PatientBookingDialog` | `src/components/shared/patient-booking/PatientBookingDialog.tsx` | Patient/services booking wizard — glass shell, inline slots, `lockDoctor` on services |
 | `PortalStaffLink` | `src/components/shared/PortalStaffLink.tsx` | Sky link to `/doctors/:id` for doctor staff on portal cards |
 | `portal-appointment.ts` | `src/lib/portal-appointment.ts` | `portalAppointmentToFullAppointment` adapter for timeline cards |
 | `ProfileDefinitionRow` | `src/components/shared/profile/ProfileDefinitionRow.tsx` | `<dl>` row: icon + label static; variant-matched skeleton in `dd` only (`doctorStack` = Primary Doctor height) |
@@ -846,7 +857,7 @@ Shared demo credentials live in `src/lib/demo-credentials.ts` (`test@admin.com`,
 
 ### `GET /api/users`
 
-Patients are normally forbidden from listing all users. Exception: if the request includes `?role=doctor` or `?roles=doctor`, patients are allowed (scoped to `id` + `display_name` only). This lets the `BookAppointmentDialog` in the patient portal populate the doctor selector.
+Patients are normally forbidden from listing all users. Exception: if the request includes `?role=doctor` or `?roles=doctor`, patients are allowed (scoped to `id` + `display_name` only). This lets `PatientBookingDialog` populate the doctor selector on `/patient-portal` and `/services`.
 
 ---
 

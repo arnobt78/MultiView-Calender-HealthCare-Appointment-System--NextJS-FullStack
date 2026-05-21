@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+  attachPortalStaffToFullAppointment,
+  formatStaffNameEmailLabel,
   portalAppointmentToFullAppointment,
   portalOwnerDisplayLabel,
+  portalStaffDisplayLabel,
   portalTreatingDisplayLabel,
+  resolvePrimaryDoctorCardLabel,
 } from "@/lib/portal-appointment";
 import { mapPortalAppointmentsFromRows } from "@/lib/serializers";
 import { portalDoctorProfileHref } from "@/lib/entity-routes";
@@ -40,6 +44,111 @@ describe("mapPortalAppointmentsFromRows", () => {
   });
 });
 
+describe("attachPortalStaffToFullAppointment", () => {
+  it("sets portal_owner and portal_treating for patient dashboard cards", () => {
+    const row = mapPortalAppointmentsFromRows([
+      {
+        id: "a1",
+        created_at: new Date(),
+        updated_at: null,
+        start: new Date(),
+        end: new Date(),
+        location: null,
+        patient_id: "p1",
+        category_id: null,
+        notes: null,
+        title: "Visit",
+        status: "pending",
+        owner_id: "u1",
+        treating_physician_id: "u2",
+        owner: {
+          id: "u1",
+          display_name: "Demo Admin",
+          email: "admin@test.com",
+          role: "admin",
+        },
+        treating_physician: {
+          id: "u2",
+          display_name: "Demo Doctor 2",
+          email: "d2@test.com",
+          role: "doctor",
+        },
+      },
+    ])[0];
+    const full = attachPortalStaffToFullAppointment(row);
+    expect(full.portal_owner?.id).toBe("u1");
+    expect(portalStaffDisplayLabel(full.portal_owner)).toBe("Demo Admin (admin@test.com)");
+    expect(portalStaffDisplayLabel(full.portal_treating_physician)).toBe(
+      "Demo Doctor 2 (d2@test.com)"
+    );
+  });
+});
+
+describe("formatStaffNameEmailLabel", () => {
+  it("never returns a UUID-shaped primary doctor label", () => {
+    const label = formatStaffNameEmailLabel("Demo Doctor", "doc@test.com");
+    expect(label).toBe("Demo Doctor (doc@test.com)");
+    expect(label).not.toMatch(/^[0-9a-f-]{36}$/i);
+  });
+});
+
+describe("resolvePrimaryDoctorCardLabel", () => {
+  const uuid = "fa0fa454-f677-4720-a27c-60ebfcd2a192";
+
+  it("uses primary_doctor_display from patient_data instead of UUID", () => {
+    const label = resolvePrimaryDoctorCardLabel(
+      {
+        id: "p1",
+        primary_doctor_id: uuid,
+        primary_doctor_display: "Demo Doctor",
+        primary_doctor_email: "doc@test.com",
+      } as Parameters<typeof resolvePrimaryDoctorCardLabel>[0],
+      uuid,
+      () => uuid
+    );
+    expect(label).toBe("Demo Doctor (doc@test.com)");
+    expect(label).not.toBe(uuid);
+  });
+
+  it("returns null when lookup fails — never surfaces raw UUID", () => {
+    const label = resolvePrimaryDoctorCardLabel(
+      { id: "p1", primary_doctor_id: uuid } as Parameters<
+        typeof resolvePrimaryDoctorCardLabel
+      >[0],
+      uuid,
+      () => "--"
+    );
+    expect(label).toBeNull();
+  });
+
+  it("uses portal_owner label path when embedded staff present (empty ownerUsers)", () => {
+    const row = mapPortalAppointmentsFromRows([
+      {
+        id: "a1",
+        created_at: new Date(),
+        updated_at: null,
+        start: new Date(),
+        end: new Date(),
+        location: null,
+        patient_id: "p1",
+        category_id: null,
+        notes: null,
+        title: "Visit",
+        status: "pending",
+        owner_id: "u1",
+        owner: {
+          id: "u1",
+          display_name: "Demo Admin",
+          email: "admin@test.com",
+          role: "admin",
+        },
+      },
+    ])[0];
+    const full = attachPortalStaffToFullAppointment(row);
+    expect(portalStaffDisplayLabel(full.portal_owner)).toBe("Demo Admin (admin@test.com)");
+  });
+});
+
 describe("portalAppointmentToFullAppointment", () => {
   it("maps portal row to FullAppointment with category_data", () => {
     const row = mapPortalAppointmentsFromRows([
@@ -71,7 +180,7 @@ describe("portalAppointmentToFullAppointment", () => {
 });
 
 describe("portal display labels", () => {
-  it("prefers display_name over email", () => {
+  it("formats display_name with email", () => {
     expect(
       portalOwnerDisplayLabel({
         id: "u1",
@@ -79,7 +188,7 @@ describe("portal display labels", () => {
         email: "d@test.com",
         role: "doctor",
       })
-    ).toBe("Demo Doctor");
+    ).toBe("Demo Doctor (d@test.com)");
   });
 });
 

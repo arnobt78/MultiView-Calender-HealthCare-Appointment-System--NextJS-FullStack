@@ -21,7 +21,12 @@ import {
   fetchDashboardAccessAccepted,
 } from "@/lib/query-fetchers";
 import { Appointment, Category, Patient, AppointmentAssignee } from "@/types/types";
-import type { PortalAppointmentStaffUser } from "@/lib/serializers";
+import {
+  attachPortalStaffToFullAppointment,
+  isPortalSerializedAppointmentRow,
+} from "@/lib/portal-appointment";
+import type { PortalAppointmentRow, PortalAppointmentStaffUser } from "@/lib/serializers";
+import { isPatientRole } from "@/lib/rbac";
 import { notify } from "@/lib/notify";
 import { useAuth } from "./useAuth";
 import { format } from "date-fns";
@@ -116,14 +121,29 @@ export function useAppointments() {
       });
 
       const owned = ownedRes.appointments || [];
+      const patientViewer = isPatientRole(user.role);
 
-      // 2. Join for owned appointments
-      const ownedWithDetails: FullAppointment[] = owned.map((appt) => ({
-        ...appt,
-        category_data: categories.find((c) => c.id === appt.category),
-        patient_data: patients.find((p) => p.id === appt.patient),
-        appointment_assignee: allAssignees.filter((a) => a.appointment === appt.id),
-      }));
+      // 2. Join for owned appointments — patient GET returns portal-shaped rows with embedded staff
+      const ownedWithDetails: FullAppointment[] = owned.map((appt) => {
+        const assigneesForAppt = allAssignees.filter((a) => a.appointment === appt.id);
+        const patientRow = patients.find((p) => p.id === appt.patient);
+
+        if (patientViewer && isPortalSerializedAppointmentRow(appt as unknown as Record<string, unknown>)) {
+          return attachPortalStaffToFullAppointment(appt as PortalAppointmentRow, {
+            patient_data: patientRow,
+            appointment_assignee: assigneesForAppt,
+          });
+        }
+
+        return {
+          ...appt,
+          category_data:
+            (appt as FullAppointment).category_data ??
+            categories.find((c) => c.id === appt.category),
+          patient_data: patientRow,
+          appointment_assignee: assigneesForAppt,
+        };
+      });
 
       // 3. Find assigned appointments (user id or email)
       const assignedByUser = allAssignees.filter(

@@ -79,7 +79,7 @@ function DateHeadline({
   dayStats: { total: number; open: number; alert: number; done: number };
 }) {
   return (
-    <div className="mt-8 mb-3 flex flex-wrap items-center gap-2">
+    <div className="my-2 flex flex-wrap items-center gap-2">
       <div className="text-lg font-bold text-gray-700">
         {new Intl.DateTimeFormat("de-DE", {
           weekday: "long",
@@ -287,7 +287,7 @@ export default function AppointmentList() {
 
       {/* Data area — skeleton while loading, real content once ready */}
       {loadingAppointments ? (
-        <div className="animate-pulse mt-8 flex flex-col gap-4">
+        <div className="animate-pulse my-2 flex flex-col gap-4">
           <div className="h-6 w-56 bg-gray-200 rounded mb-1" />
           {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="relative rounded-2xl bg-white border border-gray-100 flex items-stretch min-h-[130px]">

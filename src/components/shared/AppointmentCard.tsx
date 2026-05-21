@@ -107,8 +107,10 @@ function AppointmentCardMeta({
     portalOwner,
     portalTreating,
   } = model;
-  const showStaffForPortal = audience === "patient-portal";
-  const showStaffForDashboard = user?.role !== "patient";
+  /** Embedded staff from portal-shaped API — patient dashboard + portal (no `/api/users/search`). */
+  const showEmbeddedStaff = Boolean(portalOwner);
+  const isPatientViewer = user?.role === "patient";
+  const showStaffForDashboard = !isPatientViewer;
   const TextWrap = wrapValues ? WrappingText : TruncatedText;
 
   return (
@@ -173,7 +175,7 @@ function AppointmentCardMeta({
         ) : null}
       </div>
 
-      {showStaffForPortal && calendarOwnerId && portalOwner ? (
+      {showEmbeddedStaff && calendarOwnerId && portalOwner ? (
         <AppointmentCardMetaRow icon={<UserCog className="h-3.5 w-3.5" />} label="Calendar owner:">
           <PortalStaffLink
             staffUserId={portalOwner.id}
@@ -184,7 +186,7 @@ function AppointmentCardMeta({
         </AppointmentCardMetaRow>
       ) : null}
 
-      {showStaffForPortal && treatingDiffersFromOwner && portalTreating ? (
+      {showEmbeddedStaff && treatingDiffersFromOwner && portalTreating ? (
         <AppointmentCardMetaRow icon={<Stethoscope className="h-3.5 w-3.5" />} label="Treating physician:">
           <PortalStaffLink
             staffUserId={portalTreating.id}
@@ -215,13 +217,22 @@ function AppointmentCardMeta({
 
       {primaryDoctorId && primaryDoctorLabel ? (
         <AppointmentCardMetaRow icon={<Stethoscope className="h-3.5 w-3.5" />} label="Primary doctor:">
-          <RoleEntityLink
-            kind="doctor"
-            id={primaryDoctorId}
-            label={primaryDoctorLabel}
-            wrapLabel={wrapValues}
-            className="text-xs font-medium"
-          />
+          {isPatientViewer ? (
+            <PortalStaffLink
+              staffUserId={primaryDoctorId}
+              staffRole="doctor"
+              label={primaryDoctorLabel}
+              wrapLabel={wrapValues}
+            />
+          ) : (
+            <RoleEntityLink
+              kind="doctor"
+              id={primaryDoctorId}
+              label={primaryDoctorLabel}
+              wrapLabel={wrapValues}
+              className="text-xs font-medium"
+            />
+          )}
         </AppointmentCardMetaRow>
       ) : null}
 

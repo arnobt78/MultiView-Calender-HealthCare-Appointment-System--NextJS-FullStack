@@ -212,8 +212,8 @@ export type PortalAppointmentIncludeRow = Parameters<typeof serializeAppointment
 export type PortalAppointmentRow = ReturnType<typeof mapPortalAppointmentsFromRows>[number];
 
 /**
- * Patient portal GET + SSR prefetch: one serialized shape for `appointments`.
- * `owner` = calendar owner (`owner_id` in Prisma → `user_id` in JSON). `treating_physician` = B2 clinical contact when distinct from owner.
+ * Patient portal GET + patient dashboard GET /api/appointments: embedded staff for cards
+ * without `/api/users/search`. `owner` = calendar owner (`user_id` on JSON).
  */
 export function mapPortalAppointmentsFromRows(rows: PortalAppointmentIncludeRow[]) {
   return rows.map((a) => {

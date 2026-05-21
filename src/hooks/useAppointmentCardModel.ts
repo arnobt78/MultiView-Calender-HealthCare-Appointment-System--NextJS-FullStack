@@ -17,6 +17,11 @@ import {
 import { dedupeAssignees } from "@/lib/appointment-assignees";
 import { resolveTreatingPhysicianUserId } from "@/lib/appointment-display-doctor";
 import { getAppointmentMenuCapabilities } from "@/lib/appointment-menu-permissions";
+import {
+  formatStaffNameEmailLabel,
+  portalStaffDisplayLabel,
+  resolvePrimaryDoctorCardLabel,
+} from "@/lib/portal-appointment";
 import { PATIENT_REFERRAL_SOURCES } from "@/lib/patient-referral-sources";
 import type { AppointmentAssignee, Patient } from "@/types/types";
 
@@ -88,12 +93,11 @@ export function useAppointmentCardModel({
   );
 
   const resolveStaffLabel = useMemo(() => {
-    return (userId: string) => {
+    return (userId: string): string => {
       if (userId === user?.id) return `you (${user?.email || "owner"})`;
       const row = ownerUsers.find((u) => u.id === userId);
-      if (!row) return userId;
-      // "Firstname (email)" when display_name available — consistent format across treating physician + primary doctor:
-      return row.display_name ? `${row.display_name} (${row.email})` : row.email;
+      if (!row) return "--";
+      return formatStaffNameEmailLabel(row.display_name, row.email);
     };
   }, [ownerUsers, user?.id, user?.email]);
 
@@ -106,20 +110,33 @@ export function useAppointmentCardModel({
 
   const ownerLabel = useMemo(() => {
     if (portalOwnerLabel) return portalOwnerLabel;
+    if (appointment.portal_owner) return portalStaffDisplayLabel(appointment.portal_owner);
     return resolveStaffLabel(calendarOwnerId);
-  }, [portalOwnerLabel, calendarOwnerId, resolveStaffLabel]);
+  }, [portalOwnerLabel, appointment.portal_owner, calendarOwnerId, resolveStaffLabel]);
 
   const treatingPhysicianLabel = useMemo(() => {
     if (portalTreatingLabel) return portalTreatingLabel;
+    if (appointment.portal_treating_physician) {
+      return portalStaffDisplayLabel(appointment.portal_treating_physician);
+    }
     return resolveStaffLabel(treatingPhysicianId);
-  }, [portalTreatingLabel, treatingPhysicianId, resolveStaffLabel]);
+  }, [
+    portalTreatingLabel,
+    appointment.portal_treating_physician,
+    treatingPhysicianId,
+    resolveStaffLabel,
+  ]);
 
   const primaryDoctorId = appointment.patient_data?.primary_doctor_id?.trim() || null;
-  const primaryDoctorLabel = useMemo(() => {
-    if (!primaryDoctorId) return null;
-    // resolveStaffLabel gives "Name (email)" format consistent with treating physician row:
-    return resolveStaffLabel(primaryDoctorId);
-  }, [primaryDoctorId, resolveStaffLabel]);
+  const primaryDoctorLabel = useMemo(
+    () =>
+      resolvePrimaryDoctorCardLabel(
+        appointment.patient_data,
+        primaryDoctorId,
+        resolveStaffLabel
+      ),
+    [appointment.patient_data, primaryDoctorId, resolveStaffLabel]
+  );
 
   const referralLabel = useMemo(() => {
     const profile = appointment.patient_data?.clinical_profile;

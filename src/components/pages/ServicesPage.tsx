@@ -153,6 +153,7 @@ function DoctorProfileCard({ doctor }: { doctor: DoctorCard }) {
 
         <BookAppointmentDialog
           preselectedDoctorId={doctor.id}
+          lockDoctor
           trigger={
             <Button size="sm" className="w-full gap-2 bg-sky-600 hover:bg-sky-700 text-white shadow-[0_0_16px_rgba(2,132,199,0.3)] hover:shadow-[0_0_24px_rgba(2,132,199,0.5)] transition-all">
               <CalendarPlus className="h-3.5 w-3.5" />
