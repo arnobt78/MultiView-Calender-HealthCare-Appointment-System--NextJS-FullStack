@@ -44,7 +44,9 @@ import {
   ServicesServiceFilters,
   type ServicesCatalogFilterState,
 } from "@/components/services/ServicesServiceFilters";
-import { BookAppointmentDialog } from "@/components/pages/PatientPortalPage";
+import { PatientBookingDialog } from "@/components/shared/patient-booking/PatientBookingDialog";
+import { prefetchAppointmentTypesForDoctor } from "@/lib/prefetch-appointment-types";
+import { prefetchDoctorsDirectory } from "@/lib/prefetch-doctors-directory";
 import { RoleEntityLink } from "@/components/shared/RoleEntityLink";
 import { DoctorSpecialtyBadge } from "@/components/shared/doctor-display/DoctorSpecialtyBadge";
 import { DoctorCardHeroImage } from "@/components/shared/doctor-display/DoctorCardHeroImage";
@@ -106,12 +108,22 @@ function DoctorEmailRow({ email }: { email: string }) {
   );
 }
 
-/** Single doctor card */
+/** Single doctor card — hover prefetches visit types for instant booking step 1. */
 function DoctorProfileCard({ doctor }: { doctor: DoctorCard }) {
+  const queryClient = useQueryClient();
   const name = doctor.display_name ?? doctor.email;
 
+  const warmBookingTypes = () => {
+    prefetchDoctorsDirectory(queryClient);
+    prefetchAppointmentTypesForDoctor(queryClient, doctor.id);
+  };
+
   return (
-    <Card className="rounded-[20px] border-0 bg-card shadow-[0_4px_24px_rgba(2,132,199,0.09)] hover:shadow-[0_8px_32px_rgba(2,132,199,0.18)] transition-all duration-300 overflow-hidden flex flex-col p-0 gap-0">
+    <Card
+      className="rounded-[20px] border-0 bg-card shadow-[0_4px_24px_rgba(2,132,199,0.09)] hover:shadow-[0_8px_32px_rgba(2,132,199,0.18)] transition-all duration-300 overflow-hidden flex flex-col p-0 gap-0"
+      onMouseEnter={warmBookingTypes}
+      onFocus={warmBookingTypes}
+    >
       <DoctorCardHeroImage doctor={doctor} />
 
       <CardContent className="p-4 flex flex-col gap-2 flex-1">
@@ -151,7 +163,7 @@ function DoctorProfileCard({ doctor }: { doctor: DoctorCard }) {
 
         <div className="flex-1" />
 
-        <BookAppointmentDialog
+        <PatientBookingDialog
           preselectedDoctorId={doctor.id}
           lockDoctor
           trigger={
@@ -202,7 +214,32 @@ export default function ServicesPage({ initialDoctors, initialServiceCatalog }: 
 
   useLayoutEffect(() => {
     if (initialDoctors?.length) {
-      queryClient.setQueryData(queryKeys.doctors.all, { doctors: initialDoctors as DoctorCard[] });
+      const seeded = initialDoctors as DoctorCard[];
+      const first = seeded[0];
+      // #region agent log
+      fetch("http://127.0.0.1:7938/ingest/15849825-35e9-4832-9975-ca3563c056ec", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "6e525f" },
+        body: JSON.stringify({
+          sessionId: "6e525f",
+          hypothesisId: "H1",
+          location: "ServicesPage.tsx:useLayoutEffect",
+          message: "SSR seed doctors.all",
+          data: {
+            seedCount: seeded.length,
+            hasBookableField: first != null && "bookable_appointment_types" in first,
+            bookableLen:
+              first != null && "bookable_appointment_types" in first
+                ? (first as { bookable_appointment_types?: unknown[] }).bookable_appointment_types
+                    ?.length ?? 0
+                : null,
+            ownedLen: first?.appointment_types?.length ?? null,
+          },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => {});
+      // #endregion
+      queryClient.setQueryData(queryKeys.doctors.all, { doctors: seeded });
     }
     if (initialServiceCatalog?.length) {
       queryClient.setQueryData(queryKeys.appointmentTypes.catalog, {

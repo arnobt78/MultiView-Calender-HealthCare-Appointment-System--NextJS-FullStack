@@ -34,7 +34,7 @@ import { createQueryClient } from "@/lib/query-client";
  * Cache key:  `cal-appt-query-cache`
  * Throttle:   1 000 ms (writes are batched, not every state change)
  * Max age:    24 h — returning users see instant cached data for a full day.
- * Buster:     "v1" — bump when shipping a breaking data-shape change to force
+ * Buster:     "v2" — bump when shipping a breaking data-shape change to force
  *             all clients to drop their persisted caches.
  */
 /**
@@ -89,7 +89,7 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
         maxAge: 24 * 60 * 60 * 1_000,
         // Bump "buster" when shipping a breaking data-shape change to force
         // all clients to drop their persisted caches.
-        buster: "v1",
+        buster: "v2",
       }}
     >
       {children}

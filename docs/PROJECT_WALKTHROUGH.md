@@ -25,19 +25,27 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Prism
 - **Provider:** `DoctorDisplayProvider` (`src/context/DoctorDisplayContext.tsx`) in `AppProviders` — specialty glass classes + robohash helper (no extra network).
 - **Components:** `src/components/shared/doctor-display/*` — badges, avatars, `DoctorIdentityRow`, `DoctorLinkStack`, `DoctorCardHeroImage`, availability groups; `ServicesDoctorFilters` for client-side grid filters.
 - **Layout:** specialty badge always on its own line below name/email (`showIcon` default true). `/services` hero uses full-bleed cover with blurred backdrop fill (uniform tiles, face-biased crop); badge is in the card body under email, not on the image.
-- **Card UX:** flush hero image, `RoleEntityLink` doctor name, copy-email, grouped availability rows, book CTA via `PatientBookingDialog` (`preselectedDoctorId` + `lockDoctor`). Date filter matches calendar chrome (left calendar icon, `pl-8`, `min-w-[155px]`).
+- **Card UX:** flush hero image, `RoleEntityLink` doctor name, copy-email, grouped availability rows, book CTA via `PatientBookingDialog` (see booking section below). Date filter matches calendar chrome (left calendar icon, `pl-8`, `min-w-[155px]`).
+- **Global reuse:** CP patient list/detail primary doctor + snapshot tables (`DoctorIdentityRow` / `DoctorIdentityCell`); portals/dialogs may still use `DoctorLinkStack` (out of clinical-table pass). Related Appointments `doctor_specialty` from snapshot API; Doctor Management doctor column + specialty column.
+- **Invalidation:** doctor PATCH / availability mutations → `invalidateUsersAndAuth` / `invalidateDoctorSchedule` → `doctors.all` refetch (no new keys).
 
 ### Patient booking dialog (`PatientBookingDialog`)
 
 - **Location:** `src/components/shared/patient-booking/` — shell `PatientBookingDialog.tsx`; sections `PatientBookingDoctorTypeSection`, `PatientBookingScheduleSection`, `PatientBookingConfirmSection`; `PatientBookingStepper`; styles `patient-booking-dialog-styles.ts`.
-- **Logic:** `src/lib/patient-booking-wizard.ts` — `canAdvanceFromStep`, `getNextStep`, `getBackStep`, `shouldFetchAvailabilitySlots`; tests in `src/lib/__tests__/patient-booking-wizard.test.ts`.
-- **Consumers:** `/patient-portal` (`BookAppointmentDialog` default trigger); `/services` (`preselectedDoctorId`, `lockDoctor`, custom trigger). Re-export from `PatientPortalPage` for backward imports.
-- **UI:** Sky glass 90% dialog (same rhythm as `AppointmentDialog` / `GlobalSearch`); stepper under title; progressive stacked sections; date picker loads slots inline via `useAvailabilitySlots` (no separate “See Slots” step).
-- **Data:** `useUsers({ role: "doctor" })`, `queryKeys.appointmentTypes.byDoctor(doctorId)`, `queryKeys.availability.slots`; submit `POST /api/patient-portal`.
-- **Invalidation:** `invalidateQueries({ queryKey: queryKeys.patientPortal.all })` + `invalidateAfterAppointmentMutation` on success (timeline + dashboard + slots bust).
-- **A11y:** `DialogDescription` + `aria-describedby="patient-booking-dialog-desc"` on `DialogContent`.
-- **Global reuse:** CP patient list/detail primary doctor + snapshot tables (`DoctorIdentityRow` / `DoctorIdentityCell`); portals/dialogs may still use `DoctorLinkStack` (out of clinical-table pass). Related Appointments `doctor_specialty` from snapshot API; Doctor Management doctor column + specialty column.
-- **Invalidation:** doctor PATCH / availability mutations → `invalidateUsersAndAuth` / `invalidateDoctorSchedule` → `doctors.all` refetch (no new keys).
+- **Logic:** `src/lib/patient-booking-wizard.ts` — **3 steps** (`1` Doctor & Type, `2` Date & Time, `3` Details); one visible panel per step (no ghost step); `shouldShowDoctorTypeSection` / `shouldShowScheduleSection` / `shouldShowConfirmSection`; tests in `src/lib/__tests__/patient-booking-wizard.test.ts`.
+- **Header:** `PatientBookingDialogHeader` — responsive grid: title + description (left), stepper **1–3** (center), close (right).
+- **Doctor step 1 UI:** `DoctorDirectoryPickerList` (collapse after pick, `fillHeight` scroll) / `DoctorDirectoryPickerCard` — `DoctorAvailabilityGroups` `layout="inline"`; `DoctorDirectoryServiceChips` via `resolveDoctorBookableTypes` + `formatAppointmentTypeChipMeta` (globals violet, custom sky, buf + step).
+- **Scheduling parity:** `GET /api/doctors` → `bookable_appointment_types` (`mergeBookableTypesForDoctor`); appointment-type tiles use `formatAppointmentTypeBufferLine` / `formatAppointmentTypeSlotStepLine`; catalog rows include buffers (`GET /api/appointment-types/catalog`).
+- **Types/hooks:** `doctor-directory.ts`, `doctor-bookable-types.ts` (`filterBookableTypesForDoctorFromApi`, `mergeBookableTypesForDoctor`), `appointment-type-scheduling-meta.ts`; `useDoctorsDirectory` → `queryKeys.doctors.all`; `usePatientBookableAppointmentTypes` → `appointmentTypes.byDoctor` + directory seed (enabled globals + owned/custom only).
+- **Prefetch:** `prefetchDoctorsDirectory` (`src/lib/prefetch-doctors-directory.ts`) — portal `useLayoutEffect`, `/services` card hover/focus, dialog open; `prefetchAppointmentTypesForDoctor` (`src/lib/prefetch-appointment-types.ts`) — same 5min `staleTime` as wizard type query.
+- **Consumers:** `/patient-portal` (`BookAppointmentDialog` default trigger); `/services` imports `PatientBookingDialog` directly (`preselectedDoctorId`, `lockDoctor`, custom trigger). `PatientPortalPage` re-exports `BookAppointmentDialog` alias.
+- **UI:** Sky glass 90% dialog; step 1 `fillLayout` — doctor + type panels flex-scroll to footer; one section visible per step; inline slots via `useAvailabilitySlots`; `smooth-scroll-into-view` on date pick.
+- **Persist:** TanStack cache buster **`v2`** (drops stale `doctors.all` without `bookable_appointment_types`).
+- **Seed:** `npm run db:seed-extended` — Physio Theraphy, Test Report Show, patch doctor-owned types with 5m buffers.
+- **Data:** `useDoctorsDirectory({ enabled: open })`, `usePatientBookableAppointmentTypes`, `queryKeys.availability.slots`; submit `POST /api/patient-portal`.
+- **Submit:** Step 3 **Confirm Request** is `type="button"` (`handleConfirmBooking`) — form `onSubmit` only `preventDefault` (no auto-book on Next / Enter).
+- **Invalidation:** `invalidateAfterAppointmentMutation` on success (includes `patientPortal.all`, appointments, dashboard, notifications, type-derived keys; doctor directory refreshes via existing `invalidateUsersAndAuth` / `invalidateDoctorSchedule` → `doctors.all`).
+- **A11y:** visible `DialogDescription` without custom `id` so Radix `descriptionId` matches `aria-describedby` on content.
 
 ### Control panel entity split (users vs patients)
 
@@ -213,7 +221,8 @@ Shared primitives keep layout fixed while data loads:
 | Piece | File | Role |
 |-------|------|------|
 | `PortalChromeHeader` | `src/components/shared/PortalChromeHeader.tsx` | Icon tile + title stack with `py-2` (aligned with CP `PageHeader`) |
-| `PatientBookingDialog` | `src/components/shared/patient-booking/PatientBookingDialog.tsx` | Patient/services booking wizard — glass shell, inline slots, `lockDoctor` on services |
+| `PatientBookingDialog` | `src/components/shared/patient-booking/PatientBookingDialog.tsx` | Patient/services booking wizard — directory cards step 1, inline slots, `lockDoctor` on services |
+| `DoctorDirectoryPickerCard` | `src/components/shared/doctor-display/DoctorDirectoryPickerCard.tsx` | Booking + locked services doctor preview (availability + service chips) |
 | `PortalStaffLink` | `src/components/shared/PortalStaffLink.tsx` | Sky link to `/doctors/:id` for doctor staff on portal cards |
 | `portal-appointment.ts` | `src/lib/portal-appointment.ts` | `portalAppointmentToFullAppointment` adapter for timeline cards |
 | `ProfileDefinitionRow` | `src/components/shared/profile/ProfileDefinitionRow.tsx` | `<dl>` row: icon + label static; variant-matched skeleton in `dd` only (`doctorStack` = Primary Doctor height) |
@@ -223,7 +232,7 @@ Shared primitives keep layout fixed while data loads:
 
 **SSR + client:** root `layout.tsx` passes `initialNavRole` into `AuthShell`. Portal pages pass `initialData` on `useQuery`. Profile: `profileLoading = isLoading && !patient`. Navbar role links render when `role` is known (server + client match).
 
-**Audit (agent glance):** Navbar role uses SSR `initialNavRole` via `NavRoleContext`. Dashboard + **patient portal history** use `AppointmentCard` (portal: category hex on color bar; `PortalStaffLink` for Calendar owner / Treating physician). `GlobalSearch` + `useOwnerUserSummaries` skip staff user-directory APIs for patients. **150 tests**, `tsc` + `lint` + `build` pass.
+**Audit (agent glance):** Navbar role uses SSR `initialNavRole` via `NavRoleContext`. Patient booking: 3-step wizard, `usePatientBookableAppointmentTypes`, explicit confirm button. Login toast: `today_appointments` from `login-today-appointments.ts` (patient = `patient_id`). **181 tests**, `tsc` + `lint` + `build` pass. **Known gap:** `prefetchDoctors()` SSR seed omits `bookable_appointment_types` until client `GET /api/doctors` refetch (brief owned-only chips on `/services` first paint).
 
 ### Dashboard calendar shared UI (unified `AppointmentCard`)
 
@@ -549,8 +558,8 @@ queryKeys = {
 ```tsx
 // On hard refresh: localStorage is read synchronously before any network call fires.
 // Data renders immediately; TQ background-refetches stale entries per staleTime.
-// Cache buster: "v1" — bump when shipping a breaking data-shape change.
-persistOptions: { persister, maxAge: 10 * 60 * 1000, buster: "v1" }
+// Cache buster: "v2" — bump when shipping a breaking data-shape change (e.g. doctors.all bookable types).
+persistOptions: { persister, maxAge: 10 * 60 * 1000, buster: "v2" }
 ```
 
 Global defaults (`createQueryClient`): `staleTime: 3min`, `gcTime: 10min`, `refetchOnWindowFocus: false`, `refetchOnMount: false`. `useDashboardOverview` overrides to `staleTime: 60s` for fresher KPIs.
@@ -857,7 +866,7 @@ Shared demo credentials live in `src/lib/demo-credentials.ts` (`test@admin.com`,
 
 ### `GET /api/users`
 
-Patients are normally forbidden from listing all users. Exception: if the request includes `?role=doctor` or `?roles=doctor`, patients are allowed (scoped to `id` + `display_name` only). This lets `PatientBookingDialog` populate the doctor selector on `/patient-portal` and `/services`.
+Patients are normally forbidden from listing all users. Exception: `?role=doctor` scoped list for legacy UI. **Patient booking** uses `GET /api/doctors` (`useDoctorsDirectory`) — `bookable_appointment_types` (owned + enabled globals, scheduling fields), not `useUsers`.
 
 ---
 

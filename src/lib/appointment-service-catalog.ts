@@ -17,6 +17,8 @@ export type ServiceCatalogRow = {
   name: string;
   description: string | null;
   duration_minutes: number;
+  buffer_before_minutes: number;
+  buffer_after_minutes: number;
   slot_interval_minutes: number;
   is_telehealth: boolean;
   source: ServiceCatalogSource;
@@ -30,6 +32,8 @@ export type GlobalCatalogInput = {
   name: string;
   description: string | null;
   duration_minutes: number;
+  buffer_before_minutes: number;
+  buffer_after_minutes: number;
   slot_interval_minutes: number;
   is_telehealth: boolean;
 };
@@ -40,6 +44,8 @@ export type AdditionalCatalogInput = {
   name: string;
   description: string | null;
   duration_minutes: number;
+  buffer_before_minutes: number;
+  buffer_after_minutes: number;
   slot_interval_minutes: number;
   is_telehealth: boolean;
   user_id: string;
@@ -84,6 +90,8 @@ export function buildServiceCatalog(
     name: g.name,
     description: g.description,
     duration_minutes: g.duration_minutes,
+    buffer_before_minutes: g.buffer_before_minutes,
+    buffer_after_minutes: g.buffer_after_minutes,
     slot_interval_minutes: g.slot_interval_minutes,
     is_telehealth: g.is_telehealth,
     source: "global",
@@ -126,6 +134,8 @@ export function buildServiceCatalog(
       name: rep.name,
       description: rep.description,
       duration_minutes: rep.duration_minutes,
+      buffer_before_minutes: rep.buffer_before_minutes,
+      buffer_after_minutes: rep.buffer_after_minutes,
       slot_interval_minutes: rep.slot_interval_minutes,
       is_telehealth: rep.is_telehealth,
       source: "additional" as const,

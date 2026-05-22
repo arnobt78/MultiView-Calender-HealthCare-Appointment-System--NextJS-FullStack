@@ -1,20 +1,20 @@
 "use client";
 
-import { addMinutes, format } from "date-fns";
-import { CalendarDays, Clock, FileText, Stethoscope, Timer } from "lucide-react";
+import { CalendarCheck, Clock, MessageSquareText, NotebookPen } from "lucide-react";
+import { PatientBookingDoctorVisitSummary } from "@/components/shared/patient-booking/PatientBookingDoctorVisitSummary";
+import {
+  PatientBookingFieldLabel,
+  PatientBookingSectionHeading,
+} from "@/components/shared/patient-booking/patient-booking-section-heading";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import type { PatientBookingAppointmentType } from "@/lib/patient-booking-wizard";
-import type { User as AppUser } from "@/types/types";
-import {
-  patientBookingGlassInputClass,
-  patientBookingSummaryCardClass,
-} from "@/components/shared/patient-booking/patient-booking-dialog-styles";
+import type { DoctorDirectoryRow } from "@/lib/doctor-directory";
+import { patientBookingGlassInputClass } from "@/components/shared/patient-booking/patient-booking-dialog-styles";
 
 type PatientBookingConfirmSectionProps = {
-  selectedDoctor: AppUser | undefined;
+  selectedDoctor: DoctorDirectoryRow | undefined;
   dateStr: string;
   selectedSlot: string | null;
   isFlexible: boolean;
@@ -28,7 +28,7 @@ type PatientBookingConfirmSectionProps = {
   onFlexibleTimeChange: (isoSlot: string) => void;
 };
 
-/** Step 4 — summary glass card, reason, notes, flexible start time. */
+/** Step 3 — summary glass card, reason, notes, flexible start time. */
 export function PatientBookingConfirmSection({
   selectedDoctor,
   dateStr,
@@ -44,49 +44,29 @@ export function PatientBookingConfirmSection({
   onFlexibleTimeChange,
 }: PatientBookingConfirmSectionProps) {
   return (
-    <section
-      className="space-y-4 border-t border-sky-100/80 pt-6"
-      aria-labelledby="pb-confirm-heading"
-    >
-      <h3 id="pb-confirm-heading" className="text-sm font-semibold tracking-tight text-gray-700">
+    <section className="flex flex-col gap-4" aria-labelledby="pb-confirm-heading">
+      <PatientBookingSectionHeading id="pb-confirm-heading" icon={CalendarCheck}>
         Confirm your request
-      </h3>
+      </PatientBookingSectionHeading>
 
-      <div className={patientBookingSummaryCardClass}>
-        {selectedDoctor ? (
-          <div className="flex items-center gap-2 text-sky-800">
-            <Stethoscope className="h-3.5 w-3.5 shrink-0" />
-            <span>Dr. {selectedDoctor.display_name ?? selectedDoctor.email}</span>
-          </div>
-        ) : null}
-        <div className="flex items-center gap-2 text-sky-800">
-          <CalendarDays className="h-3.5 w-3.5 shrink-0" />
-          <span>
-            {dateStr ? format(new Date(`${dateStr}T12:00:00`), "EEEE, dd MMM yyyy") : "—"}
-            {(selectedSlot || isFlexible) && " · "}
-            {selectedSlot ? format(new Date(selectedSlot), "HH:mm") : null}
-            {selectedSlot
-              ? ` → ${format(addMinutes(new Date(selectedSlot), duration), "HH:mm")}`
-              : null}
-            {isFlexible && !selectedSlot ? ` · ${flexDuration} min` : null}
-          </span>
-        </div>
-        {selectedType ? (
-          <div className="flex items-center gap-2 text-sky-800">
-            <Timer className="h-3.5 w-3.5 shrink-0" />
-            <span>
-              {selectedType.name} · {selectedType.duration_minutes} min
-            </span>
-          </div>
-        ) : null}
-      </div>
+      {selectedDoctor ? (
+        <PatientBookingDoctorVisitSummary
+          layout="confirm"
+          doctor={selectedDoctor}
+          selectedType={selectedType}
+          isFlexible={isFlexible}
+          flexDuration={flexDuration}
+          dateStr={dateStr}
+          selectedSlot={selectedSlot}
+          duration={duration}
+        />
+      ) : null}
 
       {isFlexible ? (
-        <div className="space-y-1.5">
-          <Label htmlFor="pb-flex-time" className="flex items-center gap-1.5">
-            <Clock className="h-4 w-4 text-sky-600" />
+        <div className="flex flex-col gap-1.5">
+          <PatientBookingFieldLabel htmlFor="pb-flex-time" icon={Clock}>
             Preferred Start Time
-          </Label>
+          </PatientBookingFieldLabel>
           <Input
             id="pb-flex-time"
             type="time"
@@ -101,11 +81,10 @@ export function PatientBookingConfirmSection({
         </div>
       ) : null}
 
-      <div className="space-y-1.5">
-        <Label htmlFor="pb-title" className="flex items-center gap-1.5">
-          <FileText className="h-4 w-4 text-sky-600" />
+      <div className="flex flex-col gap-1.5">
+        <PatientBookingFieldLabel htmlFor="pb-title" icon={MessageSquareText}>
           Reason for Visit
-        </Label>
+        </PatientBookingFieldLabel>
         <Input
           id="pb-title"
           placeholder="Reason for visit"
@@ -116,11 +95,10 @@ export function PatientBookingConfirmSection({
         />
       </div>
 
-      <div className="space-y-1.5">
-        <Label htmlFor="pb-notes" className="flex items-center gap-1.5">
-          <FileText className="h-4 w-4 text-muted-foreground" />
+      <div className="flex flex-col gap-1.5">
+        <PatientBookingFieldLabel htmlFor="pb-notes" icon={NotebookPen}>
           Additional Notes
-        </Label>
+        </PatientBookingFieldLabel>
         <Textarea
           id="pb-notes"
           placeholder="Symptoms, medications, special requests…"

@@ -7,7 +7,7 @@
  * Absence of a config row = enabled by default.
  *
  * Used by:
- *   - Patient portal booking wizard (filters to is_enabled = true types)
+ *   - Patient portal booking wizard (`filterBookableTypesForDoctorFromApi` in `doctor-bookable-types.ts`)
  *   - Doctor portal appointment type manager (shows all with checkbox state)
  *   - Admin/staff appointment dialog (doctor's available types)
  *
@@ -22,6 +22,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { isValidUUID } from "@/lib/validation";
+import {
+  DEFAULT_DOCTOR_OWNED_TYPE_BUFFER_MINUTES,
+  DEFAULT_DOCTOR_OWNED_TYPE_SLOT_INTERVAL_MINUTES,
+} from "@/lib/constants-appointment-type";
 import { getUserRole, isAdminRole, isDoctorRole } from "@/lib/rbac";
 
 function numField(v: unknown, min: number, max: number, fallback: number): number {
@@ -163,9 +167,24 @@ export async function POST(req: NextRequest) {
         name,
         description,
         duration_minutes: Math.floor(durationRaw),
-        buffer_before_minutes: numField(body.buffer_before_minutes, 0, 240, 0),
-        buffer_after_minutes: numField(body.buffer_after_minutes, 0, 240, 0),
-        slot_interval_minutes: numField(body.slot_interval_minutes, 5, 12 * 60, 30),
+        buffer_before_minutes: numField(
+          body.buffer_before_minutes,
+          0,
+          240,
+          DEFAULT_DOCTOR_OWNED_TYPE_BUFFER_MINUTES
+        ),
+        buffer_after_minutes: numField(
+          body.buffer_after_minutes,
+          0,
+          240,
+          DEFAULT_DOCTOR_OWNED_TYPE_BUFFER_MINUTES
+        ),
+        slot_interval_minutes: numField(
+          body.slot_interval_minutes,
+          5,
+          12 * 60,
+          DEFAULT_DOCTOR_OWNED_TYPE_SLOT_INTERVAL_MINUTES
+        ),
         minimum_notice_minutes: numField(body.minimum_notice_minutes, 0, 7 * 24 * 60, 60),
         is_telehealth: isTelehealth,
         color,

@@ -3,6 +3,7 @@
 import { Clock, Layers, Stethoscope, Video } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { formatAppointmentTypeChipMeta } from "@/lib/appointment-type-scheduling-meta";
 import type { ServiceCatalogRow } from "@/lib/appointment-service-catalog";
 import { ServiceCatalogDoctorOffers } from "@/components/services/ServiceCatalogDoctorOffers";
 
@@ -13,11 +14,16 @@ type Props = {
 /** Single row in `/services` Appointment Services — global or deduped additional type. */
 export function ServiceCatalogCard({ service }: Props) {
   const isGlobal = service.source === "global";
+  const schedulingMeta = formatAppointmentTypeChipMeta({
+    duration_minutes: service.duration_minutes,
+    buffer_before_minutes: service.buffer_before_minutes,
+    buffer_after_minutes: service.buffer_after_minutes,
+    slot_interval_minutes: service.slot_interval_minutes,
+    is_global: isGlobal,
+  });
   const subtitle =
     service.description?.trim() ||
-    (isGlobal
-      ? null
-      : `Custom visit · ${service.duration_minutes} min · slot step ${service.slot_interval_minutes} min`);
+    (isGlobal ? schedulingMeta : `${schedulingMeta}`);
 
   return (
     <Card className="rounded-[16px] border bg-card shadow-[0_4px_16px_rgba(139,92,246,0.08)] hover:shadow-[0_8px_24px_rgba(139,92,246,0.16)] transition-all duration-300">

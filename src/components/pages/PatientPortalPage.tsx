@@ -70,6 +70,7 @@ import { ProfileDefinitionRow } from "@/components/shared/profile/ProfileDefinit
 import { BookAppointmentDialog } from "@/components/shared/patient-booking/PatientBookingDialog";
 import { useUsers } from "@/hooks/useUsers";
 import { queryKeys } from "@/lib/query-keys";
+import { prefetchDoctorsDirectory } from "@/lib/prefetch-doctors-directory";
 import { getPatientCareLevelLabel } from "@/lib/patient-care-level";
 
 // ---------------------------------------------------------------------------
@@ -377,6 +378,8 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
     if (initialPortalData != null) {
       queryClient.setQueryData(queryKeys.patientPortal.all, initialPortalData);
     }
+    // Warm doctor directory for booking step 1 cards (availabilities + service labels).
+    prefetchDoctorsDirectory(queryClient);
   }, [queryClient, initialPortalData]);
 
   const { data, isLoading, isError, error } = useQuery({

@@ -1,12 +1,12 @@
 "use client";
 
 /**
- * Patient "Request New Appointment" wizard — glass 90% shell, progressive sections,
- * inline slots under date. Used on patient portal and services (preselected doctor).
+ * Patient "Request New Appointment" wizard — glass 90% shell.
+ * Three steps (one panel each): doctor & type → date & time → details.
  */
 
-import { useState, type ReactNode } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState, type ReactNode } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { addMinutes } from "date-fns";
 import { motion, useReducedMotion } from "framer-motion";
 import {
@@ -15,24 +15,23 @@ import {
   CalendarCheck,
   CalendarPlus,
   Loader2,
-  X,
 } from "lucide-react";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
-  DialogDescription,
-  DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { apiClient, handleApiError } from "@/lib/api-client";
 import { notify } from "@/lib/notify";
-import { useUsers } from "@/hooks/useUsers";
+import { useDoctorsDirectory } from "@/hooks/useDoctorsDirectory";
 import { useAvailabilitySlots } from "@/hooks/useAvailabilitySlots";
 import { queryKeys } from "@/lib/query-keys";
 import { invalidateAfterAppointmentMutation } from "@/lib/query-client";
+import { prefetchAppointmentTypesForDoctor } from "@/lib/prefetch-appointment-types";
+import { usePatientBookableAppointmentTypes } from "@/hooks/usePatientBookableAppointmentTypes";
+import { prefetchDoctorsDirectory } from "@/lib/prefetch-doctors-directory";
 import {
   skyGlassBackButtonClass,
   skyGlassPrimaryButtonClass,
@@ -42,20 +41,20 @@ import {
   createInitialBookingState,
   getBackStep,
   getNextStep,
-  PATIENT_BOOKING_DIALOG_DESC_ID,
   shouldFetchAvailabilitySlots,
   shouldShowConfirmSection,
+  shouldShowDoctorTypeSection,
   shouldShowScheduleSection,
   type PatientBookingAppointmentType,
   type PatientBookingStep,
   type PatientBookingWizardState,
 } from "@/lib/patient-booking-wizard";
-import { PatientBookingStepper } from "@/components/shared/patient-booking/PatientBookingStepper";
+import { PatientBookingDialogHeader } from "@/components/shared/patient-booking/PatientBookingDialogHeader";
 import { PatientBookingDoctorTypeSection } from "@/components/shared/patient-booking/PatientBookingDoctorTypeSection";
 import { PatientBookingScheduleSection } from "@/components/shared/patient-booking/PatientBookingScheduleSection";
 import { PatientBookingConfirmSection } from "@/components/shared/patient-booking/PatientBookingConfirmSection";
 import { patientBookingDialogContentClass } from "@/components/shared/patient-booking/patient-booking-dialog-styles";
-import type { User as AppUser } from "@/types/types";
+import type { DoctorDirectoryRow } from "@/lib/doctor-directory";
 
 export type PatientBookingDialogProps = {
   /** Pre-select doctor when opened from /services */
@@ -73,18 +72,26 @@ interface BookingPayload {
   notes?: string;
 }
 
+/** Step 1/2 need flex-1 in the chain so doctor/type lists get a bounded height and can scroll. */
+const bookingStepFillLayoutClass = "flex min-h-0 flex-1 flex-col";
+
 function BookingSectionMotion({
   show,
   children,
+  fillStepLayout = false,
 }: {
   show: boolean;
   children: ReactNode;
+  /** Pass true for doctor + schedule steps (`fillLayout` sections). */
+  fillStepLayout?: boolean;
 }) {
   const reduceMotion = useReducedMotion();
+  const layoutClass = fillStepLayout ? bookingStepFillLayoutClass : undefined;
   if (!show) return null;
-  if (reduceMotion) return <div>{children}</div>;
+  if (reduceMotion) return <div className={layoutClass}>{children}</div>;
   return (
     <motion.div
+      className={layoutClass}
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
@@ -110,20 +117,44 @@ export function PatientBookingDialog({
   const [title, setTitle] = useState("");
   const [notes, setNotes] = useState("");
 
-  const { data: usersData } = useUsers({ role: "doctor" });
-  const doctors: AppUser[] = usersData?.users ?? [];
-
-  const { data: typesData, isLoading: typesLoading } = useQuery({
-    queryKey: queryKeys.appointmentTypes.byDoctor(doctorId),
-    queryFn: () =>
-      apiClient<{ types: PatientBookingAppointmentType[] }>(
-        `/api/appointment-types?doctorId=${doctorId}`
-      ),
-    enabled: Boolean(doctorId),
-    staleTime: 5 * 60 * 1000,
+  const { data: doctorsData, isLoading: doctorsDirectoryLoading } = useDoctorsDirectory({
+    enabled: open,
   });
-  const types = typesData?.types ?? [];
-  const isFlexible = !typesLoading && types.length === 0 && Boolean(doctorId);
+  const doctors: DoctorDirectoryRow[] = doctorsData?.doctors ?? [];
+
+  // #region agent log — H2/H3: doctors.all cache shape when dialog opens
+  useEffect(() => {
+    if (!open || doctors.length === 0) return;
+    const missingBookable = doctors.filter((d) => d.bookable_appointment_types == null).length;
+    const sample = doctors[0];
+    fetch("http://127.0.0.1:7938/ingest/15849825-35e9-4832-9975-ca3563c056ec", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "6e525f" },
+      body: JSON.stringify({
+        sessionId: "6e525f",
+        hypothesisId: "H2",
+        location: "PatientBookingDialog.tsx:useEffect",
+        message: "doctors.all payload shape",
+        data: {
+          doctorCount: doctors.length,
+          missingBookableCount: missingBookable,
+          sampleDoctorId: sample.id,
+          bookableLen: sample.bookable_appointment_types?.length ?? null,
+          ownedLen: sample.appointment_types?.length ?? null,
+          bookableGlobalCount:
+            sample.bookable_appointment_types?.filter((t) => t.is_global === true).length ?? null,
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+  }, [open, doctors]);
+  // #endregion
+
+  const { types, typesLoading, isFlexible } = usePatientBookableAppointmentTypes({
+    doctorId,
+    enabled: open,
+    doctors,
+  });
   const effectiveTypeId = selectedType?.id ?? "";
 
   const wizardState: PatientBookingWizardState = {
@@ -161,8 +192,11 @@ export function PatientBookingDialog({
 
   function handleOpenChange(v: boolean) {
     setOpen(v);
-    if (v && preselectedDoctorId) {
-      setDoctorId(preselectedDoctorId);
+    if (v) {
+      const id = preselectedDoctorId ?? doctorId;
+      if (preselectedDoctorId) setDoctorId(preselectedDoctorId);
+      prefetchDoctorsDirectory(queryClient);
+      prefetchAppointmentTypesForDoctor(queryClient, id);
     }
     if (!v) resetAll();
   }
@@ -179,23 +213,20 @@ export function PatientBookingDialog({
     setSelectedSlot(null);
   }
 
-  function prefetchTitleForStep4() {
+  function prefetchTitleForDetails() {
     if (selectedType && !title) setTitle(selectedType.name);
   }
 
-  function handleNext() {
-    if (step === 3) {
-      prefetchTitleForStep4();
-      setStep(4);
-      return;
-    }
+  function handleNext(e: React.MouseEvent<HTMLButtonElement>) {
+    e.preventDefault();
+    e.stopPropagation();
     const next = getNextStep(step, wizardState);
-    if (next === 4) prefetchTitleForStep4();
+    if (next === 3) prefetchTitleForDetails();
     setStep(next);
   }
 
   function handleBack() {
-    const prev = getBackStep(step, wizardState);
+    const prev = getBackStep(step);
     if (prev) setStep(prev);
   }
 
@@ -215,9 +246,11 @@ export function PatientBookingDialog({
     onError: (e) => handleApiError(e, "Failed to book appointment"),
   });
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  /** Explicit button only — avoids implicit form submit (Enter / Next→Confirm click-through). */
+  function handleConfirmBooking() {
+    if (step !== 3) return;
     if (!doctorId || !selectedSlot || !title) return;
+    if (!isFlexible && !selectedType) return;
     const startDt = new Date(selectedSlot);
     const endDt = addMinutes(startDt, duration);
     bookMutation.mutate({
@@ -231,21 +264,18 @@ export function PatientBookingDialog({
 
   const selectedDoctor = doctors.find((d) => d.id === doctorId);
   const today = new Date().toISOString().slice(0, 10);
-  const backStep = getBackStep(step, wizardState);
+  const backStep = getBackStep(step);
   const canAdvance = canAdvanceFromStep(step, wizardState);
+  const showDoctorType = shouldShowDoctorTypeSection(step);
   const showSchedule = shouldShowScheduleSection(step);
   const showConfirm = shouldShowConfirmSection(step);
 
   const primaryLabel =
-    step === 4
+    step === 3
       ? bookMutation.isPending
         ? "Submitting…"
         : "Confirm Request"
-      : step === 2 && isFlexible
-        ? "Continue"
-        : step === 3
-          ? "Continue"
-          : "Next";
+      : "Next";
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -264,65 +294,41 @@ export function PatientBookingDialog({
 
       <DialogContent
         showCloseButton={false}
-        aria-describedby={PATIENT_BOOKING_DIALOG_DESC_ID}
         className={patientBookingDialogContentClass}
       >
-        <div className="shrink-0 bg-white pt-6 text-gray-700">
-          <div className="px-6">
-            <div className="flex items-start gap-2">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-sky-200/70 bg-sky-50 text-sky-700">
-                <CalendarPlus className="h-5 w-5" aria-hidden />
-              </span>
-              <div className="min-w-0">
-                <DialogTitle className="text-left text-xl font-semibold text-gray-700">
-                  Request New Appointment
-                </DialogTitle>
-                <DialogDescription
-                  id={PATIENT_BOOKING_DIALOG_DESC_ID}
-                  className="text-left text-sm text-muted-foreground"
-                >
-                  Choose your doctor, visit type, date, time, and confirm your request.
-                </DialogDescription>
-              </div>
-              <DialogClose asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="ml-auto h-8 w-8 shrink-0 rounded-full text-muted-foreground hover:bg-sky-100 hover:text-sky-800"
-                >
-                  <X className="h-4 w-4" aria-hidden />
-                  <span className="sr-only">Close</span>
-                </Button>
-              </DialogClose>
-            </div>
-          </div>
-          <div className="mx-6 mt-4 border-b border-sky-200/60" />
-          <PatientBookingStepper step={step} />
-        </div>
+        <PatientBookingDialogHeader step={step} />
 
         <form
           id="patient-booking-form"
-          onSubmit={handleSubmit}
+          onSubmit={(e) => e.preventDefault()}
           className="flex min-h-0 flex-1 flex-col"
         >
-          <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4 text-gray-700">
-            <PatientBookingDoctorTypeSection
-              lockDoctor={lockDoctor}
-              doctors={doctors}
-              selectedDoctor={selectedDoctor}
-              doctorId={doctorId}
-              onDoctorIdChange={handleDoctorIdChange}
-              typesLoading={typesLoading}
-              isFlexible={isFlexible}
-              types={types}
-              selectedType={selectedType}
-              onSelectType={setSelectedType}
-              flexDuration={flexDuration}
-              onFlexDurationChange={setFlexDuration}
-            />
+          <div
+            className={cn(
+              "flex min-h-0 flex-1 flex-col px-6 py-4 text-gray-700",
+              step === 1 || step === 2 ? "overflow-hidden" : "overflow-y-auto"
+            )}
+          >
+            <BookingSectionMotion show={showDoctorType} fillStepLayout>
+              <PatientBookingDoctorTypeSection
+                lockDoctor={lockDoctor}
+                doctors={doctors}
+                doctorsLoading={doctorsDirectoryLoading}
+                selectedDoctor={selectedDoctor}
+                doctorId={doctorId}
+                onDoctorIdChange={handleDoctorIdChange}
+                typesLoading={typesLoading}
+                isFlexible={isFlexible}
+                types={types}
+                selectedType={selectedType}
+                onSelectType={setSelectedType}
+                flexDuration={flexDuration}
+                onFlexDurationChange={setFlexDuration}
+                fillLayout
+              />
+            </BookingSectionMotion>
 
-            <BookingSectionMotion show={showSchedule}>
+            <BookingSectionMotion show={showSchedule} fillStepLayout>
               <PatientBookingScheduleSection
                 today={today}
                 dateStr={dateStr}
@@ -336,6 +342,7 @@ export function PatientBookingDialog({
                 slots={slots}
                 selectedSlot={selectedSlot}
                 onSelectSlot={setSelectedSlot}
+                fillLayout
               />
             </BookingSectionMotion>
 
@@ -373,13 +380,13 @@ export function PatientBookingDialog({
               <span className="h-10 w-[88px]" aria-hidden />
             )}
 
-            {step === 4 ? (
+            {step === 3 ? (
               <Button
-                type="submit"
-                form="patient-booking-form"
+                type="button"
                 variant="ghost"
                 disabled={bookMutation.isPending || !canAdvance}
                 className={cn(skyGlassPrimaryButtonClass, "cursor-pointer")}
+                onClick={handleConfirmBooking}
               >
                 {bookMutation.isPending ? (
                   <>

@@ -1,22 +1,25 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { addMinutes, format } from "date-fns";
-import { CalendarDays, CalendarX, Clock, Stethoscope } from "lucide-react";
+import { CalendarDays, CalendarX, Clock } from "lucide-react";
+import { PatientBookingDoctorVisitSummary } from "@/components/shared/patient-booking/PatientBookingDoctorVisitSummary";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { PatientBookingAppointmentType } from "@/lib/patient-booking-wizard";
-import type { User as AppUser } from "@/types/types";
+import type { DoctorDirectoryRow } from "@/lib/doctor-directory";
 import {
   patientBookingGlassInputClass,
 } from "@/components/shared/patient-booking/patient-booking-dialog-styles";
+import { smoothScrollIntoViewAfterLayout } from "@/lib/smooth-scroll-into-view";
 
 type PatientBookingScheduleSectionProps = {
   today: string;
   dateStr: string;
   onDateStrChange: (value: string) => void;
-  selectedDoctor: AppUser | undefined;
+  selectedDoctor: DoctorDirectoryRow | undefined;
   selectedType: PatientBookingAppointmentType | null;
   isFlexible: boolean;
   flexDuration: number;
@@ -25,6 +28,8 @@ type PatientBookingScheduleSectionProps = {
   slots: string[];
   selectedSlot: string | null;
   onSelectSlot: (iso: string) => void;
+  /** Step 2 full-height scroll for date + slots panel. */
+  fillLayout?: boolean;
 };
 
 /**
@@ -43,13 +48,47 @@ export function PatientBookingScheduleSection({
   slots,
   selectedSlot,
   onSelectSlot,
+  fillLayout = false,
 }: PatientBookingScheduleSectionProps) {
   const showSlots = Boolean(dateStr && !isFlexible && selectedType);
+  const slotsPanelRef = useRef<HTMLDivElement>(null);
+  const lastScrolledDateRef = useRef("");
+
+  useEffect(() => {
+    if (!dateStr) {
+      lastScrolledDateRef.current = "";
+      return;
+    }
+    if (!showSlots || lastScrolledDateRef.current === dateStr) return;
+    lastScrolledDateRef.current = dateStr;
+    smoothScrollIntoViewAfterLayout(slotsPanelRef.current, { block: "start" });
+  }, [dateStr, showSlots]);
 
   return (
-    <section className="space-y-4 border-t border-sky-100/80 pt-6" aria-labelledby="pb-schedule-heading">
-      <h3 id="pb-schedule-heading" className="text-sm font-semibold tracking-tight text-gray-700">
-        Date & time
+    <section
+      className={cn(
+        "flex flex-col gap-4",
+        fillLayout && "min-h-0 flex-1",
+        !fillLayout && "border-t border-sky-100/80 pt-4"
+      )}
+      aria-labelledby="pb-schedule-heading"
+    >
+      {selectedDoctor ? (
+        <PatientBookingDoctorVisitSummary
+          layout="schedule"
+          doctor={selectedDoctor}
+          selectedType={selectedType}
+          isFlexible={isFlexible}
+          flexDuration={flexDuration}
+          dateStr={dateStr}
+          selectedSlot={selectedSlot}
+          duration={duration}
+        />
+      ) : null}
+
+      <h3 id="pb-schedule-heading" className="flex items-center gap-1.5 text-sm font-semibold tracking-tight text-gray-700">
+        <CalendarDays className="h-4 w-4 text-sky-600" />
+        Select available date and time
       </h3>
 
       <div className="space-y-1.5">
@@ -64,18 +103,10 @@ export function PatientBookingScheduleSection({
           onChange={(e) => onDateStrChange(e.target.value)}
           className={cn(patientBookingGlassInputClass, "cursor-pointer text-sm")}
         />
-        {selectedDoctor ? (
-          <p className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Stethoscope className="h-3 w-3 shrink-0" />
-            Dr. {selectedDoctor.display_name ?? selectedDoctor.email}
-            {selectedType && ` · ${selectedType.name} · ${selectedType.duration_minutes} min`}
-            {isFlexible && ` · ${flexDuration} min`}
-          </p>
-        ) : null}
       </div>
 
       {showSlots ? (
-        <div className="space-y-2">
+        <div ref={slotsPanelRef} className="space-y-2 scroll-mt-4">
           <Label className="flex items-center gap-1.5">
             <Clock className="h-4 w-4 text-sky-600" />
             Available Slots
@@ -98,7 +129,14 @@ export function PatientBookingScheduleSection({
               </p>
             </div>
           ) : (
-            <div className="grid max-h-56 grid-cols-2 gap-2 overflow-y-auto pr-1 sm:grid-cols-3">
+            <div
+              className={cn(
+                "grid grid-cols-2 gap-2 pr-1 sm:grid-cols-3",
+                fillLayout
+                  ? "min-h-0 flex-1 overflow-y-auto"
+                  : "max-h-56 overflow-y-auto"
+              )}
+            >
               {slots.map((slot) => {
                 const slotTime = format(new Date(slot), "HH:mm");
                 const endTime = format(addMinutes(new Date(slot), duration), "HH:mm");

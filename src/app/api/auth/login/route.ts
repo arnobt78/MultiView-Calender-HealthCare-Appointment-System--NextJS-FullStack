@@ -7,6 +7,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { verifyPassword, generateToken, getUserByEmail } from "@/lib/auth";
+import { countTodayAppointmentsForLoginUser } from "@/lib/login-today-appointments";
 import { setSession } from "@/lib/session";
 import { loginRequestSchema } from "@/lib/schemas/auth";
 import { zodBadRequest } from "@/lib/schemas/parse";
@@ -83,7 +84,12 @@ export async function POST(req: NextRequest) {
     // Set session cookie
     await setSession(token);
 
-    // Return user data (without password)
+    const today_appointments = await countTodayAppointmentsForLoginUser(
+      user.id,
+      user.role ?? "patient",
+      user.email ?? ""
+    );
+
     return NextResponse.json({
       user: {
         id: user.id,
@@ -92,6 +98,7 @@ export async function POST(req: NextRequest) {
         role: user.role,
         image: user.image ?? null,
       },
+      today_appointments,
     }, {
       headers: {
         "X-RateLimit-Limit": RATE_LIMITS.LOGIN.maxRequests.toString(),

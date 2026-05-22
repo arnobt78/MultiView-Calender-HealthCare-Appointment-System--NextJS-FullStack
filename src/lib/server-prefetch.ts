@@ -379,6 +379,12 @@ export type DoctorPrefetchRow = {
   created_at: string;
   availabilities: { weekday: number; start_min: number; end_min: number; timezone: string }[];
   appointment_types: { id: string; name: string; duration_minutes: number }[];
+  bookable_appointment_types?: {
+    id: string;
+    name: string;
+    duration_minutes: number;
+    is_global?: boolean;
+  }[];
   patient_count: number;
 };
 
@@ -464,6 +470,8 @@ export async function prefetchAppointmentServiceCatalog(): Promise<ServiceCatalo
       name: true,
       description: true,
       duration_minutes: true,
+      buffer_before_minutes: true,
+      buffer_after_minutes: true,
       slot_interval_minutes: true,
       is_telehealth: true,
       user_id: true,
@@ -490,6 +498,8 @@ export async function prefetchAppointmentServiceCatalog(): Promise<ServiceCatalo
       name: g.name,
       description: g.description,
       duration_minutes: g.duration_minutes,
+      buffer_before_minutes: g.buffer_before_minutes,
+      buffer_after_minutes: g.buffer_after_minutes,
       slot_interval_minutes: g.slot_interval_minutes,
       is_telehealth: g.is_telehealth,
     }));
@@ -503,6 +513,8 @@ export async function prefetchAppointmentServiceCatalog(): Promise<ServiceCatalo
         name: r.name,
         description: r.description,
         duration_minutes: r.duration_minutes,
+        buffer_before_minutes: r.buffer_before_minutes,
+        buffer_after_minutes: r.buffer_after_minutes,
         slot_interval_minutes: r.slot_interval_minutes,
         is_telehealth: r.is_telehealth,
         user_id: r.user_id,

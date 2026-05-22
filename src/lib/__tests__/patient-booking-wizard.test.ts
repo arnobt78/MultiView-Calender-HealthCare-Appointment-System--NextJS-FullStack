@@ -6,6 +6,7 @@ import {
   getNextStep,
   shouldFetchAvailabilitySlots,
   shouldShowConfirmSection,
+  shouldShowDoctorTypeSection,
   shouldShowScheduleSection,
   type PatientBookingWizardState,
 } from "@/lib/patient-booking-wizard";
@@ -68,6 +69,18 @@ describe("canAdvanceFromStep", () => {
     s.selectedSlot = null;
     expect(canAdvanceFromStep(2, s)).toBe(true);
   });
+
+  it("step 3 requires title, slot, and type (or flexible)", () => {
+    const s = baseState();
+    s.title = "";
+    s.selectedSlot = "2026-05-21T10:00:00.000Z";
+    expect(canAdvanceFromStep(3, s)).toBe(false);
+    s.title = "Visit";
+    expect(canAdvanceFromStep(3, s)).toBe(true);
+    s.selectedType = null;
+    s.isFlexible = true;
+    expect(canAdvanceFromStep(3, s)).toBe(true);
+  });
 });
 
 describe("getNextStep", () => {
@@ -75,43 +88,37 @@ describe("getNextStep", () => {
     expect(getNextStep(1, baseState())).toBe(2);
   });
 
-  it("flexible skips from 2 to 4", () => {
+  it("advances 2 to 3 for typed and flexible", () => {
+    expect(getNextStep(2, baseState())).toBe(3);
     const s = baseState();
     s.isFlexible = true;
-    expect(getNextStep(2, s)).toBe(4);
-  });
-
-  it("typed goes 2 to 3", () => {
-    expect(getNextStep(2, baseState())).toBe(3);
+    expect(getNextStep(2, s)).toBe(3);
   });
 });
 
 describe("getBackStep", () => {
   it("returns null on step 1", () => {
-    expect(getBackStep(1, baseState())).toBeNull();
+    expect(getBackStep(1)).toBeNull();
   });
 
-  it("flexible back from 4 goes to 2", () => {
-    const s = baseState();
-    s.isFlexible = true;
-    expect(getBackStep(4, s)).toBe(2);
+  it("back from 3 goes to 2", () => {
+    expect(getBackStep(3)).toBe(2);
   });
 
-  it("typed back from 4 goes to 3", () => {
-    expect(getBackStep(4, baseState())).toBe(3);
+  it("back from 2 goes to 1", () => {
+    expect(getBackStep(2)).toBe(1);
   });
 });
 
 describe("section visibility", () => {
-  it("schedule from step 2 onward", () => {
+  it("one panel per step", () => {
+    expect(shouldShowDoctorTypeSection(1)).toBe(true);
+    expect(shouldShowDoctorTypeSection(2)).toBe(false);
     expect(shouldShowScheduleSection(1)).toBe(false);
     expect(shouldShowScheduleSection(2)).toBe(true);
-    expect(shouldShowScheduleSection(3)).toBe(true);
-  });
-
-  it("confirm from step 4 only", () => {
-    expect(shouldShowConfirmSection(3)).toBe(false);
-    expect(shouldShowConfirmSection(4)).toBe(true);
+    expect(shouldShowScheduleSection(3)).toBe(false);
+    expect(shouldShowConfirmSection(2)).toBe(false);
+    expect(shouldShowConfirmSection(3)).toBe(true);
   });
 });
 

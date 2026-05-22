@@ -432,6 +432,88 @@ async function seedExtendedSchema() {
     }
   }
 
+  // ── 6. Demo doctor-owned visit types + scheduling parity (buffers / slot step) ─
+  console.log("\n📋  Seeding demo doctor-owned visit types + scheduling fields…");
+  const ownedTypeSpecs = [
+    {
+      doctorEmail: "test@doctor.com",
+      name: "Physio Theraphy",
+      duration_minutes: 30,
+      description: "Custom physiotherapy session for Demo Doctor.",
+    },
+    {
+      doctorEmail: "demo.doctor2@healthcal.dev",
+      name: "Test Report Show",
+      duration_minutes: 40,
+      description: "Review diagnostic imaging and lab reports with the patient.",
+    },
+  ] as const;
+
+  for (const spec of ownedTypeSpecs) {
+    const doc = await prisma.user.findFirst({ where: { email: spec.doctorEmail } });
+    if (!doc) {
+      console.log(`  – skip ${spec.name} (doctor ${spec.doctorEmail} missing)`);
+      continue;
+    }
+    const existing = await prisma.appointmentType.findFirst({
+      where: {
+        user_id: doc.id,
+        name: { equals: spec.name, mode: "insensitive" },
+        is_active: true,
+      },
+    });
+    const scheduling = {
+      buffer_before_minutes: 5,
+      buffer_after_minutes: 5,
+      slot_interval_minutes: 30,
+      minimum_notice_minutes: 60,
+    };
+    if (existing) {
+      await prisma.appointmentType.update({
+        where: { id: existing.id },
+        data: {
+          description: spec.description,
+          duration_minutes: spec.duration_minutes,
+          ...scheduling,
+        },
+      });
+      console.log(`  ✔ ${spec.name} (updated scheduling)`);
+    } else {
+      await prisma.appointmentType.create({
+        data: {
+          user_id: doc.id,
+          name: spec.name,
+          description: spec.description,
+          duration_minutes: spec.duration_minutes,
+          ...scheduling,
+        },
+      });
+      console.log(`  ✔ ${spec.name} (created)`);
+    }
+  }
+
+  const zeroBufferOwned = await prisma.appointmentType.findMany({
+    where: {
+      user_id: { not: null },
+      is_active: true,
+      buffer_before_minutes: 0,
+      buffer_after_minutes: 0,
+    },
+  });
+  for (const row of zeroBufferOwned) {
+    await prisma.appointmentType.update({
+      where: { id: row.id },
+      data: {
+        buffer_before_minutes: 5,
+        buffer_after_minutes: 5,
+        slot_interval_minutes: row.slot_interval_minutes > 0 ? row.slot_interval_minutes : 30,
+      },
+    });
+  }
+  if (zeroBufferOwned.length) {
+    console.log(`  ✔ Patched ${zeroBufferOwned.length} doctor-owned type(s) with default 5m buffers`);
+  }
+
   console.log("\n✅  Extended schema seed complete.");
 }
 

@@ -1,8 +1,9 @@
 /**
  * Pure helpers for patient portal booking wizard — shared by dialog UI and unit tests.
+ * Three steps: Doctor & Type → Date & Time → Details (one panel per step index).
  */
 
-export type PatientBookingStep = 1 | 2 | 3 | 4;
+export type PatientBookingStep = 1 | 2 | 3;
 
 export type PatientBookingAppointmentType = {
   id: string;
@@ -29,12 +30,9 @@ export type PatientBookingWizardState = {
 
 export const PATIENT_BOOKING_STEP_LABELS = [
   "Doctor & Type",
-  "Date",
-  "Time Slot",
+  "Date & Time",
   "Details",
 ] as const;
-
-export const PATIENT_BOOKING_DIALOG_DESC_ID = "patient-booking-dialog-desc";
 
 /** Initial wizard fields when dialog opens or closes. */
 export function createInitialBookingState(preselectedDoctorId?: string): PatientBookingWizardState {
@@ -64,53 +62,49 @@ export function canAdvanceFromStep(
       if (state.isFlexible) return true;
       return Boolean(state.selectedSlot);
     case 3:
-      return Boolean(state.selectedSlot);
-    case 4:
-      return Boolean(state.title && state.selectedSlot);
+      return Boolean(
+        state.title &&
+          state.selectedSlot &&
+          (state.isFlexible || Boolean(state.selectedType))
+      );
     default:
       return false;
   }
 }
 
-/** Next step index after primary footer action (not used on step 4). */
+/** Next step after footer primary (step 3 is submit only). */
 export function getNextStep(
   step: PatientBookingStep,
-  state: PatientBookingWizardState
+  _state: PatientBookingWizardState
 ): PatientBookingStep {
   if (step === 1) return 2;
-  if (step === 2) {
-    if (state.isFlexible) return 4;
-    return state.selectedSlot ? 3 : 3;
-  }
-  if (step === 3) return 4;
-  return 4;
+  return 3;
 }
 
 /** Previous step for footer Back. */
-export function getBackStep(
-  step: PatientBookingStep,
-  state: PatientBookingWizardState
-): PatientBookingStep | null {
+export function getBackStep(step: PatientBookingStep): PatientBookingStep | null {
   if (step === 1) return null;
-  if (step === 4) return state.isFlexible ? 2 : 3;
   if (step === 3) return 2;
   if (step === 2) return 1;
   return null;
 }
 
-/**
- * Which body sections stay mounted in the progressive stack.
- * Step 3 only advances stepper; schedule block remains visible from step 2 onward.
- */
+/** Step 1 panel — doctor directory + visit type. */
+export function shouldShowDoctorTypeSection(step: PatientBookingStep): boolean {
+  return step === 1;
+}
+
+/** Step 2 panel — date + availability slots (or flexible date only). */
 export function shouldShowScheduleSection(step: PatientBookingStep): boolean {
-  return step >= 2;
+  return step === 2;
 }
 
+/** Step 3 panel — summary, title, notes, flexible start time. */
 export function shouldShowConfirmSection(step: PatientBookingStep): boolean {
-  return step >= 4;
+  return step === 3;
 }
 
-/** Slots query should run when doctor, date, and type are known (not tied to step index). */
+/** Slots query when doctor, date, and type are known (not tied to step index). */
 export function shouldFetchAvailabilitySlots(state: PatientBookingWizardState): boolean {
   return (
     !state.isFlexible &&

@@ -1,6 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 const WEEKDAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 
@@ -25,8 +26,13 @@ function minToTime(min: number): string {
  */
 export function DoctorAvailabilityGroups({
   availabilities,
+  /** `inline` — one wrapping row (booking picker); default stacks each hour group. */
+  layout = "stacked",
+  className,
 }: {
   availabilities: DoctorAvailabilitySlot[];
+  layout?: "stacked" | "inline";
+  className?: string;
 }) {
   if (!availabilities.length) {
     return <p className="text-xs text-muted-foreground">No availability set</p>;
@@ -54,6 +60,32 @@ export function DoctorAvailabilityGroups({
     ...g,
     days: [...g.days].sort((a, b) => a - b),
   }));
+
+  if (layout === "inline") {
+    return (
+      <div className={cn("inline-flex max-w-full flex-wrap items-center gap-1.5", className)}>
+        {rows.map((row) => (
+          <span
+            key={`${row.start_min}-${row.end_min}`}
+            className="inline-flex max-w-full flex-wrap items-center gap-1"
+          >
+            {row.days.map((d) => (
+              <Badge
+                key={d}
+                variant="outline"
+                className="text-[10px] px-1.5 py-0 bg-sky-50 text-sky-700 border-sky-200"
+              >
+                {WEEKDAY_SHORT[d] ?? `D${d}`}
+              </Badge>
+            ))}
+            <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+              {minToTime(row.start_min)} – {minToTime(row.end_min)}
+            </span>
+          </span>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-1.5">

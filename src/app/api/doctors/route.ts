@@ -11,6 +11,7 @@
  */
 
 import { NextResponse } from "next/server";
+import { mergeBookableTypesForDoctor } from "@/lib/doctor-bookable-types";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 
@@ -23,7 +24,8 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const doctors = await prisma.user.findMany({
+    const [doctors, globalTypes] = await Promise.all([
+      prisma.user.findMany({
       where: { role: "doctor" },
       select: {
         id: true,
@@ -53,6 +55,9 @@ export async function GET() {
             duration_minutes: true,
             description: true,
             is_telehealth: true,
+            buffer_before_minutes: true,
+            buffer_after_minutes: true,
+            slot_interval_minutes: true,
           },
         },
         // Count enabled global types from the junction table
@@ -66,9 +71,30 @@ export async function GET() {
         },
       },
       orderBy: { display_name: "asc" },
-    });
+      }),
+      prisma.appointmentType.findMany({
+        where: { user_id: null, is_active: true },
+        select: {
+          id: true,
+          name: true,
+          duration_minutes: true,
+          description: true,
+          is_telehealth: true,
+          buffer_before_minutes: true,
+          buffer_after_minutes: true,
+          slot_interval_minutes: true,
+          doctor_configs: {
+            select: { doctor_id: true, is_enabled: true },
+          },
+        },
+        orderBy: { name: "asc" },
+      }),
+    ]);
 
-    const serialized = doctors.map((d) => ({
+    const serialized = doctors.map((d) => {
+      const owned = d.appointment_types_owned;
+      const bookable_appointment_types = mergeBookableTypesForDoctor(d.id, owned, globalTypes);
+      return {
       id: d.id,
       email: d.email,
       display_name: d.display_name,
@@ -84,10 +110,12 @@ export async function GET() {
       office_location: d.office_location,
       department: d.department,
       availabilities: d.doctor_availabilities,
-      appointment_types: d.appointment_types_owned,
+      appointment_types: owned,
+      bookable_appointment_types,
       enabled_type_count: d.doctor_type_configs.length,
       patient_count: d.patients_primary_doctor.length,
-    }));
+      };
+    });
 
     return NextResponse.json({ doctors: serialized });
   } catch (error: unknown) {
