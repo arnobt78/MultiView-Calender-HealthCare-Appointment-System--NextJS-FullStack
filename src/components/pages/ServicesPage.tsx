@@ -214,32 +214,7 @@ export default function ServicesPage({ initialDoctors, initialServiceCatalog }: 
 
   useLayoutEffect(() => {
     if (initialDoctors?.length) {
-      const seeded = initialDoctors as DoctorCard[];
-      const first = seeded[0];
-      // #region agent log
-      fetch("http://127.0.0.1:7938/ingest/15849825-35e9-4832-9975-ca3563c056ec", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "6e525f" },
-        body: JSON.stringify({
-          sessionId: "6e525f",
-          hypothesisId: "H1",
-          location: "ServicesPage.tsx:useLayoutEffect",
-          message: "SSR seed doctors.all",
-          data: {
-            seedCount: seeded.length,
-            hasBookableField: first != null && "bookable_appointment_types" in first,
-            bookableLen:
-              first != null && "bookable_appointment_types" in first
-                ? (first as { bookable_appointment_types?: unknown[] }).bookable_appointment_types
-                    ?.length ?? 0
-                : null,
-            ownedLen: first?.appointment_types?.length ?? null,
-          },
-          timestamp: Date.now(),
-        }),
-      }).catch(() => {});
-      // #endregion
-      queryClient.setQueryData(queryKeys.doctors.all, { doctors: seeded });
+      queryClient.setQueryData(queryKeys.doctors.all, { doctors: initialDoctors as DoctorCard[] });
     }
     if (initialServiceCatalog?.length) {
       queryClient.setQueryData(queryKeys.appointmentTypes.catalog, {

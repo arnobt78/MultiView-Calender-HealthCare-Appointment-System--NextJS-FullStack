@@ -5,7 +5,7 @@
  * Three steps (one panel each): doctor & type → date & time → details.
  */
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { addMinutes } from "date-fns";
 import { motion, useReducedMotion } from "framer-motion";
@@ -121,34 +121,6 @@ export function PatientBookingDialog({
     enabled: open,
   });
   const doctors: DoctorDirectoryRow[] = doctorsData?.doctors ?? [];
-
-  // #region agent log — H2/H3: doctors.all cache shape when dialog opens
-  useEffect(() => {
-    if (!open || doctors.length === 0) return;
-    const missingBookable = doctors.filter((d) => d.bookable_appointment_types == null).length;
-    const sample = doctors[0];
-    fetch("http://127.0.0.1:7938/ingest/15849825-35e9-4832-9975-ca3563c056ec", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "6e525f" },
-      body: JSON.stringify({
-        sessionId: "6e525f",
-        hypothesisId: "H2",
-        location: "PatientBookingDialog.tsx:useEffect",
-        message: "doctors.all payload shape",
-        data: {
-          doctorCount: doctors.length,
-          missingBookableCount: missingBookable,
-          sampleDoctorId: sample.id,
-          bookableLen: sample.bookable_appointment_types?.length ?? null,
-          ownedLen: sample.appointment_types?.length ?? null,
-          bookableGlobalCount:
-            sample.bookable_appointment_types?.filter((t) => t.is_global === true).length ?? null,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-  }, [open, doctors]);
-  // #endregion
 
   const { types, typesLoading, isFlexible } = usePatientBookableAppointmentTypes({
     doctorId,

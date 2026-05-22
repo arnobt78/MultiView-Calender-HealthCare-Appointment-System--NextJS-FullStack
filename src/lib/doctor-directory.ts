@@ -45,32 +45,10 @@ export type DoctorsDirectoryResponse = {
 
 /** Prefer server-merged bookable list; never treat empty array as “missing”. */
 export function resolveDoctorBookableTypes(
-  doctor: Pick<DoctorDirectoryRow, "bookable_appointment_types" | "appointment_types"> & {
-    id?: string;
-  }
+  doctor: Pick<DoctorDirectoryRow, "bookable_appointment_types" | "appointment_types">
 ): DoctorDirectoryAppointmentType[] {
-  const bookable = doctor.bookable_appointment_types;
-  const owned = doctor.appointment_types;
-  const resolved = bookable != null ? bookable : owned;
-  // #region agent log — H1: missing bookable forces owned-only fallback
-  if (bookable == null && typeof globalThis !== "undefined") {
-    fetch("http://127.0.0.1:7938/ingest/15849825-35e9-4832-9975-ca3563c056ec", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "6e525f" },
-      body: JSON.stringify({
-        sessionId: "6e525f",
-        hypothesisId: "H1",
-        location: "doctor-directory.ts:resolveDoctorBookableTypes",
-        message: "bookable missing — fallback to appointment_types (owned only)",
-        data: {
-          doctorId: doctor.id ?? null,
-          ownedLen: owned?.length ?? null,
-          resolvedGlobalCount: resolved.filter((t) => t.is_global === true).length,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
+  if (doctor.bookable_appointment_types != null) {
+    return doctor.bookable_appointment_types;
   }
-  // #endregion
-  return resolved;
+  return doctor.appointment_types;
 }

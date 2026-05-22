@@ -37,7 +37,7 @@ export function DoctorDirectoryPickerCard({
   const { getDoctorAvatarSrc } = useDoctorDisplayOptional();
   const label = doctor.display_name?.trim() || doctor.email?.trim() || "Doctor";
   const src = getDoctorAvatarSrc(doctor);
-  const serviceTypes = resolveDoctorBookableTypes({ ...doctor, id: doctor.id });
+  const serviceTypes = resolveDoctorBookableTypes(doctor);
 
   const body = (
     <div className="flex w-full items-stretch gap-3">
