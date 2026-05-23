@@ -26,6 +26,8 @@ export type SchedulingPanelProps = {
   /** `split` = calendar left, slots right on sm+; `stack` = vertical (legacy). */
   layout?: "split" | "stack";
   fillLayout?: boolean;
+  /** Omit inner month caption when parent already labels the scheduling section. */
+  hideCalendarCaption?: boolean;
   className?: string;
 };
 
@@ -47,6 +49,7 @@ export function SchedulingPanel({
   flexDurationMinutes = 30,
   layout = "split",
   fillLayout = false,
+  hideCalendarCaption = false,
   className,
 }: SchedulingPanelProps) {
   const isSplit = layout === "split";
@@ -111,6 +114,7 @@ export function SchedulingPanel({
           onDateStrChange={onDateStrChange}
           excludeAppointmentId={excludeAppointmentId}
           today={today}
+          hideCaption={hideCalendarCaption}
         />
         {!isFlexible && !showTypedSlots ? null : slotsRail}
       </div>
@@ -134,6 +138,7 @@ export function SchedulingPanel({
           excludeAppointmentId={excludeAppointmentId}
           today={today}
           compact
+          hideCaption={hideCalendarCaption}
         />
       </div>
       <div

@@ -6,13 +6,15 @@ import { DoctorDirectoryServiceChips } from "@/components/shared/doctor-display/
 import { DoctorSpecialtyBadge } from "@/components/shared/doctor-display/DoctorSpecialtyBadge";
 import { useDoctorDisplayOptional } from "@/context/DoctorDisplayContext";
 import { resolveDoctorBookableTypes, type DoctorDirectoryRow } from "@/lib/doctor-directory";
+import {
+  patientBookingGlassTileClass,
+  patientBookingGlassTileSelectedClass,
+} from "@/components/shared/patient-booking/patient-booking-dialog-styles";
 import { cn } from "@/lib/utils";
 
-const pickerShellClass =
-  "w-full rounded-2xl border border-sky-200/60 bg-white p-3 text-left shadow-[0_10px_30px_rgba(2,132,199,0.12)] transition-all hover:border-sky-300/70 hover:shadow-[0_14px_34px_rgba(2,132,199,0.18)]";
-
-const pickerSelectedClass =
-  "border-sky-500/80 bg-sky-50/90 ring-1 ring-sky-400/60 shadow-[0_12px_36px_rgba(2,132,199,0.22)]";
+/** Same shell as `VisitTypePickerList` tiles — aligned width and `rounded-2xl`. */
+const pickerShellClass = patientBookingGlassTileClass;
+const pickerSelectedClass = patientBookingGlassTileSelectedClass;
 
 type DoctorDirectoryPickerCardProps = {
   doctor: DoctorDirectoryRow;

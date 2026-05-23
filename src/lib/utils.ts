@@ -28,21 +28,37 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+function titleCaseWordPart(part: string): string {
+  if (!part) return part;
+  return part
+    .split("-")
+    .map((seg) => (seg ? seg.charAt(0).toUpperCase() + seg.slice(1).toLowerCase() : seg))
+    .join("-");
+}
+
+/** Title-case each `/` or `&` segment so `Client/Patient` → `Client/Patient`, not `Client/patient`. */
+function titleCaseSlashAware(fragment: string): string {
+  return fragment
+    .split(/(\/|&)/)
+    .map((piece) => (piece === "/" || piece === "&" ? piece : titleCaseWordPart(piece)))
+    .join("");
+}
+
+function titleCaseLabelToken(token: string): string {
+  const paren = token.match(/^(\()([^)]+)(\))$/);
+  if (paren) {
+    return `${paren[1]}${titleCaseSlashAware(paren[2])}${paren[3]}`;
+  }
+  return titleCaseSlashAware(token);
+}
+
 /**
- * Title-case each whitespace-delimited token for dialog chrome (labels, titles, buttons).
- * Hyphenated segments are title-cased per segment; punctuation on tokens is preserved.
+ * Title-case dialog chrome (labels, titles, buttons).
+ * Splits on whitespace; within each token also splits on `/`, `&`, and wraps `(optional)` segments.
  */
 export function toTitleCaseLabel(value: string): string {
   return value
     .split(/(\s+)/)
-    .map((segment) => {
-      if (/^\s+$/.test(segment)) return segment;
-      return segment
-        .split("-")
-        .map((part) =>
-          part ? part.charAt(0).toUpperCase() + part.slice(1).toLowerCase() : part
-        )
-        .join("-");
-    })
+    .map((segment) => (/^\s+$/.test(segment) ? segment : titleCaseLabelToken(segment)))
     .join("");
 }

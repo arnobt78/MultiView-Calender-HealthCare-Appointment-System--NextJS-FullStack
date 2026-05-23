@@ -24,7 +24,8 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { usePatients } from "@/hooks/usePatients";
 import { useCategories } from "@/hooks/useCategories";
-import { useUsers } from "@/hooks/useUsers";
+import { useDoctorsDirectory } from "@/hooks/useDoctorsDirectory";
+import { prefetchDoctorsDirectory } from "@/lib/prefetch-doctors-directory";
 import { useAppointments, FullAppointment } from "@/hooks/useAppointments";
 import { useAuth } from "@/hooks/useAuth";
 import { apiClient } from "@/lib/api-client";
@@ -79,12 +80,14 @@ export default function AppointmentDialog({
   const { categories = [] } = useCategories();
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const { data: doctorsData } = useUsers(
-    { role: "doctor", limit: 200 },
-    // Staff-only list: patients must not hit `/api/users` from this dialog.
-    { enabled: Boolean(user) && (user?.role ?? "") !== "patient" }
+  const showTreatingPhysicianPicker = Boolean(user) && (user?.role ?? "") !== "patient";
+  const { data: directoryData, isLoading: directoryDoctorsLoading } = useDoctorsDirectory({
+    enabled: open && showTreatingPhysicianPicker,
+  });
+  const directoryDoctors = useMemo(
+    () => directoryData?.doctors ?? [],
+    [directoryData?.doctors]
   );
-  const doctors = useMemo(() => doctorsData?.users ?? [], [doctorsData]);
   const { createAppointmentAsync, updateAppointmentAsync } = useAppointments();
 
   const [title, setTitle] = useState("");
@@ -189,6 +192,9 @@ export default function AppointmentDialog({
   const handleDialogOpenChange = (nextOpen: boolean) => {
     setOpen(nextOpen);
     onOpenChange?.(nextOpen);
+    if (nextOpen && showTreatingPhysicianPicker) {
+      prefetchDoctorsDirectory(queryClient);
+    }
     if (!nextOpen) {
       resetFormState();
     }
@@ -457,7 +463,7 @@ export default function AppointmentDialog({
           <div className="grid grid-cols-1 gap-6">
             <section className="min-w-0">
               <h3 className="mb-2 text-sm font-semibold tracking-tight text-gray-700">
-                {toTitleCaseLabel("Core scheduling")}
+                {toTitleCaseLabel("Core Appointment Scheduling")}
               </h3>
               <AppointmentDialogGeneralSection
                 title={title}
@@ -486,8 +492,9 @@ export default function AppointmentDialog({
                 fileInputRef={fileInputRef}
                 onFileChange={handleFileChange}
                 onRemoveUploadedFile={handleRemoveUploadedFile}
-                showTreatingPhysicianPicker={Boolean(user) && (user?.role ?? "") !== "patient"}
-                doctors={doctors}
+                showTreatingPhysicianPicker={showTreatingPhysicianPicker}
+                directoryDoctors={directoryDoctors}
+                directoryDoctorsLoading={directoryDoctorsLoading}
                 treatingPhysicianId={treatingPhysicianId}
                 setTreatingPhysicianId={setTreatingPhysicianId}
                 /**

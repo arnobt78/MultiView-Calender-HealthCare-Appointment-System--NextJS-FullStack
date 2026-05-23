@@ -32,4 +32,16 @@ export const patientBookingSummaryCardClass =
  * Parent chain must be `flex min-h-0 flex-1 flex-col`.
  */
 export const patientBookingFillScrollPanelClass =
-  "min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-2 py-2 space-y-3";
+  "min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-2 py-2 space-y-3 [scrollbar-gutter:stable]";
+
+/**
+ * Capped-height picker scroll — patient step 1 (non-flex) and staff appointment dialog.
+ * Single contract: `px-2 py-2 space-y-3` + stable scrollbar gutter (symmetric tile shadow bleed).
+ */
+export const bookingPickerScrollClass = cn(
+  "w-full max-h-[min(42vh,420px)] overflow-y-auto overflow-x-hidden overscroll-contain",
+  "space-y-3 px-2 py-2 [scrollbar-gutter:stable]"
+);
+
+/** Collapsed doctor/type summary row — matches scroll horizontal inset. */
+export const bookingPickerCollapsedInsetClass = "w-full space-y-2 px-2 py-1";

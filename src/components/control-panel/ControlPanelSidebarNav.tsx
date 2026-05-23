@@ -12,10 +12,15 @@
  * (`/control-panel/patient-management`) and detail sub-routes (`/control-panel/patients/[id]`).
  */
 
-import React, { useMemo, useRef, useState, useEffect } from "react";
+import React, { useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { useScrollOverflowEdges } from "@/hooks/useScrollOverflowEdges";
+import {
+  scrollOverflowBottomGradientClass,
+  scrollOverflowChevronButtonClass,
+} from "@/lib/scroll-overflow-ui-classes";
 import type { LucideIcon } from "lucide-react";
 import {
   Bell,
@@ -191,39 +196,7 @@ export default function ControlPanelSidebarNav() {
     }
   };
 
-  /*
-   * Scroll indicator — shows a gradient fade + chevron when the sidebar has hidden items below.
-   * Tracked via a scroll event listener + ResizeObserver so it updates on both scroll and
-   * viewport resize (e.g. user resizes browser window on a short screen).
-   */
-  const asideRef = useRef<HTMLElement>(null);
-  const [canScrollDown, setCanScrollDown] = useState(false);
-
-  useEffect(() => {
-    const el = asideRef.current;
-    if (!el) return;
-
-    const check = () => {
-      // true when there are more than 4px of hidden content below the current scroll position
-      setCanScrollDown(el.scrollTop + el.clientHeight < el.scrollHeight - 4);
-    };
-
-    check(); // run once on mount
-    el.addEventListener("scroll", check, { passive: true });
-
-    // Re-check whenever the sidebar or its content resizes (e.g. viewport height change)
-    const ro = new ResizeObserver(check);
-    ro.observe(el);
-
-    return () => {
-      el.removeEventListener("scroll", check);
-      ro.disconnect();
-    };
-  }, []);
-
-  /** Smoothly scroll the sidebar down by ~120px per click. */
-  const scrollDown = () =>
-    asideRef.current?.scrollBy({ top: 120, behavior: "smooth" });
+  const { containerRef: asideRef, canScrollDown, scrollDown } = useScrollOverflowEdges();
 
   return (
     /* Desktop sidebar — fills the height of the viewport-locked layout flex row.
@@ -300,20 +273,22 @@ export default function ControlPanelSidebarNav() {
        * pointer-events-none on the gradient layer so mouse events pass through to sidebar items.
        * The button itself has pointer-events-auto to remain clickable.
        */}
-      {canScrollDown && (
+      {canScrollDown ? (
         <div className="pointer-events-none absolute bottom-0 left-0 right-0 flex flex-col items-center">
-          {/* Gradient fade — signals hidden content below */}
-          <div className="h-10 w-full bg-gradient-to-t from-white/90 via-white/60 to-transparent" />
-          {/* Clickable chevron sits on top of the gradient */}
+          <div className={scrollOverflowBottomGradientClass("from-white/90")} />
           <button
+            type="button"
             onClick={scrollDown}
             aria-label="Scroll sidebar down"
-            className="pointer-events-auto mb-2 flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-gray-200/80 text-gray-400 hover:text-sky-600 hover:ring-sky-300 transition-colors animate-bounce"
+            className={cn(
+              scrollOverflowChevronButtonClass,
+              "pointer-events-auto mb-2 animate-bounce"
+            )}
           >
-            <ChevronDown className="size-3.5" />
+            <ChevronDown className="size-3.5" aria-hidden />
           </button>
         </div>
-      )}
+      ) : null}
     </aside>
   );
 }

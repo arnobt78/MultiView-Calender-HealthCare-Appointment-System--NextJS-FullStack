@@ -12,7 +12,10 @@ import {
   type AppointmentTypeSchedulingFields,
 } from "@/lib/appointment-type-scheduling-meta";
 import type { FlexDurationMinutes } from "@/lib/scheduling/flexible-type-config";
+import { ScrollOverflowPanel } from "@/components/shared/ScrollOverflowPanel";
 import {
+  bookingPickerCollapsedInsetClass,
+  bookingPickerScrollClass,
   patientBookingFillScrollPanelClass,
   patientBookingGlassTileClass,
   patientBookingGlassTileSelectedClass,
@@ -33,6 +36,10 @@ type VisitTypePickerListProps = {
   flexDuration: FlexDurationMinutes;
   onFlexDurationChange: (minutes: FlexDurationMinutes) => void;
   fillLayout?: boolean;
+  /** Override typed-list scroll classes (staff dialog flush inset). */
+  scrollClassName?: string;
+  /** @deprecated Staff dialog — default inset matches patient booking. */
+  flushInset?: boolean;
   className?: string;
 };
 
@@ -92,8 +99,11 @@ export function VisitTypePickerList({
   flexDuration,
   onFlexDurationChange,
   fillLayout = false,
+  scrollClassName,
+  flushInset: _flushInset = false,
   className,
 }: VisitTypePickerListProps) {
+  const collapsedInset = bookingPickerCollapsedInsetClass;
   const [pickerOpen, setPickerOpen] = useState(true);
   const [flexPicked, setFlexPicked] = useState(false);
 
@@ -114,7 +124,7 @@ export function VisitTypePickerList({
   if (isFlexible) {
     if (!showList && flexCollapsed) {
       return (
-        <div className={cn("space-y-2 px-2 py-1", className)}>
+        <div className={cn(collapsedInset, className)}>
           <VisitTypeSummaryCard flexLabel={`Flexible booking · ${flexDuration} min`} />
           <Button
             type="button"
@@ -170,7 +180,7 @@ export function VisitTypePickerList({
 
   if (typeCollapsed && selectedType) {
     return (
-      <div className={cn("space-y-2 px-2 py-1", className)}>
+      <div className={cn(collapsedInset, className)}>
         <VisitTypeSummaryCard type={selectedType} />
         <Button
           type="button"
@@ -186,12 +196,16 @@ export function VisitTypePickerList({
     );
   }
 
+  const typeScrollClass = cn(
+    scrollClassName ?? (fillLayout ? patientBookingFillScrollPanelClass : bookingPickerScrollClass),
+    className
+  );
+
   return (
-    <div
-      className={cn(
-        fillLayout ? patientBookingFillScrollPanelClass : "max-h-52 space-y-2 overflow-y-auto pr-1",
-        className
-      )}
+    <ScrollOverflowPanel
+      scrollClassName={typeScrollClass}
+      enabled={showList}
+      contentVersion={`${types.length}-${fillLayout ? 1 : 0}`}
       role="listbox"
       aria-label="Select appointment type"
     >
@@ -225,6 +239,6 @@ export function VisitTypePickerList({
           })()}
         </button>
       ))}
-    </div>
+    </ScrollOverflowPanel>
   );
 }

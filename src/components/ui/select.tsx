@@ -5,6 +5,10 @@ import * as SelectPrimitive from "@radix-ui/react-select";
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import {
+  scrollOverflowChevronButtonClass,
+  selectScrollOverflowButtonRowClass,
+} from "@/lib/scroll-overflow-ui-classes";
 
 function Select({
   ...props
@@ -135,6 +139,7 @@ function SelectSeparator({
   );
 }
 
+/** Circular chevron — matches `ScrollOverflowIndicators` / CP sidebar affordance. */
 function SelectScrollUpButton({
   className,
   ...props
@@ -142,13 +147,12 @@ function SelectScrollUpButton({
   return (
     <SelectPrimitive.ScrollUpButton
       data-slot="select-scroll-up-button"
-      className={cn(
-        "flex cursor-default items-center justify-center py-1",
-        className
-      )}
+      className={cn(selectScrollOverflowButtonRowClass, className)}
       {...props}
     >
-      <ChevronUpIcon className="size-4" />
+      <span className={scrollOverflowChevronButtonClass}>
+        <ChevronUpIcon className="size-3.5" aria-hidden />
+      </span>
     </SelectPrimitive.ScrollUpButton>
   );
 }
@@ -160,13 +164,12 @@ function SelectScrollDownButton({
   return (
     <SelectPrimitive.ScrollDownButton
       data-slot="select-scroll-down-button"
-      className={cn(
-        "flex cursor-default items-center justify-center py-1",
-        className
-      )}
+      className={cn(selectScrollOverflowButtonRowClass, className)}
       {...props}
     >
-      <ChevronDownIcon className="size-4" />
+      <span className={scrollOverflowChevronButtonClass}>
+        <ChevronDownIcon className="size-3.5" aria-hidden />
+      </span>
     </SelectPrimitive.ScrollDownButton>
   );
 }

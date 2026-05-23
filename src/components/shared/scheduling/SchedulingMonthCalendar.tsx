@@ -23,6 +23,8 @@ type SchedulingMonthCalendarProps = {
   today: string;
   /** Side-by-side layout: calendar fits content width instead of stretching full row. */
   compact?: boolean;
+  /** Staff dialog — parent section already titles the block; omit inner "Pick a Date" row. */
+  hideCaption?: boolean;
   className?: string;
 };
 
@@ -47,6 +49,7 @@ export function SchedulingMonthCalendar({
   excludeAppointmentId,
   today,
   compact = false,
+  hideCaption = false,
   className,
 }: SchedulingMonthCalendarProps) {
   const queryClient = useQueryClient();
@@ -59,12 +62,16 @@ export function SchedulingMonthCalendar({
     requestAnimationFrame(() => setIsMounted(true));
   }, []);
 
-  // Keep visible month aligned when parent sets dateStr (e.g. restore / programmatic pick).
+  // Align visible month when parent sets dateStr (e.g. wizard restore) without remounting Calendar.
   useEffect(() => {
     if (!dateStr) return;
     const picked = parseDateStr(dateStr);
     if (!picked) return;
-    setMonth((prev) => (toMonthYm(prev) === toMonthYm(picked) ? prev : picked));
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync visible month from controlled dateStr
+    setMonth((prev) => {
+      if (toMonthYm(prev) === toMonthYm(picked)) return prev;
+      return picked;
+    });
   }, [dateStr]);
 
   const { data, isLoading } = useSchedulingMonthDates({
@@ -108,11 +115,13 @@ export function SchedulingMonthCalendar({
 
   if (!isMounted) {
     return (
-      <div className={cn("space-y-1.5", className)}>
-        <Label className="flex items-center gap-1.5">
-          <CalendarDays className="h-4 w-4 text-sky-600" />
-          Pick a Date
-        </Label>
+      <div className={cn(hideCaption ? "space-y-0" : "space-y-1.5", className)}>
+        {!hideCaption ? (
+          <Label className="flex items-center gap-1.5">
+            <CalendarDays className="h-4 w-4 text-sky-600" />
+            Pick a Date
+          </Label>
+        ) : null}
         <Skeleton
           className={cn("h-[280px] rounded-2xl", compact ? "w-[280px] max-w-full" : "w-full")}
         />
@@ -121,11 +130,13 @@ export function SchedulingMonthCalendar({
   }
 
   return (
-    <div className={cn("space-y-1.5", className)}>
-      <Label className="flex items-center gap-1.5">
-        <CalendarDays className="h-4 w-4 text-sky-600" />
-        Pick a Date
-      </Label>
+    <div className={cn(hideCaption ? "space-y-0" : "space-y-1.5", className)}>
+      {!hideCaption ? (
+        <Label className="flex items-center gap-1.5">
+          <CalendarDays className="h-4 w-4 text-sky-600" />
+          Pick a Date
+        </Label>
+      ) : null}
       <div
         className={cn(
           "rounded-2xl border border-sky-200/60 bg-white/90 p-2 shadow-[0_10px_30px_rgba(2,132,199,0.12)]",

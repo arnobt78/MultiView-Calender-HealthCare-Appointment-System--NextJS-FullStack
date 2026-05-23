@@ -11,8 +11,8 @@
  * positioning so the calendar control sits on the right like select chevrons. Client avatars use
  * `resolvePatientPortraitUrl` (demo table avatars + clinical JSON + robohash). Optional **Cal-style** slot
  * row reuses `GET /api/availability/slots` (see `docs/PROJECT_WALKTHROUGH.md`) with the **calendar owner**
- * id so busy intervals match `POST /api/appointments` ownership. Treating physician trigger uses **only**
- * `SelectValue` so Radix does not duplicate avatars already rendered inside each `SelectItem`.
+ * id so busy intervals match `POST /api/appointments` ownership. Treating physician uses the same
+ * `DoctorDirectoryPickerList` as patient booking (`GET /api/doctors` / `queryKeys.doctors.all`).
  */
 
 import {
@@ -29,6 +29,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { addMinutes, format, parseISO } from "date-fns";
 import type { LucideIcon } from "lucide-react";
 import {
+  CalendarDays,
   FileText,
   Heading2,
   LayoutGrid,
@@ -41,6 +42,10 @@ import {
   UserRound,
   ListTodo,
 } from "lucide-react";
+import {
+  staffAppointmentGlassSectionClass,
+  staffAppointmentPickerShellClass,
+} from "@/lib/appointment-dialog-ui-classes";
 import { cn, toTitleCaseLabel } from "@/lib/utils";
 import { isValidUUID } from "@/lib/validation";
 import { utcToLocalInputValue } from "@/lib/datetime-local";
@@ -66,8 +71,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { Category, Patient, User } from "@/types/types";
-import { DoctorSelectOption } from "@/components/shared/doctor-display/DoctorSelectOption";
+import type { Category, Patient } from "@/types/types";
+import type { DoctorDirectoryRow } from "@/lib/doctor-directory";
+import { DoctorDirectoryPickerList } from "@/components/shared/doctor-display/DoctorDirectoryPickerList";
 
 /** Matches `MAX_ATTACHMENT_BYTES` in `AppointmentDialog.tsx` — keep both in sync. */
 const MAX_ATTACHMENT_BYTES_LABEL = "1 MB";
@@ -94,9 +100,6 @@ const glassDatetimeInputClass = cn(
 const glassTextareaClass = cn(
   "w-full min-w-0 rounded-2xl border border-sky-200/50 bg-white/75 px-3 py-2 text-sm text-gray-700 shadow-[0_8px_24px_rgba(2,132,199,0.14)] backdrop-blur-md transition-colors placeholder:text-gray-500 focus-visible:border-sky-400/50 focus-visible:ring-2 focus-visible:ring-sky-200/40 min-h-[88px] resize-y"
 );
-
-const glassCardClass =
-  "rounded-2xl border border-sky-200/55 bg-sky-50/35 p-3 shadow-[0_10px_32px_rgba(2,132,199,0.12)] backdrop-blur-md";
 
 const glassFileButtonClass =
   "inline-flex h-11 min-h-[2.75rem] w-full shrink-0 items-center justify-center gap-2 rounded-2xl border border-sky-300/45 bg-white/80 px-4 text-sm font-medium text-sky-900 shadow-[0_8px_22px_rgba(2,132,199,0.18)] backdrop-blur-md transition-all hover:border-sky-400/55 hover:bg-sky-50/90 hover:shadow-[0_12px_28px_rgba(2,132,199,0.22)] disabled:pointer-events-none disabled:opacity-50 sm:w-auto sm:min-w-[10rem] [&_svg]:size-4";
@@ -130,7 +133,8 @@ type Props = {
   onRemoveUploadedFile: (url: string) => void;
   /** When false (e.g. patient role), the treating-physician row is omitted — server still defaults B2 on create. */
   showTreatingPhysicianPicker: boolean;
-  doctors: User[];
+  directoryDoctors: DoctorDirectoryRow[];
+  directoryDoctorsLoading?: boolean;
   treatingPhysicianId: string;
   setTreatingPhysicianId: (v: string) => void;
   /**
@@ -149,10 +153,6 @@ type Props = {
   /** Edit mode — keeps the appointment's slot selectable in the grid. */
   excludeAppointmentId?: string;
 };
-
-function doctorLabel(d: User) {
-  return d.display_name?.trim() ? d.display_name : d.email;
-}
 
 /** Safe swatch for category `color` (hex) — invalid values fall back to neutral slate. */
 function categorySwatchStyle(color: string | null | undefined): CSSProperties {
@@ -209,6 +209,11 @@ function FieldLabel({
   );
 }
 
+/** Mandatory scheduling fields — same marker as Title. */
+function RequiredMark() {
+  return <span className="text-gray-700"> *</span>;
+}
+
 export function AppointmentDialogGeneralSection({
   title,
   setTitle,
@@ -237,7 +242,8 @@ export function AppointmentDialogGeneralSection({
   onFileChange,
   onRemoveUploadedFile,
   showTreatingPhysicianPicker,
-  doctors,
+  directoryDoctors,
+  directoryDoctorsLoading = false,
   treatingPhysicianId,
   setTreatingPhysicianId,
   availabilityDoctorId,
@@ -356,6 +362,7 @@ export function AppointmentDialogGeneralSection({
           id="title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
+          placeholder="Appointment title (e.g. follow-up consultation)"
           className={cn(glassInputClass, "cursor-text")}
         />
       </div>
@@ -378,93 +385,102 @@ export function AppointmentDialogGeneralSection({
         <FieldLabel htmlFor="notes" icon={FileText}>
           {toTitleCaseLabel("Internal Notes")}
         </FieldLabel>
-        <p className="text-xs text-gray-500">Optional — staff-only context, not shown to patients.</p>
+        {/* `notes` is staff-only; `chief_complaint` is the patient-facing clinical line on cards. */}
         <Textarea
           id="notes"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
+          placeholder="Optional — staff-only context, not shown to patients."
           rows={2}
           className={cn(glassTextareaClass, "cursor-text min-h-[72px]")}
         />
       </div>
 
       {showTreatingPhysicianPicker ? (
-        <div className={cn("space-y-2", glassCardClass)}>
-          <FieldLabel icon={Stethoscope}>{toTitleCaseLabel("Treating Physician")}</FieldLabel>
-          <p className="text-xs leading-relaxed text-gray-600">
-            Drives available dates and slots below. Calendar ownership stays on the scheduling account.
-          </p>
-          <Select
-            value={treatingPhysicianId || undefined}
-            onValueChange={(id) => {
-              setTreatingPhysicianId(id);
-              setSlotPickDateStr("");
-              setSlotPickTypeId("");
-              setSlotPickStartIso(null);
-              setStart("");
-              setEnd("");
-            }}
-          >
-            <SelectTrigger className={glassSelectTriggerClass}>
-              <SelectValue placeholder={toTitleCaseLabel("Select Doctor")} />
-            </SelectTrigger>
-            <SelectContent>
-              {doctors.map((d) => (
-                <SelectItem key={d.id} value={d.id} textValue={doctorLabel(d)}>
-                  <DoctorSelectOption doctor={d} />
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className={staffAppointmentGlassSectionClass}>
+          <FieldLabel icon={Stethoscope}>
+            {toTitleCaseLabel("Select Treating Physician")}
+            <RequiredMark />
+          </FieldLabel>
+          <div className={staffAppointmentPickerShellClass}>
+            <DoctorDirectoryPickerList
+              doctors={directoryDoctors}
+              selectedDoctorId={treatingPhysicianId}
+              onSelectDoctor={(id) => {
+                setTreatingPhysicianId(id);
+                setSlotPickDateStr("");
+                setSlotPickTypeId("");
+                setSlotPickStartIso(null);
+                setStart("");
+                setEnd("");
+              }}
+              isLoading={directoryDoctorsLoading}
+              fillHeight={false}
+            />
+          </div>
         </div>
       ) : null}
 
       {isValidUUID(availabilityDoctorId) ? (
-        <div className={cn("space-y-3", glassCardClass)}>
+        <div className={staffAppointmentGlassSectionClass}>
           <FieldLabel icon={Timer}>
-            {toTitleCaseLabel("Suggested start times (availability)")}
+            {toTitleCaseLabel("Select Appointment Type & Duration Based on Selected Doctor's Availability")}
+            <RequiredMark />
           </FieldLabel>
-          <VisitTypePickerList
-            key={availabilityDoctorId}
-            typesLoading={typesLoading}
-            isFlexible={isStaffFlexible}
-            types={types}
-            selectedType={selectedStaffType}
-            onSelectType={handleStaffSelectType}
-            flexDuration={staffFlexDuration}
-            onFlexDurationChange={handleStaffFlexDuration}
-          />
-          {isStaffFlexible || resolvedSlotTypeId ? (
-            <SchedulingPanel
-              doctorId={availabilityDoctorId}
-              typeId={resolvedSlotTypeId}
-              typeDuration={
-                isStaffFlexible
-                  ? staffFlexDuration
-                  : (selectedSlotType?.duration_minutes ?? 30)
-              }
-              dateStr={slotPickDateStr}
-              onDateStrChange={(v) => {
-                setSlotPickDateStr(v);
-                setSlotPickStartIso(null);
-              }}
-              selectedSlot={slotPickStartIso}
-              onSelectSlot={handleSlotPick}
-              excludeAppointmentId={excludeAppointmentId}
-              today={today}
+          <div className={staffAppointmentPickerShellClass}>
+            <VisitTypePickerList
+              key={availabilityDoctorId}
+              typesLoading={typesLoading}
               isFlexible={isStaffFlexible}
-              flexDurationMinutes={staffFlexDuration}
-              layout="split"
-              className="min-w-0"
+              types={types}
+              selectedType={selectedStaffType}
+              onSelectType={handleStaffSelectType}
+              flexDuration={staffFlexDuration}
+              onFlexDurationChange={handleStaffFlexDuration}
             />
-          ) : null}
+          </div>
         </div>
       ) : null}
+
+      {isValidUUID(availabilityDoctorId) && (isStaffFlexible || resolvedSlotTypeId) ? (
+        <div className={staffAppointmentGlassSectionClass}>
+          <FieldLabel icon={CalendarDays}>
+            {toTitleCaseLabel("Pick a Date & Time Based on Selected Doctor's Availability")}
+            <RequiredMark />
+          </FieldLabel>
+          <SchedulingPanel
+            doctorId={availabilityDoctorId}
+            typeId={resolvedSlotTypeId}
+            typeDuration={
+              isStaffFlexible
+                ? staffFlexDuration
+                : (selectedSlotType?.duration_minutes ?? 30)
+            }
+            dateStr={slotPickDateStr}
+            onDateStrChange={(v) => {
+              setSlotPickDateStr(v);
+              setSlotPickStartIso(null);
+            }}
+            selectedSlot={slotPickStartIso}
+            onSelectSlot={handleSlotPick}
+            excludeAppointmentId={excludeAppointmentId}
+            today={today}
+            isFlexible={isStaffFlexible}
+            flexDurationMinutes={staffFlexDuration}
+            layout="split"
+            hideCalendarCaption
+            className="min-w-0 w-full"
+          />
+        </div>
+      ) : null}
+
+      <SchedulingManualOverride start={start} setStart={setStart} end={end} setEnd={setEnd} />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <FieldLabel icon={UserRound}>
-            {toTitleCaseLabel("Client")} <span className="text-gray-700">*</span>
+            {toTitleCaseLabel("Select Client/Patient")}
+            <RequiredMark />
           </FieldLabel>
           <Select value={patientId || undefined} onValueChange={setPatientId}>
             <SelectTrigger className={glassSelectTriggerClass}>
@@ -474,7 +490,7 @@ export function AppointmentDialogGeneralSection({
                   alt={`${selectedPatient.firstname} ${selectedPatient.lastname}`}
                 />
               ) : null}
-              <SelectValue placeholder={toTitleCaseLabel("Select Client")} />
+              <SelectValue placeholder={toTitleCaseLabel("Select Client/Patient")} />
             </SelectTrigger>
             <SelectContent>
               {patients.map((p) => (
@@ -495,7 +511,8 @@ export function AppointmentDialogGeneralSection({
         </div>
         <div className="space-y-2">
           <FieldLabel icon={LayoutGrid}>
-            {toTitleCaseLabel("Category")} <span className="text-gray-700">*</span>
+            {toTitleCaseLabel("Select Service/Medical Category")}
+            <RequiredMark />
           </FieldLabel>
           <Select value={categoryId || undefined} onValueChange={setCategoryId}>
             <SelectTrigger className={glassSelectTriggerClass}>
@@ -506,7 +523,7 @@ export function AppointmentDialogGeneralSection({
                   aria-hidden
                 />
               ) : null}
-              <SelectValue placeholder={toTitleCaseLabel("Select Category")} />
+              <SelectValue placeholder={toTitleCaseLabel("Select Service/Medical Category")} />
             </SelectTrigger>
             <SelectContent>
               {categories.map((c) => (
@@ -526,8 +543,6 @@ export function AppointmentDialogGeneralSection({
         </div>
       </div>
 
-      <SchedulingManualOverride start={start} setStart={setStart} end={end} setEnd={setEnd} />
-
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <FieldLabel htmlFor="location" icon={MapPin}>
@@ -541,7 +556,7 @@ export function AppointmentDialogGeneralSection({
           />
         </div>
         <div className="space-y-2">
-          <FieldLabel icon={ListTodo}>{toTitleCaseLabel("Status")}</FieldLabel>
+          <FieldLabel icon={ListTodo}>{toTitleCaseLabel("Select Status")}</FieldLabel>
           <Select value={status} onValueChange={setStatus}>
             <SelectTrigger className={glassSelectTriggerClass}>
               <SelectValue placeholder={toTitleCaseLabel("Select Status")} />

@@ -5,16 +5,20 @@ import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DoctorDirectoryPickerCard } from "@/components/shared/doctor-display/DoctorDirectoryPickerCard";
+import { ScrollOverflowPanel } from "@/components/shared/ScrollOverflowPanel";
 import type { DoctorDirectoryRow } from "@/lib/doctor-directory";
+import {
+  bookingPickerCollapsedInsetClass,
+  bookingPickerScrollClass,
+  patientBookingFillScrollPanelClass,
+} from "@/components/shared/patient-booking/patient-booking-dialog-styles";
 import { cn } from "@/lib/utils";
 
-/** Fixed cap — used when parent height is not flex-driven. */
-export const doctorDirectoryPickerScrollClass =
-  "max-h-[min(42vh,420px)] overflow-y-auto overflow-x-hidden px-2 py-2 space-y-3";
+/** Fixed cap — same scroll rhythm as patient booking step 1. */
+export const doctorDirectoryPickerScrollClass = bookingPickerScrollClass;
 
 /** Grows with dialog body down to footer — parent chain: dialog form → `fillStepLayout` motion → section → this node. */
-export const doctorDirectoryPickerFillScrollClass =
-  "min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-2 py-2 space-y-3";
+export const doctorDirectoryPickerFillScrollClass = patientBookingFillScrollPanelClass;
 
 type DoctorDirectoryPickerListProps = {
   doctors: DoctorDirectoryRow[];
@@ -23,6 +27,10 @@ type DoctorDirectoryPickerListProps = {
   isLoading?: boolean;
   /** Use dialog flex height instead of `max-h-[42vh]`. */
   fillHeight?: boolean;
+  /** Override scroll region classes (staff dialog uses flush inset). */
+  scrollClassName?: string;
+  /** @deprecated Staff dialog — use default `bookingPickerCollapsedInsetClass` (same as patient). */
+  flushInset?: boolean;
   className?: string;
 };
 
@@ -36,13 +44,16 @@ export function DoctorDirectoryPickerList({
   onSelectDoctor,
   isLoading = false,
   fillHeight = false,
+  scrollClassName,
+  flushInset: _flushInset = false,
   className,
 }: DoctorDirectoryPickerListProps) {
+  const collapsedInset = bookingPickerCollapsedInsetClass;
   const [pickerOpen, setPickerOpen] = useState(true);
   const showList = !selectedDoctorId || pickerOpen;
-  const scrollClass = fillHeight
-    ? doctorDirectoryPickerFillScrollClass
-    : doctorDirectoryPickerScrollClass;
+  const scrollClass =
+    scrollClassName ??
+    (fillHeight ? doctorDirectoryPickerFillScrollClass : doctorDirectoryPickerScrollClass);
 
   if (isLoading) {
     return (
@@ -56,7 +67,9 @@ export function DoctorDirectoryPickerList({
 
   if (!doctors.length) {
     return (
-      <p className={cn("text-sm text-muted-foreground px-2", className)}>No doctors available.</p>
+      <p className={cn("text-sm text-muted-foreground px-2", className)}>
+        No doctors available.
+      </p>
     );
   }
 
@@ -64,7 +77,7 @@ export function DoctorDirectoryPickerList({
 
   if (!showList && selected) {
     return (
-      <div className={cn("space-y-2 px-2 py-1", className)}>
+      <div className={cn(collapsedInset, className)}>
         <DoctorDirectoryPickerCard doctor={selected} selected readOnly />
         <Button
           type="button"
@@ -81,8 +94,10 @@ export function DoctorDirectoryPickerList({
   }
 
   return (
-    <div
-      className={cn(scrollClass, className)}
+    <ScrollOverflowPanel
+      scrollClassName={cn(scrollClass, className)}
+      enabled={showList}
+      contentVersion={`${doctors.length}-${fillHeight ? 1 : 0}`}
       role="listbox"
       aria-label="Select a doctor"
     >
@@ -97,6 +112,6 @@ export function DoctorDirectoryPickerList({
           }}
         />
       ))}
-    </div>
+    </ScrollOverflowPanel>
   );
 }
