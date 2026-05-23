@@ -7,6 +7,32 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { SlotCell } from "@/lib/scheduling/scheduling-types";
 import { patientBookingGlassInputClass } from "@/components/shared/patient-booking/patient-booking-dialog-styles";
+import { schedulingSlotGridClass } from "@/lib/scheduling/scheduling-ui-classes";
+
+function SchedulingSlotTimeInline({
+  startLabel,
+  endLabel,
+  muted,
+}: {
+  startLabel: string;
+  endLabel: string;
+  muted?: boolean;
+}) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center justify-center gap-1 whitespace-nowrap tabular-nums leading-none",
+        muted && "opacity-80"
+      )}
+    >
+      <span className="text-sm font-medium">{startLabel}</span>
+      <span className="text-[10px] font-normal opacity-75" aria-hidden>
+        →
+      </span>
+      <span className="text-xs font-normal">{endLabel}</span>
+    </span>
+  );
+}
 
 type SchedulingSlotChipGridProps = {
   dateStr: string;
@@ -15,7 +41,7 @@ type SchedulingSlotChipGridProps = {
   selectedStart: string | null;
   onSelect: (iso: string) => void;
   isLoading: boolean;
-  /** `rail` = single-column scroll beside calendar; `default` = wide multi-column grid. */
+  /** `rail` = scrollable slot column beside calendar; `default` = stacked panel grid. */
   variant?: "default" | "rail";
   fillLayout?: boolean;
   className?: string;
@@ -40,9 +66,7 @@ export function SchedulingSlotChipGrid({
     ? format(new Date(`${dateStr}T12:00:00`), "EEE, dd MMM yyyy")
     : "";
 
-  const gridClass = isRail
-    ? "grid grid-cols-1 gap-2 min-[400px]:grid-cols-2"
-    : "grid grid-cols-2 gap-2 sm:grid-cols-3";
+  const gridClass = isRail ? schedulingSlotGridClass.rail : schedulingSlotGridClass.default;
 
   const scrollClass = isRail
     ? cn(
@@ -55,7 +79,7 @@ export function SchedulingSlotChipGrid({
     <div
       className={cn(
         "flex min-h-0 flex-col gap-2",
-        isRail && "h-full min-h-[200px] sm:min-h-[280px]",
+        isRail && "min-h-0 flex-1",
         className
       )}
     >
@@ -69,7 +93,7 @@ export function SchedulingSlotChipGrid({
       {isLoading ? (
         <div className={cn(gridClass, scrollClass)}>
           {Array.from({ length: isRail ? 6 : 9 }).map((_, i) => (
-            <Skeleton key={i} className="h-12 rounded-xl" />
+            <Skeleton key={i} className="h-10 rounded-xl" />
           ))}
         </div>
       ) : cells.length === 0 ? (
@@ -96,7 +120,7 @@ export function SchedulingSlotChipGrid({
                 disabled={!selectable}
                 onClick={() => selectable && onSelect(cell.start)}
                 className={cn(
-                  "rounded-xl border px-2 py-2 text-sm font-medium transition-all break-words text-left",
+                  "flex w-full items-center justify-center rounded-xl border px-2 py-2 transition-all",
                   selectable &&
                     (selected
                       ? "border-sky-500 bg-sky-600 text-white shadow-[0_8px_20px_rgba(2,132,199,0.35)]"
@@ -108,8 +132,11 @@ export function SchedulingSlotChipGrid({
                 aria-pressed={selected}
                 aria-disabled={!selectable}
               >
-                <span className="block">{slotTime}</span>
-                <span className="block text-[10px] opacity-80">→ {endTime}</span>
+                <SchedulingSlotTimeInline
+                  startLabel={slotTime}
+                  endLabel={endTime}
+                  muted={!selectable}
+                />
               </button>
             );
           })}

@@ -8,6 +8,7 @@ import { useSchedulingDayGrid } from "@/hooks/useSchedulingDayGrid";
 import type { FlexDurationMinutes } from "@/lib/scheduling/flexible-type-config";
 import type { SchedulingScopeKey } from "@/lib/scheduling/scheduling-types";
 import { cn } from "@/lib/utils";
+import { schedulingSplitSlotsRailBoundsClass } from "@/lib/scheduling/scheduling-ui-classes";
 
 export type SchedulingPanelProps = {
   doctorId: string;
@@ -138,7 +139,9 @@ export function SchedulingPanel({
       <div
         className={cn(
           "flex min-h-0 min-w-0 flex-1 flex-col",
-          fillLayout ? "min-h-[200px] sm:min-h-0" : "min-h-[200px] sm:min-h-[280px] sm:max-h-[min(320px,45vh)]"
+          fillLayout
+            ? schedulingSplitSlotsRailBoundsClass
+            : "min-h-[200px] sm:min-h-[280px] sm:max-h-[min(320px,45vh)]"
         )}
       >
         {slotsRail}

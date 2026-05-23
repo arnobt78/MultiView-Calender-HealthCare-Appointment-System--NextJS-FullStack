@@ -334,7 +334,9 @@ export function PatientBookingDialog({
           <div
             className={cn(
               "flex min-h-0 flex-1 flex-col px-6 py-4 text-gray-700",
-              step === 1 || step === 2 ? "overflow-hidden" : "overflow-y-auto"
+              step === 1
+                ? "overflow-hidden"
+                : "min-h-0 flex-1 overflow-y-auto overflow-x-hidden"
             )}
           >
             <BookingSectionMotion show={showDoctorType} fillStepLayout>

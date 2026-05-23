@@ -11,6 +11,8 @@ import { cn } from "@/lib/utils";
 import { useSchedulingMonthDates } from "@/hooks/useSchedulingMonthDates";
 import type { MonthDayStatus, SchedulingScopeKey } from "@/lib/scheduling/scheduling-types";
 import { prefetchSchedulingMonthsAdjacent } from "@/lib/prefetch-scheduling";
+import { schedulingMonthCalendarClassNames } from "@/lib/scheduling/scheduling-ui-classes";
+import { SchedulingMonthCaptionBar } from "@/components/shared/scheduling/SchedulingMonthCaptionBar";
 
 type SchedulingMonthCalendarProps = {
   doctorId: string;
@@ -56,6 +58,14 @@ export function SchedulingMonthCalendar({
   useEffect(() => {
     requestAnimationFrame(() => setIsMounted(true));
   }, []);
+
+  // Keep visible month aligned when parent sets dateStr (e.g. restore / programmatic pick).
+  useEffect(() => {
+    if (!dateStr) return;
+    const picked = parseDateStr(dateStr);
+    if (!picked) return;
+    setMonth((prev) => (toMonthYm(prev) === toMonthYm(picked) ? prev : picked));
+  }, [dateStr]);
 
   const { data, isLoading } = useSchedulingMonthDates({
     doctorId,
@@ -125,6 +135,7 @@ export function SchedulingMonthCalendar({
       >
         <Calendar
           mode="single"
+          hideNavigation
           selected={selected}
           onSelect={(d) => {
             if (d) onDateStrChange(format(d, "yyyy-MM-dd"));
@@ -132,13 +143,10 @@ export function SchedulingMonthCalendar({
           month={month}
           onMonthChange={handleMonthChange}
           disabled={disabledMatchers}
-          className={compact ? "mx-0" : "mx-auto"}
-          classNames={{
-            day_button: cn(
-              "size-9 rounded-lg font-normal",
-              "aria-selected:bg-sky-600 aria-selected:text-white"
-            ),
-            today: "bg-sky-50 text-sky-900 font-semibold",
+          className={cn("p-1", compact ? "mx-0" : "mx-auto")}
+          classNames={schedulingMonthCalendarClassNames}
+          components={{
+            MonthCaption: SchedulingMonthCaptionBar,
           }}
         />
       </div>
