@@ -59,7 +59,6 @@ export default function GlobalSearch() {
 
   const { appointments } = useAppointments();
   const { patients: allPatients } = usePatients();
-  const patients = isPatient ? [] : allPatients;
   const { data: usersData } = useUsers({}, { enabled: !isPatient });
 
   // Keyboard shortcut: Cmd+K / Ctrl+K
@@ -114,8 +113,8 @@ export default function GlobalSearch() {
       }
     });
 
-    // Patients
-    (patients ?? []).forEach((p) => {
+    // Patients — filter inside memo so deps stay stable (patient role skips list)
+    (isPatient ? [] : allPatients).forEach((p) => {
       const full = `${p.firstname} ${p.lastname}`.toLowerCase();
       if (full.includes(q) || p.email?.toLowerCase().includes(q)) {
         out.push({
@@ -143,7 +142,7 @@ export default function GlobalSearch() {
     });
 
     return out.slice(0, 20);
-  }, [query, appointments, patients, usersData, user?.role]);
+  }, [query, appointments, allPatients, isPatient, usersData, user?.role]);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) { setQuery(""); closeSearch(); } }}>

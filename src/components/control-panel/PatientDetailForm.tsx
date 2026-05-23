@@ -184,7 +184,7 @@ export function PatientDetailForm({
           />
         </div>
         <div className="space-y-2 sm:col-span-2">
-          <Label htmlFor="patient-primary-doctor">Primary Doctor (Care Team)</Label>
+          <Label htmlFor="patient-primary-doctor">Select Primary Doctor (Care Team)</Label>
           <Select
             value={form.primary_doctor_id ?? "none"}
             onValueChange={(v) =>
@@ -205,7 +205,7 @@ export function PatientDetailForm({
           </Select>
         </div>
         <div className="space-y-2 sm:col-span-2">
-          <Label>Referral / Intake</Label>
+          <Label>Select Referral / Intake</Label>
           <Select
             value={form.referral_source}
             onValueChange={(v) => setForm((p) => ({ ...p, referral_source: v }))}
@@ -224,7 +224,7 @@ export function PatientDetailForm({
         </div>
         {(form.referral_source === "external_partner" || form.referral_source === "other") && (
           <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="patient-referral-detail">External / Other Detail</Label>
+            <Label htmlFor="patient-referral-detail">Type External / Other Detail</Label>
             <Input
               id="patient-referral-detail"
               title="Referral detail"
@@ -236,7 +236,7 @@ export function PatientDetailForm({
           </div>
         )}
         <div className="space-y-2">
-          <Label>Pronoun</Label>
+          <Label>Select Pronoun</Label>
           <Select value={form.pronoun} onValueChange={(v) => setForm((p) => ({ ...p, pronoun: v }))}>
             <SelectTrigger className="w-full min-w-0 rounded-2xl border-gray-200">
               <SelectValue placeholder="Select" />
@@ -250,7 +250,7 @@ export function PatientDetailForm({
           </Select>
         </div>
         <div className="space-y-2">
-          <Label>Active</Label>
+          <Label>Select Active</Label>
           <Select
             value={form.active ? "yes" : "no"}
             onValueChange={(v) => setForm((p) => ({ ...p, active: v === "yes" }))}
@@ -265,7 +265,7 @@ export function PatientDetailForm({
           </Select>
         </div>
         <div className="space-y-2 sm:col-span-2">
-          <Label htmlFor="patient-allergies">Allergies (Comma-Separated)</Label>
+          <Label htmlFor="patient-allergies">Type Allergies if Any (Comma-Separated)</Label>
           <Input
             id="patient-allergies"
             title="Allergies"

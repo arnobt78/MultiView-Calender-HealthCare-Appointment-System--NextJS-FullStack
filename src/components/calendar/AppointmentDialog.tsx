@@ -33,6 +33,7 @@ import { isValidUUID } from "@/lib/validation";
 import { invalidateAssigneesActivitiesAppointment } from "@/lib/query-client";
 import { notify } from "@/lib/notify";
 import { appointmentCreateSchema } from "@/lib/schemas/appointment";
+import { prefetchSchedulingMonthWithAdjacent } from "@/lib/prefetch-scheduling";
 import { Calendar, CalendarCheck, Loader2, X } from "lucide-react";
 
 /** Client-side upload cap (bytes) — keep in sync with UI note in `AppointmentDialogGeneralSection`. */
@@ -86,23 +87,6 @@ export default function AppointmentDialog({
   const doctors = useMemo(() => doctorsData?.users ?? [], [doctorsData]);
   const { createAppointmentAsync, updateAppointmentAsync } = useAppointments();
 
-  /**
-   * When the sheet opens, prefetch visit types for the calendar owner — matches the child `useQuery` key /
-   * `staleTime` so the first paint often skips a loading skeleton (TanStack dedupes with `CalendarHeader`).
-   */
-  useEffect(() => {
-    if (!open || !user?.id) return;
-    if (!isValidUUID(user.id)) return;
-    void queryClient.prefetchQuery({
-      queryKey: queryKeys.appointmentTypes.byDoctor(user.id),
-      queryFn: () =>
-        apiClient<{ types: unknown[] }>(
-          `/api/appointment-types?doctorId=${encodeURIComponent(user.id)}`
-        ),
-      staleTime: 5 * 60 * 1000,
-    });
-  }, [open, user?.id, queryClient]);
-
   const [title, setTitle] = useState("");
   const [notes, setNotes] = useState("");
   const [start, setStart] = useState("");
@@ -119,6 +103,31 @@ export default function AppointmentDialog({
   /** Cal-style slot picker — reset in `resetFormState` when the dialog closes so the next open is clean. */
   const [slotPickDateStr, setSlotPickDateStr] = useState("");
   const [slotPickTypeId, setSlotPickTypeId] = useState("");
+  /**
+   * When the sheet opens, prefetch visit types for the calendar owner — matches the child `useQuery` key /
+   * `staleTime` so the first paint often skips a loading skeleton (TanStack dedupes with `CalendarHeader`).
+   */
+  useEffect(() => {
+    if (!open || !user?.id) return;
+    if (!isValidUUID(user.id)) return;
+    void queryClient.prefetchQuery({
+      queryKey: queryKeys.appointmentTypes.byDoctor(user.id),
+      queryFn: () =>
+        apiClient<{ types: unknown[] }>(
+          `/api/appointment-types?doctorId=${encodeURIComponent(user.id)}`
+        ),
+      staleTime: 5 * 60 * 1000,
+    });
+    const schedDoctor = treatingPhysicianId || user.id;
+    if (isValidUUID(schedDoctor) && slotPickTypeId) {
+      prefetchSchedulingMonthWithAdjacent(queryClient, {
+        doctorId: schedDoctor,
+        schedulingScope: { kind: "type", typeId: slotPickTypeId },
+        excludeAppointmentId: appointment?.id,
+      });
+    }
+  }, [open, user?.id, queryClient, treatingPhysicianId, slotPickTypeId, appointment?.id]);
+
   const [uploading, setUploading] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -492,6 +501,7 @@ export default function AppointmentDialog({
                 setSlotPickTypeId={setSlotPickTypeId}
                 chiefComplaint={chiefComplaint}
                 setChiefComplaint={setChiefComplaint}
+                excludeAppointmentId={appointment?.id}
               />
             </section>
           </div>

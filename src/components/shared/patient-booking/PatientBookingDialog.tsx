@@ -7,7 +7,7 @@
 
 import { useState, type ReactNode } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { addMinutes } from "date-fns";
+import { addMinutes, format } from "date-fns";
 import { motion, useReducedMotion } from "framer-motion";
 import {
   ArrowLeft,
@@ -25,13 +25,18 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { apiClient, handleApiError } from "@/lib/api-client";
 import { notify } from "@/lib/notify";
+import { useAuth } from "@/hooks/useAuth";
 import { useDoctorsDirectory } from "@/hooks/useDoctorsDirectory";
-import { useAvailabilitySlots } from "@/hooks/useAvailabilitySlots";
 import { queryKeys } from "@/lib/query-keys";
 import { invalidateAfterAppointmentMutation } from "@/lib/query-client";
 import { prefetchAppointmentTypesForDoctor } from "@/lib/prefetch-appointment-types";
 import { usePatientBookableAppointmentTypes } from "@/hooks/usePatientBookableAppointmentTypes";
 import { prefetchDoctorsDirectory } from "@/lib/prefetch-doctors-directory";
+import {
+  prefetchSchedulingDay,
+  prefetchSchedulingMonthWithAdjacent,
+} from "@/lib/prefetch-scheduling";
+import type { SchedulingScopeKey } from "@/lib/scheduling/scheduling-types";
 import {
   skyGlassBackButtonClass,
   skyGlassPrimaryButtonClass,
@@ -41,7 +46,6 @@ import {
   createInitialBookingState,
   getBackStep,
   getNextStep,
-  shouldFetchAvailabilitySlots,
   shouldShowConfirmSection,
   shouldShowDoctorTypeSection,
   shouldShowScheduleSection,
@@ -69,6 +73,8 @@ interface BookingPayload {
   start: string;
   end: string;
   doctorId: string;
+  appointment_type_id?: string;
+  chief_complaint?: string;
   notes?: string;
 }
 
@@ -107,6 +113,7 @@ export function PatientBookingDialog({
   trigger,
 }: PatientBookingDialogProps = {}) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<PatientBookingStep>(1);
   const [doctorId, setDoctorId] = useState(preselectedDoctorId ?? "");
@@ -127,8 +134,6 @@ export function PatientBookingDialog({
     enabled: open,
     doctors,
   });
-  const effectiveTypeId = selectedType?.id ?? "";
-
   const wizardState: PatientBookingWizardState = {
     doctorId,
     selectedType,
@@ -141,13 +146,6 @@ export function PatientBookingDialog({
     typesLoading,
   };
 
-  const fetchSlots = shouldFetchAvailabilitySlots(wizardState);
-  const { data: slotsData, isLoading: slotsLoading } = useAvailabilitySlots(
-    fetchSlots ? doctorId : null,
-    fetchSlots ? dateStr : null,
-    fetchSlots ? effectiveTypeId : null
-  );
-  const slots: string[] = slotsData?.slots ?? [];
   const duration = isFlexible ? flexDuration : (selectedType?.duration_minutes ?? 30);
 
   function resetAll() {
@@ -169,8 +167,33 @@ export function PatientBookingDialog({
       if (preselectedDoctorId) setDoctorId(preselectedDoctorId);
       prefetchDoctorsDirectory(queryClient);
       prefetchAppointmentTypesForDoctor(queryClient, id);
+    } else {
+      resetAll();
     }
-    if (!v) resetAll();
+  }
+
+  function schedulingScopeForPrefetch(): SchedulingScopeKey | null {
+    if (!doctorId) return null;
+    if (isFlexible) {
+      return { kind: "flex", durationMinutes: flexDuration };
+    }
+    if (selectedType?.id) {
+      return { kind: "type", typeId: selectedType.id };
+    }
+    return null;
+  }
+
+  function prefetchSchedulingForSelection() {
+    const scope = schedulingScopeForPrefetch();
+    if (!scope) return;
+    prefetchSchedulingMonthWithAdjacent(queryClient, { doctorId, schedulingScope: scope });
+    if (dateStr && scope.kind === "type") {
+      prefetchSchedulingDay(queryClient, {
+        doctorId,
+        typeId: scope.typeId,
+        dateStr,
+      });
+    }
   }
 
   function handleDoctorIdChange(id: string) {
@@ -180,20 +203,47 @@ export function PatientBookingDialog({
     setDateStr("");
   }
 
+  function handleSelectType(type: PatientBookingAppointmentType) {
+    setSelectedType(type);
+    setSelectedSlot(null);
+    setDateStr("");
+    if (doctorId && type.id) {
+      prefetchSchedulingMonthWithAdjacent(queryClient, {
+        doctorId,
+        schedulingScope: { kind: "type", typeId: type.id },
+      });
+    }
+  }
+
+  function handleFlexDurationChange(minutes: number) {
+    setFlexDuration(minutes);
+    setSelectedSlot(null);
+    setDateStr("");
+    if (doctorId && isFlexible) {
+      prefetchSchedulingMonthWithAdjacent(queryClient, {
+        doctorId,
+        schedulingScope: { kind: "flex", durationMinutes: minutes },
+      });
+    }
+  }
+
   function handleDateStrChange(value: string) {
     setDateStr(value);
     setSelectedSlot(null);
-  }
-
-  function prefetchTitleForDetails() {
-    if (selectedType && !title) setTitle(selectedType.name);
+    if (doctorId && selectedType?.id && value) {
+      prefetchSchedulingDay(queryClient, {
+        doctorId,
+        typeId: selectedType.id,
+        dateStr: value,
+      });
+    }
   }
 
   function handleNext(e: React.MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
     e.stopPropagation();
     const next = getNextStep(step, wizardState);
-    if (next === 3) prefetchTitleForDetails();
+    if (next === 2) prefetchSchedulingForSelection();
     setStep(next);
   }
 
@@ -221,15 +271,21 @@ export function PatientBookingDialog({
   /** Explicit button only — avoids implicit form submit (Enter / Next→Confirm click-through). */
   function handleConfirmBooking() {
     if (step !== 3) return;
-    if (!doctorId || !selectedSlot || !title) return;
+    if (!doctorId || !selectedSlot || !title.trim()) return;
     if (!isFlexible && !selectedType) return;
     const startDt = new Date(selectedSlot);
     const endDt = addMinutes(startDt, duration);
+    const patientLabel =
+      user?.display_name?.trim() || user?.email?.trim() || "Patient";
+    const typeName = selectedType?.name ?? "Appointment";
+    const generatedTitle = `${typeName} · ${patientLabel} · ${format(startDt, "dd MMM yyyy")}`;
     bookMutation.mutate({
-      title,
+      title: generatedTitle,
       start: startDt.toISOString(),
       end: endDt.toISOString(),
       doctorId,
+      ...(selectedType?.id ? { appointment_type_id: selectedType.id } : {}),
+      chief_complaint: title.trim(),
       ...(notes ? { notes } : {}),
     });
   }
@@ -293,9 +349,9 @@ export function PatientBookingDialog({
                 isFlexible={isFlexible}
                 types={types}
                 selectedType={selectedType}
-                onSelectType={setSelectedType}
+                onSelectType={handleSelectType}
                 flexDuration={flexDuration}
-                onFlexDurationChange={setFlexDuration}
+                onFlexDurationChange={handleFlexDurationChange}
                 fillLayout
               />
             </BookingSectionMotion>
@@ -310,8 +366,6 @@ export function PatientBookingDialog({
                 isFlexible={isFlexible}
                 flexDuration={flexDuration}
                 duration={duration}
-                slotsLoading={slotsLoading}
-                slots={slots}
                 selectedSlot={selectedSlot}
                 onSelectSlot={setSelectedSlot}
                 fillLayout

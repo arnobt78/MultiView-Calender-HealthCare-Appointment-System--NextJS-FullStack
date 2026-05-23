@@ -106,5 +106,37 @@ export const queryKeys = {
     root: ["app", "availability"] as const,
     slots: (doctorId: string, dateStr: string, typeId: string) =>
       [...queryKeys.availability.root, "slots", doctorId, dateStr, typeId] as const,
+    /**
+     * Month map for SchedulingMonthCalendar.
+     * `scopeKey` = appointment type UUID or `flex:30` (see schedulingScopeKeySegment).
+     */
+    dates: (
+      doctorId: string,
+      scopeKey: string,
+      monthYm: string,
+      excludeAppointmentId?: string
+    ) =>
+      [
+        ...queryKeys.availability.root,
+        "dates",
+        doctorId,
+        scopeKey,
+        monthYm,
+        excludeAppointmentId ?? "",
+      ] as const,
+    dayGrid: (
+      doctorId: string,
+      dateStr: string,
+      scopeKey: string,
+      excludeAppointmentId?: string
+    ) =>
+      [
+        ...queryKeys.availability.root,
+        "dayGrid",
+        doctorId,
+        dateStr,
+        scopeKey,
+        excludeAppointmentId ?? "",
+      ] as const,
   },
 } as const;

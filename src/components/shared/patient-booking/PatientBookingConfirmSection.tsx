@@ -46,7 +46,7 @@ export function PatientBookingConfirmSection({
   return (
     <section className="flex flex-col gap-4" aria-labelledby="pb-confirm-heading">
       <PatientBookingSectionHeading id="pb-confirm-heading" icon={CalendarCheck}>
-        Confirm your request
+        Confirm Your Request
       </PatientBookingSectionHeading>
 
       {selectedDoctor ? (
@@ -65,7 +65,7 @@ export function PatientBookingConfirmSection({
       {isFlexible ? (
         <div className="flex flex-col gap-1.5">
           <PatientBookingFieldLabel htmlFor="pb-flex-time" icon={Clock}>
-            Preferred Start Time
+            Select Preferred Start Time
           </PatientBookingFieldLabel>
           <Input
             id="pb-flex-time"
@@ -83,7 +83,7 @@ export function PatientBookingConfirmSection({
 
       <div className="flex flex-col gap-1.5">
         <PatientBookingFieldLabel htmlFor="pb-title" icon={MessageSquareText}>
-          Reason for Visit
+          Type Your Reason for Visit
         </PatientBookingFieldLabel>
         <Input
           id="pb-title"
@@ -97,7 +97,7 @@ export function PatientBookingConfirmSection({
 
       <div className="flex flex-col gap-1.5">
         <PatientBookingFieldLabel htmlFor="pb-notes" icon={NotebookPen}>
-          Additional Notes
+          Type Additional Notes for Your Visit
         </PatientBookingFieldLabel>
         <Textarea
           id="pb-notes"

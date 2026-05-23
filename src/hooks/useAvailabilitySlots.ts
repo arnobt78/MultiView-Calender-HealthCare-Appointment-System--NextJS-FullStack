@@ -1,29 +1,29 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { apiClient } from "@/lib/api-client";
-import { queryKeys } from "@/lib/query-keys";
+/**
+ * Legacy hook — returns available ISO starts only.
+ * Prefer `useSchedulingDayGrid` when rendering full slot grids with booked/past states.
+ */
 
-type SlotsResponse = { slots: string[]; timezone: string };
+import { useSchedulingDayGrid } from "@/hooks/useSchedulingDayGrid";
 
 export function useAvailabilitySlots(
   doctorId: string | null | undefined,
   dateStr: string | null | undefined,
-  typeId: string | null | undefined
+  typeId: string | null | undefined,
+  excludeAppointmentId?: string
 ) {
-  const enabled = Boolean(doctorId && dateStr && typeId);
-
-  return useQuery({
-    queryKey: queryKeys.availability.slots(doctorId ?? "", dateStr ?? "", typeId ?? ""),
-    queryFn: () => {
-      const q = new URLSearchParams();
-      q.set("doctorId", doctorId!);
-      q.set("date", dateStr!);
-      q.set("typeId", typeId!);
-      return apiClient<SlotsResponse>(`/api/availability/slots?${q.toString()}`);
-    },
-    enabled,
-    staleTime: 60 * 1000,
-    gcTime: 5 * 60 * 1000,
+  const query = useSchedulingDayGrid({
+    doctorId,
+    dateStr,
+    typeId,
+    excludeAppointmentId,
   });
+
+  return {
+    ...query,
+    data: query.data
+      ? { slots: query.data.slots, timezone: query.data.timezone }
+      : undefined,
+  };
 }

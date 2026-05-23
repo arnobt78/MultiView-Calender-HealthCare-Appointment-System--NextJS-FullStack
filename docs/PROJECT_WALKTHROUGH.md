@@ -39,11 +39,13 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Prism
 - **Types/hooks:** `doctor-directory.ts`, `doctor-bookable-types.ts` (`filterBookableTypesForDoctorFromApi`, `mergeBookableTypesForDoctor`), `appointment-type-scheduling-meta.ts`; `useDoctorsDirectory` → `queryKeys.doctors.all`; `usePatientBookableAppointmentTypes` → `appointmentTypes.byDoctor` + directory seed (enabled globals + owned/custom only).
 - **Prefetch:** `prefetchDoctorsDirectory` (`src/lib/prefetch-doctors-directory.ts`) — portal `useLayoutEffect`, `/services` card hover/focus, dialog open; `prefetchAppointmentTypesForDoctor` (`src/lib/prefetch-appointment-types.ts`) — same 5min `staleTime` as wizard type query.
 - **Consumers:** `/patient-portal` (`BookAppointmentDialog` default trigger); `/services` imports `PatientBookingDialog` directly (`preselectedDoctorId`, `lockDoctor`, custom trigger). `PatientPortalPage` re-exports `BookAppointmentDialog` alias.
-- **UI:** Sky glass 90% dialog; step 1 `fillLayout` — doctor + type panels flex-scroll to footer; one section visible per step; inline slots via `useAvailabilitySlots`; `smooth-scroll-into-view` on date pick.
-- **Persist:** TanStack cache buster **`v2`** (drops stale `doctors.all` without `bookable_appointment_types`).
+- **UI:** Sky glass 90% dialog; step 1 `fillLayout` — doctor + type panels flex-scroll to footer; one section visible per step.
+- **Step 2 scheduling:** `SchedulingPanel` `layout="split"` — calendar left, scrollable slot rail right (`SchedulingSlotChipGrid` `variant="rail"`); booked/past/blocked greyed; flexible = calendar + hint in rail (time on step 3).
+- **Persist:** TanStack cache buster **`v4`** (`availability.dates` scopeKey: type UUID or `flex:30`).
 - **Seed:** `npm run db:seed-extended` — Physio Theraphy, Test Report Show, patch doctor-owned types with 5m buffers.
-- **Data:** `useDoctorsDirectory({ enabled: open })`, `usePatientBookableAppointmentTypes`, `queryKeys.availability.slots`; submit `POST /api/patient-portal`.
-- **Submit:** Step 3 **Confirm Request** is `type="button"` (`handleConfirmBooking`) — form `onSubmit` only `preventDefault` (no auto-book on Next / Enter).
+- **Data:** `useSchedulingMonthDates` (`SchedulingScopeKey`), `useSchedulingDayGrid`; `prefetchSchedulingMonthWithAdjacent` on patient step 2 + staff dialog open (typed/flex); adjacent months on calendar nav.
+- **Submit:** `POST /api/patient-portal` — `chief_complaint` from step-3 reason; **title auto-generated** (`{type} · {patient} · {date}`); `appointment_type_id`; server `assertSlotAvailableForBooking` (409 if taken).
+- **Submit UX:** Step 3 **Confirm Request** is `type="button"` (`handleConfirmBooking`) — form `onSubmit` only `preventDefault` (no auto-book on Next / Enter).
 - **Invalidation:** `invalidateAfterAppointmentMutation` on success (includes `patientPortal.all`, appointments, dashboard, notifications, type-derived keys; doctor directory refreshes via existing `invalidateUsersAndAuth` / `invalidateDoctorSchedule` → `doctors.all`).
 - **A11y:** visible `DialogDescription` without custom `id` so Radix `descriptionId` matches `aria-describedby` on content.
 
@@ -558,8 +560,8 @@ queryKeys = {
 ```tsx
 // On hard refresh: localStorage is read synchronously before any network call fires.
 // Data renders immediately; TQ background-refetches stale entries per staleTime.
-// Cache buster: "v2" — bump when shipping a breaking data-shape change (e.g. doctors.all bookable types).
-persistOptions: { persister, maxAge: 10 * 60 * 1000, buster: "v2" }
+// Cache buster: "v4" — bump when shipping a breaking data-shape change (e.g. availability.dates scopeKey).
+persistOptions: { persister, maxAge: 24 * 60 * 60 * 1000, buster: "v4" }
 ```
 
 Global defaults (`createQueryClient`): `staleTime: 3min`, `gcTime: 10min`, `refetchOnWindowFocus: false`, `refetchOnMount: false`. `useDashboardOverview` overrides to `staleTime: 60s` for fresher KPIs.
@@ -786,14 +788,25 @@ Shared demo credentials live in `src/lib/demo-credentials.ts` (`test@admin.com`,
 
 ---
 
-## Cal-style availability (phase 1)
+## Shared scheduling UX (cal.com-style)
 
-- **Models** (`prisma/schema.prisma`): `DoctorAvailability` (weekly windows + IANA `timezone`), `DoctorTimeOff`, `AppointmentType` (duration, buffers, slot step, minimum notice).
-- **API**: `GET /api/availability/slots?doctorId=&date=YYYY-MM-DD&typeId=` — returns `{ slots: ISO[]; timezone }`.
-- **Client**: `useAvailabilitySlots` in `src/hooks/useAvailabilitySlots.ts` with keys under `queryKeys.availability`.
-- **Staff create/edit**: `AppointmentDialogGeneralSection` wires the same `GET /api/appointment-types` + slot chips into `AppointmentDialog` (doctor id = session user / appointment `owner_id` for busy overlap math).
-- **Invalidation**: `invalidateAfterAppointmentMutation` refreshes appointments, notifications, availability slots, **invoices + dashboard overview + all patient queries** (shared appointment/billing graph). Slot pickers use `queryKeys.availability`.
-- **RBAC (incremental)**: `users.role === 'patient'` cannot POST/PUT/PATCH/DELETE dashboard appointments or POST organizations; registration defaults new users to `role: admin`.
+- **Lib (single source):** `src/lib/scheduling/availability-slot-grid.ts` — `buildDaySlotCells`, `getBookableDatesInMonth`, `computeDaySlotGrid`; `src/lib/availability-slots.ts` wraps legacy `{ slots[] }` + `{ cells[] }`. Tests: `src/lib/__tests__/scheduling/availability-slot-grid.test.ts`.
+- **Validation:** `src/lib/scheduling/validate-appointment-window.ts` — `assertSlotAvailableForBooking`, `assertNoOwnerAppointmentOverlap` (409).
+- **API:**
+  - `GET /api/availability/dates?doctorId&typeId|flexDurationMinutes&month=YYYY-MM` → month map (`availability-api-query.ts`)
+  - `GET /api/availability/slots?doctorId&date&typeId` → `{ slots, cells, timezone }`
+- **Scope:** `SchedulingScopeKey` + `flexible-type-config.ts` for doctors without bookable types.
+- **Query keys:** `dates(doctorId, scopeKey, monthYm)`; bust via `availability.root` invalidation helpers.
+- **Prefetch:** `prefetchSchedulingMonthWithAdjacent` + `prefetchSchedulingMonthsAdjacent` on calendar month change.
+- **UI:** `VisitTypePickerList` (patient re-export `PatientBookingTypePickerList`); `SchedulingPanel` `layout="split"` (calendar + slot rail side-by-side on `sm+`; flex = calendar + hint in rail).
+- **Staff:** `useBookableTypesForDoctor` + `VisitTypePickerList`; `isStaffFlexible` + flex duration chips; open prefetch for flex + typed (`types[0]` when `slotPickTypeId` empty).
+- **Tests:** `availability-api-query.test.ts`, `scheduling-scope.test.ts`, `availability-routes.test.ts`, `availability-slot-grid.test.ts`.
+- **Persist buster:** `v4` in `QueryProvider.tsx`.
+
+## Cal-style availability (legacy note)
+
+- **Models** (`prisma/schema.prisma`): `DoctorAvailability`, `DoctorTimeOff`, `AppointmentType` (duration, buffers, slot step, minimum notice).
+- **RBAC:** `users.role === 'patient'` cannot POST/PUT/PATCH/DELETE dashboard appointments or POST organizations.
 
 ---
 

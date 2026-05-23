@@ -54,7 +54,7 @@ export function PatientBookingDoctorTypeSection({
     >
       <Label className="flex shrink-0 items-center gap-1.5">
         <Stethoscope className="h-4 w-4 text-sky-600" />
-        Select preferred doctor
+        Select Preferred Doctor
       </Label>
       <div className={cn(fillLayout && "flex min-h-0 flex-1 flex-col")}>
         {lockDoctor && selectedDoctor ? (
@@ -81,7 +81,7 @@ export function PatientBookingDoctorTypeSection({
     >
       <Label className="flex shrink-0 items-center gap-1.5">
         <Timer className="h-4 w-4 text-sky-600" />
-        Appointment Type
+        Select Appointment Type
       </Label>
       <PatientBookingTypePickerList
         key={doctorId}
@@ -107,7 +107,7 @@ export function PatientBookingDoctorTypeSection({
         className="flex shrink-0 items-center gap-1.5 text-sm font-semibold tracking-tight text-gray-700"
       >
         <Book className="h-4 w-4 text-sky-600" />
-        Select preferred doctor and visit type
+        Select Preferred Doctor & Visit Type
       </h3>
 
       <div className={cn("flex flex-col gap-3", fillLayout && "min-h-0 flex-1")}>

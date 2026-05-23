@@ -12,6 +12,13 @@ import { isValidUUID } from "@/lib/validation";
 import { redis } from "@/lib/redis";
 import { mapPortalAppointmentsFromRows, serializePatient, serializeAppointment } from "@/lib/serializers";
 import { patientDetailInclude } from "@/lib/patient-api-include";
+import {
+  AppointmentSchedulingConflictError,
+  assertNoOwnerAppointmentOverlap,
+  assertSlotAvailableForBooking,
+} from "@/lib/scheduling/validate-appointment-window";
+
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
@@ -81,9 +88,15 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json() as {
-      title?: unknown; start?: unknown; end?: unknown; notes?: unknown; doctorId?: unknown;
+      title?: unknown;
+      start?: unknown;
+      end?: unknown;
+      notes?: unknown;
+      doctorId?: unknown;
+      appointment_type_id?: unknown;
+      chief_complaint?: unknown;
     };
-    const { title, start, end, notes, doctorId } = body;
+    const { title, start, end, notes, doctorId, appointment_type_id, chief_complaint } = body;
 
     if (!title || typeof title !== "string" || !start || !end || !doctorId) {
       return NextResponse.json(
@@ -114,6 +127,58 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "end must be after start" }, { status: 400 });
     }
 
+    const typeId =
+      typeof appointment_type_id === "string" && isValidUUID(appointment_type_id)
+        ? appointment_type_id
+        : null;
+
+    if (typeId) {
+      const dateStr = startDate.toISOString().slice(0, 10);
+      try {
+        await assertSlotAvailableForBooking(prisma, {
+          doctorId,
+          dateStr,
+          typeId,
+          slotStartIso: startDate.toISOString(),
+        });
+      } catch (e) {
+        if (e instanceof AppointmentSchedulingConflictError) {
+          return NextResponse.json({ error: e.message }, { status: 409 });
+        }
+        throw e;
+      }
+    } else {
+      try {
+        await assertNoOwnerAppointmentOverlap(prisma, {
+          doctorId,
+          start: startDate,
+          end: endDate,
+        });
+      } catch (e) {
+        if (e instanceof AppointmentSchedulingConflictError) {
+          return NextResponse.json({ error: e.message }, { status: 409 });
+        }
+        throw e;
+      }
+    }
+
+    let isTelehealth = false;
+    let durationMinutes: number | null = null;
+    if (typeId) {
+      const apptType = await prisma.appointmentType.findFirst({
+        where: {
+          id: typeId,
+          OR: [{ user_id: doctorId }, { user_id: null }],
+        },
+        select: { is_telehealth: true, duration_minutes: true },
+      });
+      if (!apptType) {
+        return NextResponse.json({ error: "Invalid appointment type" }, { status: 400 });
+      }
+      isTelehealth = apptType.is_telehealth ?? false;
+      durationMinutes = apptType.duration_minutes;
+    }
+
     // Find patient record
     const user = await prisma.user.findUnique({
       where: { id: sessionUser.userId },
@@ -128,6 +193,13 @@ export async function POST(request: NextRequest) {
         start: startDate,
         end: endDate,
         notes: typeof notes === "string" ? notes : null,
+        chief_complaint:
+          typeof chief_complaint === "string" && chief_complaint.trim()
+            ? chief_complaint.trim()
+            : null,
+        appointment_type_id: typeId,
+        duration_minutes: durationMinutes,
+        is_telehealth: isTelehealth,
         owner_id: doctorId, // B3 Prisma field; DB column remains `user_id`
         treating_physician_id: doctorId, // B2: portal booking — same doctor until product allows decoupling
         patient_id: patient?.id || null,

@@ -708,7 +708,7 @@ function PatientManagementInner() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="pm-primary-doctor">Primary doctor (from staff list)</Label>
+                  <Label htmlFor="pm-primary-doctor">Select Primary Doctor (from staff list)</Label>
                   <Select
                     value={createExtra.primaryDoctorId || "none"}
                     onValueChange={(v) =>
@@ -730,7 +730,7 @@ function PatientManagementInner() {
                 </div>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="pm-birth-date">Birth Date</Label>
+                    <Label htmlFor="pm-birth-date">Select Birth Date</Label>
                     <Input
                       id="pm-birth-date"
                       type="date"
@@ -741,7 +741,7 @@ function PatientManagementInner() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="pm-care-level">Care Level (1–10)</Label>
+                    <Label htmlFor="pm-care-level">Select Care Level (1–10)</Label>
                     <PatientCareLevelSelect
                       id="pm-care-level"
                       value={form.care_level}
@@ -753,7 +753,7 @@ function PatientManagementInner() {
                 </div>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <Label>Pronoun</Label>
+                    <Label>Select Pronoun</Label>
                     <Select
                       value={form.pronoun ?? ""}
                       onValueChange={(v) => setForm((p) => ({ ...p, pronoun: v }))}
@@ -770,7 +770,7 @@ function PatientManagementInner() {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Status</Label>
+                    <Label>Select Status</Label>
                     <Select
                       value={form.active ? "true" : "false"}
                       onValueChange={(v) => setForm((p) => ({ ...p, active: v === "true" }))}
@@ -786,7 +786,7 @@ function PatientManagementInner() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label>Referral / Intake</Label>
+                  <Label>Select Referral / Intake</Label>
                   <Select
                     value={createExtra.referralSource}
                     onValueChange={(v) => setCreateExtra((x) => ({ ...x, referralSource: v }))}
@@ -806,7 +806,7 @@ function PatientManagementInner() {
                 {(createExtra.referralSource === "external_partner" ||
                   createExtra.referralSource === "other") && (
                     <div className="space-y-2">
-                      <Label htmlFor="pm-referral-detail">External / Other Detail</Label>
+                      <Label htmlFor="pm-referral-detail">Type External / Other Detail</Label>
                       <Input
                         id="pm-referral-detail"
                         title="Referral Detail"
@@ -820,7 +820,7 @@ function PatientManagementInner() {
                     </div>
                   )}
                 <div className="space-y-2">
-                  <Label htmlFor="pm-allergies">Allergies (comma-separated)</Label>
+                  <Label htmlFor="pm-allergies">Type Allergies if Any (comma-separated)</Label>
                   <Input
                     id="pm-allergies"
                     title="Allergies"
@@ -833,7 +833,7 @@ function PatientManagementInner() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="pm-clinical-notes">Clinical Notes</Label>
+                  <Label htmlFor="pm-clinical-notes">Type Clinical Notes if Any</Label>
                   <Textarea
                     id="pm-clinical-notes"
                     title="Clinical Notes"

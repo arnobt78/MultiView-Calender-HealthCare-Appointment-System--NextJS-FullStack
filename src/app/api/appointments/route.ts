@@ -10,6 +10,10 @@ import { PAGINATION } from "@/lib/constants";
 import { mapPortalAppointmentsFromRows, serializeAppointment } from "@/lib/serializers";
 import { appointmentCreateSchema } from "@/lib/schemas/appointment";
 import { zodBadRequest } from "@/lib/schemas/parse";
+import {
+  AppointmentSchedulingConflictError,
+  assertNoOwnerAppointmentOverlap,
+} from "@/lib/scheduling/validate-appointment-window";
 import { getUserRole, isPatientRole } from "@/lib/rbac";
 import { appointmentDetailHref, appointmentNotificationLink } from "@/lib/entity-routes";
 import { redis } from "@/lib/redis";
@@ -123,6 +127,19 @@ export async function POST(req: NextRequest) {
     const body = parsed.data;
     const startDate = new Date(body.start);
     const endDate = new Date(body.end);
+
+    try {
+      await assertNoOwnerAppointmentOverlap(prisma, {
+        doctorId: sessionUser.userId,
+        start: startDate,
+        end: endDate,
+      });
+    } catch (e) {
+      if (e instanceof AppointmentSchedulingConflictError) {
+        return NextResponse.json({ error: e.message }, { status: 409 });
+      }
+      throw e;
+    }
 
     // Resolve telehealth flag from the linked appointment type (if provided)
     let isTelehealth = false;

@@ -24,6 +24,7 @@ import {
   type GlobalCatalogInput,
   type ServiceCatalogRow,
 } from "@/lib/appointment-service-catalog";
+import { mergeBookableTypesForDoctor } from "@/lib/doctor-bookable-types";
 import { prisma } from "@/lib/prisma";
 import { redis } from "@/lib/redis";
 import {
@@ -379,10 +380,15 @@ export type DoctorPrefetchRow = {
   created_at: string;
   availabilities: { weekday: number; start_min: number; end_min: number; timezone: string }[];
   appointment_types: { id: string; name: string; duration_minutes: number }[];
-  bookable_appointment_types?: {
+  bookable_appointment_types: {
     id: string;
     name: string;
     duration_minutes: number;
+    description?: string | null;
+    is_telehealth?: boolean;
+    buffer_before_minutes: number;
+    buffer_after_minutes: number;
+    slot_interval_minutes: number;
     is_global?: boolean;
   }[];
   patient_count: number;
@@ -395,37 +401,74 @@ export type DoctorPrefetchRow = {
  */
 export async function prefetchDoctors(): Promise<{ doctors: DoctorPrefetchRow[] } | null> {
   try {
-    const rows = await prisma.user.findMany({
-      where: { role: "doctor" },
-      select: {
-        id: true,
-        email: true,
-        display_name: true,
-        image: true,
-        specialty: true,
-        bio: true,
-        created_at: true,
-        role: true,
-        doctor_availabilities: { select: { weekday: true, start_min: true, end_min: true, timezone: true } },
-        appointment_types_owned: { select: { id: true, name: true, duration_minutes: true } },
-        _count: { select: { patients_primary_doctor: true } },
-      },
-      orderBy: [{ display_name: { sort: "asc", nulls: "last" } }, { email: "asc" }],
-    });
+    const [rows, globalTypes] = await Promise.all([
+      prisma.user.findMany({
+        where: { role: "doctor" },
+        select: {
+          id: true,
+          email: true,
+          display_name: true,
+          image: true,
+          specialty: true,
+          bio: true,
+          created_at: true,
+          role: true,
+          doctor_availabilities: {
+            select: { weekday: true, start_min: true, end_min: true, timezone: true },
+          },
+          appointment_types_owned: {
+            where: { user_id: { not: null }, is_active: true },
+            select: {
+              id: true,
+              name: true,
+              duration_minutes: true,
+              description: true,
+              is_telehealth: true,
+              buffer_before_minutes: true,
+              buffer_after_minutes: true,
+              slot_interval_minutes: true,
+            },
+          },
+          _count: { select: { patients_primary_doctor: true } },
+        },
+        orderBy: [{ display_name: { sort: "asc", nulls: "last" } }, { email: "asc" }],
+      }),
+      prisma.appointmentType.findMany({
+        where: { user_id: null, is_active: true },
+        select: {
+          id: true,
+          name: true,
+          duration_minutes: true,
+          description: true,
+          is_telehealth: true,
+          buffer_before_minutes: true,
+          buffer_after_minutes: true,
+          slot_interval_minutes: true,
+          doctor_configs: { select: { doctor_id: true, is_enabled: true } },
+        },
+        orderBy: { name: "asc" },
+      }),
+    ]);
 
-    const doctors: DoctorPrefetchRow[] = rows.map((d) => ({
-      id: d.id,
-      email: d.email,
-      display_name: d.display_name,
-      image: d.image,
-      specialty: d.specialty,
-      bio: d.bio,
-      role: d.role,
-      created_at: d.created_at.toISOString(),
-      availabilities: d.doctor_availabilities,
-      appointment_types: d.appointment_types_owned,
-      patient_count: d._count.patients_primary_doctor,
-    }));
+
+    const doctors: DoctorPrefetchRow[] = rows.map((d) => {
+      const owned = d.appointment_types_owned;
+      const bookable_appointment_types = mergeBookableTypesForDoctor(d.id, owned, globalTypes);
+      return {
+        id: d.id,
+        email: d.email,
+        display_name: d.display_name,
+        image: d.image,
+        specialty: d.specialty,
+        bio: d.bio,
+        role: d.role,
+        created_at: d.created_at.toISOString(),
+        availabilities: d.doctor_availabilities,
+        appointment_types: owned,
+        bookable_appointment_types,
+        patient_count: d._count.patients_primary_doctor,
+      };
+    });
 
     return { doctors };
   } catch {

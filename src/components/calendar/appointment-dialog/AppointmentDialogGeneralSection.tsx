@@ -15,12 +15,20 @@
  * `SelectValue` so Radix does not duplicate avatars already rendered inside each `SelectItem`.
  */
 
-import { type ChangeEvent, type CSSProperties, type ReactNode, type RefObject, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { addMinutes, format } from "date-fns";
+import {
+  type ChangeEvent,
+  type CSSProperties,
+  type ReactNode,
+  type RefObject,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { addMinutes, format, parseISO } from "date-fns";
 import type { LucideIcon } from "lucide-react";
 import {
-  CalendarClock,
   FileText,
   Heading2,
   LayoutGrid,
@@ -34,18 +42,23 @@ import {
   ListTodo,
 } from "lucide-react";
 import { cn, toTitleCaseLabel } from "@/lib/utils";
-import { apiClient } from "@/lib/api-client";
-import { queryKeys } from "@/lib/query-keys";
 import { isValidUUID } from "@/lib/validation";
 import { utcToLocalInputValue } from "@/lib/datetime-local";
 import { resolvePatientPortraitUrl } from "@/lib/patient-portrait";
-import { useAvailabilitySlots } from "@/hooks/useAvailabilitySlots";
+import { prefetchSchedulingMonthWithAdjacent } from "@/lib/prefetch-scheduling";
+import type { FlexDurationMinutes } from "@/lib/scheduling/flexible-type-config";
+import { SchedulingPanel } from "@/components/shared/scheduling/SchedulingPanel";
+import { SchedulingManualOverride } from "@/components/shared/scheduling/SchedulingManualOverride";
+import {
+  VisitTypePickerList,
+  type VisitTypePickerItem,
+} from "@/components/shared/scheduling/VisitTypePickerList";
+import { useBookableTypesForDoctor } from "@/hooks/useBookableTypesForDoctor";
 import { SafeImage } from "@/components/ui/safe-image";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -55,18 +68,6 @@ import {
 } from "@/components/ui/select";
 import type { Category, Patient, User } from "@/types/types";
 import { DoctorSelectOption } from "@/components/shared/doctor-display/DoctorSelectOption";
-
-/** Mirrors `PatientPortalPage` / GET `/api/appointment-types` — drives slot duration + buffers server-side. */
-type AppointmentTypeRow = {
-  id: string;
-  name: string;
-  duration_minutes: number;
-  buffer_before_minutes: number;
-  buffer_after_minutes: number;
-  slot_interval_minutes: number;
-  minimum_notice_minutes: number;
-  user_id: string | null;
-};
 
 /** Matches `MAX_ATTACHMENT_BYTES` in `AppointmentDialog.tsx` — keep both in sync. */
 const MAX_ATTACHMENT_BYTES_LABEL = "1 MB";
@@ -145,6 +146,8 @@ type Props = {
   /** Chief complaint / presenting symptom from the patient — stored on appointment for clinical context. */
   chiefComplaint: string;
   setChiefComplaint: (v: string) => void;
+  /** Edit mode — keeps the appointment's slot selectable in the grid. */
+  excludeAppointmentId?: string;
 };
 
 function doctorLabel(d: User) {
@@ -244,30 +247,85 @@ export function AppointmentDialogGeneralSection({
   setSlotPickTypeId,
   chiefComplaint,
   setChiefComplaint,
+  excludeAppointmentId,
 }: Props) {
-  const { data: typesData, isLoading: typesLoading } = useQuery({
-    queryKey: queryKeys.appointmentTypes.byDoctor(availabilityDoctorId),
-    queryFn: () =>
-      apiClient<{ types: AppointmentTypeRow[] }>(
-        `/api/appointment-types?doctorId=${encodeURIComponent(availabilityDoctorId)}`
-      ),
-    enabled: isValidUUID(availabilityDoctorId),
-    staleTime: 5 * 60 * 1000,
-  });
-  const types = useMemo(() => typesData?.types ?? [], [typesData]);
+  const queryClient = useQueryClient();
+  const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const [slotPickStartIso, setSlotPickStartIso] = useState<string | null>(null);
+  const [staffFlexDuration, setStaffFlexDuration] = useState<FlexDurationMinutes>(30);
 
-  /** When the user has not chosen a type yet, default to the first returned type (portal parity). */
-  const resolvedSlotTypeId = useMemo(
-    () => slotPickTypeId || types[0]?.id || "",
-    [slotPickTypeId, types]
+  const { types, typesLoading, isStaffFlexible } = useBookableTypesForDoctor(
+    availabilityDoctorId
   );
 
-  const { data: slotsPayload, isLoading: slotsLoading } = useAvailabilitySlots(
-    resolvedSlotTypeId && slotPickDateStr ? availabilityDoctorId : null,
-    resolvedSlotTypeId && slotPickDateStr ? slotPickDateStr : null,
-    resolvedSlotTypeId && slotPickDateStr ? resolvedSlotTypeId : null
+  /** Typed visits default to first bookable type; flexible physicians skip auto-select. */
+  const resolvedSlotTypeId = useMemo(() => {
+    if (isStaffFlexible) return slotPickTypeId;
+    return slotPickTypeId || types[0]?.id || "";
+  }, [slotPickTypeId, types, isStaffFlexible]);
+
+  const selectedSlotType = useMemo(
+    () => types.find((t) => t.id === resolvedSlotTypeId),
+    [types, resolvedSlotTypeId]
   );
-  const slots = slotsPayload?.slots ?? [];
+
+  const selectedStaffType = useMemo(
+    () => types.find((t) => t.id === slotPickTypeId) ?? null,
+    [types, slotPickTypeId]
+  );
+
+  const prefetchStaffSchedulingScope = useCallback(
+    (scope: { kind: "type"; typeId: string } | { kind: "flex"; durationMinutes: number }) => {
+      if (!isValidUUID(availabilityDoctorId)) return;
+      prefetchSchedulingMonthWithAdjacent(queryClient, {
+        doctorId: availabilityDoctorId,
+        schedulingScope: scope,
+        excludeAppointmentId,
+      });
+    },
+    [availabilityDoctorId, excludeAppointmentId, queryClient]
+  );
+
+  function handleStaffSelectType(type: VisitTypePickerItem) {
+    setSlotPickTypeId(type.id);
+    setSlotPickDateStr("");
+    setSlotPickStartIso(null);
+    prefetchStaffSchedulingScope({ kind: "type", typeId: type.id });
+  }
+
+  function handleStaffFlexDuration(minutes: FlexDurationMinutes) {
+    setStaffFlexDuration(minutes);
+    setSlotPickDateStr("");
+    setSlotPickStartIso(null);
+    prefetchStaffSchedulingScope({ kind: "flex", durationMinutes: minutes });
+  }
+
+  /** Parity with patient booking step 2 — warm flex month map as soon as types finish loading. */
+  useEffect(() => {
+    if (typesLoading || !isStaffFlexible || !isValidUUID(availabilityDoctorId)) return;
+    prefetchStaffSchedulingScope({ kind: "flex", durationMinutes: staffFlexDuration });
+  }, [
+    typesLoading,
+    isStaffFlexible,
+    availabilityDoctorId,
+    staffFlexDuration,
+    prefetchStaffSchedulingScope,
+  ]);
+
+  /** Prefetch-only: warm month map for first bookable type on open (does not set slotPickTypeId). */
+  useEffect(() => {
+    if (typesLoading || isStaffFlexible || !isValidUUID(availabilityDoctorId)) return;
+    const effectiveTypeId = slotPickTypeId || types[0]?.id;
+    if (!isValidUUID(effectiveTypeId)) return;
+    prefetchStaffSchedulingScope({ kind: "type", typeId: effectiveTypeId });
+  }, [
+    typesLoading,
+    isStaffFlexible,
+    availabilityDoctorId,
+    slotPickTypeId,
+    types,
+    prefetchStaffSchedulingScope,
+  ]);
 
   const selectedPatient = useMemo(
     () => patients.find((p) => p.id === patientId),
@@ -279,10 +337,14 @@ export function AppointmentDialogGeneralSection({
     [categories, categoryId]
   );
 
-  const selectedSlotType = useMemo(
-    () => types.find((t) => t.id === resolvedSlotTypeId),
-    [types, resolvedSlotTypeId]
-  );
+  function handleSlotPick(iso: string) {
+    setSlotPickStartIso(iso);
+    const dur = selectedSlotType?.duration_minutes ?? 30;
+    const endUtc = addMinutes(new Date(iso), dur).toISOString();
+    setStart(utcToLocalInputValue(iso));
+    setEnd(utcToLocalInputValue(endUtc));
+    setSlotPickDateStr(format(parseISO(iso), "yyyy-MM-dd"));
+  }
 
   return (
     <div className="space-y-4 text-gray-700">
@@ -299,19 +361,6 @@ export function AppointmentDialogGeneralSection({
       </div>
 
       <div className="space-y-2">
-        <FieldLabel htmlFor="notes" icon={FileText}>
-          {toTitleCaseLabel("Notes")}
-        </FieldLabel>
-        <Textarea
-          id="notes"
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          className={cn(glassTextareaClass, "cursor-text")}
-        />
-      </div>
-
-      {/* Chief complaint — presenting symptom / reason for visit stored on appointment for clinical context */}
-      <div className="space-y-2">
         <FieldLabel htmlFor="chief-complaint" icon={MessageSquare}>
           {toTitleCaseLabel("Chief Complaint")}
         </FieldLabel>
@@ -325,141 +374,92 @@ export function AppointmentDialogGeneralSection({
         />
       </div>
 
-      {/*
-        Cal-style slot picker — primary scheduling path.
-        Selecting a chip auto-fills Start/End below. Doctor slots load from the
-        treating physician's availability (availabilityDoctorId = treatingPhysicianId || session user).
-      */}
+      <div className="space-y-2">
+        <FieldLabel htmlFor="notes" icon={FileText}>
+          {toTitleCaseLabel("Internal Notes")}
+        </FieldLabel>
+        <p className="text-xs text-gray-500">Optional — staff-only context, not shown to patients.</p>
+        <Textarea
+          id="notes"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          rows={2}
+          className={cn(glassTextareaClass, "cursor-text min-h-[72px]")}
+        />
+      </div>
+
+      {showTreatingPhysicianPicker ? (
+        <div className={cn("space-y-2", glassCardClass)}>
+          <FieldLabel icon={Stethoscope}>{toTitleCaseLabel("Treating Physician")}</FieldLabel>
+          <p className="text-xs leading-relaxed text-gray-600">
+            Drives available dates and slots below. Calendar ownership stays on the scheduling account.
+          </p>
+          <Select
+            value={treatingPhysicianId || undefined}
+            onValueChange={(id) => {
+              setTreatingPhysicianId(id);
+              setSlotPickDateStr("");
+              setSlotPickTypeId("");
+              setSlotPickStartIso(null);
+              setStart("");
+              setEnd("");
+            }}
+          >
+            <SelectTrigger className={glassSelectTriggerClass}>
+              <SelectValue placeholder={toTitleCaseLabel("Select Doctor")} />
+            </SelectTrigger>
+            <SelectContent>
+              {doctors.map((d) => (
+                <SelectItem key={d.id} value={d.id} textValue={doctorLabel(d)}>
+                  <DoctorSelectOption doctor={d} />
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      ) : null}
+
       {isValidUUID(availabilityDoctorId) ? (
         <div className={cn("space-y-3", glassCardClass)}>
           <FieldLabel icon={Timer}>
             {toTitleCaseLabel("Suggested start times (availability)")}
           </FieldLabel>
-          <p className="text-xs leading-relaxed text-gray-600">
-            Pick a visit length and day, then a chip fills Start/End below. Empty lists mean no weekly hours,
-            time off, or open gaps for that configuration — you can still type times manually.
-          </p>
-          {typesLoading ? (
-            <Skeleton className="h-11 w-full rounded-2xl" />
-          ) : types.length === 0 ? (
-            <p className="text-xs text-gray-600">
-              No appointment types for this account — seed or create types + weekly availability in Control
-              Panel to enable slot suggestions.
-            </p>
-          ) : (
-            <>
-              <Select value={resolvedSlotTypeId || undefined} onValueChange={setSlotPickTypeId}>
-                <SelectTrigger className={glassSelectTriggerClass} aria-label="Appointment type for slots">
-                  <SelectValue placeholder={toTitleCaseLabel("Visit type (duration)")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {types.map((t) => (
-                    <SelectItem key={t.id} value={t.id} textValue={t.name}>
-                      <span className="flex w-full min-w-0 items-center justify-between gap-2">
-                        <span className="truncate">{t.name}</span>
-                        <span className="shrink-0 text-xs text-gray-500">{t.duration_minutes} min</span>
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <div className="space-y-1">
-                <Label htmlFor="slot-pick-date-input" className="text-xs text-gray-600">
-                  {toTitleCaseLabel("Date for slot list")}
-                </Label>
-                <Input
-                  id="slot-pick-date-input"
-                  type="date"
-                  value={slotPickDateStr}
-                  min={new Date().toISOString().slice(0, 10)}
-                  onChange={(e) => setSlotPickDateStr(e.target.value)}
-                  className={cn(glassInputClass, "cursor-pointer")}
-                />
-              </div>
-              {resolvedSlotTypeId && slotPickDateStr ? (
-                slotsLoading ? (
-                  <Skeleton className="h-14 w-full rounded-2xl" />
-                ) : (
-                  <div className="flex max-h-36 flex-wrap gap-2 overflow-y-auto pr-0.5">
-                    {slots.length === 0 ? (
-                      <p className="text-xs text-amber-800">{toTitleCaseLabel("No open slots this day.")}</p>
-                    ) : (
-                      slots.map((iso) => (
-                        <Button
-                          key={iso}
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="cursor-pointer rounded-full border-sky-200/80 bg-white/90 text-xs font-medium text-sky-900 hover:bg-sky-50"
-                          onClick={() => {
-                            const dur = selectedSlotType?.duration_minutes ?? 30;
-                            const endUtc = addMinutes(new Date(iso), dur).toISOString();
-                            setStart(utcToLocalInputValue(iso));
-                            setEnd(utcToLocalInputValue(endUtc));
-                          }}
-                        >
-                          {format(new Date(iso), "HH:mm")}
-                        </Button>
-                      ))
-                    )}
-                  </div>
-                )
-              ) : null}
-              {slotsPayload?.timezone ? (
-                <p className="text-[10px] text-gray-500">
-                  {toTitleCaseLabel("Availability math uses IANA zone")}: {slotsPayload.timezone}
-                  {" — "}
-                  {toTitleCaseLabel("chip labels use your browser local clock")}
-                </p>
-              ) : null}
-            </>
-          )}
+          <VisitTypePickerList
+            key={availabilityDoctorId}
+            typesLoading={typesLoading}
+            isFlexible={isStaffFlexible}
+            types={types}
+            selectedType={selectedStaffType}
+            onSelectType={handleStaffSelectType}
+            flexDuration={staffFlexDuration}
+            onFlexDurationChange={handleStaffFlexDuration}
+          />
+          {isStaffFlexible || resolvedSlotTypeId ? (
+            <SchedulingPanel
+              doctorId={availabilityDoctorId}
+              typeId={resolvedSlotTypeId}
+              typeDuration={
+                isStaffFlexible
+                  ? staffFlexDuration
+                  : (selectedSlotType?.duration_minutes ?? 30)
+              }
+              dateStr={slotPickDateStr}
+              onDateStrChange={(v) => {
+                setSlotPickDateStr(v);
+                setSlotPickStartIso(null);
+              }}
+              selectedSlot={slotPickStartIso}
+              onSelectSlot={handleSlotPick}
+              excludeAppointmentId={excludeAppointmentId}
+              today={today}
+              isFlexible={isStaffFlexible}
+              flexDurationMinutes={staffFlexDuration}
+              layout="split"
+              className="min-w-0"
+            />
+          ) : null}
         </div>
       ) : null}
-
-      <p className="text-xs text-gray-500">Or enter date &amp; time manually:</p>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <FieldLabel htmlFor="start" icon={CalendarClock}>
-            {toTitleCaseLabel("Start")} <span className="text-gray-700">*</span>
-          </FieldLabel>
-          <Input
-            type="datetime-local"
-            id="start"
-            value={start}
-            onChange={(e) => {
-              const nextStart = e.target.value;
-              setStart(nextStart);
-              if (end && nextStart && end < nextStart) {
-                setEnd(nextStart);
-              }
-            }}
-            className={cn(glassDatetimeInputClass)}
-          />
-        </div>
-        <div className="space-y-2">
-          <FieldLabel htmlFor="end" icon={CalendarClock}>
-            {toTitleCaseLabel("End")} <span className="text-gray-700">*</span>
-          </FieldLabel>
-          <Input
-            type="datetime-local"
-            id="end"
-            value={end}
-            onChange={(e) => {
-              const newEnd = e.target.value;
-              if (start && newEnd < start) {
-                setEnd(start);
-              } else {
-                setEnd(newEnd);
-              }
-            }}
-            disabled={!start}
-            min={start || undefined}
-            className={cn(glassDatetimeInputClass)}
-          />
-        </div>
-      </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-2">
@@ -526,34 +526,7 @@ export function AppointmentDialogGeneralSection({
         </div>
       </div>
 
-      {showTreatingPhysicianPicker && (
-        <div className={cn("space-y-2", glassCardClass)}>
-          <FieldLabel icon={Stethoscope}>{toTitleCaseLabel("Treating Physician")}</FieldLabel>
-          <p className="text-xs leading-relaxed text-gray-600">
-            Clinical Contact For This Visit (B2). Calendar Ownership Stays On The Scheduling Account
-            (`user_id`); Change This Only When Someone Else Is The Treating Clinician.
-          </p>
-          <Select
-            value={treatingPhysicianId || undefined}
-            onValueChange={setTreatingPhysicianId}
-          >
-            {/*
-              Trigger shows a single `SelectValue` so the selected item’s row (with avatar inside `SelectItem`)
-              is not duplicated next to a second manual avatar.
-            */}
-            <SelectTrigger className={glassSelectTriggerClass}>
-              <SelectValue placeholder={toTitleCaseLabel("Select Doctor")} />
-            </SelectTrigger>
-            <SelectContent>
-              {doctors.map((d) => (
-                <SelectItem key={d.id} value={d.id} textValue={doctorLabel(d)}>
-                  <DoctorSelectOption doctor={d} />
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
+      <SchedulingManualOverride start={start} setStart={setStart} end={end} setEnd={setEnd} />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-2">

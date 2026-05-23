@@ -14,6 +14,10 @@ import { resolveAppointmentAccess } from "@/lib/appointment-access";
 import { appointmentNotificationLink } from "@/lib/entity-routes";
 import { redis } from "@/lib/redis";
 import { format } from "date-fns";
+import {
+  AppointmentSchedulingConflictError,
+  assertNoOwnerAppointmentOverlap,
+} from "@/lib/scheduling/validate-appointment-window";
 
 export const dynamic = "force-dynamic";
 
@@ -231,6 +235,31 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 
     if (Object.keys(data).length <= 1) {
       return NextResponse.json({ error: "No fields to update" }, { status: 400 });
+    }
+
+    if (data.start !== undefined || data.end !== undefined) {
+      const existing = await prisma.appointment.findUnique({
+        where: { id },
+        select: { owner_id: true, start: true, end: true },
+      });
+      if (!existing) {
+        return NextResponse.json({ error: "Appointment not found" }, { status: 404 });
+      }
+      const nextStart = data.start ?? existing.start;
+      const nextEnd = data.end ?? existing.end;
+      try {
+        await assertNoOwnerAppointmentOverlap(prisma, {
+          doctorId: existing.owner_id,
+          start: nextStart,
+          end: nextEnd,
+          excludeAppointmentId: id,
+        });
+      } catch (e) {
+        if (e instanceof AppointmentSchedulingConflictError) {
+          return NextResponse.json({ error: e.message }, { status: 409 });
+        }
+        throw e;
+      }
     }
 
     const updated = await prisma.appointment.update({
