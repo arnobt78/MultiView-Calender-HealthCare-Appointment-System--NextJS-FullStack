@@ -3,7 +3,7 @@
  *
  * All authenticated roles — including patients — can access /dashboard.
  * Patients see the calendar in read-only view (`CalendarHeader` uses
- * `NavRoleContext` / `initialNavRole` so Import / New Appointment stay hidden on refresh;
+ * `NavRoleContext` / `initialNavRole` so staff Import/New Appointment vs patient Book Appointment stay stable on refresh;
  * RBAC in the API layer rejects any write attempts).
  *
  * Patients are still sent to /patient-portal after login by default, but

@@ -222,7 +222,10 @@ Shared primitives keep layout fixed while data loads:
 
 | Piece | File | Role |
 |-------|------|------|
-| `PortalChromeHeader` | `src/components/shared/PortalChromeHeader.tsx` | Icon tile + title stack with `py-2` (aligned with CP `PageHeader`) |
+| `PortalChromeHeader` | `src/components/shared/PortalChromeHeader.tsx` | Icon tile + title stack; optional `actions` + `toolbar` rows; tokens in `page-chrome-classes.ts` |
+| `page-chrome-classes.ts` | `src/lib/page-chrome-classes.ts` | `border-b py-2`, icon tile `min-h-[3.5rem]`, title/description, toolbar-only shell |
+| `PageToolbarChrome` | `src/components/shared/PageToolbarChrome.tsx` | `/dashboard` — toolbar only (no Appointments title/icon) |
+| `CalendarHeaderRoleActions` | `src/components/calendar/CalendarHeaderRoleActions.tsx` | Dashboard toolbar: patient Book vs staff Import/New (SSR role, no flash) |
 | `PatientBookingDialog` | `src/components/shared/patient-booking/PatientBookingDialog.tsx` | Patient/services booking wizard — directory cards step 1, inline slots, `lockDoctor` on services |
 | `DoctorDirectoryPickerCard` | `src/components/shared/doctor-display/DoctorDirectoryPickerCard.tsx` | Booking + locked services doctor preview (availability + service chips) |
 | `PortalStaffLink` | `src/components/shared/PortalStaffLink.tsx` | Sky link to `/doctors/:id` for doctor staff on portal cards |
@@ -234,7 +237,7 @@ Shared primitives keep layout fixed while data loads:
 
 **SSR + client:** root `layout.tsx` passes `initialNavRole` into `AuthShell`. Portal pages pass `initialData` on `useQuery`. Profile: `profileLoading = isLoading && !patient`. Navbar role links render when `role` is known (server + client match).
 
-**Audit (agent glance):** Navbar role uses SSR `initialNavRole` via `NavRoleContext`. Patient booking: 3-step wizard, `usePatientBookableAppointmentTypes`, explicit confirm button. Staff `AppointmentDialogGeneralSection`: `StaffAppointmentPickerField` + directory/type pickers parity with patient step 1; `PatientSelectOption` two-row client dropdown; category trigger single swatch. Login toast: `today_appointments` from `login-today-appointments.ts` (patient = `patient_id`). **214 tests**, `tsc` + `lint` + `build` pass. **Known gap:** `prefetchDoctors()` SSR seed may omit `bookable_appointment_types` until client `GET /api/doctors` refetch — service-type doctor filter is accurate after hydrate.
+**Audit (agent glance):** Navbar role uses SSR `initialNavRole` via `NavRoleContext`. **Page chrome:** `page-chrome-classes.ts` + `PortalChromeHeader` on `/services`, `/patient-portal`, `/dashboard` (title + toolbar: date, tabs, role actions), `/insights`. Patient booking: 3-step wizard, `usePatientBookableAppointmentTypes`, `Book Appointment` on portal + dashboard via `CalendarHeaderRoleActions`. Staff dialog: `StaffAppointmentPickerField`, `PatientSelectOption` two-row client, category single swatch. `/services`: visit-type filter on doctor grid only (`filterDoctorsByServiceCatalog`). **214 tests**, `tsc` + `lint` + `build` pass. **Known gap:** SSR `prefetchDoctors()` may omit `bookable_appointment_types` until client refetch.
 
 ### Dashboard calendar shared UI (unified `AppointmentCard`)
 
@@ -859,7 +862,7 @@ Shared demo credentials live in `src/lib/demo-credentials.ts` (`test@admin.com`,
 
 ### CalendarHeader (`src/components/calendar/CalendarHeader.tsx`)
 
-"Import .ics" and "New Appointment" buttons are hidden for `patient` role users. The calendar is read-only view for patients.
+`PageToolbarChrome` only — no Appointments title/icon (toolbar: date nav, List/Day/Week/Month, `CalendarHeaderRoleActions`). `min-h-[3.5rem]` + `border-b py-2` matches portal chrome band height. Role from `user?.role ?? initialNavRole`. Prefetch: patients `prefetchDoctorsDirectory`; staff `appointmentTypes.byDoctor`. `dashboardShellClass` horizontal inset.
 
 ### GlobalSearch (`src/components/shared/GlobalSearch.tsx`)
 

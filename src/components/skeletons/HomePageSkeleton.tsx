@@ -8,24 +8,19 @@ import React from "react";
 export default function HomePageSkeleton() {
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col overflow-visible">
-      <div className="shrink-0 px-2 py-3 sm:px-4 lg:px-8">
-        {/* CalendarHeader skeleton */}
-        <div className="mb-2 flex items-center justify-between">
-          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-2 sm:gap-2">
-            <div className="flex items-center gap-1 sm:gap-2">
-              <div className="h-9 w-9 animate-pulse rounded-xl border bg-gray-100" />
-              <div className="h-6 min-w-[170px] animate-pulse rounded-md bg-gray-200" />
-              <div className="h-9 w-9 animate-pulse rounded-xl border bg-gray-100" />
-            </div>
+      <div className="shrink-0 w-full max-w-9xl mx-auto min-w-0 px-2 py-2 sm:px-4 lg:px-8">
+        {/* PageToolbarChrome — toolbar only (no title row) */}
+        <div className="flex min-h-[3.5rem] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2">
+            <div className="h-9 w-9 animate-pulse rounded-xl border bg-gray-100" />
+            <div className="h-6 min-w-[170px] animate-pulse rounded-md bg-gray-200" />
+            <div className="h-9 w-9 animate-pulse rounded-xl border bg-gray-100" />
           </div>
-          <div className="flex items-center gap-4">
-            <div className="flex gap-2">
-              <div className="h-10 w-16 animate-pulse rounded-full bg-gray-200" />
-              <div className="h-10 w-16 animate-pulse rounded-full bg-gray-200" />
-              <div className="h-10 w-16 animate-pulse rounded-full bg-gray-200" />
-              <div className="h-10 w-16 animate-pulse rounded-full bg-gray-200" />
-            </div>
-            <div className="h-10 w-28 animate-pulse rounded-full bg-gray-200" />
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="h-10 w-16 animate-pulse rounded-full bg-gray-200" />
+            <div className="h-10 w-16 animate-pulse rounded-full bg-gray-200" />
+            <div className="h-10 w-16 animate-pulse rounded-full bg-gray-200" />
+            <div className="h-10 w-16 animate-pulse rounded-full bg-gray-200" />
             <div className="h-10 w-36 animate-pulse rounded-full bg-gray-200" />
           </div>
         </div>

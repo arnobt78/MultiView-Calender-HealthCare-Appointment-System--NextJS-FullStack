@@ -12,27 +12,18 @@ import { Button } from "@/components/ui/button";
 import React, { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  LayoutList,
-  Calendar,
-  Columns3,
-  CalendarDays,
-  FileUp,
-  CalendarPlus,
-} from "lucide-react";
+import { LayoutList, Calendar, Columns3, CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  emeraldGlassPrimaryButtonClass,
-  violetGlassImportButtonClass,
-} from "@/lib/calendar-header-action-styles";
-import AppointmentDialogController from "./AppointmentDialogController";
-import ImportICSDialog from "./ImportICSDialog";
+import { CalendarHeaderRoleActions } from "@/components/calendar/CalendarHeaderRoleActions";
+import { PageToolbarChrome } from "@/components/shared/PageToolbarChrome";
 import { useAuth } from "@/hooks/useAuth";
 import { useInitialNavRole } from "@/context/NavRoleContext";
 import { isPatientRole } from "@/lib/rbac";
 import { apiClient } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import { isValidUUID } from "@/lib/validation";
+import { prefetchDoctorsDirectory } from "@/lib/prefetch-doctors-directory";
+import { dashboardShellClass } from "@/lib/dashboard-layout";
 
 // View modes in display order
 const views = ["List", "Day", "Week", "Month"] as const;
@@ -65,17 +56,17 @@ export default function CalendarHeader({
   const { user } = useAuth();
   const initialNavRole = useInitialNavRole();
   const queryClient = useQueryClient();
-  // SSR `initialNavRole` + live auth — same rule as Navbar (no Import / New Appointment flash on refresh).
+  // SSR `initialNavRole` + live auth — same rule as Navbar (role actions stable on refresh).
   const role = user?.role ?? initialNavRole;
   const isPatient = isPatientRole(role);
 
-  /**
-   * One lightweight GET per dashboard session: seeds `queryKeys.appointmentTypes.byDoctor(owner)` so the
-   * compose dialog / slot strip can reuse cache (same `staleTime` as `AppointmentDialogGeneralSection`).
-   */
+  /** Staff: warm owner appointment types for compose dialog. Patients: warm doctor directory for booking step 1. */
   useEffect(() => {
-    if (isPatient || !user?.id) return;
-    if (!isValidUUID(user.id)) return;
+    if (isPatient) {
+      prefetchDoctorsDirectory(queryClient);
+      return;
+    }
+    if (!user?.id || !isValidUUID(user.id)) return;
     void queryClient.prefetchQuery({
       queryKey: queryKeys.appointmentTypes.byDoctor(user.id),
       queryFn: () =>
@@ -102,18 +93,15 @@ export default function CalendarHeader({
     }
   };
 
-  // Navigation logic: only change date for Month/Week/Day, not for List
   const handlePrev = () => {
     if (view === "Month") setCurrentDate(addDays(currentDate, -30));
     else if (view === "Week") setCurrentDate(addDays(currentDate, -7));
     else if (view === "Day") setCurrentDate(addDays(currentDate, -1));
-    // For List, do nothing
   };
   const handleNext = () => {
     if (view === "Month") setCurrentDate(addDays(currentDate, 30));
     else if (view === "Week") setCurrentDate(addDays(currentDate, 7));
     else if (view === "Day") setCurrentDate(addDays(currentDate, 1));
-    // For List, do nothing
   };
 
   const showJumpToToday = useMemo(() => {
@@ -131,10 +119,8 @@ export default function CalendarHeader({
 
   const jumpToToday = () => setCurrentDate(new Date());
 
-  return (
-    <div className="flex items-center justify-between py-3 px-2 sm:px-4 lg:px-8">
-
-      {/* Date Navigation */}
+  const toolbar = (
+    <>
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-2 sm:gap-2">
         <div className="flex shrink-0 items-center gap-1 sm:gap-2">
           <Button
@@ -147,12 +133,10 @@ export default function CalendarHeader({
           </Button>
           <div className="text-base font-medium text-gray-700">
             <span className="tracking-wide">
-              {new Intl.DateTimeFormat("en-US", { weekday: "short" }).format(
-                currentDate
-              )}
+              {new Intl.DateTimeFormat("en-US", { weekday: "short" }).format(currentDate)}
               {", "}
             </span>
-            <span className="">
+            <span>
               {new Intl.DateTimeFormat("en-US", {
                 day: "2-digit",
                 month: "long",
@@ -213,8 +197,7 @@ export default function CalendarHeader({
         )}
       </div>
 
-      {/* View Navigation */}
-      <div className="flex items-center gap-4">
+      <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 sm:gap-3">
         <div className="flex flex-wrap items-center gap-2">
           {views.map((v) => {
             const Icon = VIEW_ICONS[v];
@@ -226,10 +209,7 @@ export default function CalendarHeader({
                 variant="ghost"
                 size="lg"
                 onClick={() => {
-                  if (v === "List") {
-                    // Reset date to today when switching to List
-                    setCurrentDate(new Date());
-                  }
+                  if (v === "List") setCurrentDate(new Date());
                   setView(v);
                 }}
                 className={cn(
@@ -244,32 +224,15 @@ export default function CalendarHeader({
             );
           })}
         </div>
-        {/* Import .ics and New Appointment — hidden for patient role (read-only access) */}
-        {!isPatient && (
-          <ImportICSDialog
-            trigger={
-              <Button type="button" variant="ghost" size="lg" className={cn(violetGlassImportButtonClass, "cursor-pointer")}>
-                <FileUp className="shrink-0" aria-hidden />
-                Import .ics
-              </Button>
-            }
-          />
-        )}
-
-        {!isPatient && (
-          <AppointmentDialogController
-            isOpen={shouldComposeOpen || isComposeOpen}
-            onOpenChange={handleComposeOpenChange}
-            trigger={
-              <Button type="button" variant="ghost" size="lg" className={cn(emeraldGlassPrimaryButtonClass, "cursor-pointer")}>
-                <CalendarPlus className="shrink-0" aria-hidden />
-                New Appointment
-              </Button>
-            }
-          />
-        )}
+        <CalendarHeaderRoleActions
+          isPatient={isPatient}
+          isComposeOpen={isComposeOpen}
+          shouldComposeOpen={shouldComposeOpen}
+          onComposeOpenChange={handleComposeOpenChange}
+        />
       </div>
-
-    </div>
+    </>
   );
+
+  return <PageToolbarChrome className={dashboardShellClass}>{toolbar}</PageToolbarChrome>;
 }

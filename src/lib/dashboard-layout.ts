@@ -3,7 +3,7 @@
  * Used by `AuthShell` (main), `Navbar` inner row, and fixed footers so routes
  * stay aligned without repeating `max-w-9xl mx-auto px-*` on every page.
  *
- * Calendar (`/dashboard`) opts out in `AuthShell` — it manages its own insets.
+ * Calendar (`/dashboard`) opts out in `AuthShell` — `CalendarHeader` applies `dashboardShellClass` on `PortalChromeHeader`.
  */
 export const dashboardShellClass =
   "w-full max-w-9xl mx-auto min-w-0 px-2 sm:px-4 lg:px-8";

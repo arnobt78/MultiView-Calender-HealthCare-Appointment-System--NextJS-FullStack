@@ -38,6 +38,7 @@ import {
 } from "@/lib/prefetch-scheduling";
 import type { SchedulingScopeKey } from "@/lib/scheduling/scheduling-types";
 import {
+  bookAppointmentGlassTriggerClass,
   skyGlassBackButtonClass,
   skyGlassPrimaryButtonClass,
 } from "@/lib/calendar-header-action-styles";
@@ -327,12 +328,8 @@ export function PatientBookingDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {trigger ?? (
-          <Button
-            type="button"
-            variant="ghost"
-            className={cn(skyGlassPrimaryButtonClass, "cursor-pointer px-5 has-[>svg]:px-5")}
-          >
-            <CalendarPlus className="h-4 w-4" />
+          <Button type="button" variant="ghost" className={bookAppointmentGlassTriggerClass}>
+            <CalendarPlus className="h-4 w-4" aria-hidden />
             Book Appointment
           </Button>
         )}

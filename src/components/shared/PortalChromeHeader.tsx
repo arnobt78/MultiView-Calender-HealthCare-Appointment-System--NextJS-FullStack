@@ -2,19 +2,28 @@
 
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  pageChromeDescriptionClass,
+  pageChromeHeaderShellClass,
+  pageChromeIconClass,
+  pageChromeIconTileClass,
+  pageChromeTitleClass,
+  pageChromeToolbarRowClass,
+} from "@/lib/page-chrome-classes";
 
 type PortalChromeHeaderProps = {
   icon: LucideIcon;
   title: string;
   description: string;
-  /** Right slot — e.g. Book Appointment on patient portal */
+  /** Right slot on the title row — e.g. Book Appointment on patient portal */
   actions?: React.ReactNode;
+  /** Second row — dashboard calendar toolbar (date nav, view tabs, role actions) */
+  toolbar?: React.ReactNode;
   className?: string;
 };
 
 /**
- * Page chrome for `/services` and `/patient-portal` — icon tile + title stack, then `border-b`.
- * Padding matches control-panel `PageHeader` inner `py-2` (not `pb-4`).
+ * Page chrome for `/services`, `/patient-portal`, `/dashboard`, `/insights`, etc.
  * Static shell always mounts; only inner page data slots pulse elsewhere.
  */
 export function PortalChromeHeader({
@@ -22,25 +31,24 @@ export function PortalChromeHeader({
   title,
   description,
   actions,
+  toolbar,
   className,
 }: PortalChromeHeaderProps) {
   return (
-    <div
-      className={cn(
-        "flex flex-col gap-2 border-b py-2 md:flex-row md:items-stretch md:justify-between",
-        className
-      )}
-    >
-      <div className="flex min-w-0 flex-1 items-stretch gap-2">
-        <span className="flex w-12 shrink-0 items-center justify-center self-stretch min-h-[3.5rem] rounded-xl border border-sky-200 bg-sky-100">
-          <Icon className="h-6 w-6 text-sky-600" aria-hidden />
-        </span>
-        <div className="flex min-w-0 flex-1 flex-col justify-center">
-          <h1 className="text-xl font-semibold tracking-tight text-gray-700 md:text-2xl">{title}</h1>
-          <p className="text-sm text-muted-foreground">{description}</p>
+    <div className={cn(pageChromeHeaderShellClass, className)}>
+      <div className="flex min-w-0 flex-1 flex-col gap-2 md:flex-row md:items-stretch md:justify-between">
+        <div className="flex min-w-0 flex-1 items-stretch gap-2">
+          <span className={pageChromeIconTileClass}>
+            <Icon className={pageChromeIconClass} aria-hidden />
+          </span>
+          <div className="flex min-w-0 flex-1 flex-col justify-center">
+            <h1 className={pageChromeTitleClass}>{title}</h1>
+            <p className={pageChromeDescriptionClass}>{description}</p>
+          </div>
         </div>
+        {actions ? <div className="flex shrink-0 items-center">{actions}</div> : null}
       </div>
-      {actions ? <div className="flex shrink-0 items-center">{actions}</div> : null}
+      {toolbar ? <div className={pageChromeToolbarRowClass}>{toolbar}</div> : null}
     </div>
   );
 }

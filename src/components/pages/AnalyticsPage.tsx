@@ -52,6 +52,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import { PageHeader } from "@/components/shared/PageHeader";
+import { PortalChromeHeader } from "@/components/shared/PortalChromeHeader";
 import { cn } from "@/lib/utils";
 
 /** Glass card variant per color — matches DashboardOverview / portal style. */
@@ -161,10 +162,11 @@ export default function AnalyticsPage({ initialInsights }: AnalyticsPageProps = 
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-xl md:text-2xl font-semibold tracking-tight">Business Analytics</h1>
-        <p className="text-muted-foreground text-sm">Track your business performance, patient trends, appointment analytics and more.</p>
-      </div>
+      <PortalChromeHeader
+        icon={TrendingUp}
+        title="Business Analytics"
+        description="Track your business performance, patient trends, appointment analytics and more."
+      />
 
       {/* ── Overview stat cards ─────────────────────────────────────────────────── */}
       <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-6">

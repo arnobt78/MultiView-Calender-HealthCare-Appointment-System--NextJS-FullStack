@@ -1,5 +1,5 @@
 /**
- * Glass action buttons — shared with `CalendarHeader` (Import .ics / New Appointment) and control-panel toolbars.
+ * Glass action buttons — shared with `CalendarHeader` (Import .ics / New Appointment / Book Appointment) and control-panel toolbars.
  * Keep `h-10` in sync with calendar filter row height.
  */
 export const violetGlassImportButtonClass =
@@ -14,6 +14,10 @@ export const emeraldGlassPrimaryButtonClass =
  */
 export const skyGlassPrimaryButtonClass =
   "inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-sky-400/45 bg-linear-to-r from-sky-500 to-sky-600 px-4 text-sm font-medium text-white shadow-[0_10px_40px_rgba(2,132,199,0.42)] backdrop-blur-md transition-all duration-200 hover:from-sky-500 hover:via-sky-500 hover:to-sky-700 hover:text-white hover:shadow-[0_14px_48px_rgba(2,132,199,0.55)] active:text-white disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4";
+
+/** Book Appointment — patient portal `PortalChromeHeader` + dashboard toolbar (no `size="lg"`). */
+export const bookAppointmentGlassTriggerClass =
+  "inline-flex h-10 shrink-0 cursor-pointer items-center gap-2 rounded-full border border-sky-400/45 bg-linear-to-r from-sky-500 to-sky-600 px-5 text-sm font-medium text-white shadow-[0_10px_40px_rgba(2,132,199,0.42)] backdrop-blur-md transition-all duration-200 hover:from-sky-500 hover:via-sky-500 hover:to-sky-700 hover:text-white hover:shadow-[0_14px_48px_rgba(2,132,199,0.55)] active:text-white disabled:pointer-events-none disabled:opacity-50 has-[>svg]:px-5 [&_svg]:size-4";
 
 /** Calendar filter reset + control-panel list resets — visible text (not solid `default` fill). */
 export const skyGlassResetButtonClass =
