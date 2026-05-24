@@ -7,7 +7,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { SlotCell } from "@/lib/scheduling/scheduling-types";
 import { patientBookingGlassInputClass } from "@/components/shared/patient-booking/patient-booking-dialog-styles";
-import { schedulingSlotGridClass } from "@/lib/scheduling/scheduling-ui-classes";
+import {
+  schedulingSlotChipAvailableClass,
+  schedulingSlotChipCellClass,
+  schedulingSlotChipDisabledClass,
+  schedulingSlotChipSelectedClass,
+  schedulingSlotGridClass,
+  schedulingSlotGridScrollClass,
+} from "@/lib/scheduling/scheduling-ui-classes";
 
 function SchedulingSlotTimeInline({
   startLabel,
@@ -49,6 +56,7 @@ type SchedulingSlotChipGridProps = {
 
 /**
  * Cal.com-style slot chips — shows booked/past/blocked as muted disabled buttons.
+ * Glow: scroll-root `px` inset + per-cell `schedulingSlotChipCellClass` (overflow cannot use -m bleed).
  */
 export function SchedulingSlotChipGrid({
   dateStr,
@@ -70,10 +78,47 @@ export function SchedulingSlotChipGrid({
 
   const scrollClass = isRail
     ? cn(
-        "min-h-0 flex-1 overflow-y-auto overflow-x-hidden pr-1",
+        schedulingSlotGridScrollClass.rail,
         !fillLayout && "sm:max-h-[min(320px,45vh)]"
       )
-    : cn(fillLayout ? "min-h-0 flex-1 overflow-y-auto" : "max-h-56 overflow-y-auto");
+    : cn(
+        fillLayout ? cn("min-h-0 flex-1", schedulingSlotGridScrollClass.default) : schedulingSlotGridScrollClass.defaultCapped
+      );
+
+  const slotGrid = (gridClassName: string) => (
+    <div className={gridClassName}>
+      {cells.map((cell) => {
+        const slotTime = format(new Date(cell.start), "HH:mm");
+        const endTime = format(addMinutes(new Date(cell.start), duration), "HH:mm");
+        const selected = selectedStart === cell.start;
+        const selectable = cell.status === "available";
+        return (
+          <div key={cell.start} className={schedulingSlotChipCellClass}>
+            <button
+              type="button"
+              disabled={!selectable}
+              onClick={() => selectable && onSelect(cell.start)}
+              className={cn(
+                "flex w-full items-center justify-center rounded-xl border px-2 py-2 transition-all",
+                selectable &&
+                  (selected ? schedulingSlotChipSelectedClass : schedulingSlotChipAvailableClass),
+                !selectable && schedulingSlotChipDisabledClass,
+                cell.status === "booked" && "line-through decoration-slate-400/80"
+              )}
+              aria-pressed={selected}
+              aria-disabled={!selectable}
+            >
+              <SchedulingSlotTimeInline
+                startLabel={slotTime}
+                endLabel={endTime}
+                muted={!selectable}
+              />
+            </button>
+          </div>
+        );
+      })}
+    </div>
+  );
 
   return (
     <div
@@ -91,10 +136,14 @@ export function SchedulingSlotChipGrid({
         ) : null}
       </Label>
       {isLoading ? (
-        <div className={cn(gridClass, scrollClass)}>
-          {Array.from({ length: isRail ? 6 : 9 }).map((_, i) => (
-            <Skeleton key={i} className="h-10 rounded-xl" />
-          ))}
+        <div className={scrollClass}>
+          <div className={gridClass}>
+            {Array.from({ length: isRail ? 6 : 9 }).map((_, i) => (
+              <div key={i} className={schedulingSlotChipCellClass}>
+                <Skeleton className="h-10 w-full rounded-xl" />
+              </div>
+            ))}
+          </div>
         </div>
       ) : cells.length === 0 ? (
         <div className="flex flex-1 items-center justify-center rounded-2xl border border-dashed border-sky-200/80 p-6 text-center">
@@ -107,40 +156,7 @@ export function SchedulingSlotChipGrid({
           </div>
         </div>
       ) : (
-        <div className={cn(gridClass, scrollClass)}>
-          {cells.map((cell) => {
-            const slotTime = format(new Date(cell.start), "HH:mm");
-            const endTime = format(addMinutes(new Date(cell.start), duration), "HH:mm");
-            const selected = selectedStart === cell.start;
-            const selectable = cell.status === "available";
-            return (
-              <button
-                key={cell.start}
-                type="button"
-                disabled={!selectable}
-                onClick={() => selectable && onSelect(cell.start)}
-                className={cn(
-                  "flex w-full items-center justify-center rounded-xl border px-2 py-2 transition-all",
-                  selectable &&
-                    (selected
-                      ? "border-sky-500 bg-sky-600 text-white shadow-[0_8px_20px_rgba(2,132,199,0.35)]"
-                      : "border-sky-200/80 bg-white/90 text-sky-900 hover:border-sky-400 hover:bg-sky-50"),
-                  !selectable &&
-                    "cursor-not-allowed border-slate-200/80 bg-slate-50/90 text-slate-400 opacity-70",
-                  cell.status === "booked" && "line-through decoration-slate-400/80"
-                )}
-                aria-pressed={selected}
-                aria-disabled={!selectable}
-              >
-                <SchedulingSlotTimeInline
-                  startLabel={slotTime}
-                  endLabel={endTime}
-                  muted={!selectable}
-                />
-              </button>
-            );
-          })}
-        </div>
+        <div className={scrollClass}>{slotGrid(gridClass)}</div>
       )}
     </div>
   );
