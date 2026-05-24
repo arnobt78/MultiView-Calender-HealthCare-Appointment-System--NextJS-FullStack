@@ -29,3 +29,11 @@ export function getPatientCareLevelLabel(level: number | null | undefined): stri
   const s = stageByValue.get(level);
   return s ? `${level} — ${s.shortLabel}` : String(level);
 }
+
+/** Dropdown / compact rows — short tier label without em dash placeholder. */
+export function getPatientCareLevelShortLabel(level: number | null | undefined): string {
+  if (level == null || Number.isNaN(Number(level))) return "No tier set";
+  const n = Number(level);
+  const s = stageByValue.get(n);
+  return s ? `${n} · ${s.shortLabel}` : `Tier ${n}`;
+}

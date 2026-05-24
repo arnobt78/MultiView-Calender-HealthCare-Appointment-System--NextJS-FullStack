@@ -51,6 +51,11 @@ import { cn, toTitleCaseLabel } from "@/lib/utils";
 import { isValidUUID } from "@/lib/validation";
 import { utcToLocalInputValue } from "@/lib/datetime-local";
 import { resolvePatientPortraitUrl } from "@/lib/patient-portrait";
+import { patientSelectSearchText } from "@/lib/patient-select-display";
+import {
+  PatientSelectOption,
+  patientSelectItemClass,
+} from "@/components/shared/person-display/PatientSelectOption";
 import { prefetchSchedulingMonthWithAdjacent } from "@/lib/prefetch-scheduling";
 import type { FlexDurationMinutes } from "@/lib/scheduling/flexible-type-config";
 import { SchedulingPanel } from "@/components/shared/scheduling/SchedulingPanel";
@@ -551,27 +556,28 @@ export function AppointmentDialogGeneralSection({
             <RequiredMark />
           </FieldLabel>
           <Select value={patientId || undefined} onValueChange={setPatientId}>
-            <SelectTrigger className={glassSelectTriggerClass}>
+            <SelectTrigger
+              className={cn(
+                glassSelectTriggerClass,
+                selectedPatient &&
+                  "h-11 min-h-[2.75rem] max-h-[2.75rem] overflow-hidden whitespace-normal [&_[data-slot=select-value]]:hidden"
+              )}
+            >
               {selectedPatient ? (
-                <PickerAvatar
-                  src={resolvePatientPortraitUrl(selectedPatient)}
-                  alt={`${selectedPatient.firstname} ${selectedPatient.lastname}`}
-                />
-              ) : null}
-              <SelectValue placeholder={toTitleCaseLabel("Select Client/Patient")} />
+                <PatientSelectOption patient={selectedPatient} compact className="min-w-0 flex-1 pr-1" />
+              ) : (
+                <SelectValue placeholder={toTitleCaseLabel("Select Client/Patient")} />
+              )}
             </SelectTrigger>
             <SelectContent>
               {patients.map((p) => (
-                <SelectItem key={p.id} value={p.id} textValue={`${p.firstname} ${p.lastname}`}>
-                  <span className="flex items-center gap-2">
-                    <PickerAvatar
-                      src={resolvePatientPortraitUrl(p)}
-                      alt={`${p.firstname} ${p.lastname}`}
-                    />
-                    <span className="truncate">
-                      {p.firstname} {p.lastname}
-                    </span>
-                  </span>
+                <SelectItem
+                  key={p.id}
+                  value={p.id}
+                  textValue={patientSelectSearchText(p)}
+                  className={patientSelectItemClass}
+                >
+                  <PatientSelectOption patient={p} />
                 </SelectItem>
               ))}
             </SelectContent>
