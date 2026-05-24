@@ -32,18 +32,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { queryKeys } from "@/lib/query-keys";
 import { apiClient } from "@/lib/api-client";
-import {
-  defaultServicesCatalogFilter,
-  filterServiceCatalog,
-  SERVICES_CATALOG_FILTER_ALL,
-  type ServiceCatalogRow,
-} from "@/lib/appointment-service-catalog";
+import { SERVICES_CATALOG_FILTER_ALL, type ServiceCatalogRow } from "@/lib/appointment-service-catalog";
+import type { DoctorBookableTypeRow } from "@/lib/doctor-bookable-types";
+import { filterDoctorsByServiceCatalog } from "@/lib/services-doctor-catalog-filter";
 import { useAppointmentServiceCatalog } from "@/hooks/useAppointmentServiceCatalog";
 import { ServiceCatalogCard } from "@/components/services/ServiceCatalogCard";
-import {
-  ServicesServiceFilters,
-  type ServicesCatalogFilterState,
-} from "@/components/services/ServicesServiceFilters";
 import { PatientBookingDialog } from "@/components/shared/patient-booking/PatientBookingDialog";
 import { prefetchAppointmentTypesForDoctor } from "@/lib/prefetch-appointment-types";
 import { prefetchDoctorsDirectory } from "@/lib/prefetch-doctors-directory";
@@ -76,6 +69,8 @@ export interface DoctorCard {
   created_at: string;
   availabilities: DoctorAvailability[];
   appointment_types: { id: string; name: string; description: string | null; duration_minutes: number }[];
+  /** Merged owned + enabled globals — used for visit-type filter on this page. */
+  bookable_appointment_types?: DoctorBookableTypeRow[];
   patient_count: number;
 }
 
@@ -178,24 +173,21 @@ function DoctorProfileCard({ doctor }: { doctor: DoctorCard }) {
   );
 }
 
-function filterDoctors(doctors: DoctorCard[], filters: ServicesDoctorFilterState): DoctorCard[] {
+function filterDoctors(
+  doctors: DoctorCard[],
+  filters: ServicesDoctorFilterState,
+  catalog: ServiceCatalogRow[]
+): DoctorCard[] {
   const q = filters.search.trim().toLowerCase();
-  return doctors.filter((d) => {
+  const byService = filterDoctorsByServiceCatalog(doctors, filters.serviceSelection, catalog);
+  return byService.filter((d) => {
     if (filters.specialty && d.specialty !== filters.specialty) return false;
     if (filters.weekday != null) {
       const hasDay = d.availabilities.some((a) => a.weekday === filters.weekday);
       if (!hasDay) return false;
     }
     if (!q) return true;
-    const blob = [
-      d.display_name,
-      d.email,
-      d.specialty,
-      d.bio,
-    ]
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase();
+    const blob = [d.display_name, d.email, d.specialty, d.bio].filter(Boolean).join(" ").toLowerCase();
     return blob.includes(q);
   });
 }
@@ -208,9 +200,6 @@ interface ServicesPageProps {
 export default function ServicesPage({ initialDoctors, initialServiceCatalog }: ServicesPageProps) {
   const queryClient = useQueryClient();
   const [filters, setFilters] = useState<ServicesDoctorFilterState>(defaultServicesDoctorFilters);
-  const [catalogFilters, setCatalogFilters] = useState<ServicesCatalogFilterState>(
-    defaultServicesCatalogFilter
-  );
 
   useLayoutEffect(() => {
     if (initialDoctors?.length) {
@@ -238,27 +227,24 @@ export default function ServicesPage({ initialDoctors, initialServiceCatalog }: 
     isError: catalogError,
   } = useAppointmentServiceCatalog(initialServiceCatalog);
 
+  const catalogServices = useMemo(
+    () => catalogData?.services ?? [],
+    [catalogData?.services]
+  );
+
   const filteredDoctors = useMemo(() => {
     const list = doctorsData?.doctors ?? [];
-    return filterDoctors(list, filters);
-  }, [doctorsData?.doctors, filters]);
-
-  const catalogServices = catalogData?.services;
-  const filteredServices = useMemo(
-    () => filterServiceCatalog(catalogServices ?? [], catalogFilters),
-    [catalogServices, catalogFilters]
-  );
-  const allServices = catalogServices ?? [];
+    return filterDoctors(list, filters, catalogServices);
+  }, [doctorsData?.doctors, filters, catalogServices]);
 
   const doctors = doctorsData?.doctors ?? [];
-
-  const hasActiveCatalogFilter = catalogFilters.selection !== SERVICES_CATALOG_FILTER_ALL;
 
   const hasActiveFilters =
     filters.search.trim().length > 0 ||
     filters.specialty != null ||
     filters.weekday != null ||
-    filters.date != null;
+    filters.date != null ||
+    filters.serviceSelection !== SERVICES_CATALOG_FILTER_ALL;
 
   return (
     <div className="space-y-2 pb-2">
@@ -285,6 +271,7 @@ export default function ServicesPage({ initialDoctors, initialServiceCatalog }: 
           </div>
 
           <ServicesDoctorFilters
+            catalogServices={catalogServices}
             filters={filters}
             onChange={setFilters}
             onReset={() => setFilters(defaultServicesDoctorFilters())}
@@ -312,30 +299,23 @@ export default function ServicesPage({ initialDoctors, initialServiceCatalog }: 
       </section>
 
       <section>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-4 mb-4">
           <div className="flex items-center gap-2">
             <span className="flex h-6 w-6 items-center justify-center rounded-full bg-violet-100 border border-violet-200 shrink-0">
               <Activity className="h-3.5 w-3.5 text-violet-600" />
             </span>
             <h2 className="text-base text-gray-700 font-semibold">Appointment Services</h2>
-            {catalogLoading && !allServices.length ? (
+            {catalogLoading && !catalogServices.length ? (
               <Skeleton className="h-5 w-8 rounded-full" />
             ) : (
               <Badge variant="outline" className="bg-violet-50 text-violet-700 border-violet-200 font-bold">
-                {filteredServices.length}
+                {catalogServices.length}
               </Badge>
             )}
           </div>
-          <ServicesServiceFilters
-            services={allServices}
-            filters={catalogFilters}
-            onChange={setCatalogFilters}
-            onReset={() => setCatalogFilters(defaultServicesCatalogFilter())}
-            hasActiveFilter={hasActiveCatalogFilter}
-          />
         </div>
 
-        {catalogLoading && !allServices.length ? (
+        {catalogLoading && !catalogServices.length ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {Array.from({ length: 4 }).map((_, i) => (
               <Skeleton key={i} className="h-24 rounded-[16px]" />
@@ -346,13 +326,11 @@ export default function ServicesPage({ initialDoctors, initialServiceCatalog }: 
             <AlertCircle className="h-4 w-4 shrink-0" />
             Failed to load services. Please refresh.
           </div>
-        ) : filteredServices.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            {allServices.length === 0 ? "No services listed yet." : "No services match this filter."}
-          </p>
+        ) : catalogServices.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No services listed yet.</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {filteredServices.map((s) => (
+            {catalogServices.map((s) => (
               <ServiceCatalogCard key={`${s.source}-${s.id}`} service={s} />
             ))}
           </div>

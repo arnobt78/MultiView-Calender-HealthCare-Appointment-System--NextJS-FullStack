@@ -23,7 +23,7 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Prism
 - **Route:** `/services` — `src/app/services/page.tsx` SSR-prefetches doctors + global types; client `ServicesPage.tsx`.
 - **API:** `GET /api/doctors` → specialty, bio, image, `doctor_availabilities`, `appointment_types_owned`, `patient_count` (`queryKeys.doctors.all`).
 - **Provider:** `DoctorDisplayProvider` (`src/context/DoctorDisplayContext.tsx`) in `AppProviders` — specialty glass classes + robohash helper (no extra network).
-- **Components:** `src/components/shared/doctor-display/*` — badges, avatars, `DoctorIdentityRow`, `DoctorLinkStack`, `DoctorCardHeroImage`, availability groups; `ServicesDoctorFilters` for client-side grid filters.
+- **Components:** `src/components/shared/doctor-display/*` — badges, avatars, `DoctorIdentityRow`, `DoctorLinkStack`, `DoctorCardHeroImage`, availability groups; **`ServicesDoctorFilters`** (search + **`ServicesCatalogTypeSelect`** visit-type filter + specialty/weekday/date); **`filterDoctorsByServiceCatalog`** (`src/lib/services-doctor-catalog-filter.ts`) matches `bookable_appointment_types` on each doctor row. **Appointment Services** block shows full catalog (no duplicate filter there).
 - **Layout:** specialty badge always on its own line below name/email (`showIcon` default true). `/services` hero uses full-bleed cover with blurred backdrop fill (uniform tiles, face-biased crop); badge is in the card body under email, not on the image.
 - **Card UX:** flush hero image, `RoleEntityLink` doctor name, copy-email, grouped availability rows, book CTA via `PatientBookingDialog` (see booking section below). Date filter matches calendar chrome (left calendar icon, `pl-8`, `min-w-[155px]`).
 - **Global reuse:** CP patient list/detail primary doctor + snapshot tables (`DoctorIdentityRow` / `DoctorIdentityCell`); portals/dialogs may still use `DoctorLinkStack` (out of clinical-table pass). Related Appointments `doctor_specialty` from snapshot API; Doctor Management doctor column + specialty column.
@@ -209,7 +209,7 @@ const loading = !isMounted || isLoading;
 | Google Calendar | `control-panel/GoogleCalendarSettings.tsx` | Status badge + description + action button |
 | Insights | `pages/AnalyticsPage.tsx` | Stat values + chart bars + category rows + patient table rows |
 | Patient Portal | `pages/PatientPortalPage.tsx` | Profile/summary chrome + **Appointment History** via `PortalAppointmentTimelineCard`; booking via `PatientBookingDialog` |
-| Services | `pages/ServicesPage.tsx` | `DoctorProfileCardSkeleton` text slots; filter bar + card chrome static |
+| Services | `pages/ServicesPage.tsx` | `DoctorProfileCardSkeleton` text slots; doctor filter bar (incl. catalog type select) + card chrome static |
 
 ### Deleted loading.tsx files
 
@@ -234,7 +234,7 @@ Shared primitives keep layout fixed while data loads:
 
 **SSR + client:** root `layout.tsx` passes `initialNavRole` into `AuthShell`. Portal pages pass `initialData` on `useQuery`. Profile: `profileLoading = isLoading && !patient`. Navbar role links render when `role` is known (server + client match).
 
-**Audit (agent glance):** Navbar role uses SSR `initialNavRole` via `NavRoleContext`. Patient booking: 3-step wizard, `usePatientBookableAppointmentTypes`, explicit confirm button. Login toast: `today_appointments` from `login-today-appointments.ts` (patient = `patient_id`). **181 tests**, `tsc` + `lint` + `build` pass. **Known gap:** `prefetchDoctors()` SSR seed omits `bookable_appointment_types` until client `GET /api/doctors` refetch (brief owned-only chips on `/services` first paint).
+**Audit (agent glance):** Navbar role uses SSR `initialNavRole` via `NavRoleContext`. Patient booking: 3-step wizard, `usePatientBookableAppointmentTypes`, explicit confirm button. Staff `AppointmentDialogGeneralSection`: `StaffAppointmentPickerField` + directory/type pickers parity with patient step 1; `PatientSelectOption` two-row client dropdown; category trigger single swatch. Login toast: `today_appointments` from `login-today-appointments.ts` (patient = `patient_id`). **214 tests**, `tsc` + `lint` + `build` pass. **Known gap:** `prefetchDoctors()` SSR seed may omit `bookable_appointment_types` until client `GET /api/doctors` refetch — service-type doctor filter is accurate after hydrate.
 
 ### Dashboard calendar shared UI (unified `AppointmentCard`)
 

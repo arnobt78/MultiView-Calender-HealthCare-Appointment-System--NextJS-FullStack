@@ -10,6 +10,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { GlassResetFilterButton } from "@/components/shared/GlassResetFilterButton";
+import { ServicesCatalogTypeSelect } from "@/components/services/ServicesCatalogTypeSelect";
+import { SERVICES_CATALOG_FILTER_ALL, type ServiceCatalogRow } from "@/lib/appointment-service-catalog";
 import { SPECIALTIES } from "@/lib/doctor-specialty";
 
 const ALL = "__all__";
@@ -28,6 +30,8 @@ export type ServicesDoctorFilterState = {
   specialty: string | null;
   weekday: number | null;
   date: string | null;
+  /** Visit-type catalog filter — limits doctor grid (`filterDoctorsByServiceCatalog`). */
+  serviceSelection: string;
 };
 
 export const defaultServicesDoctorFilters = (): ServicesDoctorFilterState => ({
@@ -35,9 +39,11 @@ export const defaultServicesDoctorFilters = (): ServicesDoctorFilterState => ({
   specialty: null,
   weekday: null,
   date: null,
+  serviceSelection: SERVICES_CATALOG_FILTER_ALL,
 });
 
 type Props = {
+  catalogServices: ServiceCatalogRow[];
   filters: ServicesDoctorFilterState;
   onChange: (next: ServicesDoctorFilterState) => void;
   onReset: () => void;
@@ -45,7 +51,13 @@ type Props = {
 };
 
 /** Client-side filters for /services doctor grid — mirrors calendar filter chrome. */
-export function ServicesDoctorFilters({ filters, onChange, onReset, hasActiveFilters }: Props) {
+export function ServicesDoctorFilters({
+  catalogServices,
+  filters,
+  onChange,
+  onReset,
+  hasActiveFilters,
+}: Props) {
   const specialtyLabel = filters.specialty ?? "All Specialties";
   const dayLabel =
     filters.weekday != null
@@ -63,6 +75,12 @@ export function ServicesDoctorFilters({ filters, onChange, onReset, hasActiveFil
           className="h-9 rounded-2xl border-gray-200 bg-white pl-9 text-sm shadow-sm"
         />
       </div>
+
+      <ServicesCatalogTypeSelect
+        services={catalogServices}
+        value={filters.serviceSelection}
+        onValueChange={(serviceSelection) => onChange({ ...filters, serviceSelection })}
+      />
 
       <Select
         value={filters.specialty ?? ALL}
