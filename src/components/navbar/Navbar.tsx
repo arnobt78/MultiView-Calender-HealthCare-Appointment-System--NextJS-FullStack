@@ -126,11 +126,12 @@ export default function Navbar() {
     : "U";
 
   return (
-    <div className="sticky top-0 z-40 flex w-full shrink-0 flex-col border-b border-gray-100/80 bg-white/90 backdrop-blur-md supports-backdrop-filter:bg-white/80">
+    <div className="sticky top-0 z-40 flex w-full shrink-0 flex-col border-b border-gray-100/80 bg-transparent backdrop-blur-sm">
+      {/* supports-backdrop-filter:bg-white/80 */}
       <div
         className={cn(
           dashboardShellClass,
-          "flex items-center justify-between py-2"
+          "flex items-center justify-between py-2 "
         )}
       >
 
