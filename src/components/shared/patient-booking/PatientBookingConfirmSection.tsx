@@ -28,7 +28,7 @@ type PatientBookingConfirmSectionProps = {
   onFlexibleTimeChange: (isoSlot: string) => void;
 };
 
-/** Step 3 — summary glass card, reason, notes, flexible start time. */
+/** Step 3 — summary glass card; reason defaults from visit type via `seedReasonForVisitOnStep3` in dialog. */
 export function PatientBookingConfirmSection({
   selectedDoctor,
   dateStr,

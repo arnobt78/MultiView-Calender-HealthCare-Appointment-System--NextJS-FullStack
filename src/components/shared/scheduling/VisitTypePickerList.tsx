@@ -40,10 +40,14 @@ type VisitTypePickerListProps = {
   scrollClassName?: string;
   /** @deprecated Staff dialog — default inset matches patient booking. */
   flushInset?: boolean;
+  /** Staff dropdown field — trigger shows selection; no inline collapsed summary card. */
+  dropdownMode?: boolean;
+  onAfterSelect?: () => void;
   className?: string;
 };
 
-function VisitTypeSummaryCard({
+/** Collapsed visit-type row — patient step 1 and staff appointment dropdown field. */
+export function VisitTypeSummaryCard({
   type,
   flexLabel,
 }: {
@@ -101,6 +105,8 @@ export function VisitTypePickerList({
   fillLayout = false,
   scrollClassName,
   flushInset: _flushInset = false,
+  dropdownMode = false,
+  onAfterSelect,
   className,
 }: VisitTypePickerListProps) {
   const collapsedInset = bookingPickerCollapsedInsetClass;
@@ -109,7 +115,11 @@ export function VisitTypePickerList({
 
   const flexCollapsed = isFlexible && flexPicked;
   const typeCollapsed = !isFlexible && Boolean(selectedType) && !pickerOpen;
-  const showList = isFlexible ? !flexPicked || pickerOpen : !selectedType || pickerOpen;
+  const showList = dropdownMode
+    ? true
+    : isFlexible
+      ? !flexPicked || pickerOpen
+      : !selectedType || pickerOpen;
 
   if (typesLoading) {
     return (
@@ -122,7 +132,7 @@ export function VisitTypePickerList({
   }
 
   if (isFlexible) {
-    if (!showList && flexCollapsed) {
+    if (!showList && flexCollapsed && !dropdownMode) {
       return (
         <div className={cn(collapsedInset, className)}>
           <VisitTypeSummaryCard flexLabel={`Flexible booking · ${flexDuration} min`} />
@@ -160,7 +170,8 @@ export function VisitTypePickerList({
                 onClick={() => {
                   onFlexDurationChange(d);
                   setFlexPicked(true);
-                  setPickerOpen(false);
+                  if (dropdownMode) onAfterSelect?.();
+                  else setPickerOpen(false);
                 }}
                 className={cn(
                   "rounded-full border px-3 py-1.5 text-sm font-medium transition-all",
@@ -178,7 +189,7 @@ export function VisitTypePickerList({
     );
   }
 
-  if (typeCollapsed && selectedType) {
+  if (typeCollapsed && selectedType && !dropdownMode) {
     return (
       <div className={cn(collapsedInset, className)}>
         <VisitTypeSummaryCard type={selectedType} />
@@ -215,7 +226,8 @@ export function VisitTypePickerList({
           type="button"
           onClick={() => {
             onSelectType(t);
-            setPickerOpen(false);
+            if (dropdownMode) onAfterSelect?.();
+            else setPickerOpen(false);
           }}
           className={cn(
             patientBookingGlassTileClass,

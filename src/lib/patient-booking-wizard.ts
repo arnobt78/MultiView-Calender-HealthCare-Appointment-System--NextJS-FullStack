@@ -49,6 +49,30 @@ export function createInitialBookingState(preselectedDoctorId?: string): Patient
   };
 }
 
+/** Step 3 “reason for visit” default — typed name or flexible duration label. */
+export function defaultPatientBookingReasonForVisit(
+  state: Pick<PatientBookingWizardState, "selectedType" | "isFlexible" | "flexDuration">
+): string {
+  if (state.isFlexible) {
+    return `Flexible booking · ${state.flexDuration} min`;
+  }
+  return state.selectedType?.name?.trim() ?? "";
+}
+
+/**
+ * Re-apply visit-type default when landing on step 3 if the field is empty or still shows the prior seed
+ * (patient went Back and changed visit type).
+ */
+export function shouldReseedPatientBookingReason(
+  currentTitle: string,
+  lastSeededTitle: string
+): boolean {
+  const trimmed = currentTitle.trim();
+  if (!trimmed) return true;
+  const prior = lastSeededTitle.trim();
+  return Boolean(prior) && trimmed === prior;
+}
+
 /** Whether the sticky footer primary action is enabled for the current step. */
 export function canAdvanceFromStep(
   step: PatientBookingStep,

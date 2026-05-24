@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   canAdvanceFromStep,
   createInitialBookingState,
+  defaultPatientBookingReasonForVisit,
   getBackStep,
   getNextStep,
+  shouldReseedPatientBookingReason,
   shouldFetchAvailabilitySlots,
   shouldShowConfirmSection,
   shouldShowDoctorTypeSection,
@@ -30,6 +32,34 @@ const baseState = (): PatientBookingWizardState => ({
   notes: "",
   isFlexible: false,
   typesLoading: false,
+});
+
+describe("defaultPatientBookingReasonForVisit", () => {
+  it("uses visit type name when typed", () => {
+    expect(defaultPatientBookingReasonForVisit(baseState())).toBe("Follow-up Visit");
+  });
+
+  it("uses flexible label when no types", () => {
+    const s = baseState();
+    s.isFlexible = true;
+    s.selectedType = null;
+    s.flexDuration = 45;
+    expect(defaultPatientBookingReasonForVisit(s)).toBe("Flexible booking · 45 min");
+  });
+});
+
+describe("shouldReseedPatientBookingReason", () => {
+  it("reseeds when empty", () => {
+    expect(shouldReseedPatientBookingReason("", "Follow-up Visit")).toBe(true);
+  });
+
+  it("reseeds when still prior seed", () => {
+    expect(shouldReseedPatientBookingReason("Follow-up Visit", "Follow-up Visit")).toBe(true);
+  });
+
+  it("keeps custom text", () => {
+    expect(shouldReseedPatientBookingReason("Knee pain", "Follow-up Visit")).toBe(false);
+  });
 });
 
 describe("createInitialBookingState", () => {

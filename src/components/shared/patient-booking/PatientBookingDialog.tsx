@@ -5,7 +5,7 @@
  * Three steps (one panel each): doctor & type → date & time → details.
  */
 
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { addMinutes, format } from "date-fns";
 import { motion, useReducedMotion } from "framer-motion";
@@ -44,8 +44,10 @@ import {
 import {
   canAdvanceFromStep,
   createInitialBookingState,
+  defaultPatientBookingReasonForVisit,
   getBackStep,
   getNextStep,
+  shouldReseedPatientBookingReason,
   shouldShowConfirmSection,
   shouldShowDoctorTypeSection,
   shouldShowScheduleSection,
@@ -123,6 +125,8 @@ export function PatientBookingDialog({
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [notes, setNotes] = useState("");
+  /** Tracks last auto-seeded step-3 reason so Back + type change can refresh without wiping custom text. */
+  const lastSeededReasonRef = useRef("");
 
   const { data: doctorsData, isLoading: doctorsDirectoryLoading } = useDoctorsDirectory({
     enabled: open,
@@ -158,6 +162,19 @@ export function PatientBookingDialog({
     setSelectedSlot(initial.selectedSlot);
     setTitle(initial.title);
     setNotes(initial.notes);
+    lastSeededReasonRef.current = "";
+  }
+
+  function seedReasonForVisitOnStep3() {
+    const def = defaultPatientBookingReasonForVisit({
+      selectedType,
+      isFlexible,
+      flexDuration,
+    });
+    setTitle((prev) =>
+      shouldReseedPatientBookingReason(prev, lastSeededReasonRef.current) ? def : prev
+    );
+    lastSeededReasonRef.current = def;
   }
 
   function handleOpenChange(v: boolean) {
@@ -244,6 +261,7 @@ export function PatientBookingDialog({
     e.stopPropagation();
     const next = getNextStep(step, wizardState);
     if (next === 2) prefetchSchedulingForSelection();
+    if (next === 3) seedReasonForVisitOnStep3();
     setStep(next);
   }
 

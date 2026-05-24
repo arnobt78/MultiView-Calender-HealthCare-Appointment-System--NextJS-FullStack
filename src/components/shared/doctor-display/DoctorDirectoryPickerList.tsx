@@ -31,6 +31,9 @@ type DoctorDirectoryPickerListProps = {
   scrollClassName?: string;
   /** @deprecated Staff dialog — use default `bookingPickerCollapsedInsetClass` (same as patient). */
   flushInset?: boolean;
+  /** Staff dropdown field — list only while open; trigger shows selection (no inline collapsed card). */
+  dropdownMode?: boolean;
+  onAfterSelect?: () => void;
   className?: string;
 };
 
@@ -46,11 +49,13 @@ export function DoctorDirectoryPickerList({
   fillHeight = false,
   scrollClassName,
   flushInset: _flushInset = false,
+  dropdownMode = false,
+  onAfterSelect,
   className,
 }: DoctorDirectoryPickerListProps) {
   const collapsedInset = bookingPickerCollapsedInsetClass;
   const [pickerOpen, setPickerOpen] = useState(true);
-  const showList = !selectedDoctorId || pickerOpen;
+  const showList = dropdownMode ? true : !selectedDoctorId || pickerOpen;
   const scrollClass =
     scrollClassName ??
     (fillHeight ? doctorDirectoryPickerFillScrollClass : doctorDirectoryPickerScrollClass);
@@ -75,7 +80,7 @@ export function DoctorDirectoryPickerList({
 
   const selected = doctors.find((d) => d.id === selectedDoctorId);
 
-  if (!showList && selected) {
+  if (!showList && selected && !dropdownMode) {
     return (
       <div className={cn(collapsedInset, className)}>
         <DoctorDirectoryPickerCard doctor={selected} selected readOnly />
@@ -108,7 +113,8 @@ export function DoctorDirectoryPickerList({
           selected={d.id === selectedDoctorId}
           onSelect={(id) => {
             onSelectDoctor(id);
-            setPickerOpen(false);
+            if (dropdownMode) onAfterSelect?.();
+            else setPickerOpen(false);
           }}
         />
       ))}
