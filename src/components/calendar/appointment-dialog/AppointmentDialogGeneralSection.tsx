@@ -362,11 +362,6 @@ export function AppointmentDialogGeneralSection({
     [patients, patientId]
   );
 
-  const selectedCategory = useMemo(
-    () => categories.find((c) => c.id === categoryId),
-    [categories, categoryId]
-  );
-
   function handleSlotPick(iso: string) {
     setSlotPickStartIso(iso);
     const dur = selectedSlotType?.duration_minutes ?? 30;
@@ -589,14 +584,8 @@ export function AppointmentDialogGeneralSection({
             <RequiredMark />
           </FieldLabel>
           <Select value={categoryId || undefined} onValueChange={setCategoryId}>
+            {/* Swatch only via `SelectValue` — mirrors selected `SelectItem` (avoid duplicate dot in trigger). */}
             <SelectTrigger className={glassSelectTriggerClass}>
-              {selectedCategory ? (
-                <span
-                  className="h-2.5 w-2.5 shrink-0 rounded-full ring-1 ring-sky-200/80"
-                  style={categorySwatchStyle(selectedCategory.color)}
-                  aria-hidden
-                />
-              ) : null}
               <SelectValue placeholder={toTitleCaseLabel("Select Service/Medical Category")} />
             </SelectTrigger>
             <SelectContent>
