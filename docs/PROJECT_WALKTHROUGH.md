@@ -58,7 +58,9 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Prism
 - **Accept invitation:** `AcceptInvitationPage` — `POST /api/invitations/accept` → `invalidateSharingAndAppointments`; success **Continue** → `resolveRoleHomeHref(role)`.
 - **Patient tables:** `PatientIdentityCell` shows `PatientAgeGlassBadge` beside name (CP + doctor-portal roster).
 - **Stats:** `DoctorPortalStatsRow` — four `PatientStatCard` metrics (Today / This Week / This Month / Pending); responsive `grid-cols-2 sm:grid-cols-4`; only numeric slots pulse (`portalLoading`).
-- **Panels:** [Today | Upcoming] (`lg:2-col`) · [Weekly Hours \| Patient Visit Types] (`lg:2-col`) · [Unavailable Dates \| Additional Appointment Types] (`lg:2-col`) · My Patients. Visit-type subtitles on stacked headers (`PortalPanelSection` `headerVariant="stacked"` / `PortalPanelSubsectionHeader`); collapsible **Add Appointment Type** chip (emerald, same pattern as Block Time Away). Shared: `DoctorSettingsGlassListRow`, `doctor-settings-glass-surfaces.ts`, `doctor-portal-visit-type-copy.ts`, `DoctorSettingsGlassInput`, `FilterSelect`.
+- **Panels:** [Today | Upcoming] (`lg:2-col`) · [Weekly Hours \| Global visit types] (`lg:2-col`, title `GLOBAL_APPOINTMENT_TYPES_TITLE` in `doctor-portal-schedule-copy.ts`) · [Unavailable Dates \| Additional Appointment Types] (`lg:2-col`) · My Patients. Stacked headers (`PortalPanelSection` `headerVariant="stacked"`); collapsible add chips (weekly / time-off / additional type). Shared editors under `src/components/shared/doctor-settings/`.
+- **Labels + forms:** `DoctorSettingsFieldLabel` (`mb-1`, `text-xs`, required `*` `text-sm`); `SchedulingDatetimeRangeFields`; `doctor-settings-form-validity.ts` + `DoctorSettingsFormActions.saveDisabled`.
+- **Visit types (two mechanisms):** Globals — checkbox → `POST /api/appointment-types/doctor-config` + `is_enabled`. Owned additional — checkbox → `PATCH /api/appointment-types/[id]` `is_active` (soft-hide, no delete). Serializer: `fetchAppointmentTypesForDoctorManager` (`appointment-types-for-doctor-query.ts`) used by `GET /api/appointment-types?doctorId=` + `prefetchDoctorPortalSettings`; booking filters via `filterBookableTypesForDoctorFromApi` (`doctor-bookable-types.test.ts`). Directory/services APIs still query `is_active: true` on owned rows in Prisma.
 - **Filter UI:** `FilterSelect` (`calendar/Filters.tsx`, `PatientManagement` toolbar, weekly Day field). Navbar `fixed` + `portal-z-index.ts` so body-portalled menus do not cover chrome.
 - **SSR + cache:** `prefetchDoctorPortalSettings` on `/doctor-portal` page (parallel with `prefetchDoctorPortal`) — seeds availability, timeOff, appointment types before paint; `seedDoctorPortalSettingsCache` in `useLayoutEffect`; editors use `initialData` on `useQuery` (no list skeleton on refresh). Client fallback: `prefetchDoctorScheduleSettings`. **Add chips:** `portalSelfService` on portal editors — glass add actions stay visible on refresh (not gated on `useAuth` hydration).
 - **Visit types:** `POST /api/appointment-types/doctor-config` → `invalidateAppointmentTypeDerived` (+ `doctorPortal.all`); CP admin toggle also `invalidateAdminPortal`; portal skips `router.refresh()`.
@@ -68,7 +70,7 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Prism
 - **Cache:** `useLayoutEffect` always seeds `doctorPortal.all` + `patients.all` (including `[]`) so roster CRUD via `usePatients` updates portal without refresh. `prefetchDoctorPortal` and `GET /api/doctor-portal` include `primary_doctor` on roster patients (`patientUserPick`). `useQuery` uses `initialData` + `staleTime: 3min`.
 - **Invalidation:** `invalidateEntityAffectingAppointments("patients")` and `usePatients` mutations also call `invalidateDoctorPortal`; appointments → `invalidateAfterAppointmentMutation`.
 - **Shell:** `dashboardShellClass` adds `pb-3` for portal routes in `AuthShell` (`src/lib/dashboard-layout.ts`).
-- **Verify (pre-commit):** `npm test && npx tsc --noEmit && npm run lint && npm run build` — 226 tests, all pass.
+- **Verify (pre-commit):** `npm test && npx tsc --noEmit && npm run lint && npm run build` — **231 tests**, all pass (includes `utils-title-case.test.ts`, `doctor-settings-form-validity.test.ts`, `doctor-bookable-types` inactive-owned case).
 - **Invalidation (visit types):** `invalidateAppointmentTypeDerived` centralizes `doctorPortal.all` (portal toggles + CP `DoctorGlobalTypeConfigEditor`); CP also `invalidateAdminPortal`.
 
 ### Control panel entity split (users vs patients)
@@ -264,7 +266,7 @@ Shared primitives keep layout fixed while data loads:
 
 **SSR + client:** root `layout.tsx` passes `initialNavRole` into `AuthShell`. Portal pages pass `initialData` on `useQuery`. Profile: `profileLoading = isLoading && !patient`. Navbar role links render when `role` is known (server + client match).
 
-**Audit (agent glance):** Navbar `fixed` + `Z_NAVBAR`; `FilterSelect` shared with dashboard filters. **Doctor portal:** [Weekly \| Visit types] + [Unavailable \| Additional] `lg:2-col`; stacked panel headers + friendly copy in `doctor-portal-visit-type-copy.ts`; additional types collapsible add. SSR `prefetchDoctorPortalSettings`; `portalSelfService` add chips; `invalidateDoctorSchedule` + `invalidateAppointmentTypeDerived`. **226 tests**, `tsc` + `lint` pass; `build` after stopping dev + `rm -rf .next`. **Optional:** time-off PATCH Vitest; `GlassInlineSelect` unused fallback; navbar prefetch `/doctor-portal`.
+**Audit (agent glance):** Navbar `fixed` + `Z_NAVBAR`; `FilterSelect` shared with dashboard filters. **Doctor portal:** schedule/type panels complete — labels, save-disabled, owned `is_active` checkbox, global `doctor-config` checkbox, SSR seed + `invalidateAppointmentTypeDerived` / `invalidateDoctorSchedule`. **231 tests**, `tsc` + `lint` + `build` pass. **Optional gaps (non-blocking):** dedicated Vitest for `PATCH` appointment-types `is_active`; time-off PATCH route test; `GlassInlineSelect` unused fallback.
 
 ### Dashboard calendar shared UI (unified `AppointmentCard`)
 
@@ -955,7 +957,7 @@ Thin server layout wrapper for the `/dashboard` route. Provides the outer struct
 
 ## Known Architecture Notes
 
-- **Doctor portal**: `/doctor-portal` — [Weekly \| Visit types] + [Unavailable \| Additional] `lg:2-col`; `FilterSelect` + fixed navbar; SSR `prefetchDoctorPortalSettings`. `resolveRoleHomeHref` login landing.
+- **Doctor portal**: `/doctor-portal` — [Weekly \| Global visit types] + [Unavailable \| Additional] `lg:2-col`; `FilterSelect` + fixed navbar; SSR `prefetchDoctorPortalSettings` + owned-type `is_active` manager. `resolveRoleHomeHref` login landing.
 - **`/api/auth/demo`**: Endpoint still present but no longer used by the landing page. Can be removed or kept for backwards compatibility.
 - **Vercel Deployment Protection**: The project is on the Hobby plan. "Require Log In" Vercel Authentication is toggled OFF so that deployment-specific preview URLs (`*.vercel.app`) load without Vercel login, allowing the Vercel dashboard preview thumbnail to render correctly.
 - **`src/lib/rate-limit.ts`**: In-memory rate limiter (resets on cold start). For production-grade rate limiting that survives cold starts, use the Redis-backed approach (`src/lib/redis.ts` + Upstash).
