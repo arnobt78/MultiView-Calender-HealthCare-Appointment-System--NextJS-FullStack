@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
 import { DEMO_ACCOUNTS, DEMO_PASSWORD } from "@/lib/demo-credentials";
+import { resolveRoleHomeHref } from "@/lib/role-home-href";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -539,8 +540,7 @@ export default function LandingPage() {
           });
           sessionStorage.setItem("post-login-toast", payload);
           localStorage.setItem("post-login-toast", payload);
-          // Route patients to the patient portal; all other roles use the dashboard.
-          const dest = data.user.role === "patient" ? "/patient-portal" : "/dashboard";
+          const dest = resolveRoleHomeHref(data.user.role, null);
           // Do NOT reset loading here — keep spinner visible until the new page mounts.
           // router.push is async; resetting before unmount causes a brief button flash.
           router.push(dest);

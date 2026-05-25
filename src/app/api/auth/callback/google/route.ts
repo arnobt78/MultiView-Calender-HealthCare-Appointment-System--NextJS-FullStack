@@ -12,6 +12,8 @@ import {
   generateToken,
 } from "@/lib/auth";
 import { setSession } from "@/lib/session";
+import { resolveRoleHomeHref } from "@/lib/role-home-href";
+import { getUserRole } from "@/lib/rbac";
 import {
   GOOGLE_LOGIN_OAUTH_COOKIE_NAME,
   verifyGoogleLoginOAuthState,
@@ -130,7 +132,13 @@ export async function GET(req: NextRequest) {
       return bad;
     }
 
-    type SessionUser = { id: string; email: string; display_name?: string | null; image?: string | null };
+    type SessionUser = {
+      id: string;
+      email: string;
+      display_name?: string | null;
+      image?: string | null;
+      role?: string | null;
+    };
     let user: SessionUser | null = await getUserByEmail(profile.email);
 
     if (!user) {
@@ -159,8 +167,9 @@ export async function GET(req: NextRequest) {
     const token = generateToken(user.id, user.email);
     await setSession(token);
 
-    // Post-login path came from the signed cookie (verified against OAuth `state`).
-    const redirectTo = oauthVerified.redirect;
+    // Role-aware home wins for patient/doctor; admins and others may use signed redirect path.
+    const role = user.role ?? (await getUserRole(user.id));
+    const redirectTo = resolveRoleHomeHref(role, oauthVerified.redirect);
     const res = NextResponse.redirect(new URL(redirectTo, req.url));
     clearGoogleLoginCookie(res);
     return res;

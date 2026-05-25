@@ -54,7 +54,7 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Prism
 - **Route:** `src/app/doctor-portal/page.tsx` — SSR `prefetchDoctorPortal(session.userId)`; client `DoctorPortalPage.tsx`.
 - **API:** `GET /api/doctor-portal` → `DoctorPortalData` (`queryKeys.doctorPortal.all`): doctor user row, today/upcoming appointments, patients where `primary_doctor_id = doctor` (take 50), global appointment types + per-doctor `DoctorAppointmentTypeConfig`, appointment metrics.
 - **Chrome:** `PortalDoctorChromeHeader` — `pageChromeTitleStackClass` (tight title + subtitle like insights); square `DoctorAvatar` in icon tile; specialty badge on title row; Today date right.
-- **Login:** doctors → `/doctor-portal` via `resolveRoleHomeHref`; authed `/login` → `/home` (SSR redirect).
+- **Login:** `resolveRoleHomeHref` on `/login`, `/home`, landing demo, Google OAuth — doctors always `/doctor-portal` (ignores stale `?redirect=/dashboard`).
 - **Patient tables:** `PatientIdentityCell` shows `PatientAgeGlassBadge` beside name (CP + doctor-portal roster).
 - **Stats:** `DoctorPortalStatsRow` — four `PatientStatCard` metrics (Today / This Week / This Month / Pending); responsive `grid-cols-2 sm:grid-cols-4`; only numeric slots pulse (`portalLoading`).
 - **Panels:** `PortalPanelSection` — in-card `<h3>`; inline count on My Patients / Upcoming (`countInline`). Schedule rows: `DoctorPortalAppointmentListRow` + `resolveAppointmentLineColor` dot, `AppointmentDateTag` (Today/Tomorrow/Later), `TelehealthSessionBadge`. Patient toolbar: `GlassResetFilterButton` only when search/status/tier filters active (`lockPrimaryDoctor` excludes locked doctor id).
