@@ -3,8 +3,8 @@
 /**
  * Renders a checkbox grid of global appointment types (user_id === null) for a specific doctor.
  * An admin or the doctor can toggle each type on/off; toggling calls POST /api/appointment-types/doctor-config
- * to upsert the per-doctor override row, then invalidates downstream appointment-type and portal caches
- * (doctor, secretary, admin) so directory cards and KPIs refetch without navigation.
+ * to upsert the per-doctor override row, then invalidates appointment-type derived caches (includes
+ * `doctorPortal.all` via `invalidateAppointmentTypeDerived`) plus `adminPortal.all` for CP doctor detail.
  */
 
 import { useState, useMemo } from "react";
@@ -15,7 +15,6 @@ import { apiClient, handleApiError } from "@/lib/api-client";
 import { notify } from "@/lib/notify";
 import {
   invalidateAppointmentTypeDerived,
-  invalidateDoctorPortal,
   invalidateAdminPortal,
 } from "@/lib/query-client";
 
@@ -58,16 +57,17 @@ export function DoctorGlobalTypeConfigEditor({ doctorId }: Props) {
     onMutate: ({ appointment_type_id }) => {
       setPendingIds((prev) => new Set(prev).add(appointment_type_id));
     },
-    onSuccess: (_data, { appointment_type_id, is_enabled }) => {
+    onSuccess: async (_data, { appointment_type_id, is_enabled }) => {
       const typeName = globalTypes.find((t) => t.id === appointment_type_id)?.name ?? "Visit type";
       notify.crud({
         action: is_enabled ? "created" : "deleted",
         entity: "Visit type",
         detail: `${typeName} ${is_enabled ? "enabled" : "disabled"} for this doctor`,
       });
-      void invalidateAppointmentTypeDerived(queryClient);
-      void invalidateDoctorPortal(queryClient);
-      void invalidateAdminPortal(queryClient);
+      await Promise.all([
+        invalidateAppointmentTypeDerived(queryClient),
+        invalidateAdminPortal(queryClient),
+      ]);
     },
     onError: (error, { appointment_type_id }) => {
       handleApiError(error);

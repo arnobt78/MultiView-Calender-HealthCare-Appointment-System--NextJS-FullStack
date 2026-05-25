@@ -20,6 +20,7 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { getUserRole, isDoctorRole } from "@/lib/rbac";
 import { serializeAppointment, serializePatient } from "@/lib/serializers";
+import { patientUserPick } from "@/lib/patient-api-include";
 import {
   startOfDay,
   endOfDay,
@@ -110,6 +111,7 @@ export async function GET() {
         where: { primary_doctor_id: sessionUser.userId },
         orderBy: { firstname: "asc" },
         take: 50,
+        include: { primary_doctor: patientUserPick },
       }),
       // All active global appointment types
       prisma.appointmentType.findMany({

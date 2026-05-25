@@ -37,16 +37,39 @@ type Ctx = {
   setCareTier: (t: PatientCareTierFilter) => void;
   primaryDoctorId: PatientPrimaryDoctorFilter;
   setPrimaryDoctorId: (id: PatientPrimaryDoctorFilter) => void;
+  /** When true (doctor portal), primary-doctor dropdown is hidden and filter stays locked. */
+  lockPrimaryDoctor: boolean;
   /** Toolbar filters — applied before DataTable global search (status + care tier + primary doctor) */
   filterByStatus: (list: Patient[]) => Patient[];
 };
 
 const PatientListFiltersContext = createContext<Ctx | null>(null);
 
-export function PatientListFiltersProvider({ children }: { children: ReactNode }) {
+type PatientListFiltersProviderProps = {
+  children: ReactNode;
+  /** Initial primary doctor filter — doctor portal passes session doctor id. */
+  initialPrimaryDoctorId?: PatientPrimaryDoctorFilter;
+  /** Locks `primaryDoctorId` and ignores `setPrimaryDoctorId` (doctor portal roster). */
+  lockPrimaryDoctor?: boolean;
+};
+
+export function PatientListFiltersProvider({
+  children,
+  initialPrimaryDoctorId = "all",
+  lockPrimaryDoctor = false,
+}: PatientListFiltersProviderProps) {
   const [status, setStatus] = useState<PatientStatusFilter>("all");
   const [careTier, setCareTier] = useState<PatientCareTierFilter>("all");
-  const [primaryDoctorId, setPrimaryDoctorId] = useState<PatientPrimaryDoctorFilter>("all");
+  const [primaryDoctorId, setPrimaryDoctorIdState] =
+    useState<PatientPrimaryDoctorFilter>(initialPrimaryDoctorId);
+
+  const setPrimaryDoctorId = useCallback(
+    (id: PatientPrimaryDoctorFilter) => {
+      if (lockPrimaryDoctor) return;
+      setPrimaryDoctorIdState(id);
+    },
+    [lockPrimaryDoctor]
+  );
 
   const filterByStatus = useCallback(
     (list: Patient[]) => {
@@ -83,9 +106,17 @@ export function PatientListFiltersProvider({ children }: { children: ReactNode }
       setCareTier,
       primaryDoctorId,
       setPrimaryDoctorId,
+      lockPrimaryDoctor,
       filterByStatus,
     }),
-    [status, careTier, primaryDoctorId, filterByStatus]
+    [
+      status,
+      careTier,
+      primaryDoctorId,
+      setPrimaryDoctorId,
+      lockPrimaryDoctor,
+      filterByStatus,
+    ]
   );
 
   return (

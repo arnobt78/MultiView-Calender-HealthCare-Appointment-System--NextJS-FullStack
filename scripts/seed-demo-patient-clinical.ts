@@ -24,13 +24,18 @@ async function main() {
     process.exit(0);
   }
 
+  const { mergeClinicalProfileJson, DEMO_PATIENT_PORTRAIT_BY_EMAIL } = await import(
+    "../src/lib/seed-clinical-profile"
+  );
+  const portrait = DEMO_PATIENT_PORTRAIT_BY_EMAIL[DEMO_PATIENT_EMAIL];
   await prisma.patient.update({
     where: { id: row.id },
     data: {
-      clinical_profile: {
+      clinical_profile: mergeClinicalProfileJson(row.clinical_profile, {
         allergies: ["penicillin (demo)"],
         notes: "Seeded clinical profile for Patient Management / snapshot demos.",
-      },
+        ...(portrait ? { image_url: portrait } : {}),
+      }),
     },
   });
   console.log("Updated clinical_profile for", DEMO_PATIENT_EMAIL);

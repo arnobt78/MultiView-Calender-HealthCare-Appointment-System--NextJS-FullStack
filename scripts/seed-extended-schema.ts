@@ -29,6 +29,80 @@ const GLOBAL_TYPE_IDS = {
   annualCheckup: "22222222-2222-4222-8222-222222222204",
 } as const;
 
+/** Stable ids for professional service categories (sort_order 1–6 wins appointment seed pick). */
+const DEMO_SERVICE_CATEGORIES = [
+  {
+    id: "33333333-3333-4333-8333-333333333301",
+    label: "Primary Care & Preventive Medicine",
+    description:
+      "Routine exams, chronic disease management, vaccinations, and wellness counselling.",
+    color: "#0ea5e9",
+    icon: "stethoscope",
+    sort_order: 1,
+    duration_minutes_default: 30,
+  },
+  {
+    id: "33333333-3333-4333-8333-333333333302",
+    label: "Cardiology & Vascular Health",
+    description:
+      "Heart rhythm assessment, hypertension management, and cardiovascular risk screening.",
+    color: "#ef4444",
+    icon: "heart-pulse",
+    sort_order: 2,
+    duration_minutes_default: 45,
+  },
+  {
+    id: "33333333-3333-4333-8333-333333333303",
+    label: "Dermatology & Skin Care",
+    description:
+      "Acne, eczema, mole checks, cosmetic dermatology, and laser treatment consultations.",
+    color: "#f59e0b",
+    icon: "scan-face",
+    sort_order: 3,
+    duration_minutes_default: 30,
+  },
+  {
+    id: "33333333-3333-4333-8333-333333333304",
+    label: "Neurology & Cognitive Health",
+    description:
+      "Headache clinics, seizure follow-up, memory concerns, and nerve conduction review.",
+    color: "#8b5cf6",
+    icon: "brain",
+    sort_order: 4,
+    duration_minutes_default: 45,
+  },
+  {
+    id: "33333333-3333-4333-8333-333333333305",
+    label: "Pediatrics & Adolescent Care",
+    description:
+      "Well-child visits, developmental screening, immunizations, and school health forms.",
+    color: "#10b981",
+    icon: "baby",
+    sort_order: 5,
+    duration_minutes_default: 30,
+  },
+  {
+    id: "33333333-3333-4333-8333-333333333306",
+    label: "Mental Health & Psychiatry",
+    description:
+      "Therapy intake, medication management, anxiety and depression follow-up, crisis planning.",
+    color: "#6366f1",
+    icon: "brain-circuit",
+    sort_order: 6,
+    duration_minutes_default: 50,
+  },
+] as const;
+
+const DEMO_ADMIN_PROFILE = {
+  phone: "+49 30 100 200 00",
+  license_number: "ADM-2016-DE-001",
+  department: "HealthCal Administration",
+  consultation_fee: 0,
+  office_location: "Berlin HQ — Operations, Floor 2",
+  languages_spoken: ["English", "German"] as string[],
+  years_of_experience: 12,
+};
+
 // ─── Extended doctor profile data ────────────────────────────────────────────
 
 const DOCTOR_PROFILES: Record<
@@ -124,6 +198,7 @@ const EXTRA_PATIENTS = [
     firstname: "Maria",
     lastname: "Schmidt",
     email: "maria.schmidt@demo.healthcal",
+    portraitUrl: "/users/img-4.avif",
     birth_date: new Date("1985-03-14"),
     active: true,
     blood_type: "O-",
@@ -141,6 +216,7 @@ const EXTRA_PATIENTS = [
     firstname: "Jan",
     lastname: "Mueller",
     email: "jan.mueller@demo.healthcal",
+    portraitUrl: "/users/img-5.avif",
     birth_date: new Date("1978-07-22"),
     active: true,
     blood_type: "A+",
@@ -158,6 +234,7 @@ const EXTRA_PATIENTS = [
     firstname: "Anya",
     lastname: "Petrov",
     email: "anya.petrov@demo.healthcal",
+    portraitUrl: "/users/img-6.avif",
     birth_date: new Date("1992-11-05"),
     active: true,
     blood_type: "B+",
@@ -175,6 +252,7 @@ const EXTRA_PATIENTS = [
     firstname: "Thomas",
     lastname: "Weber",
     email: "thomas.weber@demo.healthcal",
+    portraitUrl: "/users/img-7.avif",
     birth_date: new Date("1969-09-30"),
     active: true,
     blood_type: "AB-",
@@ -200,6 +278,49 @@ async function seedExtendedSchema() {
 
   const { prisma } = await import("../src/lib/prisma");
   const { DEMO_PATIENT_EMAIL } = await import("../src/lib/demo-credentials");
+  const {
+    mergeClinicalProfileJson,
+    DEMO_PATIENT_PORTRAIT_BY_EMAIL,
+  } = await import("../src/lib/seed-clinical-profile");
+
+  // ── 0. Demo admin staff profile fields (parity with doctor extended columns) ─
+  console.log("🛡️  Updating demo admin profile…");
+  const adminUser = await prisma.user.findFirst({ where: { email: "test@admin.com" } });
+  if (adminUser) {
+    await prisma.user.update({
+      where: { id: adminUser.id },
+      data: DEMO_ADMIN_PROFILE,
+    });
+    console.log("  ✔ test@admin.com");
+  }
+
+  // ── 0b. Professional medical / service categories (idempotent upsert) ─────
+  console.log("\n🏷️  Upserting demo service categories…");
+  for (const cat of DEMO_SERVICE_CATEGORIES) {
+    await prisma.category.upsert({
+      where: { id: cat.id },
+      create: {
+        id: cat.id,
+        label: cat.label,
+        description: cat.description,
+        color: cat.color,
+        icon: cat.icon,
+        is_active: true,
+        sort_order: cat.sort_order,
+        duration_minutes_default: cat.duration_minutes_default,
+      },
+      update: {
+        label: cat.label,
+        description: cat.description,
+        color: cat.color,
+        icon: cat.icon,
+        is_active: true,
+        sort_order: cat.sort_order,
+        duration_minutes_default: cat.duration_minutes_default,
+      },
+    });
+    console.log(`  ✔ ${cat.label}`);
+  }
 
   // ── 1. Extend doctor profiles with new Phase-1 fields ───────────────────
   console.log("👨‍⚕️  Updating doctor profiles…");
@@ -237,6 +358,7 @@ async function seedExtendedSchema() {
     where: { email: DEMO_PATIENT_EMAIL },
   });
   if (demoPatient) {
+    const demoPortrait = DEMO_PATIENT_PORTRAIT_BY_EMAIL[DEMO_PATIENT_EMAIL];
     await prisma.patient.update({
       where: { id: demoPatient.id },
       data: {
@@ -248,6 +370,11 @@ async function seedExtendedSchema() {
         preferred_language: "English",
         national_id: "DE900101005",
         occupation: "Software Engineer",
+        clinical_profile: mergeClinicalProfileJson(demoPatient.clinical_profile, {
+          allergies: ["penicillin (demo)"],
+          notes: "Seeded clinical profile for Patient Management / snapshot demos.",
+          ...(demoPortrait ? { image_url: demoPortrait } : {}),
+        }),
       },
     });
     console.log(`  ✔ ${DEMO_PATIENT_EMAIL}`);
@@ -256,7 +383,8 @@ async function seedExtendedSchema() {
   // ── 4. Seed extra demo patients ───────────────────────────────────────────
   console.log("\n🏥  Seeding extra demo patients…");
   const doctor = await prisma.user.findFirst({ where: { email: "test@doctor.com" } });
-  const adminUser = await prisma.user.findFirst({ where: { role: "admin" } });
+  const adminForAudit =
+    adminUser ?? (await prisma.user.findFirst({ where: { role: "admin" } }));
 
   const seededPatients: { id: string; email: string }[] = demoPatient
     ? [{ id: demoPatient.id, email: demoPatient.email ?? "" }]
@@ -264,6 +392,10 @@ async function seedExtendedSchema() {
 
   for (const p of EXTRA_PATIENTS) {
     const existing = await prisma.patient.findFirst({ where: { email: p.email } });
+    const clinicalPatch = {
+      image_url: p.portraitUrl,
+      notes: `Demo patient — ${p.firstname} ${p.lastname}. Seeded for roster and portal portrait demos.`,
+    };
     if (existing) {
       await prisma.patient.update({
         where: { id: existing.id },
@@ -276,6 +408,7 @@ async function seedExtendedSchema() {
           preferred_language: p.preferred_language,
           national_id: p.national_id,
           occupation: p.occupation,
+          clinical_profile: mergeClinicalProfileJson(existing.clinical_profile, clinicalPatch),
         },
       });
       seededPatients.push({ id: existing.id, email: p.email });
@@ -298,8 +431,11 @@ async function seedExtendedSchema() {
           preferred_language: p.preferred_language,
           national_id: p.national_id,
           occupation: p.occupation,
+          clinical_profile: mergeClinicalProfileJson(null, clinicalPatch),
           ...(doctor ? { primary_doctor_id: doctor.id } : {}),
-          ...(adminUser ? { created_by_id: adminUser.id, updated_by_id: adminUser.id } : {}),
+          ...(adminForAudit
+            ? { created_by_id: adminForAudit.id, updated_by_id: adminForAudit.id }
+            : {}),
         },
       });
       seededPatients.push({ id: created.id, email: p.email });
@@ -336,7 +472,10 @@ async function seedExtendedSchema() {
   // ── 7. Seed appointments with appointment_type_id + chief_complaint ───────
   console.log("\n📆  Seeding typed appointments with chief complaints…");
   if (doctor) {
-    const cat = await prisma.category.findFirst({ orderBy: { sort_order: "asc" } });
+    const cat = await prisma.category.findFirst({
+      where: { id: { in: DEMO_SERVICE_CATEGORIES.map((c) => c.id) } },
+      orderBy: { sort_order: "asc" },
+    });
     const now = new Date();
 
     // One appointment per global type for the next 5 days using seededPatients

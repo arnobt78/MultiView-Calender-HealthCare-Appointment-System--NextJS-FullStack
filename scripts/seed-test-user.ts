@@ -283,10 +283,15 @@ async function seedDemoUsers() {
     const existingRow = await prisma.patient.findFirst({
       where: { email: demoPatientAcc.email },
     });
-    const clinical_profile = {
+    const { mergeClinicalProfileJson, DEMO_PATIENT_PORTRAIT_BY_EMAIL } = await import(
+      "../src/lib/seed-clinical-profile"
+    );
+    const demoPortrait = DEMO_PATIENT_PORTRAIT_BY_EMAIL[demoPatientAcc.email];
+    const clinical_profile = mergeClinicalProfileJson(existingRow?.clinical_profile ?? null, {
       allergies: ["penicillin (demo)"],
       notes: "Seeded clinical profile for Patient Management / snapshot demos.",
-    };
+      ...(demoPortrait ? { image_url: demoPortrait } : {}),
+    });
     if (!existingRow) {
       await prisma.patient.create({
         data: {

@@ -49,6 +49,21 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Prism
 - **Invalidation:** `invalidateAfterAppointmentMutation` on success (includes `patientPortal.all`, appointments, dashboard, notifications, type-derived keys; doctor directory refreshes via existing `invalidateUsersAndAuth` / `invalidateDoctorSchedule` → `doctors.all`).
 - **A11y:** visible `DialogDescription` without custom `id` so Radix `descriptionId` matches `aria-describedby` on content.
 
+### Doctor Portal (`/doctor-portal`)
+
+- **Route:** `src/app/doctor-portal/page.tsx` — SSR `prefetchDoctorPortal(session.userId)`; client `DoctorPortalPage.tsx`.
+- **API:** `GET /api/doctor-portal` → `DoctorPortalData` (`queryKeys.doctorPortal.all`): doctor user row, today/upcoming appointments, patients where `primary_doctor_id = doctor` (take 50), global appointment types + per-doctor `DoctorAppointmentTypeConfig`, appointment metrics.
+- **Chrome:** `PortalDoctorChromeHeader` — same `page-chrome-classes.ts` tokens as `PortalChromeHeader`; left tile = `DoctorAvatar`; title/email; `DoctorSpecialtyBadge` (glass glow); right = Today date (skeleton on profile load only).
+- **Stats:** `DoctorPortalStatsRow` — four `PatientStatCard` metrics (Today / This Week / This Month / Pending); responsive `grid-cols-2 sm:grid-cols-4`; only numeric slots pulse (`portalLoading`).
+- **Panels:** `PortalPanelSection` — patient-portal-style white card + in-card `<h3>` (fixes headers appearing outside panel when old `CardHeader` + `GLASS` were used). Sections: Today's Schedule, Visit Types (subtitle static), My Patients, Upcoming Appointments.
+- **Visit types:** native checkboxes in `DoctorPortalPage`; CP `DoctorGlobalTypeConfigEditor` on `/control-panel/doctors/[id]`; `POST /api/appointment-types/doctor-config` → `invalidateAppointmentTypeDerived` (includes `doctorPortal.all`); CP editor also `invalidateAdminPortal`.
+- **My Patients:** `PatientListFiltersProvider` (`initialPrimaryDoctorId`, `lockPrimaryDoctor`) + `PatientManagementInner` `variant="doctor-portal"` — same toolbar filters as CP (search, status, care tier) without Add/Import/Export or primary-doctor column; links `patientDetailHref("doctor", id)`; View/Edit when `primary_doctor_id` matches session doctor.
+- **Cache:** `useLayoutEffect` always seeds `doctorPortal.all` + `patients.all` (including `[]`) so roster CRUD via `usePatients` updates portal without refresh. `prefetchDoctorPortal` and `GET /api/doctor-portal` include `primary_doctor` on roster patients (`patientUserPick`). `useQuery` uses `initialData` + `staleTime: 3min`.
+- **Invalidation:** `invalidateEntityAffectingAppointments("patients")` and `usePatients` mutations also call `invalidateDoctorPortal`; appointments → `invalidateAfterAppointmentMutation`.
+- **Shell:** `dashboardShellClass` adds `pb-3` for portal routes in `AuthShell` (`src/lib/dashboard-layout.ts`).
+- **Verify (pre-commit):** `npm test && npx tsc --noEmit && npm run lint && npm run build` — 214 tests, all pass.
+- **Invalidation (visit types):** `invalidateAppointmentTypeDerived` centralizes `doctorPortal.all` (portal toggles + CP `DoctorGlobalTypeConfigEditor`); CP also `invalidateAdminPortal`.
+
 ### Control panel entity split (users vs patients)
 
 - **`patients` table** (`Patient` model): clinical/client records used by Patient Management and appointments. Demo seed creates one row aligned with `test@patient.com` so `/control-panel/patient-management` lists a sample patient.
@@ -58,7 +73,7 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Prism
 
 ### Demo seed
 
-Run `npm run db:seed-test-user` after migrations: upserts three `users`, doctor availability + appointment type, and one `patients` row for the demo portal email so Patient Management is non-empty. Optional: `npm run db:seed-demo-clinical` (or rely on seed-test-user) writes `clinical_profile` JSON on the demo patient for allergies/notes.
+Run `npm run db:seed-test-user` after migrations: upserts demo `users`, doctor availability + global types, demo `patients` row with merged `clinical_profile` (allergies, notes, `image_url` via `src/lib/seed-clinical-profile.ts`). Run `npm run db:seed-extended` for: admin staff fields, six professional **categories** (stable UUIDs, color/icon/description), doctor v006 profiles, extra patients (Maria/Jan/Anya/Thomas) with portraits `/users/img-4`–`img-7`, type configs, typed appointments. Optional: `npm run db:seed-demo-clinical` re-merges demo patient clinical JSON idempotently.
 
 ### Patient pipeline (management + detail)
 
@@ -208,6 +223,7 @@ const loading = !isMounted || isLoading;
 | Notifications | `control-panel/NotificationsManagement.tsx` | Table rows |
 | Google Calendar | `control-panel/GoogleCalendarSettings.tsx` | Status badge + description + action button |
 | Insights | `pages/AnalyticsPage.tsx` | Stat values + chart bars + category rows + patient table rows |
+| Doctor Portal | `pages/DoctorPortalPage.tsx` | `PortalDoctorChromeHeader` + stat values + `PortalPanelSection` bodies; `PatientManagementInner` table body rows only |
 | Patient Portal | `pages/PatientPortalPage.tsx` | Profile/summary chrome + **Appointment History** via `PortalAppointmentTimelineCard`; booking via `PatientBookingDialog` |
 | Services | `pages/ServicesPage.tsx` | `DoctorProfileCardSkeleton` text slots; doctor filter bar (incl. catalog type select) + card chrome static |
 
@@ -223,7 +239,11 @@ Shared primitives keep layout fixed while data loads:
 | Piece | File | Role |
 |-------|------|------|
 | `PortalChromeHeader` | `src/components/shared/PortalChromeHeader.tsx` | Icon tile + title stack; optional `actions` + `toolbar` rows; tokens in `page-chrome-classes.ts` |
-| `page-chrome-classes.ts` | `src/lib/page-chrome-classes.ts` | `border-b py-2`, icon tile `min-h-[3.5rem]`, title/description, toolbar-only shell |
+| `PortalDoctorChromeHeader` | `src/components/shared/PortalDoctorChromeHeader.tsx` | Doctor portal top row — avatar tile, name, email, `DoctorSpecialtyBadge`, Today date |
+| `PortalPanelSection` | `src/components/shared/PortalPanelSection.tsx` | White in-card section shell + heading badge (patient/doctor portal panels) |
+| `DoctorPortalStatsRow` | `src/components/doctor-portal/DoctorPortalStatsRow.tsx` | Doctor portal metric cards (`PatientStatCard` reuse) |
+| `page-chrome-classes.ts` | `src/lib/page-chrome-classes.ts` | `border-b py-2`, icon tile `min-h-[3.5rem]`, `portalPanelSectionHeadingClass`, toolbar-only shell |
+| `dashboardShellClass` | `src/lib/dashboard-layout.ts` | `max-w-9xl` + horizontal padding + `pb-3` on scrollable portal pages via `AuthShell` |
 | `PageToolbarChrome` | `src/components/shared/PageToolbarChrome.tsx` | `/dashboard` — toolbar only (no Appointments title/icon) |
 | `CalendarHeaderRoleActions` | `src/components/calendar/CalendarHeaderRoleActions.tsx` | Dashboard toolbar: patient Book vs staff Import/New (SSR role, no flash) |
 | `PatientBookingDialog` | `src/components/shared/patient-booking/PatientBookingDialog.tsx` | Patient/services booking wizard — directory cards step 1, inline slots, `lockDoctor` on services |
@@ -237,7 +257,7 @@ Shared primitives keep layout fixed while data loads:
 
 **SSR + client:** root `layout.tsx` passes `initialNavRole` into `AuthShell`. Portal pages pass `initialData` on `useQuery`. Profile: `profileLoading = isLoading && !patient`. Navbar role links render when `role` is known (server + client match).
 
-**Audit (agent glance):** Navbar role uses SSR `initialNavRole` via `NavRoleContext`. **Page chrome:** `page-chrome-classes.ts` + `PortalChromeHeader` on `/services`, `/patient-portal`, `/dashboard` (title + toolbar: date, tabs, role actions), `/insights`. Patient booking: 3-step wizard, `usePatientBookableAppointmentTypes`, `Book Appointment` on portal + dashboard via `CalendarHeaderRoleActions`. Staff dialog: `StaffAppointmentPickerField`, `PatientSelectOption` two-row client, category single swatch. `/services`: visit-type filter on doctor grid only (`filterDoctorsByServiceCatalog`). **214 tests**, `tsc` + `lint` + `build` pass. **Known gap:** SSR `prefetchDoctors()` may omit `bookable_appointment_types` until client refetch.
+**Audit (agent glance):** Navbar role uses SSR `initialNavRole` via `NavRoleContext`. **Page chrome:** `page-chrome-classes.ts` + `PortalChromeHeader` on `/services`, `/patient-portal`, `/dashboard`, `/insights`; `/doctor-portal` uses `PortalDoctorChromeHeader` + `PortalPanelSection` + scoped `PatientManagementInner` (`usePatients` + shared `queryKeys.patients.all`, no duplicate doctor-only cache). Patient booking: 3-step wizard, `usePatientBookableAppointmentTypes`, `Book Appointment` on portal + dashboard via `CalendarHeaderRoleActions`. Staff dialog: `StaffAppointmentPickerField`, `PatientSelectOption` two-row client, category single swatch. `/services`: visit-type filter on doctor grid only (`filterDoctorsByServiceCatalog`). **214 tests**, `tsc` + `lint` + `build` pass. **Deferred at current scale:** scoped `GET /api/patients?primaryDoctorId=`; SSR `prefetchDoctors()` may omit `bookable_appointment_types` until client refetch. Visit-type CP ↔ portal sync: `invalidateAppointmentTypeDerived` includes `doctorPortal.all`.
 
 ### Dashboard calendar shared UI (unified `AppointmentCard`)
 

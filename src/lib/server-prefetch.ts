@@ -670,6 +670,7 @@ export async function prefetchDoctorPortal(userId: string): Promise<DoctorPortal
         where: { primary_doctor_id: userId },
         orderBy: { firstname: "asc" },
         take: 50,
+        include: { primary_doctor: patientUserPick },
       }),
       prisma.appointmentType.findMany({
         where: { user_id: null, is_active: true },

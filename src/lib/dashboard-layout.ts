@@ -5,8 +5,9 @@
  *
  * Calendar (`/dashboard`) opts out in `AuthShell` — `CalendarHeader` applies `dashboardShellClass` on `PortalChromeHeader`.
  */
+/** `pb-3` — default bottom inset for scrollable portal routes (`AuthShell` wrapper). */
 export const dashboardShellClass =
-  "w-full max-w-9xl mx-auto min-w-0 px-2 sm:px-4 lg:px-8";
+  "w-full max-w-9xl mx-auto min-w-0 px-2 sm:px-4 lg:px-8 pb-3";
 
 /** Same inset as `dashboardShellClass`; used only under `src/app/control-panel/layout.tsx` because `/control-panel/*` opts out of `AuthShell`'s global shell (mirrors stock-inventory admin route layout). */
 export const controlPanelShellClass = dashboardShellClass;

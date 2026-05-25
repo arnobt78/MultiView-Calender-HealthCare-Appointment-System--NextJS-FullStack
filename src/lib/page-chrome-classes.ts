@@ -27,3 +27,7 @@ export const pageChromeToolbarOnlyShellClass = "py-2";
 
 export const pageChromeToolbarOnlyInnerClass =
   "flex min-h-[3.5rem] min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between";
+
+/** In-card section title row inside `PortalPanelSection` (patient-portal / doctor-portal panels). */
+export const portalPanelSectionHeadingClass =
+  "mb-3 flex flex-wrap items-center gap-2 text-sm font-semibold text-gray-700";

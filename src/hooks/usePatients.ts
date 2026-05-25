@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient, handleApiError } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import {
+  invalidateDoctorPortal,
   invalidateEntityAffectingAppointments,
   invalidatePatientDetailAndSnapshot,
 } from "@/lib/query-client";
@@ -58,6 +59,7 @@ export function usePatients() {
       }),
     onSuccess: async (data) => {
       await invalidateEntityAffectingAppointments(queryClient, "patients");
+      await invalidateDoctorPortal(queryClient);
       await invalidatePatientDetailAndSnapshot(queryClient, data.patient.id);
       notify.crud({ action: "created", entity: "Patient", detail: `${data.patient.firstname} ${data.patient.lastname} was added.` });
     },
@@ -72,6 +74,7 @@ export function usePatients() {
       }),
     onSuccess: async (data) => {
       await invalidateEntityAffectingAppointments(queryClient, "patients");
+      await invalidateDoctorPortal(queryClient);
       await invalidatePatientDetailAndSnapshot(queryClient, data.patient.id);
       const nm = `${data.patient.firstname} ${data.patient.lastname}`.trim();
       const em = data.patient.email?.trim();
@@ -92,6 +95,7 @@ export function usePatients() {
       queryClient.removeQueries({ queryKey: queryKeys.patients.detail(vars.id) });
       queryClient.removeQueries({ queryKey: queryKeys.patients.snapshot(vars.id) });
       await invalidateEntityAffectingAppointments(queryClient, "patients");
+      await invalidateDoctorPortal(queryClient);
       const nm = vars.name?.trim();
       const em = vars.email?.trim();
       const who = nm ? `${nm}${em ? ` (${em})` : ""}` : "The patient record";

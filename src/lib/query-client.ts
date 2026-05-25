@@ -188,16 +188,18 @@ export async function invalidateAppointmentTypesData(queryClient: QueryClient) {
 }
 
 /**
- * Single choke-point after **AppointmentType** row changes (REST CRUD or appointment overlap shifts):
+ * Single choke-point after **AppointmentType** row changes (REST CRUD, doctor-config toggles, overlap shifts):
  * - `appointmentTypes.*` lists (portal, compose dialog, global cards, `/services` catalog)
  * - `availability` slot math (duration / buffers / intervals)
  * - `doctors.all` directory (`GET /api/doctors` embeds `appointment_types` for /services + Doctor Management)
+ * - `doctorPortal.all` visit-type checkboxes (CP `DoctorGlobalTypeConfigEditor` + `/doctor-portal` toggles)
  */
 export async function invalidateAppointmentTypeDerived(queryClient: QueryClient) {
   await Promise.all([
     invalidateAppointmentTypesData(queryClient),
     invalidateAvailabilitySlots(queryClient),
     queryClient.invalidateQueries({ queryKey: queryKeys.doctors.all }),
+    invalidateDoctorPortal(queryClient),
   ]);
 }
 

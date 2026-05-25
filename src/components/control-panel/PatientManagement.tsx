@@ -80,7 +80,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { useUsers } from "@/hooks/useUsers";
 import { PATIENT_REFERRAL_SOURCES } from "@/lib/patient-referral-sources";
 import { PATIENT_CARE_LEVEL_STAGES, getPatientCareLevelLabel } from "@/lib/patient-care-level";
+import { patientDetailHref, type EntityRole } from "@/lib/entity-routes";
 import type { PatientClinicalProfile } from "@/types/types";
+
+/** Control panel full admin table vs doctor-portal scoped roster (shared filters + DataTable). */
+export type PatientManagementVariant = "control-panel" | "doctor-portal";
+
+export type PatientManagementInnerProps = {
+  variant?: PatientManagementVariant;
+  viewerRole?: EntityRole;
+  lockedPrimaryDoctorId?: string;
+  /** Doctor portal section badge — filtered row count after toolbar filters. */
+  onFilteredCountChange?: (count: number) => void;
+};
 
 const STATUS_FILTER_LABEL: Record<PatientStatusFilter, string> = {
   all: "All Statuses",
@@ -159,11 +171,23 @@ function exportPatientsCSV(patients: Patient[]) {
 function PatientActions({
   patient,
   onDelete,
+  variant,
+  viewerRole = "admin",
+  lockedPrimaryDoctorId,
 }: {
   patient: Patient;
   onDelete: (p: Patient) => void;
+  variant: PatientManagementVariant;
+  viewerRole?: EntityRole;
+  lockedPrimaryDoctorId?: string;
 }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const detailHref = patientDetailHref(viewerRole, patient.id);
+  const canMutate =
+    variant === "control-panel" ||
+    (!!lockedPrimaryDoctorId && patient.primary_doctor_id === lockedPrimaryDoctorId);
+  const editHref = canMutate ? `${detailHref}?mode=edit` : detailHref;
+
   return (
     <>
       <DropdownMenu>
@@ -176,59 +200,73 @@ function PatientActions({
         <DropdownMenuContent align="end">
           <DropdownMenuItem asChild>
             <PrefetchingLink
-              href={`/control-panel/patients/${patient.id}`}
+              href={detailHref}
               className="flex items-center gap-2 cursor-pointer"
             >
               <Eye className="h-4 w-4" />
               View
             </PrefetchingLink>
           </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <PrefetchingLink
-              href={`/control-panel/patients/${patient.id}?mode=edit`}
-              className="flex items-center gap-2 cursor-pointer"
-            >
-              <Pencil className="h-4 w-4" />
-              Edit
-            </PrefetchingLink>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            className="text-destructive focus:text-destructive flex items-center gap-2"
-            onSelect={() => setConfirmOpen(true)}
-          >
-            <Trash2 className="h-4 w-4" />
-            Delete
-          </DropdownMenuItem>
+          {canMutate ? (
+            <DropdownMenuItem asChild>
+              <PrefetchingLink
+                href={editHref}
+                className="flex items-center gap-2 cursor-pointer"
+              >
+                <Pencil className="h-4 w-4" />
+                Edit
+              </PrefetchingLink>
+            </DropdownMenuItem>
+          ) : null}
+          {variant === "control-panel" ? (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive flex items-center gap-2"
+                onSelect={() => setConfirmOpen(true)}
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            </>
+          ) : null}
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <ConfirmActionDialog
-        open={confirmOpen}
-        onOpenChange={setConfirmOpen}
-        title="Permanently remove this patient?"
-        subtitle={
-          <>
-            This will delete{" "}
-            <span className="font-medium text-gray-700">
-              {`${patient.firstname} ${patient.lastname}`.trim()}
-              {patient.email ? ` (${patient.email})` : ""}
-            </span>{" "}
-            and all related data tied to this record. You cannot undo this action.
-          </>
-        }
-        confirmLabel="Delete"
-        variant="destructive"
-        onConfirm={() => {
-          onDelete(patient);
-          setConfirmOpen(false);
-        }}
-      />
+      {variant === "control-panel" ? (
+        <ConfirmActionDialog
+          open={confirmOpen}
+          onOpenChange={setConfirmOpen}
+          title="Permanently remove this patient?"
+          subtitle={
+            <>
+              This will delete{" "}
+              <span className="font-medium text-gray-700">
+                {`${patient.firstname} ${patient.lastname}`.trim()}
+                {patient.email ? ` (${patient.email})` : ""}
+              </span>{" "}
+              and all related data tied to this record. You cannot undo this action.
+            </>
+          }
+          confirmLabel="Delete"
+          variant="destructive"
+          onConfirm={() => {
+            onDelete(patient);
+            setConfirmOpen(false);
+          }}
+        />
+      ) : null}
     </>
   );
 }
 
-function PatientManagementInner() {
+export function PatientManagementInner({
+  variant = "control-panel",
+  viewerRole = "admin",
+  lockedPrimaryDoctorId,
+  onFilteredCountChange,
+}: PatientManagementInnerProps = {}) {
+  const isDoctorPortal = variant === "doctor-portal";
   const { patients, isLoading, isFetching, isError: patientsError, createPatient, isCreating, deletePatient } = usePatients();
   const [listUiMounted, setListUiMounted] = useState(false);
   useEffect(() => {
@@ -250,9 +288,14 @@ function PatientManagementInner() {
     setCareTier,
     primaryDoctorId,
     setPrimaryDoctorId,
+    lockPrimaryDoctor,
     filterByStatus,
   } = usePatientListFilters();
   const filteredPatients = filterByStatus(patients);
+
+  useEffect(() => {
+    onFilteredCountChange?.(filteredPatients.length);
+  }, [filteredPatients.length, onFilteredCountChange]);
   const primaryDoctorTriggerLabel: string =
     primaryDoctorId === "all"
       ? "All Doctors"
@@ -273,8 +316,9 @@ function PatientManagementInner() {
     setListSearch("");
     setStatus("all");
     setCareTier("all");
-    setPrimaryDoctorId("all");
+    if (!lockPrimaryDoctor) setPrimaryDoctorId("all");
   };
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<PatientCreateInput>({
     firstname: "",
@@ -294,47 +338,8 @@ function PatientManagementInner() {
     referralDetail: "",
   });
 
-  const columns: ColumnDef<Patient>[] = [
-    {
-      id: "name",
-      // Avatar + name + email in one column so layout stays grouped on wide screens (no split image / text columns).
-      accessorFn: (row) =>
-        `${row.firstname} ${row.lastname} ${row.email ?? ""}`.trim(),
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Patient Name" />,
-      meta: {
-        shellClassName: "w-[28.5%] min-w-[14rem] max-w-[28rem]",
-      },
-      cell: ({ row }) => {
-        const p = row.original;
-        const name = `${p.firstname} ${p.lastname}`.trim() || "—";
-        return (
-          <PatientIdentityCell
-            name={name}
-            email={p.email}
-            href={`/control-panel/patients/${p.id}`}
-            patient={p}
-          />
-        );
-      },
-    },
-    {
-      accessorKey: "care_level",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Care Tier" />,
-      meta: {
-        shellClassName: "w-[17%] min-w-[10rem] whitespace-normal",
-      },
-      cell: ({ row }) => (
-        <div className="flex min-h-[2.75rem] w-full min-w-0 items-center">
-          <span
-            className={cn("line-clamp-2 min-w-0 break-words", clinicalCellPrimaryTextClass)}
-            title={getPatientCareLevelLabel(row.original.care_level)}
-          >
-            {getPatientCareLevelLabel(row.original.care_level)}
-          </span>
-        </div>
-      ),
-    },
-    {
+  const columns: ColumnDef<Patient>[] = useMemo(() => {
+    const primaryDoctorCol: ColumnDef<Patient> = {
       id: "primary_doctor_display",
       accessorFn: (row) =>
         `${row.primary_doctor_display ?? ""} ${row.primary_doctor_email ?? ""}`.trim(),
@@ -387,7 +392,51 @@ function PatientManagementInner() {
           </div>
         );
       },
+    };
+
+    const cols: ColumnDef<Patient>[] = [
+    {
+      id: "name",
+      // Avatar + name + email in one column so layout stays grouped on wide screens (no split image / text columns).
+      accessorFn: (row) =>
+        `${row.firstname} ${row.lastname} ${row.email ?? ""}`.trim(),
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Patient Name" />,
+      meta: {
+        shellClassName: isDoctorPortal
+          ? "w-[32%] min-w-[14rem] max-w-[28rem]"
+          : "w-[28.5%] min-w-[14rem] max-w-[28rem]",
+      },
+      cell: ({ row }) => {
+        const p = row.original;
+        const name = `${p.firstname} ${p.lastname}`.trim() || "—";
+        return (
+          <PatientIdentityCell
+            name={name}
+            email={p.email}
+            href={patientDetailHref(viewerRole, p.id)}
+            patient={p}
+          />
+        );
+      },
     },
+    {
+      accessorKey: "care_level",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Care Tier" />,
+      meta: {
+        shellClassName: "w-[17%] min-w-[10rem] whitespace-normal",
+      },
+      cell: ({ row }) => (
+        <div className="flex min-h-[2.75rem] w-full min-w-0 items-center">
+          <span
+            className={cn("line-clamp-2 min-w-0 break-words", clinicalCellPrimaryTextClass)}
+            title={getPatientCareLevelLabel(row.original.care_level)}
+          >
+            {getPatientCareLevelLabel(row.original.care_level)}
+          </span>
+        </div>
+      ),
+    },
+    ...(isDoctorPortal ? [] : [primaryDoctorCol]),
     {
       accessorKey: "active",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Status" />,
@@ -438,6 +487,9 @@ function PatientManagementInner() {
         <div className="flex min-h-[2.75rem] items-center justify-end">
           <PatientActions
             patient={row.original}
+            variant={variant}
+            viewerRole={viewerRole}
+            lockedPrimaryDoctorId={lockedPrimaryDoctorId}
             onDelete={(pat) =>
               deletePatient({
                 id: pat.id,
@@ -450,6 +502,15 @@ function PatientManagementInner() {
       ),
     },
   ];
+    return cols;
+  }, [
+    isDoctorPortal,
+    viewerRole,
+    variant,
+    lockedPrimaryDoctorId,
+    doctorById,
+    deletePatient,
+  ]);
 
   const metrics = usePatientListMetrics(patients);
 
@@ -494,7 +555,9 @@ function PatientManagementInner() {
   if (patientsError) {
     return (
       <div className="space-y-2 text-gray-700">
-        <PageHeader title="Patients" description="Manage patients." />
+        {!isDoctorPortal ? (
+          <PageHeader title="Patients" description="Manage patients." />
+        ) : null}
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 flex items-center gap-2">
           <AlertCircle className="h-4 w-4 shrink-0" />
           Failed to load patients. Please refresh.
@@ -503,43 +566,41 @@ function PatientManagementInner() {
     );
   }
 
-  return (
-    <PatientMetricsProvider
-      value={{ patients, metrics, isLoading, isFetching, listBodyLoading }}
-    >
-      <div className="space-y-2 text-gray-700">
-        <PageHeader
-          title="Patients"
-          description="Manage patients. All table schema properties are shown."
-          actions={
-            <>
-              {/* Primary list actions live in the page header row (justify-between with title) for a stable chrome on all breakpoints. */}
-              <Button
-                type="button"
-                variant="ghost"
-                size="lg"
-                disabled={listBodyLoading || patients.length === 0}
-                className={cn(violetGlassImportButtonClass, "cursor-pointer disabled:opacity-50")}
-                onClick={() => exportPatientsCSV(patients)}
-              >
-                <Download className="shrink-0" aria-hidden />
-                Export CSV
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="lg"
-                className={cn(emeraldGlassPrimaryButtonClass, "cursor-pointer")}
-                onClick={() => setDialogOpen(true)}
-              >
-                <UserPlus className="shrink-0" aria-hidden />
-                Add Patient
-              </Button>
-            </>
-          }
-        />
+  const listChrome = (
+      <div className={cn("space-y-2 text-gray-700", isDoctorPortal && "space-y-3")}>
+        {!isDoctorPortal ? (
+          <PageHeader
+            title="Patients"
+            description="Manage patients. All table schema properties are shown."
+            actions={
+              <>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="lg"
+                  disabled={listBodyLoading || patients.length === 0}
+                  className={cn(violetGlassImportButtonClass, "cursor-pointer disabled:opacity-50")}
+                  onClick={() => exportPatientsCSV(patients)}
+                >
+                  <Download className="shrink-0" aria-hidden />
+                  Export CSV
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="lg"
+                  className={cn(emeraldGlassPrimaryButtonClass, "cursor-pointer")}
+                  onClick={() => setDialogOpen(true)}
+                >
+                  <UserPlus className="shrink-0" aria-hidden />
+                  Add Patient
+                </Button>
+              </>
+            }
+          />
+        ) : null}
 
-        <PatientManagementStatsRow />
+        {!isDoctorPortal ? <PatientManagementStatsRow /> : null}
 
         {/* Sticky toolbar: filters + search only (export/add moved to PageHeader). */}
         <div className="sticky top-0 z-10 flex min-h-[52px] flex-wrap items-center gap-2 bg-transparent backdrop-blur-sm">
@@ -591,26 +652,28 @@ function PatientManagementInner() {
               ))}
             </SelectContent>
           </Select>
-          <Select
-            value={primaryDoctorId}
-            onValueChange={(v) => setPrimaryDoctorId(v as PatientPrimaryDoctorFilter)}
-          >
-            <SelectTrigger
-              className="h-10 w-auto min-w-[200px] max-w-[min(42vw,280px)] shrink-0 rounded-2xl border-gray-200 bg-white text-gray-700 shadow-sm gap-2"
-              aria-label="Filter by primary doctor"
+          {!lockPrimaryDoctor ? (
+            <Select
+              value={primaryDoctorId}
+              onValueChange={(v) => setPrimaryDoctorId(v as PatientPrimaryDoctorFilter)}
             >
-              <Stethoscope className="h-3.5 w-3.5 shrink-0 text-gray-400" aria-hidden />
-              <SelectValue>{primaryDoctorTriggerLabel}</SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Doctors</SelectItem>
-              {doctors.map((d) => (
-                <SelectItem key={d.id} value={d.id}>
-                  {d.display_name?.trim() || d.email}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+              <SelectTrigger
+                className="h-10 w-auto min-w-[200px] max-w-[min(42vw,280px)] shrink-0 rounded-2xl border-gray-200 bg-white text-gray-700 shadow-sm gap-2"
+                aria-label="Filter by primary doctor"
+              >
+                <Stethoscope className="h-3.5 w-3.5 shrink-0 text-gray-400" aria-hidden />
+                <SelectValue>{primaryDoctorTriggerLabel}</SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Doctors</SelectItem>
+                {doctors.map((d) => (
+                  <SelectItem key={d.id} value={d.id}>
+                    {d.display_name?.trim() || d.email}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : null}
           {hasPatientToolbarFilters ? (
             <GlassResetFilterButton
               onClick={resetPatientToolbar}
@@ -633,12 +696,16 @@ function PatientManagementInner() {
           }}
           externalGlobalFilter={{ value: listSearch, onChange: setListSearch }}
           searchPlaceholder="Search by name or email…"
-          emptyMessage="No patients yet. Add one to get started."
+          emptyMessage={
+            isDoctorPortal
+              ? "No patients assigned to you yet."
+              : "No patients yet. Add one to get started."
+          }
           tableClassName="min-w-[980px] w-full"
           tableFrameClassName={skyGlassTableFrameClass}
         />
 
-        {/* Shell matches Quick Actions / Global Search: custom close, tinted border + shadow, scroll body, tinted footer. */}
+        {!isDoctorPortal ? (
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogContent
             showCloseButton={false}
@@ -874,15 +941,27 @@ function PatientManagementInner() {
             </div>
           </DialogContent>
         </Dialog>
+        ) : null}
       </div>
+  );
+
+  if (isDoctorPortal) {
+    return listChrome;
+  }
+
+  return (
+    <PatientMetricsProvider
+      value={{ patients, metrics, isLoading, isFetching, listBodyLoading }}
+    >
+      {listChrome}
     </PatientMetricsProvider>
   );
 }
 
-export default function PatientManagement() {
+export default function PatientManagement(props?: PatientManagementInnerProps) {
   return (
     <PatientListFiltersProvider>
-      <PatientManagementInner />
+      <PatientManagementInner {...props} />
     </PatientListFiltersProvider>
   );
 }
