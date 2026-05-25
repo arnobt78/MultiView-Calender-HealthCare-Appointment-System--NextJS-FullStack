@@ -7,7 +7,7 @@ import { doctorSettingsActionButtonClass } from "@/components/shared/doctor-sett
 import { toTitleCaseLabel } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
-type Tone = "weekly" | "timeOff";
+type Tone = "weekly" | "timeOff" | "emerald";
 
 type Props = {
   tone: Tone;
@@ -16,7 +16,8 @@ type Props = {
   saveLabel: string;
   pending?: boolean;
   saveIcon?: LucideIcon;
-  disabled?: boolean;
+  /** Disables Save only — Cancel remains clickable unless `pending`. */
+  saveDisabled?: boolean;
 };
 
 /** Save + Cancel aligned right — same height/font as glass summary chips. */
@@ -27,13 +28,18 @@ export function DoctorSettingsFormActions({
   saveLabel,
   pending = false,
   saveIcon: SaveIcon = Plus,
-  disabled = false,
+  saveDisabled = false,
 }: Props) {
-  const glow = doctorSettingsActionButtonClass[tone];
+  const glow =
+    tone === "emerald"
+      ? doctorSettingsActionButtonClass.emerald
+      : doctorSettingsActionButtonClass[tone];
   const outline =
     tone === "weekly"
       ? "h-9 gap-1 rounded-full border-sky-200/80 bg-white/90 px-3 text-sm font-semibold text-sky-900 shadow-sm hover:bg-sky-50 has-[>svg]:px-3"
-      : "h-9 gap-1 rounded-full border-amber-200/80 bg-white/90 px-3 text-sm font-semibold text-amber-950 shadow-sm hover:bg-amber-50 has-[>svg]:px-3";
+      : tone === "emerald"
+        ? "h-9 gap-1 rounded-full border-emerald-200/80 bg-white/90 px-3 text-sm font-semibold text-emerald-950 shadow-sm hover:bg-emerald-50 has-[>svg]:px-3"
+        : "h-9 gap-1 rounded-full border-amber-200/80 bg-white/90 px-3 text-sm font-semibold text-amber-950 shadow-sm hover:bg-amber-50 has-[>svg]:px-3";
 
   return (
     <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
@@ -42,7 +48,7 @@ export function DoctorSettingsFormActions({
         size="sm"
         variant="outline"
         className={outline}
-        disabled={pending || disabled}
+        disabled={pending}
         onClick={onCancel}
       >
         <X className="h-3.5 w-3.5" />
@@ -51,7 +57,7 @@ export function DoctorSettingsFormActions({
       <Button
         type="button"
         size="sm"
-        disabled={pending || disabled}
+        disabled={pending || saveDisabled}
         onClick={onSave}
         className={cn(glow, "gap-1 has-[>svg]:px-3")}
       >

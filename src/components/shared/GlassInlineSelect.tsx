@@ -5,7 +5,7 @@
  * Escapes `overflow-hidden` portal cards; `z-index` stays below navbar (`Z_NAVBAR`).
  */
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { CheckIcon, ChevronDownIcon } from "lucide-react";
 import { useDismissOnPointerDownOutside } from "@/hooks/useDismissOnPointerDownOutside";
@@ -49,13 +49,13 @@ export function GlassInlineSelect({
   const anchorRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
   const selected = options.find((o) => o.value === value);
   const panelStyle = useFloatingPanelStyle(anchorRef, open && !disabled);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useDismissOnPointerDownOutside(
     anchorRef,

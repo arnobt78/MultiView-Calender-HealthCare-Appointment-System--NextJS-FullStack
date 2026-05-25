@@ -19,6 +19,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { fetchAppointmentTypesForDoctorManager } from "@/lib/appointment-types-for-doctor-query";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { isValidUUID } from "@/lib/validation";
@@ -50,50 +51,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "doctorId must be a valid UUID" }, { status: 400 });
     }
 
-    // Fetch doctor-specific types + global types in one query
-    const types = await prisma.appointmentType.findMany({
-      where: {
-        OR: [{ user_id: doctorId }, { user_id: null }],
-        is_active: true,
-      },
-      include: {
-        // Load only this doctor's config rows for the is_enabled join
-        doctor_configs: {
-          where: { doctor_id: doctorId },
-          select: { is_enabled: true },
-        },
-      },
-      orderBy: [
-        // Doctor-owned types first, then globals
-        { user_id: "desc" },
-        { name: "asc" },
-      ],
-    });
-
-    // Merge is_enabled: doctor-specific types are always enabled;
-    // global types default to enabled unless a config row says otherwise
-    const serialized = types.map((t) => ({
-      id: t.id,
-      created_at: t.created_at.toISOString(),
-      user_id: t.user_id,
-      name: t.name,
-      description: t.description,
-      duration_minutes: t.duration_minutes,
-      buffer_before_minutes: t.buffer_before_minutes,
-      buffer_after_minutes: t.buffer_after_minutes,
-      slot_interval_minutes: t.slot_interval_minutes,
-      minimum_notice_minutes: t.minimum_notice_minutes,
-      is_telehealth: t.is_telehealth,
-      color: t.color,
-      icon: t.icon,
-      is_active: t.is_active,
-      // Doctor-owned types are always enabled; for global types check config row (absent = enabled)
-      is_enabled: t.user_id === doctorId
-        ? true
-        : (t.doctor_configs[0]?.is_enabled ?? true),
-    }));
-
-    return NextResponse.json({ types: serialized });
+    const types = await fetchAppointmentTypesForDoctorManager(doctorId);
+    return NextResponse.json({ types });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Internal server error";
     return NextResponse.json({ error: message }, { status: 500 });

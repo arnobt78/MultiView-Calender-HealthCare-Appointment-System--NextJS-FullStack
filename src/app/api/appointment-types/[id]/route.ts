@@ -21,6 +21,8 @@ type PatchBody = {
   buffer_after_minutes?: unknown;
   slot_interval_minutes?: unknown;
   minimum_notice_minutes?: unknown;
+  /** Doctor-owned rows only — soft-hide from booking without DELETE. */
+  is_active?: unknown;
 };
 
 function numOrUndef(v: unknown, min: number, max: number): number | undefined {
@@ -82,6 +84,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
       buffer_after_minutes?: number;
       slot_interval_minutes?: number;
       minimum_notice_minutes?: number;
+      is_active?: boolean;
     } = {};
     if (name !== undefined) {
       const trimmed = name.trim();
@@ -102,6 +105,19 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     if (buffer_after_minutes !== undefined) data.buffer_after_minutes = buffer_after_minutes;
     if (slot_interval_minutes !== undefined) data.slot_interval_minutes = slot_interval_minutes;
     if (minimum_notice_minutes !== undefined) data.minimum_notice_minutes = minimum_notice_minutes;
+
+    if (body.is_active !== undefined) {
+      if (typeof body.is_active !== "boolean") {
+        return NextResponse.json({ error: "is_active must be a boolean" }, { status: 400 });
+      }
+      if (existing.user_id == null) {
+        return NextResponse.json(
+          { error: "Use admin global tools to deactivate organization templates" },
+          { status: 400 }
+        );
+      }
+      data.is_active = body.is_active;
+    }
 
     if (Object.keys(data).length === 0) {
       return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });

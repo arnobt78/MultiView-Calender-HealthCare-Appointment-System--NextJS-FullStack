@@ -5,13 +5,13 @@
  * Portal: collapsible rows + add form; datetime range matches appointment manual override.
  */
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { CalendarRange, CalendarX2, MessageSquare, Pencil, Plus, Trash2 } from "lucide-react";
+import { CalendarRange, CalendarX2, Check, MessageSquare, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DoctorSettingsGlassInput } from "@/components/shared/doctor-settings/DoctorSettingsGlassInput";
-import { Label } from "@/components/ui/label";
+import { DoctorSettingsFieldLabel } from "@/components/shared/doctor-settings/DoctorSettingsFieldLabel";
 import { Skeleton } from "@/components/ui/skeleton";
 import { GlassCollapsibleDetails } from "@/components/shared/GlassCollapsibleDetails";
 import { GlassDoctorSettingsActionChip } from "@/components/shared/doctor-settings/GlassDoctorSettingsActionChip";
@@ -41,6 +41,7 @@ import {
 } from "@/lib/datetime-local-value";
 import { useCanEditDoctorSettings } from "@/components/shared/doctor-settings/useCanEditDoctorSettings";
 import { doctorSettingsAddFormClass, doctorSettingsRowClass } from "@/components/shared/doctor-settings/doctor-settings-classes";
+import { isValidTimeOffDatetimeRange } from "@/lib/doctor-settings-form-validity";
 import { cn, toTitleCaseLabel } from "@/lib/utils";
 
 type Props = {
@@ -194,6 +195,16 @@ export function DoctorTimeOffEditor({
     patchTimeOffMutation.isPending ||
     deleteTimeOffMutation.isPending;
 
+  const addTimeOffValid = useMemo(
+    () => isValidTimeOffDatetimeRange(newTimeOffStart, newTimeOffEnd),
+    [newTimeOffStart, newTimeOffEnd]
+  );
+
+  const editTimeOffValid = useMemo(
+    () => isValidTimeOffDatetimeRange(editStart, editEnd),
+    [editStart, editEnd]
+  );
+
   function renderBlockBody(b: TimeOffBlock, inCollapsible: boolean) {
     if (editingId === b.id) {
       return (
@@ -211,10 +222,9 @@ export function DoctorTimeOffEditor({
             endId={`time-off-edit-end-${b.id}`}
           />
           <div className="space-y-1">
-            <Label className="flex items-center gap-1.5 text-xs text-gray-700">
-              <MessageSquare className="h-3.5 w-3.5 shrink-0 text-amber-600" aria-hidden />
-              {toTitleCaseLabel("Reason (optional)")}
-            </Label>
+            <DoctorSettingsFieldLabel icon={MessageSquare} iconClassName="text-amber-600">
+              Reason (optional)
+            </DoctorSettingsFieldLabel>
             <DoctorSettingsGlassInput
               tone="amber"
               density="row"
@@ -227,6 +237,8 @@ export function DoctorTimeOffEditor({
             tone="timeOff"
             pending={busy}
             saveLabel="Save"
+            saveIcon={Check}
+            saveDisabled={!editTimeOffValid}
             onSave={() => handleSaveEdit(b.id)}
             onCancel={() => setEditingId(null)}
           />
@@ -300,10 +312,9 @@ export function DoctorTimeOffEditor({
         endId="time-off-add-end"
       />
       <div className="space-y-1">
-        <Label className="flex items-center gap-1.5 text-xs text-gray-700">
-          <MessageSquare className="h-3.5 w-3.5 shrink-0 text-amber-600" aria-hidden />
-          {toTitleCaseLabel("Reason (optional)")}
-        </Label>
+        <DoctorSettingsFieldLabel icon={MessageSquare} iconClassName="text-amber-600">
+          Reason (optional)
+        </DoctorSettingsFieldLabel>
         <DoctorSettingsGlassInput
           tone="amber"
           density="row"
@@ -316,6 +327,7 @@ export function DoctorTimeOffEditor({
         tone="timeOff"
         pending={addTimeOffMutation.isPending}
         saveLabel={TIME_OFF_SAVE_BLOCK_LABEL}
+        saveDisabled={!addTimeOffValid}
         onSave={handleAddTimeOff}
         onCancel={() => closeHtmlDetails(addDetailsRef.current)}
       />

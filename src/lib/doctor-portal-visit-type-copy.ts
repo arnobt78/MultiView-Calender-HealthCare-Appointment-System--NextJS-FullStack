@@ -1,18 +1,27 @@
 /**
- * Doctor portal visit-type panels — user-facing copy (titles live on `PortalPanelSection`).
+ * Doctor portal visit-type panels — subtitles on `PortalPanelSubsectionHeader` / stacked `PortalPanelSection`.
  */
 
 import { toTitleCaseLabel } from "@/lib/utils";
 
 export const DOCTOR_PORTAL_VISIT_TYPE_COPY = {
+  patientTypesSubtitle: toTitleCaseLabel(
+    "Choose which shared visit types patients can book with you. Turned-off types stay off your profile and booking flow."
+  ),
+  additionalTypesSubtitle: toTitleCaseLabel(
+    "Add custom visit types for your practice. They appear on your Services page with organization templates."
+  ),
+  /** @deprecated Portal uses `patientTypesSubtitle` on the section header — kept for CP blurbs. */
   patientTypesIntro: toTitleCaseLabel(
-    "Choose which organization visit templates patients can book with you. Disabled types are hidden from your public profile and booking flow."
+    "Choose which shared visit types patients can book with you. Turned-off types stay off your profile and booking flow."
   ),
+  /** @deprecated Portal uses `additionalTypesSubtitle` on the section header. */
   additionalTypesIntro: toTitleCaseLabel(
-    "Create visit types unique to your practice. They appear on the Services page next to organization-wide templates."
+    "Add custom visit types for your practice. They appear on your Services page with organization templates."
   ),
-  emptyGlobalTypes: toTitleCaseLabel("No organization visit templates are configured yet."),
-  emptyOwnedTypes: toTitleCaseLabel(
-    "No custom visit types yet — add your first type below to offer it on Services."
-  ),
+  emptyGlobalTypes: toTitleCaseLabel("No shared visit templates are set up yet."),
+  emptyOwnedTypes: toTitleCaseLabel("No custom types yet — use Add Appointment Type below."),
 } as const;
+
+export const ADDITIONAL_TYPE_ADD_SUMMARY_LABEL = toTitleCaseLabel("Add Appointment Type");
+export const ADDITIONAL_TYPE_SAVE_LABEL = toTitleCaseLabel("Save Appointment Type");

@@ -30,10 +30,7 @@ export function useFloatingPanelStyle(
   }, [anchorRef, gapPx]);
 
   useLayoutEffect(() => {
-    if (!enabled) {
-      setStyle(null);
-      return;
-    }
+    if (!enabled) return;
     update();
     window.addEventListener("resize", update);
     window.addEventListener("scroll", update, true);
@@ -43,5 +40,5 @@ export function useFloatingPanelStyle(
     };
   }, [enabled, update]);
 
-  return style;
+  return enabled ? style : null;
 }

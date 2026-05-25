@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { portalPanelSectionHeadingClass } from "@/lib/page-chrome-classes";
+import { PortalPanelSubsectionHeader } from "@/components/shared/PortalPanelSubsectionHeader";
 import { cn } from "@/lib/utils";
 
 /** Shared portal panel shell — matches patient-portal in-card sections (no `CardHeader` strip). */
@@ -23,6 +24,8 @@ type PortalPanelSectionProps = {
   countSkeleton?: boolean;
   /** Count pill beside title (My Patients / Upcoming); default trailing for schedule panels. */
   countInline?: boolean;
+  /** `stacked`: tall icon tile spans title + subtitle (`PortalPanelSubsectionHeader`). */
+  headerVariant?: "inline" | "stacked";
   children: ReactNode;
   className?: string;
   contentClassName?: string;
@@ -41,48 +44,63 @@ export function PortalPanelSection({
   count,
   countSkeleton = false,
   countInline = false,
+  headerVariant = "inline",
   children,
   className,
   contentClassName,
 }: PortalPanelSectionProps) {
   const headingId = id ?? undefined;
+  const useStackedHeader = headerVariant === "stacked" && subtitle != null && subtitle !== "";
 
   return (
     <Card className={cn(portalPanelCardClass, className)}>
       <CardContent className={cn("p-4 text-gray-700 sm:p-6", contentClassName)}>
         <section aria-labelledby={headingId}>
-          <h3 id={headingId} className={portalPanelSectionHeadingClass}>
-            <span
-              className={cn(
-                "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border",
-                iconClassName
-              )}
-            >
-              <Icon className="h-3.5 w-3.5" aria-hidden />
-            </span>
-            <span className="min-w-0">{title}</span>
-            {count !== undefined && countInline ? (
-              countSkeleton ? (
-                <Skeleton className="h-5 w-10 shrink-0 rounded-full" aria-hidden />
-              ) : (
-                <Badge variant="secondary" className="shrink-0 text-xs font-normal">
-                  {count}
-                </Badge>
-              )
-            ) : null}
-            {count !== undefined && !countInline ? (
-              countSkeleton ? (
-                <Skeleton className="ml-auto h-5 w-12 rounded-full" aria-hidden />
-              ) : (
-                <Badge variant="secondary" className="ml-auto text-xs font-normal">
-                  {count}
-                </Badge>
-              )
-            ) : null}
-          </h3>
-          {subtitle ? (
-            <p className="-mt-1 mb-3 text-xs text-muted-foreground">{subtitle}</p>
-          ) : null}
+          {useStackedHeader ? (
+            <PortalPanelSubsectionHeader
+              id={headingId}
+              title={title}
+              subtitle={subtitle}
+              icon={Icon}
+              iconClassName={iconClassName}
+              className="mb-3"
+            />
+          ) : (
+            <>
+              <h3 id={headingId} className={portalPanelSectionHeadingClass}>
+                <span
+                  className={cn(
+                    "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border",
+                    iconClassName
+                  )}
+                >
+                  <Icon className="h-3.5 w-3.5" aria-hidden />
+                </span>
+                <span className="min-w-0">{title}</span>
+                {count !== undefined && countInline ? (
+                  countSkeleton ? (
+                    <Skeleton className="h-5 w-10 shrink-0 rounded-full" aria-hidden />
+                  ) : (
+                    <Badge variant="secondary" className="shrink-0 text-xs font-normal">
+                      {count}
+                    </Badge>
+                  )
+                ) : null}
+                {count !== undefined && !countInline ? (
+                  countSkeleton ? (
+                    <Skeleton className="ml-auto h-5 w-12 rounded-full" aria-hidden />
+                  ) : (
+                    <Badge variant="secondary" className="ml-auto text-xs font-normal">
+                      {count}
+                    </Badge>
+                  )
+                ) : null}
+              </h3>
+              {subtitle ? (
+                <p className="-mt-1 mb-3 text-xs text-muted-foreground">{subtitle}</p>
+              ) : null}
+            </>
+          )}
           {children}
         </section>
       </CardContent>

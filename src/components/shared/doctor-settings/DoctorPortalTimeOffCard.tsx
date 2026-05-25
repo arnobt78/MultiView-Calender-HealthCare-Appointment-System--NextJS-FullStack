@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Doctor portal — unavailable dates (full width below weekly + visit-type row).
+ * Doctor portal — unavailable dates (pairs with Additional Appointment Types in `lg:grid-cols-2`).
  */
 
 import { CalendarOff } from "lucide-react";

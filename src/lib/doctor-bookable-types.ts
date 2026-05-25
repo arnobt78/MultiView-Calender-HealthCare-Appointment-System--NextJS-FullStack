@@ -100,6 +100,7 @@ export type AppointmentTypeDoctorApiRow = {
   slot_interval_minutes: number;
   minimum_notice_minutes?: number;
   is_enabled?: boolean;
+  is_active?: boolean;
 };
 
 /**
@@ -110,9 +111,13 @@ export function filterBookableTypesForDoctorFromApi(
   doctorId: string,
   types: AppointmentTypeDoctorApiRow[]
 ): AppointmentTypeDoctorApiRow[] {
-  return types.filter(
-    (t) => t.user_id === doctorId || (t.user_id === null && (t.is_enabled ?? true))
-  );
+  return types.filter((t) => {
+    if (t.user_id === doctorId) {
+      return (t.is_active ?? true) && (t.is_enabled ?? true);
+    }
+    if (t.user_id === null) return t.is_enabled ?? true;
+    return false;
+  });
 }
 
 /** Maps directory `bookable_appointment_types` into patient wizard shape (instant seed from `doctors.all`). */

@@ -32,6 +32,13 @@ export type AppointmentTypeApiRow = {
   buffer_after_minutes: number;
   slot_interval_minutes: number;
   minimum_notice_minutes: number;
+  /** Owned rows: DB `is_active`. Globals: always true when returned. */
+  is_active?: boolean;
+  /** Owned: mirrors `is_active`; globals: `DoctorAppointmentTypeConfig`. */
+  is_enabled?: boolean;
+  is_telehealth?: boolean;
+  color?: string | null;
+  icon?: string | null;
 };
 
 async function afterTypeMutation(
@@ -86,7 +93,11 @@ export function useAppointmentTypeMutations(
   });
 
   const updateType = useMutation({
-    mutationFn: (vars: { id: string } & Partial<Pick<AppointmentTypeApiRow, "name" | "description" | "duration_minutes">>) => {
+    mutationFn: (
+      vars: { id: string } & Partial<
+        Pick<AppointmentTypeApiRow, "name" | "description" | "duration_minutes" | "is_active">
+      >
+    ) => {
       const { id, ...patch } = vars;
       return apiClient<{ type: AppointmentTypeApiRow }>(`/api/appointment-types/${id}`, {
         method: "PATCH",

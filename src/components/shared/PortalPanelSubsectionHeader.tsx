@@ -37,9 +37,9 @@ export function PortalPanelSubsectionHeader({
         <Icon className="h-4 w-4" />
       </span>
       <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5">
-        <h4 id={id} className="text-sm font-semibold text-gray-800">
+        <h3 id={id} className="text-sm font-semibold text-gray-800">
           {toTitleCaseLabel(title)}
-        </h4>
+        </h3>
         {subtitle ? (
           <p className="text-xs leading-snug text-muted-foreground">
             {typeof subtitle === "string" ? toTitleCaseLabel(subtitle) : subtitle}

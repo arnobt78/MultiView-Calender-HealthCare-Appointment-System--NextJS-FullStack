@@ -5,13 +5,13 @@
  * Portal `layout="collapsible"`: native `<details>` per day + add-window (matches appointment dialog).
  */
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { CalendarDays, Clock, Pencil, Plus, Trash2 } from "lucide-react";
+import { CalendarDays, Check, Clock, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DoctorSettingsGlassInput } from "@/components/shared/doctor-settings/DoctorSettingsGlassInput";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { DoctorSettingsFieldLabel } from "@/components/shared/doctor-settings/DoctorSettingsFieldLabel";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FilterSelect } from "@/components/shared/filters/FilterSelect";
 import { GlassCollapsibleDetails } from "@/components/shared/GlassCollapsibleDetails";
@@ -49,6 +49,7 @@ import { DoctorAvailabilityGroups } from "@/components/shared/doctor-display/Doc
 import { useCanEditDoctorSettings } from "@/components/shared/doctor-settings/useCanEditDoctorSettings";
 import { doctorSettingsAddFormClass, doctorSettingsRowClass } from "@/components/shared/doctor-settings/doctor-settings-classes";
 import { doctorSettingsGlassSelectTriggerClass } from "@/lib/doctor-settings-glass-fields";
+import { isValidWeeklyAvailabilityWindow } from "@/lib/doctor-settings-form-validity";
 import { cn, toTitleCaseLabel } from "@/lib/utils";
 
 type Props = {
@@ -217,6 +218,16 @@ export function DoctorWeeklyScheduleEditor({
     patchWindowMutation.isPending ||
     deleteWindowMutation.isPending;
 
+  const addWindowValid = useMemo(
+    () => isValidWeeklyAvailabilityWindow(newStartTime, newEndTime, newTz),
+    [newStartTime, newEndTime, newTz]
+  );
+
+  const editWindowValid = useMemo(
+    () => isValidWeeklyAvailabilityWindow(editStartTime, editEndTime, editTz),
+    [editStartTime, editEndTime, editTz]
+  );
+
   function renderWindowRow(w: AvailabilityWindow, inCollapsible: boolean) {
     if (editingId === w.id) {
       return (
@@ -227,7 +238,7 @@ export function DoctorWeeklyScheduleEditor({
         >
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <div className="space-y-1 col-span-2 sm:col-span-1">
-              <Label className="text-xs">{toTitleCaseLabel("Day")}</Label>
+              <DoctorSettingsFieldLabel required>Day</DoctorSettingsFieldLabel>
               <FilterSelect
                 value={editWeekday}
                 onValueChange={setEditWeekday}
@@ -241,7 +252,7 @@ export function DoctorWeeklyScheduleEditor({
               />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">{toTitleCaseLabel("Start")}</Label>
+              <DoctorSettingsFieldLabel required>Start</DoctorSettingsFieldLabel>
               <Input
                 type="time"
                 value={editStartTime}
@@ -250,7 +261,7 @@ export function DoctorWeeklyScheduleEditor({
               />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">{toTitleCaseLabel("End")}</Label>
+              <DoctorSettingsFieldLabel required>End</DoctorSettingsFieldLabel>
               <Input
                 type="time"
                 value={editEndTime}
@@ -259,7 +270,7 @@ export function DoctorWeeklyScheduleEditor({
               />
             </div>
             <div className="space-y-1 col-span-2 sm:col-span-1">
-              <Label className="text-xs">{toTitleCaseLabel("Timezone")}</Label>
+              <DoctorSettingsFieldLabel required>Timezone</DoctorSettingsFieldLabel>
               <DoctorSettingsGlassInput
                 tone="sky"
                 density="compact"
@@ -272,6 +283,8 @@ export function DoctorWeeklyScheduleEditor({
             tone="weekly"
             pending={busy}
             saveLabel="Save"
+            saveIcon={Check}
+            saveDisabled={!editWindowValid}
             onSave={() => handleSaveEdit(w.id)}
             onCancel={() => setEditingId(null)}
           />
@@ -335,7 +348,7 @@ export function DoctorWeeklyScheduleEditor({
     <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <div className="space-y-1 col-span-2 sm:col-span-1">
-          <Label className="text-xs">{toTitleCaseLabel("Day")}</Label>
+          <DoctorSettingsFieldLabel required>Day</DoctorSettingsFieldLabel>
             <FilterSelect
               value={newWeekday}
               onValueChange={setNewWeekday}
@@ -349,7 +362,7 @@ export function DoctorWeeklyScheduleEditor({
             />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">{toTitleCaseLabel("Start")}</Label>
+              <DoctorSettingsFieldLabel required>Start</DoctorSettingsFieldLabel>
               <Input
                 type="time"
                 value={newStartTime}
@@ -358,7 +371,7 @@ export function DoctorWeeklyScheduleEditor({
           />
         </div>
         <div className="space-y-1">
-          <Label className="text-xs">{toTitleCaseLabel("End")}</Label>
+          <DoctorSettingsFieldLabel required>End</DoctorSettingsFieldLabel>
           <Input
             type="time"
             value={newEndTime}
@@ -367,7 +380,7 @@ export function DoctorWeeklyScheduleEditor({
           />
         </div>
         <div className="space-y-1 col-span-2 sm:col-span-1">
-          <Label className="text-xs">{toTitleCaseLabel("Timezone (IANA)")}</Label>
+          <DoctorSettingsFieldLabel required>Timezone (IANA)</DoctorSettingsFieldLabel>
           <DoctorSettingsGlassInput
             tone="sky"
             density="compact"
@@ -381,6 +394,7 @@ export function DoctorWeeklyScheduleEditor({
         tone="weekly"
         pending={addWindowMutation.isPending}
         saveLabel={WEEKLY_SAVE_WINDOW_LABEL}
+        saveDisabled={!addWindowValid}
         onSave={handleAddWindow}
         onCancel={() => closeHtmlDetails(addDetailsRef.current)}
       />

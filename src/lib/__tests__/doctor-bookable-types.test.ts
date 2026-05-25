@@ -84,6 +84,44 @@ describe("mergeBookableTypesForDoctor", () => {
     expect(filtered.map((t) => t.id)).toEqual(["o1", "g1"]);
   });
 
+  it("filterBookableTypesForDoctorFromApi drops inactive owned types", () => {
+    const filtered = filterBookableTypesForDoctorFromApi("doc-a", [
+      {
+        id: "o1",
+        user_id: "doc-a",
+        name: "Physio",
+        duration_minutes: 30,
+        buffer_before_minutes: 5,
+        buffer_after_minutes: 5,
+        slot_interval_minutes: 30,
+        is_enabled: true,
+        is_active: true,
+      },
+      {
+        id: "o2",
+        user_id: "doc-a",
+        name: "Hidden",
+        duration_minutes: 30,
+        buffer_before_minutes: 5,
+        buffer_after_minutes: 5,
+        slot_interval_minutes: 30,
+        is_enabled: false,
+        is_active: false,
+      },
+      {
+        id: "g1",
+        user_id: null,
+        name: "Follow-up",
+        duration_minutes: 30,
+        buffer_before_minutes: 5,
+        buffer_after_minutes: 5,
+        slot_interval_minutes: 30,
+        is_enabled: true,
+      },
+    ]);
+    expect(filtered.map((t) => t.id)).toEqual(["o1", "g1"]);
+  });
+
   it("enables global when no config row exists", () => {
     const merged = mergeBookableTypesForDoctor("doc-b", [], [
       {

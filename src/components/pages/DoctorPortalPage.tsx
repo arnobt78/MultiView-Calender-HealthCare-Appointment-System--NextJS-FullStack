@@ -4,8 +4,8 @@
  * DoctorPortalPage — client-side portal for authenticated doctors.
  *
  * Layout (responsive `lg:grid-cols-2` pairs, stack on mobile):
- * chrome → stats → [Today | Upcoming] → [Booking schedule (weekly + time off) | Visit types row] →
- * [Global visit types | Additional types] → My Patients (full width).
+ * chrome → stats → [Today | Upcoming] → [Weekly hours | Patient visit types] →
+ * [Unavailable dates | Additional types] (`lg:2-col`) → My Patients (full width).
  *
  * Settings reuse CP APIs via `src/components/shared/doctor-settings/*` with `variant="portal"`.
  * Cache: SSR seeds `doctorPortal.all`, `patients.all`, and schedule/type query keys via `initialScheduleSettings`.
@@ -31,17 +31,18 @@ import { DoctorPortalAppointmentListRow } from "@/components/shared/appointments
 import {
   DoctorPortalWeeklyHoursCard,
   DoctorPortalTimeOffCard,
+  DoctorPortalAdditionalTypesCard,
   DoctorGlobalVisitTypesEditor,
-  DoctorAdditionalTypesEditor,
 } from "@/components/shared/doctor-settings";
 import { doctorSettingsGlassPanelShadowClass } from "@/lib/doctor-settings-glass-surfaces";
+import { GLOBAL_APPOINTMENT_TYPES_TITLE } from "@/lib/doctor-portal-schedule-copy";
+import { DOCTOR_PORTAL_VISIT_TYPE_COPY } from "@/lib/doctor-portal-visit-type-copy";
 import {
   Calendar,
   CalendarCheck,
   CalendarClock,
   CheckCircle2,
   Layers,
-  Stethoscope,
   Users,
 } from "lucide-react";
 
@@ -112,12 +113,12 @@ export default function DoctorPortalPage({
         doctor={
           data?.doctor
             ? {
-                id: data.doctor.id,
-                email: data.doctor.email,
-                display_name: data.doctor.display_name,
-                image: data.doctor.image,
-                specialty: data.doctor.specialty,
-              }
+              id: data.doctor.id,
+              email: data.doctor.email,
+              display_name: data.doctor.display_name,
+              image: data.doctor.image,
+              specialty: data.doctor.specialty,
+            }
             : undefined
         }
         profileLoading={profileLoading}
@@ -206,7 +207,9 @@ export default function DoctorPortalPage({
 
         <PortalPanelSection
           id="dp-global-visit-types"
-          title="Patient Visit Types"
+          title={GLOBAL_APPOINTMENT_TYPES_TITLE}
+          subtitle={DOCTOR_PORTAL_VISIT_TYPE_COPY.patientTypesSubtitle}
+          headerVariant="stacked"
           icon={Layers}
           iconClassName="border-violet-100 bg-violet-50 [&_svg]:text-violet-600"
           className={doctorSettingsGlassPanelShadowClass("violet")}
@@ -227,29 +230,18 @@ export default function DoctorPortalPage({
         </PortalPanelSection>
       </div>
 
-      <DoctorPortalTimeOffCard
-        doctorId={doctorId}
-        portalLoading={portalLoading}
-        initialTimeOff={initialScheduleSettings?.timeOff}
-      />
-
-      <PortalPanelSection
-        id="dp-additional-types"
-        title="Additional Appointment Types"
-        icon={Stethoscope}
-        iconClassName="border-emerald-100 bg-emerald-50 [&_svg]:text-emerald-600"
-        className={doctorSettingsGlassPanelShadowClass("emerald")}
-      >
-        {doctorId ? (
-          <DoctorAdditionalTypesEditor
-            doctorId={doctorId}
-            variant="portal"
-            initialAppointmentTypes={initialScheduleSettings?.appointmentTypes}
-          />
-        ) : (
-          <Skeleton className="h-32 w-full rounded-xl" />
-        )}
-      </PortalPanelSection>
+      <div className={portalPanelPairGridClass}>
+        <DoctorPortalTimeOffCard
+          doctorId={doctorId}
+          portalLoading={portalLoading}
+          initialTimeOff={initialScheduleSettings?.timeOff}
+        />
+        <DoctorPortalAdditionalTypesCard
+          doctorId={doctorId}
+          portalLoading={portalLoading}
+          initialAppointmentTypes={initialScheduleSettings?.appointmentTypes}
+        />
+      </div>
 
       {doctorId ? (
         <PortalPanelSection

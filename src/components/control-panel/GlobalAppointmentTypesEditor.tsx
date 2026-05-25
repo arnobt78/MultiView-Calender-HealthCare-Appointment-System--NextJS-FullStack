@@ -192,7 +192,7 @@ export function GlobalAppointmentTypesEditor() {
             <div className="grid flex-1 gap-2 sm:grid-cols-2">
               <div className="space-y-1">
                 <Label htmlFor="global-appt-type-name" className="text-xs">
-                  Name
+                  Title/Description
                 </Label>
                 <Input
                   id="global-appt-type-name"

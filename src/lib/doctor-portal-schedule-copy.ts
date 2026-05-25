@@ -16,3 +16,10 @@ export const TIME_OFF_ADD_BLOCK_SUMMARY_LABEL = toTitleCaseLabel("Block Time Awa
 
 export const WEEKLY_SAVE_WINDOW_LABEL = toTitleCaseLabel("Save Time Window");
 export const TIME_OFF_SAVE_BLOCK_LABEL = toTitleCaseLabel("Save Time Away");
+
+export const ADDITIONAL_APPOINTMENT_TYPES_TITLE = toTitleCaseLabel(
+  "Additional Appointment Types (Doctor-Owned)"
+);
+export const GLOBAL_APPOINTMENT_TYPES_TITLE = toTitleCaseLabel(
+  "Appointment Types (Global For All Doctors)"
+);

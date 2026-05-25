@@ -49,6 +49,13 @@ function titleCaseLabelToken(token: string): string {
   if (paren) {
     return `${paren[1]}${titleCaseSlashAware(paren[2])}${paren[3]}`;
   }
+  // Whitespace split breaks `(Global For All Doctors)` into `(Global`, `For`, … — fix open/close halves.
+  if (token.startsWith("(")) {
+    return `(${titleCaseSlashAware(token.slice(1))}`;
+  }
+  if (token.endsWith(")")) {
+    return `${titleCaseSlashAware(token.slice(0, -1))})`;
+  }
   return titleCaseSlashAware(token);
 }
 

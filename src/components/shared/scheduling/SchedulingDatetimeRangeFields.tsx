@@ -2,12 +2,12 @@
 
 import { CalendarClock } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { DoctorSettingsFieldLabel } from "@/components/shared/doctor-settings/DoctorSettingsFieldLabel";
 import {
   glassDatetimeLocalInputClass,
   glassDatetimeLocalInputClassAmber,
 } from "@/lib/scheduling-glass-input-classes";
-import { cn, toTitleCaseLabel } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 type Tone = "sky" | "amber";
 
@@ -23,8 +23,8 @@ type Props = {
 };
 
 /**
- * Start/End datetime-local pair — end disabled until start set; end min follows start.
- * Shared by appointment manual override and doctor time-off forms.
+ * Start/End datetime-local pair — labels use `mb-1` + `text-xs` (doctor portal schedule cards).
+ * End disabled until start set; end min follows start.
  */
 export function SchedulingDatetimeRangeFields({
   tone = "sky",
@@ -38,14 +38,19 @@ export function SchedulingDatetimeRangeFields({
 }: Props) {
   const inputClass =
     tone === "amber" ? glassDatetimeLocalInputClassAmber : glassDatetimeLocalInputClass;
+  const iconClass = tone === "amber" ? "text-amber-600" : "text-sky-600";
 
   return (
     <div className={cn("grid grid-cols-1 gap-4 sm:grid-cols-2", className)}>
-      <div className="space-y-2">
-        <Label htmlFor={startId} className="flex items-center gap-1.5 text-gray-700">
-          <CalendarClock className={cn("h-3.5 w-3.5", tone === "amber" ? "text-amber-600" : "text-sky-600")} />
-          {toTitleCaseLabel("Start")} *
-        </Label>
+      <div className="space-y-1">
+        <DoctorSettingsFieldLabel
+          htmlFor={startId}
+          icon={CalendarClock}
+          iconClassName={iconClass}
+          required
+        >
+          Start
+        </DoctorSettingsFieldLabel>
         <Input
           type="datetime-local"
           id={startId}
@@ -58,11 +63,15 @@ export function SchedulingDatetimeRangeFields({
           className={inputClass}
         />
       </div>
-      <div className="space-y-2">
-        <Label htmlFor={endId} className="flex items-center gap-1.5 text-gray-700">
-          <CalendarClock className={cn("h-3.5 w-3.5", tone === "amber" ? "text-amber-600" : "text-sky-600")} />
-          {toTitleCaseLabel("End")} *
-        </Label>
+      <div className="space-y-1">
+        <DoctorSettingsFieldLabel
+          htmlFor={endId}
+          icon={CalendarClock}
+          iconClassName={iconClass}
+          required
+        >
+          End
+        </DoctorSettingsFieldLabel>
         <Input
           type="datetime-local"
           id={endId}

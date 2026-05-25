@@ -58,7 +58,8 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Prism
 - **Accept invitation:** `AcceptInvitationPage` — `POST /api/invitations/accept` → `invalidateSharingAndAppointments`; success **Continue** → `resolveRoleHomeHref(role)`.
 - **Patient tables:** `PatientIdentityCell` shows `PatientAgeGlassBadge` beside name (CP + doctor-portal roster).
 - **Stats:** `DoctorPortalStatsRow` — four `PatientStatCard` metrics (Today / This Week / This Month / Pending); responsive `grid-cols-2 sm:grid-cols-4`; only numeric slots pulse (`portalLoading`).
-- **Panels:** [Today | Upcoming] (`lg:2-col`) · [Weekly Hours \| Patient Visit Types] (`lg:2-col`, stack mobile — violet glass list + native checkboxes) · Unavailable dates (full width, amber) · Additional types (full width, emerald glass) · My Patients. Shared: `DoctorSettingsGlassListRow`, `doctor-settings-glass-surfaces.ts`, `doctor-portal-visit-type-copy.ts`, `DoctorSettingsGlassInput`.
+- **Panels:** [Today | Upcoming] (`lg:2-col`) · [Weekly Hours \| Patient Visit Types] (`lg:2-col`) · [Unavailable Dates \| Additional Appointment Types] (`lg:2-col`) · My Patients. Visit-type subtitles on stacked headers (`PortalPanelSection` `headerVariant="stacked"` / `PortalPanelSubsectionHeader`); collapsible **Add Appointment Type** chip (emerald, same pattern as Block Time Away). Shared: `DoctorSettingsGlassListRow`, `doctor-settings-glass-surfaces.ts`, `doctor-portal-visit-type-copy.ts`, `DoctorSettingsGlassInput`, `FilterSelect`.
+- **Filter UI:** `FilterSelect` (`calendar/Filters.tsx`, `PatientManagement` toolbar, weekly Day field). Navbar `fixed` + `portal-z-index.ts` so body-portalled menus do not cover chrome.
 - **SSR + cache:** `prefetchDoctorPortalSettings` on `/doctor-portal` page (parallel with `prefetchDoctorPortal`) — seeds availability, timeOff, appointment types before paint; `seedDoctorPortalSettingsCache` in `useLayoutEffect`; editors use `initialData` on `useQuery` (no list skeleton on refresh). Client fallback: `prefetchDoctorScheduleSettings`. **Add chips:** `portalSelfService` on portal editors — glass add actions stay visible on refresh (not gated on `useAuth` hydration).
 - **Visit types:** `POST /api/appointment-types/doctor-config` → `invalidateAppointmentTypeDerived` (+ `doctorPortal.all`); CP admin toggle also `invalidateAdminPortal`; portal skips `router.refresh()`.
 - **Admin → doctor:** `notifyDoctorSettingsChangedByAdmin` (`src/lib/doctor-settings-notify.ts`) on availability/time-off/type APIs when admin mutates another doctor (in-app notification + email).
@@ -263,7 +264,7 @@ Shared primitives keep layout fixed while data loads:
 
 **SSR + client:** root `layout.tsx` passes `initialNavRole` into `AuthShell`. Portal pages pass `initialData` on `useQuery`. Profile: `profileLoading = isLoading && !patient`. Navbar role links render when `role` is known (server + client match).
 
-**Audit (agent glance):** Navbar role uses SSR `initialNavRole` via `NavRoleContext`. **Role landing:** `resolveRoleHomeHref` — login, `/home`, landing demo, OAuth, accept-invitation CTA; proxy `/login` → `/home`. **Doctor portal:** layout [Weekly Hours \| Patient Visit Types] `lg:2-col`; violet/emerald `DoctorSettingsGlassListRow`; SSR `prefetchDoctorPortalSettings`; `portalSelfService` stable add chips; `invalidateDoctorSchedule` + `invalidateAppointmentTypeDerived`. **226 tests**, `tsc` + `lint` pass; `build` after stopping dev + `rm -rf .next`. **Optional:** time-off PATCH Vitest; navbar prefetch `/doctor-portal`.
+**Audit (agent glance):** Navbar `fixed` + `Z_NAVBAR`; `FilterSelect` shared with dashboard filters. **Doctor portal:** [Weekly \| Visit types] + [Unavailable \| Additional] `lg:2-col`; stacked panel headers + friendly copy in `doctor-portal-visit-type-copy.ts`; additional types collapsible add. SSR `prefetchDoctorPortalSettings`; `portalSelfService` add chips; `invalidateDoctorSchedule` + `invalidateAppointmentTypeDerived`. **226 tests**, `tsc` + `lint` pass; `build` after stopping dev + `rm -rf .next`. **Optional:** time-off PATCH Vitest; `GlassInlineSelect` unused fallback; navbar prefetch `/doctor-portal`.
 
 ### Dashboard calendar shared UI (unified `AppointmentCard`)
 
@@ -954,7 +955,7 @@ Thin server layout wrapper for the `/dashboard` route. Provides the outer struct
 
 ## Known Architecture Notes
 
-- **Doctor portal**: `/doctor-portal` — [Weekly Hours \| Patient Visit Types] `lg:2-col`; unavailable + additional full width; violet/emerald glass visit types; SSR `prefetchDoctorPortalSettings`. `resolveRoleHomeHref` login landing.
+- **Doctor portal**: `/doctor-portal` — [Weekly \| Visit types] + [Unavailable \| Additional] `lg:2-col`; `FilterSelect` + fixed navbar; SSR `prefetchDoctorPortalSettings`. `resolveRoleHomeHref` login landing.
 - **`/api/auth/demo`**: Endpoint still present but no longer used by the landing page. Can be removed or kept for backwards compatibility.
 - **Vercel Deployment Protection**: The project is on the Hobby plan. "Require Log In" Vercel Authentication is toggled OFF so that deployment-specific preview URLs (`*.vercel.app`) load without Vercel login, allowing the Vercel dashboard preview thumbnail to render correctly.
 - **`src/lib/rate-limit.ts`**: In-memory rate limiter (resets on cold start). For production-grade rate limiting that survives cold starts, use the Redis-backed approach (`src/lib/redis.ts` + Upstash).

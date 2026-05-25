@@ -20,10 +20,7 @@ import { useAuth } from "@/hooks/useAuth";
 import type { DoctorAppointmentTypesQueryData } from "@/lib/doctor-portal-settings-prefetch";
 import type { DoctorSettingsVariant } from "@/lib/doctor-schedule-types";
 import { DOCTOR_PORTAL_VISIT_TYPE_COPY } from "@/lib/doctor-portal-visit-type-copy";
-import {
-  doctorSettingsGlassCheckboxClass,
-  doctorSettingsPortalIntroClass,
-} from "@/lib/doctor-settings-glass-surfaces";
+import { doctorSettingsGlassCheckboxClass } from "@/lib/doctor-settings-glass-surfaces";
 import { cn, toTitleCaseLabel } from "@/lib/utils";
 
 type GlobalTypeRow = {
@@ -139,13 +136,11 @@ export function DoctorGlobalVisitTypesEditor({
 
   return (
     <div className={cn(isPortal && "space-y-3")}>
-      {isPortal ? (
-        <p className={doctorSettingsPortalIntroClass}>{DOCTOR_PORTAL_VISIT_TYPE_COPY.patientTypesIntro}</p>
-      ) : (
+      {!isPortal ? (
         <p className="text-xs text-muted-foreground leading-relaxed mb-3">
           Organization-wide templates. Toggle availability for this doctor.
         </p>
-      )}
+      ) : null}
       <ul className="space-y-2">
         {globalTypes.map((t) => {
           const checked = t.is_enabled !== false;
