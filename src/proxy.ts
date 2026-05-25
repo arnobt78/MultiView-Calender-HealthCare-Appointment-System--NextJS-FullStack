@@ -18,7 +18,7 @@ const COOKIE_NAME = "auth-token";
 /** Page paths that do NOT require authentication */
 const PUBLIC_PATHS = ["/", "/login", "/register", "/accept-invitation"];
 
-/** Page paths that redirect to /dashboard when the user is already authenticated */
+/** Authenticated visitors on these paths → `/home` (SSR `resolveRoleHomeHref` picks portal vs dashboard). */
 const AUTH_ONLY_PATHS = ["/login", "/register"];
 
 // ─── security headers ─────────────────────────────────────────────────────────
