@@ -290,7 +290,7 @@ export default function AppointmentsManagement() {
             onClick={() => setStatusFilter(filter)}
             className={`cursor-pointer rounded-[28px] border bg-gradient-to-br backdrop-blur-sm transition-shadow hover:shadow-[0_30px_70px_rgba(2,132,199,0.18)] ${variant} ${statusFilter === filter ? "ring-2 ring-primary" : ""}`}
           >
-            <CardContent className="pt-3 pb-2">
+            <CardContent className="pt-2 pb-2">
               <div className="text-xs text-muted-foreground">{label}</div>
               {/* Value slot: pulse while loading */}
               {loading ? (

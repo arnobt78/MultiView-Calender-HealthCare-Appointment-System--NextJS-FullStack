@@ -58,7 +58,7 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Prism
 - **Accept invitation:** `AcceptInvitationPage` — `POST /api/invitations/accept` → `invalidateSharingAndAppointments`; success **Continue** → `resolveRoleHomeHref(role)`.
 - **Patient tables:** `PatientIdentityCell` shows `PatientAgeGlassBadge` beside name (CP + doctor-portal roster).
 - **Stats:** `DoctorPortalStatsRow` — four `PatientStatCard` metrics (Today / This Week / This Month / Pending); responsive `grid-cols-2 sm:grid-cols-4`; only numeric slots pulse (`portalLoading`).
-- **Panels:** Today schedule · **Weekly Hours** (`DoctorWeeklyScheduleEditor`, PATCH inline edit, grouped by weekday) · **Time Off** · **Patient Visit Types** (`DoctorGlobalVisitTypesEditor`) · **Additional Appointment Types** (`DoctorAdditionalTypesEditor`) · My Patients · Upcoming. Shared package: `src/components/shared/doctor-settings/*` (same APIs/keys as CP `/control-panel/doctors/[id]`).
+- **Panels:** [Today | Upcoming] (`lg:2-col`) · **Booking schedule** (full width — `DoctorPortalSchedulePanel`: weekly hours + unavailable dates, collapsed `<details>` per weekday/add window/time away; glass chips like appointment manual override) · [Patient Visit Types | Additional Types] (`lg:2-col`, combine column later) · My Patients (full width). Shared: `src/components/shared/doctor-settings/*`, `GlassCollapsibleDetails`, `DoctorSettingsGlassInput`, `src/lib/doctor-settings-glass-fields.ts` (same glass tokens as staff appointment dialog).
 - **Prefetch:** `prefetchDoctorScheduleSettings` in portal `useLayoutEffect` — `queryKeys.doctors.availability`, `timeOff`, `appointmentTypes.byDoctor`.
 - **Visit types:** `POST /api/appointment-types/doctor-config` → `invalidateAppointmentTypeDerived` (+ `doctorPortal.all`); CP admin toggle also `invalidateAdminPortal`; portal skips `router.refresh()`.
 - **Admin → doctor:** `notifyDoctorSettingsChangedByAdmin` (`src/lib/doctor-settings-notify.ts`) on availability/time-off/type APIs when admin mutates another doctor (in-app notification + email).
@@ -67,7 +67,7 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Prism
 - **Cache:** `useLayoutEffect` always seeds `doctorPortal.all` + `patients.all` (including `[]`) so roster CRUD via `usePatients` updates portal without refresh. `prefetchDoctorPortal` and `GET /api/doctor-portal` include `primary_doctor` on roster patients (`patientUserPick`). `useQuery` uses `initialData` + `staleTime: 3min`.
 - **Invalidation:** `invalidateEntityAffectingAppointments("patients")` and `usePatients` mutations also call `invalidateDoctorPortal`; appointments → `invalidateAfterAppointmentMutation`.
 - **Shell:** `dashboardShellClass` adds `pb-3` for portal routes in `AuthShell` (`src/lib/dashboard-layout.ts`).
-- **Verify (pre-commit):** `npm test && npx tsc --noEmit && npm run lint && npm run build` — 224 tests, all pass.
+- **Verify (pre-commit):** `npm test && npx tsc --noEmit && npm run lint && npm run build` — 225 tests, all pass.
 - **Invalidation (visit types):** `invalidateAppointmentTypeDerived` centralizes `doctorPortal.all` (portal toggles + CP `DoctorGlobalTypeConfigEditor`); CP also `invalidateAdminPortal`.
 
 ### Control panel entity split (users vs patients)
@@ -263,7 +263,7 @@ Shared primitives keep layout fixed while data loads:
 
 **SSR + client:** root `layout.tsx` passes `initialNavRole` into `AuthShell`. Portal pages pass `initialData` on `useQuery`. Profile: `profileLoading = isLoading && !patient`. Navbar role links render when `role` is known (server + client match).
 
-**Audit (agent glance):** Navbar role uses SSR `initialNavRole` via `NavRoleContext`. **Role landing:** `resolveRoleHomeHref` — login, `/home`, landing demo, OAuth, accept-invitation CTA; proxy `/login` → `/home`. **Doctor portal settings:** `doctor-settings/*` — weekly hours (PATCH), time off, additional + global visit types; `invalidateDoctorSchedule` busts portal + `/services` slots. **Page chrome:** `PortalDoctorChromeHeader` + `PortalPanelSection` + scoped `PatientManagementInner`. Patient booking: 3-step wizard + `CalendarHeaderRoleActions`. **224 tests**, `tsc` + `lint` + `build` pass.
+**Audit (agent glance):** Navbar role uses SSR `initialNavRole` via `NavRoleContext`. **Role landing:** `resolveRoleHomeHref` — login, `/home`, landing demo, OAuth, accept-invitation CTA; proxy `/login` → `/home`. **Doctor portal settings:** `DoctorPortalSchedulePanel` + `GlassCollapsibleDetails` collapsible weekly/time-off; `invalidateDoctorSchedule` busts portal + `/services` slots. **Page chrome:** `PortalDoctorChromeHeader` + `PortalPanelSection` + scoped `PatientManagementInner`. Patient booking: 3-step wizard + `CalendarHeaderRoleActions`. **225 tests**, `tsc` + `lint` + `build` pass.
 
 ### Dashboard calendar shared UI (unified `AppointmentCard`)
 
@@ -954,7 +954,7 @@ Thin server layout wrapper for the `/dashboard` route. Provides the outer struct
 
 ## Known Architecture Notes
 
-- **Doctor portal**: Doctor-specific dashboard view (analogous to PatientPortalPage) is not yet implemented. Doctors currently see the same dashboard as admins. Role-specific doctor UI is planned.
+- **Doctor portal**: `/doctor-portal` — `DoctorPortalSchedulePanel` stacks weekly + time off in one card with collapsible native `<details>` (hydration-safe); visit-type pair still side-by-side until combined column. `resolveRoleHomeHref` login landing. Navbar `/dashboard` for doctors is optional explicit nav.
 - **`/api/auth/demo`**: Endpoint still present but no longer used by the landing page. Can be removed or kept for backwards compatibility.
 - **Vercel Deployment Protection**: The project is on the Hobby plan. "Require Log In" Vercel Authentication is toggled OFF so that deployment-specific preview URLs (`*.vercel.app`) load without Vercel login, allowing the Vercel dashboard preview thumbnail to render correctly.
 - **`src/lib/rate-limit.ts`**: In-memory rate limiter (resets on cold start). For production-grade rate limiting that survives cold starts, use the Redis-backed approach (`src/lib/redis.ts` + Upstash).

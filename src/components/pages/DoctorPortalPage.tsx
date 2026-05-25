@@ -3,8 +3,9 @@
 /**
  * DoctorPortalPage — client-side portal for authenticated doctors.
  *
- * Layout: chrome → stats → today + weekly hours → time off + global visit types →
- * additional types → scoped patients → upcoming appointments.
+ * Layout (responsive `lg:grid-cols-2` pairs, stack on mobile):
+ * chrome → stats → [Today | Upcoming] → [Booking schedule (weekly + time off) | Visit types row] →
+ * [Global visit types | Additional types] → My Patients (full width).
  *
  * Settings reuse CP APIs via `src/components/shared/doctor-settings/*` with `variant="portal"`.
  * Cache: seeds `doctorPortal.all`, `patients.all`, and prefetches schedule/type queries.
@@ -23,8 +24,7 @@ import { PatientManagementInner } from "@/components/control-panel/PatientManage
 import { PatientListFiltersProvider } from "@/components/control-panel/PatientListFiltersContext";
 import { DoctorPortalAppointmentListRow } from "@/components/shared/appointments/DoctorPortalAppointmentListRow";
 import {
-  DoctorWeeklyScheduleEditor,
-  DoctorTimeOffEditor,
+  DoctorPortalSchedulePanel,
   DoctorGlobalVisitTypesEditor,
   DoctorAdditionalTypesEditor,
 } from "@/components/shared/doctor-settings";
@@ -34,12 +34,13 @@ import {
   CalendarCheck,
   CalendarClock,
   CheckCircle2,
-  Clock,
-  CalendarOff,
   Layers,
   Stethoscope,
   Users,
 } from "lucide-react";
+
+/** Two-column portal rows — single column below `lg` for readability on narrow viewports. */
+const portalPanelPairGridClass = "grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6";
 
 interface DoctorPortalPageProps {
   initialData: DoctorPortalData | null;
@@ -111,7 +112,7 @@ export default function DoctorPortalPage({ initialData }: DoctorPortalPageProps)
 
       <DoctorPortalStatsRow metrics={data?.metrics} valueSkeleton={portalLoading} />
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
+      <div className={portalPanelPairGridClass}>
         <PortalPanelSection
           id="dp-today-schedule"
           title="Today's Schedule"
@@ -148,39 +149,44 @@ export default function DoctorPortalPage({ initialData }: DoctorPortalPageProps)
         </PortalPanelSection>
 
         <PortalPanelSection
-          id="dp-weekly-hours"
-          title="Weekly Hours"
-          subtitle="Recurring availability for patient booking"
-          icon={Clock}
-          iconClassName="border-sky-100 bg-sky-50 [&_svg]:text-sky-600"
+          id="dp-upcoming"
+          title="Upcoming Appointments"
+          icon={CalendarClock}
+          iconClassName="border-indigo-100 bg-indigo-50 [&_svg]:text-indigo-500"
+          count={upcomingCountLabel}
+          countSkeleton={portalLoading}
+          contentClassName="pb-2"
         >
-          {doctorId ? (
-            <DoctorWeeklyScheduleEditor
-              doctorId={doctorId}
-              variant="portal"
-              showSummaryPreview
-            />
+          {portalLoading ? (
+            <div className="space-y-3">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="flex gap-2 py-3">
+                  <Skeleton className="h-10 w-20 rounded" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-3 w-1/2" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : upcomingAppts.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
+              <CalendarCheck className="mb-2 h-8 w-8 text-emerald-400" />
+              <p className="text-sm">No upcoming appointments</p>
+            </div>
           ) : (
-            <Skeleton className="h-24 w-full rounded-xl" />
+            <div>
+              {upcomingAppts.map((appt) => (
+                <DoctorPortalAppointmentListRow key={appt.id} appt={appt} variant="upcoming" />
+              ))}
+            </div>
           )}
         </PortalPanelSection>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
-        <PortalPanelSection
-          id="dp-time-off"
-          title="Time Off"
-          subtitle="Blocked periods override weekly hours"
-          icon={CalendarOff}
-          iconClassName="border-amber-100 bg-amber-50 [&_svg]:text-amber-600"
-        >
-          {doctorId ? (
-            <DoctorTimeOffEditor doctorId={doctorId} variant="portal" />
-          ) : (
-            <Skeleton className="h-20 w-full rounded-xl" />
-          )}
-        </PortalPanelSection>
+      <DoctorPortalSchedulePanel doctorId={doctorId} loading={portalLoading} />
 
+      <div className={portalPanelPairGridClass}>
         <PortalPanelSection
           id="dp-global-visit-types"
           title="Patient Visit Types"
@@ -198,21 +204,21 @@ export default function DoctorPortalPage({ initialData }: DoctorPortalPageProps)
             </div>
           )}
         </PortalPanelSection>
-      </div>
 
-      <PortalPanelSection
-        id="dp-additional-types"
-        title="Additional Appointment Types"
-        subtitle="Visit types unique to your practice"
-        icon={Stethoscope}
-        iconClassName="border-emerald-100 bg-emerald-50 [&_svg]:text-emerald-600"
-      >
-        {doctorId ? (
-          <DoctorAdditionalTypesEditor doctorId={doctorId} variant="portal" />
-        ) : (
-          <Skeleton className="h-32 w-full rounded-xl" />
-        )}
-      </PortalPanelSection>
+        <PortalPanelSection
+          id="dp-additional-types"
+          title="Additional Appointment Types"
+          subtitle="Visit types unique to your practice"
+          icon={Stethoscope}
+          iconClassName="border-emerald-100 bg-emerald-50 [&_svg]:text-emerald-600"
+        >
+          {doctorId ? (
+            <DoctorAdditionalTypesEditor doctorId={doctorId} variant="portal" />
+          ) : (
+            <Skeleton className="h-32 w-full rounded-xl" />
+          )}
+        </PortalPanelSection>
+      </div>
 
       {doctorId ? (
         <PortalPanelSection
@@ -238,42 +244,6 @@ export default function DoctorPortalPage({ initialData }: DoctorPortalPageProps)
           </PatientListFiltersProvider>
         </PortalPanelSection>
       ) : null}
-
-      <PortalPanelSection
-        id="dp-upcoming"
-        title="Upcoming Appointments"
-        icon={CalendarClock}
-        iconClassName="border-indigo-100 bg-indigo-50 [&_svg]:text-indigo-500"
-        count={upcomingCountLabel}
-        countInline
-        countSkeleton={portalLoading}
-        contentClassName="pb-2"
-      >
-        {portalLoading ? (
-          <div className="space-y-3">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="flex gap-2 py-3">
-                <Skeleton className="h-10 w-20 rounded" />
-                <div className="flex-1 space-y-2">
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-3 w-1/2" />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : upcomingAppts.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
-            <CalendarCheck className="mb-2 h-8 w-8 text-emerald-400" />
-            <p className="text-sm">No upcoming appointments</p>
-          </div>
-        ) : (
-          <div>
-            {upcomingAppts.map((appt) => (
-              <DoctorPortalAppointmentListRow key={appt.id} appt={appt} variant="upcoming" />
-            ))}
-          </div>
-        )}
-      </PortalPanelSection>
     </div>
   );
 }

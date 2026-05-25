@@ -1,4 +1,17 @@
 import type { DoctorSettingsVariant } from "@/lib/doctor-schedule-types";
+import {
+  doctorSettingsGlassSelectTriggerClass,
+  doctorSettingsGlassTextInputClass,
+  doctorSettingsGlassTextRowClass,
+} from "@/lib/doctor-settings-glass-fields";
+import { glassCollapsibleActionChipClass } from "@/lib/glass-collapsible-details";
+import { cn } from "@/lib/utils";
+
+export {
+  doctorSettingsGlassSelectTriggerClass,
+  doctorSettingsGlassTextInputClass,
+  doctorSettingsGlassTextRowClass,
+};
 
 /** Dashed add-form shells — sky weekly, amber time off, emerald types. */
 export const doctorSettingsAddFormClass: Record<"weekly" | "timeOff" | "additional", string> = {
@@ -17,3 +30,18 @@ export function doctorSettingsSectionTitleClass(variant: DoctorSettingsVariant):
     ? "text-sm font-semibold text-gray-800"
     : "flex items-center gap-2 text-base";
 }
+
+/** Save buttons + summary chips — one visual system (font, padding, glow). */
+export const doctorSettingsActionButtonClass: Record<"weekly" | "timeOff", string> = {
+  weekly: cn(
+    glassCollapsibleActionChipClass("sky"),
+    "h-9 min-h-9 rounded-full px-4 text-sm font-semibold"
+  ),
+  timeOff: cn(
+    glassCollapsibleActionChipClass("amber"),
+    "h-9 min-h-9 rounded-full px-4 text-sm font-semibold"
+  ),
+};
+
+/** @deprecated Use doctorSettingsActionButtonClass — kept for CP flat forms. */
+export const doctorSettingsGlowButtonClass = doctorSettingsActionButtonClass;

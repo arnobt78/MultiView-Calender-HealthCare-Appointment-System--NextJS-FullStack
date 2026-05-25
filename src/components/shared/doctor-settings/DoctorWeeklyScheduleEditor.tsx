@@ -2,12 +2,14 @@
 
 /**
  * Weekly DoctorAvailability CRUD — grouped by weekday, inline PATCH edit, shared CP + portal.
+ * Portal `layout="collapsible"`: native `<details>` per day + add-window (matches appointment dialog).
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Plus, Trash2, X } from "lucide-react";
+import { CalendarDays, Clock, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DoctorSettingsGlassInput } from "@/components/shared/doctor-settings/DoctorSettingsGlassInput";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -18,40 +20,65 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { GlassCollapsibleDetails } from "@/components/shared/GlassCollapsibleDetails";
+import { GlassDoctorSettingsActionChip } from "@/components/shared/doctor-settings/GlassDoctorSettingsActionChip";
+import { DoctorSettingsSlotRow } from "@/components/shared/doctor-settings/DoctorSettingsSlotRow";
+import { DoctorSettingsSummaryHint } from "@/components/shared/doctor-settings/DoctorSettingsSummaryHint";
+import { DoctorSettingsFormActions } from "@/components/shared/doctor-settings/DoctorSettingsFormActions";
+import { closeHtmlDetails } from "@/components/shared/doctor-settings/close-html-details";
 import { apiClient } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import { invalidateDoctorSchedule } from "@/lib/query-client";
 import { notify } from "@/lib/notify";
-import type { AvailabilityWindow, DoctorSettingsVariant } from "@/lib/doctor-schedule-types";
+import type {
+  AvailabilityWindow,
+  DoctorSettingsEditorLayout,
+  DoctorSettingsVariant,
+} from "@/lib/doctor-schedule-types";
 import {
   DEFAULT_DOCTOR_TIMEZONE,
   WEEKDAY_LABELS,
+  formatWeekdayWindowsHint,
   groupAvailabilityByWeekday,
   minsToTime,
   resolveBrowserTimezone,
   sharedAvailabilityTimezone,
   timeToMins,
 } from "@/lib/doctor-schedule-display";
+import {
+  WEEKLY_ADD_WINDOW_SUMMARY_LABEL,
+  WEEKLY_SAVE_WINDOW_LABEL,
+} from "@/lib/doctor-portal-schedule-copy";
+import { glassTimeInputClass } from "@/lib/scheduling-glass-input-classes";
 import { DoctorAvailabilityGroups } from "@/components/shared/doctor-display/DoctorAvailabilityGroups";
 import { useCanEditDoctorSettings } from "@/components/shared/doctor-settings/useCanEditDoctorSettings";
-import {
-  doctorSettingsAddFormClass,
-  doctorSettingsRowClass,
-} from "@/components/shared/doctor-settings/doctor-settings-classes";
-import { cn } from "@/lib/utils";
+import { doctorSettingsAddFormClass, doctorSettingsRowClass } from "@/components/shared/doctor-settings/doctor-settings-classes";
+import { doctorSettingsGlassSelectTriggerClass } from "@/lib/doctor-settings-glass-fields";
+import { cn, toTitleCaseLabel } from "@/lib/utils";
 
 type Props = {
   doctorId: string;
   variant?: DoctorSettingsVariant;
-  /** Portal: compact summary above the editable list. */
+  layout?: DoctorSettingsEditorLayout;
   showSummaryPreview?: boolean;
 };
+
+function resolveLayout(
+  variant: DoctorSettingsVariant,
+  layout: DoctorSettingsEditorLayout | undefined
+): DoctorSettingsEditorLayout {
+  if (layout) return layout;
+  return variant === "portal" ? "collapsible" : "flat";
+}
 
 export function DoctorWeeklyScheduleEditor({
   doctorId,
   variant = "control-panel",
-  showSummaryPreview = variant === "portal",
+  layout: layoutProp,
+  showSummaryPreview = variant === "control-panel",
 }: Props) {
+  const layout = resolveLayout(variant, layoutProp);
+  const addDetailsRef = useRef<HTMLDetailsElement>(null);
   const queryClient = useQueryClient();
   const canEdit = useCanEditDoctorSettings(doctorId);
   const [isMounted, setIsMounted] = useState(false);
@@ -94,6 +121,7 @@ export function DoctorWeeklyScheduleEditor({
       notify.crud({ action: "created", entity: "Availability window", detail: "Weekly schedule updated." });
       setNewStartTime("09:00");
       setNewEndTime("17:00");
+      closeHtmlDetails(addDetailsRef.current);
     },
     onError: () =>
       notify.error({ title: "Failed to add availability window", subtitle: "Please try again." }),
@@ -185,15 +213,190 @@ export function DoctorWeeklyScheduleEditor({
     patchWindowMutation.isPending ||
     deleteWindowMutation.isPending;
 
+  function renderWindowRow(w: AvailabilityWindow, inCollapsible: boolean) {
+    if (editingId === w.id) {
+      return (
+        <div
+          key={w.id}
+          className="space-y-2 rounded-xl border border-sky-200 bg-sky-50/60 p-3"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <div className="space-y-1 col-span-2 sm:col-span-1">
+              <Label className="text-xs">{toTitleCaseLabel("Day")}</Label>
+              <Select value={editWeekday} onValueChange={setEditWeekday}>
+                <SelectTrigger className={doctorSettingsGlassSelectTriggerClass}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent position="popper" className="z-[55]">
+                  {WEEKDAY_LABELS.map((label, i) => (
+                    <SelectItem key={i} value={String(i)}>
+                      {toTitleCaseLabel(label)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{toTitleCaseLabel("Start")}</Label>
+              <Input
+                type="time"
+                value={editStartTime}
+                onChange={(e) => setEditStartTime(e.target.value)}
+                className={glassTimeInputClass}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{toTitleCaseLabel("End")}</Label>
+              <Input
+                type="time"
+                value={editEndTime}
+                onChange={(e) => setEditEndTime(e.target.value)}
+                className={glassTimeInputClass}
+              />
+            </div>
+            <div className="space-y-1 col-span-2 sm:col-span-1">
+              <Label className="text-xs">{toTitleCaseLabel("Timezone")}</Label>
+              <DoctorSettingsGlassInput
+                tone="sky"
+                density="compact"
+                debugFieldId="weekly-edit-timezone"
+                value={editTz}
+                onChange={(e) => setEditTz(e.target.value)}
+              />
+            </div>
+          </div>
+          <DoctorSettingsFormActions
+            tone="weekly"
+            pending={busy}
+            saveLabel="Save"
+            onSave={() => handleSaveEdit(w.id)}
+            onCancel={() => setEditingId(null)}
+          />
+        </div>
+      );
+    }
+
+    const rangeLabel = `${minsToTime(w.start_min)} – ${minsToTime(w.end_min)}`;
+    const actions = canEdit ? (
+      <>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 text-sky-700 hover:bg-sky-100"
+          onClick={() => startEdit(w)}
+          disabled={busy}
+          title={toTitleCaseLabel("Edit window")}
+        >
+          <Pencil className="h-3.5 w-3.5" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 text-red-500 hover:bg-red-50"
+          onClick={() => deleteWindowMutation.mutate(w.id)}
+          disabled={busy}
+          title={toTitleCaseLabel("Delete window")}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </Button>
+      </>
+    ) : null;
+
+    if (inCollapsible) {
+      return (
+        <DoctorSettingsSlotRow key={w.id} icon={Clock} tone="sky" actions={actions}>
+          <span>
+            {rangeLabel}
+            {!singleTz ? (
+              <span className="ml-2 text-xs font-normal text-muted-foreground">{w.timezone}</span>
+            ) : null}
+          </span>
+        </DoctorSettingsSlotRow>
+      );
+    }
+
+    return (
+      <div key={w.id} className={doctorSettingsRowClass.weekly}>
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <span className="text-sm font-medium text-gray-700">{rangeLabel}</span>
+          {!singleTz ? (
+            <span className="text-xs text-muted-foreground truncate">{w.timezone}</span>
+          ) : null}
+        </div>
+        {actions ? <div className="flex shrink-0 gap-0.5">{actions}</div> : null}
+      </div>
+    );
+  }
+
+  const addFormFields = (
+    <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div className="space-y-1 col-span-2 sm:col-span-1">
+          <Label className="text-xs">{toTitleCaseLabel("Day")}</Label>
+            <Select value={newWeekday} onValueChange={setNewWeekday}>
+                <SelectTrigger className={cn(doctorSettingsGlassSelectTriggerClass, "w-full")}>
+              <SelectValue />
+            </SelectTrigger>
+                <SelectContent position="popper" className="z-[55]">
+                  {WEEKDAY_LABELS.map((label, i) => (
+                    <SelectItem key={i} value={String(i)}>
+                      {toTitleCaseLabel(label)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{toTitleCaseLabel("Start")}</Label>
+              <Input
+                type="time"
+                value={newStartTime}
+            onChange={(e) => setNewStartTime(e.target.value)}
+            className={glassTimeInputClass}
+          />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">{toTitleCaseLabel("End")}</Label>
+          <Input
+            type="time"
+            value={newEndTime}
+            onChange={(e) => setNewEndTime(e.target.value)}
+            className={glassTimeInputClass}
+          />
+        </div>
+        <div className="space-y-1 col-span-2 sm:col-span-1">
+          <Label className="text-xs">{toTitleCaseLabel("Timezone (IANA)")}</Label>
+          <DoctorSettingsGlassInput
+            tone="sky"
+            density="compact"
+            debugFieldId="weekly-add-timezone"
+            value={newTz}
+            onChange={(e) => setNewTz(e.target.value)}
+            placeholder={DEFAULT_DOCTOR_TIMEZONE}
+          />
+        </div>
+      </div>
+      <DoctorSettingsFormActions
+        tone="weekly"
+        pending={addWindowMutation.isPending}
+        saveLabel={WEEKLY_SAVE_WINDOW_LABEL}
+        onSave={handleAddWindow}
+        onCancel={() => closeHtmlDetails(addDetailsRef.current)}
+      />
+    </div>
+  );
+
   return (
-    <div className={cn("space-y-4", variant === "portal" && "text-gray-700")}>
-      {showSummaryPreview && !loading && windows.length > 0 ? (
+    <div className={cn("space-y-3", variant === "portal" && "text-gray-700")}>
+      {showSummaryPreview && layout === "flat" && !loading && windows.length > 0 ? (
         <DoctorAvailabilityGroups availabilities={windows} layout="stacked" className="mb-1" />
       ) : null}
 
-      {singleTz ? (
+      {layout === "flat" && singleTz ? (
         <p className="text-[11px] text-muted-foreground">
-          All hours use timezone <span className="font-medium text-gray-700">{singleTz}</span>
+          {toTitleCaseLabel("All hours use timezone")}{" "}
+          <span className="font-medium text-gray-700">{singleTz}</span>
         </p>
       ) : null}
 
@@ -204,181 +407,65 @@ export function DoctorWeeklyScheduleEditor({
           ))}
         </div>
       ) : windows.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No weekly hours configured.</p>
+        <p className="text-sm text-muted-foreground">
+          {toTitleCaseLabel("No weekly hours configured yet.")}
+        </p>
+      ) : layout === "collapsible" ? (
+        <div className="space-y-2">
+          {grouped.map((group) => (
+            <GlassCollapsibleDetails
+              key={group.weekday}
+              tone="sky"
+              icon={CalendarDays}
+              title={toTitleCaseLabel(group.label)}
+              hint={
+                <DoctorSettingsSummaryHint tone="sky">
+                  {formatWeekdayWindowsHint(group.windows)}
+                </DoctorSettingsSummaryHint>
+              }
+            >
+              {group.windows.map((w) => renderWindowRow(w, true))}
+            </GlassCollapsibleDetails>
+          ))}
+        </div>
       ) : (
         <div className="space-y-4">
           {grouped.map((group) => (
             <div key={group.weekday} className="space-y-2">
               <p className="text-xs font-semibold uppercase tracking-wide text-sky-800/80">
-                {group.label}
+                {toTitleCaseLabel(group.label)}
               </p>
-              {group.windows.map((w) =>
-                editingId === w.id ? (
-                  <div
-                    key={w.id}
-                    className="space-y-2 rounded-xl border border-sky-200 bg-sky-50/60 p-3"
-                  >
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                      <div className="space-y-1 col-span-2 sm:col-span-1">
-                        <Label className="text-xs">Day</Label>
-                        <Select value={editWeekday} onValueChange={setEditWeekday}>
-                          <SelectTrigger className="h-9 text-sm rounded-xl">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {WEEKDAY_LABELS.map((label, i) => (
-                              <SelectItem key={i} value={String(i)}>
-                                {label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs">Start</Label>
-                        <Input
-                          type="time"
-                          value={editStartTime}
-                          onChange={(e) => setEditStartTime(e.target.value)}
-                          className="h-9 text-sm rounded-xl"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs">End</Label>
-                        <Input
-                          type="time"
-                          value={editEndTime}
-                          onChange={(e) => setEditEndTime(e.target.value)}
-                          className="h-9 text-sm rounded-xl"
-                        />
-                      </div>
-                      <div className="space-y-1 col-span-2 sm:col-span-1">
-                        <Label className="text-xs">Timezone</Label>
-                        <Input
-                          value={editTz}
-                          onChange={(e) => setEditTz(e.target.value)}
-                          className="h-9 text-sm rounded-xl"
-                        />
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        disabled={busy}
-                        onClick={() => handleSaveEdit(w.id)}
-                      >
-                        Save
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        disabled={busy}
-                        onClick={() => setEditingId(null)}
-                      >
-                        <X className="h-3.5 w-3.5" />
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div key={w.id} className={doctorSettingsRowClass.weekly}>
-                    <div className="flex min-w-0 flex-wrap items-center gap-2">
-                      <span className="text-sm font-medium text-gray-700">
-                        {minsToTime(w.start_min)} – {minsToTime(w.end_min)}
-                      </span>
-                      {!singleTz ? (
-                        <span className="text-xs text-muted-foreground truncate">{w.timezone}</span>
-                      ) : null}
-                    </div>
-                    {canEdit ? (
-                      <div className="flex shrink-0 gap-0.5">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-sky-700 hover:bg-sky-100"
-                          onClick={() => startEdit(w)}
-                          disabled={busy}
-                          title="Edit window"
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-red-500 hover:bg-red-50"
-                          onClick={() => deleteWindowMutation.mutate(w.id)}
-                          disabled={busy}
-                          title="Delete window"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    ) : null}
-                  </div>
-                )
-              )}
+              {group.windows.map((w) => renderWindowRow(w, false))}
             </div>
           ))}
         </div>
       )}
 
       {canEdit ? (
-        <div className={doctorSettingsAddFormClass.weekly}>
-          <p className="text-xs font-medium text-sky-700">Add time window</p>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <div className="space-y-1 col-span-2 sm:col-span-1">
-              <Label className="text-xs">Day</Label>
-              <Select value={newWeekday} onValueChange={setNewWeekday}>
-                <SelectTrigger className="h-9 text-sm rounded-xl">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {WEEKDAY_LABELS.map((label, i) => (
-                    <SelectItem key={i} value={String(i)}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Start</Label>
-              <Input
-                type="time"
-                value={newStartTime}
-                onChange={(e) => setNewStartTime(e.target.value)}
-                className="h-9 text-sm rounded-xl"
+        layout === "collapsible" ? (
+          <GlassCollapsibleDetails
+            ref={addDetailsRef}
+            tone="sky"
+            summaryChip={
+              <GlassDoctorSettingsActionChip
+                tone="sky"
+                icon={Plus}
+                label={WEEKLY_ADD_WINDOW_SUMMARY_LABEL}
+                pending={addWindowMutation.isPending}
               />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">End</Label>
-              <Input
-                type="time"
-                value={newEndTime}
-                onChange={(e) => setNewEndTime(e.target.value)}
-                className="h-9 text-sm rounded-xl"
-              />
-            </div>
-            <div className="space-y-1 col-span-2 sm:col-span-1">
-              <Label className="text-xs">Timezone (IANA)</Label>
-              <Input
-                value={newTz}
-                onChange={(e) => setNewTz(e.target.value)}
-                placeholder={DEFAULT_DOCTOR_TIMEZONE}
-                className="h-9 text-sm rounded-xl"
-              />
-            </div>
-          </div>
-          <Button
-            size="sm"
-            onClick={handleAddWindow}
-            disabled={busy}
-            className="gap-1.5"
+            }
+            title=""
           >
-            <Plus className="h-3.5 w-3.5" />
-            {addWindowMutation.isPending ? "Adding…" : "Add Window"}
-          </Button>
-        </div>
+            {addFormFields}
+          </GlassCollapsibleDetails>
+        ) : (
+          <div className={doctorSettingsAddFormClass.weekly}>
+            <p className="text-sm font-medium text-sky-700">
+              {toTitleCaseLabel("Add availability time window")}
+            </p>
+            {addFormFields}
+          </div>
+        )
       ) : null}
     </div>
   );

@@ -4,6 +4,7 @@ import {
   minsToTime,
   timeToMins,
   availabilityUsesSingleTimezone,
+  formatWeekdayWindowsHint,
 } from "@/lib/doctor-schedule-display";
 
 describe("doctor-schedule-display", () => {
@@ -35,5 +36,13 @@ describe("doctor-schedule-display", () => {
         { id: "2", weekday: 1, start_min: 0, end_min: 60, timezone: "Europe/Berlin" },
       ])
     ).toBe(false);
+  });
+
+  it("formats weekday hint for collapsed summary", () => {
+    expect(
+      formatWeekdayWindowsHint([
+        { id: "1", weekday: 1, start_min: 600, end_min: 840, timezone: "Europe/Berlin" },
+      ])
+    ).toBe("1 window · 10:00–14:00");
   });
 });

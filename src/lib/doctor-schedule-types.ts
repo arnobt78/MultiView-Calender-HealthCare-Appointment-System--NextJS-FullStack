@@ -4,6 +4,9 @@
 
 export type DoctorSettingsVariant = "portal" | "control-panel";
 
+/** Portal: collapsed `<details>` per weekday + add form; CP: flat list (legacy card height). */
+export type DoctorSettingsEditorLayout = "flat" | "collapsible";
+
 export type AvailabilityWindow = {
   id: string;
   weekday: number;

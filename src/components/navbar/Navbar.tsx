@@ -125,8 +125,9 @@ export default function Navbar() {
     ? user.email.substring(0, 2).toUpperCase()
     : "U";
 
+  // z-[60] keeps navbar above Radix Select/HoverCard portals (z-50) on doctor portal forms.
   return (
-    <div className="sticky top-0 z-40 flex w-full shrink-0 flex-col border-b border-gray-100/80 bg-transparent backdrop-blur-sm">
+    <div className="sticky top-0 z-[60] flex w-full shrink-0 flex-col border-b border-gray-100/80 bg-transparent backdrop-blur-sm">
       {/* supports-backdrop-filter:bg-white/80 */}
       <div
         className={cn(

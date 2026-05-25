@@ -2,6 +2,7 @@
  * Display helpers for doctor weekly schedule UI — grouping, time conversion, TZ hints.
  */
 
+import { format } from "date-fns";
 import type { AvailabilityWindow } from "@/lib/doctor-schedule-types";
 
 export const WEEKDAY_LABELS = [
@@ -52,6 +53,19 @@ export type WeekdayAvailabilityGroup = {
 };
 
 /** Portal/CP list: one section per weekday, multiple windows per day sorted by start. */
+/** Collapsed weekday `<summary>` hint — window count + time ranges. */
+/** Unavailable-dates collapsed summary — full range on one responsive line. */
+export function formatTimeOffRangeLabel(startsAt: string, endsAt: string): string {
+  return `${format(new Date(startsAt), "MMM d, yyyy HH:mm")} – ${format(new Date(endsAt), "MMM d, yyyy HH:mm")}`;
+}
+
+export function formatWeekdayWindowsHint(windows: AvailabilityWindow[]): string {
+  if (windows.length === 0) return "No time windows";
+  const ranges = windows.map((w) => `${minsToTime(w.start_min)}–${minsToTime(w.end_min)}`);
+  const n = windows.length;
+  return `${n} window${n === 1 ? "" : "s"} · ${ranges.join(", ")}`;
+}
+
 export function groupAvailabilityByWeekday(windows: AvailabilityWindow[]): WeekdayAvailabilityGroup[] {
   const byDay = new Map<number, AvailabilityWindow[]>();
   for (const w of windows) {
