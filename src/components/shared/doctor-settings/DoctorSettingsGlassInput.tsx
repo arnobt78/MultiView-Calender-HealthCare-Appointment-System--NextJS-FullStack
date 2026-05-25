@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import {
   doctorSettingsGlassTextInputClass,
   doctorSettingsGlassTextRowClass,
+  doctorSettingsGlassTextRowClassEmerald,
 } from "@/lib/doctor-settings-glass-fields";
 import { cn } from "@/lib/utils";
 
@@ -16,7 +17,7 @@ import { cn } from "@/lib/utils";
 const doctorSettingsGlassInputResetClass =
   "border-input/0 bg-transparent shadow-none focus-visible:border-transparent focus-visible:ring-0 dark:bg-transparent";
 
-type Tone = "sky" | "amber";
+type Tone = "sky" | "amber" | "emerald";
 type Density = "compact" | "row";
 
 type Props = Omit<ComponentProps<typeof Input>, "className"> & {
@@ -32,14 +33,19 @@ export function DoctorSettingsGlassInput({
   className,
   ...props
 }: Props) {
-  const glassClass =
-    density === "row"
-      ? tone === "amber"
-        ? doctorSettingsGlassTextRowClass.amber
-        : doctorSettingsGlassTextRowClass.sky
-      : tone === "amber"
-        ? doctorSettingsGlassTextInputClass.amber
+  const rowClass =
+    tone === "amber"
+      ? doctorSettingsGlassTextRowClass.amber
+      : tone === "emerald"
+        ? doctorSettingsGlassTextRowClassEmerald
+        : doctorSettingsGlassTextRowClass.sky;
+  const compactClass =
+    tone === "amber"
+      ? doctorSettingsGlassTextInputClass.amber
+      : tone === "emerald"
+        ? doctorSettingsGlassTextInputClass.emerald
         : doctorSettingsGlassTextInputClass.sky;
+  const glassClass = density === "row" ? rowClass : compactClass;
 
   return (
     <div className="min-w-0">

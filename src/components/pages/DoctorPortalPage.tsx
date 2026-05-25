@@ -29,10 +29,12 @@ import { PatientManagementInner } from "@/components/control-panel/PatientManage
 import { PatientListFiltersProvider } from "@/components/control-panel/PatientListFiltersContext";
 import { DoctorPortalAppointmentListRow } from "@/components/shared/appointments/DoctorPortalAppointmentListRow";
 import {
-  DoctorPortalSchedulePanel,
+  DoctorPortalWeeklyHoursCard,
+  DoctorPortalTimeOffCard,
   DoctorGlobalVisitTypesEditor,
   DoctorAdditionalTypesEditor,
 } from "@/components/shared/doctor-settings";
+import { doctorSettingsGlassPanelShadowClass } from "@/lib/doctor-settings-glass-surfaces";
 import {
   Calendar,
   CalendarCheck,
@@ -195,20 +197,19 @@ export default function DoctorPortalPage({
         </PortalPanelSection>
       </div>
 
-      <DoctorPortalSchedulePanel
-        doctorId={doctorId}
-        portalLoading={portalLoading}
-        initialAvailability={initialScheduleSettings?.availability}
-        initialTimeOff={initialScheduleSettings?.timeOff}
-      />
-
       <div className={portalPanelPairGridClass}>
+        <DoctorPortalWeeklyHoursCard
+          doctorId={doctorId}
+          portalLoading={portalLoading}
+          initialAvailability={initialScheduleSettings?.availability}
+        />
+
         <PortalPanelSection
           id="dp-global-visit-types"
           title="Patient Visit Types"
-          subtitle="Toggle organization templates patients can book"
           icon={Layers}
           iconClassName="border-violet-100 bg-violet-50 [&_svg]:text-violet-600"
+          className={doctorSettingsGlassPanelShadowClass("violet")}
         >
           {doctorId ? (
             <DoctorGlobalVisitTypesEditor
@@ -224,25 +225,31 @@ export default function DoctorPortalPage({
             </div>
           )}
         </PortalPanelSection>
-
-        <PortalPanelSection
-          id="dp-additional-types"
-          title="Additional Appointment Types"
-          subtitle="Visit types unique to your practice"
-          icon={Stethoscope}
-          iconClassName="border-emerald-100 bg-emerald-50 [&_svg]:text-emerald-600"
-        >
-          {doctorId ? (
-            <DoctorAdditionalTypesEditor
-              doctorId={doctorId}
-              variant="portal"
-              initialAppointmentTypes={initialScheduleSettings?.appointmentTypes}
-            />
-          ) : (
-            <Skeleton className="h-32 w-full rounded-xl" />
-          )}
-        </PortalPanelSection>
       </div>
+
+      <DoctorPortalTimeOffCard
+        doctorId={doctorId}
+        portalLoading={portalLoading}
+        initialTimeOff={initialScheduleSettings?.timeOff}
+      />
+
+      <PortalPanelSection
+        id="dp-additional-types"
+        title="Additional Appointment Types"
+        icon={Stethoscope}
+        iconClassName="border-emerald-100 bg-emerald-50 [&_svg]:text-emerald-600"
+        className={doctorSettingsGlassPanelShadowClass("emerald")}
+      >
+        {doctorId ? (
+          <DoctorAdditionalTypesEditor
+            doctorId={doctorId}
+            variant="portal"
+            initialAppointmentTypes={initialScheduleSettings?.appointmentTypes}
+          />
+        ) : (
+          <Skeleton className="h-32 w-full rounded-xl" />
+        )}
+      </PortalPanelSection>
 
       {doctorId ? (
         <PortalPanelSection

@@ -8,19 +8,29 @@ import { type RefObject, useEffect, useRef } from "react";
 export function useDismissOnPointerDownOutside(
   containerRef: RefObject<HTMLElement | null>,
   enabled: boolean,
-  onDismiss: () => void
+  onDismiss: () => void,
+  /** Portalled panel nodes — clicks inside must not dismiss (e.g. `GlassInlineSelect`). */
+  extraRefs?: readonly RefObject<HTMLElement | null>[]
 ) {
   const onDismissRef = useRef(onDismiss);
+  const extraRefsRef = useRef(extraRefs);
   useEffect(() => {
     onDismissRef.current = onDismiss;
   }, [onDismiss]);
+  useEffect(() => {
+    extraRefsRef.current = extraRefs;
+  });
 
   useEffect(() => {
     if (!enabled) return;
 
     function handlePointerDown(event: PointerEvent) {
-      const root = containerRef.current;
-      if (!root || root.contains(event.target as Node)) return;
+      const target = event.target as Node;
+      const roots = [
+        containerRef.current,
+        ...(extraRefsRef.current?.map((r) => r.current) ?? []),
+      ].filter((n): n is HTMLElement => n != null);
+      if (roots.some((root) => root.contains(target))) return;
       onDismissRef.current();
     }
 

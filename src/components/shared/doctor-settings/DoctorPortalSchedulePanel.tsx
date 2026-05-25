@@ -1,7 +1,8 @@
 "use client";
 
 /**
- * Doctor portal — weekly hours + unavailable dates in one card (no redundant outer title).
+ * Doctor portal — weekly hours + unavailable dates in one card (legacy combined layout).
+ * Prefer `DoctorPortalWeeklyHoursCard` + `DoctorPortalTimeOffCard` on `/doctor-portal`.
  */
 
 import { Clock, CalendarOff } from "lucide-react";

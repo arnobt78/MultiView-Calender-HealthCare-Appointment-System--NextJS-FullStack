@@ -13,11 +13,12 @@ export {
   doctorSettingsGlassTextRowClass,
 };
 
-/** Dashed add-form shells — sky weekly, amber time off, emerald types. */
+/** Dashed add-form shells — sky weekly, amber time off, emerald types (portal uses glass glow). */
 export const doctorSettingsAddFormClass: Record<"weekly" | "timeOff" | "additional", string> = {
   weekly: "space-y-3 rounded-xl border border-dashed border-sky-200 bg-sky-50/30 p-3",
   timeOff: "space-y-3 rounded-xl border border-dashed border-amber-200 bg-amber-50/30 p-3",
-  additional: "rounded-lg border border-dashed border-emerald-200/80 bg-white/60 p-3",
+  additional:
+    "space-y-3 rounded-2xl border border-dashed border-emerald-200/70 bg-gradient-to-br from-emerald-500/8 via-white/90 to-white/95 p-3 shadow-[0_8px_24px_rgba(16,185,129,0.12)] backdrop-blur-md",
 };
 
 export const doctorSettingsRowClass: Record<"weekly" | "timeOff", string> = {
@@ -32,13 +33,24 @@ export function doctorSettingsSectionTitleClass(variant: DoctorSettingsVariant):
 }
 
 /** Save buttons + summary chips — one visual system (font, padding, glow). */
-export const doctorSettingsActionButtonClass: Record<"weekly" | "timeOff", string> = {
+export const doctorSettingsActionButtonClass: Record<
+  "weekly" | "timeOff" | "emerald" | "violet",
+  string
+> = {
   weekly: cn(
     glassCollapsibleActionChipClass("sky"),
     "h-9 min-h-9 rounded-full px-4 text-sm font-semibold"
   ),
   timeOff: cn(
     glassCollapsibleActionChipClass("amber"),
+    "h-9 min-h-9 rounded-full px-4 text-sm font-semibold"
+  ),
+  emerald: cn(
+    glassCollapsibleActionChipClass("emerald"),
+    "h-9 min-h-9 rounded-full px-4 text-sm font-semibold"
+  ),
+  violet: cn(
+    glassCollapsibleActionChipClass("violet"),
     "h-9 min-h-9 rounded-full px-4 text-sm font-semibold"
   ),
 };

@@ -14,11 +14,11 @@ type Props = {
   className?: string;
 };
 
-const toneToAction: Record<GlassCollapsibleTone, "weekly" | "timeOff"> = {
+const toneToAction: Record<GlassCollapsibleTone, keyof typeof doctorSettingsActionButtonClass> = {
   sky: "weekly",
   amber: "timeOff",
-  emerald: "weekly",
-  violet: "weekly",
+  emerald: "emerald",
+  violet: "violet",
 };
 
 /** Visual chip inside `<summary>` — matches Save button styling (parent `<details>` handles expand). */

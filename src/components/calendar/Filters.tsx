@@ -1,15 +1,9 @@
 "use client";
 
 import { Category, Patient } from "@/types/types";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { GlassResetFilterButton } from "@/components/shared/GlassResetFilterButton";
+import { FilterSelect } from "@/components/shared/filters/FilterSelect";
 import { Tag, User, CalendarDays, Circle, CalendarRange } from "lucide-react";
 
 type FiltersProps = {
@@ -71,45 +65,35 @@ export default function Filters({
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {/* Category */}
-      <Select
+      <FilterSelect
         value={category ?? ALL_VALUE}
         onValueChange={(v) => setCategory(v === ALL_VALUE ? null : v)}
-      >
-        <SelectTrigger className="h-9 w-auto min-w-[160px] rounded-2xl shadow-sm bg-white border-gray-200 text-gray-700 gap-2">
-          <Tag className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-          <SelectValue>{categoryLabel}</SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value={ALL_VALUE}>All Categories</SelectItem>
-          {categories.map((c) => (
-            <SelectItem key={c.id} value={c.id}>
-              {c.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+        displayLabel={categoryLabel}
+        icon={Tag}
+        size="dashboard"
+        triggerClassName="min-w-[160px]"
+        options={[
+          { value: ALL_VALUE, label: "All Categories" },
+          ...categories.map((c) => ({ value: c.id, label: c.label })),
+        ]}
+      />
 
-      {/* Client */}
-      <Select
+      <FilterSelect
         value={patient ?? ALL_VALUE}
         onValueChange={(v) => setPatient(v === ALL_VALUE ? null : v)}
-      >
-        <SelectTrigger className="h-9 w-auto min-w-[160px] rounded-2xl shadow-sm bg-white border-gray-200 text-gray-700 gap-2">
-          <User className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-          <SelectValue>{clientLabel}</SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value={ALL_VALUE}>All Clients</SelectItem>
-          {patients.map((p) => (
-            <SelectItem key={p.id} value={p.id}>
-              {p.firstname} {p.lastname}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+        displayLabel={clientLabel}
+        icon={User}
+        size="dashboard"
+        triggerClassName="min-w-[160px]"
+        options={[
+          { value: ALL_VALUE, label: "All Clients" },
+          ...patients.map((p) => ({
+            value: p.id,
+            label: `${p.firstname} ${p.lastname}`.trim(),
+          })),
+        ]}
+      />
 
-      {/* Date */}
       <div className="relative flex items-center">
         <CalendarDays className="absolute left-3 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
         <Input
@@ -123,44 +107,35 @@ export default function Filters({
         />
       </div>
 
-      {/* Status */}
-      <Select
+      <FilterSelect
         value={status ?? ALL_VALUE}
         onValueChange={(v) => setStatus(v === ALL_VALUE ? null : v)}
-      >
-        <SelectTrigger className="h-9 w-auto min-w-[140px] rounded-2xl shadow-sm bg-white border-gray-200 text-gray-700 gap-2">
-          <Circle className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-          <SelectValue>{statusLabel}</SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value={ALL_VALUE}>All Statuses</SelectItem>
-          <SelectItem value="pending">Open</SelectItem>
-          <SelectItem value="done">Done</SelectItem>
-          <SelectItem value="alert">Alert</SelectItem>
-        </SelectContent>
-      </Select>
+        displayLabel={statusLabel}
+        icon={Circle}
+        size="dashboard"
+        triggerClassName="min-w-[140px]"
+        options={[
+          { value: ALL_VALUE, label: "All Statuses" },
+          { value: "pending", label: "Open" },
+          { value: "done", label: "Done" },
+          { value: "alert", label: "Alert" },
+        ]}
+      />
 
-      {/* Month */}
-      <Select
+      <FilterSelect
         value={month ?? ALL_VALUE}
         onValueChange={(v) => setMonth(v === ALL_VALUE ? null : v)}
-      >
-        <SelectTrigger className="h-9 w-auto min-w-[155px] rounded-2xl shadow-sm bg-white border-gray-200 text-gray-700 gap-2">
-          <CalendarRange className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-          <SelectValue>{monthLabel}</SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value={ALL_VALUE}>Monthly View</SelectItem>
-          {monthOptions.map((monthOption) => (
-            <SelectItem key={monthOption.value} value={monthOption.value}>
-              {monthOption.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+        displayLabel={monthLabel}
+        icon={CalendarRange}
+        size="dashboard"
+        triggerClassName="min-w-[155px]"
+        options={[
+          { value: ALL_VALUE, label: "Monthly View" },
+          ...monthOptions.map((m) => ({ value: m.value, label: m.label })),
+        ]}
+      />
 
-      {/* Reset — same glass control as patient management toolbar (`GlassResetFilterButton`). */}
-      {showReset && <GlassResetFilterButton onClick={onReset} />}
+      {showReset ? <GlassResetFilterButton onClick={onReset} /> : null}
     </div>
   );
 }

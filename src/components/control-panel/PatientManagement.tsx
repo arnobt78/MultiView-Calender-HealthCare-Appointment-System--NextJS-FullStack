@@ -58,6 +58,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { PatientCreateInput } from "@/hooks/usePatients";
 import { format } from "date-fns";
+import { FilterSelect } from "@/components/shared/filters/FilterSelect";
+import { APP_NAVBAR_STICKY_OFFSET_CLASS } from "@/lib/portal-z-index";
 import {
   Select,
   SelectContent,
@@ -603,7 +605,12 @@ export function PatientManagementInner({
         {!isDoctorPortal ? <PatientManagementStatsRow /> : null}
 
         {/* Sticky toolbar: filters + search only (export/add moved to PageHeader). */}
-        <div className="sticky top-0 z-10 flex min-h-[52px] flex-wrap items-center gap-2 bg-transparent backdrop-blur-sm">
+        <div
+          className={cn(
+            "sticky z-10 flex min-h-[52px] flex-wrap items-center gap-2 bg-white/90 backdrop-blur-sm supports-[backdrop-filter]:bg-white/80",
+            APP_NAVBAR_STICKY_OFFSET_CLASS
+          )}
+        >
           <div className="relative min-w-0 w-full flex-1 sm:max-w-md sm:flex-1">
             <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
               <FiSearch className="h-4 w-4" aria-hidden />
@@ -617,62 +624,54 @@ export function PatientManagementInner({
               aria-label="Search patients by name or email"
             />
           </div>
-          <Select value={status} onValueChange={(v) => setStatus(v as PatientStatusFilter)}>
-            <SelectTrigger
-              className="h-10 w-auto min-w-[160px] max-w-[200px] shrink-0 rounded-2xl border-gray-200 bg-white text-gray-700 shadow-sm gap-2"
-              aria-label="Filter by status"
-            >
-              <ListFilter className="h-3.5 w-3.5 shrink-0 text-gray-400" aria-hidden />
-              <SelectValue>{STATUS_FILTER_LABEL[status]}</SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select
+          <FilterSelect
+            value={status}
+            onValueChange={(v) => setStatus(v as PatientStatusFilter)}
+            displayLabel={STATUS_FILTER_LABEL[status]}
+            icon={ListFilter}
+            size="toolbar"
+            triggerClassName="max-w-[200px]"
+            ariaLabel="Filter by status"
+            options={[
+              { value: "all", label: "All Statuses" },
+              { value: "active", label: "Active" },
+              { value: "inactive", label: "Inactive" },
+            ]}
+          />
+          <FilterSelect
             value={careTier}
             onValueChange={(v) => setCareTier(v as PatientCareTierFilter)}
-          >
-            <SelectTrigger
-              className="h-10 w-auto min-w-[200px] max-w-[min(42vw,280px)] shrink-0 rounded-2xl border-gray-200 bg-white text-gray-700 shadow-sm gap-2"
-              aria-label="Filter by care tier"
-            >
-              <Activity className="h-3.5 w-3.5 shrink-0 text-gray-400" aria-hidden />
-              <SelectValue>{careTierTriggerLabel(careTier)}</SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Care Tiers</SelectItem>
-              <SelectItem value="unset">No Tier Set</SelectItem>
-              {PATIENT_CARE_LEVEL_STAGES.map((s) => (
-                <SelectItem key={s.value} value={String(s.value)} title={s.detail}>
-                  {s.value} — {s.shortLabel}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            displayLabel={careTierTriggerLabel(careTier)}
+            icon={Activity}
+            size="toolbar"
+            triggerClassName="min-w-[200px] max-w-[min(42vw,280px)]"
+            ariaLabel="Filter by care tier"
+            options={[
+              { value: "all", label: "All Care Tiers" },
+              { value: "unset", label: "No Tier Set" },
+              ...PATIENT_CARE_LEVEL_STAGES.map((s) => ({
+                value: String(s.value),
+                label: `${s.value} — ${s.shortLabel}`,
+              })),
+            ]}
+          />
           {!lockPrimaryDoctor ? (
-            <Select
+            <FilterSelect
               value={primaryDoctorId}
               onValueChange={(v) => setPrimaryDoctorId(v as PatientPrimaryDoctorFilter)}
-            >
-              <SelectTrigger
-                className="h-10 w-auto min-w-[200px] max-w-[min(42vw,280px)] shrink-0 rounded-2xl border-gray-200 bg-white text-gray-700 shadow-sm gap-2"
-                aria-label="Filter by primary doctor"
-              >
-                <Stethoscope className="h-3.5 w-3.5 shrink-0 text-gray-400" aria-hidden />
-                <SelectValue>{primaryDoctorTriggerLabel}</SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Doctors</SelectItem>
-                {doctors.map((d) => (
-                  <SelectItem key={d.id} value={d.id}>
-                    {d.display_name?.trim() || d.email}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              displayLabel={primaryDoctorTriggerLabel}
+              icon={Stethoscope}
+              size="toolbar"
+              triggerClassName="min-w-[200px] max-w-[min(42vw,280px)]"
+              ariaLabel="Filter by primary doctor"
+              options={[
+                { value: "all", label: "All Doctors" },
+                ...doctors.map((d) => ({
+                  value: d.id,
+                  label: d.display_name?.trim() || d.email,
+                })),
+              ]}
+            />
           ) : null}
           {hasPatientToolbarFilters ? (
             <GlassResetFilterButton

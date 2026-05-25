@@ -4,5 +4,8 @@ export { DoctorAdditionalTypesEditor } from "./DoctorAdditionalTypesEditor";
 export { DoctorGlobalVisitTypesEditor } from "./DoctorGlobalVisitTypesEditor";
 export { DoctorScheduleSettings } from "./DoctorScheduleSettings";
 export { DoctorPortalSchedulePanel } from "./DoctorPortalSchedulePanel";
+export { DoctorPortalWeeklyHoursCard } from "./DoctorPortalWeeklyHoursCard";
+export { DoctorPortalTimeOffCard } from "./DoctorPortalTimeOffCard";
+export { DoctorSettingsGlassListRow } from "./DoctorSettingsGlassListRow";
 export { DoctorVisitTypesSettings } from "./DoctorVisitTypesSettings";
 export { useCanEditDoctorSettings } from "./useCanEditDoctorSettings";

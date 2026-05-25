@@ -7,6 +7,8 @@
 import { useState, useMemo } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Video, Loader2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { DoctorSettingsGlassListRow } from "@/components/shared/doctor-settings/DoctorSettingsGlassListRow";
 import { useAppointmentTypesForDoctor } from "@/hooks/useAppointmentTypes";
 import { apiClient, handleApiError } from "@/lib/api-client";
 import { notify } from "@/lib/notify";
@@ -17,7 +19,12 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import type { DoctorAppointmentTypesQueryData } from "@/lib/doctor-portal-settings-prefetch";
 import type { DoctorSettingsVariant } from "@/lib/doctor-schedule-types";
-import { cn } from "@/lib/utils";
+import { DOCTOR_PORTAL_VISIT_TYPE_COPY } from "@/lib/doctor-portal-visit-type-copy";
+import {
+  doctorSettingsGlassCheckboxClass,
+  doctorSettingsPortalIntroClass,
+} from "@/lib/doctor-settings-glass-surfaces";
+import { cn, toTitleCaseLabel } from "@/lib/utils";
 
 type GlobalTypeRow = {
   id: string;
@@ -103,11 +110,17 @@ export function DoctorGlobalVisitTypesEditor({
   });
 
   const listBodyLoading = isLoading && data === undefined;
+  const isPortal = variant === "portal";
+
   if (listBodyLoading) {
     return (
-      <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin shrink-0" aria-hidden />
-        Loading visit types…
+      <div className="space-y-2">
+        {isPortal ? (
+          <Skeleton className="mb-3 h-10 w-full rounded-xl" aria-hidden />
+        ) : null}
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-14 w-full rounded-2xl" />
+        ))}
       </div>
     );
   }
@@ -118,60 +131,61 @@ export function DoctorGlobalVisitTypesEditor({
 
   if (globalTypes.length === 0) {
     return (
-      <p className="py-2 text-sm text-muted-foreground">No global appointment types configured.</p>
+      <p className="py-2 text-sm text-muted-foreground">
+        {isPortal ? DOCTOR_PORTAL_VISIT_TYPE_COPY.emptyGlobalTypes : "No global appointment types configured."}
+      </p>
     );
   }
 
   return (
-    <ul className={cn("space-y-2", variant === "portal" && "grid grid-cols-1 gap-2")}>
-      {globalTypes.map((t) => {
-        const checked = t.is_enabled !== false;
-        const isPending = pendingIds.has(t.id);
+    <div className={cn(isPortal && "space-y-3")}>
+      {isPortal ? (
+        <p className={doctorSettingsPortalIntroClass}>{DOCTOR_PORTAL_VISIT_TYPE_COPY.patientTypesIntro}</p>
+      ) : (
+        <p className="text-xs text-muted-foreground leading-relaxed mb-3">
+          Organization-wide templates. Toggle availability for this doctor.
+        </p>
+      )}
+      <ul className="space-y-2">
+        {globalTypes.map((t) => {
+          const checked = t.is_enabled !== false;
+          const isPending = pendingIds.has(t.id);
 
-        return (
-          <li
-            key={t.id}
-            className={cn(
-              "flex items-center gap-2 rounded-2xl border px-3 py-2.5 text-xs transition-colors",
-              variant === "portal"
-                ? checked
-                  ? "border-violet-100 bg-violet-50/50"
-                  : "border-border/40 bg-muted/30 opacity-80"
-                : "rounded-lg border bg-emerald-50/40"
-            )}
-          >
-            <span className="relative flex shrink-0 items-center">
-              {isPending ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald-700" aria-hidden />
-              ) : (
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  disabled={isPending}
-                  onChange={(e) =>
-                    mutate({ appointment_type_id: t.id, is_enabled: e.target.checked })
-                  }
-                  className="h-4 w-4 cursor-pointer rounded accent-emerald-700 disabled:cursor-not-allowed"
-                  aria-label={`${checked ? "Disable" : "Enable"} ${t.name}`}
-                />
-              )}
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-gray-800">{t.name}</p>
-              <p className="text-[10px] text-muted-foreground">
-                {t.duration_minutes} min
-                {t.is_telehealth ? " · Telehealth" : ""}
-              </p>
-            </div>
-            {t.is_telehealth ? (
-              <span className="flex shrink-0 items-center gap-1 rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-medium text-sky-700">
-                <Video className="h-3 w-3" aria-hidden />
-                Telehealth
-              </span>
-            ) : null}
-          </li>
-        );
-      })}
-    </ul>
+          return (
+            <DoctorSettingsGlassListRow
+              key={t.id}
+              tone="violet"
+              enabled={checked}
+              leading={
+                isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-violet-600" aria-hidden />
+                ) : (
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    disabled={isPending}
+                    onChange={(e) =>
+                      mutate({ appointment_type_id: t.id, is_enabled: e.target.checked })
+                    }
+                    className={doctorSettingsGlassCheckboxClass("violet")}
+                    aria-label={`${checked ? "Disable" : "Enable"} ${t.name}`}
+                  />
+                )
+              }
+              title={toTitleCaseLabel(t.name)}
+              meta={`${t.duration_minutes} min${t.is_telehealth ? " · Telehealth" : ""}`}
+              trailing={
+                t.is_telehealth ? (
+                  <span className="flex shrink-0 items-center gap-1 rounded-full border border-sky-200/60 bg-sky-50/90 px-2 py-0.5 text-[10px] font-medium text-sky-700 shadow-[0_4px_12px_rgba(2,132,199,0.1)]">
+                    <Video className="h-3 w-3" aria-hidden />
+                    {toTitleCaseLabel("Telehealth")}
+                  </span>
+                ) : null
+              }
+            />
+          );
+        })}
+      </ul>
+    </div>
   );
 }

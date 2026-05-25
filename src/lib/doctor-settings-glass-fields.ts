@@ -26,9 +26,19 @@ export const doctorSettingsGlassTextRowClass = {
 } as const;
 
 /** Portal density (`h-9`) — weekly day/timezone grid. */
+const glassFieldFocusEmeraldClass =
+  "placeholder:text-gray-500 focus-visible:border-emerald-400/50 focus-visible:ring-2 focus-visible:ring-emerald-200/40";
+
+export const doctorSettingsGlassTextRowClassEmerald = cn(
+  staffAppointmentGlassRowControlBase,
+  "cursor-text border-emerald-200/50 shadow-[0_8px_24px_rgba(16,185,129,0.14)]",
+  glassFieldFocusEmeraldClass
+);
+
 export const doctorSettingsGlassTextInputClass = {
   sky: cn(doctorSettingsGlassTextRowClass.sky, "h-9 min-h-9 rounded-xl"),
   amber: cn(doctorSettingsGlassTextRowClass.amber, "h-9 min-h-9 rounded-xl"),
+  emerald: cn(doctorSettingsGlassTextRowClassEmerald, "h-9 min-h-9 rounded-xl"),
 } as const;
 
 export const doctorSettingsGlassSelectTriggerClass = cn(

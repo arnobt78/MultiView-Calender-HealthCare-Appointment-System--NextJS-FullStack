@@ -22,6 +22,7 @@ import VideoCall from "@/components/calendar/VideoCall";
 import QuickActionsModal from "@/components/shared/QuickActionsModal";
 import { AppProviders } from "@/providers/AppProviders";
 import { dashboardShellClass } from "@/lib/dashboard-layout";
+import { APP_NAVBAR_OFFSET_CLASS } from "@/lib/portal-z-index";
 import { cn } from "@/lib/utils";
 import { notify } from "@/lib/notify";
 import { NavRoleProvider } from "@/context/NavRoleContext";
@@ -193,6 +194,7 @@ function AuthShellInner({ children }: { children: React.ReactNode }) {
        */}
       <main
         className={cn(
+          APP_NAVBAR_OFFSET_CLASS,
           "min-w-0 w-full px-0",
           isDashboard || isControlPanel
             ? "flex min-h-0 flex-1 flex-col overflow-hidden"

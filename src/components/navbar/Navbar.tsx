@@ -98,6 +98,7 @@ import { UserAvatar } from "@/components/shared/UserAvatar";
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import { dashboardShellClass } from "@/lib/dashboard-layout";
 import { cn } from "@/lib/utils";
+import { Z_NAVBAR } from "@/lib/portal-z-index";
 
 export default function Navbar() {
   const { logout, isLoggingOut } = useAuth();
@@ -125,9 +126,12 @@ export default function Navbar() {
     ? user.email.substring(0, 2).toUpperCase()
     : "U";
 
-  // z-[60] keeps navbar above Radix Select/HoverCard portals (z-50) on doctor portal forms.
   return (
-    <div className="sticky top-0 z-[60] flex w-full shrink-0 flex-col border-b border-gray-100/80 bg-transparent backdrop-blur-sm">
+    <div
+      data-slot="app-navbar"
+      style={{ zIndex: Z_NAVBAR }}
+      className="fixed inset-x-0 top-0 flex w-full shrink-0 flex-col border-b border-gray-100/80 bg-white/90 backdrop-blur-sm supports-[backdrop-filter]:bg-white/80"
+    >
       {/* supports-backdrop-filter:bg-white/80 */}
       <div
         className={cn(

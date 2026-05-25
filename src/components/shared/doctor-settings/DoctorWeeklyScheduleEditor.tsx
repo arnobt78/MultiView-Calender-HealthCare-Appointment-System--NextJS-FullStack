@@ -13,13 +13,7 @@ import { DoctorSettingsGlassInput } from "@/components/shared/doctor-settings/Do
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { FilterSelect } from "@/components/shared/filters/FilterSelect";
 import { GlassCollapsibleDetails } from "@/components/shared/GlassCollapsibleDetails";
 import { GlassDoctorSettingsActionChip } from "@/components/shared/doctor-settings/GlassDoctorSettingsActionChip";
 import { DoctorSettingsSlotRow } from "@/components/shared/doctor-settings/DoctorSettingsSlotRow";
@@ -234,18 +228,17 @@ export function DoctorWeeklyScheduleEditor({
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <div className="space-y-1 col-span-2 sm:col-span-1">
               <Label className="text-xs">{toTitleCaseLabel("Day")}</Label>
-              <Select value={editWeekday} onValueChange={setEditWeekday}>
-                <SelectTrigger className={doctorSettingsGlassSelectTriggerClass}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent position="popper" className="z-[55]">
-                  {WEEKDAY_LABELS.map((label, i) => (
-                    <SelectItem key={i} value={String(i)}>
-                      {toTitleCaseLabel(label)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <FilterSelect
+                value={editWeekday}
+                onValueChange={setEditWeekday}
+                displayLabel={toTitleCaseLabel(WEEKDAY_LABELS[Number(editWeekday)] ?? "")}
+                size="toolbar"
+                triggerClassName={cn(doctorSettingsGlassSelectTriggerClass, "w-full")}
+                options={WEEKDAY_LABELS.map((label, i) => ({
+                  value: String(i),
+                  label,
+                }))}
+              />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">{toTitleCaseLabel("Start")}</Label>
@@ -343,18 +336,17 @@ export function DoctorWeeklyScheduleEditor({
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <div className="space-y-1 col-span-2 sm:col-span-1">
           <Label className="text-xs">{toTitleCaseLabel("Day")}</Label>
-            <Select value={newWeekday} onValueChange={setNewWeekday}>
-                <SelectTrigger className={cn(doctorSettingsGlassSelectTriggerClass, "w-full")}>
-              <SelectValue />
-            </SelectTrigger>
-                <SelectContent position="popper" className="z-[55]">
-                  {WEEKDAY_LABELS.map((label, i) => (
-                    <SelectItem key={i} value={String(i)}>
-                      {toTitleCaseLabel(label)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <FilterSelect
+              value={newWeekday}
+              onValueChange={setNewWeekday}
+              displayLabel={toTitleCaseLabel(WEEKDAY_LABELS[Number(newWeekday)] ?? "")}
+              size="toolbar"
+              triggerClassName={cn(doctorSettingsGlassSelectTriggerClass, "w-full")}
+              options={WEEKDAY_LABELS.map((label, i) => ({
+                value: String(i),
+                label,
+              }))}
+            />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">{toTitleCaseLabel("Start")}</Label>
