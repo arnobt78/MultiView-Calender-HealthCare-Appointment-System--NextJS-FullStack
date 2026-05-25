@@ -44,14 +44,22 @@ async function afterTypeMutation(
   if (refreshRsc) router.refresh();
 }
 
-export function useAppointmentTypesForDoctor(doctorId: string | null | undefined) {
+export type AppointmentTypesForDoctorQueryData = {
+  types: AppointmentTypeApiRow[];
+};
+
+export function useAppointmentTypesForDoctor(
+  doctorId: string | null | undefined,
+  options?: { initialData?: AppointmentTypesForDoctorQueryData }
+) {
   return useQuery({
     queryKey: queryKeys.appointmentTypes.byDoctor(doctorId ?? ""),
     queryFn: () =>
-      apiClient<{ types: AppointmentTypeApiRow[] }>(
+      apiClient<AppointmentTypesForDoctorQueryData>(
         `/api/appointment-types?doctorId=${encodeURIComponent(doctorId!)}`
       ),
     enabled: Boolean(doctorId && isValidUUID(doctorId)),
+    initialData: options?.initialData,
     staleTime: 5 * 60 * 1000,
   });
 }

@@ -16,20 +16,25 @@ import {
   type AppointmentTypeApiRow,
 } from "@/hooks/useAppointmentTypes";
 import { APPOINTMENT_TYPE_COPY } from "@/lib/appointment-type-copy";
+import type { DoctorAppointmentTypesQueryData } from "@/lib/doctor-portal-settings-prefetch";
 import type { DoctorSettingsVariant } from "@/lib/doctor-schedule-types";
 import { doctorSettingsAddFormClass } from "@/components/shared/doctor-settings/doctor-settings-classes";
 
 type Props = {
   doctorId: string;
   variant?: DoctorSettingsVariant;
+  initialAppointmentTypes?: DoctorAppointmentTypesQueryData;
 };
 
 export function DoctorAdditionalTypesEditor({
   doctorId,
   variant = "control-panel",
+  initialAppointmentTypes,
 }: Props) {
   const refreshRsc = variant === "control-panel";
-  const { data, isLoading, isError } = useAppointmentTypesForDoctor(doctorId);
+  const { data, isLoading, isError } = useAppointmentTypesForDoctor(doctorId, {
+    initialData: initialAppointmentTypes,
+  });
   const { createType, updateType, deleteType, isCreating, isUpdating, isDeleting } =
     useAppointmentTypeMutations(doctorId, { refreshRsc });
 
@@ -78,7 +83,8 @@ export function DoctorAdditionalTypesEditor({
     cancelEdit();
   };
 
-  if (isLoading) {
+  const listBodyLoading = isLoading && data === undefined;
+  if (listBodyLoading) {
     return (
       <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
         <Loader2 className="h-4 w-4 animate-spin shrink-0" aria-hidden />

@@ -30,6 +30,7 @@ import { apiClient } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import { invalidateDoctorSchedule } from "@/lib/query-client";
 import { notify } from "@/lib/notify";
+import type { DoctorAvailabilityQueryData } from "@/lib/doctor-portal-settings-prefetch";
 import type {
   AvailabilityWindow,
   DoctorSettingsEditorLayout,
@@ -61,6 +62,8 @@ type Props = {
   variant?: DoctorSettingsVariant;
   layout?: DoctorSettingsEditorLayout;
   showSummaryPreview?: boolean;
+  /** SSR seed — skips list skeleton on `/doctor-portal` refresh when provided. */
+  initialAvailability?: DoctorAvailabilityQueryData;
 };
 
 function resolveLayout(
@@ -76,11 +79,14 @@ export function DoctorWeeklyScheduleEditor({
   variant = "control-panel",
   layout: layoutProp,
   showSummaryPreview = variant === "control-panel",
+  initialAvailability,
 }: Props) {
   const layout = resolveLayout(variant, layoutProp);
   const addDetailsRef = useRef<HTMLDetailsElement>(null);
   const queryClient = useQueryClient();
-  const canEdit = useCanEditDoctorSettings(doctorId);
+  const canEdit = useCanEditDoctorSettings(doctorId, {
+    portalSelfService: variant === "portal",
+  });
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
     requestAnimationFrame(() => setIsMounted(true));
@@ -92,6 +98,7 @@ export function DoctorWeeklyScheduleEditor({
       apiClient<{ availability: AvailabilityWindow[] }>(
         `/api/doctor-availability?doctorId=${encodeURIComponent(doctorId)}`
       ),
+    initialData: initialAvailability,
     staleTime: 60_000,
   });
   const windows = availData?.availability ?? [];
@@ -207,7 +214,10 @@ export function DoctorWeeklyScheduleEditor({
     });
   }
 
-  const loading = !isMounted || availLoading;
+  /** List rows only — add-window chip stays mounted (inline skeleton pattern). */
+  const listBodyLoading = initialAvailability
+    ? availLoading && availData === undefined
+    : !isMounted || availLoading;
   const busy =
     addWindowMutation.isPending ||
     patchWindowMutation.isPending ||
@@ -260,7 +270,6 @@ export function DoctorWeeklyScheduleEditor({
               <DoctorSettingsGlassInput
                 tone="sky"
                 density="compact"
-                debugFieldId="weekly-edit-timezone"
                 value={editTz}
                 onChange={(e) => setEditTz(e.target.value)}
               />
@@ -370,7 +379,6 @@ export function DoctorWeeklyScheduleEditor({
           <DoctorSettingsGlassInput
             tone="sky"
             density="compact"
-            debugFieldId="weekly-add-timezone"
             value={newTz}
             onChange={(e) => setNewTz(e.target.value)}
             placeholder={DEFAULT_DOCTOR_TIMEZONE}
@@ -389,7 +397,7 @@ export function DoctorWeeklyScheduleEditor({
 
   return (
     <div className={cn("space-y-3", variant === "portal" && "text-gray-700")}>
-      {showSummaryPreview && layout === "flat" && !loading && windows.length > 0 ? (
+      {showSummaryPreview && layout === "flat" && !listBodyLoading && windows.length > 0 ? (
         <DoctorAvailabilityGroups availabilities={windows} layout="stacked" className="mb-1" />
       ) : null}
 
@@ -400,7 +408,7 @@ export function DoctorWeeklyScheduleEditor({
         </p>
       ) : null}
 
-      {loading ? (
+      {listBodyLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} className="h-12 w-full rounded-xl" />

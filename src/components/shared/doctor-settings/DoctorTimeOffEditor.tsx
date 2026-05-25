@@ -25,6 +25,7 @@ import { apiClient } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import { invalidateDoctorSchedule } from "@/lib/query-client";
 import { notify } from "@/lib/notify";
+import type { DoctorTimeOffQueryData } from "@/lib/doctor-portal-settings-prefetch";
 import type {
   DoctorSettingsEditorLayout,
   DoctorSettingsVariant,
@@ -46,6 +47,8 @@ type Props = {
   doctorId: string;
   variant?: DoctorSettingsVariant;
   layout?: DoctorSettingsEditorLayout;
+  /** SSR seed — skips list skeleton on `/doctor-portal` refresh when provided. */
+  initialTimeOff?: DoctorTimeOffQueryData;
 };
 
 function resolveLayout(
@@ -60,11 +63,14 @@ export function DoctorTimeOffEditor({
   doctorId,
   variant = "control-panel",
   layout: layoutProp,
+  initialTimeOff,
 }: Props) {
   const layout = resolveLayout(variant, layoutProp);
   const addDetailsRef = useRef<HTMLDetailsElement>(null);
   const queryClient = useQueryClient();
-  const canEdit = useCanEditDoctorSettings(doctorId);
+  const canEdit = useCanEditDoctorSettings(doctorId, {
+    portalSelfService: variant === "portal",
+  });
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
     requestAnimationFrame(() => setIsMounted(true));
@@ -76,6 +82,7 @@ export function DoctorTimeOffEditor({
       apiClient<{ timeOff: TimeOffBlock[] }>(
         `/api/doctor-time-off?doctorId=${encodeURIComponent(doctorId)}`
       ),
+    initialData: initialTimeOff,
     staleTime: 60_000,
   });
   const timeOffBlocks = timeOffData?.timeOff ?? [];
@@ -179,7 +186,9 @@ export function DoctorTimeOffEditor({
     });
   }
 
-  const loading = !isMounted || timeOffLoading;
+  const listBodyLoading = initialTimeOff
+    ? timeOffLoading && timeOffData === undefined
+    : !isMounted || timeOffLoading;
   const busy =
     addTimeOffMutation.isPending ||
     patchTimeOffMutation.isPending ||
@@ -209,7 +218,6 @@ export function DoctorTimeOffEditor({
             <DoctorSettingsGlassInput
               tone="amber"
               density="row"
-              debugFieldId="time-off-edit-reason"
               value={editReason}
               onChange={(e) => setEditReason(e.target.value)}
               placeholder={toTitleCaseLabel("e.g. Conference, holiday…")}
@@ -299,7 +307,6 @@ export function DoctorTimeOffEditor({
         <DoctorSettingsGlassInput
           tone="amber"
           density="row"
-          debugFieldId="time-off-add-reason"
           value={newTimeOffReason}
           onChange={(e) => setNewTimeOffReason(e.target.value)}
           placeholder={toTitleCaseLabel("e.g. Conference, holiday…")}
@@ -317,7 +324,7 @@ export function DoctorTimeOffEditor({
 
   return (
     <div className={cn("space-y-3", variant === "portal" && "text-gray-700")}>
-      {loading ? (
+      {listBodyLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 2 }).map((_, i) => (
             <Skeleton key={i} className="h-12 w-full rounded-xl" />

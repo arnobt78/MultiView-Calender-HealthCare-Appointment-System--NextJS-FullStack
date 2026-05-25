@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import { CalendarClock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,31 +38,6 @@ export function SchedulingDatetimeRangeFields({
 }: Props) {
   const inputClass =
     tone === "amber" ? glassDatetimeLocalInputClassAmber : glassDatetimeLocalInputClass;
-  useEffect(() => {
-    if (tone !== "amber") return;
-    const el = document.getElementById(startId);
-    if (!el) return;
-    const cs = getComputedStyle(el);
-    // #region agent log
-    fetch("http://127.0.0.1:7938/ingest/15849825-35e9-4832-9975-ca3563c056ec", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "8bb90b" },
-      body: JSON.stringify({
-        sessionId: "8bb90b",
-        runId: "pre-fix",
-        hypothesisId: "H2",
-        location: "SchedulingDatetimeRangeFields.tsx:useEffect",
-        message: "datetime-local computed styles",
-        data: {
-          boxShadow: cs.boxShadow,
-          borderColor: cs.borderColor,
-          height: cs.height,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
-  }, [tone, startId]);
 
   return (
     <div className={cn("grid grid-cols-1 gap-4 sm:grid-cols-2", className)}>

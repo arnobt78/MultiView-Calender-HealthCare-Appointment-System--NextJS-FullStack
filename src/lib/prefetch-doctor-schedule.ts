@@ -1,14 +1,26 @@
 /**
- * Warm doctor schedule + visit-type queries before doctor-portal settings paint.
+ * Client cache seed + warm fetch for doctor portal schedule / visit-type panels.
  */
 
 import type { QueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
+import type { DoctorPortalSettingsPrefetch } from "@/lib/doctor-portal-settings-prefetch";
 import type { AppointmentTypeApiRow } from "@/hooks/useAppointmentTypes";
 import type { AvailabilityWindow, TimeOffBlock } from "@/lib/doctor-schedule-types";
 
 export const DOCTOR_SCHEDULE_PREFETCH_STALE_MS = 60_000;
+
+/** SSR props → TanStack cache (same keys as weekly/time-off/type editors). */
+export function seedDoctorPortalSettingsCache(
+  queryClient: QueryClient,
+  doctorId: string,
+  seed: DoctorPortalSettingsPrefetch
+): void {
+  queryClient.setQueryData(queryKeys.doctors.availability(doctorId), seed.availability);
+  queryClient.setQueryData(queryKeys.doctors.timeOff(doctorId), seed.timeOff);
+  queryClient.setQueryData(queryKeys.appointmentTypes.byDoctor(doctorId), seed.appointmentTypes);
+}
 
 export function prefetchDoctorScheduleSettings(
   queryClient: QueryClient,

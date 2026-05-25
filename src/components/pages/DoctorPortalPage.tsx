@@ -8,7 +8,7 @@
  * [Global visit types | Additional types] → My Patients (full width).
  *
  * Settings reuse CP APIs via `src/components/shared/doctor-settings/*` with `variant="portal"`.
- * Cache: seeds `doctorPortal.all`, `patients.all`, and prefetches schedule/type queries.
+ * Cache: SSR seeds `doctorPortal.all`, `patients.all`, and schedule/type query keys via `initialScheduleSettings`.
  */
 
 import { useState, useLayoutEffect } from "react";
@@ -16,6 +16,11 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
 import { apiClient } from "@/lib/api-client";
 import type { DoctorPortalData } from "@/types/types";
+import type { DoctorPortalSettingsPrefetch } from "@/lib/doctor-portal-settings-prefetch";
+import {
+  prefetchDoctorScheduleSettings,
+  seedDoctorPortalSettingsCache,
+} from "@/lib/prefetch-doctor-schedule";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PortalDoctorChromeHeader } from "@/components/shared/PortalDoctorChromeHeader";
 import { PortalPanelSection } from "@/components/shared/PortalPanelSection";
@@ -28,7 +33,6 @@ import {
   DoctorGlobalVisitTypesEditor,
   DoctorAdditionalTypesEditor,
 } from "@/components/shared/doctor-settings";
-import { prefetchDoctorScheduleSettings } from "@/lib/prefetch-doctor-schedule";
 import {
   Calendar,
   CalendarCheck,
@@ -44,9 +48,14 @@ const portalPanelPairGridClass = "grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6
 
 interface DoctorPortalPageProps {
   initialData: DoctorPortalData | null;
+  /** SSR mirror of availability + time off + appointment-types?doctorId= — avoids settings skeleton on refresh. */
+  initialScheduleSettings: DoctorPortalSettingsPrefetch | null;
 }
 
-export default function DoctorPortalPage({ initialData }: DoctorPortalPageProps) {
+export default function DoctorPortalPage({
+  initialData,
+  initialScheduleSettings,
+}: DoctorPortalPageProps) {
   const queryClient = useQueryClient();
   const [patientSectionCount, setPatientSectionCount] = useState<number | null>(null);
 
@@ -56,10 +65,12 @@ export default function DoctorPortalPage({ initialData }: DoctorPortalPageProps)
     }
     queryClient.setQueryData(queryKeys.patients.all, initialData?.patients ?? []);
     const doctorId = initialData?.doctor?.id;
-    if (doctorId) {
+    if (doctorId && initialScheduleSettings) {
+      seedDoctorPortalSettingsCache(queryClient, doctorId, initialScheduleSettings);
+    } else if (doctorId) {
       prefetchDoctorScheduleSettings(queryClient, doctorId);
     }
-  }, [queryClient, initialData]);
+  }, [queryClient, initialData, initialScheduleSettings]);
 
   const { data, isLoading } = useQuery<DoctorPortalData | undefined>({
     queryKey: queryKeys.doctorPortal.all,
@@ -152,7 +163,7 @@ export default function DoctorPortalPage({ initialData }: DoctorPortalPageProps)
           id="dp-upcoming"
           title="Upcoming Appointments"
           icon={CalendarClock}
-          iconClassName="border-indigo-100 bg-indigo-50 [&_svg]:text-indigo-500"
+          iconClassName="border-indigo-100 bg-indigo-50 [&_svg]:text-indigo-600"
           count={upcomingCountLabel}
           countSkeleton={portalLoading}
           contentClassName="pb-2"
@@ -184,7 +195,12 @@ export default function DoctorPortalPage({ initialData }: DoctorPortalPageProps)
         </PortalPanelSection>
       </div>
 
-      <DoctorPortalSchedulePanel doctorId={doctorId} loading={portalLoading} />
+      <DoctorPortalSchedulePanel
+        doctorId={doctorId}
+        portalLoading={portalLoading}
+        initialAvailability={initialScheduleSettings?.availability}
+        initialTimeOff={initialScheduleSettings?.timeOff}
+      />
 
       <div className={portalPanelPairGridClass}>
         <PortalPanelSection
@@ -195,7 +211,11 @@ export default function DoctorPortalPage({ initialData }: DoctorPortalPageProps)
           iconClassName="border-violet-100 bg-violet-50 [&_svg]:text-violet-600"
         >
           {doctorId ? (
-            <DoctorGlobalVisitTypesEditor doctorId={doctorId} variant="portal" />
+            <DoctorGlobalVisitTypesEditor
+              doctorId={doctorId}
+              variant="portal"
+              initialAppointmentTypes={initialScheduleSettings?.appointmentTypes}
+            />
           ) : (
             <div className="grid grid-cols-1 gap-2">
               {[...Array(4)].map((_, i) => (
@@ -213,7 +233,11 @@ export default function DoctorPortalPage({ initialData }: DoctorPortalPageProps)
           iconClassName="border-emerald-100 bg-emerald-50 [&_svg]:text-emerald-600"
         >
           {doctorId ? (
-            <DoctorAdditionalTypesEditor doctorId={doctorId} variant="portal" />
+            <DoctorAdditionalTypesEditor
+              doctorId={doctorId}
+              variant="portal"
+              initialAppointmentTypes={initialScheduleSettings?.appointmentTypes}
+            />
           ) : (
             <Skeleton className="h-32 w-full rounded-xl" />
           )}

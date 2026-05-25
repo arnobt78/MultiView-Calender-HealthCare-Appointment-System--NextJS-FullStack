@@ -59,15 +59,15 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Prism
 - **Patient tables:** `PatientIdentityCell` shows `PatientAgeGlassBadge` beside name (CP + doctor-portal roster).
 - **Stats:** `DoctorPortalStatsRow` — four `PatientStatCard` metrics (Today / This Week / This Month / Pending); responsive `grid-cols-2 sm:grid-cols-4`; only numeric slots pulse (`portalLoading`).
 - **Panels:** [Today | Upcoming] (`lg:2-col`) · **Booking schedule** (full width — `DoctorPortalSchedulePanel`: weekly hours + unavailable dates, collapsed `<details>` per weekday/add window/time away; glass chips like appointment manual override) · [Patient Visit Types | Additional Types] (`lg:2-col`, combine column later) · My Patients (full width). Shared: `src/components/shared/doctor-settings/*`, `GlassCollapsibleDetails`, `DoctorSettingsGlassInput`, `src/lib/doctor-settings-glass-fields.ts` (same glass tokens as staff appointment dialog).
-- **Prefetch:** `prefetchDoctorScheduleSettings` in portal `useLayoutEffect` — `queryKeys.doctors.availability`, `timeOff`, `appointmentTypes.byDoctor`.
+- **SSR + cache:** `prefetchDoctorPortalSettings` on `/doctor-portal` page (parallel with `prefetchDoctorPortal`) — seeds availability, timeOff, appointment types before paint; `seedDoctorPortalSettingsCache` in `useLayoutEffect`; editors use `initialData` on `useQuery` (no list skeleton on refresh). Client fallback: `prefetchDoctorScheduleSettings`.
 - **Visit types:** `POST /api/appointment-types/doctor-config` → `invalidateAppointmentTypeDerived` (+ `doctorPortal.all`); CP admin toggle also `invalidateAdminPortal`; portal skips `router.refresh()`.
 - **Admin → doctor:** `notifyDoctorSettingsChangedByAdmin` (`src/lib/doctor-settings-notify.ts`) on availability/time-off/type APIs when admin mutates another doctor (in-app notification + email).
-- **API:** `PATCH /api/doctor-availability/[id]` for inline weekly window edit (tests: `doctor-availability-patch.test.ts`).
+- **API:** `PATCH /api/doctor-availability/[id]` + `PATCH /api/doctor-time-off/[id]` for inline edit (Vitest: `doctor-availability-patch.test.ts`; time-off PATCH contract not yet mirrored in tests).
 - **My Patients:** `PatientListFiltersProvider` (`initialPrimaryDoctorId`, `lockPrimaryDoctor`) + `PatientManagementInner` `variant="doctor-portal"` — same toolbar filters as CP (search, status, care tier) without Add/Import/Export or primary-doctor column; links `patientDetailHref("doctor", id)`; View/Edit when `primary_doctor_id` matches session doctor.
 - **Cache:** `useLayoutEffect` always seeds `doctorPortal.all` + `patients.all` (including `[]`) so roster CRUD via `usePatients` updates portal without refresh. `prefetchDoctorPortal` and `GET /api/doctor-portal` include `primary_doctor` on roster patients (`patientUserPick`). `useQuery` uses `initialData` + `staleTime: 3min`.
 - **Invalidation:** `invalidateEntityAffectingAppointments("patients")` and `usePatients` mutations also call `invalidateDoctorPortal`; appointments → `invalidateAfterAppointmentMutation`.
 - **Shell:** `dashboardShellClass` adds `pb-3` for portal routes in `AuthShell` (`src/lib/dashboard-layout.ts`).
-- **Verify (pre-commit):** `npm test && npx tsc --noEmit && npm run lint && npm run build` — 225 tests, all pass.
+- **Verify (pre-commit):** `npm test && npx tsc --noEmit && npm run lint && npm run build` — 226 tests, all pass.
 - **Invalidation (visit types):** `invalidateAppointmentTypeDerived` centralizes `doctorPortal.all` (portal toggles + CP `DoctorGlobalTypeConfigEditor`); CP also `invalidateAdminPortal`.
 
 ### Control panel entity split (users vs patients)
@@ -263,7 +263,7 @@ Shared primitives keep layout fixed while data loads:
 
 **SSR + client:** root `layout.tsx` passes `initialNavRole` into `AuthShell`. Portal pages pass `initialData` on `useQuery`. Profile: `profileLoading = isLoading && !patient`. Navbar role links render when `role` is known (server + client match).
 
-**Audit (agent glance):** Navbar role uses SSR `initialNavRole` via `NavRoleContext`. **Role landing:** `resolveRoleHomeHref` — login, `/home`, landing demo, OAuth, accept-invitation CTA; proxy `/login` → `/home`. **Doctor portal settings:** `DoctorPortalSchedulePanel` + `GlassCollapsibleDetails` collapsible weekly/time-off; `invalidateDoctorSchedule` busts portal + `/services` slots. **Page chrome:** `PortalDoctorChromeHeader` + `PortalPanelSection` + scoped `PatientManagementInner`. Patient booking: 3-step wizard + `CalendarHeaderRoleActions`. **225 tests**, `tsc` + `lint` + `build` pass.
+**Audit (agent glance):** Navbar role uses SSR `initialNavRole` via `NavRoleContext`. **Role landing:** `resolveRoleHomeHref` — login, `/home`, landing demo, OAuth, accept-invitation CTA; proxy `/login` → `/home`. **Doctor portal settings:** `DoctorPortalSchedulePanel` + `GlassCollapsibleDetails` + `DoctorSettingsGlassInput` / `doctor-settings-glass-fields.ts`; `invalidateDoctorSchedule` busts availability, timeOff, `availability.root`, `doctors.all`, `doctorPortal.all`. **Page chrome:** `PortalDoctorChromeHeader` + `PortalPanelSection` + scoped `PatientManagementInner`. Patient booking: 3-step wizard + `CalendarHeaderRoleActions`. **226 tests**, `tsc` + `lint` + `build` pass. **Optional follow-ups:** combine visit-type columns; `PATCH /api/doctor-time-off/[id]` Vitest.
 
 ### Dashboard calendar shared UI (unified `AppointmentCard`)
 

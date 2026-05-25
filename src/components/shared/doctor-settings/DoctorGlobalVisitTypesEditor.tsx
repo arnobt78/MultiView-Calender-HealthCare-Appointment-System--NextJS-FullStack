@@ -15,6 +15,7 @@ import {
   invalidateAdminPortal,
 } from "@/lib/query-client";
 import { useAuth } from "@/hooks/useAuth";
+import type { DoctorAppointmentTypesQueryData } from "@/lib/doctor-portal-settings-prefetch";
 import type { DoctorSettingsVariant } from "@/lib/doctor-schedule-types";
 import { cn } from "@/lib/utils";
 
@@ -30,15 +31,19 @@ type GlobalTypeRow = {
 type Props = {
   doctorId: string;
   variant?: DoctorSettingsVariant;
+  initialAppointmentTypes?: DoctorAppointmentTypesQueryData;
 };
 
 export function DoctorGlobalVisitTypesEditor({
   doctorId,
   variant = "control-panel",
+  initialAppointmentTypes,
 }: Props) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const { data, isLoading, isError } = useAppointmentTypesForDoctor(doctorId);
+  const { data, isLoading, isError } = useAppointmentTypesForDoctor(doctorId, {
+    initialData: initialAppointmentTypes,
+  });
 
   const globalTypes = useMemo<GlobalTypeRow[]>(
     () => (data?.types ?? []).filter((t) => t.user_id === null) as GlobalTypeRow[],
@@ -97,7 +102,8 @@ export function DoctorGlobalVisitTypesEditor({
     },
   });
 
-  if (isLoading) {
+  const listBodyLoading = isLoading && data === undefined;
+  if (listBodyLoading) {
     return (
       <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
         <Loader2 className="h-4 w-4 animate-spin shrink-0" aria-hidden />
