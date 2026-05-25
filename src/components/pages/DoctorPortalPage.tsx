@@ -8,21 +8,17 @@
  *
  * Cache: `useLayoutEffect` seeds `queryKeys.doctorPortal.all` and always seeds
  * `queryKeys.patients.all` (roster array, may be empty) from SSR before first paint.
- * Inline skeleton — chrome and section titles
- * stay mounted; only data slots pulse (`portalLoading = isLoading && !data`).
+ * Schedule rows reuse dashboard color seeds (`resolveAppointmentLineColor`) and
+ * `AppointmentDateTag` / `TelehealthSessionBadge` from shared appointment UI.
  */
 
 import { useState, useLayoutEffect } from "react";
-import { RoleEntityLink } from "@/components/shared/RoleEntityLink";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { format, isToday, isPast, parseISO } from "date-fns";
 import { queryKeys } from "@/lib/query-keys";
-import {
-  invalidateAppointmentTypeDerived,
-} from "@/lib/query-client";
+import { invalidateAppointmentTypeDerived } from "@/lib/query-client";
 import { apiClient, handleApiError } from "@/lib/api-client";
 import { notify } from "@/lib/notify";
-import type { DoctorPortalData, AppointmentType, Appointment } from "@/types/types";
+import type { DoctorPortalData, AppointmentType } from "@/types/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
 import { PortalDoctorChromeHeader } from "@/components/shared/PortalDoctorChromeHeader";
@@ -30,95 +26,17 @@ import { PortalPanelSection } from "@/components/shared/PortalPanelSection";
 import { DoctorPortalStatsRow } from "@/components/doctor-portal/DoctorPortalStatsRow";
 import { PatientManagementInner } from "@/components/control-panel/PatientManagement";
 import { PatientListFiltersProvider } from "@/components/control-panel/PatientListFiltersContext";
+import { DoctorPortalAppointmentListRow } from "@/components/shared/appointments/DoctorPortalAppointmentListRow";
 import {
   Calendar,
   CalendarCheck,
   CalendarClock,
-  CalendarX,
   CheckCircle2,
-  Clock,
   Layers,
-  MapPin,
   Users,
   Video,
-  AlertCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const STATUS_META: Record<string, { cls: string; icon: React.ReactNode; label: string }> = {
-  done: {
-    cls: "calendar-glass-badge-emerald",
-    icon: <CalendarCheck className="h-3 w-3" />,
-    label: "Done",
-  },
-  pending: {
-    cls: "calendar-glass-badge-amber",
-    icon: <CalendarClock className="h-3 w-3" />,
-    label: "Pending",
-  },
-  alert: {
-    cls: "calendar-glass-badge-rose",
-    icon: <CalendarX className="h-3 w-3" />,
-    label: "Alert",
-  },
-};
-
-function AppointmentRow({ appt }: { appt: Appointment }) {
-  const start = parseISO(appt.start);
-  const end = parseISO(appt.end);
-  const meta = STATUS_META[appt.status ?? "pending"] ?? STATUS_META.pending;
-  const overdue = isPast(end) && appt.status !== "done";
-
-  return (
-    <div className="flex items-start gap-2 border-b border-border/40 py-3 last:border-0">
-      <div className="w-16 flex-shrink-0 text-right">
-        <p className="text-xs font-semibold text-foreground">{format(start, "HH:mm")}</p>
-        <p className="text-[10px] text-muted-foreground">{format(end, "HH:mm")}</p>
-      </div>
-      <div className="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-primary/60" />
-      <div className="min-w-0 flex-1">
-        <RoleEntityLink
-          kind="appointment"
-          id={appt.id}
-          label={appt.title}
-          className="block truncate text-sm font-medium"
-        />
-        {appt.location ? (
-          <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
-            <MapPin className="h-3 w-3" />
-            {appt.location}
-          </p>
-        ) : null}
-        {appt.chief_complaint ? (
-          <p className="truncate text-[11px] text-muted-foreground">{appt.chief_complaint}</p>
-        ) : null}
-      </div>
-      <div className="flex flex-shrink-0 flex-col items-end gap-1">
-        <span
-          className={cn(
-            "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium",
-            meta.cls
-          )}
-        >
-          {meta.icon}
-          {meta.label}
-        </span>
-        {appt.is_telehealth ? (
-          <span className="inline-flex items-center gap-1 rounded-full border border-sky-200/60 bg-sky-100/80 px-2 py-0.5 text-[10px] font-medium text-sky-700">
-            <Video className="h-3 w-3" />
-            Telehealth
-          </span>
-        ) : null}
-        {overdue ? (
-          <span className="inline-flex items-center gap-1 rounded-full border border-red-200/60 bg-red-100/80 px-2 py-0.5 text-[10px] font-medium text-red-700">
-            <AlertCircle className="h-3 w-3" />
-            Overdue
-          </span>
-        ) : null}
-      </div>
-    </div>
-  );
-}
 
 interface TypeToggleProps {
   type: AppointmentType;
@@ -168,7 +86,6 @@ export default function DoctorPortalPage({ initialData }: DoctorPortalPageProps)
     if (initialData != null) {
       queryClient.setQueryData(queryKeys.doctorPortal.all, initialData);
     }
-    // Always seed roster cache (including []) so doctor-portal patient table avoids a loading flash.
     queryClient.setQueryData(queryKeys.patients.all, initialData?.patients ?? []);
   }, [queryClient, initialData]);
 
@@ -292,7 +209,11 @@ export default function DoctorPortalPage({ initialData }: DoctorPortalPageProps)
               <p className="text-sm">No appointments today</p>
             </div>
           ) : (
-            <div>{sortedToday.map((appt) => <AppointmentRow key={appt.id} appt={appt} />)}</div>
+            <div>
+              {sortedToday.map((appt) => (
+                <DoctorPortalAppointmentListRow key={appt.id} appt={appt} variant="today" />
+              ))}
+            </div>
           )}
         </PortalPanelSection>
 
@@ -337,6 +258,7 @@ export default function DoctorPortalPage({ initialData }: DoctorPortalPageProps)
           icon={Users}
           iconClassName="border-emerald-100 bg-emerald-50 [&_svg]:text-emerald-600"
           count={patientCountLabel}
+          countInline
           countSkeleton={portalLoading}
           contentClassName="pt-0"
         >
@@ -360,6 +282,7 @@ export default function DoctorPortalPage({ initialData }: DoctorPortalPageProps)
         icon={CalendarClock}
         iconClassName="border-indigo-100 bg-indigo-50 [&_svg]:text-indigo-500"
         count={upcomingCountLabel}
+        countInline
         countSkeleton={portalLoading}
         contentClassName="pb-2"
       >
@@ -382,43 +305,9 @@ export default function DoctorPortalPage({ initialData }: DoctorPortalPageProps)
           </div>
         ) : (
           <div>
-            {upcomingAppts.map((appt) => {
-              const start = parseISO(appt.start);
-              const apptIsToday = isToday(start);
-              return (
-                <div
-                  key={appt.id}
-                  className="flex items-start gap-2 border-b border-border/40 py-3 last:border-0"
-                >
-                  <div className="w-20 flex-shrink-0 text-right">
-                    <p className="text-[10px] font-medium text-muted-foreground">
-                      {apptIsToday ? "Today" : format(start, "EEE, MMM d")}
-                    </p>
-                    <p className="text-xs font-semibold">{format(start, "HH:mm")}</p>
-                  </div>
-                  <div className="h-2 w-2 flex-shrink-0 rounded-full bg-indigo-400/60" />
-                  <div className="min-w-0 flex-1">
-                    <RoleEntityLink
-                      kind="appointment"
-                      id={appt.id}
-                      label={appt.title}
-                      className="block truncate text-sm font-medium"
-                    />
-                    {appt.chief_complaint ? (
-                      <p className="truncate text-[11px] text-muted-foreground">
-                        {appt.chief_complaint}
-                      </p>
-                    ) : null}
-                  </div>
-                  {appt.is_telehealth ? (
-                    <span className="flex flex-shrink-0 items-center gap-1 rounded-full border border-sky-200/60 bg-sky-100/80 px-2 py-0.5 text-[10px] font-medium text-sky-700">
-                      <Video className="h-3 w-3" />
-                      Telehealth
-                    </span>
-                  ) : null}
-                </div>
-              );
-            })}
+            {upcomingAppts.map((appt) => (
+              <DoctorPortalAppointmentListRow key={appt.id} appt={appt} variant="upcoming" />
+            ))}
           </div>
         )}
       </PortalPanelSection>

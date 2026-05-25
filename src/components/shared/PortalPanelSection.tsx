@@ -21,6 +21,8 @@ type PortalPanelSectionProps = {
   iconClassName?: string;
   count?: number | string;
   countSkeleton?: boolean;
+  /** Count pill beside title (My Patients / Upcoming); default trailing for schedule panels. */
+  countInline?: boolean;
   children: ReactNode;
   className?: string;
   contentClassName?: string;
@@ -38,6 +40,7 @@ export function PortalPanelSection({
   iconClassName = "border-sky-100 bg-sky-50 [&_svg]:text-sky-500",
   count,
   countSkeleton = false,
+  countInline = false,
   children,
   className,
   contentClassName,
@@ -58,7 +61,16 @@ export function PortalPanelSection({
               <Icon className="h-3.5 w-3.5" aria-hidden />
             </span>
             <span className="min-w-0">{title}</span>
-            {count !== undefined ? (
+            {count !== undefined && countInline ? (
+              countSkeleton ? (
+                <Skeleton className="h-5 w-10 shrink-0 rounded-full" aria-hidden />
+              ) : (
+                <Badge variant="secondary" className="shrink-0 text-xs font-normal">
+                  {count}
+                </Badge>
+              )
+            ) : null}
+            {count !== undefined && !countInline ? (
               countSkeleton ? (
                 <Skeleton className="ml-auto h-5 w-12 rounded-full" aria-hidden />
               ) : (

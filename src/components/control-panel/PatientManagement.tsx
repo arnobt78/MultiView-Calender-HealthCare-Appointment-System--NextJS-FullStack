@@ -309,8 +309,8 @@ export function PatientManagementInner({
       listSearch.trim().length > 0 ||
       status !== "all" ||
       careTier !== "all" ||
-      primaryDoctorId !== "all",
-    [listSearch, status, careTier, primaryDoctorId]
+      (!lockPrimaryDoctor && primaryDoctorId !== "all"),
+    [listSearch, status, careTier, primaryDoctorId, lockPrimaryDoctor]
   );
   const resetPatientToolbar = () => {
     setListSearch("");
