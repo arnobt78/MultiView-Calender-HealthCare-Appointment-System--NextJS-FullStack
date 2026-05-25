@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { DEMO_ACCOUNTS, DEMO_PASSWORD } from "@/lib/demo-credentials";
+import { resolveRoleHomeHref } from "@/lib/role-home-href";
 
 function GoogleIcon({ className }: { className?: string }) {
   return (
@@ -199,9 +200,7 @@ export default function Login({ redirect = null }: LoginProps) {
         localStorage.setItem("post-login-toast", serialized);
         /* seed the auth cache so AuthShell sees isAuthenticated=true immediately */
         queryClient.setQueryData(queryKeys.auth.me, { ...data.user, email_verified: true });
-        // Patients land on the portal; staff use the requested redirect or calendar home.
-        const isPatient = data.user?.role === "patient";
-        const dest = isPatient ? "/patient-portal" : redirect ?? "/dashboard";
+        const dest = resolveRoleHomeHref(data.user?.role, redirect);
         // Do NOT reset loading here — keep spinner visible until the new page mounts.
         // Resetting before unmount causes a brief button flash during navigation.
         router.push(dest);

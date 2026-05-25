@@ -7,9 +7,12 @@
 export const pageChromeHeaderShellClass =
   "flex flex-col gap-2 border-b py-2 md:flex-row md:items-stretch md:justify-between";
 
-/** Sky icon tile — `min-h-[3.5rem]` sets the header row height on portal pages. */
+/** Sky icon tile — `min-h-[3.5rem]` sets the header row height on portal pages (square photo or Lucide icon). */
 export const pageChromeIconTileClass =
   "flex w-12 shrink-0 items-center justify-center self-stretch min-h-[3.5rem] rounded-xl border border-sky-200 bg-sky-100";
+
+/** Title + subtitle stack — no `gap-*` between lines; matches `PortalChromeHeader` / insights pages. */
+export const pageChromeTitleStackClass = "flex min-w-0 flex-1 flex-col justify-center";
 
 export const pageChromeIconClass = "h-6 w-6 text-sky-600";
 

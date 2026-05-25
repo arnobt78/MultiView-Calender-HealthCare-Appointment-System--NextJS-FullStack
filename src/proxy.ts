@@ -71,7 +71,7 @@ const PAGE_CACHE: PageCache[] = [
   },
   // Dashboard / protected pages: private, revalidate each request
   {
-    pattern: /^\/(dashboard|control-panel|analytics|insights|patient-portal)/,
+    pattern: /^\/(dashboard|control-panel|analytics|insights|patient-portal|doctor-portal|home)/,
     browser: "private, no-cache, must-revalidate",
   },
   // Landing page: short public CDN cache (60 s), 5-min SWR
@@ -122,9 +122,9 @@ export async function proxy(request: NextRequest) {
 
   // ── 2. Route guards ───────────────────────────────────────────────────────
 
-  // Authenticated user on /login or /register → send to dashboard
+  // Authenticated user on /login or /register → role landing (SSR picks portal vs dashboard)
   if (authenticated && isAuthOnly(pathname)) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    return NextResponse.redirect(new URL("/home", request.url));
   }
 
   // Unauthenticated user on a protected page → send to /login

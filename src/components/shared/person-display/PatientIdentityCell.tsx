@@ -1,7 +1,9 @@
 "use client";
 
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
+import { PatientAgeGlassBadge } from "@/components/shared/person-display/PatientAgeGlassBadge";
 import { PatientPortraitAvatar } from "@/components/shared/person-display/PatientPortraitAvatar";
+import { patientAgeYears } from "@/lib/patient-age";
 import {
   clinicalCellMutedTextClass,
   clinicalStackGapClass,
@@ -10,7 +12,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { Patient } from "@/types/types";
 
-type PatientPortraitInput = Pick<Patient, "id" | "email" | "clinical_profile"> & {
+type PatientPortraitInput = Pick<Patient, "id" | "email" | "clinical_profile" | "birth_date"> & {
   firstname?: string;
   lastname?: string;
 };
@@ -27,7 +29,8 @@ type PatientIdentityCellProps = {
 };
 
 /**
- * Reusable patient row for TanStack tables — matches patient-management name column rhythm.
+ * Reusable patient row for TanStack tables — name row matches appointment client picker
+ * (`PatientSelectOption` + `PatientAgeGlassBadge`); email stays on the line below.
  */
 export function PatientIdentityCell({
   name,
@@ -40,6 +43,7 @@ export function PatientIdentityCell({
 }: PatientIdentityCellProps) {
   const emailTrim = email?.trim();
   const label = name.trim() || emailTrim || "—";
+  const age = patientAgeYears(patient.birth_date);
 
   if (layout === "detail") {
     return (
@@ -64,7 +68,10 @@ export function PatientIdentityCell({
     >
       <PatientPortraitAvatar patient={patient} sizeClassName={avatarSizeClassName} />
       <div className={cn("flex min-w-0 flex-1 flex-col justify-center", clinicalStackGapClass)}>
-        <EntityTitleLink href={href} label={label} className="min-w-0 self-start truncate font-normal" />
+        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+          <EntityTitleLink href={href} label={label} className="min-w-0 self-start truncate font-normal" />
+          {age != null ? <PatientAgeGlassBadge age={age} /> : null}
+        </div>
         {emailTrim ? (
           <span className={cn("truncate", clinicalCellMutedTextClass)} title={emailTrim}>
             {emailTrim}

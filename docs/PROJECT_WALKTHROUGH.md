@@ -53,7 +53,9 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Prism
 
 - **Route:** `src/app/doctor-portal/page.tsx` — SSR `prefetchDoctorPortal(session.userId)`; client `DoctorPortalPage.tsx`.
 - **API:** `GET /api/doctor-portal` → `DoctorPortalData` (`queryKeys.doctorPortal.all`): doctor user row, today/upcoming appointments, patients where `primary_doctor_id = doctor` (take 50), global appointment types + per-doctor `DoctorAppointmentTypeConfig`, appointment metrics.
-- **Chrome:** `PortalDoctorChromeHeader` — same `page-chrome-classes.ts` tokens as `PortalChromeHeader`; left tile = `DoctorAvatar`; title/email; `DoctorSpecialtyBadge` (glass glow); right = Today date (skeleton on profile load only).
+- **Chrome:** `PortalDoctorChromeHeader` — `pageChromeTitleStackClass` (tight title + subtitle like insights); square `DoctorAvatar` in icon tile; specialty badge on title row; Today date right.
+- **Login:** doctors → `/doctor-portal` via `resolveRoleHomeHref`; authed `/login` → `/home` (SSR redirect).
+- **Patient tables:** `PatientIdentityCell` shows `PatientAgeGlassBadge` beside name (CP + doctor-portal roster).
 - **Stats:** `DoctorPortalStatsRow` — four `PatientStatCard` metrics (Today / This Week / This Month / Pending); responsive `grid-cols-2 sm:grid-cols-4`; only numeric slots pulse (`portalLoading`).
 - **Panels:** `PortalPanelSection` — patient-portal-style white card + in-card `<h3>` (fixes headers appearing outside panel when old `CardHeader` + `GLASS` were used). Sections: Today's Schedule, Visit Types (subtitle static), My Patients, Upcoming Appointments.
 - **Visit types:** native checkboxes in `DoctorPortalPage`; CP `DoctorGlobalTypeConfigEditor` on `/control-panel/doctors/[id]`; `POST /api/appointment-types/doctor-config` → `invalidateAppointmentTypeDerived` (includes `doctorPortal.all`); CP editor also `invalidateAdminPortal`.

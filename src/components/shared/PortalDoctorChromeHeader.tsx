@@ -11,6 +11,7 @@ import {
   pageChromeHeaderShellClass,
   pageChromeIconTileClass,
   pageChromeTitleClass,
+  pageChromeTitleStackClass,
 } from "@/lib/page-chrome-classes";
 import { cn } from "@/lib/utils";
 
@@ -24,8 +25,8 @@ type PortalDoctorChromeHeaderProps = {
 };
 
 /**
- * Doctor portal top chrome — same shell tokens as `PortalChromeHeader` but identity slot
- * (avatar + name + email + glass specialty badge) instead of Lucide icon + static title.
+ * Doctor portal top chrome — same text stack as `PortalChromeHeader` (title + description,
+ * no extra gap utilities). Specialty badge sits on the title row; square avatar fills the icon tile.
  */
 export function PortalDoctorChromeHeader({
   doctor,
@@ -47,20 +48,24 @@ export function PortalDoctorChromeHeader({
             ) : (
               <DoctorAvatar
                 doctor={doctor ?? { id: "", email: null, display_name: null, image: null }}
-                sizeClassName="h-full w-full min-h-[3.5rem] min-w-[3rem] rounded-xl"
+                shape="square"
+                sizeClassName="h-full w-full min-h-[3.5rem] min-w-[3rem]"
+                className="rounded-xl border-0"
               />
             )}
           </span>
-          <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
+          <div className={pageChromeTitleStackClass}>
             {profileLoading ? (
               <>
                 <Skeleton className="h-7 w-48 max-w-full rounded-md" aria-hidden />
-                <Skeleton className="h-4 w-56 max-w-full rounded-md" aria-hidden />
-                <Skeleton className="h-5 w-32 rounded-full" aria-hidden />
+                <Skeleton className="mt-0.5 h-4 w-56 max-w-full rounded-md" aria-hidden />
               </>
             ) : (
               <>
-                <h1 className={pageChromeTitleClass}>{label}</h1>
+                <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                  <h1 className={pageChromeTitleClass}>{label}</h1>
+                  <DoctorSpecialtyBadge specialty={doctor?.specialty} showIcon className="self-center" />
+                </div>
                 {email ? (
                   <p className={pageChromeDescriptionClass}>{email}</p>
                 ) : (
@@ -68,7 +73,6 @@ export function PortalDoctorChromeHeader({
                     —
                   </p>
                 )}
-                <DoctorSpecialtyBadge specialty={doctor?.specialty} showIcon />
               </>
             )}
           </div>
