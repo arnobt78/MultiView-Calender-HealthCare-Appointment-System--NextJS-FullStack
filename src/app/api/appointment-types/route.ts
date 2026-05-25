@@ -22,6 +22,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { isValidUUID } from "@/lib/validation";
+import { notifyDoctorSettingsChangedByAdmin } from "@/lib/doctor-settings-notify";
 import {
   DEFAULT_DOCTOR_OWNED_TYPE_BUFFER_MINUTES,
   DEFAULT_DOCTOR_OWNED_TYPE_SLOT_INTERVAL_MINUTES,
@@ -190,6 +191,13 @@ export async function POST(req: NextRequest) {
         color,
         icon,
       },
+    });
+
+    notifyDoctorSettingsChangedByAdmin({
+      actorUserId: sessionUser.userId,
+      doctorUserId: user_id,
+      changeKind: "visit_type",
+      detail: `An administrator added appointment type "${name}" to your profile.`,
     });
 
     return NextResponse.json({ type }, { status: 201 });

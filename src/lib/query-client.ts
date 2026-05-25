@@ -249,6 +249,7 @@ export async function invalidateDoctorSchedule(
     queryClient.invalidateQueries({ queryKey: queryKeys.doctors.timeOff(doctorId) }),
     queryClient.invalidateQueries({ queryKey: queryKeys.availability.root }),
     queryClient.invalidateQueries({ queryKey: queryKeys.doctors.all }),
+    invalidateDoctorPortal(queryClient),
   ]);
 }
 

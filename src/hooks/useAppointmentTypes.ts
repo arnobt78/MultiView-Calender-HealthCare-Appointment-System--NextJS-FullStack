@@ -34,10 +34,14 @@ export type AppointmentTypeApiRow = {
   minimum_notice_minutes: number;
 };
 
-async function afterTypeMutation(queryClient: QueryClient, router: ReturnType<typeof useRouter>) {
+async function afterTypeMutation(
+  queryClient: QueryClient,
+  router: ReturnType<typeof useRouter>,
+  refreshRsc: boolean
+) {
   await invalidateAppointmentTypeDerived(queryClient);
-  /** Doctor detail is a server component — refresh RSC payload so header counts stay accurate. */
-  router.refresh();
+  /** CP doctor detail is RSC — portal skips refresh to avoid full route reload. */
+  if (refreshRsc) router.refresh();
 }
 
 export function useAppointmentTypesForDoctor(doctorId: string | null | undefined) {
@@ -52,9 +56,13 @@ export function useAppointmentTypesForDoctor(doctorId: string | null | undefined
   });
 }
 
-export function useAppointmentTypeMutations(doctorId: string) {
+export function useAppointmentTypeMutations(
+  doctorId: string,
+  options?: { refreshRsc?: boolean }
+) {
   const queryClient = useQueryClient();
   const router = useRouter();
+  const refreshRsc = options?.refreshRsc !== false;
 
   const createType = useMutation({
     mutationFn: (body: { name: string; duration_minutes: number; description?: string | null }) =>
@@ -63,7 +71,7 @@ export function useAppointmentTypeMutations(doctorId: string) {
         body: JSON.stringify({ user_id: doctorId, ...body }),
       }),
     onSuccess: async () => {
-      await afterTypeMutation(queryClient, router);
+      await afterTypeMutation(queryClient, router, refreshRsc);
       notify.crud({ action: "created", entity: "Appointment type", detail: "Type saved for this doctor." });
     },
     onError: (e) => handleApiError(e, "Failed to create appointment type"),
@@ -78,7 +86,7 @@ export function useAppointmentTypeMutations(doctorId: string) {
       });
     },
     onSuccess: async () => {
-      await afterTypeMutation(queryClient, router);
+      await afterTypeMutation(queryClient, router, refreshRsc);
       notify.crud({ action: "updated", entity: "Appointment type", detail: "Changes saved." });
     },
     onError: (e) => handleApiError(e, "Failed to update appointment type"),
@@ -87,7 +95,7 @@ export function useAppointmentTypeMutations(doctorId: string) {
   const deleteType = useMutation({
     mutationFn: (id: string) => apiClient<{ ok: boolean }>(`/api/appointment-types/${id}`, { method: "DELETE" }),
     onSuccess: async () => {
-      await afterTypeMutation(queryClient, router);
+      await afterTypeMutation(queryClient, router, refreshRsc);
       notify.crud({ action: "deleted", entity: "Appointment type", detail: "Type removed." });
     },
     onError: (e) => handleApiError(e, "Failed to delete appointment type"),
@@ -123,7 +131,7 @@ export function useGlobalAppointmentTypeMutations() {
         body: JSON.stringify(body),
       }),
     onSuccess: async () => {
-      await afterTypeMutation(queryClient, router);
+      await afterTypeMutation(queryClient, router, true);
       notify.crud({ action: "created", entity: "Global visit type", detail: "Saved for all doctors." });
     },
     onError: (e) => handleApiError(e, "Failed to create global appointment type"),
@@ -138,7 +146,7 @@ export function useGlobalAppointmentTypeMutations() {
       });
     },
     onSuccess: async () => {
-      await afterTypeMutation(queryClient, router);
+      await afterTypeMutation(queryClient, router, true);
       notify.crud({ action: "updated", entity: "Global visit type", detail: "Changes saved." });
     },
     onError: (e) => handleApiError(e, "Failed to update global appointment type"),
@@ -147,7 +155,7 @@ export function useGlobalAppointmentTypeMutations() {
   const deleteGlobalType = useMutation({
     mutationFn: (id: string) => apiClient<{ ok: boolean }>(`/api/appointment-types/${id}`, { method: "DELETE" }),
     onSuccess: async () => {
-      await afterTypeMutation(queryClient, router);
+      await afterTypeMutation(queryClient, router, true);
       notify.crud({ action: "deleted", entity: "Global visit type", detail: "Removed." });
     },
     onError: (e) => handleApiError(e, "Failed to delete global appointment type"),

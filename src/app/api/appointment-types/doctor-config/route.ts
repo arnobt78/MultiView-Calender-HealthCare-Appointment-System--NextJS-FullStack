@@ -21,6 +21,7 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { isValidUUID } from "@/lib/validation";
 import { getUserRole, isAdminRole, isDoctorRole } from "@/lib/rbac";
+import { notifyDoctorSettingsChangedByAdmin } from "@/lib/doctor-settings-notify";
 
 export const dynamic = "force-dynamic";
 
@@ -124,6 +125,13 @@ export async function POST(req: NextRequest) {
       },
       create: { doctor_id: doctorId, appointment_type_id: typeId, is_enabled: isEnabled },
       update: { is_enabled: isEnabled },
+    });
+
+    notifyDoctorSettingsChangedByAdmin({
+      actorUserId: sessionUser.userId,
+      doctorUserId: doctorId,
+      changeKind: "global_visit_toggle",
+      detail: `Global visit type access was ${isEnabled ? "enabled" : "disabled"} for your calendar.`,
     });
 
     return NextResponse.json({

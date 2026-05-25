@@ -11,6 +11,7 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { isValidUUID } from "@/lib/validation";
 import { getUserRole, isAdminRole, isDoctorRole } from "@/lib/rbac";
+import { notifyDoctorSettingsChangedByAdmin } from "@/lib/doctor-settings-notify";
 
 type PatchBody = {
   name?: unknown;
@@ -111,6 +112,15 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
       data,
     });
 
+    if (existing.user_id) {
+      notifyDoctorSettingsChangedByAdmin({
+        actorUserId: sessionUser.userId,
+        doctorUserId: existing.user_id,
+        changeKind: "visit_type",
+        detail: `An administrator updated appointment type "${type.name}".`,
+      });
+    }
+
     return NextResponse.json({ type });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Internal server error";
@@ -140,6 +150,15 @@ export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: str
     }
 
     await prisma.appointmentType.delete({ where: { id } });
+
+    if (existing.user_id) {
+      notifyDoctorSettingsChangedByAdmin({
+        actorUserId: sessionUser.userId,
+        doctorUserId: existing.user_id,
+        changeKind: "visit_type",
+        detail: `An administrator removed appointment type "${existing.name}" from your profile.`,
+      });
+    }
 
     return NextResponse.json({ ok: true });
   } catch (error: unknown) {

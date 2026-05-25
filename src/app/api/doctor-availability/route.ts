@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { getUserRole, isAdminRole } from "@/lib/rbac";
+import { notifyDoctorSettingsChangedByAdmin } from "@/lib/doctor-settings-notify";
 
 export const dynamic = "force-dynamic";
 
@@ -82,6 +83,13 @@ export async function POST(request: NextRequest) {
 
     const window = await prisma.doctorAvailability.create({
       data: { user_id: doctorId, weekday, start_min, end_min, timezone },
+    });
+
+    notifyDoctorSettingsChangedByAdmin({
+      actorUserId: sessionUser.userId,
+      doctorUserId: doctorId,
+      changeKind: "weekly_schedule",
+      detail: "A weekly availability window was added to your schedule.",
     });
 
     return NextResponse.json({ window }, { status: 201 });

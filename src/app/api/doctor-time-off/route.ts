@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { getUserRole, isAdminRole } from "@/lib/rbac";
+import { notifyDoctorSettingsChangedByAdmin } from "@/lib/doctor-settings-notify";
 
 export const dynamic = "force-dynamic";
 
@@ -81,6 +82,13 @@ export async function POST(request: NextRequest) {
         ends_at: endDate,
         reason: reason?.trim() || null,
       },
+    });
+
+    notifyDoctorSettingsChangedByAdmin({
+      actorUserId: sessionUser.userId,
+      doctorUserId: doctorId,
+      changeKind: "time_off",
+      detail: "A time-off block was added to your schedule.",
     });
 
     return NextResponse.json({ block }, { status: 201 });

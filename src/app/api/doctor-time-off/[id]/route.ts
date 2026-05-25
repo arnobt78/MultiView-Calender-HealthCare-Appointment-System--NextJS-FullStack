@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { getUserRole, isAdminRole } from "@/lib/rbac";
+import { notifyDoctorSettingsChangedByAdmin } from "@/lib/doctor-settings-notify";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +34,13 @@ export async function DELETE(
     }
 
     await prisma.doctorTimeOff.delete({ where: { id } });
+
+    notifyDoctorSettingsChangedByAdmin({
+      actorUserId: sessionUser.userId,
+      doctorUserId: existing.user_id,
+      changeKind: "time_off",
+      detail: "A time-off block was removed from your schedule.",
+    });
 
     return NextResponse.json({ success: true });
   } catch {

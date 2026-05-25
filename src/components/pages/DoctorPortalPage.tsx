@@ -3,24 +3,19 @@
 /**
  * DoctorPortalPage — client-side portal for authenticated doctors.
  *
- * Layout: portal doctor chrome → metric stat row → schedule / visit types panels →
- * scoped patient table (CP `PatientManagement` variant) → upcoming appointments.
+ * Layout: chrome → stats → today + weekly hours → time off + global visit types →
+ * additional types → scoped patients → upcoming appointments.
  *
- * Cache: `useLayoutEffect` seeds `queryKeys.doctorPortal.all` and always seeds
- * `queryKeys.patients.all` (roster array, may be empty) from SSR before first paint.
- * Schedule rows reuse dashboard color seeds (`resolveAppointmentLineColor`) and
- * `AppointmentDateTag` / `TelehealthSessionBadge` from shared appointment UI.
+ * Settings reuse CP APIs via `src/components/shared/doctor-settings/*` with `variant="portal"`.
+ * Cache: seeds `doctorPortal.all`, `patients.all`, and prefetches schedule/type queries.
  */
 
 import { useState, useLayoutEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
-import { invalidateAppointmentTypeDerived } from "@/lib/query-client";
-import { apiClient, handleApiError } from "@/lib/api-client";
-import { notify } from "@/lib/notify";
-import type { DoctorPortalData, AppointmentType } from "@/types/types";
+import { apiClient } from "@/lib/api-client";
+import type { DoctorPortalData } from "@/types/types";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Label } from "@/components/ui/label";
 import { PortalDoctorChromeHeader } from "@/components/shared/PortalDoctorChromeHeader";
 import { PortalPanelSection } from "@/components/shared/PortalPanelSection";
 import { DoctorPortalStatsRow } from "@/components/doctor-portal/DoctorPortalStatsRow";
@@ -28,50 +23,23 @@ import { PatientManagementInner } from "@/components/control-panel/PatientManage
 import { PatientListFiltersProvider } from "@/components/control-panel/PatientListFiltersContext";
 import { DoctorPortalAppointmentListRow } from "@/components/shared/appointments/DoctorPortalAppointmentListRow";
 import {
+  DoctorWeeklyScheduleEditor,
+  DoctorTimeOffEditor,
+  DoctorGlobalVisitTypesEditor,
+  DoctorAdditionalTypesEditor,
+} from "@/components/shared/doctor-settings";
+import { prefetchDoctorScheduleSettings } from "@/lib/prefetch-doctor-schedule";
+import {
   Calendar,
   CalendarCheck,
   CalendarClock,
   CheckCircle2,
+  Clock,
+  CalendarOff,
   Layers,
+  Stethoscope,
   Users,
-  Video,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
-
-interface TypeToggleProps {
-  type: AppointmentType;
-  isEnabled: boolean;
-  isPending: boolean;
-  onToggle: (typeId: string, enabled: boolean) => void;
-}
-
-function TypeToggle({ type, isEnabled, isPending, onToggle }: TypeToggleProps) {
-  return (
-    <div
-      className={cn(
-        "flex items-center gap-2 rounded-2xl border p-3 transition-colors",
-        isEnabled ? "border-primary/20 bg-primary/5" : "border-border/40 bg-muted/30 opacity-70"
-      )}
-    >
-      <input
-        id={`type-${type.id}`}
-        type="checkbox"
-        checked={isEnabled}
-        disabled={isPending}
-        onChange={(e) => onToggle(type.id, e.target.checked)}
-        className="h-4 w-4 flex-shrink-0 cursor-pointer rounded accent-primary"
-      />
-      <Label htmlFor={`type-${type.id}`} className="min-w-0 flex-1 cursor-pointer">
-        <span className="block truncate text-sm font-medium">{type.name}</span>
-        <span className="text-[11px] text-muted-foreground">
-          {type.duration_minutes} min
-          {type.is_telehealth ? " · Telehealth" : ""}
-        </span>
-      </Label>
-      {type.is_telehealth ? <Video className="h-3.5 w-3.5 flex-shrink-0 text-sky-500" /> : null}
-    </div>
-  );
-}
 
 interface DoctorPortalPageProps {
   initialData: DoctorPortalData | null;
@@ -79,7 +47,6 @@ interface DoctorPortalPageProps {
 
 export default function DoctorPortalPage({ initialData }: DoctorPortalPageProps) {
   const queryClient = useQueryClient();
-  const [togglingIds, setTogglingIds] = useState<Set<string>>(new Set());
   const [patientSectionCount, setPatientSectionCount] = useState<number | null>(null);
 
   useLayoutEffect(() => {
@@ -87,6 +54,10 @@ export default function DoctorPortalPage({ initialData }: DoctorPortalPageProps)
       queryClient.setQueryData(queryKeys.doctorPortal.all, initialData);
     }
     queryClient.setQueryData(queryKeys.patients.all, initialData?.patients ?? []);
+    const doctorId = initialData?.doctor?.id;
+    if (doctorId) {
+      prefetchDoctorScheduleSettings(queryClient, doctorId);
+    }
   }, [queryClient, initialData]);
 
   const { data, isLoading } = useQuery<DoctorPortalData | undefined>({
@@ -98,51 +69,10 @@ export default function DoctorPortalPage({ initialData }: DoctorPortalPageProps)
 
   const portalLoading = isLoading && !data;
   const profileLoading = portalLoading || !data?.doctor;
+  const doctorId = data?.doctor?.id;
 
-  const toggleMutation = useMutation({
-    mutationFn: (vars: { doctor_id: string; appointment_type_id: string; is_enabled: boolean }) =>
-      apiClient("/api/appointment-types/doctor-config", {
-        method: "POST",
-        body: JSON.stringify(vars),
-      }),
-    onSuccess: async () => {
-      await invalidateAppointmentTypeDerived(queryClient);
-    },
-    onError: (e) => handleApiError(e, "Failed to update type setting"),
-  });
-
-  async function handleToggle(typeId: string, enabled: boolean) {
-    if (!data?.doctor?.id) return;
-    setTogglingIds((prev) => new Set(prev).add(typeId));
-    try {
-      await toggleMutation.mutateAsync({
-        doctor_id: data.doctor.id,
-        appointment_type_id: typeId,
-        is_enabled: enabled,
-      });
-      notify.crud({
-        action: enabled ? "created" : "deleted",
-        entity: "Visit type",
-        detail: enabled ? "Enabled for your patients." : "Disabled for new bookings.",
-      });
-    } finally {
-      setTogglingIds((prev) => {
-        const next = new Set(prev);
-        next.delete(typeId);
-        return next;
-      });
-    }
-  }
-
-  const doctor = data?.doctor;
   const todayAppts = data?.todayAppointments ?? [];
   const upcomingAppts = data?.upcomingAppointments ?? [];
-  const allTypes = data?.allGlobalTypes ?? [];
-
-  const isTypeEnabled = (typeId: string) => {
-    const cfg = data?.typeConfigs.find((c) => c.appointment_type_id === typeId);
-    return cfg ? cfg.is_enabled : true;
-  };
 
   const sortedToday = [...todayAppts].sort(
     (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()
@@ -166,13 +96,13 @@ export default function DoctorPortalPage({ initialData }: DoctorPortalPageProps)
     <div className="space-y-4 text-gray-700">
       <PortalDoctorChromeHeader
         doctor={
-          doctor
+          data?.doctor
             ? {
-                id: doctor.id,
-                email: doctor.email,
-                display_name: doctor.display_name,
-                image: doctor.image,
-                specialty: doctor.specialty,
+                id: data.doctor.id,
+                email: data.doctor.email,
+                display_name: data.doctor.display_name,
+                image: data.doctor.image,
+                specialty: data.doctor.specialty,
               }
             : undefined
         }
@@ -218,40 +148,73 @@ export default function DoctorPortalPage({ initialData }: DoctorPortalPageProps)
         </PortalPanelSection>
 
         <PortalPanelSection
-          id="dp-visit-types"
-          title="Visit Types"
-          subtitle="Toggle what patients can book"
-          icon={Layers}
-          iconClassName="border-purple-100 bg-purple-50 [&_svg]:text-purple-500"
+          id="dp-weekly-hours"
+          title="Weekly Hours"
+          subtitle="Recurring availability for patient booking"
+          icon={Clock}
+          iconClassName="border-sky-100 bg-sky-50 [&_svg]:text-sky-600"
         >
-          {portalLoading ? (
+          {doctorId ? (
+            <DoctorWeeklyScheduleEditor
+              doctorId={doctorId}
+              variant="portal"
+              showSummaryPreview
+            />
+          ) : (
+            <Skeleton className="h-24 w-full rounded-xl" />
+          )}
+        </PortalPanelSection>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
+        <PortalPanelSection
+          id="dp-time-off"
+          title="Time Off"
+          subtitle="Blocked periods override weekly hours"
+          icon={CalendarOff}
+          iconClassName="border-amber-100 bg-amber-50 [&_svg]:text-amber-600"
+        >
+          {doctorId ? (
+            <DoctorTimeOffEditor doctorId={doctorId} variant="portal" />
+          ) : (
+            <Skeleton className="h-20 w-full rounded-xl" />
+          )}
+        </PortalPanelSection>
+
+        <PortalPanelSection
+          id="dp-global-visit-types"
+          title="Patient Visit Types"
+          subtitle="Toggle organization templates patients can book"
+          icon={Layers}
+          iconClassName="border-violet-100 bg-violet-50 [&_svg]:text-violet-600"
+        >
+          {doctorId ? (
+            <DoctorGlobalVisitTypesEditor doctorId={doctorId} variant="portal" />
+          ) : (
             <div className="grid grid-cols-1 gap-2">
               {[...Array(4)].map((_, i) => (
                 <Skeleton key={i} className="h-14 w-full rounded-2xl" />
-              ))}
-            </div>
-          ) : allTypes.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-              <Layers className="mb-2 h-8 w-8 opacity-40" />
-              <p className="text-sm">No global visit types configured</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-2">
-              {allTypes.map((type) => (
-                <TypeToggle
-                  key={type.id}
-                  type={type}
-                  isEnabled={isTypeEnabled(type.id)}
-                  isPending={togglingIds.has(type.id)}
-                  onToggle={handleToggle}
-                />
               ))}
             </div>
           )}
         </PortalPanelSection>
       </div>
 
-      {doctor?.id ? (
+      <PortalPanelSection
+        id="dp-additional-types"
+        title="Additional Appointment Types"
+        subtitle="Visit types unique to your practice"
+        icon={Stethoscope}
+        iconClassName="border-emerald-100 bg-emerald-50 [&_svg]:text-emerald-600"
+      >
+        {doctorId ? (
+          <DoctorAdditionalTypesEditor doctorId={doctorId} variant="portal" />
+        ) : (
+          <Skeleton className="h-32 w-full rounded-xl" />
+        )}
+      </PortalPanelSection>
+
+      {doctorId ? (
         <PortalPanelSection
           id="dp-my-patients"
           title="My Patients"
@@ -263,13 +226,13 @@ export default function DoctorPortalPage({ initialData }: DoctorPortalPageProps)
           contentClassName="pt-0"
         >
           <PatientListFiltersProvider
-            initialPrimaryDoctorId={doctor.id}
+            initialPrimaryDoctorId={doctorId}
             lockPrimaryDoctor
           >
             <PatientManagementInner
               variant="doctor-portal"
               viewerRole="doctor"
-              lockedPrimaryDoctorId={doctor.id}
+              lockedPrimaryDoctorId={doctorId}
               onFilteredCountChange={setPatientSectionCount}
             />
           </PatientListFiltersProvider>
