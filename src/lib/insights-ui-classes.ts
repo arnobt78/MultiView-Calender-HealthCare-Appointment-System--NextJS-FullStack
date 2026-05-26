@@ -4,7 +4,15 @@
 
 /** Toolbar wrapping period + scope segmented controls. */
 export const insightsFilterToolbarGlassClass =
-  "flex flex-col gap-2 rounded-[20px] border border-sky-400/25 bg-gradient-to-br from-sky-500/10 via-white/90 to-white/95 p-2 shadow-[0_18px_48px_rgba(2,132,199,0.22)] backdrop-blur-sm sm:flex-row sm:flex-wrap sm:items-center sm:justify-end";
+  "flex flex-col gap-2 rounded-[20px] bg-gradient-to-br from-sky-500/10 via-white/90 to-white/95 p-2 shadow-[0_18px_48px_rgba(2,132,199,0.22)] backdrop-blur-sm sm:flex-row sm:flex-wrap sm:items-center sm:justify-end";
+
+/** Scope-only chrome toolbar — no outer border ring. */
+export const insightsScopeToolbarClass =
+  "flex flex-wrap items-center justify-end gap-2 rounded-[20px] bg-gradient-to-br from-sky-500/10 via-white/90 to-white/95 p-2 shadow-[0_18px_48px_rgba(2,132,199,0.18)] backdrop-blur-sm";
+
+/** Period controls row inside Appointments section. */
+export const insightsAppointmentsPeriodRowClass =
+  "mb-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between";
 
 /** Inner segmented group shell. */
 export const insightsSegmentGroupClass =
@@ -26,3 +34,14 @@ export const analyticsOverviewGridClass =
 export const insightsScopeHintClass = "font-medium text-sky-600";
 
 export const insightsScopeBodyClass = "text-gray-700";
+
+/** Recharts tooltip layer — above glass analytics cards, below fixed navbar. */
+export const analyticsChartTooltipZClass = "z-[90]";
+
+/** Chart card header — matches `PortalPanelSubsectionHeader` / doctor-portal subsection tiles. */
+export const analyticsChartPanelIconTileClass =
+  "flex w-10 shrink-0 items-center justify-center self-stretch rounded-xl border border-sky-100 bg-sky-50 [&_svg]:text-sky-600";
+
+export const analyticsChartPanelTitleClass = "text-sm font-medium text-gray-800";
+
+export const analyticsChartPanelSubtitleClass = "text-xs leading-snug text-muted-foreground";

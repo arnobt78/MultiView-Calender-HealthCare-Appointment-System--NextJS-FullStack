@@ -12,13 +12,13 @@
  * Extended payload includes additional metrics added in v006 schema migration:
  *   - avgDurationMinutes, newPatientsThisMonth, busiestDayOfWeek
  *   - revenueThisMonth, revenuePrevMonth (for delta % display)
- *   - statusOverTime (stacked bar: done/pending/alert per month, last 6 months)
+ *   - statusOverTime (stacked bar: done/pending/alert buckets follow chart period)
  *   - appointmentTypeBreakdown (by type name, count)
  */
 
 import type { InsightsDataOptions } from "@/lib/insights-scope";
 import type { InsightsPeriod } from "@/lib/insights/insights-period";
-import { resolveDateRange } from "@/lib/insights/insights-period";
+import { resolveDateRangeInclusive } from "@/lib/insights/insights-period";
 import type { InsightsPayloadV2 } from "@/lib/insights/insights-types";
 import {
   appointmentOwnerWhere,
@@ -33,7 +33,7 @@ import {
   fetchMonthlyCountsLast12Months,
   fetchPaymentSuccessPct,
   fetchRevenueAggregates,
-  fetchStatusOverTimeLast6Months,
+  fetchStatusOverTimeByPeriod,
   fetchTopPatients,
   fetchTrendCountsByPeriod,
   fetchTypeBreakdown,
@@ -106,7 +106,7 @@ export async function getInsightsData(
 
   const now = new Date();
   const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const periodRange = resolveDateRange(period, now);
+  const periodRange = resolveDateRangeInclusive(period, now);
 
   const apptBase = appointmentOwnerWhere(resolved);
   const invoiceBase = invoiceOwnerWhere(resolved);
@@ -136,12 +136,13 @@ export async function getInsightsData(
     fetchPaymentSuccessPct(invoiceBase),
     fetchDoctorBreakdown(organizationWide),
     fetchMonthlyCountsLast12Months(apptBase, now),
-    fetchStatusOverTimeLast6Months(apptBase, now),
-    fetchBusiestDayOfWeekCounts(apptBase),
+    fetchStatusOverTimeByPeriod(apptBase, period, now),
+    fetchBusiestDayOfWeekCounts(apptBase, periodRange.start, periodRange.end),
     fetchCategoryBreakdown(apptBase, periodRange.start, periodRange.end),
     fetchTypeBreakdown(apptBase, periodRange.start, periodRange.end),
     fetchTopPatients(apptBase, periodRange.start, periodRange.end),
     fetchAgeDistribution(apptBase, periodRange.start, periodRange.end, now),
+    // Volume trend + revenue area chart — period=month (daily) | year (Jan–Dec), not rolling 12mo.
     fetchTrendCountsByPeriod(apptBase, period, now),
     countNewPatientsInMonth(apptBase, startOfThisMonth, now),
     countDistinctPatientsInRange(apptBase, periodRange.start, periodRange.end),

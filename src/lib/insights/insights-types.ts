@@ -5,6 +5,7 @@
 import type { InsightsPeriod } from "@/lib/insights/insights-period";
 
 export type InsightsAppointmentTotals = {
+  /** All appointments in scope (past + future scheduled). */
   all: number;
   today: number;
   thisWeek: number;
@@ -12,6 +13,7 @@ export type InsightsAppointmentTotals = {
   yearToDate: number;
   done: number;
   pending: number;
+  /** Scheduled appointments not started yet (start > now). */
   upcoming: number;
   overdue: number;
   telehealthCount: number;

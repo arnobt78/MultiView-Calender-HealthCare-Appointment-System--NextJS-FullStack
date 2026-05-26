@@ -1,7 +1,7 @@
 "use client";
 
 import type { LucideIcon } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
@@ -9,20 +9,19 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  analyticsChartDescriptionClass,
-  analyticsChartGlassClass,
-  analyticsChartTitleClass,
-} from "@/components/shared/analytics/analytics-chart-classes";
-import { cn, toSentenceCaseSubtitle, toTitleCaseLabel } from "@/lib/utils";
+import { AnalyticsChartPanelHeader } from "@/components/shared/analytics/AnalyticsChartPanelHeader";
+import { analyticsChartGlassClass } from "@/components/shared/analytics/analytics-chart-classes";
+import { cn, toSentenceCaseSubtitle } from "@/lib/utils";
 
 type Props = {
   title: string;
   subtitle?: string;
-  icon?: LucideIcon;
+  /** Required — every insights chart uses portal-style icon tile chrome. */
+  icon: LucideIcon;
   loading?: boolean;
   children: React.ReactNode;
   className?: string;
+  iconClassName?: string;
   /** Extra detail on hover (chart purpose / data source). */
   detailHint?: string;
 };
@@ -31,15 +30,15 @@ type Props = {
 export function AnalyticsChartCard({
   title,
   subtitle,
-  icon: Icon,
+  icon,
   loading = false,
   children,
   className,
+  iconClassName,
   detailHint,
 }: Props) {
   const hint = detailHint ?? subtitle;
-  const displayTitle = toTitleCaseLabel(title);
-  const displaySubtitle = subtitle ? toSentenceCaseSubtitle(subtitle) : undefined;
+  const displayHint = hint ? toSentenceCaseSubtitle(hint) : undefined;
 
   return (
     <Card className={cn(analyticsChartGlassClass, className)}>
@@ -47,29 +46,25 @@ export function AnalyticsChartCard({
         <TooltipProvider delayDuration={200}>
           <Tooltip>
             <TooltipTrigger asChild>
-              <CardTitle className={cn("flex cursor-default items-center gap-2", analyticsChartTitleClass)}>
-                {Icon ? (
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-sky-200/80 bg-sky-50 text-sky-600">
-                    <Icon className="h-4 w-4" aria-hidden />
-                  </span>
-                ) : null}
-                <span className="min-w-0">{displayTitle}</span>
-              </CardTitle>
+              <div className="cursor-default text-left">
+                <AnalyticsChartPanelHeader
+                  title={title}
+                  subtitle={subtitle}
+                  icon={icon}
+                  iconClassName={iconClassName}
+                />
+              </div>
             </TooltipTrigger>
-            {hint ? (
+            {displayHint ? (
               <TooltipContent side="top" className="max-w-xs text-xs">
-                {hint}
+                {displayHint}
               </TooltipContent>
             ) : null}
           </Tooltip>
         </TooltipProvider>
-        {displaySubtitle ? (
-          <CardDescription className={analyticsChartDescriptionClass}>
-            {displaySubtitle}
-          </CardDescription>
-        ) : null}
       </CardHeader>
-      <CardContent>
+      {/* overflow-visible — Recharts tooltips/labels render outside plot box */}
+      <CardContent className="overflow-visible">
         {loading ? (
           <Skeleton className="h-40 w-full rounded-xl" aria-hidden />
         ) : (

@@ -5,12 +5,13 @@ import {
   BarChart,
   CartesianGrid,
   ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
   XAxis,
   YAxis,
   type ChartConfig,
 } from "@/components/ui/chart";
+import { AnalyticsChartTooltip } from "@/components/shared/analytics/AnalyticsChartTooltip";
+import { AnalyticsChartValueLabelList } from "@/components/shared/analytics/AnalyticsChartValueLabelList";
+import { analyticsChartPlotMargin } from "@/lib/analytics-chart-interaction";
 
 export type AnalyticsStackedBarPoint = {
   month: string;
@@ -18,6 +19,8 @@ export type AnalyticsStackedBarPoint = {
   pending: number;
   alert: number;
 };
+
+const STACKED_LABEL_CLASS = "fill-white text-[9px] font-semibold drop-shadow-sm";
 
 export function AnalyticsStackedBarChartInner({
   data,
@@ -29,14 +32,32 @@ export function AnalyticsStackedBarChartInner({
   return (
     <div className="space-y-3">
       <ChartContainer config={config} className="h-44 min-h-[11rem] w-full">
-        <BarChart data={data} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
+        <BarChart data={data} margin={analyticsChartPlotMargin}>
           <CartesianGrid vertical={false} strokeDasharray="3 3" />
           <XAxis dataKey="month" tickLine={false} axisLine={false} fontSize={10} />
           <YAxis tickLine={false} axisLine={false} fontSize={10} width={32} />
-          <ChartTooltip content={<ChartTooltipContent />} />
-          <Bar dataKey="done" stackId="status" fill="var(--color-done)" radius={[0, 0, 0, 0]} />
-          <Bar dataKey="pending" stackId="status" fill="var(--color-pending)" />
-          <Bar dataKey="alert" stackId="status" fill="var(--color-alert)" radius={[4, 4, 0, 0]} />
+          <AnalyticsChartTooltip cursorVariant="bar" />
+          <Bar dataKey="done" stackId="status" fill="var(--color-done)" radius={[0, 0, 0, 0]}>
+            <AnalyticsChartValueLabelList
+              dataKey="done"
+              position="insideTop"
+              className={STACKED_LABEL_CLASS}
+            />
+          </Bar>
+          <Bar dataKey="pending" stackId="status" fill="var(--color-pending)">
+            <AnalyticsChartValueLabelList
+              dataKey="pending"
+              position="insideTop"
+              className={STACKED_LABEL_CLASS}
+            />
+          </Bar>
+          <Bar dataKey="alert" stackId="status" fill="var(--color-alert)" radius={[4, 4, 0, 0]}>
+            <AnalyticsChartValueLabelList
+              dataKey="alert"
+              position="insideTop"
+              className={STACKED_LABEL_CLASS}
+            />
+          </Bar>
         </BarChart>
       </ChartContainer>
       <div className="flex flex-wrap items-center gap-4 text-[11px] text-muted-foreground">

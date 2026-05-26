@@ -13,7 +13,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
 import { useInsights } from "@/hooks/useInsights";
 import type { InsightsPayload } from "@/lib/insights-data";
-import { InsightsFilterToolbar } from "@/components/insights";
+import { InsightsScopeToolbar } from "@/components/insights";
 import {
   buildInsightsQueryString,
   defaultInsightsQueryForRole,
@@ -158,9 +158,7 @@ export default function AnalyticsPage({
         }
         actions={
           isDoctorRole(viewerRole) || isAdminRole(viewerRole) ? (
-            <InsightsFilterToolbar
-              period={query.period}
-              onPeriodChange={handlePeriodChange}
+            <InsightsScopeToolbar
               filter={query}
               onFilterChange={handleFilterChange}
               viewerRole={viewerRole}
@@ -179,6 +177,9 @@ export default function AnalyticsPage({
         loading={loading}
         viewerRole={viewerRole}
         organizationWide={query.scope === "organization"}
+        period={query.period}
+        onPeriodChange={handlePeriodChange}
+        periodControlsDisabled={loading && !data}
       />
     </div>
   );

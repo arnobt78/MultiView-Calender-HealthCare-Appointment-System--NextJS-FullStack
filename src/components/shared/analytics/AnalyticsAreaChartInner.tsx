@@ -5,12 +5,13 @@ import {
   AreaChart,
   CartesianGrid,
   ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
   XAxis,
   YAxis,
   type ChartConfig,
 } from "@/components/ui/chart";
+import { AnalyticsChartTooltip } from "@/components/shared/analytics/AnalyticsChartTooltip";
+import { AnalyticsChartValueLabelList } from "@/components/shared/analytics/AnalyticsChartValueLabelList";
+import { analyticsChartPlotMargin } from "@/lib/analytics-chart-interaction";
 
 export type AnalyticsAreaPoint = { label: string; count: number };
 
@@ -23,11 +24,11 @@ export function AnalyticsAreaChartInner({
 }) {
   return (
     <ChartContainer config={config} className="h-40 min-h-[10rem] w-full">
-      <AreaChart data={data} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
+      <AreaChart data={data} margin={analyticsChartPlotMargin}>
         <CartesianGrid vertical={false} strokeDasharray="3 3" />
         <XAxis dataKey="label" tickLine={false} axisLine={false} fontSize={10} />
         <YAxis tickLine={false} axisLine={false} fontSize={10} width={40} />
-        <ChartTooltip content={<ChartTooltipContent />} />
+        <AnalyticsChartTooltip cursorVariant="area" />
         <Area
           type="monotone"
           dataKey="count"
@@ -35,7 +36,11 @@ export function AnalyticsAreaChartInner({
           fill="var(--color-count)"
           fillOpacity={0.2}
           strokeWidth={2}
-        />
+          dot={{ r: 3 }}
+          activeDot={{ r: 5 }}
+        >
+          <AnalyticsChartValueLabelList dataKey="count" position="top" />
+        </Area>
       </AreaChart>
     </ChartContainer>
   );

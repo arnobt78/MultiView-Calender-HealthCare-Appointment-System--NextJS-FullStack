@@ -1,6 +1,18 @@
 "use client";
 
-import { BarChart3, BadgeDollarSign, Stethoscope, Users } from "lucide-react";
+import {
+  Activity,
+  BarChart3,
+  BadgeDollarSign,
+  CalendarDays,
+  FolderTree,
+  Layers,
+  PieChart,
+  Receipt,
+  Stethoscope,
+  UserRound,
+  Users,
+} from "lucide-react";
 import { PortalPanelSection } from "@/components/shared/PortalPanelSection";
 import { AnalyticsChartCard } from "@/components/shared/analytics/AnalyticsChartCard";
 import { AnalyticsLineChart } from "@/components/shared/analytics/AnalyticsLineChart";
@@ -20,8 +32,12 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { InsightsPeriodControls } from "@/components/insights/InsightsPeriodControls";
 import type { InsightsPayload } from "@/lib/insights-data";
+import type { InsightsPeriod } from "@/lib/insights/insights-period";
+import { insightsAppointmentsPeriodRowClass } from "@/lib/insights-ui-classes";
 import { isAdminRole } from "@/lib/rbac";
+import { toTitleCaseLabel } from "@/lib/utils";
 
 function formatCents(cents: number): string {
   return new Intl.NumberFormat("en-US", {
@@ -36,6 +52,9 @@ type Props = {
   loading: boolean;
   viewerRole: string | null;
   organizationWide: boolean;
+  period: InsightsPeriod;
+  onPeriodChange: (next: InsightsPeriod) => void;
+  periodControlsDisabled?: boolean;
 };
 
 /** Domain-grouped Recharts sections for /insights. */
@@ -44,6 +63,9 @@ export function AnalyticsInsightsSections({
   loading,
   viewerRole,
   organizationWide,
+  period,
+  onPeriodChange,
+  periodControlsDisabled = false,
 }: Props) {
   const v2 = data?.v2;
   const trend =
@@ -70,20 +92,33 @@ export function AnalyticsInsightsSections({
     ? Object.entries(v2.revenue.invoiceByStatus).map(([label, count]) => ({ label, count }))
     : [];
   const showDoctors = isAdminRole(viewerRole) && organizationWide && v2?.doctors;
+  const chartPeriodLabel = v2?.meta.periodLabel ?? "Selected period";
   const byStatus = v2?.appointments.byStatus ?? data?.byStatus;
   /** All-time appointment count in current scope (doctor practice or org / selected doctor). */
   const appointmentsAllTime =
     v2?.appointments.totals.all ?? data?.overview.total ?? 0;
+  const upcomingScheduled = v2?.appointments.totals.upcoming ?? data?.overview.upcoming ?? 0;
 
   return (
     <div className="space-y-6">
       <PortalPanelSection
         title="Appointments"
+        subtitle={`Upcoming scheduled: ${upcomingScheduled}`}
         icon={BarChart3}
         count={appointmentsAllTime}
         countInline
         countSkeleton={loading}
       >
+        <div className={insightsAppointmentsPeriodRowClass}>
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-sky-600/90">
+            {toTitleCaseLabel("Chart period")}
+          </span>
+          <InsightsPeriodControls
+            period={period}
+            onPeriodChange={onPeriodChange}
+            disabled={periodControlsDisabled}
+          />
+        </div>
         <AnalyticsStatusSummaryRow
           byStatus={byStatus}
           loading={loading}
@@ -101,15 +136,18 @@ export function AnalyticsInsightsSections({
           </AnalyticsChartCard>
           <AnalyticsChartCard
             title="Busiest weekday"
-            subtitle="Distribution by day of week"
-            detailHint="All-time weekday volume in your current scope (not limited to period)."
+            subtitle={`By day of week · ${chartPeriodLabel}`}
+            detailHint="Appointment counts per weekday within the selected chart period."
+            icon={CalendarDays}
             loading={loading}
           >
             <AnalyticsBarChart data={weekday} />
           </AnalyticsChartCard>
           <AnalyticsChartCard
             title="Status over time"
-            subtitle="Done / pending / alert — last 6 months"
+            subtitle={`Done / pending / alert · ${chartPeriodLabel}`}
+            detailHint="Stacked status buckets follow the chart period (hours, days, or months)."
+            icon={Layers}
             loading={loading}
             className="md:col-span-2"
           >
@@ -118,6 +156,7 @@ export function AnalyticsInsightsSections({
           <AnalyticsChartCard
             title="By category"
             subtitle="Appointments in selected period"
+            icon={FolderTree}
             loading={loading}
           >
             <AnalyticsBarChart data={categoryBars} />
@@ -125,6 +164,7 @@ export function AnalyticsInsightsSections({
           <AnalyticsChartCard
             title="Visit types"
             subtitle="Appointment type mix"
+            icon={PieChart}
             loading={loading}
           >
             <AnalyticsPieChart data={typePie} />
@@ -134,7 +174,12 @@ export function AnalyticsInsightsSections({
 
       <PortalPanelSection title="Patients" icon={Users}>
         <div className="grid gap-6 md:grid-cols-2">
-          <AnalyticsChartCard title="Age distribution" subtitle="Unique patients in period" loading={loading}>
+          <AnalyticsChartCard
+            title="Age distribution"
+            subtitle="Unique patients in period"
+            icon={UserRound}
+            loading={loading}
+          >
             <AnalyticsBarChart
               data={ageBars.map((b) => ({ label: b.label, count: b.count }))}
             />
@@ -180,7 +225,12 @@ export function AnalyticsInsightsSections({
           >
             <AnalyticsAreaChart data={revenueTrend} />
           </AnalyticsChartCard>
-          <AnalyticsChartCard title="Invoice status" subtitle="All invoices in scope" loading={loading}>
+          <AnalyticsChartCard
+            title="Invoice status"
+            subtitle="All invoices in scope"
+            icon={Receipt}
+            loading={loading}
+          >
             <AnalyticsBarChart data={invoiceStatus} />
           </AnalyticsChartCard>
         </div>
@@ -189,7 +239,12 @@ export function AnalyticsInsightsSections({
       {showDoctors && v2?.doctors ? (
         <PortalPanelSection title="Doctors" icon={Stethoscope}>
           <div className="grid gap-6 md:grid-cols-2">
-            <AnalyticsChartCard title="Appointments by doctor" subtitle="Organization-wide" loading={loading}>
+            <AnalyticsChartCard
+              title="Appointments by doctor"
+              subtitle="Organization-wide"
+              icon={Activity}
+              loading={loading}
+            >
               <AnalyticsBarChart
                 data={v2.doctors.byDoctor.slice(0, 12).map((d) => ({
                   label: d.name.length > 12 ? `${d.name.slice(0, 12)}…` : d.name,
@@ -197,7 +252,12 @@ export function AnalyticsInsightsSections({
                 }))}
               />
             </AnalyticsChartCard>
-            <AnalyticsChartCard title="By specialty" subtitle="Appointment volume" loading={loading}>
+            <AnalyticsChartCard
+              title="By specialty"
+              subtitle="Appointment volume"
+              icon={Stethoscope}
+              loading={loading}
+            >
               <AnalyticsPieChart
                 data={v2.doctors.bySpecialty.map((s) => ({
                   name: s.specialty,

@@ -28,6 +28,25 @@ function startOfWeek(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate() - day);
 }
 
+function endOfDay(d: Date): Date {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+}
+
+function endOfMonth(d: Date): Date {
+  return new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
+}
+
+function endOfYear(d: Date): Date {
+  return new Date(d.getFullYear(), 11, 31, 23, 59, 59, 999);
+}
+
+function endOfWeek(d: Date): Date {
+  const start = startOfWeek(d);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  return endOfDay(end);
+}
+
 export async function countAppointments(
   where: Prisma.AppointmentWhereInput,
   extra?: Prisma.AppointmentWhereInput
@@ -55,6 +74,7 @@ export async function fetchAppointmentTotals(
   base: Prisma.AppointmentWhereInput,
   now: Date
 ): Promise<{
+  /** All appointments in scope (includes past + future scheduled). */
   all: number;
   today: number;
   thisWeek: number;
@@ -68,14 +88,18 @@ export async function fetchAppointmentTotals(
   const weekStart = startOfWeek(now);
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const yearStart = new Date(now.getFullYear(), 0, 1);
+  const todayEnd = endOfDay(now);
+  const weekEnd = endOfWeek(now);
+  const monthEnd = endOfMonth(now);
+  const yearEnd = endOfYear(now);
 
   const [all, today, thisWeek, thisMonth, yearToDate, upcoming, overdue, telehealthCount] =
     await Promise.all([
       countAppointments(base),
-      countAppointments(base, { start: { gte: todayStart, lte: now } }),
-      countAppointments(base, { start: { gte: weekStart, lte: now } }),
-      countAppointments(base, { start: { gte: monthStart, lte: now } }),
-      countAppointments(base, { start: { gte: yearStart, lte: now } }),
+      countAppointments(base, { start: { gte: todayStart, lte: todayEnd } }),
+      countAppointments(base, { start: { gte: weekStart, lte: weekEnd } }),
+      countAppointments(base, { start: { gte: monthStart, lte: monthEnd } }),
+      countAppointments(base, { start: { gte: yearStart, lte: yearEnd } }),
       countAppointments(base, { start: { gt: now } }),
       countAppointments(base, {
         end: { lt: now },
@@ -221,14 +245,125 @@ export async function fetchStatusOverTimeLast6Months(
   return Promise.all(tasks);
 }
 
-/** Weekday distribution — lightweight start timestamps only. */
+/** Current calendar year by month — includes scheduled future dates in each month bucket. */
+export async function fetchStatusOverTimeCalendarYear(
+  base: Prisma.AppointmentWhereInput,
+  now: Date
+): Promise<{ month: string; done: number; pending: number; alert: number }[]> {
+  const year = now.getFullYear();
+  const tasks = Array.from({ length: 12 }, (_, monthIndex) => {
+    const start = new Date(year, monthIndex, 1);
+    const end = new Date(year, monthIndex + 1, 0, 23, 59, 59, 999);
+    const rangeWhere = { ...base, start: { gte: start, lte: end } };
+    return Promise.all([
+      countAppointments(rangeWhere, { status: "done" }),
+      countAppointments(rangeWhere, {
+        OR: [{ status: "pending" }, { status: null }],
+      }),
+      countAppointments(rangeWhere, { status: "alert" }),
+    ]).then(([done, pending, alert]) => ({
+      month: start.toLocaleDateString("en", { month: "short", year: "2-digit" }),
+      done,
+      pending,
+      alert,
+    }));
+  });
+  return Promise.all(tasks);
+}
+
+export type InsightsStatusOverTimePoint = {
+  /** X-axis label — field name `month` kept for stacked bar chart compatibility. */
+  month: string;
+  done: number;
+  pending: number;
+  alert: number;
+};
+
+/** Done / pending / alert counts inside one appointment start window. */
+async function countStatusInRange(
+  base: Prisma.AppointmentWhereInput,
+  rangeStart: Date,
+  rangeEnd: Date
+): Promise<Pick<InsightsStatusOverTimePoint, "done" | "pending" | "alert">> {
+  const rangeWhere: Prisma.AppointmentWhereInput = {
+    ...base,
+    start: { gte: rangeStart, lte: rangeEnd },
+  };
+  const [done, pending, alert] = await Promise.all([
+    countAppointments(rangeWhere, { status: "done" }),
+    countAppointments(rangeWhere, {
+      OR: [{ status: "pending" }, { status: null }],
+    }),
+    countAppointments(rangeWhere, { status: "alert" }),
+  ]);
+  return { done, pending, alert };
+}
+
+/** Status stacked bars aligned with chart period — hour / weekday / day / month buckets. */
+export async function fetchStatusOverTimeByPeriod(
+  base: Prisma.AppointmentWhereInput,
+  period: InsightsPeriod,
+  now: Date
+): Promise<InsightsStatusOverTimePoint[]> {
+  if (period === "day") {
+    const dayStart = startOfDay(now);
+    return Promise.all(
+      Array.from({ length: 24 }, (_, h) => {
+        const hourStart = new Date(dayStart);
+        hourStart.setHours(h, 0, 0, 0);
+        const hourEnd = new Date(dayStart);
+        hourEnd.setHours(h, 59, 59, 999);
+        return countStatusInRange(base, hourStart, hourEnd).then((counts) => ({
+          month: `${h}:00`,
+          ...counts,
+        }));
+      })
+    );
+  }
+  if (period === "week") {
+    const weekStart = startOfWeek(now);
+    return Promise.all(
+      Array.from({ length: 7 }, (_, d) => {
+        const dayStart = new Date(weekStart);
+        dayStart.setDate(weekStart.getDate() + d);
+        return countStatusInRange(base, dayStart, endOfDay(dayStart)).then((counts) => ({
+          month: DAY_LABELS[d],
+          ...counts,
+        }));
+      })
+    );
+  }
+  if (period === "month") {
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    return Promise.all(
+      Array.from({ length: daysInMonth }, (_, i) => {
+        const day = i + 1;
+        const dayStart = new Date(year, month, day);
+        return countStatusInRange(base, dayStart, endOfDay(dayStart)).then((counts) => ({
+          month: dayStart.toLocaleDateString("en", { month: "short", day: "numeric" }),
+          ...counts,
+        }));
+      })
+    );
+  }
+  return fetchStatusOverTimeCalendarYear(base, now);
+}
+
+/**
+ * Weekday distribution for the active chart period — scoped `start` window (not all-time).
+ * Prisma has no DOW groupBy; bounded findMany over period range.
+ */
 export async function fetchBusiestDayOfWeekCounts(
-  base: Prisma.AppointmentWhereInput
+  base: Prisma.AppointmentWhereInput,
+  rangeStart: Date,
+  rangeEnd: Date
 ): Promise<{ day: number; label: string; count: number }[]> {
   const rows = await prisma.appointment.findMany({
-    where: base,
+    where: { ...base, start: { gte: rangeStart, lte: rangeEnd } },
     select: { start: true },
-    take: 15000,
+    take: 25000,
   });
   const dayCounts = [0, 0, 0, 0, 0, 0, 0];
   for (const row of rows) {
@@ -337,13 +472,55 @@ export async function fetchTopPatients(
   }));
 }
 
+/** Volume trend for period=month — one bucket per calendar day (includes future days in month). */
+export async function fetchTrendCountsCalendarMonth(
+  base: Prisma.AppointmentWhereInput,
+  now: Date
+): Promise<InsightsTrendPoint[]> {
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  return Promise.all(
+    Array.from({ length: daysInMonth }, (_, i) => {
+      const day = i + 1;
+      const dayStart = new Date(year, month, day);
+      const dayEnd = new Date(year, month, day, 23, 59, 59, 999);
+      return countAppointments(base, {
+        start: { gte: dayStart, lte: dayEnd },
+      }).then((count) => ({
+        label: dayStart.toLocaleDateString("en", { month: "short", day: "numeric" }),
+        count,
+      }));
+    })
+  );
+}
+
+/** Volume trend for period=year — Jan–Dec of the active calendar year. */
+export async function fetchTrendCountsCalendarYear(
+  base: Prisma.AppointmentWhereInput,
+  now: Date
+): Promise<InsightsTrendPoint[]> {
+  const year = now.getFullYear();
+  return Promise.all(
+    Array.from({ length: 12 }, (_, monthIndex) => {
+      const start = new Date(year, monthIndex, 1);
+      const end = new Date(year, monthIndex + 1, 0, 23, 59, 59, 999);
+      return countAppointments(base, {
+        start: { gte: start, lte: end },
+      }).then((count) => ({
+        label: start.toLocaleDateString("en", { month: "short" }),
+        count,
+      }));
+    })
+  );
+}
+
 /** Trend buckets for selected period — count queries, no full appointment rows. */
 export async function fetchTrendCountsByPeriod(
   base: Prisma.AppointmentWhereInput,
   period: InsightsPeriod,
   now: Date
 ): Promise<InsightsTrendPoint[]> {
-  const range = resolveDateRange(period, now);
   if (period === "day") {
     const dayStart = startOfDay(now);
     return Promise.all(
@@ -353,7 +530,7 @@ export async function fetchTrendCountsByPeriod(
         const hourEnd = new Date(dayStart);
         hourEnd.setHours(h, 59, 59, 999);
         return countAppointments(base, {
-          start: { gte: hourStart, lte: hourEnd > now ? now : hourEnd },
+          start: { gte: hourStart, lte: hourEnd },
         }).then((count) => ({ label: `${h}:00`, count }));
       })
     );
@@ -367,13 +544,15 @@ export async function fetchTrendCountsByPeriod(
         const dayEnd = new Date(dayStart);
         dayEnd.setHours(23, 59, 59, 999);
         return countAppointments(base, {
-          start: { gte: dayStart, lte: dayEnd > now ? now : dayEnd },
+          start: { gte: dayStart, lte: dayEnd },
         }).then((count) => ({ label: DAY_LABELS[d], count }));
       })
     );
   }
-  const monthly = await fetchMonthlyCountsLast12Months(base, now);
-  return monthly.map((m) => ({ label: m.month, count: m.count }));
+  if (period === "month") {
+    return fetchTrendCountsCalendarMonth(base, now);
+  }
+  return fetchTrendCountsCalendarYear(base, now);
 }
 
 export async function fetchAgeDistribution(
