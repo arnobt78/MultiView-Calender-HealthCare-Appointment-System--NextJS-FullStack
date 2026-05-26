@@ -11,11 +11,17 @@
  *
  * All mutation success handlers run `invalidateAppointmentTypeDerived` so slot math, `/api/doctors`, and
  * every `appointmentTypes` subtree refetch without a full reload.
+ * Sonner copy: `src/lib/crud-notify-messages.ts` (dynamic name/duration/toggle).
  */
 
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { apiClient, handleApiError } from "@/lib/api-client";
+import {
+  globalVisitTypeCrudMessage,
+  isOwnedVisitTypeActiveOnlyPatch,
+  ownedVisitTypeCrudMessage,
+} from "@/lib/crud-notify-messages";
 import { queryKeys } from "@/lib/query-keys";
 import { isValidUUID } from "@/lib/validation";
 import { invalidateAppointmentTypeDerived } from "@/lib/query-client";
@@ -73,11 +79,12 @@ export function useAppointmentTypesForDoctor(
 
 export function useAppointmentTypeMutations(
   doctorId: string,
-  options?: { refreshRsc?: boolean }
+  options?: { refreshRsc?: boolean; suppressNotify?: boolean }
 ) {
   const queryClient = useQueryClient();
   const router = useRouter();
   const refreshRsc = options?.refreshRsc !== false;
+  const suppressNotify = options?.suppressNotify === true;
 
   const createType = useMutation({
     mutationFn: (body: { name: string; duration_minutes: number; description?: string | null }) =>
@@ -85,9 +92,17 @@ export function useAppointmentTypeMutations(
         method: "POST",
         body: JSON.stringify({ user_id: doctorId, ...body }),
       }),
-    onSuccess: async () => {
+    onSuccess: async (data, variables) => {
       await afterTypeMutation(queryClient, router, refreshRsc);
-      notify.crud({ action: "created", entity: "Appointment type", detail: "Type saved for this doctor." });
+      if (!suppressNotify) {
+        notify.crud(
+          ownedVisitTypeCrudMessage({
+            kind: "create",
+            name: variables.name,
+            duration_minutes: data.type.duration_minutes,
+          })
+        );
+      }
     },
     onError: (e) => handleApiError(e, "Failed to create appointment type"),
   });
@@ -104,18 +119,48 @@ export function useAppointmentTypeMutations(
         body: JSON.stringify(patch),
       });
     },
-    onSuccess: async () => {
+    onSuccess: async (data, variables) => {
       await afterTypeMutation(queryClient, router, refreshRsc);
-      notify.crud({ action: "updated", entity: "Appointment type", detail: "Changes saved." });
+      if (suppressNotify) return;
+      const { id: _id, ...patch } = variables;
+      if (isOwnedVisitTypeActiveOnlyPatch(patch)) {
+        notify.crud(
+          ownedVisitTypeCrudMessage({
+            kind: "toggle-active",
+            name: data.type.name,
+            is_active: patch.is_active === true,
+          })
+        );
+        return;
+      }
+      notify.crud(
+        ownedVisitTypeCrudMessage({
+          kind: "update",
+          name: data.type.name,
+          duration_minutes: data.type.duration_minutes,
+        })
+      );
     },
     onError: (e) => handleApiError(e, "Failed to update appointment type"),
   });
 
   const deleteType = useMutation({
     mutationFn: (id: string) => apiClient<{ ok: boolean }>(`/api/appointment-types/${id}`, { method: "DELETE" }),
-    onSuccess: async () => {
+    onMutate: async (deletedId) => {
+      const types =
+        queryClient.getQueryData<AppointmentTypesForDoctorQueryData>(
+          queryKeys.appointmentTypes.byDoctor(doctorId)
+        )?.types ?? [];
+      const deleted = types.find((t) => t.id === deletedId);
+      return { name: deleted?.name ?? "Appointment type" };
+    },
+    onSuccess: async (_data, _id, context) => {
       await afterTypeMutation(queryClient, router, refreshRsc);
-      notify.crud({ action: "deleted", entity: "Appointment type", detail: "Type removed." });
+      if (!suppressNotify) {
+        notify.crud(
+          ownedVisitTypeCrudMessage({ kind: "delete", name: context?.name ?? "Appointment type" })
+        );
+      }
     },
     onError: (e) => handleApiError(e, "Failed to delete appointment type"),
   });
@@ -139,9 +184,10 @@ export function useGlobalAppointmentTypes(options?: { enabled?: boolean }) {
   });
 }
 
-export function useGlobalAppointmentTypeMutations() {
+export function useGlobalAppointmentTypeMutations(options?: { suppressNotify?: boolean }) {
   const queryClient = useQueryClient();
   const router = useRouter();
+  const suppressNotify = options?.suppressNotify === true;
 
   const createGlobalType = useMutation({
     mutationFn: (body: { name: string; duration_minutes: number; description?: string | null }) =>
@@ -149,9 +195,16 @@ export function useGlobalAppointmentTypeMutations() {
         method: "POST",
         body: JSON.stringify(body),
       }),
-    onSuccess: async () => {
+    onSuccess: async (data, variables) => {
       await afterTypeMutation(queryClient, router, true);
-      notify.crud({ action: "created", entity: "Global visit type", detail: "Saved for all doctors." });
+      if (!suppressNotify) {
+        notify.crud(
+          globalVisitTypeCrudMessage("created", {
+            name: data.type.name ?? variables.name,
+            duration_minutes: data.type.duration_minutes,
+          })
+        );
+      }
     },
     onError: (e) => handleApiError(e, "Failed to create global appointment type"),
   });
@@ -164,18 +217,37 @@ export function useGlobalAppointmentTypeMutations() {
         body: JSON.stringify(patch),
       });
     },
-    onSuccess: async () => {
+    onSuccess: async (data) => {
       await afterTypeMutation(queryClient, router, true);
-      notify.crud({ action: "updated", entity: "Global visit type", detail: "Changes saved." });
+      if (!suppressNotify) {
+        notify.crud(
+          globalVisitTypeCrudMessage("updated", {
+            name: data.type.name,
+            duration_minutes: data.type.duration_minutes,
+          })
+        );
+      }
     },
     onError: (e) => handleApiError(e, "Failed to update global appointment type"),
   });
 
   const deleteGlobalType = useMutation({
     mutationFn: (id: string) => apiClient<{ ok: boolean }>(`/api/appointment-types/${id}`, { method: "DELETE" }),
-    onSuccess: async () => {
+    onMutate: async (deletedId) => {
+      const types =
+        queryClient.getQueryData<{ types: AppointmentTypeApiRow[] }>(
+          queryKeys.appointmentTypes.global
+        )?.types ?? [];
+      const deleted = types.find((t) => t.id === deletedId);
+      return { name: deleted?.name ?? "Visit type" };
+    },
+    onSuccess: async (_data, _id, context) => {
       await afterTypeMutation(queryClient, router, true);
-      notify.crud({ action: "deleted", entity: "Global visit type", detail: "Removed." });
+      if (!suppressNotify) {
+        notify.crud(
+          globalVisitTypeCrudMessage("deleted", { name: context?.name ?? "Visit type" })
+        );
+      }
     },
     onError: (e) => handleApiError(e, "Failed to delete global appointment type"),
   });

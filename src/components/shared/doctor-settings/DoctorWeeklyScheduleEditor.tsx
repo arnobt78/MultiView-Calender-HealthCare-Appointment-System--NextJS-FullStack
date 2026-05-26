@@ -23,6 +23,7 @@ import { closeHtmlDetails } from "@/components/shared/doctor-settings/close-html
 import { apiClient } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import { invalidateDoctorSchedule } from "@/lib/query-client";
+import { weeklyAvailabilityCrudMessage } from "@/lib/crud-notify-messages";
 import { notify } from "@/lib/notify";
 import type { DoctorAvailabilityQueryData } from "@/lib/doctor-portal-settings-prefetch";
 import type {
@@ -118,9 +119,9 @@ export function DoctorWeeklyScheduleEditor({
         method: "POST",
         body: JSON.stringify({ doctorId, ...data }),
       }),
-    onSuccess: async () => {
+    onSuccess: async (_data, variables) => {
       await invalidateDoctorSchedule(queryClient, doctorId);
-      notify.crud({ action: "created", entity: "Availability window", detail: "Weekly schedule updated." });
+      notify.crud(weeklyAvailabilityCrudMessage("created", variables));
       setNewStartTime("09:00");
       setNewEndTime("17:00");
       closeHtmlDetails(addDetailsRef.current);
@@ -143,9 +144,10 @@ export function DoctorWeeklyScheduleEditor({
         body: JSON.stringify(patch),
       });
     },
-    onSuccess: async () => {
+    onSuccess: async (_data, variables) => {
       await invalidateDoctorSchedule(queryClient, doctorId);
-      notify.crud({ action: "updated", entity: "Availability window", detail: "Weekly schedule updated." });
+      const { id: _id, ...window } = variables;
+      notify.crud(weeklyAvailabilityCrudMessage("updated", window));
       setEditingId(null);
     },
     onError: () =>
@@ -155,9 +157,28 @@ export function DoctorWeeklyScheduleEditor({
   const deleteWindowMutation = useMutation({
     mutationFn: (id: string) =>
       apiClient(`/api/doctor-availability/${id}`, { method: "DELETE" }),
-    onSuccess: async () => {
+    onMutate: async (deletedId) => {
+      const deleted = windows.find((w) => w.id === deletedId) ?? null;
+      return { deleted };
+    },
+    onSuccess: async (_data, _id, context) => {
       await invalidateDoctorSchedule(queryClient, doctorId);
-      notify.crud({ action: "deleted", entity: "Availability window", detail: "Weekly schedule updated." });
+      if (context?.deleted) {
+        notify.crud(
+          weeklyAvailabilityCrudMessage("deleted", {
+            weekday: context.deleted.weekday,
+            start_min: context.deleted.start_min,
+            end_min: context.deleted.end_min,
+            timezone: context.deleted.timezone,
+          })
+        );
+      } else {
+        notify.crud({
+          action: "deleted",
+          entity: "Availability window",
+          detail: "Weekly time window removed.",
+        });
+      }
       if (editingId) setEditingId(null);
     },
     onError: () =>

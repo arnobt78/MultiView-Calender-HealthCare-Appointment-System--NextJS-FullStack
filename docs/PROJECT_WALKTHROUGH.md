@@ -70,7 +70,8 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Prism
 - **Cache:** `useLayoutEffect` always seeds `doctorPortal.all` + `patients.all` (including `[]`) so roster CRUD via `usePatients` updates portal without refresh. `prefetchDoctorPortal` and `GET /api/doctor-portal` include `primary_doctor` on roster patients (`patientUserPick`). `useQuery` uses `initialData` + `staleTime: 3min`.
 - **Invalidation:** `invalidateEntityAffectingAppointments("patients")` and `usePatients` mutations also call `invalidateDoctorPortal`; appointments → `invalidateAfterAppointmentMutation`.
 - **Shell:** `dashboardShellClass` adds `pb-3` for portal routes in `AuthShell` (`src/lib/dashboard-layout.ts`).
-- **Verify (pre-commit):** `npm test && npx tsc --noEmit && npm run lint && npm run build` — **231 tests**, all pass (includes `utils-title-case.test.ts`, `doctor-settings-form-validity.test.ts`, `doctor-bookable-types` inactive-owned case).
+- **Sonner CRUD copy:** `src/lib/crud-notify-messages.ts` + Vitest `crud-notify-messages.test.ts` — dynamic subtitles for weekly hours, time off, global/owned visit types (`useAppointmentTypes`), patient booking; wired in doctor-settings editors + `PatientBookingDialog`.
+- **Verify (pre-commit):** `npm test && npx tsc --noEmit && npm run lint && npm run build` — includes `crud-notify-messages.test.ts`, `utils-title-case.test.ts`, `doctor-settings-form-validity.test.ts`, `doctor-bookable-types` inactive-owned case.
 - **Invalidation (visit types):** `invalidateAppointmentTypeDerived` centralizes `doctorPortal.all` (portal toggles + CP `DoctorGlobalTypeConfigEditor`); CP also `invalidateAdminPortal`.
 
 ### Control panel entity split (users vs patients)
@@ -266,7 +267,7 @@ Shared primitives keep layout fixed while data loads:
 
 **SSR + client:** root `layout.tsx` passes `initialNavRole` into `AuthShell`. Portal pages pass `initialData` on `useQuery`. Profile: `profileLoading = isLoading && !patient`. Navbar role links render when `role` is known (server + client match).
 
-**Audit (agent glance):** Navbar `fixed` + `Z_NAVBAR`; `FilterSelect` shared with dashboard filters. **Doctor portal:** schedule/type panels complete — labels, save-disabled, owned `is_active` checkbox, global `doctor-config` checkbox, SSR seed + `invalidateAppointmentTypeDerived` / `invalidateDoctorSchedule`. **231 tests**, `tsc` + `lint` + `build` pass. **Optional gaps (non-blocking):** dedicated Vitest for `PATCH` appointment-types `is_active`; time-off PATCH route test; `GlassInlineSelect` unused fallback.
+**Audit (agent glance):** Navbar `fixed` + `Z_NAVBAR`; `FilterSelect` shared with dashboard filters. **Doctor portal:** schedule/type panels + dynamic Sonner (`crud-notify-messages.ts`, `crud-notify-messages.test.ts`); labels, save-disabled, owned `is_active`, global `doctor-config`, SSR seed + `invalidateAppointmentTypeDerived` / `invalidateDoctorSchedule`. **243 tests**, `tsc` + `lint` + `build` pass. **Sonner optional (deferred):** `usePayments`, `useOrganization`, `useNotifications` static copy. **Other non-blocking:** Vitest for `PATCH` appointment-types `is_active`; time-off PATCH route test; `GlassInlineSelect` unused fallback.
 
 ### Dashboard calendar shared UI (unified `AppointmentCard`)
 
@@ -750,6 +751,7 @@ Set by `proxy.ts` on every response. CDN headers use both `CDN-Cache-Control` an
   - `notify.loginWelcome({ name, todayCount })`
   - `notify.logoutGoodbye({ name })`
   - `notify.crud({ action, entity, detail })`
+- Dynamic `detail` builders: `src/lib/crud-notify-messages.ts` (schedule panels, visit types, booking — see doctor-portal section).
 - `src/lib/api-client.ts` now routes generic API errors through `notify.error(...)`.
 
 ### Shared Sensitive-Action Dialog

@@ -24,6 +24,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { apiClient, handleApiError } from "@/lib/api-client";
+import { patientBookingCreatedMessage } from "@/lib/crud-notify-messages";
 import { notify } from "@/lib/notify";
 import { useAuth } from "@/hooks/useAuth";
 import { useDoctorsDirectory } from "@/hooks/useDoctorsDirectory";
@@ -275,11 +276,31 @@ export function PatientBookingDialog({
     mutationFn: (body: BookingPayload) =>
       apiClient("/api/patient-portal", { method: "POST", body: JSON.stringify(body) }),
     onSuccess: async () => {
-      notify.crud({
-        action: "created",
-        entity: "Appointment request",
-        detail: "Your appointment request was submitted successfully.",
-      });
+      const doctorRow = doctors.find((d) => d.id === doctorId);
+      const doctorName =
+        doctorRow?.display_name?.trim() || doctorRow?.email?.trim() || "your doctor";
+      const typeName = selectedType?.name ?? "Appointment";
+      const startDt = selectedSlot ? new Date(selectedSlot) : null;
+      const endDt =
+        startDt && Number.isFinite(startDt.getTime())
+          ? addMinutes(startDt, duration)
+          : null;
+      if (startDt && endDt) {
+        notify.crud(
+          patientBookingCreatedMessage({
+            doctorName,
+            typeName,
+            start: startDt,
+            end: endDt,
+          })
+        );
+      } else {
+        notify.crud({
+          action: "created",
+          entity: "Appointment request",
+          detail: "Your appointment request was submitted successfully.",
+        });
+      }
       await queryClient.invalidateQueries({ queryKey: queryKeys.patientPortal.all });
       await invalidateAfterAppointmentMutation(queryClient);
       handleOpenChange(false);

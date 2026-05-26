@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { DoctorSettingsGlassListRow } from "@/components/shared/doctor-settings/DoctorSettingsGlassListRow";
 import { useAppointmentTypesForDoctor } from "@/hooks/useAppointmentTypes";
 import { apiClient, handleApiError } from "@/lib/api-client";
+import { globalVisitTypeToggleMessage } from "@/lib/crud-notify-messages";
 import { notify } from "@/lib/notify";
 import {
   invalidateAppointmentTypeDerived,
@@ -73,16 +74,13 @@ export function DoctorGlobalVisitTypesEditor({
     },
     onSuccess: async (_data, { appointment_type_id, is_enabled }) => {
       const typeName = globalTypes.find((t) => t.id === appointment_type_id)?.name ?? "Visit type";
-      notify.crud({
-        action: is_enabled ? "created" : "deleted",
-        entity: "Visit type",
-        detail:
-          variant === "portal"
-            ? is_enabled
-              ? "Enabled for your patients."
-              : "Disabled for new bookings."
-            : `${typeName} ${is_enabled ? "enabled" : "disabled"} for this doctor`,
-      });
+      notify.crud(
+        globalVisitTypeToggleMessage({
+          name: typeName,
+          enabled: is_enabled,
+          variant: variant === "portal" ? "portal" : "control-panel",
+        })
+      );
       const tasks = [invalidateAppointmentTypeDerived(queryClient)];
       if (user?.role === "admin") {
         tasks.push(invalidateAdminPortal(queryClient));

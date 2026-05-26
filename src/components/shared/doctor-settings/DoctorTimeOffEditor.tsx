@@ -24,6 +24,7 @@ import { SchedulingDatetimeRangeFields } from "@/components/shared/scheduling/Sc
 import { apiClient } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import { invalidateDoctorSchedule } from "@/lib/query-client";
+import { timeOffCrudMessage } from "@/lib/crud-notify-messages";
 import { notify } from "@/lib/notify";
 import type { DoctorTimeOffQueryData } from "@/lib/doctor-portal-settings-prefetch";
 import type {
@@ -103,9 +104,9 @@ export function DoctorTimeOffEditor({
         method: "POST",
         body: JSON.stringify({ doctorId, ...data }),
       }),
-    onSuccess: async () => {
+    onSuccess: async (_data, variables) => {
       await invalidateDoctorSchedule(queryClient, doctorId);
-      notify.crud({ action: "created", entity: "Time off", detail: "Block added to schedule." });
+      notify.crud(timeOffCrudMessage("created", variables));
       setNewTimeOffStart("");
       setNewTimeOffEnd("");
       setNewTimeOffReason("");
@@ -128,9 +129,10 @@ export function DoctorTimeOffEditor({
         body: JSON.stringify(patch),
       });
     },
-    onSuccess: async () => {
+    onSuccess: async (_data, variables) => {
       await invalidateDoctorSchedule(queryClient, doctorId);
-      notify.crud({ action: "updated", entity: "Time off", detail: "Block updated." });
+      const { id: _id, ...block } = variables;
+      notify.crud(timeOffCrudMessage("updated", block));
       setEditingId(null);
     },
     onError: () =>
@@ -140,9 +142,27 @@ export function DoctorTimeOffEditor({
   const deleteTimeOffMutation = useMutation({
     mutationFn: (id: string) =>
       apiClient(`/api/doctor-time-off/${id}`, { method: "DELETE" }),
-    onSuccess: async () => {
+    onMutate: async (deletedId) => {
+      const deleted = timeOffBlocks.find((b) => b.id === deletedId) ?? null;
+      return { deleted };
+    },
+    onSuccess: async (_data, _id, context) => {
       await invalidateDoctorSchedule(queryClient, doctorId);
-      notify.crud({ action: "deleted", entity: "Time off", detail: "Block removed from schedule." });
+      if (context?.deleted) {
+        notify.crud(
+          timeOffCrudMessage("deleted", {
+            starts_at: context.deleted.starts_at,
+            ends_at: context.deleted.ends_at,
+            reason: context.deleted.reason,
+          })
+        );
+      } else {
+        notify.crud({
+          action: "deleted",
+          entity: "Time off",
+          detail: "Time-off block removed from your schedule.",
+        });
+      }
       if (editingId) setEditingId(null);
     },
     onError: () =>
