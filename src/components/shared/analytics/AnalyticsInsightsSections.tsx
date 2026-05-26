@@ -155,7 +155,7 @@ export function AnalyticsInsightsSections({
           </AnalyticsChartCard>
           <AnalyticsChartCard
             title="By category"
-            subtitle="Appointments in selected period"
+            subtitle={`By category · ${chartPeriodLabel}`}
             icon={FolderTree}
             loading={loading}
           >

@@ -36,6 +36,7 @@ import {
 } from "@/lib/serializers";
 import { patientDetailInclude, patientUserPick } from "@/lib/patient-api-include";
 import { getInsightsData, type InsightsPayload } from "@/lib/insights-data";
+import { fetchInsightsWithRedisCache } from "@/lib/insights/insights-redis-cache";
 import {
   resolveInsightsDataOptions,
   type InsightsQueryKey,
@@ -367,10 +368,13 @@ export async function prefetchInsights(
 ): Promise<InsightsPayload | null> {
   try {
     const dataOptions = resolveInsightsDataOptions(userId, opts.query, opts.role);
-    return await getInsightsData(userId, {
-      ...dataOptions,
-      period: opts.query.period,
-    });
+    const { data } = await fetchInsightsWithRedisCache(userId, opts.query, () =>
+      getInsightsData(userId, {
+        ...dataOptions,
+        period: opts.query.period,
+      })
+    );
+    return data;
   } catch {
     return null;
   }

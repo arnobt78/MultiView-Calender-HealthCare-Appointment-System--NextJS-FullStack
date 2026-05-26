@@ -101,6 +101,10 @@ export const redis = {
    * Cache key pattern: `dashboard:overview:<userId>`
    */
   async invalidateDashboardOverview(userId: string): Promise<void> {
-    await redisCommand(["DEL", `dashboard:overview:${userId}`]);
+    await Promise.all([
+      redisCommand(["DEL", `dashboard:overview:${userId}`]),
+      // Bust all insights filter variants for this viewer (see insights-redis-cache.ts).
+      redisCommand(["INCR", `insights:ver:${userId}`]),
+    ]);
   },
 };

@@ -11,6 +11,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session";
 import { getInsightsData } from "@/lib/insights-data";
+import { fetchInsightsWithRedisCache } from "@/lib/insights/insights-redis-cache";
 import { getUserRole, isDoctorRole, isStaffRole } from "@/lib/rbac";
 import {
   parseInsightsQueryFromSearchParams,
@@ -71,11 +72,18 @@ export async function GET(req: NextRequest) {
 
     const dataOptions = resolveInsightsDataOptions(sessionUser.userId, filter, role);
 
-    const data = await getInsightsData(sessionUser.userId, {
-      ...dataOptions,
-      period: filter.period,
+    const { data, cacheHit } = await fetchInsightsWithRedisCache(
+      sessionUser.userId,
+      filter,
+      () =>
+        getInsightsData(sessionUser.userId, {
+          ...dataOptions,
+          period: filter.period,
+        })
+    );
+    return NextResponse.json(data, {
+      headers: cacheHit ? { "X-Cache": "HIT" } : undefined,
     });
-    return NextResponse.json(data);
   } catch (error: unknown) {
     console.error("Insights error:", error);
     return NextResponse.json({ error: "Failed to load insights" }, { status: 500 });
