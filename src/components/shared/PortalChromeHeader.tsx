@@ -14,7 +14,7 @@ import {
 type PortalChromeHeaderProps = {
   icon: LucideIcon;
   title: string;
-  description: string;
+  description: React.ReactNode;
   /** Right slot on the title row — e.g. Book Appointment on patient portal */
   actions?: React.ReactNode;
   /** Second row — dashboard calendar toolbar (date nav, view tabs, role actions) */

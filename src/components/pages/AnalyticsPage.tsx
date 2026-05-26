@@ -13,11 +13,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
 import { useInsights } from "@/hooks/useInsights";
 import type { InsightsPayload } from "@/lib/insights-data";
-import { InsightsScopeControls } from "@/components/insights/InsightsScopeControls";
-import { InsightsPeriodControls } from "@/components/insights/InsightsPeriodControls";
+import { InsightsFilterToolbar } from "@/components/insights";
 import {
   buildInsightsQueryString,
   defaultInsightsQueryForRole,
+  type InsightsFilterKey,
   type InsightsQueryKey,
 } from "@/lib/insights-scope";
 import type { InsightsPeriod } from "@/lib/insights/insights-period";
@@ -28,6 +28,7 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { PortalChromeHeader } from "@/components/shared/PortalChromeHeader";
 import { AnalyticsOverviewStatsRow } from "@/components/shared/analytics/AnalyticsOverviewStatsRow";
 import { AnalyticsInsightsSections } from "@/components/shared/analytics/AnalyticsInsightsSections";
+import { insightsScopeBodyClass, insightsScopeHintClass } from "@/lib/insights-ui-classes";
 
 type AnalyticsPageProps = {
   /** SSR payload — seed queryKeys.insights.filter(initialQuery) before paint */
@@ -78,8 +79,13 @@ export default function AnalyticsPage({
   );
 
   const handleFilterChange = useCallback(
-    (nextScope: { scope: InsightsQueryKey["scope"]; doctorId?: string }) => {
-      const next: InsightsQueryKey = { ...query, ...nextScope };
+    (nextFilter: InsightsFilterKey) => {
+      const next: InsightsQueryKey = {
+        period: query.period,
+        scope: nextFilter.scope,
+        doctorId:
+          nextFilter.scope === "personal" ? nextFilter.doctorId : undefined,
+      };
       setQuery(next);
       syncUrl(next);
     },
@@ -136,27 +142,32 @@ export default function AnalyticsPage({
         icon={TrendingUp}
         title="Business Analytics"
         description={
-          scopeHint
-            ? `${scopeHint} Track your business performance, patient trends, appointment analytics and more.`
-            : "Track your business performance, patient trends, appointment analytics and more."
+          scopeHint ? (
+            <>
+              <span className={insightsScopeHintClass}>{scopeHint}</span>{" "}
+              <span className={insightsScopeBodyClass}>
+                Track your business performance, patient trends, appointment analytics and
+                more.
+              </span>
+            </>
+          ) : (
+            <span className={insightsScopeBodyClass}>
+              Track your business performance, patient trends, appointment analytics and more.
+            </span>
+          )
         }
         actions={
           isDoctorRole(viewerRole) || isAdminRole(viewerRole) ? (
-            <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
-              <InsightsPeriodControls
-                period={query.period}
-                onPeriodChange={handlePeriodChange}
-                disabled={loading && !data}
-              />
-              <InsightsScopeControls
-                filter={query}
-                onFilterChange={handleFilterChange}
-                viewerRole={viewerRole}
-                disabled={loading && !data}
-                doctors={adminDoctors}
-                doctorsLoading={doctorsLoading}
-              />
-            </div>
+            <InsightsFilterToolbar
+              period={query.period}
+              onPeriodChange={handlePeriodChange}
+              filter={query}
+              onFilterChange={handleFilterChange}
+              viewerRole={viewerRole}
+              disabled={loading && !data}
+              doctors={adminDoctors}
+              doctorsLoading={doctorsLoading}
+            />
           ) : undefined
         }
       />

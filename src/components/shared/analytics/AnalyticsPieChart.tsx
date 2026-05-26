@@ -4,9 +4,10 @@ import dynamic from "next/dynamic";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { ChartConfig } from "@/components/ui/chart";
 import type { AnalyticsPiePoint } from "@/components/shared/analytics/AnalyticsPieChartInner";
+import { analyticsChartConfigColor } from "@/components/shared/analytics/analytics-chart-classes";
 
 const chartConfig = {
-  count: { label: "Count", color: "hsl(var(--chart-3))" },
+  count: { label: "Count", color: analyticsChartConfigColor(3) },
 } satisfies ChartConfig;
 
 const PieChartInner = dynamic(

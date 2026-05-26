@@ -3,7 +3,17 @@
 import type { LucideIcon } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { analyticsChartGlassClass } from "@/components/shared/analytics/analytics-chart-classes";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  analyticsChartDescriptionClass,
+  analyticsChartGlassClass,
+  analyticsChartTitleClass,
+} from "@/components/shared/analytics/analytics-chart-classes";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -13,6 +23,8 @@ type Props = {
   loading?: boolean;
   children: React.ReactNode;
   className?: string;
+  /** Extra detail on hover (chart purpose / data source). */
+  detailHint?: string;
 };
 
 /** Glass chart panel — chrome stays mounted; inner chart area skeletons when loading. */
@@ -23,15 +35,35 @@ export function AnalyticsChartCard({
   loading = false,
   children,
   className,
+  detailHint,
 }: Props) {
+  const hint = detailHint ?? subtitle;
+
   return (
     <Card className={cn(analyticsChartGlassClass, className)}>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
-          {Icon ? <Icon className="h-5 w-5 shrink-0 text-primary" aria-hidden /> : null}
-          {title}
-        </CardTitle>
-        {subtitle ? <CardDescription>{subtitle}</CardDescription> : null}
+      <CardHeader className="pb-2">
+        <TooltipProvider delayDuration={200}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <CardTitle className={cn("flex cursor-default items-center gap-2", analyticsChartTitleClass)}>
+                {Icon ? (
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-sky-200/80 bg-sky-50 text-sky-600">
+                    <Icon className="h-4 w-4" aria-hidden />
+                  </span>
+                ) : null}
+                <span className="min-w-0">{title}</span>
+              </CardTitle>
+            </TooltipTrigger>
+            {hint ? (
+              <TooltipContent side="top" className="max-w-xs text-xs">
+                {hint}
+              </TooltipContent>
+            ) : null}
+          </Tooltip>
+        </TooltipProvider>
+        {subtitle ? (
+          <CardDescription className={analyticsChartDescriptionClass}>{subtitle}</CardDescription>
+        ) : null}
       </CardHeader>
       <CardContent>
         {loading ? (

@@ -3,11 +3,12 @@
 import dynamic from "next/dynamic";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { ChartConfig } from "@/components/ui/chart";
+import { analyticsChartConfigColor } from "@/components/shared/analytics/analytics-chart-classes";
 
 export type AnalyticsLinePoint = { label: string; count: number };
 
 const chartConfig = {
-  count: { label: "Count", color: "hsl(var(--chart-1))" },
+  count: { label: "Count", color: analyticsChartConfigColor(1) },
 } satisfies ChartConfig;
 
 const LineChartInner = dynamic(

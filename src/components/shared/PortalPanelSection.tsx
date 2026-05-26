@@ -95,7 +95,7 @@ export function PortalPanelSection({
                 ) : null}
               </h3>
               {subtitle ? (
-                <p className="-mt-1 mb-3 text-xs text-muted-foreground">{subtitle}</p>
+                <p className="-mt-1 mb-3 text-xs text-sky-600/90">{subtitle}</p>
               ) : null}
             </>
           )}

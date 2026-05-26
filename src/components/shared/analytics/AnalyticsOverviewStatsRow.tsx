@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { PatientStatCard } from "@/components/control-panel/PatientStatCard";
 import type { InsightsPayload } from "@/lib/insights-data";
+import { analyticsOverviewGridClass } from "@/lib/insights-ui-classes";
 
 type Props = {
   data: InsightsPayload | undefined;
@@ -23,7 +24,7 @@ export function AnalyticsOverviewStatsRow({ data, valueSkeleton }: Props) {
   const revenue = data?.v2?.revenue;
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8 sm:gap-4">
+    <div className={analyticsOverviewGridClass}>
       <PatientStatCard
         variant="sky"
         icon={Calendar}

@@ -19,7 +19,7 @@ export const pageChromeIconClass = "h-6 w-6 text-sky-600";
 export const pageChromeTitleClass =
   "text-xl font-semibold tracking-tight text-gray-700 md:text-2xl";
 
-export const pageChromeDescriptionClass = "text-sm text-muted-foreground";
+export const pageChromeDescriptionClass = "text-sm leading-relaxed text-gray-700";
 
 /** Optional second row under title (dashboard date nav + view tabs). */
 export const pageChromeToolbarRowClass =

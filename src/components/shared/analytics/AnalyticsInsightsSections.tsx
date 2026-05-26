@@ -84,6 +84,7 @@ export function AnalyticsInsightsSections({
           <AnalyticsChartCard
             title="Volume trend"
             subtitle={v2?.meta.periodLabel ?? "Over selected period"}
+            detailHint="Appointment count per time bucket for the selected period filter."
             icon={BarChart3}
             loading={loading}
           >
@@ -92,6 +93,7 @@ export function AnalyticsInsightsSections({
           <AnalyticsChartCard
             title="Busiest weekday"
             subtitle="Distribution by day of week"
+            detailHint="All-time weekday volume in your current scope (not limited to period)."
             loading={loading}
           >
             <AnalyticsBarChart data={weekday} />
