@@ -5,6 +5,7 @@
  */
 
 import { CalendarOff } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { portalPanelCardClass } from "@/components/shared/PortalPanelSection";
@@ -15,6 +16,9 @@ import {
   UNAVAILABLE_DATES_SECTION_TITLE,
 } from "@/lib/doctor-portal-schedule-copy";
 import type { DoctorTimeOffQueryData } from "@/lib/doctor-portal-settings-prefetch";
+import type { TimeOffBlock } from "@/lib/doctor-schedule-types";
+import { queryKeys } from "@/lib/query-keys";
+import { apiClient } from "@/lib/api-client";
 
 type Props = {
   doctorId: string | undefined;
@@ -27,6 +31,19 @@ export function DoctorPortalTimeOffCard({
   portalLoading,
   initialTimeOff,
 }: Props) {
+  const { data: timeOffData } = useQuery({
+    queryKey: queryKeys.doctors.timeOff(doctorId ?? ""),
+    queryFn: () =>
+      apiClient<{ timeOff: TimeOffBlock[] }>(
+        `/api/doctor-time-off?doctorId=${encodeURIComponent(doctorId!)}`
+      ),
+    enabled: Boolean(doctorId),
+    initialData: initialTimeOff,
+    staleTime: 60_000,
+  });
+  const timeOffCount = timeOffData?.timeOff?.length ?? 0;
+  const countSkeleton = Boolean(portalLoading || !doctorId);
+
   return (
     <Card id="dp-unavailable-dates" className={portalPanelCardClass}>
       <CardContent className="p-4 text-gray-700 sm:p-6">
@@ -44,6 +61,8 @@ export function DoctorPortalTimeOffCard({
               subtitle={TIME_OFF_PORTAL_SUBTITLE}
               icon={CalendarOff}
               iconClassName="border-amber-100 bg-amber-50 [&_svg]:text-amber-600"
+              count={timeOffCount}
+              countSkeleton={countSkeleton}
             />
             <DoctorTimeOffEditor
               doctorId={doctorId}

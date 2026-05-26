@@ -11,7 +11,7 @@
  * Cache: SSR seeds `doctorPortal.all`, `patients.all`, and schedule/type query keys via `initialScheduleSettings`.
  */
 
-import { useState, useLayoutEffect } from "react";
+import { useState, useLayoutEffect, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
 import { apiClient } from "@/lib/api-client";
@@ -34,6 +34,7 @@ import {
   DoctorPortalAdditionalTypesCard,
   DoctorGlobalVisitTypesEditor,
 } from "@/components/shared/doctor-settings";
+import { useAppointmentTypesForDoctor } from "@/hooks/useAppointmentTypes";
 import { doctorSettingsGlassPanelShadowClass } from "@/lib/doctor-settings-glass-surfaces";
 import { GLOBAL_APPOINTMENT_TYPES_TITLE } from "@/lib/doctor-portal-schedule-copy";
 import { DOCTOR_PORTAL_VISIT_TYPE_COPY } from "@/lib/doctor-portal-visit-type-copy";
@@ -86,6 +87,14 @@ export default function DoctorPortalPage({
   const profileLoading = portalLoading || !data?.doctor;
   const doctorId = data?.doctor?.id;
 
+  const { data: doctorTypesCatalog } = useAppointmentTypesForDoctor(doctorId, {
+    initialData: initialScheduleSettings?.appointmentTypes,
+  });
+  const globalVisitTypeCount = useMemo(
+    () => (doctorTypesCatalog?.types ?? []).filter((t) => t.user_id === null).length,
+    [doctorTypesCatalog?.types]
+  );
+
   const todayAppts = data?.todayAppointments ?? [];
   const upcomingAppts = data?.upcomingAppointments ?? [];
 
@@ -133,6 +142,7 @@ export default function DoctorPortalPage({
           icon={Calendar}
           iconClassName="border-blue-100 bg-blue-50 [&_svg]:text-blue-500"
           count={todayCountLabel}
+          countInline
           countSkeleton={portalLoading}
           contentClassName="pb-2"
         >
@@ -168,6 +178,7 @@ export default function DoctorPortalPage({
           icon={CalendarClock}
           iconClassName="border-indigo-100 bg-indigo-50 [&_svg]:text-indigo-600"
           count={upcomingCountLabel}
+          countInline
           countSkeleton={portalLoading}
           contentClassName="pb-2"
         >
@@ -212,6 +223,8 @@ export default function DoctorPortalPage({
           headerVariant="stacked"
           icon={Layers}
           iconClassName="border-violet-100 bg-violet-50 [&_svg]:text-violet-600"
+          count={globalVisitTypeCount}
+          countSkeleton={portalLoading || !doctorId}
           className={doctorSettingsGlassPanelShadowClass("violet")}
         >
           {doctorId ? (

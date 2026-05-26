@@ -2,10 +2,10 @@
 
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { portalPanelSectionHeadingClass } from "@/lib/page-chrome-classes";
+import { PortalPanelCountBadge } from "@/components/shared/PortalPanelCountBadge";
 import { PortalPanelSubsectionHeader } from "@/components/shared/PortalPanelSubsectionHeader";
 import { cn } from "@/lib/utils";
 
@@ -63,6 +63,8 @@ export function PortalPanelSection({
               subtitle={subtitle}
               icon={Icon}
               iconClassName={iconClassName}
+              count={count}
+              countSkeleton={countSkeleton}
               className="mb-3"
             />
           ) : (
@@ -81,18 +83,14 @@ export function PortalPanelSection({
                   countSkeleton ? (
                     <Skeleton className="h-5 w-10 shrink-0 rounded-full" aria-hidden />
                   ) : (
-                    <Badge variant="secondary" className="shrink-0 text-xs font-normal">
-                      {count}
-                    </Badge>
+                    <PortalPanelCountBadge>{count}</PortalPanelCountBadge>
                   )
                 ) : null}
                 {count !== undefined && !countInline ? (
                   countSkeleton ? (
                     <Skeleton className="ml-auto h-5 w-12 rounded-full" aria-hidden />
                   ) : (
-                    <Badge variant="secondary" className="ml-auto text-xs font-normal">
-                      {count}
-                    </Badge>
+                    <PortalPanelCountBadge className="ml-auto">{count}</PortalPanelCountBadge>
                   )
                 ) : null}
               </h3>

@@ -73,6 +73,7 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Prism
 - **Sonner CRUD copy:** `src/lib/crud-notify-messages.ts` + Vitest `crud-notify-messages.test.ts` — dynamic subtitles for weekly hours, time off, global/owned visit types (`useAppointmentTypes`), patient booking (`PatientBookingDialog` uses mutation `variables` + `notifyMeta`), invoices (`usePayments`), organizations/members (`useOrganization`), notifications bulk (`useNotifications`); wired in doctor-settings editors + hooks above.
 - **Verify (pre-commit):** `npm test && npx tsc --noEmit && npm run lint && npm run build` — **252 tests** (37 files); includes `crud-notify-messages.test.ts` (Phase 3b invoice/org/notification/booking partial), `utils-title-case.test.ts`, `doctor-settings-form-validity.test.ts`, `doctor-bookable-types` inactive-owned case.
 - **Invalidation (visit types):** `invalidateAppointmentTypeDerived` centralizes `doctorPortal.all` (portal toggles + CP `DoctorGlobalTypeConfigEditor`); CP also `invalidateAdminPortal`.
+- **Section counts:** `PortalPanelCountBadge` + inline `countInline` / `PortalPanelSubsectionHeader` `count` on Today, Upcoming, My Patients, weekly hours, unavailable dates, global + owned visit types (TanStack cache — updates on CRUD without refresh).
 
 ### Control panel entity split (users vs patients)
 

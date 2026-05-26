@@ -41,6 +41,8 @@ export function DoctorPortalWeeklyHoursCard({
     staleTime: 60_000,
   });
   const singleTz = sharedAvailabilityTimezone(availData?.availability ?? []);
+  const weeklyHoursCount = availData?.availability?.length ?? 0;
+  const countSkeleton = Boolean(portalLoading || !doctorId);
 
   return (
     <Card id="dp-weekly-hours" className={portalPanelCardClass}>
@@ -59,6 +61,8 @@ export function DoctorPortalWeeklyHoursCard({
               subtitle={<WeeklyHoursPortalSubtitle timezone={singleTz} />}
               icon={Clock}
               iconClassName="border-sky-100 bg-sky-50 [&_svg]:text-sky-600"
+              count={weeklyHoursCount}
+              countSkeleton={countSkeleton}
             />
             <DoctorWeeklyScheduleEditor
               doctorId={doctorId}
