@@ -1,7 +1,7 @@
 "use client";
 
 import type { LucideIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, toTitleCaseLabel } from "@/lib/utils";
 import {
   pageChromeDescriptionClass,
   pageChromeHeaderShellClass,
@@ -42,7 +42,7 @@ export function PortalChromeHeader({
             <Icon className={pageChromeIconClass} aria-hidden />
           </span>
           <div className="flex min-w-0 flex-1 flex-col justify-center">
-            <h1 className={pageChromeTitleClass}>{title}</h1>
+            <h1 className={pageChromeTitleClass}>{toTitleCaseLabel(title)}</h1>
             <p className={pageChromeDescriptionClass}>{description}</p>
           </div>
         </div>

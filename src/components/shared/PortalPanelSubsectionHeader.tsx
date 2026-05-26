@@ -4,7 +4,7 @@ import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PortalPanelCountBadge } from "@/components/shared/PortalPanelCountBadge";
-import { cn, toTitleCaseLabel } from "@/lib/utils";
+import { cn, toSentenceCaseSubtitle, toTitleCaseLabel } from "@/lib/utils";
 
 type PortalPanelSubsectionHeaderProps = {
   title: string;
@@ -59,7 +59,7 @@ export function PortalPanelSubsectionHeader({
         </h3>
         {subtitle ? (
           <p className="text-xs leading-snug text-muted-foreground">
-            {typeof subtitle === "string" ? toTitleCaseLabel(subtitle) : subtitle}
+            {typeof subtitle === "string" ? toSentenceCaseSubtitle(subtitle) : subtitle}
           </p>
         ) : null}
       </div>

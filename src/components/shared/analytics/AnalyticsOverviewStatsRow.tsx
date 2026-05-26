@@ -22,6 +22,8 @@ type Props = {
 export function AnalyticsOverviewStatsRow({ data, valueSkeleton }: Props) {
   const totals = data?.v2?.appointments.totals;
   const revenue = data?.v2?.revenue;
+  const paidCents = revenue?.paidInPeriod ?? data?.revenueThisMonth ?? 0;
+  const telehealthPct = totals?.telehealthPct ?? 0;
 
   return (
     <div className={analyticsOverviewGridClass}>
@@ -69,15 +71,15 @@ export function AnalyticsOverviewStatsRow({ data, valueSkeleton }: Props) {
         variant="emerald"
         icon={BadgeDollarSign}
         title="Revenue"
-        subtitle="Paid in selected period"
-        value={Math.round((revenue?.paidInPeriod ?? data?.revenueThisMonth ?? 0) / 100)}
+        subtitle="Paid in selected period ($)"
+        value={Math.round(paidCents / 100)}
         valueSkeleton={valueSkeleton}
       />
       <PatientStatCard
         variant="sky"
         icon={Clock}
         title="Avg duration"
-        subtitle="Minutes per visit"
+        subtitle="Minutes per visit (mins)"
         value={totals?.avgDurationMinutes ?? data?.overview.avgDurationMinutes ?? 0}
         valueSkeleton={valueSkeleton}
       />
@@ -85,8 +87,8 @@ export function AnalyticsOverviewStatsRow({ data, valueSkeleton }: Props) {
         variant="violet"
         icon={Video}
         title="Telehealth"
-        subtitle="Share of all visits"
-        value={totals?.telehealthPct ?? 0}
+        subtitle="Share of all visits (%)"
+        value={telehealthPct}
         valueSkeleton={valueSkeleton}
       />
     </div>

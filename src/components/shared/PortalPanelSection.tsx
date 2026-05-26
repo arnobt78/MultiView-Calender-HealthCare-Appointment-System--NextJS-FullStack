@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { portalPanelSectionHeadingClass } from "@/lib/page-chrome-classes";
 import { PortalPanelCountBadge } from "@/components/shared/PortalPanelCountBadge";
 import { PortalPanelSubsectionHeader } from "@/components/shared/PortalPanelSubsectionHeader";
-import { cn } from "@/lib/utils";
+import { cn, toSentenceCaseSubtitle, toTitleCaseLabel } from "@/lib/utils";
 
 /** Shared portal panel shell — matches patient-portal in-card sections (no `CardHeader` strip). */
 export const portalPanelCardClass =
@@ -51,6 +51,8 @@ export function PortalPanelSection({
 }: PortalPanelSectionProps) {
   const headingId = id ?? undefined;
   const useStackedHeader = headerVariant === "stacked" && subtitle != null && subtitle !== "";
+  const displayTitle = toTitleCaseLabel(title);
+  const displaySubtitle = subtitle ? toSentenceCaseSubtitle(subtitle) : undefined;
 
   return (
     <Card className={cn(portalPanelCardClass, className)}>
@@ -59,8 +61,8 @@ export function PortalPanelSection({
           {useStackedHeader ? (
             <PortalPanelSubsectionHeader
               id={headingId}
-              title={title}
-              subtitle={subtitle}
+              title={displayTitle}
+              subtitle={displaySubtitle}
               icon={Icon}
               iconClassName={iconClassName}
               count={count}
@@ -78,7 +80,7 @@ export function PortalPanelSection({
                 >
                   <Icon className="h-3.5 w-3.5" aria-hidden />
                 </span>
-                <span className="min-w-0">{title}</span>
+                <span className="min-w-0">{displayTitle}</span>
                 {count !== undefined && countInline ? (
                   countSkeleton ? (
                     <Skeleton className="h-5 w-10 shrink-0 rounded-full" aria-hidden />
@@ -94,8 +96,8 @@ export function PortalPanelSection({
                   )
                 ) : null}
               </h3>
-              {subtitle ? (
-                <p className="-mt-1 mb-3 text-xs text-sky-600/90">{subtitle}</p>
+              {displaySubtitle ? (
+                <p className="-mt-1 mb-3 text-xs text-sky-600/90">{displaySubtitle}</p>
               ) : null}
             </>
           )}

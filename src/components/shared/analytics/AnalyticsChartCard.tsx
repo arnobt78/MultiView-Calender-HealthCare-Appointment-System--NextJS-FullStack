@@ -14,7 +14,7 @@ import {
   analyticsChartGlassClass,
   analyticsChartTitleClass,
 } from "@/components/shared/analytics/analytics-chart-classes";
-import { cn } from "@/lib/utils";
+import { cn, toSentenceCaseSubtitle, toTitleCaseLabel } from "@/lib/utils";
 
 type Props = {
   title: string;
@@ -38,6 +38,8 @@ export function AnalyticsChartCard({
   detailHint,
 }: Props) {
   const hint = detailHint ?? subtitle;
+  const displayTitle = toTitleCaseLabel(title);
+  const displaySubtitle = subtitle ? toSentenceCaseSubtitle(subtitle) : undefined;
 
   return (
     <Card className={cn(analyticsChartGlassClass, className)}>
@@ -51,7 +53,7 @@ export function AnalyticsChartCard({
                     <Icon className="h-4 w-4" aria-hidden />
                   </span>
                 ) : null}
-                <span className="min-w-0">{title}</span>
+                <span className="min-w-0">{displayTitle}</span>
               </CardTitle>
             </TooltipTrigger>
             {hint ? (
@@ -61,8 +63,10 @@ export function AnalyticsChartCard({
             ) : null}
           </Tooltip>
         </TooltipProvider>
-        {subtitle ? (
-          <CardDescription className={analyticsChartDescriptionClass}>{subtitle}</CardDescription>
+        {displaySubtitle ? (
+          <CardDescription className={analyticsChartDescriptionClass}>
+            {displaySubtitle}
+          </CardDescription>
         ) : null}
       </CardHeader>
       <CardContent>

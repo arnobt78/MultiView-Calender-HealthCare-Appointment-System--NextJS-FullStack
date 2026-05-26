@@ -6,7 +6,7 @@ import {
   insightsSegmentActiveClass,
   insightsSegmentInactiveClass,
 } from "@/lib/insights-ui-classes";
-import { cn } from "@/lib/utils";
+import { cn, toTitleCaseLabel } from "@/lib/utils";
 
 export type InsightsGlassSegmentOption<T extends string> = {
   value: T;
@@ -56,7 +56,7 @@ export function InsightsGlassSegment<T extends string>({
             onClick={() => onChange(opt.value)}
           >
             <Icon className="h-3.5 w-3.5 shrink-0 opacity-90" aria-hidden />
-            {opt.label}
+            {toTitleCaseLabel(opt.label)}
           </Button>
         );
       })}

@@ -71,10 +71,19 @@ export function AnalyticsInsightsSections({
     : [];
   const showDoctors = isAdminRole(viewerRole) && organizationWide && v2?.doctors;
   const byStatus = v2?.appointments.byStatus ?? data?.byStatus;
+  /** All-time appointment count in current scope (doctor practice or org / selected doctor). */
+  const appointmentsAllTime =
+    v2?.appointments.totals.all ?? data?.overview.total ?? 0;
 
   return (
     <div className="space-y-6">
-      <PortalPanelSection title="Appointments" icon={BarChart3}>
+      <PortalPanelSection
+        title="Appointments"
+        icon={BarChart3}
+        count={appointmentsAllTime}
+        countInline
+        countSkeleton={loading}
+      >
         <AnalyticsStatusSummaryRow
           byStatus={byStatus}
           loading={loading}

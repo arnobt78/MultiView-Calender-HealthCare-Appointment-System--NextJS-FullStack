@@ -69,3 +69,13 @@ export function toTitleCaseLabel(value: string): string {
     .map((segment) => (/^\s+$/.test(segment) ? segment : titleCaseLabelToken(segment)))
     .join("");
 }
+
+/**
+ * Subtitle / helper copy — capitalize only the first character; preserve the rest
+ * (keeps "Mon–Sun", "$", "(mins)", "(%)" intact).
+ */
+export function toSentenceCaseSubtitle(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return trimmed;
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+}

@@ -4,7 +4,7 @@ import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
+import { cn, toSentenceCaseSubtitle, toTitleCaseLabel } from "@/lib/utils";
 
 /** Visual presets for glass stat tiles — border tint + soft colored shadow (reusable on other dashboards). */
 const VARIANT_CLASS: Record<
@@ -57,6 +57,8 @@ export function PatientStatCard({
   valueSkeleton: boolean;
 }) {
   const v = VARIANT_CLASS[variant];
+  const displayTitle = toTitleCaseLabel(title);
+  const displaySubtitle = subtitle ? toSentenceCaseSubtitle(subtitle) : undefined;
   return (
     <div
       className={cn(
@@ -75,15 +77,15 @@ export function PatientStatCard({
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-sm font-medium text-gray-700">{title}</p>
+            <p className="text-sm font-medium text-gray-700">{displayTitle}</p>
             {badge ? (
               <Badge variant="outline" className="text-[10px] font-normal text-muted-foreground">
                 {badge}
               </Badge>
             ) : null}
           </div>
-          {subtitle ? (
-            <p className=" text-xs leading-snug text-muted-foreground">{subtitle}</p>
+          {displaySubtitle ? (
+            <p className=" text-xs leading-snug text-muted-foreground">{displaySubtitle}</p>
           ) : null}
         </div>
       </div>
@@ -91,7 +93,9 @@ export function PatientStatCard({
         {valueSkeleton ? (
           <Skeleton className="h-9 w-16 shrink-0 rounded-xl" aria-hidden />
         ) : valueDisplay != null ? (
-          <div className="text-gray-700">{valueDisplay}</div>
+          <div className="text-3xl font-semibold tabular-nums tracking-tight text-gray-700">
+            {valueDisplay}
+          </div>
         ) : (
           <span className="text-3xl font-semibold tabular-nums tracking-tight text-gray-700">{value}</span>
         )}

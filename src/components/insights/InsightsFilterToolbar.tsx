@@ -10,6 +10,7 @@ import {
   insightsSegmentGroupClass,
 } from "@/lib/insights-ui-classes";
 import type { User } from "@/types/types";
+import { toTitleCaseLabel } from "@/lib/utils";
 
 type Props = {
   period: InsightsPeriod;
@@ -38,7 +39,7 @@ export function InsightsFilterToolbar({
       <div className={insightsSegmentGroupClass}>
         <span className="flex items-center gap-1 px-2 text-[10px] font-semibold uppercase tracking-wide text-sky-600/90">
           <CalendarRange className="h-3.5 w-3.5" aria-hidden />
-          Period
+          {toTitleCaseLabel("Period")}
         </span>
         <InsightsPeriodControls
           period={period}
@@ -49,7 +50,7 @@ export function InsightsFilterToolbar({
       <div className={insightsSegmentGroupClass}>
         <span className="flex items-center gap-1 px-2 text-[10px] font-semibold uppercase tracking-wide text-sky-600/90">
           <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden />
-          Scope
+          {toTitleCaseLabel("Scope")}
         </span>
         <InsightsScopeControls
           filter={filter}
