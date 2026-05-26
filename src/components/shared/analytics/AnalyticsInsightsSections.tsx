@@ -227,7 +227,8 @@ export function AnalyticsInsightsSections({
           </AnalyticsChartCard>
           <AnalyticsChartCard
             title="Invoice status"
-            subtitle="All invoices in scope"
+            subtitle={`By status · ${chartPeriodLabel}`}
+            detailHint="Invoice counts by status created within the selected chart period."
             icon={Receipt}
             loading={loading}
           >

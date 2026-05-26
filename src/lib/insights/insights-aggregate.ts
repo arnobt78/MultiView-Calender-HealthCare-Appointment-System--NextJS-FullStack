@@ -3,10 +3,14 @@
  */
 
 import { prisma } from "@/lib/prisma";
-import type { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import type { InsightsDataOptions } from "@/lib/insights/insights-scope";
 import type { InsightsPeriod } from "@/lib/insights/insights-period";
-import { resolveDateRange, resolvePreviousDateRange } from "@/lib/insights/insights-period";
+import {
+  resolveDateRange,
+  resolveDateRangeInclusive,
+  resolvePreviousDateRange,
+} from "@/lib/insights/insights-period";
 import type { InsightsTrendPoint } from "@/lib/insights/insights-types";
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -17,6 +21,15 @@ export function appointmentOwnerWhere(opts: InsightsDataOptions): Prisma.Appoint
 
 export function invoiceOwnerWhere(opts: InsightsDataOptions): Prisma.InvoiceWhereInput {
   return opts.organizationWide ? {} : { user_id: opts.filterOwnerId };
+}
+
+/** Personal scope → DB `user_id`; org-wide → no owner filter (matches appointmentOwnerWhere). */
+export function resolveAppointmentOwnerUserId(
+  base: Prisma.AppointmentWhereInput
+): string | null {
+  const owner = base.owner_id;
+  if (typeof owner === "string") return owner;
+  return null;
 }
 
 function startOfDay(d: Date): Date {
@@ -141,10 +154,14 @@ export async function fetchRevenueAggregates(
 }> {
   const range = resolveDateRange(period, now);
   const prev = resolvePreviousDateRange(period, now);
+  const periodRange = resolveDateRangeInclusive(period, now);
 
   const statusRows = await prisma.invoice.groupBy({
     by: ["status"],
-    where: invoiceBase,
+    where: {
+      ...invoiceBase,
+      created_at: { gte: periodRange.start, lte: periodRange.end },
+    },
     _count: { _all: true },
   });
   const invoiceByStatus: Record<string, number> = {};
@@ -351,23 +368,41 @@ export async function fetchStatusOverTimeByPeriod(
   return fetchStatusOverTimeCalendarYear(base, now);
 }
 
+type WeekdaySqlRow = { dow: number; count: bigint };
+
 /**
- * Weekday distribution for the active chart period — scoped `start` window (not all-time).
- * Prisma has no DOW groupBy; bounded findMany over period range.
+ * Weekday distribution for the active chart period — SQL `GROUP BY` DOW (no row cap).
+ * PostgreSQL `EXTRACT(DOW)` is 0=Sun … 6=Sat (aligned with JS `getDay()`).
  */
 export async function fetchBusiestDayOfWeekCounts(
   base: Prisma.AppointmentWhereInput,
   rangeStart: Date,
   rangeEnd: Date
 ): Promise<{ day: number; label: string; count: number }[]> {
-  const rows = await prisma.appointment.findMany({
-    where: { ...base, start: { gte: rangeStart, lte: rangeEnd } },
-    select: { start: true },
-    take: 25000,
-  });
+  const ownerUserId = resolveAppointmentOwnerUserId(base);
+  const sqlRows: WeekdaySqlRow[] = ownerUserId
+    ? await prisma.$queryRaw<WeekdaySqlRow[]>`
+        SELECT EXTRACT(DOW FROM "start")::int AS dow, COUNT(*)::bigint AS count
+        FROM appointments
+        WHERE user_id = ${ownerUserId}::uuid
+          AND "start" >= ${rangeStart}
+          AND "start" <= ${rangeEnd}
+        GROUP BY 1
+      `
+    : await prisma.$queryRaw<WeekdaySqlRow[]>`
+        SELECT EXTRACT(DOW FROM "start")::int AS dow, COUNT(*)::bigint AS count
+        FROM appointments
+        WHERE "start" >= ${rangeStart}
+          AND "start" <= ${rangeEnd}
+        GROUP BY 1
+      `;
+
   const dayCounts = [0, 0, 0, 0, 0, 0, 0];
-  for (const row of rows) {
-    dayCounts[new Date(row.start).getDay()]++;
+  for (const row of sqlRows) {
+    const dow = Number(row.dow);
+    if (dow >= 0 && dow <= 6) {
+      dayCounts[dow] = Number(row.count);
+    }
   }
   return dayCounts.map((count, day) => ({ day, label: DAY_LABELS[day], count }));
 }

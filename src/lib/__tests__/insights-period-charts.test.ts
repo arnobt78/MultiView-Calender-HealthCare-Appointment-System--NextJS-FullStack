@@ -1,19 +1,25 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
 const mockAppointmentCount = vi.hoisted(() => vi.fn().mockResolvedValue(0));
-const mockAppointmentFindMany = vi.hoisted(() => vi.fn().mockResolvedValue([]));
+const mockQueryRaw = vi.hoisted(() => vi.fn().mockResolvedValue([]));
+const mockInvoiceGroupBy = vi.hoisted(() => vi.fn().mockResolvedValue([]));
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     appointment: {
       count: mockAppointmentCount,
-      findMany: mockAppointmentFindMany,
     },
+    invoice: {
+      groupBy: mockInvoiceGroupBy,
+      aggregate: vi.fn().mockResolvedValue({ _sum: { amount: 0 } }),
+    },
+    $queryRaw: mockQueryRaw,
   },
 }));
 
 import {
   fetchBusiestDayOfWeekCounts,
+  fetchRevenueAggregates,
   fetchStatusOverTimeByPeriod,
 } from "@/lib/insights/insights-aggregate";
 
@@ -54,21 +60,39 @@ describe("fetchBusiestDayOfWeekCounts", () => {
   const rangeEnd = new Date("2026-05-31T23:59:59.999Z");
 
   beforeEach(() => {
-    mockAppointmentFindMany.mockClear();
-    mockAppointmentFindMany.mockResolvedValue([
-      { start: new Date("2026-05-05T10:00:00Z") },
-      { start: new Date("2026-05-05T14:00:00Z") },
-      { start: new Date("2026-05-06T09:00:00Z") },
+    mockQueryRaw.mockClear();
+    mockQueryRaw.mockResolvedValue([
+      { dow: 1, count: BigInt(2) },
+      { dow: 2, count: BigInt(1) },
     ]);
   });
 
-  it("scopes findMany to period range and returns seven weekdays", async () => {
+  it("uses SQL group-by and returns seven weekdays", async () => {
     const rows = await fetchBusiestDayOfWeekCounts({}, rangeStart, rangeEnd);
     expect(rows).toHaveLength(7);
-    expect(mockAppointmentFindMany).toHaveBeenCalledWith(
+    expect(mockQueryRaw).toHaveBeenCalledTimes(1);
+    expect(rows[1]?.count).toBe(2);
+    expect(rows[2]?.count).toBe(1);
+  });
+});
+
+describe("fetchRevenueAggregates", () => {
+  const now = new Date("2026-05-26T12:00:00Z");
+
+  beforeEach(() => {
+    mockInvoiceGroupBy.mockClear();
+    mockInvoiceGroupBy.mockResolvedValue([{ status: "paid", _count: { _all: 3 } }]);
+  });
+
+  it("scopes invoice status groupBy to chart period created_at", async () => {
+    await fetchRevenueAggregates({}, "month", now);
+    expect(mockInvoiceGroupBy).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
-          start: { gte: rangeStart, lte: rangeEnd },
+          created_at: expect.objectContaining({
+            gte: expect.any(Date),
+            lte: expect.any(Date),
+          }),
         }),
       })
     );

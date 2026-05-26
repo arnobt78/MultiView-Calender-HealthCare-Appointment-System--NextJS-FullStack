@@ -20,6 +20,7 @@ import type { InsightsDataOptions } from "@/lib/insights-scope";
 import type { InsightsPeriod } from "@/lib/insights/insights-period";
 import { resolveDateRangeInclusive } from "@/lib/insights/insights-period";
 import type { InsightsPayloadV2 } from "@/lib/insights/insights-types";
+import { legacyMonthlyDataFromTrend } from "@/lib/insights/insights-legacy-payload";
 import {
   appointmentOwnerWhere,
   countNewPatientsInMonth,
@@ -30,7 +31,6 @@ import {
   fetchBusiestDayOfWeekCounts,
   fetchCategoryBreakdown,
   fetchDoctorBreakdown,
-  fetchMonthlyCountsLast12Months,
   fetchPaymentSuccessPct,
   fetchRevenueAggregates,
   fetchStatusOverTimeByPeriod,
@@ -58,6 +58,7 @@ export interface InsightsPayload {
   };
   byStatus: Record<string, number>;
   byCategory: Record<string, number>;
+  /** Deprecated flat series — derived from `v2.appointments.trend` (no extra DB query). */
   monthlyData: { month: string; count: number }[];
   topPatients: { name: string; count: number }[];
   /** Revenue this month (paid invoices, cents) */
@@ -118,7 +119,6 @@ export async function getInsightsData(
     revenueAgg,
     paymentSuccessPct,
     doctorRows,
-    monthlyData,
     statusOverTime,
     busiestDayOfWeek,
     byCategory,
@@ -135,7 +135,6 @@ export async function getInsightsData(
     fetchRevenueAggregates(invoiceBase, period, now),
     fetchPaymentSuccessPct(invoiceBase),
     fetchDoctorBreakdown(organizationWide),
-    fetchMonthlyCountsLast12Months(apptBase, now),
     fetchStatusOverTimeByPeriod(apptBase, period, now),
     fetchBusiestDayOfWeekCounts(apptBase, periodRange.start, periodRange.end),
     fetchCategoryBreakdown(apptBase, periodRange.start, periodRange.end),
@@ -168,6 +167,8 @@ export async function getInsightsData(
 
   const telehealthPct =
     totals.all > 0 ? Math.round((totals.telehealthCount / totals.all) * 100) : 0;
+
+  const monthlyData = legacyMonthlyDataFromTrend(trend, period);
 
   const v2: InsightsPayloadV2 = {
     meta: {
