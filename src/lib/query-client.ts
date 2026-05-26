@@ -1,3 +1,10 @@
+/**
+ * TanStack invalidation helpers — insights bust matrix (prefix queryKeys.insights.root):
+ *   invalidateAfterAppointmentMutation, invalidateEntityAffectingAppointments,
+ *   invalidateInvoicesAndOverview, invalidateUsersAndAuth, invalidateAppointmentTypeDerived,
+ *   invalidateSharingAndAppointments, invalidateAssigneesActivitiesAppointment,
+ *   invalidateQueriesForRoute (/insights, /analytics)
+ */
 import { QueryClient } from "@tanstack/react-query";
 import { queryKeys } from "./query-keys";
 
@@ -95,7 +102,7 @@ export async function invalidateDashboardOverview(queryClient: QueryClient) {
 
 export async function invalidateInsightsAndAnalytics(queryClient: QueryClient) {
   await Promise.all([
-    queryClient.invalidateQueries({ queryKey: queryKeys.insights.all }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.insights.root }),
     queryClient.invalidateQueries({ queryKey: queryKeys.analytics.all }),
   ]);
 }
@@ -128,6 +135,7 @@ export async function invalidateSharingAndAppointments(queryClient: QueryClient)
     queryClient.invalidateQueries({ queryKey: queryKeys.dashboardAccess.all }),
     invalidateAssigneesData(queryClient),
     queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all }),
+    invalidateInsightsAndAnalytics(queryClient),
   ]);
 }
 
@@ -137,8 +145,8 @@ export async function invalidateUsersAndAuth(queryClient: QueryClient) {
     queryClient.invalidateQueries({ queryKey: queryKeys.users.all }),
     queryClient.invalidateQueries({ queryKey: queryKeys.auth.me }),
     queryClient.invalidateQueries({ queryKey: queryKeys.doctors.all }),
-    /** Doctor display_name / specialty on `/services` catalog cards */
     queryClient.invalidateQueries({ queryKey: queryKeys.appointmentTypes.catalog }),
+    invalidateInsightsAndAnalytics(queryClient),
   ]);
 }
 
@@ -159,6 +167,7 @@ export async function invalidateInvoicesAndOverview(
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: queryKeys.invoices.all }),
     invalidateDashboardOverview(queryClient),
+    invalidateInsightsAndAnalytics(queryClient),
     patientId
       ? invalidatePatientDetailAndSnapshot(queryClient, patientId)
       : queryClient.invalidateQueries({ queryKey: queryKeys.patients.all }),
@@ -200,6 +209,7 @@ export async function invalidateAppointmentTypeDerived(queryClient: QueryClient)
     invalidateAvailabilitySlots(queryClient),
     queryClient.invalidateQueries({ queryKey: queryKeys.doctors.all }),
     invalidateDoctorPortal(queryClient),
+    invalidateInsightsAndAnalytics(queryClient),
   ]);
 }
 
@@ -279,6 +289,10 @@ export async function invalidateQueriesForRoute(queryClient: QueryClient, href: 
     await invalidateDashboardOverview(queryClient);
     return;
   }
+  if (path === "/insights" || path === "/analytics") {
+    await invalidateInsightsAndAnalytics(queryClient);
+    return;
+  }
   if (path === "/control-panel/patient-management") {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: queryKeys.patients.all }),
@@ -321,6 +335,7 @@ export async function invalidateAssigneesActivitiesAppointment(
     invalidateAssigneesData(queryClient),
     invalidateAppointmentData(queryClient),
     invalidateAppointmentTypeDerived(queryClient),
+    invalidateInsightsAndAnalytics(queryClient),
     invalidateDoctorPortal(queryClient),
     invalidateAdminPortal(queryClient),
     patientId

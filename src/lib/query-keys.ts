@@ -1,3 +1,5 @@
+import { insightsFilterKeyStable, type InsightsQueryKey } from "@/lib/insights-scope";
+
 /**
  * Centralized React Query Key Factory
  *
@@ -65,7 +67,13 @@ export const queryKeys = {
     root: ["app", "google-calendar"] as const,
   },
   insights: {
+    /** Prefix — invalidateQueries({ queryKey: insights.root }) busts all scope variants */
+    root: ["app", "insights"] as const,
     all: ["app", "insights"] as const,
+    filter: (filter: InsightsQueryKey) => {
+      const stable = insightsFilterKeyStable(filter);
+      return ["app", "insights", stable.scope, stable.doctorId ?? "", stable.period] as const;
+    },
   },
   analytics: {
     all: ["app", "analytics"] as const,

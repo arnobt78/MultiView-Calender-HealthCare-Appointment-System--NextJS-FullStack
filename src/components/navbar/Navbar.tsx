@@ -27,6 +27,8 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { prefetchInsightsNav } from "@/lib/prefetch-insights-nav";
 
 /**
  * Per-type visual config for notification items.
@@ -112,6 +114,7 @@ export default function Navbar() {
   } = useNavSession();
   const pathname = usePathname();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const openSearch = useAppStore((s) => s.openSearch);
   const toggleQuickActionModal = useAppStore((s) => s.toggleQuickActionModal);
   const { notifications, total, unreadCount, markAsRead, markAllAsRead, deleteRead, isDeletingRead } = useNotifications();
@@ -209,6 +212,7 @@ export default function Navbar() {
           {showStaffNavLinks && (
             <Link
               href="/insights"
+              onMouseEnter={() => prefetchInsightsNav(queryClient, { role: user?.role ?? null })}
               className={`text-base transition-colors hover:text-gray-700 ${pathname?.includes("/insights") ? "text-gray-700" : "text-muted-foreground"}`}
             >
               Analytics

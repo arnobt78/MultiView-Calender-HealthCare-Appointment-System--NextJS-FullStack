@@ -74,6 +74,7 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Prism
 - **Verify (pre-commit):** `npm test && npx tsc --noEmit && npm run lint && npm run build` — **252 tests** (37 files); includes `crud-notify-messages.test.ts` (Phase 3b invoice/org/notification/booking partial), `utils-title-case.test.ts`, `doctor-settings-form-validity.test.ts`, `doctor-bookable-types` inactive-owned case.
 - **Invalidation (visit types):** `invalidateAppointmentTypeDerived` centralizes `doctorPortal.all` (portal toggles + CP `DoctorGlobalTypeConfigEditor`); CP also `invalidateAdminPortal`.
 - **Section counts:** `PortalPanelCountBadge` + inline `countInline` / `PortalPanelSubsectionHeader` `count` on Today, Upcoming, My Patients, weekly hours, unavailable dates, global + owned visit types (TanStack cache — updates on CRUD without refresh).
+- **Insights v2:** `/insights` — aggregates + `AnalyticsStatusSummaryRow`, stacked/category/revenue charts; TanStack `insights.root` invalidation (no Redis); assignee + back-nav bust; API `?scope&doctorId&period`; buster **`v5`**; tests **278** incl. `query-client-insights-invalidation`.
 
 ### Control panel entity split (users vs patients)
 
@@ -268,7 +269,7 @@ Shared primitives keep layout fixed while data loads:
 
 **SSR + client:** root `layout.tsx` passes `initialNavRole` into `AuthShell`. Portal pages pass `initialData` on `useQuery`. Profile: `profileLoading = isLoading && !patient`. Navbar role links render when `role` is known (server + client match).
 
-**Audit (agent glance):** Navbar `fixed` + `Z_NAVBAR`; `FilterSelect` shared with dashboard filters. **Doctor portal:** schedule/type panels + dynamic Sonner (`crud-notify-messages.ts`, `crud-notify-messages.test.ts`); labels, save-disabled, owned `is_active`, global `doctor-config`, SSR seed + `invalidateAppointmentTypeDerived` / `invalidateDoctorSchedule`. **Sonner Phase 3b (done):** `usePayments`, `useOrganization`, `useNotifications` + `PatientBookingDialog` `notifyMeta`/`variables` — builders only; invalidation unchanged. **252 tests**, `tsc` + `lint` + `build` pass. **Other non-blocking:** `removeMember` hook wired, no CP UI yet; single `markAsRead` no toast; Vitest for `PATCH` appointment-types `is_active`; time-off PATCH route test; `GlassInlineSelect` unused fallback.
+**Audit (agent glance):** Navbar `fixed` + `Z_NAVBAR`. **Insights v2 + polish:** status badges, live TanStack invalidation (assignee/sharing/back-nav), aggregate-only chart path; **278** tests. Optional later: aggregate-helper Vitest, Redis insights cache. **Sonner Phase 3b (done).**
 
 ### Dashboard calendar shared UI (unified `AppointmentCard`)
 

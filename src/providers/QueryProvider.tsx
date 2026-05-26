@@ -89,7 +89,7 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
         maxAge: 24 * 60 * 60 * 1_000,
         // Bump "buster" when shipping a breaking data-shape change to force
         // all clients to drop their persisted caches.
-        buster: "v4",
+        buster: "v5",
       }}
     >
       {children}

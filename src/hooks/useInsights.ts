@@ -1,22 +1,21 @@
 /**
- * useInsights — fetches aggregated appointment insights for the analytics page.
- *
- * Uses InsightsPayload from insights-data.ts as the single source of truth for
- * the data shape — no local duplicate type definition.
+ * useInsights — scoped + period-aware analytics for /insights (AnalyticsPage).
  */
 
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import type { InsightsPayload } from "@/lib/insights-data";
+import { buildInsightsQueryString, type InsightsQueryKey } from "@/lib/insights-scope";
 
-// Re-export so callers can import the shared payload type from this hook.
 export type { InsightsPayload };
 
-export function useInsights() {
+export function useInsights(query: InsightsQueryKey) {
   return useQuery({
-    queryKey: queryKeys.insights.all,
-    queryFn: () => apiClient<InsightsPayload>("/api/insights"),
-    staleTime: 5 * 60_000,
+    queryKey: queryKeys.insights.filter(query),
+    queryFn: () =>
+      apiClient<InsightsPayload>(`/api/insights?${buildInsightsQueryString(query)}`),
+    staleTime: 3 * 60_000,
+    placeholderData: (previous) => previous,
   });
 }

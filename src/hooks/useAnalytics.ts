@@ -1,4 +1,5 @@
 /**
+ * @deprecated Prefer useInsights with InsightsQueryKey — stored under analytics.all for legacy caches.
  * useAnalytics — legacy alias for the insights endpoint, stored under analytics.all.
  *
  * Uses InsightsPayload from insights-data.ts (same shape as /api/analytics response)

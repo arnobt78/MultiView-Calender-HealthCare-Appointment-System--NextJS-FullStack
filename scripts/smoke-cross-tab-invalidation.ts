@@ -1,5 +1,6 @@
 /**
- * HTTP smoke: create appointment → PATCH → DELETE while asserting TanStack invalidation side effects.
+ * HTTP smoke: create appointment → PATCH → DELETE while asserting API list/detail consistency.
+ * Also GET /api/insights before/after CRUD (API-level insights bust; TanStack bust covered by unit test).
  * Requires a running Next dev server and seeded demo users (`npm run db:seed-test-user`).
  * Complements `npm run test` (Vitest unit) — not a substitute for full browser QA (portal book, assignees, activities).
  */
@@ -73,6 +74,18 @@ async function main() {
   }
   const title = `Smoke ${Date.now()}`;
 
+  const insightsBefore = await requestJson(
+    "/api/insights?scope=personal&period=month",
+    { method: "GET" },
+    cookie
+  );
+  if (!insightsBefore.ok) {
+    throw new Error(`Insights before create failed (${insightsBefore.status}).`);
+  }
+  const totalBefore =
+    ((insightsBefore.data.overview as { total?: number } | undefined)?.total as number | undefined) ??
+    0;
+
   const create = await requestJson(
     "/api/appointments",
     {
@@ -132,6 +145,23 @@ async function main() {
   const del = await requestJson(`/api/appointments/${id}`, { method: "DELETE" }, cookie);
   if (!del.ok) {
     throw new Error(`Delete failed (${del.status}).`);
+  }
+
+  const insightsAfter = await requestJson(
+    "/api/insights?scope=personal&period=month",
+    { method: "GET" },
+    cookie
+  );
+  if (!insightsAfter.ok) {
+    throw new Error(`Insights after delete failed (${insightsAfter.status}).`);
+  }
+  const totalAfter =
+    ((insightsAfter.data.overview as { total?: number } | undefined)?.total as number | undefined) ??
+    0;
+  if (totalAfter !== totalBefore) {
+    throw new Error(
+      `Insights total did not restore after delete (before=${totalBefore}, after=${totalAfter}).`
+    );
   }
 
   const listAfterDelete = await requestJson("/api/appointments", { method: "GET" }, cookie);

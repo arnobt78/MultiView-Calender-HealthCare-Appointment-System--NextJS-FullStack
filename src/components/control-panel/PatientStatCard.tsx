@@ -1,6 +1,7 @@
 "use client";
 
 import type { LucideIcon } from "lucide-react";
+import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -41,6 +42,8 @@ export function PatientStatCard({
   subtitle,
   badge,
   value,
+  /** Override numeric display (e.g. currency) — still uses value for a11y when string. */
+  valueDisplay,
   /** Pulse only in the numeric slot — titles/icons stay stable (avoids whole-card flicker on refetch). */
   valueSkeleton,
 }: {
@@ -50,6 +53,7 @@ export function PatientStatCard({
   subtitle?: string;
   badge?: string;
   value: number;
+  valueDisplay?: ReactNode;
   valueSkeleton: boolean;
 }) {
   const v = VARIANT_CLASS[variant];
@@ -86,6 +90,8 @@ export function PatientStatCard({
       <div className="flex min-h-[2.25rem] items-end justify-end border-t border-black/[0.04] pt-2">
         {valueSkeleton ? (
           <Skeleton className="h-9 w-16 shrink-0 rounded-xl" aria-hidden />
+        ) : valueDisplay != null ? (
+          <div className="text-gray-700">{valueDisplay}</div>
         ) : (
           <span className="text-3xl font-semibold tabular-nums tracking-tight text-gray-700">{value}</span>
         )}

@@ -36,6 +36,10 @@ import {
 } from "@/lib/serializers";
 import { patientDetailInclude, patientUserPick } from "@/lib/patient-api-include";
 import { getInsightsData, type InsightsPayload } from "@/lib/insights-data";
+import {
+  resolveInsightsDataOptions,
+  type InsightsQueryKey,
+} from "@/lib/insights-scope";
 import { resolveTreatingPhysicianUserId } from "@/lib/appointment-display-doctor";
 import {
   startOfDay,
@@ -351,16 +355,22 @@ export async function prefetchDashboardOverview(userId: string): Promise<Dashboa
 // ─── Insights ─────────────────────────────────────────────────────────────────
 
 /**
- * Mirrors GET /api/insights via the shared getInsightsData() helper.
- * Cache key: queryKeys.insights.all → stores InsightsPayload.
- * Pass ownOnly = true for doctor role so the SSR cache matches what the API route returns.
+ * Mirrors GET /api/insights via getInsightsData + resolveInsightsDataOptions.
+ * Seed with queryKeys.insights.filter(filter) on the client — must match SSR filter.
  */
 export async function prefetchInsights(
   userId: string,
-  opts: { ownOnly?: boolean } = {}
+  opts: {
+    query: InsightsQueryKey;
+    role: string | null;
+  }
 ): Promise<InsightsPayload | null> {
   try {
-    return await getInsightsData(userId, opts);
+    const dataOptions = resolveInsightsDataOptions(userId, opts.query, opts.role);
+    return await getInsightsData(userId, {
+      ...dataOptions,
+      period: opts.query.period,
+    });
   } catch {
     return null;
   }
