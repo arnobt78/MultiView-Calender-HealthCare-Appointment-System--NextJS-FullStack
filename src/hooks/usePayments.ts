@@ -7,6 +7,10 @@ import {
   invalidateInvoicesAndOverview,
 } from "@/lib/query-client";
 import { notify } from "@/lib/notify";
+import {
+  formatInvoiceMoney,
+  invoiceCrudMessage,
+} from "@/lib/crud-notify-messages";
 
 export interface InvoicePayment {
   id: string;
@@ -73,7 +77,16 @@ export function usePayments() {
     }) =>
       apiClient<{ invoice: Invoice }>("/api/invoices", { method: "POST", body: JSON.stringify(body) }),
     onSuccess: async (data, variables) => {
-      notify.crud({ action: "created", entity: "Invoice", detail: "The invoice is ready for payment." });
+      const label =
+        data.invoice.description?.trim() ||
+        variables.description?.trim() ||
+        "Invoice";
+      const amountFormatted = formatInvoiceMoney({
+        amount: variables.amount ?? data.invoice.amount / 100,
+        currency: variables.currency ?? data.invoice.currency,
+        unit: variables.amount != null ? "eur" : "cents",
+      });
+      notify.crud(invoiceCrudMessage("created", { label, amountFormatted }));
       const apt = data.invoice.appointment_id ?? variables.appointment_id;
       const patientId = apt ? getPatientIdFromAppointmentCache(queryClient, apt) : undefined;
       await invalidateInvoicesAndOverview(queryClient, { patientId });
@@ -84,8 +97,25 @@ export function usePayments() {
   const deleteInvoiceMutation = useMutation({
     mutationFn: (invoiceId: string) =>
       apiClient(`/api/invoices/${invoiceId}`, { method: "DELETE" }),
-    onSuccess: async (_, invoiceId) => {
-      notify.crud({ action: "deleted", entity: "Invoice", detail: "The invoice record was removed." });
+    onMutate: async (invoiceId) => {
+      const invoices =
+        queryClient.getQueryData<Invoice[]>(queryKeys.invoices.all) ?? [];
+      const deleted = invoices.find((inv) => inv.id === invoiceId) ?? null;
+      return { deleted };
+    },
+    onSuccess: async (_, invoiceId, context) => {
+      const deleted = context?.deleted;
+      const label = deleted?.description?.trim() || "Invoice";
+      const amountFormatted = deleted
+        ? formatInvoiceMoney({
+            amount: deleted.amount,
+            currency: deleted.currency,
+            unit: "cents",
+          })
+        : undefined;
+      notify.crud(
+        invoiceCrudMessage("deleted", { label, amountFormatted })
+      );
       const patientId = getPatientIdFromInvoiceCache(queryClient, invoiceId);
       await invalidateInvoicesAndOverview(queryClient, { patientId });
     },

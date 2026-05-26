@@ -166,29 +166,133 @@ export function isOwnedVisitTypeActiveOnlyPatch(
   );
 }
 
-function formatBookingRange(start: string | Date, end: string | Date): string {
+function formatBookingRange(start: string | Date, end: string | Date): string | null {
   const startDate = start instanceof Date ? start : new Date(start);
   const endDate = end instanceof Date ? end : new Date(end);
   if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
-    return "Date and time confirmed.";
+    return null;
   }
   return `${format(startDate, "dd MMM yyyy")}, ${format(startDate, "HH:mm")}–${format(endDate, "HH:mm")}`;
 }
 
-/** Patient booking wizard confirm — doctor, visit type, slot range. */
+/** Matches CP invoice table (`amount / 100`, `de-DE`). */
+export function formatInvoiceMoney(params: {
+  amount: number;
+  currency?: string;
+  unit: "cents" | "eur";
+}): string {
+  const currency = (params.currency ?? "eur").toUpperCase();
+  const value = params.unit === "cents" ? params.amount / 100 : params.amount;
+  return value.toLocaleString("de-DE", { style: "currency", currency });
+}
+
+export type InvoiceCrudNotifyInput = {
+  label: string;
+  amountFormatted?: string;
+};
+
+/** Invoice Management — description + formatted amount when available. */
+export function invoiceCrudMessage(
+  action: CrudNotifyAction,
+  input: InvoiceCrudNotifyInput
+): CrudNotifyPayload {
+  const quoted = quoteName(input.label);
+  const entity = "Invoice";
+  const moneySuffix = input.amountFormatted ? ` (${input.amountFormatted})` : "";
+
+  if (action === "created") {
+    return {
+      action,
+      entity,
+      detail: `${quoted}${moneySuffix} ready for payment.`,
+    };
+  }
+  return {
+    action: "deleted",
+    entity,
+    detail: `${quoted}${moneySuffix} removed.`,
+  };
+}
+
+/** Organization Management — org name on create/delete. */
+export function organizationCrudMessage(
+  action: CrudNotifyAction,
+  params: { name: string }
+): CrudNotifyPayload {
+  const quoted = quoteName(params.name);
+  const entity = "Organization";
+  if (action === "created") {
+    return { action, entity, detail: `${quoted} created.` };
+  }
+  return { action: "deleted", entity, detail: `${quoted} deleted.` };
+}
+
+/** Organization member add/remove — member, org, optional role. */
+export function orgMemberCrudMessage(
+  action: CrudNotifyAction,
+  params: { orgName: string; memberLabel: string; role?: string }
+): CrudNotifyPayload {
+  const member = quoteName(params.memberLabel);
+  const org = quoteName(params.orgName);
+  const entity = "Member";
+  const roleSuffix = params.role?.trim() ? ` as ${params.role.trim()}` : "";
+
+  if (action === "created") {
+    return { action, entity, detail: `${member} added to ${org}${roleSuffix}.` };
+  }
+  return { action, entity, detail: `${member} removed from ${org}.` };
+}
+
+/** Bulk mark-all-read — count from query cache snapshot before invalidate. */
+export function notificationsMarkAllReadMessage(params: { count: number }): CrudNotifyPayload {
+  const n = Math.max(0, params.count);
+  const detail =
+    n === 0
+      ? "No unread notifications to mark."
+      : n === 1
+        ? "1 notification marked as read."
+        : `${n} notifications marked as read.`;
+  return { action: "updated", entity: "Notifications", detail };
+}
+
+/** Bulk delete-read — count from API `deleted` field. */
+export function notificationsDeleteReadMessage(params: { deleted: number }): CrudNotifyPayload {
+  const n = Math.max(0, params.deleted);
+  const detail =
+    n === 0
+      ? "No read notifications to remove."
+      : n === 1
+        ? "1 read notification removed."
+        : `${n} read notifications removed.`;
+  return { action: "deleted", entity: "Read notifications", detail };
+}
+
+/** Patient booking wizard confirm — doctor, visit type, optional slot from mutation payload. */
 export function patientBookingCreatedMessage(params: {
   doctorName: string;
   typeName: string;
-  start: string | Date;
-  end: string | Date;
+  start?: string | Date;
+  end?: string | Date;
 }): CrudNotifyPayload {
   const doctor = params.doctorName.trim() || "your doctor";
   const type = params.typeName.trim() || "Appointment";
-  const slot = formatBookingRange(params.start, params.end);
+  const entity = "Appointment request";
+
+  if (params.start != null && params.end != null) {
+    const slot = formatBookingRange(params.start, params.end);
+    if (slot) {
+      return {
+        action: "created",
+        entity,
+        detail: `With ${doctor} · ${type} · ${slot}.`,
+      };
+    }
+  }
+
   return {
     action: "created",
-    entity: "Appointment request",
-    detail: `With ${doctor} · ${type} · ${slot}.`,
+    entity,
+    detail: `With ${doctor} · ${type}.`,
   };
 }
 

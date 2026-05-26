@@ -3,6 +3,10 @@ import { apiClient, handleApiError } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import { invalidateOrganizations, invalidateDashboardOverview } from "@/lib/query-client";
 import { notify } from "@/lib/notify";
+import {
+  organizationCrudMessage,
+  orgMemberCrudMessage,
+} from "@/lib/crud-notify-messages";
 
 export interface Organization {
   id: string;
@@ -37,12 +41,14 @@ export function useOrganization() {
 
   const createOrgMutation = useMutation({
     mutationFn: (name: string) =>
-      apiClient("/api/organizations", {
+      apiClient<{ organization: Organization }>("/api/organizations", {
         method: "POST",
         body: JSON.stringify({ name }),
       }),
-    onSuccess: async () => {
-      notify.crud({ action: "created", entity: "Organization", detail: "A new organization was created." });
+    onSuccess: async (data) => {
+      notify.crud(
+        organizationCrudMessage("created", { name: data.organization.name })
+      );
       await invalidateOrganizations(queryClient);
       await invalidateDashboardOverview(queryClient);
     },
@@ -50,13 +56,32 @@ export function useOrganization() {
   });
 
   const addMemberMutation = useMutation({
-    mutationFn: ({ orgId, userId, role }: { orgId: string; userId: string; role: string }) =>
+    mutationFn: ({
+      orgId,
+      userId,
+      role,
+    }: {
+      orgId: string;
+      userId: string;
+      role: string;
+      memberLabel?: string;
+    }) =>
       apiClient(`/api/organizations/${orgId}/members`, {
         method: "POST",
         body: JSON.stringify({ userId, role }),
       }),
-    onSuccess: async () => {
-      notify.crud({ action: "created", entity: "Member", detail: "The member now has organization access." });
+    onSuccess: async (_, variables) => {
+      const orgs =
+        queryClient.getQueryData<Organization[]>(queryKeys.organizations.all) ?? [];
+      const orgName =
+        orgs.find((o) => o.id === variables.orgId)?.name ?? "Organization";
+      notify.crud(
+        orgMemberCrudMessage("created", {
+          orgName,
+          memberLabel: variables.memberLabel ?? "Member",
+          role: variables.role,
+        })
+      );
       await invalidateOrganizations(queryClient);
       await invalidateDashboardOverview(queryClient);
     },
@@ -64,13 +89,29 @@ export function useOrganization() {
   });
 
   const removeMemberMutation = useMutation({
-    mutationFn: ({ orgId, userId }: { orgId: string; userId: string }) =>
+    mutationFn: ({
+      orgId,
+      userId,
+    }: {
+      orgId: string;
+      userId: string;
+      memberLabel?: string;
+    }) =>
       apiClient(`/api/organizations/${orgId}/members`, {
         method: "DELETE",
         body: JSON.stringify({ userId }),
       }),
-    onSuccess: async () => {
-      notify.crud({ action: "deleted", entity: "Member", detail: "The user no longer has organization access." });
+    onSuccess: async (_, variables) => {
+      const orgs =
+        queryClient.getQueryData<Organization[]>(queryKeys.organizations.all) ?? [];
+      const orgName =
+        orgs.find((o) => o.id === variables.orgId)?.name ?? "Organization";
+      notify.crud(
+        orgMemberCrudMessage("deleted", {
+          orgName,
+          memberLabel: variables.memberLabel ?? "Member",
+        })
+      );
       await invalidateOrganizations(queryClient);
       await invalidateDashboardOverview(queryClient);
     },
@@ -80,8 +121,15 @@ export function useOrganization() {
   const deleteOrgMutation = useMutation({
     mutationFn: (orgId: string) =>
       apiClient(`/api/organizations/${orgId}`, { method: "DELETE" }),
-    onSuccess: async () => {
-      notify.crud({ action: "deleted", entity: "Organization", detail: "The organization was deleted." });
+    onMutate: async (orgId) => {
+      const orgs =
+        queryClient.getQueryData<Organization[]>(queryKeys.organizations.all) ?? [];
+      const deleted = orgs.find((o) => o.id === orgId) ?? null;
+      return { deleted };
+    },
+    onSuccess: async (_, _orgId, context) => {
+      const name = context?.deleted?.name ?? "Organization";
+      notify.crud(organizationCrudMessage("deleted", { name }));
       await invalidateOrganizations(queryClient);
       await invalidateDashboardOverview(queryClient);
     },

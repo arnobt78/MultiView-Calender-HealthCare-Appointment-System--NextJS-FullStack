@@ -3,6 +3,10 @@ import { apiClient, handleApiError } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import { Notification } from "@/types/notification";
 import { notify } from "@/lib/notify";
+import {
+  notificationsDeleteReadMessage,
+  notificationsMarkAllReadMessage,
+} from "@/lib/crud-notify-messages";
 
 interface NotificationsResponse {
   notifications: Notification[];
@@ -43,23 +47,31 @@ export function useNotifications() {
         method: "PATCH",
         body: JSON.stringify({ markAllRead: true }),
       }),
-    onSuccess: async () => {
+    onMutate: async () => {
+      const prev = queryClient.getQueryData<NotificationsResponse>(
+        queryKeys.notifications.all
+      );
+      return { unreadCount: prev?.unreadCount ?? 0 };
+    },
+    onSuccess: async (_data, _vars, context) => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
-      notify.crud({ action: "updated", entity: "Notifications", detail: "All notifications were marked as read." });
+      notify.crud(
+        notificationsMarkAllReadMessage({ count: context?.unreadCount ?? 0 })
+      );
     },
     onError: (error) => handleApiError(error, "Failed to mark notifications as read"),
   });
 
   const deleteReadMutation = useMutation({
     mutationFn: () =>
-      apiClient("/api/notifications", {
+      apiClient<{ success: boolean; deleted: number }>("/api/notifications", {
         method: "PATCH",
         body: JSON.stringify({ deleteRead: true }),
       }),
-    onSuccess: async () => {
+    onSuccess: async (data) => {
       // Await so header badge and list both update before the toast appears.
       await queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
-      notify.crud({ action: "deleted", entity: "Read notifications", detail: "Unread notifications were kept." });
+      notify.crud(notificationsDeleteReadMessage({ deleted: data.deleted }));
     },
     onError: (error) => handleApiError(error, "Failed to delete read notifications"),
   });

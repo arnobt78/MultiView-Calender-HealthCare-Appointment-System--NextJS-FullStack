@@ -116,7 +116,12 @@ function AddMemberDialog({
   onAdd,
 }: {
   org: Organization;
-  onAdd: (args: { orgId: string; userId: string; role: string }) => void;
+  onAdd: (args: {
+    orgId: string;
+    userId: string;
+    role: string;
+    memberLabel?: string;
+  }) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [userId, setUserId] = useState("");
@@ -127,7 +132,13 @@ function AddMemberDialog({
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!userId) return;
-    onAdd({ orgId: org.id, userId, role });
+    const user = users.find((u) => u.id === userId);
+    onAdd({
+      orgId: org.id,
+      userId,
+      role,
+      memberLabel: user?.display_name ?? user?.email ?? "Member",
+    });
     setUserId("");
     setRole("doctor");
     setOpen(false);

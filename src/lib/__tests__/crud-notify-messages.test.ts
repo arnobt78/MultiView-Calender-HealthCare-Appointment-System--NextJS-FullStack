@@ -1,8 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
+  formatInvoiceMoney,
   globalVisitTypeCrudMessage,
   globalVisitTypeToggleMessage,
+  invoiceCrudMessage,
   isOwnedVisitTypeActiveOnlyPatch,
+  notificationsDeleteReadMessage,
+  notificationsMarkAllReadMessage,
+  organizationCrudMessage,
+  orgMemberCrudMessage,
   ownedVisitTypeCrudMessage,
   patientBookingCreatedMessage,
   timeOffCrudMessage,
@@ -106,6 +112,79 @@ describe("isOwnedVisitTypeActiveOnlyPatch", () => {
   });
 });
 
+describe("formatInvoiceMoney", () => {
+  it("formats cents like InvoiceManagement table", () => {
+    const formatted = formatInvoiceMoney({ amount: 12000, currency: "eur", unit: "cents" });
+    expect(formatted).toMatch(/120/);
+  });
+});
+
+describe("invoiceCrudMessage", () => {
+  it("create includes label and amount", () => {
+    const msg = invoiceCrudMessage("created", {
+      label: "Consultation fee",
+      amountFormatted: "€120,00",
+    });
+    expect(msg.detail).toContain('"Consultation fee"');
+    expect(msg.detail).toContain("€120,00");
+    expect(msg.detail).toContain("ready for payment");
+  });
+
+  it("delete includes label", () => {
+    const msg = invoiceCrudMessage("deleted", { label: "Invoice #42" });
+    expect(msg.detail).toContain("removed");
+  });
+});
+
+describe("organizationCrudMessage", () => {
+  it("create and delete use org name", () => {
+    expect(organizationCrudMessage("created", { name: "Acme Clinic" }).detail).toBe(
+      '"Acme Clinic" created.'
+    );
+    expect(organizationCrudMessage("deleted", { name: "Acme Clinic" }).detail).toBe(
+      '"Acme Clinic" deleted.'
+    );
+  });
+});
+
+describe("orgMemberCrudMessage", () => {
+  it("add includes member, org, and role", () => {
+    const msg = orgMemberCrudMessage("created", {
+      orgName: "Acme Clinic",
+      memberLabel: "Jane Doe",
+      role: "doctor",
+    });
+    expect(msg.detail).toBe('"Jane Doe" added to "Acme Clinic" as doctor.');
+  });
+
+  it("remove includes member and org", () => {
+    const msg = orgMemberCrudMessage("deleted", {
+      orgName: "Acme Clinic",
+      memberLabel: "Jane Doe",
+    });
+    expect(msg.detail).toBe('"Jane Doe" removed from "Acme Clinic".');
+  });
+});
+
+describe("notificationsMarkAllReadMessage", () => {
+  it("singular and plural", () => {
+    expect(notificationsMarkAllReadMessage({ count: 0 }).detail).toContain("No unread");
+    expect(notificationsMarkAllReadMessage({ count: 1 }).detail).toBe("1 notification marked as read.");
+    expect(notificationsMarkAllReadMessage({ count: 12 }).detail).toBe(
+      "12 notifications marked as read."
+    );
+  });
+});
+
+describe("notificationsDeleteReadMessage", () => {
+  it("uses deleted count from API", () => {
+    expect(notificationsDeleteReadMessage({ deleted: 0 }).detail).toContain("No read");
+    expect(notificationsDeleteReadMessage({ deleted: 5 }).detail).toBe(
+      "5 read notifications removed."
+    );
+  });
+});
+
 describe("patientBookingCreatedMessage", () => {
   it("includes doctor, type, and slot", () => {
     const msg = patientBookingCreatedMessage({
@@ -118,6 +197,16 @@ describe("patientBookingCreatedMessage", () => {
     expect(msg.detail).toContain("Dr. Smith");
     expect(msg.detail).toContain("Follow-up Visit");
     expect(msg.detail).toMatch(/25 May 2026/);
+  });
+
+  it("partial copy when dates invalid", () => {
+    const msg = patientBookingCreatedMessage({
+      doctorName: "Dr. Smith",
+      typeName: "Follow-up Visit",
+      start: "invalid",
+      end: "invalid",
+    });
+    expect(msg.detail).toBe("With Dr. Smith · Follow-up Visit.");
   });
 });
 

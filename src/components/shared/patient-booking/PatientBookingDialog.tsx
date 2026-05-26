@@ -82,6 +82,11 @@ interface BookingPayload {
   notes?: string;
 }
 
+/** Client-only notify fields — stripped in `mutationFn` before POST. */
+type BookingMutatePayload = BookingPayload & {
+  notifyMeta?: { doctorName: string; typeName: string };
+};
+
 /** Step 1/2 need flex-1 in the chain so doctor/type lists get a bounded height and can scroll. */
 const bookingStepFillLayoutClass = "flex min-h-0 flex-1 flex-col";
 
@@ -273,34 +278,25 @@ export function PatientBookingDialog({
   }
 
   const bookMutation = useMutation({
-    mutationFn: (body: BookingPayload) =>
+    mutationFn: ({ notifyMeta: _notifyMeta, ...body }: BookingMutatePayload) =>
       apiClient("/api/patient-portal", { method: "POST", body: JSON.stringify(body) }),
-    onSuccess: async () => {
-      const doctorRow = doctors.find((d) => d.id === doctorId);
+    onSuccess: async (_data, variables: BookingMutatePayload) => {
+      const doctorRow = doctors.find((d) => d.id === variables.doctorId);
       const doctorName =
-        doctorRow?.display_name?.trim() || doctorRow?.email?.trim() || "your doctor";
-      const typeName = selectedType?.name ?? "Appointment";
-      const startDt = selectedSlot ? new Date(selectedSlot) : null;
-      const endDt =
-        startDt && Number.isFinite(startDt.getTime())
-          ? addMinutes(startDt, duration)
-          : null;
-      if (startDt && endDt) {
-        notify.crud(
-          patientBookingCreatedMessage({
-            doctorName,
-            typeName,
-            start: startDt,
-            end: endDt,
-          })
-        );
-      } else {
-        notify.crud({
-          action: "created",
-          entity: "Appointment request",
-          detail: "Your appointment request was submitted successfully.",
-        });
-      }
+        variables.notifyMeta?.doctorName?.trim() ||
+        doctorRow?.display_name?.trim() ||
+        doctorRow?.email?.trim() ||
+        "your doctor";
+      const typeName =
+        variables.notifyMeta?.typeName?.trim() || "Appointment";
+      notify.crud(
+        patientBookingCreatedMessage({
+          doctorName,
+          typeName,
+          start: variables.start,
+          end: variables.end,
+        })
+      );
       await queryClient.invalidateQueries({ queryKey: queryKeys.patientPortal.all });
       await invalidateAfterAppointmentMutation(queryClient);
       handleOpenChange(false);
@@ -318,6 +314,11 @@ export function PatientBookingDialog({
     const patientLabel =
       user?.display_name?.trim() || user?.email?.trim() || "Patient";
     const typeName = selectedType?.name ?? "Appointment";
+    const selectedDoctor = doctors.find((d) => d.id === doctorId);
+    const doctorName =
+      selectedDoctor?.display_name?.trim() ||
+      selectedDoctor?.email?.trim() ||
+      "your doctor";
     const generatedTitle = `${typeName} · ${patientLabel} · ${format(startDt, "dd MMM yyyy")}`;
     bookMutation.mutate({
       title: generatedTitle,
@@ -327,6 +328,7 @@ export function PatientBookingDialog({
       ...(selectedType?.id ? { appointment_type_id: selectedType.id } : {}),
       chief_complaint: title.trim(),
       ...(notes ? { notes } : {}),
+      notifyMeta: { doctorName, typeName },
     });
   }
 
