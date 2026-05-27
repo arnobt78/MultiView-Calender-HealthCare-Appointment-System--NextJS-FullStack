@@ -260,6 +260,8 @@ export async function invalidateDoctorSchedule(
     queryClient.invalidateQueries({ queryKey: queryKeys.availability.root }),
     queryClient.invalidateQueries({ queryKey: queryKeys.doctors.all }),
     invalidateDoctorPortal(queryClient),
+    // Doctors insights charts (weekly hours, time off) read schedule tables.
+    invalidateInsightsAndAnalytics(queryClient),
   ]);
 }
 

@@ -71,10 +71,10 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Prism
 - **Invalidation:** `invalidateEntityAffectingAppointments("patients")` and `usePatients` mutations also call `invalidateDoctorPortal`; appointments → `invalidateAfterAppointmentMutation`.
 - **Shell:** `dashboardShellClass` adds `pb-3` for portal routes in `AuthShell` (`src/lib/dashboard-layout.ts`).
 - **Sonner CRUD copy:** `src/lib/crud-notify-messages.ts` + Vitest `crud-notify-messages.test.ts` — dynamic subtitles for weekly hours, time off, global/owned visit types (`useAppointmentTypes`), patient booking (`PatientBookingDialog` uses mutation `variables` + `notifyMeta`), invoices (`usePayments`), organizations/members (`useOrganization`), notifications bulk (`useNotifications`); wired in doctor-settings editors + hooks above.
-- **Verify (pre-commit):** `npm test && npx tsc --noEmit && npm run lint && npm run build` — **252 tests** (37 files); includes `crud-notify-messages.test.ts` (Phase 3b invoice/org/notification/booking partial), `utils-title-case.test.ts`, `doctor-settings-form-validity.test.ts`, `doctor-bookable-types` inactive-owned case.
+- **Verify (pre-commit):** `npm test && npx tsc --noEmit && npm run lint && npm run build` — **339 tests** (51 files); includes insights `period=all`, `insights-all-time-prisma`, `insights-scope-display`, `query-client-insights-invalidation`.
 - **Invalidation (visit types):** `invalidateAppointmentTypeDerived` centralizes `doctorPortal.all` (portal toggles + CP `DoctorGlobalTypeConfigEditor`); CP also `invalidateAdminPortal`.
 - **Section counts:** `PortalPanelCountBadge` + inline `countInline` / `PortalPanelSubsectionHeader` `count` on Today, Upcoming, My Patients, weekly hours, unavailable dates, global + owned visit types (TanStack cache — updates on CRUD without refresh).
-- **Insights v2:** `/insights` — Recharts-only `AnalyticsPage`; **scope** in chrome (`InsightsScopeToolbar`); **period** = `day|week|month|year|**all**` (`InsightsGlassSegment` + `insights-period-filter.ts` — `all` = no appointment date filter on scalars; trend/status SQL year/month buckets); KPI strip = calendar windows; Appointments badges = scope all-time; **Doctors** section (`AnalyticsDoctorInsightsSection`, `insights-doctor-aggregate.ts`) for staff — org roster + personal (availability hours, time off, volume); chart subtitles via `resolveInsightsScopeLabelForMeta` + `getInsightsChartContextSubtitle`; empty charts (`analytics-chart-empty.ts`); TanStack `queryKeys.insights.filter({scope, doctorId?, period})` + `invalidateInsightsAndAnalytics`; Redis (`insights-redis-cache.ts`, 90s); SSR `prefetchInsights`; buster **`v6`**; tests incl. `insights-all-time-prisma`, `insights-scope-display`.
+- **Insights v2:** `/insights` — Recharts-only `AnalyticsPage`; **`InsightsPageChrome`** / **`insights-page-copy.ts`** (Business Analytics chrome on success + error); **`InsightsDataErrorBanner`**; **scope** (`InsightsScopeToolbar`); **period** = `day|week|month|year|**all**` (`insights-period-filter.ts` — Prisma-safe all-time); KPI strip = calendar windows; **Doctors** section (`AnalyticsDoctorInsightsSection`, `insights-doctor-aggregate.ts`); `invalidateInsightsAndAnalytics` (+ `invalidateDoctorSchedule` busts insights doctors charts); Redis 90s; SSR `prefetchInsights`; buster **`v6`**; **339** tests.
 
 ### Control panel entity split (users vs patients)
 
@@ -269,7 +269,7 @@ Shared primitives keep layout fixed while data loads:
 
 **SSR + client:** root `layout.tsx` passes `initialNavRole` into `AuthShell`. Portal pages pass `initialData` on `useQuery`. Profile: `profileLoading = isLoading && !patient`. Navbar role links render when `role` is known (server + client match).
 
-**Audit (agent glance):** Navbar `fixed` + `Z_NAVBAR`. **Insights v2:** `period=all` + doctor schedule charts; `insights-period-filter` (Prisma-safe dates); SSR `meta.scopeLabel`; chart empty overlays; **339** tests + tsc + lint. Redis insights cache (90s). **Sonner Phase 3b (done).**
+**Audit (agent glance):** Navbar `fixed` + `Z_NAVBAR`. **Insights v2:** `period=all` + doctor schedule charts; unified page chrome + error banner; `invalidateDoctorSchedule` → `insights.root`; **339** tests + tsc + lint + build. Redis insights (90s). **Sonner Phase 3b (done).**
 
 ### Dashboard calendar shared UI (unified `AppointmentCard`)
 
