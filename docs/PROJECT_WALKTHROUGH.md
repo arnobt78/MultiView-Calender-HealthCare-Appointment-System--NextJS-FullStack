@@ -74,7 +74,7 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Prism
 - **Verify (pre-commit):** `npm test && npx tsc --noEmit && npm run lint && npm run build` — **339 tests** (51 files); includes insights `period=all`, `insights-all-time-prisma`, `insights-scope-display`, `query-client-insights-invalidation`.
 - **Invalidation (visit types):** `invalidateAppointmentTypeDerived` centralizes `doctorPortal.all` (portal toggles + CP `DoctorGlobalTypeConfigEditor`); CP also `invalidateAdminPortal`.
 - **Section counts:** `PortalPanelCountBadge` + inline `countInline` / `PortalPanelSubsectionHeader` `count` on Today, Upcoming, My Patients, weekly hours, unavailable dates, global + owned visit types (TanStack cache — updates on CRUD without refresh).
-- **Insights v2:** `/insights` — Recharts-only `AnalyticsPage`; **`InsightsPageChrome`** / **`insights-page-copy.ts`** (Business Analytics chrome on success + error); **`InsightsDataErrorBanner`**; **scope** (`InsightsScopeToolbar`); **period** = `day|week|month|year|**all**` (`insights-period-filter.ts` — Prisma-safe all-time); KPI strip = calendar windows; **Doctors** section (`AnalyticsDoctorInsightsSection`, `insights-doctor-aggregate.ts`); `invalidateInsightsAndAnalytics` (+ `invalidateDoctorSchedule` busts insights doctors charts); Redis 90s; SSR `prefetchInsights`; buster **`v6`**; **339** tests.
+- **Insights v2:** `/insights` — Recharts-only `AnalyticsPage`; **`InsightsPageChrome`** / **`insights-page-copy.ts`** (Business Analytics chrome on success + error); **`InsightsDataErrorBanner`**; **scope** (`InsightsScopeToolbar`); **period** = `day|week|month|year|**all**` (`insights-period-filter.ts` — Prisma-safe all-time); KPI strip = calendar windows; **Doctors** section (`AnalyticsDoctorInsightsSection`, `insights-doctor-aggregate.ts`); `invalidateInsightsAndAnalytics` (+ `invalidateDoctorSchedule` busts insights doctors charts); Redis 90s; SSR `prefetchInsights`; buster **`v6`**; **cross-tab** singleton `BroadcastChannel` (`query-cache-cross-tab.ts`, `useQueryCacheCrossTabSync`).
 
 ### Control panel entity split (users vs patients)
 
@@ -269,7 +269,7 @@ Shared primitives keep layout fixed while data loads:
 
 **SSR + client:** root `layout.tsx` passes `initialNavRole` into `AuthShell`. Portal pages pass `initialData` on `useQuery`. Profile: `profileLoading = isLoading && !patient`. Navbar role links render when `role` is known (server + client match).
 
-**Audit (agent glance):** Navbar `fixed` + `Z_NAVBAR`. **Insights v2:** `period=all` + doctor schedule charts; unified page chrome + error banner; `invalidateDoctorSchedule` → `insights.root`; **339** tests + tsc + lint + build. Redis insights (90s). **Sonner Phase 3b (done).**
+**Audit (agent glance):** Navbar `fixed` + `Z_NAVBAR`. **Insights v2:** `period=all` + doctor schedule charts; unified page chrome; cross-tab singleton BroadcastChannel; **345** tests (52 files) + tsc + lint + build. Redis insights (90s) + `invalidateAfterDoctorScheduleMutation`. **Sonner Phase 3b (done).**
 
 ### Dashboard calendar shared UI (unified `AppointmentCard`)
 

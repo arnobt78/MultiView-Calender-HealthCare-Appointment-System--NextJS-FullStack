@@ -6,6 +6,7 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import type { Persister } from "@tanstack/react-query-persist-client";
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import { createQueryClient } from "@/lib/query-client";
+import { useQueryCacheCrossTabSync } from "@/hooks/useQueryCacheCrossTabSync";
 
 /**
  * QueryProvider
@@ -62,6 +63,11 @@ function buildPersister(): Persister | null {
   }
 }
 
+function QueryCacheCrossTabListener() {
+  useQueryCacheCrossTabSync();
+  return null;
+}
+
 export function QueryProvider({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => createQueryClient());
   /**
@@ -92,6 +98,7 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
         buster: "v6",
       }}
     >
+      <QueryCacheCrossTabListener />
       {children}
       {showDevtools && <ReactQueryDevtools initialIsOpen={false} />}
     </PersistQueryClientProvider>

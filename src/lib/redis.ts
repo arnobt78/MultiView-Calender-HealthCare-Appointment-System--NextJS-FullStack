@@ -107,4 +107,15 @@ export const redis = {
       redisCommand(["INCR", `insights:ver:${userId}`]),
     ]);
   },
+
+  /** Weekly hours / time-off — bust actor + target doctor so /insights refetch is not stale in Redis. */
+  async invalidateAfterDoctorScheduleMutation(
+    actorUserId: string,
+    doctorUserId: string
+  ): Promise<void> {
+    await this.invalidateDashboardOverview(actorUserId);
+    if (doctorUserId !== actorUserId) {
+      await this.invalidateDashboardOverview(doctorUserId);
+    }
+  },
 };

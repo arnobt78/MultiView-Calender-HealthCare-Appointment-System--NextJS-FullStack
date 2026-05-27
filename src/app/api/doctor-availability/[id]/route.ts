@@ -11,6 +11,7 @@ import { getSessionUser } from "@/lib/session";
 import { getUserRole, isAdminRole } from "@/lib/rbac";
 import { zodBadRequest } from "@/lib/schemas/parse";
 import { notifyDoctorSettingsChangedByAdmin } from "@/lib/doctor-settings-notify";
+import { redis } from "@/lib/redis";
 
 export const dynamic = "force-dynamic";
 
@@ -79,6 +80,8 @@ export async function PATCH(
       detail: "A weekly availability window on your schedule was updated.",
     });
 
+    void redis.invalidateAfterDoctorScheduleMutation(sessionUser.userId, existing.user_id);
+
     return NextResponse.json({ availability: window });
   } catch {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -113,6 +116,8 @@ export async function DELETE(
       changeKind: "weekly_schedule",
       detail: "A weekly availability window was removed from your schedule.",
     });
+
+    void redis.invalidateAfterDoctorScheduleMutation(sessionUser.userId, existing.user_id);
 
     return NextResponse.json({ success: true });
   } catch {

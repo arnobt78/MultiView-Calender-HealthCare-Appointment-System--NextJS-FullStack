@@ -6,6 +6,11 @@
  *   invalidateQueriesForRoute (/insights, /analytics)
  */
 import { QueryClient } from "@tanstack/react-query";
+import {
+  CROSS_TAB_SCOPES,
+  publishQueryCacheCrossTab,
+  type QueryCacheCrossTabScope,
+} from "@/lib/query-cache-cross-tab";
 import { queryKeys } from "./query-keys";
 
 /** Appointment rows in cache — `patient` is FK to patients.id */
@@ -74,6 +79,7 @@ export function createQueryClient() {
 /** Full app sweep — use on session reset / logout only */
 export async function invalidateAllForCrud(queryClient: QueryClient) {
   await queryClient.invalidateQueries({ queryKey: queryKeys.root });
+  publishQueryCacheCrossTab(CROSS_TAB_SCOPES.APP_ROOT);
 }
 
 export async function invalidateAppointmentData(queryClient: QueryClient) {
@@ -126,6 +132,9 @@ export async function invalidateEntityAffectingAppointments(
     invalidateAdminPortal(queryClient),
     ...(resource === "patients" ? [invalidatePatientPortal(queryClient)] : []),
   ]);
+  publishQueryCacheCrossTab(
+    resource === "patients" ? CROSS_TAB_SCOPES.ENTITY_PATIENTS : CROSS_TAB_SCOPES.ENTITY_CATEGORIES
+  );
 }
 
 /** Invitations, dashboard access, assignees — shared calendar semantics */
@@ -137,6 +146,7 @@ export async function invalidateSharingAndAppointments(queryClient: QueryClient)
     queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all }),
     invalidateInsightsAndAnalytics(queryClient),
   ]);
+  publishQueryCacheCrossTab(CROSS_TAB_SCOPES.SHARING);
 }
 
 /** Users list/detail + doctors cache (specialty/bio/role changes must reflect in /services + DoctorManagement) */
@@ -148,6 +158,7 @@ export async function invalidateUsersAndAuth(queryClient: QueryClient) {
     queryClient.invalidateQueries({ queryKey: queryKeys.appointmentTypes.catalog }),
     invalidateInsightsAndAnalytics(queryClient),
   ]);
+  publishQueryCacheCrossTab(CROSS_TAB_SCOPES.USERS_AND_AUTH);
 }
 
 /** Organizations — lists and nested member queries */
@@ -172,6 +183,7 @@ export async function invalidateInvoicesAndOverview(
       ? invalidatePatientDetailAndSnapshot(queryClient, patientId)
       : queryClient.invalidateQueries({ queryKey: queryKeys.patients.all }),
   ]);
+  publishQueryCacheCrossTab(CROSS_TAB_SCOPES.INVOICES);
 }
 
 export async function invalidateAvailabilitySlots(queryClient: QueryClient) {
@@ -211,6 +223,7 @@ export async function invalidateAppointmentTypeDerived(queryClient: QueryClient)
     invalidateDoctorPortal(queryClient),
     invalidateInsightsAndAnalytics(queryClient),
   ]);
+  publishQueryCacheCrossTab(CROSS_TAB_SCOPES.APPOINTMENT_TYPE_DERIVED);
 }
 
 /**
@@ -234,6 +247,7 @@ export async function invalidateAfterAppointmentMutation(
     invalidateDoctorPortal(queryClient),
     invalidateAdminPortal(queryClient),
   ]);
+  publishQueryCacheCrossTab(CROSS_TAB_SCOPES.APPOINTMENT_MUTATION);
 }
 
 /**
@@ -263,6 +277,7 @@ export async function invalidateDoctorSchedule(
     // Doctors insights charts (weekly hours, time off) read schedule tables.
     invalidateInsightsAndAnalytics(queryClient),
   ]);
+  publishQueryCacheCrossTab(CROSS_TAB_SCOPES.DOCTOR_SCHEDULE);
 }
 
 /**
@@ -277,22 +292,30 @@ export async function invalidateQueriesForRoute(queryClient: QueryClient, href: 
       queryClient.invalidateQueries({ queryKey: queryKeys.appointmentTypes.catalog }),
       invalidateUsersAndAuth(queryClient),
     ]);
+    publishQueryCacheCrossTab([
+      "appointmentTypes",
+      ...CROSS_TAB_SCOPES.USERS_AND_AUTH,
+    ] satisfies QueryCacheCrossTabScope[]);
     return;
   }
   if (path === "/doctor-portal") {
     await Promise.all([invalidateDoctorPortal(queryClient), invalidateDashboardOverview(queryClient)]);
+    publishQueryCacheCrossTab(["doctorPortal", "dashboard"]);
     return;
   }
   if (path === "/patient-portal") {
     await Promise.all([invalidatePatientPortal(queryClient), invalidateDashboardOverview(queryClient)]);
+    publishQueryCacheCrossTab(["patientPortal", "dashboard"]);
     return;
   }
   if (path === "/dashboard" || path === "/dashboard-overview") {
     await invalidateDashboardOverview(queryClient);
+    publishQueryCacheCrossTab(["dashboard"]);
     return;
   }
   if (path === "/insights" || path === "/analytics") {
     await invalidateInsightsAndAnalytics(queryClient);
+    publishQueryCacheCrossTab(CROSS_TAB_SCOPES.INSIGHTS_ONLY);
     return;
   }
   if (path === "/control-panel/patient-management") {
@@ -300,6 +323,7 @@ export async function invalidateQueriesForRoute(queryClient: QueryClient, href: 
       queryClient.invalidateQueries({ queryKey: queryKeys.patients.all }),
       invalidateDashboardOverview(queryClient),
     ]);
+    publishQueryCacheCrossTab(["patients", "dashboard"]);
     return;
   }
   if (path === "/control-panel/doctor-management") {
@@ -311,6 +335,7 @@ export async function invalidateQueriesForRoute(queryClient: QueryClient, href: 
       invalidateAppointmentData(queryClient),
       invalidateDashboardOverview(queryClient),
     ]);
+    publishQueryCacheCrossTab(["appointments", "dashboard"]);
     return;
   }
   if (path === "/control-panel/category-management") {
@@ -318,10 +343,12 @@ export async function invalidateQueriesForRoute(queryClient: QueryClient, href: 
       queryClient.invalidateQueries({ queryKey: queryKeys.categories.all }),
       invalidateDashboardOverview(queryClient),
     ]);
+    publishQueryCacheCrossTab(["categories", "dashboard"]);
     return;
   }
   if (path === "/control-panel" || path.startsWith("/control-panel/")) {
     await invalidateDashboardOverview(queryClient);
+    publishQueryCacheCrossTab(["dashboard"]);
   }
 }
 
@@ -345,4 +372,5 @@ export async function invalidateAssigneesActivitiesAppointment(
       : queryClient.invalidateQueries({ queryKey: queryKeys.patients.all }),
     ...(patientId ? [invalidatePatientPortal(queryClient)] : []),
   ]);
+  publishQueryCacheCrossTab(CROSS_TAB_SCOPES.ASSIGNEES);
 }

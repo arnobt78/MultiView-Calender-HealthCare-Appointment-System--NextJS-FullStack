@@ -12,6 +12,7 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { getUserRole, isAdminRole } from "@/lib/rbac";
 import { notifyDoctorSettingsChangedByAdmin } from "@/lib/doctor-settings-notify";
+import { redis } from "@/lib/redis";
 
 export const dynamic = "force-dynamic";
 
@@ -91,6 +92,8 @@ export async function POST(request: NextRequest) {
       changeKind: "weekly_schedule",
       detail: "A weekly availability window was added to your schedule.",
     });
+
+    void redis.invalidateAfterDoctorScheduleMutation(sessionUser.userId, doctorId);
 
     return NextResponse.json({ window }, { status: 201 });
   } catch {

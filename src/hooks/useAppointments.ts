@@ -14,6 +14,7 @@ import {
   invalidateDoctorPortal,
   invalidateAdminPortal,
 } from "@/lib/query-client";
+import { CROSS_TAB_SCOPES, publishQueryCacheCrossTab } from "@/lib/query-cache-cross-tab";
 import {
   fetchAssignees,
   fetchCategories,
@@ -292,6 +293,7 @@ export function useAppointments() {
         invalidateAdminPortal(queryClient),
         ...(patientId ? [invalidatePatientDetailAndSnapshot(queryClient, patientId)] : []),
       ]);
+      publishQueryCacheCrossTab(CROSS_TAB_SCOPES.APPOINTMENT_MUTATION);
       const deleted = context?.deleted;
       notify.crud({
         action: "deleted",
@@ -350,6 +352,7 @@ export function useAppointments() {
         invalidateDoctorPortal(queryClient),
         invalidateAdminPortal(queryClient),
       ]);
+      publishQueryCacheCrossTab(CROSS_TAB_SCOPES.APPOINTMENT_MUTATION);
       notify.crud({
         action: "updated",
         entity: "Appointment status",

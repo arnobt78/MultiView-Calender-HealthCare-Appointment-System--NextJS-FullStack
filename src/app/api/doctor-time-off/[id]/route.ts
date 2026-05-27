@@ -11,6 +11,7 @@ import { getSessionUser } from "@/lib/session";
 import { getUserRole, isAdminRole } from "@/lib/rbac";
 import { zodBadRequest } from "@/lib/schemas/parse";
 import { notifyDoctorSettingsChangedByAdmin } from "@/lib/doctor-settings-notify";
+import { redis } from "@/lib/redis";
 
 export const dynamic = "force-dynamic";
 
@@ -77,6 +78,8 @@ export async function PATCH(
       detail: "A time-off block on your schedule was updated.",
     });
 
+    void redis.invalidateAfterDoctorScheduleMutation(sessionUser.userId, existing.user_id);
+
     return NextResponse.json({ block });
   } catch {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -111,6 +114,8 @@ export async function DELETE(
       changeKind: "time_off",
       detail: "A time-off block was removed from your schedule.",
     });
+
+    void redis.invalidateAfterDoctorScheduleMutation(sessionUser.userId, existing.user_id);
 
     return NextResponse.json({ success: true });
   } catch {

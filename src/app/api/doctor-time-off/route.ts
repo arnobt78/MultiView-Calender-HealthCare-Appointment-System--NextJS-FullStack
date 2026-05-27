@@ -12,6 +12,7 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { getUserRole, isAdminRole } from "@/lib/rbac";
 import { notifyDoctorSettingsChangedByAdmin } from "@/lib/doctor-settings-notify";
+import { redis } from "@/lib/redis";
 
 export const dynamic = "force-dynamic";
 
@@ -90,6 +91,8 @@ export async function POST(request: NextRequest) {
       changeKind: "time_off",
       detail: "A time-off block was added to your schedule.",
     });
+
+    void redis.invalidateAfterDoctorScheduleMutation(sessionUser.userId, doctorId);
 
     return NextResponse.json({ block }, { status: 201 });
   } catch {
