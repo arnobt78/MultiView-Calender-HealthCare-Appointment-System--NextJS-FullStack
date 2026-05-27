@@ -37,7 +37,7 @@ import {
   fetchTopPatients,
   fetchTrendCountsByPeriod,
   fetchTypeBreakdown,
-  countAppointmentsByStatus,
+  countAppointmentsByStatusInRange,
   invoiceOwnerWhere,
 } from "@/lib/insights/insights-aggregate";
 
@@ -130,11 +130,11 @@ export async function getInsightsData(
     activeInPeriod,
   ] = await Promise.all([
     fetchAppointmentTotals(apptBase, now),
-    countAppointmentsByStatus(apptBase),
+    countAppointmentsByStatusInRange(apptBase, periodRange.start, periodRange.end),
     fetchAvgDurationMinutes(apptBase),
     fetchRevenueAggregates(invoiceBase, period, now),
     fetchPaymentSuccessPct(invoiceBase),
-    fetchDoctorBreakdown(organizationWide),
+    fetchDoctorBreakdown(organizationWide, period, now),
     fetchStatusOverTimeByPeriod(apptBase, period, now),
     fetchBusiestDayOfWeekCounts(apptBase, periodRange.start, periodRange.end),
     fetchCategoryBreakdown(apptBase, periodRange.start, periodRange.end),

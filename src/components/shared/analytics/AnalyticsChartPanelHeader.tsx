@@ -3,14 +3,15 @@
 import type { LucideIcon } from "lucide-react";
 import {
   analyticsChartPanelIconTileClass,
-  analyticsChartPanelSubtitleClass,
   analyticsChartPanelTitleClass,
+  insightsChartPeriodSubtitleClass,
 } from "@/lib/insights-ui-classes";
-import { cn, toSentenceCaseSubtitle, toTitleCaseLabel } from "@/lib/utils";
+import { cn, toTitleCaseLabel } from "@/lib/utils";
 
 type AnalyticsChartPanelHeaderProps = {
   title: string;
-  subtitle?: string;
+  /** Dynamic View-as period line only (sky accent) — no static prefix text. */
+  periodSubtitle?: string;
   icon: LucideIcon;
   iconClassName?: string;
   id?: string;
@@ -18,11 +19,11 @@ type AnalyticsChartPanelHeaderProps = {
 };
 
 /**
- * In-chart panel title row — tall icon tile + title/subtitle stack (doctor-portal subsection parity).
+ * In-chart panel title row — tall icon tile + title + optional period subtitle (doctor-portal parity).
  */
 export function AnalyticsChartPanelHeader({
   title,
-  subtitle,
+  periodSubtitle,
   icon: Icon,
   iconClassName,
   id,
@@ -37,8 +38,8 @@ export function AnalyticsChartPanelHeader({
         <h3 id={id} className={analyticsChartPanelTitleClass}>
           {toTitleCaseLabel(title)}
         </h3>
-        {subtitle ? (
-          <p className={analyticsChartPanelSubtitleClass}>{toSentenceCaseSubtitle(subtitle)}</p>
+        {periodSubtitle ? (
+          <p className={insightsChartPeriodSubtitleClass}>{periodSubtitle}</p>
         ) : null}
       </div>
     </div>

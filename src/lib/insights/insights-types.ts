@@ -27,7 +27,9 @@ export type InsightsTrendPoint = {
 };
 
 export type InsightsAppointmentsSection = {
+  /** Calendar KPI windows — not tied to View-as period. */
   totals: InsightsAppointmentTotals;
+  /** Done / pending / alert within selected chart period + scope. */
   byStatus: Record<string, number>;
   byCategory: Record<string, number>;
   trend: InsightsTrendPoint[];
@@ -60,6 +62,7 @@ export type InsightsDoctorRow = {
   revenueCents: number;
 };
 
+/** Org-wide admin only — appointment volume + paid revenue within selected chart period. */
 export type InsightsDoctorsSection = {
   byDoctor: InsightsDoctorRow[];
   bySpecialty: { specialty: string; count: number }[];
@@ -67,6 +70,7 @@ export type InsightsDoctorsSection = {
 
 export type InsightsMeta = {
   period: InsightsPeriod;
+  /** Human label for chart subtitles (Today, This week, month name, year). */
   periodLabel: string;
   generatedAt: string;
   organizationWide: boolean;

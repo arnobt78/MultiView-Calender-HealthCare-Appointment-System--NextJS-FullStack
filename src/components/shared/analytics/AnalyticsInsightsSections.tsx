@@ -34,6 +34,10 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { InsightsAppointmentsPanelHeader } from "@/components/insights/InsightsAppointmentsPanelHeader";
 import type { InsightsPayload } from "@/lib/insights-data";
+import {
+  getInsightsChartPeriodSubtitle,
+  getInsightsChartPeriodSubtitleFromQuery,
+} from "@/lib/insights-chart-subtitle";
 import type { InsightsPeriod } from "@/lib/insights/insights-period";
 import { isAdminRole } from "@/lib/rbac";
 
@@ -90,8 +94,10 @@ export function AnalyticsInsightsSections({
     ? Object.entries(v2.revenue.invoiceByStatus).map(([label, count]) => ({ label, count }))
     : [];
   const showDoctors = isAdminRole(viewerRole) && organizationWide && v2?.doctors;
-  const chartPeriodLabel = v2?.meta.periodLabel ?? "Selected period";
+  const periodSubtitle =
+    getInsightsChartPeriodSubtitle(v2?.meta) ?? getInsightsChartPeriodSubtitleFromQuery(period);
   const byStatus = v2?.appointments.byStatus ?? data?.byStatus;
+  const paidInPeriodCents = v2?.revenue.paidInPeriod ?? data?.revenueThisMonth ?? 0;
   /** All-time appointment count in current scope (doctor practice or org / selected doctor). */
   const appointmentsAllTime =
     v2?.appointments.totals.all ?? data?.overview.total ?? 0;
@@ -123,7 +129,7 @@ export function AnalyticsInsightsSections({
         <div className="grid gap-6 md:grid-cols-2">
           <AnalyticsChartCard
             title="Volume trend"
-            subtitle={v2?.meta.periodLabel ?? "Over selected period"}
+            periodSubtitle={periodSubtitle}
             detailHint="Appointment count per time bucket for the selected period filter."
             icon={BarChart3}
             loading={loading}
@@ -132,7 +138,7 @@ export function AnalyticsInsightsSections({
           </AnalyticsChartCard>
           <AnalyticsChartCard
             title="Busiest weekday"
-            subtitle={`By day of week · ${chartPeriodLabel}`}
+            periodSubtitle={periodSubtitle}
             detailHint="Appointment counts per weekday within the selected chart period."
             icon={CalendarDays}
             loading={loading}
@@ -141,7 +147,7 @@ export function AnalyticsInsightsSections({
           </AnalyticsChartCard>
           <AnalyticsChartCard
             title="Status over time"
-            subtitle={`Done / pending / alert · ${chartPeriodLabel}`}
+            periodSubtitle={periodSubtitle}
             detailHint="Stacked status buckets follow the chart period (hours, days, or months)."
             icon={Layers}
             loading={loading}
@@ -151,7 +157,8 @@ export function AnalyticsInsightsSections({
           </AnalyticsChartCard>
           <AnalyticsChartCard
             title="By category"
-            subtitle={`By category · ${chartPeriodLabel}`}
+            periodSubtitle={periodSubtitle}
+            detailHint="Appointment counts grouped by category within the selected chart period."
             icon={FolderTree}
             loading={loading}
           >
@@ -159,7 +166,8 @@ export function AnalyticsInsightsSections({
           </AnalyticsChartCard>
           <AnalyticsChartCard
             title="Visit types"
-            subtitle="Appointment type mix"
+            periodSubtitle={periodSubtitle}
+            detailHint="Appointment type mix within the selected chart period."
             icon={PieChart}
             loading={loading}
           >
@@ -172,7 +180,8 @@ export function AnalyticsInsightsSections({
         <div className="grid gap-6 md:grid-cols-2">
           <AnalyticsChartCard
             title="Age distribution"
-            subtitle="Unique patients in period"
+            periodSubtitle={periodSubtitle}
+            detailHint="Unique patients with appointments in the selected chart period."
             icon={UserRound}
             loading={loading}
           >
@@ -180,7 +189,13 @@ export function AnalyticsInsightsSections({
               data={ageBars.map((b) => ({ label: b.label, count: b.count }))}
             />
           </AnalyticsChartCard>
-          <AnalyticsChartCard title="Top patients" subtitle="By visit frequency" icon={Users} loading={loading}>
+          <AnalyticsChartCard
+            title="Top patients"
+            periodSubtitle={periodSubtitle}
+            detailHint="Patients ranked by visit frequency in the selected chart period."
+            icon={Users}
+            loading={loading}
+          >
             <Table>
               <TableHeader>
                 <TableRow>
@@ -215,7 +230,8 @@ export function AnalyticsInsightsSections({
         <div className="grid gap-6 md:grid-cols-2">
           <AnalyticsChartCard
             title="Paid revenue"
-            subtitle={`${formatCents(v2?.revenue.paidInPeriod ?? data?.revenueThisMonth ?? 0)} in period`}
+            periodSubtitle={periodSubtitle}
+            detailHint={`Paid revenue collected in period: ${formatCents(paidInPeriodCents)}`}
             icon={BadgeDollarSign}
             loading={loading}
           >
@@ -223,7 +239,7 @@ export function AnalyticsInsightsSections({
           </AnalyticsChartCard>
           <AnalyticsChartCard
             title="Invoice status"
-            subtitle={`By status · ${chartPeriodLabel}`}
+            periodSubtitle={periodSubtitle}
             detailHint="Invoice counts by status created within the selected chart period."
             icon={Receipt}
             loading={loading}
@@ -238,7 +254,8 @@ export function AnalyticsInsightsSections({
           <div className="grid gap-6 md:grid-cols-2">
             <AnalyticsChartCard
               title="Appointments by doctor"
-              subtitle="Organization-wide"
+              periodSubtitle={periodSubtitle}
+              detailHint="Organization-wide appointment volume per doctor in the selected chart period."
               icon={Activity}
               loading={loading}
             >
@@ -251,7 +268,8 @@ export function AnalyticsInsightsSections({
             </AnalyticsChartCard>
             <AnalyticsChartCard
               title="By specialty"
-              subtitle="Appointment volume"
+              periodSubtitle={periodSubtitle}
+              detailHint="Organization-wide appointment volume by specialty in the selected chart period."
               icon={Stethoscope}
               loading={loading}
             >

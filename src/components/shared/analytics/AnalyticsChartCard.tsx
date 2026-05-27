@@ -15,24 +15,25 @@ import { cn, toSentenceCaseSubtitle } from "@/lib/utils";
 
 type Props = {
   title: string;
-  subtitle?: string;
+  /** Dynamic period label from v2.meta.periodLabel (View-as filter). */
+  periodSubtitle?: string;
   /** Required — every insights chart uses portal-style icon tile chrome. */
   icon: LucideIcon;
   loading?: boolean;
   children: React.ReactNode;
   className?: string;
   iconClassName?: string;
-  /** Extra detail on hover (chart purpose / data source). */
+  /** Static chart explanation — tooltip only, not shown as subtitle. */
   detailHint?: string;
 };
 
 /**
  * Glass chart panel — single `CardContent` shell (doctor-portal parity).
- * Header icon/title/subtitle stay inside the card; chart body follows in the same padding box.
+ * Header icon/title/period subtitle stay inside the card; chart body follows in the same padding box.
  */
 export function AnalyticsChartCard({
   title,
-  subtitle,
+  periodSubtitle,
   icon,
   loading = false,
   children,
@@ -40,8 +41,7 @@ export function AnalyticsChartCard({
   iconClassName,
   detailHint,
 }: Props) {
-  const hint = detailHint ?? subtitle;
-  const displayHint = hint ? toSentenceCaseSubtitle(hint) : undefined;
+  const displayHint = detailHint ? toSentenceCaseSubtitle(detailHint) : undefined;
   const headingId = `analytics-chart-${title.replace(/\s+/g, "-").toLowerCase()}`;
 
   return (
@@ -55,7 +55,7 @@ export function AnalyticsChartCard({
                   <AnalyticsChartPanelHeader
                     id={headingId}
                     title={title}
-                    subtitle={subtitle}
+                    periodSubtitle={periodSubtitle}
                     icon={icon}
                     iconClassName={iconClassName}
                   />

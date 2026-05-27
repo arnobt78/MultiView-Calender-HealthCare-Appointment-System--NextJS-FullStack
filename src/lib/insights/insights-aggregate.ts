@@ -83,6 +83,25 @@ export async function countAppointmentsByStatus(
   return out;
 }
 
+/** Status chips on /insights — scoped to chart period (`start` within range). */
+export async function countAppointmentsByStatusInRange(
+  base: Prisma.AppointmentWhereInput,
+  rangeStart: Date,
+  rangeEnd: Date
+): Promise<Record<string, number>> {
+  const rows = await prisma.appointment.groupBy({
+    by: ["status"],
+    where: { ...base, start: { gte: rangeStart, lte: rangeEnd } },
+    _count: { _all: true },
+  });
+  const out: Record<string, number> = {};
+  for (const row of rows) {
+    const key = row.status || "pending";
+    out[key] = row._count._all;
+  }
+  return out;
+}
+
 export async function fetchAppointmentTotals(
   base: Prisma.AppointmentWhereInput,
   now: Date
@@ -658,7 +677,9 @@ export async function countNewPatientsInMonth(
 }
 
 export async function fetchDoctorBreakdown(
-  organizationWide: boolean
+  organizationWide: boolean,
+  period: InsightsPeriod,
+  now: Date
 ): Promise<
   | {
       doctorId: string;
@@ -671,6 +692,9 @@ export async function fetchDoctorBreakdown(
 > {
   if (!organizationWide) return null;
 
+  const periodRange = resolveDateRangeInclusive(period, now);
+  const paidRange = resolveDateRange(period, now);
+
   const doctors = await prisma.user.findMany({
     where: { role: "doctor" },
     select: { id: true, display_name: true, email: true, specialty: true },
@@ -679,9 +703,18 @@ export async function fetchDoctorBreakdown(
   const rows = await Promise.all(
     doctors.map(async (doc) => {
       const [appointmentCount, revenueAgg] = await Promise.all([
-        prisma.appointment.count({ where: { owner_id: doc.id } }),
+        prisma.appointment.count({
+          where: {
+            owner_id: doc.id,
+            start: { gte: periodRange.start, lte: periodRange.end },
+          },
+        }),
         prisma.invoice.aggregate({
-          where: { user_id: doc.id, status: "paid" },
+          where: {
+            user_id: doc.id,
+            status: "paid",
+            paid_at: { gte: paidRange.start, lte: paidRange.end },
+          },
           _sum: { amount: true },
         }),
       ]);

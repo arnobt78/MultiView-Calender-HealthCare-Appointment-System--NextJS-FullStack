@@ -54,7 +54,11 @@ export const analyticsChartPanelIconTileClass =
 
 export const analyticsChartPanelTitleClass = "text-sm font-medium text-gray-800";
 
+/** Legacy muted subtitle — prefer `insightsChartPeriodSubtitleClass` on insights charts. */
 export const analyticsChartPanelSubtitleClass = "text-xs leading-snug text-muted-foreground";
+
+/** Dynamic View-as period line under chart titles (matches page scope hint accent). */
+export const insightsChartPeriodSubtitleClass = "text-xs leading-snug text-sky-600/90";
 
 /**
  * By-status summary row — `rounded-[24px]` matches `portalPanelCardClass` (not `rounded-2xl`).
