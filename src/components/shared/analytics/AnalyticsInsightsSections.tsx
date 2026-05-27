@@ -123,6 +123,7 @@ export function AnalyticsInsightsSections({
       >
         <AnalyticsStatusSummaryRow
           byStatus={byStatus}
+          periodLabel={periodSubtitle}
           loading={loading}
           className="mb-4"
         />

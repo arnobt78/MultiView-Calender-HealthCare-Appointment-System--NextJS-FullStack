@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
 const mockAppointmentCount = vi.hoisted(() => vi.fn().mockResolvedValue(0));
+const mockAppointmentFindMany = vi.hoisted(() => vi.fn().mockResolvedValue([]));
 const mockAppointmentGroupBy = vi.hoisted(() => vi.fn().mockResolvedValue([]));
 const mockQueryRaw = vi.hoisted(() => vi.fn().mockResolvedValue([]));
 const mockInvoiceGroupBy = vi.hoisted(() => vi.fn().mockResolvedValue([]));
@@ -13,6 +14,7 @@ vi.mock("@/lib/prisma", () => ({
   prisma: {
     appointment: {
       count: mockAppointmentCount,
+      findMany: mockAppointmentFindMany,
       groupBy: mockAppointmentGroupBy,
     },
     invoice: {
@@ -28,6 +30,8 @@ vi.mock("@/lib/prisma", () => ({
 
 import {
   countAppointmentsByStatusInRange,
+  countDistinctPatientsInPeriodToNow,
+  fetchAvgDurationMinutesInRange,
   fetchBusiestDayOfWeekCounts,
   fetchDoctorBreakdown,
   fetchRevenueAggregates,
@@ -127,6 +131,51 @@ describe("countAppointmentsByStatusInRange", () => {
       expect.objectContaining({
         where: expect.objectContaining({
           start: { gte: rangeStart, lte: rangeEnd },
+        }),
+      })
+    );
+  });
+});
+
+describe("fetchAvgDurationMinutesInRange", () => {
+  const rangeStart = new Date("2026-05-01T00:00:00Z");
+  const rangeEnd = new Date("2026-05-31T23:59:59.999Z");
+
+  beforeEach(() => {
+    mockAppointmentFindMany.mockClear();
+    mockAppointmentFindMany.mockResolvedValue([
+      { duration_minutes: 30, start: new Date(), end: new Date() },
+    ]);
+  });
+
+  it("scopes findMany to appointment start in range", async () => {
+    await fetchAvgDurationMinutesInRange({}, rangeStart, rangeEnd);
+    expect(mockAppointmentFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          start: { gte: rangeStart, lte: rangeEnd },
+        }),
+      })
+    );
+  });
+});
+
+describe("countDistinctPatientsInPeriodToNow", () => {
+  const rangeStart = new Date("2026-05-01T00:00:00Z");
+  const rangeEnd = new Date("2026-05-31T23:59:59.999Z");
+  const now = new Date("2026-05-15T12:00:00Z");
+
+  beforeEach(() => {
+    mockAppointmentGroupBy.mockClear();
+    mockAppointmentGroupBy.mockResolvedValue([{ patient_id: "p1", _count: { _all: 1 } }]);
+  });
+
+  it("clips range end to now for patient groupBy", async () => {
+    await countDistinctPatientsInPeriodToNow({}, rangeStart, rangeEnd, now);
+    expect(mockAppointmentGroupBy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          start: { gte: rangeStart, lte: now },
         }),
       })
     );

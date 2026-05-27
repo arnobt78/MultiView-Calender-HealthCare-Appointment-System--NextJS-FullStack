@@ -79,7 +79,7 @@ export function AnalyticsOverviewStatsRow({ data, valueSkeleton }: Props) {
         variant="sky"
         icon={Clock}
         title="Avg duration"
-        subtitle="Minutes per visit (mins)"
+        subtitle="Minutes per visit in selected period"
         value={totals?.avgDurationMinutes ?? data?.overview.avgDurationMinutes ?? 0}
         valueSkeleton={valueSkeleton}
       />

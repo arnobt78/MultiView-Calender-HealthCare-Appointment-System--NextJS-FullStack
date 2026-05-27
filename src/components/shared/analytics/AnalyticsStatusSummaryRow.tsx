@@ -3,7 +3,10 @@
 import { AlertCircle, CheckCircle2, CircleDashed, ListFilter } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { insightsStatusSummaryRowClass } from "@/lib/insights-ui-classes";
+import {
+  insightsChartPeriodSubtitleClass,
+  insightsStatusSummaryRowClass,
+} from "@/lib/insights-ui-classes";
 import { cn } from "@/lib/utils";
 
 /** Stable display order for appointment status chips on /insights. */
@@ -51,19 +54,31 @@ export function normalizeInsightsByStatus(
 
 type Props = {
   byStatus: Record<string, number> | undefined;
+  /** View-as period line (sky) — same as chart subtitles. */
+  periodLabel?: string;
   loading: boolean;
   className?: string;
 };
 
 /** Compact status breakdown — glass pills with Lucide icons. */
-export function AnalyticsStatusSummaryRow({ byStatus, loading, className }: Props) {
+export function AnalyticsStatusSummaryRow({
+  byStatus,
+  periodLabel,
+  loading,
+  className,
+}: Props) {
   const counts = normalizeInsightsByStatus(byStatus);
 
   return (
     <div className={cn(insightsStatusSummaryRowClass, className)}>
-      <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-sky-600">
-        <ListFilter className="h-3.5 w-3.5" aria-hidden />
-        By status
+      <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-sky-600">
+          <ListFilter className="h-3.5 w-3.5" aria-hidden />
+          By status
+        </span>
+        {periodLabel ? (
+          <span className={insightsChartPeriodSubtitleClass}>{periodLabel}</span>
+        ) : null}
       </span>
       {INSIGHTS_STATUS_ORDER.map((status) => {
         const meta = STATUS_META[status];

@@ -160,6 +160,26 @@ export async function fetchAvgDurationMinutes(
   return Math.round(sum / rows.length);
 }
 
+/** Average visit length for appointments with `start` in the chart period. */
+export async function fetchAvgDurationMinutesInRange(
+  base: Prisma.AppointmentWhereInput,
+  rangeStart: Date,
+  rangeEnd: Date
+): Promise<number> {
+  const rows = await prisma.appointment.findMany({
+    where: { ...base, start: { gte: rangeStart, lte: rangeEnd } },
+    select: { duration_minutes: true, start: true, end: true },
+    take: 5000,
+  });
+  if (rows.length === 0) return 0;
+  const sum = rows.reduce((acc, a) => {
+    if (a.duration_minutes) return acc + a.duration_minutes;
+    const diffMs = new Date(a.end).getTime() - new Date(a.start).getTime();
+    return acc + Math.round(diffMs / 60000);
+  }, 0);
+  return Math.round(sum / rows.length);
+}
+
 // Chart series below use parallel count/groupBy — bounded findMany only for avg duration + age buckets.
 
 export async function fetchRevenueAggregates(
@@ -654,6 +674,25 @@ export async function countDistinctPatientsInRange(
     where: {
       ...base,
       start: { gte: rangeStart, lte: rangeEnd },
+      patient_id: { not: null },
+    },
+  });
+  return rows.length;
+}
+
+/** Distinct patients with appointments in period — end clipped to `now` (excludes future slots). */
+export async function countDistinctPatientsInPeriodToNow(
+  base: Prisma.AppointmentWhereInput,
+  rangeStart: Date,
+  rangeEnd: Date,
+  now: Date
+): Promise<number> {
+  const end = rangeEnd.getTime() > now.getTime() ? now : rangeEnd;
+  const rows = await prisma.appointment.groupBy({
+    by: ["patient_id"],
+    where: {
+      ...base,
+      start: { gte: rangeStart, lte: end },
       patient_id: { not: null },
     },
   });

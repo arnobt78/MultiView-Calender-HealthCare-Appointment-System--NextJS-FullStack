@@ -18,6 +18,7 @@ export type InsightsAppointmentTotals = {
   overdue: number;
   telehealthCount: number;
   telehealthPct: number;
+  /** Average visit length for appointments in the selected View-as period. */
   avgDurationMinutes: number;
 };
 
@@ -39,7 +40,9 @@ export type InsightsAppointmentsSection = {
 };
 
 export type InsightsPatientsSection = {
+  /** Distinct patients with appointments from period start through now (excludes future). */
   newInPeriod: number;
+  /** Distinct patients with appointments across full inclusive period window. */
   activeInPeriod: number;
   ageDistribution: { label: string; count: number }[];
   topPatients: { name: string; count: number }[];

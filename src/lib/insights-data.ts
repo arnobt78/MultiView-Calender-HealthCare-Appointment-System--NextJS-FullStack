@@ -19,15 +19,17 @@
 import type { InsightsDataOptions } from "@/lib/insights-scope";
 import type { InsightsPeriod } from "@/lib/insights/insights-period";
 import { resolveDateRangeInclusive } from "@/lib/insights/insights-period";
+import { formatInsightsPeriodDisplayLabel } from "@/lib/insights/insights-period-label";
 import type { InsightsPayloadV2 } from "@/lib/insights/insights-types";
 import { legacyMonthlyDataFromTrend } from "@/lib/insights/insights-legacy-payload";
 import {
   appointmentOwnerWhere,
   countNewPatientsInMonth,
+  countDistinctPatientsInPeriodToNow,
   countDistinctPatientsInRange,
   fetchAgeDistribution,
   fetchAppointmentTotals,
-  fetchAvgDurationMinutes,
+  fetchAvgDurationMinutesInRange,
   fetchBusiestDayOfWeekCounts,
   fetchCategoryBreakdown,
   fetchDoctorBreakdown,
@@ -126,12 +128,13 @@ export async function getInsightsData(
     topPatients,
     ageDistribution,
     trend,
+    newPatientsInPeriod,
     newPatientsThisMonth,
     activeInPeriod,
   ] = await Promise.all([
     fetchAppointmentTotals(apptBase, now),
     countAppointmentsByStatusInRange(apptBase, periodRange.start, periodRange.end),
-    fetchAvgDurationMinutes(apptBase),
+    fetchAvgDurationMinutesInRange(apptBase, periodRange.start, periodRange.end),
     fetchRevenueAggregates(invoiceBase, period, now),
     fetchPaymentSuccessPct(invoiceBase),
     fetchDoctorBreakdown(organizationWide, period, now),
@@ -143,6 +146,7 @@ export async function getInsightsData(
     fetchAgeDistribution(apptBase, periodRange.start, periodRange.end, now),
     // Volume trend + revenue area chart — period=month (daily) | year (Jan–Dec), not rolling 12mo.
     fetchTrendCountsByPeriod(apptBase, period, now),
+    countDistinctPatientsInPeriodToNow(apptBase, periodRange.start, periodRange.end, now),
     countNewPatientsInMonth(apptBase, startOfThisMonth, now),
     countDistinctPatientsInRange(apptBase, periodRange.start, periodRange.end),
   ]);
@@ -173,7 +177,7 @@ export async function getInsightsData(
   const v2: InsightsPayloadV2 = {
     meta: {
       period,
-      periodLabel: periodRange.label,
+      periodLabel: formatInsightsPeriodDisplayLabel(period, now),
       generatedAt: now.toISOString(),
       organizationWide,
     },
@@ -193,7 +197,7 @@ export async function getInsightsData(
       typeBreakdown: appointmentTypeBreakdown,
     },
     patients: {
-      newInPeriod: newPatientsThisMonth,
+      newInPeriod: newPatientsInPeriod,
       activeInPeriod,
       ageDistribution,
       topPatients,
