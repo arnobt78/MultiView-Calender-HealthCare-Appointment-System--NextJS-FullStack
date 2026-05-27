@@ -4,7 +4,6 @@ import type { LucideIcon } from "lucide-react";
 import {
   analyticsChartPanelIconTileClass,
   analyticsChartPanelTitleClass,
-  analyticsChartPanelTitleRowClass,
   insightsChartPeriodSubtitleClass,
 } from "@/lib/insights-ui-classes";
 import { cn, toTitleCaseLabel } from "@/lib/utils";
@@ -20,7 +19,7 @@ type AnalyticsChartPanelHeaderProps = {
 };
 
 /**
- * In-chart panel title row — tall icon tile + title + optional period subtitle (doctor-portal parity).
+ * In-chart panel title row — tall icon tile + stacked title + period subtitle (doctor-portal parity).
  */
 export function AnalyticsChartPanelHeader({
   title,
@@ -35,12 +34,12 @@ export function AnalyticsChartPanelHeader({
       <span className={cn(analyticsChartPanelIconTileClass, iconClassName)} aria-hidden>
         <Icon className="h-4 w-4" />
       </span>
-      <div className={analyticsChartPanelTitleRowClass}>
-        <h3 id={id} className={cn(analyticsChartPanelTitleClass, "shrink-0")}>
+      <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5">
+        <h3 id={id} className={analyticsChartPanelTitleClass}>
           {toTitleCaseLabel(title)}
         </h3>
         {periodSubtitle ? (
-          <span className={cn(insightsChartPeriodSubtitleClass, "min-w-0")}>{periodSubtitle}</span>
+          <p className={insightsChartPeriodSubtitleClass}>{periodSubtitle}</p>
         ) : null}
       </div>
     </div>

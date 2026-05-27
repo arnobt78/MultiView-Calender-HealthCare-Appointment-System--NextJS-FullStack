@@ -11,10 +11,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  analyticsChartEmptyDescriptionClass,
-  analyticsChartEmptyTitleClass,
-} from "@/lib/analytics-chart-interaction";
+import { AnalyticsChartEmptyStateCopy } from "@/components/shared/analytics/AnalyticsChartEmptyStateCopy";
 import { insightsChartBodyMinHeightClass } from "@/lib/insights-ui-classes";
 import { cn } from "@/lib/utils";
 
@@ -60,17 +57,17 @@ export function AnalyticsTopPatientsPanel({ patients, loading = false }: Props) 
     return (
       <div
         className={cn(
-          "flex w-full flex-col items-center justify-center gap-2 px-4 text-center text-muted-foreground",
+          "flex w-full flex-col items-center justify-center gap-2 px-3 text-muted-foreground sm:px-4",
           insightsChartBodyMinHeightClass
         )}
         role="status"
         aria-live="polite"
       >
-        <Inbox className="h-8 w-8 text-muted-foreground/60" aria-hidden />
-        <p className={analyticsChartEmptyTitleClass}>No patient visits in this period</p>
-        <p className={analyticsChartEmptyDescriptionClass}>
-          Top patients will rank here when appointments are recorded in the selected range.
-        </p>
+        <Inbox className="h-8 w-8 shrink-0 text-muted-foreground/60" aria-hidden />
+        <AnalyticsChartEmptyStateCopy
+          title="No patient visits in this period"
+          description="Top patients will rank here when appointments are recorded in the selected range."
+        />
       </div>
     );
   }

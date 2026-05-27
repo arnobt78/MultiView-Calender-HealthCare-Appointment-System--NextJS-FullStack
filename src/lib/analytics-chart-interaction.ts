@@ -28,11 +28,17 @@ export const analyticsChartPlotMargin = {
 
 /** Centered empty-state overlay on insights chart plot area. */
 export const analyticsChartEmptyOverlayClass =
-  "pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center gap-1.5 bg-background/50 px-4 text-center backdrop-blur-[1px]";
+  "pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-background/50 px-3 backdrop-blur-[1px] sm:px-4";
+
+/** Empty-state copy stack — title row then description row, centered in plot. */
+export const analyticsChartEmptyCopyStackClass =
+  "flex w-full max-w-full flex-col items-center gap-1 text-center";
 
 export const analyticsChartEmptyTitleClass = "text-sm font-medium text-muted-foreground";
 
-export const analyticsChartEmptyDescriptionClass = "max-w-[16rem] text-xs text-muted-foreground/90";
+/** Description row — full width with normal inline word breaks (not title+desc on one line). */
+export const analyticsChartEmptyDescriptionClass =
+  "text-xs leading-snug text-muted-foreground/90 [overflow-wrap:anywhere]";
 
 export type AnalyticsChartTooltipCursorVariant =
   | "bar"
