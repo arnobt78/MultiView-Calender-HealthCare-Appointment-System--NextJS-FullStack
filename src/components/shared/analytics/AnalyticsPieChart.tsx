@@ -36,9 +36,13 @@ export function AnalyticsPieChart({ data, loading, emptyKind }: Props) {
 
   if (empty && emptyKind) {
     return (
-      <AnalyticsChartPlotShell empty emptyCopy={emptyCopy}>
+      <AnalyticsChartPlotShell
+        empty
+        emptyCopy={emptyCopy}
+        chartHeightClass="h-48 min-h-[12rem]"
+      >
         <div
-          className="mx-auto h-48 min-h-[12rem] w-full max-w-sm rounded-xl border border-border/40 bg-muted/10"
+          className="h-full w-full rounded-xl border border-border/40 bg-muted/10"
           aria-hidden
         />
       </AnalyticsChartPlotShell>

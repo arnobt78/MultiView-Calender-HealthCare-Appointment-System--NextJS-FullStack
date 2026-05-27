@@ -4,6 +4,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   analyticsChartPanelIconTileClass,
   analyticsChartPanelTitleClass,
+  analyticsChartPanelTitleRowClass,
   insightsChartPeriodSubtitleClass,
 } from "@/lib/insights-ui-classes";
 import { cn, toTitleCaseLabel } from "@/lib/utils";
@@ -34,12 +35,12 @@ export function AnalyticsChartPanelHeader({
       <span className={cn(analyticsChartPanelIconTileClass, iconClassName)} aria-hidden>
         <Icon className="h-4 w-4" />
       </span>
-      <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5">
-        <h3 id={id} className={analyticsChartPanelTitleClass}>
+      <div className={analyticsChartPanelTitleRowClass}>
+        <h3 id={id} className={cn(analyticsChartPanelTitleClass, "shrink-0")}>
           {toTitleCaseLabel(title)}
         </h3>
         {periodSubtitle ? (
-          <p className={insightsChartPeriodSubtitleClass}>{periodSubtitle}</p>
+          <span className={cn(insightsChartPeriodSubtitleClass, "min-w-0")}>{periodSubtitle}</span>
         ) : null}
       </div>
     </div>

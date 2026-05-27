@@ -58,7 +58,15 @@ export const analyticsChartPanelTitleClass = "text-sm font-medium text-gray-800"
 export const analyticsChartPanelSubtitleClass = "text-xs leading-snug text-muted-foreground";
 
 /** Dynamic View-as period line under chart titles (matches page scope hint accent). */
-export const insightsChartPeriodSubtitleClass = "text-xs leading-snug text-sky-600/90";
+export const insightsChartPeriodSubtitleClass =
+  "text-xs leading-snug text-sky-600/90 [overflow-wrap:anywhere]";
+
+/** Title + period subtitle on one row — wraps at card width (not forced stack). */
+export const analyticsChartPanelTitleRowClass =
+  "flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2 gap-y-0.5 w-full";
+
+/** Chart / table body min height — aligns empty states across insights cards. */
+export const insightsChartBodyMinHeightClass = "min-h-[10rem]";
 
 /**
  * By-status summary row — `rounded-[24px]` matches `portalPanelCardClass` (not `rounded-2xl`).

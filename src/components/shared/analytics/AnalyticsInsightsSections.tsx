@@ -6,7 +6,6 @@ import {
   BadgeDollarSign,
   CalendarDays,
   FolderTree,
-  Inbox,
   Layers,
   PieChart,
   Receipt,
@@ -21,18 +20,9 @@ import { AnalyticsBarChart } from "@/components/shared/analytics/AnalyticsBarCha
 import { AnalyticsPieChart } from "@/components/shared/analytics/AnalyticsPieChart";
 import { AnalyticsAreaChart } from "@/components/shared/analytics/AnalyticsAreaChart";
 import { AnalyticsStackedBarChart } from "@/components/shared/analytics/AnalyticsStackedBarChart";
+import { AnalyticsTopPatientsPanel } from "@/components/shared/analytics/AnalyticsTopPatientsPanel";
 import { AnalyticsRevenueStatsRow } from "@/components/shared/analytics/AnalyticsRevenueStatsRow";
 import { AnalyticsStatusSummaryRow } from "@/components/shared/analytics/AnalyticsStatusSummaryRow";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { InsightsAppointmentsPanelHeader } from "@/components/insights/InsightsAppointmentsPanelHeader";
 import type { InsightsPayload } from "@/lib/insights-data";
 import { getInsightsChartContextSubtitle } from "@/lib/insights-chart-subtitle";
@@ -118,8 +108,6 @@ export function AnalyticsInsightsSections({
     v2?.appointments.totals.all ?? data?.overview.total ?? 0;
   const upcomingScheduled = v2?.appointments.totals.upcoming ?? data?.overview.upcoming ?? 0;
   const untilToday = Math.max(0, appointmentsAllTime - upcomingScheduled);
-  const topPatientsEmpty = !loading && topPatients.length === 0;
-
   return (
     <div className="space-y-6">
       <PortalPanelSection
@@ -231,45 +219,7 @@ export function AnalyticsInsightsSections({
             icon={Users}
             loading={loading}
           >
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Patient</TableHead>
-                  <TableHead className="text-right">Visits</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading
-                  ? Array.from({ length: 5 }).map((_, i) => (
-                      <TableRow key={i}>
-                        <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                        <TableCell className="text-right"><Skeleton className="h-5 w-12 ml-auto" /></TableCell>
-                      </TableRow>
-                    ))
-                  : topPatientsEmpty
-                    ? (
-                        <TableRow>
-                          <TableCell colSpan={2} className="py-10">
-                            <div className="flex flex-col items-center justify-center gap-2 text-center text-muted-foreground">
-                              <Inbox className="h-8 w-8 text-muted-foreground/60" aria-hidden />
-                              <p className="text-sm font-medium">No patient visits in this period</p>
-                              <p className="max-w-xs text-xs text-muted-foreground/90">
-                                Top patients will rank here when appointments are recorded in the selected range.
-                              </p>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )
-                    : topPatients.map((p, idx) => (
-                        <TableRow key={idx}>
-                          <TableCell className="font-medium">{p.name}</TableCell>
-                          <TableCell className="text-right">
-                            <Badge variant="secondary">{p.count}</Badge>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-              </TableBody>
-            </Table>
+            <AnalyticsTopPatientsPanel patients={topPatients} loading={loading} />
           </AnalyticsChartCard>
         </div>
       </PortalPanelSection>
