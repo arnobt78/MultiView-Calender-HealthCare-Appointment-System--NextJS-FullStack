@@ -20,6 +20,7 @@ import type { InsightsDataOptions } from "@/lib/insights-scope";
 import type { InsightsPeriod } from "@/lib/insights/insights-period";
 import { resolveDateRangeInclusive } from "@/lib/insights/insights-period";
 import { formatInsightsPeriodDisplayLabel } from "@/lib/insights/insights-period-label";
+import { resolveInsightsScopeLabelForMeta } from "@/lib/insights-scope-display";
 import type { InsightsPayloadV2 } from "@/lib/insights/insights-types";
 import { legacyMonthlyDataFromTrend } from "@/lib/insights/insights-legacy-payload";
 import {
@@ -131,6 +132,7 @@ export async function getInsightsData(
     newPatientsInPeriod,
     newPatientsThisMonth,
     activeInPeriod,
+    scopeLabel,
   ] = await Promise.all([
     fetchAppointmentTotals(apptBase, now),
     countAppointmentsByStatusInRange(apptBase, periodRange.start, periodRange.end),
@@ -149,6 +151,8 @@ export async function getInsightsData(
     countDistinctPatientsInPeriodToNow(apptBase, periodRange.start, periodRange.end, now),
     countNewPatientsInMonth(apptBase, startOfThisMonth, now),
     countDistinctPatientsInRange(apptBase, periodRange.start, periodRange.end),
+    // Chart subtitles on SSR/API — admin doctor drill-down resolves display_name once.
+    resolveInsightsScopeLabelForMeta(userId, resolved),
   ]);
 
   const total = totals.all;
@@ -178,7 +182,7 @@ export async function getInsightsData(
     meta: {
       period,
       periodLabel: formatInsightsPeriodDisplayLabel(period, now),
-      scopeLabel: organizationWide ? "Organization-wide" : "My practice",
+      scopeLabel,
       generatedAt: now.toISOString(),
       organizationWide,
     },
