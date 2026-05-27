@@ -2,7 +2,7 @@
  * Shared period segment options — InsightsPeriodControls + Appointments panel header.
  */
 
-import { Calendar, CalendarDays, CalendarRange, CalendarClock } from "lucide-react";
+import { Calendar, CalendarDays, CalendarRange, CalendarClock, History } from "lucide-react";
 import type { InsightsGlassSegmentOption } from "@/components/insights/InsightsGlassSegment";
 import type { InsightsPeriod } from "@/lib/insights/insights-period";
 
@@ -30,5 +30,11 @@ export const INSIGHTS_PERIOD_SEGMENT_OPTIONS = [
     label: "Year",
     icon: CalendarClock,
     hint: "Monthly buckets for the current year",
+  },
+  {
+    value: "all" as const,
+    label: "All time",
+    icon: History,
+    hint: "All appointments in scope — past, present, and scheduled future",
   },
 ] satisfies InsightsGlassSegmentOption<InsightsPeriod>[];

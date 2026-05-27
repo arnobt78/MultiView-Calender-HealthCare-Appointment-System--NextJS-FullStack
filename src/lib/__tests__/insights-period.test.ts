@@ -13,6 +13,7 @@ describe("insights-period", () => {
 
   it("parses valid period", () => {
     expect(parsePeriodFromSearchParams({ period: "week" })).toBe("week");
+    expect(parsePeriodFromSearchParams({ period: "all" })).toBe("all");
   });
 
   it("resolveDateRange week includes seven day buckets", () => {

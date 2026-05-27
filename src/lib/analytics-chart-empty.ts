@@ -17,7 +17,9 @@ export type AnalyticsChartEmptyKind =
   | "invoice-status"
   | "age-distribution"
   | "appointments-by-doctor"
-  | "by-specialty";
+  | "by-specialty"
+  | "doctor-weekly-hours"
+  | "doctor-time-off";
 
 export type AnalyticsChartEmptyCopy = {
   title: string;
@@ -123,6 +125,18 @@ export function getAnalyticsChartEmptyCopy(kind: AnalyticsChartEmptyKind): Analy
         title: "No specialty breakdown",
         description: "Specialty mix will chart here when doctors have appointments in this period.",
       };
+    case "doctor-weekly-hours":
+      return {
+        iconName: "activity",
+        title: "No availability configured",
+        description: "Weekly hours will chart here when doctors set availability windows.",
+      };
+    case "doctor-time-off":
+      return {
+        iconName: "calendar",
+        title: "No time off in this period",
+        description: "Blocked days will appear when doctors record time away in this range.",
+      };
   }
 }
 
@@ -141,6 +155,12 @@ function buildTrendPlaceholderLabels(period: InsightsPeriod, now: Date): string[
   }
   if (period === "week") {
     return [...WEEKDAY_LABELS];
+  }
+  if (period === "all") {
+    const year = now.getFullYear();
+    return Array.from({ length: trendBucketCount("all", now) }, (_, i) =>
+      String(year - (trendBucketCount("all", now) - 1 - i))
+    );
   }
   if (period === "year") {
     return Array.from({ length: 12 }, (_, monthIndex) =>
@@ -189,6 +209,8 @@ export function buildAnalyticsPlaceholderAxisData(
     case "invoice-status":
     case "age-distribution":
     case "appointments-by-doctor":
+    case "doctor-weekly-hours":
+    case "doctor-time-off":
       return GENERIC_BAR_PLACEHOLDERS.map((label) => ({ label, count: 0 }));
     case "visit-types":
     case "by-specialty":

@@ -2,7 +2,7 @@
 
 /**
  * AnalyticsPage — Recharts insights dashboard:
- *   - Portal chrome + scope/period controls stay mounted
+ *   - Portal chrome + scope/period controls stay mounted (success, loading, error)
  *   - Overview stat row + domain sections pulse only data slots while loading
  *   - `isMounted` guard prevents hydration flicker on first paint
  */
@@ -13,7 +13,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
 import { useInsights } from "@/hooks/useInsights";
 import type { InsightsPayload } from "@/lib/insights-data";
-import { InsightsScopeToolbar } from "@/components/insights";
+import {
+  InsightsDataErrorBanner,
+  InsightsPageChrome,
+  InsightsScopeToolbar,
+} from "@/components/insights";
 import {
   buildInsightsQueryString,
   defaultInsightsQueryForRole,
@@ -23,13 +27,9 @@ import {
 import type { InsightsPeriod } from "@/lib/insights/insights-period";
 import { isAdminRole, isDoctorRole } from "@/lib/rbac";
 import { useUsers } from "@/hooks/useUsers";
-import { AlertCircle, TrendingUp } from "lucide-react";
-import { PageHeader } from "@/components/shared/PageHeader";
-import { PortalChromeHeader } from "@/components/shared/PortalChromeHeader";
 import { AnalyticsOverviewStatsRow } from "@/components/shared/analytics/AnalyticsOverviewStatsRow";
 import { AnalyticsInsightsSections } from "@/components/shared/analytics/AnalyticsInsightsSections";
 import { resolveInsightsScopePageHint } from "@/lib/insights-scope-display";
-import { insightsScopeBodyClass, insightsScopeHintClass } from "@/lib/insights-ui-classes";
 
 type AnalyticsPageProps = {
   /** SSR payload — seed queryKeys.insights.filter(initialQuery) before paint */
@@ -58,7 +58,8 @@ export default function AnalyticsPage({
     }
   }, [queryClient, initialInsights, initialQueryProp]);
 
-  const { data, isLoading, isFetching, isError } = useInsights(query);
+  const { data, isLoading, isFetching, isError, refetch, isRefetching } =
+    useInsights(query);
 
   const { data: doctorsData, isLoading: doctorsLoading } = useUsers(
     { role: "doctor", limit: 200 },
@@ -132,65 +133,41 @@ export default function AnalyticsPage({
   }, []);
 
   const loading = !isMounted || isLoading || (isFetching && !data);
+  const showScopeToolbar = isDoctorRole(viewerRole) || isAdminRole(viewerRole);
 
-  if (isError) {
-    return (
-      <div className="space-y-4">
-        <PageHeader title="Analytics" description="Appointment insights and trends" />
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 flex items-center gap-2">
-          <AlertCircle className="h-4 w-4 shrink-0" />
-          Failed to load analytics data. Please refresh.
-        </div>
-      </div>
-    );
-  }
+  const scopeToolbar = showScopeToolbar ? (
+    <InsightsScopeToolbar
+      filter={query}
+      onFilterChange={handleFilterChange}
+      viewerRole={viewerRole}
+      disabled={isRefetching}
+      doctors={adminDoctors}
+      doctorsLoading={doctorsLoading}
+    />
+  ) : undefined;
 
   return (
     <div className="space-y-6">
-      <PortalChromeHeader
-        icon={TrendingUp}
-        title="Business Analytics"
-        description={
-          scopeHint ? (
-            <>
-              <span className={insightsScopeHintClass}>{scopeHint}</span>{" "}
-              <span className={insightsScopeBodyClass}>
-                Track your business performance, patient trends, appointment analytics and
-                more.
-              </span>
-            </>
-          ) : (
-            <span className={insightsScopeBodyClass}>
-              Track your business performance, patient trends, appointment analytics and more.
-            </span>
-          )
-        }
-        actions={
-          isDoctorRole(viewerRole) || isAdminRole(viewerRole) ? (
-            <InsightsScopeToolbar
-              filter={query}
-              onFilterChange={handleFilterChange}
-              viewerRole={viewerRole}
-              disabled={loading && !data}
-              doctors={adminDoctors}
-              doctorsLoading={doctorsLoading}
-            />
-          ) : undefined
-        }
-      />
+      <InsightsPageChrome scopeHint={scopeHint} actions={scopeToolbar} />
 
-      <AnalyticsOverviewStatsRow data={data} valueSkeleton={loading} />
+      {isError ? (
+        <InsightsDataErrorBanner onRetry={() => void refetch()} isRetrying={isRefetching} />
+      ) : (
+        <>
+          <AnalyticsOverviewStatsRow data={data} valueSkeleton={loading} />
 
-      <AnalyticsInsightsSections
-        data={data}
-        loading={loading}
-        viewerRole={viewerRole}
-        insightsQuery={query}
-        doctorDisplayName={doctorDisplayName}
-        period={query.period}
-        onPeriodChange={handlePeriodChange}
-        periodControlsDisabled={loading && !data}
-      />
+          <AnalyticsInsightsSections
+            data={data}
+            loading={loading}
+            viewerRole={viewerRole}
+            insightsQuery={query}
+            doctorDisplayName={doctorDisplayName}
+            period={query.period}
+            onPeriodChange={handlePeriodChange}
+            periodControlsDisabled={loading && !data}
+          />
+        </>
+      )}
     </div>
   );
 }

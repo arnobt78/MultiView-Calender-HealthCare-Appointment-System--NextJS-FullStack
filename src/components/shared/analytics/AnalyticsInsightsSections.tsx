@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Activity,
   BarChart3,
   BadgeDollarSign,
   CalendarDays,
@@ -27,9 +26,9 @@ import { InsightsAppointmentsPanelHeader } from "@/components/insights/InsightsA
 import type { InsightsPayload } from "@/lib/insights-data";
 import { getInsightsChartContextSubtitle } from "@/lib/insights-chart-subtitle";
 import { resolveInsightsScopeChartLabel } from "@/lib/insights-scope-display";
+import { AnalyticsDoctorInsightsSection } from "@/components/shared/analytics/AnalyticsDoctorInsightsSection";
 import type { InsightsQueryKey } from "@/lib/insights-scope";
 import type { InsightsPeriod } from "@/lib/insights/insights-period";
-import { isAdminRole } from "@/lib/rbac";
 
 function formatCents(cents: number): string {
   return new Intl.NumberFormat("en-US", {
@@ -63,7 +62,6 @@ export function AnalyticsInsightsSections({
   periodControlsDisabled = false,
 }: Props) {
   const v2 = data?.v2;
-  const organizationWide = insightsQuery.scope === "organization";
   const trend =
     v2?.appointments.trend?.map((p) => ({ label: p.label, count: p.count })) ??
     data?.monthlyData?.map((m) => ({ label: m.month, count: m.count })) ??
@@ -87,7 +85,7 @@ export function AnalyticsInsightsSections({
   const invoiceStatus = v2?.revenue.invoiceByStatus
     ? Object.entries(v2.revenue.invoiceByStatus).map(([label, count]) => ({ label, count }))
     : [];
-  const showDoctors = isAdminRole(viewerRole) && organizationWide && v2?.doctors;
+  const doctorsSection = v2?.doctors ?? null;
 
   const scopeLabel = resolveInsightsScopeChartLabel({
     scope: insightsQuery.scope,
@@ -225,7 +223,7 @@ export function AnalyticsInsightsSections({
       </PortalPanelSection>
 
       <PortalPanelSection title="Revenue" icon={BadgeDollarSign}>
-        <AnalyticsRevenueStatsRow data={data} valueSkeleton={loading} />
+        <AnalyticsRevenueStatsRow data={data} valueSkeleton={loading} period={period} />
         <div className="grid gap-6 md:grid-cols-2">
           <AnalyticsChartCard
             title="Paid revenue"
@@ -256,42 +254,14 @@ export function AnalyticsInsightsSections({
         </div>
       </PortalPanelSection>
 
-      {showDoctors && v2?.doctors ? (
+      {doctorsSection ? (
         <PortalPanelSection title="Doctors" icon={Stethoscope}>
-          <div className="grid gap-6 md:grid-cols-2">
-            <AnalyticsChartCard
-              title="Appointments by doctor"
-              periodSubtitle={chartSubtitle}
-              detailHint="Organization-wide appointment volume per doctor in the selected chart period."
-              icon={Activity}
-              loading={loading}
-            >
-              <AnalyticsBarChart
-                data={v2.doctors.byDoctor.slice(0, 12).map((d) => ({
-                  label: d.name.length > 12 ? `${d.name.slice(0, 12)}…` : d.name,
-                  count: d.appointmentCount,
-                }))}
-                emptyKind="appointments-by-doctor"
-                period={period}
-              />
-            </AnalyticsChartCard>
-            <AnalyticsChartCard
-              title="By specialty"
-              periodSubtitle={chartSubtitle}
-              detailHint="Organization-wide appointment volume by specialty in the selected chart period."
-              icon={Stethoscope}
-              loading={loading}
-            >
-              <AnalyticsPieChart
-                data={v2.doctors.bySpecialty.map((s) => ({
-                  name: s.specialty,
-                  count: s.count,
-                }))}
-                emptyKind="by-specialty"
-                period={period}
-              />
-            </AnalyticsChartCard>
-          </div>
+          <AnalyticsDoctorInsightsSection
+            doctors={doctorsSection}
+            chartSubtitle={chartSubtitle}
+            period={period}
+            loading={loading}
+          />
         </PortalPanelSection>
       ) : null}
     </div>

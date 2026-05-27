@@ -61,6 +61,11 @@ describe("buildAnalyticsPlaceholderAxisData", () => {
     const rows = buildAnalyticsPlaceholderAxisData("volume-trend", "year", now);
     expect(rows).toHaveLength(analyticsPlaceholderTrendBucketCount("year", now));
   });
+
+  it("volume-trend all uses yearly placeholder labels", () => {
+    const rows = buildAnalyticsPlaceholderAxisData("volume-trend", "all", now);
+    expect(rows).toHaveLength(analyticsPlaceholderTrendBucketCount("all", now));
+  });
 });
 
 describe("getAnalyticsChartEmptyCopy", () => {

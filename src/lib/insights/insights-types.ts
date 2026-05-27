@@ -63,12 +63,21 @@ export type InsightsDoctorRow = {
   specialty: string | null;
   appointmentCount: number;
   revenueCents: number;
+  /** Sum of weekly availability window hours (configuration). */
+  weeklyHours: number;
+  /** Distinct calendar days with time-off overlapping the chart period. */
+  timeOffDaysInPeriod: number;
 };
 
-/** Org-wide admin only — appointment volume + paid revenue within selected chart period. */
+/** Staff insights — org roster or single-doctor (my practice / admin drill-down). */
 export type InsightsDoctorsSection = {
+  mode: "organization" | "personal";
   byDoctor: InsightsDoctorRow[];
   bySpecialty: { specialty: string; count: number }[];
+  /** Bar chart: org = hours per doctor; personal = hours per weekday. */
+  weeklyHours: InsightsTrendPoint[];
+  /** Bar chart: time-off days in period per doctor (org) or total (personal). */
+  timeOffInPeriod: InsightsTrendPoint[];
 };
 
 export type InsightsMeta = {

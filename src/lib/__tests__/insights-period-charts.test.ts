@@ -9,6 +9,9 @@ const mockInvoiceAggregate = vi.hoisted(() =>
   vi.fn().mockResolvedValue({ _sum: { amount: 0 } })
 );
 const mockUserFindMany = vi.hoisted(() => vi.fn().mockResolvedValue([]));
+const mockUserFindFirst = vi.hoisted(() => vi.fn().mockResolvedValue(null));
+const mockDoctorAvailabilityFindMany = vi.hoisted(() => vi.fn().mockResolvedValue([]));
+const mockDoctorTimeOffFindMany = vi.hoisted(() => vi.fn().mockResolvedValue([]));
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
@@ -23,12 +26,20 @@ vi.mock("@/lib/prisma", () => ({
     },
     user: {
       findMany: mockUserFindMany,
+      findFirst: mockUserFindFirst,
+    },
+    doctorAvailability: {
+      findMany: mockDoctorAvailabilityFindMany,
+    },
+    doctorTimeOff: {
+      findMany: mockDoctorTimeOffFindMany,
     },
     $queryRaw: mockQueryRaw,
   },
 }));
 
 import {
+  countAppointmentsByStatusForPeriod,
   countAppointmentsByStatusInRange,
   countDistinctPatientsInPeriodToNow,
   fetchAvgDurationMinutesInRange,
@@ -36,6 +47,7 @@ import {
   fetchDoctorBreakdown,
   fetchRevenueAggregates,
   fetchStatusOverTimeByPeriod,
+  fetchTrendCountsByPeriod,
 } from "@/lib/insights/insights-aggregate";
 
 describe("fetchStatusOverTimeByPeriod", () => {
@@ -67,6 +79,50 @@ describe("fetchStatusOverTimeByPeriod", () => {
     const rows = await fetchStatusOverTimeByPeriod({}, "year", now);
     expect(rows).toHaveLength(12);
     expect(rows[0]?.month).toMatch(/Jan/);
+  });
+
+  it("all uses SQL year/month buckets", async () => {
+    mockQueryRaw
+      .mockResolvedValueOnce([
+        { min_start: new Date("2020-01-01"), max_start: new Date("2026-01-01") },
+      ])
+      .mockResolvedValueOnce([
+        { bucket_start: new Date("2024-01-01"), count: BigInt(2) },
+      ])
+      .mockResolvedValueOnce([
+        {
+          bucket_start: new Date("2024-01-01"),
+          done: BigInt(1),
+          pending: BigInt(1),
+          alert: BigInt(0),
+        },
+      ]);
+    const rows = await fetchStatusOverTimeByPeriod({}, "all", now);
+    expect(rows.length).toBeGreaterThan(0);
+    expect(mockQueryRaw).toHaveBeenCalled();
+  });
+});
+
+describe("fetchTrendCountsByPeriod all", () => {
+  const now = new Date("2026-05-26T12:00:00Z");
+
+  beforeEach(() => {
+    mockQueryRaw.mockReset();
+    mockQueryRaw.mockResolvedValue([
+      { min_start: new Date("2020-01-01"), max_start: new Date("2026-01-01") },
+    ]);
+  });
+
+  it("uses SQL groupBy for all-time", async () => {
+    mockQueryRaw
+      .mockResolvedValueOnce([
+        { min_start: new Date("2020-01-01"), max_start: new Date("2026-01-01") },
+      ])
+      .mockResolvedValueOnce([
+        { bucket_start: new Date("2025-01-01"), count: BigInt(3) },
+      ]);
+    const rows = await fetchTrendCountsByPeriod({}, "all", now);
+    expect(rows.length).toBeGreaterThan(0);
   });
 });
 
@@ -109,6 +165,35 @@ describe("fetchRevenueAggregates", () => {
             lte: expect.any(Date),
           }),
         }),
+      })
+    );
+  });
+
+  it("all-time omits created_at filter and sets paidPrevPeriod to 0", async () => {
+    mockInvoiceAggregate.mockResolvedValue({ _sum: { amount: 9000 } });
+    const result = await fetchRevenueAggregates({}, "all", now);
+    expect(mockInvoiceGroupBy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {},
+      })
+    );
+    expect(result.paidPrevPeriod).toBe(0);
+  });
+});
+
+describe("countAppointmentsByStatusForPeriod", () => {
+  beforeEach(() => {
+    mockAppointmentGroupBy.mockClear();
+    mockAppointmentGroupBy.mockResolvedValue([
+      { status: "done", _count: { _all: 1 } },
+    ]);
+  });
+
+  it("all-time does not filter appointment start", async () => {
+    await countAppointmentsByStatusForPeriod({}, "all", new Date());
+    expect(mockAppointmentGroupBy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {},
       })
     );
   });

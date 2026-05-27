@@ -3,6 +3,8 @@
 import { ArrowDown, ArrowUp, BadgeDollarSign, FileWarning, Receipt, TrendingUp } from "lucide-react";
 import { PatientStatCard } from "@/components/control-panel/PatientStatCard";
 import type { InsightsPayload } from "@/lib/insights-data";
+import type { InsightsPeriod } from "@/lib/insights/insights-period";
+import { isInsightsPeriodAll } from "@/lib/insights/insights-period";
 import { cn } from "@/lib/utils";
 
 function formatCents(cents: number): string {
@@ -25,13 +27,15 @@ function formatDelta(
 type Props = {
   data: InsightsPayload | undefined;
   valueSkeleton: boolean;
+  period: InsightsPeriod;
 };
 
 /** Revenue KPI tiles — paid in period, MoM delta, overdue/draft invoice counts. */
-export function AnalyticsRevenueStatsRow({ data, valueSkeleton }: Props) {
+export function AnalyticsRevenueStatsRow({ data, valueSkeleton, period }: Props) {
   const paid = data?.v2?.revenue.paidInPeriod ?? data?.revenueThisMonth ?? 0;
   const prev = data?.v2?.revenue.paidPrevPeriod ?? data?.revenuePrevMonth ?? 0;
-  const delta = formatDelta(paid, prev);
+  const hideDelta = isInsightsPeriodAll(period);
+  const delta = hideDelta ? null : formatDelta(paid, prev);
   const invoiceByStatus = data?.v2?.revenue.invoiceByStatus ?? {};
   const overdue = invoiceByStatus.overdue ?? 0;
   const draft = invoiceByStatus.draft ?? 0;

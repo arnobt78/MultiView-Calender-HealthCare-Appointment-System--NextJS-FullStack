@@ -1,12 +1,25 @@
 /**
- * Insights time period — day/week/month/year buckets for API + query keys.
+ * Insights time period — day/week/month/year/all buckets for API + query keys.
  */
 
-export type InsightsPeriod = "day" | "week" | "month" | "year";
+export type InsightsPeriod = "day" | "week" | "month" | "year" | "all";
 
-export const INSIGHTS_PERIODS: InsightsPeriod[] = ["day", "week", "month", "year"];
+export const INSIGHTS_PERIODS: InsightsPeriod[] = [
+  "day",
+  "week",
+  "month",
+  "year",
+  "all",
+];
 
 export const DEFAULT_INSIGHTS_PERIOD: InsightsPeriod = "month";
+
+/** Placeholder axis bucket count for period=all (yearly trend cap). */
+export const INSIGHTS_ALL_TIME_TREND_BUCKET_CAP = 12;
+
+/** Prisma/PostgreSQL-safe bounds — never use Number.MAX_SAFE_INTEGER ms (invalid +275760 dates). */
+export const INSIGHTS_ALL_TIME_RANGE_START = new Date(Date.UTC(1970, 0, 1));
+export const INSIGHTS_ALL_TIME_RANGE_END = new Date(Date.UTC(2100, 11, 31, 23, 59, 59, 999));
 
 export type InsightsDateRange = {
   start: Date;
@@ -26,6 +39,10 @@ function readParam(input: SearchParamInput, key: string): string | undefined {
   return raw;
 }
 
+export function isInsightsPeriodAll(period: InsightsPeriod): period is "all" {
+  return period === "all";
+}
+
 export function defaultPeriodForRole(_role: string | null | undefined): InsightsPeriod {
   return DEFAULT_INSIGHTS_PERIOD;
 }
@@ -35,7 +52,13 @@ export function parsePeriodFromSearchParams(
   role?: string | null
 ): InsightsPeriod {
   const raw = readParam(input, "period");
-  if (raw === "day" || raw === "week" || raw === "month" || raw === "year") {
+  if (
+    raw === "day" ||
+    raw === "week" ||
+    raw === "month" ||
+    raw === "year" ||
+    raw === "all"
+  ) {
     return raw;
   }
   return defaultPeriodForRole(role);
@@ -44,9 +67,16 @@ export function parsePeriodFromSearchParams(
 /**
  * Calendar boundaries for appointment charts — full period window (includes future
  * scheduled rows through period end, e.g. rest of month/year).
+ * For `all`, returns sentinel label only — aggregates must use insights-period-filter.
  */
 export function resolveDateRangeInclusive(period: InsightsPeriod, now = new Date()): InsightsDateRange {
   switch (period) {
+    case "all":
+      return {
+        start: INSIGHTS_ALL_TIME_RANGE_START,
+        end: INSIGHTS_ALL_TIME_RANGE_END,
+        label: "All time",
+      };
     case "day": {
       const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
@@ -80,6 +110,9 @@ export function resolveDateRangeInclusive(period: InsightsPeriod, now = new Date
 
 /** Calendar boundaries for the selected period (inclusive end = now). */
 export function resolveDateRange(period: InsightsPeriod, now = new Date()): InsightsDateRange {
+  if (isInsightsPeriodAll(period)) {
+    return resolveDateRangeInclusive(period, now);
+  }
   const end = now;
   switch (period) {
     case "day": {
@@ -103,11 +136,19 @@ export function resolveDateRange(period: InsightsPeriod, now = new Date()): Insi
   }
 }
 
-/** Previous period of equal length — used for revenue delta. */
+/** Previous period of equal length — used for revenue delta; all-time has no prior window. */
 export function resolvePreviousDateRange(
   period: InsightsPeriod,
   now = new Date()
 ): InsightsDateRange {
+  if (isInsightsPeriodAll(period)) {
+    const t = now.getTime();
+    return {
+      start: new Date(t),
+      end: new Date(t),
+      label: "Previous period",
+    };
+  }
   const current = resolveDateRange(period, now);
   const durationMs = current.end.getTime() - current.start.getTime();
   const prevEnd = new Date(current.start.getTime() - 1);
@@ -122,6 +163,8 @@ export function resolvePreviousDateRange(
 /** Number of trend buckets to emit for volume-trend charts (must match insights-aggregate). */
 export function trendBucketCount(period: InsightsPeriod, now = new Date()): number {
   switch (period) {
+    case "all":
+      return INSIGHTS_ALL_TIME_TREND_BUCKET_CAP;
     case "day":
       return 24;
     case "week":

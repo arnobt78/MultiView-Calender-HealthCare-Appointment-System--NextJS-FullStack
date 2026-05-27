@@ -2,6 +2,10 @@ import { describe, expect, it } from "vitest";
 import { formatInsightsPeriodDisplayLabel } from "@/lib/insights/insights-period-label";
 
 describe("formatInsightsPeriodDisplayLabel", () => {
+  it("returns All time without date brackets", () => {
+    expect(formatInsightsPeriodDisplayLabel("all")).toBe("All time");
+  });
+
   const now = new Date("2026-05-27T12:00:00Z");
 
   it("week includes bracketed start and end day dates", () => {

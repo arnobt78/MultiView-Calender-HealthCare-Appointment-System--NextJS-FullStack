@@ -14,6 +14,10 @@ vi.mock("@/lib/prisma", () => ({
 import { fetchTrendCountsByPeriod } from "@/lib/insights/insights-aggregate";
 
 describe("trendBucketCount", () => {
+  it("all uses fixed placeholder cap", () => {
+    expect(trendBucketCount("all")).toBe(12);
+  });
+
   const may2026 = new Date("2026-05-26T12:00:00Z");
 
   it("month uses days in calendar month", () => {

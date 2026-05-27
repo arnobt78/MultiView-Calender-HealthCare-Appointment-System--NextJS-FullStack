@@ -29,6 +29,8 @@ export function formatInsightsPeriodDisplayLabel(
   const range = resolveDateRangeInclusive(period, now);
 
   switch (period) {
+    case "all":
+      return "All time";
     case "day":
       return `Today (${formatRangeEndpoint(range.start, true)})`;
     case "week":

@@ -18,29 +18,28 @@
 
 import type { InsightsDataOptions } from "@/lib/insights-scope";
 import type { InsightsPeriod } from "@/lib/insights/insights-period";
-import { resolveDateRangeInclusive } from "@/lib/insights/insights-period";
 import { formatInsightsPeriodDisplayLabel } from "@/lib/insights/insights-period-label";
 import { resolveInsightsScopeLabelForMeta } from "@/lib/insights-scope-display";
 import type { InsightsPayloadV2 } from "@/lib/insights/insights-types";
 import { legacyMonthlyDataFromTrend } from "@/lib/insights/insights-legacy-payload";
+import { fetchDoctorInsightsSection } from "@/lib/insights/insights-doctor-aggregate";
 import {
   appointmentOwnerWhere,
   countNewPatientsInMonth,
-  countDistinctPatientsInPeriodToNow,
-  countDistinctPatientsInRange,
-  fetchAgeDistribution,
+  countDistinctPatientsForPeriod,
+  countDistinctPatientsInPeriodToNowForPeriod,
+  fetchAgeDistributionForPeriod,
   fetchAppointmentTotals,
-  fetchAvgDurationMinutesInRange,
-  fetchBusiestDayOfWeekCounts,
-  fetchCategoryBreakdown,
-  fetchDoctorBreakdown,
+  fetchAvgDurationMinutesForPeriod,
+  fetchBusiestDayOfWeekForPeriod,
+  fetchCategoryBreakdownForPeriod,
   fetchPaymentSuccessPct,
   fetchRevenueAggregates,
   fetchStatusOverTimeByPeriod,
-  fetchTopPatients,
+  fetchTopPatientsForPeriod,
   fetchTrendCountsByPeriod,
-  fetchTypeBreakdown,
-  countAppointmentsByStatusInRange,
+  fetchTypeBreakdownForPeriod,
+  countAppointmentsByStatusForPeriod,
   invoiceOwnerWhere,
 } from "@/lib/insights/insights-aggregate";
 
@@ -106,11 +105,10 @@ export async function getInsightsData(
           period: "month",
         };
 
-  const { organizationWide, period } = resolved;
+  const { organizationWide, period, filterOwnerId } = resolved;
 
   const now = new Date();
   const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const periodRange = resolveDateRangeInclusive(period, now);
 
   const apptBase = appointmentOwnerWhere(resolved);
   const invoiceBase = invoiceOwnerWhere(resolved);
@@ -121,7 +119,7 @@ export async function getInsightsData(
     avgDurationMinutes,
     revenueAgg,
     paymentSuccessPct,
-    doctorRows,
+    doctorsSection,
     statusOverTime,
     busiestDayOfWeek,
     byCategory,
@@ -135,23 +133,26 @@ export async function getInsightsData(
     scopeLabel,
   ] = await Promise.all([
     fetchAppointmentTotals(apptBase, now),
-    countAppointmentsByStatusInRange(apptBase, periodRange.start, periodRange.end),
-    fetchAvgDurationMinutesInRange(apptBase, periodRange.start, periodRange.end),
+    countAppointmentsByStatusForPeriod(apptBase, period, now),
+    fetchAvgDurationMinutesForPeriod(apptBase, period, now),
     fetchRevenueAggregates(invoiceBase, period, now),
     fetchPaymentSuccessPct(invoiceBase),
-    fetchDoctorBreakdown(organizationWide, period, now),
+    fetchDoctorInsightsSection({
+      organizationWide,
+      filterOwnerId,
+      period,
+      now,
+    }),
     fetchStatusOverTimeByPeriod(apptBase, period, now),
-    fetchBusiestDayOfWeekCounts(apptBase, periodRange.start, periodRange.end),
-    fetchCategoryBreakdown(apptBase, periodRange.start, periodRange.end),
-    fetchTypeBreakdown(apptBase, periodRange.start, periodRange.end),
-    fetchTopPatients(apptBase, periodRange.start, periodRange.end),
-    fetchAgeDistribution(apptBase, periodRange.start, periodRange.end, now),
-    // Volume trend + revenue area chart — period=month (daily) | year (Jan–Dec), not rolling 12mo.
+    fetchBusiestDayOfWeekForPeriod(apptBase, period, now),
+    fetchCategoryBreakdownForPeriod(apptBase, period, now),
+    fetchTypeBreakdownForPeriod(apptBase, period, now),
+    fetchTopPatientsForPeriod(apptBase, period, now),
+    fetchAgeDistributionForPeriod(apptBase, period, now),
     fetchTrendCountsByPeriod(apptBase, period, now),
-    countDistinctPatientsInPeriodToNow(apptBase, periodRange.start, periodRange.end, now),
+    countDistinctPatientsInPeriodToNowForPeriod(apptBase, period, now),
     countNewPatientsInMonth(apptBase, startOfThisMonth, now),
-    countDistinctPatientsInRange(apptBase, periodRange.start, periodRange.end),
-    // Chart subtitles on SSR/API — admin doctor drill-down resolves display_name once.
+    countDistinctPatientsForPeriod(apptBase, period, now),
     resolveInsightsScopeLabelForMeta(userId, resolved),
   ]);
 
@@ -164,14 +165,6 @@ export async function getInsightsData(
 
   const revenueThisMonth = revenueAgg.paidInPeriod;
   const revenuePrevMonth = revenueAgg.paidPrevPeriod;
-
-  const specialtyCounts: Record<string, number> = {};
-  if (doctorRows) {
-    for (const row of doctorRows) {
-      const key = row.specialty?.trim() || "Unspecified";
-      specialtyCounts[key] = (specialtyCounts[key] ?? 0) + row.appointmentCount;
-    }
-  }
 
   const telehealthPct =
     totals.all > 0 ? Math.round((totals.telehealthCount / totals.all) * 100) : 0;
@@ -218,15 +211,7 @@ export async function getInsightsData(
           ? Math.round(revenueThisMonth / (revenueAgg.invoiceByStatus.paid || 1))
           : 0,
     },
-    doctors: doctorRows
-      ? {
-          byDoctor: doctorRows,
-          bySpecialty: Object.entries(specialtyCounts).map(([specialty, count]) => ({
-            specialty,
-            count,
-          })),
-        }
-      : null,
+    doctors: doctorsSection,
   };
 
   return {

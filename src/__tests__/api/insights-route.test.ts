@@ -110,6 +110,22 @@ describe("GET /api/insights", () => {
     expect(res.status).toBe(400);
   });
 
+  it("returns 200 with period=all", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: ADMIN,
+      email: "admin@test.com",
+    });
+    vi.mocked(getUserRole).mockResolvedValue("admin");
+    const res = await GET(
+      new NextRequest("http://localhost/api/insights?scope=organization&period=all")
+    );
+    expect(res.status).toBe(200);
+    expect(getInsightsData).toHaveBeenCalledWith(
+      ADMIN,
+      expect.objectContaining({ period: "all" })
+    );
+  });
+
   it("returns 200 for admin with valid doctorId", async () => {
     vi.mocked(getSessionUser).mockResolvedValue({
       userId: ADMIN,
