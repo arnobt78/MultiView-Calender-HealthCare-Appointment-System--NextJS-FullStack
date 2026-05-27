@@ -178,6 +178,7 @@ export async function getInsightsData(
     meta: {
       period,
       periodLabel: formatInsightsPeriodDisplayLabel(period, now),
+      scopeLabel: organizationWide ? "Organization-wide" : "My practice",
       generatedAt: now.toISOString(),
       organizationWide,
     },

@@ -28,6 +28,7 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { PortalChromeHeader } from "@/components/shared/PortalChromeHeader";
 import { AnalyticsOverviewStatsRow } from "@/components/shared/analytics/AnalyticsOverviewStatsRow";
 import { AnalyticsInsightsSections } from "@/components/shared/analytics/AnalyticsInsightsSections";
+import { resolveInsightsScopePageHint } from "@/lib/insights-scope-display";
 import { insightsScopeBodyClass, insightsScopeHintClass } from "@/lib/insights-ui-classes";
 
 type AnalyticsPageProps = {
@@ -101,21 +102,29 @@ export default function AnalyticsPage({
     [query, syncUrl]
   );
 
-  const scopeHint = useMemo(() => {
-    if (query.scope === "organization") {
-      return "Showing organization-wide metrics.";
-    }
-    if (isAdminRole(viewerRole) && query.doctorId) {
-      const doctor = adminDoctors.find((u) => u.id === query.doctorId);
-      const name =
-        doctor?.display_name?.trim() || doctor?.email?.trim() || "selected doctor";
-      return `Showing metrics for ${name}.`;
-    }
-    if (isDoctorRole(viewerRole)) {
-      return "Showing metrics for your practice.";
-    }
-    return undefined;
-  }, [query, viewerRole, adminDoctors]);
+  const selectedDoctor = useMemo(
+    () => adminDoctors.find((u) => u.id === query.doctorId),
+    [adminDoctors, query.doctorId]
+  );
+
+  const doctorDisplayName = useMemo(
+    () =>
+      selectedDoctor?.display_name?.trim() ||
+      selectedDoctor?.email?.trim() ||
+      undefined,
+    [selectedDoctor]
+  );
+
+  const scopeHint = useMemo(
+    () =>
+      resolveInsightsScopePageHint({
+        scope: query.scope,
+        viewerRole,
+        doctorId: query.doctorId,
+        doctorDisplayName,
+      }),
+    [query.scope, query.doctorId, viewerRole, doctorDisplayName]
+  );
 
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
@@ -176,7 +185,8 @@ export default function AnalyticsPage({
         data={data}
         loading={loading}
         viewerRole={viewerRole}
-        organizationWide={query.scope === "organization"}
+        insightsQuery={query}
+        doctorDisplayName={doctorDisplayName}
         period={query.period}
         onPeriodChange={handlePeriodChange}
         periodControlsDisabled={loading && !data}

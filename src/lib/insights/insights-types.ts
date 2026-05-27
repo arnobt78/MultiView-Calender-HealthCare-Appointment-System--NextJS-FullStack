@@ -75,6 +75,8 @@ export type InsightsMeta = {
   period: InsightsPeriod;
   /** Human label for chart subtitles (Today, This week, month name, year). */
   periodLabel: string;
+  /** Scope fragment for chart subtitles (Organization-wide, My practice, doctor name). */
+  scopeLabel: string;
   generatedAt: string;
   organizationWide: boolean;
 };

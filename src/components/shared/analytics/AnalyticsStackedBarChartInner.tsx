@@ -9,8 +9,10 @@ import {
   YAxis,
   type ChartConfig,
 } from "@/components/ui/chart";
+import { AnalyticsChartEmptyOverlay } from "@/components/shared/analytics/AnalyticsChartEmptyOverlay";
 import { AnalyticsChartTooltip } from "@/components/shared/analytics/AnalyticsChartTooltip";
 import { AnalyticsChartValueLabelList } from "@/components/shared/analytics/AnalyticsChartValueLabelList";
+import type { AnalyticsChartEmptyCopy } from "@/lib/analytics-chart-empty";
 import { analyticsChartPlotMargin } from "@/lib/analytics-chart-interaction";
 
 export type AnalyticsStackedBarPoint = {
@@ -25,13 +27,17 @@ const STACKED_LABEL_CLASS = "fill-white text-[9px] font-semibold drop-shadow-sm"
 export function AnalyticsStackedBarChartInner({
   data,
   config,
+  emptyCopy,
 }: {
   data: AnalyticsStackedBarPoint[];
   config: ChartConfig;
+  /** When set, centered overlay on plot only (legend stays visible below). */
+  emptyCopy?: AnalyticsChartEmptyCopy;
 }) {
   return (
     <div className="space-y-3">
-      <ChartContainer config={config} className="h-44 min-h-[11rem] w-full">
+      <div className="relative h-44 min-h-[11rem] w-full">
+        <ChartContainer config={config} className="h-full w-full">
         <BarChart data={data} margin={analyticsChartPlotMargin}>
           <CartesianGrid vertical={false} strokeDasharray="3 3" />
           <XAxis dataKey="month" tickLine={false} axisLine={false} fontSize={10} />
@@ -60,6 +66,8 @@ export function AnalyticsStackedBarChartInner({
           </Bar>
         </BarChart>
       </ChartContainer>
+        {emptyCopy ? <AnalyticsChartEmptyOverlay copy={emptyCopy} /> : null}
+      </div>
       <div className="flex flex-wrap items-center gap-4 text-[11px] text-muted-foreground">
         <span className="flex items-center gap-1">
           <span className="inline-block h-2.5 w-2.5 rounded-sm bg-emerald-500/80" />

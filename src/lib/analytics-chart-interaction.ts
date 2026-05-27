@@ -26,6 +26,14 @@ export const analyticsChartPlotMargin = {
   bottom: 0,
 } as const;
 
+/** Centered empty-state overlay on insights chart plot area. */
+export const analyticsChartEmptyOverlayClass =
+  "pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center gap-1.5 bg-background/50 px-4 text-center backdrop-blur-[1px]";
+
+export const analyticsChartEmptyTitleClass = "text-sm font-medium text-muted-foreground";
+
+export const analyticsChartEmptyDescriptionClass = "max-w-[16rem] text-xs text-muted-foreground/90";
+
 export type AnalyticsChartTooltipCursorVariant =
   | "bar"
   | "line"

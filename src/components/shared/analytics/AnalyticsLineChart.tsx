@@ -3,7 +3,15 @@
 import dynamic from "next/dynamic";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { ChartConfig } from "@/components/ui/chart";
+import { AnalyticsChartPlotShell } from "@/components/shared/analytics/AnalyticsChartPlotShell";
 import { analyticsChartConfigColor } from "@/components/shared/analytics/analytics-chart-classes";
+import type { AnalyticsChartEmptyKind } from "@/lib/analytics-chart-empty";
+import {
+  buildAnalyticsPlaceholderAxisData,
+  getAnalyticsChartEmptyCopy,
+  isAnalyticsCountSeriesEmpty,
+} from "@/lib/analytics-chart-empty";
+import type { InsightsPeriod } from "@/lib/insights/insights-period";
 
 export type AnalyticsLinePoint = { label: string; count: number };
 
@@ -22,11 +30,25 @@ const LineChartInner = dynamic(
 type Props = {
   data: AnalyticsLinePoint[];
   loading?: boolean;
+  emptyKind?: AnalyticsChartEmptyKind;
+  period?: InsightsPeriod;
 };
 
-export function AnalyticsLineChart({ data, loading }: Props) {
+export function AnalyticsLineChart({ data, loading, emptyKind, period }: Props) {
   if (loading) {
     return <Skeleton className="h-40 w-full rounded-xl" />;
   }
-  return <LineChartInner data={data} config={chartConfig} />;
+
+  const empty = isAnalyticsCountSeriesEmpty(data);
+  const emptyCopy = empty && emptyKind ? getAnalyticsChartEmptyCopy(emptyKind) : undefined;
+  const displayData =
+    empty && emptyKind && period
+      ? (buildAnalyticsPlaceholderAxisData(emptyKind, period) as AnalyticsLinePoint[])
+      : data;
+
+  return (
+    <AnalyticsChartPlotShell empty={empty} emptyCopy={emptyCopy}>
+      <LineChartInner data={displayData} config={chartConfig} />
+    </AnalyticsChartPlotShell>
+  );
 }
