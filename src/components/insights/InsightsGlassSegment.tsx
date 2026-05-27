@@ -34,7 +34,7 @@ export function InsightsGlassSegment<T extends string>({
 }: Props<T>) {
   return (
     <div
-      className="flex flex-wrap items-center gap-1"
+      className="flex flex-wrap items-center gap-2"
       role="group"
       aria-label={ariaLabel}
     >
@@ -50,7 +50,7 @@ export function InsightsGlassSegment<T extends string>({
             title={opt.hint ?? opt.label}
             disabled={disabled}
             className={cn(
-              "h-8 gap-1.5 rounded-lg px-2.5 text-xs font-medium sm:px-3 sm:text-sm",
+              "inline-flex h-10 shrink-0 items-center gap-2 rounded-full border px-4 text-sm font-medium backdrop-blur-md transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/45 focus-visible:ring-offset-2 [&_svg]:size-4",
               active ? insightsSegmentActiveClass : insightsSegmentInactiveClass
             )}
             onClick={() => onChange(opt.value)}

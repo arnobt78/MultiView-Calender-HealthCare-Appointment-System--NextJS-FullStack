@@ -4,3 +4,4 @@ export { InsightsScopeToolbar } from "@/components/insights/InsightsScopeToolbar
 export { InsightsPeriodControls } from "@/components/insights/InsightsPeriodControls";
 export { InsightsScopeControls } from "@/components/insights/InsightsScopeControls";
 export { InsightsGlassSegment } from "@/components/insights/InsightsGlassSegment";
+export { InsightsAppointmentsPanelHeader } from "@/components/insights/InsightsAppointmentsPanelHeader";

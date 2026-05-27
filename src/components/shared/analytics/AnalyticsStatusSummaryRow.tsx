@@ -1,7 +1,9 @@
 "use client";
 
 import { AlertCircle, CheckCircle2, CircleDashed, ListFilter } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { insightsStatusSummaryRowClass } from "@/lib/insights-ui-classes";
 import { cn } from "@/lib/utils";
 
 /** Stable display order for appointment status chips on /insights. */
@@ -11,28 +13,25 @@ type StatusKey = (typeof INSIGHTS_STATUS_ORDER)[number];
 
 const STATUS_META: Record<
   StatusKey,
-  { label: string; icon: typeof CheckCircle2; shell: string; hint: string }
+  { label: string; icon: typeof CheckCircle2; hint: string; badgeTone: string }
 > = {
   done: {
     label: "Done",
     icon: CheckCircle2,
-    shell:
-      "border-emerald-400/30 bg-gradient-to-r from-emerald-500/20 via-emerald-500/10 to-emerald-500/5 text-emerald-800 shadow-[0_10px_28px_rgba(16,185,129,0.2)]",
     hint: "Completed appointments in scope",
+    badgeTone: "calendar-glass-badge-emerald",
   },
   pending: {
     label: "Pending",
     icon: CircleDashed,
-    shell:
-      "border-amber-400/30 bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-amber-500/5 text-amber-900 shadow-[0_10px_28px_rgba(245,158,11,0.18)]",
     hint: "Scheduled or in-progress visits",
+    badgeTone: "calendar-glass-badge-amber",
   },
   alert: {
     label: "Alert",
     icon: AlertCircle,
-    shell:
-      "border-rose-400/30 bg-gradient-to-r from-rose-500/20 via-rose-500/10 to-rose-500/5 text-rose-800 shadow-[0_10px_28px_rgba(225,29,72,0.18)]",
     hint: "Escalated or flagged appointments",
+    badgeTone: "calendar-glass-badge-rose",
   },
 };
 
@@ -61,12 +60,7 @@ export function AnalyticsStatusSummaryRow({ byStatus, loading, className }: Prop
   const counts = normalizeInsightsByStatus(byStatus);
 
   return (
-    <div
-      className={cn(
-        "flex flex-wrap items-center gap-3 rounded-2xl border border-sky-400/20 bg-gradient-to-br from-sky-500/8 via-white/90 to-white/95 px-4 py-3 shadow-[0_14px_40px_rgba(2,132,199,0.12)] backdrop-blur-sm",
-        className
-      )}
-    >
+    <div className={cn(insightsStatusSummaryRowClass, className)}>
       <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-sky-600">
         <ListFilter className="h-3.5 w-3.5" aria-hidden />
         By status
@@ -80,19 +74,20 @@ export function AnalyticsStatusSummaryRow({ byStatus, loading, className }: Prop
             className="flex items-center gap-2"
             title={meta.hint}
           >
-            <span
+            <Badge
+              variant="outline"
               className={cn(
-                "inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium backdrop-blur-sm",
-                meta.shell
+                "calendar-glass-badge inline-flex min-h-6 items-center gap-1.5 rounded-full px-2 text-xs font-medium",
+                meta.badgeTone
               )}
             >
               <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
               {meta.label}
-            </span>
+            </Badge>
             {loading ? (
               <Skeleton className="h-6 w-8 rounded-md" aria-hidden />
             ) : (
-              <span className="text-lg font-semibold tabular-nums text-gray-700">
+              <span className="text-sm font-semibold tabular-nums text-gray-700">
                 {counts[status]}
               </span>
             )}

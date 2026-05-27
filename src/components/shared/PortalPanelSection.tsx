@@ -26,6 +26,8 @@ type PortalPanelSectionProps = {
   countInline?: boolean;
   /** `stacked`: tall icon tile spans title + subtitle (`PortalPanelSubsectionHeader`). */
   headerVariant?: "inline" | "stacked";
+  /** When set, replaces default title/subtitle/count row (e.g. insights Appointments toolbar). */
+  headerSlot?: ReactNode;
   children: ReactNode;
   className?: string;
   contentClassName?: string;
@@ -45,12 +47,14 @@ export function PortalPanelSection({
   countSkeleton = false,
   countInline = false,
   headerVariant = "inline",
+  headerSlot,
   children,
   className,
   contentClassName,
 }: PortalPanelSectionProps) {
   const headingId = id ?? undefined;
-  const useStackedHeader = headerVariant === "stacked" && subtitle != null && subtitle !== "";
+  const useStackedHeader =
+    !headerSlot && headerVariant === "stacked" && subtitle != null && subtitle !== "";
   const displayTitle = toTitleCaseLabel(title);
   const displaySubtitle = subtitle ? toSentenceCaseSubtitle(subtitle) : undefined;
 
@@ -58,7 +62,8 @@ export function PortalPanelSection({
     <Card className={cn(portalPanelCardClass, className)}>
       <CardContent className={cn("p-4 text-gray-700 sm:p-6", contentClassName)}>
         <section aria-labelledby={headingId}>
-          {useStackedHeader ? (
+          {headerSlot ? <div className="mb-3">{headerSlot}</div> : null}
+          {!headerSlot && useStackedHeader ? (
             <PortalPanelSubsectionHeader
               id={headingId}
               title={displayTitle}
@@ -69,7 +74,7 @@ export function PortalPanelSection({
               countSkeleton={countSkeleton}
               className="mb-3"
             />
-          ) : (
+          ) : !headerSlot ? (
             <>
               <h3 id={headingId} className={portalPanelSectionHeadingClass}>
                 <span
@@ -100,7 +105,7 @@ export function PortalPanelSection({
                 <p className="-mt-1 mb-3 text-xs text-sky-600/90">{displaySubtitle}</p>
               ) : null}
             </>
-          )}
+          ) : null}
           {children}
         </section>
       </CardContent>

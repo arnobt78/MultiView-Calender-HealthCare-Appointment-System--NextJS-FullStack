@@ -32,12 +32,10 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { InsightsPeriodControls } from "@/components/insights/InsightsPeriodControls";
+import { InsightsAppointmentsPanelHeader } from "@/components/insights/InsightsAppointmentsPanelHeader";
 import type { InsightsPayload } from "@/lib/insights-data";
 import type { InsightsPeriod } from "@/lib/insights/insights-period";
-import { insightsAppointmentsPeriodRowClass } from "@/lib/insights-ui-classes";
 import { isAdminRole } from "@/lib/rbac";
-import { toTitleCaseLabel } from "@/lib/utils";
 
 function formatCents(cents: number): string {
   return new Intl.NumberFormat("en-US", {
@@ -98,27 +96,25 @@ export function AnalyticsInsightsSections({
   const appointmentsAllTime =
     v2?.appointments.totals.all ?? data?.overview.total ?? 0;
   const upcomingScheduled = v2?.appointments.totals.upcoming ?? data?.overview.upcoming ?? 0;
+  const untilToday = Math.max(0, appointmentsAllTime - upcomingScheduled);
 
   return (
     <div className="space-y-6">
       <PortalPanelSection
         title="Appointments"
-        subtitle={`Upcoming scheduled: ${upcomingScheduled}`}
         icon={BarChart3}
-        count={appointmentsAllTime}
-        countInline
-        countSkeleton={loading}
-      >
-        <div className={insightsAppointmentsPeriodRowClass}>
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-sky-600/90">
-            {toTitleCaseLabel("Chart period")}
-          </span>
-          <InsightsPeriodControls
+        headerSlot={
+          <InsightsAppointmentsPanelHeader
+            overall={appointmentsAllTime}
+            untilToday={untilToday}
+            upcoming={upcomingScheduled}
             period={period}
             onPeriodChange={onPeriodChange}
             disabled={periodControlsDisabled}
+            loading={loading}
           />
-        </div>
+        }
+      >
         <AnalyticsStatusSummaryRow
           byStatus={byStatus}
           loading={loading}

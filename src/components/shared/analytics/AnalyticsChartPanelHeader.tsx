@@ -29,7 +29,7 @@ export function AnalyticsChartPanelHeader({
   className,
 }: AnalyticsChartPanelHeaderProps) {
   return (
-    <div className={cn("flex gap-3", className)}>
+    <div className={cn("mb-3 flex gap-3", className)}>
       <span className={cn(analyticsChartPanelIconTileClass, iconClassName)} aria-hidden>
         <Icon className="h-4 w-4" />
       </span>

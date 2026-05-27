@@ -3,7 +3,10 @@
 import { SlidersHorizontal } from "lucide-react";
 import { InsightsScopeControls } from "@/components/insights/InsightsScopeControls";
 import type { InsightsFilterKey } from "@/lib/insights-scope";
-import { insightsScopeToolbarClass, insightsSegmentGroupClass } from "@/lib/insights-ui-classes";
+import {
+  insightsBareToolbarRowClass,
+  insightsInlineControlRowClass,
+} from "@/lib/insights-ui-classes";
 import type { User } from "@/types/types";
 import { toTitleCaseLabel } from "@/lib/utils";
 
@@ -26,8 +29,8 @@ export function InsightsScopeToolbar({
   doctorsLoading,
 }: Props) {
   return (
-    <div className={insightsScopeToolbarClass}>
-      <div className={insightsSegmentGroupClass}>
+    <div className={insightsBareToolbarRowClass}>
+      <div className={insightsInlineControlRowClass}>
         <span className="flex items-center gap-1 px-2 text-[10px] font-semibold uppercase tracking-wide text-sky-600/90">
           <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden />
           {toTitleCaseLabel("Scope")}
