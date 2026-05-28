@@ -64,6 +64,7 @@ export interface Patient {
   updated_by_email?: string | null;
   primary_doctor_display?: string | null;
   primary_doctor_email?: string | null;
+  primary_doctor_specialty?: string | null;
   /** ABO/Rh blood type — e.g. "A+", "O-" */
   blood_type?: string | null;
   /** Height in centimetres */

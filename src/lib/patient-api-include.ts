@@ -1,6 +1,6 @@
 /** Prisma include for patient responses — keeps audit + primary-doctor labels in sync across GET/POST/PUT/snapshot */
 export const patientUserPick = {
-  select: { display_name: true, email: true },
+  select: { display_name: true, email: true, specialty: true },
 } as const;
 
 export const patientDetailInclude = {

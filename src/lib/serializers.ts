@@ -22,7 +22,10 @@ export function serializeCategory(c: {
   };
 }
 
-type UserMini = { display_name: string | null; email: string } | null | undefined;
+type UserMini =
+  | { display_name: string | null; email: string; specialty?: string | null }
+  | null
+  | undefined;
 
 function userDisplay(u: UserMini): string | null {
   if (!u) return null;
@@ -75,6 +78,8 @@ export function serializePatient(
     primary_doctor_display: userDisplay(p.primary_doctor),
     /** Same relation pick as display — list UI shows email under doctor name. */
     primary_doctor_email: p.primary_doctor?.email ?? null,
+    /** Primary doctor specialty for first-paint badge parity in patient portal/profile cards. */
+    primary_doctor_specialty: p.primary_doctor?.specialty ?? null,
   };
 }
 

@@ -23,16 +23,15 @@ type ProfileDefinitionRowProps = {
 /** Pulse skeleton inside `dd` — matches DoctorIdentityRow text-only stack (no avatar in portal dl). */
 function DoctorStackValueSkeleton() {
   return (
-    <div
-      className={cn(
-        "flex min-w-0 flex-col justify-center",
-        clinicalTableCellMinRowClass,
-        clinicalStackGapClass
-      )}
-    >
-      <Skeleton className="h-4 w-28 max-w-full rounded-sm" />
-      <Skeleton className="h-3 w-36 max-w-full rounded-sm" />
-      <Skeleton className="h-5 w-24 rounded-full" />
+    <div className={cn("flex min-w-0 items-center gap-2", clinicalTableCellMinRowClass)}>
+      {/* Mirror DoctorIdentityRow avatar footprint to avoid profile row height jump on refresh. */}
+      <Skeleton className="h-7 w-7 shrink-0 rounded-full" />
+      <div className={cn("flex min-w-0 flex-1 flex-col justify-center", clinicalStackGapClass)}>
+        <Skeleton className="h-4 w-28 max-w-full rounded-sm" />
+        <Skeleton className="h-3 w-36 max-w-full rounded-sm" />
+        {/* Specialty badge placeholder keeps referral row from collapsing/expanding on swap. */}
+        <Skeleton className="h-5 w-24 rounded-full" />
+      </div>
     </div>
   );
 }

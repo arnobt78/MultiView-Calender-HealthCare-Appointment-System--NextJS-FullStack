@@ -334,13 +334,14 @@ function renderPrimaryDoctor(patient: Patient, portalDoctors: AppUser[]): ReactN
   const nested = pRow.primary_doctor;
   if (pRow.primary_doctor_id && pRow.primary_doctor_display?.trim()) {
     const doc = portalDoctors.find((x) => x.id === pRow.primary_doctor_id);
+    const resolvedSpecialty = doc?.specialty ?? pRow.primary_doctor_specialty ?? null;
     return (
       <DoctorIdentityRow
         doctor={{
           id: pRow.primary_doctor_id,
           display_name: pRow.primary_doctor_display.trim(),
           email: pRow.primary_doctor_email ?? null,
-          specialty: doc?.specialty ?? null,
+          specialty: resolvedSpecialty,
           image: doc?.image ?? null,
         }}
         size="sm"
@@ -404,7 +405,10 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
     staleTime: 2 * 60 * 1000,
   });
 
-  const { data: portalDoctorsData } = useUsers({ role: "doctor", limit: 200 });
+  const { data: portalDoctorsData, isLoading: portalDoctorsLoading } = useUsers({
+    role: "doctor",
+    limit: 200,
+  });
   const portalDoctors = portalDoctorsData?.users ?? [];
 
   const patient = data?.patient ?? null;
@@ -439,6 +443,11 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
 
   const clinicalProfile = patient?.clinical_profile as PatientClinicalProfile;
   const invoices = invoicesData?.invoices ?? [];
+  /**
+   * Keep Primary Doctor row in doctorStack skeleton state until doctor directory metadata
+   * is available; prevents specialty-badge pop-in from expanding the row after first paint.
+   */
+  const primaryDoctorRowLoading = profileLoading;
 
   if (isError) {
     return (
@@ -579,7 +588,7 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
                           iconClassName="border-sky-100 bg-sky-50 [&_svg]:text-sky-500"
                           label="Primary Doctor"
                           variant="doctorStack"
-                          loading={profileLoading}
+                          loading={primaryDoctorRowLoading}
                         >
                           {patient ? renderPrimaryDoctor(patient, portalDoctors) : "—"}
                         </ProfileDefinitionRow>
