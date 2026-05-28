@@ -1,7 +1,6 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { Skeleton } from "@/components/ui/skeleton";
 import type { ChartConfig } from "@/components/ui/chart";
 import type { AnalyticsStackedBarPoint } from "@/components/shared/analytics/AnalyticsStackedBarChartInner";
 import type { AnalyticsChartEmptyKind } from "@/lib/analytics-chart-empty";
@@ -21,7 +20,11 @@ const chartConfig = {
 const StackedInner = dynamic(
   () =>
     import("./AnalyticsStackedBarChartInner").then((m) => m.AnalyticsStackedBarChartInner),
-  { ssr: false, loading: () => <Skeleton className="h-[220px] w-full rounded-xl" /> }
+  {
+    ssr: false,
+    // Inner chart now owns loading UI; avoid a second dynamic skeleton layer.
+    loading: () => null,
+  }
 );
 
 type Props = {
@@ -32,12 +35,11 @@ type Props = {
 };
 
 export function AnalyticsStackedBarChart({ data, loading, emptyKind, period }: Props) {
-  if (loading) return <Skeleton className="h-[220px] w-full rounded-xl" />;
-
   const empty = isAnalyticsCountSeriesEmpty(data);
-  const emptyCopy = empty && emptyKind ? getAnalyticsChartEmptyCopy(emptyKind) : undefined;
+  const showEmptyOverlay = !loading && empty;
+  const emptyCopy = showEmptyOverlay && emptyKind ? getAnalyticsChartEmptyCopy(emptyKind) : undefined;
   const displayData =
-    empty && emptyKind && period
+    ((loading && emptyKind && period) || (empty && emptyKind && period))
       ? (buildAnalyticsPlaceholderAxisData(
           emptyKind,
           period
@@ -45,6 +47,11 @@ export function AnalyticsStackedBarChart({ data, loading, emptyKind, period }: P
       : data;
 
   return (
-    <StackedInner data={displayData} config={chartConfig} emptyCopy={emptyCopy} />
+    <StackedInner
+      data={displayData}
+      config={chartConfig}
+      emptyCopy={emptyCopy}
+      loading={Boolean(loading)}
+    />
   );
 }

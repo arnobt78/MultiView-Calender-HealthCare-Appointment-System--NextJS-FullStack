@@ -93,6 +93,61 @@ export const analyticsChartCartesianPropsDense = {
   allowDataOverflow: true,
 } as const;
 
+/**
+ * Above this data-point count, XAxis ticks stagger: even-index labels float above the axis
+ * line, odd-index labels sit below — all visible, no overlap. Exported so the tick renderer
+ * component uses the same threshold without duplicating the constant.
+ */
+export const ANALYTICS_X_AXIS_STAGGER_THRESHOLD = 10;
+
+/**
+ * Dynamic XAxis interval to prevent label overlap on dense series (day=24h, month=30d).
+ * Returns 0 (show all) when data fits; otherwise skips every nth tick so ≤10 labels show.
+ * Kept as a utility export; stagger approach uses interval=0 with above/below row offset.
+ */
+export function analyticsChartXAxisInterval(dataLength: number): number {
+  if (dataLength <= ANALYTICS_X_AXIS_STAGGER_THRESHOLD) return 0;
+  return Math.ceil(dataLength / ANALYTICS_X_AXIS_STAGGER_THRESHOLD) - 1;
+}
+
+/**
+ * Chart margin when XAxis ticks stagger above/below the axis line.
+ * Extra bottom margin creates an empty buffer zone so even-index labels that float
+ * above the axis line (negative dy) render in empty space, not over chart data.
+ */
+export const analyticsChartPlotMarginStagger = {
+  left: 8,
+  right: 16,
+  top: 36,
+  bottom: 26,
+} as const;
+
+/**
+ * Returns chart props (margin + allowDataOverflow) for the given layout and data length.
+ *
+ * `staggerAbove=true`  (line/area): dense series use above-below axis stagger, requires
+ *   extra bottom margin so above-axis labels land in the buffer zone, not over data.
+ * `staggerAbove=false` (bar/stacked-bar): both stagger rows sit below the axis so bars
+ *   never cover labels — standard bottom margin is sufficient.
+ */
+export function analyticsChartCartesianPropsForDensity(
+  layout: AnalyticsChartXAxisLayout,
+  dataLength: number,
+  staggerAbove = true
+): {
+  margin:
+    | typeof analyticsChartPlotMargin
+    | typeof analyticsChartPlotMarginWrap
+    | typeof analyticsChartPlotMarginStagger;
+  allowDataOverflow: true;
+} {
+  const stagger = layout !== "wrap" && dataLength > ANALYTICS_X_AXIS_STAGGER_THRESHOLD;
+  if (stagger && staggerAbove) {
+    return { margin: analyticsChartPlotMarginStagger, allowDataOverflow: true };
+  }
+  return analyticsChartCartesianPropsForLayout(layout);
+}
+
 export type AnalyticsChartXAxisDensity = "default" | "dense";
 
 /** Horizontal wrap tick text (doctor names, categories). */

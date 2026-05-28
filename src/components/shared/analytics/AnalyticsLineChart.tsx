@@ -1,7 +1,6 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { Skeleton } from "@/components/ui/skeleton";
 import type { ChartConfig } from "@/components/ui/chart";
 import { AnalyticsChartPlotShell } from "@/components/shared/analytics/AnalyticsChartPlotShell";
 import { analyticsChartConfigColor } from "@/components/shared/analytics/analytics-chart-classes";
@@ -33,7 +32,8 @@ const LineChartInner = dynamic(
   () => import("./AnalyticsLineChartInner").then((m) => m.AnalyticsLineChartInner),
   {
     ssr: false,
-    loading: () => <Skeleton className="h-[220px] w-full rounded-xl" />,
+    // Wrapper shell already owns loading UI; avoid a second dynamic skeleton layer.
+    loading: () => null,
   }
 );
 
@@ -45,14 +45,11 @@ type Props = {
 };
 
 export function AnalyticsLineChart({ data, loading, emptyKind, period }: Props) {
-  if (loading) {
-    return <Skeleton className="h-[220px] w-full rounded-xl" />;
-  }
-
   const empty = isAnalyticsCountSeriesEmpty(data);
-  const emptyCopy = empty && emptyKind ? getAnalyticsChartEmptyCopy(emptyKind) : undefined;
+  const showEmptyOverlay = !loading && empty;
+  const emptyCopy = showEmptyOverlay && emptyKind ? getAnalyticsChartEmptyCopy(emptyKind) : undefined;
   const displayData =
-    empty && emptyKind && period
+    ((loading && emptyKind && period) || (empty && emptyKind && period))
       ? (buildAnalyticsPlaceholderAxisData(emptyKind, period) as AnalyticsLinePoint[])
       : data;
 
@@ -60,8 +57,10 @@ export function AnalyticsLineChart({ data, loading, emptyKind, period }: Props) 
 
   return (
     <AnalyticsChartPlotShell
-      empty={empty}
+      // Keep plot footprint stable during first-frame mount loading.
+      empty={showEmptyOverlay}
       emptyCopy={emptyCopy}
+      loading={Boolean(loading)}
       chartHeightClass={resolveAnalyticsChartPlotHeightClass(xAxisLayout)}
     >
       <LineChartInner

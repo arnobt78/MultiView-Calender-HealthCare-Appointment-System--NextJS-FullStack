@@ -1,5 +1,14 @@
 # HealthCal Pro — Project Walkthrough
 
+## Latest Audit Update (2026-05-28)
+
+- Insights chart no-flash loading rollout is complete.
+- Chart wrappers no longer swap plot area to generic loading skeletons.
+- `AnalyticsChartPlotShell` now provides shared in-plot loading pulse overlay while keeping chart layout mounted.
+- Pie loading preserves neutral frame behavior (no misleading fake slice data).
+- Contract audit confirmed no changes in `query-keys`, `query-client` invalidation matrix, or insights SSR prefetch flow.
+- Validation audit passed: tests, TypeScript, lint, and production build all green.
+
 ## Stack
 
 Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Prisma (PostgreSQL), TanStack Query v5, Framer Motion, Shadcn/UI, Radix UI, Sonner (toasts), Zustand, jose (edge JWT), bcryptjs, Vercel Blob, Stripe, Resend.

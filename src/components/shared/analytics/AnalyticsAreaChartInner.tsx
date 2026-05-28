@@ -6,7 +6,7 @@ import { AnalyticsChartShell } from "@/components/shared/analytics/AnalyticsChar
 import { analyticsChartSlopedXAxisEl } from "@/components/shared/analytics/AnalyticsChartSlopedXAxis";
 import { analyticsChartTooltipEl } from "@/components/shared/analytics/AnalyticsChartTooltip";
 import {
-  analyticsChartCartesianPropsForLayout,
+  analyticsChartCartesianPropsForDensity,
   analyticsChartResponsiveHeightWrapClass,
   analyticsSeriesPointLabel,
   type AnalyticsChartXAxisLayout,
@@ -32,9 +32,9 @@ export function AnalyticsAreaChartInner({
         xAxisLayout === "wrap" ? analyticsChartResponsiveHeightWrapClass : undefined
       }
     >
-      <AreaChart data={data} {...analyticsChartCartesianPropsForLayout(xAxisLayout)}>
+      <AreaChart data={data} {...analyticsChartCartesianPropsForDensity(xAxisLayout, data.length)}>
         <CartesianGrid vertical={false} strokeDasharray="3 3" />
-        {analyticsChartSlopedXAxisEl("label", xAxisLayout)}
+        {analyticsChartSlopedXAxisEl("label", xAxisLayout, data.length)}
         <YAxis tickLine={false} axisLine={false} fontSize={10} width={40} />
         {analyticsChartTooltipEl("area", { valueKind: "currency", config })}
         <Area

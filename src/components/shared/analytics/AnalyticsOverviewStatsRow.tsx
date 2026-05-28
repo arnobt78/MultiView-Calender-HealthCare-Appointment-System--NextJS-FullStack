@@ -56,7 +56,7 @@ export function AnalyticsOverviewStatsRow({ data, valueSkeleton }: Props) {
         variant="violet"
         icon={Activity}
         title="Year to date"
-        subtitle="Calendar year total (includes scheduled future)"
+        subtitle="Calendar year total (incl. scheduled future)"
         value={totals?.yearToDate ?? data?.overview.total ?? 0}
         valueSkeleton={valueSkeleton}
       />

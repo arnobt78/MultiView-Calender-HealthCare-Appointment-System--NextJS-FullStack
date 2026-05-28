@@ -35,6 +35,7 @@ import {
   fetchCategoryBreakdownForPeriod,
   fetchPaymentSuccessPct,
   fetchRevenueAggregates,
+  fetchRevenueTrendByPeriod,
   fetchStatusOverTimeByPeriod,
   fetchTopPatientsForPeriod,
   fetchTrendCountsByPeriod,
@@ -137,6 +138,7 @@ export async function getInsightsData(
     topPatients,
     ageDistribution,
     trend,
+    revenueTrend,
     newPatientsInPeriod,
     newPatientsThisMonth,
     activeInPeriod,
@@ -160,6 +162,7 @@ export async function getInsightsData(
     fetchTopPatientsForPeriod(apptBase, period, now),
     fetchAgeDistributionForPeriod(apptBase, period, now),
     fetchTrendCountsByPeriod(apptBase, period, now),
+    fetchRevenueTrendByPeriod(invoiceBase, period, now),
     countDistinctPatientsInPeriodToNowForPeriod(apptBase, period, now),
     countNewPatientsInMonth(apptBase, startOfThisMonth, now),
     countDistinctPatientsForPeriod(apptBase, period, now),
@@ -214,7 +217,7 @@ export async function getInsightsData(
       paidInPeriod: revenueThisMonth,
       paidPrevPeriod: revenuePrevMonth,
       invoiceByStatus: revenueAgg.invoiceByStatus,
-      revenueTrend: trend,
+      revenueTrend,
       paymentSuccessPct,
       avgInvoiceCents:
         revenueAgg.invoiceByStatus.paid && revenueAgg.invoiceByStatus.paid > 0

@@ -1,7 +1,6 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { Skeleton } from "@/components/ui/skeleton";
 import type { ChartConfig } from "@/components/ui/chart";
 import { AnalyticsChartPlotShell } from "@/components/shared/analytics/AnalyticsChartPlotShell";
 import type { AnalyticsBarPoint } from "@/components/shared/analytics/AnalyticsBarChartInner";
@@ -31,7 +30,11 @@ function buildCountChartConfig(emptyKind?: AnalyticsChartEmptyKind): ChartConfig
 
 const BarChartInner = dynamic(
   () => import("./AnalyticsBarChartInner").then((m) => m.AnalyticsBarChartInner),
-  { ssr: false, loading: () => <Skeleton className="h-[240px] w-full rounded-xl" /> }
+  {
+    ssr: false,
+    // Wrapper shell already owns loading UI; avoid a second dynamic skeleton layer.
+    loading: () => null,
+  }
 );
 
 type Props = {
@@ -47,12 +50,11 @@ type Props = {
 };
 
 export function AnalyticsBarChart({ data, loading, emptyKind, period, xAxisLayout: layoutProp }: Props) {
-  if (loading) return <Skeleton className="h-[240px] w-full rounded-xl" />;
-
   const empty = isAnalyticsCountSeriesEmpty(data);
-  const emptyCopy = empty && emptyKind ? getAnalyticsChartEmptyCopy(emptyKind) : undefined;
+  const showEmptyOverlay = !loading && empty;
+  const emptyCopy = showEmptyOverlay && emptyKind ? getAnalyticsChartEmptyCopy(emptyKind) : undefined;
   const displayData =
-    empty && emptyKind && period
+    ((loading && emptyKind && period) || (empty && emptyKind && period))
       ? (buildAnalyticsPlaceholderAxisData(emptyKind, period) as AnalyticsBarPoint[])
       : data;
 
@@ -61,8 +63,10 @@ export function AnalyticsBarChart({ data, loading, emptyKind, period, xAxisLayou
 
   return (
     <AnalyticsChartPlotShell
-      empty={empty}
+      // Keep chart shell mounted during loading so hard refreshes do not flash generic skeletons.
+      empty={showEmptyOverlay}
       emptyCopy={emptyCopy}
+      loading={Boolean(loading)}
       chartHeightClass={resolveAnalyticsChartPlotHeightClass(xAxisLayout)}
     >
       <BarChartInner

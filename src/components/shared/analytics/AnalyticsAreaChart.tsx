@@ -1,7 +1,6 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { Skeleton } from "@/components/ui/skeleton";
 import type { ChartConfig } from "@/components/ui/chart";
 import { AnalyticsChartPlotShell } from "@/components/shared/analytics/AnalyticsChartPlotShell";
 import type { AnalyticsAreaPoint } from "@/components/shared/analytics/AnalyticsAreaChartInner";
@@ -30,7 +29,11 @@ function buildCountChartConfig(emptyKind?: AnalyticsChartEmptyKind): ChartConfig
 
 const AreaChartInner = dynamic(
   () => import("./AnalyticsAreaChartInner").then((m) => m.AnalyticsAreaChartInner),
-  { ssr: false, loading: () => <Skeleton className="h-[220px] w-full rounded-xl" /> }
+  {
+    ssr: false,
+    // Wrapper shell already owns loading UI; avoid a second dynamic skeleton layer.
+    loading: () => null,
+  }
 );
 
 type Props = {
@@ -41,12 +44,11 @@ type Props = {
 };
 
 export function AnalyticsAreaChart({ data, loading, emptyKind, period }: Props) {
-  if (loading) return <Skeleton className="h-[220px] w-full rounded-xl" />;
-
   const empty = isAnalyticsCountSeriesEmpty(data);
-  const emptyCopy = empty && emptyKind ? getAnalyticsChartEmptyCopy(emptyKind) : undefined;
+  const showEmptyOverlay = !loading && empty;
+  const emptyCopy = showEmptyOverlay && emptyKind ? getAnalyticsChartEmptyCopy(emptyKind) : undefined;
   const displayData =
-    empty && emptyKind && period
+    ((loading && emptyKind && period) || (empty && emptyKind && period))
       ? (buildAnalyticsPlaceholderAxisData(emptyKind, period) as AnalyticsAreaPoint[])
       : data;
 
@@ -54,8 +56,10 @@ export function AnalyticsAreaChart({ data, loading, emptyKind, period }: Props) 
 
   return (
     <AnalyticsChartPlotShell
-      empty={empty}
+      // Keep chart shell mounted to avoid replacing chart area with full skeleton.
+      empty={showEmptyOverlay}
       emptyCopy={emptyCopy}
+      loading={Boolean(loading)}
       chartHeightClass={resolveAnalyticsChartPlotHeightClass(xAxisLayout)}
     >
       <AreaChartInner

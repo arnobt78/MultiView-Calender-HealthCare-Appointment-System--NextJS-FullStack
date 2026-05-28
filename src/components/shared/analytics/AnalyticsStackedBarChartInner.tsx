@@ -2,17 +2,16 @@
 
 import { Bar, BarChart, CartesianGrid, YAxis } from "recharts";
 import type { ChartConfig } from "@/components/ui/chart";
-import { AnalyticsChartEmptyOverlay } from "@/components/shared/analytics/AnalyticsChartEmptyOverlay";
+import { AnalyticsChartPlotShell } from "@/components/shared/analytics/AnalyticsChartPlotShell";
 import { AnalyticsChartShell } from "@/components/shared/analytics/AnalyticsChartShell";
 import { analyticsChartSlopedXAxisEl } from "@/components/shared/analytics/AnalyticsChartSlopedXAxis";
 import { analyticsChartTooltipEl } from "@/components/shared/analytics/AnalyticsChartTooltip";
 import { AnalyticsStackedTotalLabel } from "@/components/shared/analytics/AnalyticsStackedTotalLabel";
 import type { AnalyticsChartEmptyCopy } from "@/lib/analytics-chart-empty";
 import {
-  analyticsChartCartesianPropsDense,
+  analyticsChartCartesianPropsForDensity,
   analyticsChartCartesianHeightClass,
 } from "@/lib/analytics-chart-interaction";
-import { cn } from "@/lib/utils";
 
 export type AnalyticsStackedBarPoint = {
   month: string;
@@ -25,10 +24,12 @@ export function AnalyticsStackedBarChartInner({
   data,
   config,
   emptyCopy,
+  loading = false,
 }: {
   data: AnalyticsStackedBarPoint[];
   config: ChartConfig;
   emptyCopy?: AnalyticsChartEmptyCopy;
+  loading?: boolean;
 }) {
   const doneName = String(config.done?.label ?? "Done");
   const pendingName = String(config.pending?.label ?? "Pending");
@@ -36,11 +37,18 @@ export function AnalyticsStackedBarChartInner({
 
   return (
     <div className="space-y-3">
-      <div className={cn("relative w-full overflow-visible", analyticsChartCartesianHeightClass)}>
+      <AnalyticsChartPlotShell
+        // Keep stacked chart mounted during first-frame loading to avoid skeleton flash.
+        empty={Boolean(emptyCopy)}
+        emptyCopy={emptyCopy}
+        loading={loading}
+        chartHeightClass={analyticsChartCartesianHeightClass}
+      >
         <AnalyticsChartShell config={config}>
-          <BarChart data={data} {...analyticsChartCartesianPropsDense}>
+          <BarChart data={data} {...analyticsChartCartesianPropsForDensity("sloped", data.length, false)}>
             <CartesianGrid vertical={false} strokeDasharray="3 3" />
-            {analyticsChartSlopedXAxisEl("month")}
+            {/* Full-width chart — single-row labels fit without stagger; pass 0 to bypass threshold */}
+            {analyticsChartSlopedXAxisEl("month", "sloped", 0, false)}
             <YAxis tickLine={false} axisLine={false} fontSize={10} width={32} />
             {analyticsChartTooltipEl("bar", { config })}
             <Bar
@@ -83,8 +91,7 @@ export function AnalyticsStackedBarChartInner({
             />
           </BarChart>
         </AnalyticsChartShell>
-        {emptyCopy ? <AnalyticsChartEmptyOverlay copy={emptyCopy} /> : null}
-      </div>
+      </AnalyticsChartPlotShell>
       <div className="flex w-full flex-wrap items-center justify-center gap-4 text-[11px] text-muted-foreground">
         <span className="flex items-center gap-1">
           <span className="inline-block h-2.5 w-2.5 rounded-sm bg-emerald-500/80" />

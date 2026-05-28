@@ -286,6 +286,129 @@ export async function fetchRevenueAggregates(
   };
 }
 
+async function sumPaidInvoiceAmount(
+  base: Prisma.InvoiceWhereInput,
+  paidStart: Date,
+  paidEnd: Date
+): Promise<number> {
+  const agg = await prisma.invoice.aggregate({
+    where: {
+      ...base,
+      status: "paid",
+      paid_at: { gte: paidStart, lte: paidEnd },
+    },
+    _sum: { amount: true },
+  });
+  return agg._sum.amount ?? 0;
+}
+
+/**
+ * Revenue trend buckets for Insights revenue area chart.
+ * Note: `count` carries paid amount (cents) for chart API compatibility.
+ */
+export async function fetchRevenueTrendByPeriod(
+  invoiceBase: Prisma.InvoiceWhereInput,
+  period: InsightsPeriod,
+  now: Date
+): Promise<InsightsTrendPoint[]> {
+  if (period === "day") {
+    const dayStart = startOfDay(now);
+    return Promise.all(
+      Array.from({ length: 24 }, (_, h) => {
+        const hourStart = new Date(dayStart);
+        hourStart.setHours(h, 0, 0, 0);
+        const hourEnd = new Date(dayStart);
+        hourEnd.setHours(h, 59, 59, 999);
+        return sumPaidInvoiceAmount(invoiceBase, hourStart, hourEnd).then((count) => ({
+          label: `${h}:00`,
+          count,
+        }));
+      })
+    );
+  }
+
+  if (period === "week") {
+    const weekStart = startOfWeek(now);
+    return Promise.all(
+      Array.from({ length: 7 }, (_, d) => {
+        const day = new Date(weekStart);
+        day.setDate(weekStart.getDate() + d);
+        return sumPaidInvoiceAmount(invoiceBase, day, endOfDay(day)).then((count) => ({
+          label: DAY_LABELS[d],
+          count,
+        }));
+      })
+    );
+  }
+
+  if (period === "month") {
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    return Promise.all(
+      Array.from({ length: daysInMonth }, (_, i) => {
+        const day = i + 1;
+        const dayStart = new Date(year, month, day);
+        const dayEnd = new Date(year, month, day, 23, 59, 59, 999);
+        return sumPaidInvoiceAmount(invoiceBase, dayStart, dayEnd).then((count) => ({
+          label: dayStart.toLocaleDateString("en", { month: "short", day: "numeric" }),
+          count,
+        }));
+      })
+    );
+  }
+
+  if (period === "year") {
+    const year = now.getFullYear();
+    return Promise.all(
+      Array.from({ length: 12 }, (_, monthIndex) => {
+        const start = new Date(year, monthIndex, 1);
+        const end = new Date(year, monthIndex + 1, 0, 23, 59, 59, 999);
+        return sumPaidInvoiceAmount(invoiceBase, start, end).then((count) => ({
+          label: start.toLocaleDateString("en", { month: "short" }),
+          count,
+        }));
+      })
+    );
+  }
+
+  const paidFilter = resolveInsightsPaidAtFilter(period, now);
+  if (paidFilter) {
+    const allTimePaid = await sumPaidInvoiceAmount(invoiceBase, paidFilter.gte, paidFilter.lte);
+    return [{ label: String(now.getFullYear()), count: allTimePaid }];
+  }
+
+  const ownerUserId =
+    typeof invoiceBase.user_id === "string" ? (invoiceBase.user_id as string) : null;
+  const sqlRows: { bucket_start: Date; amount: bigint }[] = ownerUserId
+    ? await prisma.$queryRaw`
+        SELECT date_trunc('month', paid_at) AS bucket_start, COALESCE(SUM(amount), 0)::bigint AS amount
+        FROM invoices
+        WHERE user_id = ${ownerUserId}::uuid
+          AND status = 'paid'
+          AND paid_at IS NOT NULL
+        GROUP BY 1
+        ORDER BY 1 ASC
+        LIMIT ${ALL_TIME_MONTH_BUCKET_CAP}
+      `
+    : await prisma.$queryRaw`
+        SELECT date_trunc('month', paid_at) AS bucket_start, COALESCE(SUM(amount), 0)::bigint AS amount
+        FROM invoices
+        WHERE status = 'paid'
+          AND paid_at IS NOT NULL
+        GROUP BY 1
+        ORDER BY 1 ASC
+        LIMIT ${ALL_TIME_MONTH_BUCKET_CAP}
+      `;
+  return sqlRows.map((row) => ({
+    label: new Date(row.bucket_start).toLocaleDateString("en", {
+      month: "short",
+      year: "numeric",
+    }),
+    count: Number(row.amount),
+  }));
+}
+
 export async function fetchPaymentSuccessPct(
   invoiceBase: Prisma.InvoiceWhereInput
 ): Promise<number> {

@@ -2,7 +2,6 @@
 
 import dynamic from "next/dynamic";
 import { useMemo } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { AnalyticsChartPlotShell } from "@/components/shared/analytics/AnalyticsChartPlotShell";
 import type { AnalyticsPiePoint } from "@/components/shared/analytics/AnalyticsPieChartInner";
 import { buildPieChartConfigFromSlices } from "@/lib/analytics-chart-interaction";
@@ -15,7 +14,11 @@ import type { InsightsPeriod } from "@/lib/insights/insights-period";
 
 const PieChartInner = dynamic(
   () => import("./AnalyticsPieChartInner").then((m) => m.AnalyticsPieChartInner),
-  { ssr: false, loading: () => <Skeleton className="h-48 w-full rounded-xl" /> }
+  {
+    ssr: false,
+    // Wrapper shell already owns loading UI; avoid a second dynamic skeleton layer.
+    loading: () => null,
+  }
 );
 
 type Props = {
@@ -28,21 +31,22 @@ type Props = {
 
 export function AnalyticsPieChart({ data, loading, emptyKind }: Props) {
   const empty = isAnalyticsCountSeriesEmpty(data);
+  const showEmptyOverlay = !loading && empty;
   // Strip zero-count slices — 0° sectors create visual artifact (stray line at 3 o'clock).
   const displayData = useMemo(
     () => (empty ? [] : data.filter((d) => (d.count ?? 0) > 0)),
     [empty, data]
   );
   const chartConfig = useMemo(() => buildPieChartConfigFromSlices(displayData), [displayData]);
-  const emptyCopy = empty && emptyKind ? getAnalyticsChartEmptyCopy(emptyKind) : undefined;
+  const emptyCopy = showEmptyOverlay && emptyKind ? getAnalyticsChartEmptyCopy(emptyKind) : undefined;
 
-  if (loading) return <Skeleton className="h-48 w-full rounded-xl" />;
-
-  if (empty && emptyKind) {
+  if (loading || (empty && emptyKind)) {
     return (
       <AnalyticsChartPlotShell
-        empty
+        // Keep a neutral pie frame mounted while loading; avoid fake slice semantics.
+        empty={showEmptyOverlay}
         emptyCopy={emptyCopy}
+        loading={Boolean(loading)}
         chartHeightClass="h-48 min-h-[12rem]"
       >
         <div
