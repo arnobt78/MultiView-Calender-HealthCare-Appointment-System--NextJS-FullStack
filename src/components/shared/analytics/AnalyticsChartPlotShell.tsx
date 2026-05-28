@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import type { AnalyticsChartEmptyCopy } from "@/lib/analytics-chart-empty";
 import { AnalyticsChartEmptyOverlay } from "@/components/shared/analytics/AnalyticsChartEmptyOverlay";
+import { analyticsChartCartesianHeightClass } from "@/lib/analytics-chart-interaction";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -20,12 +21,12 @@ type Props = {
 export function AnalyticsChartPlotShell({
   empty,
   emptyCopy,
-  chartHeightClass = "h-40 min-h-[10rem]",
+  chartHeightClass = analyticsChartCartesianHeightClass,
   children,
   className,
 }: Props) {
   return (
-    <div className={cn("relative w-full", chartHeightClass, className)}>
+    <div className={cn("relative w-full overflow-visible", chartHeightClass, className)}>
       {children}
       {empty && emptyCopy ? <AnalyticsChartEmptyOverlay copy={emptyCopy} /> : null}
     </div>

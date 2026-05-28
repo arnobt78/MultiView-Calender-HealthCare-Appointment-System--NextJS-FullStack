@@ -28,6 +28,8 @@ type PortalPanelSectionProps = {
   headerVariant?: "inline" | "stacked";
   /** When set, replaces default title/subtitle/count row (e.g. insights Appointments toolbar). */
   headerSlot?: ReactNode;
+  /** Default true — insights charts pass false so label/tooltip layers are not clipped. */
+  clipContent?: boolean;
   children: ReactNode;
   className?: string;
   contentClassName?: string;
@@ -48,6 +50,7 @@ export function PortalPanelSection({
   countInline = false,
   headerVariant = "inline",
   headerSlot,
+  clipContent = true,
   children,
   className,
   contentClassName,
@@ -59,8 +62,14 @@ export function PortalPanelSection({
   const displaySubtitle = subtitle ? toSentenceCaseSubtitle(subtitle) : undefined;
 
   return (
-    <Card className={cn(portalPanelCardClass, className)}>
-      <CardContent className={cn("p-4 text-gray-700 sm:p-6", contentClassName)}>
+    <Card
+      className={cn(
+        portalPanelCardClass,
+        clipContent === false && "overflow-visible",
+        className
+      )}
+    >
+      <CardContent className={cn("p-4 text-gray-700", contentClassName)}>
         <section aria-labelledby={headingId}>
           {headerSlot ? <div className="mb-3">{headerSlot}</div> : null}
           {!headerSlot && useStackedHeader ? (

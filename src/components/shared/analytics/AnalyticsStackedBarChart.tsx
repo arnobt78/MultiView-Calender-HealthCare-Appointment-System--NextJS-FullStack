@@ -21,7 +21,7 @@ const chartConfig = {
 const StackedInner = dynamic(
   () =>
     import("./AnalyticsStackedBarChartInner").then((m) => m.AnalyticsStackedBarChartInner),
-  { ssr: false, loading: () => <Skeleton className="h-44 w-full rounded-xl" /> }
+  { ssr: false, loading: () => <Skeleton className="h-[220px] w-full rounded-xl" /> }
 );
 
 type Props = {
@@ -32,7 +32,7 @@ type Props = {
 };
 
 export function AnalyticsStackedBarChart({ data, loading, emptyKind, period }: Props) {
-  if (loading) return <Skeleton className="h-44 w-full rounded-xl" />;
+  if (loading) return <Skeleton className="h-[220px] w-full rounded-xl" />;
 
   const empty = isAnalyticsCountSeriesEmpty(data);
   const emptyCopy = empty && emptyKind ? getAnalyticsChartEmptyCopy(emptyKind) : undefined;

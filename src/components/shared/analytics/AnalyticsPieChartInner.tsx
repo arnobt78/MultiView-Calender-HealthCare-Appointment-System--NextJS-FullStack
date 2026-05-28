@@ -1,15 +1,14 @@
 "use client";
 
-import {
-  Cell,
-  ChartContainer,
-  Pie,
-  PieChart,
-  type ChartConfig,
-} from "@/components/ui/chart";
-import { AnalyticsPieChartTooltip } from "@/components/shared/analytics/AnalyticsChartTooltip";
-import { AnalyticsChartValueLabelList } from "@/components/shared/analytics/AnalyticsChartValueLabelList";
+import { Cell, Pie, PieChart } from "recharts";
+import type { PieLabelRenderProps } from "recharts";
+import type { ChartConfig } from "@/components/ui/chart";
+import { AnalyticsChartShell } from "@/components/shared/analytics/AnalyticsChartShell";
+import { analyticsPieChartTooltipEl } from "@/components/shared/analytics/AnalyticsChartTooltip";
+import { AnalyticsPieSliceLabel } from "@/components/shared/analytics/AnalyticsPieSliceLabel";
+import { AnalyticsPieSliceLabelLine } from "@/components/shared/analytics/AnalyticsPieSliceLabelLine";
 import { ANALYTICS_CHART_COLORS } from "@/components/shared/analytics/analytics-chart-classes";
+import { shouldShowPieLabelLines } from "@/lib/analytics-chart-interaction";
 
 export type AnalyticsPiePoint = { name: string; count: number };
 
@@ -21,17 +20,26 @@ export function AnalyticsPieChartInner({
   config: ChartConfig;
 }) {
   return (
-    <ChartContainer config={config} className="mx-auto h-48 min-h-[12rem] w-full max-w-sm">
-      <PieChart>
-        <AnalyticsPieChartTooltip />
+    <AnalyticsChartShell
+      config={config}
+      containerClassName="mx-auto h-48 min-h-[12rem] w-full max-w-sm"
+    >
+      <PieChart margin={{ top: 8, right: 24, bottom: 8, left: 24 }}>
+        {analyticsPieChartTooltipEl({ config })}
         <Pie
           data={data}
           dataKey="count"
           nameKey="name"
           cx="50%"
           cy="50%"
-          outerRadius={72}
-          labelLine={false}
+          outerRadius={64}
+          label={(props: PieLabelRenderProps) => <AnalyticsPieSliceLabel {...props} />}
+          labelLine={
+            shouldShowPieLabelLines(data)
+              ? (props: PieLabelRenderProps) => <AnalyticsPieSliceLabelLine {...props} />
+              : false
+          }
+          isAnimationActive={false}
         >
           {data.map((entry, index) => (
             <Cell
@@ -42,13 +50,8 @@ export function AnalyticsPieChartInner({
               }
             />
           ))}
-          <AnalyticsChartValueLabelList
-            dataKey="count"
-            position="outside"
-            className="fill-foreground text-[10px] font-semibold"
-          />
         </Pie>
       </PieChart>
-    </ChartContainer>
+    </AnalyticsChartShell>
   );
 }

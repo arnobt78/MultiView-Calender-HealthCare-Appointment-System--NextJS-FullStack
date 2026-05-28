@@ -28,7 +28,11 @@ type Props = {
 
 export function AnalyticsPieChart({ data, loading, emptyKind }: Props) {
   const empty = isAnalyticsCountSeriesEmpty(data);
-  const displayData = useMemo(() => (empty ? [] : data), [empty, data]);
+  // Strip zero-count slices — 0° sectors create visual artifact (stray line at 3 o'clock).
+  const displayData = useMemo(
+    () => (empty ? [] : data.filter((d) => (d.count ?? 0) > 0)),
+    [empty, data]
+  );
   const chartConfig = useMemo(() => buildPieChartConfigFromSlices(displayData), [displayData]);
   const emptyCopy = empty && emptyKind ? getAnalyticsChartEmptyCopy(emptyKind) : undefined;
 

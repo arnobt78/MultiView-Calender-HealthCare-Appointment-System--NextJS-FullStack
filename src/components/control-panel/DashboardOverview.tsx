@@ -271,7 +271,7 @@ export default function DashboardOverviewComponent() {
       <div className={`${CONTROL_PANEL_GROUP_SURFACE_CLASS} grid gap-4 lg:grid-cols-2`}>
         {/* Next Appointment — card frame + header stay static */}
         <Card className={`${CONTROL_PANEL_GLASS_CARD_BASE_CLASS} ${CONTROL_PANEL_GLASS_CARD_VARIANT.indigo}`}>
-          <CardHeader className="border-b border-border/70 p-4 sm:p-6">
+          <CardHeader className="border-b border-border/70 p-4">
             <CardTitle className="text-base flex items-center gap-2">
               <CalendarClock className="h-4 w-4 text-blue-500" />
               Next Appointment
@@ -324,7 +324,7 @@ export default function DashboardOverviewComponent() {
 
         {/* Recently Created — card frame + header stay static */}
         <Card className={`${CONTROL_PANEL_GLASS_CARD_BASE_CLASS} ${CONTROL_PANEL_GLASS_CARD_VARIANT.violet}`}>
-          <CardHeader className="border-b border-border/70 p-4 sm:p-6">
+          <CardHeader className="border-b border-border/70 p-4">
             <CardTitle className="text-base flex items-center gap-2">
               <CalendarDays className="h-4 w-4 text-purple-500" />
               Recently Created

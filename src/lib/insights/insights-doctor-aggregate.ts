@@ -173,7 +173,7 @@ function buildWeeklyHoursChart(
       .sort((a, b) => b.weeklyHours - a.weeklyHours)
       .slice(0, DOCTOR_CHART_TOP_N)
       .map((row) => ({
-        label: row.name.length > 12 ? `${row.name.slice(0, 12)}…` : row.name,
+        label: row.name,
         count: Math.round(row.weeklyHours * 10) / 10,
       }));
   }
@@ -202,7 +202,7 @@ function buildTimeOffChart(
     .sort((a, b) => b.timeOffDaysInPeriod - a.timeOffDaysInPeriod)
     .slice(0, DOCTOR_CHART_TOP_N)
     .map((row) => ({
-      label: row.name.length > 12 ? `${row.name.slice(0, 12)}…` : row.name,
+      label: row.name,
       count: row.timeOffDaysInPeriod,
     }));
 }

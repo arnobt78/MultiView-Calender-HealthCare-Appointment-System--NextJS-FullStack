@@ -37,13 +37,15 @@ export function AnalyticsDoctorInsightsSection({
             icon={Activity}
             loading={loading}
           >
+            {/* wrap: labels are doctor full names — need multi-line word break */}
             <AnalyticsBarChart
               data={doctors.byDoctor.slice(0, 12).map((d) => ({
-                label: d.name.length > 12 ? `${d.name.slice(0, 12)}…` : d.name,
+                label: d.name,
                 count: d.appointmentCount,
               }))}
               emptyKind="appointments-by-doctor"
               period={period}
+              xAxisLayout="wrap"
             />
           </AnalyticsChartCard>
           <AnalyticsChartCard
@@ -76,10 +78,15 @@ export function AnalyticsDoctorInsightsSection({
         icon={Clock}
         loading={loading}
       >
+        {/*
+          org: labels are doctor names → wrap (multi-line word break)
+          personal: labels are weekday abbreviations (Mon/Tue…) → sloped (short, fits on one line)
+        */}
         <AnalyticsBarChart
           data={doctors.weeklyHours}
           emptyKind="doctor-weekly-hours"
           period={period}
+          xAxisLayout={isOrg ? "wrap" : "sloped"}
         />
       </AnalyticsChartCard>
 
@@ -94,10 +101,15 @@ export function AnalyticsDoctorInsightsSection({
         icon={CalendarOff}
         loading={loading}
       >
+        {/*
+          org: labels are doctor names → wrap (multi-line word break)
+          personal: labels are time-off range strings or single entry → sloped
+        */}
         <AnalyticsBarChart
           data={doctors.timeOffInPeriod}
           emptyKind="doctor-time-off"
           period={period}
+          xAxisLayout={isOrg ? "wrap" : "sloped"}
         />
       </AnalyticsChartCard>
     </div>

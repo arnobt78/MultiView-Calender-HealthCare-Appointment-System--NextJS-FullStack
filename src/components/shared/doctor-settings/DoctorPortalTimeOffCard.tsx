@@ -46,7 +46,7 @@ export function DoctorPortalTimeOffCard({
 
   return (
     <Card id="dp-unavailable-dates" className={portalPanelCardClass}>
-      <CardContent className="p-4 text-gray-700 sm:p-6">
+      <CardContent className="p-4 text-gray-700">
         {portalLoading || !doctorId ? (
           <div className="space-y-2">
             {Array.from({ length: 2 }).map((_, i) => (

@@ -1,6 +1,7 @@
 "use client";
 
 import type { LucideIcon } from "lucide-react";
+import { Info } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -15,21 +16,18 @@ import { cn, toSentenceCaseSubtitle } from "@/lib/utils";
 
 type Props = {
   title: string;
-  /** Dynamic period label from v2.meta.periodLabel (View-as filter). */
   periodSubtitle?: string;
-  /** Required — every insights chart uses portal-style icon tile chrome. */
   icon: LucideIcon;
   loading?: boolean;
   children: React.ReactNode;
   className?: string;
   iconClassName?: string;
-  /** Static chart explanation — tooltip only, not shown as subtitle. */
+  /** Static chart explanation — info icon in header only (not over plot). */
   detailHint?: string;
 };
 
 /**
- * Glass chart panel — single `CardContent` shell (doctor-portal parity).
- * Header icon/title/period subtitle stay inside the card; chart body follows in the same padding box.
+ * Glass chart panel — plot hover uses Recharts `AnalyticsChartTooltip`, not this header hint.
  */
 export function AnalyticsChartCard({
   title,
@@ -46,28 +44,37 @@ export function AnalyticsChartCard({
 
   return (
     <Card className={cn(analyticsChartGlassClass, "gap-0", className)}>
-      <CardContent className="overflow-visible p-4 text-gray-700 sm:p-6">
+
+      <CardContent className="overflow-visible p-4 text-gray-700">
         <section aria-labelledby={headingId}>
-          <TooltipProvider delayDuration={200}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="cursor-default text-left">
-                  <AnalyticsChartPanelHeader
-                    id={headingId}
-                    title={title}
-                    periodSubtitle={periodSubtitle}
-                    icon={icon}
-                    iconClassName={iconClassName}
-                  />
-                </div>
-              </TooltipTrigger>
-              {displayHint ? (
-                <TooltipContent side="top" className="max-w-xs text-xs">
-                  {displayHint}
-                </TooltipContent>
-              ) : null}
-            </Tooltip>
-          </TooltipProvider>
+          <div className="mb-3 flex items-start gap-2">
+            <AnalyticsChartPanelHeader
+              id={headingId}
+              title={title}
+              periodSubtitle={periodSubtitle}
+              icon={icon}
+              iconClassName={iconClassName}
+              className="mb-0 min-w-0 flex-1"
+            />
+            {displayHint ? (
+              <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200/80 bg-white/90 text-slate-500 shadow-sm hover:border-sky-200 hover:text-sky-700"
+                      aria-label={`About ${title} chart`}
+                    >
+                      <Info className="h-4 w-4" aria-hidden />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="left" className="max-w-xs text-xs">
+                    {displayHint}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ) : null}
+          </div>
           {loading ? (
             <Skeleton className="h-40 w-full rounded-xl" aria-hidden />
           ) : (

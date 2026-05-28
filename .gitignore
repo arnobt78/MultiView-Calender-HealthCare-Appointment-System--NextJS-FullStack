@@ -18,6 +18,9 @@
 /out/
 .npm-cache
 
+# Playwright MCP artifacts
+.playwright-mcp/
+
 .env
 .env.local
 

@@ -206,7 +206,7 @@ function AppointmentTimeline({
      * so the heading is not visually split from the body (same pattern as sidebar).
      */
     <Card className="rounded-[24px] border border-slate-200/80 bg-card shadow-md overflow-hidden">
-      <CardContent className="space-y-4 p-4 text-gray-700 sm:p-6">
+      <CardContent className="space-y-4 p-4 text-gray-700">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/70 pb-2">
           <h3 className="flex items-center gap-2 text-sm font-semibold text-sky-800">
             <span className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-100 border border-sky-200 shrink-0">
@@ -462,7 +462,7 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
             as their body (no separate tinted CardHeader strip above the white panel). */}
         <div>
           <Card className="rounded-[24px] border border-slate-200/80 bg-card shadow-[0_8px_32px_rgba(99,102,241,0.12)] overflow-hidden">
-            <CardContent className="space-y-6 p-4 text-gray-700 sm:p-6">
+            <CardContent className="space-y-6 p-4 text-gray-700">
               {/* ── My Profile ───────────────────────────────── */}
               <section aria-labelledby="pp-profile-heading">
                 <h3

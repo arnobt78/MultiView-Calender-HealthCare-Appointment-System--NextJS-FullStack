@@ -45,7 +45,17 @@ export type InsightsPatientsSection = {
   /** Distinct patients with appointments across full inclusive period window. */
   activeInPeriod: number;
   ageDistribution: { label: string; count: number }[];
-  topPatients: { name: string; count: number }[];
+  topPatients: {
+    id: string;
+    name: string;
+    firstname: string;
+    lastname: string;
+    email: string | null;
+    birth_date: string | null;
+    care_level: number | null;
+    clinical_profile?: { image_url?: string } | null;
+    count: number;
+  }[];
 };
 
 export type InsightsRevenueSection = {

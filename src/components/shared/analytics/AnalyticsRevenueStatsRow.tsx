@@ -3,17 +3,10 @@
 import { ArrowDown, ArrowUp, BadgeDollarSign, FileWarning, Receipt, TrendingUp } from "lucide-react";
 import { PatientStatCard } from "@/components/control-panel/PatientStatCard";
 import type { InsightsPayload } from "@/lib/insights-data";
+import { formatInsightsUsdFromCents } from "@/lib/insights/insights-kpi-format";
 import type { InsightsPeriod } from "@/lib/insights/insights-period";
 import { isInsightsPeriodAll } from "@/lib/insights/insights-period";
 import { cn } from "@/lib/utils";
-
-function formatCents(cents: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(cents / 100);
-}
 
 function formatDelta(
   current: number,
@@ -48,14 +41,14 @@ export function AnalyticsRevenueStatsRow({ data, valueSkeleton, period }: Props)
         title="Paid in period"
         subtitle="Collected revenue"
         value={0}
-        valueDisplay={formatCents(paid)}
+        valueDisplay={formatInsightsUsdFromCents(paid)}
         valueSkeleton={valueSkeleton}
       />
       <PatientStatCard
         variant="sky"
         icon={delta ? (delta.positive ? ArrowUp : ArrowDown) : TrendingUp}
         title="vs previous period"
-        subtitle={prev > 0 ? `Prior ${formatCents(prev)}` : "No prior revenue"}
+        subtitle={prev > 0 ? `Prior ${formatInsightsUsdFromCents(prev)}` : "No prior revenue"}
         value={0}
         valueDisplay={
           delta ? (

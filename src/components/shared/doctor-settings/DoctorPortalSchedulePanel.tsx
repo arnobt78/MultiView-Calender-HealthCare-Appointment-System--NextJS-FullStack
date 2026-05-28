@@ -56,7 +56,7 @@ export function DoctorPortalSchedulePanel({
 
   return (
     <Card id="dp-booking-schedule" className={portalPanelCardClass}>
-      <CardContent className="p-4 text-gray-700 sm:p-6">
+      <CardContent className="p-4 text-gray-700">
         {portalLoading || !doctorId ? (
           <div className="space-y-4">
             <Skeleton className="h-14 w-full rounded-2xl" />

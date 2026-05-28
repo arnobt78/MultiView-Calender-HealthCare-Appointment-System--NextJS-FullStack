@@ -46,7 +46,7 @@ export const insightsScopeHintClass = "font-medium text-sky-600";
 export const insightsScopeBodyClass = "text-gray-700";
 
 /** Recharts tooltip layer — above glass analytics cards, below fixed navbar. */
-export const analyticsChartTooltipZClass = "z-[90]";
+export const analyticsChartTooltipZClass = "z-[200] pointer-events-none";
 
 /** Chart card header — matches `PortalPanelSubsectionHeader` / doctor-portal subsection tiles. */
 export const analyticsChartPanelIconTileClass =

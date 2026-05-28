@@ -7,23 +7,33 @@ import { AnalyticsChartPlotShell } from "@/components/shared/analytics/Analytics
 import { analyticsChartConfigColor } from "@/components/shared/analytics/analytics-chart-classes";
 import type { AnalyticsChartEmptyKind } from "@/lib/analytics-chart-empty";
 import {
+  resolveAnalyticsChartPlotHeightClass,
+  resolveAnalyticsChartXAxisLayout,
+} from "@/lib/analytics-chart-interaction";
+import {
   buildAnalyticsPlaceholderAxisData,
   getAnalyticsChartEmptyCopy,
+  getAnalyticsChartValueSeriesLabel,
   isAnalyticsCountSeriesEmpty,
 } from "@/lib/analytics-chart-empty";
 import type { InsightsPeriod } from "@/lib/insights/insights-period";
 
 export type AnalyticsLinePoint = { label: string; count: number };
 
-const chartConfig = {
-  count: { label: "Count", color: analyticsChartConfigColor(1) },
-} satisfies ChartConfig;
+function buildCountChartConfig(emptyKind?: AnalyticsChartEmptyKind): ChartConfig {
+  return {
+    count: {
+      label: getAnalyticsChartValueSeriesLabel(emptyKind),
+      color: analyticsChartConfigColor(1),
+    },
+  };
+}
 
 const LineChartInner = dynamic(
   () => import("./AnalyticsLineChartInner").then((m) => m.AnalyticsLineChartInner),
   {
     ssr: false,
-    loading: () => <Skeleton className="h-40 w-full rounded-xl" />,
+    loading: () => <Skeleton className="h-[220px] w-full rounded-xl" />,
   }
 );
 
@@ -36,7 +46,7 @@ type Props = {
 
 export function AnalyticsLineChart({ data, loading, emptyKind, period }: Props) {
   if (loading) {
-    return <Skeleton className="h-40 w-full rounded-xl" />;
+    return <Skeleton className="h-[220px] w-full rounded-xl" />;
   }
 
   const empty = isAnalyticsCountSeriesEmpty(data);
@@ -46,9 +56,19 @@ export function AnalyticsLineChart({ data, loading, emptyKind, period }: Props) 
       ? (buildAnalyticsPlaceholderAxisData(emptyKind, period) as AnalyticsLinePoint[])
       : data;
 
+  const xAxisLayout = resolveAnalyticsChartXAxisLayout(emptyKind, "label");
+
   return (
-    <AnalyticsChartPlotShell empty={empty} emptyCopy={emptyCopy}>
-      <LineChartInner data={displayData} config={chartConfig} />
+    <AnalyticsChartPlotShell
+      empty={empty}
+      emptyCopy={emptyCopy}
+      chartHeightClass={resolveAnalyticsChartPlotHeightClass(xAxisLayout)}
+    >
+      <LineChartInner
+        data={displayData}
+        config={buildCountChartConfig(emptyKind)}
+        xAxisLayout={xAxisLayout}
+      />
     </AnalyticsChartPlotShell>
   );
 }

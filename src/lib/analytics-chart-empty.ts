@@ -140,6 +140,32 @@ export function getAnalyticsChartEmptyCopy(kind: AnalyticsChartEmptyKind): Analy
   }
 }
 
+/** Default Recharts series / tooltip label for single `count` series charts on /insights. */
+export function getAnalyticsChartValueSeriesLabel(
+  emptyKind?: AnalyticsChartEmptyKind
+): string {
+  switch (emptyKind) {
+    case "volume-trend":
+    case "busiest-weekday":
+    case "status-over-time":
+    case "by-category":
+    case "visit-types":
+    case "appointments-by-doctor":
+    case "by-specialty":
+    case "age-distribution":
+    case "invoice-status":
+      return "Appointments";
+    case "paid-revenue":
+      return "Revenue";
+    case "doctor-weekly-hours":
+      return "Hours";
+    case "doctor-time-off":
+      return "Days";
+    default:
+      return "Count";
+  }
+}
+
 export type AnalyticsLinePlaceholderPoint = { label: string; count: number };
 export type AnalyticsStackedPlaceholderPoint = {
   month: string;

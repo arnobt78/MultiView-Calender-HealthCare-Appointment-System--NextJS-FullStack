@@ -692,7 +692,19 @@ export async function fetchTopPatientsForPeriod(
   period: InsightsPeriod,
   now: Date,
   limit = 10
-): Promise<{ name: string; count: number }[]> {
+): Promise<
+  {
+    id: string;
+    name: string;
+    firstname: string;
+    lastname: string;
+    email: string | null;
+    birth_date: string | null;
+    care_level: number | null;
+    clinical_profile?: { image_url?: string } | null;
+    count: number;
+  }[]
+> {
   const filter = resolveInsightsAppointmentStartFilter(period, now);
   if (!filter) {
     return fetchTopPatientsAllTime(base, limit);
@@ -703,7 +715,19 @@ export async function fetchTopPatientsForPeriod(
 async function fetchTopPatientsAllTime(
   base: Prisma.AppointmentWhereInput,
   limit = 10
-): Promise<{ name: string; count: number }[]> {
+): Promise<
+  {
+    id: string;
+    name: string;
+    firstname: string;
+    lastname: string;
+    email: string | null;
+    birth_date: string | null;
+    care_level: number | null;
+    clinical_profile?: { image_url?: string } | null;
+    count: number;
+  }[]
+> {
   const rows = await prisma.appointment.groupBy({
     by: ["patient_id"],
     where: { ...base, patient_id: { not: null } },
@@ -719,14 +743,34 @@ async function fetchTopPatientsAllTime(
     patientIds.length > 0
       ? await prisma.patient.findMany({
           where: { id: { in: patientIds } },
-          select: { id: true, firstname: true, lastname: true },
+          select: {
+            id: true,
+            firstname: true,
+            lastname: true,
+            email: true,
+            birth_date: true,
+            care_level: true,
+            clinical_profile: true,
+          },
         })
       : [];
-  const nameById = new Map(
-    patients.map((p) => [p.id, `${p.firstname} ${p.lastname}`.trim()])
-  );
+  const patientById = new Map(patients.map((p) => [p.id, p]));
   return topRows.map((row) => ({
-    name: row.patient_id ? nameById.get(row.patient_id) ?? "Unknown" : "Unknown",
+    id: row.patient_id ?? "unknown",
+    name: row.patient_id
+      ? `${patientById.get(row.patient_id)?.firstname ?? ""} ${patientById.get(row.patient_id)?.lastname ?? ""}`.trim() ||
+        "Unknown"
+      : "Unknown",
+    firstname: row.patient_id ? patientById.get(row.patient_id)?.firstname ?? "" : "",
+    lastname: row.patient_id ? patientById.get(row.patient_id)?.lastname ?? "" : "",
+    email: row.patient_id ? patientById.get(row.patient_id)?.email ?? null : null,
+    birth_date: row.patient_id
+      ? patientById.get(row.patient_id)?.birth_date?.toISOString() ?? null
+      : null,
+    care_level: row.patient_id ? patientById.get(row.patient_id)?.care_level ?? null : null,
+    clinical_profile: row.patient_id
+      ? (patientById.get(row.patient_id)?.clinical_profile as { image_url?: string } | null)
+      : null,
     count: row._count._all,
   }));
 }
@@ -736,7 +780,19 @@ export async function fetchTopPatients(
   rangeStart: Date,
   rangeEnd: Date,
   limit = 10
-): Promise<{ name: string; count: number }[]> {
+): Promise<
+  {
+    id: string;
+    name: string;
+    firstname: string;
+    lastname: string;
+    email: string | null;
+    birth_date: string | null;
+    care_level: number | null;
+    clinical_profile?: { image_url?: string } | null;
+    count: number;
+  }[]
+> {
   const rows = await prisma.appointment.groupBy({
     by: ["patient_id"],
     where: {
@@ -756,14 +812,34 @@ export async function fetchTopPatients(
     patientIds.length > 0
       ? await prisma.patient.findMany({
           where: { id: { in: patientIds } },
-          select: { id: true, firstname: true, lastname: true },
+          select: {
+            id: true,
+            firstname: true,
+            lastname: true,
+            email: true,
+            birth_date: true,
+            care_level: true,
+            clinical_profile: true,
+          },
         })
       : [];
-  const nameById = new Map(
-    patients.map((p) => [p.id, `${p.firstname} ${p.lastname}`.trim()])
-  );
+  const patientById = new Map(patients.map((p) => [p.id, p]));
   return topRows.map((row) => ({
-    name: row.patient_id ? nameById.get(row.patient_id) ?? "Unknown" : "Unknown",
+    id: row.patient_id ?? "unknown",
+    name: row.patient_id
+      ? `${patientById.get(row.patient_id)?.firstname ?? ""} ${patientById.get(row.patient_id)?.lastname ?? ""}`.trim() ||
+        "Unknown"
+      : "Unknown",
+    firstname: row.patient_id ? patientById.get(row.patient_id)?.firstname ?? "" : "",
+    lastname: row.patient_id ? patientById.get(row.patient_id)?.lastname ?? "" : "",
+    email: row.patient_id ? patientById.get(row.patient_id)?.email ?? null : null,
+    birth_date: row.patient_id
+      ? patientById.get(row.patient_id)?.birth_date?.toISOString() ?? null
+      : null,
+    care_level: row.patient_id ? patientById.get(row.patient_id)?.care_level ?? null : null,
+    clinical_profile: row.patient_id
+      ? (patientById.get(row.patient_id)?.clinical_profile as { image_url?: string } | null)
+      : null,
     count: row._count._all,
   }));
 }

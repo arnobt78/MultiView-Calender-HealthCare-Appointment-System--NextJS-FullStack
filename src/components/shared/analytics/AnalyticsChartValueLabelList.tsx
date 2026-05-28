@@ -1,7 +1,11 @@
 "use client";
 
 import { LabelList } from "recharts";
-import { formatAnalyticsChartLabelValue } from "@/lib/analytics-chart-interaction";
+import {
+  analyticsChartLabelStyle,
+  formatAnalyticsChartLabelValue,
+  type AnalyticsChartValueKind,
+} from "@/lib/analytics-chart-interaction";
 
 type LabelListPosition =
   | "top"
@@ -27,20 +31,31 @@ type Props = {
   dataKey: string;
   position?: LabelListPosition;
   className?: string;
+  offset?: number;
+  valueKind?: AnalyticsChartValueKind;
+  formatter?: (value: unknown, entry?: unknown) => string;
 };
 
-/** Renders numeric value above/on series when count > 0 — shared across insights charts. */
+/** On-chart values for bar/line/area — inline SVG style (Tailwind fill often missing on Recharts text). */
 export function AnalyticsChartValueLabelList({
   dataKey,
   position = "top",
-  className = "fill-foreground text-[10px] font-semibold",
+  className,
+  offset = 8,
+  formatter,
 }: Props) {
   return (
     <LabelList
       dataKey={dataKey}
       position={position}
+      offset={offset}
       className={className}
-      formatter={(value: unknown) => formatAnalyticsChartLabelValue(value) ?? ""}
+      style={analyticsChartLabelStyle}
+      formatter={(value: unknown, entry: unknown) =>
+        formatter
+          ? formatter(value, entry)
+          : (formatAnalyticsChartLabelValue(value) ?? "")
+      }
     />
   );
 }

@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { PatientStatCard } from "@/components/control-panel/PatientStatCard";
 import type { InsightsPayload } from "@/lib/insights-data";
+import { formatInsightsPercent, formatInsightsUsdFromCents } from "@/lib/insights/insights-kpi-format";
 import { analyticsOverviewGridClass } from "@/lib/insights-ui-classes";
 
 type Props = {
@@ -72,7 +73,8 @@ export function AnalyticsOverviewStatsRow({ data, valueSkeleton }: Props) {
         icon={BadgeDollarSign}
         title="Revenue"
         subtitle="Paid in selected period ($)"
-        value={Math.round(paidCents / 100)}
+        value={0}
+        valueDisplay={formatInsightsUsdFromCents(paidCents)}
         valueSkeleton={valueSkeleton}
       />
       <PatientStatCard
@@ -88,7 +90,8 @@ export function AnalyticsOverviewStatsRow({ data, valueSkeleton }: Props) {
         icon={Video}
         title="Telehealth"
         subtitle="Share of all visits (%)"
-        value={telehealthPct}
+        value={0}
+        valueDisplay={formatInsightsPercent(telehealthPct)}
         valueSkeleton={valueSkeleton}
       />
     </div>

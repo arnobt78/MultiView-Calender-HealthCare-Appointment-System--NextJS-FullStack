@@ -111,6 +111,7 @@ export function AnalyticsInsightsSections({
       <PortalPanelSection
         title="Appointments"
         icon={BarChart3}
+        clipContent={false}
         headerSlot={
           <InsightsAppointmentsPanelHeader
             overall={appointmentsAllTime}
@@ -177,10 +178,12 @@ export function AnalyticsInsightsSections({
             icon={FolderTree}
             loading={loading}
           >
+            {/* wrap layout: category names are long dynamic strings, not short date/weekday labels */}
             <AnalyticsBarChart
               data={categoryBars}
               emptyKind="by-category"
               period={period}
+              xAxisLayout="wrap"
             />
           </AnalyticsChartCard>
           <AnalyticsChartCard
@@ -195,7 +198,7 @@ export function AnalyticsInsightsSections({
         </div>
       </PortalPanelSection>
 
-      <PortalPanelSection title="Patients" icon={Users}>
+      <PortalPanelSection title="Patients" icon={Users} clipContent={false}>
         <div className="grid gap-6 md:grid-cols-2">
           <AnalyticsChartCard
             title="Age distribution"
@@ -217,12 +220,16 @@ export function AnalyticsInsightsSections({
             icon={Users}
             loading={loading}
           >
-            <AnalyticsTopPatientsPanel patients={topPatients} loading={loading} />
+            <AnalyticsTopPatientsPanel
+              patients={topPatients}
+              viewerRole={(viewerRole as "admin" | "doctor" | "patient" | null) ?? "admin"}
+              loading={loading}
+            />
           </AnalyticsChartCard>
         </div>
       </PortalPanelSection>
 
-      <PortalPanelSection title="Revenue" icon={BadgeDollarSign}>
+      <PortalPanelSection title="Revenue" icon={BadgeDollarSign} clipContent={false}>
         <AnalyticsRevenueStatsRow data={data} valueSkeleton={loading} period={period} />
         <div className="grid gap-6 md:grid-cols-2">
           <AnalyticsChartCard
@@ -255,7 +262,7 @@ export function AnalyticsInsightsSections({
       </PortalPanelSection>
 
       {doctorsSection ? (
-        <PortalPanelSection title="Doctors" icon={Stethoscope}>
+        <PortalPanelSection title="Doctors" icon={Stethoscope} clipContent={false}>
           <AnalyticsDoctorInsightsSection
             doctors={doctorsSection}
             chartSubtitle={chartSubtitle}

@@ -1,19 +1,18 @@
 "use client";
 
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ChartContainer,
-  XAxis,
-  YAxis,
-  type ChartConfig,
-} from "@/components/ui/chart";
+import { Bar, BarChart, CartesianGrid, YAxis } from "recharts";
+import type { ChartConfig } from "@/components/ui/chart";
 import { AnalyticsChartEmptyOverlay } from "@/components/shared/analytics/AnalyticsChartEmptyOverlay";
-import { AnalyticsChartTooltip } from "@/components/shared/analytics/AnalyticsChartTooltip";
-import { AnalyticsChartValueLabelList } from "@/components/shared/analytics/AnalyticsChartValueLabelList";
+import { AnalyticsChartShell } from "@/components/shared/analytics/AnalyticsChartShell";
+import { analyticsChartSlopedXAxisEl } from "@/components/shared/analytics/AnalyticsChartSlopedXAxis";
+import { analyticsChartTooltipEl } from "@/components/shared/analytics/AnalyticsChartTooltip";
+import { AnalyticsStackedTotalLabel } from "@/components/shared/analytics/AnalyticsStackedTotalLabel";
 import type { AnalyticsChartEmptyCopy } from "@/lib/analytics-chart-empty";
-import { analyticsChartPlotMargin } from "@/lib/analytics-chart-interaction";
+import {
+  analyticsChartCartesianPropsDense,
+  analyticsChartCartesianHeightClass,
+} from "@/lib/analytics-chart-interaction";
+import { cn } from "@/lib/utils";
 
 export type AnalyticsStackedBarPoint = {
   month: string;
@@ -22,8 +21,6 @@ export type AnalyticsStackedBarPoint = {
   alert: number;
 };
 
-const STACKED_LABEL_CLASS = "fill-white text-[9px] font-semibold drop-shadow-sm";
-
 export function AnalyticsStackedBarChartInner({
   data,
   config,
@@ -31,44 +28,64 @@ export function AnalyticsStackedBarChartInner({
 }: {
   data: AnalyticsStackedBarPoint[];
   config: ChartConfig;
-  /** When set, centered overlay on plot only (legend stays visible below). */
   emptyCopy?: AnalyticsChartEmptyCopy;
 }) {
+  const doneName = String(config.done?.label ?? "Done");
+  const pendingName = String(config.pending?.label ?? "Pending");
+  const alertName = String(config.alert?.label ?? "Alert");
+
   return (
     <div className="space-y-3">
-      <div className="relative h-44 min-h-[11rem] w-full">
-        <ChartContainer config={config} className="h-full w-full">
-        <BarChart data={data} margin={analyticsChartPlotMargin}>
-          <CartesianGrid vertical={false} strokeDasharray="3 3" />
-          <XAxis dataKey="month" tickLine={false} axisLine={false} fontSize={10} />
-          <YAxis tickLine={false} axisLine={false} fontSize={10} width={32} />
-          <AnalyticsChartTooltip cursorVariant="bar" />
-          <Bar dataKey="done" stackId="status" fill="var(--color-done)" radius={[0, 0, 0, 0]}>
-            <AnalyticsChartValueLabelList
+      <div className={cn("relative w-full overflow-visible", analyticsChartCartesianHeightClass)}>
+        <AnalyticsChartShell config={config}>
+          <BarChart data={data} {...analyticsChartCartesianPropsDense}>
+            <CartesianGrid vertical={false} strokeDasharray="3 3" />
+            {analyticsChartSlopedXAxisEl("month")}
+            <YAxis tickLine={false} axisLine={false} fontSize={10} width={32} />
+            {analyticsChartTooltipEl("bar", { config })}
+            <Bar
               dataKey="done"
-              position="insideTop"
-              className={STACKED_LABEL_CLASS}
+              name={doneName}
+              stackId="status"
+              fill="var(--color-done)"
+              radius={[0, 0, 0, 0]}
+              isAnimationActive={false}
             />
-          </Bar>
-          <Bar dataKey="pending" stackId="status" fill="var(--color-pending)">
-            <AnalyticsChartValueLabelList
+            <Bar
               dataKey="pending"
-              position="insideTop"
-              className={STACKED_LABEL_CLASS}
+              name={pendingName}
+              stackId="status"
+              fill="var(--color-pending)"
+              isAnimationActive={false}
             />
-          </Bar>
-          <Bar dataKey="alert" stackId="status" fill="var(--color-alert)" radius={[4, 4, 0, 0]}>
-            <AnalyticsChartValueLabelList
+            <Bar
               dataKey="alert"
-              position="insideTop"
-              className={STACKED_LABEL_CLASS}
+              name={alertName}
+              stackId="status"
+              fill="var(--color-alert)"
+              radius={[4, 4, 0, 0]}
+              isAnimationActive={false}
+              label={(props: Record<string, unknown>) => {
+                const row = data[props.index as number];
+                if (!row) {
+                  return <g />;
+                }
+                const total = (row.done ?? 0) + (row.pending ?? 0) + (row.alert ?? 0);
+                return (
+                  <AnalyticsStackedTotalLabel
+                    x={props.x as number}
+                    y={props.y as number}
+                    width={props.width as number}
+                    total={total}
+                  />
+                );
+              }}
             />
-          </Bar>
-        </BarChart>
-      </ChartContainer>
+          </BarChart>
+        </AnalyticsChartShell>
         {emptyCopy ? <AnalyticsChartEmptyOverlay copy={emptyCopy} /> : null}
       </div>
-      <div className="flex flex-wrap items-center gap-4 text-[11px] text-muted-foreground">
+      <div className="flex w-full flex-wrap items-center justify-center gap-4 text-[11px] text-muted-foreground">
         <span className="flex items-center gap-1">
           <span className="inline-block h-2.5 w-2.5 rounded-sm bg-emerald-500/80" />
           Done

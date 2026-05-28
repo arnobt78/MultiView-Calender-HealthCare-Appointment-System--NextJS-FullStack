@@ -62,7 +62,17 @@ export interface InsightsPayload {
   byCategory: Record<string, number>;
   /** Deprecated flat series — derived from `v2.appointments.trend` (no extra DB query). */
   monthlyData: { month: string; count: number }[];
-  topPatients: { name: string; count: number }[];
+  topPatients: {
+    id: string;
+    name: string;
+    firstname: string;
+    lastname: string;
+    email: string | null;
+    birth_date: string | null;
+    care_level: number | null;
+    clinical_profile?: { image_url?: string } | null;
+    count: number;
+  }[];
   /** Revenue this month (paid invoices, cents) */
   revenueThisMonth: number;
   /** Revenue previous month (paid invoices, cents) — used for % delta display */
