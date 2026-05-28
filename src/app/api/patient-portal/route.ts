@@ -59,9 +59,11 @@ export async function GET() {
       where: { patient_id: patientRow.id },
       include: {
         category: true,
-        owner: { select: { id: true, display_name: true, email: true, role: true, image: true } },
+        owner: {
+          select: { id: true, display_name: true, email: true, role: true, image: true, specialty: true },
+        },
         treating_physician: {
-          select: { id: true, display_name: true, email: true, role: true, image: true },
+          select: { id: true, display_name: true, email: true, role: true, image: true, specialty: true },
         },
       },
       orderBy: { start: "desc" },

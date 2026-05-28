@@ -11,6 +11,7 @@ export type OwnerUserSummary = {
   email: string;
   display_name?: string | null;
   image?: string | null;
+  specialty?: string | null;
 };
 
 /**
@@ -24,6 +25,7 @@ export function useOwnerUserSummaries(
     email?: string | null;
     display_name?: string | null;
     image?: string | null;
+    specialty?: string | null;
   } | null
 ) {
   const { user: authUser } = useAuth();
@@ -43,6 +45,7 @@ export function useOwnerUserSummaries(
       email: currentUser.email,
       display_name: currentUser.display_name ?? null,
       image: currentUser.image ?? null,
+      specialty: currentUser.specialty ?? null,
     };
   }, [currentUser]);
 
@@ -51,7 +54,13 @@ export function useOwnerUserSummaries(
       queryKey: queryKeys.users.search(id),
       queryFn: async (): Promise<OwnerUserSummary | null> => {
         const res = await apiClient<{
-          users: { id: string; email: string; display_name?: string | null; image?: string | null }[];
+          users: {
+            id: string;
+            email: string;
+            display_name?: string | null;
+            image?: string | null;
+            specialty?: string | null;
+          }[];
         }>(`/api/users/search?query=${encodeURIComponent(id)}`);
         const user = res.users?.find((u) => u.id === id);
         return user
@@ -60,6 +69,7 @@ export function useOwnerUserSummaries(
               email: user.email,
               display_name: user.display_name ?? null,
               image: user.image ?? null,
+              specialty: user.specialty ?? null,
             }
           : null;
       },

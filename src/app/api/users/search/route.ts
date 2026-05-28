@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
     if (isUUID) {
       users = await prisma.user.findMany({
         where: { id: searchQuery, email_verified: true },
-        select: { id: true, email: true, display_name: true, image: true },
+        select: { id: true, email: true, display_name: true, image: true, specialty: true },
         take: safeLimit,
       });
     } else {
@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
             { display_name: { contains: searchQuery, mode: "insensitive" } },
           ],
         },
-        select: { id: true, email: true, display_name: true, image: true },
+        select: { id: true, email: true, display_name: true, image: true, specialty: true },
         orderBy: [{ display_name: { sort: "asc", nulls: "last" } }, { email: "asc" }],
         take: safeLimit,
       });

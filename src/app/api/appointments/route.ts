@@ -24,8 +24,12 @@ export const dynamic = "force-dynamic";
 /** Patient callers: same joins as GET /api/patient-portal for RBAC-safe staff labels on dashboard cards. */
 const PATIENT_APPOINTMENT_INCLUDE = {
   category: true,
-  owner: { select: { id: true, display_name: true, email: true, role: true, image: true } },
-  treating_physician: { select: { id: true, display_name: true, email: true, role: true, image: true } },
+  owner: {
+    select: { id: true, display_name: true, email: true, role: true, image: true, specialty: true },
+  },
+  treating_physician: {
+    select: { id: true, display_name: true, email: true, role: true, image: true, specialty: true },
+  },
 } as const;
 
 export async function GET(req: NextRequest) {

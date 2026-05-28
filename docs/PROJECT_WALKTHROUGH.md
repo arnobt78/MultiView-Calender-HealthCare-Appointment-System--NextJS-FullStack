@@ -2,6 +2,19 @@
 
 ## Latest Audit Update (2026-05-28)
 
+- Appointment card variant parity hardening completed:
+  - `list` keeps inline identity rows for full-width dashboard cards.
+  - `month-panel` + `popover` keep stacked identity rows (label line + avatar/name/email block).
+- Patient demographic badge rollout in appointment cards:
+  - Reuses shared `PatientAgeGlassBadge` and a new shared `PatientCareTierGlassBadge`.
+  - `list` renders age + care tier badges inline on the Client row (wraps when narrow).
+  - `month-panel` + `popover` render demographics on a second line under Client name/email (same pattern as doctor specialty).
+- Doctor identity parity update:
+  - Stacked rows now render `DoctorSpecialtyBadge` (owner/treating/primary).
+  - Identity email rendering normalized to bracket format `(email)` across list + stacked variants.
+- Data contract parity for identity metadata:
+  - `specialty` now flows through patient-facing appointment includes, serializers, prefetch, and owner summary hook.
+- Added component UI coverage for `AppointmentCard` variant contract + identity specialty/email rendering.
 - Insights chart no-flash loading rollout is complete.
 - Chart wrappers no longer swap plot area to generic loading skeletons.
 - `AnalyticsChartPlotShell` now provides shared in-plot loading pulse overlay while keeping chart layout mounted.

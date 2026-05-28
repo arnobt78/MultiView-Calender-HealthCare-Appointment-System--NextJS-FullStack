@@ -24,7 +24,8 @@ export function AppointmentCardMetaRow({
     <span
       className={cn(
         "inline-flex min-w-0 gap-x-1.5 gap-y-0 text-xs text-gray-600",
-        wrap ? "flex-wrap items-start" : "items-center",
+        "items-center",
+        wrap && "flex-wrap",
         className
       )}
     >

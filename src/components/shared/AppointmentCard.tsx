@@ -20,6 +20,9 @@ import { AppointmentCardMetaRow } from "@/components/shared/AppointmentCardMetaR
 import { AppointmentListColorBar } from "@/components/shared/AppointmentListColorBar";
 import { AppointmentTitleRow } from "@/components/shared/AppointmentTitleRow";
 import { DoctorAvatar } from "@/components/shared/doctor-display/DoctorAvatar";
+import { DoctorSpecialtyBadge } from "@/components/shared/doctor-display/DoctorSpecialtyBadge";
+import { PatientAgeGlassBadge } from "@/components/shared/person-display/PatientAgeGlassBadge";
+import { PatientCareTierGlassBadge } from "@/components/shared/person-display/PatientCareTierGlassBadge";
 import { PatientPortraitAvatar } from "@/components/shared/person-display/PatientPortraitAvatar";
 import { CategoryInlineLink } from "@/components/shared/CategoryInlineLink";
 import {
@@ -50,6 +53,7 @@ import { appointmentCardMetaGroupClass, type AppointmentCardVariant } from "@/li
 import { PortalStaffLink } from "@/components/shared/PortalStaffLink";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { getPublicUrl } from "@/lib/vercelBlob";
+import { patientAgeYears } from "@/lib/patient-age";
 import type { AppointmentAssignee, Patient } from "@/types/types";
 
 export type AppointmentCardProps = {
@@ -86,11 +90,68 @@ type MetaIdentityBlockProps = {
   nameNode: ReactNode;
   nameFallback: string;
   email?: string | null;
+  /** Doctor specialty pill below name/email (popover + month-panel). */
+  specialty?: string | null;
+  /** Optional second line under name/email — client age + care tier badges. */
+  badgeRow?: ReactNode;
   avatarNode?: ReactNode;
 };
 
+type InlineIdentityValueProps = {
+  avatarNode?: ReactNode;
+  nameNode: ReactNode;
+  nameFallback: string;
+  email?: string | null;
+  /** Inline after email on list rows — patient age + care tier. */
+  demographicBadges?: ReactNode;
+  specialty?: string | null;
+};
+
+type InlineIdentityMetaRowProps = {
+  icon: ReactNode;
+  label: string;
+  children: ReactNode;
+};
+
+type PatientDemographicBadgesRowProps = {
+  age: number | null;
+  careLevel: number | null | undefined;
+  compact?: boolean;
+};
+
+function formatBracketEmail(email?: string | null): string | null {
+  const trimmed = email?.trim();
+  if (!trimmed) return null;
+  return `(${trimmed})`;
+}
+
+/** List-view identity row: icon + label + value on one baseline (wraps on narrow widths). */
+function InlineIdentityMetaRow({ icon, label, children }: InlineIdentityMetaRowProps) {
+  return (
+    <div className="flex min-w-0 w-full flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-gray-600">
+      <span className="inline-flex shrink-0 items-center text-gray-400">{icon}</span>
+      <span className="shrink-0 text-gray-400">{label}</span>
+      {children}
+    </div>
+  );
+}
+
+/** Reusable patient profile badges (age + care tier) used by list/popover/month variants. */
+function PatientDemographicBadgesRow({
+  age,
+  careLevel,
+  compact = false,
+}: PatientDemographicBadgesRowProps) {
+  return (
+    <span className="inline-flex min-w-0 flex-wrap items-center gap-1.5">
+      {age != null ? <PatientAgeGlassBadge age={age} compact={compact} /> : null}
+      <PatientCareTierGlassBadge careLevel={careLevel} compact={compact} />
+    </span>
+  );
+}
+
 /**
- * Popover-only identity row (label + avatar + name/email) kept outside render scope
+ * Popover / month-panel identity row (label + avatar + name/email) kept outside render scope
  * so eslint static-components rule passes and row state remains stable.
  */
 function MetaIdentityBlock({
@@ -99,8 +160,16 @@ function MetaIdentityBlock({
   nameNode,
   nameFallback,
   email,
+  specialty,
+  badgeRow,
   avatarNode,
 }: MetaIdentityBlockProps) {
+  const bracketEmail = formatBracketEmail(email);
+  const secondaryRow =
+    badgeRow ??
+    (specialty?.trim() ? (
+      <DoctorSpecialtyBadge specialty={specialty} className="self-start" />
+    ) : null);
   return (
     <div className="flex min-w-0 flex-col gap-1">
       <span className="inline-flex items-center gap-1.5 text-xs text-gray-400">
@@ -117,12 +186,51 @@ function MetaIdentityBlock({
             className="shrink-0"
           />
         )}
-        <div className="flex min-w-0 flex-1 flex-col">
-          <span className="min-w-0 truncate text-xs font-medium text-gray-700">{nameNode}</span>
-          <span className="min-w-0 truncate text-xs text-gray-500">{email || "—"}</span>
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span className="inline-flex min-w-0 items-baseline gap-1 text-xs font-medium text-gray-700">
+            <span className="min-w-0 truncate">{nameNode}</span>
+            <span className="min-w-0 truncate text-xs font-normal text-gray-500">
+              {bracketEmail || "(—)"}
+            </span>
+          </span>
+          {secondaryRow}
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * List-row identity value (avatar + name + email) that wraps inline on narrow widths.
+ * Keeps one reusable rendering path for client/owner/treating/primary rows.
+ */
+function InlineIdentityValue({
+  avatarNode,
+  nameNode,
+  nameFallback,
+  email,
+  demographicBadges,
+  specialty,
+}: InlineIdentityValueProps) {
+  const bracketEmail = formatBracketEmail(email);
+  return (
+    <span className="inline-flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5">
+      {avatarNode ?? (
+        <UserAvatar
+          src={null}
+          alt={nameFallback}
+          fallbackText={nameFallback}
+          sizeClassName="h-6 w-6"
+          className="shrink-0"
+        />
+      )}
+      <span className="min-w-0 text-xs font-medium text-gray-700">{nameNode}</span>
+      <span className="min-w-0 truncate text-xs text-gray-500">{bracketEmail || "(—)"}</span>
+      {demographicBadges}
+      {specialty?.trim() ? (
+        <DoctorSpecialtyBadge specialty={specialty} className="self-center" />
+      ) : null}
+    </span>
   );
 }
 
@@ -164,7 +272,9 @@ function AppointmentCardMeta({
   const showEmbeddedStaff = Boolean(portalOwner);
   const isPatientViewer = user?.role === "patient";
   const showStaffForDashboard = !isPatientViewer;
-  const useStructuredPeopleRows = variant === "popover";
+  const useInlinePeopleRows = variant === "list";
+  const useStructuredPeopleRows =
+    variant === "popover" || variant === "month-panel";
   const TextWrap = wrapValues ? WrappingText : TruncatedText;
   const ownerSummary = ownerUsers.find((row) => row.id === calendarOwnerId);
   const treatingSummary = ownerUsers.find((row) => row.id === treatingPhysicianId);
@@ -214,6 +324,16 @@ function AppointmentCardMeta({
     (primaryDoctorLabel?.includes("@")
       ? primaryDoctorLabel.replace(/^.*\((.*)\).*$/, "$1").trim()
       : null);
+  const ownerSpecialty =
+    portalOwner?.specialty?.trim() || ownerSummary?.specialty?.trim() || null;
+  const treatingSpecialty =
+    portalTreating?.specialty?.trim() || treatingSummary?.specialty?.trim() || null;
+  const primarySpecialty =
+    appointment.patient_data?.primary_doctor_specialty?.trim() ||
+    primarySummary?.specialty?.trim() ||
+    null;
+  const patientAge = patientAgeYears(appointment.patient_data?.birth_date ?? null);
+  const patientCareLevel = appointment.patient_data?.care_level ?? null;
 
   return (
     <>
@@ -257,6 +377,13 @@ function AppointmentCardMeta({
             }
             nameFallback={patientName}
             email={patientEmail}
+            badgeRow={
+              <PatientDemographicBadgesRow
+                age={patientAge}
+                careLevel={patientCareLevel}
+                compact
+              />
+            }
             avatarNode={
               appointment.patient_data ? (
                 <PatientPortraitAvatar
@@ -267,6 +394,42 @@ function AppointmentCardMeta({
               ) : undefined
             }
           />
+        ) : useInlinePeopleRows ? (
+          <InlineIdentityMetaRow icon={<UserRound className="h-3.5 w-3.5" />} label="Client:">
+            <InlineIdentityValue
+              nameNode={
+                patientId ? (
+                  <RoleEntityLink
+                    kind="patient"
+                    id={patientId}
+                    label={patientName}
+                    wrapLabel={false}
+                    className="text-xs font-medium"
+                  />
+                ) : (
+                  <span className="text-xs font-medium text-gray-700">{patientName}</span>
+                )
+              }
+              nameFallback={patientName}
+              email={patientEmail}
+              demographicBadges={
+                <PatientDemographicBadgesRow
+                  age={patientAge}
+                  careLevel={patientCareLevel}
+                  compact
+                />
+              }
+              avatarNode={
+                appointment.patient_data ? (
+                  <PatientPortraitAvatar
+                    patient={appointment.patient_data}
+                    sizeClassName="h-6 w-6"
+                    className="shrink-0"
+                  />
+                ) : undefined
+              }
+            />
+          </InlineIdentityMetaRow>
         ) : (
           <AppointmentCardMetaRow icon={<UserRound className="h-3.5 w-3.5" />} label="Client:">
             {patientId ? (
@@ -282,14 +445,20 @@ function AppointmentCardMeta({
             )}
           </AppointmentCardMetaRow>
         )}
+      </div>
 
+      <div className={clsx(appointmentCardMetaGroupClass, "text-gray-700")}>
         {appointment.category_data ? (
-          <AppointmentCardMetaRow icon={<Tags className="h-3.5 w-3.5" />} label="Category:">
+          <AppointmentCardMetaRow
+            icon={<Tags className="h-3.5 w-3.5" />}
+            label="Category:"
+            wrap={useInlinePeopleRows || wrapValues}
+          >
             <CategoryInlineLink
               categoryId={appointment.category_data.id}
               label={appointment.category_data.label}
               color={appointment.category_data.color}
-              wrapLabel={wrapValues}
+              wrapLabel={useInlinePeopleRows || wrapValues}
             />
           </AppointmentCardMetaRow>
         ) : null}
@@ -323,6 +492,7 @@ function AppointmentCardMeta({
             }
             nameFallback={ownerName}
             email={ownerEmail}
+            specialty={ownerSpecialty}
             avatarNode={
               <DoctorAvatar
                 doctor={{
@@ -335,6 +505,33 @@ function AppointmentCardMeta({
               />
             }
           />
+        ) : useInlinePeopleRows ? (
+          <InlineIdentityMetaRow icon={<UserCog className="h-3.5 w-3.5" />} label="Calendar owner/creator:">
+            <InlineIdentityValue
+              nameNode={
+                <PortalStaffLink
+                  staffUserId={portalOwner.id}
+                  staffRole={portalOwner.role}
+                  label={ownerName}
+                  wrapLabel={false}
+                />
+              }
+              nameFallback={ownerName}
+              email={ownerEmail}
+              specialty={ownerSpecialty}
+              avatarNode={
+                <DoctorAvatar
+                  doctor={{
+                    id: portalOwner.id,
+                    display_name: portalOwner.display_name,
+                    email: portalOwner.email,
+                    image: portalOwner.image ?? ownerSummary?.image ?? null,
+                  }}
+                  sizeClassName="h-6 w-6"
+                />
+              }
+            />
+          </InlineIdentityMetaRow>
         ) : (
           <AppointmentCardMetaRow icon={<UserCog className="h-3.5 w-3.5" />} label="Calendar owner:">
             <PortalStaffLink
@@ -362,6 +559,7 @@ function AppointmentCardMeta({
             }
             nameFallback={treatingName}
             email={treatingEmail}
+            specialty={treatingSpecialty}
             avatarNode={
               <DoctorAvatar
                 doctor={{
@@ -374,6 +572,33 @@ function AppointmentCardMeta({
               />
             }
           />
+        ) : useInlinePeopleRows ? (
+          <InlineIdentityMetaRow icon={<Stethoscope className="h-3.5 w-3.5" />} label="Treating physician:">
+            <InlineIdentityValue
+              nameNode={
+                <PortalStaffLink
+                  staffUserId={portalTreating.id}
+                  staffRole={portalTreating.role}
+                  label={treatingName}
+                  wrapLabel={false}
+                />
+              }
+              nameFallback={treatingName}
+              email={treatingEmail}
+              specialty={treatingSpecialty}
+              avatarNode={
+                <DoctorAvatar
+                  doctor={{
+                    id: portalTreating.id,
+                    display_name: portalTreating.display_name,
+                    email: portalTreating.email,
+                    image: portalTreating.image ?? treatingSummary?.image ?? null,
+                  }}
+                  sizeClassName="h-6 w-6"
+                />
+              }
+            />
+          </InlineIdentityMetaRow>
         ) : (
           <AppointmentCardMetaRow icon={<Stethoscope className="h-3.5 w-3.5" />} label="Treating physician:">
             <PortalStaffLink
@@ -402,6 +627,7 @@ function AppointmentCardMeta({
             }
             nameFallback={ownerName}
             email={ownerEmail}
+            specialty={ownerSpecialty}
             avatarNode={
               <DoctorAvatar
                 doctor={{
@@ -414,6 +640,34 @@ function AppointmentCardMeta({
               />
             }
           />
+        ) : useInlinePeopleRows ? (
+          <InlineIdentityMetaRow icon={<UserCog className="h-3.5 w-3.5" />} label="Calendar owner/creator:">
+            <InlineIdentityValue
+              nameNode={
+                <RoleEntityLink
+                  kind="doctor"
+                  id={calendarOwnerId}
+                  label={ownerName}
+                  wrapLabel={false}
+                  className="text-xs font-medium"
+                />
+              }
+              nameFallback={ownerName}
+              email={ownerEmail}
+              specialty={ownerSpecialty}
+              avatarNode={
+                <DoctorAvatar
+                  doctor={{
+                    id: calendarOwnerId,
+                    display_name: ownerSummary?.display_name ?? null,
+                    email: ownerEmail ?? undefined,
+                    image: ownerSummary?.image ?? null,
+                  }}
+                  sizeClassName="h-6 w-6"
+                />
+              }
+            />
+          </InlineIdentityMetaRow>
         ) : (
           <AppointmentCardMetaRow icon={<UserCog className="h-3.5 w-3.5" />} label="Calendar owner:">
             <RoleEntityLink kind="doctor" id={calendarOwnerId} label={ownerLabel} wrapLabel={wrapValues} className="text-xs font-medium" />
@@ -437,6 +691,7 @@ function AppointmentCardMeta({
             }
             nameFallback={treatingName}
             email={treatingEmail}
+            specialty={treatingSpecialty}
             avatarNode={
               <DoctorAvatar
                 doctor={{
@@ -449,6 +704,34 @@ function AppointmentCardMeta({
               />
             }
           />
+        ) : useInlinePeopleRows ? (
+          <InlineIdentityMetaRow icon={<Stethoscope className="h-3.5 w-3.5" />} label="Treating physician:">
+            <InlineIdentityValue
+              nameNode={
+                <RoleEntityLink
+                  kind="doctor"
+                  id={treatingPhysicianId}
+                  label={treatingName}
+                  wrapLabel={false}
+                  className="text-xs font-medium"
+                />
+              }
+              nameFallback={treatingName}
+              email={treatingEmail}
+              specialty={treatingSpecialty}
+              avatarNode={
+                <DoctorAvatar
+                  doctor={{
+                    id: treatingPhysicianId,
+                    display_name: treatingSummary?.display_name ?? null,
+                    email: treatingEmail ?? undefined,
+                    image: treatingSummary?.image ?? null,
+                  }}
+                  sizeClassName="h-6 w-6"
+                />
+              }
+            />
+          </InlineIdentityMetaRow>
         ) : (
           <AppointmentCardMetaRow icon={<Stethoscope className="h-3.5 w-3.5" />} label="Treating physician:">
             <RoleEntityLink
@@ -487,6 +770,7 @@ function AppointmentCardMeta({
             }
             nameFallback={primaryName}
             email={primaryEmail}
+            specialty={primarySpecialty}
             avatarNode={
               <DoctorAvatar
                 doctor={{
@@ -502,6 +786,46 @@ function AppointmentCardMeta({
               />
             }
           />
+        ) : useInlinePeopleRows ? (
+          <InlineIdentityMetaRow icon={<Stethoscope className="h-3.5 w-3.5" />} label="Primary doctor:">
+            <InlineIdentityValue
+              nameNode={
+                isPatientViewer ? (
+                  <PortalStaffLink
+                    staffUserId={primaryDoctorId}
+                    staffRole="doctor"
+                    label={primaryName}
+                    wrapLabel={false}
+                  />
+                ) : (
+                  <RoleEntityLink
+                    kind="doctor"
+                    id={primaryDoctorId}
+                    label={primaryName}
+                    wrapLabel={false}
+                    className="text-xs font-medium"
+                  />
+                )
+              }
+              nameFallback={primaryName}
+              email={primaryEmail}
+              specialty={primarySpecialty}
+              avatarNode={
+                <DoctorAvatar
+                  doctor={{
+                    id: primaryDoctorId,
+                    display_name:
+                      appointment.patient_data?.primary_doctor_display ??
+                      primarySummary?.display_name ??
+                      null,
+                    email: primaryEmail ?? undefined,
+                    image: primarySummary?.image ?? null,
+                  }}
+                  sizeClassName="h-6 w-6"
+                />
+              }
+            />
+          </InlineIdentityMetaRow>
         ) : (
           <AppointmentCardMetaRow icon={<Stethoscope className="h-3.5 w-3.5" />} label="Primary doctor:">
             {isPatientViewer ? (
