@@ -23,14 +23,14 @@ export function AppointmentCardMetaRow({
   return (
     <span
       className={cn(
-        "inline-flex min-w-0 gap-1.5 text-xs text-gray-600",
+        "inline-flex min-w-0 gap-x-1.5 gap-y-0 text-xs text-gray-600",
         wrap ? "flex-wrap items-start" : "items-center",
         className
       )}
     >
       <span className="inline-flex shrink-0 items-center text-gray-400">{icon}</span>
       {label ? <span className="shrink-0 text-gray-400">{label}</span> : null}
-      <span className={cn("min-w-0", wrap && "break-words [overflow-wrap:anywhere]")}>
+      <span className={cn("min-w-0", wrap && "wrap-anywhere")}>
         {children}
       </span>
     </span>

@@ -19,6 +19,8 @@ import { AppointmentActionsMenu } from "@/components/shared/AppointmentActionsMe
 import { AppointmentCardMetaRow } from "@/components/shared/AppointmentCardMetaRow";
 import { AppointmentListColorBar } from "@/components/shared/AppointmentListColorBar";
 import { AppointmentTitleRow } from "@/components/shared/AppointmentTitleRow";
+import { DoctorAvatar } from "@/components/shared/doctor-display/DoctorAvatar";
+import { PatientPortraitAvatar } from "@/components/shared/person-display/PatientPortraitAvatar";
 import { CategoryInlineLink } from "@/components/shared/CategoryInlineLink";
 import {
   CalendarDays,
@@ -46,6 +48,7 @@ import {
 import type { OwnerUserSummary } from "@/hooks/useOwnerUserSummaries";
 import { appointmentCardMetaGroupClass, type AppointmentCardVariant } from "@/lib/appointment-card";
 import { PortalStaffLink } from "@/components/shared/PortalStaffLink";
+import { UserAvatar } from "@/components/shared/UserAvatar";
 import { getPublicUrl } from "@/lib/vercelBlob";
 import type { AppointmentAssignee, Patient } from "@/types/types";
 
@@ -77,14 +80,64 @@ export type AppointmentCardProps = {
   onTriggerClick?: (e: React.MouseEvent) => void;
 };
 
+type MetaIdentityBlockProps = {
+  icon: ReactNode;
+  label: string;
+  nameNode: ReactNode;
+  nameFallback: string;
+  email?: string | null;
+  avatarNode?: ReactNode;
+};
+
+/**
+ * Popover-only identity row (label + avatar + name/email) kept outside render scope
+ * so eslint static-components rule passes and row state remains stable.
+ */
+function MetaIdentityBlock({
+  icon,
+  label,
+  nameNode,
+  nameFallback,
+  email,
+  avatarNode,
+}: MetaIdentityBlockProps) {
+  return (
+    <div className="flex min-w-0 flex-col gap-1">
+      <span className="inline-flex items-center gap-1.5 text-xs text-gray-400">
+        <span className="inline-flex shrink-0 items-center text-gray-400">{icon}</span>
+        <span>{label}:</span>
+      </span>
+      <div className="flex min-w-0 items-center gap-2 pl-5">
+        {avatarNode ?? (
+          <UserAvatar
+            src={null}
+            alt={nameFallback}
+            fallbackText={nameFallback}
+            sizeClassName="h-7 w-7"
+            className="shrink-0"
+          />
+        )}
+        <div className="flex min-w-0 flex-1 flex-col">
+          <span className="min-w-0 truncate text-xs font-medium text-gray-700">{nameNode}</span>
+          <span className="min-w-0 truncate text-xs text-gray-500">{email || "—"}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AppointmentCardMeta({
   appointment,
   model,
   wrapValues,
+  variant,
+  ownerUsers,
 }: {
   appointment: FullAppointment;
   model: ReturnType<typeof useAppointmentCardModel>;
   wrapValues: boolean;
+  variant: AppointmentCardVariant;
+  ownerUsers: OwnerUserSummary[];
 }) {
   const {
     isDone,
@@ -111,7 +164,56 @@ function AppointmentCardMeta({
   const showEmbeddedStaff = Boolean(portalOwner);
   const isPatientViewer = user?.role === "patient";
   const showStaffForDashboard = !isPatientViewer;
+  const useStructuredPeopleRows = variant === "popover";
   const TextWrap = wrapValues ? WrappingText : TruncatedText;
+  const ownerSummary = ownerUsers.find((row) => row.id === calendarOwnerId);
+  const treatingSummary = ownerUsers.find((row) => row.id === treatingPhysicianId);
+  const primarySummary = primaryDoctorId
+    ? ownerUsers.find((row) => row.id === primaryDoctorId)
+    : undefined;
+
+  const patientName = patientLabel?.trim() || "--";
+  const patientEmail = appointment.patient_data?.email?.trim() || null;
+
+  const ownerName =
+    portalOwner?.display_name?.trim() ||
+    ownerSummary?.display_name?.trim() ||
+    ownerLabel?.split("(")?.[0]?.trim() ||
+    ownerSummary?.email?.trim() ||
+    portalOwner?.email?.trim() ||
+    "--";
+  const ownerEmail =
+    portalOwner?.email?.trim() ||
+    ownerSummary?.email?.trim() ||
+    (ownerLabel.includes("@") ? ownerLabel.replace(/^.*\((.*)\).*$/, "$1").trim() : null);
+
+  const treatingName =
+    portalTreating?.display_name?.trim() ||
+    treatingSummary?.display_name?.trim() ||
+    treatingPhysicianLabel?.split("(")?.[0]?.trim() ||
+    portalTreating?.email?.trim() ||
+    treatingSummary?.email?.trim() ||
+    "--";
+  const treatingEmail =
+    portalTreating?.email?.trim() ||
+    treatingSummary?.email?.trim() ||
+    (treatingPhysicianLabel.includes("@")
+      ? treatingPhysicianLabel.replace(/^.*\((.*)\).*$/, "$1").trim()
+      : null);
+
+  const primaryName =
+    appointment.patient_data?.primary_doctor_display?.trim() ||
+    primarySummary?.display_name?.trim() ||
+    primaryDoctorLabel?.split("(")?.[0]?.trim() ||
+    appointment.patient_data?.primary_doctor_email?.trim() ||
+    primarySummary?.email?.trim() ||
+    "--";
+  const primaryEmail =
+    appointment.patient_data?.primary_doctor_email?.trim() ||
+    primarySummary?.email?.trim() ||
+    (primaryDoctorLabel?.includes("@")
+      ? primaryDoctorLabel.replace(/^.*\((.*)\).*$/, "$1").trim()
+      : null);
 
   return (
     <>
@@ -136,19 +238,50 @@ function AppointmentCardMeta({
       </div>
 
       <div className={clsx(appointmentCardMetaGroupClass, "text-gray-700")}>
-        <AppointmentCardMetaRow icon={<UserRound className="h-3.5 w-3.5" />} label="Client:">
-          {patientId ? (
-            <RoleEntityLink
-              kind="patient"
-              id={patientId}
-              label={patientLabel}
-              wrapLabel={wrapValues}
-              className="text-xs font-medium"
-            />
-          ) : (
-            <span className="text-xs font-medium text-gray-700">{patientLabel}</span>
-          )}
-        </AppointmentCardMetaRow>
+        {useStructuredPeopleRows ? (
+          <MetaIdentityBlock
+            icon={<UserRound className="h-3.5 w-3.5" />}
+            label="Client"
+            nameNode={
+              patientId ? (
+                <RoleEntityLink
+                  kind="patient"
+                  id={patientId}
+                  label={patientName}
+                  wrapLabel={false}
+                  className="text-xs font-medium"
+                />
+              ) : (
+                <span className="text-xs font-medium text-gray-700">{patientName}</span>
+              )
+            }
+            nameFallback={patientName}
+            email={patientEmail}
+            avatarNode={
+              appointment.patient_data ? (
+                <PatientPortraitAvatar
+                  patient={appointment.patient_data}
+                  sizeClassName="h-7 w-7"
+                  className="shrink-0"
+                />
+              ) : undefined
+            }
+          />
+        ) : (
+          <AppointmentCardMetaRow icon={<UserRound className="h-3.5 w-3.5" />} label="Client:">
+            {patientId ? (
+              <RoleEntityLink
+                kind="patient"
+                id={patientId}
+                label={patientLabel}
+                wrapLabel={wrapValues}
+                className="text-xs font-medium"
+              />
+            ) : (
+              <span className="text-xs font-medium text-gray-700">{patientLabel}</span>
+            )}
+          </AppointmentCardMetaRow>
+        )}
 
         {appointment.category_data ? (
           <AppointmentCardMetaRow icon={<Tags className="h-3.5 w-3.5" />} label="Category:">
@@ -176,64 +309,219 @@ function AppointmentCardMeta({
       </div>
 
       {showEmbeddedStaff && calendarOwnerId && portalOwner ? (
-        <AppointmentCardMetaRow icon={<UserCog className="h-3.5 w-3.5" />} label="Calendar owner:">
-          <PortalStaffLink
-            staffUserId={portalOwner.id}
-            staffRole={portalOwner.role}
-            label={ownerLabel}
-            wrapLabel={wrapValues}
+        useStructuredPeopleRows ? (
+          <MetaIdentityBlock
+            icon={<UserCog className="h-3.5 w-3.5" />}
+            label="Calendar owner"
+            nameNode={
+              <PortalStaffLink
+                staffUserId={portalOwner.id}
+                staffRole={portalOwner.role}
+                label={ownerName}
+                wrapLabel={false}
+              />
+            }
+            nameFallback={ownerName}
+            email={ownerEmail}
+            avatarNode={
+              <DoctorAvatar
+                doctor={{
+                  id: portalOwner.id,
+                  display_name: portalOwner.display_name,
+                  email: portalOwner.email,
+                  image: portalOwner.image ?? ownerSummary?.image ?? null,
+                }}
+                sizeClassName="h-7 w-7"
+              />
+            }
           />
-        </AppointmentCardMetaRow>
+        ) : (
+          <AppointmentCardMetaRow icon={<UserCog className="h-3.5 w-3.5" />} label="Calendar owner:">
+            <PortalStaffLink
+              staffUserId={portalOwner.id}
+              staffRole={portalOwner.role}
+              label={ownerLabel}
+              wrapLabel={wrapValues}
+            />
+          </AppointmentCardMetaRow>
+        )
       ) : null}
 
       {showEmbeddedStaff && treatingDiffersFromOwner && portalTreating ? (
-        <AppointmentCardMetaRow icon={<Stethoscope className="h-3.5 w-3.5" />} label="Treating physician:">
-          <PortalStaffLink
-            staffUserId={portalTreating.id}
-            staffRole={portalTreating.role}
-            label={treatingPhysicianLabel}
-            wrapLabel={wrapValues}
+        useStructuredPeopleRows ? (
+          <MetaIdentityBlock
+            icon={<Stethoscope className="h-3.5 w-3.5" />}
+            label="Treating physician"
+            nameNode={
+              <PortalStaffLink
+                staffUserId={portalTreating.id}
+                staffRole={portalTreating.role}
+                label={treatingName}
+                wrapLabel={false}
+              />
+            }
+            nameFallback={treatingName}
+            email={treatingEmail}
+            avatarNode={
+              <DoctorAvatar
+                doctor={{
+                  id: portalTreating.id,
+                  display_name: portalTreating.display_name,
+                  email: portalTreating.email,
+                  image: portalTreating.image ?? treatingSummary?.image ?? null,
+                }}
+                sizeClassName="h-7 w-7"
+              />
+            }
           />
-        </AppointmentCardMetaRow>
+        ) : (
+          <AppointmentCardMetaRow icon={<Stethoscope className="h-3.5 w-3.5" />} label="Treating physician:">
+            <PortalStaffLink
+              staffUserId={portalTreating.id}
+              staffRole={portalTreating.role}
+              label={treatingPhysicianLabel}
+              wrapLabel={wrapValues}
+            />
+          </AppointmentCardMetaRow>
+        )
       ) : null}
 
       {showStaffForDashboard && calendarOwnerId ? (
-        <AppointmentCardMetaRow icon={<UserCog className="h-3.5 w-3.5" />} label="Calendar owner:">
-          <RoleEntityLink kind="doctor" id={calendarOwnerId} label={ownerLabel} wrapLabel={wrapValues} className="text-xs font-medium" />
-        </AppointmentCardMetaRow>
+        useStructuredPeopleRows ? (
+          <MetaIdentityBlock
+            icon={<UserCog className="h-3.5 w-3.5" />}
+            label="Calendar owner"
+            nameNode={
+              <RoleEntityLink
+                kind="doctor"
+                id={calendarOwnerId}
+                label={ownerName}
+                wrapLabel={false}
+                className="text-xs font-medium"
+              />
+            }
+            nameFallback={ownerName}
+            email={ownerEmail}
+            avatarNode={
+              <DoctorAvatar
+                doctor={{
+                  id: calendarOwnerId,
+                  display_name: ownerSummary?.display_name ?? null,
+                  email: ownerEmail ?? undefined,
+                  image: ownerSummary?.image ?? null,
+                }}
+                sizeClassName="h-7 w-7"
+              />
+            }
+          />
+        ) : (
+          <AppointmentCardMetaRow icon={<UserCog className="h-3.5 w-3.5" />} label="Calendar owner:">
+            <RoleEntityLink kind="doctor" id={calendarOwnerId} label={ownerLabel} wrapLabel={wrapValues} className="text-xs font-medium" />
+          </AppointmentCardMetaRow>
+        )
       ) : null}
 
       {showStaffForDashboard && treatingDiffersFromOwner ? (
-        <AppointmentCardMetaRow icon={<Stethoscope className="h-3.5 w-3.5" />} label="Treating physician:">
-          <RoleEntityLink
-            kind="doctor"
-            id={treatingPhysicianId}
-            label={treatingPhysicianLabel}
-            wrapLabel={wrapValues}
-            className="text-xs font-medium"
+        useStructuredPeopleRows ? (
+          <MetaIdentityBlock
+            icon={<Stethoscope className="h-3.5 w-3.5" />}
+            label="Treating physician"
+            nameNode={
+              <RoleEntityLink
+                kind="doctor"
+                id={treatingPhysicianId}
+                label={treatingName}
+                wrapLabel={false}
+                className="text-xs font-medium"
+              />
+            }
+            nameFallback={treatingName}
+            email={treatingEmail}
+            avatarNode={
+              <DoctorAvatar
+                doctor={{
+                  id: treatingPhysicianId,
+                  display_name: treatingSummary?.display_name ?? null,
+                  email: treatingEmail ?? undefined,
+                  image: treatingSummary?.image ?? null,
+                }}
+                sizeClassName="h-7 w-7"
+              />
+            }
           />
-        </AppointmentCardMetaRow>
-      ) : null}
-
-      {primaryDoctorId && primaryDoctorLabel ? (
-        <AppointmentCardMetaRow icon={<Stethoscope className="h-3.5 w-3.5" />} label="Primary doctor:">
-          {isPatientViewer ? (
-            <PortalStaffLink
-              staffUserId={primaryDoctorId}
-              staffRole="doctor"
-              label={primaryDoctorLabel}
-              wrapLabel={wrapValues}
-            />
-          ) : (
+        ) : (
+          <AppointmentCardMetaRow icon={<Stethoscope className="h-3.5 w-3.5" />} label="Treating physician:">
             <RoleEntityLink
               kind="doctor"
-              id={primaryDoctorId}
-              label={primaryDoctorLabel}
+              id={treatingPhysicianId}
+              label={treatingPhysicianLabel}
               wrapLabel={wrapValues}
               className="text-xs font-medium"
             />
-          )}
-        </AppointmentCardMetaRow>
+          </AppointmentCardMetaRow>
+        )
+      ) : null}
+
+      {primaryDoctorId && primaryDoctorLabel ? (
+        useStructuredPeopleRows ? (
+          <MetaIdentityBlock
+            icon={<Stethoscope className="h-3.5 w-3.5" />}
+            label="Primary doctor"
+            nameNode={
+              isPatientViewer ? (
+                <PortalStaffLink
+                  staffUserId={primaryDoctorId}
+                  staffRole="doctor"
+                  label={primaryName}
+                  wrapLabel={false}
+                />
+              ) : (
+                <RoleEntityLink
+                  kind="doctor"
+                  id={primaryDoctorId}
+                  label={primaryName}
+                  wrapLabel={false}
+                  className="text-xs font-medium"
+                />
+              )
+            }
+            nameFallback={primaryName}
+            email={primaryEmail}
+            avatarNode={
+              <DoctorAvatar
+                doctor={{
+                  id: primaryDoctorId,
+                  display_name:
+                    appointment.patient_data?.primary_doctor_display ??
+                    primarySummary?.display_name ??
+                    null,
+                  email: primaryEmail ?? undefined,
+                  image: primarySummary?.image ?? null,
+                }}
+                sizeClassName="h-7 w-7"
+              />
+            }
+          />
+        ) : (
+          <AppointmentCardMetaRow icon={<Stethoscope className="h-3.5 w-3.5" />} label="Primary doctor:">
+            {isPatientViewer ? (
+              <PortalStaffLink
+                staffUserId={primaryDoctorId}
+                staffRole="doctor"
+                label={primaryDoctorLabel}
+                wrapLabel={wrapValues}
+              />
+            ) : (
+              <RoleEntityLink
+                kind="doctor"
+                id={primaryDoctorId}
+                label={primaryDoctorLabel}
+                wrapLabel={wrapValues}
+                className="text-xs font-medium"
+              />
+            )}
+          </AppointmentCardMetaRow>
+        )
       ) : null}
 
       {referralLabel ? (
@@ -262,16 +550,11 @@ function AppointmentCardMeta({
       ) : null}
 
       {appointment.notes ? (
-        <div className="flex min-w-0 items-start gap-1.5">
-          <NotebookPen className="h-3.5 w-3.5 shrink-0 text-gray-400" />
-          <span className="shrink-0 text-xs text-gray-400">Note:</span>
-          <TextWrap
-            className={clsx("text-xs", isDone ? "text-gray-400" : "text-gray-600")}
-            title={appointment.notes}
-          >
+        <AppointmentCardMetaRow icon={<NotebookPen className="h-3.5 w-3.5" />} label="Note:" wrap={wrapValues}>
+          <TextWrap className={isDone ? "text-gray-400" : "text-gray-600"} title={appointment.notes}>
             {appointment.notes}
           </TextWrap>
-        </div>
+        </AppointmentCardMetaRow>
       ) : null}
 
       {appointment.attachments && appointment.attachments.length > 0 ? (
@@ -405,7 +688,13 @@ export function AppointmentCard({
 
   const body =
     density === "full" ? (
-      <AppointmentCardMeta appointment={appointment} model={model} wrapValues={wrapValues} />
+      <AppointmentCardMeta
+        appointment={appointment}
+        model={model}
+        wrapValues={wrapValues}
+        variant={variant}
+        ownerUsers={ownerUsers}
+      />
     ) : (
       compactMeta
     );

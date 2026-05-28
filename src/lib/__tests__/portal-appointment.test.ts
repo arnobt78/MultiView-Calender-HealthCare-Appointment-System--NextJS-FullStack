@@ -33,6 +33,7 @@ describe("mapPortalAppointmentsFromRows", () => {
           display_name: "Demo Doctor",
           email: "doc@test.com",
           role: "doctor",
+          image: null,
         },
       },
     ]);
@@ -66,12 +67,14 @@ describe("attachPortalStaffToFullAppointment", () => {
           display_name: "Demo Admin",
           email: "admin@test.com",
           role: "admin",
+          image: null,
         },
         treating_physician: {
           id: "u2",
           display_name: "Demo Doctor 2",
           email: "d2@test.com",
           role: "doctor",
+          image: null,
         },
       },
     ])[0];
@@ -141,6 +144,7 @@ describe("resolvePrimaryDoctorCardLabel", () => {
           display_name: "Demo Admin",
           email: "admin@test.com",
           role: "admin",
+          image: null,
         },
       },
     ])[0];
@@ -170,6 +174,7 @@ describe("portalAppointmentToFullAppointment", () => {
           display_name: "Owner",
           email: "o@test.com",
           role: "doctor",
+          image: null,
         },
       },
     ])[0];
@@ -187,6 +192,7 @@ describe("portal display labels", () => {
         display_name: "Demo Doctor",
         email: "d@test.com",
         role: "doctor",
+        image: null,
       })
     ).toBe("Demo Doctor (d@test.com)");
   });
@@ -210,6 +216,7 @@ describe("portalTreatingDisplayLabel", () => {
         display_name: null,
         email: "t2@test.com",
         role: "doctor",
+        image: null,
       })
     ).toBe("t2@test.com");
   });

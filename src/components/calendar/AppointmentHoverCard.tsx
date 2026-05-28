@@ -122,8 +122,8 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
         side="bottom"
         sideOffset={8}
         align="center"
-        // p-0 overflow-hidden: AppointmentCard popover variant owns all padding so SVG bar sits at true card edge:
-        className={`relative z-[60] overflow-hidden border border-gray-200 bg-white shadow-xl ${APPOINTMENT_CARD_POPOVER_WIDTH} ${APPOINTMENT_CARD_POPOVER_MAX_WIDTH}`}
+        // Remove default HoverCardContent padding layer so popover card renders flush.
+        className={`relative z-[60] overflow-hidden border border-gray-200 bg-white p-0 shadow-xl ${APPOINTMENT_CARD_POPOVER_WIDTH} ${APPOINTMENT_CARD_POPOVER_MAX_WIDTH}`}
       >
         <AppointmentCard
           variant="popover"

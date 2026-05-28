@@ -195,6 +195,7 @@ export type PortalAppointmentStaffUser = {
   display_name: string | null;
   email: string;
   role: string | null;
+  image?: string | null;
 };
 
 /** Prisma appointment row + optional `category` / `owner` / `treating_physician` includes for portal responses */
@@ -242,6 +243,7 @@ export function mapPortalAppointmentsFromRows(rows: PortalAppointmentIncludeRow[
             display_name: a.owner.display_name,
             email: a.owner.email,
             role: a.owner.role,
+            image: a.owner.image ?? null,
           }
         : undefined,
       treating_physician: a.treating_physician
@@ -250,6 +252,7 @@ export function mapPortalAppointmentsFromRows(rows: PortalAppointmentIncludeRow[
             display_name: a.treating_physician.display_name,
             email: a.treating_physician.email,
             role: a.treating_physician.role,
+            image: a.treating_physician.image ?? null,
           }
         : undefined,
     };
