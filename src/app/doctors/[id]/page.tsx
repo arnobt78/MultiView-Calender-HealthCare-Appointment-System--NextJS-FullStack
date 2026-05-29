@@ -81,7 +81,7 @@ export default async function PortalDoctorDetailPage({ params }: PageProps) {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
             <UserAvatar
               src={doc.image}
               fallbackText={(doc.display_name ?? doc.email).slice(0, 2)}

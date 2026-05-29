@@ -164,7 +164,7 @@ export default function TelehealthDashboard() {
             {loading ? (
               /* Skeleton rows match real row structure: time col + divider + content + action */
               Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-4 p-4 border rounded-2xl">
+                <div key={i} className="flex items-center gap-2 p-4 border rounded-2xl">
                   <div className="w-20 text-center shrink-0 space-y-1">
                     <Skeleton className="h-6 w-12 mx-auto rounded" />
                     <Skeleton className="h-3 w-8 mx-auto rounded" />
@@ -190,7 +190,7 @@ export default function TelehealthDashboard() {
                 return (
                   <div
                     key={appt.id}
-                    className={`flex items-center gap-4 p-4 rounded-2xl border transition-all hover:shadow-sm ${isCurrent ? 'border-primary shadow-sm bg-primary/5' : isPastAppt ? 'opacity-60 bg-muted/20' : 'bg-background hover:bg-muted/10'}`}
+                    className={`flex items-center gap-2 p-4 rounded-2xl border transition-all hover:shadow-sm ${isCurrent ? 'border-primary shadow-sm bg-primary/5' : isPastAppt ? 'opacity-60 bg-muted/20' : 'bg-background hover:bg-muted/10'}`}
                   >
                     <div className="w-20 text-center shrink-0">
                       <p className={`font-bold text-lg leading-tight ${isCurrent ? 'text-gray-700' : ''}`}>

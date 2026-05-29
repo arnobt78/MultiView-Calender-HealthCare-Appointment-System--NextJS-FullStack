@@ -5,6 +5,9 @@ import { generateToken } from "@/lib/auth";
 import { countTodayAppointmentsForLoginUser } from "@/lib/login-today-appointments";
 import { isAllowedDemoLogin } from "@/lib/demo-credentials";
 
+/** Per-request API handler (see api-route-dynamic.test.ts). */
+export const dynamic = "force-dynamic";
+
 export async function POST(req: NextRequest) {
   try {
     // Demo auth is opt-in: set ENABLE_DEMO_AUTH=true in .env to activate.

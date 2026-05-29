@@ -11,6 +11,8 @@ import { serializePatient } from "@/lib/serializers";
 import { patientDetailInclude, patientUserPick } from "@/lib/patient-api-include";
 import { redis } from "@/lib/redis";
 import { getUserRole, isPatientRole } from "@/lib/rbac";
+/** Per-request list/create — literal required by Next segment config (see api-route-dynamic.test.ts). */
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {

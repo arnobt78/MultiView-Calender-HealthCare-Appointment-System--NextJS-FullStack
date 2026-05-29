@@ -21,6 +21,8 @@ export type DoctorIdentityCellProps = {
   doctorId: string;
   name: string;
   email?: string | null;
+  /** Snapshot/API image — used before `doctorById` hydrates from `useUsers`. */
+  image?: string | null;
   specialty?: string | null;
   viewerRole: EntityRole;
   /** Enriched user row from `useUsers` when snapshot only has denormalized strings. */
@@ -39,6 +41,7 @@ export function DoctorIdentityCell({
   doctorId,
   name,
   email,
+  image,
   specialty,
   viewerRole,
   doctorById,
@@ -52,7 +55,7 @@ export function DoctorIdentityCell({
     id: doctorId,
     email: email ?? fromMap?.email ?? null,
     display_name: name.trim() || (fromMap?.display_name ?? null),
-    image: fromMap?.image ?? null,
+    image: image ?? fromMap?.image ?? null,
     specialty: specialty ?? fromMap?.specialty ?? null,
   };
 

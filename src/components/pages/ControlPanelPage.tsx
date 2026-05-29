@@ -202,7 +202,7 @@ export function PatientsTab() {
   if (activePatientId) {
     return (
       <div className="space-y-2 animate-in fade-in h-[calc(100vh-140px)]">
-        <div className="flex items-center gap-4 border-b pb-4">
+        <div className="flex items-center gap-2 border-b pb-4">
           <Button variant="ghost" size="sm" onClick={() => setActivePatient(null)}>
             ← Back to Patient List
           </Button>

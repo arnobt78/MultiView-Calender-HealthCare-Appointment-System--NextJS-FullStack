@@ -12,6 +12,9 @@ import { prisma } from "@/lib/prisma";
 import { generateCompletion } from "@/lib/ai-client";
 import { checkRateLimit } from "@/lib/rate-limit";
 
+/** Per-request API handler (see api-route-dynamic.test.ts). */
+export const dynamic = "force-dynamic";
+
 export async function POST(request: NextRequest) {
   try {
     const sessionUser = await getSessionUser();

@@ -72,6 +72,8 @@ import {
   type PatientFormDialogExtra,
 } from "@/lib/patient-form-clinical";
 import { useUsers } from "@/hooks/useUsers";
+import { useQueryClient } from "@tanstack/react-query";
+import { prefetchDoctorsDirectory } from "@/lib/prefetch-doctors-directory";
 import { PATIENT_CARE_LEVEL_STAGES, getPatientCareLevelLabel } from "@/lib/patient-care-level";
 import { patientDetailHref, type EntityRole } from "@/lib/entity-routes";
 
@@ -161,7 +163,8 @@ function PatientActions({
   const canMutate =
     variant === "control-panel" ||
     (!!lockedPrimaryDoctorId && patient.primary_doctor_id === lockedPrimaryDoctorId);
-  const useEditDialog = variant === "control-panel" && canMutate && onEdit != null;
+  /** List edit always uses glass dialog when parent passes `onEdit` (CP + doctor-portal roster). */
+  const useEditDialog = canMutate && onEdit != null;
 
   return (
     <>
@@ -182,26 +185,14 @@ function PatientActions({
               View
             </PrefetchingLink>
           </DropdownMenuItem>
-          {canMutate ? (
-            useEditDialog ? (
-              <DropdownMenuItem
-                className="flex items-center gap-2 cursor-pointer"
-                onSelect={() => onEdit(patient)}
-              >
-                <Pencil className="h-4 w-4" />
-                Edit
-              </DropdownMenuItem>
-            ) : (
-              <DropdownMenuItem asChild>
-                <PrefetchingLink
-                  href={`${detailHref}?mode=edit`}
-                  className="flex items-center gap-2 cursor-pointer"
-                >
-                  <Pencil className="h-4 w-4" />
-                  Edit
-                </PrefetchingLink>
-              </DropdownMenuItem>
-            )
+          {useEditDialog ? (
+            <DropdownMenuItem
+              className="flex items-center gap-2 cursor-pointer"
+              onSelect={() => onEdit(patient)}
+            >
+              <Pencil className="h-4 w-4" />
+              Edit
+            </DropdownMenuItem>
           ) : null}
           {variant === "control-panel" ? (
             <>
@@ -263,6 +254,7 @@ export function PatientManagementInner({
     isUpdating,
     deletePatient,
   } = usePatients();
+  const queryClient = useQueryClient();
   const [listUiMounted, setListUiMounted] = useState(false);
   useEffect(() => {
     const id = requestAnimationFrame(() => setListUiMounted(true));
@@ -331,16 +323,21 @@ export function PatientManagementInner({
 
   const openCreateDialog = () => {
     resetPatientDialog();
+    prefetchDoctorsDirectory(queryClient);
     setDialogOpen(true);
   };
 
-  const openEditDialog = useCallback((patient: Patient) => {
-    setDialogMode("edit");
-    setEditingPatient(patient);
-    setForm(patientToDialogFormState(patient));
-    setCreateExtra(patientToDialogExtraState(patient));
-    setDialogOpen(true);
-  }, []);
+  const openEditDialog = useCallback(
+    (patient: Patient) => {
+      prefetchDoctorsDirectory(queryClient);
+      setDialogMode("edit");
+      setEditingPatient(patient);
+      setForm(patientToDialogFormState(patient));
+      setCreateExtra(patientToDialogExtraState(patient));
+      setDialogOpen(true);
+    },
+    [queryClient]
+  );
 
   const handleDialogOpenChange = (open: boolean) => {
     setDialogOpen(open);
@@ -506,7 +503,7 @@ export function PatientManagementInner({
                 email: pat.email,
               })
             }
-            onEdit={variant === "control-panel" ? openEditDialog : undefined}
+            onEdit={openEditDialog}
           />
         </div>
       ),
@@ -716,20 +713,18 @@ export function PatientManagementInner({
           tableFrameClassName={skyGlassTableFrameClass}
         />
 
-        {!isDoctorPortal ? (
-          <PatientFormDialog
-            open={dialogOpen}
-            onOpenChange={handleDialogOpenChange}
-            mode={dialogMode}
-            readOnlyEmail={editingPatient?.email}
-            form={form}
-            onFormChange={(patch) => setForm((p) => ({ ...p, ...patch }))}
-            createExtra={createExtra}
-            onCreateExtraChange={(patch) => setCreateExtra((x) => ({ ...x, ...patch }))}
-            onSubmit={handleDialogSubmit}
-            isSubmitting={dialogMode === "edit" ? isUpdating : isCreating}
-          />
-        ) : null}
+        <PatientFormDialog
+          open={dialogOpen}
+          onOpenChange={handleDialogOpenChange}
+          mode={dialogMode}
+          readOnlyEmail={editingPatient?.email}
+          form={form}
+          onFormChange={(patch) => setForm((p) => ({ ...p, ...patch }))}
+          createExtra={createExtra}
+          onCreateExtraChange={(patch) => setCreateExtra((x) => ({ ...x, ...patch }))}
+          onSubmit={handleDialogSubmit}
+          isSubmitting={dialogMode === "edit" ? isUpdating : isCreating}
+        />
       </div>
   );
 

@@ -1,7 +1,9 @@
 /**
- * Doctor / patient patient chart — `/patients/:id` (no control-panel chrome).
- * Doctors: related patients only. Patients: own record (email match).
+ * Doctor / patient chart — `/patients/:id` (no control-panel chrome).
+ * SSR seeds patient + snapshot + doctor directory (snapshot table portraits).
  */
+export const dynamic = "force-dynamic";
+
 import { notFound, redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/session";
 import { getUserRole, isAdminRole } from "@/lib/rbac";
@@ -9,7 +11,11 @@ import { isValidUUID } from "@/lib/validation";
 import { resolvePatientAccess } from "@/lib/patient-access";
 import { patientDetailHref } from "@/lib/entity-routes";
 import { PatientDetailScreen } from "@/components/control-panel/PatientDetailScreen";
-import { prefetchPatient, prefetchPatientSnapshot } from "@/lib/server-prefetch";
+import {
+  prefetchDoctors,
+  prefetchPatient,
+  prefetchPatientSnapshot,
+} from "@/lib/server-prefetch";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -39,9 +45,10 @@ export default async function PortalPatientDetailPage({ params, searchParams }: 
   );
   if (accessLevel === "none") notFound();
 
-  const [initialPatient, initialSnapshot] = await Promise.all([
+  const [initialPatient, initialSnapshot, initialDoctors] = await Promise.all([
     prefetchPatient(id),
     prefetchPatientSnapshot(id),
+    prefetchDoctors(),
   ]);
 
   if (!initialPatient) notFound();
@@ -56,6 +63,7 @@ export default async function PortalPatientDetailPage({ params, searchParams }: 
       listBackHref={listBackHref}
       initialPatient={initialPatient}
       initialSnapshot={initialSnapshot}
+      initialDoctors={initialDoctors}
     />
   );
 }

@@ -114,6 +114,9 @@ function parseICS(content: string): ParsedEvent[] {
   return events;
 }
 
+/** Per-request API handler (see api-route-dynamic.test.ts). */
+export const dynamic = "force-dynamic";
+
 export async function POST(req: NextRequest) {
   try {
     const sessionUser = await getSessionUser();

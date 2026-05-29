@@ -55,16 +55,21 @@ export function CategoryTableCell({
   );
   const canLink = categoryId && isValidUUID(categoryId);
   return (
-    <span className={cn("inline-flex max-w-full min-w-0 items-center gap-1.5", clinicalCellPrimaryTextClass)}>
+    <span
+      className={cn(
+        "inline-flex max-w-full min-w-0 items-start gap-1.5 break-words [overflow-wrap:anywhere]",
+        clinicalCellPrimaryTextClass
+      )}
+    >
       {dot}
       {canLink ? (
         <EntityTitleLink
           href={categoryDetailHref(viewerRole, categoryId)}
           label={label.trim()}
-          className="truncate font-normal"
+          className="break-words font-normal [overflow-wrap:anywhere]"
         />
       ) : (
-        <span className="truncate">{label}</span>
+        <span className="break-words [overflow-wrap:anywhere]">{label}</span>
       )}
     </span>
   );
@@ -213,6 +218,7 @@ export function buildRelatedAppointmentsColumns(
             doctorId={a.calendar_owner_id}
             name={a.calendar_owner_display}
             email={a.calendar_owner_email}
+            image={a.calendar_owner_image}
             specialty={null}
             viewerRole={viewerRole}
             doctorById={doctorById}
@@ -248,6 +254,7 @@ export function buildRelatedAppointmentsColumns(
             doctorId={a.doctor_id}
             name={a.doctor_display}
             email={a.doctor_email}
+            image={a.doctor_image}
             specialty={a.doctor_specialty ?? doctorById.get(a.doctor_id)?.specialty ?? null}
             viewerRole={viewerRole}
             doctorById={doctorById}

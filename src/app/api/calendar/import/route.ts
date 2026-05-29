@@ -87,6 +87,9 @@ function parseICSDate(dateStr: string): string {
   return dateStr;
 }
 
+/** Per-request API handler (see api-route-dynamic.test.ts). */
+export const dynamic = "force-dynamic";
+
 export async function POST(request: NextRequest) {
   try {
     const sessionUser = await getSessionUser();

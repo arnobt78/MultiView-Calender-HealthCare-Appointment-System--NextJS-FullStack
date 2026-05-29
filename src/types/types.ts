@@ -108,11 +108,14 @@ export type AppointmentSnapshotRow = Appointment & {
   calendar_owner_id?: string | null;
   calendar_owner_display?: string | null;
   calendar_owner_email?: string | null;
+  /** OAuth/upload portrait for calendar owner — avoids robohash when `useUsers` is still loading. */
+  calendar_owner_image?: string | null;
   /** Resolved treating / clinical user (`treating_physician_id ?? user_id`). */
   doctor_id?: string | null;
   doctor_display?: string | null;
   doctor_email?: string | null;
   doctor_specialty?: string | null;
+  doctor_image?: string | null;
 };
 
 export type PatientSnapshot = {

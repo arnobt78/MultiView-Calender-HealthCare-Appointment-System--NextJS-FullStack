@@ -24,6 +24,9 @@ import {
 import { patientDetailInclude } from "@/lib/patient-api-include";
 import { resolveTreatingPhysicianUserId } from "@/lib/appointment-display-doctor";
 
+/** Per-request snapshot — literal required (see api-route-dynamic.test.ts). */
+export const dynamic = "force-dynamic";
+
 type RouteContext = { params: Promise<{ id: string }> };
 
 export async function GET(req: NextRequest, context: RouteContext) {
@@ -65,8 +68,12 @@ export async function GET(req: NextRequest, context: RouteContext) {
       include: {
         category: true,
         appointment_type: { select: { name: true } },
-        owner: { select: { id: true, display_name: true, email: true, specialty: true } },
-        treating_physician: { select: { id: true, display_name: true, email: true, specialty: true } },
+        owner: {
+          select: { id: true, display_name: true, email: true, specialty: true, image: true },
+        },
+        treating_physician: {
+          select: { id: true, display_name: true, email: true, specialty: true, image: true },
+        },
       },
     });
 
@@ -95,10 +102,12 @@ export async function GET(req: NextRequest, context: RouteContext) {
         calendar_owner_id: a.owner?.id ?? null,
         calendar_owner_display: a.owner?.display_name ?? null,
         calendar_owner_email: a.owner?.email ?? null,
+        calendar_owner_image: a.owner?.image ?? null,
         doctor_id: clinical?.id ?? null,
         doctor_display: clinical?.display_name ?? null,
         doctor_email: clinical?.email ?? null,
         doctor_specialty: clinical?.specialty ?? null,
+        doctor_image: clinical?.image ?? null,
       };
     });
 

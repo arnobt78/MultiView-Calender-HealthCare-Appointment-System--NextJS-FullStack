@@ -10,6 +10,9 @@ import { serializeCategory } from "@/lib/serializers";
 import { redis } from "@/lib/redis";
 import { getUserRole, isPatientRole } from "@/lib/rbac";
 
+/** Per-request API handler (see api-route-dynamic.test.ts). */
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const sessionUser = await getSessionUser();

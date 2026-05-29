@@ -11,6 +11,9 @@ import { getSessionUser } from "@/lib/session";
 import { uploadMetaSchema } from "@/lib/schemas/upload";
 import { zodBadRequest } from "@/lib/schemas/parse";
 
+/** Per-request API handler (see api-route-dynamic.test.ts). */
+export const dynamic = "force-dynamic";
+
 export async function POST(req: NextRequest) {
   try {
     // Require authentication

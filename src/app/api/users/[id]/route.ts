@@ -11,6 +11,9 @@ import { serializeUser } from "@/lib/serializers";
 import { redis } from "@/lib/redis";
 import { getUserRole } from "@/lib/rbac";
 
+/** Per-request API handler (see api-route-dynamic.test.ts). */
+export const dynamic = "force-dynamic";
+
 type RouteContext = { params: Promise<{ id: string }> };
 
 const USER_SELECT = {

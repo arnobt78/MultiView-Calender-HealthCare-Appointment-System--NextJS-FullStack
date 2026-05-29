@@ -38,6 +38,9 @@ function serializeAssignee(a: {
   };
 }
 
+/** Per-request API handler (see api-route-dynamic.test.ts). */
+export const dynamic = "force-dynamic";
+
 export async function GET(req: NextRequest) {
   try {
     const sessionUser = await getSessionUser();

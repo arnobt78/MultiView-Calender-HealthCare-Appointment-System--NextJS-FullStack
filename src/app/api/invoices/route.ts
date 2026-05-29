@@ -10,6 +10,9 @@ import { prisma } from "@/lib/prisma";
 import { redis } from "@/lib/redis";
 import { isValidUUID } from "@/lib/validation";
 
+/** Per-request API handler (see api-route-dynamic.test.ts). */
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const sessionUser = await getSessionUser();

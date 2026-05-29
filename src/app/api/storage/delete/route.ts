@@ -12,6 +12,9 @@ import { deleteFile } from "@/lib/vercelBlob";
 import { getSessionUser } from "@/lib/session";
 import { getUserRole, isStaffRole } from "@/lib/rbac";
 
+/** Per-request API handler (see api-route-dynamic.test.ts). */
+export const dynamic = "force-dynamic";
+
 export async function POST(req: NextRequest) {
   try {
     const sessionUser = await getSessionUser();

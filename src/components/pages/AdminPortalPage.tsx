@@ -94,7 +94,7 @@ interface KpiCardProps {
 
 function KpiCard({ label, value, icon, color, isLoading, sub }: KpiCardProps) {
   return (
-    <div className={cn("p-5 flex items-center gap-4", GLASS[color])}>
+    <div className={cn("p-5 flex items-center gap-2", GLASS[color])}>
       <div className="flex-shrink-0 rounded-2xl bg-white/60 p-3 shadow-sm">{icon}</div>
       <div className="min-w-0">
         <p className="text-xs font-medium text-muted-foreground">{label}</p>

@@ -1,12 +1,19 @@
 /**
- * Admin patient detail — control-panel shell only.
+ * Admin patient detail — SSR seeds patient + snapshot + doctor directory for avatars.
+ * Control-panel layout keeps the sidebar mounted; only this pane hydrates client data.
  */
+export const dynamic = "force-dynamic";
+
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { isValidUUID } from "@/lib/validation";
 import { PatientDetailScreen } from "@/components/control-panel/PatientDetailScreen";
-import { prefetchPatient, prefetchPatientSnapshot } from "@/lib/server-prefetch";
+import {
+  prefetchDoctors,
+  prefetchPatient,
+  prefetchPatientSnapshot,
+} from "@/lib/server-prefetch";
 import { getUserRole, isAdminRole, isDoctorRole, isPatientRole } from "@/lib/rbac";
 import { patientDetailHref } from "@/lib/entity-routes";
 import { resolvePatientAccess } from "@/lib/patient-access";
@@ -49,9 +56,10 @@ export default async function ControlPanelPatientDetailPage({ params }: PageProp
 
   if (!isAdminRole(role)) notFound();
 
-  const [initialPatient, initialSnapshot] = await Promise.all([
+  const [initialPatient, initialSnapshot, initialDoctors] = await Promise.all([
     prefetchPatient(id),
     prefetchPatientSnapshot(id),
+    prefetchDoctors(),
   ]);
 
   if (!initialPatient) notFound();
@@ -69,6 +77,7 @@ export default async function ControlPanelPatientDetailPage({ params }: PageProp
       listBackHref="/control-panel/patient-management"
       initialPatient={initialPatient}
       initialSnapshot={initialSnapshot}
+      initialDoctors={initialDoctors}
     />
   );
 }

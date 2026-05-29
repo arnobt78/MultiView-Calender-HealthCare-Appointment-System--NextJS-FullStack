@@ -9,6 +9,9 @@ import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session";
 import { getUserById } from "@/lib/auth";
 
+/** Per-request API handler (see api-route-dynamic.test.ts). */
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     // Get user from session

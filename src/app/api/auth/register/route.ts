@@ -13,6 +13,9 @@ import { zodBadRequest } from "@/lib/schemas/parse";
 import { checkRateLimit, getClientIP } from "@/lib/rate-limit";
 import { RATE_LIMITS } from "@/lib/constants";
 
+/** Per-request API handler (see api-route-dynamic.test.ts). */
+export const dynamic = "force-dynamic";
+
 export async function POST(req: NextRequest) {
   try {
     // Rate limiting: prevent spam registrations

@@ -47,6 +47,9 @@ async function canMutateType(sessionUserId: string, role: string | null, typeUse
   return false;
 }
 
+/** Per-request API handler (see api-route-dynamic.test.ts). */
+export const dynamic = "force-dynamic";
+
 export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   try {
     const sessionUser = await getSessionUser();

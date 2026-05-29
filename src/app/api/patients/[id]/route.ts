@@ -13,6 +13,8 @@ import { redis } from "@/lib/redis";
 import { getUserRole } from "@/lib/rbac";
 import { resolvePatientAccess } from "@/lib/patient-access";
 import { rosterDoctorIdFromRequest } from "@/lib/patient-api-access";
+/** Per-request detail CRUD — literal required (see api-route-dynamic.test.ts). */
+export const dynamic = "force-dynamic";
 
 type RouteContext = { params: Promise<{ id: string }> };
 

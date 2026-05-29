@@ -19,6 +19,9 @@ function clearGcalCookie(res: NextResponse) {
   res.cookies.set(GCAL_OAUTH_COOKIE_NAME, "", { ...oauthStateCookieOptions(), maxAge: 0 });
 }
 
+/** Per-request API handler (see api-route-dynamic.test.ts). */
+export const dynamic = "force-dynamic";
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);

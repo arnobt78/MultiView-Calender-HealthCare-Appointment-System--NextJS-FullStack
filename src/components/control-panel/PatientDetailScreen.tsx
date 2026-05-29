@@ -10,16 +10,13 @@ import {
   FileText,
   Fingerprint,
   List,
-  Loader2,
   Lock,
   Pencil,
   Receipt,
-  Save,
   Share2,
   Stethoscope,
   Trash2,
   User,
-  X,
 } from "lucide-react";
 import { BackNavigationLink } from "@/components/shared/BackNavigationLink";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -27,7 +24,16 @@ import { usePatient, usePatientSnapshot } from "@/hooks/usePatients";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { PatientDetailForm } from "@/components/control-panel/PatientDetailForm";
+import { PatientFormDialog } from "@/components/control-panel/patient-dialog/PatientFormDialog";
+import {
+  buildClinicalProfileFromDialogExtra,
+  EMPTY_PATIENT_DIALOG_EXTRA,
+  EMPTY_PATIENT_DIALOG_FORM,
+  patientToDialogExtraState,
+  patientToDialogFormState,
+} from "@/lib/patient-form-clinical";
+import type { PatientCreateInput } from "@/hooks/usePatients";
+import type { DoctorPrefetchRow } from "@/lib/server-prefetch";
 import { DoctorIdentityRow } from "@/components/shared/doctor-display/DoctorIdentityRow";
 import { ClinicalDataTable } from "@/components/shared/ClinicalDataTable";
 import {
@@ -45,7 +51,10 @@ import { getPatientCareLevelLabel } from "@/lib/patient-care-level";
 import { PATIENT_REFERRAL_SOURCES } from "@/lib/patient-referral-sources";
 import { patientAgeYears } from "@/lib/patient-age";
 import { skyGlassBackButtonClass, skyGlassTableFrameClass } from "@/lib/calendar-header-action-styles";
-import { dashboardShellClass } from "@/lib/dashboard-layout";
+import {
+  patientDetailDefinitionRowClass,
+  patientDetailSnapshotTableFrameClass,
+} from "@/lib/patient-detail-ui-classes";
 import { ControlPanelGlassActionButton } from "@/components/shared/ControlPanelGlassActionButton";
 import { cn } from "@/lib/utils";
 import { patientDetailHref } from "@/lib/entity-routes";
@@ -53,22 +62,39 @@ import { isAdminRole } from "@/lib/rbac";
 import type { PatientAccessLevel } from "@/lib/patient-access";
 import { isValidUUID } from "@/lib/validation";
 import { invalidateQueriesForRoute } from "@/lib/query-client";
+import { prefetchDoctorsDirectory } from "@/lib/prefetch-doctors-directory";
 import type { Patient, PatientSnapshot } from "@/types/types";
-import { useEffect, useLayoutEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
 
-const FORM_ID = "patient-detail-form";
-
 function FieldLabel({ icon: Icon, children }: { icon: LucideIcon; children: React.ReactNode }) {
   return (
-    <dt className="flex items-center gap-1.5 text-xs font-medium text-gray-500">
+    <dt className="flex items-center gap-1.5 text-xs font-medium text-gray-500 sm:pt-0.5">
       {/* Glassmorphic icon circle — provides visual separation without heavy weight */}
       <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-sky-200/70 bg-sky-50/80 shadow-[0_2px_8px_rgba(14,165,233,0.15)]">
         <Icon className="h-3 w-3 text-sky-600" aria-hidden />
       </span>
       {children}
     </dt>
+  );
+}
+
+/** Label (left) + value (right) on one row — matches patient detail screenshots. */
+function PatientDetailDefinitionRow({
+  icon,
+  label,
+  children,
+}: {
+  icon: LucideIcon;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className={patientDetailDefinitionRowClass}>
+      <FieldLabel icon={icon}>{label}</FieldLabel>
+      <dd className="min-w-0 text-gray-700">{children}</dd>
+    </div>
   );
 }
 
@@ -89,8 +115,8 @@ function PatientDetailBodySkeleton() {
   return (
     <div className="space-y-6 text-gray-700">
       {/* Keep static schema labels/icons visible; only value slots skeletonize during refresh. */}
-      <dl className="grid gap-2 text-sm sm:grid-cols-2">
-        <div className="sm:col-span-2 rounded-xl border border-slate-200/80 bg-slate-50/50 px-3 py-2 text-gray-700">
+      <dl className="grid gap-3 text-sm">
+        <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 px-3 py-2 text-gray-700">
           <div className="flex items-center gap-2 text-xs font-medium text-gray-500">
             {/* Keep audit icon style aligned with other schema icons and stable on refresh. */}
             <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-sky-200/70 bg-sky-50/80 shadow-[0_2px_8px_rgba(14,165,233,0.15)]">
@@ -104,38 +130,37 @@ function PatientDetailBodySkeleton() {
             <Skeleton className="h-5 w-full max-w-[560px] rounded-md" />
           </dd>
         </div>
-        <div>
+        <div className={patientDetailDefinitionRowClass}>
           <FieldLabel icon={Fingerprint}>Patient ID</FieldLabel>
-          <Skeleton className="mt-1 h-4 w-full max-w-[320px]" />
+          <Skeleton className="h-4 w-full max-w-[320px] sm:mt-0.5" />
         </div>
-        <div>
+        <div className={patientDetailDefinitionRowClass}>
           <FieldLabel icon={Calendar}>Birth Date</FieldLabel>
-          <Skeleton className="mt-1 h-4 w-32" />
+          <Skeleton className="h-4 w-32 sm:mt-0.5" />
         </div>
-        <div>
+        <div className={patientDetailDefinitionRowClass}>
           <FieldLabel icon={Activity}>Care Tier (1–10)</FieldLabel>
-          <Skeleton className="mt-1 h-4 w-44" />
+          <Skeleton className="h-4 w-44 sm:mt-0.5" />
         </div>
-        <div>
+        <div className={patientDetailDefinitionRowClass}>
           <FieldLabel icon={User}>Pronoun</FieldLabel>
-          <Skeleton className="mt-1 h-4 w-24" />
+          <Skeleton className="h-4 w-24 sm:mt-0.5" />
         </div>
-        <div className="sm:col-span-2">
+        <div className={patientDetailDefinitionRowClass}>
           <FieldLabel icon={Stethoscope}>Primary Doctor</FieldLabel>
-          <Skeleton className="mt-1 h-4 w-56" />
+          <Skeleton className="h-4 w-56 sm:mt-0.5" />
         </div>
-        <div className="sm:col-span-2">
+        <div className={patientDetailDefinitionRowClass}>
           <FieldLabel icon={Share2}>Referral</FieldLabel>
-          <Skeleton className="mt-1 h-4 w-64" />
+          <Skeleton className="h-4 w-64 sm:mt-0.5" />
         </div>
-        <div>
+        <div className={patientDetailDefinitionRowClass}>
           <FieldLabel icon={AlertCircle}>Allergies</FieldLabel>
-          <Skeleton className="mt-1 h-4 w-full max-w-[240px]" />
+          <Skeleton className="h-4 w-full max-w-[240px] sm:mt-0.5" />
         </div>
-        <div className="sm:col-span-2">
+        <div className={patientDetailDefinitionRowClass}>
           <FieldLabel icon={FileText}>Clinical Notes</FieldLabel>
-          <Skeleton className="mt-1 h-4 w-full max-w-[620px]" />
-          <Skeleton className="mt-2 h-4 w-full max-w-[540px]" />
+          <Skeleton className="h-4 w-full max-w-[620px] sm:mt-0.5" />
         </div>
       </dl>
 
@@ -161,6 +186,8 @@ type PatientDetailScreenProps = {
    * queryKeys.patients.snapshot(patientId) so the tables render on first paint.
    */
   initialSnapshot?: PatientSnapshot | null;
+  /** SSR doctor directory — seeds `queryKeys.doctors.all` for portrait resolution in snapshot tables. */
+  initialDoctors?: { doctors: DoctorPrefetchRow[] } | null;
 };
 
 export function PatientDetailScreen({
@@ -170,6 +197,7 @@ export function PatientDetailScreen({
   listBackHref,
   initialPatient,
   initialSnapshot,
+  initialDoctors,
 }: PatientDetailScreenProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -178,8 +206,10 @@ export function PatientDetailScreen({
   const rosterDoctorId =
     rosterDoctorIdRaw && isValidUUID(rosterDoctorIdRaw) ? rosterDoctorIdRaw : null;
   const canEdit = accessLevel === "mutate";
-  const modeParam = searchParams.get("mode") === "edit" ? "edit" : "view";
-  const mode = canEdit ? modeParam : "view";
+
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [dialogForm, setDialogForm] = useState<PatientCreateInput>(EMPTY_PATIENT_DIALOG_FORM);
+  const [dialogExtra, setDialogExtra] = useState(EMPTY_PATIENT_DIALOG_EXTRA);
 
   /**
    * Seed the TanStack Query cache with server-prefetched data before the first
@@ -194,7 +224,10 @@ export function PatientDetailScreen({
     if (initialSnapshot != null) {
       queryClient.setQueryData(queryKeys.patients.snapshot(patientId), initialSnapshot);
     }
-  }, [queryClient, patientId, initialPatient, initialSnapshot]);
+    if (initialDoctors != null) {
+      queryClient.setQueryData(queryKeys.doctors.all, initialDoctors);
+    }
+  }, [queryClient, patientId, initialPatient, initialSnapshot, initialDoctors]);
 
   const { data: patient, isLoading, isError, error } = usePatient(patientId, rosterDoctorId);
   const snap = usePatientSnapshot(patientId, rosterDoctorId);
@@ -216,20 +249,29 @@ export function PatientDetailScreen({
         specialty?: string | null;
       }
     >();
+    for (const d of initialDoctors?.doctors ?? []) {
+      map.set(d.id, {
+        id: d.id,
+        email: d.email,
+        display_name: d.display_name,
+        image: d.image,
+        specialty: d.specialty ?? null,
+      });
+    }
     for (const u of doctorsData?.users ?? []) {
-      if (u.id) {
-        map.set(u.id, {
-          id: u.id,
-          email: u.email,
-          display_name: u.display_name,
-          image: u.image,
-          specialty: u.specialty ?? null,
-        });
-      }
+      if (!u.id) continue;
+      const prev = map.get(u.id);
+      map.set(u.id, {
+        id: u.id,
+        email: u.email ?? prev?.email,
+        display_name: u.display_name ?? prev?.display_name,
+        image: u.image ?? prev?.image ?? null,
+        specialty: u.specialty ?? prev?.specialty ?? null,
+      });
     }
     return map;
-  }, [doctorsData?.users]);
-  const { deletePatient, isDeleting, isUpdating } = usePatients();
+  }, [initialDoctors?.doctors, doctorsData?.users]);
+  const { deletePatient, isDeleting, isUpdating, updatePatient } = usePatients();
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -238,31 +280,65 @@ export function PatientDetailScreen({
     return () => window.cancelAnimationFrame(raf);
   }, []);
 
-  const buildPatientUrl = (next: "view" | "edit") => {
-    const q = new URLSearchParams();
-    if (rosterDoctorId) q.set("fromDoctor", rosterDoctorId);
-    if (next === "edit" && canEdit) q.set("mode", "edit");
-    const qs = q.toString();
-    return `${patientDetailHref(viewerRole, patientId)}${qs ? `?${qs}` : ""}`;
-  };
-
-  const setMode = (next: "view" | "edit") => {
-    if (next === "edit" && !canEdit) return;
-    router.replace(buildPatientUrl(next));
-  };
-
-  useEffect(() => {
-    if (canEdit || modeParam !== "edit") return;
-    const q = new URLSearchParams();
-    if (rosterDoctorId) q.set("fromDoctor", rosterDoctorId);
-    const qs = q.toString();
-    const base = patientDetailHref(viewerRole, patientId);
-    router.replace(`${base}${qs ? `?${qs}` : ""}`);
-  }, [canEdit, modeParam, patientId, rosterDoctorId, router, viewerRole]);
-
   const ready = Boolean(patient) && !isLoading;
   const showLiveData = isMounted && ready;
   const p = patient as Patient | undefined;
+
+  const openEditDialog = useCallback(() => {
+    if (!canEdit || !p) return;
+    // Warm doctor directory before picker opens (SSR seed may be stale after long sessions).
+    prefetchDoctorsDirectory(queryClient);
+    setDialogForm(patientToDialogFormState(p));
+    setDialogExtra(patientToDialogExtraState(p));
+    setEditDialogOpen(true);
+  }, [canEdit, p, queryClient]);
+
+  const handleEditDialogOpenChange = (open: boolean) => {
+    setEditDialogOpen(open);
+    if (!open && p) {
+      setDialogForm(patientToDialogFormState(p));
+      setDialogExtra(patientToDialogExtraState(p));
+    }
+  };
+
+  const handleEditDialogSubmit = () => {
+    if (!p) return;
+    const primary_doctor_id =
+      dialogExtra.primaryDoctorId && dialogExtra.primaryDoctorId !== "none"
+        ? dialogExtra.primaryDoctorId
+        : null;
+    const clinical_profile = buildClinicalProfileFromDialogExtra(p.clinical_profile, dialogExtra);
+    updatePatient(
+      {
+        id: p.id,
+        firstname: dialogForm.firstname.trim(),
+        lastname: dialogForm.lastname.trim(),
+        birth_date: dialogForm.birth_date || undefined,
+        care_level: dialogForm.care_level,
+        pronoun: dialogForm.pronoun || undefined,
+        active: dialogForm.active,
+        clinical_profile,
+        primary_doctor_id,
+      },
+      { onSuccess: () => setEditDialogOpen(false) }
+    );
+  };
+
+  const didOpenEditFromUrlRef = useRef(false);
+  /** Legacy `?mode=edit` deep links open the shared glass dialog (not inline form). */
+  useEffect(() => {
+    if (didOpenEditFromUrlRef.current) return;
+    if (!canEdit || searchParams.get("mode") !== "edit" || !p) return;
+    didOpenEditFromUrlRef.current = true;
+    const raf = window.requestAnimationFrame(() => {
+      openEditDialog();
+      const q = new URLSearchParams();
+      if (rosterDoctorId) q.set("fromDoctor", rosterDoctorId);
+      const qs = q.toString();
+      router.replace(`${patientDetailHref(viewerRole, patientId)}${qs ? `?${qs}` : ""}`);
+    });
+    return () => window.cancelAnimationFrame(raf);
+  }, [canEdit, searchParams, p, rosterDoctorId, router, viewerRole, patientId, openEditDialog]);
   const nameLabel = p ? `${p.firstname} ${p.lastname}`.trim() : "";
   const age = p ? patientAgeYears(p.birth_date) : null;
 
@@ -299,7 +375,7 @@ export function PatientDetailScreen({
   }
 
   return (
-    <div className="space-y-4 pb-16 text-gray-700">
+    <div className="space-y-4 pb-4 text-gray-700">
       <PageHeader
         title={
           showLiveData ? (
@@ -341,7 +417,7 @@ export function PatientDetailScreen({
             {/* Static heading should stay rendered even while values are loading. */}
             <h2 className="text-lg font-semibold text-gray-700">Patient Details</h2>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
             {showLiveData && p ? (
               <PatientPortraitAvatar patient={p} sizeClassName="h-16 w-16" />
             ) : (
@@ -393,12 +469,11 @@ export function PatientDetailScreen({
 
           {!showLiveData ? (
             <PatientDetailBodySkeleton />
-          ) : mode === "view" ? (
+          ) : (
             <>
-              <dl className="grid gap-2 text-sm sm:grid-cols-2">
-                <div className="sm:col-span-2 rounded-xl border border-slate-200/80 bg-slate-50/50 px-3 py-2 text-gray-700">
+              <dl className="grid gap-3 text-sm">
+                <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 px-3 py-2 text-gray-700">
                   <div className="flex items-center gap-2 text-xs font-medium text-gray-500">
-                    {/* Keep audit icon style consistent with all other schema icon circles. */}
                     <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-sky-200/70 bg-sky-50/80 shadow-[0_2px_8px_rgba(14,165,233,0.15)]">
                       <CalendarClock className="h-3 w-3 text-sky-600" aria-hidden />
                     </span>
@@ -435,69 +510,54 @@ export function PatientDetailScreen({
                     </p>
                   </dd>
                 </div>
-                <div>
-                  <FieldLabel icon={Fingerprint}>Patient ID</FieldLabel>
-                  <dd className=" font-mono text-xs break-all text-gray-700">{p!.id}</dd>
-                </div>
-                <div>
-                  <FieldLabel icon={Calendar}>Birth Date</FieldLabel>
-                  <dd className=" text-gray-700">{p!.birth_date ?? "—"}</dd>
-                </div>
-                <div>
-                  <FieldLabel icon={Activity}>Care Tier (1–10)</FieldLabel>
-                  <dd className=" text-gray-700">{getPatientCareLevelLabel(p!.care_level)}</dd>
-                </div>
-                <div>
-                  <FieldLabel icon={User}>Pronoun</FieldLabel>
-                  <dd className=" text-gray-700">{p!.pronoun ?? "—"}</dd>
-                </div>
-                <div className="sm:col-span-2">
-                  <FieldLabel icon={Stethoscope}>Primary Doctor</FieldLabel>
-                  <dd className=" text-gray-700">
-                    {/* Schema block (not table): avatar + name → email → badge stack; matches list/table doctor cells. */}
-                    {p!.primary_doctor_id && p!.primary_doctor_display?.trim() ? (
-                      <DoctorIdentityRow
-                        doctor={{
-                          id: p!.primary_doctor_id,
-                          email: p!.primary_doctor_email ?? primaryDoctorUser?.email ?? null,
-                          display_name: p!.primary_doctor_display.trim(),
-                          image: primaryDoctorUser?.image ?? null,
-                          specialty: primaryDoctorUser?.specialty ?? null,
-                        }}
-                        linkKind={isAdminRole(viewerRole) ? "admin-cp" : "role"}
-                        showEmail
-                      />
-                    ) : (
-                      (p!.primary_doctor_display ?? "—")
-                    )}
-                  </dd>
-                </div>
-                <div className="sm:col-span-2">
-                  <FieldLabel icon={Share2}>Referral</FieldLabel>
-                  <dd className=" text-gray-700">
-                    {cp && typeof cp === "object" && typeof cp.referral_source === "string"
-                      ? PATIENT_REFERRAL_SOURCES.find((x) => x.value === cp.referral_source)?.label ??
-                      cp.referral_source
-                      : "—"}
-                    {cp && typeof cp === "object" && typeof cp.referral_detail === "string" && cp.referral_detail
-                      ? ` — ${cp.referral_detail}`
-                      : ""}
-                  </dd>
-                </div>
-                <div>
-                  <FieldLabel icon={AlertCircle}>Allergies</FieldLabel>
-                  <dd className=" text-gray-700">
-                    {cp && typeof cp === "object" && Array.isArray(cp.allergies)
-                      ? cp.allergies.join(", ")
-                      : "—"}
-                  </dd>
-                </div>
-                <div className="sm:col-span-2">
-                  <FieldLabel icon={FileText}>Clinical Notes</FieldLabel>
-                  <dd className=" whitespace-pre-wrap text-gray-700">
+                <PatientDetailDefinitionRow icon={Fingerprint} label="Patient ID">
+                  <span className="font-mono text-xs break-all">{p!.id}</span>
+                </PatientDetailDefinitionRow>
+                <PatientDetailDefinitionRow icon={Calendar} label="Birth Date">
+                  {p!.birth_date ?? "—"}
+                </PatientDetailDefinitionRow>
+                <PatientDetailDefinitionRow icon={Activity} label="Care Tier (1–10)">
+                  {getPatientCareLevelLabel(p!.care_level)}
+                </PatientDetailDefinitionRow>
+                <PatientDetailDefinitionRow icon={User} label="Pronoun">
+                  {p!.pronoun ?? "—"}
+                </PatientDetailDefinitionRow>
+                <PatientDetailDefinitionRow icon={Stethoscope} label="Primary Doctor">
+                  {p!.primary_doctor_id && p!.primary_doctor_display?.trim() ? (
+                    <DoctorIdentityRow
+                      doctor={{
+                        id: p!.primary_doctor_id,
+                        email: p!.primary_doctor_email ?? primaryDoctorUser?.email ?? null,
+                        display_name: p!.primary_doctor_display.trim(),
+                        image: primaryDoctorUser?.image ?? null,
+                        specialty: primaryDoctorUser?.specialty ?? null,
+                      }}
+                      linkKind={isAdminRole(viewerRole) ? "admin-cp" : "role"}
+                      showEmail
+                    />
+                  ) : (
+                    (p!.primary_doctor_display ?? "—")
+                  )}
+                </PatientDetailDefinitionRow>
+                <PatientDetailDefinitionRow icon={Share2} label="Referral">
+                  {cp && typeof cp === "object" && typeof cp.referral_source === "string"
+                    ? PATIENT_REFERRAL_SOURCES.find((x) => x.value === cp.referral_source)?.label ??
+                    cp.referral_source
+                    : "—"}
+                  {cp && typeof cp === "object" && typeof cp.referral_detail === "string" && cp.referral_detail
+                    ? ` — ${cp.referral_detail}`
+                    : ""}
+                </PatientDetailDefinitionRow>
+                <PatientDetailDefinitionRow icon={AlertCircle} label="Allergies">
+                  {cp && typeof cp === "object" && Array.isArray(cp.allergies)
+                    ? cp.allergies.join(", ")
+                    : "—"}
+                </PatientDetailDefinitionRow>
+                <PatientDetailDefinitionRow icon={FileText} label="Clinical Notes">
+                  <span className="whitespace-pre-wrap">
                     {cp && typeof cp === "object" && typeof cp.notes === "string" ? cp.notes : "—"}
-                  </dd>
-                </div>
+                  </span>
+                </PatientDetailDefinitionRow>
               </dl>
 
               <div className="space-y-3">
@@ -509,7 +569,8 @@ export function PatientDetailScreen({
                   pagination={false}
                   emptyMessage="No Appointments"
                   tableClassName="min-w-[900px] w-full"
-                  className="overflow-x-auto rounded-md border border-slate-200/80"
+                  className={patientDetailSnapshotTableFrameClass}
+                  tableFrameClassName="rounded-md border border-slate-200/80 bg-white shadow-none"
                 />
               </div>
 
@@ -522,27 +583,20 @@ export function PatientDetailScreen({
                   pagination={false}
                   emptyMessage="No Invoices"
                   tableClassName="min-w-[720px] w-full"
-                  className="overflow-x-auto rounded-md border border-slate-200/80"
+                  className={patientDetailSnapshotTableFrameClass}
+                  tableFrameClassName="rounded-md border border-slate-200/80 bg-white shadow-none"
                 />
               </div>
             </>
-          ) : (
-            <PatientDetailForm
-              key={`${p!.id}-${p!.primary_doctor_id ?? ""}-${JSON.stringify(p!.clinical_profile)}`}
-              patient={p!}
-              formId={FORM_ID}
-              onSaved={() => setMode("view")}
-              submitActions="none"
-            />
           )}
         </CardContent>
       </Card>
 
-      <div className="fixed bottom-0 left-0 right-0 z-10 border-t border-sky-100/60 bg-white/95 py-3 text-gray-700 backdrop-blur supports-backdrop-filter:bg-white/85">
-        <div className={cn(dashboardShellClass, "flex flex-wrap items-center justify-between gap-2")}>
+      {/* Sticky footer — scoped to control-panel right pane (not under sidebar). */}
+      <div className="sticky bottom-0 z-10 -mx-2 border-t border-sky-100/60 bg-white/95 px-2 py-3 text-gray-700 backdrop-blur supports-backdrop-filter:bg-white/85 sm:-mx-4 sm:px-4 lg:-mx-8 lg:px-8">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           {!showLiveData ? (
             <div className="flex w-full items-center justify-between gap-2">
-              {/* Keep navigation action static while loading to match view mode and avoid flicker. */}
               <BackNavigationLink
                 href={listBackHref}
                 className={cn(skyGlassBackButtonClass, "no-underline")}
@@ -550,13 +604,12 @@ export function PatientDetailScreen({
                 <List className="shrink-0" aria-hidden />
                 Back To List
               </BackNavigationLink>
-              {/* Footer action placeholders — static chrome, no pulse */}
               <div className="flex flex-wrap gap-2">
                 <div className="h-10 w-36" />
                 <div className="h-10 w-24" />
               </div>
             </div>
-          ) : mode === "view" ? (
+          ) : (
             <>
               <BackNavigationLink
                 href={listBackHref}
@@ -570,7 +623,7 @@ export function PatientDetailScreen({
                   <ControlPanelGlassActionButton
                     type="button"
                     variant="emerald"
-                    onClick={() => setMode("edit")}
+                    onClick={openEditDialog}
                     className="cursor-pointer"
                   >
                     <Pencil className="shrink-0" aria-hidden />
@@ -578,7 +631,12 @@ export function PatientDetailScreen({
                   </ControlPanelGlassActionButton>
                   <ConfirmActionDialog
                     trigger={
-                      <ControlPanelGlassActionButton type="button" variant="rose" disabled={isDeleting} className="cursor-pointer">
+                      <ControlPanelGlassActionButton
+                        type="button"
+                        variant="rose"
+                        disabled={isDeleting}
+                        className="cursor-pointer"
+                      >
                         <Trash2 className="shrink-0" aria-hidden />
                         {isDeleting ? "Deleting…" : "Delete"}
                       </ControlPanelGlassActionButton>
@@ -614,72 +672,24 @@ export function PatientDetailScreen({
                 </div>
               ) : null}
             </>
-          ) : canEdit ? (
-            <>
-              <ControlPanelGlassActionButton
-                type="button"
-                variant="sky"
-                onClick={() => setMode("view")}
-                className="cursor-pointer"
-              >
-                <X className="shrink-0" aria-hidden />
-                Cancel
-              </ControlPanelGlassActionButton>
-              <div className="flex flex-wrap gap-2">
-                <ControlPanelGlassActionButton
-                  type="submit"
-                  form={FORM_ID}
-                  variant="emerald"
-                  disabled={isDeleting || isUpdating}
-                  className="cursor-pointer"
-                >
-                  {isUpdating ? (
-                    <Loader2 className="shrink-0 animate-spin" aria-hidden />
-                  ) : (
-                    <Save className="shrink-0" aria-hidden />
-                  )}
-                  {isUpdating ? "Saving Changes…" : "Save Changes"}
-                </ControlPanelGlassActionButton>
-                <ConfirmActionDialog
-                  trigger={
-                    <ControlPanelGlassActionButton type="button" variant="rose" disabled={isDeleting} className="cursor-pointer">
-                      <Trash2 className="shrink-0" aria-hidden />
-                      {isDeleting ? "Deleting…" : "Delete"}
-                    </ControlPanelGlassActionButton>
-                  }
-                  title="Permanently Remove This Patient?"
-                  subtitle={
-                    <>
-                      This will delete{" "}
-                      <span className="text-gray-700">
-                        {`${p!.firstname} ${p!.lastname}`.trim()}
-                        {p!.email ? ` (${p!.email})` : ""}
-                      </span>{" "}
-                      and all related data. You cannot undo this action.
-                    </>
-                  }
-                  confirmLabel="Delete"
-                  onConfirm={() =>
-                    deletePatient(
-                      {
-                        id: p!.id,
-                        name: `${p!.firstname} ${p!.lastname}`.trim(),
-                        email: p!.email,
-                      },
-                      {
-                        onSuccess: async () => {
-                          await invalidateQueriesForRoute(queryClient, listBackHref);
-                          router.push(listBackHref);
-                        },
-                      }
-                    )
-                  }
-                />
-              </div>
-            </>
-          ) : null}
+          )}
         </div>
       </div>
+
+      {canEdit && p ? (
+        <PatientFormDialog
+          open={editDialogOpen}
+          onOpenChange={handleEditDialogOpenChange}
+          mode="edit"
+          readOnlyEmail={p.email}
+          form={dialogForm}
+          onFormChange={(patch) => setDialogForm((prev) => ({ ...prev, ...patch }))}
+          createExtra={dialogExtra}
+          onCreateExtraChange={(patch) => setDialogExtra((x) => ({ ...x, ...patch }))}
+          onSubmit={handleEditDialogSubmit}
+          isSubmitting={isUpdating}
+        />
+      ) : null}
     </div>
   );
 }

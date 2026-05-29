@@ -297,7 +297,7 @@ export default function AppointmentList() {
                   <div className="h-5 w-36 bg-gray-200 rounded-2xl" />
                   <div className="h-5 w-20 bg-gray-100 rounded-full" />
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
                   <div className="h-4 w-28 bg-gray-100 rounded" />
                   <div className="h-4 w-24 bg-gray-100 rounded" />
                 </div>

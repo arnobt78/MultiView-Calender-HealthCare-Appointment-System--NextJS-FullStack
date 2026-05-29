@@ -17,7 +17,7 @@ import {
   assertNoOwnerAppointmentOverlap,
   assertSlotAvailableForBooking,
 } from "@/lib/scheduling/validate-appointment-window";
-
+/** Per-request portal bundle — literal required (see api-route-dynamic.test.ts). */
 export const dynamic = "force-dynamic";
 
 export async function GET() {

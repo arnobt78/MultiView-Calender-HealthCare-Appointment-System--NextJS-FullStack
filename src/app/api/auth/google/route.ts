@@ -15,6 +15,9 @@ import {
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_ID || process.env.GOOGLE_CLIENT_ID;
 
+/** Per-request API handler (see api-route-dynamic.test.ts). */
+export const dynamic = "force-dynamic";
+
 export async function GET(req: NextRequest) {
   if (!GOOGLE_CLIENT_ID) {
     console.error("GOOGLE_ID or GOOGLE_CLIENT_ID is not set");

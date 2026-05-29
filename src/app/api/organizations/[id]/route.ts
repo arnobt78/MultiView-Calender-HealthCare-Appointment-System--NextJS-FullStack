@@ -11,6 +11,9 @@ import { prisma } from "@/lib/prisma";
 
 type Params = { params: Promise<{ id: string }> };
 
+/** Per-request API handler (see api-route-dynamic.test.ts). */
+export const dynamic = "force-dynamic";
+
 export async function GET(_req: NextRequest, { params }: Params) {
   try {
     const sessionUser = await getSessionUser();

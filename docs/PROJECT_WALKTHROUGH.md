@@ -112,11 +112,13 @@ Run `npm run db:seed-test-user` after migrations: upserts demo `users`, doctor a
 ### Patient pipeline (management + detail)
 
 - **Schema**: `Patient.clinical_profile` (`Json?`) — merged on `PUT /api/patients/[id]` (not fully replaced); **email is never updated from the client** on PUT (demo safety).
-- **API**: `GET /api/patients/[id]` and `GET /api/patients/[id]/snapshot` gated by `resolvePatientAccess` (403 when `none`; `?fromDoctor=` for roster-only view). Snapshot returns `{ patient, appointments, invoices }` (invoices via `appointment_id`). Appointment rows include `doctor_specialty` for Treating physician badges.
+- **API**: `GET /api/patients/[id]` and `GET /api/patients/[id]/snapshot` gated by `resolvePatientAccess` (403 when `none`; `?fromDoctor=` for roster-only view). Snapshot returns `{ patient, appointments, invoices }` (invoices via `appointment_id`). Appointment rows include `doctor_specialty`, `calendar_owner_image`, and `doctor_image` for portrait cells (avoids robohash when DB has `User.image`).
 - **React Query**: `usePatient(id, rosterDoctorId?)` / `usePatientSnapshot(id, rosterDoctorId?)` forward roster query to API. Prefix invalidation `queryKeys.patients.all` refreshes list, detail, and snapshot together.
 - **Invalidation wiring**: `invalidateAfterAppointmentMutation` calls `invalidateInvoicesAndOverview`, which now also invalidates `queryKeys.patients.all` (appointments + invoices affect patient aggregates). `invalidateSharingAndAppointments` invalidates `patients.all` so assignee changes refresh snapshots without navigation.
-- **UI**: `PatientListFiltersProvider` + status dropdown (all/active/inactive); `DataTable` optional `globalFilterFn` for multi-column search (name + email). Sortable headers via `DataTableColumnHeader`. Row menu: View (`?mode` default), Edit (`?mode=edit`). **`PatientDetailScreen`** (client): SSR `accessLevel` prop; `canEdit = accessLevel === "mutate"`; read-only amber banner when `view`; footer Update/Delete hidden when view-only; `?mode=edit` stripped when not mutate; **`BackNavigationLink`** on header/footer back; **`PatientDetailForm`** with read-only email + clinical fields in `clinical_profile`.
-- **Shared table patterns**: **`table-display-styles.ts`** (`clinicalTableHeadClass`, `clinicalStackGapClass`, cell min-height/muted text). Person columns: **`PatientIdentityCell`** + **`PatientPortraitAvatar`** (robohash fallback), **`DoctorIdentityRow`** / **`DoctorIdentityCell`**. **`PatientDetailScreen`** Related Appointments + Invoices use **`ClinicalDataTable`** + `patient-detail-snapshot-columns.tsx` (headers match patient list via `DataTableColumnHeader`). Doctor/User management: combined avatar+identity columns; Category management already uses `DataTableColumnHeader`.
+- **SSR pages**: `src/app/control-panel/patients/[id]/page.tsx` and `src/app/patients/[id]/page.tsx` use `export const dynamic = "force-dynamic"` and parallel prefetch (`prefetchPatient`, `prefetchPatientSnapshot`, `prefetchDoctors`). Control-panel **layout** (`control-panel/layout.tsx`) keeps sidebar mounted; detail route only hydrates the right pane.
+- **UI (list)**: `PatientListFiltersProvider` + status dropdown; `DataTable` global filter; row ⋮ **View** → detail route; **Edit** → **`PatientFormDialog`** (glass 90vw×90vh, emerald). Primary doctor: **`PatientPrimaryDoctorPickerField`** + `DoctorDirectoryPickerList` (same as appointment treating-physician picker). Required `*` via **`FormRequiredMark`**.
+- **UI (detail)**: **`PatientDetailScreen`** — SSR `accessLevel`; chrome + footer stay mounted; **`PatientDetailBodySkeleton`** pulses schema/table slots only; horizontal **`PatientDetailDefinitionRow`** (`patient-detail-ui-classes.ts`); sticky footer scoped to CP right scroll (not under sidebar). **Update Profile** opens **`PatientFormDialog`** (not inline form). Legacy `?mode=edit` on detail opens dialog once then strips query. Read-only banner when `view`; footer CRUD hidden when view-only. **`BackNavigationLink`** on header/footer.
+- **Shared table patterns**: **`ClinicalDataTable`** + `patient-detail-snapshot-columns.tsx` — category column `break-words`; single table border (`tableFrameClassName`, not double card frame). **`DoctorIdentityCell`** merges snapshot images + `useUsers` doctor map. CP + doctor-portal list **Edit** opens **`PatientFormDialog`** (same as detail **Update Profile**).
 - **Loading**: `src/app/control-panel/loading.tsx` returns `null` so route transitions don't flash a full skeleton; tables keep localized skeleton rows via `DataTable` `isLoading`.
 
 ### Clinical table UI (audit glance — display-only)
@@ -132,7 +134,7 @@ Run `npm run db:seed-test-user` after migrations: upserts demo `users`, doctor a
 
 **Data layer:** no API/query-key/cache-version changes. Portrait/snapshot refresh via existing `invalidateEntityAffectingAppointments`, `invalidateAfterAppointmentMutation`, `queryKeys.patients.snapshot` — unchanged.
 
-**Verify:** `npm test` (134) · `npx tsc --noEmit` · `npm run lint` · `npm run build`.
+**Verify:** `npm test` (374) · `npx tsc --noEmit` · `npm run lint` · `npm run build`.
 
 ### Avatar cropping (detail pages)
 
@@ -483,7 +485,7 @@ src/
 │   │   ├── DashboardOverview.tsx       Inline skeleton + glassmorphic
 │   │   ├── AppointmentsManagement.tsx / AppointmentDetailForm.tsx — inline skeleton + glassmorphic
 │   │   ├── DoctorManagement.tsx / DoctorDetailForm.tsx
-│   │   ├── PatientManagement.tsx / PatientDetailForm.tsx — reference inline skeleton pattern
+│   │   ├── PatientManagement.tsx — reference inline skeleton pattern; list Edit uses PatientFormDialog
 │   │   ├── PatientStatCard.tsx         Reference value-slot skeleton
 │   │   ├── CategoryManagement.tsx / CategoryDetailForm.tsx
 │   │   ├── InvoiceManagement.tsx       Inline skeleton + glassmorphic

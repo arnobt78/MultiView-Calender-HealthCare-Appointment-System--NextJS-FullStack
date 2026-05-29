@@ -11,6 +11,9 @@ import { InvitationRequest } from "@/types/invitation";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 
+/** Per-request API handler (see api-route-dynamic.test.ts). */
+export const dynamic = "force-dynamic";
+
 export async function POST(req: NextRequest) {
   try {
     const sessionUser = await getSessionUser();

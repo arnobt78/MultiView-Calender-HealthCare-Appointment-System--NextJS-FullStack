@@ -14,6 +14,9 @@ import { checkRateLimit } from "@/lib/rate-limit";
 /** Max characters we send to the model — keeps tokens bounded and cost predictable. */
 const MAX_INPUT_CHARS = 8_000;
 
+/** Per-request API handler (see api-route-dynamic.test.ts). */
+export const dynamic = "force-dynamic";
+
 export async function POST(request: NextRequest) {
   try {
     const sessionUser = await getSessionUser();
