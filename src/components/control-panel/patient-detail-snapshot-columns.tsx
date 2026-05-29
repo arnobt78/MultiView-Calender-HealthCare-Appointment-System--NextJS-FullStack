@@ -5,27 +5,32 @@ import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { DataTableColumnHeader } from "@/components/shared/DataTableColumnHeader";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
+import { ClinicalTableEmptyDash } from "@/components/shared/ClinicalTableEmptyDash";
 import { DoctorIdentityCell } from "@/components/shared/person-display/DoctorIdentityCell";
 import {
   appointmentDetailHref,
   categoryDetailHref,
-  doctorDetailHref,
   invoiceDetailHref,
 } from "@/lib/entity-routes";
 import {
   clinicalCellMutedTextClass,
   clinicalCellPrimaryTextClass,
   clinicalTableCellMinRowClass,
+  clinicalTableCellWrapClass,
+  clinicalTableColumnIdentityShellClass,
+  clinicalCategoryLabelRowClass,
+  clinicalCategorySwatchAnchorClass,
+  clinicalTableColumnCategoryShellClass,
+  clinicalTableColumnTitleShellClass,
+  clinicalTableColumnWhenShellClass,
+  clinicalTableColumnWrapShellClass,
 } from "@/lib/table-display-styles";
 import { isAdminRole } from "@/lib/rbac";
 import { isValidUUID } from "@/lib/validation";
 import { cn } from "@/lib/utils";
-import type {
-  AppointmentSnapshotRow,
-  Patient,
-  SnapshotInvoice,
-} from "@/types/types";
+import type { AppointmentSnapshotRow, SnapshotInvoice } from "@/types/types";
 import type { EntityRole } from "@/lib/entity-routes";
+import { CLINICAL_SNAPSHOT_APPOINTMENT_COL_WIDTH } from "@/lib/clinical-snapshot-table-columns";
 
 function categorySwatchFill(color: string | null | undefined): string {
   if (!color?.trim()) return "#94a3b8";
@@ -46,30 +51,28 @@ export function CategoryTableCell({
   viewerRole?: EntityRole;
 }) {
   if (!label?.trim()) {
-    return <span className={clinicalCellMutedTextClass}>—</span>;
+    return <ClinicalTableEmptyDash />;
   }
   const dot = (
-    <svg width="8" height="8" viewBox="0 0 8 8" aria-hidden className="inline-block shrink-0">
-      <circle cx="4" cy="4" r="4" fill={categorySwatchFill(color)} />
-    </svg>
+    <span className={clinicalCategorySwatchAnchorClass} aria-hidden>
+      <svg width="8" height="8" viewBox="0 0 8 8" className="block">
+        <circle cx="4" cy="4" r="4" fill={categorySwatchFill(color)} />
+      </svg>
+    </span>
   );
   const canLink = categoryId && isValidUUID(categoryId);
   return (
-    <span
-      className={cn(
-        "inline-flex max-w-full min-w-0 items-start gap-1.5 break-words [overflow-wrap:anywhere]",
-        clinicalCellPrimaryTextClass
-      )}
-    >
+    <span className={cn(clinicalCategoryLabelRowClass, clinicalCellPrimaryTextClass)}>
       {dot}
       {canLink ? (
         <EntityTitleLink
           href={categoryDetailHref(viewerRole, categoryId)}
           label={label.trim()}
-          className="break-words font-normal [overflow-wrap:anywhere]"
+          wrapLabel
+          className={cn("min-w-0 flex-1 font-normal", clinicalTableCellWrapClass)}
         />
       ) : (
-        <span className="break-words [overflow-wrap:anywhere]">{label}</span>
+        <span className={cn("min-w-0 flex-1", clinicalTableCellWrapClass)}>{label}</span>
       )}
     </span>
   );
@@ -137,35 +140,48 @@ type DoctorLookup = {
   specialty?: string | null;
 };
 
+export type SnapshotStaffLookup = DoctorLookup;
+
 export type BuildSnapshotColumnsOpts = {
   viewerRole: EntityRole;
   patientDisplayName: string;
-  primaryPatient?: Patient | null;
-  doctorById: Map<string, DoctorLookup>;
+  /** Doctors + admins for calendar-owner portraits (snapshot image wins when set). */
+  staffById: Map<string, SnapshotStaffLookup>;
 };
 
 /** Related Appointments table — TanStack columns aligned with patient-management header/cell styles. */
 export function buildRelatedAppointmentsColumns(
   opts: BuildSnapshotColumnsOpts
 ): ColumnDef<AppointmentSnapshotRow>[] {
-  const { viewerRole, patientDisplayName, primaryPatient, doctorById } = opts;
+  const { viewerRole, patientDisplayName, staffById } = opts;
 
   return [
     {
       id: "title",
       accessorFn: (row) => row.title ?? "",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Title" />,
+      meta: {
+        shellClassName: clinicalTableColumnTitleShellClass,
+        colWidth: CLINICAL_SNAPSHOT_APPOINTMENT_COL_WIDTH.title,
+      },
       cell: ({ row }) => {
         const a = row.original;
         const { typeLine, patientLine } = appointmentTitleLines(a, patientDisplayName);
         return (
-          <div className={cn("min-w-0", clinicalTableCellMinRowClass, "flex flex-col justify-center")}>
+          <div
+            className={cn(
+              clinicalTableCellMinRowClass,
+              clinicalTableCellWrapClass,
+              "flex min-w-0 flex-col justify-center gap-1"
+            )}
+          >
             <EntityTitleLink
               href={appointmentDetailHref(viewerRole, a.id)}
               label={typeLine}
-              className="block truncate font-normal"
+              className={cn("block font-normal", clinicalTableCellWrapClass)}
             />
-            <p className={cn("truncate", clinicalCellMutedTextClass)}>{patientLine}</p>
+            <p className={cn(clinicalCellMutedTextClass, clinicalTableCellWrapClass)}>{patientLine}</p>
+            <AppointmentStatusBadge status={a.status} />
           </div>
         );
       },
@@ -174,11 +190,14 @@ export function buildRelatedAppointmentsColumns(
       id: "when",
       accessorFn: (row) => row.start ?? "",
       header: ({ column }) => <DataTableColumnHeader column={column} title="When" />,
-      meta: { shellClassName: "whitespace-nowrap" },
+      meta: {
+        shellClassName: clinicalTableColumnWhenShellClass,
+        colWidth: CLINICAL_SNAPSHOT_APPOINTMENT_COL_WIDTH.when,
+      },
       cell: ({ row }) => {
         const a = row.original;
         if (!a.start) {
-          return <span className={clinicalCellMutedTextClass}>—</span>;
+          return <ClinicalTableEmptyDash />;
         }
         return (
           <div className={cn("min-w-0 whitespace-nowrap", clinicalTableCellMinRowClass, "flex flex-col justify-center")}>
@@ -194,8 +213,12 @@ export function buildRelatedAppointmentsColumns(
     {
       id: "category",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Category" />,
+      meta: {
+        shellClassName: clinicalTableColumnCategoryShellClass,
+        colWidth: CLINICAL_SNAPSHOT_APPOINTMENT_COL_WIDTH.category,
+      },
       cell: ({ row }) => (
-        <div className={cn(clinicalTableCellMinRowClass, "flex items-center")}>
+        <div className={cn(clinicalTableCellMinRowClass, "w-full max-w-full overflow-hidden py-0.5")}>
           <CategoryTableCell
             label={row.original.category_label}
             color={row.original.category_color}
@@ -208,10 +231,14 @@ export function buildRelatedAppointmentsColumns(
     {
       id: "calendar_owner",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Calendar Owner" />,
+      meta: {
+        shellClassName: clinicalTableColumnIdentityShellClass,
+        colWidth: CLINICAL_SNAPSHOT_APPOINTMENT_COL_WIDTH.identity,
+      },
       cell: ({ row }) => {
         const a = row.original;
         if (!a.calendar_owner_id || !a.calendar_owner_display) {
-          return <span className={clinicalCellMutedTextClass}>—</span>;
+          return <ClinicalTableEmptyDash />;
         }
         return (
           <DoctorIdentityCell
@@ -221,7 +248,7 @@ export function buildRelatedAppointmentsColumns(
             image={a.calendar_owner_image}
             specialty={null}
             viewerRole={viewerRole}
-            doctorById={doctorById}
+            doctorById={staffById}
             showSpecialty={false}
           />
         );
@@ -230,35 +257,24 @@ export function buildRelatedAppointmentsColumns(
     {
       id: "treating_physician",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Treating Physician" />,
+      meta: {
+        shellClassName: clinicalTableColumnIdentityShellClass,
+        colWidth: CLINICAL_SNAPSHOT_APPOINTMENT_COL_WIDTH.identity,
+      },
       cell: ({ row }) => {
         const a = row.original;
         if (!a.doctor_id || !a.doctor_display) {
-          return <span className={clinicalCellMutedTextClass}>—</span>;
+          return <ClinicalTableEmptyDash />;
         }
-        const primaryFooter =
-          primaryPatient?.primary_doctor_id &&
-          a.doctor_id &&
-          primaryPatient.primary_doctor_id !== a.doctor_id &&
-          primaryPatient.primary_doctor_display?.trim() ? (
-            <p className="mt-1.5 text-[10px] leading-snug text-gray-600">
-              Primary care:{" "}
-              <EntityTitleLink
-                href={doctorDetailHref(viewerRole, primaryPatient.primary_doctor_id)}
-                label={primaryPatient.primary_doctor_display.trim()}
-                className="font-normal"
-              />
-            </p>
-          ) : null;
         return (
           <DoctorIdentityCell
             doctorId={a.doctor_id}
             name={a.doctor_display}
             email={a.doctor_email}
             image={a.doctor_image}
-            specialty={a.doctor_specialty ?? doctorById.get(a.doctor_id)?.specialty ?? null}
+            specialty={a.doctor_specialty ?? staffById.get(a.doctor_id)?.specialty ?? null}
             viewerRole={viewerRole}
-            doctorById={doctorById}
-            footer={primaryFooter}
+            doctorById={staffById}
           />
         );
       },
@@ -267,21 +283,28 @@ export function buildRelatedAppointmentsColumns(
       id: "location",
       accessorKey: "location",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Location" />,
-      cell: ({ row }) => (
-        <div className={cn(clinicalTableCellMinRowClass, "flex items-center", clinicalCellPrimaryTextClass)}>
-          {row.original.location ?? "—"}
-        </div>
-      ),
-    },
-    {
-      id: "status",
-      accessorKey: "status",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Status" />,
-      cell: ({ row }) => (
-        <div className={cn(clinicalTableCellMinRowClass, "flex items-center")}>
-          <AppointmentStatusBadge status={row.original.status} />
-        </div>
-      ),
+      meta: {
+        shellClassName: clinicalTableColumnWrapShellClass,
+        colWidth: CLINICAL_SNAPSHOT_APPOINTMENT_COL_WIDTH.location,
+      },
+      cell: ({ row }) => {
+        const loc = row.original.location?.trim();
+        if (!loc) {
+          return <ClinicalTableEmptyDash />;
+        }
+        return (
+          <p
+            className={cn(
+              clinicalTableCellMinRowClass,
+              clinicalTableCellWrapClass,
+              clinicalCellPrimaryTextClass,
+              "m-0 w-full max-w-full overflow-hidden whitespace-normal"
+            )}
+          >
+            {loc}
+          </p>
+        );
+      },
     },
   ];
 }
@@ -311,15 +334,17 @@ export function buildPatientInvoicesColumns(viewerRole: EntityRole): ColumnDef<S
       id: "description",
       accessorKey: "description",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Description" />,
+      meta: { shellClassName: clinicalTableColumnWrapShellClass },
       cell: ({ row }) => (
         <div
           className={cn(
             clinicalTableCellMinRowClass,
-            "flex max-w-[160px] items-center truncate",
-            clinicalCellPrimaryTextClass
+            clinicalTableCellWrapClass,
+            clinicalCellPrimaryTextClass,
+            "flex min-w-0 items-start"
           )}
         >
-          {row.original.description ?? "—"}
+          {row.original.description?.trim() ? row.original.description : "—"}
         </div>
       ),
     },

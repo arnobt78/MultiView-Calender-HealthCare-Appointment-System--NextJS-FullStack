@@ -33,6 +33,8 @@ export type DataTableColumnMeta = {
   shellClassName?: string;
   headClassName?: string;
   cellClassName?: string;
+  /** With `table-fixed`, set `<col width>` so cells do not bleed into neighbors. */
+  colWidth?: string;
 };
 
 function resolveColumnShellMeta(meta: DataTableColumnMeta | undefined, slot: "head" | "cell") {
@@ -171,10 +173,28 @@ export function DataTable<TData, TValue>({
       >
         <Table
           className={cn(
-            tableLayout === "auto" ? "table-auto w-full" : "table-fixed",
+            tableLayout === "auto" ? "table-auto w-full" : "table-fixed w-full",
             tableClassName
           )}
         >
+          {tableLayout === "fixed" ? (
+            <colgroup>
+              {table.getAllLeafColumns().map((column) => {
+                const meta = column.columnDef.meta as DataTableColumnMeta | undefined;
+                const width = meta?.colWidth;
+                return (
+                  <col
+                    key={column.id}
+                    style={
+                      width
+                        ? { width, minWidth: width, maxWidth: width }
+                        : undefined
+                    }
+                  />
+                );
+              })}
+            </colgroup>
+          ) : null}
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>

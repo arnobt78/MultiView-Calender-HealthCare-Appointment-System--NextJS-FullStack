@@ -15,6 +15,7 @@ import {
   Receipt,
   Share2,
   Stethoscope,
+  Tag,
   Trash2,
   User,
 } from "lucide-react";
@@ -39,6 +40,7 @@ import { ClinicalDataTable } from "@/components/shared/ClinicalDataTable";
 import {
   buildPatientInvoicesColumns,
   buildRelatedAppointmentsColumns,
+  CategoryTableCell,
 } from "@/components/control-panel/patient-detail-snapshot-columns";
 import { PatientPortraitAvatar } from "@/components/shared/person-display/PatientPortraitAvatar";
 import { useUsers } from "@/hooks/useUsers";
@@ -53,16 +55,20 @@ import { patientAgeYears } from "@/lib/patient-age";
 import { skyGlassBackButtonClass, skyGlassTableFrameClass } from "@/lib/calendar-header-action-styles";
 import {
   patientDetailDefinitionRowClass,
+  patientDetailPrimaryDoctorRowClass,
+  patientDetailSchemaSectionClass,
   patientDetailSnapshotTableFrameClass,
+  patientDetailStickyFooterClass,
 } from "@/lib/patient-detail-ui-classes";
 import { ControlPanelGlassActionButton } from "@/components/shared/ControlPanelGlassActionButton";
 import { cn } from "@/lib/utils";
-import { patientDetailHref } from "@/lib/entity-routes";
+import { patientDetailHref, type EntityRole } from "@/lib/entity-routes";
 import { isAdminRole } from "@/lib/rbac";
 import type { PatientAccessLevel } from "@/lib/patient-access";
 import { isValidUUID } from "@/lib/validation";
 import { invalidateQueriesForRoute } from "@/lib/query-client";
 import { prefetchDoctorsDirectory } from "@/lib/prefetch-doctors-directory";
+import { clinicalSnapshotAppointmentsTableMinWidthClass } from "@/lib/clinical-snapshot-table-columns";
 import type { Patient, PatientSnapshot } from "@/types/types";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -85,13 +91,15 @@ function PatientDetailDefinitionRow({
   icon,
   label,
   children,
+  rowClassName = patientDetailDefinitionRowClass,
 }: {
   icon: LucideIcon;
   label: string;
   children: React.ReactNode;
+  rowClassName?: string;
 }) {
   return (
-    <div className={patientDetailDefinitionRowClass}>
+    <div className={rowClassName}>
       <FieldLabel icon={icon}>{label}</FieldLabel>
       <dd className="min-w-0 text-gray-700">{children}</dd>
     </div>
@@ -113,7 +121,7 @@ function SectionHeading({ icon: Icon, children }: { icon: LucideIcon; children: 
 /** Pulse placeholders only — page chrome (header, card, footer bar) stays fixed to avoid layout flash. */
 function PatientDetailBodySkeleton() {
   return (
-    <div className="space-y-6 text-gray-700">
+    <div className="space-y-3 text-gray-700">
       {/* Keep static schema labels/icons visible; only value slots skeletonize during refresh. */}
       <dl className="grid gap-3 text-sm">
         <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 px-3 py-2 text-gray-700">
@@ -145,6 +153,10 @@ function PatientDetailBodySkeleton() {
         <div className={patientDetailDefinitionRowClass}>
           <FieldLabel icon={User}>Pronoun</FieldLabel>
           <Skeleton className="h-4 w-24 sm:mt-0.5" />
+        </div>
+        <div className={patientDetailDefinitionRowClass}>
+          <FieldLabel icon={Tag}>Category</FieldLabel>
+          <Skeleton className="h-4 w-40 sm:mt-0.5" />
         </div>
         <div className={patientDetailDefinitionRowClass}>
           <FieldLabel icon={Stethoscope}>Primary Doctor</FieldLabel>
@@ -229,16 +241,22 @@ export function PatientDetailScreen({
     }
   }, [queryClient, patientId, initialPatient, initialSnapshot, initialDoctors]);
 
-  const { data: patient, isLoading, isError, error } = usePatient(patientId, rosterDoctorId);
-  const snap = usePatientSnapshot(patientId, rosterDoctorId);
+  const { data: patient, isLoading, isError, error } = usePatient(patientId, rosterDoctorId, {
+    initialData: initialPatient ?? undefined,
+  });
+  const snap = usePatientSnapshot(patientId, rosterDoctorId, {
+    initialData: initialSnapshot ?? undefined,
+  });
   const { data: doctorsData } = useUsers({ role: "doctor", limit: 200 });
+  const { data: adminUsersData } = useUsers({ role: "admin", limit: 50 });
   const primaryDoctorUser = useMemo(() => {
     const id = patient?.primary_doctor_id;
     if (!id) return undefined;
     return doctorsData?.users?.find((u) => u.id === id);
   }, [patient?.primary_doctor_id, doctorsData?.users]);
 
-  const doctorById = useMemo(() => {
+  /** Doctors + admins — calendar owners may be admin; snapshot portraits must not be overwritten. */
+  const staffById = useMemo(() => {
     const map = new Map<
       string,
       {
@@ -249,8 +267,26 @@ export function PatientDetailScreen({
         specialty?: string | null;
       }
     >();
+    const mergeUser = (u: {
+      id: string;
+      email?: string | null;
+      display_name?: string | null;
+      image?: string | null;
+      specialty?: string | null;
+    }) => {
+      const prev = map.get(u.id);
+      const prevImage = prev?.image?.trim();
+      const nextImage = u.image?.trim();
+      map.set(u.id, {
+        id: u.id,
+        email: u.email ?? prev?.email,
+        display_name: u.display_name ?? prev?.display_name,
+        image: prevImage ? (prev?.image ?? null) : (nextImage ? u.image : (prev?.image ?? null)),
+        specialty: u.specialty ?? prev?.specialty ?? null,
+      });
+    };
     for (const d of initialDoctors?.doctors ?? []) {
-      map.set(d.id, {
+      mergeUser({
         id: d.id,
         email: d.email,
         display_name: d.display_name,
@@ -259,18 +295,40 @@ export function PatientDetailScreen({
       });
     }
     for (const u of doctorsData?.users ?? []) {
-      if (!u.id) continue;
-      const prev = map.get(u.id);
-      map.set(u.id, {
-        id: u.id,
-        email: u.email ?? prev?.email,
-        display_name: u.display_name ?? prev?.display_name,
-        image: u.image ?? prev?.image ?? null,
-        specialty: u.specialty ?? prev?.specialty ?? null,
-      });
+      if (u.id) {
+        mergeUser({
+          id: u.id,
+          email: u.email,
+          display_name: u.display_name,
+          image: u.image,
+          specialty: u.specialty ?? null,
+        });
+      }
+    }
+    for (const u of adminUsersData?.users ?? []) {
+      if (u.id) {
+        mergeUser({
+          id: u.id,
+          email: u.email,
+          display_name: u.display_name,
+          image: u.image,
+          specialty: null,
+        });
+      }
     }
     return map;
-  }, [initialDoctors?.doctors, doctorsData?.users]);
+  }, [initialDoctors?.doctors, doctorsData?.users, adminUsersData?.users]);
+
+  /** Latest appointment category for schema block (primary doctor sits on the row below). */
+  const schemaCategory = useMemo(() => {
+    const row = (snap.data?.appointments ?? []).find((a) => a.category_label?.trim());
+    if (!row?.category_label?.trim()) return null;
+    return {
+      id: row.category ?? null,
+      label: row.category_label.trim(),
+      color: row.category_color ?? null,
+    };
+  }, [snap.data?.appointments]);
   const { deletePatient, isDeleting, isUpdating, updatePatient } = usePatients();
   const [isMounted, setIsMounted] = useState(false);
 
@@ -280,9 +338,12 @@ export function PatientDetailScreen({
     return () => window.cancelAnimationFrame(raf);
   }, []);
 
-  const ready = Boolean(patient) && !isLoading;
-  const showLiveData = isMounted && ready;
+  const hasPatient = Boolean(patient);
+  /** Data slots only — footer/header actions stay mounted (SSR `initialData` + cache). */
+  const showBodySkeleton = !hasPatient && (isLoading || !isMounted);
+  const showLiveBody = hasPatient && (isMounted || initialPatient != null);
   const p = patient as Patient | undefined;
+  const footerActionsDisabled = !hasPatient || isDeleting || isUpdating;
 
   const openEditDialog = useCallback(() => {
     if (!canEdit || !p) return;
@@ -352,10 +413,9 @@ export function PatientDetailScreen({
       buildRelatedAppointmentsColumns({
         viewerRole,
         patientDisplayName,
-        primaryPatient: snap.data?.patient ?? p ?? null,
-        doctorById,
+        staffById,
       }),
-    [viewerRole, patientDisplayName, snap.data?.patient, p, doctorById]
+    [viewerRole, patientDisplayName, staffById]
   );
 
   const invoiceColumns = useMemo(
@@ -375,10 +435,10 @@ export function PatientDetailScreen({
   }
 
   return (
-    <div className="space-y-4 pb-4 text-gray-700">
+    <div className="space-y-4 text-gray-700">
       <PageHeader
         title={
-          showLiveData ? (
+          showLiveBody ? (
             <span className="block min-h-8 sm:min-h-9">{nameLabel || "—"}</span>
           ) : (
             <Skeleton className="h-8 w-56 max-w-full sm:h-9" aria-hidden />
@@ -397,7 +457,7 @@ export function PatientDetailScreen({
         }
       />
 
-      {accessLevel === "view" && showLiveData && (
+      {accessLevel === "view" && showLiveBody && (
         <div className="flex items-center gap-2 rounded-lg border border-amber-200/80 bg-amber-50/90 px-3 py-2 text-sm text-amber-900">
           <Lock className="h-4 w-4 shrink-0" aria-hidden />
           Read-only — you can view this patient chart but only the primary doctor or an admin can
@@ -411,20 +471,21 @@ export function PatientDetailScreen({
           skyGlassTableFrameClass
         )}
       >
-        <CardContent className="space-y-6 px-4 sm:px-6 text-gray-700">
+        <CardContent className="space-y-3 px-4 sm:px-6 text-gray-700">
           {/* Keep section title inside the same content flow to avoid top-strip jump on refresh. */}
           <div className="min-h-6">
             {/* Static heading should stay rendered even while values are loading. */}
             <h2 className="text-lg font-semibold text-gray-700">Patient Details</h2>
           </div>
+          <div className={patientDetailSchemaSectionClass}>
           <div className="flex items-center gap-2">
-            {showLiveData && p ? (
+            {showLiveBody && p ? (
               <PatientPortraitAvatar patient={p} sizeClassName="h-16 w-16" />
             ) : (
               <Skeleton className="h-16 w-16 shrink-0 rounded-full" aria-hidden />
             )}
             <div className="min-w-0 flex-1">
-              {showLiveData ? (
+              {showLiveBody ? (
                 <>
                   <p className="text-lg font-semibold text-gray-700">{nameLabel || "—"}</p>
                   <p className="text-sm text-gray-600">{p!.email ?? "—"}</p>
@@ -467,7 +528,7 @@ export function PatientDetailScreen({
             </div>
           </div>
 
-          {!showLiveData ? (
+          {showBodySkeleton ? (
             <PatientDetailBodySkeleton />
           ) : (
             <>
@@ -522,9 +583,26 @@ export function PatientDetailScreen({
                 <PatientDetailDefinitionRow icon={User} label="Pronoun">
                   {p!.pronoun ?? "—"}
                 </PatientDetailDefinitionRow>
-                <PatientDetailDefinitionRow icon={Stethoscope} label="Primary Doctor">
+                <PatientDetailDefinitionRow icon={Tag} label="Category">
+                  {schemaCategory ? (
+                    <CategoryTableCell
+                      label={schemaCategory.label}
+                      color={schemaCategory.color}
+                      categoryId={schemaCategory.id}
+                      viewerRole={viewerRole as EntityRole}
+                    />
+                  ) : (
+                    "—"
+                  )}
+                </PatientDetailDefinitionRow>
+                <PatientDetailDefinitionRow
+                  icon={Stethoscope}
+                  label="Primary Doctor"
+                  rowClassName={patientDetailPrimaryDoctorRowClass}
+                >
                   {p!.primary_doctor_id && p!.primary_doctor_display?.trim() ? (
                     <DoctorIdentityRow
+                      layout="inline"
                       doctor={{
                         id: p!.primary_doctor_id,
                         email: p!.primary_doctor_email ?? primaryDoctorUser?.email ?? null,
@@ -534,6 +612,7 @@ export function PatientDetailScreen({
                       }}
                       linkKind={isAdminRole(viewerRole) ? "admin-cp" : "role"}
                       showEmail
+                      showSpecialty
                     />
                   ) : (
                     (p!.primary_doctor_display ?? "—")
@@ -559,7 +638,12 @@ export function PatientDetailScreen({
                   </span>
                 </PatientDetailDefinitionRow>
               </dl>
+            </>
+          )}
+          </div>
 
+          {hasPatient ? (
+            <>
               <div className="space-y-3">
                 <SectionHeading icon={Calendar}>Related Appointments</SectionHeading>
                 <ClinicalDataTable
@@ -567,8 +651,9 @@ export function PatientDetailScreen({
                   data={(snap.data?.appointments ?? []).slice(0, 12)}
                   isLoading={snap.isLoading}
                   pagination={false}
+                  tableLayout="fixed"
                   emptyMessage="No Appointments"
-                  tableClassName="min-w-[900px] w-full"
+                  tableClassName={cn(clinicalSnapshotAppointmentsTableMinWidthClass, "w-full")}
                   className={patientDetailSnapshotTableFrameClass}
                   tableFrameClassName="rounded-md border border-slate-200/80 bg-white shadow-none"
                 />
@@ -588,91 +673,76 @@ export function PatientDetailScreen({
                 />
               </div>
             </>
-          )}
+          ) : null}
         </CardContent>
       </Card>
 
-      {/* Sticky footer — scoped to control-panel right pane (not under sidebar). */}
-      <div className="sticky bottom-0 z-10 -mx-2 border-t border-sky-100/60 bg-white/95 px-2 py-3 text-gray-700 backdrop-blur supports-backdrop-filter:bg-white/85 sm:-mx-4 sm:px-4 lg:-mx-8 lg:px-8">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          {!showLiveData ? (
-            <div className="flex w-full items-center justify-between gap-2">
-              <BackNavigationLink
-                href={listBackHref}
-                className={cn(skyGlassBackButtonClass, "no-underline")}
+      {/* Sticky footer — static client chrome; never swap placeholders on refetch/hydrate. */}
+      <div className={patientDetailStickyFooterClass}>
+        <div className="flex min-h-10 flex-wrap items-center justify-between gap-2">
+          <BackNavigationLink
+            href={listBackHref}
+            className={cn(skyGlassBackButtonClass, "no-underline")}
+          >
+            <List className="shrink-0" aria-hidden />
+            Back To List
+          </BackNavigationLink>
+          {canEdit ? (
+            <div className="flex flex-wrap gap-2">
+              <ControlPanelGlassActionButton
+                type="button"
+                variant="emerald"
+                onClick={openEditDialog}
+                disabled={footerActionsDisabled}
+                className="cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
               >
-                <List className="shrink-0" aria-hidden />
-                Back To List
-              </BackNavigationLink>
-              <div className="flex flex-wrap gap-2">
-                <div className="h-10 w-36" />
-                <div className="h-10 w-24" />
-              </div>
-            </div>
-          ) : (
-            <>
-              <BackNavigationLink
-                href={listBackHref}
-                className={cn(skyGlassBackButtonClass, "no-underline")}
-              >
-                <List className="shrink-0" aria-hidden />
-                Back To List
-              </BackNavigationLink>
-              {canEdit ? (
-                <div className="flex flex-wrap gap-2">
+                <Pencil className="shrink-0" aria-hidden />
+                Update Profile
+              </ControlPanelGlassActionButton>
+              <ConfirmActionDialog
+                trigger={
                   <ControlPanelGlassActionButton
                     type="button"
-                    variant="emerald"
-                    onClick={openEditDialog}
-                    className="cursor-pointer"
+                    variant="rose"
+                    disabled={footerActionsDisabled}
+                    className="cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    <Pencil className="shrink-0" aria-hidden />
-                    Update Profile
+                    <Trash2 className="shrink-0" aria-hidden />
+                    {isDeleting ? "Deleting…" : "Delete"}
                   </ControlPanelGlassActionButton>
-                  <ConfirmActionDialog
-                    trigger={
-                      <ControlPanelGlassActionButton
-                        type="button"
-                        variant="rose"
-                        disabled={isDeleting}
-                        className="cursor-pointer"
-                      >
-                        <Trash2 className="shrink-0" aria-hidden />
-                        {isDeleting ? "Deleting…" : "Delete"}
-                      </ControlPanelGlassActionButton>
+                }
+                title="Permanently Remove This Patient?"
+                subtitle={
+                  <>
+                    This will delete{" "}
+                    <span className="text-gray-700">
+                      {p
+                        ? `${p.firstname} ${p.lastname}`.trim() + (p.email ? ` (${p.email})` : "")
+                        : "this patient"}
+                    </span>{" "}
+                    and all related data. You cannot undo this action.
+                  </>
+                }
+                confirmLabel="Delete"
+                onConfirm={() => {
+                  if (!p) return;
+                  deletePatient(
+                    {
+                      id: p.id,
+                      name: `${p.firstname} ${p.lastname}`.trim(),
+                      email: p.email,
+                    },
+                    {
+                      onSuccess: async () => {
+                        await invalidateQueriesForRoute(queryClient, listBackHref);
+                        router.push(listBackHref);
+                      },
                     }
-                    title="Permanently Remove This Patient?"
-                    subtitle={
-                      <>
-                        This will delete{" "}
-                        <span className="text-gray-700">
-                          {`${p!.firstname} ${p!.lastname}`.trim()}
-                          {p!.email ? ` (${p!.email})` : ""}
-                        </span>{" "}
-                        and all related data. You cannot undo this action.
-                      </>
-                    }
-                    confirmLabel="Delete"
-                    onConfirm={() =>
-                      deletePatient(
-                        {
-                          id: p!.id,
-                          name: `${p!.firstname} ${p!.lastname}`.trim(),
-                          email: p!.email,
-                        },
-                        {
-                          onSuccess: async () => {
-                            await invalidateQueriesForRoute(queryClient, listBackHref);
-                            router.push(listBackHref);
-                          },
-                        }
-                      )
-                    }
-                  />
-                </div>
-              ) : null}
-            </>
-          )}
+                  );
+                }}
+              />
+            </div>
+          ) : null}
         </div>
       </div>
 

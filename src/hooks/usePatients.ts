@@ -131,7 +131,16 @@ function patientRosterQuery(rosterDoctorId?: string | null): string {
   return `?fromDoctor=${encodeURIComponent(rosterDoctorId)}`;
 }
 
-export function usePatient(id: string | null, rosterDoctorId?: string | null) {
+export type UsePatientQueryOptions = {
+  /** SSR prefetch — keeps detail chrome stable on first paint and after hard refresh. */
+  initialData?: Patient | null;
+};
+
+export function usePatient(
+  id: string | null,
+  rosterDoctorId?: string | null,
+  options?: UsePatientQueryOptions
+) {
   const rosterQ = patientRosterQuery(rosterDoctorId);
   return useQuery({
     queryKey: queryKeys.patients.detail(id ?? ""),
@@ -140,16 +149,28 @@ export function usePatient(id: string | null, rosterDoctorId?: string | null) {
       return res.patient;
     },
     enabled: !!id,
+    initialData: options?.initialData ?? undefined,
+    staleTime: 60_000,
   });
 }
 
+export type UsePatientSnapshotQueryOptions = {
+  /** SSR prefetch — snapshot tables render without waiting on client cache seed. */
+  initialData?: PatientSnapshot | null;
+};
+
 /** Aggregated appointments / activities / invoices for patient profile — invalidated with `queryKeys.patients.all` */
-export function usePatientSnapshot(id: string | null, rosterDoctorId?: string | null) {
+export function usePatientSnapshot(
+  id: string | null,
+  rosterDoctorId?: string | null,
+  options?: UsePatientSnapshotQueryOptions
+) {
   const rosterQ = patientRosterQuery(rosterDoctorId);
   return useQuery({
     queryKey: queryKeys.patients.snapshot(id ?? ""),
     queryFn: () => apiClient<PatientSnapshot>(`/api/patients/${id}/snapshot${rosterQ}`),
     enabled: !!id,
+    initialData: options?.initialData ?? undefined,
     staleTime: 60_000,
   });
 }

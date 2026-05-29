@@ -51,11 +51,13 @@ export function DoctorIdentityCell({
   footer,
 }: DoctorIdentityCellProps) {
   const fromMap = doctorById?.get(doctorId);
+  const snapshotImage = image?.trim() ? image.trim() : null;
   const doctor: DoctorIdentityDoctor = {
     id: doctorId,
     email: email ?? fromMap?.email ?? null,
     display_name: name.trim() || (fromMap?.display_name ?? null),
-    image: image ?? fromMap?.image ?? null,
+    /** Snapshot/API portrait wins — avoids robohash flash when staff directory hydrates later. */
+    image: snapshotImage ?? fromMap?.image?.trim() ?? null,
     specialty: specialty ?? fromMap?.specialty ?? null,
   };
 
