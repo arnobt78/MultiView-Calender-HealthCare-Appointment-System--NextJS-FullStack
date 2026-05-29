@@ -4,6 +4,7 @@ export { InsightsScopeToolbar } from "@/components/insights/InsightsScopeToolbar
 export { InsightsPeriodControls } from "@/components/insights/InsightsPeriodControls";
 export { InsightsScopeControls } from "@/components/insights/InsightsScopeControls";
 export { InsightsGlassSegment } from "@/components/insights/InsightsGlassSegment";
+export { InsightsDoctorScopeSelect } from "@/components/insights/InsightsDoctorScopeSelect";
 export { InsightsAppointmentsPanelHeader } from "@/components/insights/InsightsAppointmentsPanelHeader";
 export { InsightsPageChrome } from "@/components/insights/InsightsPageChrome";
 export { InsightsDataErrorBanner } from "@/components/insights/InsightsDataErrorBanner";

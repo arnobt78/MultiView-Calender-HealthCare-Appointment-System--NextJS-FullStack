@@ -3,6 +3,7 @@
 import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
+  insightsGlassSegmentButtonBaseClass,
   insightsSegmentActiveClass,
   insightsSegmentInactiveClass,
 } from "@/lib/insights-ui-classes";
@@ -50,7 +51,7 @@ export function InsightsGlassSegment<T extends string>({
             title={opt.hint ?? opt.label}
             disabled={disabled}
             className={cn(
-              "inline-flex h-10 shrink-0 items-center gap-2 rounded-full border px-4 text-sm font-medium backdrop-blur-md transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/45 focus-visible:ring-offset-2 [&_svg]:size-4",
+              insightsGlassSegmentButtonBaseClass,
               active ? insightsSegmentActiveClass : insightsSegmentInactiveClass
             )}
             onClick={() => onChange(opt.value)}

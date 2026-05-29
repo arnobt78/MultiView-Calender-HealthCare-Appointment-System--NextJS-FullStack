@@ -36,6 +36,16 @@ export const insightsSegmentActiveClass =
 export const insightsSegmentInactiveClass =
   "border-slate-300/55 bg-white/70 text-slate-700 shadow-[0_10px_24px_rgba(15,23,42,0.08)] hover:border-sky-300/60 hover:bg-sky-50/80 hover:text-sky-800 hover:shadow-[0_12px_30px_rgba(2,132,199,0.16)]";
 
+/** Shared pill geometry for InsightsGlassSegment + admin scope quick toggles. */
+export const insightsGlassSegmentButtonBaseClass =
+  "inline-flex h-10 shrink-0 items-center gap-2 rounded-full border px-4 text-sm font-medium backdrop-blur-md transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/45 focus-visible:ring-offset-2 [&_svg]:size-4";
+
+/**
+ * Insights admin doctor scope picker — pill trigger with sky shadowglow (matches segment active state).
+ */
+export const insightsGlassSelectTriggerClass =
+  "h-10 max-h-10 min-h-10 w-auto min-w-[12.5rem] max-w-[20rem] rounded-full border border-slate-300/55 bg-white/70 px-3 py-0 text-sm text-slate-700 shadow-[0_10px_24px_rgba(15,23,42,0.08)] backdrop-blur-md transition-all duration-200 hover:border-sky-300/60 hover:bg-sky-50/80 hover:shadow-[0_12px_30px_rgba(2,132,199,0.16)] focus-visible:border-sky-400/45 focus-visible:ring-2 focus-visible:ring-sky-400/45 focus-visible:ring-offset-2 data-[placeholder]:text-gray-500 [&_[data-slot=select-value]]:min-w-0 [&_[data-slot=select-value]]:flex-1 [&_[data-slot=select-value]]:items-center [&_[data-slot=select-value]]:overflow-hidden";
+
 /** KPI strip: 4 cards per row from md up (incl. 1920×1080); 2 cols on narrow viewports. */
 export const analyticsOverviewGridClass =
   "grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4";

@@ -1,6 +1,8 @@
 // Insights Page - Server Component (async SSR)
 // Pre-fetches scoped insights so AnalyticsPage seeds TanStack cache on first paint.
 
+export const dynamic = "force-dynamic";
+
 import type { Metadata } from "next";
 import AnalyticsPage from "@/components/pages/AnalyticsPage";
 import { getSessionUser } from "@/lib/session";
