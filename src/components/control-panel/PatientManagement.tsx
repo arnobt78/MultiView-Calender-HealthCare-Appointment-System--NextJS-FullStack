@@ -74,6 +74,10 @@ import {
 import { useUsers } from "@/hooks/useUsers";
 import { useQueryClient } from "@tanstack/react-query";
 import { prefetchDoctorsDirectory } from "@/lib/prefetch-doctors-directory";
+import {
+  patientManagementFilterToolbarClass,
+  patientManagementStatsStripClass,
+} from "@/lib/patient-management-toolbar-classes";
 import { PATIENT_CARE_LEVEL_STAGES, getPatientCareLevelLabel } from "@/lib/patient-care-level";
 import { patientDetailHref, type EntityRole } from "@/lib/entity-routes";
 
@@ -578,7 +582,13 @@ export function PatientManagementInner({
   }
 
   const listChrome = (
-      <div className={cn("space-y-2 text-gray-700", isDoctorPortal && "space-y-3")}>
+      <div
+        className={cn(
+          "space-y-2 text-gray-700",
+          isDoctorPortal && "space-y-3",
+          !isDoctorPortal && "overflow-visible"
+        )}
+      >
         {!isDoctorPortal ? (
           <PageHeader
             title="Patients"
@@ -611,15 +621,14 @@ export function PatientManagementInner({
           />
         ) : null}
 
-        {!isDoctorPortal ? <PatientManagementStatsRow /> : null}
+        {!isDoctorPortal ? (
+          <div className={patientManagementStatsStripClass}>
+            <PatientManagementStatsRow />
+          </div>
+        ) : null}
 
-        {/* Sticky toolbar: filters + search only (export/add moved to PageHeader). */}
-        <div
-          className={cn(
-            "sticky z-10 flex min-h-[52px] flex-wrap items-center gap-2 bg-white/90 backdrop-blur-sm supports-[backdrop-filter]:bg-white/80",
-            APP_NAVBAR_STICKY_OFFSET_CLASS
-          )}
-        >
+        {/* Sticky toolbar: transparent shell so stat card shadows are not clipped (see patient-management-toolbar-classes). */}
+        <div className={cn(patientManagementFilterToolbarClass, APP_NAVBAR_STICKY_OFFSET_CLASS)}>
           <div className="relative min-w-0 w-full flex-1 sm:max-w-md sm:flex-1">
             <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
               <FiSearch className="h-4 w-4" aria-hidden />
