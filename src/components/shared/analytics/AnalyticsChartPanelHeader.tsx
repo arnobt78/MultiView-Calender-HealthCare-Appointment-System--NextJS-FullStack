@@ -1,6 +1,7 @@
 "use client";
 
 import type { LucideIcon } from "lucide-react";
+import { PortalPanelCountBadge } from "@/components/shared/PortalPanelCountBadge";
 import {
   analyticsChartPanelIconTileClass,
   analyticsChartPanelTitleClass,
@@ -12,6 +13,8 @@ type AnalyticsChartPanelHeaderProps = {
   title: string;
   /** Dynamic View-as period line only (sky accent) — no static prefix text. */
   periodSubtitle?: string;
+  /** Inline count pill beside title (doctor-portal section parity). */
+  count?: number;
   icon: LucideIcon;
   iconClassName?: string;
   id?: string;
@@ -24,6 +27,7 @@ type AnalyticsChartPanelHeaderProps = {
 export function AnalyticsChartPanelHeader({
   title,
   periodSubtitle,
+  count,
   icon: Icon,
   iconClassName,
   id,
@@ -35,8 +39,17 @@ export function AnalyticsChartPanelHeader({
         <Icon className="h-4 w-4" />
       </span>
       <div className="flex min-w-0 flex-1 flex-col justify-center">
-        <h3 id={id} className={analyticsChartPanelTitleClass}>
-          {toTitleCaseLabel(title)}
+        <h3
+          id={id}
+          className={cn(
+            analyticsChartPanelTitleClass,
+            "flex flex-wrap items-center gap-x-2 gap-y-0.5"
+          )}
+        >
+          <span className="min-w-0">{toTitleCaseLabel(title)}</span>
+          {count !== undefined ? (
+            <PortalPanelCountBadge>{count}</PortalPanelCountBadge>
+          ) : null}
         </h3>
         {periodSubtitle ? (
           <p className={insightsChartPeriodSubtitleClass}>{periodSubtitle}</p>

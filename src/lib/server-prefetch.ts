@@ -63,11 +63,17 @@ import type {
 } from "@/types/types";
 import type { DashboardOverview } from "@/hooks/useDashboardOverview";
 import {
-  coerceDashboardOverviewUpcomingAppointments,
+  coerceDashboardOverviewPayload,
+  mapDashboardOverviewRecentQueueAppointment,
   DASHBOARD_UPCOMING_APPOINTMENTS_LIMIT,
   dashboardOverviewAppointmentQueueSelect,
   mapDashboardOverviewQueueAppointment,
 } from "@/lib/dashboard-overview-queue";
+import {
+  DASHBOARD_RECENT_ACTIVITY_FETCH_CAP,
+  dashboardOverviewRecentQueueSelect,
+  pickRecentActivityAppointments,
+} from "@/lib/dashboard-overview-recent-activity";
 
 // ─── Shared types ─────────────────────────────────────────────────────────────
 
@@ -231,7 +237,7 @@ export async function prefetchDashboardOverview(userId: string): Promise<Dashboa
     if (redis.isConfigured) {
       const cached = await redis.get(cacheKey);
       if (cached) {
-        return coerceDashboardOverviewUpcomingAppointments(
+        return coerceDashboardOverviewPayload(
           JSON.parse(cached as string) as DashboardOverview & {
             nextAppointment?: DashboardOverview["upcomingAppointments"][number] | null;
           }
@@ -261,7 +267,7 @@ export async function prefetchDashboardOverview(userId: string): Promise<Dashboa
       totalDoctors,
       totalCategories,
       upcomingAppointmentsRaw,
-      recentAppointments,
+      recentAppointmentsRaw,
       overdueCount,
       totalInvoices,
       paidInvoices,
@@ -286,8 +292,8 @@ export async function prefetchDashboardOverview(userId: string): Promise<Dashboa
       prisma.appointment.findMany({
         where: { owner_id: userId },
         orderBy: { created_at: "desc" },
-        take: 5,
-        select: dashboardOverviewAppointmentQueueSelect,
+        take: DASHBOARD_RECENT_ACTIVITY_FETCH_CAP,
+        select: dashboardOverviewRecentQueueSelect,
       }),
       prisma.appointment.count({
         where: { owner_id: userId, end: { lt: now }, status: { not: "done" } },
@@ -324,8 +330,8 @@ export async function prefetchDashboardOverview(userId: string): Promise<Dashboa
       upcomingAppointments: upcomingAppointmentsRaw.map((a) =>
         mapDashboardOverviewQueueAppointment(a)
       ),
-      recentAppointments: recentAppointments.map((a) =>
-        mapDashboardOverviewQueueAppointment(a)
+      recentAppointments: pickRecentActivityAppointments(recentAppointmentsRaw).map((a) =>
+        mapDashboardOverviewRecentQueueAppointment(a)
       ),
       revenue: {
         paidCents: paidRevenue._sum.amount ?? 0,

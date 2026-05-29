@@ -2,8 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
 import { apiClient } from "@/lib/api-client";
 import {
-  coerceDashboardOverviewUpcomingAppointments,
+  coerceDashboardOverviewPayload,
   type DashboardOverviewQueueAppointment,
+  type DashboardOverviewRecentQueueAppointment,
 } from "@/lib/dashboard-overview-queue";
 
 export interface DashboardOverview {
@@ -22,7 +23,7 @@ export interface DashboardOverview {
   categories: number;
   /** Closest future non-done appointments (max 5), ascending by start. */
   upcomingAppointments: DashboardOverviewQueueAppointment[];
-  recentAppointments: DashboardOverviewQueueAppointment[];
+  recentAppointments: DashboardOverviewRecentQueueAppointment[];
   revenue: {
     paidCents: number;
     outstandingCents: number;
@@ -35,10 +36,10 @@ export function useDashboardOverview() {
   const query = useQuery({
     queryKey: queryKeys.dashboard.overview,
     queryFn: async () => {
-      const raw = await apiClient<DashboardOverview & { nextAppointment?: DashboardOverviewQueueAppointment | null }>(
-        "/api/dashboard/overview"
-      );
-      return coerceDashboardOverviewUpcomingAppointments(raw);
+      const raw = await apiClient<
+        DashboardOverview & { nextAppointment?: DashboardOverviewQueueAppointment | null }
+      >("/api/dashboard/overview");
+      return coerceDashboardOverviewPayload(raw);
     },
     staleTime: 60_000, // refresh every minute
   });

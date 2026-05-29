@@ -32,11 +32,17 @@ import {
   endOfMonth,
 } from "date-fns";
 import {
-  coerceDashboardOverviewUpcomingAppointments,
+  coerceDashboardOverviewPayload,
   DASHBOARD_UPCOMING_APPOINTMENTS_LIMIT,
   dashboardOverviewAppointmentQueueSelect,
   mapDashboardOverviewQueueAppointment,
+  mapDashboardOverviewRecentQueueAppointment,
 } from "@/lib/dashboard-overview-queue";
+import {
+  DASHBOARD_RECENT_ACTIVITY_FETCH_CAP,
+  dashboardOverviewRecentQueueSelect,
+  pickRecentActivityAppointments,
+} from "@/lib/dashboard-overview-recent-activity";
 
 /** Cache TTL in seconds — 90 s balances freshness vs DB load on VPS Postgres. */
 const OVERVIEW_CACHE_TTL = 90;
@@ -56,7 +62,7 @@ export async function GET() {
     if (redis.isConfigured) {
       const cached = await redis.get(cacheKey);
       if (cached) {
-        const parsed = coerceDashboardOverviewUpcomingAppointments(
+        const parsed = coerceDashboardOverviewPayload(
           JSON.parse(cached as string) as Record<string, unknown>
         );
         return NextResponse.json(parsed, { headers: { "X-Cache": "HIT" } });
@@ -84,7 +90,7 @@ export async function GET() {
       totalDoctors,
       totalCategories,
       upcomingAppointmentsRaw,
-      recentAppointments,
+      recentAppointmentsRaw,
       overdueCount,
       totalInvoices,
       paidInvoices,
@@ -125,8 +131,8 @@ export async function GET() {
       prisma.appointment.findMany({
         where: { owner_id: sessionUser.userId },
         orderBy: { created_at: "desc" },
-        take: 5,
-        select: dashboardOverviewAppointmentQueueSelect,
+        take: DASHBOARD_RECENT_ACTIVITY_FETCH_CAP,
+        select: dashboardOverviewRecentQueueSelect,
       }),
       prisma.appointment.count({
         where: {
@@ -171,8 +177,8 @@ export async function GET() {
       upcomingAppointments: upcomingAppointmentsRaw.map((a) =>
         mapDashboardOverviewQueueAppointment(a)
       ),
-      recentAppointments: recentAppointments.map((a) =>
-        mapDashboardOverviewQueueAppointment(a)
+      recentAppointments: pickRecentActivityAppointments(recentAppointmentsRaw).map((a) =>
+        mapDashboardOverviewRecentQueueAppointment(a)
       ),
       revenue: {
         paidCents: paidRevenue._sum.amount ?? 0,

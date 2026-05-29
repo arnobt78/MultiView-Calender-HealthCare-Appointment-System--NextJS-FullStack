@@ -1,21 +1,17 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
-import { DashboardAppointmentStatusBadge } from "@/components/control-panel/dashboard/DashboardAppointmentStatusBadge";
-import { DashboardAppointmentScheduleMetaRow } from "@/components/control-panel/dashboard/DashboardAppointmentScheduleMetaRow";
-import { DashboardDoctorIdentityInline } from "@/components/control-panel/dashboard/DashboardDoctorIdentityInline";
-import { DashboardPatientIdentityInline } from "@/components/control-panel/dashboard/DashboardPatientIdentityInline";
-import { appointmentDetailHref } from "@/lib/entity-routes";
+import { DashboardQueueActivityMetaRow } from "@/components/control-panel/dashboard/DashboardQueueActivityMetaRow";
+import { DashboardQueueAppointmentRow } from "@/components/control-panel/dashboard/DashboardQueueAppointmentRow";
 import { controlPanelDashboardListRowClass } from "@/lib/control-panel-glass-card";
-import type { DashboardOverviewQueueAppointment } from "@/lib/dashboard-overview-queue";
+import type { DashboardOverviewRecentQueueAppointment } from "@/lib/dashboard-overview-queue";
 
 type Props = {
-  appointments: DashboardOverviewQueueAppointment[];
+  appointments: DashboardOverviewRecentQueueAppointment[];
   loading?: boolean;
 };
 
-/** Recently created list — sky title link, datetime + location row, patient + doctor identity rows. */
+/** Last 5 create/update activities — schedule + identities + activity actor row. */
 export function DashboardRecentAppointmentsBody({ appointments, loading = false }: Props) {
   if (loading) {
     return (
@@ -30,7 +26,7 @@ export function DashboardRecentAppointmentsBody({ appointments, loading = false 
   if (appointments.length === 0) {
     return (
       <p className="py-2 text-center text-sm text-muted-foreground" role="status">
-        No appointments yet.
+        No recent appointment activity.
       </p>
     );
   }
@@ -38,33 +34,20 @@ export function DashboardRecentAppointmentsBody({ appointments, loading = false 
   return (
     <div className="divide-y divide-slate-100/90">
       {appointments.map((appt) => (
-        <RecentAppointmentRow key={appt.id} appt={appt} />
+        <div key={appt.id} className={controlPanelDashboardListRowClass}>
+          <DashboardQueueAppointmentRow
+            appointment={appt}
+            dateVariant="short"
+            showRelativeTime={false}
+            embedded
+          />
+          <DashboardQueueActivityMetaRow
+            kind={appt.activityKind}
+            activityAt={appt.activityAt}
+            actor={appt.actor}
+          />
+        </div>
       ))}
-    </div>
-  );
-}
-
-function RecentAppointmentRow({ appt }: { appt: DashboardOverviewQueueAppointment }) {
-  return (
-    <div className={controlPanelDashboardListRowClass}>
-      <div className="flex min-w-0 items-start justify-between gap-2">
-        <EntityTitleLink
-          href={appointmentDetailHref("admin", appt.id)}
-          label={appt.title}
-          className="min-w-0 flex-1 text-sm font-medium"
-          wrapLabel={false}
-        />
-        <DashboardAppointmentStatusBadge status={appt.status} />
-      </div>
-      <DashboardAppointmentScheduleMetaRow
-        start={appt.start}
-        end={appt.end}
-        location={appt.location}
-        isTelehealth={appt.is_telehealth}
-        dateVariant="short"
-      />
-      {appt.patient ? <DashboardPatientIdentityInline patient={appt.patient} /> : null}
-      {appt.treatingDoctor ? <DashboardDoctorIdentityInline doctor={appt.treatingDoctor} /> : null}
     </div>
   );
 }
@@ -79,6 +62,7 @@ function RecentAppointmentSkeleton() {
       <Skeleton className="h-3 w-full max-w-[14rem] rounded" />
       <Skeleton className="h-3 w-2/3 max-w-[12rem] rounded" />
       <Skeleton className="h-3 w-1/2 max-w-[10rem] rounded" />
+      <Skeleton className="h-3 w-4/5 max-w-[16rem] rounded" />
     </div>
   );
 }

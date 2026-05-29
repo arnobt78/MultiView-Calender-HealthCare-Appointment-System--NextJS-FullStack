@@ -3,6 +3,11 @@
  */
 
 import type { Prisma } from "@prisma/client";
+import {
+  resolveAppointmentActivityAt,
+  resolveAppointmentActivityKind,
+  type DashboardAppointmentActivityKind,
+} from "@/lib/dashboard-overview-recent-activity";
 
 /** Upcoming queue on dashboard overview (closest future starts first). */
 export const DASHBOARD_UPCOMING_APPOINTMENTS_LIMIT = 5;
@@ -21,6 +26,49 @@ export function coerceDashboardOverviewUpcomingAppointments<
     ...payload,
     upcomingAppointments: payload.nextAppointment ? [payload.nextAppointment] : [],
   };
+}
+
+/** Legacy Redis rows may lack activity fields until TTL expires. */
+function normalizeRecentQueueRow(
+  row: DashboardOverviewQueueAppointment | DashboardOverviewRecentQueueAppointment
+): DashboardOverviewRecentQueueAppointment {
+  const recent = row as DashboardOverviewRecentQueueAppointment;
+  if (recent.activityKind && recent.activityAt && recent.actor) return recent;
+  const actor =
+    recent.actor ??
+    recent.treatingDoctor ?? {
+      id: "unknown",
+      display_name: "Unknown",
+      email: "",
+      image: null,
+      specialty: null,
+    };
+  return {
+    ...row,
+    activityKind: recent.activityKind ?? "created",
+    activityAt: recent.activityAt ?? row.start,
+    actor,
+  };
+}
+
+/** Normalizes overview API/prefetch payload (upcoming + recent activity rows). */
+export function coerceDashboardOverviewPayload<
+  T extends {
+    upcomingAppointments?: DashboardOverviewQueueAppointment[];
+    nextAppointment?: DashboardOverviewQueueAppointment | null;
+    recentAppointments?: (DashboardOverviewQueueAppointment | DashboardOverviewRecentQueueAppointment)[];
+  },
+>(
+  payload: T
+): T & {
+  upcomingAppointments: DashboardOverviewQueueAppointment[];
+  recentAppointments: DashboardOverviewRecentQueueAppointment[];
+} {
+  const withUpcoming = coerceDashboardOverviewUpcomingAppointments(payload);
+  const recent = Array.isArray(withUpcoming.recentAppointments)
+    ? withUpcoming.recentAppointments.map(normalizeRecentQueueRow)
+    : [];
+  return { ...withUpcoming, recentAppointments: recent };
 }
 
 /** Appointment fields for Next + Recently Created panels. */
@@ -60,6 +108,15 @@ export type DashboardOverviewQueueDoctor = {
   email: string;
   image: string | null;
   specialty: string | null;
+};
+
+/** Calendar owner shown as Created/Updated actor on recent-activity rows. */
+export type DashboardOverviewQueueActor = DashboardOverviewQueueDoctor;
+
+export type DashboardOverviewRecentQueueAppointment = DashboardOverviewQueueAppointment & {
+  activityKind: DashboardAppointmentActivityKind;
+  activityAt: string;
+  actor: DashboardOverviewQueueActor;
 };
 
 export type DashboardOverviewQueuePatient = {
@@ -153,5 +210,39 @@ export function mapDashboardOverviewQueueAppointment(
     is_telehealth: row.is_telehealth === true,
     patient: row.patient ? mapPatient(row.patient) : null,
     treatingDoctor: row.treating_physician ? mapDoctor(row.treating_physician) : null,
+  };
+}
+
+type RecentAppointmentQueueRow = AppointmentQueueRow & {
+  created_at: Date;
+  updated_at: Date | null;
+  owner: {
+    id: string;
+    display_name: string | null;
+    email: string;
+    image: string | null;
+    specialty: string | null;
+  };
+};
+
+function mapActor(owner: RecentAppointmentQueueRow["owner"]): DashboardOverviewQueueActor {
+  return {
+    id: owner.id,
+    display_name: owner.display_name,
+    email: owner.email,
+    image: owner.image,
+    specialty: owner.specialty,
+  };
+}
+
+/** Recent panel row — base appointment fields + latest create/update activity metadata. */
+export function mapDashboardOverviewRecentQueueAppointment(
+  row: RecentAppointmentQueueRow
+): DashboardOverviewRecentQueueAppointment {
+  return {
+    ...mapDashboardOverviewQueueAppointment(row),
+    activityKind: resolveAppointmentActivityKind(row),
+    activityAt: resolveAppointmentActivityAt(row).toISOString(),
+    actor: mapActor(row.owner),
   };
 }

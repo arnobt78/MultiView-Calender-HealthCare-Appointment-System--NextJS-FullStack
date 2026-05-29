@@ -14,6 +14,8 @@ type Props = {
   subtitle: string;
   icon: LucideIcon;
   iconClassName?: string;
+  /** Shown inline beside title (portal Weekly Hours parity). */
+  count?: number;
   children: React.ReactNode;
   className?: string;
 };
@@ -27,6 +29,7 @@ export function DashboardQueuePanelCard({
   subtitle,
   icon,
   iconClassName,
+  count,
   children,
   className,
 }: Props) {
@@ -45,6 +48,7 @@ export function DashboardQueuePanelCard({
           id={headingId}
           title={title}
           periodSubtitle={subtitle}
+          count={count}
           icon={icon}
           iconClassName={iconClassName}
           className="mb-2 shrink-0"

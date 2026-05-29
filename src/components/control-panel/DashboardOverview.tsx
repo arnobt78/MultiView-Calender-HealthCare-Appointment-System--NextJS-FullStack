@@ -195,6 +195,7 @@ export default function DashboardOverviewComponent() {
         <DashboardQueuePanelCard
           title="Next Appointments"
           subtitle="Upcoming 5 appointments from your queue"
+          count={listBodyLoading ? undefined : upcomingAppointments.length}
           icon={CalendarClock}
           iconClassName="[&_svg]:text-blue-600"
         >
@@ -205,8 +206,9 @@ export default function DashboardOverviewComponent() {
         </DashboardQueuePanelCard>
 
         <DashboardQueuePanelCard
-          title="Recently Created"
-          subtitle="Last 5 created appointments"
+          title="Recently Created & Updated"
+          subtitle="Last 5 created & updated appointments"
+          count={listBodyLoading ? undefined : recentAppointments.length}
           icon={CalendarDays}
           iconClassName="[&_svg]:text-violet-600"
         >

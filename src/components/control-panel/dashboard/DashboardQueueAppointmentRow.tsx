@@ -14,13 +14,18 @@ import {
   resolveDashboardAppointmentRelativeTone,
 } from "@/lib/dashboard-appointment-relative-time";
 import { appointmentDetailHref } from "@/lib/entity-routes";
-import { controlPanelDashboardListRowClass } from "@/lib/control-panel-glass-card";
+import {
+  controlPanelDashboardListRowClass,
+  controlPanelDashboardQueueItemStackClass,
+} from "@/lib/control-panel-glass-card";
 import type { DashboardOverviewQueueAppointment } from "@/lib/dashboard-overview-queue";
 
 type Props = {
   appointment: DashboardOverviewQueueAppointment;
   dateVariant?: "full" | "short";
   showRelativeTime?: boolean;
+  /** When true, parent supplies list row chrome (recent-activity card). */
+  embedded?: boolean;
 };
 
 /** Single upcoming/recent queue row — shared layout for overview panels. */
@@ -28,12 +33,13 @@ export function DashboardQueueAppointmentRow({
   appointment,
   dateVariant = "full",
   showRelativeTime = true,
+  embedded = false,
 }: Props) {
   const href = appointmentDetailHref("admin", appointment.id);
   const relativeTone = resolveDashboardAppointmentRelativeTone(appointment.start);
 
   return (
-    <div className={controlPanelDashboardListRowClass}>
+    <div className={embedded ? controlPanelDashboardQueueItemStackClass : controlPanelDashboardListRowClass}>
       <div className="flex min-w-0 items-start justify-between gap-2">
         <EntityTitleLink
           href={href}
