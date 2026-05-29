@@ -42,6 +42,12 @@ import {
   buildRelatedAppointmentsColumns,
   CategoryTableCell,
 } from "@/components/control-panel/patient-detail-snapshot-columns";
+import {
+  ClinicalEmptyDash,
+  clinicalEmptyOr,
+  clinicalEmptyOrNode,
+} from "@/components/shared/ClinicalTableEmptyDash";
+import { clinicalHasListValue, clinicalHasTextValue } from "@/lib/clinical-empty-value";
 import { PatientPortraitAvatar } from "@/components/shared/person-display/PatientPortraitAvatar";
 import { useUsers } from "@/hooks/useUsers";
 import { ControlPanelStaffLink } from "@/components/shared/ControlPanelStaffLink";
@@ -103,6 +109,31 @@ function PatientDetailDefinitionRow({
       <FieldLabel icon={icon}>{label}</FieldLabel>
       <dd className="min-w-0 text-gray-700">{children}</dd>
     </div>
+  );
+}
+
+/** Referral source + detail — uses shared `clinicalEmptyOrNode` when both empty. */
+function renderPatientReferralValue(cp: Patient["clinical_profile"]) {
+  const source =
+    cp && typeof cp === "object" && typeof cp.referral_source === "string"
+      ? cp.referral_source.trim()
+      : "";
+  const detail =
+    cp && typeof cp === "object" && typeof cp.referral_detail === "string"
+      ? cp.referral_detail.trim()
+      : "";
+  const label = source
+    ? (PATIENT_REFERRAL_SOURCES.find((x) => x.value === source)?.label ?? source)
+    : "";
+  return clinicalEmptyOrNode(
+    Boolean(label || detail),
+    (
+      <>
+        {label}
+        {detail ? `${label ? " — " : ""}${detail}` : null}
+      </>
+    ),
+    "definition"
   );
 }
 
@@ -487,8 +518,10 @@ export function PatientDetailScreen({
             <div className="min-w-0 flex-1">
               {showLiveBody ? (
                 <>
-                  <p className="text-lg font-semibold text-gray-700">{nameLabel || "—"}</p>
-                  <p className="text-sm text-gray-600">{p!.email ?? "—"}</p>
+                  <p className="text-lg font-semibold text-gray-700">
+                    {clinicalEmptyOr(nameLabel, "definition")}
+                  </p>
+                  <p className="text-sm text-gray-600">{clinicalEmptyOr(p!.email, "definition")}</p>
                   <div className="mt-1 flex flex-wrap items-center gap-2">
                     {age != null ? (
                       <Badge
@@ -543,7 +576,11 @@ export function PatientDetailScreen({
                   <dd className="mt-1 space-y-1 text-gray-700">
                     <p>
                       <span className="text-gray-500">Created: </span>
-                      {p!.created_at ? format(new Date(p!.created_at), "M/d/yyyy, h:mm:ss a") : "—"}
+                      {p!.created_at ? (
+                        format(new Date(p!.created_at), "M/d/yyyy, h:mm:ss a")
+                      ) : (
+                        <ClinicalEmptyDash layout="inline" />
+                      )}
                       {p!.created_by_display ? (
                         <>
                           <span className="text-gray-500"> · By </span>
@@ -557,7 +594,11 @@ export function PatientDetailScreen({
                     </p>
                     <p>
                       <span className="text-gray-500">Last Updated: </span>
-                      {p!.updated_at ? format(new Date(p!.updated_at), "M/d/yyyy, h:mm:ss a") : "—"}
+                      {p!.updated_at ? (
+                        format(new Date(p!.updated_at), "M/d/yyyy, h:mm:ss a")
+                      ) : (
+                        <ClinicalEmptyDash layout="inline" />
+                      )}
                       {p!.updated_by_display ? (
                         <>
                           <span className="text-gray-500"> · By </span>
@@ -575,25 +616,22 @@ export function PatientDetailScreen({
                   <span className="font-mono text-xs break-all">{p!.id}</span>
                 </PatientDetailDefinitionRow>
                 <PatientDetailDefinitionRow icon={Calendar} label="Birth Date">
-                  {p!.birth_date ?? "—"}
+                  {clinicalEmptyOr(p!.birth_date, "definition")}
                 </PatientDetailDefinitionRow>
                 <PatientDetailDefinitionRow icon={Activity} label="Care Tier (1–10)">
                   {getPatientCareLevelLabel(p!.care_level)}
                 </PatientDetailDefinitionRow>
                 <PatientDetailDefinitionRow icon={User} label="Pronoun">
-                  {p!.pronoun ?? "—"}
+                  {clinicalEmptyOr(p!.pronoun, "definition")}
                 </PatientDetailDefinitionRow>
                 <PatientDetailDefinitionRow icon={Tag} label="Category">
-                  {schemaCategory ? (
-                    <CategoryTableCell
-                      label={schemaCategory.label}
-                      color={schemaCategory.color}
-                      categoryId={schemaCategory.id}
-                      viewerRole={viewerRole as EntityRole}
-                    />
-                  ) : (
-                    "—"
-                  )}
+                  <CategoryTableCell
+                    label={schemaCategory?.label}
+                    color={schemaCategory?.color}
+                    categoryId={schemaCategory?.id}
+                    viewerRole={viewerRole as EntityRole}
+                    emptyLayout="definition"
+                  />
                 </PatientDetailDefinitionRow>
                 <PatientDetailDefinitionRow
                   icon={Stethoscope}
@@ -615,27 +653,29 @@ export function PatientDetailScreen({
                       showSpecialty
                     />
                   ) : (
-                    (p!.primary_doctor_display ?? "—")
+                    clinicalEmptyOr(p!.primary_doctor_display, "definition")
                   )}
                 </PatientDetailDefinitionRow>
                 <PatientDetailDefinitionRow icon={Share2} label="Referral">
-                  {cp && typeof cp === "object" && typeof cp.referral_source === "string"
-                    ? PATIENT_REFERRAL_SOURCES.find((x) => x.value === cp.referral_source)?.label ??
-                    cp.referral_source
-                    : "—"}
-                  {cp && typeof cp === "object" && typeof cp.referral_detail === "string" && cp.referral_detail
-                    ? ` — ${cp.referral_detail}`
-                    : ""}
+                  {renderPatientReferralValue(cp)}
                 </PatientDetailDefinitionRow>
                 <PatientDetailDefinitionRow icon={AlertCircle} label="Allergies">
-                  {cp && typeof cp === "object" && Array.isArray(cp.allergies)
-                    ? cp.allergies.join(", ")
-                    : "—"}
+                  {clinicalEmptyOrNode(
+                    Boolean(cp && typeof cp === "object" && clinicalHasListValue(cp.allergies)),
+                    cp && typeof cp === "object" && Array.isArray(cp.allergies)
+                      ? cp.allergies.join(", ")
+                      : null,
+                    "definition"
+                  )}
                 </PatientDetailDefinitionRow>
                 <PatientDetailDefinitionRow icon={FileText} label="Clinical Notes">
-                  <span className="whitespace-pre-wrap">
-                    {cp && typeof cp === "object" && typeof cp.notes === "string" ? cp.notes : "—"}
-                  </span>
+                  {clinicalEmptyOrNode(
+                    Boolean(cp && typeof cp === "object" && clinicalHasTextValue(cp.notes)),
+                    <span className="whitespace-pre-wrap">
+                      {cp && typeof cp === "object" && typeof cp.notes === "string" ? cp.notes : ""}
+                    </span>,
+                    "definition"
+                  )}
                 </PatientDetailDefinitionRow>
               </dl>
             </>

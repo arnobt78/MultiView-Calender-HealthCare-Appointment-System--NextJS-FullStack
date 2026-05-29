@@ -5,7 +5,12 @@ import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { DataTableColumnHeader } from "@/components/shared/DataTableColumnHeader";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
-import { ClinicalTableEmptyDash } from "@/components/shared/ClinicalTableEmptyDash";
+import {
+  ClinicalEmptyDash,
+  clinicalEmptyOrNode,
+  type ClinicalEmptyLayout,
+} from "@/components/shared/ClinicalTableEmptyDash";
+import { clinicalHasTextValue } from "@/lib/clinical-empty-value";
 import { DoctorIdentityCell } from "@/components/shared/person-display/DoctorIdentityCell";
 import {
   appointmentDetailHref,
@@ -38,21 +43,28 @@ function categorySwatchFill(color: string | null | undefined): string {
   return /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/.test(hex) ? hex : "#94a3b8";
 }
 
-/** Category pill — role-aware link via `categoryDetailHref`. */
+/**
+ * Category pill — role-aware link via `categoryDetailHref`.
+ * Missing label → `ClinicalEmptyDash` via `clinicalEmptyOr` (table + patient schema row).
+ */
 export function CategoryTableCell({
   label,
   color,
   categoryId,
   viewerRole,
+  emptyLayout = "table",
 }: {
   label: string | null | undefined;
   color: string | null | undefined;
   categoryId?: string | null;
   viewerRole?: EntityRole;
+  /** `definition` for patient schema `<dd>`; `table` for snapshot grids (default). */
+  emptyLayout?: ClinicalEmptyLayout;
 }) {
-  if (!label?.trim()) {
-    return <ClinicalTableEmptyDash />;
+  if (!clinicalHasTextValue(label)) {
+    return <ClinicalEmptyDash layout={emptyLayout} />;
   }
+  const trimmed = label!.trim();
   const dot = (
     <span className={clinicalCategorySwatchAnchorClass} aria-hidden>
       <svg width="8" height="8" viewBox="0 0 8 8" className="block">
@@ -67,12 +79,12 @@ export function CategoryTableCell({
       {canLink ? (
         <EntityTitleLink
           href={categoryDetailHref(viewerRole, categoryId)}
-          label={label.trim()}
+          label={trimmed}
           wrapLabel
           className={cn("min-w-0 flex-1 font-normal", clinicalTableCellWrapClass)}
         />
       ) : (
-        <span className={cn("min-w-0 flex-1", clinicalTableCellWrapClass)}>{label}</span>
+        <span className={cn("min-w-0 flex-1", clinicalTableCellWrapClass)}>{trimmed}</span>
       )}
     </span>
   );
@@ -196,17 +208,24 @@ export function buildRelatedAppointmentsColumns(
       },
       cell: ({ row }) => {
         const a = row.original;
-        if (!a.start) {
-          return <ClinicalTableEmptyDash />;
-        }
-        return (
-          <div className={cn("min-w-0 whitespace-nowrap", clinicalTableCellMinRowClass, "flex flex-col justify-center")}>
-            <p className={clinicalCellPrimaryTextClass}>{format(new Date(a.start), "PP")}</p>
-            <p className={clinicalCellMutedTextClass}>
-              {format(new Date(a.start), "p")}
-              {a.end ? ` – ${format(new Date(a.end), "p")}` : ""}
-            </p>
-          </div>
+        return clinicalEmptyOrNode(
+          Boolean(a.start),
+          (
+            <div
+              className={cn(
+                "min-w-0 whitespace-nowrap",
+                clinicalTableCellMinRowClass,
+                "flex flex-col justify-center"
+              )}
+            >
+              <p className={clinicalCellPrimaryTextClass}>{format(new Date(a.start!), "PP")}</p>
+              <p className={clinicalCellMutedTextClass}>
+                {format(new Date(a.start!), "p")}
+                {a.end ? ` – ${format(new Date(a.end), "p")}` : ""}
+              </p>
+            </div>
+          ),
+          "table"
         );
       },
     },
@@ -237,20 +256,21 @@ export function buildRelatedAppointmentsColumns(
       },
       cell: ({ row }) => {
         const a = row.original;
-        if (!a.calendar_owner_id || !a.calendar_owner_display) {
-          return <ClinicalTableEmptyDash />;
-        }
-        return (
-          <DoctorIdentityCell
-            doctorId={a.calendar_owner_id}
-            name={a.calendar_owner_display}
-            email={a.calendar_owner_email}
-            image={a.calendar_owner_image}
-            specialty={null}
-            viewerRole={viewerRole}
-            doctorById={staffById}
-            showSpecialty={false}
-          />
+        return clinicalEmptyOrNode(
+          Boolean(a.calendar_owner_id && a.calendar_owner_display),
+          (
+            <DoctorIdentityCell
+              doctorId={a.calendar_owner_id!}
+              name={a.calendar_owner_display!}
+              email={a.calendar_owner_email}
+              image={a.calendar_owner_image}
+              specialty={null}
+              viewerRole={viewerRole}
+              doctorById={staffById}
+              showSpecialty={false}
+            />
+          ),
+          "table"
         );
       },
     },
@@ -263,19 +283,20 @@ export function buildRelatedAppointmentsColumns(
       },
       cell: ({ row }) => {
         const a = row.original;
-        if (!a.doctor_id || !a.doctor_display) {
-          return <ClinicalTableEmptyDash />;
-        }
-        return (
-          <DoctorIdentityCell
-            doctorId={a.doctor_id}
-            name={a.doctor_display}
-            email={a.doctor_email}
-            image={a.doctor_image}
-            specialty={a.doctor_specialty ?? staffById.get(a.doctor_id)?.specialty ?? null}
-            viewerRole={viewerRole}
-            doctorById={staffById}
-          />
+        return clinicalEmptyOrNode(
+          Boolean(a.doctor_id && a.doctor_display),
+          (
+            <DoctorIdentityCell
+              doctorId={a.doctor_id!}
+              name={a.doctor_display!}
+              email={a.doctor_email}
+              image={a.doctor_image}
+              specialty={a.doctor_specialty ?? staffById.get(a.doctor_id!)?.specialty ?? null}
+              viewerRole={viewerRole}
+              doctorById={staffById}
+            />
+          ),
+          "table"
         );
       },
     },
@@ -287,24 +308,23 @@ export function buildRelatedAppointmentsColumns(
         shellClassName: clinicalTableColumnWrapShellClass,
         colWidth: CLINICAL_SNAPSHOT_APPOINTMENT_COL_WIDTH.location,
       },
-      cell: ({ row }) => {
-        const loc = row.original.location?.trim();
-        if (!loc) {
-          return <ClinicalTableEmptyDash />;
-        }
-        return (
-          <p
-            className={cn(
-              clinicalTableCellMinRowClass,
-              clinicalTableCellWrapClass,
-              clinicalCellPrimaryTextClass,
-              "m-0 w-full max-w-full overflow-hidden whitespace-normal"
-            )}
-          >
-            {loc}
-          </p>
-        );
-      },
+      cell: ({ row }) =>
+        clinicalEmptyOrNode(
+          clinicalHasTextValue(row.original.location),
+          (
+            <p
+              className={cn(
+                clinicalTableCellMinRowClass,
+                clinicalTableCellWrapClass,
+                clinicalCellPrimaryTextClass,
+                "m-0 w-full max-w-full overflow-hidden whitespace-normal"
+              )}
+            >
+              {row.original.location!.trim()}
+            </p>
+          ),
+          "table"
+        ),
     },
   ];
 }
@@ -335,18 +355,23 @@ export function buildPatientInvoicesColumns(viewerRole: EntityRole): ColumnDef<S
       accessorKey: "description",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Description" />,
       meta: { shellClassName: clinicalTableColumnWrapShellClass },
-      cell: ({ row }) => (
-        <div
-          className={cn(
-            clinicalTableCellMinRowClass,
-            clinicalTableCellWrapClass,
-            clinicalCellPrimaryTextClass,
-            "flex min-w-0 items-start"
-          )}
-        >
-          {row.original.description?.trim() ? row.original.description : "—"}
-        </div>
-      ),
+      cell: ({ row }) =>
+        clinicalEmptyOrNode(
+          clinicalHasTextValue(row.original.description),
+          (
+            <div
+              className={cn(
+                clinicalTableCellMinRowClass,
+                clinicalTableCellWrapClass,
+                clinicalCellPrimaryTextClass,
+                "flex min-w-0 items-start"
+              )}
+            >
+              {row.original.description!.trim()}
+            </div>
+          ),
+          "table"
+        ),
     },
     {
       id: "appointment",
@@ -354,18 +379,18 @@ export function buildPatientInvoicesColumns(viewerRole: EntityRole): ColumnDef<S
       header: ({ column }) => <DataTableColumnHeader column={column} title="Appointment" />,
       cell: ({ row }) => {
         const inv = row.original;
-        return (
-          <div className={cn(clinicalTableCellMinRowClass, "flex items-center")}>
-            {inv.appointment_id ? (
+        return clinicalEmptyOrNode(
+          Boolean(inv.appointment_id),
+          (
+            <div className={cn(clinicalTableCellMinRowClass, "flex items-center")}>
               <EntityTitleLink
-                href={appointmentDetailHref(viewerRole, inv.appointment_id)}
+                href={appointmentDetailHref(viewerRole, inv.appointment_id!)}
                 label="View"
                 className="text-xs font-normal"
               />
-            ) : (
-              <span className={clinicalCellMutedTextClass}>—</span>
-            )}
-          </div>
+            </div>
+          ),
+          "table"
         );
       },
     },
@@ -384,22 +409,44 @@ export function buildPatientInvoicesColumns(viewerRole: EntityRole): ColumnDef<S
       accessorKey: "due_date",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Due" />,
       meta: { shellClassName: "whitespace-nowrap" },
-      cell: ({ row }) => (
-        <div className={cn(clinicalTableCellMinRowClass, "flex items-center whitespace-nowrap", clinicalCellPrimaryTextClass)}>
-          {row.original.due_date ? format(new Date(row.original.due_date), "PP") : "—"}
-        </div>
-      ),
+      cell: ({ row }) =>
+        clinicalEmptyOrNode(
+          Boolean(row.original.due_date),
+          (
+            <div
+              className={cn(
+                clinicalTableCellMinRowClass,
+                "flex items-center whitespace-nowrap",
+                clinicalCellPrimaryTextClass
+              )}
+            >
+              {format(new Date(row.original.due_date!), "PP")}
+            </div>
+          ),
+          "table"
+        ),
     },
     {
       id: "paid_at",
       accessorKey: "paid_at",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Paid" />,
       meta: { shellClassName: "whitespace-nowrap" },
-      cell: ({ row }) => (
-        <div className={cn(clinicalTableCellMinRowClass, "flex items-center whitespace-nowrap", clinicalCellPrimaryTextClass)}>
-          {row.original.paid_at ? format(new Date(row.original.paid_at), "PP") : "—"}
-        </div>
-      ),
+      cell: ({ row }) =>
+        clinicalEmptyOrNode(
+          Boolean(row.original.paid_at),
+          (
+            <div
+              className={cn(
+                clinicalTableCellMinRowClass,
+                "flex items-center whitespace-nowrap",
+                clinicalCellPrimaryTextClass
+              )}
+            >
+              {format(new Date(row.original.paid_at!), "PP")}
+            </div>
+          ),
+          "table"
+        ),
     },
   ];
 }
