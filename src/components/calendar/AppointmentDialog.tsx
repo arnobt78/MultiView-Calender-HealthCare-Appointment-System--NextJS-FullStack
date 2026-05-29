@@ -412,7 +412,6 @@ export default function AppointmentDialog({
       */}
       <DialogContent
         showCloseButton={false}
-        aria-describedby={undefined}
         className="flex h-[90vh] max-h-[90vh] w-[90vw] max-w-[90vw] flex-col gap-0 overflow-hidden rounded-[28px] border border-sky-400/30 bg-white p-0 shadow-[0_30px_80px_rgba(2,132,199,0.35)] backdrop-blur-sm"
       >
         <div className="shrink-0 bg-white pt-6 text-gray-700">
@@ -427,10 +426,7 @@ export default function AppointmentDialog({
                     ? toTitleCaseLabel("Edit Appointment")
                     : toTitleCaseLabel("Create New Appointment")}
                 </DialogTitle>
-                <DialogDescription
-                  id="appointment-dialog-desc"
-                  className="text-left text-sm text-muted-foreground"
-                >
+                <DialogDescription className="text-left text-sm text-muted-foreground">
                   {isEditMode
                     ? toTitleCaseLabel("Update scheduling details and appointment type.")
                     : toTitleCaseLabel("Set the client, time, and appointment type.")}

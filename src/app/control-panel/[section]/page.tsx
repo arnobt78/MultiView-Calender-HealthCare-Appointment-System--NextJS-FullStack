@@ -47,10 +47,19 @@ export default async function Page({
   let initialPatients: Patient[] | null = null;
 
   if (sessionUser) {
-    [initialDashboardOverview, initialPatients] = await Promise.all([
-      prefetchDashboardOverview(sessionUser.userId),
-      prefetchPatients(),
-    ]);
+    const prefetchJobs: [
+      Promise<DashboardOverview | null>,
+      Promise<Patient[] | null>,
+    ] = [Promise.resolve(null), Promise.resolve(null)];
+
+    if (section === "dashboard-overview") {
+      prefetchJobs[0] = prefetchDashboardOverview(sessionUser.userId);
+    }
+    if (section === "patient-management") {
+      prefetchJobs[1] = prefetchPatients();
+    }
+
+    [initialDashboardOverview, initialPatients] = await Promise.all(prefetchJobs);
   }
 
   return (

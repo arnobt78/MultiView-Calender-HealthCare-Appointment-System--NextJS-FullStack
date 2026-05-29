@@ -149,7 +149,6 @@ export default function GlobalSearch() {
       <DialogContent
         showCloseButton={false}
         className="flex h-[90vh] w-[92vw] max-w-[1200px] flex-col gap-0 overflow-hidden rounded-[28px] border border-sky-400/30 bg-white p-0 shadow-[0_30px_80px_rgba(2,132,199,0.35)]"
-        aria-describedby={undefined}
       >
         <div className="bg-white pt-6">
           <div className="px-6">

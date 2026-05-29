@@ -1,6 +1,7 @@
 "use client";
 
 import type { LucideIcon } from "lucide-react";
+import { FormRequiredMark } from "@/components/shared/form/FormRequiredMark";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
@@ -36,11 +37,13 @@ export function PatientBookingFieldLabel({
   icon: Icon,
   children,
   iconMuted = false,
+  required = false,
 }: {
   htmlFor?: string;
   icon: LucideIcon;
   children: React.ReactNode;
   iconMuted?: boolean;
+  required?: boolean;
 }) {
   return (
     <Label
@@ -52,6 +55,7 @@ export function PatientBookingFieldLabel({
         aria-hidden
       />
       {children}
+      {required ? <FormRequiredMark /> : null}
     </Label>
   );
 }

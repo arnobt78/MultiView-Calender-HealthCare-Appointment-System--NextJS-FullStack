@@ -64,7 +64,7 @@ export function PatientBookingConfirmSection({
 
       {isFlexible ? (
         <div className="flex flex-col gap-1.5">
-          <PatientBookingFieldLabel htmlFor="pb-flex-time" icon={Clock}>
+          <PatientBookingFieldLabel htmlFor="pb-flex-time" icon={Clock} required>
             Select Preferred Start Time
           </PatientBookingFieldLabel>
           <Input
@@ -82,7 +82,7 @@ export function PatientBookingConfirmSection({
       ) : null}
 
       <div className="flex flex-col gap-1.5">
-        <PatientBookingFieldLabel htmlFor="pb-title" icon={MessageSquareText}>
+        <PatientBookingFieldLabel htmlFor="pb-title" icon={MessageSquareText} required>
           Type Your Reason for Visit
         </PatientBookingFieldLabel>
         <Input

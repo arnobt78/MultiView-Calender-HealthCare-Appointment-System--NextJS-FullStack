@@ -2,6 +2,7 @@
 
 import type { LucideIcon } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import { FormRequiredMark } from "@/components/shared/form/FormRequiredMark";
 import {
   doctorSettingsFieldLabelClass,
   doctorSettingsRequiredMarkClass,
@@ -31,12 +32,7 @@ export function DoctorSettingsFieldLabel({
         <Icon className={cn("h-3.5 w-3.5 shrink-0", iconClassName)} aria-hidden />
       ) : null}
       {toTitleCaseLabel(children)}
-      {required ? (
-        <span className={doctorSettingsRequiredMarkClass} aria-hidden>
-          {" "}
-          *
-        </span>
-      ) : null}
+      {required ? <FormRequiredMark className={doctorSettingsRequiredMarkClass} /> : null}
     </Label>
   );
 }

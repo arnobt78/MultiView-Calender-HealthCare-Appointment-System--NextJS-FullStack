@@ -8,6 +8,7 @@ import { Patient, type PatientClinicalProfile } from "@/types/types";
 import { usePatients } from "@/hooks/usePatients";
 import { ControlPanelGlassActionButton } from "@/components/shared/ControlPanelGlassActionButton";
 import { Input } from "@/components/ui/input";
+import { FormRequiredMark } from "@/components/shared/form/FormRequiredMark";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -21,42 +22,10 @@ import { PatientCareLevelSelect } from "@/components/control-panel/PatientCareLe
 import { useUsers } from "@/hooks/useUsers";
 import { DoctorSelectOption } from "@/components/shared/doctor-display/DoctorSelectOption";
 import { PATIENT_REFERRAL_SOURCES } from "@/lib/patient-referral-sources";
-
-function clinicalToForm(cp: PatientClinicalProfile | undefined) {
-  const o =
-    cp != null && typeof cp === "object" && !Array.isArray(cp)
-      ? cp
-      : {};
-  const allergies = Array.isArray(o.allergies) ? (o.allergies as string[]).join(", ") : "";
-  const notes = typeof o.notes === "string" ? o.notes : "";
-  const referral_source =
-    typeof o.referral_source === "string" && o.referral_source ? o.referral_source : "control_panel";
-  const referral_detail = typeof o.referral_detail === "string" ? o.referral_detail : "";
-  return { allergies, notes, referral_source, referral_detail };
-}
-
-function buildClinicalPayload(
-  prev: PatientClinicalProfile | undefined,
-  allergiesCsv: string,
-  notes: string,
-  referral_source: string,
-  referral_detail: string
-): PatientClinicalProfile {
-  const base =
-    prev && typeof prev === "object" && !Array.isArray(prev) ? { ...prev } : {};
-  const allergies = allergiesCsv
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-  const detail =
-    referral_source === "external_partner" || referral_source === "other"
-      ? referral_detail.trim()
-      : "";
-  const out: Record<string, unknown> = { ...base, allergies, notes, referral_source };
-  if (detail) out.referral_detail = detail;
-  else delete out.referral_detail;
-  return out as PatientClinicalProfile;
-}
+import {
+  buildClinicalProfileFromDialogExtra,
+  clinicalProfileToDialogExtra,
+} from "@/lib/patient-form-clinical";
 
 export function PatientDetailForm({
   patient,
@@ -74,6 +43,7 @@ export function PatientDetailForm({
   const { updatePatient, isUpdating, deletePatient, isDeleting } = usePatients();
   const { data: doctorsData } = useUsers({ role: "doctor", limit: 200 });
   const doctors = doctorsData?.users ?? [];
+  const clinicalExtra = clinicalProfileToDialogExtra(patient.clinical_profile);
   const [form, setForm] = useState({
     firstname: patient.firstname,
     lastname: patient.lastname,
@@ -82,18 +52,20 @@ export function PatientDetailForm({
     pronoun: patient.pronoun ?? "",
     active: patient.active,
     primary_doctor_id: patient.primary_doctor_id ?? undefined as string | undefined,
-    ...clinicalToForm(patient.clinical_profile),
+    allergies: clinicalExtra.allergiesCsv,
+    notes: clinicalExtra.clinicalNotes,
+    referral_source: clinicalExtra.referralSource,
+    referral_detail: clinicalExtra.referralDetail,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const clinical_profile = buildClinicalPayload(
-      patient.clinical_profile,
-      form.allergies,
-      form.notes,
-      form.referral_source,
-      form.referral_detail
-    );
+    const clinical_profile = buildClinicalProfileFromDialogExtra(patient.clinical_profile, {
+      allergiesCsv: form.allergies,
+      clinicalNotes: form.notes,
+      referralSource: form.referral_source,
+      referralDetail: form.referral_detail,
+    });
     updatePatient(
       {
         id: patient.id,
@@ -132,7 +104,10 @@ export function PatientDetailForm({
     <form id={formId} onSubmit={handleSubmit} className="space-y-4 text-gray-700">
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="patient-firstname">First Name</Label>
+          <Label htmlFor="patient-firstname">
+            First Name
+            <FormRequiredMark />
+          </Label>
           <Input
             id="patient-firstname"
             title="First name"
@@ -142,7 +117,10 @@ export function PatientDetailForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="patient-lastname">Last Name</Label>
+          <Label htmlFor="patient-lastname">
+            Last Name
+            <FormRequiredMark />
+          </Label>
           <Input
             id="patient-lastname"
             title="Last name"

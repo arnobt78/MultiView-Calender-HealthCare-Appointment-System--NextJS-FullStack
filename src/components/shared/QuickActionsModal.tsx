@@ -148,7 +148,6 @@ export default function QuickActionsModal() {
       <DialogContent
         showCloseButton={false}
         className="h-[90vh] w-[92vw] max-w-[1200px] gap-0 overflow-hidden rounded-[28px] border border-violet-400/30 bg-white p-0 shadow-[0_30px_80px_rgba(139,92,246,0.35)]"
-        aria-describedby={undefined}
       >
         <div className=" bg-white pt-6 px-6">
           <div className="flex items-start gap-2">

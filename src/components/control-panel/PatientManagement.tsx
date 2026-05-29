@@ -42,31 +42,15 @@ import {
   Eye,
   ListFilter,
   UserPlus,
-  X,
   Activity,
   Stethoscope,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import type { PatientCreateInput } from "@/hooks/usePatients";
 import { format } from "date-fns";
 import { FilterSelect } from "@/components/shared/filters/FilterSelect";
 import { APP_NAVBAR_STICKY_OFFSET_CLASS } from "@/lib/portal-z-index";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   PatientListFiltersProvider,
   usePatientListFilters,
@@ -75,15 +59,21 @@ import {
   type PatientStatusFilter,
 } from "@/components/control-panel/PatientListFiltersContext";
 import { PatientManagementStatsRow } from "@/components/control-panel/PatientManagementStatsRow";
-import { PatientCareLevelSelect } from "@/components/control-panel/PatientCareLevelSelect";
 import { PatientMetricsProvider } from "@/context/PatientMetricsContext";
 import { usePatientListMetrics } from "@/hooks/usePatientListMetrics";
-import { Textarea } from "@/components/ui/textarea";
+import { PatientFormDialog } from "@/components/control-panel/patient-dialog/PatientFormDialog";
+import {
+  buildClinicalProfileFromDialogExtra,
+  buildCreateClinicalProfile,
+  EMPTY_PATIENT_DIALOG_EXTRA,
+  EMPTY_PATIENT_DIALOG_FORM,
+  patientToDialogExtraState,
+  patientToDialogFormState,
+  type PatientFormDialogExtra,
+} from "@/lib/patient-form-clinical";
 import { useUsers } from "@/hooks/useUsers";
-import { PATIENT_REFERRAL_SOURCES } from "@/lib/patient-referral-sources";
 import { PATIENT_CARE_LEVEL_STAGES, getPatientCareLevelLabel } from "@/lib/patient-care-level";
 import { patientDetailHref, type EntityRole } from "@/lib/entity-routes";
-import type { PatientClinicalProfile } from "@/types/types";
 
 /** Control panel full admin table vs doctor-portal scoped roster (shared filters + DataTable). */
 export type PatientManagementVariant = "control-panel" | "doctor-portal";
@@ -109,26 +99,6 @@ function careTierTriggerLabel(tier: PatientCareTierFilter): string {
   const n = Number(tier);
   const s = PATIENT_CARE_LEVEL_STAGES.find((x) => x.value === n);
   return s ? `${n} — ${s.shortLabel}` : `Tier ${n}`;
-}
-
-/** Build `clinical_profile` JSON for POST /api/patients from add-dialog fields (allergies CSV, notes, referral). */
-function buildCreateClinicalProfile(extra: {
-  allergiesCsv: string;
-  clinicalNotes: string;
-  referralSource: string;
-  referralDetail: string;
-}): PatientClinicalProfile | undefined {
-  const allergies = extra.allergiesCsv.split(",").map((s) => s.trim()).filter(Boolean);
-  const notes = extra.clinicalNotes.trim();
-  const rd =
-    extra.referralSource === "external_partner" || extra.referralSource === "other"
-      ? extra.referralDetail.trim()
-      : "";
-  const o: Record<string, unknown> = { referral_source: extra.referralSource };
-  if (allergies.length) o.allergies = allergies;
-  if (notes) o.notes = notes;
-  if (rd) o.referral_detail = rd;
-  return Object.keys(o).length ? (o as PatientClinicalProfile) : undefined;
 }
 
 function exportPatientsCSV(patients: Patient[]) {
@@ -173,12 +143,15 @@ function exportPatientsCSV(patients: Patient[]) {
 function PatientActions({
   patient,
   onDelete,
+  onEdit,
   variant,
   viewerRole = "admin",
   lockedPrimaryDoctorId,
 }: {
   patient: Patient;
   onDelete: (p: Patient) => void;
+  /** Control-panel list — open glass edit dialog instead of navigating away. */
+  onEdit?: (p: Patient) => void;
   variant: PatientManagementVariant;
   viewerRole?: EntityRole;
   lockedPrimaryDoctorId?: string;
@@ -188,7 +161,7 @@ function PatientActions({
   const canMutate =
     variant === "control-panel" ||
     (!!lockedPrimaryDoctorId && patient.primary_doctor_id === lockedPrimaryDoctorId);
-  const editHref = canMutate ? `${detailHref}?mode=edit` : detailHref;
+  const useEditDialog = variant === "control-panel" && canMutate && onEdit != null;
 
   return (
     <>
@@ -210,15 +183,25 @@ function PatientActions({
             </PrefetchingLink>
           </DropdownMenuItem>
           {canMutate ? (
-            <DropdownMenuItem asChild>
-              <PrefetchingLink
-                href={editHref}
+            useEditDialog ? (
+              <DropdownMenuItem
                 className="flex items-center gap-2 cursor-pointer"
+                onSelect={() => onEdit(patient)}
               >
                 <Pencil className="h-4 w-4" />
                 Edit
-              </PrefetchingLink>
-            </DropdownMenuItem>
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem asChild>
+                <PrefetchingLink
+                  href={`${detailHref}?mode=edit`}
+                  className="flex items-center gap-2 cursor-pointer"
+                >
+                  <Pencil className="h-4 w-4" />
+                  Edit
+                </PrefetchingLink>
+              </DropdownMenuItem>
+            )
           ) : null}
           {variant === "control-panel" ? (
             <>
@@ -269,14 +252,25 @@ export function PatientManagementInner({
   onFilteredCountChange,
 }: PatientManagementInnerProps = {}) {
   const isDoctorPortal = variant === "doctor-portal";
-  const { patients, isLoading, isFetching, isError: patientsError, createPatient, isCreating, deletePatient } = usePatients();
+  const {
+    patients,
+    isLoading,
+    isFetching,
+    isError: patientsError,
+    createPatient,
+    isCreating,
+    updatePatient,
+    isUpdating,
+    deletePatient,
+  } = usePatients();
   const [listUiMounted, setListUiMounted] = useState(false);
   useEffect(() => {
     const id = requestAnimationFrame(() => setListUiMounted(true));
     return () => cancelAnimationFrame(id);
   }, []);
-  /** Align SSR + first client paint with React Query (query can finish on client before mount). */
-  const listBodyLoading = !listUiMounted || isLoading;
+  /** SSR-seeded cache: chrome + stats stay real; pulse table rows only when no list data yet. */
+  const hasPatientsCache = patients.length > 0;
+  const listBodyLoading = !listUiMounted || (isLoading && !hasPatientsCache);
   const { data: doctorsData } = useUsers({ role: "doctor", limit: 200 });
   const doctorById = useMemo(() => {
     const list = doctorsData?.users ?? [];
@@ -322,23 +316,36 @@ export function PatientManagementInner({
   };
 
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [form, setForm] = useState<PatientCreateInput>({
-    firstname: "",
-    lastname: "",
-    email: "",
-    birth_date: "",
-    care_level: undefined,
-    pronoun: "",
-    active: true,
-  });
-  /** Add-dialog only — merged into `clinical_profile` + `primary_doctor_id` on create (not part of table row model). */
-  const [createExtra, setCreateExtra] = useState({
-    allergiesCsv: "",
-    clinicalNotes: "",
-    primaryDoctorId: "",
-    referralSource: "control_panel",
-    referralDetail: "",
-  });
+  const [dialogMode, setDialogMode] = useState<"create" | "edit">("create");
+  const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
+  const [form, setForm] = useState<PatientCreateInput>(EMPTY_PATIENT_DIALOG_FORM);
+  /** Dialog extras — clinical_profile + primary doctor (create + edit). */
+  const [createExtra, setCreateExtra] = useState<PatientFormDialogExtra>(EMPTY_PATIENT_DIALOG_EXTRA);
+
+  const resetPatientDialog = () => {
+    setDialogMode("create");
+    setEditingPatient(null);
+    setForm(EMPTY_PATIENT_DIALOG_FORM);
+    setCreateExtra(EMPTY_PATIENT_DIALOG_EXTRA);
+  };
+
+  const openCreateDialog = () => {
+    resetPatientDialog();
+    setDialogOpen(true);
+  };
+
+  const openEditDialog = useCallback((patient: Patient) => {
+    setDialogMode("edit");
+    setEditingPatient(patient);
+    setForm(patientToDialogFormState(patient));
+    setCreateExtra(patientToDialogExtraState(patient));
+    setDialogOpen(true);
+  }, []);
+
+  const handleDialogOpenChange = (open: boolean) => {
+    setDialogOpen(open);
+    if (!open) resetPatientDialog();
+  };
 
   const columns: ColumnDef<Patient>[] = useMemo(() => {
     const primaryDoctorCol: ColumnDef<Patient> = {
@@ -499,6 +506,7 @@ export function PatientManagementInner({
                 email: pat.email,
               })
             }
+            onEdit={variant === "control-panel" ? openEditDialog : undefined}
           />
         </div>
       ),
@@ -512,45 +520,49 @@ export function PatientManagementInner({
     lockedPrimaryDoctorId,
     doctorById,
     deletePatient,
+    openEditDialog,
   ]);
 
   const metrics = usePatientListMetrics(patients);
 
-  const handleCreate = () => {
-    const clinical_profile = buildCreateClinicalProfile(createExtra);
+  const handleDialogSubmit = () => {
     const primary_doctor_id =
       createExtra.primaryDoctorId && createExtra.primaryDoctorId !== "none"
         ? createExtra.primaryDoctorId
-        : undefined;
+        : null;
+
+    if (dialogMode === "edit" && editingPatient) {
+      const clinical_profile = buildClinicalProfileFromDialogExtra(
+        editingPatient.clinical_profile,
+        createExtra
+      );
+      updatePatient(
+        {
+          id: editingPatient.id,
+          firstname: form.firstname.trim(),
+          lastname: form.lastname.trim(),
+          birth_date: form.birth_date || undefined,
+          care_level: form.care_level,
+          pronoun: form.pronoun || undefined,
+          active: form.active,
+          clinical_profile,
+          primary_doctor_id,
+        },
+        { onSuccess: () => handleDialogOpenChange(false) }
+      );
+      return;
+    }
+
+    const clinical_profile = buildCreateClinicalProfile(createExtra);
     createPatient(
       {
         ...form,
         firstname: form.firstname.trim(),
         lastname: form.lastname.trim(),
-        primary_doctor_id,
+        primary_doctor_id: primary_doctor_id ?? undefined,
         ...(clinical_profile ? { clinical_profile } : {}),
       },
-      {
-        onSuccess: () => {
-          setDialogOpen(false);
-          setForm({
-            firstname: "",
-            lastname: "",
-            email: "",
-            birth_date: "",
-            care_level: undefined,
-            pronoun: "",
-            active: true,
-          });
-          setCreateExtra({
-            allergiesCsv: "",
-            clinicalNotes: "",
-            primaryDoctorId: "",
-            referralSource: "control_panel",
-            referralDetail: "",
-          });
-        },
-      }
+      { onSuccess: () => handleDialogOpenChange(false) }
     );
   };
 
@@ -592,7 +604,7 @@ export function PatientManagementInner({
                   variant="ghost"
                   size="lg"
                   className={cn(emeraldGlassPrimaryButtonClass, "cursor-pointer")}
-                  onClick={() => setDialogOpen(true)}
+                  onClick={openCreateDialog}
                 >
                   <UserPlus className="shrink-0" aria-hidden />
                   Add Patient
@@ -705,241 +717,18 @@ export function PatientManagementInner({
         />
 
         {!isDoctorPortal ? (
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogContent
-            showCloseButton={false}
-            className="flex h-auto max-h-[90vh] w-[92vw] max-w-[1200px] flex-col gap-0 overflow-hidden rounded-[28px] border border-emerald-400/30 bg-white p-0 shadow-[0_30px_80px_rgba(16,185,129,0.28)]"
-            aria-describedby={undefined}
-          >
-            <div className="shrink-0 bg-white pt-6">
-              <div className="px-6">
-                <div className="flex items-start gap-2">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-emerald-200/70 bg-emerald-50 text-emerald-700">
-                    <UserPlus className="h-5 w-5" aria-hidden />
-                  </span>
-                  <div className="min-w-0">
-                    <DialogTitle className="text-xl font-semibold text-gray-700">
-                      Add Patient
-                    </DialogTitle>
-                    <DialogDescription className="text-sm text-muted-foreground">
-                      Required: first and last name. Optional fields help scheduling and records stay accurate.
-                    </DialogDescription>
-                  </div>
-                  <DialogClose asChild>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="ml-auto h-8 w-8 shrink-0 rounded-full text-muted-foreground hover:bg-emerald-100 hover:text-emerald-700"
-                    >
-                      <X className="h-4 w-4" aria-hidden />
-                      <span className="sr-only">Close</span>
-                    </Button>
-                  </DialogClose>
-                </div>
-              </div>
-              <div className="mx-6 mt-4 border-b border-emerald-200/60" />
-            </div>
-
-            <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">
-              <div className="grid gap-4">
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label>First Name *</Label>
-                    <Input
-                      value={form.firstname}
-                      onChange={(e) => setForm((p) => ({ ...p, firstname: e.target.value }))}
-                      placeholder="First Name"
-                      className="w-full min-w-0 rounded-2xl border-gray-200"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Last Name *</Label>
-                    <Input
-                      value={form.lastname}
-                      onChange={(e) => setForm((p) => ({ ...p, lastname: e.target.value }))}
-                      placeholder="Last Name"
-                      className="w-full min-w-0 rounded-2xl border-gray-200"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Email</Label>
-                  <Input
-                    type="email"
-                    value={form.email ?? ""}
-                    onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
-                    placeholder="name@example.com"
-                    className="w-full min-w-0 rounded-2xl border-gray-200"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="pm-primary-doctor">Select Primary Doctor (from staff list)</Label>
-                  <Select
-                    value={createExtra.primaryDoctorId || "none"}
-                    onValueChange={(v) =>
-                      setCreateExtra((x) => ({ ...x, primaryDoctorId: v === "none" ? "" : v }))
-                    }
-                  >
-                    <SelectTrigger id="pm-primary-doctor" className="w-full min-w-0 rounded-2xl border-gray-200">
-                      <SelectValue placeholder="Not Assigned" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Not Assigned</SelectItem>
-                      {doctors.map((d) => (
-                        <SelectItem key={d.id} value={d.id}>
-                          {d.display_name?.trim() || d.email}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="pm-birth-date">Select Birth Date</Label>
-                    <Input
-                      id="pm-birth-date"
-                      type="date"
-                      title="Birth Date"
-                      value={form.birth_date ?? ""}
-                      onChange={(e) => setForm((p) => ({ ...p, birth_date: e.target.value }))}
-                      className="w-full min-w-0 rounded-2xl border-gray-200"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="pm-care-level">Select Care Level (1–10)</Label>
-                    <PatientCareLevelSelect
-                      id="pm-care-level"
-                      value={form.care_level}
-                      onValueChange={(next) => setForm((p) => ({ ...p, care_level: next }))}
-                      aria-label="Care level tier from 1 to 10"
-                      className="w-full"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label>Select Pronoun</Label>
-                    <Select
-                      value={form.pronoun ?? ""}
-                      onValueChange={(v) => setForm((p) => ({ ...p, pronoun: v }))}
-                    >
-                      <SelectTrigger className="w-full min-w-0 rounded-2xl border-gray-200">
-                        <SelectValue placeholder="Pronoun" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="he/him">He/Him</SelectItem>
-                        <SelectItem value="she/her">She/Her</SelectItem>
-                        <SelectItem value="they/them">They/Them</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Select Status</Label>
-                    <Select
-                      value={form.active ? "true" : "false"}
-                      onValueChange={(v) => setForm((p) => ({ ...p, active: v === "true" }))}
-                    >
-                      <SelectTrigger className="w-full min-w-0 rounded-2xl border-gray-200">
-                        <SelectValue placeholder="Active" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="true">Active</SelectItem>
-                        <SelectItem value="false">Inactive</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Select Referral / Intake</Label>
-                  <Select
-                    value={createExtra.referralSource}
-                    onValueChange={(v) => setCreateExtra((x) => ({ ...x, referralSource: v }))}
-                  >
-                    <SelectTrigger className="w-full min-w-0 rounded-2xl border-gray-200">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PATIENT_REFERRAL_SOURCES.map((s) => (
-                        <SelectItem key={s.value} value={s.value}>
-                          {s.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                {(createExtra.referralSource === "external_partner" ||
-                  createExtra.referralSource === "other") && (
-                    <div className="space-y-2">
-                      <Label htmlFor="pm-referral-detail">Type External / Other Detail</Label>
-                      <Input
-                        id="pm-referral-detail"
-                        title="Referral Detail"
-                        value={createExtra.referralDetail}
-                        onChange={(e) =>
-                          setCreateExtra((x) => ({ ...x, referralDetail: e.target.value }))
-                        }
-                        placeholder="Clinic, referrer, or how they reached you"
-                        className="w-full min-w-0 rounded-2xl border-gray-200"
-                      />
-                    </div>
-                  )}
-                <div className="space-y-2">
-                  <Label htmlFor="pm-allergies">Type Allergies if Any (comma-separated)</Label>
-                  <Input
-                    id="pm-allergies"
-                    title="Allergies"
-                    value={createExtra.allergiesCsv}
-                    onChange={(e) =>
-                      setCreateExtra((x) => ({ ...x, allergiesCsv: e.target.value }))
-                    }
-                    placeholder="e.g. penicillin, latex"
-                    className="w-full min-w-0 rounded-2xl border-gray-200"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="pm-clinical-notes">Type Clinical Notes if Any</Label>
-                  <Textarea
-                    id="pm-clinical-notes"
-                    title="Clinical Notes"
-                    rows={3}
-                    value={createExtra.clinicalNotes}
-                    onChange={(e) =>
-                      setCreateExtra((x) => ({ ...x, clinicalNotes: e.target.value }))
-                    }
-                    placeholder="Short clinical context for the team"
-                    className="w-full min-w-0 resize-y rounded-2xl border-gray-200"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 border-t border-emerald-200/60 bg-emerald-50/40 px-6 py-3">
-              <Button
-                type="button"
-                variant="outline"
-                className="rounded-2xl border-emerald-200/70 bg-white"
-                onClick={() => setDialogOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="lg"
-                className={cn(
-                  emeraldGlassPrimaryButtonClass,
-                  "cursor-pointer disabled:pointer-events-none disabled:opacity-50"
-                )}
-                onClick={handleCreate}
-                disabled={isCreating || !form.firstname.trim() || !form.lastname.trim()}
-              >
-                {isCreating ? "Creating…" : "Create Patient"}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+          <PatientFormDialog
+            open={dialogOpen}
+            onOpenChange={handleDialogOpenChange}
+            mode={dialogMode}
+            readOnlyEmail={editingPatient?.email}
+            form={form}
+            onFormChange={(patch) => setForm((p) => ({ ...p, ...patch }))}
+            createExtra={createExtra}
+            onCreateExtraChange={(patch) => setCreateExtra((x) => ({ ...x, ...patch }))}
+            onSubmit={handleDialogSubmit}
+            isSubmitting={dialogMode === "edit" ? isUpdating : isCreating}
+          />
         ) : null}
       </div>
   );

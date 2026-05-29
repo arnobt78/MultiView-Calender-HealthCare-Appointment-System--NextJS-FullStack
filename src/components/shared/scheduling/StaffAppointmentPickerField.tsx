@@ -13,6 +13,13 @@ import {
   staffAppointmentGlassSelectTriggerClass,
   staffAppointmentGlassSelectValueClass,
 } from "@/lib/appointment-dialog-ui-classes";
+import {
+  patientDialogDropdownPanelClass,
+  patientDialogGlassSelectChevronClass,
+  patientDialogGlassSelectPlaceholderClass,
+  patientDialogGlassSelectTriggerClass,
+  patientDialogGlassSelectValueClass,
+} from "@/lib/patient-dialog-ui-classes";
 import { bookingPickerCollapsedInsetClass } from "@/components/shared/patient-booking/patient-booking-dialog-styles";
 import { useDismissOnPointerDownOutside } from "@/hooks/useDismissOnPointerDownOutside";
 import { cn } from "@/lib/utils";
@@ -30,6 +37,8 @@ type StaffAppointmentPickerFieldProps = {
   changeLabel: string;
   children: ReactNode;
   disabled?: boolean;
+  /** `sky` = appointment dialog; `emerald` = patient add/edit dialog. */
+  tone?: "sky" | "emerald";
   className?: string;
 };
 
@@ -48,8 +57,31 @@ export function StaffAppointmentPickerField({
   changeLabel,
   children,
   disabled = false,
+  tone = "sky",
   className,
 }: StaffAppointmentPickerFieldProps) {
+  const isEmerald = tone === "emerald";
+  const triggerClass = isEmerald
+    ? patientDialogGlassSelectTriggerClass
+    : staffAppointmentGlassSelectTriggerClass;
+  const panelClass = isEmerald ? patientDialogDropdownPanelClass : staffAppointmentDropdownPanelClass;
+  const chevronClass = isEmerald
+    ? patientDialogGlassSelectChevronClass
+    : staffAppointmentGlassSelectChevronClass;
+  const placeholderClass = isEmerald
+    ? patientDialogGlassSelectPlaceholderClass
+    : staffAppointmentGlassSelectPlaceholderClass;
+  const valueClass = isEmerald
+    ? patientDialogGlassSelectValueClass
+    : staffAppointmentGlassSelectValueClass;
+  const labelIconClass = isEmerald ? "text-emerald-600" : "text-sky-600";
+  const openRingClass = isEmerald
+    ? "border-emerald-400/50 ring-2 ring-emerald-200/40"
+    : "border-sky-400/50 ring-2 ring-sky-200/40";
+  const changeBtnClass = isEmerald
+    ? "text-emerald-700 hover:bg-emerald-50 hover:text-emerald-900"
+    : "text-sky-700 hover:bg-sky-50 hover:text-sky-900";
+
   const rootRef = useRef<HTMLDivElement>(null);
   const hasSelection = selectedContent != null && selectedContent !== false;
   const showTrigger = !hasSelection || open;
@@ -67,7 +99,7 @@ export function StaffAppointmentPickerField({
   return (
     <div className={cn("space-y-2", className)}>
       <div className="flex items-center gap-1.5 text-gray-700">
-        <Icon className="h-3.5 w-3.5 shrink-0 text-sky-600" aria-hidden />
+        <Icon className={cn("h-3.5 w-3.5 shrink-0", labelIconClass)} aria-hidden />
         <Label className="text-gray-700">{label}</Label>
       </div>
 
@@ -78,51 +110,41 @@ export function StaffAppointmentPickerField({
             disabled={disabled}
             aria-expanded={open}
             aria-haspopup="listbox"
-            className={cn(
-              staffAppointmentGlassSelectTriggerClass,
-              open && "border-sky-400/50 ring-2 ring-sky-200/40"
-            )}
+            className={cn(triggerClass, open && openRingClass)}
             onClick={() => onOpenChange(!open)}
           >
             <span
-              className={cn(
-                staffAppointmentGlassSelectValueClass,
-                !hasSelection && !open && staffAppointmentGlassSelectPlaceholderClass
-              )}
+              className={cn(valueClass, !hasSelection && !open && placeholderClass)}
             >
               {triggerLabel}
             </span>
             <ChevronDownIcon
-              className={cn(
-                staffAppointmentGlassSelectChevronClass,
-                "transition-transform",
-                open && "rotate-180"
-              )}
+              className={cn(chevronClass, "transition-transform", open && "rotate-180")}
               aria-hidden
             />
           </button>
         ) : null}
 
         {open ? (
-          <div className={staffAppointmentDropdownPanelClass} role="presentation">
+          <div className={panelClass} role="presentation">
             {children}
           </div>
         ) : null}
 
         {showSelectedSummary ? (
-          <div className={staffAppointmentDropdownPanelClass}>
+          <div className={panelClass}>
             <div className={bookingPickerCollapsedInsetClass}>
               {selectedContent}
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="h-8 w-full cursor-pointer text-sky-700 hover:bg-sky-50 hover:text-sky-900"
+                className={cn("h-8 w-full cursor-pointer", changeBtnClass)}
                 onClick={() => onOpenChange(true)}
                 disabled={disabled}
               >
                 <ChevronDownIcon
-                  className={cn(staffAppointmentGlassSelectChevronClass, "mr-1 rotate-180")}
+                  className={cn(chevronClass, "mr-1 rotate-180")}
                   aria-hidden
                 />
                 {changeLabel}

@@ -47,6 +47,7 @@ import {
   staffAppointmentGlassSectionClass,
   staffAppointmentGlassSelectTriggerClass,
 } from "@/lib/appointment-dialog-ui-classes";
+import { FormRequiredMark } from "@/components/shared/form/FormRequiredMark";
 import { cn, toTitleCaseLabel } from "@/lib/utils";
 import { isValidUUID } from "@/lib/validation";
 import { utcToLocalInputValue } from "@/lib/datetime-local";
@@ -201,24 +202,22 @@ function FieldLabel({
   htmlFor,
   icon: Icon,
   children,
+  required,
 }: {
   htmlFor?: string;
   icon: LucideIcon;
   children: ReactNode;
+  required?: boolean;
 }) {
   return (
     <div className="flex items-center gap-1.5 text-gray-700">
       <Icon className="h-3.5 w-3.5 shrink-0 text-sky-600" aria-hidden />
       <Label htmlFor={htmlFor} className="text-gray-700">
         {children}
+        {required ? <FormRequiredMark /> : null}
       </Label>
     </div>
   );
-}
-
-/** Mandatory scheduling fields — same marker as Title. */
-function RequiredMark() {
-  return <span className="text-gray-700"> *</span>;
 }
 
 export function AppointmentDialogGeneralSection({
@@ -374,8 +373,8 @@ export function AppointmentDialogGeneralSection({
   return (
     <div className="space-y-4 text-gray-700">
       <div className="space-y-2">
-        <FieldLabel htmlFor="title" icon={Heading2}>
-          {toTitleCaseLabel("Title")} <span className="text-gray-700">*</span>
+        <FieldLabel htmlFor="title" icon={Heading2} required>
+          {toTitleCaseLabel("Title")}
         </FieldLabel>
         <Input
           id="title"
@@ -421,7 +420,7 @@ export function AppointmentDialogGeneralSection({
           label={
             <>
               {toTitleCaseLabel("Treating Physician")}
-              <RequiredMark />
+              <FormRequiredMark />
             </>
           }
           placeholder={toTitleCaseLabel("Select Doctor/Treating Physician")}
@@ -473,7 +472,7 @@ export function AppointmentDialogGeneralSection({
           label={
             <>
               {toTitleCaseLabel("Select Appointment Type & Duration Based on Selected Doctor's Availability")}
-              <RequiredMark />
+              <FormRequiredMark />
             </>
           }
           placeholder={toTitleCaseLabel("Select Appointment Type")}
@@ -512,9 +511,8 @@ export function AppointmentDialogGeneralSection({
 
       {isValidUUID(staffSchedulingDoctorId) && (isStaffFlexible || resolvedSlotTypeId) ? (
         <div className={staffAppointmentGlassSectionClass}>
-          <FieldLabel icon={CalendarDays}>
+          <FieldLabel icon={CalendarDays} required>
             {toTitleCaseLabel("Pick a Date & Time Based on Selected Doctor's Availability")}
-            <RequiredMark />
           </FieldLabel>
           <SchedulingPanel
             doctorId={staffSchedulingDoctorId}
@@ -546,9 +544,8 @@ export function AppointmentDialogGeneralSection({
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <FieldLabel icon={UserRound}>
+          <FieldLabel icon={UserRound} required>
             {toTitleCaseLabel("Client/Patient")}
-            <RequiredMark />
           </FieldLabel>
           <Select value={patientId || undefined} onValueChange={setPatientId}>
             <SelectTrigger
@@ -579,9 +576,8 @@ export function AppointmentDialogGeneralSection({
           </Select>
         </div>
         <div className="space-y-2">
-          <FieldLabel icon={LayoutGrid}>
+          <FieldLabel icon={LayoutGrid} required>
             {toTitleCaseLabel("Service/Medical Category")}
-            <RequiredMark />
           </FieldLabel>
           <Select value={categoryId || undefined} onValueChange={setCategoryId}>
             {/* Swatch only via `SelectValue` — mirrors selected `SelectItem` (avoid duplicate dot in trigger). */}
