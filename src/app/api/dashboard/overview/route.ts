@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 /**
  * GET /api/dashboard/overview
  * Server-side summary stats for the dashboard overview card section.
@@ -29,6 +31,12 @@ import {
   startOfMonth,
   endOfMonth,
 } from "date-fns";
+import {
+  coerceDashboardOverviewUpcomingAppointments,
+  DASHBOARD_UPCOMING_APPOINTMENTS_LIMIT,
+  dashboardOverviewAppointmentQueueSelect,
+  mapDashboardOverviewQueueAppointment,
+} from "@/lib/dashboard-overview-queue";
 
 /** Cache TTL in seconds — 90 s balances freshness vs DB load on VPS Postgres. */
 const OVERVIEW_CACHE_TTL = 90;
@@ -48,10 +56,10 @@ export async function GET() {
     if (redis.isConfigured) {
       const cached = await redis.get(cacheKey);
       if (cached) {
-        return new NextResponse(cached, {
-          status: 200,
-          headers: { "Content-Type": "application/json", "X-Cache": "HIT" },
-        });
+        const parsed = coerceDashboardOverviewUpcomingAppointments(
+          JSON.parse(cached as string) as Record<string, unknown>
+        );
+        return NextResponse.json(parsed, { headers: { "X-Cache": "HIT" } });
       }
     }
 
@@ -75,7 +83,7 @@ export async function GET() {
       activePatients,
       totalDoctors,
       totalCategories,
-      nextAppointmentRaw,
+      upcomingAppointmentsRaw,
       recentAppointments,
       overdueCount,
       totalInvoices,
@@ -104,27 +112,21 @@ export async function GET() {
       prisma.patient.count({ where: { active: true } }),
       prisma.user.count({ where: { role: "doctor" } }),
       prisma.category.count(),
-      prisma.appointment.findFirst({
+      prisma.appointment.findMany({
         where: {
           owner_id: sessionUser.userId,
           start: { gt: now },
           status: { not: "done" },
         },
         orderBy: { start: "asc" },
-        select: { id: true, title: true, start: true, end: true, location: true },
+        take: DASHBOARD_UPCOMING_APPOINTMENTS_LIMIT,
+        select: dashboardOverviewAppointmentQueueSelect,
       }),
       prisma.appointment.findMany({
         where: { owner_id: sessionUser.userId },
         orderBy: { created_at: "desc" },
         take: 5,
-        select: {
-          id: true,
-          title: true,
-          start: true,
-          end: true,
-          status: true,
-          patient: { select: { firstname: true, lastname: true } },
-        },
+        select: dashboardOverviewAppointmentQueueSelect,
       }),
       prisma.appointment.count({
         where: {
@@ -166,25 +168,12 @@ export async function GET() {
       },
       doctors: totalDoctors,
       categories: totalCategories,
-      nextAppointment: nextAppointmentRaw
-        ? {
-            id: nextAppointmentRaw.id,
-            title: nextAppointmentRaw.title,
-            start: nextAppointmentRaw.start.toISOString(),
-            end: nextAppointmentRaw.end.toISOString(),
-            location: nextAppointmentRaw.location,
-          }
-        : null,
-      recentAppointments: recentAppointments.map((a) => ({
-        id: a.id,
-        title: a.title,
-        start: a.start.toISOString(),
-        end: a.end.toISOString(),
-        status: a.status,
-        patientName: a.patient
-          ? `${a.patient.firstname} ${a.patient.lastname}`
-          : null,
-      })),
+      upcomingAppointments: upcomingAppointmentsRaw.map((a) =>
+        mapDashboardOverviewQueueAppointment(a)
+      ),
+      recentAppointments: recentAppointments.map((a) =>
+        mapDashboardOverviewQueueAppointment(a)
+      ),
       revenue: {
         paidCents: paidRevenue._sum.amount ?? 0,
         outstandingCents: outstandingRevenue._sum.amount ?? 0,

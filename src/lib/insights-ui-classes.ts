@@ -69,7 +69,7 @@ export const analyticsChartPanelSubtitleClass = "text-xs leading-snug text-muted
 
 /** Dynamic View-as period line under chart titles (matches page scope hint accent). */
 export const insightsChartPeriodSubtitleClass =
-  "text-xs leading-snug text-sky-600/90 [overflow-wrap:anywhere]";
+  "text-xs leading-snug muted-foreground [overflow-wrap:anywhere]";
 
 /** Chart / table body min height — aligns empty states across insights cards. */
 export const insightsChartBodyMinHeightClass = "min-h-[10rem]";

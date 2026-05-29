@@ -1,6 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
 import { apiClient } from "@/lib/api-client";
+import {
+  coerceDashboardOverviewUpcomingAppointments,
+  type DashboardOverviewQueueAppointment,
+} from "@/lib/dashboard-overview-queue";
 
 export interface DashboardOverview {
   appointments: {
@@ -16,21 +20,9 @@ export interface DashboardOverview {
   patients: { total: number; active: number };
   doctors: number;
   categories: number;
-  nextAppointment: {
-    id: string;
-    title: string;
-    start: string;
-    end: string;
-    location: string | null;
-  } | null;
-  recentAppointments: {
-    id: string;
-    title: string;
-    start: string;
-    end: string;
-    status: string | null;
-    patientName: string | null;
-  }[];
+  /** Closest future non-done appointments (max 5), ascending by start. */
+  upcomingAppointments: DashboardOverviewQueueAppointment[];
+  recentAppointments: DashboardOverviewQueueAppointment[];
   revenue: {
     paidCents: number;
     outstandingCents: number;
@@ -42,7 +34,12 @@ export interface DashboardOverview {
 export function useDashboardOverview() {
   const query = useQuery({
     queryKey: queryKeys.dashboard.overview,
-    queryFn: () => apiClient<DashboardOverview>("/api/dashboard/overview"),
+    queryFn: async () => {
+      const raw = await apiClient<DashboardOverview & { nextAppointment?: DashboardOverviewQueueAppointment | null }>(
+        "/api/dashboard/overview"
+      );
+      return coerceDashboardOverviewUpcomingAppointments(raw);
+    },
     staleTime: 60_000, // refresh every minute
   });
 

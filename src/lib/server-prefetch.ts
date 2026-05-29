@@ -62,6 +62,12 @@ import type {
   DoctorAppointmentTypeConfig,
 } from "@/types/types";
 import type { DashboardOverview } from "@/hooks/useDashboardOverview";
+import {
+  coerceDashboardOverviewUpcomingAppointments,
+  DASHBOARD_UPCOMING_APPOINTMENTS_LIMIT,
+  dashboardOverviewAppointmentQueueSelect,
+  mapDashboardOverviewQueueAppointment,
+} from "@/lib/dashboard-overview-queue";
 
 // ─── Shared types ─────────────────────────────────────────────────────────────
 
@@ -224,7 +230,13 @@ export async function prefetchDashboardOverview(userId: string): Promise<Dashboa
     // Leverage the existing server-side Redis cache (avoids all Prisma queries when warm)
     if (redis.isConfigured) {
       const cached = await redis.get(cacheKey);
-      if (cached) return JSON.parse(cached as string) as DashboardOverview;
+      if (cached) {
+        return coerceDashboardOverviewUpcomingAppointments(
+          JSON.parse(cached as string) as DashboardOverview & {
+            nextAppointment?: DashboardOverview["upcomingAppointments"][number] | null;
+          }
+        );
+      }
     }
 
     // Cold cache — run the same Prisma aggregation as the API route
@@ -248,7 +260,7 @@ export async function prefetchDashboardOverview(userId: string): Promise<Dashboa
       activePatients,
       totalDoctors,
       totalCategories,
-      nextAppointmentRaw,
+      upcomingAppointmentsRaw,
       recentAppointments,
       overdueCount,
       totalInvoices,
@@ -265,23 +277,17 @@ export async function prefetchDashboardOverview(userId: string): Promise<Dashboa
       prisma.patient.count({ where: { active: true } }),
       prisma.user.count({ where: { role: "doctor" } }),
       prisma.category.count(),
-      prisma.appointment.findFirst({
+      prisma.appointment.findMany({
         where: { owner_id: userId, start: { gt: now }, status: { not: "done" } },
         orderBy: { start: "asc" },
-        select: { id: true, title: true, start: true, end: true, location: true },
+        take: DASHBOARD_UPCOMING_APPOINTMENTS_LIMIT,
+        select: dashboardOverviewAppointmentQueueSelect,
       }),
       prisma.appointment.findMany({
         where: { owner_id: userId },
         orderBy: { created_at: "desc" },
         take: 5,
-        select: {
-          id: true,
-          title: true,
-          start: true,
-          end: true,
-          status: true,
-          patient: { select: { firstname: true, lastname: true } },
-        },
+        select: dashboardOverviewAppointmentQueueSelect,
       }),
       prisma.appointment.count({
         where: { owner_id: userId, end: { lt: now }, status: { not: "done" } },
@@ -315,25 +321,12 @@ export async function prefetchDashboardOverview(userId: string): Promise<Dashboa
       patients: { total: totalPatients, active: activePatients },
       doctors: totalDoctors,
       categories: totalCategories,
-      nextAppointment: nextAppointmentRaw
-        ? {
-            id: nextAppointmentRaw.id,
-            title: nextAppointmentRaw.title,
-            start: nextAppointmentRaw.start.toISOString(),
-            end: nextAppointmentRaw.end.toISOString(),
-            location: nextAppointmentRaw.location,
-          }
-        : null,
-      recentAppointments: recentAppointments.map((a) => ({
-        id: a.id,
-        title: a.title,
-        start: a.start.toISOString(),
-        end: a.end.toISOString(),
-        status: a.status,
-        patientName: a.patient
-          ? `${a.patient.firstname} ${a.patient.lastname}`
-          : null,
-      })),
+      upcomingAppointments: upcomingAppointmentsRaw.map((a) =>
+        mapDashboardOverviewQueueAppointment(a)
+      ),
+      recentAppointments: recentAppointments.map((a) =>
+        mapDashboardOverviewQueueAppointment(a)
+      ),
       revenue: {
         paidCents: paidRevenue._sum.amount ?? 0,
         outstandingCents: outstandingRevenue._sum.amount ?? 0,

@@ -18,3 +18,7 @@ export const clinicalCellPrimaryTextClass = "text-sm text-gray-700";
 
 /** Secondary lines (email under name, time sub-lines). */
 export const clinicalCellMutedTextClass = "text-xs text-muted-foreground";
+
+/** Entity detail links — matches `EntityTitleLink` sky accent app-wide. */
+export const entityDetailLinkClass =
+  "text-sky-700 no-underline transition-colors hover:bg-sky-50/60 hover:text-sky-800";

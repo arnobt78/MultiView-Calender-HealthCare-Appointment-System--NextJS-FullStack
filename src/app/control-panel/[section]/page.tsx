@@ -3,6 +3,8 @@
 // can seed the TanStack Query cache on first render — overview and patient tabs
 // both show data instantly without a loading flash.
 
+export const dynamic = "force-dynamic";
+
 import ControlPanelPage from "@/components/pages/ControlPanelPage";
 import { getSessionUser } from "@/lib/session";
 import {

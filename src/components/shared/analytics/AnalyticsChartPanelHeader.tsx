@@ -34,7 +34,7 @@ export function AnalyticsChartPanelHeader({
       <span className={cn(analyticsChartPanelIconTileClass, iconClassName)} aria-hidden>
         <Icon className="h-4 w-4" />
       </span>
-      <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5">
+      <div className="flex min-w-0 flex-1 flex-col justify-center">
         <h3 id={id} className={analyticsChartPanelTitleClass}>
           {toTitleCaseLabel(title)}
         </h3>
