@@ -18,8 +18,14 @@ export const PAGINATION = {
   MAX_LIMIT: 1000,
   MAX_SEARCH_LIMIT: 50,
   DEFAULT_OFFSET: 0,
-  /** Calendar dashboard + SSR prefetch — demo-friendly cap; raise for production heavy calendars. */
+  /**
+   * Max **owned** appointments per calendar load (GET /api/appointments?limit=… + SSR prefetch).
+   * Does not cap shared/invited rows — those load separately via batch `ids=` fetch.
+   * Demo seed data is small — 100 is enough; raise (e.g. 500) for production heavy calendars.
+   */
   CALENDAR_APPOINTMENTS_LIMIT: 100,
+  /** Max IDs per batch assignee calendar fetch (GET /api/appointments?ids=…). */
+  CALENDAR_ASSIGNED_BATCH_LIMIT: 100,
 } as const;
 
 // Validation Constants

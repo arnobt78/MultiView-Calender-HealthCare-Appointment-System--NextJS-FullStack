@@ -15,6 +15,7 @@ import {
   assertNoOwnerAppointmentOverlap,
 } from "@/lib/scheduling/validate-appointment-window";
 import { getUserRole, isPatientRole } from "@/lib/rbac";
+import { isValidUUID } from "@/lib/validation";
 import { appointmentDetailHref, appointmentNotificationLink } from "@/lib/entity-routes";
 import { redis } from "@/lib/redis";
 import { format } from "date-fns";
@@ -40,6 +41,55 @@ export async function GET(req: NextRequest) {
     }
 
     const { searchParams } = new URL(req.url);
+    const idsParam = searchParams.get("ids");
+
+    /** Batch fetch for calendar assignee rows — RBAC filters to owner or accepted assignee. */
+    if (idsParam) {
+      const ids = idsParam
+        .split(",")
+        .map((s) => s.trim())
+        .filter((id) => isValidUUID(id))
+        .slice(0, PAGINATION.CALENDAR_ASSIGNED_BATCH_LIMIT);
+
+      if (ids.length === 0) {
+        return NextResponse.json({
+          appointments: [],
+          pagination: { limit: 0, offset: 0, total: 0, count: 0 },
+        });
+      }
+
+      const rows = await prisma.appointment.findMany({
+        where: {
+          id: { in: ids },
+          OR: [
+            { owner_id: sessionUser.userId },
+            {
+              assignees: {
+                some: {
+                  OR: [
+                    { user_id: sessionUser.userId },
+                    ...(sessionUser.email ? [{ invited_email: sessionUser.email }] : []),
+                  ],
+                  status: "accepted",
+                },
+              },
+            },
+          ],
+        },
+        orderBy: { start: "asc" },
+      });
+
+      return NextResponse.json({
+        appointments: rows.map(serializeAppointment),
+        pagination: {
+          limit: ids.length,
+          offset: 0,
+          total: rows.length,
+          count: rows.length,
+        },
+      });
+    }
+
     const status = searchParams.get("status") ?? undefined;
     const category = searchParams.get("category") ?? undefined;
     const startDate = searchParams.get("start_date") ?? undefined;

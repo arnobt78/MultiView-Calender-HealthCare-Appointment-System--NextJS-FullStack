@@ -83,6 +83,7 @@ import {
 import { loadCategorySnapshotData } from "@/lib/category-snapshot-data";
 import type { DashboardAccessRow } from "@/lib/query-fetchers";
 import { buildFullAppointmentsList } from "@/lib/appointments-list-build";
+import { resolveExtraAssignedAppointmentIds } from "@/lib/appointments-calendar-assignees";
 import type { FullAppointment } from "@/hooks/useAppointments";
 import type { Organization } from "@/hooks/useOrganization";
 import { getUserRole, isPatientRole } from "@/lib/rbac";
@@ -327,24 +328,30 @@ export async function prefetchDashboardAppointments(
       ownedRows = rows.map(serializeAppointment) as Appointment[];
     }
 
-    const ownedIds = new Set(ownedRows.map((a) => a.id));
-    const assignedByUser = assignees.filter(
-      (a) => a.user === userId && a.status === "accepted"
-    );
-    const assignedByEmail = assignees.filter(
-      (a) => a.invited_email === email && a.status === "accepted"
-    );
-    const extraAssignedIds = [
-      ...new Set([
-        ...assignedByUser.map((a) => a.appointment),
-        ...assignedByEmail.map((a) => a.appointment),
-      ]),
-    ].filter((id): id is string => !!id && !ownedIds.has(id));
+    const extraAssignedIds = resolveExtraAssignedAppointmentIds(
+      ownedRows,
+      assignees,
+      userId,
+      email
+    ).slice(0, PAGINATION.CALENDAR_ASSIGNED_BATCH_LIMIT);
 
     const assignedRaw =
       extraAssignedIds.length > 0
         ? await prisma.appointment.findMany({
-            where: { id: { in: extraAssignedIds } },
+            where: {
+              id: { in: extraAssignedIds },
+              OR: [
+                { owner_id: userId },
+                {
+                  assignees: {
+                    some: {
+                      OR: [{ user_id: userId }, { invited_email: email }],
+                      status: "accepted",
+                    },
+                  },
+                },
+              ],
+            },
           })
         : [];
 

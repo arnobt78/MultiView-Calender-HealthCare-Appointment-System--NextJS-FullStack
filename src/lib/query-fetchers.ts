@@ -6,6 +6,7 @@ import type {
   AppointmentAssignee,
   Category,
   Patient,
+  Appointment,
 } from "@/types/types";
 
 export async function fetchCategories(): Promise<Category[]> {
@@ -21,6 +22,15 @@ export async function fetchPatients(): Promise<Patient[]> {
 export async function fetchAssignees(): Promise<AppointmentAssignee[]> {
   const res = await apiClient<{ assignees: AppointmentAssignee[] }>("/api/appointment-assignees");
   return res.assignees || [];
+}
+
+/** Batch fetch for calendar assignee rows — one round-trip instead of N× GET /api/appointments/:id. */
+export async function fetchAppointmentsByIds(ids: string[]): Promise<Appointment[]> {
+  if (ids.length === 0) return [];
+  const res = await apiClient<{ appointments: Appointment[] }>(
+    `/api/appointments?ids=${ids.map((id) => encodeURIComponent(id)).join(",")}`
+  );
+  return res.appointments ?? [];
 }
 
 export type DashboardAccessRow = {

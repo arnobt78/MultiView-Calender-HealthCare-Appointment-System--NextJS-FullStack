@@ -10,7 +10,9 @@ import {
   fetchCategories,
   fetchPatients,
   fetchDashboardAccessAccepted,
+  fetchAppointmentsByIds,
 } from "@/lib/query-fetchers";
+import { resolveExtraAssignedAppointmentIds } from "@/lib/appointments-calendar-assignees";
 import { Appointment, Category, Patient, AppointmentAssignee } from "@/types/types";
 import type { PortalAppointmentStaffUser } from "@/lib/serializers";
 import { buildFullAppointmentsList } from "@/lib/appointments-list-build";
@@ -112,31 +114,14 @@ export function useAppointments() {
 
       const owned = ownedRes.appointments || [];
 
-      const assignedByUser = allAssignees.filter(
-        (a) => a.user === user.id && a.status === "accepted"
-      );
-      const assignedByEmail = user.email
-        ? allAssignees.filter((a) => a.invited_email === user.email && a.status === "accepted")
-        : [];
+      const extraAssignedIds = resolveExtraAssignedAppointmentIds(
+        owned,
+        allAssignees,
+        user.id,
+        user.email
+      ).slice(0, PAGINATION.CALENDAR_ASSIGNED_BATCH_LIMIT);
 
-      const assignedAppointmentIds = [
-        ...assignedByUser.map((a) => a.appointment),
-        ...assignedByEmail.map((a) => a.appointment),
-      ].filter(Boolean);
-      const uniqueAppointmentIds = [...new Set(assignedAppointmentIds)];
-      const ownedIds = new Set(owned.map((a) => a.id));
-      const extraAssignedIds = uniqueAppointmentIds.filter((id) => !ownedIds.has(id));
-
-      const assignedAppointmentsData = await Promise.all(
-        extraAssignedIds.map(async (apptId) => {
-          try {
-            const res = await apiClient<{ appointment: Appointment }>(`/api/appointments/${apptId}`);
-            return res.appointment;
-          } catch {
-            return null;
-          }
-        })
-      );
+      const assignedAppointmentsData = await fetchAppointmentsByIds(extraAssignedIds);
 
       return buildFullAppointmentsList({
         userId: user.id,
@@ -146,9 +131,7 @@ export function useAppointments() {
         patients,
         assignees: allAssignees,
         ownedAppointments: owned,
-        assignedAppointmentRows: assignedAppointmentsData.filter(
-          (a): a is Appointment => a !== null
-        ),
+        assignedAppointmentRows: assignedAppointmentsData,
       });
     },
     enabled: !!user,

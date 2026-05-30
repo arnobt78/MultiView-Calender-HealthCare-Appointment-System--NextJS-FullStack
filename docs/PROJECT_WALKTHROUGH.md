@@ -1,6 +1,15 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest Audit Update (2026-05-28)
+## Latest Audit Update (2026-05-30)
+
+- **Dashboard `/dashboard` SSR:** `force-dynamic` page prefetches categories, patients, assignees, accepted dashboard-access, and merged calendar list (`src/lib/appointments-list-build.ts` + `prefetchDashboardAppointments` in `server-prefetch.ts`). `HomePage` seeds TanStack cache before paint — no calendar flash on hard refresh.
+- **Calendar fetch contract:** Owned rows capped at `PAGINATION.CALENDAR_APPOINTMENTS_LIMIT` (100 demo); invited/shared rows resolved by `resolveExtraAssignedAppointmentIds` and fetched in one batch (`GET /api/appointments?ids=` / `fetchAppointmentsByIds`).
+- **Control panel SSR:** `organization-management` section prefetches orgs; `control-panel/layout.tsx` prefetches `CP_DOCTOR_USERS_FILTERS` + `CP_ALL_USERS_FILTERS` once for all CP routes via `ControlPanelSsrCacheSeed`.
+- **Cross-tab:** `invalidateOrganizations` publishes `CROSS_TAB_SCOPES.ORGANIZATIONS`.
+- **Skipped (intentional):** SPA client-nav seed; appointment-types prefetch everywhere; bulk-import snapshot bust.
+- **Verify:** `npm test && npx tsc --noEmit && npm run lint && npm run build` — **472 tests**.
+
+## Prior (2026-05-28)
 
 - Appointment card variant parity hardening completed:
   - `list` keeps inline identity rows for full-width dashboard cards.
