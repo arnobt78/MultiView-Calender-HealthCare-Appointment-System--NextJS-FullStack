@@ -1,0 +1,15 @@
+# Cycle C1 Archive Placeholder
+
+<!-- Frozen snapshots land here after Gate 2 acceptance. Do not edit archives. -->
+
+_No cycle archived yet._
+
+When C1 completes Gate 2, copy living docs snapshot to this directory:
+
+- REQUIREMENTS.md
+- BUILD_MANIFEST.md
+- TEST_SPEC.md
+- VALIDATION_SUMMARY_C1.md
+- ATM.md (cycle slice)
+
+DECISION_LOG.md and CHANGE_LOG.md remain in `.agile-v/` root (append-only timeline).

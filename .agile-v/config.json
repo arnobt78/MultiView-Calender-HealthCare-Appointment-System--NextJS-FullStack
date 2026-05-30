@@ -1,0 +1,63 @@
+{
+  "agile_v_version": "1.4",
+  "project": {
+    "name": "healthcal-pro",
+    "display_name": "HealthCal Pro",
+    "repository": "calendar-appointment",
+    "initialized": "2026-05-30"
+  },
+  "cycle": {
+    "current": "C1",
+    "started": "2026-05-30"
+  },
+  "authority_matrix": {
+    "gate_1": ["Product Owner", "Tech Lead", "Project Maintainer"],
+    "gate_2": ["Product Owner", "Tech Lead", "Release Manager"]
+  },
+  "verification": {
+    "commands": [
+      "npm test",
+      "npx tsc --noEmit",
+      "npm run lint"
+    ],
+    "release_candidate": [
+      "npm run build"
+    ]
+  },
+  "llm_provider_registry": [
+    {
+      "name": "cursor",
+      "models": ["composer", "claude", "gpt"],
+      "data_residency": "vendor-defined",
+      "retention": "session + vendor policy",
+      "api_data_usage": "per Cursor Terms of Service",
+      "approved_for": ["non-regulated", "internal-dev"],
+      "review_date": "2026-05-30"
+    }
+  ],
+  "model_versions": {
+    "high_tier": {
+      "id": "unspecified",
+      "last_validated": null,
+      "validated_by": null
+    },
+    "medium_tier": {
+      "id": "unspecified",
+      "last_validated": null,
+      "validated_by": null
+    },
+    "low_tier": {
+      "id": "unspecified",
+      "last_validated": null,
+      "validated_by": null
+    }
+  },
+  "agents": {
+    "requirement_architect": { "tier": "high" },
+    "logic_gatekeeper": { "tier": "high" },
+    "build_agent": { "tier": "medium" },
+    "test_designer": { "tier": "medium" },
+    "red_team_verifier": { "tier": "medium" },
+    "compliance_auditor": { "tier": "low-medium" }
+  }
+}

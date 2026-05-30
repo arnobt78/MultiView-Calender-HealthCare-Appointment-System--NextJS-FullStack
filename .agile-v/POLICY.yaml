@@ -1,0 +1,69 @@
+# version: "1.0.0"
+# Agile V Policy — HealthCal Pro
+# Source of truth for eval thresholds and gate rules
+
+project:
+  name: healthcal-pro
+  display_name: HealthCal Pro
+  stack:
+    - nextjs
+    - react
+    - typescript
+    - prisma
+    - postgres
+    - tanstack-query
+
+cycle:
+  current: C1
+  started: "2026-05-30"
+
+gates:
+  gate_1:
+    name: Requirements Approval
+    required_artifacts:
+      - REQUIREMENTS.md
+    block_on:
+      - ambiguous_req
+      - missing_traceability
+      - unresolved_req_conflict
+  gate_2:
+    name: Release / Merge Approval
+    required_artifacts:
+      - VALIDATION_SUMMARY.md
+      - EVAL_RESULTS.md
+      - BUILD_MANIFEST.md
+    eval_gate_required: true
+    block_on:
+      - eval_gate_status_fail
+      - open_critical_risk
+      - open_capa_unverified
+      - checkpoint_pending
+
+verification:
+  default_commands:
+    - npm test
+    - npx tsc --noEmit
+    - npm run lint
+  release_candidate_commands:
+    - npm run build
+  first_pass_target_percent: 80
+  requirement_coverage_target_percent: 100
+
+traceability:
+  req_id_pattern: "REQ-\\d{4}"
+  art_id_pattern: "ART-\\d{4}"
+  tc_id_pattern: "TC-\\d{4}"
+  ver_id_pattern: "VER-\\d{4}"
+  halt_without_parent_req: true
+
+hitl:
+  checkpoint_sla_hours: 72
+  durable_resume: true
+
+compliance:
+  regulatory_context: non-regulated
+  min_signature: "APPROVALS.md entry with name + timestamp"
+
+repository_contracts:
+  - path: CLAUDE.md
+    rules: query_keys, invalidation, rbac, skeleton_loading, no_regressions
