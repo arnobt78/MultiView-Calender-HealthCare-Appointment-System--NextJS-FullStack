@@ -12,6 +12,7 @@ import { isValidUUID } from "@/lib/validation";
 import { redis } from "@/lib/redis";
 import { mapPortalAppointmentsFromRows, serializePatient, serializeAppointment } from "@/lib/serializers";
 import { patientDetailInclude } from "@/lib/patient-api-include";
+import { resolvePatientBookingCategoryId } from "@/lib/patient-booking-category";
 import {
   AppointmentSchedulingConflictError,
   assertNoOwnerAppointmentOverlap,
@@ -191,6 +192,8 @@ export async function POST(request: NextRequest) {
       ? await prisma.patient.findFirst({ where: { email: user.email } })
       : null;
 
+    const categoryId = await resolvePatientBookingCategoryId(prisma, doctorId, typeId);
+
     const appointment = await prisma.appointment.create({
       data: {
         title,
@@ -204,6 +207,7 @@ export async function POST(request: NextRequest) {
         appointment_type_id: typeId,
         duration_minutes: durationMinutes,
         is_telehealth: isTelehealth,
+        category_id: categoryId,
         owner_id: doctorId, // B3 Prisma field; DB column remains `user_id`
         treating_physician_id: doctorId, // B2: portal booking — same doctor until product allows decoupling
         patient_id: patient?.id || null,

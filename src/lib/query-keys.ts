@@ -25,6 +25,7 @@ export const queryKeys = {
   categories: {
     all: ["app", "categories"] as const,
     detail: (id: string) => [...queryKeys.categories.all, id] as const,
+    snapshot: (id: string) => [...queryKeys.categories.all, id, "snapshot"] as const,
   },
   patients: {
     all: ["app", "patients"] as const,

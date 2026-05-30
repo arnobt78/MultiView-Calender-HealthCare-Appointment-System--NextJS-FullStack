@@ -54,6 +54,14 @@ import { utcToLocalInputValue } from "@/lib/datetime-local";
 import { resolvePatientPortraitUrl } from "@/lib/patient-portrait";
 import { patientSelectSearchText } from "@/lib/patient-select-display";
 import {
+  isCategoryActive,
+  isPatientActive,
+  partitionForBookingSelect,
+  sortCategoriesForBookingSelect,
+  sortPatientsForBookingSelect,
+} from "@/lib/entity-active-status";
+import { ActiveInactiveSelectSections } from "@/components/shared/select/ActiveInactiveSelectSections";
+import {
   PatientSelectOption,
   patientSelectItemClass,
 } from "@/components/shared/person-display/PatientSelectOption";
@@ -361,6 +369,30 @@ export function AppointmentDialogGeneralSection({
     [patients, patientId]
   );
 
+  const patientSelectPartition = useMemo(
+    () =>
+      partitionForBookingSelect({
+        items: patients,
+        isActive: isPatientActive,
+        getId: (p) => p.id,
+        currentId: patientId,
+        sortSelectable: sortPatientsForBookingSelect,
+      }),
+    [patients, patientId]
+  );
+
+  const categorySelectPartition = useMemo(
+    () =>
+      partitionForBookingSelect({
+        items: categories,
+        isActive: isCategoryActive,
+        getId: (c) => c.id,
+        currentId: categoryId,
+        sortSelectable: sortCategoriesForBookingSelect,
+      }),
+    [categories, categoryId]
+  );
+
   function handleSlotPick(iso: string) {
     setSlotPickStartIso(iso);
     const dur = selectedSlotType?.duration_minutes ?? 30;
@@ -562,16 +594,15 @@ export function AppointmentDialogGeneralSection({
               )}
             </SelectTrigger>
             <SelectContent>
-              {patients.map((p) => (
-                <SelectItem
-                  key={p.id}
-                  value={p.id}
-                  textValue={patientSelectSearchText(p)}
-                  className={patientSelectItemClass}
-                >
-                  <PatientSelectOption patient={p} />
-                </SelectItem>
-              ))}
+              <ActiveInactiveSelectSections
+                selectable={patientSelectPartition.selectable}
+                inactiveDisplay={patientSelectPartition.inactiveDisplay}
+                getItemKey={(p) => p.id}
+                getTextValue={patientSelectSearchText}
+                selectableItemClassName={patientSelectItemClass}
+                renderSelectableItem={(p) => <PatientSelectOption patient={p} />}
+                renderInactiveItem={(p) => <PatientSelectOption patient={p} />}
+              />
             </SelectContent>
           </Select>
         </div>
@@ -585,8 +616,12 @@ export function AppointmentDialogGeneralSection({
               <SelectValue placeholder={toTitleCaseLabel("Select Service/Medical Category")} />
             </SelectTrigger>
             <SelectContent>
-              {categories.map((c) => (
-                <SelectItem key={c.id} value={c.id} textValue={c.label}>
+              <ActiveInactiveSelectSections
+                selectable={categorySelectPartition.selectable}
+                inactiveDisplay={categorySelectPartition.inactiveDisplay}
+                getItemKey={(c) => c.id}
+                getTextValue={(c) => c.label}
+                renderSelectableItem={(c) => (
                   <span className="flex min-w-0 items-center gap-2">
                     <span
                       className="h-2.5 w-2.5 shrink-0 rounded-full ring-1 ring-sky-200/80"
@@ -595,8 +630,18 @@ export function AppointmentDialogGeneralSection({
                     />
                     <span className="truncate">{c.label}</span>
                   </span>
-                </SelectItem>
-              ))}
+                )}
+                renderInactiveItem={(c) => (
+                  <span className="flex min-w-0 items-center gap-2">
+                    <span
+                      className="h-2.5 w-2.5 shrink-0 rounded-full ring-1 ring-sky-200/80 opacity-60"
+                      style={categorySwatchStyle(c.color)}
+                      aria-hidden
+                    />
+                    <span className="truncate">{c.label}</span>
+                  </span>
+                )}
+              />
             </SelectContent>
           </Select>
         </div>

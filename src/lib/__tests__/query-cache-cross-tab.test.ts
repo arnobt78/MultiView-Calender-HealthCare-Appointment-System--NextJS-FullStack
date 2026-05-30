@@ -83,6 +83,25 @@ describe("applyCrossTabScopes", () => {
 
     expect(qc.getQueryState(key)?.isInvalidated).toBe(true);
   });
+
+  it("APPOINTMENT_MUTATION scope invalidates patients and categories trees", async () => {
+    const qc = createQueryClient();
+    const patientSnapKey = queryKeys.patients.snapshot("pat-1");
+    const categorySnapKey = queryKeys.categories.snapshot("cat-1");
+    qc.setQueryData(patientSnapKey, { patient: { id: "pat-1" }, appointments: [], invoices: [] });
+    qc.setQueryData(categorySnapKey, {
+      category: { id: "cat-1" },
+      appointments: [],
+      totalCount: 0,
+    });
+
+    await applyCrossTabScopes(qc, CROSS_TAB_SCOPES.APPOINTMENT_MUTATION);
+
+    expect(qc.getQueryState(patientSnapKey)?.isInvalidated).toBe(true);
+    expect(qc.getQueryState(categorySnapKey)?.isInvalidated).toBe(true);
+    expect(CROSS_TAB_SCOPES.APPOINTMENT_MUTATION).toContain("patients");
+    expect(CROSS_TAB_SCOPES.APPOINTMENT_MUTATION).toContain("categories");
+  });
 });
 
 describe("publishQueryCacheCrossTab + subscribeQueryCacheCrossTab", () => {

@@ -12,21 +12,39 @@ import {
   type QueryCacheCrossTabScope,
 } from "@/lib/query-cache-cross-tab";
 import { queryKeys } from "./query-keys";
+import {
+  getCategoryIdFromAppointmentCache,
+  getPatientIdFromAppointmentCache,
+} from "./appointment-cache-read";
+export {
+  getCategoryIdFromAppointmentCache,
+  getPatientIdFromAppointmentCache,
+} from "./appointment-cache-read";
+export type { CachedAppointmentRow } from "./appointment-cache-read";
+import {
+  invalidateCategoryDetailAndSnapshot,
+  invalidatePatientDetailAndSnapshot,
+} from "./entity-snapshot-invalidation";
+export {
+  invalidateCategoryDetailAndSnapshot,
+  invalidatePatientDetailAndSnapshot,
+} from "./entity-snapshot-invalidation";
+import {
+  type AppointmentMutationInvalidationOpts,
+  invalidateAppointmentEntitySnapshots,
+  resolveAppointmentMutationTargets,
+} from "./appointment-mutation-invalidation";
 
-/** Appointment rows in cache — `patient` is FK to patients.id */
-type CachedAppointmentRow = { id: string; patient?: string | null };
+export type { AppointmentMutationInvalidationOpts } from "./appointment-mutation-invalidation";
+export {
+  invalidateAppointmentEntitySnapshots,
+  resolveAppointmentMutationTargets,
+} from "./appointment-mutation-invalidation";
+
+/** Appointment rows in cache — see `appointment-cache-read.ts`. */
+type CachedAppointmentRow = { id: string; patient?: string | null; category?: string | null };
 
 type CachedInvoiceRow = { id: string; appointment_id?: string | null };
-
-/** Resolve patient UUID from the appointments list cache (no extra fetch). */
-export function getPatientIdFromAppointmentCache(
-  queryClient: QueryClient,
-  appointmentId: string | null | undefined
-): string | undefined {
-  if (!appointmentId) return undefined;
-  const data = queryClient.getQueryData<CachedAppointmentRow[]>(queryKeys.appointments.all);
-  return data?.find((a) => a.id === appointmentId)?.patient ?? undefined;
-}
 
 /** Invoice list cache → appointment → patient (for targeted invalidation after invoice CRUD). */
 export function getPatientIdFromInvoiceCache(
@@ -37,18 +55,6 @@ export function getPatientIdFromInvoiceCache(
   const inv = invoices?.find((i) => i.id === invoiceId);
   if (!inv?.appointment_id) return undefined;
   return getPatientIdFromAppointmentCache(queryClient, inv.appointment_id);
-}
-
-/** Narrow invalidation: detail + snapshot only (avoids refetching full patient list when not needed). */
-export async function invalidatePatientDetailAndSnapshot(
-  queryClient: QueryClient,
-  patientId: string | null | undefined
-) {
-  if (!patientId) return;
-  await Promise.all([
-    queryClient.invalidateQueries({ queryKey: queryKeys.patients.detail(patientId) }),
-    queryClient.invalidateQueries({ queryKey: queryKeys.patients.snapshot(patientId) }),
-  ]);
 }
 
 /** Linked patient profile + portal appointment list — invalidate when staff edits patient or appointments change. */
@@ -233,19 +239,22 @@ export async function invalidateAppointmentTypeDerived(queryClient: QueryClient)
  */
 export async function invalidateAfterAppointmentMutation(
   queryClient: QueryClient,
-  opts?: { patientId?: string | null }
+  opts?: AppointmentMutationInvalidationOpts
 ) {
+  const targets = resolveAppointmentMutationTargets(queryClient, opts);
+
   await Promise.all([
     invalidateAppointmentData(queryClient),
     invalidateNotificationsData(queryClient),
     invalidateAppointmentTypeDerived(queryClient),
-    invalidateInvoicesAndOverview(queryClient, { patientId: opts?.patientId ?? undefined }),
-    // Insights / analytics charts aggregate appointment data — must refetch after any mutation.
+    invalidateInvoicesAndOverview(queryClient, {
+      patientId: opts?.patientId ?? targets.patientIds[0] ?? undefined,
+    }),
     invalidateInsightsAndAnalytics(queryClient),
     invalidatePatientPortal(queryClient),
-    // Role-specific portals show appointment counts and today's schedule.
     invalidateDoctorPortal(queryClient),
     invalidateAdminPortal(queryClient),
+    invalidateAppointmentEntitySnapshots(queryClient, targets),
   ]);
   publishQueryCacheCrossTab(CROSS_TAB_SCOPES.APPOINTMENT_MUTATION);
 }

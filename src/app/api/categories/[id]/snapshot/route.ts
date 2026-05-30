@@ -1,0 +1,37 @@
+/**
+ * Category aggregate: recent appointments for this category (CP detail live panel).
+ */
+
+import { NextRequest, NextResponse } from "next/server";
+import { getSessionUser } from "@/lib/session";
+import { isValidUUID } from "@/lib/validation";
+import { loadCategorySnapshotData } from "@/lib/category-snapshot-data";
+
+/** Per-request snapshot — literal required (see api-route-dynamic.test.ts). */
+export const dynamic = "force-dynamic";
+
+type RouteContext = { params: Promise<{ id: string }> };
+
+export async function GET(_req: NextRequest, context: RouteContext) {
+  try {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id } = await context.params;
+    if (!isValidUUID(id)) {
+      return NextResponse.json({ error: "Invalid category ID" }, { status: 400 });
+    }
+
+    const snapshot = await loadCategorySnapshotData(id);
+    if (!snapshot) {
+      return NextResponse.json({ error: "Category not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(snapshot);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Internal server error";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}

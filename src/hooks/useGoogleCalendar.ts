@@ -75,7 +75,7 @@ export function useGoogleCalendar() {
        * appointments + activities + notifications + availability + invoices + dashboard overview + patients.
        * Previously only invalidated `appointments.all`, leaving dashboard counts stale.
        */
-      await invalidateAfterAppointmentMutation(queryClient);
+      await invalidateAfterAppointmentMutation(queryClient, { bustAllCategorySnapshots: true });
     },
     onError: (error) => handleApiError(error, "Failed to import calendar"),
   });

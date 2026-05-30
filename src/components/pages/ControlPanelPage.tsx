@@ -9,6 +9,7 @@ import { apiClient } from "@/lib/api-client";
 import { useAuth } from "@/hooks/useAuth";
 import type { AppointmentTypeApiRow } from "@/hooks/useAppointmentTypes";
 import type { Patient } from "@/types/types";
+import type { Category } from "@/types/types";
 import type { DashboardOverview } from "@/hooks/useDashboardOverview";
 import PatientDetailView from "./PatientDetailView";
 import TelehealthDashboard from "./TelehealthDashboard";
@@ -192,6 +193,8 @@ type ControlPanelPageProps = {
    * so the Patient Management tab renders from cache on first visit.
    */
   initialPatients?: Patient[] | null;
+  /** Server-prefetched categories — seeds queryKeys.categories.all on category-management tab. */
+  initialCategories?: Category[] | null;
 };
 
 export function PatientsTab() {
@@ -222,6 +225,7 @@ export default function ControlPanelPage({
   initialTab,
   initialDashboardOverview,
   initialPatients,
+  initialCategories,
 }: ControlPanelPageProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -255,7 +259,10 @@ export default function ControlPanelPage({
     if (initialPatients != null) {
       queryClient.setQueryData(queryKeys.patients.all, initialPatients);
     }
-  }, [queryClient, initialDashboardOverview, initialPatients]);
+    if (initialCategories != null) {
+      queryClient.setQueryData(queryKeys.categories.all, initialCategories);
+    }
+  }, [queryClient, initialDashboardOverview, initialPatients, initialCategories]);
 
   /**
    * Optional cache warm-up for global visit types (GET is allowed for any signed-in user).

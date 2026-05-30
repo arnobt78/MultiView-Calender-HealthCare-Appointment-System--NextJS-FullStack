@@ -2,28 +2,23 @@
 
 import { type ColumnDef } from "@tanstack/react-table";
 import { PrefetchingLink } from "@/components/shared/PrefetchingLink";
-import { useCategories } from "@/hooks/useCategories";
+import { useCategories, type CategoryCreateInput } from "@/hooks/useCategories";
 import { DataTable } from "@/components/shared/DataTable";
 import { DataTableColumnHeader } from "@/components/shared/DataTableColumnHeader";
 import { PageHeader } from "@/components/shared/PageHeader";
-import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
+import { CategoryTableCell } from "@/components/control-panel/patient-detail-snapshot-columns";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { Category } from "@/types/types";
 import { cn } from "@/lib/utils";
-import { skyGlassTableFrameClass, emeraldGlassPrimaryButtonClass } from "@/lib/calendar-header-action-styles";
-import { Plus, Pencil, MoreHorizontal, Trash2, Eye, Layers, CheckCircle2, Clock, Tag, AlertCircle } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useState } from "react";
+import { violetGlassPrimaryButtonClass } from "@/lib/calendar-header-action-styles";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+  amberGlassTableFrameClass,
+  categoryManagementFilterToolbarClass,
+  categoryManagementStatsStripClass,
+} from "@/lib/category-management-toolbar-classes";
+import { GlassResetFilterButton } from "@/components/shared/GlassResetFilterButton";
+import { EntityListSearchInput } from "@/components/shared/EntityListSearchInput";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,100 +26,67 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import type { CategoryCreateInput } from "@/hooks/useCategories";
+  AlertCircle,
+  CheckCircle2,
+  CircleOff,
+  Clock,
+  EllipsisVertical,
+  Eye,
+  ListFilter,
+  Pencil,
+  Tag,
+  Trash2,
+} from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { format } from "date-fns";
+import { FilterSelect } from "@/components/shared/filters/FilterSelect";
+import { APP_NAVBAR_STICKY_OFFSET_CLASS } from "@/lib/portal-z-index";
+import {
+  CategoryListFiltersProvider,
+  useCategoryListFilters,
+  type CategoryStatusFilter,
+} from "@/components/control-panel/CategoryListFiltersContext";
+import { CategoryManagementStatsRow } from "@/components/control-panel/CategoryManagementStatsRow";
+import { CategoryMetricsProvider } from "@/context/CategoryMetricsContext";
+import { useCategoryListMetrics } from "@/hooks/useCategoryListMetrics";
+import { CategoryFormDialog } from "@/components/control-panel/category-dialog/CategoryFormDialog";
+import {
+  EMPTY_CATEGORY_FORM,
+  buildCategorySubmitPayload,
+  categoryToFormInput,
+} from "@/lib/category-form-state";
+import { isCategoryActive } from "@/lib/entity-active-status";
+import { CLINICAL_EMPTY_EM_DASH } from "@/lib/clinical-empty-value";
+import {
+  clinicalCellMutedTextClass,
+  clinicalTableCellMinRowClass,
+} from "@/lib/table-display-styles";
 
-// ---------------------------------------------------------------------------
-// Stat cards — amber/orange color scheme; only numeric values pulse during load
-// ---------------------------------------------------------------------------
-function CategoryStatCards({ categories, isLoading }: { categories: Category[]; isLoading: boolean }) {
-  const active = categories.filter((c) => c.is_active !== false).length;
-  const withDuration = categories.filter((c) => c.duration_minutes_default != null).length;
-
-  const stats = [
-    {
-      label: "Total Categories",
-      value: categories.length,
-      icon: <Tag className="h-4 w-4" />,
-      cls: "bg-amber-50/60 border-amber-200/60",
-      valueCls: "text-amber-700",
-      iconCls: "bg-amber-100 border-amber-200 text-amber-600",
-    },
-    {
-      label: "Active",
-      value: active,
-      icon: <CheckCircle2 className="h-4 w-4" />,
-      cls: "bg-emerald-50/60 border-emerald-200/60",
-      valueCls: "text-emerald-700",
-      iconCls: "bg-emerald-100 border-emerald-200 text-emerald-600",
-    },
-    {
-      label: "With Duration",
-      value: withDuration,
-      icon: <Clock className="h-4 w-4" />,
-      cls: "bg-sky-50/60 border-sky-200/60",
-      valueCls: "text-sky-700",
-      iconCls: "bg-sky-100 border-sky-200 text-sky-600",
-    },
-    {
-      label: "Inactive",
-      value: categories.length - active,
-      icon: <Layers className="h-4 w-4" />,
-      cls: "bg-slate-50/60 border-slate-200/60",
-      valueCls: "text-slate-700",
-      iconCls: "bg-slate-100 border-slate-200 text-slate-600",
-    },
-  ];
-
-  return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-      {stats.map(({ label, value, icon, cls, valueCls, iconCls }) => (
-        <Card key={label} className={cn("rounded-[16px] border", cls)}>
-          <CardContent className="p-3 flex items-center gap-2">
-            <span className={cn("flex h-9 w-9 items-center justify-center rounded-xl border shrink-0", iconCls)}>
-              {icon}
-            </span>
-            <div>
-              {/* Only pulse the numeric value — label + icon stay fixed during load */}
-              {isLoading
-                ? <Skeleton className="h-5 w-8 rounded mb-1" />
-                : <p className={cn("text-lg font-bold leading-none", valueCls)}>{value}</p>
-              }
-              <p className="text-xs text-muted-foreground ">{label}</p>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
-}
+const STATUS_FILTER_LABEL: Record<CategoryStatusFilter, string> = {
+  all: "All Statuses",
+  active: "Active",
+  inactive: "Inactive",
+};
 
 function CategoryActions({
   category,
   onDelete,
+  onEdit,
 }: {
   category: Category;
-  onDelete: (id: string) => void;
+  onDelete: (c: Category) => void;
+  onEdit: (c: Category) => void;
 }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
+
   return (
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <MoreHorizontal className="h-4 w-4" />
+          <Button variant="ghost" size="icon" className="h-7 w-7">
+            <EllipsisVertical className="h-4 w-4" />
             <span className="sr-only">Open menu</span>
           </Button>
         </DropdownMenuTrigger>
@@ -138,14 +100,12 @@ function CategoryActions({
               View
             </PrefetchingLink>
           </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <PrefetchingLink
-              href={`/control-panel/categories/${category.id}?mode=edit`}
-              className="flex items-center gap-2 cursor-pointer"
-            >
-              <Pencil className="h-4 w-4" />
-              Edit
-            </PrefetchingLink>
+          <DropdownMenuItem
+            className="flex items-center gap-2 cursor-pointer"
+            onSelect={() => onEdit(category)}
+          >
+            <Pencil className="h-4 w-4" />
+            Edit
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
@@ -158,139 +118,249 @@ function CategoryActions({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete category?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete{" "}
-              <strong>&ldquo;{category.label}&rdquo;</strong>. This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive hover:bg-destructive/90"
-              onClick={() => onDelete(category.id)}
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmActionDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Permanently remove this category?"
+        subtitle={
+          <>
+            This will delete{" "}
+            <span className="font-medium text-gray-700">&ldquo;{category.label}&rdquo;</span>.
+            Appointments using this category may need reassignment. You cannot undo this action.
+          </>
+        }
+        confirmLabel="Delete"
+        variant="destructive"
+        onConfirm={() => {
+          onDelete(category);
+          setConfirmOpen(false);
+        }}
+      />
     </>
   );
 }
 
-export default function CategoryManagement() {
-  const { categories, isLoading, isError, createCategory, isCreating, deleteCategory } = useCategories();
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [form, setForm] = useState<CategoryCreateInput>({
-    label: "",
-    description: "",
-    color: "#f59e0b",
-    icon: "",
-    is_active: true,
-    sort_order: 0,
-    duration_minutes_default: undefined,
-  });
+export function CategoryManagementInner() {
+  const {
+    categories,
+    isLoading,
+    isFetching,
+    isError,
+    createCategory,
+    isCreating,
+    updateCategory,
+    isUpdating,
+    deleteCategory,
+  } = useCategories();
 
-  const columns: ColumnDef<Category>[] = [
-    {
-      accessorKey: "label",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Label" />,
-      meta: { shellClassName: "min-w-[10rem]" },
-      cell: ({ row }) => {
-        const c = row.original;
-        return (
-          <div className="flex items-center gap-2">
-            {c.color && (
-              <span className="h-3 w-3 rounded-full border shrink-0" style={{ background: c.color }} />
-            )}
-            <EntityTitleLink href={`/control-panel/categories/${c.id}`} label={c.label} className="font-medium" />
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: "description",
-      header: "Description",
-      meta: { shellClassName: "min-w-[12rem]" },
-      cell: ({ row }) => (
-        <span className="text-xs text-muted-foreground truncate max-w-[200px] block">
-          {row.original.description ?? "—"}
-        </span>
-      ),
-    },
-    {
-      id: "status",
-      header: "Status",
-      meta: { shellClassName: "w-[7rem]" },
-      cell: ({ row }) => {
-        const active = row.original.is_active !== false;
-        return (
-          <Badge variant="outline" className={`text-[10px] py-0 ${active ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-gray-50 text-gray-500 border-gray-200"}`}>
-            {active ? "Active" : "Inactive"}
-          </Badge>
-        );
-      },
-    },
-    {
-      id: "duration",
-      header: "Default Duration",
-      meta: { shellClassName: "w-[9rem] text-right" },
-      cell: ({ row }) => {
-        const d = row.original.duration_minutes_default;
-        return d != null ? (
-          <Badge variant="outline" className="text-[10px] py-0 bg-sky-50 text-sky-700 border-sky-200">
-            <Clock className="h-2.5 w-2.5 mr-0.5" />{d} min
-          </Badge>
-        ) : (
-          <span className="text-xs text-muted-foreground">—</span>
-        );
-      },
-    },
-    {
-      accessorKey: "sort_order",
-      header: "Order",
-      meta: { shellClassName: "w-[5rem] text-center" },
-      cell: ({ row }) => (
-        <span className="text-sm font-medium">{row.original.sort_order ?? 0}</span>
-      ),
-    },
-    {
-      accessorKey: "created_at",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Created" />,
-      meta: { shellClassName: "w-[1%] whitespace-nowrap" },
-      cell: ({ row }) => (
-        <span className="text-xs">{row.original.created_at ? new Date(row.original.created_at).toLocaleDateString() : "—"}</span>
-      ),
-    },
-    {
-      id: "actions",
-      header: "Actions",
-      enableSorting: false,
-      meta: { shellClassName: "w-[1%] whitespace-nowrap text-right" },
-      cell: ({ row }) => <CategoryActions category={row.original} onDelete={deleteCategory} />,
-    },
-  ];
+  const [listUiMounted, setListUiMounted] = useState(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setListUiMounted(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
 
-  const handleCreate = () => {
-    createCategory(
-      { ...form, label: form.label.trim() },
-      {
-        onSuccess: () => {
-          setDialogOpen(false);
-          setForm({ label: "", description: "", color: "#f59e0b", icon: "", is_active: true, sort_order: 0 });
-        },
-      }
-    );
+  const hasCategoriesCache = categories.length > 0;
+  const listBodyLoading = !listUiMounted || (isLoading && !hasCategoriesCache);
+
+  const { status, setStatus, filterByStatus } = useCategoryListFilters();
+  const filteredCategories = filterByStatus(categories);
+  const metrics = useCategoryListMetrics(categories);
+
+  const [listSearch, setListSearch] = useState("");
+  const hasToolbarFilters = useMemo(
+    () => listSearch.trim().length > 0 || status !== "all",
+    [listSearch, status]
+  );
+  const resetToolbar = () => {
+    setListSearch("");
+    setStatus("all");
   };
+
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<"create" | "edit">("create");
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [form, setForm] = useState<CategoryCreateInput>(EMPTY_CATEGORY_FORM);
+
+  const resetDialog = () => {
+    setDialogMode("create");
+    setEditingCategory(null);
+    setForm(EMPTY_CATEGORY_FORM);
+  };
+
+  const openCreateDialog = () => {
+    resetDialog();
+    setDialogOpen(true);
+  };
+
+  const openEditDialog = useCallback((category: Category) => {
+    setDialogMode("edit");
+    setEditingCategory(category);
+    setForm(categoryToFormInput(category));
+    setDialogOpen(true);
+  }, []);
+
+  const handleDialogOpenChange = (open: boolean) => {
+    setDialogOpen(open);
+    if (!open) resetDialog();
+  };
+
+  const handleDialogSubmit = () => {
+    const payload = buildCategorySubmitPayload(form);
+    if (dialogMode === "create") {
+      createCategory(payload, {
+        onSuccess: () => handleDialogOpenChange(false),
+      });
+    } else if (editingCategory) {
+      updateCategory(
+        { id: editingCategory.id, ...payload },
+        { onSuccess: () => handleDialogOpenChange(false) }
+      );
+    }
+  };
+
+  const columns: ColumnDef<Category>[] = useMemo(
+    () => [
+      {
+        accessorKey: "label",
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Label" />,
+        meta: { shellClassName: "w-[22%] min-w-[12rem] max-w-[20rem] whitespace-normal" },
+        cell: ({ row }) => {
+          const c = row.original;
+          return (
+            <div
+              className={cn(
+                clinicalTableCellMinRowClass,
+                "w-full max-w-full overflow-hidden py-0.5"
+              )}
+            >
+              <CategoryTableCell
+                label={c.label}
+                color={c.color}
+                categoryId={c.id}
+                viewerRole="admin"
+              />
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "description",
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Description" />,
+        meta: {
+          shellClassName:
+            "w-[28%] min-w-[12rem] whitespace-normal break-words [overflow-wrap:anywhere]",
+        },
+        cell: ({ row }) => (
+          <div className="flex min-h-[2.75rem] min-w-0 items-center">
+            <span
+              className={cn(
+                "line-clamp-3 min-w-0 break-words [overflow-wrap:anywhere]",
+                clinicalCellMutedTextClass
+              )}
+              title={row.original.description ?? undefined}
+            >
+              {row.original.description?.trim() ? row.original.description.trim() : CLINICAL_EMPTY_EM_DASH}
+            </span>
+          </div>
+        ),
+      },
+      {
+        id: "status",
+        accessorFn: (row) => (isCategoryActive(row) ? "active" : "inactive"),
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Status" />,
+        meta: { shellClassName: "w-[10%] min-w-[7.25rem] whitespace-nowrap" },
+        cell: ({ row }) => {
+          const active = isCategoryActive(row.original);
+          return (
+            <div className="flex min-h-[2.75rem] items-center">
+              <Badge
+                variant="outline"
+                className={cn(
+                  "inline-flex max-w-full items-center gap-1 truncate text-xs py-0",
+                  active
+                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                    : "bg-gray-50 text-gray-500 border-gray-200"
+                )}
+              >
+              {active ? (
+                <CheckCircle2 className="h-3 w-3 shrink-0" />
+              ) : (
+                <CircleOff className="h-3 w-3 shrink-0" />
+              )}
+              {active ? "Active" : "Inactive"}
+              </Badge>
+            </div>
+          );
+        },
+      },
+      {
+        id: "duration",
+        accessorFn: (row) => row.duration_minutes_default ?? -1,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Default Duration" />
+        ),
+        meta: { shellClassName: "w-[12%] min-w-[9rem] whitespace-nowrap" },
+        cell: ({ row }) => {
+          const d = row.original.duration_minutes_default;
+          return (
+            <div className="flex min-h-[2.75rem] min-w-0 items-center">
+              {d != null ? (
+                <Badge
+                  variant="outline"
+                  className="inline-flex items-center gap-1 text-xs py-0 bg-sky-50 text-sky-700 border-sky-200"
+                >
+                  <Clock className="h-3 w-3 shrink-0" />
+                  {d} min
+                </Badge>
+              ) : (
+                <span className={clinicalCellMutedTextClass}>{CLINICAL_EMPTY_EM_DASH}</span>
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "created_at",
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Created" />,
+        meta: { shellClassName: "w-[13.5%] min-w-[9rem] whitespace-nowrap" },
+        cell: ({ row }) => (
+          <div className="flex min-h-[2.75rem] items-center">
+            <span className={cn("whitespace-nowrap text-xs", clinicalCellMutedTextClass)}>
+              {row.original.created_at
+                ? format(new Date(row.original.created_at), "MMM d, yyyy")
+                : "—"}
+            </span>
+          </div>
+        ),
+      },
+      {
+        id: "actions",
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Actions" className="text-right" />
+        ),
+        enableSorting: false,
+        meta: { shellClassName: "w-[8%] min-w-[4.75rem] whitespace-nowrap text-right" },
+        cell: ({ row }) => (
+          <div className="flex min-h-[2.75rem] items-center justify-end">
+            <CategoryActions
+              category={row.original}
+              onEdit={openEditDialog}
+              onDelete={(c) => deleteCategory(c.id)}
+            />
+          </div>
+        ),
+      },
+    ],
+    [deleteCategory, openEditDialog]
+  );
 
   if (isError) {
     return (
       <div className="space-y-4">
-        <PageHeader title="Category Management" description="Manage appointment categories with status, duration, and display order." />
+        <PageHeader
+          title="Category Management"
+          description="Manage appointment categories with status, duration, and display order."
+        />
         <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center text-sm text-red-700">
           <AlertCircle className="h-8 w-8 mx-auto mb-2 opacity-60" />
           Failed to load categories. Please refresh the page.
@@ -299,128 +369,108 @@ export default function CategoryManagement() {
     );
   }
 
+  const metricsValue = {
+    categories,
+    metrics,
+    isLoading,
+    isFetching,
+    listBodyLoading,
+  };
+
   return (
-    <div className="space-y-4">
-      <PageHeader
-        title="Category Management"
-        description="Manage appointment categories with status, duration, and display order."
-        actions={
-          <button
-            type="button"
-            onClick={() => setDialogOpen(true)}
-            className={emeraldGlassPrimaryButtonClass}
-          >
-            <Plus className="h-4 w-4" />
-            Add Category
-          </button>
-        }
-      />
+    <CategoryMetricsProvider value={metricsValue}>
+      <div className="space-y-2 text-gray-700">
+        <PageHeader
+          title="Category Management"
+          description="Manage appointment categories with status, duration, and display order."
+          actions={
+            <Button
+              type="button"
+              variant="ghost"
+              size="lg"
+              className={cn(violetGlassPrimaryButtonClass, "cursor-pointer")}
+              onClick={openCreateDialog}
+            >
+              <Tag className="shrink-0" aria-hidden />
+              Add Category
+            </Button>
+          }
+        />
 
-      <CategoryStatCards categories={categories} isLoading={isLoading} />
+        <div className={categoryManagementStatsStripClass}>
+          <CategoryManagementStatsRow />
+        </div>
 
-      <div className={cn("rounded-2xl overflow-hidden", skyGlassTableFrameClass)}>
+        <div
+          className={cn(
+            categoryManagementFilterToolbarClass,
+            APP_NAVBAR_STICKY_OFFSET_CLASS
+          )}
+        >
+          <EntityListSearchInput
+            value={listSearch}
+            onChange={setListSearch}
+            placeholder="Search… (label or description)"
+            ariaLabel="Search categories by label or description"
+          />
+          <FilterSelect
+            value={status}
+            onValueChange={(v) => setStatus(v as CategoryStatusFilter)}
+            displayLabel={STATUS_FILTER_LABEL[status]}
+            icon={ListFilter}
+            size="toolbar"
+            triggerClassName="max-w-[200px]"
+            ariaLabel="Filter by status"
+            options={[
+              { value: "all", label: "All Statuses" },
+              { value: "active", label: "Active" },
+              { value: "inactive", label: "Inactive" },
+            ]}
+          />
+          {hasToolbarFilters ? (
+            <GlassResetFilterButton
+              onClick={resetToolbar}
+              className="ml-auto h-10 shrink-0 px-4 [&_svg]:size-4"
+            />
+          ) : null}
+        </div>
+
         <DataTable<Category, unknown>
           columns={columns}
-          data={categories}
-          isLoading={isLoading}
+          data={filteredCategories}
+          isLoading={listBodyLoading}
           globalFilterFn={(row, q) => {
             const s = q.trim().toLowerCase();
             if (!s) return true;
             const c = row;
             return `${c.label} ${c.description ?? ""}`.toLowerCase().includes(s);
           }}
+          externalGlobalFilter={{ value: listSearch, onChange: setListSearch }}
           searchPlaceholder="Search by label or description…"
-          emptyMessage="No categories yet. Add one to get started."
-          tableClassName="min-w-[800px]"
-          tableLayout="auto"
+          emptyMessage="No categories match your filters."
+          tableClassName="min-w-[980px] w-full"
+          tableFrameClassName={amberGlassTableFrameClass}
+        />
+
+        <CategoryFormDialog
+          open={dialogOpen}
+          onOpenChange={handleDialogOpenChange}
+          mode={dialogMode}
+          form={form}
+          onFormChange={(patch) => setForm((prev) => ({ ...prev, ...patch }))}
+          onSubmit={handleDialogSubmit}
+          isSubmitting={dialogMode === "create" ? isCreating : isUpdating}
         />
       </div>
-
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add Category</DialogTitle>
-            <DialogDescription className="sr-only">
-              Create a scheduling category with label, optional description, color, and sort order.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-2">
-            <div className="space-y-1.5">
-              <Label>Label *</Label>
-              <Input
-                value={form.label}
-                onChange={(e) => setForm((p) => ({ ...p, label: e.target.value }))}
-                placeholder="Category label"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Description</Label>
-              <Textarea
-                value={form.description ?? ""}
-                onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
-                placeholder="Optional description"
-                rows={2}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1.5">
-                <Label>Color</Label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="color"
-                    title="Pick a color"
-                    value={form.color ?? "#f59e0b"}
-                    onChange={(e) => setForm((p) => ({ ...p, color: e.target.value }))}
-                    className="h-9 w-12 cursor-pointer rounded border p-1"
-                  />
-                  <Input
-                    value={form.color ?? ""}
-                    onChange={(e) => setForm((p) => ({ ...p, color: e.target.value }))}
-                    placeholder="#hex"
-                    className="flex-1"
-                  />
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                <Label>Icon</Label>
-                <Input
-                  value={form.icon ?? ""}
-                  onChange={(e) => setForm((p) => ({ ...p, icon: e.target.value }))}
-                  placeholder="lucide icon name"
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1.5">
-                <Label>Default Duration (min)</Label>
-                <Input
-                  type="number"
-                  min={5}
-                  value={form.duration_minutes_default ?? ""}
-                  onChange={(e) => setForm((p) => ({ ...p, duration_minutes_default: e.target.value ? Number(e.target.value) : undefined }))}
-                  placeholder="e.g. 30"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Sort Order</Label>
-                <Input
-                  type="number"
-                  value={form.sort_order ?? 0}
-                  onChange={(e) => setForm((p) => ({ ...p, sort_order: Number(e.target.value) }))}
-                  placeholder="0"
-                />
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleCreate} disabled={isCreating || !form.label.trim()}>
-              {isCreating ? "Creating…" : "Create"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+    </CategoryMetricsProvider>
   );
 }
 
+/** Control-panel category list — SSR-seeded via `ControlPanelPage` + `prefetchCategories`. */
+export default function CategoryManagement() {
+  return (
+    <CategoryListFiltersProvider>
+      <CategoryManagementInner />
+    </CategoryListFiltersProvider>
+  );
+}

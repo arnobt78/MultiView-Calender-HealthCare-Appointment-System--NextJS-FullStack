@@ -4,17 +4,7 @@ import { queryKeys } from "@/lib/query-keys";
 import {
   invalidateAfterAppointmentMutation,
   invalidateAssigneesData,
-  invalidateAppointmentTypeDerived,
-  invalidateInvoicesAndOverview,
-  invalidateNotificationsData,
-  invalidatePatientDetailAndSnapshot,
-  invalidatePatientPortal,
-  invalidateInsightsAndAnalytics,
-  invalidateDashboardOverview,
-  invalidateDoctorPortal,
-  invalidateAdminPortal,
 } from "@/lib/query-client";
-import { CROSS_TAB_SCOPES, publishQueryCacheCrossTab } from "@/lib/query-cache-cross-tab";
 import {
   fetchAssignees,
   fetchCategories,
@@ -225,7 +215,9 @@ export function useAppointments() {
     onSuccess: async (data) => {
       const appointment = data.appointment;
       await invalidateAfterAppointmentMutation(queryClient, {
+        appointmentId: appointment?.id,
         patientId: appointment?.patient ?? undefined,
+        categoryId: appointment?.category ?? undefined,
       });
       notify.crud({
         action: "created",
@@ -245,11 +237,20 @@ export function useAppointments() {
         method: "PATCH",
         body: JSON.stringify(updateData),
       }),
-    onSuccess: async (data, variables) => {
+    onMutate: async ({ id }) => {
+      const current = queryClient.getQueryData<FullAppointment[]>(queryKeys.appointments.all) || [];
+      const previous = current.find((appt) => appt.id === id) ?? null;
+      return { previous };
+    },
+    onSuccess: async (data, variables, context) => {
       const appointment = data.appointment;
       const updatedLabels = getUpdatedFieldLabels(variables);
       await invalidateAfterAppointmentMutation(queryClient, {
+        appointmentId: appointment?.id,
         patientId: appointment?.patient ?? undefined,
+        categoryId: appointment?.category ?? undefined,
+        previousPatientId: context?.previous?.patient ?? undefined,
+        previousCategoryId: context?.previous?.category ?? undefined,
       });
       notify.crud({
         action: "updated",
@@ -272,28 +273,21 @@ export function useAppointments() {
       return { deleted };
     },
     onSuccess: async (_, deletedId, context) => {
+      // Dashboard/overview is already busted inside `invalidateAfterAppointmentMutation`
+      // (via `invalidateInvoicesAndOverview`); assignee rows are a separate cache tree.
+      await Promise.all([
+        invalidateAfterAppointmentMutation(queryClient, {
+          appointmentId: deletedId,
+          patientId: context?.deleted?.patient ?? undefined,
+          categoryId: context?.deleted?.category ?? undefined,
+        }),
+        invalidateAssigneesData(queryClient),
+      ]);
+
       queryClient.setQueryData<FullAppointment[]>(queryKeys.appointments.all, (old) =>
         old ? old.filter((appt) => appt.id !== deletedId) : []
       );
-      const patientId = context?.deleted?.patient ?? undefined;
 
-      await Promise.all([
-        invalidateNotificationsData(queryClient),
-        // Assignee rows are cascade-deleted in the DB; evict the client cache to match.
-        invalidateAssigneesData(queryClient),
-        invalidateAppointmentTypeDerived(queryClient),
-        invalidateInvoicesAndOverview(queryClient, { patientId }),
-        // Insights charts and dashboard counters depend on appointment totals.
-        invalidateInsightsAndAnalytics(queryClient),
-        invalidateDashboardOverview(queryClient),
-        // Portal timeline lists this patient's appointments — drop stale rows without a full reload.
-        invalidatePatientPortal(queryClient),
-        // Staff portals surface aggregated appointment rows and KPIs — refetch in background after delete.
-        invalidateDoctorPortal(queryClient),
-        invalidateAdminPortal(queryClient),
-        ...(patientId ? [invalidatePatientDetailAndSnapshot(queryClient, patientId)] : []),
-      ]);
-      publishQueryCacheCrossTab(CROSS_TAB_SCOPES.APPOINTMENT_MUTATION);
       const deleted = context?.deleted;
       notify.crud({
         action: "deleted",
@@ -342,17 +336,11 @@ export function useAppointments() {
       // Portal timeline reads appointment status — invalidate so patient-facing portal refetches without navigation.
       // Status labels can affect scheduling UX copy; also bust slot/type caches so any UI that keys off
       // `invalidateAfterAppointmentMutation` stays on the same invalidation contract as full PATCH flows.
-      await Promise.all([
-        invalidatePatientDetailAndSnapshot(queryClient, appt.patient ?? undefined),
-        invalidateNotificationsData(queryClient),
-        invalidateInsightsAndAnalytics(queryClient),
-        invalidateDashboardOverview(queryClient),
-        invalidatePatientPortal(queryClient),
-        invalidateAppointmentTypeDerived(queryClient),
-        invalidateDoctorPortal(queryClient),
-        invalidateAdminPortal(queryClient),
-      ]);
-      publishQueryCacheCrossTab(CROSS_TAB_SCOPES.APPOINTMENT_MUTATION);
+      await invalidateAfterAppointmentMutation(queryClient, {
+        appointmentId: appt.id,
+        patientId: appt.patient ?? undefined,
+        categoryId: appt.category ?? undefined,
+      });
       notify.crud({
         action: "updated",
         entity: "Appointment status",

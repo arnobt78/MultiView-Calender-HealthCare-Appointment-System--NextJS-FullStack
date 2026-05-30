@@ -4,9 +4,9 @@
 
 ## Matrix
 
-| REQ-ID | Status | ART-ID | ART Cycle | VER-ID | VER Cycle | FT-CODE | policy_version | eval_run_id | Result |
-|--------|--------|--------|-----------|--------|-----------|---------|----------------|-------------|--------|
-| — | — | — | — | — | — | — | — | — | — |
+| REQ-ID | Status | ART-ID | ART Cycle | VER-ID | VER Cycle | Result |
+|--------|--------|--------|-----------|--------|-----------|--------|
+| REQ-0001 | approved [C1] | ART-0001..0015 | C1 | VER-0001..0004 | C1 | PASS |
 
 ## Dangling Artifacts
 
@@ -14,4 +14,4 @@ _None._
 
 ## Coverage Gaps
 
-_All REQs pending — no gaps to report until REQs exist._
+_None for REQ-0001._

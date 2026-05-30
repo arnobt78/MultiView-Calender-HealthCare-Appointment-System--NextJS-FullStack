@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAppointments } from "@/hooks/useAppointments";
 import { useCategories } from "@/hooks/useCategories";
@@ -30,6 +30,14 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import type { Appointment } from "@/types/types";
+import {
+  isCategoryActive,
+  isPatientActive,
+  partitionForBookingSelect,
+  sortCategoriesForBookingSelect,
+  sortPatientsForBookingSelect,
+} from "@/lib/entity-active-status";
+import { ActiveInactiveSelectSections } from "@/components/shared/select/ActiveInactiveSelectSections";
 
 interface AppointmentDetailFormProps {
   appointment: Appointment;
@@ -53,6 +61,30 @@ export function AppointmentDetailForm({ appointment }: AppointmentDetailFormProp
     category: appointment.category ?? "",
     patient: appointment.patient ?? "",
   });
+
+  const patientSelectPartition = useMemo(
+    () =>
+      partitionForBookingSelect({
+        items: patients,
+        isActive: isPatientActive,
+        getId: (p) => p.id,
+        currentId: form.patient,
+        sortSelectable: sortPatientsForBookingSelect,
+      }),
+    [patients, form.patient]
+  );
+
+  const categorySelectPartition = useMemo(
+    () =>
+      partitionForBookingSelect({
+        items: categories,
+        isActive: isCategoryActive,
+        getId: (c) => c.id,
+        currentId: form.category,
+        sortSelectable: sortCategoriesForBookingSelect,
+      }),
+    [categories, form.category]
+  );
 
   const handleSave = () => {
     /*
@@ -139,11 +171,22 @@ export function AppointmentDetailForm({ appointment }: AppointmentDetailFormProp
                 <SelectValue placeholder="Select patient" />
               </SelectTrigger>
               <SelectContent>
-                {patients.map((pt) => (
-                  <SelectItem key={pt.id} value={pt.id}>
-                    {pt.firstname} {pt.lastname}
-                  </SelectItem>
-                ))}
+                <ActiveInactiveSelectSections
+                  selectable={patientSelectPartition.selectable}
+                  inactiveDisplay={patientSelectPartition.inactiveDisplay}
+                  getItemKey={(p) => p.id}
+                  getTextValue={(p) => `${p.firstname} ${p.lastname}`}
+                  renderSelectableItem={(p) => (
+                    <span>
+                      {p.firstname} {p.lastname}
+                    </span>
+                  )}
+                  renderInactiveItem={(p) => (
+                    <span>
+                      {p.firstname} {p.lastname}
+                    </span>
+                  )}
+                />
               </SelectContent>
             </Select>
           </div>
@@ -154,11 +197,14 @@ export function AppointmentDetailForm({ appointment }: AppointmentDetailFormProp
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
-                {categories.map((cat) => (
-                  <SelectItem key={cat.id} value={cat.id}>
-                    {cat.label}
-                  </SelectItem>
-                ))}
+                <ActiveInactiveSelectSections
+                  selectable={categorySelectPartition.selectable}
+                  inactiveDisplay={categorySelectPartition.inactiveDisplay}
+                  getItemKey={(c) => c.id}
+                  getTextValue={(c) => c.label}
+                  renderSelectableItem={(c) => <span>{c.label}</span>}
+                  renderInactiveItem={(c) => <span>{c.label}</span>}
+                />
               </SelectContent>
             </Select>
           </div>

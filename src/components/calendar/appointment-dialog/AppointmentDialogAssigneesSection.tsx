@@ -1,28 +1,28 @@
 "use client";
 
-/**
- * Assignees block — maps to `AppointmentAssignee` (shared calendar access: read/write/full), not the
- * appointment's client (`patient_id`). The client is chosen in Core scheduling; this list is for other
- * patients who need portal/calendar visibility without replacing the client field.
- *
- * Picker rows mirror the client select: `resolvePatientPortraitUrl` for patients (demo + clinical JSON).
- * `h-11` trigger matches login + general section controls.
- * The assign `Select` stays uncontrolled so the trigger returns to the placeholder after each add (Radix
- * default); chips show the chosen portrait + label.
- */
-
+import { useMemo } from "react";
 import { UserPlus } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { SafeImage } from "@/components/ui/safe-image";
 import {
   Select,
   SelectContent,
-  SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { cn, toTitleCaseLabel } from "@/lib/utils";
 import { resolvePatientPortraitUrl } from "@/lib/patient-portrait";
+import { patientSelectSearchText } from "@/lib/patient-select-display";
+import {
+  isPatientActive,
+  partitionForBookingSelect,
+  sortPatientsForBookingSelect,
+} from "@/lib/entity-active-status";
+import { ActiveInactiveSelectSections } from "@/components/shared/select/ActiveInactiveSelectSections";
+import {
+  PatientSelectOption,
+  patientSelectItemClass,
+} from "@/components/shared/person-display/PatientSelectOption";
 import type { AppointmentAssignee, Patient } from "@/types/types";
 
 const glassSelectTriggerClass =
@@ -60,10 +60,24 @@ export function AppointmentDialogAssigneesSection({
   onAddAssignee,
   onRemoveAssignee,
 }: Props) {
-  const patientsForPicker =
-    selectedPatientId.trim().length > 0
-      ? patients.filter((p) => p.id !== selectedPatientId)
-      : patients;
+  const patientsForPicker = useMemo(
+    () =>
+      selectedPatientId.trim().length > 0
+        ? patients.filter((p) => p.id !== selectedPatientId)
+        : patients,
+    [patients, selectedPatientId]
+  );
+
+  const patientSelectPartition = useMemo(
+    () =>
+      partitionForBookingSelect({
+        items: patientsForPicker,
+        isActive: isPatientActive,
+        getId: (p) => p.id,
+        sortSelectable: sortPatientsForBookingSelect,
+      }),
+    [patientsForPicker]
+  );
 
   return (
     <div className="space-y-3 text-gray-700">
@@ -81,16 +95,15 @@ export function AppointmentDialogAssigneesSection({
             <SelectValue placeholder={toTitleCaseLabel("Select Person")} />
           </SelectTrigger>
           <SelectContent>
-            {patientsForPicker.map((p) => (
-              <SelectItem key={p.id} value={p.id} textValue={`Patient: ${p.firstname} ${p.lastname}`}>
-                <span className="flex items-center gap-2">
-                  <PickerAvatar src={resolvePatientPortraitUrl(p)} alt={`${p.firstname} ${p.lastname}`} />
-                  <span className="truncate">
-                    Patient: {p.firstname} {p.lastname}
-                  </span>
-                </span>
-              </SelectItem>
-            ))}
+            <ActiveInactiveSelectSections
+              selectable={patientSelectPartition.selectable}
+              inactiveDisplay={patientSelectPartition.inactiveDisplay}
+              getItemKey={(p) => p.id}
+              getTextValue={patientSelectSearchText}
+              selectableItemClassName={patientSelectItemClass}
+              renderSelectableItem={(p) => <PatientSelectOption patient={p} />}
+              renderInactiveItem={(p) => <PatientSelectOption patient={p} />}
+            />
           </SelectContent>
         </Select>
         <div className="mt-1 flex flex-wrap gap-2">

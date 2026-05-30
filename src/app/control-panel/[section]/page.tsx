@@ -1,7 +1,6 @@
 // Control Panel section page — Server Component (async)
-// Pre-fetches dashboard overview data and the patient list so ControlPanelPage
-// can seed the TanStack Query cache on first render — overview and patient tabs
-// both show data instantly without a loading flash.
+// Pre-fetches dashboard overview, patient list, or category list so ControlPanelPage
+// can seed the TanStack Query cache on first render — tabs show data instantly without a loading flash.
 
 export const dynamic = "force-dynamic";
 
@@ -10,8 +9,9 @@ import { getSessionUser } from "@/lib/session";
 import {
   prefetchDashboardOverview,
   prefetchPatients,
+  prefetchCategories,
 } from "@/lib/server-prefetch";
-import type { Patient } from "@/types/types";
+import type { Category, Patient } from "@/types/types";
 import type { DashboardOverview } from "@/hooks/useDashboardOverview";
 
 const SECTION_TO_TAB: Record<string, string> = {
@@ -45,12 +45,14 @@ export default async function Page({
   // the cache immediately — both tabs render from cache on first visit.
   let initialDashboardOverview: DashboardOverview | null = null;
   let initialPatients: Patient[] | null = null;
+  let initialCategories: Category[] | null = null;
 
   if (sessionUser) {
     const prefetchJobs: [
       Promise<DashboardOverview | null>,
       Promise<Patient[] | null>,
-    ] = [Promise.resolve(null), Promise.resolve(null)];
+      Promise<Category[] | null>,
+    ] = [Promise.resolve(null), Promise.resolve(null), Promise.resolve(null)];
 
     if (section === "dashboard-overview") {
       prefetchJobs[0] = prefetchDashboardOverview(sessionUser.userId);
@@ -58,8 +60,11 @@ export default async function Page({
     if (section === "patient-management") {
       prefetchJobs[1] = prefetchPatients();
     }
+    if (section === "category-management") {
+      prefetchJobs[2] = prefetchCategories();
+    }
 
-    [initialDashboardOverview, initialPatients] = await Promise.all(prefetchJobs);
+    [initialDashboardOverview, initialPatients, initialCategories] = await Promise.all(prefetchJobs);
   }
 
   return (
@@ -68,6 +73,7 @@ export default async function Page({
       initialTab={initialTab}
       initialDashboardOverview={initialDashboardOverview}
       initialPatients={initialPatients}
+      initialCategories={initialCategories}
     />
   );
 }

@@ -1,71 +1,45 @@
 "use client";
 
+/**
+ * @deprecated Use `CategoryFormDialog` from `./category-dialog/CategoryFormDialog` instead.
+ * Kept for backward compatibility — thin adapter around the violet glass dialog.
+ */
 import { Category } from "@/types/types";
 import { useCategories } from "@/hooks/useCategories";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
+import { useState } from "react";
+import { CategoryFormDialog } from "@/components/control-panel/category-dialog/CategoryFormDialog";
+import { categoryToFormInput } from "@/lib/category-form-state";
 
 export function CategoryDetailForm({ category }: { category: Category }) {
   const router = useRouter();
-  const { updateCategory, isUpdating, deleteCategory, isDeleting } = useCategories();
-  const [form, setForm] = useState({
-    label: category.label,
-    description: category.description ?? "",
-    color: category.color ?? "",
-    icon: category.icon ?? "",
-  });
-
-  const handleSave = () => {
-    updateCategory({
-      id: category.id,
-      label: form.label,
-      description: form.description || undefined,
-      color: form.color || undefined,
-      icon: form.icon || undefined,
-    });
-  };
-
-  const handleDelete = () => {
-    deleteCategory(category.id, { onSuccess: () => router.push("/control-panel") });
-  };
+  const { updateCategory, isUpdating } = useCategories();
+  const [open, setOpen] = useState(true);
+  const [form, setForm] = useState(() => categoryToFormInput(category));
 
   return (
-    <div className="border-t pt-4 space-y-2">
-      <h4 className="font-medium">Edit</h4>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="cat-detail-label">Label</Label>
-          <Input id="cat-detail-label" title="Category label" value={form.label} onChange={(e) => setForm((p) => ({ ...p, label: e.target.value }))} />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="cat-detail-description">Description</Label>
-          <Input id="cat-detail-description" title="Category description" value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="cat-detail-color">Color</Label>
-          <Input id="cat-detail-color" title="Category color" value={form.color} onChange={(e) => setForm((p) => ({ ...p, color: e.target.value }))} />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="cat-detail-icon">Icon</Label>
-          <Input id="cat-detail-icon" title="Category icon" value={form.icon} onChange={(e) => setForm((p) => ({ ...p, icon: e.target.value }))} />
-        </div>
-      </div>
-      <div className="flex gap-2">
-        <Button onClick={handleSave} disabled={isUpdating}>{isUpdating ? "Saving..." : "Save"}</Button>
-        <ConfirmActionDialog
-          trigger={
-            <Button variant="destructive" disabled={isDeleting}>{isDeleting ? "Deleting..." : "Delete"}</Button>
-          }
-          title="Delete category?"
-          subtitle="Appointments using this category may be affected."
-          confirmLabel="Delete"
-          onConfirm={handleDelete}
-        />
-      </div>
-    </div>
+    <CategoryFormDialog
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (!next) router.back();
+      }}
+      mode="edit"
+      form={form}
+      onFormChange={(patch) => setForm((prev) => ({ ...prev, ...patch }))}
+      onSubmit={() => {
+        updateCategory(
+          {
+            id: category.id,
+            ...form,
+            label: form.label.trim(),
+            description: form.description?.trim() || undefined,
+            icon: form.icon?.trim() || undefined,
+          },
+          { onSuccess: () => setOpen(false) }
+        );
+      }}
+      isSubmitting={isUpdating}
+    />
   );
 }

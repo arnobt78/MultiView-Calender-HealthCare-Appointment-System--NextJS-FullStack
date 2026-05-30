@@ -3,7 +3,7 @@ import { apiClient } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import { isValidUUID } from "@/lib/validation";
 import { isAdminRole } from "@/lib/rbac";
-import type { Category, Patient, PatientSnapshot, User } from "@/types/types";
+import type { Category, Patient, PatientSnapshot, User, CategorySnapshot } from "@/types/types";
 
 type PrefetchViewer = { userId: string; role: string | null };
 
@@ -75,13 +75,19 @@ export function prefetchQueriesForControlPanelHref(
         return;
       }
       if (isCategories) {
-        await queryClient.prefetchQuery({
-          queryKey: queryKeys.categories.detail(id),
-          queryFn: async () => {
-            const res = await apiClient<{ category: Category }>(`/api/categories/${id}`);
-            return res.category;
-          },
-        });
+        await Promise.all([
+          queryClient.prefetchQuery({
+            queryKey: queryKeys.categories.detail(id),
+            queryFn: async () => {
+              const res = await apiClient<{ category: Category }>(`/api/categories/${id}`);
+              return res.category;
+            },
+          }),
+          queryClient.prefetchQuery({
+            queryKey: queryKeys.categories.snapshot(id),
+            queryFn: () => apiClient<CategorySnapshot>(`/api/categories/${id}/snapshot`),
+          }),
+        ]);
       }
     } catch {
       /* ignore — prefetch only */

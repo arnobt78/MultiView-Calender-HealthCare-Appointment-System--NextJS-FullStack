@@ -124,6 +124,22 @@ export type PatientSnapshot = {
   invoices: SnapshotInvoice[];
 };
 
+/** Appointment row on category snapshot (CP detail appointments panel). */
+export type CategorySnapshotAppointmentRow = {
+  id: string;
+  title: string;
+  start: string;
+  end: string;
+  status: string | null;
+  owner: { display_name: string | null; email: string };
+};
+
+export type CategorySnapshot = {
+  category: Category;
+  appointments: CategorySnapshotAppointmentRow[];
+  totalCount: number;
+};
+
 // Category (appointment category / service type)
 export interface Category {
   id: UUID;

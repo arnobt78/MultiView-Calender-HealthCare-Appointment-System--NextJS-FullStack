@@ -6,13 +6,15 @@ import {
   emeraldGlassPrimaryButtonClass,
   roseGlassDangerButtonClass,
   skyGlassBackButtonClass,
+  violetGlassPrimaryButtonClass,
 } from "@/lib/calendar-header-action-styles";
 
-export type ControlPanelGlassActionVariant = "sky" | "emerald" | "rose";
+export type ControlPanelGlassActionVariant = "sky" | "emerald" | "violet" | "rose";
 
 const VARIANT: Record<ControlPanelGlassActionVariant, string> = {
   sky: skyGlassBackButtonClass,
   emerald: emeraldGlassPrimaryButtonClass,
+  violet: violetGlassPrimaryButtonClass,
   rose: roseGlassDangerButtonClass,
 };
 

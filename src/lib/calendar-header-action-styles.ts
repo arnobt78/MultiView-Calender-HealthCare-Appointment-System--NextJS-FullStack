@@ -34,3 +34,11 @@ export const skyGlassBackButtonClass =
 /** Destructive glass — delete / remove. */
 export const roseGlassDangerButtonClass =
   "inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-rose-300/55 bg-rose-50/85 px-4 text-sm font-medium text-rose-800 shadow-[0_10px_28px_rgba(244,63,94,0.22)] backdrop-blur-md transition-all duration-200 hover:border-rose-400/60 hover:bg-rose-100/90 hover:shadow-[0_12px_34px_rgba(244,63,94,0.3)] disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4";
+
+/** Violet glass primary — category CRUD dialog (distinct from emerald patient + sky appointment). */
+export const violetGlassPrimaryButtonClass =
+  "inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-violet-400/45 bg-linear-to-r from-violet-500 to-violet-700 px-4 text-sm font-medium text-white shadow-[0_10px_40px_rgba(139,92,246,0.42)] backdrop-blur-md transition-all duration-200 hover:from-violet-500 hover:via-violet-600 hover:to-violet-700 hover:text-white hover:shadow-[0_14px_48px_rgba(139,92,246,0.58)] active:text-white disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4";
+
+/** Violet glass back / cancel — pairs with `violetGlassPrimaryButtonClass`. */
+export const violetGlassBackButtonClass =
+  "inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-violet-300/50 bg-white/75 px-4 text-sm font-medium text-violet-900 shadow-[0_10px_28px_rgba(139,92,246,0.2)] backdrop-blur-md transition-all duration-200 hover:border-violet-400/55 hover:bg-violet-50/90 hover:shadow-[0_12px_34px_rgba(139,92,246,0.28)] disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4";

@@ -21,7 +21,7 @@ import {
   violetGlassImportButtonClass,
 } from "@/lib/calendar-header-action-styles";
 import { GlassResetFilterButton } from "@/components/shared/GlassResetFilterButton";
-import { FiSearch } from "react-icons/fi";
+import { EntityListSearchInput } from "@/components/shared/EntityListSearchInput";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -629,19 +629,12 @@ export function PatientManagementInner({
 
         {/* Sticky toolbar: transparent shell so stat card shadows are not clipped (see patient-management-toolbar-classes). */}
         <div className={cn(patientManagementFilterToolbarClass, APP_NAVBAR_STICKY_OFFSET_CLASS)}>
-          <div className="relative min-w-0 w-full flex-1 sm:max-w-md sm:flex-1">
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-              <FiSearch className="h-4 w-4" aria-hidden />
-            </span>
-            <Input
-              type="search"
-              value={listSearch}
-              onChange={(e) => setListSearch(e.target.value)}
-              placeholder="Search… (name or email)"
-              className="h-10 w-full min-w-0 rounded-2xl border-gray-200 bg-white pl-8 pr-2 text-sm text-gray-700 shadow-sm placeholder:text-gray-400 focus:border-slate-400 focus:ring-slate-200"
-              aria-label="Search patients by name or email"
-            />
-          </div>
+          <EntityListSearchInput
+            value={listSearch}
+            onChange={setListSearch}
+            placeholder="Search… (name or email)"
+            ariaLabel="Search patients by name or email"
+          />
           <FilterSelect
             value={status}
             onValueChange={(v) => setStatus(v as PatientStatusFilter)}

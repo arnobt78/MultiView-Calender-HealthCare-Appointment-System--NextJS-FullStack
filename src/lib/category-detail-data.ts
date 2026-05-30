@@ -1,31 +1,18 @@
-import { prisma } from "@/lib/prisma";
-import { serializeCategory } from "@/lib/serializers";
 import type { Category } from "@/types/types";
+import { loadCategorySnapshotData } from "@/lib/category-snapshot-data";
 
 /** Shared Prisma load for category detail pages (CP + portal). */
 export async function loadCategoryDetailData(categoryId: string) {
-  const catRow = await prisma.category.findUnique({ where: { id: categoryId } });
-  if (!catRow) return null;
-
-  const appointments = await prisma.appointment.findMany({
-    where: { category_id: categoryId },
-    orderBy: { start: "desc" },
-    take: 15,
-    select: {
-      id: true,
-      title: true,
-      start: true,
-      end: true,
-      status: true,
-      owner: { select: { display_name: true, email: true } },
-    },
-  });
-
-  const totalCount = await prisma.appointment.count({ where: { category_id: categoryId } });
+  const snapshot = await loadCategorySnapshotData(categoryId);
+  if (!snapshot) return null;
 
   return {
-    cat: serializeCategory(catRow) as Category,
-    appointments,
-    totalCount,
+    cat: snapshot.category as Category,
+    appointments: snapshot.appointments.map((a) => ({
+      ...a,
+      start: new Date(a.start),
+      end: new Date(a.end),
+    })),
+    totalCount: snapshot.totalCount,
   };
 }

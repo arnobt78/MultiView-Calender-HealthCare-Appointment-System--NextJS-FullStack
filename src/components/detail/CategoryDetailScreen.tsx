@@ -1,6 +1,9 @@
+"use client";
+
 /**
- * Shared category detail — admin (control panel) and doctor/patient portal routes.
- * View-only: no edit/delete actions; admin CRUD lives on Category Management list (`?mode=edit`).
+ * Shared category detail — doctor/patient portal routes (view-only).
+ * Admin CRUD lives on Category Management list + `ControlPanelCategoryDetailScreen`.
+ * SSR seeds TanStack cache; appointments panel refetches after appointment CRUD without navigation.
  */
 import Link from "next/link";
 import { BackNavigationLink } from "@/components/shared/BackNavigationLink";
@@ -11,42 +14,72 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   ArrowLeft,
   CalendarDays,
-  CheckCircle2,
-  CircleOff,
-  Clock,
   Hash,
-  Layers,
   Tag,
 } from "lucide-react";
-import type { Category } from "@/types/types";
-
-type ApptRow = {
-  id: string;
-  title: string;
-  start: Date;
-  end: Date;
-  status: string | null;
-  owner: { display_name: string | null; email: string };
-};
+import { useLayoutEffect, useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useCategory, useCategorySnapshot } from "@/hooks/useCategories";
+import { queryKeys } from "@/lib/query-keys";
+import type { Category, CategorySnapshot } from "@/types/types";
 
 export type CategoryDetailScreenProps = {
-  cat: Category;
-  appointments: ApptRow[];
-  totalCount: number;
+  categoryId: string;
+  initialCategory: Category | null;
+  initialSnapshot: CategorySnapshot | null;
   viewerRole: string | null;
   backHref: string;
 };
 
 export function CategoryDetailScreen({
-  cat,
-  appointments,
-  totalCount,
+  categoryId,
+  initialCategory,
+  initialSnapshot,
   viewerRole,
   backHref,
 }: CategoryDetailScreenProps) {
+  const queryClient = useQueryClient();
+  const { data: liveCategory } = useCategory(categoryId);
+  const {
+    data: liveSnapshot,
+    isLoading: snapshotLoading,
+    isFetching: snapshotFetching,
+  } = useCategorySnapshot(categoryId, { initialData: initialSnapshot ?? undefined });
+
+  useLayoutEffect(() => {
+    if (initialCategory != null) {
+      queryClient.setQueryData(queryKeys.categories.detail(categoryId), initialCategory);
+    }
+  }, [queryClient, categoryId, initialCategory]);
+
+  useLayoutEffect(() => {
+    if (initialSnapshot != null) {
+      queryClient.setQueryData(queryKeys.categories.snapshot(categoryId), initialSnapshot);
+    }
+  }, [queryClient, categoryId, initialSnapshot]);
+
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setIsMounted(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  const cat = liveCategory ?? initialCategory ?? initialSnapshot?.category ?? null;
+  const snapshot = liveSnapshot ?? initialSnapshot;
+  const hasSnapshot = snapshot != null;
+  const appointmentsLoading =
+    !isMounted || ((snapshotLoading || snapshotFetching) && !hasSnapshot);
+  const appointmentList = snapshot?.appointments ?? [];
+  const totalCount = snapshot?.totalCount ?? 0;
+
+  if (!cat) {
+    return null;
+  }
+
   return (
     <div className="space-y-5 text-gray-700">
       <PageHeader
@@ -129,11 +162,17 @@ export function CategoryDetailScreen({
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4">
-              {appointments.length === 0 ? (
+              {appointmentsLoading ? (
+                <div className="space-y-2">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <Skeleton key={i} className="h-14 w-full rounded-lg" />
+                  ))}
+                </div>
+              ) : appointmentList.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No appointments use this category yet.</p>
               ) : (
                 <div className="space-y-2">
-                  {appointments.map((appt) => (
+                  {appointmentList.map((appt) => (
                     <Link
                       key={appt.id}
                       href={appointmentDetailHref(viewerRole, appt.id)}

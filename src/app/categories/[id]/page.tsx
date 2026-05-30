@@ -1,6 +1,8 @@
 /**
- * Doctor category detail (read-only) — `/categories/:id`.
+ * Doctor/patient category detail (read-only) — `/categories/:id`.
  */
+export const dynamic = "force-dynamic";
+
 import { notFound, redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/session";
 import { isValidUUID } from "@/lib/validation";
@@ -8,6 +10,7 @@ import { getUserRole, isAdminRole, isDoctorRole, isPatientRole } from "@/lib/rba
 import { categoryDetailHref } from "@/lib/entity-routes";
 import { loadCategoryDetailData } from "@/lib/category-detail-data";
 import { CategoryDetailScreen } from "@/components/detail/CategoryDetailScreen";
+import { prefetchCategory, prefetchCategorySnapshot } from "@/lib/server-prefetch";
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -20,10 +23,13 @@ export default async function PortalCategoryDetailPage({ params }: PageProps) {
 
   const role = await getUserRole(sessionUser.userId);
   if (isAdminRole(role)) redirect(categoryDetailHref(role, id));
-  // Portal category detail is read-only for doctor and patient (no CP edit routes).
   if (!isDoctorRole(role) && !isPatientRole(role)) notFound();
 
-  const data = await loadCategoryDetailData(id);
+  const [data, initialCategory, initialSnapshot] = await Promise.all([
+    loadCategoryDetailData(id),
+    prefetchCategory(id),
+    prefetchCategorySnapshot(id),
+  ]);
   if (!data) notFound();
 
   const backHref = isPatientRole(role)
@@ -34,9 +40,9 @@ export default async function PortalCategoryDetailPage({ params }: PageProps) {
 
   return (
     <CategoryDetailScreen
-      cat={data.cat}
-      appointments={data.appointments}
-      totalCount={data.totalCount}
+      categoryId={id}
+      initialCategory={initialCategory}
+      initialSnapshot={initialSnapshot}
       viewerRole={role}
       backHref={backHref}
     />

@@ -30,6 +30,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useDoctorsDirectory } from "@/hooks/useDoctorsDirectory";
 import { queryKeys } from "@/lib/query-keys";
 import { invalidateAfterAppointmentMutation } from "@/lib/query-client";
+import type { FullAppointment } from "@/hooks/useAppointments";
 import { prefetchAppointmentTypesForDoctor } from "@/lib/prefetch-appointment-types";
 import { usePatientBookableAppointmentTypes } from "@/hooks/usePatientBookableAppointmentTypes";
 import { prefetchDoctorsDirectory } from "@/lib/prefetch-doctors-directory";
@@ -279,8 +280,12 @@ export function PatientBookingDialog({
 
   const bookMutation = useMutation({
     mutationFn: ({ notifyMeta: _notifyMeta, ...body }: BookingMutatePayload) =>
-      apiClient("/api/patient-portal", { method: "POST", body: JSON.stringify(body) }),
-    onSuccess: async (_data, variables: BookingMutatePayload) => {
+      apiClient<{ appointment: FullAppointment }>("/api/patient-portal", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    onSuccess: async (data, variables: BookingMutatePayload) => {
+      const appointment = data.appointment;
       const doctorRow = doctors.find((d) => d.id === variables.doctorId);
       const doctorName =
         variables.notifyMeta?.doctorName?.trim() ||
@@ -298,7 +303,11 @@ export function PatientBookingDialog({
         })
       );
       await queryClient.invalidateQueries({ queryKey: queryKeys.patientPortal.all });
-      await invalidateAfterAppointmentMutation(queryClient);
+      await invalidateAfterAppointmentMutation(queryClient, {
+        appointmentId: appointment?.id,
+        patientId: appointment?.patient ?? undefined,
+        categoryId: appointment?.category ?? undefined,
+      });
       handleOpenChange(false);
     },
     onError: (e) => handleApiError(e, "Failed to book appointment"),

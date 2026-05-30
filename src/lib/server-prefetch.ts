@@ -52,6 +52,7 @@ import {
 } from "date-fns";
 import type {
   Category,
+  CategorySnapshot,
   Patient,
   PatientSnapshot,
   User,
@@ -74,6 +75,7 @@ import {
   dashboardOverviewRecentQueueSelect,
   pickRecentActivityAppointments,
 } from "@/lib/dashboard-overview-recent-activity";
+import { loadCategorySnapshotData } from "@/lib/category-snapshot-data";
 
 // ─── Shared types ─────────────────────────────────────────────────────────────
 
@@ -106,6 +108,27 @@ export async function prefetchCategories(): Promise<Category[] | null> {
       orderBy: { created_at: "desc" },
     });
     return rows.map(serializeCategory) as Category[];
+  } catch {
+    return null;
+  }
+}
+
+/** Mirrors GET /api/categories/[id] — seeds `queryKeys.categories.detail(id)`. */
+export async function prefetchCategory(id: string): Promise<Category | null> {
+  try {
+    const row = await prisma.category.findUnique({ where: { id } });
+    return row ? (serializeCategory(row) as Category) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Mirrors GET /api/categories/:id/snapshot — seeds `queryKeys.categories.snapshot(id)`. */
+export async function prefetchCategorySnapshot(
+  categoryId: string
+): Promise<CategorySnapshot | null> {
+  try {
+    return await loadCategorySnapshotData(categoryId);
   } catch {
     return null;
   }

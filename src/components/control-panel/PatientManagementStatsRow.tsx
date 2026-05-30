@@ -6,8 +6,8 @@ import { usePatientMetricsContext } from "@/context/PatientMetricsContext";
 
 /** Stat strip under the page title — reads shared metrics context (invalidates with `queryKeys.patients.all`). */
 export function PatientManagementStatsRow() {
-  const { metrics, listBodyLoading } = usePatientMetricsContext();
-  const skeleton = listBodyLoading;
+  const { metrics, listBodyLoading, isFetching } = usePatientMetricsContext();
+  const skeleton = listBodyLoading || isFetching;
   return (
     <div className="grid grid-cols-1 gap-2 overflow-visible sm:grid-cols-2 lg:grid-cols-4">
       <PatientStatCard

@@ -1,13 +1,16 @@
 /**
  * Admin category detail — control-panel shell.
  */
+export const dynamic = "force-dynamic";
+
 import { notFound, redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/session";
 import { isValidUUID } from "@/lib/validation";
 import { getUserRole, isAdminRole, isDoctorRole, isPatientRole } from "@/lib/rbac";
 import { categoryDetailHref } from "@/lib/entity-routes";
 import { loadCategoryDetailData } from "@/lib/category-detail-data";
-import { CategoryDetailScreen } from "@/components/detail/CategoryDetailScreen";
+import { ControlPanelCategoryDetailScreen } from "@/components/control-panel/CategoryDetailScreen";
+import { prefetchCategory, prefetchCategorySnapshot } from "@/lib/server-prefetch";
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -32,16 +35,20 @@ export default async function ControlPanelCategoryDetailPage({ params }: PagePro
   }
   if (!isAdminRole(role)) notFound();
 
-  const data = await loadCategoryDetailData(id);
+  const [data, initialCategory, initialSnapshot] = await Promise.all([
+    loadCategoryDetailData(id),
+    prefetchCategory(id),
+    prefetchCategorySnapshot(id),
+  ]);
   if (!data) notFound();
 
   return (
-    <CategoryDetailScreen
-      cat={data.cat}
-      appointments={data.appointments}
-      totalCount={data.totalCount}
+    <ControlPanelCategoryDetailScreen
+      categoryId={id}
       viewerRole={role}
-      backHref="/control-panel/category-management"
+      listBackHref="/control-panel/category-management"
+      initialCategory={initialCategory}
+      initialSnapshot={initialSnapshot}
     />
   );
 }

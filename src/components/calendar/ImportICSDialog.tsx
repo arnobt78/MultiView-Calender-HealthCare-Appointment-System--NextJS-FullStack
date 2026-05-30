@@ -89,7 +89,7 @@ export default function ImportICSDialog({ trigger }: Props) {
         entity: "Appointments",
         detail: data.message ?? "Appointments were imported successfully.",
       });
-      await invalidateAfterAppointmentMutation(queryClient);
+      await invalidateAfterAppointmentMutation(queryClient, { bustAllCategorySnapshots: true });
       setOpen(false);
       setFile(null);
       if (fileInputRef.current) fileInputRef.current.value = "";

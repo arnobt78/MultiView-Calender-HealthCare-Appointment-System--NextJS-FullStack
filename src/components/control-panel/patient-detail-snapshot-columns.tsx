@@ -210,7 +210,7 @@ export function buildRelatedAppointmentsColumns(
         const a = row.original;
         return clinicalEmptyOrNode(
           Boolean(a.start),
-          (
+          () => (
             <div
               className={cn(
                 "min-w-0 whitespace-nowrap",
@@ -258,7 +258,7 @@ export function buildRelatedAppointmentsColumns(
         const a = row.original;
         return clinicalEmptyOrNode(
           Boolean(a.calendar_owner_id && a.calendar_owner_display),
-          (
+          () => (
             <DoctorIdentityCell
               doctorId={a.calendar_owner_id!}
               name={a.calendar_owner_display!}
@@ -285,7 +285,7 @@ export function buildRelatedAppointmentsColumns(
         const a = row.original;
         return clinicalEmptyOrNode(
           Boolean(a.doctor_id && a.doctor_display),
-          (
+          () => (
             <DoctorIdentityCell
               doctorId={a.doctor_id!}
               name={a.doctor_display!}
@@ -311,7 +311,7 @@ export function buildRelatedAppointmentsColumns(
       cell: ({ row }) =>
         clinicalEmptyOrNode(
           clinicalHasTextValue(row.original.location),
-          (
+          () => (
             <p
               className={cn(
                 clinicalTableCellMinRowClass,
@@ -358,7 +358,7 @@ export function buildPatientInvoicesColumns(viewerRole: EntityRole): ColumnDef<S
       cell: ({ row }) =>
         clinicalEmptyOrNode(
           clinicalHasTextValue(row.original.description),
-          (
+          () => (
             <div
               className={cn(
                 clinicalTableCellMinRowClass,
@@ -381,7 +381,7 @@ export function buildPatientInvoicesColumns(viewerRole: EntityRole): ColumnDef<S
         const inv = row.original;
         return clinicalEmptyOrNode(
           Boolean(inv.appointment_id),
-          (
+          () => (
             <div className={cn(clinicalTableCellMinRowClass, "flex items-center")}>
               <EntityTitleLink
                 href={appointmentDetailHref(viewerRole, inv.appointment_id!)}
@@ -412,7 +412,7 @@ export function buildPatientInvoicesColumns(viewerRole: EntityRole): ColumnDef<S
       cell: ({ row }) =>
         clinicalEmptyOrNode(
           Boolean(row.original.due_date),
-          (
+          () => (
             <div
               className={cn(
                 clinicalTableCellMinRowClass,
@@ -434,7 +434,7 @@ export function buildPatientInvoicesColumns(viewerRole: EntityRole): ColumnDef<S
       cell: ({ row }) =>
         clinicalEmptyOrNode(
           Boolean(row.original.paid_at),
-          (
+          () => (
             <div
               className={cn(
                 clinicalTableCellMinRowClass,
