@@ -25,6 +25,7 @@ import {
   type ServiceCatalogRow,
 } from "@/lib/appointment-service-catalog";
 import { mergeBookableTypesForDoctor } from "@/lib/doctor-bookable-types";
+import { PAGINATION } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import { redis } from "@/lib/redis";
 import {
@@ -32,8 +33,10 @@ import {
   serializePatient,
   serializeAppointment,
   serializeInvoice,
+  serializeUser,
   mapPortalAppointmentsFromRows,
 } from "@/lib/serializers";
+import type { UsersListResponse } from "@/hooks/useUsers";
 import { patientDetailInclude, patientUserPick } from "@/lib/patient-api-include";
 import { getInsightsData, type InsightsPayload } from "@/lib/insights-data";
 import { fetchInsightsWithRedisCache } from "@/lib/insights/insights-redis-cache";
@@ -507,6 +510,57 @@ export async function prefetchDoctors(): Promise<{ doctors: DoctorPrefetchRow[] 
     });
 
     return { doctors };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Mirrors GET /api/users — seeds `useUsers(filters)` on detail pages (doctor/admin portraits).
+ */
+export async function prefetchUsersList(filters: {
+  role?: string;
+  roles?: string[];
+  limit?: number;
+  offset?: number;
+}): Promise<UsersListResponse | null> {
+  try {
+    const limit = Math.min(
+      Math.max(filters.limit ?? PAGINATION.DEFAULT_LIMIT, 1),
+      PAGINATION.MAX_LIMIT
+    );
+    const offset = Math.max(filters.offset ?? 0, 0);
+    const where =
+      filters.roles?.length && filters.roles.length > 0
+        ? { role: { in: filters.roles } }
+        : filters.role
+          ? { role: filters.role }
+          : {};
+
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        where,
+        select: {
+          id: true,
+          email: true,
+          display_name: true,
+          role: true,
+          image: true,
+          created_at: true,
+          specialty: true,
+          bio: true,
+        },
+        orderBy: [{ display_name: { sort: "asc", nulls: "last" } }, { email: "asc" }],
+        take: limit,
+        skip: offset,
+      }),
+      prisma.user.count({ where }),
+    ]);
+
+    return {
+      users: users.map(serializeUser),
+      pagination: { limit, offset, total, count: users.length },
+    };
   } catch {
     return null;
   }

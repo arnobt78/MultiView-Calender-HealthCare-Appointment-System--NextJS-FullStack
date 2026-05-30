@@ -65,6 +65,8 @@ export interface Patient {
   primary_doctor_display?: string | null;
   primary_doctor_email?: string | null;
   primary_doctor_specialty?: string | null;
+  /** Denormalized primary doctor portrait from SSR patient include. */
+  primary_doctor_image?: string | null;
   /** ABO/Rh blood type — e.g. "A+", "O-" */
   blood_type?: string | null;
   /** Height in centimetres */

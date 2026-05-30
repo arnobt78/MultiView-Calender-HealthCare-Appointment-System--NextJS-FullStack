@@ -27,6 +27,11 @@ type UserMini =
   | null
   | undefined;
 
+type PrimaryDoctorMini =
+  | { display_name: string | null; email: string; specialty?: string | null; image?: string | null }
+  | null
+  | undefined;
+
 function userDisplay(u: UserMini): string | null {
   if (!u) return null;
   return (u.display_name?.trim() || u.email) ?? null;
@@ -52,7 +57,7 @@ export function serializePatient(
     primary_doctor_id?: string | null;
     created_by?: UserMini;
     updated_by?: UserMini;
-    primary_doctor?: UserMini;
+    primary_doctor?: PrimaryDoctorMini;
   }
 ) {
   return {
@@ -80,6 +85,8 @@ export function serializePatient(
     primary_doctor_email: p.primary_doctor?.email ?? null,
     /** Primary doctor specialty for first-paint badge parity in patient portal/profile cards. */
     primary_doctor_specialty: p.primary_doctor?.specialty ?? null,
+    /** Primary doctor portrait — SSR denormalized so detail pages skip robohash flash. */
+    primary_doctor_image: p.primary_doctor?.image ?? null,
   };
 }
 

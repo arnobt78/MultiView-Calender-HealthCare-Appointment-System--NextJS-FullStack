@@ -335,6 +335,8 @@ function renderPrimaryDoctor(patient: Patient, portalDoctors: AppUser[]): ReactN
   if (pRow.primary_doctor_id && pRow.primary_doctor_display?.trim()) {
     const doc = portalDoctors.find((x) => x.id === pRow.primary_doctor_id);
     const resolvedSpecialty = doc?.specialty ?? pRow.primary_doctor_specialty ?? null;
+    const resolvedImage =
+      pRow.primary_doctor_image?.trim() || doc?.image?.trim() || null;
     return (
       <DoctorIdentityRow
         doctor={{
@@ -342,7 +344,7 @@ function renderPrimaryDoctor(patient: Patient, portalDoctors: AppUser[]): ReactN
           display_name: pRow.primary_doctor_display.trim(),
           email: pRow.primary_doctor_email ?? null,
           specialty: resolvedSpecialty,
-          image: doc?.image ?? null,
+          image: resolvedImage,
         }}
         size="sm"
         showEmail

@@ -13,6 +13,7 @@ import {
   prefetchDoctors,
   prefetchPatient,
   prefetchPatientSnapshot,
+  prefetchUsersList,
 } from "@/lib/server-prefetch";
 import { getUserRole, isAdminRole, isDoctorRole, isPatientRole } from "@/lib/rbac";
 import { patientDetailHref } from "@/lib/entity-routes";
@@ -56,11 +57,14 @@ export default async function ControlPanelPatientDetailPage({ params }: PageProp
 
   if (!isAdminRole(role)) notFound();
 
-  const [initialPatient, initialSnapshot, initialDoctors] = await Promise.all([
-    prefetchPatient(id),
-    prefetchPatientSnapshot(id),
-    prefetchDoctors(),
-  ]);
+  const [initialPatient, initialSnapshot, initialDoctors, initialDoctorUsers, initialAdminUsers] =
+    await Promise.all([
+      prefetchPatient(id),
+      prefetchPatientSnapshot(id),
+      prefetchDoctors(),
+      prefetchUsersList({ role: "doctor", limit: 200 }),
+      prefetchUsersList({ role: "admin", limit: 50 }),
+    ]);
 
   if (!initialPatient) notFound();
 
@@ -78,6 +82,8 @@ export default async function ControlPanelPatientDetailPage({ params }: PageProp
       initialPatient={initialPatient}
       initialSnapshot={initialSnapshot}
       initialDoctors={initialDoctors}
+      initialDoctorUsers={initialDoctorUsers}
+      initialAdminUsers={initialAdminUsers}
     />
   );
 }

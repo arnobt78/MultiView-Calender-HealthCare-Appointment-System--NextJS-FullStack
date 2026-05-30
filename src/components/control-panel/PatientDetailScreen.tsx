@@ -35,6 +35,12 @@ import {
 } from "@/lib/patient-form-clinical";
 import type { PatientCreateInput } from "@/hooks/usePatients";
 import type { DoctorPrefetchRow } from "@/lib/server-prefetch";
+import type { UsersListResponse } from "@/hooks/useUsers";
+import {
+  buildStaffDirectoryMap,
+  resolvePrimaryDoctorIdentity,
+} from "@/lib/staff-directory-cache";
+import { seedUsersListCache } from "@/lib/ssr-query-seed";
 import { DoctorIdentityRow } from "@/components/shared/doctor-display/DoctorIdentityRow";
 import { ClinicalDataTable } from "@/components/shared/ClinicalDataTable";
 import {
@@ -69,9 +75,13 @@ import {
 import { ControlPanelGlassActionButton } from "@/components/shared/ControlPanelGlassActionButton";
 import { cn } from "@/lib/utils";
 import { patientDetailHref, type EntityRole } from "@/lib/entity-routes";
-import { isAdminRole } from "@/lib/rbac";
+import { isAdminRole, isDoctorRole } from "@/lib/rbac";
 import type { PatientAccessLevel } from "@/lib/patient-access";
 import { isValidUUID } from "@/lib/validation";
+
+/** Must match `useUsers` filters on this screen — SSR seeds the same query keys. */
+const PATIENT_DETAIL_DOCTOR_USERS_FILTERS = { role: "doctor" as const, limit: 200 };
+const PATIENT_DETAIL_ADMIN_USERS_FILTERS = { role: "admin" as const, limit: 50 };
 import { invalidateQueriesForRoute } from "@/lib/query-client";
 import { prefetchDoctorsDirectory } from "@/lib/prefetch-doctors-directory";
 import { clinicalSnapshotAppointmentsTableMinWidthClass } from "@/lib/clinical-snapshot-table-columns";
@@ -231,6 +241,10 @@ type PatientDetailScreenProps = {
   initialSnapshot?: PatientSnapshot | null;
   /** SSR doctor directory — seeds `queryKeys.doctors.all` for portrait resolution in snapshot tables. */
   initialDoctors?: { doctors: DoctorPrefetchRow[] } | null;
+  /** SSR users list — seeds `useUsers({ role: "doctor" })` for identity rows without fetch flash. */
+  initialDoctorUsers?: UsersListResponse | null;
+  /** SSR admin users — calendar owners in snapshot tables may be admin accounts. */
+  initialAdminUsers?: UsersListResponse | null;
 };
 
 export function PatientDetailScreen({
@@ -241,6 +255,8 @@ export function PatientDetailScreen({
   initialPatient,
   initialSnapshot,
   initialDoctors,
+  initialDoctorUsers,
+  initialAdminUsers,
 }: PatientDetailScreenProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -270,7 +286,21 @@ export function PatientDetailScreen({
     if (initialDoctors != null) {
       queryClient.setQueryData(queryKeys.doctors.all, initialDoctors);
     }
-  }, [queryClient, patientId, initialPatient, initialSnapshot, initialDoctors]);
+    if (initialDoctorUsers != null) {
+      seedUsersListCache(queryClient, PATIENT_DETAIL_DOCTOR_USERS_FILTERS, initialDoctorUsers);
+    }
+    if (initialAdminUsers != null) {
+      seedUsersListCache(queryClient, PATIENT_DETAIL_ADMIN_USERS_FILTERS, initialAdminUsers);
+    }
+  }, [
+    queryClient,
+    patientId,
+    initialPatient,
+    initialSnapshot,
+    initialDoctors,
+    initialDoctorUsers,
+    initialAdminUsers,
+  ]);
 
   const { data: patient, isLoading, isError, error } = usePatient(patientId, rosterDoctorId, {
     initialData: initialPatient ?? undefined,
@@ -278,77 +308,36 @@ export function PatientDetailScreen({
   const snap = usePatientSnapshot(patientId, rosterDoctorId, {
     initialData: initialSnapshot ?? undefined,
   });
-  const { data: doctorsData } = useUsers({ role: "doctor", limit: 200 });
-  const { data: adminUsersData } = useUsers({ role: "admin", limit: 50 });
-  const primaryDoctorUser = useMemo(() => {
-    const id = patient?.primary_doctor_id;
-    if (!id) return undefined;
-    return doctorsData?.users?.find((u) => u.id === id);
-  }, [patient?.primary_doctor_id, doctorsData?.users]);
+  const staffViewer = isAdminRole(viewerRole) || isDoctorRole(viewerRole);
+  const { data: doctorsData } = useUsers(PATIENT_DETAIL_DOCTOR_USERS_FILTERS, {
+    initialData: initialDoctorUsers ?? undefined,
+  });
+  const { data: adminUsersData } = useUsers(PATIENT_DETAIL_ADMIN_USERS_FILTERS, {
+    initialData: initialAdminUsers ?? undefined,
+    enabled: staffViewer,
+  });
 
-  /** Doctors + admins — calendar owners may be admin; snapshot portraits must not be overwritten. */
-  const staffById = useMemo(() => {
-    const map = new Map<
-      string,
-      {
-        id: string;
-        email?: string | null;
-        display_name?: string | null;
-        image?: string | null;
-        specialty?: string | null;
-      }
-    >();
-    const mergeUser = (u: {
-      id: string;
-      email?: string | null;
-      display_name?: string | null;
-      image?: string | null;
-      specialty?: string | null;
-    }) => {
-      const prev = map.get(u.id);
-      const prevImage = prev?.image?.trim();
-      const nextImage = u.image?.trim();
-      map.set(u.id, {
-        id: u.id,
-        email: u.email ?? prev?.email,
-        display_name: u.display_name ?? prev?.display_name,
-        image: prevImage ? (prev?.image ?? null) : (nextImage ? u.image : (prev?.image ?? null)),
-        specialty: u.specialty ?? prev?.specialty ?? null,
-      });
-    };
-    for (const d of initialDoctors?.doctors ?? []) {
-      mergeUser({
-        id: d.id,
-        email: d.email,
-        display_name: d.display_name,
-        image: d.image,
-        specialty: d.specialty ?? null,
-      });
-    }
-    for (const u of doctorsData?.users ?? []) {
-      if (u.id) {
-        mergeUser({
-          id: u.id,
-          email: u.email,
-          display_name: u.display_name,
-          image: u.image,
-          specialty: u.specialty ?? null,
-        });
-      }
-    }
-    for (const u of adminUsersData?.users ?? []) {
-      if (u.id) {
-        mergeUser({
-          id: u.id,
-          email: u.email,
-          display_name: u.display_name,
-          image: u.image,
-          specialty: null,
-        });
-      }
-    }
-    return map;
-  }, [initialDoctors?.doctors, doctorsData?.users, adminUsersData?.users]);
+  /** Doctors + admins — calendar owners may be admin; SSR prefetch merged before client fetch. */
+  const staffById = useMemo(
+    () =>
+      buildStaffDirectoryMap({
+        initialDoctors,
+        doctorUsers: doctorsData?.users ?? initialDoctorUsers?.users,
+        adminUsers: adminUsersData?.users ?? initialAdminUsers?.users,
+      }),
+    [
+      initialDoctors,
+      doctorsData?.users,
+      adminUsersData?.users,
+      initialDoctorUsers?.users,
+      initialAdminUsers?.users,
+    ]
+  );
+
+  const primaryDoctorIdentity = useMemo(() => {
+    if (!patient) return null;
+    return resolvePrimaryDoctorIdentity(patient, staffById);
+  }, [patient, staffById]);
 
   /** Latest appointment category for schema block (primary doctor sits on the row below). */
   const schemaCategory = useMemo(() => {
@@ -638,16 +627,10 @@ export function PatientDetailScreen({
                   label="Primary Doctor"
                   rowClassName={patientDetailPrimaryDoctorRowClass}
                 >
-                  {p!.primary_doctor_id && p!.primary_doctor_display?.trim() ? (
+                  {primaryDoctorIdentity ? (
                     <DoctorIdentityRow
                       layout="inline"
-                      doctor={{
-                        id: p!.primary_doctor_id,
-                        email: p!.primary_doctor_email ?? primaryDoctorUser?.email ?? null,
-                        display_name: p!.primary_doctor_display.trim(),
-                        image: primaryDoctorUser?.image ?? null,
-                        specialty: primaryDoctorUser?.specialty ?? null,
-                      }}
+                      doctor={primaryDoctorIdentity}
                       linkKind={isAdminRole(viewerRole) ? "admin-cp" : "role"}
                       showEmail
                       showSpecialty
