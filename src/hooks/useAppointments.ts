@@ -12,12 +12,8 @@ import {
   fetchDashboardAccessAccepted,
 } from "@/lib/query-fetchers";
 import { Appointment, Category, Patient, AppointmentAssignee } from "@/types/types";
-import {
-  attachPortalStaffToFullAppointment,
-  isPortalSerializedAppointmentRow,
-} from "@/lib/portal-appointment";
-import type { PortalAppointmentRow, PortalAppointmentStaffUser } from "@/lib/serializers";
-import { isPatientRole } from "@/lib/rbac";
+import type { PortalAppointmentStaffUser } from "@/lib/serializers";
+import { buildFullAppointmentsList } from "@/lib/appointments-list-build";
 import { notify } from "@/lib/notify";
 import { useAuth } from "./useAuth";
 import { format } from "date-fns";
@@ -112,31 +108,7 @@ export function useAppointments() {
       });
 
       const owned = ownedRes.appointments || [];
-      const patientViewer = isPatientRole(user.role);
 
-      // 2. Join for owned appointments — patient GET returns portal-shaped rows with embedded staff
-      const ownedWithDetails: FullAppointment[] = owned.map((appt) => {
-        const assigneesForAppt = allAssignees.filter((a) => a.appointment === appt.id);
-        const patientRow = patients.find((p) => p.id === appt.patient);
-
-        if (patientViewer && isPortalSerializedAppointmentRow(appt as unknown as Record<string, unknown>)) {
-          return attachPortalStaffToFullAppointment(appt as PortalAppointmentRow, {
-            patient_data: patientRow,
-            appointment_assignee: assigneesForAppt,
-          });
-        }
-
-        return {
-          ...appt,
-          category_data:
-            (appt as FullAppointment).category_data ??
-            categories.find((c) => c.id === appt.category),
-          patient_data: patientRow,
-          appointment_assignee: assigneesForAppt,
-        };
-      });
-
-      // 3. Find assigned appointments (user id or email)
       const assignedByUser = allAssignees.filter(
         (a) => a.user === user.id && a.status === "accepted"
       );
@@ -149,10 +121,11 @@ export function useAppointments() {
         ...assignedByEmail.map((a) => a.appointment),
       ].filter(Boolean);
       const uniqueAppointmentIds = [...new Set(assignedAppointmentIds)];
+      const ownedIds = new Set(owned.map((a) => a.id));
+      const extraAssignedIds = uniqueAppointmentIds.filter((id) => !ownedIds.has(id));
 
-      // Fetch the actual assigned appointment details
       const assignedAppointmentsData = await Promise.all(
-        uniqueAppointmentIds.map(async (apptId) => {
+        extraAssignedIds.map(async (apptId) => {
           try {
             const res = await apiClient<{ appointment: Appointment }>(`/api/appointments/${apptId}`);
             return res.appointment;
@@ -162,43 +135,18 @@ export function useAppointments() {
         })
       );
 
-      const assignedAppointments: FullAppointment[] = assignedAppointmentsData
-        .filter((a): a is Appointment => a !== null)
-        .map((appt) => {
-          const relatedAssignees = [
-            ...assignedByUser.filter((a) => a.appointment === appt.id),
-            ...assignedByEmail.filter((a) => a.appointment === appt.id),
-          ].filter(
-            (a) =>
-              typeof a.permission === "string" && ["read", "write", "full"].includes(a.permission)
-          );
-
-          return {
-            ...appt,
-            category_data: categories.find((c) => c.id === appt.category),
-            patient_data: patients.find((p) => p.id === appt.patient),
-            appointment_assignee: relatedAssignees,
-          };
-        });
-
-      // 4. Merge and deduplicate
-      const allAppointments = [...ownedWithDetails, ...assignedAppointments];
-      
-      const deduped = allAppointments.reduce((acc: FullAppointment[], curr) => {
-        if (!curr || !curr.id) return acc;
-        const existing = acc.find((a) => a.id === curr.id);
-        if (existing) {
-          existing.appointment_assignee = [
-            ...(existing.appointment_assignee || []),
-            ...(curr.appointment_assignee || [])
-          ].filter((v, i, arr) => v && v.id && arr.findIndex((b) => b.id === v.id) === i);
-        } else {
-          acc.push({ ...curr });
-        }
-        return acc;
-      }, []);
-
-      return deduped;
+      return buildFullAppointmentsList({
+        userId: user.id,
+        userEmail: user.email,
+        userRole: user.role ?? "",
+        categories,
+        patients,
+        assignees: allAssignees,
+        ownedAppointments: owned,
+        assignedAppointmentRows: assignedAppointmentsData.filter(
+          (a): a is Appointment => a !== null
+        ),
+      });
     },
     enabled: !!user,
     // Appointments are invalidated after every create/update/delete/toggle mutation;

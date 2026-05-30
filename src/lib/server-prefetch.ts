@@ -64,6 +64,8 @@ import type {
   DoctorRow,
   AppointmentType,
   DoctorAppointmentTypeConfig,
+  Appointment,
+  AppointmentAssignee,
 } from "@/types/types";
 import type { DashboardOverview } from "@/hooks/useDashboardOverview";
 import {
@@ -79,6 +81,10 @@ import {
   pickRecentActivityAppointments,
 } from "@/lib/dashboard-overview-recent-activity";
 import { loadCategorySnapshotData } from "@/lib/category-snapshot-data";
+import { buildFullAppointmentsList } from "@/lib/appointments-list-build";
+import type { FullAppointment } from "@/hooks/useAppointments";
+import type { Organization } from "@/hooks/useOrganization";
+import { getUserRole, isPatientRole } from "@/lib/rbac";
 
 // ─── Shared types ─────────────────────────────────────────────────────────────
 
@@ -111,6 +117,217 @@ export async function prefetchCategories(): Promise<Category[] | null> {
       orderBy: { created_at: "desc" },
     });
     return rows.map(serializeCategory) as Category[];
+  } catch {
+    return null;
+  }
+}
+
+// ─── Organizations ────────────────────────────────────────────────────────────
+
+/** Mirrors GET /api/organizations — cache key: queryKeys.organizations.all */
+export async function prefetchOrganizations(
+  userId: string
+): Promise<Organization[] | null> {
+  try {
+    const memberships = await prisma.organizationMember.findMany({
+      where: { user_id: userId },
+      include: { organization: true },
+    });
+    return memberships.map((m) => ({
+      ...m.organization,
+      role: m.role,
+      created_at: m.organization.created_at.toISOString(),
+    })) as Organization[];
+  } catch {
+    return null;
+  }
+}
+
+// ─── Dashboard calendar appointments ─────────────────────────────────────────
+
+/** Same projection as GET /api/appointment-assignees (global, no appointment_id). */
+function serializeAppointmentAssigneeRow(a: {
+  id: string;
+  created_at: Date;
+  appointment_id: string;
+  user_id: string | null;
+  user_type: string | null;
+  invited_email: string | null;
+  status: string | null;
+  permission: string | null;
+  invited_by_id: string | null;
+}): AppointmentAssignee {
+  return {
+    id: a.id,
+    created_at: a.created_at?.toISOString?.(),
+    appointment: a.appointment_id,
+    user: a.user_id,
+    user_type: a.user_type,
+    invited_email: a.invited_email,
+    status: a.status,
+    permission: a.permission,
+    invited_by: a.invited_by_id,
+  } as AppointmentAssignee;
+}
+
+/** Mirrors GET /api/appointment-assignees — cache key: queryKeys.assignees.all */
+export async function prefetchAppointmentAssigneesForUser(
+  userId: string,
+  email: string
+): Promise<AppointmentAssignee[] | null> {
+  try {
+    const accessibleAppointments = await prisma.appointment.findMany({
+      where: {
+        OR: [
+          { owner_id: userId },
+          {
+            assignees: {
+              some: {
+                OR: [{ user_id: userId }, { invited_email: email }],
+                status: "accepted",
+              },
+            },
+          },
+        ],
+      },
+      select: { id: true },
+    });
+
+    const appointmentIds = accessibleAppointments.map((a) => a.id);
+    if (appointmentIds.length === 0) return [];
+
+    const assignees = await prisma.appointmentAssignee.findMany({
+      where: { appointment_id: { in: appointmentIds } },
+      orderBy: { created_at: "desc" },
+    });
+
+    return assignees.map(serializeAppointmentAssigneeRow);
+  } catch {
+    return null;
+  }
+}
+
+const PATIENT_DASHBOARD_APPOINTMENT_INCLUDE = {
+  category: true,
+  owner: {
+    select: {
+      id: true,
+      display_name: true,
+      email: true,
+      role: true,
+      image: true,
+      specialty: true,
+    },
+  },
+  treating_physician: {
+    select: {
+      id: true,
+      display_name: true,
+      email: true,
+      role: true,
+      image: true,
+      specialty: true,
+    },
+  },
+} as const;
+
+/**
+ * Mirrors useAppointments join output for /dashboard first paint.
+ * Cache key: queryKeys.appointments.all → FullAppointment[].
+ * Also seeds assignees when provided via dashboard/page.tsx companion prefetch.
+ */
+export async function prefetchDashboardAppointments(
+  userId: string,
+  email: string,
+  preloaded?: {
+    categories?: Category[] | null;
+    patients?: Patient[] | null;
+    assignees?: AppointmentAssignee[] | null;
+  }
+): Promise<FullAppointment[] | null> {
+  try {
+    const callerRole = await getUserRole(userId);
+    const patientCaller = isPatientRole(callerRole);
+
+    const [categories, patients, assignees] = await Promise.all([
+      preloaded?.categories != null
+        ? Promise.resolve(preloaded.categories)
+        : prefetchCategories(),
+      preloaded?.patients != null
+        ? Promise.resolve(preloaded.patients)
+        : prefetchPatients(),
+      preloaded?.assignees != null
+        ? Promise.resolve(preloaded.assignees)
+        : prefetchAppointmentAssigneesForUser(userId, email),
+    ]);
+
+    if (categories == null || patients == null || assignees == null) {
+      return null;
+    }
+
+    let ownedRows: Appointment[] = [];
+
+    if (patientCaller) {
+      const userRow = await prisma.user.findUnique({ where: { id: userId } });
+      const patientRecord = userRow
+        ? await prisma.patient.findFirst({ where: { email: userRow.email } })
+        : null;
+
+      if (patientRecord) {
+        const rows = await prisma.appointment.findMany({
+          where: { patient_id: patientRecord.id },
+          orderBy: { start: "asc" },
+          take: PAGINATION.DEFAULT_LIMIT,
+          include: PATIENT_DASHBOARD_APPOINTMENT_INCLUDE,
+        });
+        ownedRows = mapPortalAppointmentsFromRows(
+          rows as Parameters<typeof mapPortalAppointmentsFromRows>[0]
+        ) as unknown as Appointment[];
+      }
+    } else {
+      const rows = await prisma.appointment.findMany({
+        where: { owner_id: userId },
+        orderBy: { start: "asc" },
+        take: PAGINATION.DEFAULT_LIMIT,
+      });
+      ownedRows = rows.map(serializeAppointment) as Appointment[];
+    }
+
+    const ownedIds = new Set(ownedRows.map((a) => a.id));
+    const assignedByUser = assignees.filter(
+      (a) => a.user === userId && a.status === "accepted"
+    );
+    const assignedByEmail = assignees.filter(
+      (a) => a.invited_email === email && a.status === "accepted"
+    );
+    const extraAssignedIds = [
+      ...new Set([
+        ...assignedByUser.map((a) => a.appointment),
+        ...assignedByEmail.map((a) => a.appointment),
+      ]),
+    ].filter((id): id is string => !!id && !ownedIds.has(id));
+
+    const assignedRaw =
+      extraAssignedIds.length > 0
+        ? await prisma.appointment.findMany({
+            where: { id: { in: extraAssignedIds } },
+          })
+        : [];
+
+    const serializedAssigned = assignedRaw.map(
+      (row) => serializeAppointment(row) as Appointment
+    );
+
+    return buildFullAppointmentsList({
+      userId,
+      userEmail: email,
+      userRole: callerRole ?? "",
+      categories,
+      patients,
+      assignees,
+      ownedAppointments: ownedRows,
+      assignedAppointmentRows: serializedAssigned,
+    });
   } catch {
     return null;
   }

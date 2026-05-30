@@ -11,6 +11,7 @@ import type { AppointmentTypeApiRow } from "@/hooks/useAppointmentTypes";
 import type { Patient } from "@/types/types";
 import type { Category } from "@/types/types";
 import type { DashboardOverview } from "@/hooks/useDashboardOverview";
+import type { Organization } from "@/hooks/useOrganization";
 import PatientDetailView from "./PatientDetailView";
 import TelehealthDashboard from "./TelehealthDashboard";
 import { useAppStore } from "@/store/useAppStore";
@@ -195,6 +196,8 @@ type ControlPanelPageProps = {
   initialPatients?: Patient[] | null;
   /** Server-prefetched categories — seeds queryKeys.categories.all on category-management tab. */
   initialCategories?: Category[] | null;
+  /** Server-prefetched org list — seeds queryKeys.organizations.all on organization-management tab. */
+  initialOrganizations?: Organization[] | null;
 };
 
 export function PatientsTab() {
@@ -226,6 +229,7 @@ export default function ControlPanelPage({
   initialDashboardOverview,
   initialPatients,
   initialCategories,
+  initialOrganizations,
 }: ControlPanelPageProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -262,7 +266,10 @@ export default function ControlPanelPage({
     if (initialCategories != null) {
       queryClient.setQueryData(queryKeys.categories.all, initialCategories);
     }
-  }, [queryClient, initialDashboardOverview, initialPatients, initialCategories]);
+    if (initialOrganizations != null) {
+      queryClient.setQueryData(queryKeys.organizations.all, initialOrganizations);
+    }
+  }, [queryClient, initialDashboardOverview, initialPatients, initialCategories, initialOrganizations]);
 
   /**
    * Optional cache warm-up for global visit types (GET is allowed for any signed-in user).

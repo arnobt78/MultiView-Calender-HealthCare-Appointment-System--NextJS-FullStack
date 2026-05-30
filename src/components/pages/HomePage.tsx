@@ -4,12 +4,9 @@
 // so a refresh returns to the same tab.
 //
 // SSR initial-data seeding:
-// dashboard/page.tsx (server) pre-fetches categories and patients via Prisma and
-// passes them as initialCategories / initialPatients props. useLayoutEffect seeds
-// those arrays into the TanStack Query cache under queryKeys.categories.all and
-// queryKeys.patients.all before the first paint. useAppointments internally calls
-// ensureQueryData on these keys — finding them already in cache avoids the
-// sub-fetch waterfall and lets the appointments fetch fire immediately.
+// dashboard/page.tsx pre-fetches categories, patients, assignees, and the merged
+// FullAppointment[] list. useLayoutEffect seeds TanStack Query before paint so
+// useAppointments / useAppointmentData find warm cache — no calendar flash.
 
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -20,7 +17,8 @@ import WeekView from "@/components/calendar/WeekView";
 import DayView from "@/components/calendar/DayView";
 import AppointmentList from "@/components/calendar/AppointmentList";
 import CalendarHeader from "@/components/calendar/CalendarHeader";
-import type { Category, Patient } from "@/types/types";
+import type { Category, Patient, AppointmentAssignee } from "@/types/types";
+import type { FullAppointment } from "@/hooks/useAppointments";
 
 const views = ["List", "Day", "Week", "Month"] as const;
 export type ViewType = (typeof views)[number];
@@ -36,9 +34,18 @@ type HomePageProps = {
   initialCategories?: Category[] | null;
   /** Server-prefetched patients — seeds queryKeys.patients.all before first render. */
   initialPatients?: Patient[] | null;
+  /** Server-prefetched assignees — seeds queryKeys.assignees.all for calendar join. */
+  initialAssignees?: AppointmentAssignee[] | null;
+  /** Server-prefetched merged calendar rows — seeds queryKeys.appointments.all. */
+  initialAppointments?: FullAppointment[] | null;
 };
 
-const HomePage: React.FC<HomePageProps> = ({ initialCategories, initialPatients }) => {
+const HomePage: React.FC<HomePageProps> = ({
+  initialCategories,
+  initialPatients,
+  initialAssignees,
+  initialAppointments,
+}) => {
   const queryClient = useQueryClient();
 
   /**
@@ -54,7 +61,19 @@ const HomePage: React.FC<HomePageProps> = ({ initialCategories, initialPatients 
     if (initialPatients != null) {
       queryClient.setQueryData(queryKeys.patients.all, initialPatients);
     }
-  }, [queryClient, initialCategories, initialPatients]);
+    if (initialAssignees != null) {
+      queryClient.setQueryData(queryKeys.assignees.all, initialAssignees);
+    }
+    if (initialAppointments != null) {
+      queryClient.setQueryData(queryKeys.appointments.all, initialAppointments);
+    }
+  }, [
+    queryClient,
+    initialCategories,
+    initialPatients,
+    initialAssignees,
+    initialAppointments,
+  ]);
   const searchParams = useSearchParams();
   const initialView = useMemo(
     () => parseViewParam(searchParams.get("view")),

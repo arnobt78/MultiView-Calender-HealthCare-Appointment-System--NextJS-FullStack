@@ -10,9 +10,11 @@ import {
   prefetchDashboardOverview,
   prefetchPatients,
   prefetchCategories,
+  prefetchOrganizations,
 } from "@/lib/server-prefetch";
 import type { Category, Patient } from "@/types/types";
 import type { DashboardOverview } from "@/hooks/useDashboardOverview";
+import type { Organization } from "@/hooks/useOrganization";
 
 const SECTION_TO_TAB: Record<string, string> = {
   "dashboard-overview": "overview",
@@ -46,13 +48,20 @@ export default async function Page({
   let initialDashboardOverview: DashboardOverview | null = null;
   let initialPatients: Patient[] | null = null;
   let initialCategories: Category[] | null = null;
+  let initialOrganizations: Organization[] | null = null;
 
   if (sessionUser) {
     const prefetchJobs: [
       Promise<DashboardOverview | null>,
       Promise<Patient[] | null>,
       Promise<Category[] | null>,
-    ] = [Promise.resolve(null), Promise.resolve(null), Promise.resolve(null)];
+      Promise<Organization[] | null>,
+    ] = [
+      Promise.resolve(null),
+      Promise.resolve(null),
+      Promise.resolve(null),
+      Promise.resolve(null),
+    ];
 
     if (section === "dashboard-overview") {
       prefetchJobs[0] = prefetchDashboardOverview(sessionUser.userId);
@@ -63,8 +72,12 @@ export default async function Page({
     if (section === "category-management") {
       prefetchJobs[2] = prefetchCategories();
     }
+    if (section === "organization-management") {
+      prefetchJobs[3] = prefetchOrganizations(sessionUser.userId);
+    }
 
-    [initialDashboardOverview, initialPatients, initialCategories] = await Promise.all(prefetchJobs);
+    [initialDashboardOverview, initialPatients, initialCategories, initialOrganizations] =
+      await Promise.all(prefetchJobs);
   }
 
   return (
@@ -74,6 +87,7 @@ export default async function Page({
       initialDashboardOverview={initialDashboardOverview}
       initialPatients={initialPatients}
       initialCategories={initialCategories}
+      initialOrganizations={initialOrganizations}
     />
   );
 }
