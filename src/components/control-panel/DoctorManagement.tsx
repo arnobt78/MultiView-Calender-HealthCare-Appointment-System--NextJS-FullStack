@@ -37,6 +37,7 @@ import {
 } from "@/lib/calendar-header-action-styles";
 import type { User } from "@/types/types";
 import { useUsers } from "@/hooks/useUsers";
+import { CP_DOCTOR_USERS_FILTERS } from "@/lib/control-panel-users-filters";
 import { queryKeys } from "@/lib/query-keys";
 import { apiClient } from "@/lib/api-client";
 import {
@@ -186,7 +187,8 @@ function ActionsCell({ user }: { user: User }) {
 // Main component
 // ---------------------------------------------------------------------------
 export default function DoctorManagement() {
-  const { data: usersData, isLoading: usersLoading, isError: usersError, updateUser } = useUsers({ role: "doctor", limit: 100 });
+  const { data: usersData, isLoading: usersLoading, isError: usersError, updateUser } =
+    useUsers(CP_DOCTOR_USERS_FILTERS);
   const usersRows: User[] = usersData?.users ?? [];
 
   // Enrich with specialty, bio, availability, patient_count from /api/doctors

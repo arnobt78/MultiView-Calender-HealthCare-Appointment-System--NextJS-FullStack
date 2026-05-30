@@ -81,6 +81,7 @@ import {
   pickRecentActivityAppointments,
 } from "@/lib/dashboard-overview-recent-activity";
 import { loadCategorySnapshotData } from "@/lib/category-snapshot-data";
+import type { DashboardAccessRow } from "@/lib/query-fetchers";
 import { buildFullAppointmentsList } from "@/lib/appointments-list-build";
 import type { FullAppointment } from "@/hooks/useAppointments";
 import type { Organization } from "@/hooks/useOrganization";
@@ -207,6 +208,39 @@ export async function prefetchAppointmentAssigneesForUser(
   }
 }
 
+/** Mirrors GET /api/dashboard-access?status=accepted — cache key: queryKeys.dashboardAccess.accepted */
+export async function prefetchDashboardAccessAccepted(
+  userId: string,
+  email: string
+): Promise<DashboardAccessRow[] | null> {
+  try {
+    const records = await prisma.dashboardAccess.findMany({
+      where: {
+        status: "accepted",
+        OR: [
+          { owner_user_id: userId },
+          { invited_user_id: userId },
+          { invited_email: email },
+        ],
+      },
+      orderBy: { created_at: "desc" },
+    });
+
+    return records.map((d) => ({
+      id: d.id,
+      created_at: d.created_at?.toISOString?.(),
+      owner_user_id: d.owner_user_id,
+      invited_user_id: d.invited_user_id,
+      invited_email: d.invited_email,
+      status: d.status,
+      permission: d.permission,
+      invited_by: d.invited_by_id,
+    }));
+  } catch {
+    return null;
+  }
+}
+
 const PATIENT_DASHBOARD_APPOINTMENT_INCLUDE = {
   category: true,
   owner: {
@@ -277,7 +311,7 @@ export async function prefetchDashboardAppointments(
         const rows = await prisma.appointment.findMany({
           where: { patient_id: patientRecord.id },
           orderBy: { start: "asc" },
-          take: PAGINATION.DEFAULT_LIMIT,
+          take: PAGINATION.CALENDAR_APPOINTMENTS_LIMIT,
           include: PATIENT_DASHBOARD_APPOINTMENT_INCLUDE,
         });
         ownedRows = mapPortalAppointmentsFromRows(
@@ -288,7 +322,7 @@ export async function prefetchDashboardAppointments(
       const rows = await prisma.appointment.findMany({
         where: { owner_id: userId },
         orderBy: { start: "asc" },
-        take: PAGINATION.DEFAULT_LIMIT,
+        take: PAGINATION.CALENDAR_APPOINTMENTS_LIMIT,
       });
       ownedRows = rows.map(serializeAppointment) as Appointment[];
     }

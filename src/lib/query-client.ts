@@ -170,6 +170,7 @@ export async function invalidateUsersAndAuth(queryClient: QueryClient) {
 /** Organizations — lists and nested member queries */
 export async function invalidateOrganizations(queryClient: QueryClient) {
   await queryClient.invalidateQueries({ queryKey: queryKeys.organizations.all });
+  publishQueryCacheCrossTab(CROSS_TAB_SCOPES.ORGANIZATIONS);
 }
 
 /**

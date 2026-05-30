@@ -11,9 +11,11 @@ import {
   prefetchPatients,
   prefetchDashboardAppointments,
   prefetchAppointmentAssigneesForUser,
+  prefetchDashboardAccessAccepted,
 } from "@/lib/server-prefetch";
 import type { Category, Patient, AppointmentAssignee } from "@/types/types";
 import type { FullAppointment } from "@/hooks/useAppointments";
+import type { DashboardAccessRow } from "@/lib/query-fetchers";
 
 export default async function DashboardPage() {
   const session = await getSessionUser();
@@ -22,13 +24,16 @@ export default async function DashboardPage() {
   let initialPatients: Patient[] | null = null;
   let initialAssignees: AppointmentAssignee[] | null = null;
   let initialAppointments: FullAppointment[] | null = null;
+  let initialDashboardAccessAccepted: DashboardAccessRow[] | null = null;
 
   if (session) {
-    [initialCategories, initialPatients, initialAssignees] = await Promise.all([
-      prefetchCategories(),
-      prefetchPatients(),
-      prefetchAppointmentAssigneesForUser(session.userId, session.email),
-    ]);
+    [initialCategories, initialPatients, initialAssignees, initialDashboardAccessAccepted] =
+      await Promise.all([
+        prefetchCategories(),
+        prefetchPatients(),
+        prefetchAppointmentAssigneesForUser(session.userId, session.email),
+        prefetchDashboardAccessAccepted(session.userId, session.email),
+      ]);
 
     initialAppointments = await prefetchDashboardAppointments(
       session.userId,
@@ -48,6 +53,7 @@ export default async function DashboardPage() {
         initialPatients={initialPatients}
         initialAssignees={initialAssignees}
         initialAppointments={initialAppointments}
+        initialDashboardAccessAccepted={initialDashboardAccessAccepted}
       />
     </div>
   );

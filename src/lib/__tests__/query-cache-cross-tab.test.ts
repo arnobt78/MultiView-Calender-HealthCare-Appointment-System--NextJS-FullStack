@@ -102,6 +102,11 @@ describe("applyCrossTabScopes", () => {
     expect(CROSS_TAB_SCOPES.APPOINTMENT_MUTATION).toContain("patients");
     expect(CROSS_TAB_SCOPES.APPOINTMENT_MUTATION).toContain("categories");
   });
+
+  it("ORGANIZATIONS scope includes organizations and dashboard", () => {
+    expect(CROSS_TAB_SCOPES.ORGANIZATIONS).toContain("organizations");
+    expect(CROSS_TAB_SCOPES.ORGANIZATIONS).toContain("dashboard");
+  });
 });
 
 describe("publishQueryCacheCrossTab + subscribeQueryCacheCrossTab", () => {

@@ -10,6 +10,7 @@
 import { type ColumnDef } from "@tanstack/react-table";
 import { PrefetchingLink } from "@/components/shared/PrefetchingLink";
 import { useUsers } from "@/hooks/useUsers";
+import { CP_ALL_USERS_FILTERS } from "@/lib/control-panel-users-filters";
 import { DataTable } from "@/components/shared/DataTable";
 import { DataTableColumnHeader } from "@/components/shared/DataTableColumnHeader";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -173,7 +174,7 @@ function ActionsCell({ user }: { user: User }) {
 // Main component — shows ALL users (not filtered by role)
 // ---------------------------------------------------------------------------
 export default function UserManagement() {
-  const { data, isLoading, isError, updateUser } = useUsers({ limit: 200 });
+  const { data, isLoading, isError, updateUser } = useUsers(CP_ALL_USERS_FILTERS);
   const users = data?.users ?? [];
 
   const handleRoleChange = (id: string, role: string) => {

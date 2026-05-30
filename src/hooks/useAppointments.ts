@@ -14,6 +14,7 @@ import {
 import { Appointment, Category, Patient, AppointmentAssignee } from "@/types/types";
 import type { PortalAppointmentStaffUser } from "@/lib/serializers";
 import { buildFullAppointmentsList } from "@/lib/appointments-list-build";
+import { PAGINATION } from "@/lib/constants";
 import { notify } from "@/lib/notify";
 import { useAuth } from "./useAuth";
 import { format } from "date-fns";
@@ -99,7 +100,9 @@ export function useAppointments() {
           queryKey: queryKeys.assignees.all,
           queryFn: fetchAssignees,
         }),
-        apiClient<{ appointments: Appointment[] }>("/api/appointments"),
+        apiClient<{ appointments: Appointment[] }>(
+          `/api/appointments?limit=${PAGINATION.CALENDAR_APPOINTMENTS_LIMIT}`
+        ),
       ]);
 
       await queryClient.ensureQueryData({

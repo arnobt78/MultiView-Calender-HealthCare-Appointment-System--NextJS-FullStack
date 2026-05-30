@@ -72,6 +72,7 @@ import {
   type PatientFormDialogExtra,
 } from "@/lib/patient-form-clinical";
 import { useUsers } from "@/hooks/useUsers";
+import { CP_DOCTOR_USERS_FILTERS } from "@/lib/control-panel-users-filters";
 import { useQueryClient } from "@tanstack/react-query";
 import { prefetchDoctorsDirectory } from "@/lib/prefetch-doctors-directory";
 import {
@@ -267,7 +268,7 @@ export function PatientManagementInner({
   /** SSR-seeded cache: chrome + stats stay real; pulse table rows only when no list data yet. */
   const hasPatientsCache = patients.length > 0;
   const listBodyLoading = !listUiMounted || (isLoading && !hasPatientsCache);
-  const { data: doctorsData } = useUsers({ role: "doctor", limit: 200 });
+  const { data: doctorsData } = useUsers(CP_DOCTOR_USERS_FILTERS);
   const doctorById = useMemo(() => {
     const list = doctorsData?.users ?? [];
     return new Map(list.map((d) => [d.id, d]));

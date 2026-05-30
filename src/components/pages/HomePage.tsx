@@ -19,6 +19,7 @@ import AppointmentList from "@/components/calendar/AppointmentList";
 import CalendarHeader from "@/components/calendar/CalendarHeader";
 import type { Category, Patient, AppointmentAssignee } from "@/types/types";
 import type { FullAppointment } from "@/hooks/useAppointments";
+import type { DashboardAccessRow } from "@/lib/query-fetchers";
 
 const views = ["List", "Day", "Week", "Month"] as const;
 export type ViewType = (typeof views)[number];
@@ -38,6 +39,8 @@ type HomePageProps = {
   initialAssignees?: AppointmentAssignee[] | null;
   /** Server-prefetched merged calendar rows — seeds queryKeys.appointments.all. */
   initialAppointments?: FullAppointment[] | null;
+  /** Accepted dashboard shares — seeds queryKeys.dashboardAccess.accepted for useAppointments. */
+  initialDashboardAccessAccepted?: DashboardAccessRow[] | null;
 };
 
 const HomePage: React.FC<HomePageProps> = ({
@@ -45,6 +48,7 @@ const HomePage: React.FC<HomePageProps> = ({
   initialPatients,
   initialAssignees,
   initialAppointments,
+  initialDashboardAccessAccepted,
 }) => {
   const queryClient = useQueryClient();
 
@@ -67,12 +71,19 @@ const HomePage: React.FC<HomePageProps> = ({
     if (initialAppointments != null) {
       queryClient.setQueryData(queryKeys.appointments.all, initialAppointments);
     }
+    if (initialDashboardAccessAccepted != null) {
+      queryClient.setQueryData(
+        queryKeys.dashboardAccess.accepted,
+        initialDashboardAccessAccepted
+      );
+    }
   }, [
     queryClient,
     initialCategories,
     initialPatients,
     initialAssignees,
     initialAppointments,
+    initialDashboardAccessAccepted,
   ]);
   const searchParams = useSearchParams();
   const initialView = useMemo(

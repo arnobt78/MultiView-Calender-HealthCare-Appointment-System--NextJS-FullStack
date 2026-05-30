@@ -124,6 +124,9 @@ export const CROSS_TAB_SCOPES = {
 
   INSIGHTS_ONLY: ["insights", "analytics"] as const satisfies readonly QueryCacheCrossTabScope[],
 
+  /** Org CRUD — member lists + dashboard KPIs that reference org counts */
+  ORGANIZATIONS: ["organizations", "dashboard"] as const satisfies readonly QueryCacheCrossTabScope[],
+
   APP_ROOT: ["app"] as const satisfies readonly QueryCacheCrossTabScope[],
 } as const;
 

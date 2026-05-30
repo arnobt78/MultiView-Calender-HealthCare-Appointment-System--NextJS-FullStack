@@ -18,6 +18,8 @@ export const PAGINATION = {
   MAX_LIMIT: 1000,
   MAX_SEARCH_LIMIT: 50,
   DEFAULT_OFFSET: 0,
+  /** Calendar dashboard + SSR prefetch — demo-friendly cap; raise for production heavy calendars. */
+  CALENDAR_APPOINTMENTS_LIMIT: 100,
 } as const;
 
 // Validation Constants

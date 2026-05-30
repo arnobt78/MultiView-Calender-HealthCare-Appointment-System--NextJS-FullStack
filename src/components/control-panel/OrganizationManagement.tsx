@@ -12,6 +12,7 @@ import {
 } from "@tanstack/react-table";
 import { useOrganization, type Organization } from "@/hooks/useOrganization";
 import { useUsers } from "@/hooks/useUsers";
+import { CP_ALL_USERS_FILTERS } from "@/lib/control-panel-users-filters";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -126,7 +127,7 @@ function AddMemberDialog({
   const [open, setOpen] = useState(false);
   const [userId, setUserId] = useState("");
   const [role, setRole] = useState("doctor");
-  const { data: usersData } = useUsers();
+  const { data: usersData } = useUsers(CP_ALL_USERS_FILTERS);
   const users = usersData?.users ?? [];
 
   function handleSubmit(e: React.FormEvent) {
