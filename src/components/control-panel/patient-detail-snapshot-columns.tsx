@@ -44,6 +44,7 @@ import { cn } from "@/lib/utils";
 import type { AppointmentSnapshotRow, SnapshotInvoice } from "@/types/types";
 import type { EntityRole } from "@/lib/entity-routes";
 import { CLINICAL_SNAPSHOT_APPOINTMENT_COL_WIDTH } from "@/lib/clinical-snapshot-table-columns";
+import type { RelatedAppointmentsColumnId } from "@/lib/clinical-snapshot-table-columns";
 
 /**
  * Category pill — role-aware link via `categoryDetailHref`.
@@ -205,15 +206,20 @@ export type BuildSnapshotColumnsOpts = {
     birth_date: string | null;
     clinical_profile?: AppointmentSnapshotRow["patient_clinical_profile"];
   } | null;
+  /** Omit columns by id — category detail hides `category` (page is already scoped to one category). */
+  hiddenColumns?: readonly RelatedAppointmentsColumnId[];
 };
+
+export type { RelatedAppointmentsColumnId };
 
 /** Related Appointments table — TanStack columns aligned with patient-management header/cell styles. */
 export function buildRelatedAppointmentsColumns(
   opts: BuildSnapshotColumnsOpts
 ): ColumnDef<AppointmentSnapshotRow>[] {
-  const { viewerRole, patientDisplayName, staffById, pagePatient } = opts;
+  const { viewerRole, patientDisplayName, staffById, pagePatient, hiddenColumns } = opts;
+  const hidden = new Set(hiddenColumns ?? []);
 
-  return [
+  const columns: ColumnDef<AppointmentSnapshotRow>[] = [
     {
       id: "title",
       accessorFn: (row) => row.title ?? "",
@@ -388,6 +394,12 @@ export function buildRelatedAppointmentsColumns(
         ),
     },
   ];
+
+  return columns.filter((col) => {
+    const id = col.id;
+    if (!id || typeof id !== "string") return true;
+    return !hidden.has(id as RelatedAppointmentsColumnId);
+  });
 }
 
 /** Invoices linked to patient appointments — same clinical table chrome as management lists. */

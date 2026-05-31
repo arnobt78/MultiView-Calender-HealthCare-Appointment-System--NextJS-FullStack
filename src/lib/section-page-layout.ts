@@ -3,10 +3,8 @@
  *
  * - `appSectionRootClass` — CP right pane and other scroll areas without `dashboardShellClass` (includes `pb-3`).
  * - `appPortalSectionRootClass` — portal/insights routes inside AuthShell `dashboardShellClass` (shell already has `pb-3`).
- * - `appEntityDetailRootClass` — entity detail with sticky footer clearance + flex min-height shell.
+ * - `appEntityDetailRootClass` — same single-scroll contract as dashboard-overview (no nested overflow).
  */
-
-import { entityDetailShellClass } from "@/lib/patient-detail-ui-classes";
 
 /** Stack gap between major sections (PageHeader, stats, tables). */
 export const appSectionStackClass = "space-y-3 text-gray-700";
@@ -17,14 +15,17 @@ export const appSectionRootClass = `${appSectionStackClass} pb-3`;
 /** Inside `dashboardShellClass` — avoid double bottom padding. */
 export const appPortalSectionRootClass = appSectionStackClass;
 
-/** Entity detail pages with sticky footer bar + flex shell for short content. */
-export const appEntityDetailRootClass = `${appSectionStackClass} pb-24 ${entityDetailShellClass}`;
+/** CP entity detail — identical scroll shell to dashboard-overview / patient-management. */
+export const appEntityDetailRootClass = appSectionRootClass;
 
-/** Resolve entity detail root — CP and portal share sticky-footer clearance. */
+/** Portal entity detail — portal stack rhythm; document scroll via AuthShell. */
+export const appPortalEntityDetailRootClass = appPortalSectionRootClass;
+
+/** Resolve entity detail root — CP includes `pb-3`; portal avoids double bottom inset. */
 export function resolveEntityDetailRootClass(
-  _shell: AppSectionScrollShell = "control-panel"
+  shell: AppSectionScrollShell = "control-panel"
 ): string {
-  return appEntityDetailRootClass;
+  return shell === "control-panel" ? appEntityDetailRootClass : appPortalEntityDetailRootClass;
 }
 
 /** Inline fetch/section failure banner. */

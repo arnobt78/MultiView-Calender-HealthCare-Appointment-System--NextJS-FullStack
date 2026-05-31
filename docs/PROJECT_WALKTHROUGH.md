@@ -2,7 +2,9 @@
 
 ## Latest Audit Update (2026-05-31)
 
-- **Entity detail parity (patient + category):** CP `/control-panel/patients/[id]` + `/control-panel/categories/[id]` — compact `PageHeader`, `gap-2` schema rows, `resolveEntityDetailRootClass` flex shell + sticky footer (`mt-auto`). Related appointments: `ClinicalDataTable` + `buildRelatedAppointmentsColumns` (sky titles, `PatientIdentityCell`, `DoctorIdentityCell`, `ClinicalAppointmentStatusBadge`, start–end times).
+- **Unified page header chrome:** `page-chrome-classes.ts` — `pageHeaderRootClass` (`py-2` + `min-h-[3.5rem]` whole row), `pageHeaderDescriptionClass` (no subtitle `mt-0.5`), `pageHeaderEntityDetailClass`. `PageHeader` + `PortalChromeHeader` share `pageChromeTitleStackClass`. CP tabs, entity detail, insights, services, portals aligned.
+- **Entity detail scroll + footer:** `appEntityDetailRootClass` = `appSectionRootClass`; single `cp-right-scroll` (no nested overflow — card glow unclipped). Actions via `entityDetailActionsRowClass` inline at page end (not sticky footer bar).
+- **Entity detail parity (patient + category):** CP `/control-panel/patients/[id]` + `/control-panel/categories/[id]` — `gap-2` schema rows. Related appointments: `ClinicalDataTable` + `buildRelatedAppointmentsColumns` + `hiddenColumns` (category detail hides Category col); sky titles, `PatientIdentityCell`, `DoctorIdentityCell`, `ClinicalAppointmentStatusBadge`.
 - **Shared category detail:** `CategoryDetailScreenShared` — CP wrapper sky + CRUD (`ControlPanelCategoryDetailScreen`); portal `/categories/[id]` amber glass (`CategoryDetailScreen` read-only). Tokens: `category-detail-ui-classes.ts`, `amberGlassBackButtonClass`.
 - **Snapshot mapper:** `appointment-snapshot-row.ts` + `appointmentSnapshotInclude` — patient + category snapshot/API/prefetch share one projection (patient denormalized fields, doctor images).
 - **Category audit trail:** `migrations/007_category_audit_users.sql` — `categories.created_by` / `updated_by`; Prisma relations; POST/PUT set actor; GET + `prefetchCategory` include `categoryDetailInclude`; `EntityDetailRecordAuditCard` + role-aware `EntityDetailAuditStaffLink`.
@@ -314,7 +316,7 @@ Shared primitives keep layout fixed while data loads:
 | `PortalDoctorChromeHeader` | `src/components/shared/PortalDoctorChromeHeader.tsx` | Doctor portal top row — avatar tile, name, email, `DoctorSpecialtyBadge`, Today date |
 | `PortalPanelSection` | `src/components/shared/PortalPanelSection.tsx` | White in-card section shell + heading badge (patient/doctor portal panels) |
 | `DoctorPortalStatsRow` | `src/components/doctor-portal/DoctorPortalStatsRow.tsx` | Doctor portal metric cards (`PatientStatCard` reuse) |
-| `page-chrome-classes.ts` | `src/lib/page-chrome-classes.ts` | `border-b py-2`, icon tile `min-h-[3.5rem]`, `portalPanelSectionHeadingClass`, toolbar-only shell |
+| `page-chrome-classes.ts` | `src/lib/page-chrome-classes.ts` | `border-b py-2`, icon tile `min-h-[3.5rem]`, `pageHeaderRootClass`, `pageChromeTitleStackClass`, `portalPanelSectionHeadingClass`, toolbar-only shell |
 | `dashboardShellClass` | `src/lib/dashboard-layout.ts` | `max-w-9xl` + horizontal padding + `pb-3` on scrollable portal pages via `AuthShell` |
 | `PageToolbarChrome` | `src/components/shared/PageToolbarChrome.tsx` | `/dashboard` — toolbar only (no Appointments title/icon) |
 | `CalendarHeaderRoleActions` | `src/components/calendar/CalendarHeaderRoleActions.tsx` | Dashboard toolbar: patient Book vs staff Import/New (SSR role, no flash) |

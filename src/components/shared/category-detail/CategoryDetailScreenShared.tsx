@@ -58,8 +58,14 @@ import {
 import type { CategoryCreateInput } from "@/hooks/useCategories";
 import { isCategoryActive } from "@/lib/entity-active-status";
 import { cn } from "@/lib/utils";
-import { resolveEntityDetailRootClass } from "@/lib/section-page-layout";
-import { clinicalSnapshotAppointmentsTableMinWidthClass } from "@/lib/clinical-snapshot-table-columns";
+import {
+  resolveEntityDetailRootClass,
+  type AppSectionScrollShell,
+} from "@/lib/section-page-layout";
+import {
+  CATEGORY_DETAIL_RELATED_APPOINTMENTS_HIDDEN_COLUMNS,
+  resolveClinicalSnapshotAppointmentsTableMinWidth,
+} from "@/lib/clinical-snapshot-table-columns";
 import type { Category, CategorySnapshot } from "@/types/types";
 import type { EntityRole } from "@/lib/entity-routes";
 import { clinicalEmptyOr } from "@/components/shared/ClinicalTableEmptyDash";
@@ -179,6 +185,8 @@ export function CategoryDetailScreenShared({
   initialAdminUsers,
 }: CategoryDetailScreenSharedProps) {
   const toneClasses = resolveCategoryDetailToneClasses(tone);
+  const scrollShell: AppSectionScrollShell =
+    mode === "control-panel" ? "control-panel" : "portal";
   const isAdminMode = mode === "control-panel";
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -273,8 +281,17 @@ export function CategoryDetailScreenShared({
         viewerRole: entityRole,
         patientDisplayName: "—",
         staffById,
+        hiddenColumns: CATEGORY_DETAIL_RELATED_APPOINTMENTS_HIDDEN_COLUMNS,
       }),
     [entityRole, staffById]
+  );
+
+  const appointmentTableMinWidthClass = useMemo(
+    () =>
+      resolveClinicalSnapshotAppointmentsTableMinWidth(
+        CATEGORY_DETAIL_RELATED_APPOINTMENTS_HIDDEN_COLUMNS
+      ),
+    []
   );
 
   if (!cat && !showBodySkeleton && !isLoading && isMounted) {
@@ -282,9 +299,8 @@ export function CategoryDetailScreenShared({
   }
 
   return (
-    <div className={resolveEntityDetailRootClass("control-panel")}>
+    <div className={resolveEntityDetailRootClass(scrollShell)}>
       <PageHeader
-        compact
         className={entityDetailPageHeaderClass}
         title={showLiveBody && cat ? cat.label : <Skeleton className="h-7 w-56 max-w-full" aria-hidden />}
         description="Category Record — Schema Fields, Related Appointments"
@@ -301,7 +317,7 @@ export function CategoryDetailScreenShared({
 
       <Card
         className={cn(
-          "flex-1 overflow-hidden bg-white/90 text-gray-700 shadow-none",
+          "flex-1 bg-white/90 text-gray-700",
           toneClasses.cardBorderClass,
           toneClasses.cardFrameClass
         )}
@@ -453,7 +469,7 @@ export function CategoryDetailScreenShared({
                 isLoading={appointmentsLoading}
                 pagination={false}
                 emptyMessage="No appointments use this category yet."
-                tableClassName={clinicalSnapshotAppointmentsTableMinWidthClass}
+                tableClassName={appointmentTableMinWidthClass}
                 className={patientDetailSnapshotTableFrameClass}
                 tableFrameClassName="rounded-md border border-slate-200/80 bg-white shadow-none"
               />
@@ -462,17 +478,16 @@ export function CategoryDetailScreenShared({
         </CardContent>
       </Card>
 
-      <div className={cn(toneClasses.stickyFooterClass, "mt-auto shrink-0")}>
-        <div className="flex min-h-10 flex-wrap items-center justify-between gap-2">
-          <BackNavigationLink
-            href={backHref}
-            className={cn(toneClasses.backButtonClass, "no-underline")}
-          >
-            <List className="shrink-0" aria-hidden />
-            Back To List
-          </BackNavigationLink>
-          {isAdminMode && hasCategory ? (
-            <div className="flex flex-wrap gap-2">
+      <div className={toneClasses.stickyFooterClass}>
+        <BackNavigationLink
+          href={backHref}
+          className={cn(toneClasses.backButtonClass, "no-underline")}
+        >
+          <List className="shrink-0" aria-hidden />
+          Back To List
+        </BackNavigationLink>
+        {isAdminMode && hasCategory ? (
+          <div className="flex flex-wrap gap-2">
               <ControlPanelGlassActionButton type="button" variant="emerald" onClick={openEditDialog}>
                 <Pencil className="shrink-0" aria-hidden />
                 Update Category
@@ -505,7 +520,6 @@ export function CategoryDetailScreenShared({
               />
             </div>
           ) : null}
-        </div>
       </div>
 
       {isAdminMode && hasCategory ? (

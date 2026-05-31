@@ -68,7 +68,7 @@ import {
   patientDetailPrimaryDoctorRowClass,
   patientDetailSchemaSectionClass,
   patientDetailSnapshotTableFrameClass,
-  patientDetailStickyFooterClass,
+  entityDetailActionsRowClass,
 } from "@/lib/patient-detail-ui-classes";
 import { ControlPanelGlassActionButton } from "@/components/shared/ControlPanelGlassActionButton";
 import { EntityDetailRecordAuditCard } from "@/components/shared/entity-detail/EntityDetailRecordAuditCard";
@@ -478,7 +478,6 @@ export function PatientDetailScreen({
   return (
     <div className={sectionRootClass}>
       <PageHeader
-        compact
         className={entityDetailPageHeaderClass}
         title={
           showLiveBody ? (
@@ -510,7 +509,7 @@ export function PatientDetailScreen({
 
       <Card
         className={cn(
-          "flex-1 overflow-hidden border-sky-100/50 bg-white/90 text-gray-700 shadow-none",
+          "flex-1 border-sky-100/50 bg-white/90 text-gray-700",
           skyGlassTableFrameClass
         )}
       >
@@ -703,18 +702,17 @@ export function PatientDetailScreen({
         </CardContent>
       </Card>
 
-      {/* Sticky footer — static client chrome; never swap placeholders on refetch/hydrate. */}
-      <div className={cn(patientDetailStickyFooterClass, "mt-auto shrink-0")}>
-        <div className="flex min-h-10 flex-wrap items-center justify-between gap-2">
-          <BackNavigationLink
-            href={listBackHref}
-            className={cn(skyGlassBackButtonClass, "no-underline")}
-          >
-            <List className="shrink-0" aria-hidden />
-            Back To List
-          </BackNavigationLink>
-          {canEdit ? (
-            <div className="flex flex-wrap gap-2">
+      {/* Actions — inline row after card (no separate footer bar layer). */}
+      <div className={entityDetailActionsRowClass}>
+        <BackNavigationLink
+          href={listBackHref}
+          className={cn(skyGlassBackButtonClass, "no-underline")}
+        >
+          <List className="shrink-0" aria-hidden />
+          Back To List
+        </BackNavigationLink>
+        {canEdit ? (
+          <div className="flex flex-wrap gap-2">
               <ControlPanelGlassActionButton
                 type="button"
                 variant="emerald"
@@ -769,7 +767,6 @@ export function PatientDetailScreen({
               />
             </div>
           ) : null}
-        </div>
       </div>
 
       {canEdit && p ? (

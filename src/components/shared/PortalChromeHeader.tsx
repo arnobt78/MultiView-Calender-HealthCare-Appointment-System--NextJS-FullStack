@@ -8,6 +8,7 @@ import {
   pageChromeIconClass,
   pageChromeIconTileClass,
   pageChromeTitleClass,
+  pageChromeTitleStackClass,
   pageChromeToolbarRowClass,
 } from "@/lib/page-chrome-classes";
 
@@ -41,7 +42,7 @@ export function PortalChromeHeader({
           <span className={pageChromeIconTileClass}>
             <Icon className={pageChromeIconClass} aria-hidden />
           </span>
-          <div className="flex min-w-0 flex-1 flex-col justify-center">
+          <div className={pageChromeTitleStackClass}>
             <h1 className={pageChromeTitleClass}>{toTitleCaseLabel(title)}</h1>
             <p className={pageChromeDescriptionClass}>{description}</p>
           </div>

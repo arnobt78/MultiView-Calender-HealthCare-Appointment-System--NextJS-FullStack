@@ -34,3 +34,20 @@ export const pageChromeToolbarOnlyInnerClass =
 /** In-card section title row inside `PortalPanelSection` (patient-portal / doctor-portal panels). */
 export const portalPanelSectionHeadingClass =
   "mb-3 flex flex-wrap items-center gap-2 text-sm font-semibold text-gray-700";
+
+/**
+ * Control-panel / entity detail `PageHeader` — whole row gets `py-2` + min height (matches portal icon tile).
+ * Title stack uses `pageChromeTitleStackClass` (no `mt-*` between title and subtitle).
+ */
+export const pageHeaderRootClass =
+  "flex min-h-[3.5rem] flex-col sm:flex-row sm:items-center justify-between gap-4 py-2 sticky top-0 z-20 backdrop-blur-sm";
+
+export const pageHeaderTitleClass =
+  "text-xl font-semibold tracking-tight text-gray-700";
+
+/** Matches list/management pages — subtitle sits flush under title (no `mt-0.5`). */
+export const pageHeaderDescriptionClass = "text-xs text-gray-500 sm:text-sm leading-relaxed";
+
+/** Optional fade when header sticks over scrolling CP content. */
+export const pageHeaderEntityDetailClass =
+  "bg-gradient-to-b from-white via-white/95 to-transparent";

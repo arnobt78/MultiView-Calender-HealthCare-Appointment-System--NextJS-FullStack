@@ -2,6 +2,8 @@
  * Patient detail definition list — label + value on one row (Y-axis aligned).
  */
 
+import { pageHeaderEntityDetailClass } from "@/lib/page-chrome-classes";
+
 /** Single schema row: icon label left, value right (stacks on xs). */
 export const patientDetailDefinitionRowClass =
   "grid grid-cols-1 gap-1 sm:grid-cols-[minmax(8.5rem,11rem)_minmax(0,1fr)] sm:items-start sm:gap-x-4";
@@ -31,16 +33,29 @@ export const entityDetailAuditIconCircleClass = entityDetailFieldIconCircleClass
 export const entityDetailSectionIconCircleClass =
   "flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-sky-200/70 bg-sky-50/80 shadow-[0_2px_10px_rgba(14,165,233,0.18)]";
 
-/** Flex shell so sticky footer pins to viewport bottom when content is short. */
-export const entityDetailShellClass = "flex min-h-full flex-col";
-
-/** Tighter entity detail PageHeader — less gap under title/description. */
-export const entityDetailPageHeaderClass =
-  "gap-2 bg-gradient-to-b from-white via-white/95 to-transparent pb-0";
+/**
+ * @deprecated Nested flex/inner-scroll shells clip glass shadows — use `appSectionRootClass` via
+ * `resolveEntityDetailRootClass` (dashboard-overview single `cp-right-scroll` scroll).
+ */
+export const entityDetailPageShellClass = "flex min-h-0 flex-1 flex-col text-gray-700";
 
 /**
- * Sticky action bar — always mounted; buttons stay visible during refetch (disabled only).
- * `min-h` matches glass action button row so layout does not jump on hydrate.
+ * @deprecated Inner `overflow-y-auto` clips card glow — do not use; scroll stays on `cp-right-scroll`.
  */
-export const patientDetailStickyFooterClass =
-  "sticky bottom-0 z-10 -mx-2 min-h-[3.25rem] border-t border-sky-100/60 bg-white/95 px-2 py-3 text-gray-700 backdrop-blur supports-backdrop-filter:bg-white/85 sm:-mx-4 sm:px-4 lg:-mx-8 lg:px-8";
+export const entityDetailScrollMainClass =
+  "cp-right-scroll min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain pb-3 text-gray-700";
+
+/** @deprecated Use `appSectionRootClass` / `resolveEntityDetailRootClass`. */
+export const entityDetailShellClass = entityDetailPageShellClass;
+
+/** @deprecated Use `pageHeaderEntityDetailClass` — optional sticky fade only; layout is on `PageHeader` root. */
+export const entityDetailPageHeaderClass = pageHeaderEntityDetailClass;
+
+/**
+ * Inline action row — last `space-y-3` sibling; no bar bg/border (same page layer as card).
+ */
+export const entityDetailActionsRowClass =
+  "flex flex-wrap items-center justify-between gap-2 text-gray-700";
+
+/** @deprecated Alias — use `entityDetailActionsRowClass`. */
+export const patientDetailStickyFooterClass = entityDetailActionsRowClass;
