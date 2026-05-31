@@ -11,6 +11,7 @@ import { serializePatient } from "@/lib/serializers";
 import { patientDetailInclude, patientUserPick } from "@/lib/patient-api-include";
 import { redis } from "@/lib/redis";
 import { getUserRole, isPatientRole } from "@/lib/rbac";
+import { assertDoctorActiveForBooking, InactiveDoctorBookingError } from "@/lib/doctor-active-booking";
 /** Per-request list/create — literal required by Next segment config (see api-route-dynamic.test.ts). */
 export const dynamic = "force-dynamic";
 
@@ -72,6 +73,17 @@ export async function POST(req: NextRequest) {
       body.primary_doctor_id && isValidUUID(String(body.primary_doctor_id))
         ? String(body.primary_doctor_id)
         : null;
+
+    if (primaryDoctorId) {
+      try {
+        await assertDoctorActiveForBooking(primaryDoctorId);
+      } catch (e) {
+        if (e instanceof InactiveDoctorBookingError) {
+          return NextResponse.json({ error: e.message }, { status: 409 });
+        }
+        throw e;
+      }
+    }
 
     const patient = await prisma.patient.create({
       data: {

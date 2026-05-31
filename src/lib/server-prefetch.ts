@@ -25,6 +25,10 @@ import {
   type ServiceCatalogRow,
 } from "@/lib/appointment-service-catalog";
 import { mergeBookableTypesForDoctor } from "@/lib/doctor-bookable-types";
+import {
+  fetchPaidRevenueCentsByDoctorIds,
+  resolveDoctorPaidRevenueCents,
+} from "@/lib/doctor-revenue-aggregate";
 import { PAGINATION } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import { redis } from "@/lib/redis";
@@ -38,6 +42,7 @@ import {
 } from "@/lib/serializers";
 import type { UsersListResponse } from "@/hooks/useUsers";
 import { patientDetailInclude, patientUserPick } from "@/lib/patient-api-include";
+import { USER_API_SELECT } from "@/lib/user-api-select";
 import { getInsightsData, type InsightsPayload } from "@/lib/insights-data";
 import { fetchInsightsWithRedisCache } from "@/lib/insights/insights-redis-cache";
 import {
@@ -771,6 +776,9 @@ export type DoctorPrefetchRow = {
     is_global?: boolean;
   }[];
   patient_count: number;
+  is_active?: boolean;
+  active_since?: string | null;
+  paid_revenue_cents?: number;
 };
 
 /**
@@ -792,6 +800,8 @@ export async function prefetchDoctors(): Promise<{ doctors: DoctorPrefetchRow[] 
           bio: true,
           created_at: true,
           role: true,
+          is_active: true,
+          active_since: true,
           doctor_availabilities: {
             select: { weekday: true, start_min: true, end_min: true, timezone: true },
           },
@@ -829,6 +839,7 @@ export async function prefetchDoctors(): Promise<{ doctors: DoctorPrefetchRow[] 
       }),
     ]);
 
+    const revenueByDoctor = await fetchPaidRevenueCentsByDoctorIds(rows.map((d) => d.id));
 
     const doctors: DoctorPrefetchRow[] = rows.map((d) => {
       const owned = d.appointment_types_owned;
@@ -842,10 +853,13 @@ export async function prefetchDoctors(): Promise<{ doctors: DoctorPrefetchRow[] 
         bio: d.bio,
         role: d.role,
         created_at: d.created_at.toISOString(),
+        is_active: d.is_active,
+        active_since: d.active_since?.toISOString() ?? null,
         availabilities: d.doctor_availabilities,
         appointment_types: owned,
         bookable_appointment_types,
         patient_count: d._count.patients_primary_doctor,
+        paid_revenue_cents: resolveDoctorPaidRevenueCents(d.id, revenueByDoctor),
       };
     });
 
@@ -880,16 +894,7 @@ export async function prefetchUsersList(filters: {
     const [users, total] = await Promise.all([
       prisma.user.findMany({
         where,
-        select: {
-          id: true,
-          email: true,
-          display_name: true,
-          role: true,
-          image: true,
-          created_at: true,
-          specialty: true,
-          bio: true,
-        },
+        select: USER_API_SELECT,
         orderBy: [{ display_name: { sort: "asc", nulls: "last" } }, { email: "asc" }],
         take: limit,
         skip: offset,

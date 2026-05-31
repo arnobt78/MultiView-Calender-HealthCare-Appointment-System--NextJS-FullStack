@@ -18,6 +18,7 @@ import { getUserRole, isPatientRole } from "@/lib/rbac";
 import { isValidUUID } from "@/lib/validation";
 import { appointmentDetailHref, appointmentNotificationLink } from "@/lib/entity-routes";
 import { redis } from "@/lib/redis";
+import { assertDoctorActiveForBooking, InactiveDoctorBookingError } from "@/lib/doctor-active-booking";
 import { format } from "date-fns";
 
 export const dynamic = "force-dynamic";
@@ -181,6 +182,16 @@ export async function POST(req: NextRequest) {
     const body = parsed.data;
     const startDate = new Date(body.start);
     const endDate = new Date(body.end);
+
+    const treatingId = body.treating_physician ?? sessionUser.userId;
+    try {
+      await assertDoctorActiveForBooking(treatingId);
+    } catch (e) {
+      if (e instanceof InactiveDoctorBookingError) {
+        return NextResponse.json({ error: e.message }, { status: 409 });
+      }
+      throw e;
+    }
 
     try {
       await assertNoOwnerAppointmentOverlap(prisma, {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   isCategoryActive,
+  isDoctorActive,
   isPatientActive,
   partitionForBookingSelect,
   sortCategoriesForBookingSelect,
@@ -72,6 +73,12 @@ describe("entity-active-status", () => {
     expect(selectable.map((p) => p.id)).toEqual(["other"]);
     expect(inactiveDisplay.map((p) => p.id)).toEqual(["inactive"]);
     expect(selectable.some((p) => p.id === "client")).toBe(false);
+  });
+
+  it("isDoctorActive treats missing is_active as true", () => {
+    expect(isDoctorActive({ is_active: true })).toBe(true);
+    expect(isDoctorActive({ is_active: false })).toBe(false);
+    expect(isDoctorActive({})).toBe(true);
   });
 
   it("sortCategoriesForBookingSelect orders by sort_order then label", () => {

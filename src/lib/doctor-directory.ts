@@ -37,6 +37,11 @@ export type DoctorDirectoryRow = {
   /** Owned + enabled globals — patient booking picker chips (mirrors `GET /api/appointment-types?doctorId=`). */
   bookable_appointment_types: DoctorDirectoryAppointmentType[];
   patient_count?: number;
+  /** Doctor account active — lists show all; booking selects partition inactive. */
+  is_active?: boolean;
+  active_since?: string | null;
+  /** All-time paid invoice revenue (cents) — `Invoice.user_id` = doctor. */
+  paid_revenue_cents?: number;
 };
 
 export type DoctorsDirectoryResponse = {

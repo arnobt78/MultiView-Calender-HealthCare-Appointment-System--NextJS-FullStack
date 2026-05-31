@@ -41,6 +41,9 @@ model User {
   languages_spoken        String[]  @default([])
   /// Years of clinical practice experience
   years_of_experience     Int?
+  /// When false, doctor is hidden from new appointment booking selects (still visible in lists).
+  is_active               Boolean   @default(true)
+  active_since            DateTime? @db.Timestamptz(6)
 
   appointments_owned       Appointment[]           @relation("AppointmentOwner")
   appointments_as_treating_physician Appointment[] @relation("AppointmentTreatingPhysician")

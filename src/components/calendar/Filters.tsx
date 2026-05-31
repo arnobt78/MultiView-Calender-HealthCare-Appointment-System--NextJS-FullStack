@@ -2,7 +2,7 @@
 
 import { Category, Patient } from "@/types/types";
 import { Input } from "@/components/ui/input";
-import { GlassResetFilterButton } from "@/components/shared/GlassResetFilterButton";
+import { ClinicalListFilterToolbar } from "@/components/shared/filters/ClinicalListFilterToolbar";
 import { FilterSelect } from "@/components/shared/filters/FilterSelect";
 import { Tag, User, CalendarDays, Circle, CalendarRange } from "lucide-react";
 
@@ -31,6 +31,7 @@ const STATUS_LABEL: Record<string, string> = {
   alert: "Alert",
 };
 
+/** Dashboard calendar filter row — shared `ClinicalListFilterToolbar` reset alignment. */
 export default function Filters({
   category,
   setCategory,
@@ -64,7 +65,7 @@ export default function Filters({
       : monthOptions.find((m) => m.value === month)?.label ?? "Monthly View";
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <ClinicalListFilterToolbar showReset={showReset} onReset={onReset}>
       <FilterSelect
         value={category ?? ALL_VALUE}
         onValueChange={(v) => setCategory(v === ALL_VALUE ? null : v)}
@@ -134,8 +135,6 @@ export default function Filters({
           ...monthOptions.map((m) => ({ value: m.value, label: m.label })),
         ]}
       />
-
-      {showReset ? <GlassResetFilterButton onClick={onReset} /> : null}
-    </div>
+    </ClinicalListFilterToolbar>
   );
 }

@@ -63,7 +63,9 @@ import { PatientBookingDoctorTypeSection } from "@/components/shared/patient-boo
 import { PatientBookingScheduleSection } from "@/components/shared/patient-booking/PatientBookingScheduleSection";
 import { PatientBookingConfirmSection } from "@/components/shared/patient-booking/PatientBookingConfirmSection";
 import { patientBookingDialogContentClass } from "@/components/shared/patient-booking/patient-booking-dialog-styles";
+import { DoctorDirectoryPickerCard } from "@/components/shared/doctor-display/DoctorDirectoryPickerCard";
 import type { DoctorDirectoryRow } from "@/lib/doctor-directory";
+import { isDoctorActive } from "@/lib/entity-active-status";
 
 export type PatientBookingDialogProps = {
   /** Pre-select doctor when opened from /services */
@@ -342,6 +344,13 @@ export function PatientBookingDialog({
   }
 
   const selectedDoctor = doctors.find((d) => d.id === doctorId);
+  /** Locked /services flow — inactive preselected doctor cannot proceed (server also rejects). */
+  const lockedDoctorBookingBlocked =
+    lockDoctor &&
+    Boolean(preselectedDoctorId) &&
+    !doctorsDirectoryLoading &&
+    selectedDoctor != null &&
+    !isDoctorActive(selectedDoctor);
   const today = new Date().toISOString().slice(0, 10);
   const backStep = getBackStep(step);
   const canAdvance = canAdvanceFromStep(step, wizardState);
@@ -378,6 +387,27 @@ export function PatientBookingDialog({
           onSubmit={(e) => e.preventDefault()}
           className="flex min-h-0 flex-1 flex-col"
         >
+          {lockedDoctorBookingBlocked && selectedDoctor ? (
+            <>
+              <div className="flex min-h-0 flex-1 flex-col gap-4 px-6 py-4 text-gray-700">
+                <DoctorDirectoryPickerCard doctor={selectedDoctor} readOnly selected />
+                <p className="text-sm text-muted-foreground">
+                  Inactive — booking unavailable for this doctor.
+                </p>
+              </div>
+              <div className="flex shrink-0 items-center justify-end gap-3 border-t border-sky-200/60 bg-sky-50/40 px-6 py-3">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className={cn(skyGlassPrimaryButtonClass, "cursor-pointer")}
+                  onClick={() => handleOpenChange(false)}
+                >
+                  Close
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
           <div
             className={cn(
               "flex min-h-0 flex-1 flex-col px-6 py-4 text-gray-700",
@@ -488,6 +518,8 @@ export function PatientBookingDialog({
               </Button>
             )}
           </div>
+            </>
+          )}
         </form>
       </DialogContent>
     </Dialog>

@@ -1,302 +1,367 @@
 "use client";
 
 /**
- * Doctor Management — redesigned to match PatientManagement style.
- * Color scheme: sky/indigo (different from patient's emerald).
- *
- * Shows:
- *  - Stat cards (total doctors, with specialty, with availability)
- *  - Searchable DataTable with avatar, name/email, specialty, availability days
- *  - Row actions: View detail, Edit role
+ * Doctor Management — patient/category list parity: stats, sticky filters, emerald table,
+ * View / Edit / Deactivate only (no add/delete — demo showcase).
  */
 
 import { type ColumnDef } from "@tanstack/react-table";
-import { useQuery } from "@tanstack/react-query";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  CalendarClock,
+  EllipsisVertical,
+  Eye,
+  ListFilter,
+  Pencil,
+  Power,
+  PowerOff,
+  Stethoscope,
+} from "lucide-react";
 import { PrefetchingLink } from "@/components/shared/PrefetchingLink";
 import { DataTable } from "@/components/shared/DataTable";
 import { DataTableColumnHeader } from "@/components/shared/DataTableColumnHeader";
 import { PageHeader } from "@/components/shared/PageHeader";
+import { DemoShowcaseFeatureNote } from "@/components/shared/DemoShowcaseFeatureNote";
 import { DoctorIdentityRow } from "@/components/shared/doctor-display/DoctorIdentityRow";
-import { UserRoleBadge } from "@/components/shared/UserRoleBadge";
+import { DoctorAvailabilityGroups } from "@/components/shared/doctor-display/DoctorAvailabilityGroups";
+import { DoctorDirectoryServiceChips } from "@/components/shared/doctor-display/DoctorDirectoryServiceChips";
+import { EntityActiveStatusBadge } from "@/components/shared/entity-display/EntityActiveStatusBadge";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { DoctorSpecialtyBadge } from "@/components/shared/doctor-display/DoctorSpecialtyBadge";
+import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
+import { AppSectionErrorBanner } from "@/components/shared/AppSectionErrorBanner";
+import { DOCTOR_MANAGEMENT_DEMO_NOTE } from "@/lib/demo-showcase-copy";
+import {
+  doctorManagementStatsStripClass,
+  emeraldGlassTableFrameClass,
+} from "@/lib/doctor-management-toolbar-classes";
+import { ClinicalListFilterToolbar } from "@/components/shared/filters/ClinicalListFilterToolbar";
+import { FilterSelect } from "@/components/shared/filters/FilterSelect";
+import { APP_INNER_SCROLL_STICKY_TOP_CLASS } from "@/lib/portal-z-index";
+import {
+  DoctorListFiltersProvider,
+  useDoctorListFilters,
+  type DoctorAvailabilityFilter,
+  type DoctorStatusFilter,
+} from "@/components/control-panel/DoctorListFiltersContext";
+import { DoctorManagementStatsRow } from "@/components/control-panel/DoctorManagementStatsRow";
+import { DoctorMetricsProvider } from "@/context/DoctorMetricsContext";
+import { useDoctorListMetrics } from "@/hooks/useDoctorListMetrics";
+import { DoctorFormDialog } from "@/components/control-panel/doctor-dialog/DoctorFormDialog";
+import {
+  doctorFormToUpdatePayload,
+  EMPTY_DOCTOR_FORM,
+  userToDoctorForm,
+  type DoctorFormValues,
+} from "@/lib/doctor-form-state";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Card, CardContent } from "@/components/ui/card";
+import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
+import type { User } from "@/types/types";
+import type { DoctorDirectoryRow } from "@/lib/doctor-directory";
+import { useUsers } from "@/hooks/useUsers";
+import { useDoctorsDirectory } from "@/hooks/useDoctorsDirectory";
+import { CP_DOCTOR_USERS_FILTERS } from "@/lib/control-panel-users-filters";
+import { isDoctorActive } from "@/lib/entity-active-status";
+import { formatInvoiceMoney } from "@/lib/crud-notify-messages";
+import { SPECIALTIES } from "@/lib/doctor-specialty";
 import { cn } from "@/lib/utils";
 import {
-  skyGlassTableFrameClass,
-  emeraldGlassPrimaryButtonClass,
-} from "@/lib/calendar-header-action-styles";
-import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
-import { AppSectionErrorBanner } from "@/components/shared/AppSectionErrorBanner";
-import type { User } from "@/types/types";
-import { useUsers } from "@/hooks/useUsers";
-import { CP_DOCTOR_USERS_FILTERS } from "@/lib/control-panel-users-filters";
-import { queryKeys } from "@/lib/query-keys";
-import { apiClient } from "@/lib/api-client";
-import {
-  EllipsisVertical,
-  Eye,
-  ShieldCheck,
-  Stethoscope,
-  Users,
-  CalendarClock,
-  BookOpen,
-} from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+  clinicalCellMutedTextClass,
+  clinicalCellPrimaryTextClass,
+  clinicalStackGapClass,
+  clinicalTableCellMinRowClass,
+} from "@/lib/table-display-styles";
 
-// ---------------------------------------------------------------------------
-// Types for the doctor detail data from /api/doctors
-// ---------------------------------------------------------------------------
-interface DoctorRow {
-  id: string;
-  email: string;
-  display_name: string | null;
-  image: string | null;
-  specialty: string | null;
-  bio: string | null;
-  availabilities: { weekday: number }[];
-  patient_count: number;
-}
+type DoctorTableRow = User & { directory?: DoctorDirectoryRow };
 
-const WEEKDAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
+const STATUS_FILTER_LABEL: Record<DoctorStatusFilter, string> = {
+  all: "All Statuses",
+  active: "Active",
+  inactive: "Inactive",
+};
 
-// ---------------------------------------------------------------------------
-// Stat cards — only pulse numeric values during load (icons + labels stay stable)
-// ---------------------------------------------------------------------------
-function DoctorStatCards({ doctors, isLoading }: { doctors: DoctorRow[]; isLoading: boolean }) {
-  const withSpecialty = doctors.filter((d) => d.specialty).length;
-  const withAvailability = doctors.filter((d) => d.availabilities.length > 0).length;
+const AVAILABILITY_FILTER_LABEL: Record<DoctorAvailabilityFilter, string> = {
+  all: "All Availability",
+  with: "With Hours",
+  without: "No Hours",
+};
 
-  const stats = [
-    {
-      label: "Total Doctors",
-      value: doctors.length,
-      icon: <Stethoscope className="h-4 w-4" />,
-      cls: "bg-sky-50/60 border-sky-200/60",
-      valueCls: "text-sky-700",
-      iconCls: "bg-sky-100 border-sky-200 text-sky-600",
-    },
-    {
-      label: "With Specialty",
-      value: withSpecialty,
-      icon: <BookOpen className="h-4 w-4" />,
-      cls: "bg-indigo-50/60 border-indigo-200/60",
-      valueCls: "text-indigo-700",
-      iconCls: "bg-indigo-100 border-indigo-200 text-indigo-600",
-    },
-    {
-      label: "With Availability",
-      value: withAvailability,
-      icon: <CalendarClock className="h-4 w-4" />,
-      cls: "bg-violet-50/60 border-violet-200/60",
-      valueCls: "text-violet-700",
-      iconCls: "bg-violet-100 border-violet-200 text-violet-600",
-    },
-    {
-      label: "Total Patients",
-      value: doctors.reduce((s, d) => s + d.patient_count, 0),
-      icon: <Users className="h-4 w-4" />,
-      cls: "bg-emerald-50/60 border-emerald-200/60",
-      valueCls: "text-emerald-700",
-      iconCls: "bg-emerald-100 border-emerald-200 text-emerald-600",
-    },
-  ];
+function DoctorActions({
+  row,
+  onEdit,
+  onToggleActive,
+}: {
+  row: DoctorTableRow;
+  onEdit: (row: DoctorTableRow) => void;
+  onToggleActive: (row: DoctorTableRow) => void;
+}) {
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const active = isDoctorActive(row);
+  const label = row.display_name?.trim() || row.email;
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-      {stats.map(({ label, value, icon, cls, valueCls, iconCls }) => (
-        <Card key={label} className={cn("rounded-[16px] border", cls)}>
-          <CardContent className="p-3 flex items-center gap-2">
-            <span className={cn("flex h-9 w-9 items-center justify-center rounded-xl border shrink-0", iconCls)}>
-              {icon}
-            </span>
-            <div>
-              {/* Only pulse the numeric value — label + icon stay fixed during load */}
-              {isLoading
-                ? <Skeleton className="h-5 w-8 rounded mb-1" />
-                : <p className={cn("text-lg font-bold leading-none", valueCls)}>{value}</p>
-              }
-              <p className="text-xs text-muted-foreground ">{label}</p>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Role change cell
-// ---------------------------------------------------------------------------
-function RoleCell({ user, onRoleChange }: { user: User; onRoleChange: (id: string, role: string) => void }) {
-  const ROLES = ["admin", "doctor", "patient"];
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-7 gap-1">
-          <UserRoleBadge role={user.role} />
-          <ShieldCheck className="h-3 w-3 text-muted-foreground" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
-        <DropdownMenuLabel>Change role</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {ROLES.map((r) => (
-          <DropdownMenuItem key={r} className="capitalize" onSelect={() => onRoleChange(user.id, r)}>
-            {r}
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-7 w-7">
+            <EllipsisVertical className="h-4 w-4" />
+            <span className="sr-only">Open menu</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem asChild>
+            <PrefetchingLink
+              href={`/control-panel/doctors/${row.id}`}
+              className="flex items-center gap-2 cursor-pointer"
+            >
+              <Eye className="h-4 w-4" />
+              View
+            </PrefetchingLink>
           </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+          <DropdownMenuItem
+            className="flex items-center gap-2 cursor-pointer"
+            onSelect={() => onEdit(row)}
+          >
+            <Pencil className="h-4 w-4" />
+            Edit
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            className={cn(
+              "flex items-center gap-2 cursor-pointer",
+              active ? "text-amber-800 focus:text-amber-900" : "text-emerald-800 focus:text-emerald-900"
+            )}
+            onSelect={() => setConfirmOpen(true)}
+          >
+            {active ? <PowerOff className="h-4 w-4" /> : <Power className="h-4 w-4" />}
+            {active ? "Deactivate" : "Activate"}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <ConfirmActionDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title={active ? "Deactivate this doctor?" : "Activate this doctor?"}
+        subtitle={
+          active ? (
+            <>
+              <span className="font-medium text-gray-700">{label}</span> will stay in lists and
+              /services but will not appear as selectable for new appointments.
+            </>
+          ) : (
+            <>
+              <span className="font-medium text-gray-700">{label}</span> will become available for
+              new appointment bookings again.
+            </>
+          )
+        }
+        confirmLabel={active ? "Deactivate" : "Activate"}
+        variant={active ? "warning" : "info"}
+        onConfirm={() => {
+          onToggleActive(row);
+          setConfirmOpen(false);
+        }}
+      />
+    </>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Actions cell
-// ---------------------------------------------------------------------------
-function ActionsCell({ user }: { user: User }) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-7 w-7">
-          <EllipsisVertical className="h-4 w-4" />
-          <span className="sr-only">Open menu</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem asChild>
-          <PrefetchingLink href={`/control-panel/doctors/${user.id}`} className="flex items-center gap-2 cursor-pointer">
-            <Eye className="h-4 w-4" />
-            View Detail
-          </PrefetchingLink>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Main component
-// ---------------------------------------------------------------------------
-export default function DoctorManagement() {
-  const { data: usersData, isLoading: usersLoading, isError: usersError, updateUser } =
+function DoctorManagementInner() {
+  const { data: usersData, isLoading: usersLoading, isError: usersError, updateUser, isUpdating } =
     useUsers(CP_DOCTOR_USERS_FILTERS);
-  const usersRows: User[] = usersData?.users ?? [];
+  const {
+    data: doctorsData,
+    isLoading: doctorsLoading,
+    isFetching: doctorsFetching,
+    isError: doctorsError,
+  } = useDoctorsDirectory();
 
-  // Enrich with specialty, bio, availability, patient_count from /api/doctors
-  const { data: doctorsData, isLoading: doctorsLoading, isError: doctorsError } = useQuery({
-    queryKey: queryKeys.doctors.all,
-    queryFn: () => apiClient<{ doctors: DoctorRow[] }>("/api/doctors"),
-    staleTime: 2 * 60 * 1000,
-  });
-  const doctorMap = new Map((doctorsData?.doctors ?? []).map((d) => [d.id, d]));
-  const isLoading = usersLoading || doctorsLoading;
+  const {
+    status,
+    setStatus,
+    specialty,
+    setSpecialty,
+    availability,
+    setAvailability,
+    listSearch,
+    setListSearch,
+    filterDoctors,
+    hasActiveFilters,
+    resetFilters,
+  } = useDoctorListFilters();
+
+  const [listUiMounted, setListUiMounted] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingDoctor, setEditingDoctor] = useState<DoctorTableRow | null>(null);
+  const [dialogForm, setDialogForm] = useState<DoctorFormValues>(EMPTY_DOCTOR_FORM);
+
+  useEffect(() => {
+    requestAnimationFrame(() => setListUiMounted(true));
+  }, []);
+
+  const doctorMap = useMemo(
+    () => new Map((doctorsData?.doctors ?? []).map((d) => [d.id, d])),
+    [doctorsData?.doctors]
+  );
+
+  const mergedRows: DoctorTableRow[] = useMemo(
+    () =>
+      (usersData?.users ?? []).map((u) => ({
+        ...u,
+        directory: doctorMap.get(u.id),
+      })),
+    [usersData?.users, doctorMap]
+  );
+
+  const hasCache = mergedRows.length > 0;
+  const listBodyLoading = !listUiMounted || ((usersLoading || doctorsLoading) && !hasCache);
   const isError = usersError || doctorsError;
+  const metrics = useDoctorListMetrics(mergedRows);
 
-  const handleRoleChange = (id: string, role: string) => {
-    updateUser({ id, role });
-  };
+  const filteredRows = useMemo(
+    () => filterDoctors(mergedRows),
+    [mergedRows, filterDoctors]
+  );
 
-  const columns: ColumnDef<User>[] = [
-    {
-      id: "display_name",
-      accessorFn: (row) => `${row.display_name ?? ""} ${row.email}`.trim(),
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Doctor" />,
-      meta: { shellClassName: "min-w-[12rem]" },
-      cell: ({ row }) => {
-        const u = row.original;
-        const d = doctorMap.get(u.id);
-        return (
-          <DoctorIdentityRow
-            doctor={{
-              id: u.id,
-              email: u.email,
-              display_name: u.display_name,
-              image: u.image,
-              specialty: d?.specialty ?? null,
-            }}
-            linkKind="admin-cp"
-            size="sm"
-            showEmail
-            showSpecialty={false}
+  const openEditDialog = useCallback((row: DoctorTableRow) => {
+    setEditingDoctor(row);
+    setDialogForm(userToDoctorForm(row));
+    setEditDialogOpen(true);
+  }, []);
+
+  const handleSaveEdit = useCallback(() => {
+    if (!editingDoctor) return;
+    updateUser({
+      id: editingDoctor.id,
+      ...doctorFormToUpdatePayload(dialogForm),
+    });
+    setEditDialogOpen(false);
+  }, [editingDoctor, dialogForm, updateUser]);
+
+  const handleToggleActive = useCallback(
+    (row: DoctorTableRow) => {
+      const nextActive = !isDoctorActive(row);
+      updateUser({ id: row.id, is_active: nextActive });
+    },
+    [updateUser]
+  );
+
+  const columns: ColumnDef<DoctorTableRow>[] = useMemo(
+    () => [
+      {
+        id: "display_name",
+        accessorFn: (row) => `${row.display_name ?? ""} ${row.email}`.trim(),
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Doctor" />,
+        meta: { shellClassName: "min-w-[14rem]" },
+        cell: ({ row }) => {
+          const u = row.original;
+          const d = u.directory;
+          const active = isDoctorActive(u);
+          return (
+            <div className={cn("flex min-h-[2.75rem] min-w-0 flex-col justify-center", clinicalStackGapClass)}>
+              <DoctorIdentityRow
+                doctor={{
+                  id: u.id,
+                  email: u.email,
+                  display_name: u.display_name,
+                  image: u.image,
+                  specialty: d?.specialty ?? u.specialty ?? null,
+                }}
+                linkKind="admin-cp"
+                size="sm"
+                showEmail
+                showSpecialty
+              />
+              <EntityActiveStatusBadge active={active} />
+            </div>
+          );
+        },
+      },
+      {
+        id: "availability",
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Available Days" />
+        ),
+        meta: { shellClassName: "min-w-[11rem]" },
+        cell: ({ row }) => {
+          const slots = row.original.directory?.availabilities ?? [];
+          if (!slots.length) return <span className={clinicalCellMutedTextClass}>—</span>;
+          return (
+            <DoctorAvailabilityGroups
+              availabilities={slots}
+              layout="services-card"
+              className={clinicalTableCellMinRowClass}
+            />
+          );
+        },
+      },
+      {
+        id: "visit_types",
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Visit Types" />,
+        meta: { shellClassName: "min-w-[10rem]" },
+        cell: ({ row }) => {
+          const types = row.original.directory?.bookable_appointment_types ?? [];
+          return (
+            <DoctorDirectoryServiceChips types={types} showSchedulingMeta={false} />
+          );
+        },
+      },
+      {
+        id: "patients",
+        accessorFn: (row) => row.directory?.patient_count ?? 0,
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Patients" />,
+        meta: { shellClassName: "w-[5rem] text-center" },
+        cell: ({ row }) => (
+          <span className="text-sm font-medium">
+            {row.original.directory?.patient_count ?? 0}
+          </span>
+        ),
+      },
+      {
+        id: "revenue",
+        accessorFn: (row) => row.directory?.paid_revenue_cents ?? 0,
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Revenue" />,
+        meta: { shellClassName: "min-w-[7rem]" },
+        cell: ({ row }) => {
+          const cents = row.original.directory?.paid_revenue_cents ?? 0;
+          return (
+            <span className={clinicalCellPrimaryTextClass}>
+              {formatInvoiceMoney({ amount: cents, currency: "eur", unit: "cents" })}
+            </span>
+          );
+        },
+      },
+      {
+        id: "actions",
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Actions" className="text-right" />
+        ),
+        enableSorting: false,
+        meta: { shellClassName: "w-[1%] whitespace-nowrap text-right" },
+        cell: ({ row }) => (
+          <DoctorActions
+            row={row.original}
+            onEdit={openEditDialog}
+            onToggleActive={handleToggleActive}
           />
-        );
+        ),
       },
-    },
-    {
-      id: "specialty",
-      header: "Specialty",
-      meta: { shellClassName: "min-w-[9rem]" },
-      cell: ({ row }) => {
-        const d = doctorMap.get(row.original.id);
-        return d?.specialty ? (
-          <DoctorSpecialtyBadge specialty={d.specialty} className="text-xs" />
-        ) : (
-          <span className="text-muted-foreground text-xs">—</span>
-        );
-      },
-    },
-    {
-      id: "availability",
-      header: "Available Days",
-      meta: { shellClassName: "min-w-[10rem]" },
-      cell: ({ row }) => {
-        const d = doctorMap.get(row.original.id);
-        if (!d || d.availabilities.length === 0)
-          return <span className="text-muted-foreground text-xs">—</span>;
-        const days = Array.from(new Set(d.availabilities.map((a) => a.weekday))).sort();
-        return (
-          <div className="flex flex-wrap gap-1">
-            {days.map((day) => (
-              <Badge key={day} variant="outline" className="text-[10px] px-1.5 py-0 bg-violet-50 text-violet-700 border-violet-200">
-                {WEEKDAY_SHORT[day]}
-              </Badge>
-            ))}
-          </div>
-        );
-      },
-    },
-    {
-      id: "patients",
-      header: "Patients",
-      meta: { shellClassName: "w-[5rem] text-center" },
-      cell: ({ row }) => {
-        const d = doctorMap.get(row.original.id);
-        return (
-          <span className="text-sm font-medium">{d?.patient_count ?? 0}</span>
-        );
-      },
-    },
-    {
-      accessorKey: "role",
-      header: "Role",
-      meta: { shellClassName: "min-w-[8rem] whitespace-nowrap" },
-      cell: ({ row }) => <RoleCell user={row.original} onRoleChange={handleRoleChange} />,
-    },
-    {
-      id: "actions",
-      header: "Actions",
-      enableSorting: false,
-      meta: { shellClassName: "w-[1%] whitespace-nowrap text-right" },
-      cell: ({ row }) => <ActionsCell user={row.original} />,
-    },
-  ];
-
-  const enrichedDoctors: DoctorRow[] = (doctorsData?.doctors ?? []);
+    ],
+    [openEditDialog, handleToggleActive]
+  );
 
   if (isError) {
     return (
       <div className={controlPanelSectionRootClass}>
-        <PageHeader title="Doctor Management" description="Manage doctor profiles, specialties, and availability." />
+        <PageHeader
+          title="Doctor Management"
+          description="Manage doctor profiles, specialties, and availability."
+        />
         <AppSectionErrorBanner>
           Failed to load doctor data. Please refresh the page.
         </AppSectionErrorBanner>
@@ -305,36 +370,122 @@ export default function DoctorManagement() {
   }
 
   return (
-    <div className={controlPanelSectionRootClass}>
-      <PageHeader
-        title="Doctor Management"
-        description="Manage doctor profiles, specialties, and availability."
-      />
+    <DoctorMetricsProvider
+      value={{
+        rows: mergedRows,
+        metrics,
+        isLoading: usersLoading || doctorsLoading,
+        isFetching: doctorsFetching,
+        listBodyLoading,
+      }}
+    >
+      <div className={controlPanelSectionRootClass}>
+        <PageHeader
+          title="Doctor Management"
+          description="Manage doctor profiles, specialties, and availability."
+        />
 
-      <DoctorStatCards doctors={enrichedDoctors} isLoading={isLoading} />
+        <DemoShowcaseFeatureNote note={DOCTOR_MANAGEMENT_DEMO_NOTE} />
 
-      <div className={cn("rounded-2xl overflow-hidden", skyGlassTableFrameClass)}>
-        <DataTable<User, unknown>
+        <div className={doctorManagementStatsStripClass}>
+          <DoctorManagementStatsRow />
+        </div>
+
+        <ClinicalListFilterToolbar
+          stickyClassName={APP_INNER_SCROLL_STICKY_TOP_CLASS}
+          search={{
+            value: listSearch,
+            onChange: setListSearch,
+            placeholder: "Search by name, email, or specialty…",
+            ariaLabel: "Search doctors by name, email, or specialty",
+          }}
+          showReset={hasActiveFilters}
+          onReset={resetFilters}
+        >
+          <FilterSelect
+            icon={ListFilter}
+            value={status}
+            onValueChange={(v) => setStatus(v as DoctorStatusFilter)}
+            displayLabel={STATUS_FILTER_LABEL[status]}
+            size="toolbar"
+            triggerClassName="max-w-[200px]"
+            ariaLabel="Filter by status"
+            options={(["all", "active", "inactive"] as const).map((k) => ({
+              value: k,
+              label: STATUS_FILTER_LABEL[k],
+            }))}
+          />
+          <FilterSelect
+            icon={Stethoscope}
+            value={specialty}
+            onValueChange={setSpecialty}
+            displayLabel={specialty === "all" ? "All Specialties" : specialty}
+            size="toolbar"
+            triggerClassName="max-w-[220px]"
+            ariaLabel="Filter by specialty"
+            options={[
+              { value: "all", label: "All Specialties" },
+              ...SPECIALTIES.map((s) => ({ value: s, label: s })),
+            ]}
+          />
+          <FilterSelect
+            icon={CalendarClock}
+            value={availability}
+            onValueChange={(v) => setAvailability(v as DoctorAvailabilityFilter)}
+            displayLabel={AVAILABILITY_FILTER_LABEL[availability]}
+            size="toolbar"
+            triggerClassName="max-w-[220px]"
+            ariaLabel="Filter by availability"
+            options={(["all", "with", "without"] as const).map((k) => ({
+              value: k,
+              label: AVAILABILITY_FILTER_LABEL[k],
+            }))}
+          />
+        </ClinicalListFilterToolbar>
+
+        <DataTable<DoctorTableRow, unknown>
           columns={columns}
-          data={usersRows}
-          isLoading={isLoading}
+          data={filteredRows}
+          isLoading={listBodyLoading}
+          externalGlobalFilter={{ value: listSearch, onChange: setListSearch }}
           globalFilterFn={(row, q) => {
             const s = q.trim().toLowerCase();
             if (!s) return true;
             const u = row;
-            const d = doctorMap.get(u.id);
+            const d = u.directory;
             return (
               (u.display_name?.toLowerCase().includes(s) ?? false) ||
               u.email.toLowerCase().includes(s) ||
-              (d?.specialty?.toLowerCase().includes(s) ?? false)
+              (d?.specialty?.toLowerCase().includes(s) ?? false) ||
+              (u.specialty?.toLowerCase().includes(s) ?? false)
             );
           }}
-          searchPlaceholder="Search by name, email, or specialty…"
-          emptyMessage="No doctors found."
-          tableClassName="min-w-[860px]"
+          emptyMessage="No doctors match your filters."
+          tableClassName="min-w-[1100px] w-full"
           tableLayout="auto"
+          tableFrameClassName={emeraldGlassTableFrameClass}
         />
+
+        {editingDoctor ? (
+          <DoctorFormDialog
+            open={editDialogOpen}
+            onOpenChange={setEditDialogOpen}
+            readOnlyEmail={editingDoctor.email}
+            form={dialogForm}
+            onFormChange={(patch) => setDialogForm((p) => ({ ...p, ...patch }))}
+            onSubmit={handleSaveEdit}
+            isSubmitting={isUpdating}
+          />
+        ) : null}
       </div>
-    </div>
+    </DoctorMetricsProvider>
+  );
+}
+
+export default function DoctorManagement() {
+  return (
+    <DoctorListFiltersProvider>
+      <DoctorManagementInner />
+    </DoctorListFiltersProvider>
   );
 }

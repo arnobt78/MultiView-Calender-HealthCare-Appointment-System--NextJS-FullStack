@@ -77,6 +77,7 @@ import {
 import { ControlPanelGlassActionButton } from "@/components/shared/ControlPanelGlassActionButton";
 import { EntityDetailRecordAuditCard } from "@/components/shared/entity-detail/EntityDetailRecordAuditCard";
 import { EntityDetailSnapshotSectionHeading } from "@/components/shared/entity-detail/EntityDetailSnapshotSectionHeading";
+import { entityDetailOwnedSnapshotSectionTitle } from "@/lib/entity-detail-snapshot-section-copy";
 import { cn } from "@/lib/utils";
 import {
   resolveEntityDetailRootClass,
@@ -465,6 +466,8 @@ export function PatientDetailScreen({
               clinical_profile: p.clinical_profile,
             }
           : null,
+        // Page is scoped to one patient — title column shows visit type + status only.
+        titleColumn: { showPatientIdentity: false },
       }),
     [viewerRole, patientDisplayName, staffById, p]
   );
@@ -478,6 +481,17 @@ export function PatientDetailScreen({
     snap.data?.appointmentTotalCount ?? snap.data?.appointments?.length ?? 0;
   const invoiceTotalCount = snap.data?.invoiceTotalCount ?? snap.data?.invoices?.length ?? 0;
   const snapshotSectionsLoading = snap.isLoading && !snap.data;
+
+  const relatedAppointmentsSectionTitle = entityDetailOwnedSnapshotSectionTitle(
+    patientDisplayName,
+    "relatedAppointments",
+    "patient"
+  );
+  const relatedInvoicesSectionTitle = entityDetailOwnedSnapshotSectionTitle(
+    patientDisplayName,
+    "relatedInvoicesViaAppointments",
+    "patient"
+  );
 
   const cp = p?.clinical_profile;
 
@@ -691,7 +705,7 @@ export function PatientDetailScreen({
                   count={appointmentTotalCount}
                   countSkeleton={snapshotSectionsLoading}
                 >
-                  Related Appointments
+                  {relatedAppointmentsSectionTitle}
                 </SectionHeading>
                 <ClinicalDataTable
                   columns={appointmentColumns}
@@ -712,7 +726,7 @@ export function PatientDetailScreen({
                   count={invoiceTotalCount}
                   countSkeleton={snapshotSectionsLoading}
                 >
-                  Invoices (Via Appointments)
+                  {relatedInvoicesSectionTitle}
                 </SectionHeading>
                 <ClinicalDataTable
                   columns={invoiceColumns}

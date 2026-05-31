@@ -55,4 +55,7 @@ export function seedControlPanelSectionCache(
       initial.dashboardAccessAccepted
     );
   }
+  if (initial.doctorsDirectory != null) {
+    queryClient.setQueryData(queryKeys.doctors.all, initial.doctorsDirectory);
+  }
 }

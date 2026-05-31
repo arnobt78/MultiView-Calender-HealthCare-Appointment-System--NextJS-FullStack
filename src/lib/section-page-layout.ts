@@ -32,6 +32,10 @@ export function resolveEntityDetailRootClass(
 export const appSectionErrorBannerClass =
   "flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700";
 
+/** Demo showcase intentional-limitation note — emerald glass (doctor management, etc.). */
+export const appSectionDemoNoteBannerClass =
+  "flex items-start gap-3 rounded-xl border border-emerald-200/70 bg-emerald-50/80 px-3 py-2.5 text-emerald-900";
+
 export type AppSectionScrollShell = "control-panel" | "portal";
 
 /** Pick root class from scroll shell — CP panes need `pb-3`; portal shell already insets bottom. */

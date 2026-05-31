@@ -4,8 +4,10 @@ import { SafeImage } from "@/components/ui/safe-image";
 import { DoctorAvailabilityGroups } from "@/components/shared/doctor-display/DoctorAvailabilityGroups";
 import { DoctorDirectoryServiceChips } from "@/components/shared/doctor-display/DoctorDirectoryServiceChips";
 import { DoctorSpecialtyBadge } from "@/components/shared/doctor-display/DoctorSpecialtyBadge";
+import { EntityActiveStatusBadge } from "@/components/shared/entity-display/EntityActiveStatusBadge";
 import { useDoctorDisplayOptional } from "@/context/DoctorDisplayContext";
 import { resolveDoctorBookableTypes, type DoctorDirectoryRow } from "@/lib/doctor-directory";
+import { isDoctorActive } from "@/lib/entity-active-status";
 import {
   patientBookingGlassTileClass,
   patientBookingGlassTileSelectedClass,
@@ -58,6 +60,7 @@ export function DoctorDirectoryPickerCard({
         <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
           <span className="truncate text-sm font-semibold text-gray-800">{label}</span>
           <DoctorSpecialtyBadge specialty={doctor.specialty} className="shrink-0" />
+          <EntityActiveStatusBadge active={isDoctorActive(doctor)} />
         </div>
         <div>
           <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">

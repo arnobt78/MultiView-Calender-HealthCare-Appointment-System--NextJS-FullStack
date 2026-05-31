@@ -41,11 +41,13 @@ import { prefetchAppointmentTypesForDoctor } from "@/lib/prefetch-appointment-ty
 import { prefetchDoctorsDirectory } from "@/lib/prefetch-doctors-directory";
 import { RoleEntityLink } from "@/components/shared/RoleEntityLink";
 import { DoctorSpecialtyBadge } from "@/components/shared/doctor-display/DoctorSpecialtyBadge";
+import { EntityActiveStatusBadge } from "@/components/shared/entity-display/EntityActiveStatusBadge";
 import { DoctorCardHeroImage } from "@/components/shared/doctor-display/DoctorCardHeroImage";
 import { DoctorAvailabilityGroups } from "@/components/shared/doctor-display/DoctorAvailabilityGroups";
 import { PortalChromeHeader } from "@/components/shared/PortalChromeHeader";
 import { AppSectionErrorBanner } from "@/components/shared/AppSectionErrorBanner";
 import { appPortalSectionRootClass } from "@/lib/section-page-layout";
+import { isDoctorActive } from "@/lib/entity-active-status";
 import { DoctorProfileCardSkeleton } from "@/components/shared/services/DoctorProfileCardSkeleton";
 import {
   ServicesDoctorFilters,
@@ -73,6 +75,8 @@ export interface DoctorCard {
   /** Merged owned + enabled globals — used for visit-type filter on this page. */
   bookable_appointment_types?: DoctorBookableTypeRow[];
   patient_count: number;
+  /** Doctor account active — inactive doctors stay listed but cannot be booked. */
+  is_active?: boolean;
 }
 
 /** Copy email with brief check icon feedback — local state only (no navigation). */
@@ -108,8 +112,10 @@ function DoctorEmailRow({ email }: { email: string }) {
 function DoctorProfileCard({ doctor }: { doctor: DoctorCard }) {
   const queryClient = useQueryClient();
   const name = doctor.display_name ?? doctor.email;
+  const doctorActive = isDoctorActive(doctor);
 
   const warmBookingTypes = () => {
+    if (!doctorActive) return;
     prefetchDoctorsDirectory(queryClient);
     prefetchAppointmentTypesForDoctor(queryClient, doctor.id);
   };
@@ -131,7 +137,10 @@ function DoctorProfileCard({ doctor }: { doctor: DoctorCard }) {
             className="font-semibold text-sm leading-tight block truncate"
           />
           <DoctorEmailRow email={doctor.email} />
-          <DoctorSpecialtyBadge specialty={doctor.specialty} className="self-start" />
+          <div className="flex flex-wrap items-center gap-2">
+            <DoctorSpecialtyBadge specialty={doctor.specialty} className="self-start" />
+            <EntityActiveStatusBadge active={doctorActive} />
+          </div>
         </div>
 
         {doctor.bio && (
@@ -159,16 +168,22 @@ function DoctorProfileCard({ doctor }: { doctor: DoctorCard }) {
 
         <div className="flex-1" />
 
-        <PatientBookingDialog
-          preselectedDoctorId={doctor.id}
-          lockDoctor
-          trigger={
-            <Button size="sm" className="w-full gap-2 bg-sky-600 hover:bg-sky-700 text-white shadow-[0_0_16px_rgba(2,132,199,0.3)] hover:shadow-[0_0_24px_rgba(2,132,199,0.5)] transition-all">
-              <CalendarPlus className="h-3.5 w-3.5" />
-              Book with Dr. {doctor.display_name?.split(" ")[0] ?? "this doctor"}
-            </Button>
-          }
-        />
+        {doctorActive ? (
+          <PatientBookingDialog
+            preselectedDoctorId={doctor.id}
+            lockDoctor
+            trigger={
+              <Button size="sm" className="w-full gap-2 bg-sky-600 hover:bg-sky-700 text-white shadow-[0_0_16px_rgba(2,132,199,0.3)] hover:shadow-[0_0_24px_rgba(2,132,199,0.5)] transition-all">
+                <CalendarPlus className="h-3.5 w-3.5" />
+                Book with Dr. {doctor.display_name?.split(" ")[0] ?? "this doctor"}
+              </Button>
+            }
+          />
+        ) : (
+          <p className="text-center text-xs text-muted-foreground py-2">
+            Inactive — booking unavailable
+          </p>
+        )}
       </CardContent>
     </Card>
   );

@@ -478,6 +478,7 @@ export function AppointmentDialogGeneralSection({
           <DoctorDirectoryPickerList
             doctors={directoryDoctors}
             selectedDoctorId={treatingPhysicianId}
+            currentDoctorId={treatingPhysicianId}
             onSelectDoctor={(id) => {
               setTreatingPhysicianId(id);
               setSlotPickDateStr("");

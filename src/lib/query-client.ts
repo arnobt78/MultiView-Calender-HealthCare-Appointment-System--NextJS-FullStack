@@ -190,6 +190,7 @@ export async function invalidateInvoicesAndOverview(
   const patientId = opts?.patientId;
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: queryKeys.invoices.all }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.doctors.all }),
     invalidateDashboardOverview(queryClient),
     invalidateInsightsAndAnalytics(queryClient),
     patientId

@@ -12,6 +12,10 @@
 
 import { NextResponse } from "next/server";
 import { mergeBookableTypesForDoctor } from "@/lib/doctor-bookable-types";
+import {
+  fetchPaidRevenueCentsByDoctorIds,
+  resolveDoctorPaidRevenueCents,
+} from "@/lib/doctor-revenue-aggregate";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 
@@ -27,7 +31,7 @@ export async function GET() {
     const [doctors, globalTypes] = await Promise.all([
       prisma.user.findMany({
       where: { role: "doctor" },
-      select: {
+        select: {
         id: true,
         email: true,
         display_name: true,
@@ -35,6 +39,8 @@ export async function GET() {
         specialty: true,
         bio: true,
         created_at: true,
+        is_active: true,
+        active_since: true,
         // Extended professional fields added in migration 006
         phone: true,
         license_number: true,
@@ -91,6 +97,8 @@ export async function GET() {
       }),
     ]);
 
+    const revenueByDoctor = await fetchPaidRevenueCentsByDoctorIds(doctors.map((d) => d.id));
+
     const serialized = doctors.map((d) => {
       const owned = d.appointment_types_owned;
       const bookable_appointment_types = mergeBookableTypesForDoctor(d.id, owned, globalTypes);
@@ -102,6 +110,8 @@ export async function GET() {
       specialty: d.specialty,
       bio: d.bio,
       created_at: d.created_at.toISOString(),
+      is_active: d.is_active,
+      active_since: d.active_since?.toISOString() ?? null,
       phone: d.phone,
       license_number: d.license_number,
       consultation_fee: d.consultation_fee,
@@ -114,6 +124,7 @@ export async function GET() {
       bookable_appointment_types,
       enabled_type_count: d.doctor_type_configs.length,
       patient_count: d.patients_primary_doctor.length,
+      paid_revenue_cents: resolveDoctorPaidRevenueCents(d.id, revenueByDoctor),
       };
     });
 

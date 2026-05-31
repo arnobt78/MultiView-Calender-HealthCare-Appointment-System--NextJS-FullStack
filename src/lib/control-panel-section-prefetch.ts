@@ -29,6 +29,7 @@ import {
   prefetchInvoices,
   prefetchNotifications,
   prefetchCalendarAppointmentsBundle,
+  prefetchDoctors,
 } from "@/lib/server-prefetch";
 
 /** SSR payload keyed by section — seeded in `ControlPanelSectionPageClient` before paint. */
@@ -43,6 +44,8 @@ export type ControlPanelSectionPrefetchPayload = {
   appointments?: FullAppointment[] | null;
   assignees?: AppointmentAssignee[] | null;
   dashboardAccessAccepted?: DashboardAccessRow[] | null;
+  /** Doctor directory — seeds queryKeys.doctors.all on doctor-management tab. */
+  doctorsDirectory?: { doctors: import("@/lib/server-prefetch").DoctorPrefetchRow[] } | null;
 };
 
 /**
@@ -71,6 +74,8 @@ export async function prefetchControlPanelSection(
       return prefetchCalendarAppointmentsBundle(userId, email);
     case "notifications":
       return { notifications: await prefetchNotifications(userId) };
+    case "doctors":
+      return { doctorsDirectory: await prefetchDoctors() };
     default:
       return {};
   }

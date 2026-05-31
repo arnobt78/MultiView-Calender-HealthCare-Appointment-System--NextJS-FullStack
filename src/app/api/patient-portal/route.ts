@@ -116,10 +116,16 @@ export async function POST(request: NextRequest) {
     }
     const doctor = await prisma.user.findUnique({
       where: { id: doctorId },
-      select: { id: true, role: true },
+      select: { id: true, role: true, is_active: true },
     });
     if (!doctor || doctor.role !== "doctor") {
       return NextResponse.json({ error: "Doctor not found" }, { status: 404 });
+    }
+    if (doctor.is_active === false) {
+      return NextResponse.json(
+        { error: "Selected doctor is inactive and cannot be used for new appointments." },
+        { status: 409 }
+      );
     }
 
     // Parse and validate dates before Prisma to avoid Invalid Date silently storing epoch.

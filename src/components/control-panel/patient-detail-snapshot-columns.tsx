@@ -192,6 +192,14 @@ type DoctorLookup = {
 
 export type SnapshotStaffLookup = DoctorLookup;
 
+/** Title column cell — toggle patient identity + status per entity detail context. */
+export type RelatedAppointmentsTitleColumnDisplay = {
+  /** Avatar, name, email under title. Default true; false on patient detail (page already scoped). */
+  showPatientIdentity?: boolean;
+  /** Status badge under title stack. Default true. */
+  showStatus?: boolean;
+};
+
 export type BuildSnapshotColumnsOpts = {
   viewerRole: EntityRole;
   patientDisplayName: string;
@@ -208,6 +216,8 @@ export type BuildSnapshotColumnsOpts = {
   } | null;
   /** Omit columns by id — category detail hides `category` (page is already scoped to one category). */
   hiddenColumns?: readonly RelatedAppointmentsColumnId[];
+  /** Related Appointments title column layout — reuse on patient/category/portal detail tables. */
+  titleColumn?: RelatedAppointmentsTitleColumnDisplay;
 };
 
 export type { RelatedAppointmentsColumnId };
@@ -216,8 +226,10 @@ export type { RelatedAppointmentsColumnId };
 export function buildRelatedAppointmentsColumns(
   opts: BuildSnapshotColumnsOpts
 ): ColumnDef<AppointmentSnapshotRow>[] {
-  const { viewerRole, patientDisplayName, staffById, pagePatient, hiddenColumns } = opts;
+  const { viewerRole, patientDisplayName, staffById, pagePatient, hiddenColumns, titleColumn } = opts;
   const hidden = new Set(hiddenColumns ?? []);
+  const showPatientIdentity = titleColumn?.showPatientIdentity ?? true;
+  const showStatus = titleColumn?.showStatus ?? true;
 
   const columns: ColumnDef<AppointmentSnapshotRow>[] = [
     {
@@ -231,7 +243,9 @@ export function buildRelatedAppointmentsColumns(
       cell: ({ row }) => {
         const a = row.original;
         const { typeLine, patientLine } = appointmentTitleLines(a, patientDisplayName);
-        const patientIdentity = resolvePatientIdentityFromRow(a, viewerRole, patientLine, pagePatient);
+        const patientIdentity = showPatientIdentity
+          ? resolvePatientIdentityFromRow(a, viewerRole, patientLine, pagePatient)
+          : null;
         return (
           <div
             className={cn(
@@ -245,19 +259,21 @@ export function buildRelatedAppointmentsColumns(
               label={typeLine}
               className={cn("block font-normal", clinicalTableCellWrapClass)}
             />
-            {patientIdentity ? (
-              <PatientIdentityCell
-                href={patientIdentity.href}
-                name={patientIdentity.name}
-                email={patientIdentity.email}
-                patient={patientIdentity.patient}
-                avatarSizeClassName="h-7 w-7"
-                className="min-h-0 items-start gap-1.5 py-0"
-              />
-            ) : (
-              <p className={cn(clinicalCellMutedTextClass, clinicalTableCellWrapClass)}>{patientLine}</p>
-            )}
-            <ClinicalAppointmentStatusBadge status={a.status} />
+            {showPatientIdentity ? (
+              patientIdentity ? (
+                <PatientIdentityCell
+                  href={patientIdentity.href}
+                  name={patientIdentity.name}
+                  email={patientIdentity.email}
+                  patient={patientIdentity.patient}
+                  avatarSizeClassName="h-7 w-7"
+                  className="min-h-0 items-start gap-1.5 py-0"
+                />
+              ) : (
+                <p className={cn(clinicalCellMutedTextClass, clinicalTableCellWrapClass)}>{patientLine}</p>
+              )
+            ) : null}
+            {showStatus ? <ClinicalAppointmentStatusBadge status={a.status} /> : null}
           </div>
         );
       },

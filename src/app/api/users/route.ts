@@ -1,6 +1,6 @@
 /**
  * Users list for Control Panel (Prisma)
- * GET: List users (id, email, display_name, role, image, created_at).
+ * GET: List users (profile + active status — same shape as GET /api/users/[id] for edit forms).
  * Query: role=doctor | roles=admin,secretary (comma-separated; roles wins when non-empty).
  */
 
@@ -10,6 +10,7 @@ import { getSessionUser } from "@/lib/session";
 import { PAGINATION } from "@/lib/constants";
 import { serializeUser } from "@/lib/serializers";
 import { getUserRole, isPatientRole } from "@/lib/rbac";
+import { USER_API_SELECT } from "@/lib/user-api-select";
 
 /** Per-request API handler (see api-route-dynamic.test.ts). */
 export const dynamic = "force-dynamic";
@@ -53,7 +54,7 @@ export async function GET(req: NextRequest) {
     const [users, total] = await Promise.all([
       prisma.user.findMany({
         where,
-        select: { id: true, email: true, display_name: true, role: true, image: true, created_at: true, specialty: true, bio: true },
+        select: USER_API_SELECT,
         orderBy: [{ display_name: { sort: "asc", nulls: "last" } }, { email: "asc" }],
         take: limit,
         skip: offset,

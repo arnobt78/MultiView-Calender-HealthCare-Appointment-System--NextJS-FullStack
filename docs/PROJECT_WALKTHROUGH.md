@@ -1,6 +1,16 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest Audit Update (2026-05-31)
+## Latest Audit Update (2026-05-30)
+
+- **Doctor management (CP):** `/control-panel/doctor-management` — stats, `ClinicalListFilterToolbar`, emerald table; merge `useUsers(role=doctor)` + `useDoctorsDirectory()` for availability/visit types/patient count/revenue; View/Edit/Deactivate only; demo note via `DemoShowcaseFeatureNote`.
+- **Doctor detail:** `/control-panel/doctors/[id]` → `DoctorDetailScreen` (schedule editors, assigned patients, deactivate); edit via `DoctorFormDialog`.
+- **`User.is_active`:** migration `008_user_doctor_active_status.sql`; booking API guards; inactive doctors listed on `/services` with badge, no book button; pickers partition inactive (read-only bottom).
+- **Shared filter toolbar:** `ClinicalListFilterToolbar` — CP patient/category/doctor + dashboard calendar filters; Reset right-aligned (`ml-auto`).
+- **Doctor revenue column:** `doctor-revenue-aggregate.ts` (paid invoices `groupBy`); on `DoctorDirectoryRow.paid_revenue_cents`; SSR `prefetchDoctors()`; invalidates via `invalidateInvoicesAndOverview` + `invalidateUsersAndAuth`.
+- **List API parity:** `USER_API_SELECT` — CP list Edit no longer wipes extended profile fields.
+- **Verify:** `npm test` **518**, `tsc`, `lint`, `build` green. DB: `npm run db:migrate` (008) + `npm run prisma:push`.
+
+## Prior (2026-05-31)
 
 - **Dynamic navbar / header offset:** `useAppNavbarHeightSync` → `--app-navbar-height`; `.app-main-offset` in `globals.css` on `AuthShell` `<main>` (literal CSS class, not Tailwind arbitrary in TS). Admin nav nowrap via `navbar-ui-classes.ts`.
 - **Shared category detail:** `CategoryDetailScreenShared` — CP wrapper sky + CRUD (`ControlPanelCategoryDetailScreen`); portal `/categories/[id]` amber glass (`CategoryDetailScreen` read-only). Tokens: `category-detail-ui-classes.ts`, `amberGlassBackButtonClass`.
@@ -75,13 +85,13 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Prism
 ### Doctor display + `/services`
 
 - **Route:** `/services` — `src/app/services/page.tsx` SSR-prefetches doctors + global types; client `ServicesPage.tsx`.
-- **API:** `GET /api/doctors` → specialty, bio, image, `doctor_availabilities`, `appointment_types_owned`, `patient_count` (`queryKeys.doctors.all`).
+- **API:** `GET /api/doctors` → specialty, bio, image, `is_active`, `doctor_availabilities`, `bookable_appointment_types`, `patient_count`, `paid_revenue_cents` (`queryKeys.doctors.all`).
 - **Provider:** `DoctorDisplayProvider` (`src/context/DoctorDisplayContext.tsx`) in `AppProviders` — specialty glass classes + robohash helper (no extra network).
 - **Components:** `src/components/shared/doctor-display/*` — badges, avatars, `DoctorIdentityRow`, `DoctorLinkStack`, `DoctorCardHeroImage`, availability groups; **`ServicesDoctorFilters`** (search + **`ServicesCatalogTypeSelect`** visit-type filter + specialty/weekday/date); **`filterDoctorsByServiceCatalog`** (`src/lib/services-doctor-catalog-filter.ts`) matches `bookable_appointment_types` on each doctor row. **Appointment Services** block shows full catalog (no duplicate filter there).
 - **Layout:** specialty badge always on its own line below name/email (`showIcon` default true). `/services` hero uses full-bleed cover with blurred backdrop fill (uniform tiles, face-biased crop); badge is in the card body under email, not on the image.
-- **Card UX:** flush hero image, `RoleEntityLink` doctor name, copy-email, grouped availability rows, book CTA via `PatientBookingDialog` (see booking section below). Date filter matches calendar chrome (left calendar icon, `pl-8`, `min-w-[155px]`).
-- **Global reuse:** CP patient list/detail primary doctor + snapshot tables (`DoctorIdentityRow` / `DoctorIdentityCell`); portals/dialogs may still use `DoctorLinkStack` (out of clinical-table pass). Related Appointments `doctor_specialty` from snapshot API; Doctor Management doctor column + specialty column.
-- **Invalidation:** doctor PATCH / availability mutations → `invalidateUsersAndAuth` / `invalidateDoctorSchedule` → `doctors.all` refetch (no new keys).
+- **Card UX:** flush hero image, `RoleEntityLink` doctor name, copy-email, `EntityActiveStatusBadge`, grouped availability rows; book CTA only when `isDoctorActive` — else “Inactive — booking unavailable”. Date filter matches calendar chrome (left calendar icon, `pl-8`, `min-w-[155px]`).
+- **Global reuse:** CP patient list/detail primary doctor + snapshot tables (`DoctorIdentityRow` / `DoctorIdentityCell`); Doctor Management stacks specialty + status in Doctor column; revenue column sortable.
+- **Invalidation:** doctor PATCH / deactivate / availability → `invalidateUsersAndAuth` / `invalidateDoctorSchedule`; invoice CRUD → `invalidateInvoicesAndOverview` — both bust `doctors.all`.
 
 ### Patient booking dialog (`PatientBookingDialog`)
 
@@ -92,7 +102,7 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Prism
 - **Scheduling parity:** `GET /api/doctors` → `bookable_appointment_types` (`mergeBookableTypesForDoctor`); appointment-type tiles use `formatAppointmentTypeBufferLine` / `formatAppointmentTypeSlotStepLine`; catalog rows include buffers (`GET /api/appointment-types/catalog`).
 - **Types/hooks:** `doctor-directory.ts`, `doctor-bookable-types.ts` (`filterBookableTypesForDoctorFromApi`, `mergeBookableTypesForDoctor`), `appointment-type-scheduling-meta.ts`; `useDoctorsDirectory` → `queryKeys.doctors.all`; `usePatientBookableAppointmentTypes` → `appointmentTypes.byDoctor` + directory seed (enabled globals + owned/custom only).
 - **Prefetch:** `prefetchDoctorsDirectory` (`src/lib/prefetch-doctors-directory.ts`) — portal `useLayoutEffect`, `/services` card hover/focus, dialog open; `prefetchAppointmentTypesForDoctor` (`src/lib/prefetch-appointment-types.ts`) — same 5min `staleTime` as wizard type query.
-- **Consumers:** `/patient-portal` (`BookAppointmentDialog` default trigger); `/services` imports `PatientBookingDialog` directly (`preselectedDoctorId`, `lockDoctor`, custom trigger). `PatientPortalPage` re-exports `BookAppointmentDialog` alias.
+- **Consumers:** `/patient-portal` (`BookAppointmentDialog` default trigger); `/services` imports `PatientBookingDialog` directly (`preselectedDoctorId`, `lockDoctor`, custom trigger); locked inactive doctor → read-only card + Close. `PatientPortalPage` re-exports `BookAppointmentDialog` alias.
 - **UI:** Sky glass 90% dialog; step 1 `fillLayout` — doctor + type panels flex-scroll to footer; one section visible per step.
 - **Step 2 scheduling:** `SchedulingPanel` `layout="split"` — calendar left, scrollable slot rail right (`SchedulingSlotChipGrid` `variant="rail"`); booked/past/blocked greyed; flexible = calendar + hint in rail (time on step 3).
 - **Persist:** TanStack cache buster **`v4`** (`availability.dates` scopeKey: type UUID or `flex:30`).

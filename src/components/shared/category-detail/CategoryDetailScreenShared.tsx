@@ -31,6 +31,8 @@ import { ClinicalDataTable } from "@/components/shared/ClinicalDataTable";
 import { CategoryBrandMark } from "@/components/shared/category-display/CategoryBrandMark";
 import { EntityDetailRecordAuditCard } from "@/components/shared/entity-detail/EntityDetailRecordAuditCard";
 import { buildRelatedAppointmentsColumns } from "@/components/control-panel/patient-detail-snapshot-columns";
+import { EntityDetailSnapshotSectionHeading } from "@/components/shared/entity-detail/EntityDetailSnapshotSectionHeading";
+import { entityDetailOwnedSnapshotSectionTitle } from "@/lib/entity-detail-snapshot-section-copy";
 import { useCategories, useCategory, useCategorySnapshot } from "@/hooks/useCategories";
 import { useUsers } from "@/hooks/useUsers";
 import type { UsersListResponse } from "@/hooks/useUsers";
@@ -127,25 +129,6 @@ function DefinitionRow({
       </FieldLabel>
       <dd className="min-w-0 text-gray-700">{children}</dd>
     </div>
-  );
-}
-
-function SectionHeading({
-  icon: Icon,
-  children,
-  toneClasses,
-}: {
-  icon: LucideIcon;
-  children: React.ReactNode;
-  toneClasses: ReturnType<typeof resolveCategoryDetailToneClasses>;
-}) {
-  return (
-    <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-      <span className={toneClasses.sectionIconCircleClass}>
-        <Icon className={toneClasses.sectionIconClass} aria-hidden />
-      </span>
-      {children}
-    </h3>
   );
 }
 
@@ -292,6 +275,12 @@ export function CategoryDetailScreenShared({
         CATEGORY_DETAIL_RELATED_APPOINTMENTS_HIDDEN_COLUMNS
       ),
     []
+  );
+
+  const relatedAppointmentsSectionTitle = entityDetailOwnedSnapshotSectionTitle(
+    cat?.label,
+    "relatedAppointments",
+    "category"
   );
 
   if (!cat && !showBodySkeleton && !isLoading && isMounted) {
@@ -457,12 +446,15 @@ export function CategoryDetailScreenShared({
             ) : null}
 
             <div className={cn("space-y-3 border-t pt-3", toneClasses.sectionDividerClass)}>
-              <SectionHeading icon={Calendar} toneClasses={toneClasses}>
-                Related Appointments
-                <Badge variant="outline" className="ml-1 font-bold">
-                  {totalCount}
-                </Badge>
-              </SectionHeading>
+              <EntityDetailSnapshotSectionHeading
+                icon={Calendar}
+                sectionIconCircleClass={toneClasses.sectionIconCircleClass}
+                iconClassName={toneClasses.sectionIconClass}
+                count={totalCount}
+                countSkeleton={appointmentsLoading}
+              >
+                {relatedAppointmentsSectionTitle}
+              </EntityDetailSnapshotSectionHeading>
               <ClinicalDataTable
                 columns={appointmentColumns}
                 data={appointmentList}

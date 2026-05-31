@@ -24,6 +24,9 @@ export interface User {
   languages_spoken?: string[];
   /** Years of clinical practice experience */
   years_of_experience?: number | null;
+  /** Doctor account active flag — default true when unset (demo deactivate without delete). */
+  is_active?: boolean;
+  active_since?: string | null;
 }
 export type UUID = string;
 

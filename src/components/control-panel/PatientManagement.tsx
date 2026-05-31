@@ -22,8 +22,7 @@ import {
 } from "@/lib/calendar-header-action-styles";
 import { resolveAppSectionRootClass } from "@/lib/section-page-layout";
 import { AppSectionErrorBanner } from "@/components/shared/AppSectionErrorBanner";
-import { GlassResetFilterButton } from "@/components/shared/GlassResetFilterButton";
-import { EntityListSearchInput } from "@/components/shared/EntityListSearchInput";
+import { ClinicalListFilterToolbar } from "@/components/shared/filters/ClinicalListFilterToolbar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -75,7 +74,6 @@ import { CP_DOCTOR_USERS_FILTERS } from "@/lib/control-panel-users-filters";
 import { useQueryClient } from "@tanstack/react-query";
 import { prefetchDoctorsDirectory } from "@/lib/prefetch-doctors-directory";
 import {
-  patientManagementFilterToolbarClass,
   patientManagementStatsStripClass,
 } from "@/lib/patient-management-toolbar-classes";
 import { PATIENT_CARE_LEVEL_STAGES, getPatientCareLevelLabel } from "@/lib/patient-care-level";
@@ -617,14 +615,17 @@ export function PatientManagementInner({
           </div>
         ) : null}
 
-        {/* Sticky toolbar: transparent shell so stat card shadows are not clipped (see patient-management-toolbar-classes). */}
-        <div className={cn(patientManagementFilterToolbarClass, APP_INNER_SCROLL_STICKY_TOP_CLASS)}>
-          <EntityListSearchInput
-            value={listSearch}
-            onChange={setListSearch}
-            placeholder="Search… (name or email)"
-            ariaLabel="Search patients by name or email"
-          />
+        <ClinicalListFilterToolbar
+          stickyClassName={APP_INNER_SCROLL_STICKY_TOP_CLASS}
+          search={{
+            value: listSearch,
+            onChange: setListSearch,
+            placeholder: "Search… (name or email)",
+            ariaLabel: "Search patients by name or email",
+          }}
+          showReset={hasPatientToolbarFilters}
+          onReset={resetPatientToolbar}
+        >
           <FilterSelect
             value={status}
             onValueChange={(v) => setStatus(v as PatientStatusFilter)}
@@ -674,13 +675,7 @@ export function PatientManagementInner({
               ]}
             />
           ) : null}
-          {hasPatientToolbarFilters ? (
-            <GlassResetFilterButton
-              onClick={resetPatientToolbar}
-              className="ml-auto h-10 shrink-0 px-4 [&_svg]:size-4"
-            />
-          ) : null}
-        </div>
+        </ClinicalListFilterToolbar>
 
         <DataTable<Patient, unknown>
           columns={columns}

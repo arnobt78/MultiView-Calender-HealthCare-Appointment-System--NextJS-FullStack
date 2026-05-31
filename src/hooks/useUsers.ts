@@ -24,6 +24,14 @@ export type UserUpdateInput = {
   image?: string | null;
   specialty?: string | null;
   bio?: string | null;
+  phone?: string | null;
+  license_number?: string | null;
+  department?: string | null;
+  consultation_fee?: number | null;
+  office_location?: string | null;
+  languages_spoken?: string[];
+  years_of_experience?: number | null;
+  is_active?: boolean;
 };
 
 export function useUsers(

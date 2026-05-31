@@ -17,11 +17,9 @@ import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout
 import { AppSectionErrorBanner } from "@/components/shared/AppSectionErrorBanner";
 import {
   amberGlassTableFrameClass,
-  categoryManagementFilterToolbarClass,
   categoryManagementStatsStripClass,
 } from "@/lib/category-management-toolbar-classes";
-import { GlassResetFilterButton } from "@/components/shared/GlassResetFilterButton";
-import { EntityListSearchInput } from "@/components/shared/EntityListSearchInput";
+import { ClinicalListFilterToolbar } from "@/components/shared/filters/ClinicalListFilterToolbar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -396,18 +394,17 @@ export function CategoryManagementInner() {
           <CategoryManagementStatsRow />
         </div>
 
-        <div
-          className={cn(
-            categoryManagementFilterToolbarClass,
-            APP_INNER_SCROLL_STICKY_TOP_CLASS
-          )}
+        <ClinicalListFilterToolbar
+          stickyClassName={APP_INNER_SCROLL_STICKY_TOP_CLASS}
+          search={{
+            value: listSearch,
+            onChange: setListSearch,
+            placeholder: "Search… (label or description)",
+            ariaLabel: "Search categories by label or description",
+          }}
+          showReset={hasToolbarFilters}
+          onReset={resetToolbar}
         >
-          <EntityListSearchInput
-            value={listSearch}
-            onChange={setListSearch}
-            placeholder="Search… (label or description)"
-            ariaLabel="Search categories by label or description"
-          />
           <FilterSelect
             value={status}
             onValueChange={(v) => setStatus(v as CategoryStatusFilter)}
@@ -422,13 +419,7 @@ export function CategoryManagementInner() {
               { value: "inactive", label: "Inactive" },
             ]}
           />
-          {hasToolbarFilters ? (
-            <GlassResetFilterButton
-              onClick={resetToolbar}
-              className="ml-auto h-10 shrink-0 px-4 [&_svg]:size-4"
-            />
-          ) : null}
-        </div>
+        </ClinicalListFilterToolbar>
 
         <DataTable<Category, unknown>
           columns={columns}

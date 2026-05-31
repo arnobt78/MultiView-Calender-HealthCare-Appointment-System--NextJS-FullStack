@@ -13,6 +13,10 @@ import { redis } from "@/lib/redis";
 import { getUserRole } from "@/lib/rbac";
 import { resolvePatientAccess } from "@/lib/patient-access";
 import { rosterDoctorIdFromRequest } from "@/lib/patient-api-access";
+import {
+  assertDoctorActiveForBookingUnlessCurrent,
+  InactiveDoctorBookingError,
+} from "@/lib/doctor-active-booking";
 /** Per-request detail CRUD — literal required (see api-route-dynamic.test.ts). */
 export const dynamic = "force-dynamic";
 
@@ -111,6 +115,20 @@ export async function PUT(req: NextRequest, context: RouteContext) {
           ? String(body.primary_doctor_id)
           : null
         : undefined;
+
+    if (primaryDoctorId) {
+      try {
+        await assertDoctorActiveForBookingUnlessCurrent(
+          primaryDoctorId,
+          existing.primary_doctor_id
+        );
+      } catch (e) {
+        if (e instanceof InactiveDoctorBookingError) {
+          return NextResponse.json({ error: e.message }, { status: 409 });
+        }
+        throw e;
+      }
+    }
 
     const patient = await prisma.patient.update({
       where: { id },

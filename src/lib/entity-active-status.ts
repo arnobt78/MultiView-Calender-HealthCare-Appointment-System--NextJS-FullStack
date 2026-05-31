@@ -1,4 +1,5 @@
-import type { Category, Patient } from "@/types/types";
+import type { Category, Patient, User } from "@/types/types";
+import type { DoctorDirectoryRow } from "@/lib/doctor-directory";
 
 /** Patient list `active` flag — default true when unset. */
 export function isPatientActive(patient: Patient): boolean {
@@ -56,6 +57,13 @@ export function partitionForBookingSelect<T>({
   return { selectable, inactiveDisplay };
 }
 
+/** Doctor / staff user `is_active` — default true when unset. */
+export function isDoctorActive(
+  user: Pick<User, "is_active"> | Pick<DoctorDirectoryRow, "is_active">
+): boolean {
+  return user.is_active !== false;
+}
+
 /** Categories in booking UI — lower `sort_order` first, then label. */
 export function sortCategoriesForBookingSelect(a: Category, b: Category): number {
   const orderA = a.sort_order ?? 0;
@@ -68,5 +76,15 @@ export function sortCategoriesForBookingSelect(a: Category, b: Category): number
 export function sortPatientsForBookingSelect(a: Patient, b: Patient): number {
   const nameA = `${a.firstname} ${a.lastname}`.trim();
   const nameB = `${b.firstname} ${b.lastname}`.trim();
+  return nameA.localeCompare(nameB);
+}
+
+/** Doctors in booking UI — display name ascending. */
+export function sortDoctorsForBookingSelect(
+  a: Pick<DoctorDirectoryRow, "display_name" | "email">,
+  b: Pick<DoctorDirectoryRow, "display_name" | "email">
+): number {
+  const nameA = (a.display_name?.trim() || a.email).trim();
+  const nameB = (b.display_name?.trim() || b.email).trim();
   return nameA.localeCompare(nameB);
 }

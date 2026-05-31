@@ -18,6 +18,7 @@ import {
   AppointmentSchedulingConflictError,
   assertNoOwnerAppointmentOverlap,
 } from "@/lib/scheduling/validate-appointment-window";
+import { assertDoctorActiveForBooking, assertDoctorActiveForBookingUnlessCurrent, InactiveDoctorBookingError } from "@/lib/doctor-active-booking";
 
 export const dynamic = "force-dynamic";
 
@@ -114,6 +115,18 @@ export async function PUT(req: NextRequest, context: RouteContext) {
         const u = await prisma.user.findUnique({ where: { id: v }, select: { id: true } });
         if (!u) {
           return NextResponse.json({ error: "treating_physician user not found" }, { status: 400 });
+        }
+        const existing = await prisma.appointment.findUnique({
+          where: { id },
+          select: { treating_physician_id: true },
+        });
+        try {
+          await assertDoctorActiveForBookingUnlessCurrent(v, existing?.treating_physician_id);
+        } catch (e) {
+          if (e instanceof InactiveDoctorBookingError) {
+            return NextResponse.json({ error: e.message }, { status: 409 });
+          }
+          throw e;
         }
         data.treating_physician_id = v;
       } else {
@@ -226,6 +239,18 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
         const u = await prisma.user.findUnique({ where: { id: v }, select: { id: true } });
         if (!u) {
           return NextResponse.json({ error: "treating_physician user not found" }, { status: 400 });
+        }
+        const existing = await prisma.appointment.findUnique({
+          where: { id },
+          select: { treating_physician_id: true },
+        });
+        try {
+          await assertDoctorActiveForBookingUnlessCurrent(v, existing?.treating_physician_id);
+        } catch (e) {
+          if (e instanceof InactiveDoctorBookingError) {
+            return NextResponse.json({ error: e.message }, { status: 409 });
+          }
+          throw e;
         }
         data.treating_physician_id = v;
       } else {

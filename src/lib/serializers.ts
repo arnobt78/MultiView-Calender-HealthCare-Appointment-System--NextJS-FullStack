@@ -118,10 +118,20 @@ export function serializeUser(u: {
   created_at: Date;
   specialty?: string | null;
   bio?: string | null;
+  phone?: string | null;
+  license_number?: string | null;
+  department?: string | null;
+  consultation_fee?: number | null;
+  office_location?: string | null;
+  languages_spoken?: string[];
+  years_of_experience?: number | null;
+  is_active?: boolean;
+  active_since?: Date | null;
 }) {
   return {
     ...u,
     created_at: u.created_at?.toISOString?.(),
+    active_since: u.active_since?.toISOString?.() ?? null,
   };
 }
 

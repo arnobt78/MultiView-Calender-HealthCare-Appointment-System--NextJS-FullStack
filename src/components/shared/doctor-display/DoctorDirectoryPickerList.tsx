@@ -1,12 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DoctorDirectoryPickerCard } from "@/components/shared/doctor-display/DoctorDirectoryPickerCard";
 import { ScrollOverflowPanel } from "@/components/shared/ScrollOverflowPanel";
 import type { DoctorDirectoryRow } from "@/lib/doctor-directory";
+import {
+  isDoctorActive,
+  partitionForBookingSelect,
+  sortDoctorsForBookingSelect,
+} from "@/lib/entity-active-status";
 import {
   bookingPickerCollapsedInsetClass,
   bookingPickerScrollClass,
@@ -34,6 +39,8 @@ type DoctorDirectoryPickerListProps = {
   /** Staff dropdown field — list only while open; trigger shows selection (no inline collapsed card). */
   dropdownMode?: boolean;
   onAfterSelect?: () => void;
+  /** Edit mode — keep current inactive doctor in selectable set. */
+  currentDoctorId?: string | null;
   className?: string;
 };
 
@@ -51,6 +58,7 @@ export function DoctorDirectoryPickerList({
   flushInset: _flushInset = false,
   dropdownMode = false,
   onAfterSelect,
+  currentDoctorId,
   className,
 }: DoctorDirectoryPickerListProps) {
   const collapsedInset = bookingPickerCollapsedInsetClass;
@@ -59,6 +67,18 @@ export function DoctorDirectoryPickerList({
   const scrollClass =
     scrollClassName ??
     (fillHeight ? doctorDirectoryPickerFillScrollClass : doctorDirectoryPickerScrollClass);
+
+  const { selectable, inactiveDisplay } = useMemo(
+    () =>
+      partitionForBookingSelect({
+        items: doctors,
+        isActive: isDoctorActive,
+        getId: (d) => d.id,
+        currentId: currentDoctorId ?? selectedDoctorId,
+        sortSelectable: sortDoctorsForBookingSelect,
+      }),
+    [doctors, currentDoctorId, selectedDoctorId]
+  );
 
   if (isLoading) {
     return (
@@ -78,7 +98,9 @@ export function DoctorDirectoryPickerList({
     );
   }
 
-  const selected = doctors.find((d) => d.id === selectedDoctorId);
+  const selected =
+    doctors.find((d) => d.id === selectedDoctorId) ??
+    inactiveDisplay.find((d) => d.id === selectedDoctorId);
 
   if (!showList && selected && !dropdownMode) {
     return (
@@ -102,11 +124,11 @@ export function DoctorDirectoryPickerList({
     <ScrollOverflowPanel
       scrollClassName={cn(scrollClass, className)}
       enabled={showList}
-      contentVersion={`${doctors.length}-${fillHeight ? 1 : 0}`}
+      contentVersion={`${selectable.length}-${inactiveDisplay.length}-${fillHeight ? 1 : 0}`}
       role="listbox"
       aria-label="Select a doctor"
     >
-      {doctors.map((d) => (
+      {selectable.map((d) => (
         <DoctorDirectoryPickerCard
           key={d.id}
           doctor={d}
@@ -118,6 +140,22 @@ export function DoctorDirectoryPickerList({
           }}
         />
       ))}
+      {inactiveDisplay.length > 0 ? (
+        <>
+          <div className="px-2 py-2 text-xs font-medium text-muted-foreground border-t border-slate-200/80 mt-1">
+            Inactive — not available for new appointments
+          </div>
+          {inactiveDisplay.map((d) => (
+            <DoctorDirectoryPickerCard
+              key={d.id}
+              doctor={d}
+              selected={false}
+              readOnly
+              className="pointer-events-none opacity-60"
+            />
+          ))}
+        </>
+      ) : null}
     </ScrollOverflowPanel>
   );
 }
