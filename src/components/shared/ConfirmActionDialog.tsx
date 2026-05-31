@@ -32,6 +32,8 @@ type ConfirmActionDialogProps = {
   variant?: ConfirmVariant;
   onConfirm: () => void | Promise<void>;
   disabled?: boolean;
+  /** Blocks confirm action while still showing the dialog (demo stubs). */
+  confirmDisabled?: boolean;
 };
 
 const stylesByVariant: Record<ConfirmVariant, { media: string; icon: string; action: string }> = {
@@ -70,6 +72,7 @@ export function ConfirmActionDialog({
   variant = "destructive",
   onConfirm,
   disabled,
+  confirmDisabled,
 }: ConfirmActionDialogProps) {
   const style = stylesByVariant[variant];
   const Icon = icon ?? (variant === "info" ? ShieldAlert : AlertTriangle);
@@ -97,7 +100,11 @@ export function ConfirmActionDialog({
           <AlertDialogCancel className="rounded-full border-violet-200/70 bg-white text-violet-700 hover:bg-violet-50 hover:text-violet-800 focus-visible:!ring-0 focus-visible:!ring-offset-0">
             {cancelLabel}
           </AlertDialogCancel>
-          <AlertDialogAction className={cn("rounded-full", style.action)} onClick={onConfirm}>
+          <AlertDialogAction
+            className={cn("rounded-full", style.action)}
+            disabled={confirmDisabled || disabled}
+            onClick={confirmDisabled ? undefined : onConfirm}
+          >
             {confirmLabel}
           </AlertDialogAction>
         </AlertDialogFooter>

@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { AdminUserFormValues } from "@/lib/admin-user-form-state";
 import { adminUserDialogShellClass } from "@/lib/admin-user-detail-ui-classes";
+import { CpDevStubSubmitNote } from "@/components/shared/control-panel/CpDevStubSubmitNote";
+import type { CpDevStubCopy } from "@/lib/cp-dev-stub-copy";
 import { cn } from "@/lib/utils";
 
 type AdminUserFormDialogProps = {
@@ -22,6 +24,8 @@ type AdminUserFormDialogProps = {
   onFormChange: (patch: Partial<AdminUserFormValues>) => void;
   onSubmit: () => void;
   isSubmitting?: boolean;
+  mode?: "create" | "edit";
+  devStub?: CpDevStubCopy;
 };
 
 /** Edit admin account — slate glass shell; role locked to admin. */
@@ -33,7 +37,11 @@ export function AdminUserFormDialog({
   onFormChange,
   onSubmit,
   isSubmitting = false,
+  mode = "edit",
+  devStub,
 }: AdminUserFormDialogProps) {
+  const isCreate = mode === "create";
+  const canSubmit = !isSubmitting && !devStub;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent showCloseButton={false} className={adminUserDialogShellClass}>
@@ -41,10 +49,12 @@ export function AdminUserFormDialog({
           <div className="min-w-0 space-y-1">
             <DialogTitle className="flex items-center gap-2 text-lg font-semibold text-gray-800">
               <Pencil className="h-4 w-4 text-slate-600" aria-hidden />
-              Update Admin Profile
+              {isCreate ? "Add Admin Account" : "Update Admin Profile"}
             </DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
-              Display name and avatar URL. Role remains admin.
+              {devStub
+                ? devStub.note
+                : "Display name and avatar URL. Role remains admin."}
             </DialogDescription>
           </div>
           <DialogClose asChild>
@@ -95,30 +105,33 @@ export function AdminUserFormDialog({
           </div>
         </div>
 
-        <div className="flex shrink-0 justify-end gap-2 border-t border-slate-200/70 bg-slate-50/40 px-6 py-3">
-          <DialogClose asChild>
-            <Button type="button" variant="ghost">
-              Cancel
+        <div className="flex shrink-0 flex-col gap-3 border-t border-slate-200/70 bg-slate-50/40 px-6 py-3">
+          {devStub ? <CpDevStubSubmitNote stub={devStub} /> : null}
+          <div className="flex justify-end gap-2">
+            <DialogClose asChild>
+              <Button type="button" variant="ghost">
+                Cancel
+              </Button>
+            </DialogClose>
+            <Button
+              type="button"
+              onClick={onSubmit}
+              disabled={!canSubmit}
+              className={cn("gap-2 bg-slate-700 hover:bg-slate-800 text-white disabled:opacity-50")}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                  Saving…
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" aria-hidden />
+                  {isCreate ? "Create Admin" : "Save Changes"}
+                </>
+              )}
             </Button>
-          </DialogClose>
-          <Button
-            type="button"
-            onClick={onSubmit}
-            disabled={isSubmitting}
-            className={cn("gap-2 bg-slate-700 hover:bg-slate-800 text-white")}
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                Saving…
-              </>
-            ) : (
-              <>
-                <Save className="h-4 w-4" aria-hidden />
-                Save Changes
-              </>
-            )}
-          </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

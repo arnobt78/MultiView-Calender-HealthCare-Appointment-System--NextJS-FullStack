@@ -41,6 +41,8 @@ import {
   doctorDialogShellClass,
 } from "@/lib/doctor-dialog-ui-classes";
 import { emeraldGlassPrimaryButtonClass } from "@/lib/calendar-header-action-styles";
+import { CpDevStubSubmitNote } from "@/components/shared/control-panel/CpDevStubSubmitNote";
+import type { CpDevStubCopy } from "@/lib/cp-dev-stub-copy";
 import { SPECIALTIES } from "@/lib/doctor-specialty";
 import { cn, toTitleCaseLabel } from "@/lib/utils";
 
@@ -52,9 +54,12 @@ type DoctorFormDialogProps = {
   onFormChange: (patch: Partial<DoctorFormValues>) => void;
   onSubmit: () => void;
   isSubmitting?: boolean;
+  mode?: "create" | "edit";
+  /** Demo preview — keeps form visible but blocks submit (API route documented in note). */
+  devStub?: CpDevStubCopy;
 };
 
-/** Edit-only doctor profile — emerald glass shell; parent owns mutation + invalidation. */
+/** Doctor profile dialog — emerald glass shell; parent owns mutation + invalidation. */
 export function DoctorFormDialog({
   open,
   onOpenChange,
@@ -63,8 +68,11 @@ export function DoctorFormDialog({
   onFormChange,
   onSubmit,
   isSubmitting = false,
+  mode = "edit",
+  devStub,
 }: DoctorFormDialogProps) {
-  const canSubmit = Boolean(form.display_name.trim()) && !isSubmitting;
+  const canSubmit = Boolean(form.display_name.trim()) && !isSubmitting && !devStub;
+  const isCreate = mode === "create";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -77,12 +85,14 @@ export function DoctorFormDialog({
               </span>
               <div className="min-w-0">
                 <DialogTitle className="text-left text-xl font-semibold text-gray-700">
-                  {toTitleCaseLabel("Edit Doctor Profile")}
+                  {toTitleCaseLabel(isCreate ? "Add Doctor" : "Edit Doctor Profile")}
                 </DialogTitle>
                 <DialogDescription className="text-left text-sm text-muted-foreground">
-                  {toTitleCaseLabel(
-                    "Update specialty, contact details, and active status. Email is fixed for this demo account."
-                  )}
+                  {devStub
+                    ? devStub.note
+                    : toTitleCaseLabel(
+                        "Update specialty, contact details, and active status. Email is fixed for this demo account."
+                      )}
                 </DialogDescription>
               </div>
               <DialogClose asChild>
@@ -251,7 +261,8 @@ export function DoctorFormDialog({
           </div>
         </div>
 
-        <div className="shrink-0 border-t border-emerald-200/60 bg-emerald-50/40 px-6 py-4">
+        <div className="shrink-0 border-t border-emerald-200/60 bg-emerald-50/40 px-6 py-4 space-y-3">
+          {devStub ? <CpDevStubSubmitNote stub={devStub} /> : null}
           <div className="flex flex-wrap justify-end gap-2">
             <DialogClose asChild>
               <Button type="button" variant="ghost" className={doctorDialogGlassBackButtonClass}>
@@ -269,7 +280,7 @@ export function DoctorFormDialog({
               ) : (
                 <Save className="shrink-0" aria-hidden />
               )}
-              Update Profile
+              {isCreate ? "Create Doctor" : "Update Profile"}
             </Button>
           </div>
         </div>

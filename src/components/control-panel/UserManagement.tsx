@@ -6,6 +6,7 @@
  */
 
 import { type ColumnDef } from "@tanstack/react-table";
+import { useState } from "react";
 import { PrefetchingLink } from "@/components/shared/PrefetchingLink";
 import { useUsers } from "@/hooks/useUsers";
 import { CP_ADMIN_USERS_FILTERS } from "@/lib/control-panel-users-filters";
@@ -17,6 +18,17 @@ import { UserRoleBadge } from "@/components/shared/UserRoleBadge";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { DemoShowcaseFeatureNote } from "@/components/shared/DemoShowcaseFeatureNote";
 import { ADMIN_USER_MANAGEMENT_DEMO_NOTE } from "@/lib/demo-showcase-copy";
+import { AdminUserFormDialog } from "@/components/control-panel/admin-user-dialog/AdminUserFormDialog";
+import { CpListPaginationDevStub } from "@/components/shared/control-panel/CpListPaginationDevStub";
+import {
+  CP_ADMIN_CREATE_STUB,
+  CP_ADMIN_LIST_PAGINATION_STUB,
+} from "@/lib/cp-dev-stub-copy";
+import {
+  EMPTY_ADMIN_USER_FORM,
+  type AdminUserFormValues,
+} from "@/lib/admin-user-form-state";
+import { emeraldGlassPrimaryButtonClass } from "@/lib/calendar-header-action-styles";
 import {
   clinicalCellMutedTextClass,
   clinicalStackGapClass,
@@ -42,6 +54,7 @@ import {
   ShieldCheck,
   ShieldOff,
   UserCheck,
+  UserPlus,
   Users,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -138,6 +151,8 @@ function ActionsCell({ user }: { user: User }) {
 export default function UserManagement() {
   const { data, isLoading, isError } = useUsers(CP_ADMIN_USERS_FILTERS);
   const users = data?.users ?? [];
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [createForm, setCreateForm] = useState<AdminUserFormValues>(EMPTY_ADMIN_USER_FORM);
 
   const columns: ColumnDef<User>[] = [
     {
@@ -214,6 +229,21 @@ export default function UserManagement() {
       <PageHeader
         title="User & Admin Management"
         description="B2B admin accounts — register or Google sign-in. Demo doctors and patients are on their own management tabs."
+        actions={
+          <Button
+            type="button"
+            variant="ghost"
+            size="lg"
+            className={cn(emeraldGlassPrimaryButtonClass, "cursor-pointer")}
+            onClick={() => {
+              setCreateForm(EMPTY_ADMIN_USER_FORM);
+              setCreateDialogOpen(true);
+            }}
+          >
+            <UserPlus className="shrink-0" aria-hidden />
+            Add Admin
+          </Button>
+        }
       />
 
       <DemoShowcaseFeatureNote note={ADMIN_ROSTER_DEMO_NOTE} />
@@ -240,6 +270,23 @@ export default function UserManagement() {
           tableLayout="auto"
         />
       </div>
+
+      <CpListPaginationDevStub
+        stub={CP_ADMIN_LIST_PAGINATION_STUB}
+        visibleCount={users.length}
+        pagination={data?.pagination ?? null}
+      />
+
+      <AdminUserFormDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        readOnlyEmail="new.admin@example.com"
+        form={createForm}
+        onFormChange={(patch) => setCreateForm((p) => ({ ...p, ...patch }))}
+        onSubmit={() => undefined}
+        mode="create"
+        devStub={CP_ADMIN_CREATE_STUB}
+      />
     </div>
   );
 }

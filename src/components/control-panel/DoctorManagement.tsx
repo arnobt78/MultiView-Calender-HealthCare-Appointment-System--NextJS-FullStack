@@ -2,7 +2,7 @@
 
 /**
  * Doctor Management — patient/category list parity: stats, sticky filters, emerald table,
- * View / Edit / Deactivate only (no add/delete — demo showcase).
+ * View / Edit / Deactivate; Add/Delete/Load-more are demo stubs (API routes documented).
  */
 
 import { type ColumnDef } from "@tanstack/react-table";
@@ -16,6 +16,8 @@ import {
   Power,
   PowerOff,
   Stethoscope,
+  Trash2,
+  UserPlus,
 } from "lucide-react";
 import { PrefetchingLink } from "@/components/shared/PrefetchingLink";
 import { DataTable } from "@/components/shared/DataTable";
@@ -61,6 +63,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
+import { CpListPaginationDevStub } from "@/components/shared/control-panel/CpListPaginationDevStub";
+import { CpDevStubSubmitNote } from "@/components/shared/control-panel/CpDevStubSubmitNote";
+import {
+  CP_DOCTOR_CREATE_STUB,
+  CP_DOCTOR_DELETE_STUB,
+  CP_DOCTOR_LIST_PAGINATION_STUB,
+} from "@/lib/cp-dev-stub-copy";
+import { emeraldGlassPrimaryButtonClass } from "@/lib/calendar-header-action-styles";
 import type { User } from "@/types/types";
 import type { DoctorDirectoryRow } from "@/lib/doctor-directory";
 import { useUsers } from "@/hooks/useUsers";
@@ -101,6 +111,7 @@ function DoctorActions({
   onToggleActive: (row: DoctorTableRow) => void;
 }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteStubOpen, setDeleteStubOpen] = useState(false);
   const active = isDoctorActive(row);
   const label = row.display_name?.trim() || row.email;
 
@@ -141,8 +152,34 @@ function DoctorActions({
             {active ? <PowerOff className="h-4 w-4" /> : <Power className="h-4 w-4" />}
             {active ? "Deactivate" : "Activate"}
           </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            className="flex items-center gap-2 cursor-pointer text-rose-800 focus:text-rose-900"
+            onSelect={() => setDeleteStubOpen(true)}
+          >
+            <Trash2 className="h-4 w-4" />
+            Delete
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      <ConfirmActionDialog
+        open={deleteStubOpen}
+        onOpenChange={setDeleteStubOpen}
+        title="Delete this doctor?"
+        subtitle={
+          <div className="space-y-2">
+            <p>
+              <span className="font-medium text-gray-700">{label}</span> — demo uses Deactivate
+              instead of hard delete.
+            </p>
+            <CpDevStubSubmitNote stub={CP_DOCTOR_DELETE_STUB} />
+          </div>
+        }
+        confirmLabel="Delete"
+        variant="destructive"
+        confirmDisabled
+        onConfirm={() => setDeleteStubOpen(false)}
+      />
       <ConfirmActionDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
@@ -197,8 +234,10 @@ function DoctorManagementInner() {
 
   const [listUiMounted, setListUiMounted] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editingDoctor, setEditingDoctor] = useState<DoctorTableRow | null>(null);
   const [dialogForm, setDialogForm] = useState<DoctorFormValues>(EMPTY_DOCTOR_FORM);
+  const [createForm, setCreateForm] = useState<DoctorFormValues>(EMPTY_DOCTOR_FORM);
 
   useEffect(() => {
     requestAnimationFrame(() => setListUiMounted(true));
@@ -383,6 +422,21 @@ function DoctorManagementInner() {
         <PageHeader
           title="Doctor Management"
           description="Manage doctor profiles, specialties, and availability."
+          actions={
+            <Button
+              type="button"
+              variant="ghost"
+              size="lg"
+              className={cn(emeraldGlassPrimaryButtonClass, "cursor-pointer")}
+              onClick={() => {
+                setCreateForm(EMPTY_DOCTOR_FORM);
+                setCreateDialogOpen(true);
+              }}
+            >
+              <UserPlus className="shrink-0" aria-hidden />
+              Add Doctor
+            </Button>
+          }
         />
 
         <DemoShowcaseFeatureNote note={DOCTOR_MANAGEMENT_DEMO_NOTE} />
@@ -466,6 +520,12 @@ function DoctorManagementInner() {
           tableFrameClassName={emeraldGlassTableFrameClass}
         />
 
+        <CpListPaginationDevStub
+          stub={CP_DOCTOR_LIST_PAGINATION_STUB}
+          visibleCount={filteredRows.length}
+          pagination={usersData?.pagination ?? null}
+        />
+
         {editingDoctor ? (
           <DoctorFormDialog
             open={editDialogOpen}
@@ -475,8 +535,20 @@ function DoctorManagementInner() {
             onFormChange={(patch) => setDialogForm((p) => ({ ...p, ...patch }))}
             onSubmit={handleSaveEdit}
             isSubmitting={isUpdating}
+            mode="edit"
           />
         ) : null}
+
+        <DoctorFormDialog
+          open={createDialogOpen}
+          onOpenChange={setCreateDialogOpen}
+          readOnlyEmail="new.doctor@example.com"
+          form={createForm}
+          onFormChange={(patch) => setCreateForm((p) => ({ ...p, ...patch }))}
+          onSubmit={() => undefined}
+          mode="create"
+          devStub={CP_DOCTOR_CREATE_STUB}
+        />
       </div>
     </DoctorMetricsProvider>
   );
