@@ -48,4 +48,8 @@ Stage 1: Requirements → Stage 2: Validation → [Gate 1]
 npm test && npx tsc --noEmit && npm run lint
 ```
 
-Initialized: **2026-05-30** | Cycle: **C1** | Policy: **1.0.0**
+Initialized: **2026-05-30** | Cycle: **C1 (closed)** | Archive: **`cycles/C1/`** | Policy: **1.0.0**
+
+## C1 Status
+
+Gate 2 closed **2026-05-30** — see `cycles/C1/GATE2_SIGNOFF.md`. Living `STATE.md` points to C2 bootstrap when next cycle starts.

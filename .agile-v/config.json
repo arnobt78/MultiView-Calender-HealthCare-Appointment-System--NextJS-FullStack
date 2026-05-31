@@ -8,7 +8,11 @@
   },
   "cycle": {
     "current": "C1",
-    "started": "2026-05-30"
+    "status": "closed",
+    "started": "2026-05-30",
+    "closed": "2026-05-30",
+    "gate_2_commit": "3a563d7",
+    "archive_path": ".agile-v/cycles/C1/"
   },
   "authority_matrix": {
     "gate_1": ["Product Owner", "Tech Lead", "Project Maintainer"],
