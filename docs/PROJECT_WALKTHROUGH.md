@@ -2,7 +2,7 @@
 
 ## Latest Audit Update (2026-05-31)
 
-- **Dynamic navbar / header offset:** `useAppNavbarHeightSync` → `--app-navbar-height`; `.app-main-offset` in `globals.css` on `AuthShell` `<main>` (literal CSS — Tailwind JIT skipped TS-built `pt-[var(...)]`). Admin nav nowrap via `navbar-ui-classes.ts`.
+- **Dynamic navbar / header offset:** `useAppNavbarHeightSync` → `--app-navbar-height`; `.app-main-offset` in `globals.css` on `AuthShell` `<main>` (literal CSS class, not Tailwind arbitrary in TS). Admin nav nowrap via `navbar-ui-classes.ts`.
 - **Shared category detail:** `CategoryDetailScreenShared` — CP wrapper sky + CRUD (`ControlPanelCategoryDetailScreen`); portal `/categories/[id]` amber glass (`CategoryDetailScreen` read-only). Tokens: `category-detail-ui-classes.ts`, `amberGlassBackButtonClass`.
 - **Snapshot mapper:** `appointment-snapshot-row.ts` + `appointmentSnapshotInclude` — patient + category snapshot/API/prefetch share one projection (patient denormalized fields, doctor images).
 - **Category audit trail:** `migrations/007_category_audit_users.sql` — `categories.created_by` / `updated_by`; Prisma relations; POST/PUT set actor; GET + `prefetchCategory` include `categoryDetailInclude`; `EntityDetailRecordAuditCard` + role-aware `EntityDetailAuditStaffLink`.

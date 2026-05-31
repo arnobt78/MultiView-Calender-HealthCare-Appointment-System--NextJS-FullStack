@@ -116,7 +116,7 @@
 }
 
 /**
- * Fixed navbar clearance — literal classes (Tailwind JIT skips TS-built arbitrary `pt-[var(...)]`).
+ * Fixed navbar clearance — literal `.app-main-offset` (do not use Tailwind arbitrary padding-top + CSS var in TS strings).
  * `--app-navbar-height` is measured by `useAppNavbarHeightSync` in `Navbar.tsx`.
  */
 @layer components {
