@@ -96,6 +96,12 @@ export async function invalidateNotificationsData(queryClient: QueryClient) {
   await queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
 }
 
+/** SSE + cross-tab — use when server pushes new rows outside client mutations. */
+export async function invalidateNotificationsAndCrossTab(queryClient: QueryClient) {
+  await invalidateNotificationsData(queryClient);
+  publishQueryCacheCrossTab(["notifications"]);
+}
+
 export async function invalidateAssigneesData(queryClient: QueryClient) {
   await queryClient.invalidateQueries({ queryKey: queryKeys.assignees.all });
 }

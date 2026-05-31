@@ -38,6 +38,7 @@ export * from "./useInsights";
 export * from "./useInvitations";
 export * from "./useNormalizedEntities";
 export * from "./useNotifications";
+export * from "./useNotificationStream";
 export * from "./useOrganization";
 export * from "./useOwnerUserSummaries";
 export * from "./usePatientListMetrics";

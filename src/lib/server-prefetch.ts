@@ -85,6 +85,7 @@ import type { DashboardAccessRow } from "@/lib/query-fetchers";
 import { buildFullAppointmentsList } from "@/lib/appointments-list-build";
 import { resolveExtraAssignedAppointmentIds } from "@/lib/appointments-calendar-assignees";
 import type { FullAppointment } from "@/hooks/useAppointments";
+import type { Invoice } from "@/hooks/usePayments";
 import type { Organization } from "@/hooks/useOrganization";
 import { getUserRole, isPatientRole } from "@/lib/rbac";
 
@@ -372,6 +373,129 @@ export async function prefetchDashboardAppointments(
   } catch {
     return null;
   }
+}
+
+/** Response shape for GET /api/notifications — cache key: queryKeys.notifications.all */
+export type NotificationsPrefetch = {
+  notifications: Array<{
+    id: string;
+    user_id: string;
+    title: string;
+    message: string;
+    type: string;
+    read: boolean;
+    created_at: string;
+    link?: string;
+  }>;
+  total: number;
+  unreadCount: number;
+};
+
+/** Mirrors GET /api/payments — cache key: queryKeys.invoices.all → Invoice[] */
+export async function prefetchInvoices(userId: string): Promise<Invoice[] | null> {
+  try {
+    const rows = await prisma.invoice.findMany({
+      where: { user_id: userId },
+      include: { payments: true },
+      orderBy: { created_at: "desc" },
+    });
+
+    return rows.map((i) => {
+      const base = serializeInvoice(i);
+      return {
+        ...base,
+        appointment_id: i.appointment_id ?? undefined,
+        description: i.description ?? undefined,
+        due_date: base.due_date ?? undefined,
+        paid_at: base.paid_at ?? undefined,
+        payments: i.payments.map((p) => ({
+          id: p.id,
+          amount: p.amount,
+          status: p.status,
+          created_at: p.created_at?.toISOString?.() ?? "",
+          stripe_payment_id: p.stripe_payment_id ?? undefined,
+        })),
+      } satisfies Invoice;
+    });
+  } catch {
+    return null;
+  }
+}
+
+/** Mirrors GET /api/notifications — unread-first list + total/unread counts. */
+export async function prefetchNotifications(
+  userId: string
+): Promise<NotificationsPrefetch | null> {
+  try {
+    const [notifications, total, unreadCount] = await Promise.all([
+      prisma.notification.findMany({
+        where: { user_id: userId },
+        orderBy: [{ read: "asc" }, { created_at: "desc" }],
+        take: 50,
+      }),
+      prisma.notification.count({ where: { user_id: userId } }),
+      prisma.notification.count({
+        where: { user_id: userId, read: false },
+      }),
+    ]);
+
+    return {
+      notifications: notifications.map((n) => ({
+        id: n.id,
+        user_id: n.user_id,
+        title: n.title,
+        message: n.message,
+        type: n.type,
+        read: n.read,
+        created_at: n.created_at?.toISOString?.() ?? "",
+        link: n.link ?? undefined,
+      })),
+      total,
+      unreadCount,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/** Bundle seeded for CP appointment-mgmt / telehealth — same keys as dashboard/page.tsx. */
+export type CalendarAppointmentsPrefetchBundle = {
+  categories: Category[] | null;
+  patients: Patient[] | null;
+  assignees: AppointmentAssignee[] | null;
+  dashboardAccessAccepted: DashboardAccessRow[] | null;
+  appointments: FullAppointment[] | null;
+};
+
+/**
+ * Parallel prefetch for calendar appointment tabs (CP + dashboard pattern).
+ * Seeds categories, patients, assignees, dashboardAccess.accepted, appointments.all.
+ */
+export async function prefetchCalendarAppointmentsBundle(
+  userId: string,
+  email: string
+): Promise<CalendarAppointmentsPrefetchBundle> {
+  const [categories, patients, assignees, dashboardAccessAccepted] =
+    await Promise.all([
+      prefetchCategories(),
+      prefetchPatients(),
+      prefetchAppointmentAssigneesForUser(userId, email),
+      prefetchDashboardAccessAccepted(userId, email),
+    ]);
+
+  const appointments = await prefetchDashboardAppointments(userId, email, {
+    categories,
+    patients,
+    assignees,
+  });
+
+  return {
+    categories,
+    patients,
+    assignees,
+    dashboardAccessAccepted,
+    appointments,
+  };
 }
 
 /** Mirrors GET /api/categories/[id] — seeds `queryKeys.categories.detail(id)`. */

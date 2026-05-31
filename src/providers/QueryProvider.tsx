@@ -7,6 +7,8 @@ import type { Persister } from "@tanstack/react-query-persist-client";
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import { createQueryClient } from "@/lib/query-client";
 import { useQueryCacheCrossTabSync } from "@/hooks/useQueryCacheCrossTabSync";
+import { useNotificationStream } from "@/hooks/useNotificationStream";
+import { useAuth } from "@/hooks/useAuth";
 
 /**
  * QueryProvider
@@ -68,6 +70,13 @@ function QueryCacheCrossTabListener() {
   return null;
 }
 
+/** One EventSource per tab — live navbar/CP notification updates via SSE invalidation. */
+function NotificationStreamListener() {
+  const { user, isLoading } = useAuth();
+  useNotificationStream(!isLoading && !!user?.id);
+  return null;
+}
+
 export function QueryProvider({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => createQueryClient());
   /**
@@ -99,6 +108,7 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
       }}
     >
       <QueryCacheCrossTabListener />
+      <NotificationStreamListener />
       {children}
       {showDevtools && <ReactQueryDevtools initialIsOpen={false} />}
     </PersistQueryClientProvider>

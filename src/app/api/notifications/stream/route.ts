@@ -1,6 +1,6 @@
 /**
  * Server-Sent Events (SSE) endpoint for real-time notifications
- * 
+ *
  * GET /api/notifications/stream — long-lived SSE connection
  * Client should use EventSource API to connect.
  */
@@ -8,6 +8,7 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import { serializeNotificationRow } from "@/lib/serialize-notification-row";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -43,7 +44,10 @@ export async function GET() {
           if (newNotifications.length > 0) {
             controller.enqueue(
               encoder.encode(
-                `data: ${JSON.stringify({ type: "notifications", data: newNotifications })}\n\n`
+                `data: ${JSON.stringify({
+                  type: "notifications",
+                  data: newNotifications.map(serializeNotificationRow),
+                })}\n\n`
               )
             );
             lastCheck = new Date();

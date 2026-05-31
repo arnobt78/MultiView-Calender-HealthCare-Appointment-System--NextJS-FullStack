@@ -2,12 +2,20 @@
 
 ## Latest Audit Update (2026-05-30)
 
+- **CP section SSR prefetch (extended):** `ControlPanelSectionServerPage` + `prefetchControlPanelSection` seeds per-tab cache before paint via `seedControlPanelSectionCache` — invoices (`queryKeys.invoices.all`), appointments_mgmt + telehealth (calendar bundle: categories/patients/assignees/dashboardAccess/appointments), notifications (`queryKeys.notifications.all`); Stripe return still busts via `invalidateInvoicesAndOverview`.
+- **Notification SSE live updates:** `NotificationStreamListener` in `QueryProvider` → `useNotificationStream` → `subscribeNotificationStream` → `invalidateNotificationsAndCrossTab` on SSE `notifications` events (~10s server poll); navbar badge + CP notifications list refresh without navigation.
+- **Dashboard `/dashboard` SSR:** unchanged — `prefetchDashboardAppointments` + `HomePage` cache seed.
+- **Cross-tab:** `notifications` scope in `query-cache-cross-tab.ts`; SSE uses `invalidateNotificationsAndCrossTab`.
+- **Skipped (intentional):** CP list-tab hover prefetch (SSR on navigation); merge SSE rows into cache (invalidate + refetch keeps total/unreadCount accurate).
+- **Verify:** `npm test && npx tsc --noEmit && npm run lint && npm run build` — **498 tests**.
+
+## Prior (2026-05-30 early)
+
 - **Dashboard `/dashboard` SSR:** `force-dynamic` page prefetches categories, patients, assignees, accepted dashboard-access, and merged calendar list (`src/lib/appointments-list-build.ts` + `prefetchDashboardAppointments` in `server-prefetch.ts`). `HomePage` seeds TanStack cache before paint — no calendar flash on hard refresh.
 - **Calendar fetch contract:** Owned rows capped at `PAGINATION.CALENDAR_APPOINTMENTS_LIMIT` (100 demo); invited/shared rows resolved by `resolveExtraAssignedAppointmentIds` and fetched in one batch (`GET /api/appointments?ids=` / `fetchAppointmentsByIds`).
 - **Control panel SSR:** `organization-management` section prefetches orgs; `control-panel/layout.tsx` prefetches `CP_DOCTOR_USERS_FILTERS` + `CP_ALL_USERS_FILTERS` once for all CP routes via `ControlPanelSsrCacheSeed`.
 - **Cross-tab:** `invalidateOrganizations` publishes `CROSS_TAB_SCOPES.ORGANIZATIONS`.
 - **Skipped (intentional):** SPA client-nav seed; appointment-types prefetch everywhere; bulk-import snapshot bust.
-- **Verify:** `npm test && npx tsc --noEmit && npm run lint && npm run build` — **472 tests**.
 
 ## Prior (2026-05-28)
 
@@ -199,7 +207,8 @@ AuthShell (h-dvh, overflow-hidden, sets html.style.overflow = "hidden")
 
 - `src/app/control-panel/layout.tsx` — wraps `ControlPanelSidebarNav` + scrollable right pane. Has `bg-gradient-to-br from-slate-50 via-white to-slate-100` to prevent the black-flash hydration bug.
 - `src/components/control-panel/ControlPanelSidebarNav.tsx` — client component, reads `pathname`, calls `router.replace()` on tab change.
-- `src/components/pages/ControlPanelPage.tsx` — renders mobile hamburger Sheet + horizontal tab strip + all `TabsContent` panels. Desktop sidebar has been moved to layout.
+- `src/components/control-panel/ControlPanelSectionServerPage.tsx` — shared async server entry for dedicated CP list routes; `prefetchControlPanelSection` + `ControlPanelSectionPageClient` seed cache.
+- `src/components/pages/ControlPanelPage.tsx` — thin deprecated wrapper; mobile nav lives in `ControlPanelMobileNav` / `ControlPanelSectionPageClient`.
 
 **CSS globals (src/styles/globals.css):**
 
@@ -516,7 +525,8 @@ src/
 │   ├── useAppointments.ts      React Query — /api/appointments
 │   ├── useUsers.ts             React Query — /api/users (filterable by role/roles)
 │   ├── usePatients.ts          + usePatientSnapshot(id)
-│   ├── useNotifications.ts     SSE + React Query
+│   ├── useNotifications.ts     REST list + mutations
+│   ├── useNotificationStream.ts SSE listener (QueryProvider only)
 │   ├── useOrganization.ts
 │   ├── useAnalytics.ts
 │   ├── useInsights.ts

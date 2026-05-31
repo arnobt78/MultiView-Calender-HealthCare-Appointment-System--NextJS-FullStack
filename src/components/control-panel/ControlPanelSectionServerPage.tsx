@@ -14,7 +14,9 @@ export async function ControlPanelSectionServerPage({
 }) {
   const sessionUser = await getSessionUser();
   const initial =
-    sessionUser != null ? await prefetchControlPanelSection(tab, sessionUser.userId) : null;
+    sessionUser != null
+      ? await prefetchControlPanelSection(tab, sessionUser.userId, sessionUser.email)
+      : null;
 
   return <ControlPanelSectionPageClient tab={tab} initial={initial} />;
 }
