@@ -132,6 +132,10 @@ export type PatientSnapshot = {
   patient: Patient;
   appointments: AppointmentSnapshotRow[];
   invoices: SnapshotInvoice[];
+  /** Full appointment count for section badge (table rows capped at 50). */
+  appointmentTotalCount: number;
+  /** Invoices linked to this patient's appointments (via appointment_id). */
+  invoiceTotalCount: number;
 };
 
 /** Appointment row on category snapshot — full clinical table projection (same as patient snapshot). */

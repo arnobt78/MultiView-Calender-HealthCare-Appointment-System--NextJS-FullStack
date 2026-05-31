@@ -1,31 +1,10 @@
-/**
- * Patient aggregate: appointments + invoices for this patient.
- *
- * Each appointment row adds denormalized labels for the control-panel table:
- * - `calendar_owner_*`: always the calendar owner (`Appointment.owner_id` in Prisma → `user_id` in JSON).
- * - `doctor_*`: B2 resolved treating / clinical contact (`resolveTreatingPhysicianUserId` → joined user row).
- * - `doctor_specialty`: clinical user's `specialty` for stacked badge in patient detail table.
- * - `category_label` / `category_color` / `category_icon`: patient detail Related Appointments category column.
- * - `appointment_type_name`: two-line Title column (type on row 1, patient name on row 2 in `PatientDetailScreen`).
- */
-
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { isValidUUID } from "@/lib/validation";
 import { getUserRole } from "@/lib/rbac";
 import { resolvePatientAccess } from "@/lib/patient-access";
 import { rosterDoctorIdFromRequest } from "@/lib/patient-api-access";
-import {
-  serializePatient,
-  serializeInvoice,
-} from "@/lib/serializers";
-import { patientDetailInclude } from "@/lib/patient-api-include";
-import {
-  appointmentSnapshotInclude,
-  mapAppointmentToSnapshotRow,
-  type AppointmentSnapshotPrismaRow,
-} from "@/lib/appointment-snapshot-row";
+import { loadPatientSnapshotData } from "@/lib/patient-snapshot-data";
 
 /** Per-request snapshot — literal required (see api-route-dynamic.test.ts). */
 export const dynamic = "force-dynamic";
@@ -55,43 +34,12 @@ export async function GET(req: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const patientRaw = await prisma.patient.findUnique({
-      where: { id },
-      include: patientDetailInclude,
-    });
-
-    if (!patientRaw) {
+    const snapshot = await loadPatientSnapshotData(id);
+    if (!snapshot) {
       return NextResponse.json({ error: "Patient not found" }, { status: 404 });
     }
 
-    const appointmentsRaw = await prisma.appointment.findMany({
-      where: { patient_id: id },
-      orderBy: { start: "desc" },
-      take: 50,
-      include: appointmentSnapshotInclude,
-    });
-
-    const appointmentIds = appointmentsRaw.map((a) => a.id);
-
-    const invoicesRaw =
-      appointmentIds.length === 0
-        ? []
-        : await prisma.invoice.findMany({
-            where: { appointment_id: { in: appointmentIds } },
-            orderBy: { created_at: "desc" },
-          });
-
-    const appointments = appointmentsRaw.map((a) =>
-      mapAppointmentToSnapshotRow(a as AppointmentSnapshotPrismaRow)
-    );
-
-    const invoices = invoicesRaw.map(serializeInvoice);
-
-    return NextResponse.json({
-      patient: serializePatient(patientRaw),
-      appointments,
-      invoices,
-    });
+    return NextResponse.json(snapshot);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Internal server error";
     return NextResponse.json({ error: message }, { status: 500 });

@@ -88,7 +88,13 @@ describe("applyCrossTabScopes", () => {
     const qc = createQueryClient();
     const patientSnapKey = queryKeys.patients.snapshot("pat-1");
     const categorySnapKey = queryKeys.categories.snapshot("cat-1");
-    qc.setQueryData(patientSnapKey, { patient: { id: "pat-1" }, appointments: [], invoices: [] });
+    qc.setQueryData(patientSnapKey, {
+      patient: { id: "pat-1" },
+      appointments: [],
+      invoices: [],
+      appointmentTotalCount: 0,
+      invoiceTotalCount: 0,
+    });
     qc.setQueryData(categorySnapKey, {
       category: { id: "cat-1" },
       appointments: [],

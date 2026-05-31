@@ -33,6 +33,10 @@ export const entityDetailAuditIconCircleClass = entityDetailFieldIconCircleClass
 export const entityDetailSectionIconCircleClass =
   "flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-sky-200/70 bg-sky-50/80 shadow-[0_2px_10px_rgba(14,165,233,0.18)]";
 
+/** Sky divider + rhythm above Related Appointments / Invoices snapshot blocks (CP patient detail). */
+export const entityDetailSnapshotSectionShellClass =
+  "space-y-3 border-t border-sky-100/80 pt-3";
+
 /**
  * @deprecated Nested flex/inner-scroll shells clip glass shadows — use `appSectionRootClass` via
  * `resolveEntityDetailRootClass` (dashboard-overview single `cp-right-scroll` scroll).

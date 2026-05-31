@@ -574,36 +574,8 @@ export async function prefetchPatient(patientId: string): Promise<Patient | null
  */
 export async function prefetchPatientSnapshot(patientId: string): Promise<PatientSnapshot | null> {
   try {
-    const patientRaw = await prisma.patient.findUnique({
-      where: { id: patientId },
-      include: patientDetailInclude,
-    });
-    if (!patientRaw) return null;
-
-    const appointmentsRaw = await prisma.appointment.findMany({
-      where: { patient_id: patientId },
-      orderBy: { start: "desc" },
-      take: 50,
-      include: appointmentSnapshotInclude,
-    });
-
-    const appointmentIds = appointmentsRaw.map((a) => a.id);
-
-    const invoicesRaw =
-      appointmentIds.length === 0
-        ? []
-        : await prisma.invoice.findMany({
-            where: { appointment_id: { in: appointmentIds } },
-            orderBy: { created_at: "desc" },
-          });
-
-    return {
-      patient: serializePatient(patientRaw) as Patient,
-      appointments: appointmentsRaw.map((a) =>
-        mapAppointmentToSnapshotRow(a as AppointmentSnapshotPrismaRow)
-      ),
-      invoices: invoicesRaw.map(serializeInvoice),
-    } as PatientSnapshot;
+    const { loadPatientSnapshotData } = await import("@/lib/patient-snapshot-data");
+    return await loadPatientSnapshotData(patientId);
   } catch {
     return null;
   }

@@ -69,16 +69,15 @@ import {
   patientDetailSchemaSectionClass,
   patientDetailSnapshotTableFrameClass,
   entityDetailActionsRowClass,
-} from "@/lib/patient-detail-ui-classes";
-import { ControlPanelGlassActionButton } from "@/components/shared/ControlPanelGlassActionButton";
-import { EntityDetailRecordAuditCard } from "@/components/shared/entity-detail/EntityDetailRecordAuditCard";
-import { cn } from "@/lib/utils";
-import {
   entityDetailPageHeaderClass,
   patientDetailDefinitionListClass,
   entityDetailFieldIconCircleClass,
-  entityDetailSectionIconCircleClass,
+  entityDetailSnapshotSectionShellClass,
 } from "@/lib/patient-detail-ui-classes";
+import { ControlPanelGlassActionButton } from "@/components/shared/ControlPanelGlassActionButton";
+import { EntityDetailRecordAuditCard } from "@/components/shared/entity-detail/EntityDetailRecordAuditCard";
+import { EntityDetailSnapshotSectionHeading } from "@/components/shared/entity-detail/EntityDetailSnapshotSectionHeading";
+import { cn } from "@/lib/utils";
 import {
   resolveEntityDetailRootClass,
   type AppSectionScrollShell,
@@ -155,14 +154,25 @@ function renderPatientReferralValue(cp: Patient["clinical_profile"]) {
   );
 }
 
-function SectionHeading({ icon: Icon, children }: { icon: LucideIcon; children: React.ReactNode }) {
+function SectionHeading({
+  icon: Icon,
+  children,
+  count,
+  countSkeleton,
+}: {
+  icon: LucideIcon;
+  children: React.ReactNode;
+  count?: number;
+  countSkeleton?: boolean;
+}) {
   return (
-    <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-      <span className={entityDetailSectionIconCircleClass}>
-        <Icon className="h-3.5 w-3.5 text-sky-600" aria-hidden />
-      </span>
+    <EntityDetailSnapshotSectionHeading
+      icon={Icon}
+      count={count}
+      countSkeleton={countSkeleton}
+    >
       {children}
-    </h3>
+    </EntityDetailSnapshotSectionHeading>
   );
 }
 
@@ -463,6 +473,12 @@ export function PatientDetailScreen({
     () => buildPatientInvoicesColumns(viewerRole),
     [viewerRole]
   );
+
+  const appointmentTotalCount =
+    snap.data?.appointmentTotalCount ?? snap.data?.appointments?.length ?? 0;
+  const invoiceTotalCount = snap.data?.invoiceTotalCount ?? snap.data?.invoices?.length ?? 0;
+  const snapshotSectionsLoading = snap.isLoading && !snap.data;
+
   const cp = p?.clinical_profile;
 
   if (isError) {
@@ -669,8 +685,14 @@ export function PatientDetailScreen({
 
           {hasPatient ? (
             <>
-              <div className="space-y-3">
-                <SectionHeading icon={Calendar}>Related Appointments</SectionHeading>
+              <div className={entityDetailSnapshotSectionShellClass}>
+                <SectionHeading
+                  icon={Calendar}
+                  count={appointmentTotalCount}
+                  countSkeleton={snapshotSectionsLoading}
+                >
+                  Related Appointments
+                </SectionHeading>
                 <ClinicalDataTable
                   columns={appointmentColumns}
                   data={(snap.data?.appointments ?? []).slice(0, 12)}
@@ -684,8 +706,14 @@ export function PatientDetailScreen({
                 />
               </div>
 
-              <div className="space-y-3">
-                <SectionHeading icon={Receipt}>Invoices (Via Appointments)</SectionHeading>
+              <div className={entityDetailSnapshotSectionShellClass}>
+                <SectionHeading
+                  icon={Receipt}
+                  count={invoiceTotalCount}
+                  countSkeleton={snapshotSectionsLoading}
+                >
+                  Invoices (Via Appointments)
+                </SectionHeading>
                 <ClinicalDataTable
                   columns={invoiceColumns}
                   data={(snap.data?.invoices ?? []).slice(0, 12)}
