@@ -3,22 +3,41 @@
  * Use in API routes so responses match existing frontend types.
  */
 
-export function serializeCategory(c: {
-  id: string;
-  created_at: Date;
-  updated_at: Date | null;
-  label: string;
-  description: string | null;
-  color: string | null;
-  icon: string | null;
-  is_active?: boolean;
-  sort_order?: number;
-  duration_minutes_default?: number | null;
-}) {
+export function serializeCategory(
+  c: {
+    id: string;
+    created_at: Date;
+    updated_at: Date | null;
+    label: string;
+    description: string | null;
+    color: string | null;
+    icon: string | null;
+    is_active?: boolean;
+    sort_order?: number;
+    duration_minutes_default?: number | null;
+    created_by_id?: string | null;
+    updated_by_id?: string | null;
+    created_by?: UserMini;
+    updated_by?: UserMini;
+  }
+) {
   return {
-    ...c,
+    id: c.id,
     created_at: c.created_at?.toISOString?.(),
     updated_at: c.updated_at?.toISOString?.() ?? null,
+    label: c.label,
+    description: c.description,
+    color: c.color,
+    icon: c.icon,
+    is_active: c.is_active,
+    sort_order: c.sort_order,
+    duration_minutes_default: c.duration_minutes_default,
+    created_by_id: c.created_by_id ?? null,
+    updated_by_id: c.updated_by_id ?? null,
+    created_by_display: userDisplay(c.created_by),
+    updated_by_display: userDisplay(c.updated_by),
+    created_by_email: c.created_by?.email ?? null,
+    updated_by_email: c.updated_by?.email ?? null,
   };
 }
 

@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { DataTableColumnHeader } from "@/components/shared/DataTableColumnHeader";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
+import { ClinicalAppointmentStatusBadge } from "@/components/shared/entity-detail/ClinicalAppointmentStatusBadge";
 import {
   ClinicalEmptyDash,
   clinicalEmptyOrNode,
@@ -12,10 +13,12 @@ import {
 } from "@/components/shared/ClinicalTableEmptyDash";
 import { clinicalHasTextValue } from "@/lib/clinical-empty-value";
 import { DoctorIdentityCell } from "@/components/shared/person-display/DoctorIdentityCell";
+import { PatientIdentityCell } from "@/components/shared/person-display/PatientIdentityCell";
 import {
   appointmentDetailHref,
   categoryDetailHref,
   invoiceDetailHref,
+  patientDetailHref,
 } from "@/lib/entity-routes";
 import {
   clinicalCellMutedTextClass,
@@ -104,22 +107,6 @@ export function CategoryTableCell({
   );
 }
 
-function AppointmentStatusBadge({ status }: { status?: string | null }) {
-  const cls =
-    status === "done"
-      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-      : status === "alert"
-        ? "border-rose-200 bg-rose-50 text-rose-700"
-        : status === "pending"
-          ? "border-amber-200 bg-amber-50 text-amber-700"
-          : "border-slate-200 bg-slate-50 text-gray-600";
-  return (
-    <Badge variant="outline" className={`capitalize text-xs ${cls}`}>
-      {status ?? "pending"}
-    </Badge>
-  );
-}
-
 function InvoiceStatusBadge({ status }: { status: string }) {
   const cls =
     status === "paid"
@@ -158,6 +145,42 @@ function appointmentTitleLines(
   return { typeLine: title || "—", patientLine: patientDisplayName };
 }
 
+function resolvePatientIdentityFromRow(
+  appt: AppointmentSnapshotRow,
+  viewerRole: EntityRole,
+  fallbackName: string,
+  pagePatient?: BuildSnapshotColumnsOpts["pagePatient"]
+) {
+  const patientId = appt.patient;
+  if (!patientId || !isValidUUID(patientId)) return null;
+  let first = appt.patient_firstname?.trim() ?? "";
+  let last = appt.patient_lastname?.trim() ?? "";
+  let email = appt.patient_email ?? null;
+  let birth_date = appt.patient_birth_date ?? null;
+  let clinical_profile = appt.patient_clinical_profile ?? null;
+  if (!first && !last && pagePatient?.id === patientId) {
+    first = pagePatient.firstname?.trim() ?? "";
+    last = pagePatient.lastname?.trim() ?? "";
+    email = pagePatient.email;
+    birth_date = pagePatient.birth_date;
+    clinical_profile = pagePatient.clinical_profile ?? null;
+  }
+  const name = `${first} ${last}`.trim() || fallbackName;
+  return {
+    href: patientDetailHref(viewerRole, patientId),
+    name,
+    email,
+    patient: {
+      id: patientId,
+      firstname: first,
+      lastname: last,
+      email: email ?? "",
+      birth_date,
+      clinical_profile,
+    },
+  };
+}
+
 type DoctorLookup = {
   id: string;
   email?: string | null;
@@ -173,13 +196,22 @@ export type BuildSnapshotColumnsOpts = {
   patientDisplayName: string;
   /** Doctors + admins for calendar-owner portraits (snapshot image wins when set). */
   staffById: Map<string, SnapshotStaffLookup>;
+  /** Patient detail page — fills portrait/name when row omits denormalized patient fields. */
+  pagePatient?: {
+    id: string;
+    firstname: string;
+    lastname: string;
+    email: string | null;
+    birth_date: string | null;
+    clinical_profile?: AppointmentSnapshotRow["patient_clinical_profile"];
+  } | null;
 };
 
 /** Related Appointments table — TanStack columns aligned with patient-management header/cell styles. */
 export function buildRelatedAppointmentsColumns(
   opts: BuildSnapshotColumnsOpts
 ): ColumnDef<AppointmentSnapshotRow>[] {
-  const { viewerRole, patientDisplayName, staffById } = opts;
+  const { viewerRole, patientDisplayName, staffById, pagePatient } = opts;
 
   return [
     {
@@ -193,6 +225,7 @@ export function buildRelatedAppointmentsColumns(
       cell: ({ row }) => {
         const a = row.original;
         const { typeLine, patientLine } = appointmentTitleLines(a, patientDisplayName);
+        const patientIdentity = resolvePatientIdentityFromRow(a, viewerRole, patientLine, pagePatient);
         return (
           <div
             className={cn(
@@ -206,8 +239,19 @@ export function buildRelatedAppointmentsColumns(
               label={typeLine}
               className={cn("block font-normal", clinicalTableCellWrapClass)}
             />
-            <p className={cn(clinicalCellMutedTextClass, clinicalTableCellWrapClass)}>{patientLine}</p>
-            <AppointmentStatusBadge status={a.status} />
+            {patientIdentity ? (
+              <PatientIdentityCell
+                href={patientIdentity.href}
+                name={patientIdentity.name}
+                email={patientIdentity.email}
+                patient={patientIdentity.patient}
+                avatarSizeClassName="h-7 w-7"
+                className="min-h-0 items-start gap-1.5 py-0"
+              />
+            ) : (
+              <p className={cn(clinicalCellMutedTextClass, clinicalTableCellWrapClass)}>{patientLine}</p>
+            )}
+            <ClinicalAppointmentStatusBadge status={a.status} />
           </div>
         );
       },

@@ -1,5 +1,5 @@
 /**
- * Doctor/patient category detail (read-only) — `/categories/:id`.
+ * Doctor/patient category detail — `/categories/:id`.
  */
 export const dynamic = "force-dynamic";
 
@@ -10,7 +10,7 @@ import { getUserRole, isAdminRole, isDoctorRole, isPatientRole } from "@/lib/rba
 import { categoryDetailHref } from "@/lib/entity-routes";
 import { loadCategoryDetailData } from "@/lib/category-detail-data";
 import { CategoryDetailScreen } from "@/components/detail/CategoryDetailScreen";
-import { prefetchCategory, prefetchCategorySnapshot } from "@/lib/server-prefetch";
+import { prefetchCategory, prefetchCategorySnapshot, prefetchUsersList } from "@/lib/server-prefetch";
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -25,11 +25,14 @@ export default async function PortalCategoryDetailPage({ params }: PageProps) {
   if (isAdminRole(role)) redirect(categoryDetailHref(role, id));
   if (!isDoctorRole(role) && !isPatientRole(role)) notFound();
 
-  const [data, initialCategory, initialSnapshot] = await Promise.all([
-    loadCategoryDetailData(id),
-    prefetchCategory(id),
-    prefetchCategorySnapshot(id),
-  ]);
+  const [data, initialCategory, initialSnapshot, initialDoctorUsers, initialAdminUsers] =
+    await Promise.all([
+      loadCategoryDetailData(id),
+      prefetchCategory(id),
+      prefetchCategorySnapshot(id),
+      prefetchUsersList({ role: "doctor", limit: 200 }),
+      prefetchUsersList({ role: "admin", limit: 50 }),
+    ]);
   if (!data) notFound();
 
   const backHref = isPatientRole(role)
@@ -45,6 +48,8 @@ export default async function PortalCategoryDetailPage({ params }: PageProps) {
       initialSnapshot={initialSnapshot}
       viewerRole={role}
       backHref={backHref}
+      initialDoctorUsers={initialDoctorUsers}
+      initialAdminUsers={initialAdminUsers}
     />
   );
 }

@@ -120,6 +120,12 @@ export type AppointmentSnapshotRow = Appointment & {
   doctor_email?: string | null;
   doctor_specialty?: string | null;
   doctor_image?: string | null;
+  /** Denormalized patient fields for category snapshot / multi-patient tables. */
+  patient_firstname?: string | null;
+  patient_lastname?: string | null;
+  patient_email?: string | null;
+  patient_birth_date?: string | null;
+  patient_clinical_profile?: Patient["clinical_profile"];
 };
 
 export type PatientSnapshot = {
@@ -128,15 +134,8 @@ export type PatientSnapshot = {
   invoices: SnapshotInvoice[];
 };
 
-/** Appointment row on category snapshot (CP detail appointments panel). */
-export type CategorySnapshotAppointmentRow = {
-  id: string;
-  title: string;
-  start: string;
-  end: string;
-  status: string | null;
-  owner: { display_name: string | null; email: string };
-};
+/** Appointment row on category snapshot — full clinical table projection (same as patient snapshot). */
+export type CategorySnapshotAppointmentRow = AppointmentSnapshotRow;
 
 export type CategorySnapshot = {
   category: Category;
@@ -156,6 +155,12 @@ export interface Category {
   is_active?: boolean;
   sort_order?: number;
   duration_minutes_default?: number | null;
+  created_by_id?: string | null;
+  updated_by_id?: string | null;
+  created_by_display?: string | null;
+  updated_by_display?: string | null;
+  created_by_email?: string | null;
+  updated_by_email?: string | null;
 }
 
 // Appointment

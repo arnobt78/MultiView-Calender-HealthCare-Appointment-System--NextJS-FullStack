@@ -1,6 +1,15 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest Audit Update (2026-05-30)
+## Latest Audit Update (2026-05-31)
+
+- **Entity detail parity (patient + category):** CP `/control-panel/patients/[id]` + `/control-panel/categories/[id]` — compact `PageHeader`, `gap-2` schema rows, `resolveEntityDetailRootClass` flex shell + sticky footer (`mt-auto`). Related appointments: `ClinicalDataTable` + `buildRelatedAppointmentsColumns` (sky titles, `PatientIdentityCell`, `DoctorIdentityCell`, `ClinicalAppointmentStatusBadge`, start–end times).
+- **Shared category detail:** `CategoryDetailScreenShared` — CP wrapper sky + CRUD (`ControlPanelCategoryDetailScreen`); portal `/categories/[id]` amber glass (`CategoryDetailScreen` read-only). Tokens: `category-detail-ui-classes.ts`, `amberGlassBackButtonClass`.
+- **Snapshot mapper:** `appointment-snapshot-row.ts` + `appointmentSnapshotInclude` — patient + category snapshot/API/prefetch share one projection (patient denormalized fields, doctor images).
+- **Category audit trail:** `migrations/007_category_audit_users.sql` — `categories.created_by` / `updated_by`; Prisma relations; POST/PUT set actor; GET + `prefetchCategory` include `categoryDetailInclude`; `EntityDetailRecordAuditCard` + role-aware `EntityDetailAuditStaffLink`.
+- **Prefetch:** CP + portal category pages SSR `prefetchUsersList` (doctor/admin); hover `prefetchCategoryDetailStaffUsers` in `prefetch-route-queries.ts`.
+- **Verify:** `npm test && npx tsc --noEmit && npm run lint && npm run build` — **503 tests**. Local DB: `npm run db:migrate` (007) then `npm run prisma:push`.
+
+## Prior (2026-05-30)
 
 - **App-wide section layout:** `src/lib/section-page-layout.ts` — `appSectionRootClass` (CP + scroll panes with `pb-3`), `appPortalSectionRootClass` (portals/insights inside `dashboardShellClass`), `appEntityDetailRootClass` (`space-y-3 pb-24`), `resolveAppSectionRootClass`, `appSectionErrorBannerClass`. CP consumers re-export via `control-panel-section-layout.ts`.
 - **Shared error banner:** `AppSectionErrorBanner` — Telehealth, DashboardOverview, PatientManagement, Notifications, InvitationList, Services, PatientDetailView.
@@ -57,7 +66,7 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Prism
 - **Access (doctor profile):** `src/lib/doctor-access.ts` — `canViewDoctorPortalProfile` for `/doctors/[id]` directory browse.
 - **Routes:** Admin stays on `/control-panel/*`. Doctors/patients use `/appointments/[id]`, `/patients/[id]`, `/categories/[id]`, `/doctors/[id]` with thin layouts (no CP sidebar). `control-panel/layout.tsx` redirects non-admins away.
 - **Href helpers:** `patientDetailHrefWithContext(role, id, fromDoctorId?)` for roster-aware patient links.
-- **UI:** `AppointmentDetailScreen`, `CategoryDetailScreen`, `PatientDetailScreen` (required `accessLevel`); `RoleEntityLink` on client surfaces; `PrefetchingLink` + `prefetchQueriesForDetailHref` (alias of `prefetchQueriesForControlPanelHref`) for hover prefetch; `BackNavigationLink` on detail backs (click → `invalidateQueriesForRoute` then navigate).
+- **UI:** `AppointmentDetailScreen`, **`CategoryDetailScreenShared`** (portal amber / CP sky via wrappers), `PatientDetailScreen` (required `accessLevel`); `RoleEntityLink` on client surfaces; `PrefetchingLink` + `prefetchQueriesForDetailHref` (category detail + snapshot + **`prefetchCategoryDetailStaffUsers`** on hover); `BackNavigationLink` on detail backs (click → `invalidateQueriesForRoute` then navigate).
 - **API patient gates:** `GET /api/patients/[id]` + snapshot require view+; `PUT`/`DELETE` require mutate; optional `?fromDoctor=` on GET (see `patient-api-access.ts`).
 - **Invalidation:** mutation helpers unchanged; add `invalidateQueriesForRoute` for back-navigation list refresh without `refetchOnMount`.
 - **Links wired:** calendar (`AppointmentList`, `DayView`, `WeekView`/`MonthView` via `AppointmentHoverCard`), portals, global search, notification deep links (create/booking/cron).
@@ -140,7 +149,7 @@ Run `npm run db:seed-test-user` after migrations: upserts demo `users`, doctor a
 - **Invalidation wiring**: `invalidateAfterAppointmentMutation` calls `invalidateInvoicesAndOverview`, which now also invalidates `queryKeys.patients.all` (appointments + invoices affect patient aggregates). `invalidateSharingAndAppointments` invalidates `patients.all` so assignee changes refresh snapshots without navigation.
 - **SSR pages**: `src/app/control-panel/patients/[id]/page.tsx` and `src/app/patients/[id]/page.tsx` use `export const dynamic = "force-dynamic"` and parallel prefetch (`prefetchPatient`, `prefetchPatientSnapshot`, `prefetchDoctors`). Control-panel **layout** (`control-panel/layout.tsx`) keeps sidebar mounted; detail route only hydrates the right pane.
 - **UI (list)**: `PatientListFiltersProvider` + status dropdown; `DataTable` global filter; row ⋮ **View** → detail route; **Edit** → **`PatientFormDialog`** (glass 90vw×90vh, emerald). Primary doctor: **`PatientPrimaryDoctorPickerField`** + `DoctorDirectoryPickerList` (same as appointment treating-physician picker). Required `*` via **`FormRequiredMark`**.
-- **UI (detail)**: **`PatientDetailScreen`** — SSR `accessLevel`; chrome + footer stay mounted; **`PatientDetailBodySkeleton`** pulses schema/table slots only; horizontal **`PatientDetailDefinitionRow`** (`patient-detail-ui-classes.ts`); sticky footer scoped to CP right scroll (not under sidebar). **Update Profile** opens **`PatientFormDialog`** (not inline form). Legacy `?mode=edit` on detail opens dialog once then strips query. Read-only banner when `view`; footer CRUD hidden when view-only. **`BackNavigationLink`** on header/footer.
+- **UI (detail)**: **`PatientDetailScreen`** — SSR `accessLevel`; chrome + footer stay mounted; **`PatientDetailBodySkeleton`** pulses schema/table slots only; horizontal **`PatientDetailDefinitionRow`** (`patient-detail-ui-classes.ts`, `gap-2`); **`EntityDetailRecordAuditCard`**; sticky footer via **`resolveEntityDetailRootClass`**. **Update Profile** opens **`PatientFormDialog`**. **`CategoryDetailScreenShared`** — same layout/table pattern; portal tone amber, CP sky + CRUD footer.
 - **Shared table patterns**: **`ClinicalDataTable`** + `patient-detail-snapshot-columns.tsx` — category column `break-words`; single table border (`tableFrameClassName`, not double card frame). **`DoctorIdentityCell`** merges snapshot images + `useUsers` doctor map. CP + doctor-portal list **Edit** opens **`PatientFormDialog`** (same as detail **Update Profile**).
 - **Loading**: `src/app/control-panel/loading.tsx` returns `null` so route transitions don't flash a full skeleton; tables keep localized skeleton rows via `DataTable` `isLoading`.
 

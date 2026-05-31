@@ -56,9 +56,7 @@ import {
 import { clinicalHasListValue, clinicalHasTextValue } from "@/lib/clinical-empty-value";
 import { PatientPortraitAvatar } from "@/components/shared/person-display/PatientPortraitAvatar";
 import { useUsers } from "@/hooks/useUsers";
-import { ControlPanelStaffLink } from "@/components/shared/ControlPanelStaffLink";
 import { Skeleton } from "@/components/ui/skeleton";
-import { format } from "date-fns";
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import { usePatients } from "@/hooks/usePatients";
 import { getPatientCareLevelLabel } from "@/lib/patient-care-level";
@@ -73,9 +71,16 @@ import {
   patientDetailStickyFooterClass,
 } from "@/lib/patient-detail-ui-classes";
 import { ControlPanelGlassActionButton } from "@/components/shared/ControlPanelGlassActionButton";
+import { EntityDetailRecordAuditCard } from "@/components/shared/entity-detail/EntityDetailRecordAuditCard";
 import { cn } from "@/lib/utils";
 import {
-  resolveAppSectionRootClass,
+  entityDetailPageHeaderClass,
+  patientDetailDefinitionListClass,
+  entityDetailFieldIconCircleClass,
+  entityDetailSectionIconCircleClass,
+} from "@/lib/patient-detail-ui-classes";
+import {
+  resolveEntityDetailRootClass,
   type AppSectionScrollShell,
 } from "@/lib/section-page-layout";
 import { patientDetailHref, type EntityRole } from "@/lib/entity-routes";
@@ -97,8 +102,7 @@ import { queryKeys } from "@/lib/query-keys";
 function FieldLabel({ icon: Icon, children }: { icon: LucideIcon; children: React.ReactNode }) {
   return (
     <dt className="flex items-center gap-1.5 text-xs font-medium text-gray-500 sm:pt-0.5">
-      {/* Glassmorphic icon circle — provides visual separation without heavy weight */}
-      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-sky-200/70 bg-sky-50/80 shadow-[0_2px_8px_rgba(14,165,233,0.15)]">
+      <span className={entityDetailFieldIconCircleClass}>
         <Icon className="h-3 w-3 text-sky-600" aria-hidden />
       </span>
       {children}
@@ -154,8 +158,7 @@ function renderPatientReferralValue(cp: Patient["clinical_profile"]) {
 function SectionHeading({ icon: Icon, children }: { icon: LucideIcon; children: React.ReactNode }) {
   return (
     <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-      {/* Slightly larger circle for section headings */}
-      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-sky-200/70 bg-sky-50/80 shadow-[0_2px_10px_rgba(14,165,233,0.18)]">
+      <span className={entityDetailSectionIconCircleClass}>
         <Icon className="h-3.5 w-3.5 text-sky-600" aria-hidden />
       </span>
       {children}
@@ -168,20 +171,18 @@ function PatientDetailBodySkeleton() {
   return (
     <div className="space-y-3 text-gray-700">
       {/* Keep static schema labels/icons visible; only value slots skeletonize during refresh. */}
-      <dl className="grid gap-3 text-sm">
+      <dl className={patientDetailDefinitionListClass}>
         <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 px-3 py-2 text-gray-700">
           <div className="flex items-center gap-2 text-xs font-medium text-gray-500">
-            {/* Keep audit icon style aligned with other schema icons and stable on refresh. */}
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-sky-200/70 bg-sky-50/80 shadow-[0_2px_8px_rgba(14,165,233,0.15)]">
+            <span className={entityDetailFieldIconCircleClass}>
               <CalendarClock className="h-3 w-3 text-sky-600" aria-hidden />
             </span>
             Record Audit
           </div>
-          <dd className="mt-1 space-y-1 text-gray-700">
-            {/* Match real audit text rows more closely to reduce vertical shift on data hydrate. */}
+          <div className="mt-1 space-y-1 text-gray-700">
             <Skeleton className="h-5 w-full max-w-[560px] rounded-md" />
             <Skeleton className="h-5 w-full max-w-[560px] rounded-md" />
-          </dd>
+          </div>
         </div>
         <div className={patientDetailDefinitionRowClass}>
           <FieldLabel icon={Fingerprint}>Patient ID</FieldLabel>
@@ -265,7 +266,7 @@ export function PatientDetailScreen({
   initialDoctorUsers,
   initialAdminUsers,
 }: PatientDetailScreenProps) {
-  const sectionRootClass = resolveAppSectionRootClass(scrollShell);
+  const sectionRootClass = resolveEntityDetailRootClass(scrollShell);
 
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -444,8 +445,18 @@ export function PatientDetailScreen({
         viewerRole,
         patientDisplayName,
         staffById,
+        pagePatient: p
+          ? {
+              id: p.id,
+              firstname: p.firstname,
+              lastname: p.lastname,
+              email: p.email,
+              birth_date: p.birth_date,
+              clinical_profile: p.clinical_profile,
+            }
+          : null,
       }),
-    [viewerRole, patientDisplayName, staffById]
+    [viewerRole, patientDisplayName, staffById, p]
   );
 
   const invoiceColumns = useMemo(
@@ -467,11 +478,13 @@ export function PatientDetailScreen({
   return (
     <div className={sectionRootClass}>
       <PageHeader
+        compact
+        className={entityDetailPageHeaderClass}
         title={
           showLiveBody ? (
-            <span className="block min-h-8 sm:min-h-9">{nameLabel || "—"}</span>
+            nameLabel || "—"
           ) : (
-            <Skeleton className="h-8 w-56 max-w-full sm:h-9" aria-hidden />
+            <Skeleton className="h-7 w-56 max-w-full" aria-hidden />
           )
         }
         // Static descriptor text should not flicker on refresh.
@@ -497,7 +510,7 @@ export function PatientDetailScreen({
 
       <Card
         className={cn(
-          "overflow-hidden border-sky-100/50 bg-white/90 text-gray-700 shadow-none",
+          "flex-1 overflow-hidden border-sky-100/50 bg-white/90 text-gray-700 shadow-none",
           skyGlassTableFrameClass
         )}
       >
@@ -564,53 +577,30 @@ export function PatientDetailScreen({
             <PatientDetailBodySkeleton />
           ) : (
             <>
-              <dl className="grid gap-3 text-sm">
-                <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 px-3 py-2 text-gray-700">
-                  <div className="flex items-center gap-2 text-xs font-medium text-gray-500">
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-sky-200/70 bg-sky-50/80 shadow-[0_2px_8px_rgba(14,165,233,0.15)]">
-                      <CalendarClock className="h-3 w-3 text-sky-600" aria-hidden />
-                    </span>
-                    Record Audit
-                  </div>
-                  <dd className="mt-1 space-y-1 text-gray-700">
-                    <p>
-                      <span className="text-gray-500">Created: </span>
-                      {p!.created_at ? (
-                        format(new Date(p!.created_at), "M/d/yyyy, h:mm:ss a")
-                      ) : (
-                        <ClinicalEmptyDash layout="inline" />
-                      )}
-                      {p!.created_by_display ? (
-                        <>
-                          <span className="text-gray-500"> · By </span>
-                          <ControlPanelStaffLink
-                            userId={p!.created_by_id}
-                            label={p!.created_by_display}
-                            email={p!.created_by_email}
-                          />
-                        </>
-                      ) : null}
-                    </p>
-                    <p>
-                      <span className="text-gray-500">Last Updated: </span>
-                      {p!.updated_at ? (
-                        format(new Date(p!.updated_at), "M/d/yyyy, h:mm:ss a")
-                      ) : (
-                        <ClinicalEmptyDash layout="inline" />
-                      )}
-                      {p!.updated_by_display ? (
-                        <>
-                          <span className="text-gray-500"> · By </span>
-                          <ControlPanelStaffLink
-                            userId={p!.updated_by_id}
-                            label={p!.updated_by_display}
-                            email={p!.updated_by_email}
-                          />
-                        </>
-                      ) : null}
-                    </p>
-                  </dd>
-                </div>
+              <dl className={patientDetailDefinitionListClass}>
+                <EntityDetailRecordAuditCard
+                  createdAt={p!.created_at}
+                  updatedAt={p!.updated_at}
+                  createdBy={
+                    p!.created_by_display
+                      ? {
+                          userId: p!.created_by_id,
+                          label: p!.created_by_display,
+                          email: p!.created_by_email,
+                        }
+                      : null
+                  }
+                  updatedBy={
+                    p!.updated_by_display
+                      ? {
+                          userId: p!.updated_by_id,
+                          label: p!.updated_by_display,
+                          email: p!.updated_by_email,
+                        }
+                      : null
+                  }
+                  viewerRole={viewerRole as EntityRole}
+                />
                 <PatientDetailDefinitionRow icon={Fingerprint} label="Patient ID">
                   <span className="font-mono text-xs break-all">{p!.id}</span>
                 </PatientDetailDefinitionRow>
@@ -714,7 +704,7 @@ export function PatientDetailScreen({
       </Card>
 
       {/* Sticky footer — static client chrome; never swap placeholders on refetch/hydrate. */}
-      <div className={patientDetailStickyFooterClass}>
+      <div className={cn(patientDetailStickyFooterClass, "mt-auto shrink-0")}>
         <div className="flex min-h-10 flex-wrap items-center justify-between gap-2">
           <BackNavigationLink
             href={listBackHref}

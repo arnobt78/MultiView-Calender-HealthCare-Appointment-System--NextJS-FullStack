@@ -12,14 +12,15 @@ type Props = {
   icon?: string | null;
   /** `brand` = colored circle + icon; `dot` = 8px fill-only swatch. */
   variant?: "brand" | "dot";
-  /** `list` = category-management table; `compact` = snapshot / detail tables. */
-  size?: "list" | "compact";
+  /** `hero` = entity detail profile tile (category/patient detail headers). */
+  size?: "list" | "compact" | "hero";
   className?: string;
 };
 
 const BRAND_SIZE_CLASS = {
   list: "h-7 w-7 [&_svg]:h-3 [&_svg]:w-3",
   compact: "h-6 w-6 [&_svg]:h-2.5 [&_svg]:w-2.5",
+  hero: "h-16 w-16 [&_svg]:h-7 [&_svg]:w-7",
 } as const;
 
 /**

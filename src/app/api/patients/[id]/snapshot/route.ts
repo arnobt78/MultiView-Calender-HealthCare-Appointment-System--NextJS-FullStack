@@ -18,11 +18,14 @@ import { resolvePatientAccess } from "@/lib/patient-access";
 import { rosterDoctorIdFromRequest } from "@/lib/patient-api-access";
 import {
   serializePatient,
-  serializeAppointment,
   serializeInvoice,
 } from "@/lib/serializers";
 import { patientDetailInclude } from "@/lib/patient-api-include";
-import { resolveTreatingPhysicianUserId } from "@/lib/appointment-display-doctor";
+import {
+  appointmentSnapshotInclude,
+  mapAppointmentToSnapshotRow,
+  type AppointmentSnapshotPrismaRow,
+} from "@/lib/appointment-snapshot-row";
 
 /** Per-request snapshot — literal required (see api-route-dynamic.test.ts). */
 export const dynamic = "force-dynamic";
@@ -65,16 +68,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
       where: { patient_id: id },
       orderBy: { start: "desc" },
       take: 50,
-      include: {
-        category: true,
-        appointment_type: { select: { name: true } },
-        owner: {
-          select: { id: true, display_name: true, email: true, specialty: true, image: true },
-        },
-        treating_physician: {
-          select: { id: true, display_name: true, email: true, specialty: true, image: true },
-        },
-      },
+      include: appointmentSnapshotInclude,
     });
 
     const appointmentIds = appointmentsRaw.map((a) => a.id);
@@ -87,30 +81,9 @@ export async function GET(req: NextRequest, context: RouteContext) {
             orderBy: { created_at: "desc" },
           });
 
-    const appointments = appointmentsRaw.map((a) => {
-      const row = serializeAppointment(a);
-      const clinicalId = resolveTreatingPhysicianUserId(row);
-      const clinical =
-        a.treating_physician_id && a.treating_physician?.id === clinicalId
-          ? a.treating_physician
-          : a.owner;
-      return {
-        ...row,
-        category_label: a.category?.label ?? null,
-        category_color: a.category?.color ?? null,
-        category_icon: a.category?.icon ?? null,
-        appointment_type_name: a.appointment_type?.name ?? null,
-        calendar_owner_id: a.owner?.id ?? null,
-        calendar_owner_display: a.owner?.display_name ?? null,
-        calendar_owner_email: a.owner?.email ?? null,
-        calendar_owner_image: a.owner?.image ?? null,
-        doctor_id: clinical?.id ?? null,
-        doctor_display: clinical?.display_name ?? null,
-        doctor_email: clinical?.email ?? null,
-        doctor_specialty: clinical?.specialty ?? null,
-        doctor_image: clinical?.image ?? null,
-      };
-    });
+    const appointments = appointmentsRaw.map((a) =>
+      mapAppointmentToSnapshotRow(a as AppointmentSnapshotPrismaRow)
+    );
 
     const invoices = invoicesRaw.map(serializeInvoice);
 

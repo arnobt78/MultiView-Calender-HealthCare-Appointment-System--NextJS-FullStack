@@ -57,6 +57,8 @@ model User {
   patients_created            Patient[]             @relation("PatientCreatedBy")
   patients_updated            Patient[]             @relation("PatientUpdatedBy")
   patients_primary_doctor     Patient[]             @relation("PatientPrimaryDoctor")
+  categories_created          Category[]            @relation("CategoryCreatedBy")
+  categories_updated          Category[]            @relation("CategoryUpdatedBy")
   /// Junction table: which global appointment types this doctor has enabled
   doctor_type_configs         DoctorAppointmentTypeConfig[] @relation("DoctorTypeConfigUser")
 
@@ -121,7 +123,11 @@ model Category {
   sort_order              Int       @default(0)
   /// Default appointment duration in minutes for this service type
   duration_minutes_default Int?
+  created_by_id            String? @map("created_by") @db.Uuid
+  updated_by_id            String? @map("updated_by") @db.Uuid
 
+  created_by     User? @relation("CategoryCreatedBy", fields: [created_by_id], references: [id], onDelete: SetNull)
+  updated_by     User? @relation("CategoryUpdatedBy", fields: [updated_by_id], references: [id], onDelete: SetNull)
   appointments Appointment[]
 
   @@map("categories")

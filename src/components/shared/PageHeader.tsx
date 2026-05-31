@@ -9,6 +9,8 @@ export interface PageHeaderProps extends Omit<React.HTMLAttributes<HTMLDivElemen
   description?: React.ReactNode;
   actions?: React.ReactNode;
   loading?: boolean;
+  /** Entity detail pages — tighter title/description stack, no extra vertical padding. */
+  compact?: boolean;
 }
 
 export function PageHeader({
@@ -17,6 +19,7 @@ export function PageHeader({
   actions,
   className,
   loading = false,
+  compact = false,
   ...props
 }: PageHeaderProps) {
   if (loading) {
@@ -36,22 +39,32 @@ export function PageHeader({
   return (
     <div
       className={cn(
-        "flex flex-col sm:flex-row sm:items-center justify-between gap-4 sticky top-0 backdrop-blur-sm z-20",
+        "flex flex-col sm:flex-row sm:items-center justify-between sticky top-0 backdrop-blur-sm z-20",
+        compact ? "gap-2" : "gap-4",
         className
       )}
       {...props}
     >
-      <div className="min-w-0 flex-1 py-2">
-        {/* `title` / `description` may be block nodes (e.g. Skeleton) — avoid <h1>/<p> so HTML stays valid and hydration matches. */}
+      <div className={cn("min-w-0 flex-1", compact ? "py-0" : "py-2")}>
         <div
           role="heading"
           aria-level={1}
-          className="text-xl font-semibold tracking-tight text-gray-700"
+          className={cn(
+            "font-semibold tracking-tight text-gray-700",
+            compact ? "text-xl leading-tight" : "text-xl"
+          )}
         >
           {title}
         </div>
         {description ? (
-          <div className="text-gray-500 text-xs sm:text-sm">{description}</div>
+          <div
+            className={cn(
+              "text-gray-500 text-xs sm:text-sm",
+              compact ? "mt-0.5 leading-snug" : undefined
+            )}
+          >
+            {description}
+          </div>
         ) : null}
       </div>
       {actions && (

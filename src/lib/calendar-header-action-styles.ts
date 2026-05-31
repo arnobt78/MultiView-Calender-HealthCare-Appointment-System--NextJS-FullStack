@@ -42,3 +42,7 @@ export const violetGlassPrimaryButtonClass =
 /** Violet glass back / cancel — pairs with `violetGlassPrimaryButtonClass`. */
 export const violetGlassBackButtonClass =
   "inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-violet-300/50 bg-white/75 px-4 text-sm font-medium text-violet-900 shadow-[0_10px_28px_rgba(139,92,246,0.2)] backdrop-blur-md transition-all duration-200 hover:border-violet-400/55 hover:bg-violet-50/90 hover:shadow-[0_12px_34px_rgba(139,92,246,0.28)] disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4";
+
+/** Amber glass back — portal category detail + category-management list parity. */
+export const amberGlassBackButtonClass =
+  "inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-amber-300/50 bg-white/75 px-4 text-sm font-medium text-amber-900 shadow-[0_10px_28px_rgba(217,119,6,0.2)] backdrop-blur-md transition-all duration-200 hover:border-amber-400/55 hover:bg-amber-50/90 hover:shadow-[0_12px_34px_rgba(217,119,6,0.28)] disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4";

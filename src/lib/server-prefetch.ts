@@ -44,7 +44,11 @@ import {
   resolveInsightsDataOptions,
   type InsightsQueryKey,
 } from "@/lib/insights-scope";
-import { resolveTreatingPhysicianUserId } from "@/lib/appointment-display-doctor";
+import {
+  appointmentSnapshotInclude,
+  mapAppointmentToSnapshotRow,
+  type AppointmentSnapshotPrismaRow,
+} from "@/lib/appointment-snapshot-row";
 import {
   startOfDay,
   endOfDay,
@@ -81,6 +85,7 @@ import {
   pickRecentActivityAppointments,
 } from "@/lib/dashboard-overview-recent-activity";
 import { loadCategorySnapshotData } from "@/lib/category-snapshot-data";
+import { categoryDetailInclude } from "@/lib/category-api-include";
 import type { DashboardAccessRow } from "@/lib/query-fetchers";
 import { buildFullAppointmentsList } from "@/lib/appointments-list-build";
 import { resolveExtraAssignedAppointmentIds } from "@/lib/appointments-calendar-assignees";
@@ -501,7 +506,10 @@ export async function prefetchCalendarAppointmentsBundle(
 /** Mirrors GET /api/categories/[id] — seeds `queryKeys.categories.detail(id)`. */
 export async function prefetchCategory(id: string): Promise<Category | null> {
   try {
-    const row = await prisma.category.findUnique({ where: { id } });
+    const row = await prisma.category.findUnique({
+      where: { id },
+      include: categoryDetailInclude,
+    });
     return row ? (serializeCategory(row) as Category) : null;
   } catch {
     return null;
@@ -576,12 +584,7 @@ export async function prefetchPatientSnapshot(patientId: string): Promise<Patien
       where: { patient_id: patientId },
       orderBy: { start: "desc" },
       take: 50,
-      include: {
-        category: true,
-        appointment_type: { select: { name: true } },
-        owner: { select: { id: true, display_name: true, email: true } },
-        treating_physician: { select: { id: true, display_name: true, email: true } },
-      },
+      include: appointmentSnapshotInclude,
     });
 
     const appointmentIds = appointmentsRaw.map((a) => a.id);
@@ -596,27 +599,9 @@ export async function prefetchPatientSnapshot(patientId: string): Promise<Patien
 
     return {
       patient: serializePatient(patientRaw) as Patient,
-      appointments: appointmentsRaw.map((a) => {
-        const row = serializeAppointment(a);
-        const clinicalId = resolveTreatingPhysicianUserId(row);
-        const clinical =
-          a.treating_physician_id && a.treating_physician?.id === clinicalId
-            ? a.treating_physician
-            : a.owner;
-        return {
-          ...row,
-          category_label: a.category?.label ?? null,
-          category_color: a.category?.color ?? null,
-          category_icon: a.category?.icon ?? null,
-          appointment_type_name: a.appointment_type?.name ?? null,
-          calendar_owner_id: a.owner?.id ?? null,
-          calendar_owner_display: a.owner?.display_name ?? null,
-          calendar_owner_email: a.owner?.email ?? null,
-          doctor_id: clinical?.id ?? null,
-          doctor_display: clinical?.display_name ?? null,
-          doctor_email: clinical?.email ?? null,
-        };
-      }),
+      appointments: appointmentsRaw.map((a) =>
+        mapAppointmentToSnapshotRow(a as AppointmentSnapshotPrismaRow)
+      ),
       invoices: invoicesRaw.map(serializeInvoice),
     } as PatientSnapshot;
   } catch {

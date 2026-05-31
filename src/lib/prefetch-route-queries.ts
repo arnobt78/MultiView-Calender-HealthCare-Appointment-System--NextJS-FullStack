@@ -4,6 +4,7 @@ import { queryKeys } from "@/lib/query-keys";
 import { isValidUUID } from "@/lib/validation";
 import { isAdminRole } from "@/lib/rbac";
 import type { Category, Patient, PatientSnapshot, User, CategorySnapshot } from "@/types/types";
+import { prefetchCategoryDetailStaffUsers } from "@/lib/prefetch-category-detail-staff";
 
 type PrefetchViewer = { userId: string; role: string | null };
 
@@ -87,6 +88,7 @@ export function prefetchQueriesForControlPanelHref(
             queryKey: queryKeys.categories.snapshot(id),
             queryFn: () => apiClient<CategorySnapshot>(`/api/categories/${id}/snapshot`),
           }),
+          prefetchCategoryDetailStaffUsers(queryClient),
         ]);
       }
     } catch {

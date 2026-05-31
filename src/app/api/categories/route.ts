@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { serializeCategory } from "@/lib/serializers";
+import { categoryDetailInclude } from "@/lib/category-api-include";
 import { redis } from "@/lib/redis";
 import { getUserRole, isPatientRole } from "@/lib/rbac";
 
@@ -62,7 +63,10 @@ export async function POST(req: NextRequest) {
         sort_order: body.sort_order !== undefined ? Number(body.sort_order) : 0,
         duration_minutes_default:
           body.duration_minutes_default !== undefined ? Number(body.duration_minutes_default) : null,
+        created_by_id: sessionUser.userId,
+        updated_by_id: sessionUser.userId,
       },
+      include: categoryDetailInclude,
     });
 
     /*

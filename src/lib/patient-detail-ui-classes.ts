@@ -14,8 +14,29 @@ export const patientDetailPrimaryDoctorRowClass =
 export const patientDetailSnapshotTableFrameClass =
   "overflow-x-auto rounded-md border-0 bg-transparent shadow-none";
 
-/** Avatar block + schema `<dl>` share one vertical rhythm (`gap-3`), not `space-y-6`. */
-export const patientDetailSchemaSectionClass = "space-y-3";
+/** Avatar block + schema `<dl>` share one vertical rhythm (`gap-2`), not `space-y-6`. */
+export const patientDetailSchemaSectionClass = "space-y-2";
+
+/** Definition list grid rhythm inside entity detail cards. */
+export const patientDetailDefinitionListClass = "grid gap-2 text-sm";
+
+/** Glass icon circle for schema field labels (sky tone). */
+export const entityDetailFieldIconCircleClass =
+  "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-sky-200/70 bg-sky-50/80 shadow-[0_2px_8px_rgba(14,165,233,0.15)]";
+
+/** Record audit card icon circle — matches schema field labels. */
+export const entityDetailAuditIconCircleClass = entityDetailFieldIconCircleClass;
+
+/** Section heading icon circle (slightly larger). */
+export const entityDetailSectionIconCircleClass =
+  "flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-sky-200/70 bg-sky-50/80 shadow-[0_2px_10px_rgba(14,165,233,0.18)]";
+
+/** Flex shell so sticky footer pins to viewport bottom when content is short. */
+export const entityDetailShellClass = "flex min-h-full flex-col";
+
+/** Tighter entity detail PageHeader — less gap under title/description. */
+export const entityDetailPageHeaderClass =
+  "gap-2 bg-gradient-to-b from-white via-white/95 to-transparent pb-0";
 
 /**
  * Sticky action bar — always mounted; buttons stay visible during refetch (disabled only).

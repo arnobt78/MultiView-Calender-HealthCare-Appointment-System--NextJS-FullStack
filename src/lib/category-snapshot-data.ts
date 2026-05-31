@@ -1,35 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { serializeCategory } from "@/lib/serializers";
-import type { Category, CategorySnapshot, CategorySnapshotAppointmentRow } from "@/types/types";
-
-const categorySnapshotAppointmentSelect = {
-  id: true,
-  title: true,
-  start: true,
-  end: true,
-  status: true,
-  owner: { select: { display_name: true, email: true } },
-} as const;
-
-function mapCategorySnapshotAppointment(
-  row: Awaited<
-    ReturnType<
-      typeof prisma.appointment.findMany<{ select: typeof categorySnapshotAppointmentSelect }>
-    >
-  >[number]
-): CategorySnapshotAppointmentRow {
-  return {
-    id: row.id,
-    title: row.title,
-    start: row.start.toISOString(),
-    end: row.end.toISOString(),
-    status: row.status,
-    owner: {
-      display_name: row.owner.display_name,
-      email: row.owner.email,
-    },
-  };
-}
+import {
+  appointmentSnapshotInclude,
+  mapAppointmentToSnapshotRow,
+  type AppointmentSnapshotPrismaRow,
+} from "@/lib/appointment-snapshot-row";
+import type { Category, CategorySnapshot } from "@/types/types";
 
 /** Shared Prisma load for category snapshot (CP detail live panel + API + SSR prefetch). */
 export async function loadCategorySnapshotData(
@@ -41,15 +17,17 @@ export async function loadCategorySnapshotData(
   const appointmentsRaw = await prisma.appointment.findMany({
     where: { category_id: categoryId },
     orderBy: { start: "desc" },
-    take: 15,
-    select: categorySnapshotAppointmentSelect,
+    take: 50,
+    include: appointmentSnapshotInclude,
   });
 
   const totalCount = await prisma.appointment.count({ where: { category_id: categoryId } });
 
   return {
     category: serializeCategory(catRow) as Category,
-    appointments: appointmentsRaw.map(mapCategorySnapshotAppointment),
+    appointments: appointmentsRaw.map((a) =>
+      mapAppointmentToSnapshotRow(a as AppointmentSnapshotPrismaRow)
+    ),
     totalCount,
   };
 }

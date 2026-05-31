@@ -10,7 +10,7 @@ import { getUserRole, isAdminRole, isDoctorRole, isPatientRole } from "@/lib/rba
 import { categoryDetailHref } from "@/lib/entity-routes";
 import { loadCategoryDetailData } from "@/lib/category-detail-data";
 import { ControlPanelCategoryDetailScreen } from "@/components/control-panel/CategoryDetailScreen";
-import { prefetchCategory, prefetchCategorySnapshot } from "@/lib/server-prefetch";
+import { prefetchCategory, prefetchCategorySnapshot, prefetchUsersList } from "@/lib/server-prefetch";
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -35,11 +35,14 @@ export default async function ControlPanelCategoryDetailPage({ params }: PagePro
   }
   if (!isAdminRole(role)) notFound();
 
-  const [data, initialCategory, initialSnapshot] = await Promise.all([
-    loadCategoryDetailData(id),
-    prefetchCategory(id),
-    prefetchCategorySnapshot(id),
-  ]);
+  const [data, initialCategory, initialSnapshot, initialDoctorUsers, initialAdminUsers] =
+    await Promise.all([
+      loadCategoryDetailData(id),
+      prefetchCategory(id),
+      prefetchCategorySnapshot(id),
+      prefetchUsersList({ role: "doctor", limit: 200 }),
+      prefetchUsersList({ role: "admin", limit: 50 }),
+    ]);
   if (!data) notFound();
 
   return (
@@ -49,6 +52,8 @@ export default async function ControlPanelCategoryDetailPage({ params }: PagePro
       listBackHref="/control-panel/category-management"
       initialCategory={initialCategory}
       initialSnapshot={initialSnapshot}
+      initialDoctorUsers={initialDoctorUsers}
+      initialAdminUsers={initialAdminUsers}
     />
   );
 }

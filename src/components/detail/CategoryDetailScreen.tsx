@@ -1,31 +1,11 @@
 "use client";
 
 /**
- * Shared category detail — doctor/patient portal routes (view-only).
- * Admin CRUD lives on Category Management list + `ControlPanelCategoryDetailScreen`.
- * SSR seeds TanStack cache; appointments panel refetches after appointment CRUD without navigation.
+ * Portal category detail — doctor/patient read-only; amber glass tone preserved.
+ * Admin CRUD lives on `ControlPanelCategoryDetailScreen`.
  */
-import Link from "next/link";
-import { BackNavigationLink } from "@/components/shared/BackNavigationLink";
-import { format } from "date-fns";
-import { appointmentDetailHref } from "@/lib/entity-routes";
-import { PageHeader } from "@/components/shared/PageHeader";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  ArrowLeft,
-  CalendarDays,
-  Hash,
-  Tag,
-} from "lucide-react";
-import { useLayoutEffect, useEffect, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { useCategory, useCategorySnapshot } from "@/hooks/useCategories";
-import { queryKeys } from "@/lib/query-keys";
-import { appPortalSectionRootClass } from "@/lib/section-page-layout";
+import { CategoryDetailScreenShared } from "@/components/shared/category-detail/CategoryDetailScreenShared";
+import type { UsersListResponse } from "@/hooks/useUsers";
 import type { Category, CategorySnapshot } from "@/types/types";
 
 export type CategoryDetailScreenProps = {
@@ -34,6 +14,8 @@ export type CategoryDetailScreenProps = {
   initialSnapshot: CategorySnapshot | null;
   viewerRole: string | null;
   backHref: string;
+  initialDoctorUsers?: UsersListResponse | null;
+  initialAdminUsers?: UsersListResponse | null;
 };
 
 export function CategoryDetailScreen({
@@ -42,161 +24,20 @@ export function CategoryDetailScreen({
   initialSnapshot,
   viewerRole,
   backHref,
+  initialDoctorUsers,
+  initialAdminUsers,
 }: CategoryDetailScreenProps) {
-  const queryClient = useQueryClient();
-  const { data: liveCategory } = useCategory(categoryId);
-  const {
-    data: liveSnapshot,
-    isLoading: snapshotLoading,
-    isFetching: snapshotFetching,
-  } = useCategorySnapshot(categoryId, { initialData: initialSnapshot ?? undefined });
-
-  useLayoutEffect(() => {
-    if (initialCategory != null) {
-      queryClient.setQueryData(queryKeys.categories.detail(categoryId), initialCategory);
-    }
-  }, [queryClient, categoryId, initialCategory]);
-
-  useLayoutEffect(() => {
-    if (initialSnapshot != null) {
-      queryClient.setQueryData(queryKeys.categories.snapshot(categoryId), initialSnapshot);
-    }
-  }, [queryClient, categoryId, initialSnapshot]);
-
-  const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => {
-    const id = requestAnimationFrame(() => setIsMounted(true));
-    return () => cancelAnimationFrame(id);
-  }, []);
-
-  const cat = liveCategory ?? initialCategory ?? initialSnapshot?.category ?? null;
-  const snapshot = liveSnapshot ?? initialSnapshot;
-  const hasSnapshot = snapshot != null;
-  const appointmentsLoading =
-    !isMounted || ((snapshotLoading || snapshotFetching) && !hasSnapshot);
-  const appointmentList = snapshot?.appointments ?? [];
-  const totalCount = snapshot?.totalCount ?? 0;
-
-  if (!cat) {
-    return null;
-  }
-
   return (
-    <div className={appPortalSectionRootClass}>
-      <PageHeader
-        title={cat.label}
-        description="Category details and associated appointments"
-        actions={
-          <Button variant="outline" asChild size="sm">
-            <BackNavigationLink href={backHref}>
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </BackNavigationLink>
-          </Button>
-        }
-      />
-
-      <div className="grid md:grid-cols-3 gap-5">
-        <div>
-          <Card className="rounded-[20px] border bg-card shadow-[0_8px_32px_rgba(245,158,11,0.12)] overflow-hidden">
-            <CardHeader className="pb-2 bg-amber-50/60 border-b border-amber-100/60">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2 text-amber-800">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-100 border border-amber-200">
-                  <Tag className="h-3.5 w-3.5 text-amber-600" />
-                </span>
-                Category Info
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 space-y-3">
-              <div className="flex items-center gap-2">
-                {cat.color && (
-                  <span
-                    className="h-10 w-10 rounded-xl border shrink-0 shadow-sm"
-                    style={{ background: cat.color }}
-                  />
-                )}
-                <div>
-                  <p className="font-bold">{cat.label}</p>
-                  {cat.icon && <p className="text-xs text-muted-foreground">{cat.icon}</p>}
-                </div>
-              </div>
-              {cat.description && (
-                <p className="text-sm text-muted-foreground leading-relaxed">{cat.description}</p>
-              )}
-              <Separator />
-              <dl className="space-y-2 text-xs">
-                <div className="flex items-center gap-2">
-                  <Hash className="h-2.5 w-2.5 text-muted-foreground" />
-                  <div>
-                    <dt className="text-muted-foreground">ID</dt>
-                    <dd className="font-mono text-[10px] break-all">{cat.id}</dd>
-                  </div>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Status</dt>
-                  <dd>
-                    <Badge variant="outline" className="text-[10px] py-0">
-                      {cat.is_active !== false ? "Active" : "Inactive"}
-                    </Badge>
-                  </dd>
-                </div>
-                {cat.duration_minutes_default != null && (
-                  <div>
-                    <dt className="text-muted-foreground">Default Duration</dt>
-                    <dd className="font-medium">{cat.duration_minutes_default} minutes</dd>
-                  </div>
-                )}
-              </dl>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="md:col-span-2">
-          <Card className="rounded-[20px] border bg-card overflow-hidden">
-            <CardHeader className="pb-2 bg-amber-50/60 border-b border-amber-100/60">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2 text-amber-800">
-                <CalendarDays className="h-3.5 w-3.5 text-amber-600" />
-                Appointments
-                <Badge variant="outline" className="ml-1 font-bold">
-                  {totalCount}
-                </Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4">
-              {appointmentsLoading ? (
-                <div className="space-y-2">
-                  {Array.from({ length: 3 }).map((_, i) => (
-                    <Skeleton key={i} className="h-14 w-full rounded-lg" />
-                  ))}
-                </div>
-              ) : appointmentList.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No appointments use this category yet.</p>
-              ) : (
-                <div className="space-y-2">
-                  {appointmentList.map((appt) => (
-                    <Link
-                      key={appt.id}
-                      href={appointmentDetailHref(viewerRole, appt.id)}
-                      className="flex items-center justify-between rounded-lg border bg-amber-50/40 hover:bg-amber-100/50 px-3 py-2 text-xs transition-colors"
-                    >
-                      <div className="min-w-0">
-                        <p className="font-medium truncate">{appt.title}</p>
-                        <p className="text-muted-foreground">
-                          {appt.owner.display_name ?? appt.owner.email} ·{" "}
-                          {format(new Date(appt.start), "dd MMM yyyy, HH:mm")}
-                        </p>
-                      </div>
-                      <Badge variant="outline" className="text-[10px] py-0 ml-2 shrink-0 capitalize">
-                        {appt.status ?? "pending"}
-                      </Badge>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    </div>
+    <CategoryDetailScreenShared
+      tone="amber"
+      mode="portal"
+      categoryId={categoryId}
+      backHref={backHref}
+      viewerRole={viewerRole}
+      initialCategory={initialCategory}
+      initialSnapshot={initialSnapshot}
+      initialDoctorUsers={initialDoctorUsers}
+      initialAdminUsers={initialAdminUsers}
+    />
   );
 }

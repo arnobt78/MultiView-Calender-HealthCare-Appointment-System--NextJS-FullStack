@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { isValidUUID } from "@/lib/validation";
 import { serializeCategory } from "@/lib/serializers";
+import { categoryDetailInclude } from "@/lib/category-api-include";
 import { redis } from "@/lib/redis";
 import { getUserRole, isPatientRole } from "@/lib/rbac";
 
@@ -27,7 +28,10 @@ export async function GET(req: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Invalid category ID" }, { status: 400 });
     }
 
-    const category = await prisma.category.findUnique({ where: { id } });
+    const category = await prisma.category.findUnique({
+      where: { id },
+      include: categoryDetailInclude,
+    });
     if (!category) {
       return NextResponse.json({ error: "Category not found" }, { status: 404 });
     }
@@ -78,7 +82,9 @@ export async function PUT(req: NextRequest, context: RouteContext) {
               : Number(body.duration_minutes_default)
             : undefined,
         updated_at: new Date(),
+        updated_by_id: sessionUser.userId,
       },
+      include: categoryDetailInclude,
     });
 
     /* Bust the server-side Redis overview cache so the updated category is reflected immediately. */
