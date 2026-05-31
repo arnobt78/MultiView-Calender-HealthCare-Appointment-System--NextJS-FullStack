@@ -2,6 +2,8 @@
  * Doctor Detail Page — profile, specialty, bio, availability, assigned patients, types
  * Accessible to: admin (any doctor), doctor (own profile only)
  */
+export const dynamic = "force-dynamic";
+
 import { notFound, redirect } from "next/navigation";
 import { isAdminRole, isDoctorRole } from "@/lib/rbac";
 import { doctorDetailHref } from "@/lib/entity-routes";
@@ -12,6 +14,7 @@ import { getSessionUser } from "@/lib/session";
 import { isValidUUID } from "@/lib/validation";
 import { getUserRole } from "@/lib/rbac";
 import { PageHeader } from "@/components/shared/PageHeader";
+import { appSectionRootClass } from "@/lib/section-page-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -83,7 +86,7 @@ export default async function DoctorDetailPage({ params }: PageProps) {
   if (!raw) notFound();
 
   return (
-    <div className="space-y-5 text-gray-700">
+    <div className={appSectionRootClass}>
       <PageHeader
         title={raw.display_name ?? raw.email}
         description={raw.specialty ? `${raw.specialty} · Doctor Profile` : "Doctor Profile"}

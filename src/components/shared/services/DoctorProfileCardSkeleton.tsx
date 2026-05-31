@@ -23,14 +23,14 @@ export function DoctorProfileCardSkeleton() {
         <Skeleton className="h-3 w-full rounded-sm" />
         <Skeleton className="h-3 w-4/5 rounded-sm" />
 
-        <div>
+        <div className="space-y-2">
           <p className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-            <CalendarClock className="h-3 w-3" aria-hidden />
+            <CalendarClock className="h-3.5 w-3.5 shrink-0" aria-hidden />
             Availability
           </p>
-          <div className="flex flex-wrap gap-1">
-            <Skeleton className="h-5 w-10 rounded-full" />
-            <Skeleton className="h-5 w-24 rounded-full" />
+          <div className="flex flex-col gap-2">
+            <Skeleton className="h-5 w-full max-w-[12rem] rounded-sm" />
+            <Skeleton className="h-5 w-full max-w-[10rem] rounded-sm" />
           </div>
         </div>
 

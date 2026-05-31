@@ -14,6 +14,7 @@ import { Category } from "@/types/types";
 import { cn } from "@/lib/utils";
 import { violetGlassPrimaryButtonClass } from "@/lib/calendar-header-action-styles";
 import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
+import { AppSectionErrorBanner } from "@/components/shared/AppSectionErrorBanner";
 import {
   amberGlassTableFrameClass,
   categoryManagementFilterToolbarClass,
@@ -30,7 +31,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import {
-  AlertCircle,
   Clock,
   EllipsisVertical,
   Eye,
@@ -357,10 +357,9 @@ export function CategoryManagementInner() {
           title="Category Management"
           description="Manage appointment categories with status, duration, and display order."
         />
-        <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center text-sm text-red-700">
-          <AlertCircle className="h-8 w-8 mx-auto mb-2 opacity-60" />
+        <AppSectionErrorBanner>
           Failed to load categories. Please refresh the page.
-        </div>
+        </AppSectionErrorBanner>
       </div>
     );
   }

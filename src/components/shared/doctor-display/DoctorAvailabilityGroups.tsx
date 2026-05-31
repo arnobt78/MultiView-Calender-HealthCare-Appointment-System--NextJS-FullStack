@@ -1,6 +1,11 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import {
+  formatWeekdayTimeRangesInline,
+  groupAvailabilityByWeekday,
+} from "@/lib/doctor-schedule-display";
+import type { AvailabilityWindow } from "@/lib/doctor-schedule-types";
 import { cn } from "@/lib/utils";
 
 const WEEKDAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
@@ -22,20 +27,45 @@ function minToTime(min: number): string {
 
 /**
  * Renders availability from control-panel DoctorAvailabilityEditor data.
- * Groups weekdays that share the same start/end; separate rows when hours differ.
+ * - `stacked` / `inline` — group days that share identical start/end (legacy booking chips).
+ * - `by-weekday` — one row per weekday, multiple windows inline (matches doctor-portal Weekly Hours).
  */
 export function DoctorAvailabilityGroups({
   availabilities,
-  /** `inline` — one wrapping row (booking picker); default stacks each hour group. */
+  /** `inline` — one wrapping row; `by-weekday` — portal-style day rows for `/services` cards. */
   layout = "stacked",
   className,
 }: {
   availabilities: DoctorAvailabilitySlot[];
-  layout?: "stacked" | "inline";
+  layout?: "stacked" | "inline" | "by-weekday";
   className?: string;
 }) {
   if (!availabilities.length) {
     return <p className="text-xs text-muted-foreground">No availability set</p>;
+  }
+
+  if (layout === "by-weekday") {
+    const grouped = groupAvailabilityByWeekday(availabilities as AvailabilityWindow[]);
+    return (
+      <div className={cn("flex flex-col gap-2", className)}>
+        {grouped.map((group) => (
+          <div
+            key={group.weekday}
+            className="flex flex-wrap items-center gap-x-1.5 gap-y-1"
+          >
+            <Badge
+              variant="outline"
+              className="shrink-0 text-[10px] px-1.5 py-0 bg-sky-50 text-sky-700 border-sky-200"
+            >
+              {WEEKDAY_SHORT[group.weekday] ?? `D${group.weekday}`}
+            </Badge>
+            <span className="min-w-0 text-[10px] leading-snug text-muted-foreground break-words">
+              {formatWeekdayTimeRangesInline(group.windows)}
+            </span>
+          </div>
+        ))}
+      </div>
+    );
   }
 
   const groups = new Map<string, { start_min: number; end_min: number; days: number[] }>();
@@ -88,7 +118,7 @@ export function DoctorAvailabilityGroups({
   }
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className={cn("flex flex-col gap-2", className)}>
       {rows.map((row) => (
         <div key={`${row.start_min}-${row.end_min}`} className="flex flex-wrap items-center gap-1.5">
           {row.days.map((d) => (

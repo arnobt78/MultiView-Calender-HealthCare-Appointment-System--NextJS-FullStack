@@ -9,10 +9,13 @@
 - **Doctor-portal roster:** `PatientManagementInner` `resolveAppSectionRootClass("portal")` when embedded — no double bottom padding.
 - **CP list-tab layout parity:** All 14 tabs on `controlPanelSectionRootClass`; Google Calendar full width.
 - **CP SSR prefetch + notification SSE:** unchanged — `prefetchControlPanelSection`, `useNotificationStream`, `invalidateNotificationsAndCrossTab`.
-- **Skipped (intentional):** Form/dialog/card inner `space-y-2`; grid `gap-4/5/6`; doctor profile detail pages (`/doctors/[id]`, `/control-panel/doctors/[id]`) still legacy `space-y-4/5`; CP list full-page error states (Doctor/Category/User mgmt) use centered `rounded-2xl p-6` variant; `InsightsDataErrorBanner` keeps Retry layout.
-- **Verify:** `npm test && npx tsc --noEmit && npm run lint && npm run build` — **500 tests**.
+- **Doctor detail layout:** `/doctors/[id]` → `appPortalSectionRootClass`; `/control-panel/doctors/[id]` → `appSectionRootClass` + `force-dynamic`.
+- **CP list errors:** Doctor/Category/User mgmt → `AppSectionErrorBanner`.
+- **Services `/services` cards:** `DoctorAvailabilityGroups` `layout="by-weekday"` (grouped windows per day like doctor-portal Weekly Hours); availability icon/row gap aligned with patient/type meta row.
+- **Skipped (intentional):** Form/dialog/card inner `space-y-2`; grid `gap-4/5/6`.
+- **Verify:** `npm test && npx tsc --noEmit && npm run lint && npm run build` — **501 tests**.
 
-## Prior (2026-05-30 — CP layout token only)
+## Prior (2026-05-30 — app section layout)
 
 - **Dashboard `/dashboard` SSR:** `force-dynamic` page prefetches categories, patients, assignees, accepted dashboard-access, and merged calendar list (`src/lib/appointments-list-build.ts` + `prefetchDashboardAppointments` in `server-prefetch.ts`). `HomePage` seeds TanStack cache before paint — no calendar flash on hard refresh.
 - **Calendar fetch contract:** Owned rows capped at `PAGINATION.CALENDAR_APPOINTMENTS_LIMIT` (100 demo); invited/shared rows resolved by `resolveExtraAssignedAppointmentIds` and fetched in one batch (`GET /api/appointments?ids=` / `fetchAppointmentsByIds`).

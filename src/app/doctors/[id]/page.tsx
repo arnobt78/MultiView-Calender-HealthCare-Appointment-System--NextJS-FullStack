@@ -2,6 +2,8 @@
  * Doctor profile for portal users — `/doctors/:id`.
  * Doctor: self or clinically related colleagues. Patient: primary doctor only.
  */
+export const dynamic = "force-dynamic";
+
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
@@ -15,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { BackNavigationLink } from "@/components/shared/BackNavigationLink";
+import { appPortalSectionRootClass } from "@/lib/section-page-layout";
 import { ArrowLeft, Stethoscope } from "lucide-react";
 
 type PageProps = { params: Promise<{ id: string }> };
@@ -60,7 +63,7 @@ export default async function PortalDoctorDetailPage({ params }: PageProps) {
   const viewerIsProfileDoctor = sessionUser.userId === doc.id;
 
   return (
-    <div className="space-y-4 text-gray-700">
+    <div className={appPortalSectionRootClass}>
       <PageHeader
         title={doc.display_name ?? doc.email}
         description={doc.specialty ?? "Doctor profile"}

@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { skyGlassTableFrameClass } from "@/lib/calendar-header-action-styles";
 import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
+import { AppSectionErrorBanner } from "@/components/shared/AppSectionErrorBanner";
 import type { User } from "@/types/types";
 import {
   EllipsisVertical,
@@ -45,7 +46,6 @@ import {
   Users,
   UserCheck,
   UserCog,
-  UserX,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -250,10 +250,9 @@ export default function UserManagement() {
     return (
       <div className={controlPanelSectionRootClass}>
         <PageHeader title="User & Admin Management" description="All user accounts — admins, doctors, secretaries, patients." />
-        <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center text-sm text-red-700">
-          <UserX className="h-8 w-8 mx-auto mb-2 opacity-60" />
+        <AppSectionErrorBanner>
           Failed to load users. Please refresh the page.
-        </div>
+        </AppSectionErrorBanner>
       </div>
     );
   }

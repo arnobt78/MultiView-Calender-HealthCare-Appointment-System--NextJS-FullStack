@@ -5,6 +5,7 @@ import {
   timeToMins,
   availabilityUsesSingleTimezone,
   formatWeekdayWindowsHint,
+  formatWeekdayTimeRangesInline,
 } from "@/lib/doctor-schedule-display";
 
 describe("doctor-schedule-display", () => {
@@ -44,5 +45,14 @@ describe("doctor-schedule-display", () => {
         { id: "1", weekday: 1, start_min: 600, end_min: 840, timezone: "Europe/Berlin" },
       ])
     ).toBe("1 window · 10:00–14:00");
+  });
+
+  it("formats inline weekday ranges for services cards", () => {
+    expect(
+      formatWeekdayTimeRangesInline([
+        { id: "1", weekday: 1, start_min: 600, end_min: 840, timezone: "Europe/Berlin" },
+        { id: "2", weekday: 1, start_min: 960, end_min: 1020, timezone: "Europe/Berlin" },
+      ])
+    ).toBe("10:00 – 14:00, 16:00 – 17:00");
   });
 });

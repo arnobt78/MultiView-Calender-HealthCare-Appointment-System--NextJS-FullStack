@@ -66,6 +66,14 @@ export function formatWeekdayWindowsHint(windows: AvailabilityWindow[]): string 
   return `${n} window${n === 1 ? "" : "s"} · ${ranges.join(", ")}`;
 }
 
+/** Services cards — comma-separated ranges for one weekday row (sorted by start). */
+export function formatWeekdayTimeRangesInline(windows: AvailabilityWindow[]): string {
+  return [...windows]
+    .sort((a, b) => a.start_min - b.start_min)
+    .map((w) => `${minsToTime(w.start_min)} – ${minsToTime(w.end_min)}`)
+    .join(", ");
+}
+
 export function groupAvailabilityByWeekday(windows: AvailabilityWindow[]): WeekdayAvailabilityGroup[] {
   const byDay = new Map<number, AvailabilityWindow[]>();
   for (const w of windows) {
