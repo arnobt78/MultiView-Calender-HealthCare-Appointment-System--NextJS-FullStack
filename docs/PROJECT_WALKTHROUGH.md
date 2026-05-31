@@ -2,15 +2,17 @@
 
 ## Latest Audit Update (2026-05-30)
 
-- **CP list-tab layout parity:** Shared `controlPanelSectionRootClass` (`src/lib/control-panel-section-layout.ts`) — `space-y-3 pb-3 text-gray-700` (matches `dashboardShellClass` 12px rhythm). Applied to all 14 CP list tabs + invitation wrappers; `InvitationList` dropped extra `mt-6`; `GlobalAppointmentTypesEditor` internal stack `space-y-3`; legacy inline patient detail uses token; `GoogleCalendarSettings` full width (no `max-w-2xl`); Telehealth grid dropped redundant `pt-2`.
-- **CP section SSR prefetch (extended):** `ControlPanelSectionServerPage` + `prefetchControlPanelSection` seeds per-tab cache before paint via `seedControlPanelSectionCache` — invoices (`queryKeys.invoices.all`), appointments_mgmt + telehealth (calendar bundle: categories/patients/assignees/dashboardAccess/appointments), notifications (`queryKeys.notifications.all`); Stripe return still busts via `invalidateInvoicesAndOverview`.
-- **Notification SSE live updates:** `NotificationStreamListener` in `QueryProvider` → `useNotificationStream` → `subscribeNotificationStream` → `invalidateNotificationsAndCrossTab` on SSE `notifications` events (~10s server poll); navbar badge + CP notifications list refresh without navigation.
-- **Dashboard `/dashboard` SSR:** unchanged — `prefetchDashboardAppointments` + `HomePage` cache seed.
-- **Cross-tab:** `notifications` scope in `query-cache-cross-tab.ts`; SSE uses `invalidateNotificationsAndCrossTab`.
-- **Skipped (intentional):** CP list-tab hover prefetch; portal page roots (`PatientPortalPage`, `ServicesPage` still `space-y-2 pb-2`); entity detail screens (`space-y-4/5/6`); form/dialog inner `space-y-2`.
-- **Verify:** `npm test && npx tsc --noEmit && npm run lint && npm run build` — **498 tests**.
+- **App-wide section layout:** `src/lib/section-page-layout.ts` — `appSectionRootClass` (CP + scroll panes with `pb-3`), `appPortalSectionRootClass` (portals/insights inside `dashboardShellClass`), `appEntityDetailRootClass` (`space-y-3 pb-24`), `resolveAppSectionRootClass`, `appSectionErrorBannerClass`. CP consumers re-export via `control-panel-section-layout.ts`.
+- **Shared error banner:** `AppSectionErrorBanner` — Telehealth, DashboardOverview, PatientManagement, Notifications, InvitationList, Services, PatientDetailView.
+- **Portal + insights roots:** `ServicesPage`, `PatientPortalPage`, `DoctorPortalPage`, `AdminPortalPage`, `AnalyticsPage` → `appPortalSectionRootClass`.
+- **Entity detail roots:** CP `CategoryDetailScreen` → `appEntityDetailRootClass`; portal `CategoryDetailScreen` + `AppointmentDetailScreen` → shell-aware tokens; `PatientDetailScreen` `scrollShell` prop (`control-panel` vs `portal`); CP `/control-panel/users/[id]` → `appSectionRootClass`.
+- **Doctor-portal roster:** `PatientManagementInner` `resolveAppSectionRootClass("portal")` when embedded — no double bottom padding.
+- **CP list-tab layout parity:** All 14 tabs on `controlPanelSectionRootClass`; Google Calendar full width.
+- **CP SSR prefetch + notification SSE:** unchanged — `prefetchControlPanelSection`, `useNotificationStream`, `invalidateNotificationsAndCrossTab`.
+- **Skipped (intentional):** Form/dialog/card inner `space-y-2`; grid `gap-4/5/6` for horizontal layout.
+- **Verify:** `npm test && npx tsc --noEmit && npm run lint && npm run build` — **500 tests**.
 
-## Prior (2026-05-30 — SSR + SSE only)
+## Prior (2026-05-30 — CP layout token only)
 
 - **Dashboard `/dashboard` SSR:** `force-dynamic` page prefetches categories, patients, assignees, accepted dashboard-access, and merged calendar list (`src/lib/appointments-list-build.ts` + `prefetchDashboardAppointments` in `server-prefetch.ts`). `HomePage` seeds TanStack cache before paint — no calendar flash on hard refresh.
 - **Calendar fetch contract:** Owned rows capped at `PAGINATION.CALENDAR_APPOINTMENTS_LIMIT` (100 demo); invited/shared rows resolved by `resolveExtraAssignedAppointmentIds` and fetched in one batch (`GET /api/appointments?ids=` / `fetchAppointmentsByIds`).
@@ -209,7 +211,9 @@ AuthShell (h-dvh, overflow-hidden, sets html.style.overflow = "hidden")
 - `src/app/control-panel/layout.tsx` — wraps `ControlPanelSidebarNav` + scrollable right pane. Has `bg-gradient-to-br from-slate-50 via-white to-slate-100` to prevent the black-flash hydration bug.
 - `src/components/control-panel/ControlPanelSidebarNav.tsx` — client component, reads `pathname`, calls `router.replace()` on tab change.
 - `src/components/control-panel/ControlPanelSectionServerPage.tsx` — shared async server entry for dedicated CP list routes; `prefetchControlPanelSection` + `ControlPanelSectionPageClient` seed cache.
-- `src/lib/control-panel-section-layout.ts` — `controlPanelSectionRootClass` (`space-y-3 pb-3`) + `controlPanelSectionErrorBannerClass`; canonical vertical rhythm for all CP list-tab bodies (matches `dashboardShellClass` bottom inset).
+- `src/lib/control-panel-section-layout.ts` — re-exports `controlPanelSectionRootClass` + `controlPanelSectionErrorBannerClass` from `section-page-layout.ts`.
+- `src/lib/section-page-layout.ts` — `appSectionRootClass`, `appPortalSectionRootClass`, `appEntityDetailRootClass`, `resolveAppSectionRootClass`, `appSectionErrorBannerClass`.
+- `src/components/shared/AppSectionErrorBanner.tsx` — shared inline fetch failure banner.
 - `src/components/pages/ControlPanelPage.tsx` — thin deprecated wrapper; mobile nav lives in `ControlPanelMobileNav` / `ControlPanelSectionPageClient`.
 
 **CSS globals (src/styles/globals.css):**

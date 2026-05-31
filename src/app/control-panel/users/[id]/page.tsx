@@ -11,6 +11,7 @@ import { getSessionUser } from "@/lib/session";
 import { isValidUUID } from "@/lib/validation";
 import { getUserRole } from "@/lib/rbac";
 import { PageHeader } from "@/components/shared/PageHeader";
+import { appSectionRootClass } from "@/lib/section-page-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -70,7 +71,7 @@ export default async function UserDetailPage({ params }: PageProps) {
       : "/control-panel/user-admin-management";
 
   return (
-    <div className="space-y-5 text-gray-700">
+    <div className={appSectionRootClass}>
       <PageHeader
         title={raw.display_name ?? raw.email}
         description={`${raw.role ? raw.role.charAt(0).toUpperCase() + raw.role.slice(1) : "User"} Account`}

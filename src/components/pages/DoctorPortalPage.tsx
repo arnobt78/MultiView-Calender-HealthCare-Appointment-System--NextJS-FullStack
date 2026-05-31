@@ -22,6 +22,7 @@ import {
   seedDoctorPortalSettingsCache,
 } from "@/lib/prefetch-doctor-schedule";
 import { Skeleton } from "@/components/ui/skeleton";
+import { appPortalSectionRootClass } from "@/lib/section-page-layout";
 import { PortalDoctorChromeHeader } from "@/components/shared/PortalDoctorChromeHeader";
 import { PortalPanelSection } from "@/components/shared/PortalPanelSection";
 import { DoctorPortalStatsRow } from "@/components/doctor-portal/DoctorPortalStatsRow";
@@ -117,7 +118,7 @@ export default function DoctorPortalPage({
           : "0 total";
 
   return (
-    <div className="space-y-4 text-gray-700">
+    <div className={appPortalSectionRootClass}>
       <PortalDoctorChromeHeader
         doctor={
           data?.doctor

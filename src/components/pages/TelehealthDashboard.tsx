@@ -19,6 +19,7 @@ import { format, isToday, isPast, isFuture } from "date-fns";
 import { useAppStore } from "@/store/useAppStore";
 import { useState, useMemo, useEffect } from "react";
 import { PageHeader } from "@/components/shared/PageHeader";
+import { AppSectionErrorBanner } from "@/components/shared/AppSectionErrorBanner";
 import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
 
 export default function TelehealthDashboard() {
@@ -55,12 +56,11 @@ export default function TelehealthDashboard() {
 
   return (
     <div className={controlPanelSectionRootClass}>
-      {appointmentsError && (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 flex items-center gap-2">
-          <span className="shrink-0">⚠</span>
+      {appointmentsError ? (
+        <AppSectionErrorBanner>
           Failed to load appointments. Please refresh.
-        </div>
-      )}
+        </AppSectionErrorBanner>
+      ) : null}
       {/* PageHeader + filter buttons always stay static */}
       <PageHeader
         title="Telehealth Queue"

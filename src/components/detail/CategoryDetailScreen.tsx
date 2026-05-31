@@ -25,6 +25,7 @@ import { useLayoutEffect, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCategory, useCategorySnapshot } from "@/hooks/useCategories";
 import { queryKeys } from "@/lib/query-keys";
+import { appPortalSectionRootClass } from "@/lib/section-page-layout";
 import type { Category, CategorySnapshot } from "@/types/types";
 
 export type CategoryDetailScreenProps = {
@@ -81,7 +82,7 @@ export function CategoryDetailScreen({
   }
 
   return (
-    <div className="space-y-5 text-gray-700">
+    <div className={appPortalSectionRootClass}>
       <PageHeader
         title={cat.label}
         description="Category details and associated appointments"

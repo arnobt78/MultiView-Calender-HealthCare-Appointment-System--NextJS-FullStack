@@ -17,7 +17,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLayoutEffect } from "react";
 import {
   Activity,
-  AlertCircle,
   CalendarClock,
   CalendarPlus,
   Check,
@@ -45,6 +44,8 @@ import { DoctorSpecialtyBadge } from "@/components/shared/doctor-display/DoctorS
 import { DoctorCardHeroImage } from "@/components/shared/doctor-display/DoctorCardHeroImage";
 import { DoctorAvailabilityGroups } from "@/components/shared/doctor-display/DoctorAvailabilityGroups";
 import { PortalChromeHeader } from "@/components/shared/PortalChromeHeader";
+import { AppSectionErrorBanner } from "@/components/shared/AppSectionErrorBanner";
+import { appPortalSectionRootClass } from "@/lib/section-page-layout";
 import { DoctorProfileCardSkeleton } from "@/components/shared/services/DoctorProfileCardSkeleton";
 import {
   ServicesDoctorFilters,
@@ -247,7 +248,7 @@ export default function ServicesPage({ initialDoctors, initialServiceCatalog }: 
     filters.serviceSelection !== SERVICES_CATALOG_FILTER_ALL;
 
   return (
-    <div className="space-y-2 pb-2">
+    <div className={appPortalSectionRootClass}>
       <PortalChromeHeader
         icon={Stethoscope}
         title="Doctors & Services"
@@ -283,10 +284,9 @@ export default function ServicesPage({ initialDoctors, initialServiceCatalog }: 
           {doctorsLoading && !doctors.length ? (
             Array.from({ length: 8 }).map((_, i) => <DoctorProfileCardSkeleton key={i} />)
           ) : doctorsError ? (
-            <div className="col-span-full rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 shrink-0" />
+            <AppSectionErrorBanner className="col-span-full">
               Failed to load doctors. Please refresh.
-            </div>
+            </AppSectionErrorBanner>
           ) : filteredDoctors.length === 0 ? (
             <div className="col-span-full text-center py-12 text-muted-foreground">
               <Stethoscope className="h-10 w-10 mx-auto mb-2 opacity-30" />
@@ -322,10 +322,9 @@ export default function ServicesPage({ initialDoctors, initialServiceCatalog }: 
             ))}
           </div>
         ) : catalogError ? (
-          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 flex items-center gap-2">
-            <AlertCircle className="h-4 w-4 shrink-0" />
+          <AppSectionErrorBanner>
             Failed to load services. Please refresh.
-          </div>
+          </AppSectionErrorBanner>
         ) : catalogServices.length === 0 ? (
           <p className="text-sm text-muted-foreground">No services listed yet.</p>
         ) : (

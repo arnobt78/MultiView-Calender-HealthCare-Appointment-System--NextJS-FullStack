@@ -44,7 +44,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  AlertCircle,
   Bell,
   BellOff,
   CheckCheck,
@@ -52,6 +51,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { format } from "date-fns";
+import { AppSectionErrorBanner } from "@/components/shared/AppSectionErrorBanner";
 import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
 
 const columnHelper = createColumnHelper<Notification>();
@@ -161,10 +161,9 @@ export default function NotificationsManagement() {
   if (notificationsError) {
     return (
       <div className={controlPanelSectionRootClass}>
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 flex items-center gap-2">
-          <AlertCircle className="h-4 w-4 shrink-0" />
+        <AppSectionErrorBanner>
           Failed to load notifications. Please refresh.
-        </div>
+        </AppSectionErrorBanner>
       </div>
     );
   }

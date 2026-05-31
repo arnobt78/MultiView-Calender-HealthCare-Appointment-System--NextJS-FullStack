@@ -22,6 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, MapPin, Calendar, Clock, Lock } from "lucide-react";
 import { AppointmentDetailForm } from "@/components/control-panel/AppointmentDetailForm";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
+import { resolveAppSectionRootClass } from "@/lib/section-page-layout";
 
 const STATUS_VARIANTS: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   done: "default",
@@ -58,7 +59,7 @@ export function AppointmentDetailScreen({
   const canEdit = accessLevel === "mutate";
 
   return (
-    <div className="space-y-2">
+    <div className={resolveAppSectionRootClass(variant === "control-panel" ? "control-panel" : "portal")}>
       <PageHeader
         title={appointment.title}
         description={

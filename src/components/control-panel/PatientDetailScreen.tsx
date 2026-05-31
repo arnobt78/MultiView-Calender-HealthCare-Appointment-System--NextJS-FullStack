@@ -74,6 +74,10 @@ import {
 } from "@/lib/patient-detail-ui-classes";
 import { ControlPanelGlassActionButton } from "@/components/shared/ControlPanelGlassActionButton";
 import { cn } from "@/lib/utils";
+import {
+  resolveAppSectionRootClass,
+  type AppSectionScrollShell,
+} from "@/lib/section-page-layout";
 import { patientDetailHref, type EntityRole } from "@/lib/entity-routes";
 import { isAdminRole, isDoctorRole } from "@/lib/rbac";
 import type { PatientAccessLevel } from "@/lib/patient-access";
@@ -245,6 +249,8 @@ type PatientDetailScreenProps = {
   initialDoctorUsers?: UsersListResponse | null;
   /** SSR admin users — calendar owners in snapshot tables may be admin accounts. */
   initialAdminUsers?: UsersListResponse | null;
+  /** SSR scroll shell — CP right pane needs bottom inset; portal uses `dashboardShellClass`. */
+  scrollShell?: AppSectionScrollShell;
 };
 
 export function PatientDetailScreen({
@@ -252,12 +258,15 @@ export function PatientDetailScreen({
   accessLevel,
   viewerRole,
   listBackHref,
+  scrollShell = "portal",
   initialPatient,
   initialSnapshot,
   initialDoctors,
   initialDoctorUsers,
   initialAdminUsers,
 }: PatientDetailScreenProps) {
+  const sectionRootClass = resolveAppSectionRootClass(scrollShell);
+
   const router = useRouter();
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
@@ -456,7 +465,7 @@ export function PatientDetailScreen({
   }
 
   return (
-    <div className="space-y-4 text-gray-700">
+    <div className={sectionRootClass}>
       <PageHeader
         title={
           showLiveBody ? (

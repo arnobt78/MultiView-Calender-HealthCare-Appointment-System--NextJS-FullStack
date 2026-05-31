@@ -20,7 +20,8 @@ import {
   skyGlassTableFrameClass,
   violetGlassImportButtonClass,
 } from "@/lib/calendar-header-action-styles";
-import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
+import { resolveAppSectionRootClass } from "@/lib/section-page-layout";
+import { AppSectionErrorBanner } from "@/components/shared/AppSectionErrorBanner";
 import { GlassResetFilterButton } from "@/components/shared/GlassResetFilterButton";
 import { EntityListSearchInput } from "@/components/shared/EntityListSearchInput";
 import {
@@ -33,7 +34,6 @@ import {
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import { Patient } from "@/types/types";
 import {
-  AlertCircle,
   EllipsisVertical,
   Pencil,
   Trash2,
@@ -247,6 +247,10 @@ export function PatientManagementInner({
   onFilteredCountChange,
 }: PatientManagementInnerProps = {}) {
   const isDoctorPortal = variant === "doctor-portal";
+  /** Portal embed sits inside `dashboardShellClass` — omit duplicate `pb-3`. */
+  const sectionRootClass = resolveAppSectionRootClass(
+    isDoctorPortal ? "portal" : "control-panel"
+  );
   const {
     patients,
     isLoading,
@@ -340,7 +344,7 @@ export function PatientManagementInner({
       setCreateExtra(patientToDialogExtraState(patient));
       setDialogOpen(true);
     },
-    [queryClient]
+    [queryClient, setDialogMode, setEditingPatient, setForm, setCreateExtra, setDialogOpen]
   );
 
   const handleDialogOpenChange = (open: boolean) => {
@@ -557,14 +561,13 @@ export function PatientManagementInner({
 
   if (patientsError) {
     return (
-      <div className={controlPanelSectionRootClass}>
+      <div className={sectionRootClass}>
         {!isDoctorPortal ? (
           <PageHeader title="Patients" description="Manage patients." />
         ) : null}
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 flex items-center gap-2">
-          <AlertCircle className="h-4 w-4 shrink-0" />
+        <AppSectionErrorBanner>
           Failed to load patients. Please refresh.
-        </div>
+        </AppSectionErrorBanner>
       </div>
     );
   }
@@ -572,7 +575,7 @@ export function PatientManagementInner({
   const listChrome = (
       <div
         className={cn(
-          controlPanelSectionRootClass,
+          sectionRootClass,
           !isDoctorPortal && "overflow-visible"
         )}
       >

@@ -66,6 +66,7 @@ import type { Patient, PatientClinicalProfile, User as AppUser } from "@/types/t
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { DoctorIdentityRow } from "@/components/shared/doctor-display/DoctorIdentityRow";
 import { PortalChromeHeader } from "@/components/shared/PortalChromeHeader";
+import { appPortalSectionRootClass } from "@/lib/section-page-layout";
 import { ProfileDefinitionRow } from "@/components/shared/profile/ProfileDefinitionRow";
 import { BookAppointmentDialog } from "@/components/shared/patient-booking/PatientBookingDialog";
 import { useUsers } from "@/hooks/useUsers";
@@ -460,7 +461,7 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
   }
 
   return (
-    <div className="space-y-2 pb-2 text-gray-700">
+    <div className={appPortalSectionRootClass}>
       <PortalChromeHeader
         icon={Activity}
         title="Patient Portal"

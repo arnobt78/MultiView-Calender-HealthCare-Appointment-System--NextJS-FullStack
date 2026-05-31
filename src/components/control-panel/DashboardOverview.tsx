@@ -28,7 +28,6 @@ import {
   RefreshCw,
   Banknote,
   Receipt,
-  AlertCircle,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useDashboardOverview } from "@/hooks/useDashboardOverview";
@@ -41,6 +40,7 @@ import {
   controlPanelGroupSurfaceClass,
   getControlPanelCardVariantClass,
 } from "@/lib/control-panel-glass-card";
+import { AppSectionErrorBanner } from "@/components/shared/AppSectionErrorBanner";
 import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
 
 function StatCard({
@@ -115,10 +115,9 @@ export default function DashboardOverviewComponent() {
     return (
       <div className={controlPanelSectionRootClass}>
         <PageHeader title="Dashboard Overview" description="Real-time system summary" />
-        <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          <AlertCircle className="h-4 w-4 shrink-0" />
+        <AppSectionErrorBanner>
           Failed to load dashboard data. Please refresh.
-        </div>
+        </AppSectionErrorBanner>
       </div>
     );
   }

@@ -27,6 +27,7 @@ import {
 import type { InsightsPeriod } from "@/lib/insights/insights-period";
 import { isAdminRole, isDoctorRole } from "@/lib/rbac";
 import { useUsers } from "@/hooks/useUsers";
+import { appPortalSectionRootClass } from "@/lib/section-page-layout";
 import { AnalyticsOverviewStatsRow } from "@/components/shared/analytics/AnalyticsOverviewStatsRow";
 import { AnalyticsInsightsSections } from "@/components/shared/analytics/AnalyticsInsightsSections";
 import { resolveInsightsScopePageHint } from "@/lib/insights-scope-display";
@@ -147,7 +148,7 @@ export default function AnalyticsPage({
   ) : undefined;
 
   return (
-    <div className="space-y-6">
+    <div className={appPortalSectionRootClass}>
       <InsightsPageChrome scopeHint={scopeHint} actions={scopeToolbar} />
 
       {isError ? (

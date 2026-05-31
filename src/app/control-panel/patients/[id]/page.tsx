@@ -79,6 +79,7 @@ export default async function ControlPanelPatientDetailPage({ params }: PageProp
       accessLevel={accessLevel}
       viewerRole={role}
       listBackHref="/control-panel/patient-management"
+      scrollShell="control-panel"
       initialPatient={initialPatient}
       initialSnapshot={initialSnapshot}
       initialDoctors={initialDoctors}

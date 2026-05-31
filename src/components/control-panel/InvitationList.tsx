@@ -10,7 +10,7 @@
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertCircle } from "lucide-react";
+import { AppSectionErrorBanner } from "@/components/shared/AppSectionErrorBanner";
 import {
   useInvitations,
   type DashboardInvitation,
@@ -68,10 +68,9 @@ export default function InvitationList({ type }: { type: "appointment" | "dashbo
 
   if (invitationsError) {
     return (
-      <div className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 flex items-center gap-2">
-        <AlertCircle className="h-4 w-4 shrink-0" />
+      <AppSectionErrorBanner>
         Failed to load invitations. Please refresh.
-      </div>
+      </AppSectionErrorBanner>
     );
   }
 

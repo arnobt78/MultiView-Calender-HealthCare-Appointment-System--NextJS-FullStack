@@ -27,6 +27,7 @@ import type { AdminPortalData, Appointment, DoctorRow } from "@/types/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { appPortalSectionRootClass } from "@/lib/section-page-layout";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { appointmentDetailHref, doctorDetailHref } from "@/lib/entity-routes";
@@ -255,7 +256,7 @@ export default function AdminPortalPage({ initialData }: AdminPortalPageProps) {
   const recent = data?.recentAppointments ?? [];
 
   return (
-    <div className="space-y-4 max-w-9xl mx-auto">
+    <div className={cn(appPortalSectionRootClass, "max-w-9xl mx-auto")}>
       {/* ------------------------------------------------------------------ */}
       {/* Page header                                                          */}
       {/* ------------------------------------------------------------------ */}

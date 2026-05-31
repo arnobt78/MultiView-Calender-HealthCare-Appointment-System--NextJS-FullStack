@@ -45,6 +45,7 @@ import {
 import type { CategoryCreateInput } from "@/hooks/useCategories";
 import { isCategoryActive } from "@/lib/entity-active-status";
 import { cn } from "@/lib/utils";
+import { appEntityDetailRootClass } from "@/lib/section-page-layout";
 import type { Category, CategorySnapshot } from "@/types/types";
 
 export type ControlPanelCategoryDetailScreenProps = {
@@ -171,7 +172,7 @@ export function ControlPanelCategoryDetailScreen({
   const totalCount = snapshot?.totalCount ?? 0;
 
   return (
-    <div className="space-y-5 pb-24 text-gray-700">
+    <div className={appEntityDetailRootClass}>
       <PageHeader
         title={cat?.label ?? "Category"}
         description="Category details and associated appointments"

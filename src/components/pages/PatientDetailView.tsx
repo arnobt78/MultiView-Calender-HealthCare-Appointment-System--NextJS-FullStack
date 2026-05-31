@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { useAppStore } from "@/store/useAppStore";
+import { AppSectionErrorBanner } from "@/components/shared/AppSectionErrorBanner";
 
 export default function PatientDetailView({ patientId }: { patientId: string }) {
   const { patients, isLoading: patientsLoading, isError: patientsError } = usePatients();
@@ -28,10 +29,9 @@ export default function PatientDetailView({ patientId }: { patientId: string }) 
 
   if (patientsError || apptsError) {
     return (
-      <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 flex items-center gap-2">
-        <AlertCircle className="h-4 w-4 shrink-0" />
+      <AppSectionErrorBanner>
         Failed to load patient data. Please refresh.
-      </div>
+      </AppSectionErrorBanner>
     );
   }
 
