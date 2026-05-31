@@ -25,6 +25,10 @@ import {
   clinicalTableColumnIdentityShellClass,
   clinicalCategoryLabelRowClass,
   clinicalCategorySwatchAnchorClass,
+  clinicalCategoryBrandRowClass,
+  clinicalTableBrandMarkCellClass,
+  clinicalBadgeInlineClass,
+  clinicalBadgeInlineIconClass,
   clinicalTableColumnCategoryShellClass,
   clinicalTableColumnTitleShellClass,
   clinicalTableColumnWhenShellClass,
@@ -32,16 +36,11 @@ import {
 } from "@/lib/table-display-styles";
 import { isAdminRole } from "@/lib/rbac";
 import { isValidUUID } from "@/lib/validation";
+import { CategoryBrandMark } from "@/components/shared/category-display/CategoryBrandMark";
 import { cn } from "@/lib/utils";
 import type { AppointmentSnapshotRow, SnapshotInvoice } from "@/types/types";
 import type { EntityRole } from "@/lib/entity-routes";
 import { CLINICAL_SNAPSHOT_APPOINTMENT_COL_WIDTH } from "@/lib/clinical-snapshot-table-columns";
-
-function categorySwatchFill(color: string | null | undefined): string {
-  if (!color?.trim()) return "#94a3b8";
-  const hex = color.trim();
-  return /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/.test(hex) ? hex : "#94a3b8";
-}
 
 /**
  * Category pill — role-aware link via `categoryDetailHref`.
@@ -50,32 +49,47 @@ function categorySwatchFill(color: string | null | undefined): string {
 export function CategoryTableCell({
   label,
   color,
+  icon,
   categoryId,
   viewerRole,
   emptyLayout = "table",
+  markVariant = "dot",
+  markSize = "list",
 }: {
   label: string | null | undefined;
   color: string | null | undefined;
+  icon?: string | null;
   categoryId?: string | null;
   viewerRole?: EntityRole;
   /** `definition` for patient schema `<dd>`; `table` for snapshot grids (default). */
   emptyLayout?: ClinicalEmptyLayout;
+  /** `brand` = logo tile; `dot` = compact swatch. */
+  markVariant?: "brand" | "dot";
+  /** Passed to `CategoryBrandMark` when `markVariant="brand"`. */
+  markSize?: "list" | "compact";
 }) {
   if (!clinicalHasTextValue(label)) {
     return <ClinicalEmptyDash layout={emptyLayout} />;
   }
   const trimmed = label!.trim();
-  const dot = (
-    <span className={clinicalCategorySwatchAnchorClass} aria-hidden>
-      <svg width="8" height="8" viewBox="0 0 8 8" className="block">
-        <circle cx="4" cy="4" r="4" fill={categorySwatchFill(color)} />
-      </svg>
-    </span>
-  );
+  const mark =
+    markVariant === "brand" ? (
+      <CategoryBrandMark color={color} icon={icon} variant="brand" size={markSize} />
+    ) : (
+      <span className={clinicalCategorySwatchAnchorClass} aria-hidden>
+        <CategoryBrandMark color={color} icon={icon} variant="dot" />
+      </span>
+    );
   const canLink = categoryId && isValidUUID(categoryId);
   return (
-    <span className={cn(clinicalCategoryLabelRowClass, clinicalCellPrimaryTextClass)}>
-      {dot}
+    <span
+      className={cn(
+        markVariant === "brand" ? clinicalCategoryBrandRowClass : clinicalCategoryLabelRowClass,
+        clinicalCellPrimaryTextClass,
+        markVariant === "brand" && markSize === "list" && "gap-2"
+      )}
+    >
+      {mark}
       {canLink ? (
         <EntityTitleLink
           href={categoryDetailHref(viewerRole, categoryId)}
@@ -218,7 +232,7 @@ export function buildRelatedAppointmentsColumns(
                 "flex flex-col justify-center"
               )}
             >
-              <p className={clinicalCellPrimaryTextClass}>{format(new Date(a.start!), "PP")}</p>
+              <p className={clinicalCellMutedTextClass}>{format(new Date(a.start!), "PP")}</p>
               <p className={clinicalCellMutedTextClass}>
                 {format(new Date(a.start!), "p")}
                 {a.end ? ` – ${format(new Date(a.end), "p")}` : ""}
@@ -237,12 +251,15 @@ export function buildRelatedAppointmentsColumns(
         colWidth: CLINICAL_SNAPSHOT_APPOINTMENT_COL_WIDTH.category,
       },
       cell: ({ row }) => (
-        <div className={cn(clinicalTableCellMinRowClass, "w-full max-w-full overflow-hidden py-0.5")}>
+        <div className={cn(clinicalTableCellMinRowClass, clinicalTableBrandMarkCellClass)}>
           <CategoryTableCell
             label={row.original.category_label}
             color={row.original.category_color}
+            icon={row.original.category_icon}
             categoryId={row.original.category}
             viewerRole={viewerRole}
+            markVariant="brand"
+            markSize="compact"
           />
         </div>
       ),
@@ -316,7 +333,7 @@ export function buildRelatedAppointmentsColumns(
               className={cn(
                 clinicalTableCellMinRowClass,
                 clinicalTableCellWrapClass,
-                clinicalCellPrimaryTextClass,
+                clinicalCellMutedTextClass,
                 "m-0 w-full max-w-full overflow-hidden whitespace-normal"
               )}
             >
@@ -417,10 +434,10 @@ export function buildPatientInvoicesColumns(viewerRole: EntityRole): ColumnDef<S
               className={cn(
                 clinicalTableCellMinRowClass,
                 "flex items-center whitespace-nowrap",
-                clinicalCellPrimaryTextClass
+                clinicalCellMutedTextClass
               )}
             >
-              {format(new Date(row.original.due_date!), "PP")}
+              {format(new Date(row.original.due_date!), "MMM d, yyyy")}
             </div>
           ),
           "table"
@@ -439,10 +456,10 @@ export function buildPatientInvoicesColumns(viewerRole: EntityRole): ColumnDef<S
               className={cn(
                 clinicalTableCellMinRowClass,
                 "flex items-center whitespace-nowrap",
-                clinicalCellPrimaryTextClass
+                clinicalCellMutedTextClass
               )}
             >
-              {format(new Date(row.original.paid_at!), "PP")}
+              {format(new Date(row.original.paid_at!), "MMM d, yyyy")}
             </div>
           ),
           "table"

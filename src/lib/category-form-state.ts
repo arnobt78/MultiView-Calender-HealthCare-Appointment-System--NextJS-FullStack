@@ -1,4 +1,5 @@
 import type { CategoryCreateInput } from "@/hooks/useCategories";
+import { DEFAULT_CATEGORY_ICON, normalizeCategoryIcon } from "@/lib/category-icon-options";
 import type { Category } from "@/types/types";
 
 /** Default create form — `is_active: true` matches API POST default. */
@@ -6,7 +7,7 @@ export const EMPTY_CATEGORY_FORM: CategoryCreateInput = {
   label: "",
   description: "",
   color: "#f59e0b",
-  icon: "",
+  icon: DEFAULT_CATEGORY_ICON,
   is_active: true,
   sort_order: 0,
   duration_minutes_default: undefined,
@@ -18,7 +19,7 @@ export function categoryToFormInput(category: Category): CategoryCreateInput {
     label: category.label,
     description: category.description ?? "",
     color: category.color ?? "#f59e0b",
-    icon: category.icon ?? "",
+    icon: normalizeCategoryIcon(category.icon),
     is_active: category.is_active !== false,
     sort_order: category.sort_order ?? 0,
     duration_minutes_default: category.duration_minutes_default ?? undefined,
@@ -38,7 +39,7 @@ export function buildCategorySubmitPayload(form: CategoryCreateInput) {
     ...form,
     label: form.label.trim(),
     description: form.description?.trim() || undefined,
-    icon: form.icon?.trim() || undefined,
+    icon: normalizeCategoryIcon(form.icon),
     duration_minutes_default,
   };
 }

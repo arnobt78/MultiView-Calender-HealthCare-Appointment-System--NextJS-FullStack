@@ -149,6 +149,7 @@ export function PortalAppointmentTimelineCard({
                     categoryId={appt.category_data.id}
                     label={appt.category_data.label}
                     color={appt.category_data.color}
+                    icon={appt.category_data.icon}
                   />
                 </AppointmentCardMetaRow>
               ) : null}

@@ -458,6 +458,7 @@ function AppointmentCardMeta({
               categoryId={appointment.category_data.id}
               label={appointment.category_data.label}
               color={appointment.category_data.color}
+              icon={appointment.category_data.icon}
               wrapLabel={useInlinePeopleRows || wrapValues}
             />
           </AppointmentCardMetaRow>

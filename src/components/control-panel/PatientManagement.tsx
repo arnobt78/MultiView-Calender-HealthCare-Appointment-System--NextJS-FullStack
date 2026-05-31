@@ -13,7 +13,7 @@ import {
   clinicalCellPrimaryTextClass,
 } from "@/lib/table-display-styles";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { EntityActiveStatusBadge } from "@/components/shared/entity-display/EntityActiveStatusBadge";
 import { cn } from "@/lib/utils";
 import {
   emeraldGlassPrimaryButtonClass,
@@ -37,8 +37,6 @@ import {
   Pencil,
   Trash2,
   Download,
-  CircleCheck,
-  CircleOff,
   Eye,
   ListFilter,
   UserPlus,
@@ -439,7 +437,7 @@ export function PatientManagementInner({
       cell: ({ row }) => (
         <div className="flex min-h-[2.75rem] w-full min-w-0 items-center">
           <span
-            className={cn("line-clamp-2 min-w-0 break-words", clinicalCellPrimaryTextClass)}
+            className={cn("line-clamp-2 min-w-0 break-words", clinicalCellMutedTextClass)}
             title={getPatientCareLevelLabel(row.original.care_level)}
           >
             {getPatientCareLevelLabel(row.original.care_level)}
@@ -454,21 +452,7 @@ export function PatientManagementInner({
       meta: { shellClassName: "w-[10%] min-w-[7.25rem] whitespace-nowrap" },
       cell: ({ row }) => (
         <div className="flex min-h-[2.75rem] items-center">
-          <Badge
-            variant="outline"
-            className={
-              row.original.active
-                ? "max-w-full truncate text-xs border-emerald-200 bg-emerald-50 text-emerald-700"
-                : "max-w-full truncate text-xs border-slate-200 bg-slate-50 text-slate-600"
-            }
-          >
-            {row.original.active ? (
-              <CircleCheck className="mr-1 h-3.5 w-3.5" />
-            ) : (
-              <CircleOff className="mr-1 h-3.5 w-3.5" />
-            )}
-            {row.original.active ? "Active" : "Inactive"}
-          </Badge>
+          <EntityActiveStatusBadge active={row.original.active !== false} />
         </div>
       ),
     },
@@ -479,12 +463,14 @@ export function PatientManagementInner({
       cell: ({ row }) =>
         row.original.created_at ? (
           <div className="flex min-h-[2.75rem] items-center">
-            <span className="block whitespace-nowrap text-xs">
+            <span className={cn("whitespace-nowrap", clinicalCellMutedTextClass)}>
               {format(new Date(row.original.created_at), "MMM d, yyyy")}
             </span>
           </div>
         ) : (
-          <div className="flex min-h-[2.75rem] items-center text-muted-foreground">—</div>
+          <div className="flex min-h-[2.75rem] items-center">
+            <span className={clinicalCellMutedTextClass}>—</span>
+          </div>
         ),
     },
     {

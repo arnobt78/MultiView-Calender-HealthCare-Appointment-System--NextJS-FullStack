@@ -104,6 +104,8 @@ export type AppointmentSnapshotRow = Appointment & {
   category_label?: string | null;
   /** Hex swatch for category column (from `categories.color`). */
   category_color?: string | null;
+  /** Lucide icon name for category brand mark (from `categories.icon`). */
+  category_icon?: string | null;
   /** Visit type name for two-line Title column (from `appointment_types.name`). */
   appointment_type_name?: string | null;
   /** Calendar row owner (wire `user_id`; Prisma `owner_id`). */

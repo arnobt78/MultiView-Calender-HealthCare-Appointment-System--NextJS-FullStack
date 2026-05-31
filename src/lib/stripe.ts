@@ -53,7 +53,7 @@ export async function createCheckoutSession({
       mode: "payment",
       customer_email: customerEmail,
       // Redirect to the invoice-management section (segment → tab: "invoices").
-      // ControlPanelPage reads status=success on mount to refetch invoice data.
+      // Dedicated CP section pages read status=success on mount to refetch invoice data.
       success_url: `${APP_URL}/control-panel/invoice-management?session_id={CHECKOUT_SESSION_ID}&status=success`,
       cancel_url: `${APP_URL}/control-panel/invoice-management?status=cancelled`,
       "metadata[invoice_id]": invoiceId,

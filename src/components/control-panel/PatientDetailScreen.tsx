@@ -347,6 +347,7 @@ export function PatientDetailScreen({
       id: row.category ?? null,
       label: row.category_label.trim(),
       color: row.category_color ?? null,
+      icon: row.category_icon ?? null,
     };
   }, [snap.data?.appointments]);
   const { deletePatient, isDeleting, isUpdating, updatePatient } = usePatients();
@@ -617,9 +618,12 @@ export function PatientDetailScreen({
                   <CategoryTableCell
                     label={schemaCategory?.label}
                     color={schemaCategory?.color}
+                    icon={schemaCategory?.icon}
                     categoryId={schemaCategory?.id}
                     viewerRole={viewerRole as EntityRole}
                     emptyLayout="definition"
+                    markVariant="brand"
+                    markSize="compact"
                   />
                 </PatientDetailDefinitionRow>
                 <PatientDetailDefinitionRow

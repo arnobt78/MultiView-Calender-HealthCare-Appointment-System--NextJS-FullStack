@@ -16,8 +16,26 @@ export const clinicalStackGapClass = "gap-0.5";
 /** Primary cell text (care tier, location, dates). */
 export const clinicalCellPrimaryTextClass = "text-sm text-gray-700";
 
-/** Secondary lines (email under name, time sub-lines). */
+/** Secondary lines (email under name, time sub-lines, created dates, care tier). */
 export const clinicalCellMutedTextClass = "text-xs text-muted-foreground";
+
+/**
+ * Inline badge row — icon + label gap matches Default Duration column app-wide.
+ * Pair with `clinicalBadgeInlineIconClass` on Lucide icons inside shadcn `Badge`.
+ */
+export const clinicalBadgeInlineClass =
+  "inline-flex max-w-full items-center gap-1 truncate py-0 text-xs";
+
+/** Lucide icon size inside clinical inline badges (status, duration, specialty). */
+export const clinicalBadgeInlineIconClass = "h-3 w-3 shrink-0";
+
+/** Brand-mark label cells — keep outer glow visible (avoid `overflow-hidden` clip). */
+export const clinicalTableBrandMarkCellClass =
+  "w-full max-w-full overflow-visible py-1 pr-0.5";
+
+/** Compact category brand row in snapshot tables (icon + wrapped label). */
+export const clinicalCategoryBrandRowClass =
+  "flex w-full min-w-0 max-w-full items-center gap-2 overflow-visible";
 
 /** Entity detail links — matches `EntityTitleLink` sky accent app-wide. */
 export const entityDetailLinkClass =
@@ -35,9 +53,9 @@ export const clinicalTableColumnTitleShellClass =
 export const clinicalTableColumnWhenShellClass =
   "align-top overflow-x-hidden overflow-y-visible whitespace-nowrap";
 
-/** Category — width from `meta.colWidth`; wrap inside cell only. */
+/** Category — width from `meta.colWidth`; allow brand-mark glow escape. */
 export const clinicalTableColumnCategoryShellClass =
-  "align-top overflow-hidden whitespace-normal break-words [overflow-wrap:break-word]";
+  "align-top overflow-x-visible overflow-y-visible whitespace-normal break-words [overflow-wrap:break-word]";
 
 /** Location — width from `meta.colWidth`. */
 export const clinicalTableColumnWrapShellClass =

@@ -32,6 +32,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CategoryDialogFieldLabel } from "@/components/control-panel/category-dialog/CategoryDialogFieldLabel";
+import { CategoryIconPickerSelect } from "@/components/shared/category-display/CategoryIconPickerSelect";
 import type { CategoryCreateInput } from "@/hooks/useCategories";
 import {
   categoryDialogGlassBackButtonClass,
@@ -148,13 +149,10 @@ export function CategoryFormDialog({
                   />
                 </div>
               </FieldBlock>
-              <FieldBlock icon={Sparkles} htmlFor="cf-icon" label="Icon (Lucide Name)">
-                <Input
-                  id="cf-icon"
-                  value={form.icon ?? ""}
-                  onChange={(e) => onFormChange({ icon: e.target.value })}
-                  placeholder="e.g. brain-circuit"
-                  className={categoryDialogGlassInputClass}
+              <FieldBlock icon={Sparkles} label="Icon">
+                <CategoryIconPickerSelect
+                  value={form.icon}
+                  onValueChange={(icon) => onFormChange({ icon })}
                 />
               </FieldBlock>
             </div>

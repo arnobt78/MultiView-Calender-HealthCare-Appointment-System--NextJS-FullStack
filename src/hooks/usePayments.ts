@@ -58,7 +58,7 @@ export function usePayments() {
     },
     onSuccess: async (url) => {
       // Invalidate invoices before redirect so the cache is stale when the user
-      // returns from Stripe — ControlPanelPage will re-fetch automatically on mount.
+      // returns from Stripe — ControlPanelSectionPageClient re-fetches on mount.
       await invalidateInvoicesAndOverview(queryClient);
       window.location.href = url;
     },

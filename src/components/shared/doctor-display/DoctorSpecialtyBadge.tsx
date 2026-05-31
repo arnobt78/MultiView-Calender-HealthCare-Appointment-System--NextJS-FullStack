@@ -1,8 +1,12 @@
 "use client";
 
 import { Stethoscope } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { useDoctorDisplayOptional } from "@/context/DoctorDisplayContext";
+import {
+  clinicalBadgeInlineClass,
+  clinicalBadgeInlineIconClass,
+} from "@/lib/table-display-styles";
+import { cn } from "@/lib/utils";
 
 type DoctorSpecialtyBadgeProps = {
   specialty: string | null | undefined;
@@ -24,11 +28,12 @@ export function DoctorSpecialtyBadge({
     <span
       className={cn(
         getSpecialtyGlassClassName(specialty),
-        "inline-flex items-center gap-1 px-2 py-0 text-[10px] font-normal shrink-0",
+        clinicalBadgeInlineClass,
+        "px-2 font-normal shrink-0 text-[10px]",
         className
       )}
     >
-      {showIcon && <Stethoscope className="h-3 w-3 shrink-0" aria-hidden />}
+      {showIcon && <Stethoscope className={clinicalBadgeInlineIconClass} aria-hidden />}
       {specialty.trim()}
     </span>
   );

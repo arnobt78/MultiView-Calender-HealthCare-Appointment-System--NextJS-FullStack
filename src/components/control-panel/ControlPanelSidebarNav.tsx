@@ -14,6 +14,8 @@
 
 import React, { useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { ChevronDown } from "lucide-react";
+import { navigateControlPanelSectionList } from "@/lib/control-panel-section-nav";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { useScrollOverflowEdges } from "@/hooks/useScrollOverflowEdges";
@@ -21,159 +23,21 @@ import {
   scrollOverflowBottomGradientClass,
   scrollOverflowChevronButtonClass,
 } from "@/lib/scroll-overflow-ui-classes";
-import type { LucideIcon } from "lucide-react";
 import {
-  Bell,
-  Building2,
-  Calendar,
-  CalendarDays,
-  ChevronDown,
-  LayoutDashboard,
-  Layers,
-  Mail,
-  PanelTop,
-  Receipt,
-  Stethoscope,
-  Tags,
-  UserCog,
-  Users,
-  Video,
-} from "lucide-react";
+  CONTROL_PANEL_NAV_BORDER,
+  CONTROL_PANEL_SEGMENT_TO_TAB,
+  CONTROL_PANEL_SIDEBAR_ITEM_LABEL,
+  CONTROL_PANEL_SIDEBAR_SECTIONS,
+  controlPanelSidebarItemLabelClass,
+  controlPanelSidebarTriggerClass,
+  type ControlPanelSidebarTabValue,
+} from "@/lib/control-panel-nav-config";
 
-// ─── Tab / segment constants ──────────────────────────────────────────────────
+// ─── Styling tokens ───────────────────────────────────────────────────────────
 
-const SIDEBAR_ITEMS = [
-  { value: "overview", label: "Dashboard Overview" },
-  { value: "telehealth", label: "Telehealth Queue" },
-  { value: "appointment", label: "Appointment Access Invitation" },
-  { value: "dashboard", label: "User Dashboard Access Invitation" },
-  { value: "patients", label: "Patient Management" },
-  { value: "categories", label: "Category Management" },
-  { value: "visit_types_global", label: "Global Visit Types" },
-  { value: "doctors", label: "Doctor Management" },
-  { value: "users_admin", label: "User / Admin Management" },
-  { value: "organizations", label: "Organization Management" },
-  { value: "invoices", label: "Invoices & Payments" },
-  { value: "appointments_mgmt", label: "Appointment Management" },
-  { value: "notifications", label: "Notifications" },
-  { value: "google-calendar", label: "Google Calendar" },
-] as const;
-
-type SidebarTabValue = (typeof SIDEBAR_ITEMS)[number]["value"];
-
-const SIDEBAR_ITEM_LABEL = Object.fromEntries(
-  SIDEBAR_ITEMS.map((item) => [item.value, item.label])
-) as Record<SidebarTabValue, string>;
-
-const SIDEBAR_SECTIONS: readonly {
-  heading: string;
-  items: readonly { value: SidebarTabValue; icon: LucideIcon }[];
-}[] = [
-  {
-    heading: "Overview & Queue",
-    items: [
-      { value: "overview", icon: LayoutDashboard },
-      { value: "telehealth", icon: Video },
-    ],
-  },
-  {
-    heading: "Access & Invitations",
-    items: [
-      { value: "appointment", icon: Mail },
-      { value: "dashboard", icon: PanelTop },
-    ],
-  },
-  {
-    heading: "Entity Management",
-    items: [
-      { value: "patients", icon: Users },
-      { value: "categories", icon: Tags },
-      { value: "visit_types_global", icon: Layers },
-      { value: "doctors", icon: Stethoscope },
-      { value: "users_admin", icon: UserCog },
-      { value: "organizations", icon: Building2 },
-    ],
-  },
-  {
-    heading: "Operations",
-    items: [
-      { value: "invoices", icon: Receipt },
-      { value: "appointments_mgmt", icon: CalendarDays },
-      { value: "notifications", icon: Bell },
-    ],
-  },
-  {
-    heading: "System & Audit",
-    items: [
-      { value: "google-calendar", icon: Calendar },
-    ],
-  },
-] as const;
-
-/** URL segment → tab value. Covers both section slugs AND sub-resource paths (detail pages). */
-const SEGMENT_TO_TAB: Record<string, SidebarTabValue> = {
-  // section routes (from TAB_TO_SEGMENT reverse)
-  "dashboard-overview": "overview",
-  "telehealth-queue": "telehealth",
-  "appointment-access-invitation": "appointment",
-  "user-dashboard-access-invitation": "dashboard",
-  "patient-management": "patients",
-  "category-management": "categories",
-  "global-visit-types": "visit_types_global",
-  "doctor-management": "doctors",
-  "user-admin-management": "users_admin",
-  "organization-management": "organizations",
-  "invoice-management": "invoices",
-  "appointment-management": "appointments_mgmt",
-  notifications: "notifications",
-  "google-calendar": "google-calendar",
-  // legacy alias
-  "doctor-user-management": "doctors",
-  // sub-resource detail pages — highlight the parent section in the sidebar
-  patients: "patients",
-  appointments: "appointments_mgmt",
-  doctors: "doctors",
-  invoices: "invoices",
-  categories: "categories",
-  organizations: "organizations",
-};
-
-/** Maps tab value → URL segment for navigation. */
-const TAB_TO_SEGMENT: Record<string, string> = {
-  overview: "dashboard-overview",
-  telehealth: "telehealth-queue",
-  appointment: "appointment-access-invitation",
-  dashboard: "user-dashboard-access-invitation",
-  patients: "patient-management",
-  categories: "category-management",
-  visit_types_global: "global-visit-types",
-  doctors: "doctor-management",
-  users_admin: "user-admin-management",
-  organizations: "organization-management",
-  invoices: "invoice-management",
-  appointments_mgmt: "appointment-management",
-  notifications: "notifications",
-  "google-calendar": "google-calendar",
-};
-
-// ─── Styling tokens (match ControlPanelPage) ─────────────────────────────────
-
-/** Border color matching Navbar bottom border. */
-const NAV_BORDER = "border-gray-100/80";
-
-/** Sidebar trigger — full-width, no padding, active item gets sky chip style. */
-const triggerClass = cn(
-  /* tabs.tsx now emits `whitespace-normal` for vertical orientation via group-data selector;
-     items-start keeps the icon at the top of wrapped multi-line labels. */
-  "!m-0 !h-auto !min-h-0 !gap-0 !px-0 !py-2 w-full cursor-pointer items-start justify-start rounded-none border-0 text-left text-sm font-normal shadow-none transition-colors",
-  "text-gray-700 hover:bg-sky-50 hover:text-sky-800",
-  "data-[state=active]:rounded-md data-[state=active]:bg-sky-100 data-[state=active]:text-sky-800 data-[state=active]:shadow-none",
-  "[&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-gray-500 data-[state=active]:[&_svg]:text-sky-700",
-  "after:hidden! data-[state=active]:after:hidden!"
-);
-
-/* Allow long labels (e.g. "Appointment Access Invitation") to wrap inside the sidebar width. */
-const labelClass = "min-w-0 flex-1 pl-2 leading-snug break-words";
+const NAV_BORDER = CONTROL_PANEL_NAV_BORDER;
+const triggerClass = controlPanelSidebarTriggerClass;
+const labelClass = controlPanelSidebarItemLabelClass;
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -182,18 +46,13 @@ export default function ControlPanelSidebarNav() {
   const router = useRouter();
 
   /** Resolve active tab from the current pathname segment. Works for section AND detail routes. */
-  const activeTab = useMemo<SidebarTabValue>(() => {
+  const activeTab = useMemo<ControlPanelSidebarTabValue>(() => {
     const seg = pathname.split("/")[2] ?? "";
-    return (SEGMENT_TO_TAB[seg] as SidebarTabValue | undefined) ?? "overview";
+    return CONTROL_PANEL_SEGMENT_TO_TAB[seg] ?? "overview";
   }, [pathname]);
 
   const handleTabChange = (nextTab: string) => {
-    const segment = TAB_TO_SEGMENT[nextTab] ?? TAB_TO_SEGMENT.overview;
-    const targetPath = `/control-panel/${segment}`;
-    // Always scroll to top on tab switch (mirrors stock-inventory Link navigation).
-    if (pathname !== targetPath) {
-      router.replace(targetPath);
-    }
+    navigateControlPanelSectionList(pathname, nextTab, router.replace.bind(router));
   };
 
   const { containerRef: asideRef, canScrollDown, scrollDown } = useScrollOverflowEdges();
@@ -237,7 +96,7 @@ export default function ControlPanelSidebarNav() {
           variant="line"
           className="flex h-auto w-full flex-col gap-0 rounded-none border-0 bg-transparent pl-2 sm:pl-4 lg:pl-8 pb-2"
         >
-          {SIDEBAR_SECTIONS.map((section, idx) => (
+          {CONTROL_PANEL_SIDEBAR_SECTIONS.map((section, idx) => (
             <div
               key={section.heading}
               className={cn("w-full", idx === 0 ? "pt-2" : "pt-4")}
@@ -253,10 +112,11 @@ export default function ControlPanelSidebarNav() {
                       key={item.value}
                       value={item.value}
                       className={triggerClass}
+                      onClick={() => handleTabChange(item.value)}
                     >
                       <Icon className="size-4 shrink-0" aria-hidden />
                       <span className={labelClass}>
-                        {SIDEBAR_ITEM_LABEL[item.value]}
+                        {CONTROL_PANEL_SIDEBAR_ITEM_LABEL[item.value]}
                       </span>
                     </TabsTrigger>
                   );

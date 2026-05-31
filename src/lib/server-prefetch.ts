@@ -483,6 +483,7 @@ export async function prefetchPatientSnapshot(patientId: string): Promise<Patien
           ...row,
           category_label: a.category?.label ?? null,
           category_color: a.category?.color ?? null,
+          category_icon: a.category?.icon ?? null,
           appointment_type_name: a.appointment_type?.name ?? null,
           calendar_owner_id: a.owner?.id ?? null,
           calendar_owner_display: a.owner?.display_name ?? null,

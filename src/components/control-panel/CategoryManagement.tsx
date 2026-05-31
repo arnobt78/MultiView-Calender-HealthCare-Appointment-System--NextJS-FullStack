@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { CategoryTableCell } from "@/components/control-panel/patient-detail-snapshot-columns";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { EntityActiveStatusBadge } from "@/components/shared/entity-display/EntityActiveStatusBadge";
 import { Category } from "@/types/types";
 import { cn } from "@/lib/utils";
 import { violetGlassPrimaryButtonClass } from "@/lib/calendar-header-action-styles";
@@ -29,8 +30,6 @@ import {
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import {
   AlertCircle,
-  CheckCircle2,
-  CircleOff,
   Clock,
   EllipsisVertical,
   Eye,
@@ -62,6 +61,9 @@ import { CLINICAL_EMPTY_EM_DASH } from "@/lib/clinical-empty-value";
 import {
   clinicalCellMutedTextClass,
   clinicalTableCellMinRowClass,
+  clinicalTableBrandMarkCellClass,
+  clinicalBadgeInlineClass,
+  clinicalBadgeInlineIconClass,
 } from "@/lib/table-display-styles";
 
 const STATUS_FILTER_LABEL: Record<CategoryStatusFilter, string> = {
@@ -223,21 +225,26 @@ export function CategoryManagementInner() {
       {
         accessorKey: "label",
         header: ({ column }) => <DataTableColumnHeader column={column} title="Label" />,
-        meta: { shellClassName: "w-[22%] min-w-[12rem] max-w-[20rem] whitespace-normal" },
+        meta: {
+          shellClassName:
+            "w-[22%] min-w-[12rem] max-w-[20rem] whitespace-normal overflow-visible",
+        },
         cell: ({ row }) => {
           const c = row.original;
           return (
             <div
               className={cn(
                 clinicalTableCellMinRowClass,
-                "w-full max-w-full overflow-hidden py-0.5"
+                clinicalTableBrandMarkCellClass
               )}
             >
               <CategoryTableCell
                 label={c.label}
                 color={c.color}
+                icon={c.icon}
                 categoryId={c.id}
                 viewerRole="admin"
+                markVariant="brand"
               />
             </div>
           );
@@ -273,22 +280,7 @@ export function CategoryManagementInner() {
           const active = isCategoryActive(row.original);
           return (
             <div className="flex min-h-[2.75rem] items-center">
-              <Badge
-                variant="outline"
-                className={cn(
-                  "inline-flex max-w-full items-center gap-1 truncate text-xs py-0",
-                  active
-                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                    : "bg-gray-50 text-gray-500 border-gray-200"
-                )}
-              >
-              {active ? (
-                <CheckCircle2 className="h-3 w-3 shrink-0" />
-              ) : (
-                <CircleOff className="h-3 w-3 shrink-0" />
-              )}
-              {active ? "Active" : "Inactive"}
-              </Badge>
+              <EntityActiveStatusBadge active={active} />
             </div>
           );
         },
@@ -307,9 +299,12 @@ export function CategoryManagementInner() {
               {d != null ? (
                 <Badge
                   variant="outline"
-                  className="inline-flex items-center gap-1 text-xs py-0 bg-sky-50 text-sky-700 border-sky-200"
+                  className={cn(
+                    clinicalBadgeInlineClass,
+                    "bg-sky-50 text-sky-700 border-sky-200"
+                  )}
                 >
-                  <Clock className="h-3 w-3 shrink-0" />
+                  <Clock className={clinicalBadgeInlineIconClass} />
                   {d} min
                 </Badge>
               ) : (
@@ -325,7 +320,7 @@ export function CategoryManagementInner() {
         meta: { shellClassName: "w-[13.5%] min-w-[9rem] whitespace-nowrap" },
         cell: ({ row }) => (
           <div className="flex min-h-[2.75rem] items-center">
-            <span className={cn("whitespace-nowrap text-xs", clinicalCellMutedTextClass)}>
+            <span className={cn("whitespace-nowrap", clinicalCellMutedTextClass)}>
               {row.original.created_at
                 ? format(new Date(row.original.created_at), "MMM d, yyyy")
                 : "—"}
@@ -466,7 +461,7 @@ export function CategoryManagementInner() {
   );
 }
 
-/** Control-panel category list — SSR-seeded via `ControlPanelPage` + `prefetchCategories`. */
+/** Control-panel category list — SSR-seeded via dedicated `/control-panel/category-management` route. */
 export default function CategoryManagement() {
   return (
     <CategoryListFiltersProvider>

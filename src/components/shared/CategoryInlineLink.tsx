@@ -1,30 +1,33 @@
 "use client";
 
 import { RoleEntityLink } from "@/components/shared/RoleEntityLink";
-import { categorySwatchFill } from "@/lib/appointment-card";
+import { CategoryBrandMark } from "@/components/shared/category-display/CategoryBrandMark";
 import { cn } from "@/lib/utils";
 
 type CategoryInlineLinkProps = {
   categoryId: string;
   label: string;
   color?: string | null;
+  icon?: string | null;
   className?: string;
   wrapLabel?: boolean;
+  /** `compact` for cards/timeline; `list` for wider rows. */
+  markSize?: "list" | "compact";
 };
 
-/** Color swatch + category label link — same visual as control-panel CategoryTableCell. */
+/** Circular category brand mark + label link — matches CP category table / snapshot cells. */
 export function CategoryInlineLink({
   categoryId,
   label,
   color,
+  icon,
   className,
   wrapLabel,
+  markSize = "compact",
 }: CategoryInlineLinkProps) {
   return (
-    <span className={cn("inline-flex max-w-full min-w-0 items-center gap-1.5", className)}>
-      <svg width="8" height="8" viewBox="0 0 8 8" aria-hidden className="inline-block shrink-0">
-        <circle cx="4" cy="4" r="4" fill={categorySwatchFill(color)} />
-      </svg>
+    <span className={cn("inline-flex max-w-full min-w-0 items-center gap-2", className)}>
+      <CategoryBrandMark color={color} icon={icon} variant="brand" size={markSize} />
       <RoleEntityLink
         kind="category"
         id={categoryId}

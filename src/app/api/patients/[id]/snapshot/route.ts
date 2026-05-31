@@ -5,7 +5,7 @@
  * - `calendar_owner_*`: always the calendar owner (`Appointment.owner_id` in Prisma → `user_id` in JSON).
  * - `doctor_*`: B2 resolved treating / clinical contact (`resolveTreatingPhysicianUserId` → joined user row).
  * - `doctor_specialty`: clinical user's `specialty` for stacked badge in patient detail table.
- * - `category_label` / `category_color`: patient detail Related Appointments category column (color swatch).
+ * - `category_label` / `category_color` / `category_icon`: patient detail Related Appointments category column.
  * - `appointment_type_name`: two-line Title column (type on row 1, patient name on row 2 in `PatientDetailScreen`).
  */
 
@@ -98,6 +98,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
         ...row,
         category_label: a.category?.label ?? null,
         category_color: a.category?.color ?? null,
+        category_icon: a.category?.icon ?? null,
         appointment_type_name: a.appointment_type?.name ?? null,
         calendar_owner_id: a.owner?.id ?? null,
         calendar_owner_display: a.owner?.display_name ?? null,
