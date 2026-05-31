@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { prefetchInsightsNav } from "@/lib/prefetch-insights-nav";
 
@@ -99,6 +99,12 @@ import GlobalSearch from "@/components/shared/GlobalSearch";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import { navbarContentShellClass } from "@/lib/dashboard-layout";
+import {
+  navbarCenterNavClass,
+  navbarLogoTitleClass,
+  navbarNavLinkClass,
+} from "@/lib/navbar-ui-classes";
+import { useAppNavbarHeightSync } from "@/hooks/useAppNavbarHeightSync";
 import { cn } from "@/lib/utils";
 import { APP_NAVBAR_INNER_ROW_CLASS, Z_NAVBAR } from "@/lib/portal-z-index";
 
@@ -129,8 +135,15 @@ export default function Navbar() {
     ? user.email.substring(0, 2).toUpperCase()
     : "U";
 
+  const navbarRef = useRef<HTMLDivElement>(null);
+  useAppNavbarHeightSync(navbarRef);
+
+  const navLinkClass = (active: boolean) =>
+    cn(navbarNavLinkClass, active ? "text-gray-700" : "text-muted-foreground");
+
   return (
     <div
+      ref={navbarRef}
       data-slot="app-navbar"
       style={{ zIndex: Z_NAVBAR }}
       className="fixed inset-x-0 top-0 flex w-full shrink-0 flex-col border-b border-gray-100/80 bg-white/90 backdrop-blur-sm supports-[backdrop-filter]:bg-white/80"
@@ -163,76 +176,66 @@ export default function Navbar() {
               />
               {/* </span> */}
             </span>
-            <span className="inline-block bg-linear-to-r from-emerald-900 via-red-500 to-sky-700 bg-clip-text text-lg font-semibold tracking-tight text-transparent">
+            <span className={navbarLogoTitleClass}>
               HealthCal Pro
             </span>
           </Link>
         </div>
 
-        {/* Center: nav links — role from SSR NavRoleContext + useAuth; same DOM on server and client */}
-        <nav className="hidden md:flex flex-1 items-center justify-center gap-6">
-          {/* Dashboard — all authenticated roles */}
-          <Link
-            href="/dashboard"
-            className={`text-base transition-colors hover:text-gray-700 ${pathname === "/dashboard" ? "text-gray-700" : "text-muted-foreground"}`}
-          >
+        {/* Center: nav links — nowrap so admin labels stay one row; height sync updates main offset */}
+        <nav className={navbarCenterNavClass}>
+          <Link href="/dashboard" className={navLinkClass(pathname === "/dashboard")}>
             Dashboard
           </Link>
 
-          {/* Admin Portal — admin role only */}
           {showAdminPortalLink && (
             <Link
               href="/admin-portal"
-              className={`flex items-center gap-1.5 text-base transition-colors hover:text-gray-700 ${pathname?.startsWith("/admin-portal") ? "text-gray-700" : "text-muted-foreground"}`}
+              className={navLinkClass(Boolean(pathname?.startsWith("/admin-portal")))}
             >
               Admin Portal
             </Link>
           )}
 
-          {/* Doctor Portal — doctor role only (replaces Control Panel for doctors) */}
           {showDoctorPortalLink && (
             <Link
               href="/doctor-portal"
-              className={`flex items-center gap-1.5 text-base transition-colors hover:text-gray-700 ${pathname?.startsWith("/doctor-portal") ? "text-gray-700" : "text-muted-foreground"}`}
+              className={navLinkClass(Boolean(pathname?.startsWith("/doctor-portal")))}
             >
               Doctor Portal
             </Link>
           )}
 
-          {/* Control Panel — admin only; doctors use Doctor Portal */}
           {showControlPanelLink && (
             <Link
               href="/control-panel"
-              className={`text-base transition-colors hover:text-gray-700 ${pathname?.includes("/control-panel") ? "text-gray-700" : "text-muted-foreground"}`}
+              className={navLinkClass(Boolean(pathname?.includes("/control-panel")))}
             >
               Control Panel
             </Link>
           )}
 
-          {/* Analytics — all staff roles (doctor sees own-scoped data via ?scope=own) */}
           {showStaffNavLinks && (
             <Link
               href="/insights"
               onMouseEnter={() => prefetchInsightsNav(queryClient, { role: user?.role ?? null })}
-              className={`text-base transition-colors hover:text-gray-700 ${pathname?.includes("/insights") ? "text-gray-700" : "text-muted-foreground"}`}
+              className={navLinkClass(Boolean(pathname?.includes("/insights")))}
             >
               Analytics
             </Link>
           )}
 
-          {/* Services — all authenticated roles */}
           <Link
             href="/services"
-            className={`text-base transition-colors hover:text-gray-700 ${pathname?.includes("/services") ? "text-gray-700" : "text-muted-foreground"}`}
+            className={navLinkClass(Boolean(pathname?.includes("/services")))}
           >
             Services
           </Link>
 
-          {/* Patient Portal — patients only */}
           {showPatientPortalNavLink && (
             <Link
               href="/patient-portal"
-              className={`text-base transition-colors hover:text-gray-700 ${pathname?.includes("/patient-portal") ? "text-gray-700" : "text-muted-foreground"}`}
+              className={navLinkClass(Boolean(pathname?.includes("/patient-portal")))}
             >
               Patient Portal
             </Link>

@@ -38,7 +38,7 @@ export const portalPanelSectionHeadingClass =
 /**
  * Control-panel / entity detail `PageHeader` — whole row gets `py-2` + min height (matches portal icon tile).
  * Title stack uses `pageChromeTitleStackClass` (no `mt-*` between title and subtitle).
- * Top `py-2` band clears fixed navbar via `APP_MAIN_OFFSET_CLASS` on `AuthShell` `<main>`.
+ * Top `py-2` band clears fixed navbar via `APP_MAIN_OFFSET_CLASS` (`--app-navbar-height`) on `AuthShell` `<main>`.
  */
 export const pageHeaderRootClass =
   "flex min-h-[3.5rem] flex-col sm:flex-row sm:items-center justify-between gap-4 py-2 sticky top-0 z-20 backdrop-blur-sm";

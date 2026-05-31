@@ -2,8 +2,7 @@
 
 ## Latest Audit Update (2026-05-31)
 
-- **Navbar vs page header clearance:** `navbarContentShellClass` on navbar (horizontal only); `APP_MAIN_OFFSET_CLASS` on `AuthShell` `<main>` — header `py-2` no longer sits under fixed navbar. CP list filter sticky → `APP_INNER_SCROLL_STICKY_TOP_CLASS` (`top-0`).
-- **Unified page header chrome:** `pageHeaderRootClass` + `pageChromeTitleStackClass`; entity detail single `cp-right-scroll` + inline actions.
+- **Dynamic navbar / header offset:** `useAppNavbarHeightSync` → `--app-navbar-height` on `<html>`; `APP_MAIN_OFFSET_CLASS` = `pt-[var(--app-navbar-height,…)]` (no static extra gap). Admin nav `navbar-ui-classes.ts` — `flex-nowrap` + `whitespace-nowrap` links stay one row on laptop.
 - **Shared category detail:** `CategoryDetailScreenShared` — CP wrapper sky + CRUD (`ControlPanelCategoryDetailScreen`); portal `/categories/[id]` amber glass (`CategoryDetailScreen` read-only). Tokens: `category-detail-ui-classes.ts`, `amberGlassBackButtonClass`.
 - **Snapshot mapper:** `appointment-snapshot-row.ts` + `appointmentSnapshotInclude` — patient + category snapshot/API/prefetch share one projection (patient denormalized fields, doctor images).
 - **Category audit trail:** `migrations/007_category_audit_users.sql` — `categories.created_by` / `updated_by`; Prisma relations; POST/PUT set actor; GET + `prefetchCategory` include `categoryDetailInclude`; `EntityDetailRecordAuditCard` + role-aware `EntityDetailAuditStaffLink`.
