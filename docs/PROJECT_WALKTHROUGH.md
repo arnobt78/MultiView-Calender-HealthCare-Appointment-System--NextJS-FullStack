@@ -9,7 +9,7 @@
 - **Doctor-portal roster:** `PatientManagementInner` `resolveAppSectionRootClass("portal")` when embedded — no double bottom padding.
 - **CP list-tab layout parity:** All 14 tabs on `controlPanelSectionRootClass`; Google Calendar full width.
 - **CP SSR prefetch + notification SSE:** unchanged — `prefetchControlPanelSection`, `useNotificationStream`, `invalidateNotificationsAndCrossTab`.
-- **Skipped (intentional):** Form/dialog/card inner `space-y-2`; grid `gap-4/5/6` for horizontal layout.
+- **Skipped (intentional):** Form/dialog/card inner `space-y-2`; grid `gap-4/5/6`; doctor profile detail pages (`/doctors/[id]`, `/control-panel/doctors/[id]`) still legacy `space-y-4/5`; CP list full-page error states (Doctor/Category/User mgmt) use centered `rounded-2xl p-6` variant; `InsightsDataErrorBanner` keeps Retry layout.
 - **Verify:** `npm test && npx tsc --noEmit && npm run lint && npm run build` — **500 tests**.
 
 ## Prior (2026-05-30 — CP layout token only)
