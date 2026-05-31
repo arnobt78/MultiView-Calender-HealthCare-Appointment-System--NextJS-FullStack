@@ -59,6 +59,7 @@ export const CROSS_TAB_SCOPES = {
     "doctorPortal",
     "adminPortal",
     "patientPortal",
+    "doctors",
   ] as const satisfies readonly QueryCacheCrossTabScope[],
 
   ENTITY_CATEGORIES: [

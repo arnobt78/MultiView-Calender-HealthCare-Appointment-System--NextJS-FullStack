@@ -8,7 +8,7 @@
  *       right: scrollable content pane — `overflow-y-auto` so only the content scrolls,
  *              not the page; sidebar position is therefore stable regardless of content length.
  *
- * SSR: prefetches doctor + all-user lists once for every CP route — doctor/user/org tabs
+ * SSR: prefetches doctor + admin + all-user lists once for every CP route — management/org tabs
  * read warm `useUsers` cache without per-tab fetch flash.
  */
 
@@ -17,6 +17,7 @@ import { redirect } from "next/navigation";
 import ControlPanelSidebarNav from "@/components/control-panel/ControlPanelSidebarNav";
 import ControlPanelSsrCacheSeed from "@/components/control-panel/ControlPanelSsrCacheSeed";
 import {
+  CP_ADMIN_USERS_FILTERS,
   CP_ALL_USERS_FILTERS,
   CP_DOCTOR_USERS_FILTERS,
 } from "@/lib/control-panel-users-filters";
@@ -61,11 +62,13 @@ export default async function ControlPanelLayout({
   }
 
   let initialDoctorUsers = null;
+  let initialAdminUsers = null;
   let initialAllUsers = null;
 
   if (sessionUser) {
-    [initialDoctorUsers, initialAllUsers] = await Promise.all([
+    [initialDoctorUsers, initialAdminUsers, initialAllUsers] = await Promise.all([
       prefetchUsersList(CP_DOCTOR_USERS_FILTERS),
+      prefetchUsersList(CP_ADMIN_USERS_FILTERS),
       prefetchUsersList(CP_ALL_USERS_FILTERS),
     ]);
   }
@@ -75,6 +78,7 @@ export default async function ControlPanelLayout({
       <ControlPanelSidebarNav />
       <ControlPanelSsrCacheSeed
         initialDoctorUsers={initialDoctorUsers}
+        initialAdminUsers={initialAdminUsers}
         initialAllUsers={initialAllUsers}
       />
       <div className="cp-right-scroll flex-1 min-w-0 overflow-y-auto overscroll-contain px-2 sm:px-4 lg:px-8">

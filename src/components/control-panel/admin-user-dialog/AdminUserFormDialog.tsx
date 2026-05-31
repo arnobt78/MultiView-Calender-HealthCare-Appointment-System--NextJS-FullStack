@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, Mail, Pencil, Save, ShieldCheck, UserRound, X } from "lucide-react";
+import { Loader2, Mail, Pencil, Save, UserRound, X } from "lucide-react";
 import {
   Dialog,
   DialogClose,
@@ -10,18 +10,9 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import type { AdminUserFormValues } from "@/lib/admin-user-form-state";
 import { adminUserDialogShellClass } from "@/lib/admin-user-detail-ui-classes";
 import { cn } from "@/lib/utils";
-
-const ROLES = ["admin", "doctor", "patient"] as const;
 
 type AdminUserFormDialogProps = {
   open: boolean;
@@ -33,7 +24,7 @@ type AdminUserFormDialogProps = {
   isSubmitting?: boolean;
 };
 
-/** Edit admin/staff account — slate glass shell; parent owns mutation + invalidation. */
+/** Edit admin account — slate glass shell; role locked to admin. */
 export function AdminUserFormDialog({
   open,
   onOpenChange,
@@ -50,10 +41,10 @@ export function AdminUserFormDialog({
           <div className="min-w-0 space-y-1">
             <DialogTitle className="flex items-center gap-2 text-lg font-semibold text-gray-800">
               <Pencil className="h-4 w-4 text-slate-600" aria-hidden />
-              Update Account
+              Update Admin Profile
             </DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
-              Display name, role, and avatar URL. Email is read-only.
+              Display name and avatar URL. Role remains admin.
             </DialogDescription>
           </div>
           <DialogClose asChild>
@@ -89,25 +80,6 @@ export function AdminUserFormDialog({
                 placeholder="Full name"
               />
             </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-gray-600" htmlFor="admin-user-role">
-              Role
-            </label>
-            <Select value={form.role} onValueChange={(v) => onFormChange({ role: v })}>
-              <SelectTrigger id="admin-user-role" className="w-full">
-                <ShieldCheck className="mr-2 h-4 w-4 text-muted-foreground" />
-                <SelectValue placeholder="Select role" />
-              </SelectTrigger>
-              <SelectContent>
-                {ROLES.map((r) => (
-                  <SelectItem key={r} value={r} className="capitalize">
-                    {r}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
 
           <div className="space-y-1.5">

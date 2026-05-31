@@ -1,5 +1,5 @@
 /**
- * Admin/staff user detail — doctors redirect to `/control-panel/doctors/[id]`.
+ * Admin user detail — B2B admin accounts only; doctors use `/control-panel/doctors/[id]`.
  */
 export const dynamic = "force-dynamic";
 
@@ -46,17 +46,18 @@ export default async function UserDetailPage({ params }: PageProps) {
     redirect(`/control-panel/doctors/${id}`);
   }
 
+  // Demo patient/other auth users — not part of the B2B admin roster.
+  if (raw.role !== "admin") {
+    notFound();
+  }
+
   const appointmentCount = await prisma.appointment.count({ where: { owner_id: id } });
-  const listBackHref =
-    raw.role === "patient"
-      ? "/control-panel/user-admin-management"
-      : "/control-panel/user-admin-management";
 
   return (
     <AdminUserDetailScreen
       userId={id}
       canAdminEdit={callerRole === "admin"}
-      listBackHref={listBackHref}
+      listBackHref="/control-panel/user-admin-management"
       scrollShell="control-panel"
       initialUser={serializeUser(raw)}
       appointmentCount={appointmentCount}
