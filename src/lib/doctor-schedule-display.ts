@@ -52,6 +52,71 @@ export type WeekdayAvailabilityGroup = {
   windows: AvailabilityWindow[];
 };
 
+/** `/services` card row — weekdays sharing hours merge; one day with split hours stays on one row. */
+export type ServicesAvailabilityDisplayRow = {
+  weekdays: number[];
+  ranges: { start_min: number; end_min: number }[];
+};
+
+type AvailabilitySlotLike = Pick<AvailabilityWindow, "weekday" | "start_min" | "end_min">;
+
+/**
+ * Services doctor cards:
+ * 1. Identical start/end → one row, multiple weekday badges + single time.
+ * 2. Same weekday, different hours → one row, one day badge + separate inline time spans.
+ */
+export function buildServicesAvailabilityDisplayRows(
+  slots: AvailabilitySlotLike[]
+): ServicesAvailabilityDisplayRow[] {
+  const byTime = new Map<string, { start_min: number; end_min: number; days: number[] }>();
+
+  for (const slot of slots) {
+    const key = `${slot.start_min}-${slot.end_min}`;
+    const existing = byTime.get(key);
+    if (existing) {
+      if (!existing.days.includes(slot.weekday)) {
+        existing.days.push(slot.weekday);
+      }
+    } else {
+      byTime.set(key, {
+        start_min: slot.start_min,
+        end_min: slot.end_min,
+        days: [slot.weekday],
+      });
+    }
+  }
+
+  const multiDayRows: ServicesAvailabilityDisplayRow[] = [];
+  const singleDayByWeekday = new Map<number, { start_min: number; end_min: number }[]>();
+
+  for (const group of byTime.values()) {
+    const days = [...group.days].sort((a, b) => a - b);
+    if (days.length >= 2) {
+      multiDayRows.push({
+        weekdays: days,
+        ranges: [{ start_min: group.start_min, end_min: group.end_min }],
+      });
+      continue;
+    }
+    const weekday = days[0];
+    if (weekday == null) continue;
+    const list = singleDayByWeekday.get(weekday) ?? [];
+    list.push({ start_min: group.start_min, end_min: group.end_min });
+    singleDayByWeekday.set(weekday, list);
+  }
+
+  const singleDayRows: ServicesAvailabilityDisplayRow[] = [...singleDayByWeekday.entries()]
+    .sort(([a], [b]) => a - b)
+    .map(([weekday, ranges]) => ({
+      weekdays: [weekday],
+      ranges: [...ranges].sort((a, b) => a.start_min - b.start_min),
+    }));
+
+  return [...multiDayRows, ...singleDayRows].sort(
+    (a, b) => Math.min(...a.weekdays) - Math.min(...b.weekdays)
+  );
+}
+
 /** Portal/CP list: one section per weekday, multiple windows per day sorted by start. */
 /** Collapsed weekday `<summary>` hint — window count + time ranges. */
 /** Unavailable-dates collapsed summary — full range on one responsive line. */

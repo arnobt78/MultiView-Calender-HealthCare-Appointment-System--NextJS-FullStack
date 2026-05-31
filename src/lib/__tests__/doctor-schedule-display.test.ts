@@ -6,6 +6,7 @@ import {
   availabilityUsesSingleTimezone,
   formatWeekdayWindowsHint,
   formatWeekdayTimeRangesInline,
+  buildServicesAvailabilityDisplayRows,
 } from "@/lib/doctor-schedule-display";
 
 describe("doctor-schedule-display", () => {
@@ -54,5 +55,28 @@ describe("doctor-schedule-display", () => {
         { id: "2", weekday: 1, start_min: 960, end_min: 1020, timezone: "Europe/Berlin" },
       ])
     ).toBe("10:00 – 14:00, 16:00 – 17:00");
+  });
+
+  it("buildServicesAvailabilityDisplayRows merges days with identical hours", () => {
+    const rows = buildServicesAvailabilityDisplayRows([
+      { weekday: 1, start_min: 540, end_min: 1020 },
+      { weekday: 2, start_min: 540, end_min: 1020 },
+      { weekday: 3, start_min: 540, end_min: 1020 },
+    ]);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.weekdays).toEqual([1, 2, 3]);
+    expect(rows[0]?.ranges).toHaveLength(1);
+  });
+
+  it("buildServicesAvailabilityDisplayRows keeps split hours on one weekday inline", () => {
+    const rows = buildServicesAvailabilityDisplayRows([
+      { weekday: 1, start_min: 600, end_min: 840 },
+      { weekday: 1, start_min: 960, end_min: 1020 },
+      { weekday: 3, start_min: 480, end_min: 720 },
+      { weekday: 3, start_min: 780, end_min: 1020 },
+    ]);
+    expect(rows).toHaveLength(2);
+    const mon = rows.find((r) => r.weekdays.length === 1 && r.weekdays[0] === 1);
+    expect(mon?.ranges).toHaveLength(2);
   });
 });

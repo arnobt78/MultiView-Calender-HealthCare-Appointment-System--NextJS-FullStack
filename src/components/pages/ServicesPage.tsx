@@ -142,7 +142,7 @@ function DoctorProfileCard({ doctor }: { doctor: DoctorCard }) {
           <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
             <CalendarClock className="h-3.5 w-3.5 shrink-0" /> Availability
           </p>
-          <DoctorAvailabilityGroups availabilities={doctor.availabilities} layout="by-weekday" />
+          <DoctorAvailabilityGroups availabilities={doctor.availabilities} layout="services-card" />
         </div>
 
         {/* `appointment_types` = bookable visit types (Initial Consultation, etc.), not specialty */}

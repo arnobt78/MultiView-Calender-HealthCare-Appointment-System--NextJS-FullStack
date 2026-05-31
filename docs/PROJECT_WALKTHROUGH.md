@@ -11,9 +11,9 @@
 - **CP SSR prefetch + notification SSE:** unchanged — `prefetchControlPanelSection`, `useNotificationStream`, `invalidateNotificationsAndCrossTab`.
 - **Doctor detail layout:** `/doctors/[id]` → `appPortalSectionRootClass`; `/control-panel/doctors/[id]` → `appSectionRootClass` + `force-dynamic`.
 - **CP list errors:** Doctor/Category/User mgmt → `AppSectionErrorBanner`.
-- **Services `/services` cards:** `DoctorAvailabilityGroups` `layout="by-weekday"` (grouped windows per day like doctor-portal Weekly Hours); availability icon/row gap aligned with patient/type meta row.
+- **Services `/services` cards:** `DoctorAvailabilityGroups` `layout="services-card"` — days with identical hours merge to one row (day badges + time); split hours on one weekday stay on one row as separate inline time chips.
 - **Skipped (intentional):** Form/dialog/card inner `space-y-2`; grid `gap-4/5/6`.
-- **Verify:** `npm test && npx tsc --noEmit && npm run lint && npm run build` — **501 tests**.
+- **Verify:** `npm test && npx tsc --noEmit && npm run lint && npm run build` — **503 tests**.
 
 ## Prior (2026-05-30 — app section layout)
 
