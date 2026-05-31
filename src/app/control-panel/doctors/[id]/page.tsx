@@ -1,5 +1,5 @@
 /**
- * Admin doctor detail — SSR seeds user; CP sidebar stays mounted.
+ * Admin doctor detail — SSR seeds user + assigned-patients query; CP sidebar stays mounted.
  */
 export const dynamic = "force-dynamic";
 
@@ -7,11 +7,13 @@ import { notFound, redirect } from "next/navigation";
 import { isAdminRole, isDoctorRole } from "@/lib/rbac";
 import { doctorDetailHref } from "@/lib/entity-routes";
 import { prisma } from "@/lib/prisma";
+import { USER_API_SELECT } from "@/lib/user-api-select";
 import { getSessionUser } from "@/lib/session";
 import { isValidUUID } from "@/lib/validation";
 import { getUserRole } from "@/lib/rbac";
 import { DoctorDetailScreen } from "@/components/control-panel/DoctorDetailScreen";
 import { serializeUser } from "@/lib/serializers";
+import { fetchDoctorAssignedPatients } from "@/lib/doctor-assigned-patients";
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -36,50 +38,13 @@ export default async function DoctorDetailPage({ params }: PageProps) {
 
   const raw = await prisma.user.findUnique({
     where: { id },
-    select: {
-      id: true,
-      email: true,
-      display_name: true,
-      role: true,
-      image: true,
-      specialty: true,
-      bio: true,
-      created_at: true,
-      phone: true,
-      license_number: true,
-      department: true,
-      consultation_fee: true,
-      office_location: true,
-      languages_spoken: true,
-      years_of_experience: true,
-      is_active: true,
-      active_since: true,
-      patients_primary_doctor: {
-        select: {
-          id: true,
-          firstname: true,
-          lastname: true,
-          email: true,
-          active: true,
-          birth_date: true,
-        },
-        orderBy: { firstname: "asc" },
-        take: 50,
-      },
-    },
+    select: USER_API_SELECT,
   });
 
   if (!raw) notFound();
 
   const initialUser = serializeUser(raw);
-  const initialAssignedPatients = raw.patients_primary_doctor.map((p) => ({
-    id: p.id,
-    firstname: p.firstname,
-    lastname: p.lastname,
-    email: p.email,
-    active: p.active,
-    birth_date: p.birth_date?.toISOString() ?? null,
-  }));
+  const initialAssignedPatients = await fetchDoctorAssignedPatients(id);
 
   return (
     <DoctorDetailScreen

@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * @deprecated Prefer `AdminUserFormDialog` on `/control-panel/users/[id]` or `DoctorFormDialog` on doctor detail.
+ * Kept for backwards compatibility — not wired on active routes.
+ */
+
 import { useState } from "react";
 import { useUser, UserUpdateInput } from "@/hooks/useUsers";
 import { Button } from "@/components/ui/button";

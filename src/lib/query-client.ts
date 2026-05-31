@@ -142,11 +142,27 @@ export async function invalidateEntityAffectingAppointments(
     invalidateInsightsAndAnalytics(queryClient),
     invalidateDoctorPortal(queryClient),
     invalidateAdminPortal(queryClient),
-    ...(resource === "patients" ? [invalidatePatientPortal(queryClient)] : []),
+    ...(resource === "patients"
+      ? [
+          invalidatePatientPortal(queryClient),
+          invalidateDoctorAssignedPatients(queryClient),
+          queryClient.invalidateQueries({ queryKey: queryKeys.doctors.all }),
+        ]
+      : []),
   ]);
   publishQueryCacheCrossTab(
     resource === "patients" ? CROSS_TAB_SCOPES.ENTITY_PATIENTS : CROSS_TAB_SCOPES.ENTITY_CATEGORIES
   );
+}
+
+/** Doctor detail primary-doctor roster — bust on patient CRUD / primary_doctor_id changes. */
+export async function invalidateDoctorAssignedPatients(queryClient: QueryClient) {
+  await queryClient.invalidateQueries({
+    predicate: (query) =>
+      query.queryKey[0] === "app" &&
+      query.queryKey[1] === "doctors" &&
+      query.queryKey[3] === "assigned-patients",
+  });
 }
 
 /** Invitations, dashboard access, assignees — shared calendar semantics */

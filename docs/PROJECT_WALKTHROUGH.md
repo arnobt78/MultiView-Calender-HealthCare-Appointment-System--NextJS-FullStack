@@ -2,13 +2,18 @@
 
 ## Latest Audit Update (2026-05-30)
 
-- **Doctor management (CP):** `/control-panel/doctor-management` — stats, `ClinicalListFilterToolbar`, emerald table; merge `useUsers(role=doctor)` + `useDoctorsDirectory()` for availability/visit types/patient count/revenue; View/Edit/Deactivate only; demo note via `DemoShowcaseFeatureNote`.
+- **Doctor assigned-patients live roster:** `GET /api/doctors/[id]/assigned-patients` + `queryKeys.doctors.assignedPatients(id)` + `useDoctorAssignedPatients`; SSR seed on CP doctor detail; `invalidateDoctorAssignedPatients` + `doctors.all` on patient CRUD (count + roster refresh without navigation).
+- **CP user detail parity:** `/control-panel/users/[id]` — doctors redirect to `/control-panel/doctors/[id]`; admin/staff use `AdminUserDetailScreen` + `AdminUserFormDialog`. Legacy `DoctorDetailForm` deprecated, unwired.
+- **Doctor management (CP):** stats, `ClinicalListFilterToolbar`, emerald table; merge `useUsers` + `useDoctorsDirectory()`; revenue via `paid_revenue_cents`; inactive UX on `/services`/booking.
+- **Verify:** `npm test` **520**, `tsc`, `lint`, `build` green.
+
+## Prior (2026-05-30 — doctor list UI)
+
 - **Doctor detail:** `/control-panel/doctors/[id]` → `DoctorDetailScreen` (schedule editors, assigned patients, deactivate); edit via `DoctorFormDialog`.
-- **`User.is_active`:** migration `008_user_doctor_active_status.sql`; booking API guards; inactive doctors listed on `/services` with badge, no book button; pickers partition inactive (read-only bottom).
-- **Shared filter toolbar:** `ClinicalListFilterToolbar` — CP patient/category/doctor + dashboard calendar filters; Reset right-aligned (`ml-auto`).
-- **Doctor revenue column:** `doctor-revenue-aggregate.ts` (paid invoices `groupBy`); on `DoctorDirectoryRow.paid_revenue_cents`; SSR `prefetchDoctors()`; invalidates via `invalidateInvoicesAndOverview` + `invalidateUsersAndAuth`.
-- **List API parity:** `USER_API_SELECT` — CP list Edit no longer wipes extended profile fields.
-- **Verify:** `npm test` **518**, `tsc`, `lint`, `build` green. DB: `npm run db:migrate` (008) + `npm run prisma:push`.
+- **`User.is_active`:** migration `008_user_doctor_active_status.sql`; booking API guards; inactive doctors on `/services` with badge, no book button.
+- **Shared filter toolbar:** `ClinicalListFilterToolbar` — Reset right-aligned (`ml-auto`).
+- **Doctor revenue column:** `doctor-revenue-aggregate.ts`; invalidates via `invalidateInvoicesAndOverview` + `invalidateUsersAndAuth`.
+- **List API parity:** `USER_API_SELECT`.
 
 ## Prior (2026-05-31)
 

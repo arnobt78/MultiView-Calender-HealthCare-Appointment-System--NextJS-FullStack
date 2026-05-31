@@ -97,6 +97,9 @@ export const queryKeys = {
     availability: (doctorId: string) => ["app", "doctors", doctorId, "availability"] as const,
     /** Time-off blocks for CRUD management on doctor detail page */
     timeOff: (doctorId: string) => ["app", "doctors", doctorId, "time-off"] as const,
+    /** Primary-doctor roster on CP doctor detail */
+    assignedPatients: (doctorId: string) =>
+      ["app", "doctors", doctorId, "assigned-patients"] as const,
   },
   /**
    * Appointment types: per-doctor lists (`GET /api/appointment-types?doctorId=`) + global card data.

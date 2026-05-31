@@ -61,15 +61,10 @@ import {
   EMPTY_DOCTOR_FORM,
 } from "@/lib/doctor-form-state";
 import { cn } from "@/lib/utils";
+import type { DoctorAssignedPatientRow } from "@/lib/doctor-assigned-patients";
+import { useDoctorAssignedPatients } from "@/hooks/useDoctorAssignedPatients";
 
-export type DoctorAssignedPatientRow = {
-  id: string;
-  firstname: string;
-  lastname: string;
-  email: string | null;
-  active: boolean;
-  birth_date?: string | null;
-};
+export type { DoctorAssignedPatientRow };
 
 type DoctorDetailScreenProps = {
   doctorId: string;
@@ -113,9 +108,19 @@ export function DoctorDetailScreen({
 
   useLayoutEffect(() => {
     queryClient.setQueryData(queryKeys.users.detail(doctorId), initialUser);
-  }, [queryClient, doctorId, initialUser]);
+    queryClient.setQueryData(
+      queryKeys.doctors.assignedPatients(doctorId),
+      initialAssignedPatients
+    );
+  }, [queryClient, doctorId, initialUser, initialAssignedPatients]);
 
   const { data: user, updateUser, isUpdating } = useUser(doctorId);
+  const {
+    data: assignedPatients = initialAssignedPatients,
+    isLoading: assignedPatientsLoading,
+  } = useDoctorAssignedPatients(doctorId, { initialData: initialAssignedPatients });
+  const assignedPatientsLoadingUi =
+    assignedPatientsLoading && assignedPatients.length === 0;
   const liveUser = user ?? initialUser;
   const displayName = liveUser.display_name?.trim() || liveUser.email;
   const active = isDoctorActive(liveUser);
@@ -276,13 +281,14 @@ export function DoctorDetailScreen({
               icon={Users}
               sectionIconCircleClass={doctorDetailSectionIconCircleClass}
               iconClassName="h-3.5 w-3.5 text-emerald-600"
-              count={initialAssignedPatients.length}
+              count={assignedPatients.length}
             >
               {patientsSectionTitle}
             </EntityDetailSnapshotSectionHeading>
             <ClinicalDataTable
               columns={patientColumns}
-              data={initialAssignedPatients}
+              data={assignedPatients}
+              isLoading={assignedPatientsLoadingUi}
               pagination={false}
               emptyMessage="No patients assigned as primary doctor."
               tableClassName="min-w-[520px] w-full"
