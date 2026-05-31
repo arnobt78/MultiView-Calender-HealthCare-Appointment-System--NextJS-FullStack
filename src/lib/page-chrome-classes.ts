@@ -3,7 +3,7 @@
  * `/insights`, and other top-of-page title rows. Keep padding/height in sync here.
  */
 
-/** Outer shell: border + vertical rhythm (`py-2` matches control-panel `PageHeader`). */
+/** Outer shell: border + vertical rhythm (`py-2` matches control-panel `PageHeader`). Clears navbar via `APP_MAIN_OFFSET_CLASS`. */
 export const pageChromeHeaderShellClass =
   "flex flex-col gap-2 border-b py-2 md:flex-row md:items-stretch md:justify-between";
 
@@ -38,6 +38,7 @@ export const portalPanelSectionHeadingClass =
 /**
  * Control-panel / entity detail `PageHeader` — whole row gets `py-2` + min height (matches portal icon tile).
  * Title stack uses `pageChromeTitleStackClass` (no `mt-*` between title and subtitle).
+ * Top `py-2` band clears fixed navbar via `APP_MAIN_OFFSET_CLASS` on `AuthShell` `<main>`.
  */
 export const pageHeaderRootClass =
   "flex min-h-[3.5rem] flex-col sm:flex-row sm:items-center justify-between gap-4 py-2 sticky top-0 z-20 backdrop-blur-sm";

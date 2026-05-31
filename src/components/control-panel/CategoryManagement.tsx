@@ -42,7 +42,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import { FilterSelect } from "@/components/shared/filters/FilterSelect";
-import { APP_NAVBAR_STICKY_OFFSET_CLASS } from "@/lib/portal-z-index";
+import { APP_INNER_SCROLL_STICKY_TOP_CLASS } from "@/lib/portal-z-index";
 import {
   CategoryListFiltersProvider,
   useCategoryListFilters,
@@ -399,7 +399,7 @@ export function CategoryManagementInner() {
         <div
           className={cn(
             categoryManagementFilterToolbarClass,
-            APP_NAVBAR_STICKY_OFFSET_CLASS
+            APP_INNER_SCROLL_STICKY_TOP_CLASS
           )}
         >
           <EntityListSearchInput

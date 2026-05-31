@@ -49,7 +49,7 @@ import { Input } from "@/components/ui/input";
 import type { PatientCreateInput } from "@/hooks/usePatients";
 import { format } from "date-fns";
 import { FilterSelect } from "@/components/shared/filters/FilterSelect";
-import { APP_NAVBAR_STICKY_OFFSET_CLASS } from "@/lib/portal-z-index";
+import { APP_INNER_SCROLL_STICKY_TOP_CLASS } from "@/lib/portal-z-index";
 import {
   PatientListFiltersProvider,
   usePatientListFilters,
@@ -618,7 +618,7 @@ export function PatientManagementInner({
         ) : null}
 
         {/* Sticky toolbar: transparent shell so stat card shadows are not clipped (see patient-management-toolbar-classes). */}
-        <div className={cn(patientManagementFilterToolbarClass, APP_NAVBAR_STICKY_OFFSET_CLASS)}>
+        <div className={cn(patientManagementFilterToolbarClass, APP_INNER_SCROLL_STICKY_TOP_CLASS)}>
           <EntityListSearchInput
             value={listSearch}
             onChange={setListSearch}

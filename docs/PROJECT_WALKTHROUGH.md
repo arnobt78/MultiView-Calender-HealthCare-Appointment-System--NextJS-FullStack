@@ -2,9 +2,8 @@
 
 ## Latest Audit Update (2026-05-31)
 
-- **Unified page header chrome:** `page-chrome-classes.ts` — `pageHeaderRootClass` (`py-2` + `min-h-[3.5rem]` whole row), `pageHeaderDescriptionClass` (no subtitle `mt-0.5`), `pageHeaderEntityDetailClass`. `PageHeader` + `PortalChromeHeader` share `pageChromeTitleStackClass`. CP tabs, entity detail, insights, services, portals aligned.
-- **Entity detail scroll + footer:** `appEntityDetailRootClass` = `appSectionRootClass`; single `cp-right-scroll` (no nested overflow — card glow unclipped). Actions via `entityDetailActionsRowClass` inline at page end (not sticky footer bar).
-- **Entity detail parity (patient + category):** CP `/control-panel/patients/[id]` + `/control-panel/categories/[id]` — `gap-2` schema rows. Related appointments: `ClinicalDataTable` + `buildRelatedAppointmentsColumns` + `hiddenColumns` (category detail hides Category col); sky titles, `PatientIdentityCell`, `DoctorIdentityCell`, `ClinicalAppointmentStatusBadge`.
+- **Navbar vs page header clearance:** `navbarContentShellClass` on navbar (horizontal only); `APP_MAIN_OFFSET_CLASS` on `AuthShell` `<main>` — header `py-2` no longer sits under fixed navbar. CP list filter sticky → `APP_INNER_SCROLL_STICKY_TOP_CLASS` (`top-0`).
+- **Unified page header chrome:** `pageHeaderRootClass` + `pageChromeTitleStackClass`; entity detail single `cp-right-scroll` + inline actions.
 - **Shared category detail:** `CategoryDetailScreenShared` — CP wrapper sky + CRUD (`ControlPanelCategoryDetailScreen`); portal `/categories/[id]` amber glass (`CategoryDetailScreen` read-only). Tokens: `category-detail-ui-classes.ts`, `amberGlassBackButtonClass`.
 - **Snapshot mapper:** `appointment-snapshot-row.ts` + `appointmentSnapshotInclude` — patient + category snapshot/API/prefetch share one projection (patient denormalized fields, doctor images).
 - **Category audit trail:** `migrations/007_category_audit_users.sql` — `categories.created_by` / `updated_by`; Prisma relations; POST/PUT set actor; GET + `prefetchCategory` include `categoryDetailInclude`; `EntityDetailRecordAuditCard` + role-aware `EntityDetailAuditStaffLink`.

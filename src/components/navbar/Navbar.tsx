@@ -98,9 +98,9 @@ import { useAppStore } from "@/store/useAppStore";
 import GlobalSearch from "@/components/shared/GlobalSearch";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
-import { dashboardShellClass } from "@/lib/dashboard-layout";
+import { navbarContentShellClass } from "@/lib/dashboard-layout";
 import { cn } from "@/lib/utils";
-import { Z_NAVBAR } from "@/lib/portal-z-index";
+import { APP_NAVBAR_INNER_ROW_CLASS, Z_NAVBAR } from "@/lib/portal-z-index";
 
 export default function Navbar() {
   const { logout, isLoggingOut } = useAuth();
@@ -138,8 +138,9 @@ export default function Navbar() {
       {/* supports-backdrop-filter:bg-white/80 */}
       <div
         className={cn(
-          dashboardShellClass,
-          "flex items-center justify-between py-2 "
+          navbarContentShellClass,
+          APP_NAVBAR_INNER_ROW_CLASS,
+          "flex items-center justify-between py-2"
         )}
       >
 
