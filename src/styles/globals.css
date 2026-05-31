@@ -77,6 +77,8 @@
   --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
   --sidebar-border: oklch(0.92 0.004 286.32);
   --sidebar-ring: oklch(0.705 0.015 286.067);
+  /* SSR fallback — overwritten in px by `useAppNavbarHeightSync` on `<html>`. */
+  --app-navbar-height: calc(3.5rem + 1px);
 }
 
 .dark {
@@ -111,6 +113,20 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.552 0.016 285.938);
+}
+
+/**
+ * Fixed navbar clearance — literal classes (Tailwind JIT skips TS-built arbitrary `pt-[var(...)]`).
+ * `--app-navbar-height` is measured by `useAppNavbarHeightSync` in `Navbar.tsx`.
+ */
+@layer components {
+  .app-main-offset {
+    padding-top: var(--app-navbar-height);
+  }
+
+  .app-navbar-sticky-top {
+    top: var(--app-navbar-height);
+  }
 }
 
 @layer base {

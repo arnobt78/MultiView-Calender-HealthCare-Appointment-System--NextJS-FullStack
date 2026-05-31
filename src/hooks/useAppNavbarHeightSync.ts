@@ -5,7 +5,7 @@ import { APP_NAVBAR_HEIGHT_CSS_VAR } from "@/lib/portal-z-index";
 
 /**
  * Publishes measured fixed navbar height to `--app-navbar-height` on `<html>`.
- * AuthShell `<main>` and document-scroll sticky rows consume the same token (role-aware link count).
+ * Consumed by `.app-main-offset` / `.app-navbar-sticky-top` in `globals.css` (not Tailwind arbitrary classes).
  */
 export function useAppNavbarHeightSync(navbarRef: RefObject<HTMLElement | null>) {
   useLayoutEffect(() => {
