@@ -61,6 +61,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MoreHorizontal, Plus, Users, Building2 } from "lucide-react";
 import { format } from "date-fns";
+import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
 
 const columnHelper = createColumnHelper<Organization>();
 
@@ -339,7 +340,7 @@ export default function OrganizationManagement() {
   }
 
   return (
-    <div className="space-y-2 pb-2">
+    <div className={controlPanelSectionRootClass}>
       {/* Chrome — heading, filter, and add button are always static */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>

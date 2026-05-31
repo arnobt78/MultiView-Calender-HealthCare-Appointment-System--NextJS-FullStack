@@ -35,6 +35,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { skyGlassTableFrameClass } from "@/lib/calendar-header-action-styles";
+import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
 import type { User } from "@/types/types";
 import {
   EllipsisVertical,
@@ -247,7 +248,7 @@ export default function UserManagement() {
 
   if (isError) {
     return (
-      <div className="space-y-4 text-gray-700">
+      <div className={controlPanelSectionRootClass}>
         <PageHeader title="User & Admin Management" description="All user accounts — admins, doctors, secretaries, patients." />
         <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center text-sm text-red-700">
           <UserX className="h-8 w-8 mx-auto mb-2 opacity-60" />
@@ -258,7 +259,7 @@ export default function UserManagement() {
   }
 
   return (
-    <div className="space-y-4 text-gray-700">
+    <div className={controlPanelSectionRootClass}>
       <PageHeader
         title="User & Admin Management"
         description="All user accounts — admins, doctors, secretaries, patients."

@@ -52,6 +52,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { format } from "date-fns";
+import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
 
 const columnHelper = createColumnHelper<Notification>();
 
@@ -159,7 +160,7 @@ export default function NotificationsManagement() {
 
   if (notificationsError) {
     return (
-      <div className="space-y-2 pb-2">
+      <div className={controlPanelSectionRootClass}>
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 flex items-center gap-2">
           <AlertCircle className="h-4 w-4 shrink-0" />
           Failed to load notifications. Please refresh.
@@ -169,7 +170,7 @@ export default function NotificationsManagement() {
   }
 
   return (
-    <div className="space-y-2 pb-2">
+    <div className={controlPanelSectionRootClass}>
       {/* Chrome — heading, filter, and mark-all-read always static */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>

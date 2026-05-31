@@ -20,6 +20,7 @@ import {
   skyGlassTableFrameClass,
   violetGlassImportButtonClass,
 } from "@/lib/calendar-header-action-styles";
+import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
 import { GlassResetFilterButton } from "@/components/shared/GlassResetFilterButton";
 import { EntityListSearchInput } from "@/components/shared/EntityListSearchInput";
 import {
@@ -556,7 +557,7 @@ export function PatientManagementInner({
 
   if (patientsError) {
     return (
-      <div className="space-y-2 text-gray-700">
+      <div className={controlPanelSectionRootClass}>
         {!isDoctorPortal ? (
           <PageHeader title="Patients" description="Manage patients." />
         ) : null}
@@ -571,8 +572,7 @@ export function PatientManagementInner({
   const listChrome = (
       <div
         className={cn(
-          "space-y-2 text-gray-700",
-          isDoctorPortal && "space-y-3",
+          controlPanelSectionRootClass,
           !isDoctorPortal && "overflow-visible"
         )}
       >

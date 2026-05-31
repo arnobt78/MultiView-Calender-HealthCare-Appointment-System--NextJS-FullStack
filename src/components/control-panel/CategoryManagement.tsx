@@ -13,6 +13,7 @@ import { EntityActiveStatusBadge } from "@/components/shared/entity-display/Enti
 import { Category } from "@/types/types";
 import { cn } from "@/lib/utils";
 import { violetGlassPrimaryButtonClass } from "@/lib/calendar-header-action-styles";
+import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
 import {
   amberGlassTableFrameClass,
   categoryManagementFilterToolbarClass,
@@ -351,7 +352,7 @@ export function CategoryManagementInner() {
 
   if (isError) {
     return (
-      <div className="space-y-4">
+      <div className={controlPanelSectionRootClass}>
         <PageHeader
           title="Category Management"
           description="Manage appointment categories with status, duration, and display order."
@@ -374,7 +375,7 @@ export function CategoryManagementInner() {
 
   return (
     <CategoryMetricsProvider value={metricsValue}>
-      <div className="space-y-2 text-gray-700">
+      <div className={controlPanelSectionRootClass}>
         <PageHeader
           title="Category Management"
           description="Manage appointment categories with status, duration, and display order."

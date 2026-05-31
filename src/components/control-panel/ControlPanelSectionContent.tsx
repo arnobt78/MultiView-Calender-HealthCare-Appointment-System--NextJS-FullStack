@@ -19,6 +19,8 @@ import DashboardOverviewComponent from "@/components/control-panel/DashboardOver
 import TelehealthDashboard from "@/components/pages/TelehealthDashboard";
 import PatientDetailView from "@/components/pages/PatientDetailView";
 import type { ControlPanelSidebarTabValue } from "@/lib/control-panel-nav-config";
+import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
+import { cn } from "@/lib/utils";
 
 /** Legacy inline patient detail when store pins a patient id (rare). */
 export function ControlPanelPatientsTab() {
@@ -27,7 +29,7 @@ export function ControlPanelPatientsTab() {
 
   if (activePatientId) {
     return (
-      <div className="space-y-2 animate-in fade-in h-[calc(100vh-140px)]">
+      <div className={cn(controlPanelSectionRootClass, "animate-in fade-in h-[calc(100vh-140px)]")}>
         <div className="flex items-center gap-2 border-b pb-4">
           <Button variant="ghost" size="sm" onClick={() => setActivePatient(null)}>
             ← Back to Patient List
@@ -52,17 +54,17 @@ export function ControlPanelSectionContent({ tab }: { tab: ControlPanelSidebarTa
       return <TelehealthDashboard />;
     case "appointment":
       return (
-        <>
+        <div className={controlPanelSectionRootClass}>
           <AppointmentAccessPermission />
           <InvitationList type="appointment" />
-        </>
+        </div>
       );
     case "dashboard":
       return (
-        <>
+        <div className={controlPanelSectionRootClass}>
           <UserAccessPermission />
           <InvitationList type="dashboard" />
-        </>
+        </div>
       );
     case "patients":
       return <ControlPanelPatientsTab />;
@@ -70,7 +72,7 @@ export function ControlPanelSectionContent({ tab }: { tab: ControlPanelSidebarTa
       return <CategoryManagement />;
     case "visit_types_global":
       return (
-        <div className="space-y-4">
+        <div className={controlPanelSectionRootClass}>
           <div>
             <h2 className="text-lg font-semibold text-gray-800">Global Visit Types</h2>
             <p className="text-sm text-muted-foreground">

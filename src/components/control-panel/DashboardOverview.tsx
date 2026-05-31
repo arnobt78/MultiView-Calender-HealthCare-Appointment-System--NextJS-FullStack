@@ -41,6 +41,7 @@ import {
   controlPanelGroupSurfaceClass,
   getControlPanelCardVariantClass,
 } from "@/lib/control-panel-glass-card";
+import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
 
 function StatCard({
   label,
@@ -112,7 +113,7 @@ export default function DashboardOverviewComponent() {
 
   if (isError) {
     return (
-      <div className="space-y-3 pb-2">
+      <div className={controlPanelSectionRootClass}>
         <PageHeader title="Dashboard Overview" description="Real-time system summary" />
         <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
           <AlertCircle className="h-4 w-4 shrink-0" />
@@ -123,7 +124,7 @@ export default function DashboardOverviewComponent() {
   }
 
   return (
-    <div className="space-y-3 pb-2">
+    <div className={controlPanelSectionRootClass}>
       <PageHeader
         title="Dashboard Overview"
         description={

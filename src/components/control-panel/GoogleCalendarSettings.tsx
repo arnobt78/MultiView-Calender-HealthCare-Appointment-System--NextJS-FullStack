@@ -34,6 +34,7 @@ import {
   ExternalLink,
   Calendar,
 } from "lucide-react";
+import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
 
 export default function GoogleCalendarSettings() {
   const {
@@ -66,7 +67,7 @@ export default function GoogleCalendarSettings() {
   }
 
   return (
-    <div className="space-y-6 max-w-2xl pb-2">
+    <div className={controlPanelSectionRootClass}>
       {/* Heading stays static */}
       <div>
         <h2 className="text-xl font-bold flex items-center gap-2">

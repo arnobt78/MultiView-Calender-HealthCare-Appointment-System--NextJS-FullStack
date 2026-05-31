@@ -76,7 +76,7 @@ export default function InvitationList({ type }: { type: "appointment" | "dashbo
   }
 
   return (
-    <div className="mt-6">
+    <div>
       {/* Section heading always stays static */}
       <h3 className="font-semibold mb-2">
         Your {type === "appointment" ? "Appointment" : "Dashboard"} Invitations

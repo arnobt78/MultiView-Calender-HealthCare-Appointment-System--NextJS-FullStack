@@ -60,6 +60,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MoreHorizontal, Plus, Receipt, CreditCard } from "lucide-react";
 import { format } from "date-fns";
+import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
 
 const columnHelper = createColumnHelper<Invoice>();
 
@@ -311,7 +312,7 @@ export default function InvoiceManagement() {
   }
 
   return (
-    <div className="space-y-2 pb-2">
+    <div className={controlPanelSectionRootClass}>
       {/* Summary cards — shells always visible; value slots pulse while loading */}
       <div className="grid gap-4 sm:grid-cols-2">
         <Card className="rounded-[28px] border bg-gradient-to-br from-green-500/10 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(34,197,94,0.12)]">

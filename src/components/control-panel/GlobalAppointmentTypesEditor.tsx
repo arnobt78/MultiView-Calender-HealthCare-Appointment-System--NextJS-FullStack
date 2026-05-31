@@ -83,7 +83,7 @@ export function GlobalAppointmentTypesEditor() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <p className="text-xs text-muted-foreground leading-relaxed">
         {APPOINTMENT_TYPE_COPY.globalSectionBlurb}
       </p>

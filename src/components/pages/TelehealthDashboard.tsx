@@ -19,6 +19,7 @@ import { format, isToday, isPast, isFuture } from "date-fns";
 import { useAppStore } from "@/store/useAppStore";
 import { useState, useMemo, useEffect } from "react";
 import { PageHeader } from "@/components/shared/PageHeader";
+import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
 
 export default function TelehealthDashboard() {
   const { appointments, isLoading, isError: appointmentsError } = useAppointments();
@@ -53,7 +54,7 @@ export default function TelehealthDashboard() {
     .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())[0];
 
   return (
-    <div className="space-y-2">
+    <div className={controlPanelSectionRootClass}>
       {appointmentsError && (
         <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 flex items-center gap-2">
           <span className="shrink-0">⚠</span>
@@ -73,7 +74,7 @@ export default function TelehealthDashboard() {
         }
       />
 
-      <div className="grid grid-cols-1 gap-6 pt-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
 
         {/* Up Next — heading always static; card body pulses while loading */}
         <div className="lg:col-span-1 border-b pb-6 lg:border-b-0 lg:border-r lg:pr-6 lg:pb-0">

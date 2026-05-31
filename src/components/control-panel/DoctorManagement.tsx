@@ -35,6 +35,7 @@ import {
   skyGlassTableFrameClass,
   emeraldGlassPrimaryButtonClass,
 } from "@/lib/calendar-header-action-styles";
+import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
 import type { User } from "@/types/types";
 import { useUsers } from "@/hooks/useUsers";
 import { CP_DOCTOR_USERS_FILTERS } from "@/lib/control-panel-users-filters";
@@ -294,7 +295,7 @@ export default function DoctorManagement() {
 
   if (isError) {
     return (
-      <div className="space-y-4 text-gray-700">
+      <div className={controlPanelSectionRootClass}>
         <PageHeader title="Doctor Management" description="Manage doctor profiles, specialties, and availability." />
         <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center text-sm text-red-700">
           <AlertCircle className="h-8 w-8 mx-auto mb-2 opacity-60" />
@@ -305,7 +306,7 @@ export default function DoctorManagement() {
   }
 
   return (
-    <div className="space-y-4 text-gray-700">
+    <div className={controlPanelSectionRootClass}>
       <PageHeader
         title="Doctor Management"
         description="Manage doctor profiles, specialties, and availability."

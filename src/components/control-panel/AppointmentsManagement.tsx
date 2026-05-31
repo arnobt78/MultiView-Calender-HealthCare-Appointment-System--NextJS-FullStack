@@ -64,6 +64,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
+import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
 
 const columnHelper = createColumnHelper<FullAppointment>();
 
@@ -274,7 +275,7 @@ export default function AppointmentsManagement() {
   }
 
   return (
-    <div className="space-y-2 pb-2">
+    <div className={controlPanelSectionRootClass}>
       {/* Stats row — card shells always visible; value slots pulse while loading */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {(
