@@ -28,10 +28,17 @@ type Props = {
   value: string;
   onChange: (appointmentId: string) => void;
   disabled?: boolean;
+  /** Patient portal lists invoices only when `appointment_id` is set on the row. */
+  required?: boolean;
 };
 
 /** Searchable appointment select for invoice create (admin global / doctor scoped API). */
-export function InvoiceAppointmentPickerField({ value, onChange, disabled }: Props) {
+export function InvoiceAppointmentPickerField({
+  value,
+  onChange,
+  disabled,
+  required = false,
+}: Props) {
   const [search, setSearch] = useState("");
 
   const { data, isLoading } = useQuery({
@@ -51,7 +58,9 @@ export function InvoiceAppointmentPickerField({ value, onChange, disabled }: Pro
 
   return (
     <div className="space-y-1.5">
-      <Label>Link appointment (optional)</Label>
+      <Label>
+        Link appointment{required ? " *" : " (optional)"}
+      </Label>
       <Input
         placeholder="Search by title…"
         value={search}
@@ -60,17 +69,24 @@ export function InvoiceAppointmentPickerField({ value, onChange, disabled }: Pro
         className="mb-1"
       />
       <Select
-        value={value || "__none__"}
+        value={value || (required ? undefined : "__none__")}
         onValueChange={(v) => onChange(v === "__none__" ? "" : v)}
         disabled={disabled || isLoading}
+        required={required}
       >
         <SelectTrigger>
           <SelectValue
-            placeholder={isLoading ? "Loading visits…" : "Select a visit"}
+            placeholder={
+              isLoading
+                ? "Loading visits…"
+                : required
+                  ? "Select a visit (required)"
+                  : "Select a visit"
+            }
           />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="__none__">No appointment</SelectItem>
+          {!required && <SelectItem value="__none__">No appointment</SelectItem>}
           {options.map((opt) => (
             <SelectItem key={opt.id} value={opt.id}>
               {opt.title} — {opt.patient_label} (

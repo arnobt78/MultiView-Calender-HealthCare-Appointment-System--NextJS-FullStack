@@ -2,7 +2,9 @@
  * Normalizes GET /api/invoices/[id] JSON into InvoiceRow for TanStack cache + hooks.
  */
 
+import type { QueryClient } from "@tanstack/react-query";
 import type { InvoiceRow, InvoicePaymentRow } from "@/lib/billing-types";
+import { queryKeys } from "@/lib/query-keys";
 
 type ApiPayment = {
   id: string;
@@ -44,6 +46,23 @@ function mapPayment(p: ApiPayment): InvoicePaymentRow {
         : p.created_at.toISOString(),
     stripe_payment_id: p.stripe_payment_id ?? undefined,
   };
+}
+
+/** Immediate list update after POST/PATCH — avoids waiting on GET /api/payments refetch. */
+export function mergeInvoiceIntoListCache(
+  queryClient: QueryClient,
+  invoice: InvoiceRow
+): void {
+  queryClient.setQueryData<InvoiceRow[]>(queryKeys.invoices.all, (old) => {
+    const list = old ?? [];
+    const idx = list.findIndex((row) => row.id === invoice.id);
+    if (idx >= 0) {
+      const next = [...list];
+      next[idx] = invoice;
+      return next;
+    }
+    return [invoice, ...list];
+  });
 }
 
 export function mapApiInvoiceToRow(raw: ApiInvoice): InvoiceRow {

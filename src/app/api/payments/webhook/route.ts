@@ -11,6 +11,7 @@ import {
 } from "@/lib/billing-notify";
 import { resolvePatientIdForInvoice } from "@/lib/invoice-access";
 import { isStripePaymentAlreadyRecorded } from "@/lib/payments-webhook-idempotency";
+import { isHandledStripeWebhookEventType } from "@/lib/stripe-webhook-events";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +37,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid event shape" }, { status: 400 });
   }
   const stripeEvent = event as { type: string; data: { object: Record<string, unknown> } };
+
+  // Stripe CLI forwards every event — skip DB/SSE for types we do not handle.
+  if (!isHandledStripeWebhookEventType(stripeEvent.type)) {
+    return NextResponse.json({ received: true, ignored: true });
+  }
 
   try {
     switch (stripeEvent.type) {

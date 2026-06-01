@@ -92,6 +92,16 @@ export const CROSS_TAB_SCOPES = {
 
   INVOICES: ["invoices", "dashboard", "insights", "analytics", "patients"] as const satisfies readonly QueryCacheCrossTabScope[],
 
+  /** Draft/create/update — skips insights + doctors.all refetch (paid/refund still uses INVOICES). */
+  INVOICES_BILLING: [
+    "invoices",
+    "dashboard",
+    "patientPortal",
+    "doctorPortal",
+    "adminPortal",
+    "patients",
+  ] as const satisfies readonly QueryCacheCrossTabScope[],
+
   APPOINTMENT_TYPE_DERIVED: [
     "appointmentTypes",
     "availability",

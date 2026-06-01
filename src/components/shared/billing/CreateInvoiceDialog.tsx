@@ -20,7 +20,7 @@ type CreateBody = {
   amount: number;
   description?: string;
   due_date?: string;
-  appointment_id?: string;
+  appointment_id: string;
 };
 
 type Props = {
@@ -46,11 +46,14 @@ export function CreateInvoiceDialog({
     e.preventDefault();
     const parsed = parseFloat(amount);
     if (!parsed || parsed <= 0) return;
+    const linkedAppt = (apptId.trim() || appointmentId || "").trim();
+    if (!linkedAppt) return;
+
     onCreate({
       amount: parsed,
       description: description || undefined,
       due_date: dueDate || undefined,
-      appointment_id: apptId.trim() || appointmentId || undefined,
+      appointment_id: linkedAppt,
     });
     setAmount("");
     setDescription("");
@@ -71,8 +74,8 @@ export function CreateInvoiceDialog({
           <DialogTitle>Create Invoice</DialogTitle>
           <DialogDescription>
             {variant === "admin"
-              ? "Draft invoice — optionally link a recent visit."
-              : "Draft invoice for one of your visits."}
+              ? "Link a visit so the patient sees this invoice on their portal."
+              : "Draft invoice for one of your visits (visit link required)."}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-2 pt-2">
@@ -93,6 +96,7 @@ export function CreateInvoiceDialog({
             <InvoiceAppointmentPickerField
               value={apptId}
               onChange={setApptId}
+              required
             />
           )}
           <div className="space-y-1.5">

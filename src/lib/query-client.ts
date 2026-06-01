@@ -196,6 +196,36 @@ export async function invalidateOrganizations(queryClient: QueryClient) {
 }
 
 /**
+ * Lighter bust after draft create / metadata PATCH — skips insights + doctors directory.
+ * Prefer `mergeInvoiceIntoListCache` in the mutation `onSuccess` before calling this.
+ */
+export async function invalidateInvoicesBilling(
+  queryClient: QueryClient,
+  opts?: { patientId?: string | null; invoiceId?: string | null }
+) {
+  const patientId = opts?.patientId;
+  const invoiceId = opts?.invoiceId;
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: queryKeys.invoices.all }),
+    ...(invoiceId
+      ? [
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.invoices.detail(invoiceId),
+          }),
+        ]
+      : []),
+    invalidateDashboardOverview(queryClient),
+    invalidatePatientPortal(queryClient),
+    invalidateDoctorPortal(queryClient),
+    invalidateAdminPortal(queryClient),
+    patientId
+      ? invalidatePatientDetailAndSnapshot(queryClient, patientId)
+      : [],
+  ]);
+  publishQueryCacheCrossTab(CROSS_TAB_SCOPES.INVOICES_BILLING);
+}
+
+/**
  * Invoices + dashboard KPIs + patient UI tied to billing/appointments.
  * When `patientId` is known, only that patient’s detail/snapshot refetch (fewer calls than `patients.all`).
  */

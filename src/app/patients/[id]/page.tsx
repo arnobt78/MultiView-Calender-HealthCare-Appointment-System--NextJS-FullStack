@@ -6,7 +6,8 @@ export const dynamic = "force-dynamic";
 
 import { notFound, redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/session";
-import { getUserRole, isAdminRole } from "@/lib/rbac";
+import { getUserRole, isAdminRole, isDoctorRole } from "@/lib/rbac";
+import { canClientFetchAdminUsersList } from "@/lib/user-list-access";
 import { isValidUUID } from "@/lib/validation";
 import { resolvePatientAccess } from "@/lib/patient-access";
 import { patientDetailHref } from "@/lib/entity-routes";
@@ -46,13 +47,16 @@ export default async function PortalPatientDetailPage({ params, searchParams }: 
   );
   if (accessLevel === "none") notFound();
 
+  const staffRoster = isDoctorRole(role) || isAdminRole(role);
   const [initialPatient, initialSnapshot, initialDoctors, initialDoctorUsers, initialAdminUsers] =
     await Promise.all([
       prefetchPatient(id),
       prefetchPatientSnapshot(id),
       prefetchDoctors(),
       prefetchUsersList({ role: "doctor", limit: 200 }),
-      prefetchUsersList({ role: "admin", limit: 50 }),
+      staffRoster && canClientFetchAdminUsersList(role)
+        ? prefetchUsersList({ role: "admin", limit: 50 })
+        : Promise.resolve(null),
     ]);
 
   if (!initialPatient) notFound();

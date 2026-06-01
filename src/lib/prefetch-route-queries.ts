@@ -105,7 +105,7 @@ export function prefetchQueriesForControlPanelHref(
             queryKey: queryKeys.categories.snapshot(id),
             queryFn: () => apiClient<CategorySnapshot>(`/api/categories/${id}/snapshot`),
           }),
-          prefetchCategoryDetailStaffUsers(queryClient),
+          prefetchCategoryDetailStaffUsers(queryClient, resolvedViewer?.role),
         ]);
         return;
       }

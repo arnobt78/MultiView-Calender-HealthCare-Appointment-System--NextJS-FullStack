@@ -17,7 +17,10 @@ import {
 } from "@/lib/invoice-access";
 import { invoiceCreateSchema } from "@/lib/schemas/invoice";
 import { zodBadRequest } from "@/lib/schemas/parse";
-import { invalidateBillingRedisCaches } from "@/lib/billing-cache";
+import {
+  invalidateBillingRedisCaches,
+  resolvePatientPortalUserIdForAppointment,
+} from "@/lib/billing-cache";
 import { resolveInvoiceOrganizationId } from "@/lib/invoice-organization-resolve";
 
 export const dynamic = "force-dynamic";
@@ -71,10 +74,12 @@ export async function POST(req: NextRequest) {
     const { amount, currency, description, appointment_id, due_date, organization_id } =
       parsed.data;
 
-    const canCreate = await canCreateInvoiceForAppointment(
-      session,
-      appointment_id ?? null
-    );
+    const [canCreate, billingUserId, patientPortalUserId] = await Promise.all([
+      canCreateInvoiceForAppointment(session, appointment_id),
+      resolveInvoiceBillingUserId(appointment_id, sessionUser.userId),
+      resolvePatientPortalUserIdForAppointment(appointment_id),
+    ]);
+
     if (!canCreate) {
       return NextResponse.json(
         { error: "Appointment not found or forbidden" },
@@ -82,15 +87,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const billingUserId = await resolveInvoiceBillingUserId(
-      appointment_id ?? null,
-      sessionUser.userId
-    );
-
     const orgResolved = await resolveInvoiceOrganizationId({
       sessionUserId: sessionUser.userId,
       role,
-      appointmentId: appointment_id ?? null,
+      appointmentId: appointment_id,
       billingUserId,
       explicitOrganizationId: organization_id ?? null,
     });
@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
         amount: Math.round(amount * 100),
         currency,
         description: description ?? null,
-        appointment_id: appointment_id ?? null,
+        appointment_id,
         organization_id: orgResolved.organizationId,
         due_date: due_date ? new Date(due_date) : null,
         status: "draft",
@@ -117,7 +117,8 @@ export async function POST(req: NextRequest) {
 
     await invalidateBillingRedisCaches({
       invoiceUserId: billingUserId,
-      appointmentId: appointment_id ?? null,
+      appointmentId: appointment_id,
+      patientPortalUserId,
     });
 
     return NextResponse.json({ invoice }, { status: 201 });

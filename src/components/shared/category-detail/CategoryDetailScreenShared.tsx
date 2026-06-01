@@ -59,6 +59,8 @@ import {
 } from "@/lib/category-form-state";
 import type { CategoryCreateInput } from "@/hooks/useCategories";
 import { isCategoryActive } from "@/lib/entity-active-status";
+import { isAdminRole, isDoctorRole } from "@/lib/rbac";
+import { canClientFetchAdminUsersList } from "@/lib/user-list-access";
 import { cn } from "@/lib/utils";
 import {
   resolveEntityDetailRootClass,
@@ -202,8 +204,12 @@ export function CategoryDetailScreenShared({
     }
   }, [queryClient, initialDoctorUsers, initialAdminUsers]);
 
+  const staffViewer = isAdminRole(viewerRole) || isDoctorRole(viewerRole);
   const { data: doctorUsers } = useUsers(CATEGORY_DETAIL_DOCTOR_USERS_FILTERS);
-  const { data: adminUsers } = useUsers(CATEGORY_DETAIL_ADMIN_USERS_FILTERS);
+  const { data: adminUsers } = useUsers(CATEGORY_DETAIL_ADMIN_USERS_FILTERS, {
+    enabled: canClientFetchAdminUsersList(viewerRole),
+    initialData: staffViewer ? initialAdminUsers ?? undefined : undefined,
+  });
 
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {

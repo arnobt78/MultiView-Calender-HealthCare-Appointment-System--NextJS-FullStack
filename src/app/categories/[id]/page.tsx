@@ -7,6 +7,7 @@ import { notFound, redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/session";
 import { isValidUUID } from "@/lib/validation";
 import { getUserRole, isAdminRole, isDoctorRole, isPatientRole } from "@/lib/rbac";
+import { canClientFetchAdminUsersList } from "@/lib/user-list-access";
 import { categoryDetailHref } from "@/lib/entity-routes";
 import { loadCategoryDetailData } from "@/lib/category-detail-data";
 import { CategoryDetailScreen } from "@/components/detail/CategoryDetailScreen";
@@ -31,7 +32,9 @@ export default async function PortalCategoryDetailPage({ params }: PageProps) {
       prefetchCategory(id),
       prefetchCategorySnapshot(id),
       prefetchUsersList({ role: "doctor", limit: 200 }),
-      prefetchUsersList({ role: "admin", limit: 50 }),
+      canClientFetchAdminUsersList(role)
+        ? prefetchUsersList({ role: "admin", limit: 50 })
+        : Promise.resolve(null),
     ]);
   if (!data) notFound();
 

@@ -5,7 +5,9 @@ import {
   getPatientIdFromAppointmentCache,
   getPatientIdFromInvoiceCache,
   invalidateInvoicesAndOverview,
+  invalidateInvoicesBilling,
 } from "@/lib/query-client";
+import { mapApiInvoiceToRow, mergeInvoiceIntoListCache } from "@/lib/billing-invoice-map";
 import { notify } from "@/lib/notify";
 import {
   formatInvoiceMoney,
@@ -18,17 +20,27 @@ export type Invoice = InvoiceRow;
 
 async function invalidateAfterInvoiceWrite(
   queryClient: ReturnType<typeof useQueryClient>,
-  opts?: { invoiceId?: string; appointmentId?: string | null }
+  opts?: {
+    invoiceId?: string;
+    appointmentId?: string | null;
+    /** Full bust (pay/refund/delete) vs lighter draft create/PATCH */
+    scope?: "billing" | "full";
+  }
 ) {
   const patientId = opts?.appointmentId
     ? getPatientIdFromAppointmentCache(queryClient, opts.appointmentId)
     : opts?.invoiceId
       ? getPatientIdFromInvoiceCache(queryClient, opts.invoiceId)
       : undefined;
-  await invalidateInvoicesAndOverview(queryClient, {
+  const invalidationOpts = {
     patientId: patientId ?? undefined,
     invoiceId: opts?.invoiceId ?? undefined,
-  });
+  };
+  if (opts?.scope === "billing") {
+    await invalidateInvoicesBilling(queryClient, invalidationOpts);
+    return;
+  }
+  await invalidateInvoicesAndOverview(queryClient, invalidationOpts);
 }
 
 export function usePayments() {
@@ -65,7 +77,7 @@ export function usePayments() {
       amount: number;
       currency?: string;
       description?: string;
-      appointment_id?: string;
+      appointment_id: string;
       due_date?: string;
       organization_id?: string;
     }) =>
@@ -84,9 +96,11 @@ export function usePayments() {
         unit: variables.amount != null ? "eur" : "cents",
       });
       notify.crud(invoiceCrudMessage("created", { label, amountFormatted }));
+      mergeInvoiceIntoListCache(queryClient, mapApiInvoiceToRow(data.invoice));
       await invalidateAfterInvoiceWrite(queryClient, {
         invoiceId: data.invoice.id,
         appointmentId: data.invoice.appointment_id ?? variables.appointment_id,
+        scope: "billing",
       });
     },
     onError: (error) => handleApiError(error, "Failed to create invoice"),
@@ -110,9 +124,11 @@ export function usePayments() {
           label: data.invoice.description?.trim() || "Invoice",
         })
       );
+      mergeInvoiceIntoListCache(queryClient, mapApiInvoiceToRow(data.invoice));
       await invalidateAfterInvoiceWrite(queryClient, {
         invoiceId: data.invoice.id,
         appointmentId: data.invoice.appointment_id,
+        scope: data.invoice.status === "paid" ? "full" : "billing",
       });
     },
     onError: (error) => handleApiError(error, "Failed to update invoice"),

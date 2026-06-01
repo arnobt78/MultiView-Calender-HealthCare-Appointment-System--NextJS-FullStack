@@ -1,5 +1,6 @@
 /**
  * Role-aware invoice listing — aligns patient portal with patient snapshot invoices.
+ * Patient rows: `appointment_id` ∈ that chart's visits (no `patient_id` on Invoice).
  * Staff/admin CP tabs use the same rules as GET /api/invoices and GET /api/payments.
  */
 
