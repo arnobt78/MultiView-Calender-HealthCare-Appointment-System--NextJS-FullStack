@@ -12,7 +12,8 @@
 - **Org panel:** `010_backfill_invoice_org_and_billing.sql` tags invoices when billing doctor has one org; demo seed adds all doctors to HealthCal Demo Clinic; org tab SSR-seeds first org billing list.
 - **One bill per visit / picker / Refunded badge:** `billing-appointment-eligibility.ts`, POST **409**, `009` migration, shared picker + SSR seed (unchanged contract).
 - **Payments:** `011_payment_stripe_id_unique.sql`; payment history UI dedupes duplicate Stripe IDs.
-- **Tests:** Vitest **569** (95 files). **DB:** `npm run db:migrate` (silent OK) runs `009`–`011`.
+- **Tests:** Vitest **577** (97 files). **DB:** `npm run db:migrate` (silent OK) runs `009`–`011`.
+- **Known follow-ups (not blocking demo):** `calendar/export`, `calendar/sync`, `appointments/search` still filter `owner_id` only; assignee-only visibility unchanged (assignee batch); `GET /api/appointments?ids=` batch does not OR `treating_physician_id` (main list already includes treating). Fix export/search only if QA needs treating-only visits there.
 
 ## Prior (2026-05-31)
 
