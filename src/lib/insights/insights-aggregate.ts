@@ -4,6 +4,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import { buildDoctorScopedInvoiceWhere } from "@/lib/invoices-revenue-scope";
 import type { InsightsDataOptions } from "@/lib/insights/insights-scope";
 import type { InsightsPeriod } from "@/lib/insights/insights-period";
 import {
@@ -21,21 +22,59 @@ import type { InsightsTrendPoint } from "@/lib/insights/insights-types";
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
+/**
+ * Appointment scope for /insights — personal matches doctor portal (owner OR treating).
+ * Org-wide = all visits (admin / doctor org toggle).
+ */
 export function appointmentOwnerWhere(opts: InsightsDataOptions): Prisma.AppointmentWhereInput {
-  return opts.organizationWide ? {} : { owner_id: opts.filterOwnerId };
+  if (opts.organizationWide) return {};
+  const id = opts.filterOwnerId;
+  return {
+    OR: [{ owner_id: id }, { treating_physician_id: id }],
+  };
 }
 
+/** @deprecated Use buildInsightsScopeBases — personal invoice scope is async (visit-linked OR). */
 export function invoiceOwnerWhere(opts: InsightsDataOptions): Prisma.InvoiceWhereInput {
-  return opts.organizationWide ? {} : { user_id: opts.filterOwnerId };
+  if (opts.organizationWide) return {};
+  return { user_id: opts.filterOwnerId };
 }
 
-/** Personal scope → DB `user_id`; org-wide → no owner filter (matches appointmentOwnerWhere). */
+/** Prisma + raw-SQL bases for getInsightsData — invoice side aligned with fetchInvoicesForViewer. */
+export async function buildInsightsScopeBases(
+  opts: InsightsDataOptions
+): Promise<{
+  apptBase: Prisma.AppointmentWhereInput;
+  invoiceBase: Prisma.InvoiceWhereInput;
+}> {
+  const apptBase = appointmentOwnerWhere(opts);
+  const invoiceBase = opts.organizationWide
+    ? {}
+    : await buildDoctorScopedInvoiceWhere(opts.filterOwnerId);
+  return { apptBase, invoiceBase };
+}
+
+/** Personal scope doctor id for raw SQL (DB `appointments.user_id` = Prisma `owner_id`). */
 export function resolveAppointmentOwnerUserId(
   base: Prisma.AppointmentWhereInput
 ): string | null {
-  const owner = base.owner_id;
-  if (typeof owner === "string") return owner;
+  if (typeof base.owner_id === "string") return base.owner_id;
+  if (Array.isArray(base.OR)) {
+    for (const clause of base.OR) {
+      if (!clause || typeof clause !== "object") continue;
+      if (typeof clause.owner_id === "string") return clause.owner_id;
+      if (typeof clause.treating_physician_id === "string") {
+        return clause.treating_physician_id;
+      }
+    }
+  }
   return null;
+}
+
+function isInsightsScopeUnrestricted(
+  where: Prisma.AppointmentWhereInput | Prisma.InvoiceWhereInput
+): boolean {
+  return Object.keys(where).length === 0;
 }
 
 function startOfDay(d: Date): Date {
@@ -378,20 +417,17 @@ export async function fetchRevenueTrendByPeriod(
     return [{ label: String(now.getFullYear()), count: allTimePaid }];
   }
 
-  const ownerUserId =
-    typeof invoiceBase.user_id === "string" ? (invoiceBase.user_id as string) : null;
-  const sqlRows: { bucket_start: Date; amount: bigint }[] = ownerUserId
-    ? await prisma.$queryRaw`
-        SELECT date_trunc('month', paid_at) AS bucket_start, COALESCE(SUM(amount), 0)::bigint AS amount
-        FROM invoices
-        WHERE user_id = ${ownerUserId}::uuid
-          AND status = 'paid'
-          AND paid_at IS NOT NULL
-        GROUP BY 1
-        ORDER BY 1 ASC
-        LIMIT ${ALL_TIME_MONTH_BUCKET_CAP}
-      `
-    : await prisma.$queryRaw`
+  if (!isInsightsScopeUnrestricted(invoiceBase)) {
+    const allTimePaid = await sumPaidInvoiceAmount(
+      invoiceBase,
+      new Date(0),
+      new Date(8640000000000000)
+    );
+    return [{ label: String(now.getFullYear()), count: allTimePaid }];
+  }
+
+  const sqlRows: { bucket_start: Date; amount: bigint }[] =
+    await prisma.$queryRaw`
         SELECT date_trunc('month', paid_at) AS bucket_start, COALESCE(SUM(amount), 0)::bigint AS amount
         FROM invoices
         WHERE status = 'paid'
@@ -601,7 +637,7 @@ export async function fetchBusiestDayOfWeekCounts(
     ? await prisma.$queryRaw<WeekdaySqlRow[]>`
         SELECT EXTRACT(DOW FROM "start")::int AS dow, COUNT(*)::bigint AS count
         FROM appointments
-        WHERE user_id = ${ownerUserId}::uuid
+        WHERE (user_id = ${ownerUserId}::uuid OR treating_physician_id = ${ownerUserId}::uuid)
           AND "start" >= ${rangeStart}
           AND "start" <= ${rangeEnd}
         GROUP BY 1
@@ -645,7 +681,7 @@ async function fetchBusiestDayOfWeekAllTime(
     ? await prisma.$queryRaw<WeekdaySqlRow[]>`
         SELECT EXTRACT(DOW FROM "start")::int AS dow, COUNT(*)::bigint AS count
         FROM appointments
-        WHERE user_id = ${ownerUserId}::uuid
+        WHERE (user_id = ${ownerUserId}::uuid OR treating_physician_id = ${ownerUserId}::uuid)
         GROUP BY 1
       `
     : await prisma.$queryRaw<WeekdaySqlRow[]>`
@@ -1024,7 +1060,7 @@ async function resolveAllTimeUsesMonthlyBuckets(
     ? await prisma.$queryRaw<{ min_start: Date | null; max_start: Date | null }[]>`
         SELECT MIN("start") AS min_start, MAX("start") AS max_start
         FROM appointments
-        WHERE user_id = ${ownerUserId}::uuid
+        WHERE (user_id = ${ownerUserId}::uuid OR treating_physician_id = ${ownerUserId}::uuid)
       `
     : await prisma.$queryRaw<{ min_start: Date | null; max_start: Date | null }[]>`
         SELECT MIN("start") AS min_start, MAX("start") AS max_start
@@ -1048,7 +1084,7 @@ export async function fetchTrendCountsAllTime(
       ? await prisma.$queryRaw<AllTimeBucketSqlRow[]>`
           SELECT date_trunc('month', "start") AS bucket_start, COUNT(*)::bigint AS count
           FROM appointments
-          WHERE user_id = ${ownerUserId}::uuid
+          WHERE (user_id = ${ownerUserId}::uuid OR treating_physician_id = ${ownerUserId}::uuid)
           GROUP BY 1
           ORDER BY 1 ASC
           LIMIT ${ALL_TIME_MONTH_BUCKET_CAP}
@@ -1073,7 +1109,7 @@ export async function fetchTrendCountsAllTime(
     ? await prisma.$queryRaw<AllTimeBucketSqlRow[]>`
         SELECT date_trunc('year', "start") AS bucket_start, COUNT(*)::bigint AS count
         FROM appointments
-        WHERE user_id = ${ownerUserId}::uuid
+        WHERE (user_id = ${ownerUserId}::uuid OR treating_physician_id = ${ownerUserId}::uuid)
         GROUP BY 1
         ORDER BY 1 ASC
         LIMIT ${ALL_TIME_YEAR_BUCKET_CAP}
@@ -1110,7 +1146,7 @@ export async function fetchStatusOverTimeAllTime(
               COUNT(*) FILTER (WHERE status = 'pending' OR status IS NULL)::bigint AS pending,
               COUNT(*) FILTER (WHERE status = 'alert')::bigint AS alert
             FROM appointments
-            WHERE user_id = ${ownerUserId}::uuid
+            WHERE (user_id = ${ownerUserId}::uuid OR treating_physician_id = ${ownerUserId}::uuid)
             GROUP BY 1
             ORDER BY 1 ASC
             LIMIT ${ALL_TIME_MONTH_BUCKET_CAP}
@@ -1144,7 +1180,7 @@ export async function fetchStatusOverTimeAllTime(
             COUNT(*) FILTER (WHERE status = 'pending' OR status IS NULL)::bigint AS pending,
             COUNT(*) FILTER (WHERE status = 'alert')::bigint AS alert
           FROM appointments
-          WHERE user_id = ${ownerUserId}::uuid
+          WHERE (user_id = ${ownerUserId}::uuid OR treating_physician_id = ${ownerUserId}::uuid)
           GROUP BY 1
           ORDER BY 1 ASC
           LIMIT ${ALL_TIME_YEAR_BUCKET_CAP}

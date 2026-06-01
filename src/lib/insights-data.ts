@@ -6,7 +6,7 @@
  *   - prefetchInsights() for SSR cache seeding
  *
  * organizationWide = true  → global aggregate (all appointments / paid invoices)
- * organizationWide = false → filters to owner_id / invoice user_id = filterOwnerId
+ * organizationWide = false → visits owner OR treating + doctor-scoped invoices (portal parity)
  * Legacy ownOnly maps to the inverse of organizationWide (see insights-scope.ts).
  *
  * Extended payload includes additional metrics added in v006 schema migration:
@@ -24,7 +24,7 @@ import type { InsightsPayloadV2 } from "@/lib/insights/insights-types";
 import { legacyMonthlyDataFromTrend } from "@/lib/insights/insights-legacy-payload";
 import { fetchDoctorInsightsSection } from "@/lib/insights/insights-doctor-aggregate";
 import {
-  appointmentOwnerWhere,
+  buildInsightsScopeBases,
   countNewPatientsInMonth,
   countDistinctPatientsForPeriod,
   countDistinctPatientsInPeriodToNowForPeriod,
@@ -41,7 +41,6 @@ import {
   fetchTrendCountsByPeriod,
   fetchTypeBreakdownForPeriod,
   countAppointmentsByStatusForPeriod,
-  invoiceOwnerWhere,
 } from "@/lib/insights/insights-aggregate";
 
 export type { InsightsDataOptions };
@@ -121,8 +120,7 @@ export async function getInsightsData(
   const now = new Date();
   const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  const apptBase = appointmentOwnerWhere(resolved);
-  const invoiceBase = invoiceOwnerWhere(resolved);
+  const { apptBase, invoiceBase } = await buildInsightsScopeBases(resolved);
 
   const [
     totals,

@@ -204,22 +204,7 @@ async function seedTimeline() {
         },
       });
 
-      if (status === "done" && Math.random() < 0.35) {
-        const amount = 8_000 + Math.floor(Math.random() * 12_000);
-        const paidAt = new Date(end.getTime() + 2 * 24 * 60 * 60 * 1000);
-        await prisma.invoice.create({
-          data: {
-            appointment_id: appt.id,
-            user_id: doctor.id,
-            amount,
-            currency: "eur",
-            status: "paid",
-            paid_at: paidAt,
-            due_date: paidAt,
-            description: `Visit invoice — ${title}`,
-          },
-        });
-      }
+      // Invoices: create via billing UI / auto-draft on done — avoids random paid rows skewing insights.
 
       if (Math.random() < 0.12) {
         const other = pick(refs.doctors.filter((d) => d.id !== doctor.id));
