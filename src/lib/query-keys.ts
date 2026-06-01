@@ -60,6 +60,9 @@ export const queryKeys = {
   invoices: {
     all: ["app", "invoices"] as const,
     detail: (id: string) => ["app", "invoices", id] as const,
+    /** CP org billing panel — GET /api/invoices?organizationId= */
+    byOrganization: (organizationId: string) =>
+      [...queryKeys.invoices.all, "org", organizationId] as const,
   },
   billing: {
     root: ["app", "billing"] as const,

@@ -32,6 +32,8 @@ import {
   prefetchCalendarAppointmentsBundle,
   prefetchDoctors,
 } from "@/lib/server-prefetch";
+import { prefetchOrgBillingInvoicesByOrgIds } from "@/lib/org-billing-prefetch";
+import type { OrgBillingCachePayload } from "@/lib/org-billing-prefetch";
 
 /** SSR payload keyed by section — seeded in `ControlPanelSectionPageClient` before paint. */
 export type ControlPanelSectionPrefetchPayload = {
@@ -49,8 +51,8 @@ export type ControlPanelSectionPrefetchPayload = {
   dashboardAccessAccepted?: DashboardAccessRow[] | null;
   /** Doctor directory — seeds queryKeys.doctors.all on doctor-management tab. */
   doctorsDirectory?: { doctors: import("@/lib/server-prefetch").DoctorPrefetchRow[] } | null;
-  /** First org on CP org tab — seeds OrganizationBillingPanel query key. */
-  orgBillingInvoicesByOrgId?: Record<string, { invoices: Invoice[] }>;
+  /** Every org on CP org tab — seeds `queryKeys.invoices.byOrganization(id)`. */
+  orgBillingInvoicesByOrgId?: Record<string, OrgBillingCachePayload>;
 };
 
 /**
@@ -73,34 +75,14 @@ export async function prefetchControlPanelSection(
       return { categories: await prefetchCategories() };
     case "organizations": {
       const organizations = await prefetchOrganizations(userId);
-      const orgBillingInvoicesByOrgId: Record<string, { invoices: Invoice[] }> = {};
-      const firstOrg = organizations?.[0];
-      if (firstOrg) {
-        const { fetchInvoicesForViewer } = await import("@/lib/invoices-scope");
-        const { attachVisitSummariesToInvoices } = await import(
-          "@/lib/invoice-visit-summary"
-        );
-        const { mapApiInvoiceToRow } = await import("@/lib/billing-invoice-map");
-        const { serializeInvoice } = await import("@/lib/serializers");
-        const rows = await fetchInvoicesForViewer({
-          userId,
-          role,
-          email,
-          organizationId: firstOrg.id,
-        });
-        const mapped = rows.map((row) => {
-          const base = serializeInvoice(row);
-          return mapApiInvoiceToRow({
-            ...row,
-            ...base,
-            appointment_id: row.appointment_id,
-            payments: row.payments,
-          });
-        });
-        orgBillingInvoicesByOrgId[firstOrg.id] = {
-          invoices: await attachVisitSummariesToInvoices(mapped),
-        };
-      }
+      const orgBillingInvoicesByOrgId = organizations?.length
+        ? await prefetchOrgBillingInvoicesByOrgIds(
+            organizations.map((o) => o.id),
+            userId,
+            role,
+            email
+          )
+        : {};
       return { organizations, orgBillingInvoicesByOrgId };
     }
     case "visit_types_global":

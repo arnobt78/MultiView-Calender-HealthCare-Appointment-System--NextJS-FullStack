@@ -9,11 +9,24 @@ const mockBundle = {
   appointments: [{ id: "appt1" }],
 };
 
+vi.mock("@/lib/org-billing-prefetch", () => ({
+  prefetchOrgBillingInvoicesByOrgIds: vi.fn(async (orgIds: string[]) => {
+    const map: Record<string, { invoices: { id: string }[] }> = {};
+    for (const id of orgIds) {
+      map[id] = { invoices: [{ id: `inv-${id}` }] };
+    }
+    return map;
+  }),
+}));
+
 vi.mock("@/lib/server-prefetch", () => ({
   prefetchDashboardOverview: vi.fn(async () => ({ ok: true })),
   prefetchPatients: vi.fn(async () => [{ id: "p1" }]),
   prefetchCategories: vi.fn(async () => [{ id: "c1" }]),
-  prefetchOrganizations: vi.fn(async () => [{ id: "o1" }]),
+  prefetchOrganizations: vi.fn(async () => [
+    { id: "o1" },
+    { id: "o2" },
+  ]),
   prefetchGlobalAppointmentTypes: vi.fn(async () => [{ id: "t1" }]),
   prefetchInvoices: vi.fn(async () => [{ id: "inv1" }]),
   prefetchBillingAppointmentOptions: vi.fn(async () => ({
@@ -70,6 +83,30 @@ describe("prefetchControlPanelSection", () => {
       total: 1,
       unreadCount: 1,
     });
+  });
+
+  it("prefetches org billing for every organization", async () => {
+    const { prefetchOrgBillingInvoicesByOrgIds } = await import(
+      "@/lib/org-billing-prefetch"
+    );
+    const result = await prefetchControlPanelSection(
+      "organizations",
+      "user-1",
+      "u@test.com",
+      "admin"
+    );
+    expect(prefetchOrgBillingInvoicesByOrgIds).toHaveBeenCalledWith(
+      ["o1", "o2"],
+      "user-1",
+      "admin",
+      "u@test.com"
+    );
+    expect(result.orgBillingInvoicesByOrgId?.o1?.invoices).toEqual([
+      { id: "inv-o1" },
+    ]);
+    expect(result.orgBillingInvoicesByOrgId?.o2?.invoices).toEqual([
+      { id: "inv-o2" },
+    ]);
   });
 
   it("returns empty payload for tabs without SSR prefetch", async () => {

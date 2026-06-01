@@ -509,6 +509,40 @@ export async function prefetchInvoices(
   }
 }
 
+/** Mirrors GET /api/invoices?organizationId= — cache: `queryKeys.invoices.byOrganization(orgId)`. */
+export async function prefetchInvoicesForOrganization(
+  organizationId: string,
+  userId: string,
+  role: string | null,
+  email?: string | null
+): Promise<Invoice[] | null> {
+  try {
+    const { fetchInvoicesForViewer } = await import("@/lib/invoices-scope");
+    const { attachVisitSummariesToInvoices } = await import(
+      "@/lib/invoice-visit-summary"
+    );
+    const { mapApiInvoiceToRow } = await import("@/lib/billing-invoice-map");
+    const rows = await fetchInvoicesForViewer({
+      userId,
+      role,
+      email,
+      organizationId,
+    });
+    const mapped = rows.map((row) => {
+      const base = serializeInvoice(row);
+      return mapApiInvoiceToRow({
+        ...row,
+        ...base,
+        appointment_id: row.appointment_id,
+        payments: row.payments,
+      });
+    });
+    return attachVisitSummariesToInvoices(mapped);
+  } catch {
+    return null;
+  }
+}
+
 /** Mirrors GET /api/notifications — unread-first list + total/unread counts. */
 export async function prefetchNotifications(
   userId: string

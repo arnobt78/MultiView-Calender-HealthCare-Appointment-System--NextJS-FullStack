@@ -25,8 +25,10 @@ export function OrganizationBillingPanel({ organizationId, organizationName }: P
     requestAnimationFrame(() => setIsMounted(true));
   }, []);
 
+  const orgBillingQueryKey = queryKeys.invoices.byOrganization(organizationId);
+
   const { data, isLoading } = useQuery({
-    queryKey: [...queryKeys.invoices.all, "org", organizationId],
+    queryKey: orgBillingQueryKey,
     queryFn: () =>
       apiClient<{ invoices: Invoice[] }>(
         `/api/invoices?organizationId=${encodeURIComponent(organizationId)}`

@@ -10,6 +10,10 @@ import {
   getOrganizationMemberOrgIds,
   userCanViewOrganizationInvoices,
 } from "@/lib/organization-invoice-access";
+import {
+  INVOICE_OUTSTANDING_STATUSES,
+  type InvoiceBillingTotals,
+} from "@/lib/invoice-billing-totals";
 
 const invoiceInclude = { payments: true } as const;
 
@@ -101,27 +105,56 @@ export async function fetchInvoicesForViewer(opts: {
   });
 }
 
-/** Org billing KPIs for Organization Management panel. */
-export async function fetchInvoiceTotalsForOrganization(organizationId: string) {
-  const [paid, outstanding] = await Promise.all([
+/** Org billing KPI aggregates — same buckets as `computeInvoiceBillingTotals` (Prisma). */
+export async function fetchInvoiceBillingTotalsForOrganization(
+  organizationId: string
+): Promise<InvoiceBillingTotals> {
+  const orgWhere = { organization_id: organizationId };
+
+  const [paid, outstanding, refunded, cancelled] = await Promise.all([
     prisma.invoice.aggregate({
-      where: { organization_id: organizationId, status: "paid" },
+      where: { ...orgWhere, status: "paid" },
       _sum: { amount: true },
       _count: true,
     }),
     prisma.invoice.aggregate({
       where: {
-        organization_id: organizationId,
-        status: { in: ["draft", "sent", "overdue"] },
+        ...orgWhere,
+        status: { in: [...INVOICE_OUTSTANDING_STATUSES] },
       },
       _sum: { amount: true },
       _count: true,
     }),
+    prisma.invoice.aggregate({
+      where: { ...orgWhere, status: "refunded" },
+      _sum: { amount: true },
+      _count: true,
+    }),
+    prisma.invoice.aggregate({
+      where: { ...orgWhere, status: "cancelled" },
+      _sum: { amount: true },
+      _count: true,
+    }),
   ]);
+
   return {
-    paidCents: paid._sum.amount ?? 0,
-    paidCount: paid._count,
-    outstandingCents: outstanding._sum.amount ?? 0,
-    outstandingCount: outstanding._count,
+    paid: { cents: paid._sum.amount ?? 0, count: paid._count },
+    outstanding: {
+      cents: outstanding._sum.amount ?? 0,
+      count: outstanding._count,
+    },
+    refunded: { cents: refunded._sum.amount ?? 0, count: refunded._count },
+    cancelled: { cents: cancelled._sum.amount ?? 0, count: cancelled._count },
+  };
+}
+
+/** @deprecated Prefer `fetchInvoiceBillingTotalsForOrganization` — slim paid/outstanding only. */
+export async function fetchInvoiceTotalsForOrganization(organizationId: string) {
+  const totals = await fetchInvoiceBillingTotalsForOrganization(organizationId);
+  return {
+    paidCents: totals.paid.cents,
+    paidCount: totals.paid.count,
+    outstandingCents: totals.outstanding.cents,
+    outstandingCount: totals.outstanding.count,
   };
 }
