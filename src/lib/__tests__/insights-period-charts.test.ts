@@ -46,6 +46,7 @@ import {
   fetchBusiestDayOfWeekCounts,
   fetchDoctorBreakdown,
   fetchRevenueAggregates,
+  fetchRevenueTrendByPeriod,
   fetchStatusOverTimeByPeriod,
   fetchTrendCountsByPeriod,
 } from "@/lib/insights/insights-aggregate";
@@ -178,6 +179,33 @@ describe("fetchRevenueAggregates", () => {
       })
     );
     expect(result.paidPrevPeriod).toBe(0);
+  });
+});
+
+describe("fetchRevenueTrendByPeriod period=all scoped", () => {
+  const now = new Date("2026-06-01T12:00:00Z");
+
+  beforeEach(() => {
+    mockInvoiceAggregate.mockClear();
+    mockInvoiceAggregate.mockResolvedValue({ _sum: { amount: 5900 } });
+  });
+
+  it("uses paid_at not-null only (no invalid max date)", async () => {
+    const rows = await fetchRevenueTrendByPeriod(
+      { OR: [{ user_id: "doc-a" }] },
+      "all",
+      now
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.count).toBe(5900);
+    expect(mockInvoiceAggregate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          status: "paid",
+          paid_at: { not: null },
+        }),
+      })
+    );
   });
 });
 

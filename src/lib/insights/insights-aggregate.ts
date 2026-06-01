@@ -341,6 +341,21 @@ async function sumPaidInvoiceAmount(
   return agg._sum.amount ?? 0;
 }
 
+/** Paid revenue for period=all — no paid_at range (avoids invalid JS max-date in Prisma). */
+async function sumPaidInvoiceAmountAllTime(
+  base: Prisma.InvoiceWhereInput
+): Promise<number> {
+  const agg = await prisma.invoice.aggregate({
+    where: {
+      ...base,
+      status: "paid",
+      paid_at: { not: null },
+    },
+    _sum: { amount: true },
+  });
+  return agg._sum.amount ?? 0;
+}
+
 /**
  * Revenue trend buckets for Insights revenue area chart.
  * Note: `count` carries paid amount (cents) for chart API compatibility.
@@ -418,11 +433,7 @@ export async function fetchRevenueTrendByPeriod(
   }
 
   if (!isInsightsScopeUnrestricted(invoiceBase)) {
-    const allTimePaid = await sumPaidInvoiceAmount(
-      invoiceBase,
-      new Date(0),
-      new Date(8640000000000000)
-    );
+    const allTimePaid = await sumPaidInvoiceAmountAllTime(invoiceBase);
     return [{ label: String(now.getFullYear()), count: allTimePaid }];
   }
 
