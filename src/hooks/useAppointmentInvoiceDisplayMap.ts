@@ -31,3 +31,4 @@ export function useAppointmentInvoiceDisplayMap(
     }
     return map;
   }, [invoices, stableKey]);
+}
