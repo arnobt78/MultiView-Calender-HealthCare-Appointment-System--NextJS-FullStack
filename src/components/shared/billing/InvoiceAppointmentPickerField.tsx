@@ -2,51 +2,51 @@
 
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
 import { apiClient } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
-export type InvoiceAppointmentOption = {
-  id: string;
-  title: string;
-  start: string;
-  end: string;
-  owner_id: string;
-  patient_label: string;
-};
+import type { InvoiceAppointmentOptionRow } from "@/lib/billing-types";
+import { InvoiceVisitPickerList } from "@/components/shared/billing/InvoiceVisitPickerList";
+import type { EntityRole } from "@/lib/entity-routes";
 
 type Props = {
   value: string;
   onChange: (appointmentId: string) => void;
+  onSelectionChange?: (option: InvoiceAppointmentOptionRow | null) => void;
   disabled?: boolean;
-  /** Patient portal lists invoices only when `appointment_id` is set on the row. */
   required?: boolean;
+  variant: "admin" | "doctor";
+  includeBilled?: boolean;
+  onIncludeBilledChange?: (value: boolean) => void;
 };
 
-/** Searchable appointment select for invoice create (admin global / doctor scoped API). */
+/** Search + compact visit list for invoice create (eligibility from GET /api/billing/appointment-options). */
 export function InvoiceAppointmentPickerField({
   value,
   onChange,
+  onSelectionChange,
   disabled,
   required = false,
+  variant,
+  includeBilled = false,
+  onIncludeBilledChange,
 }: Props) {
   const [search, setSearch] = useState("");
 
+  const viewerRole: EntityRole = variant === "admin" ? "admin" : "doctor";
+
   const { data, isLoading } = useQuery({
-    queryKey: queryKeys.billing.appointmentOptions(search),
-    queryFn: () =>
-      apiClient<{ options: InvoiceAppointmentOption[] }>(
-        `/api/billing/appointment-options?search=${encodeURIComponent(search)}`
-      ),
+    queryKey: queryKeys.billing.appointmentOptions(search, includeBilled),
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (search) params.set("search", search);
+      if (includeBilled) params.set("includeBilled", "1");
+      const qs = params.toString();
+      return apiClient<{ options: InvoiceAppointmentOptionRow[] }>(
+        `/api/billing/appointment-options${qs ? `?${qs}` : ""}`
+      );
+    },
     staleTime: 20_000,
   });
 
@@ -58,46 +58,51 @@ export function InvoiceAppointmentPickerField({
 
   return (
     <div className="space-y-1.5">
-      <Label>
-        Link appointment{required ? " *" : " (optional)"}
-      </Label>
+      <div className="flex items-center justify-between gap-2">
+        <Label>
+          Link visit{required ? " *" : ""}
+        </Label>
+        {variant === "admin" && onIncludeBilledChange && (
+          <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-muted-foreground">
+            <input
+              type="checkbox"
+              className="h-3.5 w-3.5 rounded border-gray-300"
+              checked={includeBilled}
+              onChange={(e) => onIncludeBilledChange(e.target.checked)}
+              disabled={disabled}
+            />
+            Show billed visits
+          </label>
+        )}
+      </div>
       <Input
-        placeholder="Search by title…"
+        placeholder="Search patient or visit title…"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         disabled={disabled}
-        className="mb-1"
       />
-      <Select
-        value={value || (required ? undefined : "__none__")}
-        onValueChange={(v) => onChange(v === "__none__" ? "" : v)}
-        disabled={disabled || isLoading}
-        required={required}
-      >
-        <SelectTrigger>
-          <SelectValue
-            placeholder={
-              isLoading
-                ? "Loading visits…"
-                : required
-                  ? "Select a visit (required)"
-                  : "Select a visit"
-            }
-          />
-        </SelectTrigger>
-        <SelectContent>
-          {!required && <SelectItem value="__none__">No appointment</SelectItem>}
-          {options.map((opt) => (
-            <SelectItem key={opt.id} value={opt.id}>
-              {opt.title} — {opt.patient_label} (
-              {format(new Date(opt.start), "dd MMM yyyy")})
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      {selected && (
+      {isLoading ? (
+        <p className="text-xs text-muted-foreground py-2">Loading visits…</p>
+      ) : (
+        <InvoiceVisitPickerList
+          options={options}
+          value={value}
+          onSelect={(id) => {
+            onChange(id);
+            onSelectionChange?.(options.find((o) => o.id === id) ?? null);
+          }}
+          viewerRole={viewerRole}
+          disabled={disabled}
+        />
+      )}
+      {selected && selected.eligible && (
         <p className="text-[10px] text-muted-foreground">
-          Selected: {selected.title} · {format(new Date(selected.start), "PPp")}
+          Selected: {selected.patient_label}
+        </p>
+      )}
+      {selected && !selected.eligible && (
+        <p className="text-[10px] text-amber-700">
+          This visit already has an invoice — pick another or open the existing bill.
         </p>
       )}
     </div>

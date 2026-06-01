@@ -770,7 +770,7 @@ export default function PatientPortalPage({
                               currency={inv.currency}
                               className="font-semibold text-gray-700"
                             />
-                            <InvoiceStatusBadge status={inv.status} />
+                            <InvoiceStatusBadge invoice={inv} />
                             <InvoicePayActions
                               status={inv.status}
                               onPay={() => pay(inv.id)}

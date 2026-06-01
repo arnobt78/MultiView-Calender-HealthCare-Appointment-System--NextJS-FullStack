@@ -86,7 +86,9 @@ export default function InvoiceManagement() {
     }),
     columnHelper.accessor("status", {
       header: "Status",
-      cell: (info) => <InvoiceStatusBadge status={info.getValue()} />,
+      cell: (info) => (
+        <InvoiceStatusBadge invoice={info.row.original} />
+      ),
     }),
     columnHelper.accessor("due_date", {
       header: "Due",

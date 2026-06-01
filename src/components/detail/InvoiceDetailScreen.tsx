@@ -11,6 +11,7 @@ import { ArrowLeft, Receipt, CreditCard } from "lucide-react";
 import { InvoiceDetailClient } from "@/components/shared/billing/InvoiceDetailClient";
 import { InvoiceDetailQuerySeed } from "@/components/shared/billing/InvoiceDetailQuerySeed";
 import { InvoicePaymentHistoryTable } from "@/components/shared/billing/InvoicePaymentHistoryTable";
+import { InvoiceStatusBadge } from "@/components/shared/billing/InvoiceStatusBadge";
 import { appointmentDetailHref } from "@/lib/entity-routes";
 import type { InvoiceDetailUiAccess } from "@/lib/invoice-detail-ssr";
 import type { Invoice } from "@/hooks/usePayments";
@@ -82,7 +83,9 @@ export function InvoiceDetailScreen({
             </div>
             <div>
               <dt className="font-medium text-muted-foreground">status</dt>
-              <dd>{invoice.status}</dd>
+              <dd>
+                <InvoiceStatusBadge invoice={invoice} />
+              </dd>
             </div>
             <div>
               <dt className="font-medium text-muted-foreground">appointment_id</dt>

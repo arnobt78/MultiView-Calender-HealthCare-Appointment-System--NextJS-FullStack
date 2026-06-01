@@ -22,6 +22,7 @@ import {
   resolvePatientPortalUserIdForAppointment,
 } from "@/lib/billing-cache";
 import { resolveInvoiceOrganizationId } from "@/lib/invoice-organization-resolve";
+import { assertAppointmentEligibleForNewInvoice } from "@/lib/billing-appointment-eligibility";
 
 export const dynamic = "force-dynamic";
 
@@ -84,6 +85,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: "Appointment not found or forbidden" },
         { status: 403 }
+      );
+    }
+
+    const eligibility = await assertAppointmentEligibleForNewInvoice(appointment_id);
+    if (!eligibility.ok) {
+      return NextResponse.json(
+        { error: eligibility.message, invoice_id: eligibility.invoiceId },
+        { status: eligibility.status }
       );
     }
 

@@ -80,7 +80,7 @@ export function DoctorPortalInvoicesCard({ listBodyLoading }: Props) {
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 <InvoiceAmountDisplay amountCents={inv.amount} currency={inv.currency} />
-                <InvoiceStatusBadge status={inv.status} />
+                <InvoiceStatusBadge invoice={inv} />
                 <InvoiceAdminActionsMenu
                   invoice={inv}
                   viewerRole="doctor"

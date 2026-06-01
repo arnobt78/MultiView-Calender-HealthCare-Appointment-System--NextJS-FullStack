@@ -34,7 +34,7 @@ export function InvoiceDetailClient({ invoice: initialInvoice, accessLevel }: Pr
   if (accessLevel === "pay") {
     return (
       <div className="flex items-center gap-2">
-        <InvoiceStatusBadge status={invoice.status} />
+        <InvoiceStatusBadge invoice={invoice} />
         <Button size="sm" disabled={isPaying} onClick={() => pay(invoice.id)}>
           Pay via Stripe
         </Button>
@@ -43,13 +43,13 @@ export function InvoiceDetailClient({ invoice: initialInvoice, accessLevel }: Pr
   }
 
   if (accessLevel === "view") {
-    return <InvoiceStatusBadge status={invoice.status} />;
+    return <InvoiceStatusBadge invoice={invoice} />;
   }
 
   if (accessLevel === "mutate") {
     return (
       <div className="flex flex-wrap items-center gap-2">
-        <InvoiceStatusBadge status={invoice.status} />
+        <InvoiceStatusBadge invoice={invoice} />
         <InvoiceAdminActionsMenu
           invoice={invoice}
           viewerRole="doctor"
@@ -63,7 +63,7 @@ export function InvoiceDetailClient({ invoice: initialInvoice, accessLevel }: Pr
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <InvoiceStatusBadge status={invoice.status} />
+      <InvoiceStatusBadge invoice={invoice} />
       <InvoiceAdminActionsMenu
         invoice={invoice}
         viewerRole="admin"

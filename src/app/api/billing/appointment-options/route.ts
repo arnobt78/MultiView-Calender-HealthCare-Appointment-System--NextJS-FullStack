@@ -1,5 +1,6 @@
 /**
- * GET /api/billing/appointment-options — recent visits for invoice create picker (admin | doctor).
+ * GET /api/billing/appointment-options — visits for invoice create (admin | doctor).
+ * Default: only visits without a blocking invoice. Admin `includeBilled=1` adds disabled rows.
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -8,6 +9,11 @@ import { getUserRole, isAdminRole, isDoctorRole } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 import { PAGINATION } from "@/lib/constants";
 import { isValidUUID } from "@/lib/validation";
+import type { InvoiceAppointmentOptionRow } from "@/lib/billing-types";
+import {
+  mapLatestInvoicesByAppointmentId,
+  resolveAppointmentBillingSummary,
+} from "@/lib/billing-appointment-eligibility";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +28,8 @@ export async function GET(req: NextRequest) {
 
     const role = await getUserRole(sessionUser.userId);
     const search = req.nextUrl.searchParams.get("search")?.trim() ?? "";
+    const includeBilledParam = req.nextUrl.searchParams.get("includeBilled") === "1";
+    const includeBilled = isAdminRole(role) && includeBilledParam;
 
     if (!isAdminRole(role) && !isDoctorRole(role)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -64,17 +72,52 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    const options = rows.map((row) => ({
-      id: row.id,
-      title: row.title,
-      start: row.start.toISOString(),
-      end: row.end.toISOString(),
-      owner_id: row.owner_id,
-      patient_label:
-        [row.patient?.firstname, row.patient?.lastname].filter(Boolean).join(" ").trim() ||
-        row.patient?.email?.trim() ||
-        "Patient",
-    }));
+    const apptIds = rows.map((r) => r.id);
+    const invoiceRows =
+      apptIds.length > 0
+        ? await prisma.invoice.findMany({
+            where: { appointment_id: { in: apptIds } },
+            orderBy: { created_at: "desc" },
+            select: {
+              id: true,
+              appointment_id: true,
+              status: true,
+              amount: true,
+              currency: true,
+              created_at: true,
+              payments: { select: { status: true } },
+            },
+          })
+        : [];
+
+    const latestByAppt = mapLatestInvoicesByAppointmentId(invoiceRows);
+
+    const options: InvoiceAppointmentOptionRow[] = [];
+
+    for (const row of rows) {
+      const latest = latestByAppt.get(row.id) ?? null;
+      const billing = resolveAppointmentBillingSummary(latest);
+      if (!billing.eligible && !includeBilled) continue;
+
+      options.push({
+        id: row.id,
+        title: row.title,
+        start: row.start.toISOString(),
+        end: row.end.toISOString(),
+        owner_id: row.owner_id,
+        patient_label:
+          [row.patient?.firstname, row.patient?.lastname].filter(Boolean).join(" ").trim() ||
+          row.patient?.email?.trim() ||
+          "Patient",
+        eligible: billing.eligible,
+        block_reason: billing.blockReason,
+        invoice_id: billing.invoiceId,
+        invoice_status: billing.invoiceStatus,
+        display_status: billing.displayStatus,
+        amount_cents: billing.amountCents,
+        currency: billing.currency,
+      });
+    }
 
     return NextResponse.json({ options });
   } catch (error: unknown) {

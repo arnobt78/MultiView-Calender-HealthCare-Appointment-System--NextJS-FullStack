@@ -46,3 +46,20 @@ export type InvoiceRow = {
   created_at: string;
   payments: InvoicePaymentRow[];
 };
+
+/** GET /api/billing/appointment-options — compact visit picker row. */
+export type InvoiceAppointmentOptionRow = {
+  id: string;
+  title: string;
+  start: string;
+  end: string;
+  owner_id: string;
+  patient_label: string;
+  eligible: boolean;
+  block_reason: string | null;
+  invoice_id: string | null;
+  invoice_status: string | null;
+  display_status: string | null;
+  amount_cents: number | null;
+  currency: string | null;
+};

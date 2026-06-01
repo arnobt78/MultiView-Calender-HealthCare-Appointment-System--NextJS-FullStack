@@ -15,6 +15,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { InvoiceAppointmentPickerField } from "@/components/shared/billing/InvoiceAppointmentPickerField";
+import type { InvoiceAppointmentOptionRow } from "@/lib/billing-types";
 
 type CreateBody = {
   amount: number;
@@ -41,6 +42,8 @@ export function CreateInvoiceDialog({
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [apptId, setApptId] = useState(appointmentId ?? "");
+  const [includeBilled, setIncludeBilled] = useState(false);
+  const [selection, setSelection] = useState<InvoiceAppointmentOptionRow | null>(null);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -48,6 +51,7 @@ export function CreateInvoiceDialog({
     if (!parsed || parsed <= 0) return;
     const linkedAppt = (apptId.trim() || appointmentId || "").trim();
     if (!linkedAppt) return;
+    if (selection && !selection.eligible) return;
 
     onCreate({
       amount: parsed,
@@ -59,6 +63,7 @@ export function CreateInvoiceDialog({
     setDescription("");
     setDueDate("");
     if (!appointmentId) setApptId("");
+    setSelection(null);
     setOpen(false);
   }
 
@@ -74,8 +79,8 @@ export function CreateInvoiceDialog({
           <DialogTitle>Create Invoice</DialogTitle>
           <DialogDescription>
             {variant === "admin"
-              ? "Link a visit so the patient sees this invoice on their portal."
-              : "Draft invoice for one of your visits (visit link required)."}
+              ? "Pick an unpaid visit — billed visits are hidden unless you enable Show billed visits."
+              : "Draft invoice for a visit without an active bill."}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-2 pt-2">
@@ -94,9 +99,15 @@ export function CreateInvoiceDialog({
           </div>
           {!appointmentId && (
             <InvoiceAppointmentPickerField
+              variant={variant}
               value={apptId}
               onChange={setApptId}
+              onSelectionChange={setSelection}
               required
+              includeBilled={includeBilled}
+              onIncludeBilledChange={
+                variant === "admin" ? setIncludeBilled : undefined
+              }
             />
           )}
           <div className="space-y-1.5">
@@ -117,7 +128,11 @@ export function CreateInvoiceDialog({
               onChange={(e) => setDueDate(e.target.value)}
             />
           </div>
-          <Button type="submit" className="w-full">
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={selection !== null && !selection.eligible}
+          >
             Create draft
           </Button>
         </form>

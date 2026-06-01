@@ -207,6 +207,7 @@ export async function invalidateInvoicesBilling(
   const invoiceId = opts?.invoiceId;
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: queryKeys.invoices.all }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.billing.root }),
     ...(invoiceId
       ? [
           queryClient.invalidateQueries({
@@ -237,6 +238,7 @@ export async function invalidateInvoicesAndOverview(
   const invoiceId = opts?.invoiceId;
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: queryKeys.invoices.all }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.billing.root }),
     ...(invoiceId
       ? [
           queryClient.invalidateQueries({
