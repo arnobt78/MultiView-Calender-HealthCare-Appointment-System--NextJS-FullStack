@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { isAdminRole, isDoctorRole } from "@/lib/rbac";
 import { getOrganizationMemberOrgIds } from "@/lib/organization-invoice-access";
 import type { Prisma } from "@prisma/client";
+import { INVOICE_OUTSTANDING_STATUSES } from "@/lib/invoice-billing-totals";
 
 export type RevenueOverviewSnapshot = {
   paidCents: number;
@@ -14,8 +15,6 @@ export type RevenueOverviewSnapshot = {
   totalInvoices: number;
   paidInvoices: number;
 };
-
-const OUTSTANDING_STATUSES = ["draft", "sent", "overdue"] as const;
 
 /** Prisma where for invoices visible to a doctor (matches invoices-scope OR). */
 export async function buildDoctorScopedInvoiceWhere(
@@ -62,7 +61,7 @@ export async function fetchRevenueOverviewForViewer(opts: {
           _sum: { amount: true },
         }),
         prisma.invoice.aggregate({
-          where: { status: { in: [...OUTSTANDING_STATUSES] } },
+          where: { status: { in: [...INVOICE_OUTSTANDING_STATUSES] } },
           _sum: { amount: true },
         }),
       ]);
@@ -87,7 +86,7 @@ export async function fetchRevenueOverviewForViewer(opts: {
         prisma.invoice.aggregate({
           where: {
             ...where,
-            status: { in: [...OUTSTANDING_STATUSES] },
+            status: { in: [...INVOICE_OUTSTANDING_STATUSES] },
           },
           _sum: { amount: true },
         }),
@@ -113,7 +112,7 @@ export async function fetchRevenueOverviewForViewer(opts: {
       prisma.invoice.aggregate({
         where: {
           user_id: userId,
-          status: { in: [...OUTSTANDING_STATUSES] },
+          status: { in: [...INVOICE_OUTSTANDING_STATUSES] },
         },
         _sum: { amount: true },
       }),

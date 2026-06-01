@@ -54,6 +54,7 @@ import type { User } from "@/types/types";
 import { useUser } from "@/hooks/useUsers";
 import { queryKeys } from "@/lib/query-keys";
 import { isDoctorActive } from "@/lib/entity-active-status";
+import { clinicalEmptyOr } from "@/components/shared/ClinicalTableEmptyDash";
 import {
   doctorFormToUpdatePayload,
   userToDoctorForm,
@@ -243,7 +244,7 @@ export function DoctorDetailScreen({
               </div>
               <div className={patientDetailDefinitionRowClass}>
                 <FieldLabel icon={Stethoscope}>Specialty</FieldLabel>
-                <dd>{liveUser.specialty ?? "—"}</dd>
+                <dd>{clinicalEmptyOr(liveUser.specialty, "definition")}</dd>
               </div>
               {liveUser.created_at ? (
                 <div className={patientDetailDefinitionRowClass}>

@@ -10,8 +10,8 @@ import {
 
 /**
  * `table` — snapshot / list TanStack cells: left-aligned muted em-dash (same rhythm as cell text).
- * `definition` — patient schema `<dd>` value column (centered).
- * `inline` — em-dash inside flowing text (audit timestamps).
+ * `definition` — entity detail `<dd>` value column (start-aligned in grid, single glyph).
+ * `inline` — em-dash inside flowing text (audit timestamps, hero lines).
  */
 export type ClinicalEmptyLayout = "table" | "definition" | "inline";
 
@@ -23,17 +23,24 @@ export function clinicalEmptyShellClass(layout: ClinicalEmptyLayout): string {
         "flex w-full min-w-0 items-center justify-start text-left"
       );
     case "definition":
-      return "flex w-full min-h-[1.25rem] items-center justify-center text-center";
+      return cn(
+        clinicalTableCellMinRowClass,
+        "flex w-full min-w-0 items-center justify-start text-left"
+      );
     case "inline":
-      return "inline-flex min-w-[1.25rem] items-center justify-center align-middle text-center";
+      return "inline-flex min-w-[1.25rem] items-center justify-center align-middle";
   }
 }
 
-/** Empty clinical value — `table` uses start-aligned muted em-dash; definition/inline stay centered. */
+/** Single muted em-dash — one span so detail rows never show a duplicated placeholder. */
 export function ClinicalEmptyDash({ layout = "table" }: { layout?: ClinicalEmptyLayout }) {
   return (
-    <span className={clinicalEmptyShellClass(layout)} role="presentation">
-      <span className={clinicalCellMutedTextClass}>{CLINICAL_EMPTY_EM_DASH}</span>
+    <span
+      className={cn(clinicalEmptyShellClass(layout), clinicalCellMutedTextClass)}
+      role="presentation"
+      aria-hidden
+    >
+      {CLINICAL_EMPTY_EM_DASH}
     </span>
   );
 }

@@ -59,7 +59,10 @@ import { useUsers } from "@/hooks/useUsers";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import { usePatients } from "@/hooks/usePatients";
-import { getPatientCareLevelLabel } from "@/lib/patient-care-level";
+import {
+  getPatientCareLevelLabel,
+  hasPatientCareLevel,
+} from "@/lib/patient-care-level";
 import { PATIENT_REFERRAL_SOURCES } from "@/lib/patient-referral-sources";
 import { patientAgeYears } from "@/lib/patient-age";
 import { skyGlassBackButtonClass, skyGlassTableFrameClass } from "@/lib/calendar-header-action-styles";
@@ -560,9 +563,9 @@ export function PatientDetailScreen({
               {showLiveBody ? (
                 <>
                   <p className="text-lg font-semibold text-gray-700">
-                    {clinicalEmptyOr(nameLabel, "definition")}
+                    {clinicalEmptyOr(nameLabel, "inline")}
                   </p>
-                  <p className="text-sm text-gray-600">{clinicalEmptyOr(p!.email, "definition")}</p>
+                  <p className="text-sm text-gray-600">{clinicalEmptyOr(p!.email, "inline")}</p>
                   <div className="mt-1 flex flex-wrap items-center gap-2">
                     {age != null ? (
                       <Badge
@@ -637,7 +640,11 @@ export function PatientDetailScreen({
                   {clinicalEmptyOr(p!.birth_date, "definition")}
                 </PatientDetailDefinitionRow>
                 <PatientDetailDefinitionRow icon={Activity} label="Care Tier (1–10)">
-                  {getPatientCareLevelLabel(p!.care_level)}
+                  {clinicalEmptyOrNode(
+                    hasPatientCareLevel(p!.care_level),
+                    () => getPatientCareLevelLabel(p!.care_level!),
+                    "definition"
+                  )}
                 </PatientDetailDefinitionRow>
                 <PatientDetailDefinitionRow icon={User} label="Pronoun">
                   {clinicalEmptyOr(p!.pronoun, "definition")}

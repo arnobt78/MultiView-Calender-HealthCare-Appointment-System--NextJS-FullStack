@@ -1,3 +1,5 @@
+import { CLINICAL_EMPTY_EM_DASH } from "@/lib/clinical-empty-value";
+
 /**
  * Clinical-style acuity tiers (1–10) stored as `patients.care_level` — higher = more coordination / risk.
  * Used by selects and analytics; keep labels clinician-friendly but short for UI.
@@ -24,10 +26,17 @@ export const PATIENT_CARE_LEVEL_STAGES: readonly PatientCareLevelStage[] = [
 
 const stageByValue = new Map(PATIENT_CARE_LEVEL_STAGES.map((s) => [s.value, s]));
 
+export function hasPatientCareLevel(level: number | null | undefined): boolean {
+  if (level == null || Number.isNaN(Number(level))) return false;
+  return true;
+}
+
+/** Table/export string — returns single empty placeholder when tier unset. */
 export function getPatientCareLevelLabel(level: number | null | undefined): string {
-  if (level == null || Number.isNaN(level)) return "—";
-  const s = stageByValue.get(level);
-  return s ? `${level} — ${s.shortLabel}` : String(level);
+  if (!hasPatientCareLevel(level)) return CLINICAL_EMPTY_EM_DASH;
+  const n = Number(level);
+  const s = stageByValue.get(n);
+  return s ? `${n} — ${s.shortLabel}` : String(n);
 }
 
 /** Dropdown / compact rows — short tier label without em dash placeholder. */

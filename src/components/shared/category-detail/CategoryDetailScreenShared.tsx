@@ -72,7 +72,10 @@ import {
 } from "@/lib/clinical-snapshot-table-columns";
 import type { Category, CategorySnapshot } from "@/types/types";
 import type { EntityRole } from "@/lib/entity-routes";
-import { clinicalEmptyOr } from "@/components/shared/ClinicalTableEmptyDash";
+import {
+  clinicalEmptyOr,
+  clinicalEmptyOrNode,
+} from "@/components/shared/ClinicalTableEmptyDash";
 
 export type CategoryDetailScreenMode = "control-panel" | "portal";
 
@@ -339,10 +342,10 @@ export function CategoryDetailScreenShared({
                 {showLiveBody && cat ? (
                   <>
                     <p className="text-lg font-semibold text-gray-700">
-                      {clinicalEmptyOr(cat.label, "definition")}
+                      {clinicalEmptyOr(cat.label, "inline")}
                     </p>
                     <p className="text-sm text-gray-600">
-                      {clinicalEmptyOr(cat.description, "definition")}
+                      {clinicalEmptyOr(cat.description, "inline")}
                     </p>
                     <div className="mt-1 flex flex-wrap items-center gap-2">
                       <Badge
@@ -412,7 +415,7 @@ export function CategoryDetailScreenShared({
                   </div>
                 </DefinitionRow>
                 <DefinitionRow icon={Layers} label="Description" toneClasses={toneClasses}>
-                  {cat.description?.trim() ? cat.description : "—"}
+                  {clinicalEmptyOr(cat.description, "definition")}
                 </DefinitionRow>
                 {cat.icon ? (
                   <DefinitionRow icon={Sparkles} label="Icon" toneClasses={toneClasses}>
@@ -441,9 +444,11 @@ export function CategoryDetailScreenShared({
                   </Badge>
                 </DefinitionRow>
                 <DefinitionRow icon={Clock} label="Default Duration" toneClasses={toneClasses}>
-                  {cat.duration_minutes_default != null
-                    ? `${cat.duration_minutes_default} minutes`
-                    : "—"}
+                  {clinicalEmptyOrNode(
+                    cat.duration_minutes_default != null,
+                    () => `${cat.duration_minutes_default} minutes`,
+                    "definition"
+                  )}
                 </DefinitionRow>
                 <DefinitionRow icon={Hash} label="Sort Order" toneClasses={toneClasses}>
                   {cat.sort_order ?? 0}

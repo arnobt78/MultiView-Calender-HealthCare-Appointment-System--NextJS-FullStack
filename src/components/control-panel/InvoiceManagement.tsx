@@ -28,8 +28,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Receipt, CreditCard } from "lucide-react";
+import { Receipt } from "lucide-react";
+import { InvoiceBillingStatsRow } from "@/components/shared/billing/InvoiceBillingStatsRow";
 import { CreateInvoiceDialog } from "@/components/shared/billing/CreateInvoiceDialog";
 import { InvoiceAdminActionsMenu } from "@/components/shared/billing/InvoiceAdminActionsMenu";
 import { InvoiceStatusBadge } from "@/components/shared/billing/InvoiceStatusBadge";
@@ -152,50 +152,14 @@ export default function InvoiceManagement() {
 
   const loading = !isMounted || isLoading;
 
-  const totalPaid = invoices
-    .filter((i) => i.status === "paid")
-    .reduce((sum, i) => sum + i.amount, 0);
-  const totalOutstanding = invoices
-    .filter((i) => i.status !== "paid" && i.status !== "cancelled")
-    .reduce((sum, i) => sum + i.amount, 0);
-
   if (isError) {
     return <div className="p-4 text-red-500">Error: {error?.message}</div>;
   }
 
   return (
     <div className={controlPanelSectionRootClass}>
-      {/* Summary cards — shells always visible; value slots pulse while loading */}
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Card className="rounded-[28px] border bg-gradient-to-br from-green-500/10 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(34,197,94,0.12)]">
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wide mb-1">
-              <Receipt className="h-3.5 w-3.5" /> Total Paid
-            </div>
-            {loading ? (
-              <Skeleton className="h-7 w-28 rounded" />
-            ) : (
-              <div className="text-xl font-bold text-green-600">
-                {(totalPaid / 100).toLocaleString("de-DE", { style: "currency", currency: "EUR" })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-        <Card className="rounded-[28px] border bg-gradient-to-br from-orange-500/10 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(249,115,22,0.12)]">
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wide mb-1">
-              <CreditCard className="h-3.5 w-3.5" /> Outstanding
-            </div>
-            {loading ? (
-              <Skeleton className="h-7 w-28 rounded" />
-            ) : (
-              <div className="text-xl font-bold text-orange-600">
-                {(totalOutstanding / 100).toLocaleString("de-DE", { style: "currency", currency: "EUR" })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      {/* KPI strip — outstanding excludes refunded/cancelled (dashboard parity). */}
+      <InvoiceBillingStatsRow invoices={invoices} valueSkeleton={loading} />
 
       {/* Chrome — heading, filter, and add button always static */}
       <div className="flex items-center justify-between gap-4 flex-wrap">

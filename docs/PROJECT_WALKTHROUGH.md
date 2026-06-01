@@ -2,6 +2,8 @@
 
 ## Latest Audit Update (2026-06-01)
 
+- **Invoice billing KPI + org list:** `src/lib/invoice-billing-totals.ts` — `computeInvoiceBillingTotals` / `INVOICE_OUTSTANDING_STATUSES` (shared with `invoices-revenue-scope.ts`). CP **Invoice Management** uses `InvoiceBillingStatsRow` (Paid / Outstanding / Refunded / Cancelled — 4 responsive glass cards); outstanding no longer includes refunded (was €287.50 → €187.50 with curated seed). **Organization billing** (`OrganizationBillingPanel`): lists **all** org invoices (removed `slice(0,5)`), `PortalPanelCountBadge`, same KPI row, rich rows via `InvoiceBillingListRow` (`PrefetchingLink`, `InvoiceVisitSummaryLine`, `DoctorIdentityRow`, due/created). Invalidation unchanged: `invalidateInvoices*` busts `queryKeys.invoices.all` prefix → org `[..., "org", orgId]` refetches. SSR: `prefetchControlPanelSection("organizations")` seeds first org billing cache.
+- **Entity detail empty values:** `ClinicalEmptyDash` — single em-dash; `clinicalEmptyOr` / `clinicalEmptyOrNode` on patient, doctor, category CP detail schema rows (`patient-care-level.ts` `hasPatientCareLevel`).
 - **Dashboard calendar filters:** `CategoryFilterSelect` + `PatientFilterSelect` (brand mark / portrait + age + care tier); `ClinicalListFilterToolbar` reset right-aligned. **Clinical role** filter (`calendar-clinical-role-filter.ts`): default **All My Visits**; **Created by Me**; **Referred to Me (Treating)** — client-side on staff views; hidden for patients.
 - **Staff calendar scope:** `src/lib/staff-appointment-calendar-scope.ts` — staff list/dashboard calendar uses `owner_id OR treating_physician_id` (aligned with insights + billing). Wired: `GET /api/appointments`, `prefetchDashboardAppointments`, `prefetchDoctorPortal`, `GET /api/doctor-portal`, `login-today-appointments`. **Admin** dashboard overview KPI counts stay **org-wide** via `dashboardOverviewAppointmentFilter` (doctors use staff scope).
 - **Curated demo seed:** `npm run db:seed-demo-appointments` → `scripts/seed-demo-appointments-curated.ts` (exactly **10** rows, marker `seed-demo-curated:v1`, invoice matrix). Bulk timeline: `db:seed-demo-appointments-timeline`. Full reset: `CONFIRM_DB_CLEAR=YES npm run db:clear` → `db:prepare` → `db:seed-extended` → `db:seed-demo-appointments` → `db:migrate`.
@@ -10,10 +12,10 @@
 - **Visit context on invoices:** `InvoiceLinkedVisitPanel` on `/invoices/[id]` and CP invoice detail; `visit_summary` on list APIs + patient/doctor portal cards + CP invoice table; snapshot invoices include visit line under description.
 - **Invoice status on appointments:** Dashboard list cards show **Invoice:** badge when `invoices.all` cache has a linked row (`useAppointmentInvoiceDisplayMap`).
 - **Auto-draft on done:** `maybeCreateDraftInvoiceForCompletedVisit` on appointment PATCH when status becomes `done` (requires doctor `consultation_fee` > 0).
-- **Org panel:** `010_backfill_invoice_org_and_billing.sql` tags invoices when billing doctor has one org; demo seed adds all doctors to HealthCal Demo Clinic; org tab SSR-seeds first org billing list.
+- **Org panel:** `010_backfill_invoice_org_and_billing.sql` tags invoices when billing doctor has one org; demo seed adds all doctors to HealthCal Demo Clinic; org tab SSR-seeds first org billing list; UI shows full list + KPI strip (see invoice billing KPI bullet above).
 - **One bill per visit / picker / Refunded badge:** `billing-appointment-eligibility.ts`, POST **409**, `009` migration, shared picker + SSR seed (unchanged contract).
 - **Payments:** `011_payment_stripe_id_unique.sql`; payment history UI dedupes duplicate Stripe IDs.
-- **Tests:** Vitest **580** (98 files). **DB:** `npm run db:migrate` (silent OK) runs `009`–`011`.
+- **Tests:** Vitest **585** (101 files), incl. `invoice-billing-totals.test.ts`, `clinical-empty-dash.test.tsx`. **DB:** `npm run db:migrate` (silent OK) runs `009`–`011`.
 - **Known follow-ups (not blocking demo):** `calendar/export`, `calendar/sync`, `appointments/search` still filter `owner_id` only; assignee-only visibility unchanged (assignee batch); `GET /api/appointments?ids=` batch does not OR `treating_physician_id` (main list already includes treating). Fix export/search only if QA needs treating-only visits there.
 
 ## Prior (2026-05-31)
@@ -116,10 +118,10 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Prism
 | Patient | patient portal + `/api/invoices` | `/invoices/[id]` | Stripe pay when `pay` |
 
 - **Shared UI:** `src/components/shared/billing/*` — `CreateInvoiceDialog`, `InvoiceAppointmentPickerField`, `InvoiceVisitPickerList`, `InvoiceStatusBadge`, `InvoiceDetailClient`, `InvoicePayActions`, `InvoiceAdminActionsMenu`.
-- **Libs:** `billing-appointment-eligibility.ts`, `billing-appointment-options-load.ts`, `invoices-revenue-scope.ts`, `invoice-visit-summary.ts`, `billing-auto-draft.ts`, `billing-dashboard-cache.ts`.
+- **Libs:** `invoice-billing-totals.ts`, `billing-appointment-eligibility.ts`, `billing-appointment-options-load.ts`, `invoices-revenue-scope.ts`, `invoice-visit-summary.ts`, `billing-auto-draft.ts`, `billing-dashboard-cache.ts`.
 - **Doctor portal:** `DoctorPortalInvoicesCard` + SSR `prefetchInvoices` + `prefetchBillingAppointmentOptions` on `doctor-portal/page.tsx`.
 - **CP invoices tab:** SSR `prefetchInvoices` + `prefetchBillingAppointmentOptions` via `prefetchControlPanelSection("invoices")`.
-- **Org billing:** `OrganizationBillingPanel` on org detail; `?organizationId=` filter; any org **member** can view org-tagged rows; org **admin** can tag on create.
+- **Org billing:** `OrganizationBillingPanel` — `?organizationId=` filter; `InvoiceBillingStatsRow` + `InvoiceBillingListRow`; all rows (no cap); member view / admin tag on create.
 - **Env:** see `.env.example` — `STRIPE_*`, `NEXT_PUBLIC_APP_URL`. Local webhook secret from CLI; production secret from Stripe Dashboard endpoint only.
 
 ### Doctor display + `/services`

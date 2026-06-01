@@ -3,6 +3,7 @@
 import { useLayoutEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
+import { clinicalEmptyOr } from "@/components/shared/ClinicalTableEmptyDash";
 import {
   ArrowLeft,
   CalendarDays,
@@ -164,7 +165,7 @@ export function AdminUserDetailScreen({
               </div>
               <div className={patientDetailDefinitionRowClass}>
                 <FieldLabel icon={ShieldCheck}>Role</FieldLabel>
-                <dd className="capitalize">{liveUser.role ?? "—"}</dd>
+                <dd className="capitalize">{clinicalEmptyOr(liveUser.role, "definition")}</dd>
               </div>
               {liveUser.created_at ? (
                 <div className={patientDetailDefinitionRowClass}>
