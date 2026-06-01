@@ -1,6 +1,6 @@
 # Build Manifest — HealthCal Pro
 
-<!-- Cycle: C1 | Last updated: 2026-05-30 -->
+<!-- Cycle: C1+C2 | Last updated: 2026-05-31 -->
 
 ## Artifacts
 
@@ -39,11 +39,26 @@
 | ART-0031 | C1 | REQ-0004 | `CROSS_TAB_SCOPES.ORGANIZATIONS` + `invalidateOrganizations` publish | built |
 | ART-0032 | C1 | REQ-0004 | `src/lib/__tests__/appointments-calendar-assignees.test.ts` | built |
 | ART-0033 | C1 | REQ-0004 | `src/lib/__tests__/query-cache-cross-tab.test.ts` (ORGANIZATIONS scope) | built |
+| ART-0034 | C2 | REQ-0005 | `migrations/008_user_is_active.sql`, Prisma `User.is_active` | built |
+| ART-0035 | C2 | REQ-0005 | `src/lib/doctor-revenue-aggregate.ts`, `GET /api/doctors` revenue | built |
+| ART-0036 | C2 | REQ-0005 | `src/lib/doctor-active-booking.ts`, inactive booking UX | built |
+| ART-0037 | C2 | REQ-0005 | `ClinicalListFilterToolbar` + `DoctorManagement.tsx` emerald table | built |
+| ART-0038 | C2 | REQ-0005 | `DoctorDetailScreen.tsx`, `DoctorFormDialog.tsx` | built |
+| ART-0039 | C2 | REQ-0005 | Services/booking inactive badges + directory partition | built |
+| ART-0040 | C2 | REQ-0006 | `GET /api/doctors/[id]/assigned-patients` + `useDoctorAssignedPatients` | built |
+| ART-0041 | C2 | REQ-0006 | `invalidateDoctorAssignedPatients` in `query-client.ts` | built |
+| ART-0042 | C2 | REQ-0006 | `AdminUserDetailScreen.tsx`, `AdminUserFormDialog.tsx` | built |
+| ART-0043 | C2 | REQ-0006 | CP user/doctor detail SSR + doctor redirect on `/users/[id]` | built |
+| ART-0044 | C2 | REQ-0007 | `CP_ADMIN_USERS_FILTERS`, `UserManagement.tsx` admin-only | built |
+| ART-0045 | C2 | REQ-0007 | `query-cache-cross-tab.ts` ENTITY_PATIENTS + `doctors` | built |
+| ART-0046 | C2 | REQ-0008 | `src/lib/cp-dev-stub-copy.ts` | built |
+| ART-0047 | C2 | REQ-0008 | `CpDevStubSubmitNote`, `CpListPaginationDevStub` | built |
+| ART-0048 | C2 | REQ-0008 | Doctor/UserManagement stubs + `ConfirmActionDialog.confirmDisabled` | built |
 
 ## Verification Commands (project default)
 
 ```bash
-npm test        # 472 passed
+npm test        # 520 passed (C2 close)
 npx tsc --noEmit
 npm run lint
 npm run build

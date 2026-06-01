@@ -1,6 +1,10 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest Audit Update (2026-05-30)
+## Latest Audit Update (2026-05-31)
+
+- **Agile V AQMS:** `.agile-v/` bootstrapped — `SKILLS.md` (24 agents), `BOOTSTRAP.md`, phases `01`–`05`, `POLICY.yaml`, runtime contracts. **C1** archived (REQ-0001..0004 category/SSR). **C2** archived (REQ-0005..0008 doctor CP + dev stubs). Living `STATE.md` → ready for **C3**. See `.agile-v/README.md`.
+
+## Prior (2026-05-30)
 
 - **Doctor assigned-patients live roster:** `GET /api/doctors/[id]/assigned-patients` + `queryKeys.doctors.assignedPatients(id)` + `useDoctorAssignedPatients`; SSR seed on CP doctor detail; `invalidateDoctorAssignedPatients` + `doctors.all` on patient CRUD (count + roster refresh without navigation).
 - **CP user detail parity:** `/control-panel/users/[id]` — doctors redirect to `/control-panel/doctors/[id]`; admin/staff use `AdminUserDetailScreen` + `AdminUserFormDialog`. Legacy `DoctorDetailForm` deprecated, unwired.

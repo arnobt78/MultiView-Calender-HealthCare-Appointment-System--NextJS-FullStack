@@ -37,3 +37,26 @@ release_commit: "3a563d7"
 ## Eval Gate Status
 
 **PASS** — C1 Human Gate 2 closed with automated Red Team verification. Archived to `.agile-v/cycles/C1/`.
+
+---
+
+## C2 Close — ER-C2-CLOSE
+
+```yaml
+eval_run_id: ER-C2-CLOSE
+eval_timestamp: "2026-05-31T16:10:00Z"
+policy_version_ref: "1.0.0"
+eval_gate_status: PASS
+eval_gate_rationale: "C2 closure — npm test 520/520, tsc, eslint, build PASS for REQ-0005..0008"
+cycle: C2
+release_commit: "2d9a932"
+```
+
+| Suite | Command | Result | LINKED_REQ |
+|-------|---------|--------|------------|
+| full regression | npm test | PASS 520/520 | REQ-0005..0008 |
+| typecheck | npx tsc --noEmit | PASS | REQ-0005..0008 |
+| lint | npm run lint | PASS | REQ-0005..0008 |
+| release build | npm run build | PASS | REQ-0005..0008 |
+
+**EvalGate (active):** PASS — C2 archived to `.agile-v/cycles/C2/`.

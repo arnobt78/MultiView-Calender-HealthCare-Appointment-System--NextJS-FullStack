@@ -67,3 +67,25 @@
 ---
 
 EvalGate: status=PASS | eval_run_id=ER-C1-CLOSE | policy_version_ref=1.0.0 | eval_results_path=.agile-v/EVAL_RESULTS.md
+
+---
+
+## C2 — Doctor CP Tranche (closed 2026-05-31)
+
+| Item | Value |
+|------|-------|
+| Cycle | C2 |
+| ART-IDs | ART-0034..ART-0048 |
+| REQ-IDs | REQ-0005..REQ-0008 |
+| Regression | 520/520 Vitest |
+
+| VER-ID | TC-ID | REQ-ID | Result | Description |
+|--------|-------|--------|--------|-------------|
+| VER-0013 | TC-0010 | REQ-0005 | PASS | Doctor tranche regression |
+| VER-0014 | TC-0013 | REQ-0005 | PASS | Full suite at C2 synthesis |
+| VER-0015 | TC-0011 | REQ-0006 | PASS | Patient access tests |
+| VER-0016 | TC-0012 | REQ-0007 | PASS | Cross-tab doctors scope |
+| VER-0017 | TC-0014 | REQ-0008 | PASS | tsc strict |
+| VER-0018 | TC-0015 | REQ-0008 | PASS | lint + build |
+
+EvalGate (C2): status=PASS | eval_run_id=ER-C2-CLOSE | release_commit=2d9a932

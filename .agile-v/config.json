@@ -4,15 +4,24 @@
     "name": "healthcal-pro",
     "display_name": "HealthCal Pro",
     "repository": "calendar-appointment",
-    "initialized": "2026-05-30"
+    "initialized": "2026-05-30",
+    "bootstrap_completed": "2026-05-31"
   },
   "cycle": {
-    "current": "C1",
+    "current": "C2",
     "status": "closed",
-    "started": "2026-05-30",
-    "closed": "2026-05-30",
-    "gate_2_commit": "3a563d7",
-    "archive_path": ".agile-v/cycles/C1/"
+    "started": "2026-05-31",
+    "closed": "2026-05-31",
+    "gate_2_commit": "2d9a932",
+    "archive_path": ".agile-v/cycles/C2/",
+    "prior_cycles": [
+      {
+        "id": "C1",
+        "closed": "2026-05-30",
+        "gate_2_commit": "3a563d7",
+        "archive_path": ".agile-v/cycles/C1/"
+      }
+    ]
   },
   "authority_matrix": {
     "gate_1": ["Product Owner", "Tech Lead", "Project Maintainer"],
@@ -28,6 +37,8 @@
       "npm run build"
     ]
   },
+  "skills_registry": ".agile-v/SKILLS.md",
+  "bootstrap_guide": ".agile-v/BOOTSTRAP.md",
   "llm_provider_registry": [
     {
       "name": "cursor",
@@ -36,7 +47,7 @@
       "retention": "session + vendor policy",
       "api_data_usage": "per Cursor Terms of Service",
       "approved_for": ["non-regulated", "internal-dev"],
-      "review_date": "2026-05-30"
+      "review_date": "2026-05-31"
     }
   ],
   "model_versions": {
@@ -59,7 +70,7 @@
   "agents": {
     "requirement_architect": { "tier": "high" },
     "logic_gatekeeper": { "tier": "high" },
-    "build_agent": { "tier": "medium" },
+    "build_agent_js": { "tier": "medium" },
     "test_designer": { "tier": "medium" },
     "red_team_verifier": { "tier": "medium" },
     "compliance_auditor": { "tier": "low-medium" }

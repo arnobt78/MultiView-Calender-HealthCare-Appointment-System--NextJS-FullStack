@@ -1,6 +1,6 @@
 # Test Specification — HealthCal Pro
 
-<!-- Cycle: C1 | Last updated: 2026-05-30 | Gate 2 closed -->
+<!-- Cycle: C1+C2 | Last updated: 2026-05-31 | C2 Gate 2 closed -->
 
 ## Test Cases
 
@@ -15,12 +15,18 @@
 | TC-0007 | C1 | REQ-0001..0004 | regression | TypeScript strict | `npx tsc --noEmit` | PASS |
 | TC-0008 | C1 | REQ-0001..0004 | regression | ESLint | `npm run lint` | PASS |
 | TC-0009 | C1 | REQ-0001..0004 | regression | Production build | `npm run build` | PASS |
+| TC-0010 | C2 | REQ-0005 | regression | Doctor revenue / access tests | `npm test` | PASS |
+| TC-0011 | C2 | REQ-0006 | unit | Patient access matrix | `patient-access.test.ts` | PASS |
+| TC-0012 | C2 | REQ-0007 | unit | Cross-tab doctors scope | `query-cache-cross-tab.test.ts` | PASS |
+| TC-0013 | C2 | REQ-0005..0008 | regression | Full Vitest suite | `npm test` | PASS |
+| TC-0014 | C2 | REQ-0005..0008 | regression | TypeScript strict | `npx tsc --noEmit` | PASS |
+| TC-0015 | C2 | REQ-0005..0008 | regression | ESLint + build | `npm run lint`, `npm run build` | PASS |
 
 ## Regression Baseline
 
 | Suite | Command | Scope |
 |-------|---------|-------|
-| Unit / lib | `npm test` | 66 files, 472 tests |
+| Unit / lib | `npm test` | 79 files, 520 tests (C2) |
 | Typecheck | `npx tsc --noEmit` | strict TS |
 | Lint | `npm run lint` | ESLint |
 | Release | `npm run build` | Next.js production |

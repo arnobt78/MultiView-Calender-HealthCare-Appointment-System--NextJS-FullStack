@@ -14,8 +14,10 @@ project:
     - tanstack-query
 
 cycle:
-  current: C1
+  current: C2
   started: "2026-05-30"
+  closed: "2026-05-31"
+  prior: C1
 
 gates:
   gate_1:
