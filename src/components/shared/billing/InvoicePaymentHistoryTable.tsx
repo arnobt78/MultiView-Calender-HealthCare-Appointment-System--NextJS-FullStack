@@ -25,8 +25,24 @@ type Props = {
   currency: string;
 };
 
+/** Hide duplicate Stripe webhook rows (legacy data before unique index). */
+function dedupePaymentsForDisplay(payments: InvoicePaymentRow[]): InvoicePaymentRow[] {
+  const seenStripe = new Set<string>();
+  const out: InvoicePaymentRow[] = [];
+  for (const p of payments) {
+    const ref = p.stripe_payment_id?.trim();
+    if (ref) {
+      if (seenStripe.has(ref)) continue;
+      seenStripe.add(ref);
+    }
+    out.push(p);
+  }
+  return out;
+}
+
 export function InvoicePaymentHistoryTable({ payments, currency }: Props) {
-  if (payments.length === 0) {
+  const rows = dedupePaymentsForDisplay(payments);
+  if (rows.length === 0) {
     return <p className="text-sm text-muted-foreground">No payments recorded yet.</p>;
   }
 
@@ -42,7 +58,7 @@ export function InvoicePaymentHistoryTable({ payments, currency }: Props) {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {payments.map((p) => (
+        {rows.map((p) => (
           <TableRow key={p.id}>
             <TableCell className="font-mono text-xs">#{p.id.slice(0, 8)}</TableCell>
             <TableCell className="font-semibold">

@@ -32,6 +32,27 @@ export type InvoicePaymentRow = {
   stripe_payment_id?: string;
 };
 
+/** Linked appointment context for invoice list + detail UI. */
+export type InvoiceVisitSummary = {
+  appointment_id: string;
+  title: string;
+  start_iso: string;
+  end_iso: string;
+  when_label: string;
+  location_label: string;
+  is_telehealth: boolean;
+  patient_id: string | null;
+  patient_label: string | null;
+  category_label: string | null;
+  category_color: string | null;
+  treating_physician_id: string | null;
+  treating_physician_label: string | null;
+  treating_physician_specialty: string | null;
+  calendar_owner_id: string | null;
+  calendar_owner_label: string | null;
+  calendar_owner_specialty: string | null;
+};
+
 export type InvoiceRow = {
   id: string;
   appointment_id?: string;
@@ -45,6 +66,7 @@ export type InvoiceRow = {
   paid_at?: string;
   created_at: string;
   payments: InvoicePaymentRow[];
+  visit_summary?: InvoiceVisitSummary;
 };
 
 /** GET /api/billing/appointment-options — compact visit picker row. */

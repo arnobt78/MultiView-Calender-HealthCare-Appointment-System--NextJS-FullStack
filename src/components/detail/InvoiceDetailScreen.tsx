@@ -12,6 +12,7 @@ import { InvoiceDetailClient } from "@/components/shared/billing/InvoiceDetailCl
 import { InvoiceDetailQuerySeed } from "@/components/shared/billing/InvoiceDetailQuerySeed";
 import { InvoicePaymentHistoryTable } from "@/components/shared/billing/InvoicePaymentHistoryTable";
 import { InvoiceStatusBadge } from "@/components/shared/billing/InvoiceStatusBadge";
+import { InvoiceLinkedVisitPanel } from "@/components/shared/billing/InvoiceLinkedVisitPanel";
 import { appointmentDetailHref } from "@/lib/entity-routes";
 import type { InvoiceDetailUiAccess } from "@/lib/invoice-detail-ssr";
 import type { Invoice } from "@/hooks/usePayments";
@@ -87,21 +88,16 @@ export function InvoiceDetailScreen({
                 <InvoiceStatusBadge invoice={invoice} />
               </dd>
             </div>
-            <div>
-              <dt className="font-medium text-muted-foreground">appointment_id</dt>
-              <dd>
-                {appointmentHref ? (
-                  <Link href={appointmentHref} className="font-mono text-xs hover:underline">
-                    #{invoice.appointment_id!.slice(0, 8)}
-                  </Link>
-                ) : (
-                  "—"
-                )}
-              </dd>
-            </div>
           </dl>
         </CardContent>
       </Card>
+
+      {invoice.visit_summary && (
+        <InvoiceLinkedVisitPanel
+          summary={invoice.visit_summary}
+          appointmentHref={appointmentHref}
+        />
+      )}
 
       <Card>
         <CardHeader>

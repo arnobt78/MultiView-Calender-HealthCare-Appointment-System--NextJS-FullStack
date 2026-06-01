@@ -39,6 +39,7 @@ import {
   UserRound,
   Users,
   Video,
+  Receipt,
 } from "@/components/shared/appointment-card-icons";
 import { RoleEntityLink } from "@/components/shared/RoleEntityLink";
 import { TruncatedText, WrappingText } from "@/components/shared/TruncatedText";
@@ -55,6 +56,8 @@ import { UserAvatar } from "@/components/shared/UserAvatar";
 import { getPublicUrl } from "@/lib/vercelBlob";
 import { patientAgeYears } from "@/lib/patient-age";
 import type { AppointmentAssignee, Patient } from "@/types/types";
+import { InvoiceStatusBadge } from "@/components/shared/billing/InvoiceStatusBadge";
+import type { InvoiceDisplayStatus } from "@/lib/billing-appointment-eligibility";
 
 export type AppointmentCardProps = {
   appointment: FullAppointment;
@@ -76,6 +79,8 @@ export type AppointmentCardProps = {
   /** Portal API labels — avoids `/api/users/search` for patients. */
   portalOwnerLabel?: string;
   portalTreatingLabel?: string;
+  /** Latest linked invoice display status (from invoices cache). */
+  invoiceDisplayStatus?: InvoiceDisplayStatus | null;
   /** When set, card is a hover/grid trigger only (no outer chrome) */
   /** Inside `AppointmentHoverCard` — no role=button so Radix hover pointer events work. */
   asHoverTrigger?: boolean;
@@ -240,12 +245,14 @@ function AppointmentCardMeta({
   wrapValues,
   variant,
   ownerUsers,
+  invoiceDisplayStatus,
 }: {
   appointment: FullAppointment;
   model: ReturnType<typeof useAppointmentCardModel>;
   wrapValues: boolean;
   variant: AppointmentCardVariant;
   ownerUsers: OwnerUserSummary[];
+  invoiceDisplayStatus?: InvoiceDisplayStatus | null;
 }) {
   const {
     isDone,
@@ -469,6 +476,12 @@ function AppointmentCardMeta({
             {appointment.status || "pending"}
           </span>
         </AppointmentCardMetaRow>
+
+        {invoiceDisplayStatus ? (
+          <AppointmentCardMetaRow icon={<Receipt className="h-3.5 w-3.5" />} label="Invoice:">
+            <InvoiceStatusBadge displayStatus={invoiceDisplayStatus} />
+          </AppointmentCardMetaRow>
+        ) : null}
 
         {appointment.is_telehealth ? (
           <span className="inline-flex items-center gap-1 rounded-full border border-sky-200/60 bg-sky-100/80 px-2 py-0.5 text-[10px] font-medium text-sky-700">
@@ -940,6 +953,7 @@ export function AppointmentCard({
   hideActionsRail = false,
   portalOwnerLabel,
   portalTreatingLabel,
+  invoiceDisplayStatus,
   asHoverTrigger,
   asTrigger,
   triggerClassName,
@@ -1019,6 +1033,7 @@ export function AppointmentCard({
         wrapValues={wrapValues}
         variant={variant}
         ownerUsers={ownerUsers}
+        invoiceDisplayStatus={invoiceDisplayStatus}
       />
     ) : (
       compactMeta

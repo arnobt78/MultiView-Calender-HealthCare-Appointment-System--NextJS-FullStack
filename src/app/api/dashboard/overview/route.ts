@@ -21,7 +21,9 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session";
+import { getUserRole } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
+import { fetchRevenueOverviewForViewer } from "@/lib/invoices-revenue-scope";
 import { redis } from "@/lib/redis";
 import {
   startOfDay,
@@ -92,8 +94,6 @@ export async function GET() {
       upcomingAppointmentsRaw,
       recentAppointmentsRaw,
       overdueCount,
-      totalInvoices,
-      paidInvoices,
     ] = await Promise.all([
       prisma.appointment.count({ where: { owner_id: sessionUser.userId } }),
       prisma.appointment.count({
@@ -141,20 +141,12 @@ export async function GET() {
           status: { not: "done" },
         },
       }),
-      prisma.invoice.count({ where: { user_id: sessionUser.userId } }),
-      prisma.invoice.count({
-        where: { user_id: sessionUser.userId, status: "paid" },
-      }),
     ]);
 
-    // Revenue: sum of paid invoice amounts (stored in cents)
-    const paidRevenue = await prisma.invoice.aggregate({
-      where: { user_id: sessionUser.userId, status: "paid" },
-      _sum: { amount: true },
-    });
-    const outstandingRevenue = await prisma.invoice.aggregate({
-      where: { user_id: sessionUser.userId, status: { in: ["draft", "sent"] } },
-      _sum: { amount: true },
+    const role = await getUserRole(sessionUser.userId);
+    const revenue = await fetchRevenueOverviewForViewer({
+      userId: sessionUser.userId,
+      role,
     });
 
     const payload = {
@@ -180,12 +172,7 @@ export async function GET() {
       recentAppointments: pickRecentActivityAppointments(recentAppointmentsRaw).map((a) =>
         mapDashboardOverviewRecentQueueAppointment(a)
       ),
-      revenue: {
-        paidCents: paidRevenue._sum.amount ?? 0,
-        outstandingCents: outstandingRevenue._sum.amount ?? 0,
-        totalInvoices,
-        paidInvoices,
-      },
+      revenue,
     };
 
     /*

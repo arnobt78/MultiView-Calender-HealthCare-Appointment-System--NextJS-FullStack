@@ -155,6 +155,44 @@ export type AssertAppointmentEligibleResult =
   | { ok: false; status: 409; message: string; invoiceId: string };
 
 /** POST /api/invoices — one active bill per encounter. */
+/** Batch latest invoice display status per appointment (calendar cards + snapshot). */
+export async function mapLatestInvoiceDisplayByAppointmentIds(
+  appointmentIds: string[]
+): Promise<Map<string, InvoiceDisplayStatus>> {
+  const map = new Map<string, InvoiceDisplayStatus>();
+  if (appointmentIds.length === 0) return map;
+
+  const rows = await prisma.invoice.findMany({
+    where: { appointment_id: { in: appointmentIds } },
+    orderBy: { created_at: "desc" },
+    select: {
+      appointment_id: true,
+      status: true,
+      created_at: true,
+      payments: { select: { status: true } },
+    },
+  });
+
+  const latestByAppt = new Map<
+    string,
+    { status: string; payments: Pick<InvoicePaymentRow, "status">[] }
+  >();
+
+  for (const row of rows) {
+    const apptId = row.appointment_id;
+    if (!apptId || latestByAppt.has(apptId)) continue;
+    latestByAppt.set(apptId, {
+      status: row.status,
+      payments: row.payments,
+    });
+  }
+
+  for (const [apptId, latest] of latestByAppt) {
+    map.set(apptId, resolveInvoiceDisplayStatus(latest));
+  }
+  return map;
+}
+
 export async function assertAppointmentEligibleForNewInvoice(
   appointmentId: string
 ): Promise<AssertAppointmentEligibleResult> {

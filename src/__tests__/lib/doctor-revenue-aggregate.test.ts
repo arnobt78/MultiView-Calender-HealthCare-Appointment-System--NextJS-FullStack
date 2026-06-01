@@ -8,41 +8,37 @@ import {
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     invoice: {
-      groupBy: vi.fn(),
+      findMany: vi.fn(),
     },
   },
 }));
 
 describe("doctor-revenue-aggregate", () => {
   beforeEach(() => {
-    vi.mocked(prisma.invoice.groupBy).mockReset();
+    vi.mocked(prisma.invoice.findMany).mockReset();
   });
 
   it("fetchPaidRevenueCentsByDoctorIds returns empty map for no ids", async () => {
     const map = await fetchPaidRevenueCentsByDoctorIds([]);
     expect(map.size).toBe(0);
-    expect(prisma.invoice.groupBy).not.toHaveBeenCalled();
+    expect(prisma.invoice.findMany).not.toHaveBeenCalled();
   });
 
-  it("fetchPaidRevenueCentsByDoctorIds maps paid invoice sums per doctor", async () => {
-    vi.mocked(prisma.invoice.groupBy).mockResolvedValue([
-      { user_id: "doc-a", _sum: { amount: 12500 } },
-      { user_id: "doc-b", _sum: { amount: null } },
+  it("credits treating physician when billing user is calendar owner", async () => {
+    vi.mocked(prisma.invoice.findMany).mockResolvedValue([
+      {
+        amount: 5900,
+        user_id: "doc-owner",
+        appointment: {
+          owner_id: "doc-owner",
+          treating_physician_id: "doc-a",
+        },
+      },
     ] as never);
 
-    const map = await fetchPaidRevenueCentsByDoctorIds(["doc-a", "doc-b", "doc-c"]);
-
-    expect(prisma.invoice.groupBy).toHaveBeenCalledWith({
-      by: ["user_id"],
-      where: {
-        user_id: { in: ["doc-a", "doc-b", "doc-c"] },
-        status: "paid",
-      },
-      _sum: { amount: true },
-    });
-    expect(map.get("doc-a")).toBe(12500);
-    expect(map.get("doc-b")).toBe(0);
-    expect(map.has("doc-c")).toBe(false);
+    const map = await fetchPaidRevenueCentsByDoctorIds(["doc-a", "doc-owner"]);
+    expect(map.get("doc-a")).toBe(5900);
+    expect(map.get("doc-owner")).toBe(0);
   });
 
   it("resolveDoctorPaidRevenueCents defaults missing doctor to 0", () => {

@@ -102,6 +102,7 @@ export type SnapshotInvoice = {
   description: string | null;
   /** For Refunded display via shared InvoiceStatusBadge on patient snapshot. */
   payments?: { status: string }[];
+  visit_summary?: import("@/lib/billing-types").InvoiceVisitSummary;
 };
 
 /** Appointment row from snapshot API (adds category label + B2 owner / treating columns for patient detail table). */

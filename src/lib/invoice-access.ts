@@ -96,7 +96,7 @@ async function doctorIsLinkedToInvoice(
 }
 
 /**
- * Billing owner on create — invoice.user_id follows appointment owner (doctor), not admin session.
+ * Billing owner on create — treating physician first (patient-facing doctor), else calendar owner.
  */
 export async function resolveInvoiceBillingUserId(
   appointmentId: string | null,
@@ -105,9 +105,10 @@ export async function resolveInvoiceBillingUserId(
   if (!appointmentId) return fallbackUserId;
   const appt = await prisma.appointment.findUnique({
     where: { id: appointmentId },
-    select: { owner_id: true },
+    select: { owner_id: true, treating_physician_id: true },
   });
-  return appt?.owner_id ?? fallbackUserId;
+  if (!appt) return fallbackUserId;
+  return appt.treating_physician_id ?? appt.owner_id ?? fallbackUserId;
 }
 
 /** Doctor may create invoice when linked to a visit they own or treat. */

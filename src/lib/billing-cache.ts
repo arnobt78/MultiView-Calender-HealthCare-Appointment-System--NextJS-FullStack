@@ -4,6 +4,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { redis } from "@/lib/redis";
+import { invalidateAdminDashboardOverviewCaches } from "@/lib/billing-dashboard-cache";
 
 /** Resolve patient login user for Redis overview bust (chart email → users row). */
 export async function resolvePatientPortalUserIdForAppointment(
@@ -31,6 +32,7 @@ export async function invalidateBillingRedisCaches(opts: {
   patientPortalUserId?: string | null;
 }): Promise<void> {
   void redis.invalidateDashboardOverview(opts.invoiceUserId);
+  void invalidateAdminDashboardOverviewCaches();
 
   const patientUserId =
     opts.patientPortalUserId !== undefined

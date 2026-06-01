@@ -4,6 +4,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { DataTableColumnHeader } from "@/components/shared/DataTableColumnHeader";
 import { InvoiceStatusBadge } from "@/components/shared/billing/InvoiceStatusBadge";
+import { InvoiceVisitSummaryLine } from "@/components/shared/billing/InvoiceVisitSummaryLine";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { ClinicalAppointmentStatusBadge } from "@/components/shared/entity-detail/ClinicalAppointmentStatusBadge";
 import {
@@ -438,7 +439,10 @@ export function buildPatientInvoicesColumns(viewerRole: EntityRole): ColumnDef<S
                 "flex min-w-0 items-start"
               )}
             >
-              {row.original.description!.trim()}
+              <div className="min-w-0 space-y-0.5">
+                <span>{row.original.description!.trim()}</span>
+                <InvoiceVisitSummaryLine summary={row.original.visit_summary} />
+              </div>
             </div>
           ),
           "table"

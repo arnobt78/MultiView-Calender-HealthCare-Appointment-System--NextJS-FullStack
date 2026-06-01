@@ -2,16 +2,15 @@
 
 ## Latest Audit Update (2026-06-01)
 
-- **One bill per visit:** `billing-appointment-eligibility.ts` blocks duplicate `draft|sent|overdue|paid`; POST `/api/invoices` → **409**; migration `009_invoice_one_active_per_appointment.sql` (dedupe legacy rows + partial unique index). Cancelled + refunded payment → **Refunded** badge (`InvoiceStatusBadge` + `resolveInvoiceDisplayStatus`).
-- **Visit picker:** `GET /api/billing/appointment-options` + shared `fetchBillingAppointmentOptions` (API + SSR). `InvoiceVisitPickerList` / `InvoiceAppointmentPickerField`; admin `includeBilled=1` shows disabled billed rows.
-- **SSR picker seed:** `prefetchBillingAppointmentOptions` → `queryKeys.billing.appointmentOptions("", false)` on CP **invoice-management** (`prefetchControlPanelSection` invoices tab) and **doctor-portal** page. Client search still refetches keyed by `search` + `includeBilled`.
-- **Invalidation:** `invalidateInvoicesBilling` + `invalidateInvoicesAndOverview` invalidate `queryKeys.billing.root`; `invalidateBillingAppointmentOptionsCache` on invoice mutations; Redis `billing-cache.ts` on writes/webhook.
-- **Role-based billing (base):** Stripe Checkout pay, CP invoice lifecycle, `DoctorPortalInvoicesCard`, org `organization_id`. Access: `resolveInvoiceAccess`. Paid only via `record-payment` or webhook.
-- **Routes:** Admin `/control-panel/invoices/[id]`; doctor/patient `/invoices/[id]`. `invoiceDetailHref` in `entity-routes.ts`.
-- **Patient snapshot:** invoice rows include `payments`; status column uses shared `InvoiceStatusBadge` (Refunded parity).
-- **Tests:** Vitest **565** (93 files) incl. `billing-appointment-options.test.ts`, `billing-appointment-options-load.test.ts`.
-- **DB:** `npm run db:migrate` is idempotent and **silent on success** (loads `.env.local`, runs `migrations/*.sql`). Then `npm run prisma:push` if Prisma schema drift.
-- **Stripe:** Local `stripe listen --forward-to localhost:3000/api/payments/webhook`; Vercel Dashboard signing secret for production endpoint.
+- **Cross-portal revenue fix:** Admin **Dashboard Overview** revenue now uses `fetchRevenueOverviewForViewer` (global totals — same universe as CP Invoice Management). Doctor Management **Revenue** column attributes paid cents to treating physician, then calendar owner (`fetchPaidRevenueCentsByDoctorIds`). Invoice writes bust all admin overview Redis keys (`invalidateAdminDashboardOverviewCaches`).
+- **Billing owner:** `resolveInvoiceBillingUserId` prefers `treating_physician_id` over `owner_id` on create.
+- **Visit context on invoices:** `InvoiceLinkedVisitPanel` on `/invoices/[id]` and CP invoice detail; `visit_summary` on list APIs + patient/doctor portal cards + CP invoice table; snapshot invoices include visit line under description.
+- **Invoice status on appointments:** Dashboard list cards show **Invoice:** badge when `invoices.all` cache has a linked row (`useAppointmentInvoiceDisplayMap`).
+- **Auto-draft on done:** `maybeCreateDraftInvoiceForCompletedVisit` on appointment PATCH when status becomes `done` (requires doctor `consultation_fee` > 0).
+- **Org panel:** `010_backfill_invoice_org_and_billing.sql` tags invoices when billing doctor has one org; demo seed adds all doctors to HealthCal Demo Clinic; org tab SSR-seeds first org billing list.
+- **One bill per visit / picker / Refunded badge:** `billing-appointment-eligibility.ts`, POST **409**, `009` migration, shared picker + SSR seed (unchanged contract).
+- **Payments:** `011_payment_stripe_id_unique.sql`; payment history UI dedupes duplicate Stripe IDs.
+- **Tests:** Vitest **569** (95 files). **DB:** `npm run db:migrate` (silent OK) runs `009`–`011`.
 
 ## Prior (2026-05-31)
 
@@ -113,7 +112,7 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Prism
 | Patient | patient portal + `/api/invoices` | `/invoices/[id]` | Stripe pay when `pay` |
 
 - **Shared UI:** `src/components/shared/billing/*` — `CreateInvoiceDialog`, `InvoiceAppointmentPickerField`, `InvoiceVisitPickerList`, `InvoiceStatusBadge`, `InvoiceDetailClient`, `InvoicePayActions`, `InvoiceAdminActionsMenu`.
-- **Libs:** `billing-appointment-eligibility.ts`, `billing-appointment-options-load.ts`, `billing-appointment-options-cache.ts`.
+- **Libs:** `billing-appointment-eligibility.ts`, `billing-appointment-options-load.ts`, `invoices-revenue-scope.ts`, `invoice-visit-summary.ts`, `billing-auto-draft.ts`, `billing-dashboard-cache.ts`.
 - **Doctor portal:** `DoctorPortalInvoicesCard` + SSR `prefetchInvoices` + `prefetchBillingAppointmentOptions` on `doctor-portal/page.tsx`.
 - **CP invoices tab:** SSR `prefetchInvoices` + `prefetchBillingAppointmentOptions` via `prefetchControlPanelSection("invoices")`.
 - **Org billing:** `OrganizationBillingPanel` on org detail; `?organizationId=` filter; any org **member** can view org-tagged rows; org **admin** can tag on create.

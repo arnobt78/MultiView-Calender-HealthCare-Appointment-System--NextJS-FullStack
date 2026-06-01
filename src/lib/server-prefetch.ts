@@ -475,9 +475,12 @@ export async function prefetchInvoices(
 ): Promise<Invoice[] | null> {
   try {
     const { fetchInvoicesForViewer } = await import("@/lib/invoices-scope");
+    const { attachVisitSummariesToInvoices } = await import(
+      "@/lib/invoice-visit-summary"
+    );
     const rows = await fetchInvoicesForViewer({ userId, role, email });
 
-    return rows.map((i) => {
+    const mapped = rows.map((i) => {
       const base = serializeInvoice(i);
       return {
         ...base,
@@ -494,6 +497,8 @@ export async function prefetchInvoices(
         })),
       } satisfies Invoice;
     });
+
+    return attachVisitSummariesToInvoices(mapped);
   } catch {
     return null;
   }
@@ -667,7 +672,10 @@ const OVERVIEW_CACHE_TTL = 90;
  * to the same 16-query Prisma aggregation as the API route, and populates
  * Redis for subsequent calls within the TTL window.
  */
-export async function prefetchDashboardOverview(userId: string): Promise<DashboardOverview | null> {
+export async function prefetchDashboardOverview(
+  userId: string,
+  role: string | null = null
+): Promise<DashboardOverview | null> {
   try {
     const cacheKey = `dashboard:overview:${userId}`;
 
@@ -707,8 +715,6 @@ export async function prefetchDashboardOverview(userId: string): Promise<Dashboa
       upcomingAppointmentsRaw,
       recentAppointmentsRaw,
       overdueCount,
-      totalInvoices,
-      paidInvoices,
     ] = await Promise.all([
       prisma.appointment.count({ where: { owner_id: userId } }),
       prisma.appointment.count({ where: { owner_id: userId, start: { gte: todayStart, lte: todayEnd } } }),
@@ -736,20 +742,12 @@ export async function prefetchDashboardOverview(userId: string): Promise<Dashboa
       prisma.appointment.count({
         where: { owner_id: userId, end: { lt: now }, status: { not: "done" } },
       }),
-      prisma.invoice.count({ where: { user_id: userId } }),
-      prisma.invoice.count({ where: { user_id: userId, status: "paid" } }),
     ]);
 
-    const [paidRevenue, outstandingRevenue] = await Promise.all([
-      prisma.invoice.aggregate({
-        where: { user_id: userId, status: "paid" },
-        _sum: { amount: true },
-      }),
-      prisma.invoice.aggregate({
-        where: { user_id: userId, status: { in: ["draft", "sent"] } },
-        _sum: { amount: true },
-      }),
-    ]);
+    const { fetchRevenueOverviewForViewer } = await import(
+      "@/lib/invoices-revenue-scope"
+    );
+    const revenue = await fetchRevenueOverviewForViewer({ userId, role });
 
     const payload: DashboardOverview = {
       appointments: {
@@ -771,12 +769,7 @@ export async function prefetchDashboardOverview(userId: string): Promise<Dashboa
       recentAppointments: pickRecentActivityAppointments(recentAppointmentsRaw).map((a) =>
         mapDashboardOverviewRecentQueueAppointment(a)
       ),
-      revenue: {
-        paidCents: paidRevenue._sum.amount ?? 0,
-        outstandingCents: outstandingRevenue._sum.amount ?? 0,
-        totalInvoices,
-        paidInvoices,
-      },
+      revenue,
     };
 
     // Populate Redis so the API route also benefits from this fresh data

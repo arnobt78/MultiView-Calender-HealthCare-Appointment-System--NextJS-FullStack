@@ -287,10 +287,31 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       }
     }
 
+    const previousStatus =
+      body.status !== undefined
+        ? (
+            await prisma.appointment.findUnique({
+              where: { id },
+              select: { status: true },
+            })
+          )?.status
+        : undefined;
+
     const updated = await prisma.appointment.update({
       where: { id },
       data,
     });
+
+    if (
+      body.status === "done" &&
+      previousStatus !== "done" &&
+      updated.status === "done"
+    ) {
+      const { maybeCreateDraftInvoiceForCompletedVisit } = await import(
+        "@/lib/billing-auto-draft"
+      );
+      void maybeCreateDraftInvoiceForCompletedVisit(id, ctx.accessSession);
+    }
 
     void redis.invalidateDashboardOverview(ctx.sessionUser.userId);
 

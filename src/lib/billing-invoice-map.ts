@@ -3,7 +3,11 @@
  */
 
 import type { QueryClient } from "@tanstack/react-query";
-import type { InvoiceRow, InvoicePaymentRow } from "@/lib/billing-types";
+import type {
+  InvoiceRow,
+  InvoicePaymentRow,
+  InvoiceVisitSummary,
+} from "@/lib/billing-types";
 import { queryKeys } from "@/lib/query-keys";
 
 type ApiPayment = {
@@ -27,6 +31,7 @@ type ApiInvoice = {
   paid_at?: string | Date | null;
   created_at: string | Date;
   payments?: ApiPayment[];
+  visit_summary?: InvoiceVisitSummary;
 };
 
 function toIsoDateString(value: string | Date | null | undefined): string | undefined {
@@ -82,5 +87,6 @@ export function mapApiInvoiceToRow(raw: ApiInvoice): InvoiceRow {
         ? raw.created_at
         : raw.created_at.toISOString(),
     payments: (raw.payments ?? []).map(mapPayment),
+    visit_summary: raw.visit_summary,
   };
 }

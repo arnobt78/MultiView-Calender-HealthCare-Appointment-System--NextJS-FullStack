@@ -33,6 +33,7 @@ import { Receipt, CreditCard } from "lucide-react";
 import { CreateInvoiceDialog } from "@/components/shared/billing/CreateInvoiceDialog";
 import { InvoiceAdminActionsMenu } from "@/components/shared/billing/InvoiceAdminActionsMenu";
 import { InvoiceStatusBadge } from "@/components/shared/billing/InvoiceStatusBadge";
+import { InvoiceVisitSummaryLine } from "@/components/shared/billing/InvoiceVisitSummaryLine";
 import { format } from "date-fns";
 import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
 
@@ -71,7 +72,14 @@ export default function InvoiceManagement() {
     }),
     columnHelper.accessor("description", {
       header: "Description",
-      cell: (info) => info.getValue() ?? <span className="text-muted-foreground italic">—</span>,
+      cell: (info) => (
+        <div className="min-w-0 max-w-[280px]">
+          <p className="truncate text-sm">
+            {info.getValue() ?? <span className="text-muted-foreground italic">—</span>}
+          </p>
+          <InvoiceVisitSummaryLine summary={info.row.original.visit_summary} />
+        </div>
+      ),
     }),
     columnHelper.accessor("amount", {
       header: "Amount",

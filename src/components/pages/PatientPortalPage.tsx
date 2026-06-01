@@ -20,6 +20,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { invalidateInvoicesAndOverview } from "@/lib/query-client";
 import { usePayments, type Invoice } from "@/hooks/usePayments";
 import { InvoiceStatusBadge } from "@/components/shared/billing/InvoiceStatusBadge";
+import { InvoiceVisitSummaryLine } from "@/components/shared/billing/InvoiceVisitSummaryLine";
 import { InvoicePayActions } from "@/components/shared/billing/InvoicePayActions";
 import { InvoiceAmountDisplay } from "@/components/shared/billing/InvoiceAmountDisplay";
 import { differenceInYears, format, isPast, isFuture, isToday } from "date-fns";
@@ -763,6 +764,10 @@ export default function PatientPortalPage({
                                 Due {format(new Date(inv.due_date), "dd MMM yyyy")}
                               </p>
                             )}
+                            <InvoiceVisitSummaryLine
+                              summary={inv.visit_summary}
+                              className="text-gray-600"
+                            />
                           </div>
                           <div className="flex shrink-0 items-center gap-2">
                             <InvoiceAmountDisplay

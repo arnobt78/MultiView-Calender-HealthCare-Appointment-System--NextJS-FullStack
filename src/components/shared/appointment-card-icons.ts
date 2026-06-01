@@ -15,4 +15,5 @@ export {
   Stethoscope,
   UserCog,
   Share2,
+  Receipt,
 } from "lucide-react";

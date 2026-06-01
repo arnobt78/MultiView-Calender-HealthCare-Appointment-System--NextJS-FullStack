@@ -10,6 +10,7 @@ import {
 } from "@/lib/invoice-access";
 import type { InvoiceAccessLevel } from "@/lib/billing-types";
 import type { Invoice } from "@/hooks/usePayments";
+import { loadInvoiceVisitSummary } from "@/lib/invoice-visit-summary";
 
 export type InvoiceDetailUiAccess = "admin" | "view" | "mutate" | "pay";
 
@@ -26,6 +27,7 @@ export function toClientInvoice(
 ): Invoice | null {
   if (!raw) return null;
   const invoice = serializeInvoice(raw);
+
   return {
     ...invoice,
     appointment_id: invoice.appointment_id ?? undefined,
@@ -66,6 +68,12 @@ export async function loadInvoiceDetailForPage(
   const raw = await loadInvoiceDetailRow(invoiceId);
   const clientInvoice = toClientInvoice(raw);
   if (!clientInvoice) return null;
+
+  if (raw?.appointment_id) {
+    clientInvoice.visit_summary =
+      (await loadInvoiceVisitSummary(raw.appointment_id)) ?? undefined;
+  }
+
   return {
     clientInvoice,
     accessLevel,

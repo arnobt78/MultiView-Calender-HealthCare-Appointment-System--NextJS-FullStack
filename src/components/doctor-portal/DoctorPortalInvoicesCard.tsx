@@ -8,6 +8,7 @@ import { PortalPanelSection } from "@/components/shared/PortalPanelSection";
 import { CreateInvoiceDialog } from "@/components/shared/billing/CreateInvoiceDialog";
 import { InvoiceStatusBadge } from "@/components/shared/billing/InvoiceStatusBadge";
 import { InvoiceAmountDisplay } from "@/components/shared/billing/InvoiceAmountDisplay";
+import { InvoiceVisitSummaryLine } from "@/components/shared/billing/InvoiceVisitSummaryLine";
 import { InvoiceAdminActionsMenu } from "@/components/shared/billing/InvoiceAdminActionsMenu";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -77,6 +78,7 @@ export function DoctorPortalInvoicesCard({ listBodyLoading }: Props) {
                   {format(new Date(inv.created_at), "dd MMM yyyy")}
                   {outstanding > 0 ? ` · ${outstanding} open` : ""}
                 </p>
+                <InvoiceVisitSummaryLine summary={inv.visit_summary} />
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 <InvoiceAmountDisplay amountCents={inv.amount} currency={inv.currency} />

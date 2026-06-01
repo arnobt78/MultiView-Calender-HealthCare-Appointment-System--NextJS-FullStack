@@ -64,4 +64,12 @@ export function seedControlPanelSectionCache(
   if (initial.doctorsDirectory != null) {
     queryClient.setQueryData(queryKeys.doctors.all, initial.doctorsDirectory);
   }
+  if (initial.orgBillingInvoicesByOrgId) {
+    for (const [orgId, payload] of Object.entries(initial.orgBillingInvoicesByOrgId)) {
+      queryClient.setQueryData(
+        [...queryKeys.invoices.all, "org", orgId],
+        payload
+      );
+    }
+  }
 }

@@ -6,6 +6,7 @@ import {
   type AppointmentSnapshotPrismaRow,
 } from "@/lib/appointment-snapshot-row";
 import { serializeInvoice, serializePatient } from "@/lib/serializers";
+import { attachVisitSummariesToInvoices } from "@/lib/invoice-visit-summary";
 import type { Patient, PatientSnapshot } from "@/types/types";
 
 /**
@@ -47,12 +48,15 @@ export async function loadPatientSnapshotData(patientId: string): Promise<Patien
           where: { appointment_id: { in: appointmentIds } },
         });
 
+  const invoicesSerialized = invoicesRaw.map(serializeInvoice);
+  const invoicesWithVisit = await attachVisitSummariesToInvoices(invoicesSerialized);
+
   return {
     patient: serializePatient(patientRaw) as Patient,
     appointments: appointmentsRaw.map((a) =>
       mapAppointmentToSnapshotRow(a as AppointmentSnapshotPrismaRow)
     ),
-    invoices: invoicesRaw.map(serializeInvoice),
+    invoices: invoicesWithVisit,
     appointmentTotalCount,
     invoiceTotalCount,
   };

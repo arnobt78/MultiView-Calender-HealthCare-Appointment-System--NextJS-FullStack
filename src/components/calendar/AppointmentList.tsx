@@ -44,6 +44,7 @@ const LIST_SECTION_ICONS: Record<ListSectionKey, ComponentType<{ className?: str
 };
 import VideoCall from "./VideoCall";
 import { AppointmentCard } from "@/components/shared/AppointmentCard";
+import { useAppointmentInvoiceDisplayMap } from "@/hooks/useAppointmentInvoiceDisplayMap";
 import GlobalCalendarFilters from "./GlobalCalendarFilters";
 import { motion } from "framer-motion";
 import CalendarStickyHeader from "./CalendarStickyHeader";
@@ -225,6 +226,10 @@ export default function AppointmentList() {
     );
   });
 
+  const invoiceDisplayByAppt = useAppointmentInvoiceDisplayMap(
+    filteredAppointments.map((a) => a.id)
+  );
+
   const handleEditSuccess = () => {
     setEditAppt(null);
     void refetchAppointments();
@@ -401,6 +406,7 @@ export default function AppointmentList() {
                                     patients={patients}
                                     assignees={assignees}
                                     ownerUsers={ownerUsers}
+                                    invoiceDisplayStatus={invoiceDisplayByAppt.get(appt.id)}
                                     onEdit={handleEdit}
                                     onDelete={handleDelete}
                                     onToggleStatus={handleToggleStatus}

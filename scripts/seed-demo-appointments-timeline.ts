@@ -119,7 +119,7 @@ async function ensureDemoOrganization(adminId: string, doctorIds: string[]) {
 
   const memberSpecs: { user_id: string; role: string }[] = [
     { user_id: adminId, role: "admin" },
-    ...doctorIds.slice(0, 4).map((id) => ({ user_id: id, role: "doctor" })),
+    ...doctorIds.map((id) => ({ user_id: id, role: "doctor" })),
   ];
 
   for (const m of memberSpecs) {
