@@ -22,12 +22,5 @@
       "path": "/api/cron/reminders",
       "schedule": "0 7 * * *"
     }
-  ],
-  "_disabledCrons": [
-    {
-      "_comment": "DISABLED 2026-06-01 — monthly hard-delete wiped past appointments and broke insights/dashboard history. Route kept at /api/cron/cleanup-appointments for optional manual ops only. Re-enable: move this object back into crons[] and redeploy.",
-      "path": "/api/cron/cleanup-appointments",
-      "schedule": "0 0 1 * *"
-    }
   ]
 }

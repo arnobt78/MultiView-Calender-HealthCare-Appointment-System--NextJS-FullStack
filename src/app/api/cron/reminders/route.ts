@@ -1,12 +1,14 @@
 /**
  * Appointment Reminders Cron Endpoint
- * 
+ *
  * Sends email reminders for appointments starting in the next 24 hours.
- * Can be triggered by:
- * - Vercel Cron (vercel.json → cron)
- * - External cron service (e.g. cron-job.org)
- * - Manual trigger via GET request with CRON_SECRET header
- * 
+ * Vercel schedule: vercel.json → crons → `/api/cron/reminders` (daily 07:00 UTC).
+ *
+ * Appointments are never auto-deleted by cron — full history for dashboard,
+ * insights, and revenue. (Former monthly cleanup route removed.)
+ *
+ * Manual trigger: GET with `Authorization: Bearer $CRON_SECRET`.
+ *
  * GET /api/cron/reminders
  */
 

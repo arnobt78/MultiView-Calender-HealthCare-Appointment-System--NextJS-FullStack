@@ -561,7 +561,7 @@ export function PatientManagementInner({
     return (
       <div className={sectionRootClass}>
         {!isDoctorPortal ? (
-          <PageHeader title="Patients" description="Manage patients." />
+          <PageHeader title="Patient Management" description="Manage patient records, care tiers, and primary doctor assignments." />
         ) : null}
         <AppSectionErrorBanner>
           Failed to load patients. Please refresh.
@@ -579,8 +579,8 @@ export function PatientManagementInner({
       >
         {!isDoctorPortal ? (
           <PageHeader
-            title="Patients"
-            description="Manage patients. All table schema properties are shown."
+            title="Patient Management"
+            description="Manage patient records, care tiers, and primary doctor assignments."
             actions={
               <>
                 <Button

@@ -27,7 +27,6 @@ import { DemoShowcaseFeatureNote } from "@/components/shared/DemoShowcaseFeature
 import { DoctorIdentityRow } from "@/components/shared/doctor-display/DoctorIdentityRow";
 import { DoctorAvailabilityGroups } from "@/components/shared/doctor-display/DoctorAvailabilityGroups";
 import { DoctorDirectoryServiceChips } from "@/components/shared/doctor-display/DoctorDirectoryServiceChips";
-import { EntityActiveStatusBadge } from "@/components/shared/entity-display/EntityActiveStatusBadge";
 import { Button } from "@/components/ui/button";
 import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
 import { AppSectionErrorBanner } from "@/components/shared/AppSectionErrorBanner";
@@ -83,7 +82,6 @@ import { cn } from "@/lib/utils";
 import {
   clinicalCellMutedTextClass,
   clinicalCellPrimaryTextClass,
-  clinicalStackGapClass,
   clinicalTableCellMinRowClass,
 } from "@/lib/table-display-styles";
 
@@ -302,22 +300,21 @@ function DoctorManagementInner() {
           const d = u.directory;
           const active = isDoctorActive(u);
           return (
-            <div className={cn("flex min-h-[2.75rem] min-w-0 flex-col justify-center", clinicalStackGapClass)}>
-              <DoctorIdentityRow
-                doctor={{
-                  id: u.id,
-                  email: u.email,
-                  display_name: u.display_name,
-                  image: u.image,
-                  specialty: d?.specialty ?? u.specialty ?? null,
-                }}
-                linkKind="admin-cp"
-                size="sm"
-                showEmail
-                showSpecialty
-              />
-              <EntityActiveStatusBadge active={active} />
-            </div>
+            <DoctorIdentityRow
+              doctor={{
+                id: u.id,
+                email: u.email,
+                display_name: u.display_name,
+                image: u.image,
+                specialty: d?.specialty ?? u.specialty ?? null,
+              }}
+              linkKind="admin-cp"
+              size="sm"
+              showEmail
+              showSpecialty
+              activeStatus={active}
+              className="min-h-[2.75rem]"
+            />
           );
         },
       },

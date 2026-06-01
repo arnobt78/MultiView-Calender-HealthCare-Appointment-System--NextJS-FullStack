@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import { DoctorAvatar } from "./DoctorAvatar";
 import { DoctorSpecialtyBadge } from "./DoctorSpecialtyBadge";
+import { EntityActiveStatusBadge } from "@/components/shared/entity-display/EntityActiveStatusBadge";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { RoleEntityLink } from "@/components/shared/RoleEntityLink";
 import { doctorDetailHref } from "@/lib/entity-routes";
@@ -35,6 +36,8 @@ type DoctorIdentityRowProps = {
    * `inline` — patient detail schema: avatar + name (email) + badge on one wrapped row.
    */
   layout?: "stack" | "inline";
+  /** When set, Active/Inactive pill sits inline with specialty (doctor management table). */
+  activeStatus?: boolean;
 };
 
 /**
@@ -50,12 +53,25 @@ export function DoctorIdentityRow({
   showEmail = true,
   stackGapClassName = clinicalStackGapClass,
   layout = "stack",
+  activeStatus,
 }: DoctorIdentityRowProps) {
   const label = doctor.display_name?.trim() || doctor.email?.trim() || "Doctor";
   const avatarSize = size === "sm" ? "h-7 w-7" : "h-9 w-9";
   const emailVisible = showEmail;
   const emailTrimmed = doctor.email?.trim() ?? "";
   const nameTextClass = size === "sm" ? "text-sm" : "text-sm";
+
+  const badgeRow =
+    showSpecialty || activeStatus !== undefined ? (
+      <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+        {showSpecialty ? (
+          <DoctorSpecialtyBadge specialty={doctor.specialty} className="shrink-0" />
+        ) : null}
+        {activeStatus !== undefined ? (
+          <EntityActiveStatusBadge active={activeStatus} />
+        ) : null}
+      </div>
+    ) : null;
 
   const nameLink =
     linkKind === "none" ? (
@@ -96,9 +112,7 @@ export function DoctorIdentityRow({
               ({emailTrimmed})
             </span>
           ) : null}
-          {showSpecialty ? (
-            <DoctorSpecialtyBadge specialty={doctor.specialty} className="shrink-0" />
-          ) : null}
+          {badgeRow}
         </div>
       </div>
     );
@@ -114,7 +128,7 @@ export function DoctorIdentityRow({
             {emailTrimmed}
           </span>
         ) : null}
-        {showSpecialty ? <DoctorSpecialtyBadge specialty={doctor.specialty} className="self-start" /> : null}
+        {badgeRow}
       </div>
     </div>
   );
