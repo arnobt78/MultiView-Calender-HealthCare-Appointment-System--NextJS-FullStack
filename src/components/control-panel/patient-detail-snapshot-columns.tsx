@@ -2,8 +2,8 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { Badge } from "@/components/ui/badge";
 import { DataTableColumnHeader } from "@/components/shared/DataTableColumnHeader";
+import { InvoiceStatusBadge } from "@/components/shared/billing/InvoiceStatusBadge";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { ClinicalAppointmentStatusBadge } from "@/components/shared/entity-detail/ClinicalAppointmentStatusBadge";
 import {
@@ -105,24 +105,6 @@ export function CategoryTableCell({
         <span className={cn("min-w-0 flex-1", clinicalTableCellWrapClass)}>{trimmed}</span>
       )}
     </span>
-  );
-}
-
-function InvoiceStatusBadge({ status }: { status: string }) {
-  const cls =
-    status === "paid"
-      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-      : status === "overdue"
-        ? "border-rose-200 bg-rose-50 text-rose-700"
-        : status === "sent"
-          ? "border-sky-200 bg-sky-50 text-sky-700"
-          : status === "cancelled"
-            ? "border-slate-200 bg-slate-50 text-gray-400 line-through"
-            : "border-slate-200 bg-slate-50 text-gray-600";
-  return (
-    <Badge variant="outline" className={`capitalize text-xs ${cls}`}>
-      {status}
-    </Badge>
   );
 }
 
@@ -489,7 +471,12 @@ export function buildPatientInvoicesColumns(viewerRole: EntityRole): ColumnDef<S
       header: ({ column }) => <DataTableColumnHeader column={column} title="Status" />,
       cell: ({ row }) => (
         <div className={cn(clinicalTableCellMinRowClass, "flex items-center")}>
-          <InvoiceStatusBadge status={row.original.status} />
+          <InvoiceStatusBadge
+            invoice={{
+              status: row.original.status,
+              payments: row.original.payments,
+            }}
+          />
         </div>
       ),
     },

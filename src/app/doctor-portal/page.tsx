@@ -5,7 +5,11 @@ import { DoctorPortalPageSkeleton } from "@/components/pages/DoctorPortalPageSke
 import { getSessionUser } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { prefetchDoctorPortalSettings } from "@/lib/doctor-portal-settings-prefetch";
-import { prefetchDoctorPortal, prefetchInvoices } from "@/lib/server-prefetch";
+import {
+  prefetchDoctorPortal,
+  prefetchInvoices,
+  prefetchBillingAppointmentOptions,
+} from "@/lib/server-prefetch";
 import type { Invoice } from "@/hooks/usePayments";
 import { getUserRole, isDoctorRole } from "@/lib/rbac";
 
@@ -20,11 +24,13 @@ export default async function DoctorPortalRoute() {
   const role = await getUserRole(session.userId);
   if (!isDoctorRole(role)) redirect("/control-panel/dashboard-overview");
 
-  const [initialData, initialScheduleSettings, initialInvoices] = await Promise.all([
-    prefetchDoctorPortal(session.userId),
-    prefetchDoctorPortalSettings(session.userId),
-    prefetchInvoices(session.userId, role, session.email),
-  ]);
+  const [initialData, initialScheduleSettings, initialInvoices, initialBillingAppointmentOptions] =
+    await Promise.all([
+      prefetchDoctorPortal(session.userId),
+      prefetchDoctorPortalSettings(session.userId),
+      prefetchInvoices(session.userId, role, session.email),
+      prefetchBillingAppointmentOptions(session.userId, role),
+    ]);
 
   if (!initialData) {
     return <DoctorPortalPageSkeleton />;
@@ -35,6 +41,7 @@ export default async function DoctorPortalRoute() {
       initialData={initialData}
       initialScheduleSettings={initialScheduleSettings}
       initialInvoices={(initialInvoices ?? []) as Invoice[]}
+      initialBillingAppointmentOptions={initialBillingAppointmentOptions}
     />
   );
 }

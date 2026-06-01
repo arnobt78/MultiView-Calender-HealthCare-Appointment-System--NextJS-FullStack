@@ -40,6 +40,12 @@ export function seedControlPanelSectionCache(
   if (initial.invoices != null) {
     queryClient.setQueryData(queryKeys.invoices.all, initial.invoices);
   }
+  if (initial.billingAppointmentOptions != null) {
+    queryClient.setQueryData(
+      queryKeys.billing.appointmentOptions("", false),
+      initial.billingAppointmentOptions
+    );
+  }
   if (initial.notifications != null) {
     queryClient.setQueryData(queryKeys.notifications.all, initial.notifications);
   }

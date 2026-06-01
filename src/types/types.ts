@@ -100,6 +100,8 @@ export type SnapshotInvoice = {
   due_date: string | null;
   paid_at: string | null;
   description: string | null;
+  /** For Refunded display via shared InvoiceStatusBadge on patient snapshot. */
+  payments?: { status: string }[];
 };
 
 /** Appointment row from snapshot API (adds category label + B2 owner / treating columns for patient detail table). */

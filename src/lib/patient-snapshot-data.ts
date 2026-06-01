@@ -37,6 +37,7 @@ export async function loadPatientSnapshotData(patientId: string): Promise<Patien
       : await prisma.invoice.findMany({
           where: { appointment_id: { in: appointmentIds } },
           orderBy: { created_at: "desc" },
+          include: { payments: { select: { id: true, status: true, amount: true, created_at: true, stripe_payment_id: true } } },
         });
 
   const invoiceTotalCount =

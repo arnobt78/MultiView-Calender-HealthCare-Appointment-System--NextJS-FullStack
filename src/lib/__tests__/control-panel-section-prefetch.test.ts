@@ -16,6 +16,9 @@ vi.mock("@/lib/server-prefetch", () => ({
   prefetchOrganizations: vi.fn(async () => [{ id: "o1" }]),
   prefetchGlobalAppointmentTypes: vi.fn(async () => [{ id: "t1" }]),
   prefetchInvoices: vi.fn(async () => [{ id: "inv1" }]),
+  prefetchBillingAppointmentOptions: vi.fn(async () => ({
+    options: [{ id: "appt-bill", eligible: true }],
+  })),
   prefetchNotifications: vi.fn(async () => ({
     notifications: [{ id: "n1" }],
     total: 1,
@@ -31,9 +34,12 @@ describe("prefetchControlPanelSection", () => {
     expect(result.patients).toBeUndefined();
   });
 
-  it("prefetches invoices for invoices tab", async () => {
+  it("prefetches invoices and billing picker for invoices tab", async () => {
     const result = await prefetchControlPanelSection("invoices", "user-1", "u@test.com", "admin");
     expect(result.invoices).toEqual([{ id: "inv1" }]);
+    expect(result.billingAppointmentOptions).toEqual({
+      options: [{ id: "appt-bill", eligible: true }],
+    });
   });
 
   it("prefetches calendar bundle for appointments_mgmt tab", async () => {

@@ -2,12 +2,16 @@
 
 ## Latest Audit Update (2026-06-01)
 
-- **Role-based billing:** Patient pay (Stripe Checkout), admin CP invoice lifecycle, doctor portal billing card, org-tagged invoices (`Invoice.organization_id`). Access: `resolveInvoiceAccess` → `none|view|mutate|pay|admin`. Paid only via `record-payment` or webhook (not PATCH `status=paid`).
-- **Routes:** Admin `/control-panel/invoices/[id]`; doctor/patient `/invoices/[id]` (CP layout redirects doctors). `invoiceDetailHref` in `entity-routes.ts`. Legacy `?invoiceId=` on patient portal → server redirect to `/invoices/:id`.
-- **API:** `GET|POST /api/invoices`, `GET|PATCH|DELETE /api/invoices/[id]`, `POST .../record-payment`, `POST .../refund`, `GET /api/billing/appointment-options`, `POST /api/payments` + `POST /api/payments/webhook`.
-- **Cache/SSR:** `prefetchInvoices` (portals), `prefetchInvoiceDetail` (detail pages), `queryKeys.invoices.all` + `.detail(id)`, `invalidateInvoicesAndOverview`, SSE billing types in `notification-stream-subscribe.ts`. Hover prefetch both invoice detail paths.
-- **Stripe:** `NEXT_PUBLIC_APP_URL` for return URLs. Local: `stripe listen --forward-to localhost:3000/api/payments/webhook`. Vercel: Dashboard destination **HealthCal Pro** → signing secret ≠ CLI `whsec`. Events: `checkout.session.completed`, `payment_intent.payment_failed`, `charge.refunded`.
-- **Also:** Retention cron only; demo timeline seed; CP doctor stubs. **Verify:** `npm test` **549**, tsc, lint, build. `npm run prisma:push` after schema pull.
+- **One bill per visit:** `billing-appointment-eligibility.ts` blocks duplicate `draft|sent|overdue|paid`; POST `/api/invoices` → **409**; migration `009_invoice_one_active_per_appointment.sql` (dedupe legacy rows + partial unique index). Cancelled + refunded payment → **Refunded** badge (`InvoiceStatusBadge` + `resolveInvoiceDisplayStatus`).
+- **Visit picker:** `GET /api/billing/appointment-options` + shared `fetchBillingAppointmentOptions` (API + SSR). `InvoiceVisitPickerList` / `InvoiceAppointmentPickerField`; admin `includeBilled=1` shows disabled billed rows.
+- **SSR picker seed:** `prefetchBillingAppointmentOptions` → `queryKeys.billing.appointmentOptions("", false)` on CP **invoice-management** (`prefetchControlPanelSection` invoices tab) and **doctor-portal** page. Client search still refetches keyed by `search` + `includeBilled`.
+- **Invalidation:** `invalidateInvoicesBilling` + `invalidateInvoicesAndOverview` invalidate `queryKeys.billing.root`; `invalidateBillingAppointmentOptionsCache` on invoice mutations; Redis `billing-cache.ts` on writes/webhook.
+- **Role-based billing (base):** Stripe Checkout pay, CP invoice lifecycle, `DoctorPortalInvoicesCard`, org `organization_id`. Access: `resolveInvoiceAccess`. Paid only via `record-payment` or webhook.
+- **Routes:** Admin `/control-panel/invoices/[id]`; doctor/patient `/invoices/[id]`. `invoiceDetailHref` in `entity-routes.ts`.
+- **Patient snapshot:** invoice rows include `payments`; status column uses shared `InvoiceStatusBadge` (Refunded parity).
+- **Tests:** Vitest **565** (93 files) incl. `billing-appointment-options.test.ts`, `billing-appointment-options-load.test.ts`.
+- **DB:** `npm run db:migrate` is idempotent and **silent on success** (loads `.env.local`, runs `migrations/*.sql`). Then `npm run prisma:push` if Prisma schema drift.
+- **Stripe:** Local `stripe listen --forward-to localhost:3000/api/payments/webhook`; Vercel Dashboard signing secret for production endpoint.
 
 ## Prior (2026-05-31)
 
@@ -108,8 +112,10 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Prism
 | Doctor | `GET /api/invoices` (scoped) | `/invoices/[id]` | draft mutate on own |
 | Patient | patient portal + `/api/invoices` | `/invoices/[id]` | Stripe pay when `pay` |
 
-- **Shared UI:** `src/components/shared/billing/*` — `CreateInvoiceDialog`, `InvoiceAppointmentPickerField`, `InvoiceDetailClient`, `InvoicePayActions`, `InvoiceAdminActionsMenu`.
-- **Doctor portal:** `DoctorPortalInvoicesCard` + SSR `prefetchInvoices` on `doctor-portal/page.tsx`.
+- **Shared UI:** `src/components/shared/billing/*` — `CreateInvoiceDialog`, `InvoiceAppointmentPickerField`, `InvoiceVisitPickerList`, `InvoiceStatusBadge`, `InvoiceDetailClient`, `InvoicePayActions`, `InvoiceAdminActionsMenu`.
+- **Libs:** `billing-appointment-eligibility.ts`, `billing-appointment-options-load.ts`, `billing-appointment-options-cache.ts`.
+- **Doctor portal:** `DoctorPortalInvoicesCard` + SSR `prefetchInvoices` + `prefetchBillingAppointmentOptions` on `doctor-portal/page.tsx`.
+- **CP invoices tab:** SSR `prefetchInvoices` + `prefetchBillingAppointmentOptions` via `prefetchControlPanelSection("invoices")`.
 - **Org billing:** `OrganizationBillingPanel` on org detail; `?organizationId=` filter; any org **member** can view org-tagged rows; org **admin** can tag on create.
 - **Env:** see `.env.example` — `STRIPE_*`, `NEXT_PUBLIC_APP_URL`. Local webhook secret from CLI; production secret from Stripe Dashboard endpoint only.
 

@@ -445,6 +445,28 @@ export async function prefetchInvoiceDetail(
   }
 }
 
+/** Mirrors GET /api/billing/appointment-options — seeds invoice create picker (empty search). */
+export async function prefetchBillingAppointmentOptions(
+  userId: string,
+  role: string | null,
+  opts?: { search?: string; includeBilled?: boolean }
+): Promise<{ options: import("@/lib/billing-types").InvoiceAppointmentOptionRow[] } | null> {
+  try {
+    const { fetchBillingAppointmentOptions } = await import(
+      "@/lib/billing-appointment-options-load"
+    );
+    const options = await fetchBillingAppointmentOptions({
+      sessionUserId: userId,
+      role,
+      search: opts?.search ?? "",
+      includeBilled: opts?.includeBilled ?? false,
+    });
+    return { options };
+  } catch {
+    return null;
+  }
+}
+
 /** Mirrors GET /api/payments — cache key: queryKeys.invoices.all → Invoice[] */
 export async function prefetchInvoices(
   userId: string,

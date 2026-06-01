@@ -27,6 +27,7 @@ import {
   prefetchOrganizations,
   prefetchPatients,
   prefetchInvoices,
+  prefetchBillingAppointmentOptions,
   prefetchNotifications,
   prefetchCalendarAppointmentsBundle,
   prefetchDoctors,
@@ -40,6 +41,8 @@ export type ControlPanelSectionPrefetchPayload = {
   organizations?: Organization[] | null;
   globalAppointmentTypes?: GlobalAppointmentType[] | null;
   invoices?: Invoice[] | null;
+  /** Default visit picker for Create Invoice dialog (empty search, eligible visits only). */
+  billingAppointmentOptions?: { options: import("@/lib/billing-types").InvoiceAppointmentOptionRow[] } | null;
   notifications?: NotificationsPrefetch | null;
   appointments?: FullAppointment[] | null;
   assignees?: AppointmentAssignee[] | null;
@@ -68,8 +71,13 @@ export async function prefetchControlPanelSection(
       return { organizations: await prefetchOrganizations(userId) };
     case "visit_types_global":
       return { globalAppointmentTypes: await prefetchGlobalAppointmentTypes() };
-    case "invoices":
-      return { invoices: await prefetchInvoices(userId, role, email) };
+    case "invoices": {
+      const [invoices, billingAppointmentOptions] = await Promise.all([
+        prefetchInvoices(userId, role, email),
+        prefetchBillingAppointmentOptions(userId, role),
+      ]);
+      return { invoices, billingAppointmentOptions };
+    }
     case "appointments_mgmt":
     case "telehealth":
       return prefetchCalendarAppointmentsBundle(userId, email);

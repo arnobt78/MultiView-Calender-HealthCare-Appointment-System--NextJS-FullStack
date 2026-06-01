@@ -59,12 +59,17 @@ interface DoctorPortalPageProps {
   initialScheduleSettings: DoctorPortalSettingsPrefetch | null;
   /** SSR seed for doctor-scoped invoices (queryKeys.invoices.all). */
   initialInvoices?: Invoice[];
+  /** SSR seed for visit picker (queryKeys.billing.appointmentOptions("", false)). */
+  initialBillingAppointmentOptions?: {
+    options: import("@/lib/billing-types").InvoiceAppointmentOptionRow[];
+  } | null;
 }
 
 export default function DoctorPortalPage({
   initialData,
   initialScheduleSettings,
   initialInvoices = [],
+  initialBillingAppointmentOptions = null,
 }: DoctorPortalPageProps) {
   const queryClient = useQueryClient();
   const [patientSectionCount, setPatientSectionCount] = useState<number | null>(null);
@@ -83,7 +88,19 @@ export default function DoctorPortalPage({
     if (initialInvoices.length > 0) {
       queryClient.setQueryData(queryKeys.invoices.all, initialInvoices);
     }
-  }, [queryClient, initialData, initialScheduleSettings, initialInvoices]);
+    if (initialBillingAppointmentOptions != null) {
+      queryClient.setQueryData(
+        queryKeys.billing.appointmentOptions("", false),
+        initialBillingAppointmentOptions
+      );
+    }
+  }, [
+    queryClient,
+    initialData,
+    initialScheduleSettings,
+    initialInvoices,
+    initialBillingAppointmentOptions,
+  ]);
 
   const { data, isLoading } = useQuery<DoctorPortalData | undefined>({
     queryKey: queryKeys.doctorPortal.all,
