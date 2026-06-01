@@ -15,8 +15,8 @@
 - **Org panel:** `010_backfill_invoice_org_and_billing.sql` tags invoices when billing doctor has one org; demo seed adds all doctors to HealthCal Demo Clinic; org tab SSR-seeds first org billing list; UI shows full list + KPI strip (see invoice billing KPI bullet above).
 - **One bill per visit / picker / Refunded badge:** `billing-appointment-eligibility.ts`, POST **409**, `009` migration, shared picker + SSR seed (unchanged contract).
 - **Payments:** `011_payment_stripe_id_unique.sql`; payment history UI dedupes duplicate Stripe IDs.
-- **Tests:** Vitest **585** (101 files), incl. `invoice-billing-totals.test.ts`, `clinical-empty-dash.test.tsx`. **DB:** `npm run db:migrate` (silent OK) runs `009`–`011`.
-- **Known follow-ups (not blocking demo):** `calendar/export`, `calendar/sync`, `appointments/search` still filter `owner_id` only; assignee-only visibility unchanged (assignee batch); `GET /api/appointments?ids=` batch does not OR `treating_physician_id` (main list already includes treating). Fix export/search only if QA needs treating-only visits there.
+- **Tests:** Vitest **588** (102 files), incl. `invoice-billing-totals.test.ts`, `org-billing-prefetch.test.ts`, `clinical-empty-dash.test.tsx`. **DB:** `npm run db:migrate` (silent OK) runs `009`–`011`.
+- **Known follow-ups (not blocking demo):** `calendar/export`, `calendar/sync`, `appointments/search` still filter `owner_id` only; assignee-only visibility unchanged (assignee batch); `GET /api/appointments?ids=` batch does not OR `treating_physician_id` (main list already includes treating). CP org tab renders billing panels for first **3** orgs only (`OrganizationManagement` `slice(0,3)`) while SSR prefetches all orgs (cap 20). `fetchInvoiceBillingTotalsForOrganization` ready for future org KPI API (UI uses list + `computeInvoiceBillingTotals`).
 
 ## Prior (2026-05-31)
 
