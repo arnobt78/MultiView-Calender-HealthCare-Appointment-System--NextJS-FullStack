@@ -4,7 +4,9 @@ import { useMemo } from "react";
 import { useAppointmentData } from "@/context/AppointmentDataContext";
 import { useCalendarFilters } from "@/context/CalendarFiltersContext";
 import type { Category, Patient } from "@/types/types";
-import SearchBar from "./SearchBar";
+import { useAuth } from "@/hooks/useAuth";
+import { isPatientRole } from "@/lib/rbac";
+import { ClinicalListFilterToolbar } from "@/components/shared/filters/ClinicalListFilterToolbar";
 import Filters from "./Filters";
 
 type GlobalCalendarFiltersProps = {
@@ -13,12 +15,17 @@ type GlobalCalendarFiltersProps = {
   className?: string;
 };
 
+/** Dashboard list/day/week/month filters — one toolbar row; Reset aligns right like CP entity lists. */
 export default function GlobalCalendarFilters({
   categories,
   patients,
   className,
 }: GlobalCalendarFiltersProps) {
   const { appointments } = useAppointmentData();
+  const { user } = useAuth();
+  const showClinicalRoleFilter = Boolean(
+    user?.id && user.role && !isPatientRole(user.role)
+  );
   const {
     category,
     setCategory,
@@ -32,6 +39,8 @@ export default function GlobalCalendarFilters({
     setMonth,
     search,
     setSearch,
+    clinicalRole,
+    setClinicalRole,
     resetFilters,
     hasActiveFilters,
   } = useCalendarFilters();
@@ -55,29 +64,35 @@ export default function GlobalCalendarFilters({
   }, [appointments]);
 
   return (
-    <div className={`flex flex-wrap items-center gap-2 w-full ${className ?? ""}`}>
-      <div className="w-full sm:flex-1 sm:min-w-[220px] sm:max-w-sm">
-        <SearchBar value={search} setValue={setSearch} />
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <Filters
-          category={category}
-          setCategory={setCategory}
-          patient={patient}
-          setPatient={setPatient}
-          date={date}
-          setDate={setDate}
-          status={status}
-          setStatus={setStatus}
-          month={month}
-          setMonth={setMonth}
-          monthOptions={monthOptions}
-          categories={categories}
-          patients={patients}
-          showReset={hasActiveFilters}
-          onReset={resetFilters}
-        />
-      </div>
-    </div>
+    <ClinicalListFilterToolbar
+      className={className ?? "w-full"}
+      search={{
+        value: search,
+        onChange: setSearch,
+        placeholder: "Search… (Name, Title, Notes)",
+        ariaLabel: "Search appointments by name, title, or notes",
+      }}
+      showReset={hasActiveFilters}
+      onReset={resetFilters}
+    >
+      <Filters
+        category={category}
+        setCategory={setCategory}
+        patient={patient}
+        setPatient={setPatient}
+        date={date}
+        setDate={setDate}
+        status={status}
+        setStatus={setStatus}
+        month={month}
+        setMonth={setMonth}
+        monthOptions={monthOptions}
+        categories={categories}
+        patients={patients}
+        clinicalRole={clinicalRole}
+        setClinicalRole={setClinicalRole}
+        showClinicalRoleFilter={showClinicalRoleFilter}
+      />
+    </ClinicalListFilterToolbar>
   );
 }

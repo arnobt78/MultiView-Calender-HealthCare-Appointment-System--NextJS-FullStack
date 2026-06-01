@@ -135,7 +135,8 @@ export default function AppointmentList() {
 
   const { categories = [] } = useCategories();
   const { patients = [] } = usePatients();
-  const { category, patient, date, status, month, search } = useCalendarFilters();
+  const { category, patient, date, status, month, search, clinicalRole } =
+    useCalendarFilters();
   const { assignees } = useAssignees();
   const ownerUsers = useOwnerUserSummaries(
     collectAppointmentStaffUserIds(appointments),
@@ -152,10 +153,11 @@ export default function AppointmentList() {
     () =>
       applyCalendarFilters(
         appointments,
-        { category, patient, date, status, month, search: "" },
-        patients
+        { category, patient, date, status, month, search: "", clinicalRole },
+        patients,
+        user?.id
       ),
-    [appointments, category, patient, date, status, month, patients]
+    [appointments, category, patient, date, status, month, clinicalRole, patients, user?.id]
   );
 
   const handleToggleStatus = (id: string, newStatus: string) => {

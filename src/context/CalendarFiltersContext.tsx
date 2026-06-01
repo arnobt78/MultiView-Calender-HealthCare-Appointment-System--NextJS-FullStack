@@ -2,6 +2,11 @@
 
 import { createContext, useContext, useMemo, useState } from "react";
 import type { Patient } from "@/types/types";
+import {
+  appointmentMatchesClinicalRoleFilter,
+  CALENDAR_CLINICAL_ROLE_ALL,
+  type CalendarClinicalRoleFilter,
+} from "@/lib/calendar-clinical-role-filter";
 
 export type CalendarFiltersState = {
   category: string | null;
@@ -10,6 +15,8 @@ export type CalendarFiltersState = {
   status: string | null;
   month: string | null;
   search: string;
+  /** Staff dashboard — subdivide owner vs treating-only rows (default = all scoped visits). */
+  clinicalRole: CalendarClinicalRoleFilter;
 };
 
 type CalendarFiltersContextValue = CalendarFiltersState & {
@@ -19,6 +26,7 @@ type CalendarFiltersContextValue = CalendarFiltersState & {
   setStatus: (v: string | null) => void;
   setMonth: (v: string | null) => void;
   setSearch: (v: string) => void;
+  setClinicalRole: (v: CalendarClinicalRoleFilter) => void;
   resetFilters: () => void;
   hasActiveFilters: boolean;
 };
@@ -31,6 +39,8 @@ type SearchableAppointment = {
   status?: string | null;
   category?: string | null;
   patient?: string | Record<string, unknown> | null;
+  user_id?: string;
+  treating_physician_id?: string | null;
   category_data?: { label?: string | null; description?: string | null };
   patient_data?: { firstname?: string | null; lastname?: string | null; email?: string | null };
   appointment_assignee?: { user?: string | null; invited_email?: string | null }[];
@@ -52,6 +62,9 @@ export function CalendarFiltersProvider({
   const [status, setStatus] = useState<string | null>(null);
   const [month, setMonth] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [clinicalRole, setClinicalRole] = useState<CalendarClinicalRoleFilter>(
+    CALENDAR_CLINICAL_ROLE_ALL
+  );
 
   const resetFilters = () => {
     setCategory(null);
@@ -60,14 +73,21 @@ export function CalendarFiltersProvider({
     setStatus(null);
     setMonth(null);
     setSearch("");
+    setClinicalRole(CALENDAR_CLINICAL_ROLE_ALL);
   };
 
   const hasActiveFilters = useMemo(
     () =>
       Boolean(
-        category || patient || date || status || month || search.trim().length
+        category ||
+          patient ||
+          date ||
+          status ||
+          month ||
+          search.trim().length ||
+          clinicalRole !== CALENDAR_CLINICAL_ROLE_ALL
       ),
-    [category, patient, date, status, month, search]
+    [category, patient, date, status, month, search, clinicalRole]
   );
 
   const value = useMemo(
@@ -78,16 +98,18 @@ export function CalendarFiltersProvider({
       status,
       month,
       search,
+      clinicalRole,
       setCategory,
       setPatient,
       setDate,
       setStatus,
       setMonth,
       setSearch,
+      setClinicalRole,
       resetFilters,
       hasActiveFilters,
     }),
-    [category, patient, date, status, month, search, hasActiveFilters]
+    [category, patient, date, status, month, search, clinicalRole, hasActiveFilters]
   );
 
   return (
@@ -108,9 +130,10 @@ export function useCalendarFilters() {
 export function applyCalendarFilters<T extends SearchableAppointment>(
   appointments: T[],
   filters: CalendarFiltersState,
-  patients: Patient[] = []
+  patients: Patient[] = [],
+  viewerUserId?: string | null
 ): T[] {
-  const { category, patient, date, status, month, search } = filters;
+  const { category, patient, date, status, month, search, clinicalRole } = filters;
   const lowerSearch = search.trim().toLowerCase();
 
   return appointments.filter((appt) => {
@@ -133,6 +156,22 @@ export function applyCalendarFilters<T extends SearchableAppointment>(
     if (category && appt.category !== category) return false;
     if (patient && appt.patient !== patient) return false;
     if (status && appt.status !== status) return false;
+
+    if (
+      viewerUserId &&
+      clinicalRole !== CALENDAR_CLINICAL_ROLE_ALL &&
+      appt.user_id &&
+      !appointmentMatchesClinicalRoleFilter(
+        {
+          user_id: appt.user_id,
+          treating_physician_id: appt.treating_physician_id,
+        },
+        viewerUserId,
+        clinicalRole
+      )
+    ) {
+      return false;
+    }
 
     if (!lowerSearch) return true;
 

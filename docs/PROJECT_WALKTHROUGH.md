@@ -2,6 +2,7 @@
 
 ## Latest Audit Update (2026-06-01)
 
+- **Dashboard calendar filters:** `CategoryFilterSelect` + `PatientFilterSelect` (brand mark / portrait + age + care tier); `ClinicalListFilterToolbar` reset right-aligned. **Clinical role** filter (`calendar-clinical-role-filter.ts`): default **All My Visits**; **Created by Me**; **Referred to Me (Treating)** — client-side on staff views; hidden for patients.
 - **Staff calendar scope:** `src/lib/staff-appointment-calendar-scope.ts` — staff list/dashboard calendar uses `owner_id OR treating_physician_id` (aligned with insights + billing). Wired: `GET /api/appointments`, `prefetchDashboardAppointments`, `prefetchDoctorPortal`, `GET /api/doctor-portal`, `login-today-appointments`. **Admin** dashboard overview KPI counts stay **org-wide** via `dashboardOverviewAppointmentFilter` (doctors use staff scope).
 - **Curated demo seed:** `npm run db:seed-demo-appointments` → `scripts/seed-demo-appointments-curated.ts` (exactly **10** rows, marker `seed-demo-curated:v1`, invoice matrix). Bulk timeline: `db:seed-demo-appointments-timeline`. Full reset: `CONFIRM_DB_CLEAR=YES npm run db:clear` → `db:prepare` → `db:seed-extended` → `db:seed-demo-appointments` → `db:migrate`.
 - **Cross-portal revenue fix:** Admin **Dashboard Overview** revenue now uses `fetchRevenueOverviewForViewer` (global totals — same universe as CP Invoice Management). Doctor Management **Revenue** column attributes paid cents to treating physician, then calendar owner (`fetchPaidRevenueCentsByDoctorIds`). Invoice writes bust all admin overview Redis keys (`invalidateAdminDashboardOverviewCaches`).
@@ -12,7 +13,7 @@
 - **Org panel:** `010_backfill_invoice_org_and_billing.sql` tags invoices when billing doctor has one org; demo seed adds all doctors to HealthCal Demo Clinic; org tab SSR-seeds first org billing list.
 - **One bill per visit / picker / Refunded badge:** `billing-appointment-eligibility.ts`, POST **409**, `009` migration, shared picker + SSR seed (unchanged contract).
 - **Payments:** `011_payment_stripe_id_unique.sql`; payment history UI dedupes duplicate Stripe IDs.
-- **Tests:** Vitest **577** (97 files). **DB:** `npm run db:migrate` (silent OK) runs `009`–`011`.
+- **Tests:** Vitest **580** (98 files). **DB:** `npm run db:migrate` (silent OK) runs `009`–`011`.
 - **Known follow-ups (not blocking demo):** `calendar/export`, `calendar/sync`, `appointments/search` still filter `owner_id` only; assignee-only visibility unchanged (assignee batch); `GET /api/appointments?ids=` batch does not OR `treating_physician_id` (main list already includes treating). Fix export/search only if QA needs treating-only visits there.
 
 ## Prior (2026-05-31)

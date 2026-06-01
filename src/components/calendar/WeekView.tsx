@@ -57,7 +57,8 @@ export default function WeekView() {
     collectAppointmentStaffUserIds(globalAppointments),
     user
   );
-  const { category, patient, date, status, month, search } = useCalendarFilters();
+  const { category, patient, date, status, month, search, clinicalRole } =
+    useCalendarFilters();
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const hours = Array.from({ length: 24 }, (_, i) => i);
   const [editAppt, setEditAppt] = useState<AppointmentWithCategory | null>(null);
@@ -68,10 +69,22 @@ export default function WeekView() {
     () =>
       applyCalendarFilters(
         globalAppointments,
-        { category, patient, date, status, month, search },
-        filterPatients
+        { category, patient, date, status, month, search, clinicalRole },
+        filterPatients,
+        user?.id
       ),
-    [globalAppointments, category, patient, date, status, month, search, filterPatients]
+    [
+      globalAppointments,
+      category,
+      patient,
+      date,
+      status,
+      month,
+      search,
+      clinicalRole,
+      filterPatients,
+      user?.id,
+    ]
   );
   const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
   const weekAppointments = useMemo(

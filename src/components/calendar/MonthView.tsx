@@ -68,7 +68,8 @@ export default function MonthView() {
     collectAppointmentStaffUserIds(globalAppointments),
     user
   );
-  const { category, patient, date, status, month, search } = useCalendarFilters();
+  const { category, patient, date, status, month, search, clinicalRole } =
+    useCalendarFilters();
   const { currentDate } = useDateContext();
   const [editAppt, setEditAppt] = useState<AppointmentWithCategory | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -78,8 +79,9 @@ export default function MonthView() {
     () =>
       applyCalendarFilters(
         globalAppointments,
-        { category, patient, date, status, month, search },
-        filterPatients
+        { category, patient, date, status, month, search, clinicalRole },
+        filterPatients,
+        user?.id
       ),
     [
       globalAppointments,
@@ -89,7 +91,9 @@ export default function MonthView() {
       status,
       month,
       search,
+      clinicalRole,
       filterPatients,
+      user?.id,
     ]
   );
 

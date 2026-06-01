@@ -44,7 +44,8 @@ export default function DayView() {
   const { currentDate } = useDateContext();
   const { appointments, isLoading, isError: appointmentsError, toggleStatus, deleteAppointment } = useAppointmentData();
   const { user } = useAuth();
-  const { category, patient, date, status, month, search } = useCalendarFilters();
+  const { category, patient, date, status, month, search, clinicalRole } =
+    useCalendarFilters();
   const { categories = [] } = useCategories();
   const { patients = [] } = usePatients();
   const { assignees } = useAssignees();
@@ -58,10 +59,22 @@ export default function DayView() {
     () =>
       applyCalendarFilters(
         appointments,
-        { category, patient, date, status, month, search },
-        patients
+        { category, patient, date, status, month, search, clinicalRole },
+        patients,
+        user?.id
       ),
-    [appointments, category, patient, date, status, month, search, patients]
+    [
+      appointments,
+      category,
+      patient,
+      date,
+      status,
+      month,
+      search,
+      clinicalRole,
+      patients,
+      user?.id,
+    ]
   );
 
   const dayAppointments = useMemo(() => {

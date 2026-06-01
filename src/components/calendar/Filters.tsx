@@ -2,9 +2,15 @@
 
 import { Category, Patient } from "@/types/types";
 import { Input } from "@/components/ui/input";
-import { ClinicalListFilterToolbar } from "@/components/shared/filters/ClinicalListFilterToolbar";
 import { FilterSelect } from "@/components/shared/filters/FilterSelect";
-import { Tag, User, CalendarDays, Circle, CalendarRange } from "lucide-react";
+import { CategoryFilterSelect } from "@/components/shared/filters/CategoryFilterSelect";
+import { PatientFilterSelect } from "@/components/shared/filters/PatientFilterSelect";
+import {
+  CALENDAR_CLINICAL_ROLE_FILTER_OPTIONS,
+  calendarClinicalRoleFilterLabel,
+  type CalendarClinicalRoleFilter,
+} from "@/lib/calendar-clinical-role-filter";
+import { CalendarDays, Circle, CalendarRange, Stethoscope } from "lucide-react";
 
 type FiltersProps = {
   category: string | null;
@@ -20,8 +26,9 @@ type FiltersProps = {
   monthOptions: { value: string; label: string }[];
   categories: Category[];
   patients: Patient[];
-  onReset: () => void;
-  showReset: boolean;
+  clinicalRole: CalendarClinicalRoleFilter;
+  setClinicalRole: (v: CalendarClinicalRoleFilter) => void;
+  showClinicalRoleFilter: boolean;
 };
 
 const ALL_VALUE = "__all__";
@@ -31,7 +38,7 @@ const STATUS_LABEL: Record<string, string> = {
   alert: "Alert",
 };
 
-/** Dashboard calendar filter row — shared `ClinicalListFilterToolbar` reset alignment. */
+/** Dashboard calendar filter controls — parent wraps with `ClinicalListFilterToolbar` + search. */
 export default function Filters({
   category,
   setCategory,
@@ -46,18 +53,10 @@ export default function Filters({
   monthOptions,
   categories,
   patients,
-  onReset,
-  showReset,
+  clinicalRole,
+  setClinicalRole,
+  showClinicalRoleFilter,
 }: FiltersProps) {
-  const categoryLabel = !category
-    ? "All Categories"
-    : categories.find((c) => c.id === category)?.label ?? "All Categories";
-  const selectedPatient = patient ? patients.find((x) => x.id === patient) : undefined;
-  const clientLabel = !patient
-    ? "All Clients"
-    : selectedPatient
-      ? `${selectedPatient.firstname} ${selectedPatient.lastname}`.trim()
-      : "All Clients";
   const statusLabel = !status ? "All Statuses" : STATUS_LABEL[status] ?? "All Statuses";
   const monthLabel =
     !month
@@ -65,34 +64,33 @@ export default function Filters({
       : monthOptions.find((m) => m.value === month)?.label ?? "Monthly View";
 
   return (
-    <ClinicalListFilterToolbar showReset={showReset} onReset={onReset}>
-      <FilterSelect
-        value={category ?? ALL_VALUE}
-        onValueChange={(v) => setCategory(v === ALL_VALUE ? null : v)}
-        displayLabel={categoryLabel}
-        icon={Tag}
-        size="dashboard"
-        triggerClassName="min-w-[160px]"
-        options={[
-          { value: ALL_VALUE, label: "All Categories" },
-          ...categories.map((c) => ({ value: c.id, label: c.label })),
-        ]}
+    <>
+      {showClinicalRoleFilter ? (
+        <FilterSelect
+          value={clinicalRole}
+          onValueChange={(v) => setClinicalRole(v as CalendarClinicalRoleFilter)}
+          displayLabel={calendarClinicalRoleFilterLabel(clinicalRole)}
+          icon={Stethoscope}
+          size="dashboard"
+          triggerClassName="min-w-[200px]"
+          ariaLabel="Filter by calendar role"
+          options={CALENDAR_CLINICAL_ROLE_FILTER_OPTIONS.map((o) => ({
+            value: o.value,
+            label: o.label,
+          }))}
+        />
+      ) : null}
+
+      <CategoryFilterSelect
+        value={category}
+        onValueChange={setCategory}
+        categories={categories}
       />
 
-      <FilterSelect
-        value={patient ?? ALL_VALUE}
-        onValueChange={(v) => setPatient(v === ALL_VALUE ? null : v)}
-        displayLabel={clientLabel}
-        icon={User}
-        size="dashboard"
-        triggerClassName="min-w-[160px]"
-        options={[
-          { value: ALL_VALUE, label: "All Clients" },
-          ...patients.map((p) => ({
-            value: p.id,
-            label: `${p.firstname} ${p.lastname}`.trim(),
-          })),
-        ]}
+      <PatientFilterSelect
+        value={patient}
+        onValueChange={setPatient}
+        patients={patients}
       />
 
       <div className="relative flex items-center">
@@ -135,6 +133,6 @@ export default function Filters({
           ...monthOptions.map((m) => ({ value: m.value, label: m.label })),
         ]}
       />
-    </ClinicalListFilterToolbar>
+    </>
   );
 }
