@@ -1,8 +1,15 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest Audit Update (2026-05-31)
+## Latest Audit Update (2026-06-01)
 
-- **Agile V AQMS:** `.agile-v/` bootstrapped — `SKILLS.md` (24 agents), `BOOTSTRAP.md`, phases `01`–`05`, `POLICY.yaml`, runtime contracts. **C1** archived (REQ-0001..0004 category/SSR). **C2** archived (REQ-0005..0008 doctor CP + dev stubs). Living `STATE.md` → ready for **C3**. See `.agile-v/README.md`.
+- **Appointment retention:** Monthly hard-delete cron removed — `vercel.json` only `/api/cron/reminders` (07:00 UTC). Route `cleanup-appointments` deleted. Appointments kept for dashboard, insights, revenue. Doc: `src/app/api/cron/reminders/route.ts`.
+- **CP UI:** `demo-showcase-copy.ts` short doctor banner; `DoctorIdentityRow` `activeStatus`; **Patient Management** header (was "Patients").
+- **Doctor CP (C2):** dev stubs, live assigned-patients, admin-only roster, cross-tab `doctors` — `.agile-v/cycles/C2/`.
+- **Verify:** `npm test` **519** (79 files), tsc, lint, build green. Restore demo appts after prior wipe: `npm run db:seed-extended`.
+
+## Prior (2026-05-31)
+
+- **Agile V AQMS:** `.agile-v/` — `SKILLS.md`, `BOOTSTRAP.md`, phases `01`–`05`. C1/C2 archived; `STATE.md` → C3.
 
 ## Prior (2026-05-30)
 
@@ -144,7 +151,7 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Prism
 - **Invalidation:** `invalidateEntityAffectingAppointments("patients")` and `usePatients` mutations also call `invalidateDoctorPortal`; appointments → `invalidateAfterAppointmentMutation`.
 - **Shell:** `dashboardShellClass` adds `pb-3` for portal routes in `AuthShell` (`src/lib/dashboard-layout.ts`).
 - **Sonner CRUD copy:** `src/lib/crud-notify-messages.ts` + Vitest `crud-notify-messages.test.ts` — dynamic subtitles for weekly hours, time off, global/owned visit types (`useAppointmentTypes`), patient booking (`PatientBookingDialog` uses mutation `variables` + `notifyMeta`), invoices (`usePayments`), organizations/members (`useOrganization`), notifications bulk (`useNotifications`); wired in doctor-settings editors + hooks above.
-- **Verify (pre-commit):** `npm test && npx tsc --noEmit && npm run lint && npm run build` — **520 tests** (79 files); includes `analytics-chart-interaction.test.ts`, `query-cache-cross-tab.test.ts`, insights `period=all`, `insights-all-time-prisma`, `query-client-insights-invalidation`.
+- **Verify (pre-commit):** `npm test && npx tsc --noEmit && npm run lint && npm run build` — **519 tests** (79 files); includes `analytics-chart-interaction.test.ts`, `query-cache-cross-tab.test.ts`, insights `period=all`, `insights-all-time-prisma`, `query-client-insights-invalidation`.
 - **Invalidation (visit types):** `invalidateAppointmentTypeDerived` centralizes `doctorPortal.all` (portal toggles + CP `DoctorGlobalTypeConfigEditor`); CP also `invalidateAdminPortal`.
 - **Section counts:** `PortalPanelCountBadge` + inline `countInline` / `PortalPanelSubsectionHeader` `count` on Today, Upcoming, My Patients, weekly hours, unavailable dates, global + owned visit types (TanStack cache — updates on CRUD without refresh).
 - **Insights v2:** `/insights` — Recharts-only `AnalyticsPage`; **`InsightsPageChrome`** / **`insights-page-copy.ts`**; **`InsightsDataErrorBanner`**; **scope** (`InsightsScopeToolbar`); **period** = `day|week|month|year|**all**`; KPI strip = calendar windows; **Doctors** (`AnalyticsDoctorInsightsSection`); **chart UX (display-only):** `AnalyticsChartShell` + `AnalyticsResponsiveChartContainer` (`h-[220px] sm:h-[260px]`); multi-line horizontal X via `{analyticsChartSlopedXAxisEl()}` + `wrapCategoryAxisLabel`; config-driven plot tooltips `{analyticsChartTooltipEl(_, { config })}` (series names from `getAnalyticsChartValueSeriesLabel` / stacked `ChartConfig`, not hardcoded Count); on-point labels via `AnalyticsChartValueLabelList`; stacked totals `AnalyticsStackedTotalLabel`; pie `AnalyticsPieSliceLabel` + `AnalyticsPieSliceLabelLine` (zero-count slices filtered before render); `PortalPanelSection` `clipContent={false}`; **no query/invalidation changes** — `invalidateInsightsAndAnalytics`, Redis 90s, SSR `prefetchInsights`, buster **`v6`**, cross-tab `BroadcastChannel`.
