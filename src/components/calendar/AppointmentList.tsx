@@ -46,6 +46,8 @@ import VideoCall from "./VideoCall";
 import { AppointmentCard } from "@/components/shared/AppointmentCard";
 import { useAppointmentInvoiceDisplayMap } from "@/hooks/useAppointmentInvoiceDisplayMap";
 import GlobalCalendarFilters from "./GlobalCalendarFilters";
+import { CalendarFiltersEmptyState } from "./CalendarFiltersEmptyState";
+import { buildCalendarFiltersEmptyCopy } from "@/lib/calendar-filters-empty-copy";
 import { motion } from "framer-motion";
 import CalendarStickyHeader from "./CalendarStickyHeader";
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
@@ -135,8 +137,71 @@ export default function AppointmentList() {
 
   const { categories = [] } = useCategories();
   const { patients = [] } = usePatients();
-  const { category, patient, date, status, month, search, clinicalRole } =
-    useCalendarFilters();
+  const {
+    category,
+    patient,
+    date,
+    status,
+    month,
+    search,
+    clinicalRole,
+    resetFilters,
+  } = useCalendarFilters();
+
+  const monthOptions = useMemo(() => {
+    const all = new Set<string>();
+    appointments.forEach((a) => {
+      const d = new Date(a.start);
+      all.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+    });
+    return Array.from(all)
+      .sort((a, b) => b.localeCompare(a))
+      .map((value) => {
+        const [year, monthPart] = value.split("-");
+        const formatted = new Intl.DateTimeFormat("de-DE", {
+          month: "long",
+          year: "numeric",
+        }).format(new Date(Number(year), Number(monthPart) - 1, 1));
+        return { value, label: formatted };
+      });
+  }, [appointments]);
+
+  const filtersEmptyCopy = useMemo(() => {
+    const selectedCategory = category
+      ? categories.find((c) => c.id === category)
+      : undefined;
+    const selectedPatient = patient ? patients.find((p) => p.id === patient) : undefined;
+    const monthLabel = month
+      ? monthOptions.find((m) => m.value === month)?.label
+      : undefined;
+    return buildCalendarFiltersEmptyCopy({
+      search,
+      category,
+      patient,
+      date,
+      status,
+      month,
+      clinicalRole,
+      categoryLabel: selectedCategory?.label,
+      patientLabel: selectedPatient
+        ? `${selectedPatient.firstname} ${selectedPatient.lastname}`.trim()
+        : undefined,
+      monthLabel,
+      totalAppointments: appointments.length,
+    });
+  }, [
+    search,
+    category,
+    patient,
+    date,
+    status,
+    month,
+    clinicalRole,
+    categories,
+    patients,
+    monthOptions,
+    appointments.length,
+  ]);
   const { assignees } = useAssignees();
   const ownerUsers = useOwnerUserSummaries(
     collectAppointmentStaffUserIds(appointments),
@@ -345,11 +410,10 @@ export default function AppointmentList() {
 
           {/* Only show the 'Kein Treffer gefunden' message if there are appointments but none match the filter/search */}
           {appointments.length > 0 && filteredAppointments.length === 0 && (
-            <div className="flex items-center justify-center min-h-[40vh]">
-              <div className="text-center text-gray-500 text-lg">
-                ❌ No matches found for your search for &quot;{search}&quot;
-              </div>
-            </div>
+            <CalendarFiltersEmptyState
+              copy={filtersEmptyCopy}
+              onReset={resetFilters}
+            />
           )}
 
           {/* Render grouped appointments */}
