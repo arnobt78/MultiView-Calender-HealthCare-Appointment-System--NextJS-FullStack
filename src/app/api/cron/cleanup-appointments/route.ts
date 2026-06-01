@@ -1,13 +1,14 @@
 /**
- * Monthly Appointment Cleanup Cron
+ * Monthly Appointment Cleanup Cron (NOT scheduled in production)
  *
- * Deletes appointments whose `end` timestamp falls before the first day of the
- * current calendar month.  Runs automatically on the 1st of every month at 00:00 UTC
- * via Vercel Cron (see vercel.json → "crons").
+ * Hard-deletes appointments whose `end` is before the 1st of the current month (UTC).
+ * Vercel schedule was removed from vercel.json `crons[]` (2026-06-01) so dashboard,
+ * insights, revenue, and patient/doctor history stay complete — no soft-delete layer.
  *
- * Can also be triggered manually:
+ * Disabled entry is preserved in vercel.json `_disabledCrons` for re-enable docs.
+ * Manual trigger only (requires CRON_SECRET in production):
  *   curl -H "Authorization: Bearer $CRON_SECRET" \
- *     https://doctor-patient-calendar-appointment.vercel.app/api/cron/cleanup-appointments
+ *     https://<your-host>/api/cron/cleanup-appointments
  *
  * GET /api/cron/cleanup-appointments
  */
