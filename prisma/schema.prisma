@@ -348,7 +348,8 @@ model Organization {
   /// Organisation type — "clinic" | "hospital" | "private_practice"
   org_type      String?  @db.Text
 
-  members OrganizationMember[]
+  members  OrganizationMember[]
+  invoices Invoice[]
 
   @@map("organizations")
 }
@@ -368,19 +369,22 @@ model OrganizationMember {
 
 // --- Invoices & Payments (billing)
 model Invoice {
-  id             String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  created_at     DateTime  @default(now())
-  appointment_id String?   @db.Uuid
-  user_id        String    @db.Uuid
-  amount         Int       // Amount in cents
-  currency       String    @default("eur") @db.Text
-  status         String    @default("draft") @db.Text // 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled'
-  due_date       DateTime? @db.Date
-  paid_at        DateTime? @db.Timestamptz(6)
-  description    String?   @db.Text
+  id              String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  created_at      DateTime  @default(now())
+  appointment_id  String?   @db.Uuid
+  user_id         String    @db.Uuid
+  organization_id String?   @db.Uuid
+  amount          Int       // Amount in cents
+  currency        String    @default("eur") @db.Text
+  status          String    @default("draft") @db.Text // 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled'
+  due_date        DateTime? @db.Date
+  paid_at         DateTime? @db.Timestamptz(6)
+  description     String?   @db.Text
 
-  payments Payment[]
+  organization Organization? @relation(fields: [organization_id], references: [id], onDelete: SetNull)
+  payments     Payment[]
 
+  @@index([organization_id])
   @@map("invoices")
 }
 

@@ -62,6 +62,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MoreHorizontal, Plus, Users, Building2 } from "lucide-react";
 import { format } from "date-fns";
 import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
+import { OrganizationBillingPanel } from "@/components/control-panel/OrganizationBillingPanel";
 
 const columnHelper = createColumnHelper<Organization>();
 
@@ -444,6 +445,15 @@ export default function OrganizationManagement() {
         )}
       </div>
       {isCreating && <p className="text-sm text-muted-foreground">Creating organization…</p>}
+
+      {!loading &&
+        organizations.slice(0, 3).map((org) => (
+          <OrganizationBillingPanel
+            key={org.id}
+            organizationId={org.id}
+            organizationName={org.name}
+          />
+        ))}
     </div>
   );
 }

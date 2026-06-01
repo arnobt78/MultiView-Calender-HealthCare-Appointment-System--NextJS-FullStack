@@ -14,6 +14,7 @@
 import { useState, useLayoutEffect, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
+import type { Invoice } from "@/hooks/usePayments";
 import { apiClient } from "@/lib/api-client";
 import type { DoctorPortalData } from "@/types/types";
 import type { DoctorPortalSettingsPrefetch } from "@/lib/doctor-portal-settings-prefetch";
@@ -26,6 +27,7 @@ import { appPortalSectionRootClass } from "@/lib/section-page-layout";
 import { PortalDoctorChromeHeader } from "@/components/shared/PortalDoctorChromeHeader";
 import { PortalPanelSection } from "@/components/shared/PortalPanelSection";
 import { DoctorPortalStatsRow } from "@/components/doctor-portal/DoctorPortalStatsRow";
+import { DoctorPortalInvoicesCard } from "@/components/doctor-portal/DoctorPortalInvoicesCard";
 import { PatientManagementInner } from "@/components/control-panel/PatientManagement";
 import { PatientListFiltersProvider } from "@/components/control-panel/PatientListFiltersContext";
 import { DoctorPortalAppointmentListRow } from "@/components/shared/appointments/DoctorPortalAppointmentListRow";
@@ -55,11 +57,14 @@ interface DoctorPortalPageProps {
   initialData: DoctorPortalData | null;
   /** SSR mirror of availability + time off + appointment-types?doctorId= — avoids settings skeleton on refresh. */
   initialScheduleSettings: DoctorPortalSettingsPrefetch | null;
+  /** SSR seed for doctor-scoped invoices (queryKeys.invoices.all). */
+  initialInvoices?: Invoice[];
 }
 
 export default function DoctorPortalPage({
   initialData,
   initialScheduleSettings,
+  initialInvoices = [],
 }: DoctorPortalPageProps) {
   const queryClient = useQueryClient();
   const [patientSectionCount, setPatientSectionCount] = useState<number | null>(null);
@@ -75,7 +80,10 @@ export default function DoctorPortalPage({
     } else if (doctorId) {
       prefetchDoctorScheduleSettings(queryClient, doctorId);
     }
-  }, [queryClient, initialData, initialScheduleSettings]);
+    if (initialInvoices.length > 0) {
+      queryClient.setQueryData(queryKeys.invoices.all, initialInvoices);
+    }
+  }, [queryClient, initialData, initialScheduleSettings, initialInvoices]);
 
   const { data, isLoading } = useQuery<DoctorPortalData | undefined>({
     queryKey: queryKeys.doctorPortal.all,
@@ -256,6 +264,8 @@ export default function DoctorPortalPage({
           initialAppointmentTypes={initialScheduleSettings?.appointmentTypes}
         />
       </div>
+
+      <DoctorPortalInvoicesCard listBodyLoading={portalLoading} />
 
       {doctorId ? (
         <PortalPanelSection

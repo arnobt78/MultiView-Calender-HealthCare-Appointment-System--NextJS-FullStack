@@ -2,11 +2,12 @@
 
 ## Latest Audit Update (2026-06-01)
 
-- **Appointment retention:** Monthly hard-delete cron removed — `vercel.json` only `/api/cron/reminders` (07:00 UTC). Route `cleanup-appointments` deleted. Appointments kept for dashboard, insights, revenue. Doc: `src/app/api/cron/reminders/route.ts`.
-- **CP UI:** `demo-showcase-copy.ts` short doctor banner; `DoctorIdentityRow` `activeStatus`; **Patient Management** header (was "Patients").
-- **Doctor CP (C2):** dev stubs, live assigned-patients, admin-only roster, cross-tab `doctors` — `.agile-v/cycles/C2/`.
-- **Demo appointments timeline:** `npm run db:seed-demo-appointments` — 36 slots across ±3 months, typed visits, invoices on some `done`, demo org `healthcal-demo-clinic`. Idempotent by title.
-- **Verify:** `npm test` **519** (79 files), tsc, lint, build green. Base seed: `db:prepare` + `db:seed-extended`; then `db:seed-demo-appointments`.
+- **Role-based billing:** Patient pay (Stripe Checkout), admin CP invoice lifecycle, doctor portal billing card, org-tagged invoices (`Invoice.organization_id`). Access: `resolveInvoiceAccess` → `none|view|mutate|pay|admin`. Paid only via `record-payment` or webhook (not PATCH `status=paid`).
+- **Routes:** Admin `/control-panel/invoices/[id]`; doctor/patient `/invoices/[id]` (CP layout redirects doctors). `invoiceDetailHref` in `entity-routes.ts`. Legacy `?invoiceId=` on patient portal → server redirect to `/invoices/:id`.
+- **API:** `GET|POST /api/invoices`, `GET|PATCH|DELETE /api/invoices/[id]`, `POST .../record-payment`, `POST .../refund`, `GET /api/billing/appointment-options`, `POST /api/payments` + `POST /api/payments/webhook`.
+- **Cache/SSR:** `prefetchInvoices` (portals), `prefetchInvoiceDetail` (detail pages), `queryKeys.invoices.all` + `.detail(id)`, `invalidateInvoicesAndOverview`, SSE billing types in `notification-stream-subscribe.ts`. Hover prefetch both invoice detail paths.
+- **Stripe:** `NEXT_PUBLIC_APP_URL` for return URLs. Local: `stripe listen --forward-to localhost:3000/api/payments/webhook`. Vercel: Dashboard destination **HealthCal Pro** → signing secret ≠ CLI `whsec`. Events: `checkout.session.completed`, `payment_intent.payment_failed`, `charge.refunded`.
+- **Also:** Retention cron only; demo timeline seed; CP doctor stubs. **Verify:** `npm test` **549**, tsc, lint, build. `npm run prisma:push` after schema pull.
 
 ## Prior (2026-05-31)
 
@@ -98,6 +99,19 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Prism
 - **Invalidation:** mutation helpers unchanged; add `invalidateQueriesForRoute` for back-navigation list refresh without `refetchOnMount`.
 - **Links wired:** calendar (`AppointmentList`, `DayView`, `WeekView`/`MonthView` via `AppointmentHoverCard`), portals, global search, notification deep links (create/booking/cron).
 - **Verify:** `npm test && npx tsc --noEmit && npm run lint && npm run build`.
+
+### Role-based billing (invoices + Stripe)
+
+| Role | List | Detail | Pay / mutate |
+|------|------|--------|----------------|
+| Admin | CP Invoice Management | `/control-panel/invoices/[id]` | full + refund |
+| Doctor | `GET /api/invoices` (scoped) | `/invoices/[id]` | draft mutate on own |
+| Patient | patient portal + `/api/invoices` | `/invoices/[id]` | Stripe pay when `pay` |
+
+- **Shared UI:** `src/components/shared/billing/*` — `CreateInvoiceDialog`, `InvoiceAppointmentPickerField`, `InvoiceDetailClient`, `InvoicePayActions`, `InvoiceAdminActionsMenu`.
+- **Doctor portal:** `DoctorPortalInvoicesCard` + SSR `prefetchInvoices` on `doctor-portal/page.tsx`.
+- **Org billing:** `OrganizationBillingPanel` on org detail; `?organizationId=` filter; any org **member** can view org-tagged rows; org **admin** can tag on create.
+- **Env:** see `.env.example` — `STRIPE_*`, `NEXT_PUBLIC_APP_URL`. Local webhook secret from CLI; production secret from Stripe Dashboard endpoint only.
 
 ### Doctor display + `/services`
 
@@ -502,9 +516,10 @@ src/
 │   │   ├── appointments/[id]/page.tsx
 │   │   ├── categories/[id]/page.tsx
 │   │   ├── doctors/[id]/page.tsx
-│   │   ├── invoices/[id]/page.tsx
+│   │   ├── invoices/[id]/page.tsx      admin invoice detail
 │   │   ├── organizations/[id]/page.tsx
 │   │   └── patients/[id]/page.tsx
+│   ├── invoices/[id]/page.tsx          doctor/patient invoice detail (no CP sidebar)
 │   │
 │   └── api/
 │       ├── auth/login/route.ts       POST — rate limited login
@@ -519,8 +534,9 @@ src/
 │       ├── relatives/                CRUD
 │       ├── invitations/              CRUD
 │       ├── organizations/            CRUD
-│       ├── invoices/                 CRUD
-│       ├── payments/                 Stripe webhook + checkout
+│       ├── invoices/                 CRUD + [id]/record-payment + [id]/refund
+│       ├── billing/appointment-options  invoice create picker
+│       ├── payments/                 Stripe checkout + webhook
 │       ├── notifications/            SSE stream + CRUD
 │       ├── analytics/                Aggregated stats
 │       ├── insights/                 AI-powered insights
@@ -581,7 +597,8 @@ src/
 │   ├── useInsights.ts
 │   ├── useDashboardOverview.ts Exposes isFetching + dataUpdatedAt for refresh button
 │   ├── useGoogleCalendar.ts
-│   ├── usePayments.ts          invoices + pay + create + delete
+│   ├── usePayments.ts          invoices list + pay + CRUD mutations
+│   ├── useInvoice.ts           single invoice detail query
 │   ├── useAI.ts
 │   ├── useDebounce.ts          300ms default
 │   ├── usePrevious.ts          useRef-based prev value

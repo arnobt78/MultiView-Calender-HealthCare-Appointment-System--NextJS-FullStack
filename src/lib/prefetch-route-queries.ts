@@ -5,6 +5,8 @@ import { isValidUUID } from "@/lib/validation";
 import { isAdminRole } from "@/lib/rbac";
 import type { Category, Patient, PatientSnapshot, User, CategorySnapshot } from "@/types/types";
 import { prefetchCategoryDetailStaffUsers } from "@/lib/prefetch-category-detail-staff";
+import { mapApiInvoiceToRow } from "@/lib/billing-invoice-map";
+import type { InvoiceRow } from "@/lib/billing-types";
 
 type PrefetchViewer = { userId: string; role: string | null };
 
@@ -12,6 +14,19 @@ function getPrefetchViewer(queryClient: QueryClient): PrefetchViewer | undefined
   const me = queryClient.getQueryData<{ id: string; role?: string } | null>(queryKeys.auth.me);
   if (!me?.id) return undefined;
   return { userId: me.id, role: me.role ?? null };
+}
+
+async function prefetchInvoiceDetailQuery(
+  queryClient: QueryClient,
+  invoiceId: string
+): Promise<void> {
+  await queryClient.prefetchQuery({
+    queryKey: queryKeys.invoices.detail(invoiceId),
+    queryFn: async () => {
+      const res = await apiClient<{ invoice: InvoiceRow }>(`/api/invoices/${invoiceId}`);
+      return mapApiInvoiceToRow(res.invoice);
+    },
+  });
 }
 
 function rosterQueryFromHref(href: string): string {
@@ -40,6 +55,8 @@ export function prefetchQueriesForControlPanelHref(
   const isPatients = segments.includes("patients");
   const isDoctors = segments.includes("doctors");
   const isCategories = segments.includes("categories");
+  /** Portal `/invoices/:id` and CP `/control-panel/invoices/:id` share the same detail API. */
+  const isInvoices = segments.includes("invoices");
   const resolvedViewer = viewer ?? getPrefetchViewer(queryClient);
   const rosterQ = rosterQueryFromHref(href);
 
@@ -90,6 +107,11 @@ export function prefetchQueriesForControlPanelHref(
           }),
           prefetchCategoryDetailStaffUsers(queryClient),
         ]);
+        return;
+      }
+      if (isInvoices) {
+        await prefetchInvoiceDetailQuery(queryClient, id);
+        return;
       }
     } catch {
       /* ignore — prefetch only */

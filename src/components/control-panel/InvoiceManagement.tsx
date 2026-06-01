@@ -18,28 +18,8 @@ import {
   type SortingState,
 } from "@tanstack/react-table";
 import { usePayments, type Invoice } from "@/hooks/usePayments";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import {
   Table,
   TableBody,
@@ -48,112 +28,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MoreHorizontal, Plus, Receipt, CreditCard } from "lucide-react";
+import { Receipt, CreditCard } from "lucide-react";
+import { CreateInvoiceDialog } from "@/components/shared/billing/CreateInvoiceDialog";
+import { InvoiceAdminActionsMenu } from "@/components/shared/billing/InvoiceAdminActionsMenu";
+import { InvoiceStatusBadge } from "@/components/shared/billing/InvoiceStatusBadge";
 import { format } from "date-fns";
 import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
 
 const columnHelper = createColumnHelper<Invoice>();
-
-const STATUS_COLORS: Record<string, string> = {
-  draft: "bg-gray-100 text-gray-700",
-  sent: "bg-blue-100 text-blue-700",
-  paid: "bg-green-100 text-green-700",
-  overdue: "bg-red-100 text-red-700",
-  cancelled: "bg-yellow-100 text-yellow-700",
-};
-
-function CreateInvoiceDialog({
-  onCreate,
-}: {
-  onCreate: (body: { amount: number; description?: string; due_date?: string }) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const [amount, setAmount] = useState("");
-  const [description, setDescription] = useState("");
-  const [dueDate, setDueDate] = useState("");
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const parsed = parseFloat(amount);
-    if (!parsed || parsed <= 0) return;
-    onCreate({
-      amount: parsed,
-      description: description || undefined,
-      due_date: dueDate || undefined,
-    });
-    setAmount("");
-    setDescription("");
-    setDueDate("");
-    setOpen(false);
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm" className="gap-2">
-          <Plus className="h-4 w-4" /> New Invoice
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Create Invoice</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-2 pt-2">
-          <div className="space-y-1.5">
-            <Label htmlFor="inv-amount">Amount (EUR)</Label>
-            <Input
-              id="inv-amount"
-              type="number"
-              step="0.01"
-              min="0.01"
-              placeholder="e.g. 150.00"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              required
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="inv-desc">Description</Label>
-            <Textarea
-              id="inv-desc"
-              placeholder="Optional description…"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={2}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="inv-due">Due Date</Label>
-            <Input
-              id="inv-due"
-              type="date"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-            />
-          </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={!amount || parseFloat(amount) <= 0}>
-              Create Invoice
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 export default function InvoiceManagement() {
   const {
@@ -166,6 +49,12 @@ export default function InvoiceManagement() {
     createInvoice,
     isCreating,
     deleteInvoice,
+    updateInvoice,
+    recordPayment,
+    refundInvoice,
+    isUpdating,
+    isRecording,
+    isRefunding,
   } = usePayments();
 
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -197,14 +86,7 @@ export default function InvoiceManagement() {
     }),
     columnHelper.accessor("status", {
       header: "Status",
-      cell: (info) => {
-        const status = info.getValue();
-        return (
-          <Badge className={STATUS_COLORS[status] ?? "bg-gray-100 text-gray-700"}>
-            {status}
-          </Badge>
-        );
-      },
+      cell: (info) => <InvoiceStatusBadge status={info.getValue()} />,
     }),
     columnHelper.accessor("due_date", {
       header: "Due",
@@ -222,60 +104,20 @@ export default function InvoiceManagement() {
       header: "",
       cell: ({ row }) => {
         const invoice = row.original;
-        const canPay = invoice.status === "draft" || invoice.status === "sent";
-        const canDelete = invoice.status !== "paid";
+        const busy = isUpdating || isRecording || isRefunding;
         return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {canPay && (
-                <DropdownMenuItem
-                  onClick={() => pay(invoice.id)}
-                  disabled={isPaying}
-                  className="gap-2"
-                >
-                  <CreditCard className="h-4 w-4" /> Pay Now
-                </DropdownMenuItem>
-              )}
-              {canDelete && (
-                <>
-                  <DropdownMenuSeparator />
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <DropdownMenuItem
-                        className="text-red-600 focus:text-red-600"
-                        onSelect={(e) => e.preventDefault()}
-                      >
-                        Delete Invoice
-                      </DropdownMenuItem>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Invoice?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This will permanently delete invoice{" "}
-                          <strong>#{invoice.id.slice(0, 8)}</strong>.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                          className="bg-red-600 hover:bg-red-700"
-                          onClick={() => deleteInvoice(invoice.id)}
-                        >
-                          Delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <InvoiceAdminActionsMenu
+            invoice={invoice}
+            viewerRole="admin"
+            onPay={pay}
+            onSend={(id) => updateInvoice({ invoiceId: id, body: { status: "sent" } })}
+            onMarkPaid={recordPayment}
+            onCancel={(id) => updateInvoice({ invoiceId: id, body: { status: "cancelled" } })}
+            onDelete={deleteInvoice}
+            onRefund={refundInvoice}
+            isPaying={isPaying}
+            isUpdating={busy}
+          />
         );
       },
     }),
@@ -367,7 +209,7 @@ export default function InvoiceManagement() {
             onChange={(e) => setGlobalFilter(e.target.value)}
             className="w-56"
           />
-          <CreateInvoiceDialog onCreate={createInvoice} />
+          <CreateInvoiceDialog variant="admin" onCreate={createInvoice} />
         </div>
       </div>
 

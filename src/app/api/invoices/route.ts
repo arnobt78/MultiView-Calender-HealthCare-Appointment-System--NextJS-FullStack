@@ -1,31 +1,39 @@
 /**
  * Invoices API
- * GET:  list user's invoices
- * POST: create invoice
+ * GET:  role-aware list (invoices-scope)
+ * POST: create draft — admin or doctor (appointment-linked billing owner)
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session";
-import { getUserRole } from "@/lib/rbac";
+import { getUserRole, isPatientRole } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
-import { redis } from "@/lib/redis";
-import { isValidUUID } from "@/lib/validation";
 import { fetchInvoicesForViewer } from "@/lib/invoices-scope";
 import { serializeInvoice } from "@/lib/serializers";
+import {
+  canCreateInvoiceForAppointment,
+  resolveInvoiceBillingUserId,
+  type InvoiceAccessSession,
+} from "@/lib/invoice-access";
+import { invoiceCreateSchema } from "@/lib/schemas/invoice";
+import { zodBadRequest } from "@/lib/schemas/parse";
+import { invalidateBillingRedisCaches } from "@/lib/billing-cache";
+import { resolveInvoiceOrganizationId } from "@/lib/invoice-organization-resolve";
 
-/** Per-request API handler (see api-route-dynamic.test.ts). */
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const sessionUser = await getSessionUser();
     if (!sessionUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const role = await getUserRole(sessionUser.userId);
+    const organizationId = req.nextUrl.searchParams.get("organizationId");
     const rows = await fetchInvoicesForViewer({
       userId: sessionUser.userId,
       role,
       email: sessionUser.email,
+      organizationId,
     });
 
     const invoices = rows.map((row) => ({
@@ -45,44 +53,72 @@ export async function POST(req: NextRequest) {
     const sessionUser = await getSessionUser();
     if (!sessionUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { amount, currency = "eur", description, appointment_id, due_date } = await req.json();
-
-    if (!amount || typeof amount !== "number" || amount <= 0) {
-      return NextResponse.json({ error: "Valid amount is required" }, { status: 400 });
+    const role = await getUserRole(sessionUser.userId);
+    if (isPatientRole(role)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // When an appointment is linked, validate UUID format first to prevent malformed Prisma queries.
-    if (appointment_id && (typeof appointment_id !== "string" || !isValidUUID(appointment_id))) {
-      return NextResponse.json({ error: "Invalid appointment_id format" }, { status: 400 });
+    const session: InvoiceAccessSession = {
+      userId: sessionUser.userId,
+      email: sessionUser.email,
+      role,
+    };
+
+    const json = await req.json();
+    const parsed = invoiceCreateSchema.safeParse(json);
+    if (!parsed.success) return zodBadRequest(parsed.error);
+
+    const { amount, currency, description, appointment_id, due_date, organization_id } =
+      parsed.data;
+
+    const canCreate = await canCreateInvoiceForAppointment(
+      session,
+      appointment_id ?? null
+    );
+    if (!canCreate) {
+      return NextResponse.json(
+        { error: "Appointment not found or forbidden" },
+        { status: 403 }
+      );
     }
-    if (appointment_id) {
-      const appt = await prisma.appointment.findFirst({
-        where: { id: appointment_id, owner_id: sessionUser.userId },
-        select: { id: true },
-      });
-      if (!appt) {
-        return NextResponse.json({ error: "Appointment not found or forbidden" }, { status: 403 });
-      }
+
+    const billingUserId = await resolveInvoiceBillingUserId(
+      appointment_id ?? null,
+      sessionUser.userId
+    );
+
+    const orgResolved = await resolveInvoiceOrganizationId({
+      sessionUserId: sessionUser.userId,
+      role,
+      appointmentId: appointment_id ?? null,
+      billingUserId,
+      explicitOrganizationId: organization_id ?? null,
+    });
+    if (orgResolved.forbidden) {
+      return NextResponse.json(
+        { error: "Organization not found or forbidden" },
+        { status: 403 }
+      );
     }
 
     const invoice = await prisma.invoice.create({
       data: {
-        user_id: sessionUser.userId,
-        amount: Math.round(amount * 100), // store as cents
+        user_id: billingUserId,
+        amount: Math.round(amount * 100),
         currency,
         description: description ?? null,
         appointment_id: appointment_id ?? null,
+        organization_id: orgResolved.organizationId,
         due_date: due_date ? new Date(due_date) : null,
         status: "draft",
       },
       include: { payments: true },
     });
 
-    /*
-     * Bust the server-side Redis overview cache so revenue totals
-     * and invoice counts in the dashboard card update immediately.
-     */
-    void redis.invalidateDashboardOverview(sessionUser.userId);
+    await invalidateBillingRedisCaches({
+      invoiceUserId: billingUserId,
+      appointmentId: appointment_id ?? null,
+    });
 
     return NextResponse.json({ invoice }, { status: 201 });
   } catch (error: unknown) {

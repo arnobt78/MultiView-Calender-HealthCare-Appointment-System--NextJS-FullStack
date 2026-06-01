@@ -44,4 +44,5 @@ export * from "./useOwnerUserSummaries";
 export * from "./usePatientListMetrics";
 export * from "./usePatients";
 export * from "./usePayments";
+export * from "./useInvoice";
 export * from "./useUsers";

@@ -18,6 +18,19 @@ interface StripeSession {
   url: string;
 }
 
+/** Checkout return paths — role-specific success/cancel URLs. */
+export type StripeCheckoutReturnPath =
+  | "patient-portal"
+  | "control-panel/invoice-management";
+
+function checkoutReturnUrls(returnPath: StripeCheckoutReturnPath) {
+  const base = `${APP_URL}/${returnPath}`;
+  return {
+    success_url: `${base}?session_id={CHECKOUT_SESSION_ID}&status=success`,
+    cancel_url: `${base}?status=cancelled`,
+  };
+}
+
 /**
  * Create a Stripe Checkout session for an invoice
  */
@@ -27,12 +40,14 @@ export async function createCheckoutSession({
   currency,
   description,
   customerEmail,
+  returnPath = "control-panel/invoice-management",
 }: {
   invoiceId: string;
   amount: number; // in cents
   currency: string;
   description: string;
   customerEmail: string;
+  returnPath?: StripeCheckoutReturnPath;
 }): Promise<StripeSession> {
   if (!STRIPE_SECRET_KEY) {
     throw new Error("Stripe is not configured (STRIPE_SECRET_KEY missing)");
@@ -52,11 +67,10 @@ export async function createCheckoutSession({
       "line_items[0][quantity]": "1",
       mode: "payment",
       customer_email: customerEmail,
-      // Redirect to the invoice-management section (segment → tab: "invoices").
-      // Dedicated CP section pages read status=success on mount to refetch invoice data.
-      success_url: `${APP_URL}/control-panel/invoice-management?session_id={CHECKOUT_SESSION_ID}&status=success`,
-      cancel_url: `${APP_URL}/control-panel/invoice-management?status=cancelled`,
+      ...checkoutReturnUrls(returnPath),
       "metadata[invoice_id]": invoiceId,
+      // Propagate to PaymentIntent so payment_intent.payment_failed webhooks can resolve invoice.
+      "payment_intent_data[metadata][invoice_id]": invoiceId,
     }),
   });
 
@@ -118,4 +132,30 @@ export function verifyWebhookSignature(rawBody: string, signatureHeader: string)
   }
 
   return JSON.parse(rawBody) as unknown;
+}
+
+/** Full refund on a succeeded PaymentIntent (Stripe REST, no SDK). */
+export async function createRefund(paymentIntentId: string): Promise<{ id: string }> {
+  if (!STRIPE_SECRET_KEY) {
+    throw new Error("Stripe is not configured (STRIPE_SECRET_KEY missing)");
+  }
+
+  const response = await fetch("https://api.stripe.com/v1/refunds", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${STRIPE_SECRET_KEY}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: new URLSearchParams({
+      payment_intent: paymentIntentId,
+    }),
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`Stripe refund error: ${err}`);
+  }
+
+  const refund = (await response.json()) as { id: string };
+  return { id: refund.id };
 }

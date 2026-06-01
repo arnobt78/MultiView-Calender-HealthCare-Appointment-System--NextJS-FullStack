@@ -3,7 +3,11 @@
  */
 
 import type { QueryClient } from "@tanstack/react-query";
-import { invalidateNotificationsAndCrossTab } from "@/lib/query-client";
+import {
+  invalidateInvoicesAndOverview,
+  invalidateNotificationsAndCrossTab,
+} from "@/lib/query-client";
+import { isBillingNotificationType } from "@/lib/billing-notify";
 import {
   NOTIFICATION_STREAM_RECONNECT_MS,
   NOTIFICATION_STREAM_URL,
@@ -39,6 +43,12 @@ export function subscribeNotificationStream(queryClient: QueryClient): () => voi
       const parsed = parseNotificationStreamEvent(event.data);
       if (parsed?.type === "notifications" && parsed.data.length > 0) {
         void invalidateNotificationsAndCrossTab(queryClient);
+        const hasBilling = parsed.data.some((row) =>
+          isBillingNotificationType(row.type)
+        );
+        if (hasBilling) {
+          void invalidateInvoicesAndOverview(queryClient);
+        }
       }
     };
 

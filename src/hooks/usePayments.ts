@@ -11,27 +11,24 @@ import {
   formatInvoiceMoney,
   invoiceCrudMessage,
 } from "@/lib/crud-notify-messages";
+import type { InvoiceRow, InvoicePaymentRow } from "@/lib/billing-types";
 
-export interface InvoicePayment {
-  id: string;
-  amount: number;
-  status: string;
-  created_at: string;
-  stripe_payment_id?: string;
-}
+export type InvoicePayment = InvoicePaymentRow;
+export type Invoice = InvoiceRow;
 
-export interface Invoice {
-  id: string;
-  appointment_id?: string;
-  user_id: string;
-  amount: number;
-  currency: string;
-  status: string;
-  description?: string;
-  due_date?: string;
-  paid_at?: string;
-  created_at: string;
-  payments: InvoicePayment[];
+async function invalidateAfterInvoiceWrite(
+  queryClient: ReturnType<typeof useQueryClient>,
+  opts?: { invoiceId?: string; appointmentId?: string | null }
+) {
+  const patientId = opts?.appointmentId
+    ? getPatientIdFromAppointmentCache(queryClient, opts.appointmentId)
+    : opts?.invoiceId
+      ? getPatientIdFromInvoiceCache(queryClient, opts.invoiceId)
+      : undefined;
+  await invalidateInvoicesAndOverview(queryClient, {
+    patientId: patientId ?? undefined,
+    invoiceId: opts?.invoiceId ?? undefined,
+  });
 }
 
 export function usePayments() {
@@ -43,8 +40,6 @@ export function usePayments() {
       const data = await apiClient<{ invoices: Invoice[] }>("/api/payments");
       return data.invoices || [];
     },
-    // Invoice list is updated only via createInvoice / deleteInvoice mutations;
-    // 30 s prevents redundant re-fetches on tab switches.
     staleTime: 30_000,
   });
 
@@ -56,10 +51,8 @@ export function usePayments() {
       });
       return data.url;
     },
-    onSuccess: async (url) => {
-      // Invalidate invoices before redirect so the cache is stale when the user
-      // returns from Stripe — ControlPanelSectionPageClient re-fetches on mount.
-      await invalidateInvoicesAndOverview(queryClient);
+    onSuccess: async (url, invoiceId) => {
+      await invalidateAfterInvoiceWrite(queryClient, { invoiceId });
       window.location.href = url;
     },
     onError: (error) => {
@@ -74,8 +67,12 @@ export function usePayments() {
       description?: string;
       appointment_id?: string;
       due_date?: string;
+      organization_id?: string;
     }) =>
-      apiClient<{ invoice: Invoice }>("/api/invoices", { method: "POST", body: JSON.stringify(body) }),
+      apiClient<{ invoice: Invoice }>("/api/invoices", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
     onSuccess: async (data, variables) => {
       const label =
         data.invoice.description?.trim() ||
@@ -87,11 +84,76 @@ export function usePayments() {
         unit: variables.amount != null ? "eur" : "cents",
       });
       notify.crud(invoiceCrudMessage("created", { label, amountFormatted }));
-      const apt = data.invoice.appointment_id ?? variables.appointment_id;
-      const patientId = apt ? getPatientIdFromAppointmentCache(queryClient, apt) : undefined;
-      await invalidateInvoicesAndOverview(queryClient, { patientId });
+      await invalidateAfterInvoiceWrite(queryClient, {
+        invoiceId: data.invoice.id,
+        appointmentId: data.invoice.appointment_id ?? variables.appointment_id,
+      });
     },
     onError: (error) => handleApiError(error, "Failed to create invoice"),
+  });
+
+  const updateInvoiceMutation = useMutation({
+    mutationFn: ({
+      invoiceId,
+      body,
+    }: {
+      invoiceId: string;
+      body: { status?: string; description?: string | null; due_date?: string | null };
+    }) =>
+      apiClient<{ invoice: Invoice }>(`/api/invoices/${invoiceId}`, {
+        method: "PATCH",
+        body: JSON.stringify(body),
+      }),
+    onSuccess: async (data) => {
+      notify.crud(
+        invoiceCrudMessage("updated", {
+          label: data.invoice.description?.trim() || "Invoice",
+        })
+      );
+      await invalidateAfterInvoiceWrite(queryClient, {
+        invoiceId: data.invoice.id,
+        appointmentId: data.invoice.appointment_id,
+      });
+    },
+    onError: (error) => handleApiError(error, "Failed to update invoice"),
+  });
+
+  const recordPaymentMutation = useMutation({
+    mutationFn: (invoiceId: string) =>
+      apiClient<{ invoice: Invoice }>(`/api/invoices/${invoiceId}/record-payment`, {
+        method: "POST",
+        body: JSON.stringify({}),
+      }),
+    onSuccess: async (data) => {
+      notify.crud(
+        invoiceCrudMessage("updated", {
+          label: data.invoice.description?.trim() || "Invoice",
+          amountFormatted: formatInvoiceMoney({
+            amount: data.invoice.amount,
+            currency: data.invoice.currency,
+            unit: "cents",
+          }),
+        })
+      );
+      await invalidateAfterInvoiceWrite(queryClient, {
+        invoiceId: data.invoice.id,
+        appointmentId: data.invoice.appointment_id,
+      });
+    },
+    onError: (error) => handleApiError(error, "Failed to record payment"),
+  });
+
+  const refundInvoiceMutation = useMutation({
+    mutationFn: (invoiceId: string) =>
+      apiClient(`/api/invoices/${invoiceId}/refund`, {
+        method: "POST",
+        body: JSON.stringify({}),
+      }),
+    onSuccess: async (_, invoiceId) => {
+      notify.crud(invoiceCrudMessage("updated", { label: "Invoice refunded" }));
+      await invalidateAfterInvoiceWrite(queryClient, { invoiceId });
+    },
+    onError: (error) => handleApiError(error, "Refund failed"),
   });
 
   const deleteInvoiceMutation = useMutation({
@@ -113,11 +175,11 @@ export function usePayments() {
             unit: "cents",
           })
         : undefined;
-      notify.crud(
-        invoiceCrudMessage("deleted", { label, amountFormatted })
-      );
-      const patientId = getPatientIdFromInvoiceCache(queryClient, invoiceId);
-      await invalidateInvoicesAndOverview(queryClient, { patientId });
+      notify.crud(invoiceCrudMessage("deleted", { label, amountFormatted }));
+      await invalidateAfterInvoiceWrite(queryClient, {
+        invoiceId,
+        appointmentId: deleted?.appointment_id,
+      });
     },
     onError: (error) => handleApiError(error, "Failed to delete invoice"),
   });
@@ -131,6 +193,12 @@ export function usePayments() {
     isPaying: payMutation.isPending,
     createInvoice: createInvoiceMutation.mutate,
     isCreating: createInvoiceMutation.isPending,
+    updateInvoice: updateInvoiceMutation.mutate,
+    isUpdating: updateInvoiceMutation.isPending,
+    recordPayment: recordPaymentMutation.mutate,
+    isRecording: recordPaymentMutation.isPending,
+    refundInvoice: refundInvoiceMutation.mutate,
+    isRefunding: refundInvoiceMutation.isPending,
     deleteInvoice: deleteInvoiceMutation.mutate,
     isDeleting: deleteInvoiceMutation.isPending,
   };

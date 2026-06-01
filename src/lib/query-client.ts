@@ -201,14 +201,25 @@ export async function invalidateOrganizations(queryClient: QueryClient) {
  */
 export async function invalidateInvoicesAndOverview(
   queryClient: QueryClient,
-  opts?: { patientId?: string | null }
+  opts?: { patientId?: string | null; invoiceId?: string | null }
 ) {
   const patientId = opts?.patientId;
+  const invoiceId = opts?.invoiceId;
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: queryKeys.invoices.all }),
+    ...(invoiceId
+      ? [
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.invoices.detail(invoiceId),
+          }),
+        ]
+      : []),
     queryClient.invalidateQueries({ queryKey: queryKeys.doctors.all }),
     invalidateDashboardOverview(queryClient),
     invalidateInsightsAndAnalytics(queryClient),
+    invalidatePatientPortal(queryClient),
+    invalidateDoctorPortal(queryClient),
+    invalidateAdminPortal(queryClient),
     patientId
       ? invalidatePatientDetailAndSnapshot(queryClient, patientId)
       : queryClient.invalidateQueries({ queryKey: queryKeys.patients.all }),

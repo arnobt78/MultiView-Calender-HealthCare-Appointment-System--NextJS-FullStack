@@ -13,7 +13,15 @@
  */
 
 import { useState, useEffect, useLayoutEffect, useMemo, type ReactNode } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { invoiceDetailHref } from "@/lib/entity-routes";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { invalidateInvoicesAndOverview } from "@/lib/query-client";
+import { usePayments, type Invoice } from "@/hooks/usePayments";
+import { InvoiceStatusBadge } from "@/components/shared/billing/InvoiceStatusBadge";
+import { InvoicePayActions } from "@/components/shared/billing/InvoicePayActions";
+import { InvoiceAmountDisplay } from "@/components/shared/billing/InvoiceAmountDisplay";
 import { differenceInYears, format, isPast, isFuture, isToday } from "date-fns";
 import type { PortalPrefetchData } from "@/lib/server-prefetch";
 import { apiClient } from "@/lib/api-client";
@@ -77,19 +85,6 @@ import { getPatientCareLevelLabel } from "@/lib/patient-care-level";
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
-
-/** Serialized invoice row from /api/invoices */
-interface InvoiceRow {
-  id: string;
-  created_at: string;
-  appointment_id: string | null;
-  amount: number;
-  currency: string;
-  status: string;
-  due_date: string | null;
-  paid_at: string | null;
-  description: string | null;
-}
 
 // ---------------------------------------------------------------------------
 // Status meta
@@ -372,10 +367,20 @@ type PatientPortalPageProps = {
    * profile card and timeline render on first paint without a loading flash.
    */
   initialPortalData?: PortalPrefetchData | null;
+  /** SSR seed for chart-linked invoices (queryKeys.invoices.all). */
+  initialInvoices?: Invoice[];
+  /** Stripe checkout return — parsed on server from ?status= (no useSearchParams). */
+  paymentReturnStatus?: "success" | "cancelled" | null;
 };
 
-export default function PatientPortalPage({ initialPortalData }: PatientPortalPageProps = {}) {
+export default function PatientPortalPage({
+  initialPortalData,
+  initialInvoices = [],
+  paymentReturnStatus = null,
+}: PatientPortalPageProps = {}) {
   const queryClient = useQueryClient();
+  const router = useRouter();
+  const { pay, isPaying } = usePayments();
 
   // Seed cache synchronously before first paint to avoid skeleton flash
   useLayoutEffect(() => {
@@ -384,7 +389,16 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
     }
     // Warm doctor directory for booking step 1 cards (availabilities + service labels).
     prefetchDoctorsDirectory(queryClient);
-  }, [queryClient, initialPortalData]);
+    // SSR invoice list — always seed (including []) so client matches server without isMounted gate.
+    queryClient.setQueryData(queryKeys.invoices.all, initialInvoices);
+  }, [queryClient, initialPortalData, initialInvoices]);
+
+  /** Stripe return — bust invoice cache without full page reload. */
+  useEffect(() => {
+    if (paymentReturnStatus !== "success" && paymentReturnStatus !== "cancelled") return;
+    void invalidateInvoicesAndOverview(queryClient);
+    router.replace("/patient-portal", { scroll: false });
+  }, [paymentReturnStatus, queryClient, router]);
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: queryKeys.patientPortal.all,
@@ -394,18 +408,15 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
     staleTime: 30_000,
   });
 
-  // Mount guard for invoices query only — avoids SSR/client mismatch on /api/invoices
-  const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => {
-    requestAnimationFrame(() => setIsMounted(true));
-  }, []);
-
-  // Chart-linked invoices via GET /api/invoices (role-aware — see invoices-scope.ts)
-  const { data: invoicesData, isLoading: invoicesLoading, isError: invoicesError } = useQuery({
+  // Chart-linked invoices — SSR initialData + layout seed (no isMounted delay).
+  const { data: invoicesList, isLoading: invoicesLoading, isError: invoicesError } = useQuery({
     queryKey: queryKeys.invoices.all,
-    queryFn: () => apiClient<{ invoices: InvoiceRow[] }>("/api/invoices"),
-    enabled: isMounted,
-    staleTime: 2 * 60 * 1000,
+    queryFn: async () => {
+      const data = await apiClient<{ invoices: Invoice[] }>("/api/invoices");
+      return data.invoices ?? [];
+    },
+    initialData: initialInvoices,
+    staleTime: 30_000,
   });
 
   const { data: portalDoctorsData, isLoading: portalDoctorsLoading } = useUsers({
@@ -445,7 +456,7 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
   const avatarSrc = trimmedOAuth ?? trimmedClinical ?? robohashFallback;
 
   const clinicalProfile = patient?.clinical_profile as PatientClinicalProfile;
-  const invoices = invoicesData?.invoices ?? [];
+  const invoices = invoicesList ?? [];
   /**
    * Keep Primary Doctor row in doctorStack skeleton state until doctor directory metadata
    * is available; prevents specialty-badge pop-in from expanding the row after first paint.
@@ -741,7 +752,12 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
                           className="flex items-center justify-between rounded-lg border bg-card px-3 py-2 text-xs"
                         >
                           <div className="min-w-0">
-                            <p className="truncate font-medium text-gray-700">{inv.description ?? "Invoice"}</p>
+                            <Link
+                              href={invoiceDetailHref("patient", inv.id)}
+                              className="truncate font-medium text-gray-700 hover:underline"
+                            >
+                              {inv.description ?? "Invoice"}
+                            </Link>
                             {inv.due_date && (
                               <p className="text-[10px] text-gray-600">
                                 Due {format(new Date(inv.due_date), "dd MMM yyyy")}
@@ -749,24 +765,17 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
                             )}
                           </div>
                           <div className="flex shrink-0 items-center gap-2">
-                            <span className="font-semibold text-gray-700">
-                              {(inv.amount / 100).toFixed(2)} {inv.currency.toUpperCase()}
-                            </span>
-                            <Badge
-                              variant="outline"
-                              className={cn(
-                                "calendar-glass-badge text-[10px] py-0",
-                                inv.status === "paid"
-                                  ? "calendar-glass-badge-emerald"
-                                  : inv.status === "overdue"
-                                    ? "calendar-glass-badge-rose"
-                                    : inv.status === "sent"
-                                      ? "calendar-glass-badge-sky"
-                                      : "calendar-glass-badge-slate"
-                              )}
-                            >
-                              {inv.status}
-                            </Badge>
+                            <InvoiceAmountDisplay
+                              amountCents={inv.amount}
+                              currency={inv.currency}
+                              className="font-semibold text-gray-700"
+                            />
+                            <InvoiceStatusBadge status={inv.status} />
+                            <InvoicePayActions
+                              status={inv.status}
+                              onPay={() => pay(inv.id)}
+                              isPaying={isPaying}
+                            />
                           </div>
                         </div>
                       ))}

@@ -1,18 +1,20 @@
 /**
  * Payments API
- * 
- * GET: list user's invoices
- * POST: create checkout session for an invoice
+ * GET: list invoices (scoped)
+ * POST: Stripe Checkout — patient pay or admin test pay
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session";
-import { getUserRole } from "@/lib/rbac";
-import { prisma } from "@/lib/prisma";
-import { createCheckoutSession } from "@/lib/stripe";
+import { getUserRole, isPatientRole } from "@/lib/rbac";
+import { createCheckoutSession, type StripeCheckoutReturnPath } from "@/lib/stripe";
 import { fetchInvoicesForViewer } from "@/lib/invoices-scope";
+import {
+  assertInvoiceAccess,
+  type InvoiceAccessSession,
+} from "@/lib/invoice-access";
+import { canPatientPayInvoiceStatus } from "@/lib/billing-status";
 
-/** Per-request API handler (see api-route-dynamic.test.ts). */
 export const dynamic = "force-dynamic";
 
 export async function GET() {
@@ -50,6 +52,21 @@ export async function POST(request: NextRequest) {
     }
 
     const role = await getUserRole(sessionUser.userId);
+    const session: InvoiceAccessSession = {
+      userId: sessionUser.userId,
+      email: sessionUser.email,
+      role,
+    };
+
+    const payLevel = await assertInvoiceAccess(session, invoiceId, "pay");
+    const adminLevel = await assertInvoiceAccess(session, invoiceId, "admin");
+    if (payLevel === "none" && adminLevel === "none") {
+      return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
+    }
+    if (payLevel === "none" && adminLevel !== "admin") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const scoped = await fetchInvoicesForViewer({
       userId: sessionUser.userId,
       role,
@@ -65,15 +82,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invoice already paid" }, { status: 400 });
     }
 
-    const session = await createCheckoutSession({
+    if (isPatientRole(role) && !canPatientPayInvoiceStatus(invoice.status)) {
+      return NextResponse.json({ error: "Invoice is not payable" }, { status: 400 });
+    }
+
+    const returnPath: StripeCheckoutReturnPath = isPatientRole(role)
+      ? "patient-portal"
+      : "control-panel/invoice-management";
+
+    const checkout = await createCheckoutSession({
       invoiceId: invoice.id,
       amount: invoice.amount,
       currency: invoice.currency,
       description: invoice.description || `Invoice #${invoice.id.substring(0, 8)}`,
       customerEmail: sessionUser.email,
+      returnPath,
     });
 
-    return NextResponse.json({ sessionId: session.id, url: session.url });
+    return NextResponse.json({ sessionId: checkout.id, url: checkout.url });
   } catch (error: unknown) {
     console.error("Payments POST error:", error);
     return NextResponse.json({ error: "Failed to create payment session" }, { status: 500 });

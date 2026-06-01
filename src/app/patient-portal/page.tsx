@@ -1,21 +1,24 @@
-// Patient Portal — async Server Component
-// Pre-fetches portal data (patient record + appointment history) so
-// PatientPortalPage seeds the TanStack Query cache on first render —
-// profile and appointment timeline show instantly with no loading flash.
-//
-// RBAC: only users with the "patient" role may access this route.
-// Staff / admin / doctor are redirected to the control panel.
+// Patient Portal — SSR prefetch + inline pulse fallback (no Suspense).
+// Seeds TanStack on client via PatientPortalPage useLayoutEffect.
 
 import PatientPortalPage from "@/components/pages/PatientPortalPage";
+import { PatientPortalPageSkeleton } from "@/components/pages/PatientPortalPageSkeleton";
 import { getSessionUser } from "@/lib/session";
 import { redirect } from "next/navigation";
-import { prefetchPortalData } from "@/lib/server-prefetch";
-import type { PortalPrefetchData } from "@/lib/server-prefetch";
+import { prefetchPortalData, prefetchInvoices } from "@/lib/server-prefetch";
+import type { Invoice } from "@/hooks/usePayments";
 import { getUserRole, isAdminRole, isDoctorRole, isPatientRole } from "@/lib/rbac";
+import { isValidUUID } from "@/lib/validation";
+
+export const dynamic = "force-dynamic";
 
 export const metadata = { title: "Patient Portal — HealthCal Pro" };
 
-export default async function PatientPortalRoute() {
+type PageProps = {
+  searchParams: Promise<{ status?: string; invoiceId?: string }>;
+};
+
+export default async function PatientPortalRoute({ searchParams }: PageProps) {
   const session = await getSessionUser();
   if (!session) redirect("/login");
 
@@ -24,8 +27,31 @@ export default async function PatientPortalRoute() {
   if (isDoctorRole(role)) redirect("/doctor-portal");
   if (!isPatientRole(role)) redirect("/login");
 
-  // Pre-fetch portal data — best-effort, returns null if no patient record found
-  const initialPortalData: PortalPrefetchData | null = await prefetchPortalData(session.userId);
+  const sp = await searchParams;
 
-  return <PatientPortalPage initialPortalData={initialPortalData} />;
+  // Legacy list deep-link → full invoice detail route (matches invoiceDetailHref).
+  const legacyInvoiceId = sp.invoiceId?.trim();
+  if (legacyInvoiceId && isValidUUID(legacyInvoiceId)) {
+    redirect(`/invoices/${legacyInvoiceId}`);
+  }
+
+  const paymentReturnStatus =
+    sp.status === "success" || sp.status === "cancelled" ? sp.status : null;
+
+  const [initialPortalData, initialInvoices] = await Promise.all([
+    prefetchPortalData(session.userId),
+    prefetchInvoices(session.userId, role, session.email),
+  ]);
+
+  if (!initialPortalData) {
+    return <PatientPortalPageSkeleton />;
+  }
+
+  return (
+    <PatientPortalPage
+      initialPortalData={initialPortalData}
+      initialInvoices={(initialInvoices ?? []) as Invoice[]}
+      paymentReturnStatus={paymentReturnStatus}
+    />
+  );
 }

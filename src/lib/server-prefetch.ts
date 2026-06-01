@@ -401,6 +401,50 @@ export type NotificationsPrefetch = {
   unreadCount: number;
 };
 
+/** Mirrors GET /api/invoices/[id] — cache key: queryKeys.invoices.detail(id). */
+export async function prefetchInvoiceDetail(
+  invoiceId: string,
+  userId: string,
+  role: string | null,
+  email: string
+): Promise<Invoice | null> {
+  try {
+    const { assertInvoiceAccess } = await import("@/lib/invoice-access");
+    const { mapApiInvoiceToRow } = await import("@/lib/billing-invoice-map");
+    const level = await assertInvoiceAccess(
+      { userId, email, role },
+      invoiceId,
+      "view"
+    );
+    if (level === "none") return null;
+    const raw = await prisma.invoice.findUnique({
+      where: { id: invoiceId },
+      include: { payments: { orderBy: { created_at: "desc" } } },
+    });
+    if (!raw) return null;
+    const base = serializeInvoice(raw);
+    return mapApiInvoiceToRow({
+      ...raw,
+      ...base,
+      appointment_id: raw.appointment_id,
+      organization_id: raw.organization_id,
+      description: raw.description,
+      due_date: base.due_date,
+      paid_at: base.paid_at,
+      created_at: base.created_at ?? raw.created_at.toISOString(),
+      payments: raw.payments.map((p) => ({
+        id: p.id,
+        amount: p.amount,
+        status: p.status,
+        created_at: p.created_at,
+        stripe_payment_id: p.stripe_payment_id,
+      })),
+    }) as Invoice;
+  } catch {
+    return null;
+  }
+}
+
 /** Mirrors GET /api/payments — cache key: queryKeys.invoices.all → Invoice[] */
 export async function prefetchInvoices(
   userId: string,

@@ -1,17 +1,15 @@
-// Doctor Portal — async Server Component
-// Pre-fetches portal summary + schedule settings (weekly hours, time off, visit types)
-// so DoctorPortalPage seeds TanStack Query on first paint — no skeleton flash on refresh.
-//
-// RBAC: only users with the "doctor" role may access this route.
-// Admin / secretary / patient are redirected to their respective dashboards.
+// Doctor Portal — SSR prefetch + inline pulse fallback (no Suspense).
 
 import DoctorPortalPage from "@/components/pages/DoctorPortalPage";
+import { DoctorPortalPageSkeleton } from "@/components/pages/DoctorPortalPageSkeleton";
 import { getSessionUser } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { prefetchDoctorPortalSettings } from "@/lib/doctor-portal-settings-prefetch";
-import { prefetchDoctorPortal } from "@/lib/server-prefetch";
-import type { DoctorPortalData } from "@/types/types";
+import { prefetchDoctorPortal, prefetchInvoices } from "@/lib/server-prefetch";
+import type { Invoice } from "@/hooks/usePayments";
 import { getUserRole, isDoctorRole } from "@/lib/rbac";
+
+export const dynamic = "force-dynamic";
 
 export const metadata = { title: "Doctor Portal — HealthCal Pro" };
 
@@ -19,19 +17,24 @@ export default async function DoctorPortalRoute() {
   const session = await getSessionUser();
   if (!session) redirect("/login");
 
-  // Only doctors may access this portal; redirect other roles to appropriate pages
   const role = await getUserRole(session.userId);
   if (!isDoctorRole(role)) redirect("/control-panel/dashboard-overview");
 
-  const [initialData, initialScheduleSettings] = await Promise.all([
+  const [initialData, initialScheduleSettings, initialInvoices] = await Promise.all([
     prefetchDoctorPortal(session.userId),
     prefetchDoctorPortalSettings(session.userId),
+    prefetchInvoices(session.userId, role, session.email),
   ]);
+
+  if (!initialData) {
+    return <DoctorPortalPageSkeleton />;
+  }
 
   return (
     <DoctorPortalPage
       initialData={initialData}
       initialScheduleSettings={initialScheduleSettings}
+      initialInvoices={(initialInvoices ?? []) as Invoice[]}
     />
   );
 }

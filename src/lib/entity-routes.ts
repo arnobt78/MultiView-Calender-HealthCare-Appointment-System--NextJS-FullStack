@@ -5,7 +5,7 @@
  * Doctor / patient → top-level `/appointments`, `/patients`, etc. (dashboard shell, no control panel).
  */
 
-import { isAdminRole } from "@/lib/rbac";
+import { isAdminRole, isDoctorRole, isPatientRole } from "@/lib/rbac";
 
 export type EntityRole = string | null | undefined;
 
@@ -66,8 +66,10 @@ export function userDetailHref(role: EntityRole, id: string): string {
   return `/control-panel/users/${id}`;
 }
 
-/** Invoice detail — admin control panel only in current product scope. */
+/** Invoice detail — admin CP; doctor/patient `/invoices/:id` (dashboard shell). */
 export function invoiceDetailHref(role: EntityRole, id: string): string {
+  if (isAdminRole(role)) return `/control-panel/invoices/${id}`;
+  if (isPatientRole(role) || isDoctorRole(role)) return `/invoices/${id}`;
   return `/control-panel/invoices/${id}`;
 }
 

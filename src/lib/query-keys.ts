@@ -61,6 +61,10 @@ export const queryKeys = {
     all: ["app", "invoices"] as const,
     detail: (id: string) => ["app", "invoices", id] as const,
   },
+  billing: {
+    appointmentOptions: (search: string) =>
+      ["app", "billing", "appointment-options", search] as const,
+  },
   dashboard: {
     overview: ["app", "dashboard", "overview"] as const,
   },
