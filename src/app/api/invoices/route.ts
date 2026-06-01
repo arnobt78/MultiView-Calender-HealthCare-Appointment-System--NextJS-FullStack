@@ -6,9 +6,12 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session";
+import { getUserRole } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 import { redis } from "@/lib/redis";
 import { isValidUUID } from "@/lib/validation";
+import { fetchInvoicesForViewer } from "@/lib/invoices-scope";
+import { serializeInvoice } from "@/lib/serializers";
 
 /** Per-request API handler (see api-route-dynamic.test.ts). */
 export const dynamic = "force-dynamic";
@@ -18,11 +21,17 @@ export async function GET() {
     const sessionUser = await getSessionUser();
     if (!sessionUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const invoices = await prisma.invoice.findMany({
-      where: { user_id: sessionUser.userId },
-      include: { payments: true },
-      orderBy: { created_at: "desc" },
+    const role = await getUserRole(sessionUser.userId);
+    const rows = await fetchInvoicesForViewer({
+      userId: sessionUser.userId,
+      role,
+      email: sessionUser.email,
     });
+
+    const invoices = rows.map((row) => ({
+      ...serializeInvoice(row),
+      payments: row.payments,
+    }));
 
     return NextResponse.json({ invoices });
   } catch (error: unknown) {

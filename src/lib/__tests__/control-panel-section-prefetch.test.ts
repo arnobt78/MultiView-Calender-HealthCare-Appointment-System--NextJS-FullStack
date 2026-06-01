@@ -26,13 +26,13 @@ vi.mock("@/lib/server-prefetch", () => ({
 
 describe("prefetchControlPanelSection", () => {
   it("prefetches only overview data for overview tab", async () => {
-    const result = await prefetchControlPanelSection("overview", "user-1", "u@test.com");
+    const result = await prefetchControlPanelSection("overview", "user-1", "u@test.com", "admin");
     expect(result.dashboardOverview).toEqual({ ok: true });
     expect(result.patients).toBeUndefined();
   });
 
   it("prefetches invoices for invoices tab", async () => {
-    const result = await prefetchControlPanelSection("invoices", "user-1", "u@test.com");
+    const result = await prefetchControlPanelSection("invoices", "user-1", "u@test.com", "admin");
     expect(result.invoices).toEqual([{ id: "inv1" }]);
   });
 
@@ -40,13 +40,14 @@ describe("prefetchControlPanelSection", () => {
     const result = await prefetchControlPanelSection(
       "appointments_mgmt",
       "user-1",
-      "u@test.com"
+      "u@test.com",
+      "admin"
     );
     expect(result).toEqual(mockBundle);
   });
 
   it("prefetches calendar bundle for telehealth tab", async () => {
-    const result = await prefetchControlPanelSection("telehealth", "user-1", "u@test.com");
+    const result = await prefetchControlPanelSection("telehealth", "user-1", "u@test.com", "admin");
     expect(result.appointments).toEqual([{ id: "appt1" }]);
     expect(result.categories).toEqual([{ id: "c1" }]);
   });
@@ -55,7 +56,8 @@ describe("prefetchControlPanelSection", () => {
     const result = await prefetchControlPanelSection(
       "notifications",
       "user-1",
-      "u@test.com"
+      "u@test.com",
+      "admin"
     );
     expect(result.notifications).toEqual({
       notifications: [{ id: "n1" }],
@@ -68,7 +70,8 @@ describe("prefetchControlPanelSection", () => {
     const result = await prefetchControlPanelSection(
       "google-calendar",
       "user-1",
-      "u@test.com"
+      "u@test.com",
+      "admin"
     );
     expect(result).toEqual({});
   });

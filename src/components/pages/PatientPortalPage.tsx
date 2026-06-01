@@ -400,7 +400,7 @@ export default function PatientPortalPage({ initialPortalData }: PatientPortalPa
     requestAnimationFrame(() => setIsMounted(true));
   }, []);
 
-  // Fetch patient's invoices — enabled after mount to avoid SSR mismatch
+  // Chart-linked invoices via GET /api/invoices (role-aware — see invoices-scope.ts)
   const { data: invoicesData, isLoading: invoicesLoading, isError: invoicesError } = useQuery({
     queryKey: queryKeys.invoices.all,
     queryFn: () => apiClient<{ invoices: InvoiceRow[] }>("/api/invoices"),

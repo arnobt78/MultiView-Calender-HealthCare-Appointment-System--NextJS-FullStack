@@ -37,16 +37,47 @@ export function serializeDoctorAssignedPatient(row: {
   };
 }
 
-/** Primary-doctor roster — shared by SSR page, API route, and prefetch. */
+/**
+ * Primary roster + patients with visits (owner or treating) — matches revenue/appointment reality.
+ * Shared by SSR page, API route, and prefetch.
+ */
 export async function fetchDoctorAssignedPatients(
   doctorId: string,
   take = 50
 ): Promise<DoctorAssignedPatientRow[]> {
-  const rows = await prisma.patient.findMany({
-    where: { primary_doctor_id: doctorId },
-    select: DOCTOR_ASSIGNED_PATIENT_SELECT,
-    orderBy: [{ firstname: "asc" }, { lastname: "asc" }],
-    take,
-  });
-  return rows.map(serializeDoctorAssignedPatient);
+  const [primaryRows, clinicalRows] = await Promise.all([
+    prisma.patient.findMany({
+      where: { primary_doctor_id: doctorId },
+      select: DOCTOR_ASSIGNED_PATIENT_SELECT,
+      orderBy: [{ firstname: "asc" }, { lastname: "asc" }],
+      take,
+    }),
+    prisma.patient.findMany({
+      where: {
+        appointments: {
+          some: {
+            OR: [{ owner_id: doctorId }, { treating_physician_id: doctorId }],
+          },
+        },
+      },
+      select: DOCTOR_ASSIGNED_PATIENT_SELECT,
+      orderBy: [{ firstname: "asc" }, { lastname: "asc" }],
+      take,
+    }),
+  ]);
+
+  const byId = new Map<string, DoctorAssignedPatientRow>();
+  for (const row of [...primaryRows, ...clinicalRows]) {
+    if (!byId.has(row.id)) {
+      byId.set(row.id, serializeDoctorAssignedPatient(row));
+    }
+  }
+
+  return [...byId.values()]
+    .sort((a, b) =>
+      `${a.firstname} ${a.lastname}`.localeCompare(`${b.firstname} ${b.lastname}`, undefined, {
+        sensitivity: "base",
+      })
+    )
+    .slice(0, take);
 }

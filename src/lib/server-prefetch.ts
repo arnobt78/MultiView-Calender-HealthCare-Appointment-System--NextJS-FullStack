@@ -402,13 +402,14 @@ export type NotificationsPrefetch = {
 };
 
 /** Mirrors GET /api/payments — cache key: queryKeys.invoices.all → Invoice[] */
-export async function prefetchInvoices(userId: string): Promise<Invoice[] | null> {
+export async function prefetchInvoices(
+  userId: string,
+  role: string | null,
+  email?: string | null
+): Promise<Invoice[] | null> {
   try {
-    const rows = await prisma.invoice.findMany({
-      where: { user_id: userId },
-      include: { payments: true },
-      orderBy: { created_at: "desc" },
-    });
+    const { fetchInvoicesForViewer } = await import("@/lib/invoices-scope");
+    const rows = await fetchInvoicesForViewer({ userId, role, email });
 
     return rows.map((i) => {
       const base = serializeInvoice(i);

@@ -7,8 +7,10 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session";
+import { getUserRole } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 import { createCheckoutSession } from "@/lib/stripe";
+import { fetchInvoicesForViewer } from "@/lib/invoices-scope";
 
 /** Per-request API handler (see api-route-dynamic.test.ts). */
 export const dynamic = "force-dynamic";
@@ -20,13 +22,14 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const invoices = await prisma.invoice.findMany({
-      where: { user_id: sessionUser.userId },
-      include: { payments: true },
-      orderBy: { created_at: "desc" },
+    const role = await getUserRole(sessionUser.userId);
+    const rows = await fetchInvoicesForViewer({
+      userId: sessionUser.userId,
+      role,
+      email: sessionUser.email,
     });
 
-    return NextResponse.json({ invoices });
+    return NextResponse.json({ invoices: rows });
   } catch (error: unknown) {
     console.error("Payments GET error:", error);
     return NextResponse.json({ error: "Failed to fetch invoices" }, { status: 500 });
@@ -46,9 +49,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "invoiceId is required" }, { status: 400 });
     }
 
-    const invoice = await prisma.invoice.findFirst({
-      where: { id: invoiceId, user_id: sessionUser.userId },
+    const role = await getUserRole(sessionUser.userId);
+    const scoped = await fetchInvoicesForViewer({
+      userId: sessionUser.userId,
+      role,
+      email: sessionUser.email,
     });
+    const invoice = scoped.find((row) => row.id === invoiceId);
 
     if (!invoice) {
       return NextResponse.json({ error: "Invoice not found" }, { status: 404 });

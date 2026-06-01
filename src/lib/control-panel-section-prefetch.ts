@@ -54,7 +54,8 @@ export type ControlPanelSectionPrefetchPayload = {
 export async function prefetchControlPanelSection(
   tab: ControlPanelSidebarTabValue,
   userId: string,
-  email: string
+  email: string,
+  role: string | null
 ): Promise<ControlPanelSectionPrefetchPayload> {
   switch (tab) {
     case "overview":
@@ -68,7 +69,7 @@ export async function prefetchControlPanelSection(
     case "visit_types_global":
       return { globalAppointmentTypes: await prefetchGlobalAppointmentTypes() };
     case "invoices":
-      return { invoices: await prefetchInvoices(userId) };
+      return { invoices: await prefetchInvoices(userId, role, email) };
     case "appointments_mgmt":
     case "telehealth":
       return prefetchCalendarAppointmentsBundle(userId, email);

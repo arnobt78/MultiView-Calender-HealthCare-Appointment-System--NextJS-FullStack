@@ -1,5 +1,5 @@
 /**
- * GET /api/doctors/[id]/assigned-patients — primary-doctor roster for CP doctor detail.
+ * GET /api/doctors/[id]/assigned-patients — primary + clinical visit roster for CP doctor detail.
  * Invalidated via `invalidateDoctorAssignedPatients` on patient CRUD.
  */
 import { NextResponse } from "next/server";
