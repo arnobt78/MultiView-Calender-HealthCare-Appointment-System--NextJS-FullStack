@@ -5,7 +5,8 @@
 - **Appointment retention:** Monthly hard-delete cron removed — `vercel.json` only `/api/cron/reminders` (07:00 UTC). Route `cleanup-appointments` deleted. Appointments kept for dashboard, insights, revenue. Doc: `src/app/api/cron/reminders/route.ts`.
 - **CP UI:** `demo-showcase-copy.ts` short doctor banner; `DoctorIdentityRow` `activeStatus`; **Patient Management** header (was "Patients").
 - **Doctor CP (C2):** dev stubs, live assigned-patients, admin-only roster, cross-tab `doctors` — `.agile-v/cycles/C2/`.
-- **Verify:** `npm test` **519** (79 files), tsc, lint, build green. Restore demo appts after prior wipe: `npm run db:seed-extended`.
+- **Demo appointments timeline:** `npm run db:seed-demo-appointments` — 36 slots across ±3 months, typed visits, invoices on some `done`, demo org `healthcal-demo-clinic`. Idempotent by title.
+- **Verify:** `npm test` **519** (79 files), tsc, lint, build green. Base seed: `db:prepare` + `db:seed-extended`; then `db:seed-demo-appointments`.
 
 ## Prior (2026-05-31)
 
