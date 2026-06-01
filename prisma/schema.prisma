@@ -173,6 +173,8 @@ model Appointment {
   treating_physician User? @relation("AppointmentTreatingPhysician", fields: [treating_physician_id], references: [id], onDelete: SetNull)
   appointment_type    AppointmentType? @relation("AppointmentTypeAppointments", fields: [appointment_type_id], references: [id], onDelete: SetNull)
   assignees   AppointmentAssignee[]
+  /// Billing rows linked via `invoices.appointment_id` (revenue attribution joins this relation).
+  invoices    Invoice[]
 
   @@index([treating_physician_id])
   @@index([appointment_type_id])
@@ -382,9 +384,11 @@ model Invoice {
   description     String?   @db.Text
 
   organization Organization? @relation(fields: [organization_id], references: [id], onDelete: SetNull)
+  appointment  Appointment?  @relation(fields: [appointment_id], references: [id], onDelete: SetNull)
   payments     Payment[]
 
   @@index([organization_id])
+  @@index([appointment_id])
   @@map("invoices")
 }
 
