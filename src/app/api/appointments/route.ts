@@ -4,6 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { PAGINATION } from "@/lib/constants";
@@ -15,6 +16,7 @@ import {
   assertNoOwnerAppointmentOverlap,
 } from "@/lib/scheduling/validate-appointment-window";
 import { getUserRole, isPatientRole } from "@/lib/rbac";
+import { staffCalendarAppointmentFilter } from "@/lib/staff-appointment-calendar-scope";
 import { isValidUUID } from "@/lib/validation";
 import { appointmentDetailHref, appointmentNotificationLink } from "@/lib/entity-routes";
 import { redis } from "@/lib/redis";
@@ -110,7 +112,14 @@ export async function GET(req: NextRequest) {
      * When the caller is a patient, resolve their patient record and filter by patient_id instead.
      */
     const patientCaller = isPatientRole(callerRole);
-    let where: Record<string, unknown>;
+    const listFilters: Prisma.AppointmentWhereInput = {
+      ...(status ? { status } : {}),
+      ...(category ? { category_id: category } : {}),
+      ...(startDate ? { start: { gte: new Date(startDate) } } : {}),
+      ...(endDate ? { end: { lte: new Date(endDate) } } : {}),
+    };
+
+    let where: Prisma.AppointmentWhereInput;
 
     if (patientCaller) {
       const userRow = await prisma.user.findUnique({ where: { id: sessionUser.userId } });
@@ -125,15 +134,10 @@ export async function GET(req: NextRequest) {
         });
       }
 
-      where = { patient_id: patientRecord.id } as Record<string, unknown>;
+      where = { patient_id: patientRecord.id, ...listFilters };
     } else {
-      where = { owner_id: sessionUser.userId } as Record<string, unknown>;
+      where = staffCalendarAppointmentFilter(sessionUser.userId, listFilters);
     }
-
-    if (status) where.status = status;
-    if (category) where.category_id = category;
-    if (startDate) where.start = { gte: new Date(startDate) };
-    if (endDate) where.end = { lte: new Date(endDate) };
 
     const [appointments, total] = await Promise.all([
       prisma.appointment.findMany({

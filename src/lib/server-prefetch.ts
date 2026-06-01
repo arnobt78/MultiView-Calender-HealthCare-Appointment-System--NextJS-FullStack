@@ -31,6 +31,11 @@ import {
 } from "@/lib/doctor-revenue-aggregate";
 import { PAGINATION } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
+import {
+  dashboardOverviewAppointmentFilter,
+  staffCalendarAppointmentFilter,
+  staffCalendarAppointmentWhere,
+} from "@/lib/staff-appointment-calendar-scope";
 import { redis } from "@/lib/redis";
 import {
   serializeCategory,
@@ -332,7 +337,7 @@ export async function prefetchDashboardAppointments(
       }
     } else {
       const rows = await prisma.appointment.findMany({
-        where: { owner_id: userId },
+        where: staffCalendarAppointmentWhere(userId),
         orderBy: { start: "asc" },
         take: PAGINATION.CALENDAR_APPOINTMENTS_LIMIT,
       });
@@ -700,6 +705,10 @@ export async function prefetchDashboardOverview(
     const monthStart = startOfMonth(now);
     const monthEnd = endOfMonth(now);
 
+    const resolvedRole = role ?? (await getUserRole(userId));
+    const appt = (extra?: Parameters<typeof dashboardOverviewAppointmentFilter>[2]) =>
+      dashboardOverviewAppointmentFilter(userId, resolvedRole, extra);
+
     const [
       totalAppointments,
       todayAppointments,
@@ -716,31 +725,43 @@ export async function prefetchDashboardOverview(
       recentAppointmentsRaw,
       overdueCount,
     ] = await Promise.all([
-      prisma.appointment.count({ where: { owner_id: userId } }),
-      prisma.appointment.count({ where: { owner_id: userId, start: { gte: todayStart, lte: todayEnd } } }),
-      prisma.appointment.count({ where: { owner_id: userId, start: { gte: weekStart, lte: weekEnd } } }),
-      prisma.appointment.count({ where: { owner_id: userId, start: { gte: monthStart, lte: monthEnd } } }),
-      prisma.appointment.count({ where: { owner_id: userId, status: "done" } }),
-      prisma.appointment.count({ where: { owner_id: userId, status: "pending" } }),
-      prisma.appointment.count({ where: { owner_id: userId, status: "alert" } }),
+      prisma.appointment.count({ where: appt() }),
+      prisma.appointment.count({
+        where: appt({ start: { gte: todayStart, lte: todayEnd } }),
+      }),
+      prisma.appointment.count({
+        where: appt({ start: { gte: weekStart, lte: weekEnd } }),
+      }),
+      prisma.appointment.count({
+        where: appt({ start: { gte: monthStart, lte: monthEnd } }),
+      }),
+      prisma.appointment.count({ where: appt({ status: "done" }) }),
+      prisma.appointment.count({ where: appt({ status: "pending" }) }),
+      prisma.appointment.count({ where: appt({ status: "alert" }) }),
       prisma.patient.count(),
       prisma.patient.count({ where: { active: true } }),
       prisma.user.count({ where: { role: "doctor" } }),
       prisma.category.count(),
       prisma.appointment.findMany({
-        where: { owner_id: userId, start: { gt: now }, status: { not: "done" } },
+        where: appt({
+          start: { gt: now },
+          status: { not: "done" },
+        }),
         orderBy: { start: "asc" },
         take: DASHBOARD_UPCOMING_APPOINTMENTS_LIMIT,
         select: dashboardOverviewAppointmentQueueSelect,
       }),
       prisma.appointment.findMany({
-        where: { owner_id: userId },
+        where: appt(),
         orderBy: { created_at: "desc" },
         take: DASHBOARD_RECENT_ACTIVITY_FETCH_CAP,
         select: dashboardOverviewRecentQueueSelect,
       }),
       prisma.appointment.count({
-        where: { owner_id: userId, end: { lt: now }, status: { not: "done" } },
+        where: appt({
+          end: { lt: now },
+          status: { not: "done" },
+        }),
       }),
     ]);
 
@@ -1157,11 +1178,16 @@ export async function prefetchDoctorPortal(userId: string): Promise<DoctorPortal
         },
       }),
       prisma.appointment.findMany({
-        where: { owner_id: userId, start: { gte: todayStart, lte: todayEnd } },
+        where: staffCalendarAppointmentFilter(userId, {
+          start: { gte: todayStart, lte: todayEnd },
+        }),
         orderBy: { start: "asc" },
       }),
       prisma.appointment.findMany({
-        where: { owner_id: userId, start: { gt: todayEnd }, status: { not: "done" } },
+        where: staffCalendarAppointmentFilter(userId, {
+          start: { gt: todayEnd },
+          status: { not: "done" },
+        }),
         orderBy: { start: "asc" },
         take: 20,
       }),
@@ -1179,12 +1205,33 @@ export async function prefetchDoctorPortal(userId: string): Promise<DoctorPortal
         where: { doctor_id: userId },
         select: { id: true, doctor_id: true, appointment_type_id: true, is_enabled: true, created_at: true },
       }),
-      prisma.appointment.count({ where: { owner_id: userId, start: { gte: todayStart, lte: todayEnd } } }),
-      prisma.appointment.count({ where: { owner_id: userId, start: { gte: weekStart, lte: weekEnd } } }),
-      prisma.appointment.count({ where: { owner_id: userId, start: { gte: monthStart, lte: monthEnd } } }),
-      prisma.appointment.count({ where: { owner_id: userId, status: "pending" } }),
-      prisma.appointment.count({ where: { owner_id: userId, status: "done" } }),
-      prisma.appointment.count({ where: { owner_id: userId, end: { lt: now }, status: { not: "done" } } }),
+      prisma.appointment.count({
+        where: staffCalendarAppointmentFilter(userId, {
+          start: { gte: todayStart, lte: todayEnd },
+        }),
+      }),
+      prisma.appointment.count({
+        where: staffCalendarAppointmentFilter(userId, {
+          start: { gte: weekStart, lte: weekEnd },
+        }),
+      }),
+      prisma.appointment.count({
+        where: staffCalendarAppointmentFilter(userId, {
+          start: { gte: monthStart, lte: monthEnd },
+        }),
+      }),
+      prisma.appointment.count({
+        where: staffCalendarAppointmentFilter(userId, { status: "pending" }),
+      }),
+      prisma.appointment.count({
+        where: staffCalendarAppointmentFilter(userId, { status: "done" }),
+      }),
+      prisma.appointment.count({
+        where: staffCalendarAppointmentFilter(userId, {
+          end: { lt: now },
+          status: { not: "done" },
+        }),
+      }),
     ]);
 
     if (!doctor) return null;

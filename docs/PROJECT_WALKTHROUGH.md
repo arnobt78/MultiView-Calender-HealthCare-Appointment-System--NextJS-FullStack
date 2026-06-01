@@ -2,6 +2,8 @@
 
 ## Latest Audit Update (2026-06-01)
 
+- **Staff calendar scope:** `src/lib/staff-appointment-calendar-scope.ts` — staff list/dashboard calendar uses `owner_id OR treating_physician_id` (aligned with insights + billing). Wired: `GET /api/appointments`, `prefetchDashboardAppointments`, `prefetchDoctorPortal`, `GET /api/doctor-portal`, `login-today-appointments`. **Admin** dashboard overview KPI counts stay **org-wide** via `dashboardOverviewAppointmentFilter` (doctors use staff scope).
+- **Curated demo seed:** `npm run db:seed-demo-appointments` → `scripts/seed-demo-appointments-curated.ts` (exactly **10** rows, marker `seed-demo-curated:v1`, invoice matrix). Bulk timeline: `db:seed-demo-appointments-timeline`. Full reset: `CONFIRM_DB_CLEAR=YES npm run db:clear` → `db:prepare` → `db:seed-extended` → `db:seed-demo-appointments` → `db:migrate`.
 - **Cross-portal revenue fix:** Admin **Dashboard Overview** revenue now uses `fetchRevenueOverviewForViewer` (global totals — same universe as CP Invoice Management). Doctor Management **Revenue** column attributes paid cents to treating physician, then calendar owner (`fetchPaidRevenueCentsByDoctorIds`). Invoice writes bust all admin overview Redis keys (`invalidateAdminDashboardOverviewCaches`).
 - **Billing owner:** `resolveInvoiceBillingUserId` prefers `treating_physician_id` over `owner_id` on create.
 - **Visit context on invoices:** `InvoiceLinkedVisitPanel` on `/invoices/[id]` and CP invoice detail; `visit_summary` on list APIs + patient/doctor portal cards + CP invoice table; snapshot invoices include visit line under description.

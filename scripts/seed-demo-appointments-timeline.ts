@@ -3,7 +3,7 @@
  * Uses existing users (doctors/admin), patients, categories, appointment types.
  * Optional invoices on completed past visits for revenue/insights QA.
  *
- * Run: npm run db:seed-demo-appointments
+ * Run: npm run db:seed-demo-appointments-timeline  (bulk timeline — prefer db:seed-demo-appointments curated)
  * Prereq: npm run db:prepare && npm run db:seed-extended (recommended)
  */
 

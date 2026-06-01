@@ -37,7 +37,7 @@ describe("countTodayAppointmentsForLoginUser", () => {
     );
   });
 
-  it("counts by owner_id for doctor role", async () => {
+  it("counts owner or treating visits for doctor role", async () => {
     vi.mocked(prisma.appointment.count).mockResolvedValue(5);
 
     const n = await countTodayAppointmentsForLoginUser(
@@ -48,10 +48,15 @@ describe("countTodayAppointmentsForLoginUser", () => {
 
     expect(n).toBe(5);
     expect(prisma.patient.findFirst).not.toHaveBeenCalled();
-    expect(prisma.appointment.count).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: expect.objectContaining({ owner_id: "doc-1" }),
-      })
-    );
+    expect(prisma.appointment.count).toHaveBeenCalledWith({
+      where: {
+        AND: [
+          {
+            OR: [{ owner_id: "doc-1" }, { treating_physician_id: "doc-1" }],
+          },
+          { start: { gte: expect.any(Date), lte: expect.any(Date) } },
+        ],
+      },
+    });
   });
 });

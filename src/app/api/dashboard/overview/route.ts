@@ -22,6 +22,7 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session";
 import { getUserRole } from "@/lib/rbac";
+import { dashboardOverviewAppointmentFilter } from "@/lib/staff-appointment-calendar-scope";
 import { prisma } from "@/lib/prisma";
 import { fetchRevenueOverviewForViewer } from "@/lib/invoices-revenue-scope";
 import { redis } from "@/lib/redis";
@@ -79,6 +80,10 @@ export async function GET() {
     const monthStart = startOfMonth(now);
     const monthEnd = endOfMonth(now);
 
+    const role = await getUserRole(sessionUser.userId);
+    const appt = (extra?: Parameters<typeof dashboardOverviewAppointmentFilter>[2]) =>
+      dashboardOverviewAppointmentFilter(sessionUser.userId, role, extra);
+
     const [
       totalAppointments,
       todayAppointments,
@@ -95,55 +100,46 @@ export async function GET() {
       recentAppointmentsRaw,
       overdueCount,
     ] = await Promise.all([
-      prisma.appointment.count({ where: { owner_id: sessionUser.userId } }),
+      prisma.appointment.count({ where: appt() }),
       prisma.appointment.count({
-        where: { owner_id: sessionUser.userId, start: { gte: todayStart, lte: todayEnd } },
+        where: appt({ start: { gte: todayStart, lte: todayEnd } }),
       }),
       prisma.appointment.count({
-        where: { owner_id: sessionUser.userId, start: { gte: weekStart, lte: weekEnd } },
+        where: appt({ start: { gte: weekStart, lte: weekEnd } }),
       }),
       prisma.appointment.count({
-        where: { owner_id: sessionUser.userId, start: { gte: monthStart, lte: monthEnd } },
+        where: appt({ start: { gte: monthStart, lte: monthEnd } }),
       }),
-      prisma.appointment.count({
-        where: { owner_id: sessionUser.userId, status: "done" },
-      }),
-      prisma.appointment.count({
-        where: { owner_id: sessionUser.userId, status: "pending" },
-      }),
-      prisma.appointment.count({
-        where: { owner_id: sessionUser.userId, status: "alert" },
-      }),
+      prisma.appointment.count({ where: appt({ status: "done" }) }),
+      prisma.appointment.count({ where: appt({ status: "pending" }) }),
+      prisma.appointment.count({ where: appt({ status: "alert" }) }),
       prisma.patient.count(),
       prisma.patient.count({ where: { active: true } }),
       prisma.user.count({ where: { role: "doctor" } }),
       prisma.category.count(),
       prisma.appointment.findMany({
-        where: {
-          owner_id: sessionUser.userId,
+        where: appt({
           start: { gt: now },
           status: { not: "done" },
-        },
+        }),
         orderBy: { start: "asc" },
         take: DASHBOARD_UPCOMING_APPOINTMENTS_LIMIT,
         select: dashboardOverviewAppointmentQueueSelect,
       }),
       prisma.appointment.findMany({
-        where: { owner_id: sessionUser.userId },
+        where: appt(),
         orderBy: { created_at: "desc" },
         take: DASHBOARD_RECENT_ACTIVITY_FETCH_CAP,
         select: dashboardOverviewRecentQueueSelect,
       }),
       prisma.appointment.count({
-        where: {
-          owner_id: sessionUser.userId,
+        where: appt({
           end: { lt: now },
           status: { not: "done" },
-        },
+        }),
       }),
     ]);
 
-    const role = await getUserRole(sessionUser.userId);
     const revenue = await fetchRevenueOverviewForViewer({
       userId: sessionUser.userId,
       role,

@@ -29,6 +29,7 @@ import {
   startOfMonth,
   endOfMonth,
 } from "date-fns";
+import { staffCalendarAppointmentFilter } from "@/lib/staff-appointment-calendar-scope";
 
 export const dynamic = "force-dynamic";
 
@@ -51,6 +52,9 @@ export async function GET() {
     const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
     const monthStart = startOfMonth(now);
     const monthEnd = endOfMonth(now);
+
+    const appt = (extra?: Parameters<typeof staffCalendarAppointmentFilter>[1]) =>
+      staffCalendarAppointmentFilter(sessionUser.userId, extra);
 
     // Run all queries in parallel for performance
     const [
@@ -90,19 +94,15 @@ export async function GET() {
       }),
       // Today's appointments
       prisma.appointment.findMany({
-        where: {
-          owner_id: sessionUser.userId,
-          start: { gte: todayStart, lte: todayEnd },
-        },
+        where: appt({ start: { gte: todayStart, lte: todayEnd } }),
         orderBy: { start: "asc" },
       }),
       // Upcoming: next 20 beyond today (not done)
       prisma.appointment.findMany({
-        where: {
-          owner_id: sessionUser.userId,
+        where: appt({
           start: { gt: todayEnd },
           status: { not: "done" },
-        },
+        }),
         orderBy: { start: "asc" },
         take: 20,
       }),
@@ -130,13 +130,19 @@ export async function GET() {
         },
       }),
       // Metrics
-      prisma.appointment.count({ where: { owner_id: sessionUser.userId, start: { gte: todayStart, lte: todayEnd } } }),
-      prisma.appointment.count({ where: { owner_id: sessionUser.userId, start: { gte: weekStart, lte: weekEnd } } }),
-      prisma.appointment.count({ where: { owner_id: sessionUser.userId, start: { gte: monthStart, lte: monthEnd } } }),
-      prisma.appointment.count({ where: { owner_id: sessionUser.userId, status: "pending" } }),
-      prisma.appointment.count({ where: { owner_id: sessionUser.userId, status: "done" } }),
       prisma.appointment.count({
-        where: { owner_id: sessionUser.userId, end: { lt: now }, status: { not: "done" } },
+        where: appt({ start: { gte: todayStart, lte: todayEnd } }),
+      }),
+      prisma.appointment.count({
+        where: appt({ start: { gte: weekStart, lte: weekEnd } }),
+      }),
+      prisma.appointment.count({
+        where: appt({ start: { gte: monthStart, lte: monthEnd } }),
+      }),
+      prisma.appointment.count({ where: appt({ status: "pending" }) }),
+      prisma.appointment.count({ where: appt({ status: "done" }) }),
+      prisma.appointment.count({
+        where: appt({ end: { lt: now }, status: { not: "done" } }),
       }),
     ]);
 
