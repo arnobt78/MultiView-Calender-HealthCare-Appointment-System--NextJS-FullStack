@@ -2,18 +2,23 @@
 
 import { Banknote, CreditCard, RotateCcw, XCircle } from "lucide-react";
 import { PatientStatCard } from "@/components/control-panel/PatientStatCard";
-import { computeInvoiceBillingTotals } from "@/lib/invoice-billing-totals";
+import {
+  computeInvoiceBillingTotals,
+  type InvoiceBillingTotals,
+} from "@/lib/invoice-billing-totals";
 import { formatInvoiceMoney } from "@/lib/crud-notify-messages";
 import type { InvoiceRow } from "@/lib/billing-types";
 
 type Props = {
   invoices: ReadonlyArray<Pick<InvoiceRow, "amount" | "status">>;
+  totals?: InvoiceBillingTotals;
   valueSkeleton: boolean;
 };
 
 /** Four glass KPI tiles — shared by Invoice Management + org billing panel. */
-export function InvoiceBillingStatsRow({ invoices, valueSkeleton }: Props) {
-  const totals = computeInvoiceBillingTotals(invoices);
+export function InvoiceBillingStatsRow({ invoices, totals: prefetchedTotals, valueSkeleton }: Props) {
+  // Prefer server aggregate totals for org panels; fallback keeps Invoice Management behavior unchanged.
+  const totals = prefetchedTotals ?? computeInvoiceBillingTotals(invoices);
 
   const paidDisplay = formatInvoiceMoney({
     amount: totals.paid.cents,

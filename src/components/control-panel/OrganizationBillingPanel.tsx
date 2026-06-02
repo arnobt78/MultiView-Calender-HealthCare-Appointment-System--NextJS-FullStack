@@ -12,6 +12,7 @@ import { PortalPanelCountBadge } from "@/components/shared/PortalPanelCountBadge
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import type { InvoiceBillingTotals } from "@/lib/invoice-billing-totals";
 
 type Props = {
   organizationId: string;
@@ -35,12 +36,22 @@ export function OrganizationBillingPanel({ organizationId, organizationName }: P
       ),
     staleTime: 30_000,
   });
+  const { data: totalsData, isLoading: isTotalsLoading } = useQuery({
+    queryKey: queryKeys.invoices.byOrganizationTotals(organizationId),
+    queryFn: () =>
+      apiClient<{ totals: InvoiceBillingTotals }>(
+        `/api/invoices/billing-totals?organizationId=${encodeURIComponent(organizationId)}`
+      ),
+    staleTime: 30_000,
+  });
 
   const invoices = data?.invoices ?? [];
+  const totals = totalsData?.totals;
   const loading = !isMounted || isLoading;
+  const statsLoading = !isMounted || isTotalsLoading;
 
   return (
-    <Card className="rounded-[28px] border bg-gradient-to-br from-violet-500/5 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(139,92,246,0.1)]">
+    <Card className="rounded-[28px] border bg-linear-to-br from-violet-500/5 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(139,92,246,0.1)]">
       <CardHeader className="space-y-3 pb-2">
         <CardTitle className="flex flex-wrap items-center gap-2 text-base">
           <Receipt className="h-4 w-4 shrink-0 text-violet-600" />
@@ -53,7 +64,11 @@ export function OrganizationBillingPanel({ organizationId, organizationName }: P
             <Skeleton className="h-5 w-20 rounded-full" />
           )}
         </CardTitle>
-        <InvoiceBillingStatsRow invoices={invoices} valueSkeleton={loading} />
+        <InvoiceBillingStatsRow
+          invoices={invoices}
+          totals={totals}
+          valueSkeleton={statsLoading}
+        />
       </CardHeader>
       <CardContent className="space-y-2 pt-0">
         {loading ? (

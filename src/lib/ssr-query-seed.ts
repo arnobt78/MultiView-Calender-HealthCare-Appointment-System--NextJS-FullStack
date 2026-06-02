@@ -67,6 +67,9 @@ export function seedControlPanelSectionCache(
   if (initial.orgBillingInvoicesByOrgId) {
     for (const [orgId, payload] of Object.entries(initial.orgBillingInvoicesByOrgId)) {
       queryClient.setQueryData(queryKeys.invoices.byOrganization(orgId), payload);
+      queryClient.setQueryData(queryKeys.invoices.byOrganizationTotals(orgId), {
+        totals: payload.totals,
+      });
     }
   }
 }

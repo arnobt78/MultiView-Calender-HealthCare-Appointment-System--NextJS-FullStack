@@ -11,9 +11,28 @@ const mockBundle = {
 
 vi.mock("@/lib/org-billing-prefetch", () => ({
   prefetchOrgBillingInvoicesByOrgIds: vi.fn(async (orgIds: string[]) => {
-    const map: Record<string, { invoices: { id: string }[] }> = {};
+    const map: Record<
+      string,
+      {
+        invoices: { id: string }[];
+        totals: {
+          paid: { cents: number; count: number };
+          outstanding: { cents: number; count: number };
+          refunded: { cents: number; count: number };
+          cancelled: { cents: number; count: number };
+        };
+      }
+    > = {};
     for (const id of orgIds) {
-      map[id] = { invoices: [{ id: `inv-${id}` }] };
+      map[id] = {
+        invoices: [{ id: `inv-${id}` }],
+        totals: {
+          paid: { cents: 100, count: 1 },
+          outstanding: { cents: 0, count: 0 },
+          refunded: { cents: 0, count: 0 },
+          cancelled: { cents: 0, count: 0 },
+        },
+      };
     }
     return map;
   }),
@@ -107,6 +126,7 @@ describe("prefetchControlPanelSection", () => {
     expect(result.orgBillingInvoicesByOrgId?.o2?.invoices).toEqual([
       { id: "inv-o2" },
     ]);
+    expect(result.orgBillingInvoicesByOrgId?.o2?.totals.paid.cents).toBe(100);
   });
 
   it("returns empty payload for tabs without SSR prefetch", async () => {

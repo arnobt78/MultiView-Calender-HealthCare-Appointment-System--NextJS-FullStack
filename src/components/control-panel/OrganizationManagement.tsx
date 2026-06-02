@@ -447,7 +447,7 @@ export default function OrganizationManagement() {
       {isCreating && <p className="text-sm text-muted-foreground">Creating organization…</p>}
 
       {!loading &&
-        organizations.slice(0, 3).map((org) => (
+        organizations.map((org) => (
           <OrganizationBillingPanel
             key={org.id}
             organizationId={org.id}

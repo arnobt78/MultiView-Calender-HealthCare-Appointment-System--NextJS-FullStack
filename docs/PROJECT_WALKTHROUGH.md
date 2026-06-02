@@ -1,8 +1,8 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest Audit Update (2026-06-01)
+## Latest Audit Update (2026-06-02)
 
-- **Invoice billing KPI + org list:** `invoice-billing-totals.ts` — `INVOICE_OUTSTANDING_STATUSES` used by `invoices-revenue-scope.ts`, `fetchInvoiceBillingTotalsForOrganization` in `invoices-scope.ts`, and client `InvoiceBillingStatsRow`. `queryKeys.invoices.byOrganization(orgId)`. **Org SSR:** `prefetchOrgBillingInvoicesByOrgIds` + `prefetchInvoicesForOrganization` seed every org on CP organizations tab (cap 20). **Organization billing:** all invoices, KPI row, `InvoiceBillingListRow`. Invalidation: `invalidateInvoices*` → `invoices.all` prefix includes `byOrganization`.
+- **Invoice billing KPI + org list:** `invoice-billing-totals.ts` — `INVOICE_OUTSTANDING_STATUSES` shared by UI and server aggregates. `fetchInvoiceBillingTotalsForOrganization` now actively powers org KPI cards through new API `GET /api/invoices/billing-totals?organizationId=`. Query keys: `queryKeys.invoices.byOrganization(orgId)` + `queryKeys.invoices.byOrganizationTotals(orgId)`. **Org SSR:** `prefetchOrgBillingInvoicesByOrgIds` seeds both list + totals for every org on CP organizations tab (cap 20). **Organization billing:** all org panels render (removed `slice(0,3)`), all invoices shown, `InvoiceBillingStatsRow` + `InvoiceBillingListRow`. Invalidation: `invalidateInvoices*` → `invoices.all` prefix includes both org list + totals keys.
 - **Entity detail empty values:** `ClinicalEmptyDash` — single em-dash; `clinicalEmptyOr` / `clinicalEmptyOrNode` on patient, doctor, category CP detail schema rows (`patient-care-level.ts` `hasPatientCareLevel`).
 - **Dashboard calendar filters:** `CategoryFilterSelect` + `PatientFilterSelect` (brand mark / portrait + age + care tier); `ClinicalListFilterToolbar` reset right-aligned. **Clinical role** filter (`calendar-clinical-role-filter.ts`): default **All My Visits**; **Created by Me**; **Referred to Me (Treating)** — client-side on staff views; hidden for patients.
 - **Staff calendar scope:** `src/lib/staff-appointment-calendar-scope.ts` — staff list/dashboard calendar uses `owner_id OR treating_physician_id` (aligned with insights + billing). Wired: `GET /api/appointments`, `prefetchDashboardAppointments`, `prefetchDoctorPortal`, `GET /api/doctor-portal`, `login-today-appointments`. **Admin** dashboard overview KPI counts stay **org-wide** via `dashboardOverviewAppointmentFilter` (doctors use staff scope).
@@ -15,8 +15,8 @@
 - **Org panel:** `010_backfill_invoice_org_and_billing.sql` tags invoices when billing doctor has one org; demo seed adds all doctors to HealthCal Demo Clinic; org tab SSR-seeds first org billing list; UI shows full list + KPI strip (see invoice billing KPI bullet above).
 - **One bill per visit / picker / Refunded badge:** `billing-appointment-eligibility.ts`, POST **409**, `009` migration, shared picker + SSR seed (unchanged contract).
 - **Payments:** `011_payment_stripe_id_unique.sql`; payment history UI dedupes duplicate Stripe IDs.
-- **Tests:** Vitest **588** (102 files), incl. `invoice-billing-totals.test.ts`, `org-billing-prefetch.test.ts`, `clinical-empty-dash.test.tsx`. **DB:** `npm run db:migrate` (silent OK) runs `009`–`011`.
-- **Known follow-ups (not blocking demo):** `calendar/export`, `calendar/sync`, `appointments/search` still filter `owner_id` only; assignee-only visibility unchanged (assignee batch); `GET /api/appointments?ids=` batch does not OR `treating_physician_id` (main list already includes treating). CP org tab renders billing panels for first **3** orgs only (`OrganizationManagement` `slice(0,3)`) while SSR prefetches all orgs (cap 20). `fetchInvoiceBillingTotalsForOrganization` ready for future org KPI API (UI uses list + `computeInvoiceBillingTotals`).
+- **Tests:** Vitest **589** (102 files), incl. `invoice-billing-totals.test.ts`, `org-billing-prefetch.test.ts`, `clinical-empty-dash.test.tsx`, `control-panel-section-prefetch.test.ts`. **DB:** `npm run db:migrate` (silent OK) runs `009`–`011`.
+- **Known follow-ups (not blocking demo):** `calendar/export`, `calendar/sync`, `appointments/search` still filter `owner_id` only; assignee-only visibility unchanged (assignee batch); `GET /api/appointments?ids=` batch does not OR `treating_physician_id` (main list already includes treating).
 
 ## Prior (2026-05-31)
 

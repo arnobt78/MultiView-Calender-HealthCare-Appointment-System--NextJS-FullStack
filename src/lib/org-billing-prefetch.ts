@@ -4,13 +4,18 @@
  */
 
 import type { Invoice } from "@/hooks/usePayments";
-import { prefetchInvoicesForOrganization } from "@/lib/server-prefetch";
+import type { InvoiceBillingTotals } from "@/lib/invoice-billing-totals";
+import {
+  prefetchInvoiceBillingTotalsForOrganization,
+  prefetchInvoicesForOrganization,
+} from "@/lib/server-prefetch";
 
 /** Max org billing lists prefetched on one CP tab navigation (safety cap). */
 export const ORG_BILLING_PREFETCH_ORG_CAP = 20;
 
 export type OrgBillingCachePayload = {
   invoices: Invoice[];
+  totals: InvoiceBillingTotals;
 };
 
 /**
@@ -27,14 +32,18 @@ export async function prefetchOrgBillingInvoicesByOrgIds(
 
   const pairs = await Promise.all(
     unique.map(async (orgId) => {
-      const invoices = await prefetchInvoicesForOrganization(
-        orgId,
-        userId,
-        role,
-        email
-      );
+      const [invoices, totals] = await Promise.all([
+        prefetchInvoicesForOrganization(orgId, userId, role, email),
+        prefetchInvoiceBillingTotalsForOrganization(orgId),
+      ]);
       const payload: OrgBillingCachePayload = {
         invoices: invoices ?? [],
+        totals: totals ?? {
+          paid: { cents: 0, count: 0 },
+          outstanding: { cents: 0, count: 0 },
+          refunded: { cents: 0, count: 0 },
+          cancelled: { cents: 0, count: 0 },
+        },
       };
       return [orgId, payload] as const;
     })
