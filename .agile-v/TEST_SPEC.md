@@ -1,6 +1,6 @@
 # Test Specification — HealthCal Pro
 
-<!-- Cycle: C1+C2 | Last updated: 2026-05-31 | C2 Gate 2 closed -->
+<!-- Cycle: C1+C2+C3 | Last updated: 2026-06-01 | C3 verify in progress -->
 
 ## Test Cases
 
@@ -21,12 +21,17 @@
 | TC-0013 | C2 | REQ-0005..0008 | regression | Full Vitest suite | `npm test` | PASS |
 | TC-0014 | C2 | REQ-0005..0008 | regression | TypeScript strict | `npx tsc --noEmit` | PASS |
 | TC-0015 | C2 | REQ-0005..0008 | regression | ESLint + build | `npm run lint`, `npm run build` | PASS |
+| TC-0016 | C3 | REQ-0009 | unit | Staff calendar scope | `staff-appointment-calendar-scope.test.ts` | PASS |
+| TC-0017 | C3 | REQ-0010 | unit | Clinical role + filter empty state | `calendar-clinical-role-filter.test.ts`, `calendar-filters-empty-state.test.tsx` | PASS |
+| TC-0018 | C3 | REQ-0011 | unit | Invoice billing totals buckets | `invoice-billing-totals.test.ts` | PASS |
+| TC-0019 | C3 | REQ-0012 | unit | Org billing prefetch + empty dash | `org-billing-prefetch.test.ts`, `clinical-empty-dash.test.tsx` | PASS |
+| TC-0020 | C3 | REQ-0009..0012 | regression | Full suite + tsc + lint + build | project default | PASS |
 
 ## Regression Baseline
 
 | Suite | Command | Scope |
 |-------|---------|-------|
-| Unit / lib | `npm test` | 79 files, 520 tests (C2) |
+| Unit / lib | `npm test` | 102 files, 588 tests (C3) |
 | Typecheck | `npx tsc --noEmit` | strict TS |
 | Lint | `npm run lint` | ESLint |
 | Release | `npm run build` | Next.js production |

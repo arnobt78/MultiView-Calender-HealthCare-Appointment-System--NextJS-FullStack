@@ -11,6 +11,9 @@
 | TRACE-0005 | 2026-05-31T16:00:00Z | init | bootstrap | POLICY.yaml@1.0.0 | SKILLS.md + phases 02–05 + BOOTSTRAP.md | — |
 | TRACE-0006 | 2026-05-31T16:10:00Z | red-team | tool | POLICY.yaml@1.0.0 | npm test 520/520 | REQ-0005..0008 |
 | TRACE-0007 | 2026-05-31T16:10:00Z | compliance | gate | POLICY.yaml@1.0.0 | GATE-0004 closed; archive cycles/C2 | REQ-0005..0008 |
+| TRACE-0008 | 2026-06-01T00:00:00Z | init | bootstrap | POLICY.yaml@1.0.0 | C3 retroactive bootstrap REQ-0009..0012 | — |
+| TRACE-0009 | 2026-06-01T00:00:00Z | red-team | tool | POLICY.yaml@1.0.0 | npm test 588/588 | REQ-0009..0012 |
+| TRACE-0010 | 2026-06-02T12:19:00Z | init | bootstrap | POLICY.yaml@1.0.0 | Framework refresh; npm test 589/589; BOOTSTRAP.md v1.4 checklist | REQ-0009..0012 |
 
 ## Span Types
 

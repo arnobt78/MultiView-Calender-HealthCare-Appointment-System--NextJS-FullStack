@@ -1,6 +1,6 @@
 # Build Manifest — HealthCal Pro
 
-<!-- Cycle: C1+C2 | Last updated: 2026-05-31 -->
+<!-- Cycle: C1+C2+C3 | Last updated: 2026-06-02 -->
 
 ## Artifacts
 
@@ -54,11 +54,33 @@
 | ART-0046 | C2 | REQ-0008 | `src/lib/cp-dev-stub-copy.ts` | built |
 | ART-0047 | C2 | REQ-0008 | `CpDevStubSubmitNote`, `CpListPaginationDevStub` | built |
 | ART-0048 | C2 | REQ-0008 | Doctor/UserManagement stubs + `ConfirmActionDialog.confirmDisabled` | built |
+| ART-0049 | C3 | REQ-0009 | `src/lib/staff-appointment-calendar-scope.ts` | built |
+| ART-0050 | C3 | REQ-0009 | `src/app/api/appointments/route.ts` scope + portal/dashboard wiring | built |
+| ART-0051 | C3 | REQ-0009 | `scripts/seed-demo-appointments-curated.ts`, `db:seed-demo-appointments` | built |
+| ART-0052 | C3 | REQ-0009 | `src/lib/__tests__/staff-appointment-calendar-scope.test.ts` | built |
+| ART-0053 | C3 | REQ-0009 | `src/lib/login-today-appointments.ts` scoped counts | built |
+| ART-0054 | C3 | REQ-0009 | `src/lib/server-prefetch.ts` doctor portal scoped prefetch | built |
+| ART-0055 | C3 | REQ-0010 | `src/lib/calendar-clinical-role-filter.ts` | built |
+| ART-0056 | C3 | REQ-0010 | `CategoryFilterSelect.tsx`, `PatientFilterSelect.tsx` | built |
+| ART-0057 | C3 | REQ-0010 | `CalendarFiltersContext` + `CalendarFiltersEmptyState` | built |
+| ART-0058 | C3 | REQ-0010 | `src/components/calendar/Filters.tsx` toolbar integration | built |
+| ART-0059 | C3 | REQ-0010 | `src/lib/__tests__/calendar-clinical-role-filter.test.ts` | built |
+| ART-0060 | C3 | REQ-0010 | `src/lib/__tests__/calendar-filters-empty-state.test.tsx` | built |
+| ART-0061 | C3 | REQ-0011 | `src/lib/invoice-billing-totals.ts` | built |
+| ART-0062 | C3 | REQ-0011 | `InvoiceBillingStatsRow.tsx`, `InvoiceBillingListRow.tsx` | built |
+| ART-0063 | C3 | REQ-0011 | `InvoiceManagement.tsx` KPI + outstanding fix | built |
+| ART-0064 | C3 | REQ-0011 | `OrganizationBillingPanel.tsx` full list + KPI | built |
+| ART-0065 | C3 | REQ-0011 | `queryKeys.invoices.byOrganization` + `byOrganizationTotals` | built |
+| ART-0066 | C3 | REQ-0011 | `src/lib/__tests__/invoice-billing-totals.test.ts` | built |
+| ART-0067 | C3 | REQ-0012 | `org-billing-prefetch.ts`, `control-panel-section-prefetch.ts` | built |
+| ART-0068 | C3 | REQ-0012 | `ClinicalTableEmptyDash.tsx`, `clinical-empty-dash.test.tsx` | built |
+| ART-0069 | C3 | REQ-0011 | `src/app/api/invoices/billing-totals/route.ts` | built |
+| ART-0070 | C3 | REQ-0012 | `prefetchInvoiceBillingTotalsForOrganization` in `server-prefetch.ts` | built |
 
 ## Verification Commands (project default)
 
 ```bash
-npm test        # 520 passed (C2 close)
+npm test        # 589 passed (C3 bootstrap verify, 2026-06-02)
 npx tsc --noEmit
 npm run lint
 npm run build

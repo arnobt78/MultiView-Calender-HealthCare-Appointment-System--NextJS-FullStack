@@ -1,13 +1,16 @@
 # Phase 04 — Verify — Summary
 
-<!-- Cycle: C2 | Last run: 2026-05-31 -->
+<!-- Cycle: C3 | Last run: 2026-06-02 -->
 
 | Metric | Value |
 |--------|-------|
-| VER-IDs | VER-0013..0018 |
-| PASS | 520 tests |
+| VER-IDs | VER-0019..0024 |
+| PASS | 589 tests (102 files) |
 | FAIL | 0 |
-| eval_run_id | ER-C2-CLOSE |
-| eval_gate_status | PASS |
+| eval_run_id | ER-C3-VERIFY |
+| eval_gate_status | PASS (automated) |
+| Human Gate 2 | GATE-0006 pending |
 
-**Red Team:** automated suite + build at commit `2d9a932`.
+**Red Team:** automated suite + tsc + lint + build at C3 verify refresh.
+
+**Linked REQs:** REQ-0009..0012

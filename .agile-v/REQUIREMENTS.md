@@ -1,12 +1,12 @@
 # Requirements — HealthCal Pro
 
-<!-- Revision: C1+C2 | C1 archived | C2 closed | Last updated: 2026-05-31 -->
+<!-- Revision: C1+C2+C3 | C1/C2 archived | C3 active | Last updated: 2026-06-02 -->
 
 ## Document Control
 
 | Field | Value |
 |-------|-------|
-| Cycle | C1 (archived) + C2 (closed) |
+| Cycle | C1 (archived) + C2 (archived) + C3 (active) |
 | Author | Requirement Architect |
 | Gate 1 status | C1 GATE-0001 · C2 GATE-0003 approved |
 | Canonical source | this file |
@@ -54,6 +54,10 @@
 | REQ-0006 | approved [C2] | REQ-0005 | ART-0040..0043 | VER-0015 |
 | REQ-0007 | approved [C2] | REQ-0006 | ART-0044..0045 | VER-0016 |
 | REQ-0008 | approved [C2] | REQ-0005 | ART-0046..0048 | VER-0017..0018 |
+| REQ-0009 | approved [C3] | — | ART-0049..0054 | VER-0019..0020 |
+| REQ-0010 | approved [C3] | — | ART-0055..0060 | VER-0021 |
+| REQ-0011 | approved [C3] | — | ART-0061..0066, ART-0069 | VER-0022 |
+| REQ-0012 | approved [C3] | REQ-0011 | ART-0067..0068, ART-0070 | VER-0023..0024 |
 
 ### REQ-0004 — Dashboard/CP SSR prefetch + calendar batch assignee fetch
 
@@ -191,3 +195,80 @@
 2. Doctor + admin user tables show pagination stub (`GET /api/users?offset=`).
 3. `DoctorFormDialog` / `AdminUserFormDialog` `devStub` disables Save; `ConfirmActionDialog.confirmDisabled` on delete.
 4. No accidental POST/DELETE in demo; implementer notes reference routes.
+
+---
+
+## Cycle C3 — Calendar scope, filters, billing KPI (2026-06-01)
+
+### REQ-0009 — Staff calendar scope + curated demo seed
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C3] |
+| Priority | P1 |
+| Risk | R1 |
+| Owner | Human |
+
+**Statement:** Doctor/staff calendar and portal appointment lists include visits where the user is calendar owner **or** treating physician; demo seed provides deterministic 10-row curated matrix aligned with insights/dashboard QA.
+
+**Acceptance criteria:**
+1. `staff-appointment-calendar-scope.ts` wired: `GET /api/appointments`, dashboard prefetch, doctor portal, login-today counts.
+2. `scripts/seed-demo-appointments-curated.ts` default via `npm run db:seed-demo-appointments`; Demo Doctor sees ~7 scoped visits.
+3. Admin dashboard overview appointment KPIs remain org-wide where specified.
+4. `npm test` includes `staff-appointment-calendar-scope` coverage.
+
+**Constraints:** `queryKeys` + `invalidateAfterAppointmentMutation`; no hardcoded keys.
+
+**Out of scope:** `calendar/export`, `calendar/sync`, `appointments/search` owner-only paths (follow-up).
+
+### REQ-0010 — Dashboard calendar filters (category, patient, clinical role)
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C3] |
+| Priority | P2 |
+| Risk | R1 |
+| Owner | Human |
+
+**Statement:** Staff dashboard toolbar uses rich category/patient dropdowns and clinical-role filter (All My Visits / Created by Me / Referred to Me) with filtered-empty state.
+
+**Acceptance criteria:**
+1. `CategoryFilterSelect`, `PatientFilterSelect`, `calendar-clinical-role-filter.ts`, `CalendarFiltersContext.clinicalRole`.
+2. `CalendarFiltersEmptyState` when filters hide all rows; reset aligned right.
+3. Patient filter shows primary doctor (not treating) per seed contract.
+4. Client-only filter; no API shape change.
+
+### REQ-0011 — Invoice billing KPI parity + org billing list UI
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C3] |
+| Priority | P1 |
+| Risk | R1 |
+| Owner | Human |
+
+**Statement:** CP Invoice Management and Organization billing show four KPI cards (Paid, Outstanding, Refunded, Cancelled) with outstanding matching dashboard (`draft|sent|overdue` only); org panel lists **all** org invoices with visit/doctor context.
+
+**Acceptance criteria:**
+1. `invoice-billing-totals.ts` + `InvoiceBillingStatsRow` — Outstanding excludes refunded (€187.50 demo, not €287.50).
+2. `GET /api/invoices/billing-totals?organizationId=` + `fetchInvoiceBillingTotalsForOrganization` for org KPI cards.
+3. `OrganizationBillingPanel` renders all org invoices (no `slice`); `InvoiceBillingListRow` for rows.
+4. `queryKeys.invoices.byOrganization(orgId)` + `byOrganizationTotals(orgId)`; invalidation via `invalidateInvoices*`.
+5. Demo curated: Paid €175, Outstanding €187.50, Refunded €100, Cancelled €97.50.
+
+### REQ-0012 — Org billing SSR all orgs + shared outstanding statuses
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C3] |
+| Priority | P2 |
+| Risk | R1 |
+| Parent | REQ-0011 |
+
+**Statement:** Organizations tab SSR-prefetches billing for every org (cap 20); server aggregates use `INVOICE_OUTSTANDING_STATUSES`; entity detail empty fields show single em-dash.
+
+**Acceptance criteria:**
+1. `prefetchOrgBillingInvoicesByOrgIds` + `prefetchInvoicesForOrganization` on CP organizations section.
+2. `invoices-scope.ts` + `invoices-revenue-scope.ts` import shared outstanding statuses.
+3. `ClinicalEmptyDash` single glyph; `clinicalEmptyOr` on patient/doctor/category detail rows.
+4. `npm test`: `invoice-billing-totals.test.ts`, `org-billing-prefetch.test.ts`, `clinical-empty-dash.test.tsx`.

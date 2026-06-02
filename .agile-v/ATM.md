@@ -1,6 +1,6 @@
 # Automated Traceability Matrix (ATM) — HealthCal Pro
 
-<!-- Cycle: C1+C2 | Last updated: 2026-05-31 | C2 Gate 2 closed -->
+<!-- Cycle: C1+C2+C3 | Last updated: 2026-06-02 | C3 verify (Gate 2 pending) -->
 
 ## Matrix
 
@@ -14,6 +14,10 @@
 | REQ-0006 | approved [C2] | ART-0040..0043 | C2 | VER-0015 | C2 | PASS |
 | REQ-0007 | approved [C2] | ART-0044..0045 | C2 | VER-0016 | C2 | PASS |
 | REQ-0008 | approved [C2] | ART-0046..0048 | C2 | VER-0017..0018 | C2 | PASS |
+| REQ-0009 | approved [C3] | ART-0049..0054 | C3 | VER-0019..0020 | C3 | PASS |
+| REQ-0010 | approved [C3] | ART-0055..0060 | C3 | VER-0021 | C3 | PASS |
+| REQ-0011 | approved [C3] | ART-0061..0066, ART-0069 | C3 | VER-0022 | C3 | PASS |
+| REQ-0012 | approved [C3] | ART-0067..0068, ART-0070 | C3 | VER-0023..0024 | C3 | PASS |
 
 ## Dangling Artifacts
 

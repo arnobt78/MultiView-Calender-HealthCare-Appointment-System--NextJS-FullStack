@@ -89,3 +89,45 @@ EvalGate: status=PASS | eval_run_id=ER-C1-CLOSE | policy_version_ref=1.0.0 | eva
 | VER-0018 | TC-0015 | REQ-0008 | PASS | lint + build |
 
 EvalGate (C2): status=PASS | eval_run_id=ER-C2-CLOSE | release_commit=2d9a932
+
+---
+
+## C3 — Calendar scope + filters + billing (bootstrap 2026-06-01)
+
+| Item | Value |
+|------|-------|
+| Cycle | C3 |
+| ART-IDs | ART-0049..ART-0068 |
+| REQ-IDs | REQ-0009..REQ-0012 |
+| Mode | Retroactive (code on `main` before Gate 1) |
+| Regression | 589/589 Vitest (102 files) |
+
+| VER-ID | TC-ID | REQ-ID | Result | Description |
+|--------|-------|--------|--------|-------------|
+| VER-0019 | TC-0016 | REQ-0009 | PASS | Staff appointment calendar scope |
+| VER-0020 | TC-0016 | REQ-0009 | PASS | Full regression at C3 verify |
+| VER-0021 | TC-0017 | REQ-0010 | PASS | Clinical role + filter empty state |
+| VER-0022 | TC-0018 | REQ-0011 | PASS | Invoice billing totals (outstanding excludes refunded) |
+| VER-0023 | TC-0019 | REQ-0012 | PASS | Org billing prefetch + clinical empty dash |
+| VER-0024 | TC-0020 | REQ-0009..0012 | PASS | tsc + lint + build |
+
+## Coverage (C3)
+
+| REQ-ID | Tests | Status |
+|--------|-------|--------|
+| REQ-0009 | TC-0016 + regression | PASS |
+| REQ-0010 | TC-0017 + regression | PASS |
+| REQ-0011 | TC-0018 + regression | PASS |
+| REQ-0012 | TC-0019 + regression | PASS |
+
+## Red Team Sign-Off (C3)
+
+| Field | Value |
+|-------|-------|
+| Agent | Red Team Verifier (automated) |
+| Timestamp | 2026-06-01T00:00:00Z |
+| Evidence | commits `30d9fd3`, `47c4913`, `297cd51`; 589 tests (2026-06-02 verify) |
+| LINKED_REQ | REQ-0009..0012 |
+| Human Gate 2 | pending GATE-0006 |
+
+EvalGate (C3): status=PASS | eval_run_id=ER-C3-VERIFY | policy_version_ref=1.0.0 | gate2_pending=GATE-0006

@@ -60,3 +60,32 @@ release_commit: "2d9a932"
 | release build | npm run build | PASS | REQ-0005..0008 |
 
 **EvalGate (active):** PASS — C2 archived to `.agile-v/cycles/C2/`.
+
+---
+
+## C3 Verify — ER-C3-VERIFY
+
+```yaml
+eval_run_id: ER-C3-VERIFY
+eval_timestamp: "2026-06-02T12:19:00Z"
+policy_version_ref: "1.0.0"
+eval_gate_status: PASS
+eval_gate_rationale: "C3 retroactive bootstrap — npm test 589/589, tsc, eslint, build PASS for REQ-0009..0012"
+cycle: C3
+release_commit: "47c4913"
+human_gate_2: GATE-0006
+```
+
+| Suite | Command | Result | LINKED_REQ |
+|-------|---------|--------|------------|
+| staff-appointment-calendar-scope | npm test staff-appointment-calendar-scope | PASS | REQ-0009 |
+| calendar-clinical-role-filter | npm test calendar-clinical-role-filter | PASS | REQ-0010 |
+| invoice-billing-totals | npm test invoice-billing-totals | PASS | REQ-0011 |
+| org-billing-prefetch | npm test org-billing-prefetch | PASS | REQ-0012 |
+| clinical-empty-dash | npm test clinical-empty-dash | PASS | REQ-0012 |
+| full regression | npm test | PASS 589/589 | REQ-0009..0012 |
+| typecheck | npx tsc --noEmit | PASS | REQ-0009..0012 |
+| lint | npm run lint | PASS | REQ-0009..0012 |
+| release build | npm run build | PASS | REQ-0009..0012 |
+
+**EvalGate (active):** PASS (automated) — Human Gate 2 pending before `cycles/C3/` freeze.

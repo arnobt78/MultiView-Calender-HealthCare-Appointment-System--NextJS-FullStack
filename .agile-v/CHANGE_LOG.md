@@ -4,7 +4,7 @@
 
 | CR-ID | Cycle | Affected REQ | Change | Rationale | Impact (ART + TC) | Requested by | Approved |
 |-------|-------|--------------|--------|-----------|-------------------|--------------|----------|
-| — | — | — | — | — | — | — | — |
+| CR-C3-001 | C3 | REQ-0009..0012 | Retroactive bootstrap for post-C2 merges | Trace billing/calendar work not in C2 archive | ART-0049..0068, TC-0016..0020 | compliance-auditor | approved (retroactive) |
 
 ## Template
 

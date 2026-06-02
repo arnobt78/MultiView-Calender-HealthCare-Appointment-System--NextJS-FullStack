@@ -19,3 +19,10 @@
 | 2026-05-31T16:00:00Z | build | C2 REQ-0008 CP dev stubs | disabled submit + API hints for create/delete/pagination | REQ-0008 |
 | 2026-05-31T16:10:00Z | red-team | C2 Gate 2 automated verification PASS | 520 tests, tsc, lint, build; archive cycles/C2 | REQ-0005..0008 |
 | 2026-05-31T16:10:00Z | compliance | Close C2 Gate 2 — freeze archive | STATE → C2 closed; ready C3 | REQ-0005..0008 |
+| 2026-06-01T00:00:00Z | init | Bootstrap C3 retroactive traceability | Code merged post-C2; REQ-0009..0012 document billing/calendar/filters | — |
+| 2026-06-01T00:00:00Z | build | REQ-0009 staff scope + curated seed | Owner OR treating physician; demo matrix for QA | REQ-0009 |
+| 2026-06-01T00:00:00Z | build | REQ-0010 dashboard calendar filters | Category/patient selects + clinical role + empty state | REQ-0010 |
+| 2026-06-01T00:00:00Z | build | REQ-0011 invoice billing KPI + org list | Shared totals; outstanding excludes refunded; 6/6 org invoices | REQ-0011 |
+| 2026-06-01T00:00:00Z | build | REQ-0012 org SSR prefetch all orgs + empty dash | `byOrganization` keys; single em-dash placeholder | REQ-0012 |
+| 2026-06-01T00:00:00Z | compliance | C1 bootstrap frozen — do not rewrite | Living docs append only; archives in `cycles/C1/` | REQ-0001..0004 |
+| 2026-06-02T12:19:00Z | init | Refresh Agile V bootstrap (C1/C2/C3 index) | 589/589 tests; ART-0069/0070 billing-totals API traceability; BOOTSTRAP checklist v1.4 | REQ-0009..0012 |

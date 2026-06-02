@@ -35,7 +35,7 @@ Living AQMS for the **Agile V Infinity Loop** on this repository.
 |-------|--------|---------|---------|
 | C1 | closed | REQ-0001..0004 | `cycles/C1/` |
 | C2 | closed | REQ-0005..0008 | `cycles/C2/` |
-| C3 | — | bootstrap on next CR | — |
+| C3 | verify (retroactive) | REQ-0009..0012 | `cycles/C3/` (living) |
 
 ## Verification
 
@@ -43,4 +43,4 @@ Living AQMS for the **Agile V Infinity Loop** on this repository.
 npm test && npx tsc --noEmit && npm run lint && npm run build
 ```
 
-Initialized: **2026-05-30** | Bootstrap completed: **2026-05-31** | Policy: **1.0.0**
+Initialized: **2026-05-30** | Bootstrap completed: **2026-06-02** | Policy: **1.0.0** | Active: **C3** (Gates 5–6 pending)
