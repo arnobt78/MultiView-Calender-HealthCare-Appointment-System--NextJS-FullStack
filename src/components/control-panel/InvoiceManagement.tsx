@@ -28,13 +28,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ClipboardList, FileEdit, Receipt } from "lucide-react";
+import { Receipt } from "lucide-react";
 import { InvoiceBillingStatsRow } from "@/components/shared/billing/InvoiceBillingStatsRow";
 import { CreateInvoiceDialog } from "@/components/shared/billing/CreateInvoiceDialog";
 import { InvoiceAdminActionsMenu } from "@/components/shared/billing/InvoiceAdminActionsMenu";
 import { InvoiceStatusBadge } from "@/components/shared/billing/InvoiceStatusBadge";
 import { InvoiceVisitSummaryLine } from "@/components/shared/billing/InvoiceVisitSummaryLine";
-import { PatientStatCard } from "@/components/control-panel/PatientStatCard";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { format } from "date-fns";
 import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
@@ -159,8 +158,6 @@ export default function InvoiceManagement() {
     return <div className="p-4 text-red-500">Error: {error?.message}</div>;
   }
 
-  const draftCount = isMounted ? invoices.filter((i) => i.status === "draft").length : 0;
-
   return (
     <div className={controlPanelSectionRootClass}>
       {/* Page header */}
@@ -181,28 +178,8 @@ export default function InvoiceManagement() {
         }
       />
 
-      {/* KPI strip — outstanding excludes refunded/cancelled (dashboard parity). */}
+      {/* KPI strip — per-status amounts + count badges (shared insights grid). */}
       <InvoiceBillingStatsRow invoices={invoices} valueSkeleton={loading} />
-
-      {/* Draft state card — auto-generated draft invoices awaiting review. */}
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
-        <PatientStatCard
-          variant="amber"
-          icon={FileEdit}
-          title="Draft Invoices"
-          subtitle="Auto-generated, not yet sent"
-          value={draftCount}
-          valueSkeleton={loading}
-        />
-        <PatientStatCard
-          variant="sky"
-          icon={ClipboardList}
-          title="Total Invoices"
-          subtitle="All statuses combined"
-          value={isMounted ? invoices.length : 0}
-          valueSkeleton={loading}
-        />
-      </div>
 
       {/* Chrome — filter and table heading */}
       <div className="flex items-center justify-between gap-4 flex-wrap">

@@ -12,7 +12,7 @@ import { PortalPanelCountBadge } from "@/components/shared/PortalPanelCountBadge
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import type { InvoiceBillingTotals } from "@/lib/invoice-billing-totals";
+import type { InvoiceBillingTotalsPayload } from "@/lib/invoice-billing-totals";
 
 type Props = {
   organizationId: string;
@@ -39,7 +39,7 @@ export function OrganizationBillingPanel({ organizationId, organizationName }: P
   const { data: totalsData, isLoading: isTotalsLoading } = useQuery({
     queryKey: queryKeys.invoices.byOrganizationTotals(organizationId),
     queryFn: () =>
-      apiClient<{ totals: InvoiceBillingTotals }>(
+      apiClient<InvoiceBillingTotalsPayload>(
         `/api/invoices/billing-totals?organizationId=${encodeURIComponent(organizationId)}`
       ),
     staleTime: 30_000,
@@ -47,6 +47,7 @@ export function OrganizationBillingPanel({ organizationId, organizationName }: P
 
   const invoices = data?.invoices ?? [];
   const totals = totalsData?.totals;
+  const statusTotals = totalsData?.statusTotals;
   const loading = !isMounted || isLoading;
   const statsLoading = !isMounted || isTotalsLoading;
 
@@ -67,6 +68,7 @@ export function OrganizationBillingPanel({ organizationId, organizationName }: P
         <InvoiceBillingStatsRow
           invoices={invoices}
           totals={totals}
+          statusTotals={statusTotals}
           valueSkeleton={statsLoading}
         />
       </CardHeader>

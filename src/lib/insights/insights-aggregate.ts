@@ -19,6 +19,11 @@ import {
   withAppointmentStartInPeriod,
 } from "@/lib/insights/insights-period-filter";
 import type { InsightsTrendPoint } from "@/lib/insights/insights-types";
+import { buildInvoiceStatusTotalsFromGroupBy } from "@/lib/invoice-billing-totals";
+import {
+  buildInsightsPaidCollectedAllTimeWhere,
+  buildInsightsPaidCollectedWhere,
+} from "@/lib/insights/insights-paid-collected";
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -218,6 +223,25 @@ export async function fetchAvgDurationMinutes(
   return Math.round(sum / rows.length);
 }
 
+/**
+ * Telehealth share for the active View-as period — same `start` window as pending chips + charts.
+ * `visitCount` = all visits in period; `telehealthCount` = telehealth visits in period.
+ */
+export async function fetchTelehealthShareForPeriod(
+  base: Prisma.AppointmentWhereInput,
+  period: InsightsPeriod,
+  now: Date
+): Promise<{ telehealthCount: number; visitCount: number; telehealthPct: number }> {
+  const periodWhere = withAppointmentStartInPeriod(base, period, now);
+  const [telehealthCount, visitCount] = await Promise.all([
+    countAppointments(periodWhere, { is_telehealth: true }),
+    countAppointments(periodWhere),
+  ]);
+  const telehealthPct =
+    visitCount > 0 ? Math.round((telehealthCount / visitCount) * 100) : 0;
+  return { telehealthCount, visitCount, telehealthPct };
+}
+
 /** Average visit length for the active View-as period. */
 export async function fetchAvgDurationMinutesForPeriod(
   base: Prisma.AppointmentWhereInput,
@@ -267,7 +291,9 @@ export async function fetchRevenueAggregates(
 ): Promise<{
   paidInPeriod: number;
   paidPrevPeriod: number;
+  paidInPeriodCount: number;
   invoiceByStatus: Record<string, number>;
+  statusTotals: ReturnType<typeof buildInvoiceStatusTotalsFromGroupBy>;
 }> {
   const paidFilter = resolveInsightsPaidAtFilter(period, now);
 
@@ -281,47 +307,49 @@ export async function fetchRevenueAggregates(
     by: ["status"],
     where: statusWhere,
     _count: { _all: true },
+    _sum: { amount: true },
   });
   const invoiceByStatus: Record<string, number> = {};
   for (const row of statusRows) {
     invoiceByStatus[row.status] = row._count._all;
   }
+  const statusTotals = buildInvoiceStatusTotalsFromGroupBy(statusRows);
 
-  const paidWhere: Prisma.InvoiceWhereInput = {
-    ...invoiceBase,
-    status: "paid",
-  };
-  if (paidFilter) {
-    paidWhere.paid_at = { gte: paidFilter.gte, lte: paidFilter.lte };
-  }
+  const paidWhere = paidFilter
+    ? buildInsightsPaidCollectedWhere(invoiceBase, paidFilter)
+    : buildInsightsPaidCollectedAllTimeWhere(invoiceBase);
 
   const paidInPeriodAgg = await prisma.invoice.aggregate({
     where: paidWhere,
     _sum: { amount: true },
+    _count: true,
   });
 
   if (isInsightsPeriodAll(period)) {
     return {
       paidInPeriod: paidInPeriodAgg._sum.amount ?? 0,
       paidPrevPeriod: 0,
+      paidInPeriodCount: paidInPeriodAgg._count,
       invoiceByStatus,
+      statusTotals,
     };
   }
 
   const prev = resolvePreviousDateRange(period, now);
   const paidPrevAgg = await prisma.invoice.aggregate({
-    where: {
-      ...invoiceBase,
-      status: "paid",
-      paid_at: { gte: prev.start, lte: prev.end },
-    },
+    where: buildInsightsPaidCollectedWhere(invoiceBase, {
+      gte: prev.start,
+      lte: prev.end,
+    }),
     _sum: { amount: true },
   });
 
   return {
     paidInPeriod: paidInPeriodAgg._sum.amount ?? 0,
     paidPrevPeriod: paidPrevAgg._sum.amount ?? 0,
+    paidInPeriodCount: paidInPeriodAgg._count,
     invoiceByStatus,
+    statusTotals,
   };
 }
 

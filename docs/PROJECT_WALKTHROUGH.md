@@ -6,7 +6,9 @@
 - **Doctor portal:** stacked panel headers (billing/patients); invoice rows (`DoctorPortalInvoiceListRow`, `invoice-list-display`); SSR visit summaries on invoices.
 - **Confirm dialogs:** `ConfirmActionDialog` + `confirm-delete-dialog-copy.tsx` — destructive/warning actions portal + CP + calendar/settings; dropdown deletes: dialog as menu **sibling**.
 - **Org billing KPI:** `invoice-billing-totals.ts`, `GET /api/invoices/billing-totals`, dual query keys + `prefetchOrgBillingInvoicesByOrgIds`.
-- **Verify:** Vitest **629** (113 files), tsc, lint, build.
+- **Invoice revenue KPI grid:** `InvoiceRevenueKpiGrid` — amount + count badge + insights period hint; `formatBillingKpiMoney` (exact EUR). Used on `/insights`, CP invoice-management, org billing. API `billing-totals` returns `{ totals, statusTotals }`; insights `fetchRevenueAggregates` adds `statusTotals` + `paidInPeriodCount`.
+- **Insights KPI:** View-as hints (`formatInsightsPeriodStatValueLabel`); **Telehealth %** = `fetchTelehealthShareForPeriod` (same `start` window as pending/avg duration). Top-row Today/week/month/YTD = fixed calendar only.
+- **Verify:** Vitest **638** (114 files), tsc, lint, build.
 
 ## Prior (2026-06-02 — Appointment Type Pricing + Doctor Profiles + CP UI)
 

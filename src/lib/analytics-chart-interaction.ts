@@ -6,6 +6,7 @@
 import type { ChartConfig } from "@/components/ui/chart";
 import { ANALYTICS_CHART_COLORS } from "@/components/shared/analytics/analytics-chart-classes";
 import type { AnalyticsChartEmptyKind } from "@/lib/analytics-chart-empty";
+import { formatInvoiceMoney } from "@/lib/crud-notify-messages";
 
 /** Above glass chart panels (`Z_SELECT_DROPDOWN`), below fixed navbar (`Z_NAVBAR`). */
 export const ANALYTICS_CHART_TOOLTIP_Z_INDEX = 200;
@@ -352,6 +353,15 @@ export function formatAnalyticsChartLabelValue(value: unknown): string | null {
   return Number.isInteger(n) ? String(n) : n.toLocaleString(undefined, { maximumFractionDigits: 1 });
 }
 
+/** On-chart label for paid-revenue series (values are cents). */
+export function formatAnalyticsChartCurrencyLabelValue(value: unknown): string | null {
+  const n = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(n) || n <= 0) {
+    return null;
+  }
+  return formatInvoiceMoney({ amount: n, currency: "eur", unit: "cents" });
+}
+
 /**
  * @deprecated Prefer `<AnalyticsChartValueLabelList dataKey="…" />` on Bar/Line/Area children.
  */
@@ -362,6 +372,16 @@ export const analyticsSeriesPointLabel = {
   fontSize: analyticsChartLabelStyle.fontSize,
   fontWeight: analyticsChartLabelStyle.fontWeight,
   formatter: (value: unknown) => formatAnalyticsChartLabelValue(value) ?? "",
+};
+
+/** Paid-revenue area/line — on-chart values as EUR (cents in `count` field). */
+export const analyticsSeriesCurrencyPointLabel = {
+  position: "top" as const,
+  offset: 10,
+  fill: analyticsChartLabelStyle.fill,
+  fontSize: analyticsChartLabelStyle.fontSize,
+  fontWeight: analyticsChartLabelStyle.fontWeight,
+  formatter: (value: unknown) => formatAnalyticsChartCurrencyLabelValue(value) ?? "",
 };
 
 /** Tooltip value line — same rules as labels; currency for paid-revenue cents. */
@@ -376,11 +396,7 @@ export function formatAnalyticsChartTooltipValue(
   if (kind === "currency") {
     const n = typeof value === "number" ? value : Number(value);
     if (Number.isFinite(n)) {
-      return new Intl.NumberFormat(undefined, {
-        style: "currency",
-        currency: "EUR",
-        maximumFractionDigits: 0,
-      }).format(n / 100);
+      return formatInvoiceMoney({ amount: n, currency: "eur", unit: "cents" });
     }
   }
   return formatted;

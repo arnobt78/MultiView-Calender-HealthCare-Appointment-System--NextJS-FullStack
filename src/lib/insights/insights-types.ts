@@ -3,6 +3,7 @@
  */
 
 import type { InsightsPeriod } from "@/lib/insights/insights-period";
+import type { InvoiceBillingStatusTotals } from "@/lib/invoice-billing-totals";
 
 export type InsightsAppointmentTotals = {
   /** All appointments in scope (past + future scheduled). */
@@ -16,7 +17,9 @@ export type InsightsAppointmentTotals = {
   /** Scheduled appointments not started yet (start > now). */
   upcoming: number;
   overdue: number;
+  /** Telehealth visits in the active View-as period (matches pending / avg duration). */
   telehealthCount: number;
+  /** Share of visits in View-as period that are telehealth (`start` window). */
   telehealthPct: number;
   /** Average visit length for appointments in the selected View-as period. */
   avgDurationMinutes: number;
@@ -61,7 +64,11 @@ export type InsightsPatientsSection = {
 export type InsightsRevenueSection = {
   paidInPeriod: number;
   paidPrevPeriod: number;
+  /** Paid invoices with paid_at in View-as window (badge on Paid in period card). */
+  paidInPeriodCount: number;
   invoiceByStatus: Record<string, number>;
+  /** Per-status amount + count in created_at window (KPI grid). */
+  statusTotals: InvoiceBillingStatusTotals;
   revenueTrend: InsightsTrendPoint[];
   paymentSuccessPct: number;
   avgInvoiceCents: number;

@@ -50,6 +50,10 @@ export const insightsGlassSelectTriggerClass =
 export const analyticsOverviewGridClass =
   "grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4";
 
+/** Invoice revenue KPI grid — up to 10 cards on insights; 2–4 cols responsive. */
+export const invoiceRevenueKpiGridClass =
+  "grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4";
+
 /** Scope hint line in page header — sky accent. */
 export const insightsScopeHintClass = "font-medium text-sky-600";
 
@@ -70,6 +74,10 @@ export const analyticsChartPanelSubtitleClass = "text-xs leading-snug text-muted
 /** Dynamic View-as period line under chart titles (matches page scope hint accent). */
 export const insightsChartPeriodSubtitleClass =
   "text-xs leading-snug muted-foreground [overflow-wrap:anywhere]";
+
+/** Period hint in insights KPI value row — muted, same scale as chart period subtitles. */
+export const insightsStatCardPeriodHintClass =
+  "min-w-0 flex-1 text-xs leading-snug text-muted-foreground [overflow-wrap:anywhere]";
 
 /** Chart / table body min height — aligns empty states across insights cards. */
 export const insightsChartBodyMinHeightClass = "min-h-[10rem]";

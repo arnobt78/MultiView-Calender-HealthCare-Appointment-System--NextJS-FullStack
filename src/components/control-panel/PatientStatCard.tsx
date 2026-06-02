@@ -4,11 +4,12 @@ import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { insightsStatCardPeriodHintClass } from "@/lib/insights-ui-classes";
 import { cn, toSentenceCaseSubtitle, toTitleCaseLabel } from "@/lib/utils";
 
 /** Visual presets for glass stat tiles — border tint + soft colored shadow (reusable on other dashboards). */
 const VARIANT_CLASS: Record<
-  "violet" | "emerald" | "sky" | "amber",
+  "violet" | "emerald" | "sky" | "amber" | "rose",
   { shell: string; iconWrap: string }
 > = {
   violet: {
@@ -31,6 +32,11 @@ const VARIANT_CLASS: Record<
       "border-amber-400/30 bg-white/70 shadow-[0_14px_44px_rgba(217,119,6,0.2)] backdrop-blur-sm supports-[backdrop-filter]:bg-white/55",
     iconWrap: "border-amber-200/80 bg-amber-50 text-amber-800",
   },
+  rose: {
+    shell:
+      "border-rose-400/30 bg-white/70 shadow-[0_14px_44px_rgba(244,63,94,0.2)] backdrop-blur-sm supports-[backdrop-filter]:bg-white/55",
+    iconWrap: "border-rose-200/80 bg-rose-50 text-rose-700",
+  },
 };
 
 export type PatientStatCardVariant = keyof typeof VARIANT_CLASS;
@@ -46,6 +52,12 @@ export function PatientStatCard({
   valueDisplay,
   /** Pulse only in the numeric slot — titles/icons stay stable (avoids whole-card flicker on refetch). */
   valueSkeleton,
+  /** Left-aligned period/scope hint in the value row (insights View-as filter). */
+  valueRowHint,
+  /** Optional tone for value row (e.g. emerald/red period-over-period). */
+  valueClassName,
+  /** Optional tone for title badge (e.g. green/red delta chip). */
+  badgeClassName,
 }: {
   variant: PatientStatCardVariant;
   icon: LucideIcon;
@@ -56,6 +68,9 @@ export function PatientStatCard({
   value: number;
   valueDisplay?: ReactNode;
   valueSkeleton: boolean;
+  valueRowHint?: string;
+  valueClassName?: string;
+  badgeClassName?: string;
 }) {
   const v = VARIANT_CLASS[variant];
   const displayTitle = toTitleCaseLabel(title);
@@ -81,7 +96,13 @@ export function PatientStatCard({
             <p className="text-sm font-medium text-gray-700">{displayTitle}</p>
             {badge != null ? (
               typeof badge === "string" ? (
-                <Badge variant="outline" className="text-[10px] font-normal text-muted-foreground">
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "text-[10px] font-semibold tabular-nums",
+                    badgeClassName ?? "font-normal text-muted-foreground"
+                  )}
+                >
                   {badge}
                 </Badge>
               ) : (
@@ -94,15 +115,35 @@ export function PatientStatCard({
           ) : null}
         </div>
       </div>
-      <div className="flex min-h-[2.25rem] items-end justify-end border-t border-black/[0.04] pt-2">
+      <div
+        className={cn(
+          "flex min-h-[2.25rem] items-end gap-2 border-t border-black/[0.04] pt-2",
+          valueRowHint ? "justify-between" : "justify-end"
+        )}
+      >
+        {valueRowHint ? (
+          <span className={insightsStatCardPeriodHintClass}>{valueRowHint}</span>
+        ) : null}
         {valueSkeleton ? (
           <Skeleton className="h-9 w-16 shrink-0 rounded-xl" aria-hidden />
         ) : valueDisplay != null ? (
-          <div className="text-3xl font-semibold tabular-nums tracking-tight text-gray-700">
+          <div
+            className={cn(
+              "shrink-0 text-3xl font-semibold tabular-nums tracking-tight text-gray-700",
+              valueClassName
+            )}
+          >
             {valueDisplay}
           </div>
         ) : (
-          <span className="text-3xl font-semibold tabular-nums tracking-tight text-gray-700">{value}</span>
+          <span
+            className={cn(
+              "shrink-0 text-3xl font-semibold tabular-nums tracking-tight text-gray-700",
+              valueClassName
+            )}
+          >
+            {value}
+          </span>
         )}
       </div>
     </div>

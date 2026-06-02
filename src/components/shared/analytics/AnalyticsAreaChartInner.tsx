@@ -8,7 +8,7 @@ import { analyticsChartTooltipEl } from "@/components/shared/analytics/Analytics
 import {
   analyticsChartCartesianPropsForDensity,
   analyticsChartResponsiveHeightWrapClass,
-  analyticsSeriesPointLabel,
+  analyticsSeriesCurrencyPointLabel,
   type AnalyticsChartXAxisLayout,
 } from "@/lib/analytics-chart-interaction";
 
@@ -48,7 +48,7 @@ export function AnalyticsAreaChartInner({
           dot={{ r: 3 }}
           activeDot={{ r: 5 }}
           isAnimationActive={false}
-          label={analyticsSeriesPointLabel}
+          label={analyticsSeriesCurrencyPointLabel}
         />
       </AreaChart>
     </AnalyticsChartShell>

@@ -104,7 +104,7 @@ import type { FullAppointment } from "@/hooks/useAppointments";
 import type { Invoice } from "@/hooks/usePayments";
 import type { Organization } from "@/hooks/useOrganization";
 import { getUserRole, isPatientRole } from "@/lib/rbac";
-import type { InvoiceBillingTotals } from "@/lib/invoice-billing-totals";
+import type { InvoiceBillingTotalsPayload } from "@/lib/invoice-billing-totals";
 
 // ─── Shared types ─────────────────────────────────────────────────────────────
 
@@ -548,7 +548,7 @@ export async function prefetchInvoicesForOrganization(
 /** Mirrors GET /api/invoices/billing-totals?organizationId= — org KPI aggregate payload. */
 export async function prefetchInvoiceBillingTotalsForOrganization(
   organizationId: string
-): Promise<InvoiceBillingTotals | null> {
+): Promise<InvoiceBillingTotalsPayload | null> {
   try {
     const { fetchInvoiceBillingTotalsForOrganization } = await import("@/lib/invoices-scope");
     return await fetchInvoiceBillingTotalsForOrganization(organizationId);

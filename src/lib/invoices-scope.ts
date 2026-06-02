@@ -11,8 +11,12 @@ import {
   userCanViewOrganizationInvoices,
 } from "@/lib/organization-invoice-access";
 import {
-  INVOICE_OUTSTANDING_STATUSES,
+  INVOICE_STATUS_KEYS,
+  rollupInvoiceBillingTotals,
+  type InvoiceBillingStatusTotals,
   type InvoiceBillingTotals,
+  type InvoiceBillingTotalsPayload,
+  type InvoiceStatusKey,
 } from "@/lib/invoice-billing-totals";
 
 const invoiceInclude = { payments: true } as const;
@@ -105,52 +109,39 @@ export async function fetchInvoicesForViewer(opts: {
   });
 }
 
-/** Org billing KPI aggregates — same buckets as `computeInvoiceBillingTotals` (Prisma). */
+function aggregateToBucket(agg: {
+  _sum: { amount: number | null };
+  _count: number;
+}): { cents: number; count: number } {
+  return { cents: agg._sum.amount ?? 0, count: agg._count };
+}
+
+/** Org billing KPI aggregates — rollups + per-status buckets (Prisma). */
 export async function fetchInvoiceBillingTotalsForOrganization(
   organizationId: string
-): Promise<InvoiceBillingTotals> {
+): Promise<InvoiceBillingTotalsPayload> {
   const orgWhere = { organization_id: organizationId };
 
-  const [paid, outstanding, refunded, cancelled] = await Promise.all([
-    prisma.invoice.aggregate({
-      where: { ...orgWhere, status: "paid" },
-      _sum: { amount: true },
-      _count: true,
-    }),
-    prisma.invoice.aggregate({
-      where: {
-        ...orgWhere,
-        status: { in: [...INVOICE_OUTSTANDING_STATUSES] },
-      },
-      _sum: { amount: true },
-      _count: true,
-    }),
-    prisma.invoice.aggregate({
-      where: { ...orgWhere, status: "refunded" },
-      _sum: { amount: true },
-      _count: true,
-    }),
-    prisma.invoice.aggregate({
-      where: { ...orgWhere, status: "cancelled" },
-      _sum: { amount: true },
-      _count: true,
-    }),
-  ]);
+  const statusAggs = await Promise.all(
+    INVOICE_STATUS_KEYS.map(async (status: InvoiceStatusKey) => {
+      const agg = await prisma.invoice.aggregate({
+        where: { ...orgWhere, status },
+        _sum: { amount: true },
+        _count: true,
+      });
+      return [status, aggregateToBucket(agg)] as const;
+    })
+  );
 
-  return {
-    paid: { cents: paid._sum.amount ?? 0, count: paid._count },
-    outstanding: {
-      cents: outstanding._sum.amount ?? 0,
-      count: outstanding._count,
-    },
-    refunded: { cents: refunded._sum.amount ?? 0, count: refunded._count },
-    cancelled: { cents: cancelled._sum.amount ?? 0, count: cancelled._count },
-  };
+  const statusTotals = Object.fromEntries(statusAggs) as InvoiceBillingStatusTotals;
+  const totals = rollupInvoiceBillingTotals(statusTotals);
+
+  return { totals, statusTotals };
 }
 
 /** @deprecated Prefer `fetchInvoiceBillingTotalsForOrganization` — slim paid/outstanding only. */
 export async function fetchInvoiceTotalsForOrganization(organizationId: string) {
-  const totals = await fetchInvoiceBillingTotalsForOrganization(organizationId);
+  const { totals } = await fetchInvoiceBillingTotalsForOrganization(organizationId);
   return {
     paidCents: totals.paid.cents,
     paidCount: totals.paid.count,

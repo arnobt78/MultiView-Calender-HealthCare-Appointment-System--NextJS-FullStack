@@ -12,6 +12,7 @@ import type { InsightsPeriod } from "@/lib/insights/insights-period";
 import {
   insightsAppointmentsToolbarClass,
   insightsInlineControlRowClass,
+  insightsScopeHintClass,
 } from "@/lib/insights-ui-classes";
 import { toTitleCaseLabel } from "@/lib/utils";
 
@@ -23,6 +24,8 @@ type Props = {
   onPeriodChange: (next: InsightsPeriod) => void;
   disabled?: boolean;
   loading?: boolean;
+  /** My practice, organization-wide, or selected doctor — sky accent beside title. */
+  scopeLabel: string;
 };
 
 export function InsightsAppointmentsPanelHeader({
@@ -33,6 +36,7 @@ export function InsightsAppointmentsPanelHeader({
   onPeriodChange,
   disabled = false,
   loading = false,
+  scopeLabel,
 }: Props) {
   return (
     <div className={insightsAppointmentsToolbarClass}>
@@ -43,7 +47,12 @@ export function InsightsAppointmentsPanelHeader({
         >
           <BarChart3 className="h-4 w-4" />
         </span>
-        <span className="text-sm font-semibold text-gray-700">{toTitleCaseLabel("Appointments")}</span>
+        <span className="flex min-w-0 flex-wrap items-baseline gap-x-1 text-sm font-semibold text-gray-700">
+          <span>{toTitleCaseLabel("Appointments")}</span>
+          <span className={insightsScopeHintClass} aria-label={`Scope: ${scopeLabel}`}>
+            · {scopeLabel}
+          </span>
+        </span>
         <CalendarGlassStatBadge label="Overall" value={overall} variant="sky" loading={loading} />
         <CalendarGlassStatBadge
           label="Until today"

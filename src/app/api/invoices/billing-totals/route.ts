@@ -26,8 +26,8 @@ export async function GET(req: NextRequest) {
       (await userCanViewOrganizationInvoices(sessionUser.userId, organizationId));
     if (!allowed) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-    const totals = await fetchInvoiceBillingTotalsForOrganization(organizationId);
-    return NextResponse.json({ totals });
+    const payload = await fetchInvoiceBillingTotalsForOrganization(organizationId);
+    return NextResponse.json(payload);
   } catch (error: unknown) {
     console.error("Invoice billing totals GET error:", error);
     return NextResponse.json(

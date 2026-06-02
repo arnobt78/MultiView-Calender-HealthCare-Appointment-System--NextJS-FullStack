@@ -41,6 +41,7 @@ vi.mock("@/lib/prisma", () => ({
 import {
   countAppointmentsByStatusForPeriod,
   countAppointmentsByStatusInRange,
+  fetchTelehealthShareForPeriod,
   countDistinctPatientsInPeriodToNow,
   fetchAvgDurationMinutesInRange,
   fetchBusiestDayOfWeekCounts,
@@ -153,7 +154,10 @@ describe("fetchRevenueAggregates", () => {
 
   beforeEach(() => {
     mockInvoiceGroupBy.mockClear();
-    mockInvoiceGroupBy.mockResolvedValue([{ status: "paid", _count: { _all: 3 } }]);
+    mockInvoiceGroupBy.mockResolvedValue([
+      { status: "paid", _count: { _all: 3 }, _sum: { amount: 9000 } },
+    ]);
+    mockInvoiceAggregate.mockResolvedValue({ _sum: { amount: 9000 }, _count: 3 });
   });
 
   it("scopes invoice status groupBy to chart period created_at", async () => {
@@ -171,14 +175,17 @@ describe("fetchRevenueAggregates", () => {
   });
 
   it("all-time omits created_at filter and sets paidPrevPeriod to 0", async () => {
-    mockInvoiceAggregate.mockResolvedValue({ _sum: { amount: 9000 } });
+    mockInvoiceAggregate.mockResolvedValue({ _sum: { amount: 9000 }, _count: 2 });
     const result = await fetchRevenueAggregates({}, "all", now);
     expect(mockInvoiceGroupBy).toHaveBeenCalledWith(
       expect.objectContaining({
         where: {},
+        _sum: { amount: true },
       })
     );
     expect(result.paidPrevPeriod).toBe(0);
+    expect(result.paidInPeriodCount).toBe(2);
+    expect(result.statusTotals.paid.cents).toBe(9000);
   });
 });
 
@@ -224,6 +231,64 @@ describe("countAppointmentsByStatusForPeriod", () => {
         where: {},
       })
     );
+  });
+});
+
+describe("fetchTelehealthShareForPeriod", () => {
+  const now = new Date("2026-06-02T12:00:00Z");
+
+  beforeEach(() => {
+    mockAppointmentCount.mockClear();
+    mockAppointmentCount.mockResolvedValue(0);
+  });
+
+  it("all-time counts telehealth and visits without start filter", async () => {
+    mockAppointmentCount
+      .mockResolvedValueOnce(3)
+      .mockResolvedValueOnce(10);
+    const result = await fetchTelehealthShareForPeriod({}, "all", now);
+    expect(result).toEqual({
+      telehealthCount: 3,
+      visitCount: 10,
+      telehealthPct: 30,
+    });
+    expect(mockAppointmentCount).toHaveBeenNthCalledWith(1, {
+      where: { is_telehealth: true },
+    });
+    expect(mockAppointmentCount).toHaveBeenNthCalledWith(2, {
+      where: {},
+    });
+  });
+
+  it("month scopes both counts to appointment start in calendar month", async () => {
+    mockAppointmentCount.mockResolvedValue(0);
+    await fetchTelehealthShareForPeriod({}, "month", now);
+    expect(mockAppointmentCount).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          start: expect.objectContaining({
+            gte: expect.any(Date),
+            lte: expect.any(Date),
+          }),
+          is_telehealth: true,
+        }),
+      })
+    );
+    expect(mockAppointmentCount).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          start: expect.objectContaining({
+            gte: expect.any(Date),
+            lte: expect.any(Date),
+          }),
+        }),
+      })
+    );
+  });
+
+  it("returns 0% when no visits in period", async () => {
+    const result = await fetchTelehealthShareForPeriod({}, "day", now);
+    expect(result.telehealthPct).toBe(0);
   });
 });
 

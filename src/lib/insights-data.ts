@@ -12,6 +12,7 @@
  * Extended payload includes additional metrics added in v006 schema migration:
  *   - avgDurationMinutes, newPatientsThisMonth, busiestDayOfWeek
  *   - revenueThisMonth, revenuePrevMonth (for delta % display)
+ *   - telehealthPct from fetchTelehealthShareForPeriod (View-as `start` window, like pending)
  *   - statusOverTime (stacked bar: done/pending/alert buckets follow chart period)
  *   - appointmentTypeBreakdown (by type name, count)
  */
@@ -41,6 +42,7 @@ import {
   fetchTrendCountsByPeriod,
   fetchTypeBreakdownForPeriod,
   countAppointmentsByStatusForPeriod,
+  fetchTelehealthShareForPeriod,
 } from "@/lib/insights/insights-aggregate";
 
 export type { InsightsDataOptions };
@@ -125,6 +127,7 @@ export async function getInsightsData(
   const [
     totals,
     byStatus,
+    telehealthShare,
     avgDurationMinutes,
     revenueAgg,
     paymentSuccessPct,
@@ -144,6 +147,7 @@ export async function getInsightsData(
   ] = await Promise.all([
     fetchAppointmentTotals(apptBase, now),
     countAppointmentsByStatusForPeriod(apptBase, period, now),
+    fetchTelehealthShareForPeriod(apptBase, period, now),
     fetchAvgDurationMinutesForPeriod(apptBase, period, now),
     fetchRevenueAggregates(invoiceBase, period, now),
     fetchPaymentSuccessPct(invoiceBase),
@@ -177,8 +181,7 @@ export async function getInsightsData(
   const revenueThisMonth = revenueAgg.paidInPeriod;
   const revenuePrevMonth = revenueAgg.paidPrevPeriod;
 
-  const telehealthPct =
-    totals.all > 0 ? Math.round((totals.telehealthCount / totals.all) * 100) : 0;
+  const telehealthPct = telehealthShare.telehealthPct;
 
   const monthlyData = legacyMonthlyDataFromTrend(trend, period);
 
@@ -195,6 +198,7 @@ export async function getInsightsData(
         ...totals,
         done,
         pending,
+        telehealthCount: telehealthShare.telehealthCount,
         telehealthPct,
         avgDurationMinutes,
       },
@@ -214,7 +218,9 @@ export async function getInsightsData(
     revenue: {
       paidInPeriod: revenueThisMonth,
       paidPrevPeriod: revenuePrevMonth,
+      paidInPeriodCount: revenueAgg.paidInPeriodCount,
       invoiceByStatus: revenueAgg.invoiceByStatus,
+      statusTotals: revenueAgg.statusTotals,
       revenueTrend,
       paymentSuccessPct,
       avgInvoiceCents:

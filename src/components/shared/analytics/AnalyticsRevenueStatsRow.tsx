@@ -1,21 +1,15 @@
 "use client";
 
-import { ArrowDown, ArrowUp, BadgeDollarSign, FileWarning, Receipt, TrendingUp } from "lucide-react";
-import { PatientStatCard } from "@/components/control-panel/PatientStatCard";
+import { InvoiceRevenueKpiGrid } from "@/components/shared/billing/InvoiceRevenueKpiGrid";
 import type { InsightsPayload } from "@/lib/insights-data";
-import { formatInsightsUsdFromCents } from "@/lib/insights/insights-kpi-format";
 import type { InsightsPeriod } from "@/lib/insights/insights-period";
 import { isInsightsPeriodAll } from "@/lib/insights/insights-period";
-import { cn } from "@/lib/utils";
-
-function formatDelta(
-  current: number,
-  prev: number
-): { text: string; positive: boolean } | null {
-  if (prev === 0) return null;
-  const pct = Math.round(((current - prev) / prev) * 100);
-  return { text: `${pct > 0 ? "+" : ""}${pct}%`, positive: pct >= 0 };
-}
+import { formatInsightsPeriodStatValueLabel } from "@/lib/insights/insights-period-label";
+import {
+  emptyInvoiceBillingStatusTotals,
+  type InvoiceExtendedKpis,
+  type InvoiceStatusKey,
+} from "@/lib/invoice-billing-totals";
 
 type Props = {
   data: InsightsPayload | undefined;
@@ -23,65 +17,43 @@ type Props = {
   period: InsightsPeriod;
 };
 
-/** Revenue KPI tiles — paid in period, MoM delta, overdue/draft invoice counts. */
+/** Revenue KPI strip for /insights — period-filtered amounts + status breakdown. */
 export function AnalyticsRevenueStatsRow({ data, valueSkeleton, period }: Props) {
-  const paid = data?.v2?.revenue.paidInPeriod ?? data?.revenueThisMonth ?? 0;
-  const prev = data?.v2?.revenue.paidPrevPeriod ?? data?.revenuePrevMonth ?? 0;
-  const hideDelta = isInsightsPeriodAll(period);
-  const delta = hideDelta ? null : formatDelta(paid, prev);
-  const invoiceByStatus = data?.v2?.revenue.invoiceByStatus ?? {};
-  const overdue = invoiceByStatus.overdue ?? 0;
-  const draft = invoiceByStatus.draft ?? 0;
+  const revenue = data?.v2?.revenue;
+  const paidInPeriod = revenue?.paidInPeriod ?? data?.revenueThisMonth ?? 0;
+  const paidPrev = revenue?.paidPrevPeriod ?? data?.revenuePrevMonth ?? 0;
+  const statusTotals = revenue?.statusTotals ?? emptyInvoiceBillingStatusTotals();
+  const periodValueHint = formatInsightsPeriodStatValueLabel(period);
+
+  const totalCount = Object.values(revenue?.invoiceByStatus ?? {}).reduce(
+    (sum, n) => sum + n,
+    0
+  );
+  const totalAmountCents = (Object.keys(statusTotals) as InvoiceStatusKey[]).reduce(
+    (sum, key) => sum + statusTotals[key].cents,
+    0
+  );
+  const extendedKpis: InvoiceExtendedKpis = {
+    totalCount,
+    totalAmountCents,
+    avgInvoiceCents: revenue?.avgInvoiceCents ?? 0,
+    paymentSuccessPct: revenue?.paymentSuccessPct ?? 0,
+    paymentAttemptCount: 0,
+  };
 
   return (
-    <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <PatientStatCard
-        variant="emerald"
-        icon={BadgeDollarSign}
-        title="Paid in period"
-        subtitle="Collected revenue"
-        value={0}
-        valueDisplay={formatInsightsUsdFromCents(paid)}
-        valueSkeleton={valueSkeleton}
-      />
-      <PatientStatCard
-        variant="sky"
-        icon={delta ? (delta.positive ? ArrowUp : ArrowDown) : TrendingUp}
-        title="vs previous period"
-        subtitle={prev > 0 ? `Prior ${formatInsightsUsdFromCents(prev)}` : "No prior revenue"}
-        value={0}
-        valueDisplay={
-          delta ? (
-            <span
-              className={cn(
-                "text-3xl font-semibold tabular-nums tracking-tight",
-                delta.positive ? "text-emerald-700" : "text-red-600"
-              )}
-            >
-              {delta.text}
-            </span>
-          ) : (
-            "—"
-          )
-        }
-        valueSkeleton={valueSkeleton}
-      />
-      <PatientStatCard
-        variant="amber"
-        icon={FileWarning}
-        title="Overdue invoices"
-        subtitle="Needs follow-up"
-        value={overdue}
-        valueSkeleton={valueSkeleton}
-      />
-      <PatientStatCard
-        variant="violet"
-        icon={Receipt}
-        title="Draft invoices"
-        subtitle="Not yet sent"
-        value={draft}
-        valueSkeleton={valueSkeleton}
-      />
+    <div className="mb-6">
+    <InvoiceRevenueKpiGrid
+      mode="insights"
+      statusTotals={statusTotals}
+      valueSkeleton={valueSkeleton}
+      periodValueHint={periodValueHint}
+      paidInPeriodCents={paidInPeriod}
+      paidInPeriodCount={revenue?.paidInPeriodCount ?? 0}
+      paidPrevPeriodCents={paidPrev}
+      showPeriodComparison={!isInsightsPeriodAll(period)}
+      extendedKpis={extendedKpis}
+    />
     </div>
   );
 }

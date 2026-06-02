@@ -155,7 +155,11 @@ export default function AnalyticsPage({
         <InsightsDataErrorBanner onRetry={() => void refetch()} isRetrying={isRefetching} />
       ) : (
         <>
-          <AnalyticsOverviewStatsRow data={data} valueSkeleton={loading} />
+          <AnalyticsOverviewStatsRow
+            data={data}
+            valueSkeleton={loading}
+            period={query.period}
+          />
 
           <AnalyticsInsightsSections
             data={data}

@@ -7,7 +7,10 @@ vi.mock("@/lib/server-prefetch", () => ({
 
 import { prefetchInvoicesForOrganization } from "@/lib/server-prefetch";
 import { prefetchInvoiceBillingTotalsForOrganization } from "@/lib/server-prefetch";
+import { emptyInvoiceBillingStatusTotals } from "@/lib/invoice-billing-totals";
 import { prefetchOrgBillingInvoicesByOrgIds } from "@/lib/org-billing-prefetch";
+
+const EMPTY_STATUS = emptyInvoiceBillingStatusTotals();
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -20,16 +23,22 @@ describe("prefetchOrgBillingInvoicesByOrgIds", () => {
       .mockResolvedValueOnce([{ id: "inv-b", amount: 200, status: "sent", currency: "eur", user_id: "u", created_at: "", payments: [] }]);
     vi.mocked(prefetchInvoiceBillingTotalsForOrganization)
       .mockResolvedValueOnce({
-        paid: { cents: 100, count: 1 },
-        outstanding: { cents: 0, count: 0 },
-        refunded: { cents: 0, count: 0 },
-        cancelled: { cents: 0, count: 0 },
+        totals: {
+          paid: { cents: 100, count: 1 },
+          outstanding: { cents: 0, count: 0 },
+          refunded: { cents: 0, count: 0 },
+          cancelled: { cents: 0, count: 0 },
+        },
+        statusTotals: { ...EMPTY_STATUS, paid: { cents: 100, count: 1 } },
       })
       .mockResolvedValueOnce({
-        paid: { cents: 0, count: 0 },
-        outstanding: { cents: 200, count: 1 },
-        refunded: { cents: 0, count: 0 },
-        cancelled: { cents: 0, count: 0 },
+        totals: {
+          paid: { cents: 0, count: 0 },
+          outstanding: { cents: 200, count: 1 },
+          refunded: { cents: 0, count: 0 },
+          cancelled: { cents: 0, count: 0 },
+        },
+        statusTotals: { ...EMPTY_STATUS, sent: { cents: 200, count: 1 } },
       });
 
     const map = await prefetchOrgBillingInvoicesByOrgIds(
@@ -50,10 +59,13 @@ describe("prefetchOrgBillingInvoicesByOrgIds", () => {
   it("dedupes org ids", async () => {
     vi.mocked(prefetchInvoicesForOrganization).mockResolvedValue([]);
     vi.mocked(prefetchInvoiceBillingTotalsForOrganization).mockResolvedValue({
-      paid: { cents: 0, count: 0 },
-      outstanding: { cents: 0, count: 0 },
-      refunded: { cents: 0, count: 0 },
-      cancelled: { cents: 0, count: 0 },
+      totals: {
+        paid: { cents: 0, count: 0 },
+        outstanding: { cents: 0, count: 0 },
+        refunded: { cents: 0, count: 0 },
+        cancelled: { cents: 0, count: 0 },
+      },
+      statusTotals: EMPTY_STATUS,
     });
     await prefetchOrgBillingInvoicesByOrgIds(
       ["org-1", "org-1"],

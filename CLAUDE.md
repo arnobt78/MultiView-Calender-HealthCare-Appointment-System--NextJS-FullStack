@@ -4,11 +4,11 @@ Compact agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-02)
 
-- **Staff calendar scope:** `staff-appointment-calendar-scope.ts` — owner **OR** treating **OR** accepted assignee (`user_id` / `invited_email`). Wired: `GET /api/appointments` (+ `?ids=`), export, sync POST, search, doctor-portal, login-today, dashboard overview (non-admin), SSR prefetch (`server-prefetch`, `control-panel-section-prefetch` passes email).
-- **Doctor portal:** billing/patients stacked headers; `DoctorPortalInvoiceListRow` + display libs; SSR invoice visit summaries.
-- **Confirm UI:** `ConfirmActionDialog` + `confirm-delete-dialog-copy.tsx` — portal, CP, calendar/settings; dialog **sibling** of `DropdownMenu`.
-- **Org billing:** full org panels; `GET /api/invoices/billing-totals`; shared `invoice-billing-totals.ts` + `queryKeys.invoices.byOrganizationTotals`.
-- **Verify:** `npm test` **629** / **113** files, tsc, lint, build.
+- **Invoice revenue KPI grid:** `InvoiceRevenueKpiGrid` — 12 cards on insights (paid in period, vs prior % green/red, status breakdown, total/avg/payment success). CP invoice-management + org billing include month comparison cards. Paid collected uses `paid_at` with `created_at` fallback (`insights-paid-collected.ts`). Charts: paid revenue labels/tooltips use `formatBillingKpiMoney` (not raw cents).
+- **Insights KPI period hint:** `formatInsightsPeriodStatValueLabel` on appointment + revenue stat value rows. **Telehealth %** uses `fetchTelehealthShareForPeriod` (View-as `start` window; top-row Today/week/month/YTD stay calendar-fixed).
+- **Staff calendar scope:** owner **OR** treating **OR** accepted assignee — list, `?ids=`, export, sync, search, SSR+email.
+- **Doctor portal / confirms / org billing:** stacked headers; `ConfirmActionDialog`; full org panels + billing-totals query keys.
+- **Verify:** `npm test` **638** / **114** files, tsc, lint, build.
 
 ## Never / Always
 
@@ -37,11 +37,10 @@ Cross-tab: `query-cache-cross-tab.ts` in `QueryProvider`.
 
 ## Key paths
 
+- Billing KPI: `invoice-billing-totals.ts`, `InvoiceRevenueKpiGrid.tsx`, `invoice-revenue-kpi-presets.ts`
+- Insights: `insights-kpi-format.ts`, `AnalyticsRevenueStatsRow.tsx`, `insights-aggregate.ts`
 - Scope: `staff-appointment-calendar-scope.ts`
-- Portal: `doctor-portal-billing-display.ts`, `doctor-portal-patients-display.ts`, `components/doctor-portal/*`
-- Confirm: `confirm-delete-dialog-copy.tsx`, `ConfirmActionDialog.tsx`
-- Billing: `invoice-billing-totals.ts`, `org-billing-prefetch.ts`, `components/shared/billing/*`
-- Query/SSR: `query-keys.ts`, `query-client.ts`, `server-prefetch.ts`, `control-panel-section-prefetch.ts`
+- Query/SSR: `query-keys.ts`, `server-prefetch.ts`, `org-billing-prefetch.ts`
 
 ## Principle
 

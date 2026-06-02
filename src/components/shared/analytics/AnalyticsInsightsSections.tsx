@@ -30,13 +30,7 @@ import { AnalyticsDoctorInsightsSection } from "@/components/shared/analytics/An
 import type { InsightsQueryKey } from "@/lib/insights-scope";
 import type { InsightsPeriod } from "@/lib/insights/insights-period";
 
-function formatCents(cents: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(cents / 100);
-}
+import { formatBillingKpiMoney } from "@/lib/insights/insights-kpi-format";
 
 type Props = {
   data: InsightsPayload | undefined;
@@ -121,6 +115,7 @@ export function AnalyticsInsightsSections({
             onPeriodChange={onPeriodChange}
             disabled={periodControlsDisabled}
             loading={loading}
+            scopeLabel={scopeLabel}
           />
         }
       >
@@ -235,7 +230,7 @@ export function AnalyticsInsightsSections({
           <AnalyticsChartCard
             title="Paid revenue"
             periodSubtitle={chartSubtitle}
-            detailHint={`Paid revenue collected in period: ${formatCents(paidInPeriodCents)}`}
+            detailHint={`Paid revenue collected in period: ${formatBillingKpiMoney(paidInPeriodCents)}`}
             icon={BadgeDollarSign}
             loading={loading}
           >
