@@ -19,12 +19,76 @@ import type {
 } from "@/lib/doctor-schedule-types";
 
 export const DELETE_INVOICE_CONFIRM_TITLE = "Delete invoice?";
+export const DELETE_APPOINTMENT_CONFIRM_TITLE = "Delete appointment?";
 export const DELETE_APPOINTMENT_TYPE_CONFIRM_TITLE = "Delete appointment type?";
+export const DELETE_ORGANIZATION_CONFIRM_TITLE = "Delete organization?";
+export const MARK_ALL_NOTIFICATIONS_READ_TITLE = "Mark all as read?";
+export const DISCONNECT_GOOGLE_CALENDAR_CONFIRM_TITLE = "Disconnect Google Calendar?";
+export const RESET_FORM_CONFIRM_TITLE = "Reset form?";
 export const DELETE_WEEKLY_HOURS_WINDOW_CONFIRM_TITLE = "Delete weekly hours window?";
 export const DELETE_UNAVAILABLE_DATE_CONFIRM_TITLE = "Delete unavailable date?";
 export const DISABLE_VISIT_TYPE_CONFIRM_TITLE = "Disable visit type?";
 /** @deprecated Use `DISABLE_VISIT_TYPE_CONFIRM_TITLE` */
 export const DISABLE_GLOBAL_VISIT_TYPE_CONFIRM_TITLE = DISABLE_VISIT_TYPE_CONFIRM_TITLE;
+
+/** CP appointment list/detail delete — title-driven copy. */
+export function buildAppointmentDeleteConfirmSubtitle(
+  title: string,
+  context: "list" | "detail" = "list"
+): ReactNode {
+  const quoted = title.trim() || "this appointment";
+  if (context === "detail") {
+    return (
+      <>
+        This will permanently delete{" "}
+        <span className="font-medium text-gray-800">&ldquo;{quoted}&rdquo;</span> and all related
+        data. This cannot be undone.
+      </>
+    );
+  }
+  return (
+    <>
+      <span className="font-medium text-gray-800">{quoted}</span> will be permanently deleted along
+      with its activities and assignees.
+    </>
+  );
+}
+
+/** CP organization row delete. */
+export function buildOrganizationDeleteConfirmSubtitle(name: string): ReactNode {
+  return (
+    <>
+      This will permanently delete{" "}
+      <span className="font-medium text-gray-800">{name.trim() || "this organization"}</span> and all
+      its members. This cannot be undone.
+    </>
+  );
+}
+
+/** Notifications toolbar — mark all unread as read. */
+export function buildMarkAllNotificationsReadConfirmSubtitle(unreadCount: number): ReactNode {
+  return (
+    <>
+      This will mark all{" "}
+      <span className="font-medium text-gray-800">{unreadCount}</span> unread notifications as read.
+    </>
+  );
+}
+
+/** Google Calendar settings — OAuth disconnect. */
+export function buildGoogleCalendarDisconnectConfirmSubtitle(): ReactNode {
+  return (
+    <>
+      This will remove the OAuth token. Your existing appointments will not be deleted, but future
+      syncs will stop working until you reconnect.
+    </>
+  );
+}
+
+/** Doctor detail form — discard unsaved edits. */
+export function buildDiscardFormChangesConfirmSubtitle(): ReactNode {
+  return <>This will discard all unsaved changes on this form.</>;
+}
 
 /** Invoice list/detail delete — visit + patient + amount when available. */
 export function buildInvoiceDeleteConfirmSubtitle(

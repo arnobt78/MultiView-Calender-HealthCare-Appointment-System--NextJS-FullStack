@@ -38,17 +38,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+  buildAppointmentDeleteConfirmSubtitle,
+  DELETE_APPOINTMENT_CONFIRM_TITLE,
+} from "@/lib/confirm-delete-dialog-copy";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   CalendarDays,
@@ -100,6 +94,76 @@ const STATUS_META: Record<string, { cls: string; icon: React.ReactNode; label: s
   pending: { cls: "bg-yellow-100 text-yellow-700", icon: <Clock className="h-3 w-3" />, label: "Pending" },
   alert: { cls: "bg-red-100 text-red-700", icon: <AlertTriangle className="h-3 w-3" />, label: "Alert" },
 };
+
+/** Appointment list row menu — delete confirm matches calendar copy. */
+function AppointmentListRowActions({
+  appt,
+  onDelete,
+  onToggleStatus,
+  confirmDisabled,
+}: {
+  appt: FullAppointment;
+  onDelete: (id: string) => void;
+  onToggleStatus: (args: { id: string; status: "done" | "pending" | "alert" }) => void;
+  confirmDisabled?: boolean;
+}) {
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-8 w-8">
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem asChild className="gap-2">
+            <Link href={`/control-panel/appointments/${appt.id}`}>
+              <Eye className="h-4 w-4" /> View Details
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="gap-2"
+            onClick={() =>
+              onToggleStatus({
+                id: appt.id,
+                status: appt.status === "done" ? "pending" : "done",
+              })
+            }
+          >
+            <CheckCircle2 className="h-4 w-4" />
+            {appt.status === "done" ? "Mark Pending" : "Mark Done"}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            className="gap-2 text-red-600 focus:text-red-600"
+            onSelect={(e) => {
+              e.preventDefault();
+              setConfirmOpen(true);
+            }}
+          >
+            <Trash2 className="h-4 w-4" /> Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <ConfirmActionDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        variant="destructive"
+        title={DELETE_APPOINTMENT_CONFIRM_TITLE}
+        subtitle={buildAppointmentDeleteConfirmSubtitle(appt.title ?? "", "list")}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        confirmDisabled={confirmDisabled}
+        onConfirm={() => {
+          onDelete(appt.id);
+          setConfirmOpen(false);
+        }}
+      />
+    </>
+  );
+}
 
 export default function AppointmentsManagement() {
   const { appointments, isLoading, isError, error, deleteAppointment, toggleStatus, isDeleting } = useAppointments();
@@ -187,60 +251,12 @@ export default function AppointmentsManagement() {
       cell: ({ row }) => {
         const appt = row.original;
         return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild className="gap-2">
-                <Link href={`/control-panel/appointments/${appt.id}`}>
-                  <Eye className="h-4 w-4" /> View Details
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="gap-2"
-                onClick={() =>
-                  toggleStatus({
-                    id: appt.id,
-                    status: appt.status === "done" ? "pending" : "done",
-                  })
-                }
-              >
-                <CheckCircle2 className="h-4 w-4" />
-                {appt.status === "done" ? "Mark Pending" : "Mark Done"}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <DropdownMenuItem
-                    className="text-red-600 focus:text-red-600 gap-2"
-                    onSelect={(e) => e.preventDefault()}
-                  >
-                    <Trash2 className="h-4 w-4" /> Delete
-                  </DropdownMenuItem>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Appointment?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      <strong>{appt.title}</strong> will be permanently deleted along with its activities and assignees.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      className="bg-red-600 hover:bg-red-700"
-                      onClick={() => deleteAppointment(appt.id)}
-                    >
-                      Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <AppointmentListRowActions
+            appt={appt}
+            onDelete={deleteAppointment}
+            onToggleStatus={toggleStatus}
+            confirmDisabled={isDeleting}
+          />
         );
       },
     }),

@@ -6,10 +6,10 @@ Compact agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 - **Doctor portal billing:** `DoctorPortalInvoicesCard` — stacked header (`PortalPanelSubsectionHeader`): possessive title, total count, status chip (`doctor-portal-billing-display.ts`). Rows: `DoctorPortalInvoiceListRow` + `InvoiceListPatientStrip` / `InvoiceVisitListMeta` / `InvoiceIssuedByMeta`. SSR `prefetchInvoices` seeds visit_summary + issuer labels. No manual Create Draft on portal (`DOCTOR_PORTAL_BILLING_SHOW_MANUAL_CREATE`).
 - **Doctor portal patients:** `DoctorPortalPatientsCard` — same header pattern; `doctor-portal-patients-display.ts` (Active/Inactive chip). Roster from `usePatients` + `primary_doctor_id` scope.
-- **Confirm dialogs:** `ConfirmActionDialog` + `confirm-delete-dialog-copy.tsx` — portal invoice/schedule/visit-type actions; CP `GlobalAppointmentTypesEditor` delete (`buildCpAdminAppointmentTypeDeleteConfirmSubtitle`). Dropdown deletes: dialog sibling of menu (fragment).
+- **Confirm dialogs:** `ConfirmActionDialog` + `confirm-delete-dialog-copy.tsx` — calendar, portal, CP (org delete, appointment list/detail delete, notifications mark-all-read, Google disconnect, form reset, visit types). Dropdown: dialog sibling of menu.
 - **Visit types:** Portal owned fee + disable/delete confirms; CP admin-all global/custom delete confirm. Mutations → `invalidateAppointmentTypeDerived`.
 - **Invalidation / SSR:** Portal page seeds `doctorPortal.all`, `patients.all`, invoices, schedule settings; hooks unchanged.
-- **Verify:** `npm test` **623** / **113** files, tsc, lint, build.
+- **Verify:** `npm test` **625** / **113** files, tsc, lint, build.
 
 ## Never / Always
 
@@ -46,7 +46,7 @@ Cross-tab: `query-cache-cross-tab.ts` in `QueryProvider`.
 
 ## Follow-ups (optional)
 
-`calendar/export`, `calendar/sync`, `appointments/search` = owner-only. Legacy raw `AlertDialog` on some CP detail forms (org, appointment detail) — migrate to `ConfirmActionDialog` if UX parity needed. Assignee / `?ids=` treating OR gap unchanged.
+`calendar/export`, `calendar/sync`, `appointments/search` = owner-only. Assignee / `?ids=` treating OR gap unchanged.
 
 ## Principle
 

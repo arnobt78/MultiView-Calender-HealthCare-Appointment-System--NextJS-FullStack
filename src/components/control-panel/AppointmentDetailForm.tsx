@@ -18,17 +18,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+  buildAppointmentDeleteConfirmSubtitle,
+  DELETE_APPOINTMENT_CONFIRM_TITLE,
+} from "@/lib/confirm-delete-dialog-copy";
 import type { Appointment } from "@/types/types";
 import {
   isCategoryActive,
@@ -45,6 +39,7 @@ interface AppointmentDetailFormProps {
 
 export function AppointmentDetailForm({ appointment }: AppointmentDetailFormProps) {
   const router = useRouter();
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const { updateAppointment, isUpdating, deleteAppointment, isDeleting } = useAppointments();
   const { categories } = useCategories();
   const { patients } = usePatients();
@@ -256,30 +251,28 @@ export function AppointmentDetailForm({ appointment }: AppointmentDetailFormProp
           <Printer className="h-4 w-4" />
           Print
         </Button>
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button variant="destructive" type="button" disabled={isDeleting}>
-              {isDeleting ? "Deleting…" : "Delete"}
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete appointment?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This will permanently delete <strong>&ldquo;{appointment.title}&rdquo;</strong> and all related data. This action cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                className="bg-destructive hover:bg-destructive/90"
-                onClick={handleDelete}
-              >
-                Delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <Button
+          variant="destructive"
+          type="button"
+          disabled={isDeleting}
+          onClick={() => setDeleteConfirmOpen(true)}
+        >
+          {isDeleting ? "Deleting…" : "Delete"}
+        </Button>
+        <ConfirmActionDialog
+          open={deleteConfirmOpen}
+          onOpenChange={setDeleteConfirmOpen}
+          variant="destructive"
+          title={DELETE_APPOINTMENT_CONFIRM_TITLE}
+          subtitle={buildAppointmentDeleteConfirmSubtitle(appointment.title ?? "", "detail")}
+          confirmLabel="Delete"
+          cancelLabel="Cancel"
+          confirmDisabled={isDeleting}
+          onConfirm={() => {
+            handleDelete();
+            setDeleteConfirmOpen(false);
+          }}
+        />
       </div>
     </div>
   );

@@ -14,17 +14,11 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+  buildGoogleCalendarDisconnectConfirmSubtitle,
+  DISCONNECT_GOOGLE_CALENDAR_CONFIRM_TITLE,
+} from "@/lib/confirm-delete-dialog-copy";
 import {
   CalendarCheck2,
   CalendarX2,
@@ -54,6 +48,7 @@ export default function GoogleCalendarSettings() {
    * after the next animation frame — prevents hydration flicker.
    */
   const [isMounted, setIsMounted] = useState(false);
+  const [disconnectConfirmOpen, setDisconnectConfirmOpen] = useState(false);
   useEffect(() => {
     requestAnimationFrame(() => setIsMounted(true));
   }, []);
@@ -117,29 +112,31 @@ export default function GoogleCalendarSettings() {
               </a>
             </Button>
           ) : (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="gap-2" disabled={isDisconnecting}>
-                  <CalendarX2 className="h-4 w-4" />
-                  {isDisconnecting ? "Disconnecting…" : "Disconnect"}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Disconnect Google Calendar?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This will remove the OAuth token. Your existing appointments will not be deleted,
-                    but future syncs will stop working until you reconnect.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={() => disconnect()}>
-                    Disconnect
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            <>
+              <Button
+                variant="destructive"
+                className="gap-2"
+                disabled={isDisconnecting}
+                onClick={() => setDisconnectConfirmOpen(true)}
+              >
+                <CalendarX2 className="h-4 w-4" />
+                {isDisconnecting ? "Disconnecting…" : "Disconnect"}
+              </Button>
+              <ConfirmActionDialog
+                open={disconnectConfirmOpen}
+                onOpenChange={setDisconnectConfirmOpen}
+                variant="warning"
+                title={DISCONNECT_GOOGLE_CALENDAR_CONFIRM_TITLE}
+                subtitle={buildGoogleCalendarDisconnectConfirmSubtitle()}
+                confirmLabel="Disconnect"
+                cancelLabel="Cancel"
+                confirmDisabled={isDisconnecting}
+                onConfirm={() => {
+                  disconnect();
+                  setDisconnectConfirmOpen(false);
+                }}
+              />
+            </>
           )}
         </CardContent>
       </Card>

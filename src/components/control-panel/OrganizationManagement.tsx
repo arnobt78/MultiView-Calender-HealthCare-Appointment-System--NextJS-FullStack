@@ -24,17 +24,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+  buildOrganizationDeleteConfirmSubtitle,
+  DELETE_ORGANIZATION_CONFIRM_TITLE,
+} from "@/lib/confirm-delete-dialog-copy";
 import {
   Table,
   TableBody,
@@ -202,6 +196,70 @@ function AddMemberDialog({
   );
 }
 
+/** Org row menu — delete uses shared `ConfirmActionDialog` (dropdown sibling pattern). */
+function OrganizationRowActions({
+  org,
+  isOwner,
+  onAddMember,
+  onDelete,
+}: {
+  org: Organization;
+  isOwner: boolean;
+  onAddMember: (args: {
+    orgId: string;
+    userId: string;
+    role: string;
+    memberLabel?: string;
+  }) => void;
+  onDelete: (orgId: string) => void;
+}) {
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-8 w-8">
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <AddMemberDialog org={org} onAdd={onAddMember} />
+          {isOwner ? (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-red-600 focus:text-red-600"
+                onSelect={(e) => {
+                  e.preventDefault();
+                  setConfirmOpen(true);
+                }}
+              >
+                Delete Organization
+              </DropdownMenuItem>
+            </>
+          ) : null}
+        </DropdownMenuContent>
+      </DropdownMenu>
+      {isOwner ? (
+        <ConfirmActionDialog
+          open={confirmOpen}
+          onOpenChange={setConfirmOpen}
+          variant="destructive"
+          title={DELETE_ORGANIZATION_CONFIRM_TITLE}
+          subtitle={buildOrganizationDeleteConfirmSubtitle(org.name)}
+          confirmLabel="Delete"
+          cancelLabel="Cancel"
+          onConfirm={() => {
+            onDelete(org.id);
+            setConfirmOpen(false);
+          }}
+        />
+      ) : null}
+    </>
+  );
+}
+
 const ROLE_COLORS: Record<string, string> = {
   admin: "bg-red-100 text-red-700",
   doctor: "bg-blue-100 text-blue-700",
@@ -283,48 +341,12 @@ export default function OrganizationManagement() {
         const org = row.original;
         const isOwner = org.role === "admin" || org.owner_user_id != null;
         return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <AddMemberDialog org={org} onAdd={addMember} />
-              {isOwner && (
-                <>
-                  <DropdownMenuSeparator />
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <DropdownMenuItem
-                        className="text-red-600 focus:text-red-600"
-                        onSelect={(e) => e.preventDefault()}
-                      >
-                        Delete Organization
-                      </DropdownMenuItem>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Organization?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This will permanently delete <strong>{org.name}</strong> and all its members.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                          className="bg-red-600 hover:bg-red-700"
-                          onClick={() => deleteOrg(org.id)}
-                        >
-                          Delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <OrganizationRowActions
+            org={org}
+            isOwner={isOwner}
+            onAddMember={addMember}
+            onDelete={deleteOrg}
+          />
         );
       },
     }),

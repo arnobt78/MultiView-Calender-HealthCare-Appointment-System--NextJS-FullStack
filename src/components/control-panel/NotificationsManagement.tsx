@@ -31,17 +31,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+  buildMarkAllNotificationsReadConfirmSubtitle,
+  MARK_ALL_NOTIFICATIONS_READ_TITLE,
+} from "@/lib/confirm-delete-dialog-copy";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Bell,
@@ -69,6 +63,7 @@ export default function NotificationsManagement() {
   const { notifications, unreadCount, isLoading, isError: notificationsError, markAsRead, markAllAsRead, isMarkingRead } = useNotifications();
   const [sorting, setSorting] = useState<SortingState>([{ id: "created_at", desc: true }]);
   const [globalFilter, setGlobalFilter] = useState("");
+  const [markAllConfirmOpen, setMarkAllConfirmOpen] = useState(false);
 
   const columns = [
     columnHelper.accessor("read", {
@@ -194,27 +189,32 @@ export default function NotificationsManagement() {
             className="w-52"
           />
           {/* Gate by !loading so the server HTML (unreadCount=0) matches the initial client frame — prevents hydration mismatch. */}
-          {!loading && unreadCount > 0 && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <CheckCheck className="h-4 w-4" /> Mark all read
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Mark all as read?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This will mark all {unreadCount} unread notifications as read.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => markAllAsRead()}>Confirm</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          )}
+          {!loading && unreadCount > 0 ? (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={() => setMarkAllConfirmOpen(true)}
+              >
+                <CheckCheck className="h-4 w-4" /> Mark all read
+              </Button>
+              <ConfirmActionDialog
+                open={markAllConfirmOpen}
+                onOpenChange={setMarkAllConfirmOpen}
+                variant="info"
+                title={MARK_ALL_NOTIFICATIONS_READ_TITLE}
+                subtitle={buildMarkAllNotificationsReadConfirmSubtitle(unreadCount)}
+                confirmLabel="Confirm"
+                cancelLabel="Cancel"
+                confirmDisabled={isMarkingRead}
+                onConfirm={() => {
+                  markAllAsRead();
+                  setMarkAllConfirmOpen(false);
+                }}
+              />
+            </>
+          ) : null}
         </div>
       </div>
 

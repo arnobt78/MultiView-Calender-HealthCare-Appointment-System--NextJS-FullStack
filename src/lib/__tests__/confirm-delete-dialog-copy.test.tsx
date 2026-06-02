@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
-import { buildCpAdminAppointmentTypeDeleteConfirmSubtitle } from "@/lib/confirm-delete-dialog-copy";
+import {
+  buildAppointmentDeleteConfirmSubtitle,
+  buildCpAdminAppointmentTypeDeleteConfirmSubtitle,
+  buildOrganizationDeleteConfirmSubtitle,
+} from "@/lib/confirm-delete-dialog-copy";
 
 function subtitleText(
   input: Parameters<typeof buildCpAdminAppointmentTypeDeleteConfirmSubtitle>[0]
@@ -31,5 +35,21 @@ describe("buildCpAdminAppointmentTypeDeleteConfirmSubtitle", () => {
     });
     expect(text).toContain("Demo Doctor");
     expect(text).toContain("custom visit type");
+  });
+});
+
+describe("buildOrganizationDeleteConfirmSubtitle", () => {
+  it("includes org name", () => {
+    expect(
+      renderToStaticMarkup(<>{buildOrganizationDeleteConfirmSubtitle("Acme Clinic")}</>)
+    ).toContain("Acme Clinic");
+  });
+});
+
+describe("buildAppointmentDeleteConfirmSubtitle", () => {
+  it("includes title for list context", () => {
+    expect(
+      renderToStaticMarkup(<>{buildAppointmentDeleteConfirmSubtitle("Check-up", "list")}</>)
+    ).toContain("Check-up");
   });
 });

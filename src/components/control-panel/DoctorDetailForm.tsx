@@ -18,17 +18,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+  buildDiscardFormChangesConfirmSubtitle,
+  RESET_FORM_CONFIRM_TITLE,
+} from "@/lib/confirm-delete-dialog-copy";
 import type { User } from "@/types/types";
 import { SPECIALTIES } from "@/lib/doctor-specialty";
 
@@ -47,6 +41,7 @@ export function DoctorDetailForm({ initialUser }: DoctorDetailFormProps) {
     specialty: initialUser.specialty ?? "",
     bio: initialUser.bio ?? "",
   });
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
 
   const handleSave = () => {
     updateUser({
@@ -129,35 +124,33 @@ export function DoctorDetailForm({ initialUser }: DoctorDetailFormProps) {
         <Button onClick={handleSave} disabled={isUpdating} className="flex-1 sm:flex-none">
           {isUpdating ? "Saving…" : "Save changes"}
         </Button>
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button variant="outline" type="button" className="text-destructive hover:text-destructive">
-              Reset
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Reset form?</AlertDialogTitle>
-              <AlertDialogDescription>This will discard unsaved changes.</AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() =>
-                  setForm({
-                    display_name: initialUser.display_name ?? "",
-                    role: initialUser.role ?? "",
-                    image: initialUser.image ?? "",
-                    specialty: initialUser.specialty ?? "",
-                    bio: initialUser.bio ?? "",
-                  })
-                }
-              >
-                Reset
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <Button
+          variant="outline"
+          type="button"
+          className="text-destructive hover:text-destructive"
+          onClick={() => setResetConfirmOpen(true)}
+        >
+          Reset
+        </Button>
+        <ConfirmActionDialog
+          open={resetConfirmOpen}
+          onOpenChange={setResetConfirmOpen}
+          variant="warning"
+          title={RESET_FORM_CONFIRM_TITLE}
+          subtitle={buildDiscardFormChangesConfirmSubtitle()}
+          confirmLabel="Reset"
+          cancelLabel="Cancel"
+          onConfirm={() => {
+            setForm({
+              display_name: initialUser.display_name ?? "",
+              role: initialUser.role ?? "",
+              image: initialUser.image ?? "",
+              specialty: initialUser.specialty ?? "",
+              bio: initialUser.bio ?? "",
+            });
+            setResetConfirmOpen(false);
+          }}
+        />
       </div>
     </div>
   );
