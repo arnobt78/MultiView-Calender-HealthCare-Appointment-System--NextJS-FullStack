@@ -9,7 +9,7 @@ type PortalPanelCountBadgeProps = {
   className?: string;
 };
 
-/** Inline count pill beside portal section titles — not `ml-auto` (avoids justify-between header). */
+/** Grey count pill beside portal section titles — not `ml-auto` (billing, visit types, time off). */
 export function PortalPanelCountBadge({ children, className }: PortalPanelCountBadgeProps) {
   return (
     <Badge

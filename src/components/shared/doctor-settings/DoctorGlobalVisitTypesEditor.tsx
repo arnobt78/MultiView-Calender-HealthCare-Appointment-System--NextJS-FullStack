@@ -21,13 +21,20 @@ import { useAuth } from "@/hooks/useAuth";
 import type { DoctorAppointmentTypesQueryData } from "@/lib/doctor-portal-settings-prefetch";
 import type { DoctorSettingsVariant } from "@/lib/doctor-schedule-types";
 import { DOCTOR_PORTAL_VISIT_TYPE_COPY } from "@/lib/doctor-portal-visit-type-copy";
+import { VisitFeeBadge } from "@/components/shared/billing/VisitFeeBadge";
 import { doctorSettingsGlassCheckboxClass } from "@/lib/doctor-settings-glass-surfaces";
+import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
+import {
+  buildDisableGlobalVisitTypeConfirmSubtitle,
+  DISABLE_VISIT_TYPE_CONFIRM_TITLE,
+} from "@/lib/confirm-delete-dialog-copy";
 import { cn, toTitleCaseLabel } from "@/lib/utils";
 
 type GlobalTypeRow = {
   id: string;
   name: string;
   duration_minutes: number;
+  price_cents?: number;
   is_telehealth?: boolean;
   is_enabled?: boolean;
   user_id: string | null;
@@ -56,6 +63,8 @@ export function DoctorGlobalVisitTypesEditor({
   );
 
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
+  /** Uncheck global template — warn before POST `is_enabled: false`. */
+  const [disableTarget, setDisableTarget] = useState<GlobalTypeRow | null>(null);
 
   const { mutate } = useMutation({
     mutationFn: ({
@@ -157,9 +166,13 @@ export function DoctorGlobalVisitTypesEditor({
                     type="checkbox"
                     checked={checked}
                     disabled={isPending}
-                    onChange={(e) =>
-                      mutate({ appointment_type_id: t.id, is_enabled: e.target.checked })
-                    }
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        mutate({ appointment_type_id: t.id, is_enabled: true });
+                      } else {
+                        setDisableTarget(t);
+                      }
+                    }}
                     className={doctorSettingsGlassCheckboxClass("violet")}
                     aria-label={`${checked ? "Disable" : "Enable"} ${t.name}`}
                   />
@@ -168,17 +181,46 @@ export function DoctorGlobalVisitTypesEditor({
               title={toTitleCaseLabel(t.name)}
               meta={`${t.duration_minutes} min${t.is_telehealth ? " · Telehealth" : ""}`}
               trailing={
-                t.is_telehealth ? (
-                  <span className="flex shrink-0 items-center gap-1 rounded-full border border-sky-200/60 bg-sky-50/90 px-2 py-0.5 text-[10px] font-medium text-sky-700 shadow-[0_4px_12px_rgba(2,132,199,0.1)]">
-                    <Video className="h-3 w-3" aria-hidden />
-                    {toTitleCaseLabel("Telehealth")}
-                  </span>
-                ) : null
+                <span className="flex shrink-0 flex-wrap items-center justify-end gap-1">
+                  <VisitFeeBadge priceCents={t.price_cents ?? 0} />
+                  {t.is_telehealth ? (
+                    <span className="flex shrink-0 items-center gap-1 rounded-full border border-sky-200/60 bg-sky-50/90 px-2 py-0.5 text-[10px] font-medium text-sky-700 shadow-[0_4px_12px_rgba(2,132,199,0.1)]">
+                      <Video className="h-3 w-3" aria-hidden />
+                      {toTitleCaseLabel("Telehealth")}
+                    </span>
+                  ) : null}
+                </span>
               }
             />
           );
         })}
       </ul>
+
+      <ConfirmActionDialog
+        open={Boolean(disableTarget)}
+        onOpenChange={(open) => {
+          if (!open) setDisableTarget(null);
+        }}
+        variant="warning"
+        title={DISABLE_VISIT_TYPE_CONFIRM_TITLE}
+        subtitle={
+          disableTarget
+            ? buildDisableGlobalVisitTypeConfirmSubtitle(disableTarget, variant)
+            : ""
+        }
+        confirmLabel="Disable"
+        cancelLabel="Cancel"
+        confirmDisabled={disableTarget ? pendingIds.has(disableTarget.id) : false}
+        onConfirm={() => {
+          if (disableTarget) {
+            mutate({
+              appointment_type_id: disableTarget.id,
+              is_enabled: false,
+            });
+          }
+          setDisableTarget(null);
+        }}
+      />
     </div>
   );
 }

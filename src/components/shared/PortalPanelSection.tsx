@@ -22,12 +22,17 @@ type PortalPanelSectionProps = {
   iconClassName?: string;
   count?: number | string;
   countSkeleton?: boolean;
+  /** Today-style chip on stacked headers (billing status breakdown). */
+  statusChip?: ReactNode;
+  statusChipSkeleton?: boolean;
   /** Count pill beside title (My Patients / Upcoming); default trailing for schedule panels. */
   countInline?: boolean;
   /** `stacked`: tall icon tile spans title + subtitle (`PortalPanelSubsectionHeader`). */
   headerVariant?: "inline" | "stacked";
   /** When set, replaces default title/subtitle/count row (e.g. insights Appointments toolbar). */
   headerSlot?: ReactNode;
+  /** Inline header actions (e.g. Create Draft) — rendered before count badge. */
+  headerActions?: ReactNode;
   /** Default true — insights charts pass false so label/tooltip layers are not clipped. */
   clipContent?: boolean;
   children: ReactNode;
@@ -47,9 +52,12 @@ export function PortalPanelSection({
   iconClassName = "border-sky-100 bg-sky-50 [&_svg]:text-sky-500",
   count,
   countSkeleton = false,
+  statusChip,
+  statusChipSkeleton = false,
   countInline = false,
   headerVariant = "inline",
   headerSlot,
+  headerActions,
   clipContent = true,
   children,
   className,
@@ -81,6 +89,9 @@ export function PortalPanelSection({
               iconClassName={iconClassName}
               count={count}
               countSkeleton={countSkeleton}
+              statusChip={statusChip}
+              statusChipSkeleton={statusChipSkeleton}
+              headerActions={headerActions}
               className="mb-3"
             />
           ) : !headerSlot ? (
@@ -102,12 +113,17 @@ export function PortalPanelSection({
                     <PortalPanelCountBadge>{count}</PortalPanelCountBadge>
                   )
                 ) : null}
-                {count !== undefined && !countInline ? (
-                  countSkeleton ? (
-                    <Skeleton className="ml-auto h-5 w-12 rounded-full" aria-hidden />
-                  ) : (
-                    <PortalPanelCountBadge className="ml-auto">{count}</PortalPanelCountBadge>
-                  )
+                {headerActions || (count !== undefined && !countInline) ? (
+                  <span className="ml-auto flex shrink-0 items-center gap-2">
+                    {headerActions}
+                    {count !== undefined && !countInline ? (
+                      countSkeleton ? (
+                        <Skeleton className="h-5 w-12 rounded-full" aria-hidden />
+                      ) : (
+                        <PortalPanelCountBadge>{count}</PortalPanelCountBadge>
+                      )
+                    ) : null}
+                  </span>
                 ) : null}
               </h3>
               {displaySubtitle ? (

@@ -23,7 +23,10 @@ import {
 } from "@/lib/billing-cache";
 import { resolveInvoiceOrganizationId } from "@/lib/invoice-organization-resolve";
 import { assertAppointmentEligibleForNewInvoice } from "@/lib/billing-appointment-eligibility";
-import { attachVisitSummariesToInvoices } from "@/lib/invoice-visit-summary";
+import {
+  attachInvoiceIssuerLabels,
+  attachVisitSummariesToInvoices,
+} from "@/lib/invoice-visit-summary";
 
 export const dynamic = "force-dynamic";
 
@@ -41,12 +44,13 @@ export async function GET(req: NextRequest) {
       organizationId,
     });
 
-    const invoices = await attachVisitSummariesToInvoices(
+    const withVisits = await attachVisitSummariesToInvoices(
       rows.map((row) => ({
         ...serializeInvoice(row),
         payments: row.payments,
       }))
     );
+    const invoices = await attachInvoiceIssuerLabels(withVisits);
 
     return NextResponse.json({ invoices });
   } catch (error: unknown) {

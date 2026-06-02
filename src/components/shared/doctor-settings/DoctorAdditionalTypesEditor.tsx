@@ -5,7 +5,7 @@
  */
 
 import { useMemo, useRef, useState } from "react";
-import { Check, Clock, Loader2, Pencil, Plus, Tag, Trash2 } from "lucide-react";
+import { Check, Clock, Euro, Loader2, Pencil, Plus, Tag, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DoctorSettingsFieldLabel } from "@/components/shared/doctor-settings/DoctorSettingsFieldLabel";
@@ -31,6 +31,18 @@ import {
   ADDITIONAL_TYPE_ADD_SUMMARY_LABEL,
   ADDITIONAL_TYPE_SAVE_LABEL,
 } from "@/lib/doctor-portal-visit-type-copy";
+import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
+import { VisitFeeBadge } from "@/components/shared/billing/VisitFeeBadge";
+import {
+  buildAppointmentTypeDeleteConfirmSubtitle,
+  buildDisableOwnedVisitTypeConfirmSubtitle,
+  DELETE_APPOINTMENT_TYPE_CONFIRM_TITLE,
+  DISABLE_VISIT_TYPE_CONFIRM_TITLE,
+} from "@/lib/confirm-delete-dialog-copy";
+import {
+  formatCentsToPriceInput,
+  parsePriceEurInputToCents,
+} from "@/lib/appointment-type-price";
 import { isValidDoctorAppointmentTypeDraft } from "@/lib/doctor-settings-form-validity";
 
 type Props = {
@@ -74,12 +86,24 @@ export function DoctorAdditionalTypesEditor({
 
   const [newName, setNewName] = useState("");
   const [newDuration, setNewDuration] = useState("30");
+  /** Optional EUR visit fee — persisted as `price_cents` on POST/PATCH (0 when empty). */
+  const [newPrice, setNewPrice] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editDuration, setEditDuration] = useState("");
+  const [editPrice, setEditPrice] = useState("");
   const [togglePendingIds, setTogglePendingIds] = useState<Set<string>>(new Set());
+  /** Destructive confirm — same glass dialog as calendar appointment delete. */
+  const [deleteTypeId, setDeleteTypeId] = useState<string | null>(null);
+  /** Uncheck owned type — warn before PATCH `is_active: false` (global types parity). */
+  const [disableTarget, setDisableTarget] = useState<AppointmentTypeApiRow | null>(null);
 
   const busy = isCreating || isUpdating || isDeleting;
+
+  const typePendingDelete = useMemo(
+    () => ownedTypes.find((t) => t.id === deleteTypeId) ?? null,
+    [ownedTypes, deleteTypeId]
+  );
 
   const ownedTypeActive = (t: AppointmentTypeApiRow) =>
     (t.is_active ?? true) && (t.is_enabled ?? true);
@@ -111,21 +135,25 @@ export function DoctorAdditionalTypesEditor({
     setEditingId(t.id);
     setEditName(t.name);
     setEditDuration(String(t.duration_minutes));
+    setEditPrice(formatCentsToPriceInput(t.price_cents ?? 0));
   };
 
   const cancelEdit = () => {
     setEditingId(null);
     setEditName("");
     setEditDuration("");
+    setEditPrice("");
   };
 
   const handleCreate = async () => {
     const name = newName.trim();
     const duration = Number.parseInt(newDuration, 10);
     if (!name || !Number.isFinite(duration)) return;
-    await createType({ name, duration_minutes: duration });
+    const price_cents = parsePriceEurInputToCents(newPrice);
+    await createType({ name, duration_minutes: duration, price_cents });
     setNewName("");
     setNewDuration("30");
+    setNewPrice("");
     closeHtmlDetails(addDetailsRef.current);
   };
 
@@ -133,7 +161,8 @@ export function DoctorAdditionalTypesEditor({
     const name = editName.trim();
     const duration = Number.parseInt(editDuration, 10);
     if (!name || !Number.isFinite(duration)) return;
-    await updateType({ id, name, duration_minutes: duration });
+    const price_cents = parsePriceEurInputToCents(editPrice);
+    await updateType({ id, name, duration_minutes: duration, price_cents });
     cancelEdit();
   };
 
@@ -152,8 +181,8 @@ export function DoctorAdditionalTypesEditor({
           {toTitleCaseLabel("Add type")}
         </p>
       ) : null}
-      <div className="grid gap-2 sm:grid-cols-2">
-        <div className="space-y-1">
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="space-y-1 sm:col-span-2 lg:col-span-1">
           <DoctorSettingsFieldLabel
             htmlFor={`new-appt-type-name-${doctorId}`}
             icon={Tag}
@@ -190,6 +219,27 @@ export function DoctorAdditionalTypesEditor({
             max={720}
             value={newDuration}
             onChange={(e) => setNewDuration(e.target.value)}
+            disabled={busy}
+          />
+        </div>
+        <div className="space-y-1">
+          <DoctorSettingsFieldLabel
+            htmlFor={`new-appt-type-price-${doctorId}`}
+            icon={Euro}
+            iconClassName="text-emerald-600"
+          >
+            Visit fee (€)
+          </DoctorSettingsFieldLabel>
+          <DoctorSettingsGlassInput
+            id={`new-appt-type-price-${doctorId}`}
+            tone="emerald"
+            density="compact"
+            type="number"
+            min={0}
+            step="0.01"
+            value={newPrice}
+            onChange={(e) => setNewPrice(e.target.value)}
+            placeholder="0.00"
             disabled={busy}
           />
         </div>
@@ -270,8 +320,8 @@ export function DoctorAdditionalTypesEditor({
                   "border-solid list-none"
                 )}
               >
-                <div className="grid flex-1 gap-2 sm:grid-cols-2">
-                  <div className="space-y-1">
+                <div className="grid flex-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="space-y-1 sm:col-span-2 lg:col-span-1">
                     <DoctorSettingsFieldLabel icon={Tag} iconClassName="text-emerald-600" required>
                       Title/Description
                     </DoctorSettingsFieldLabel>
@@ -295,6 +345,22 @@ export function DoctorAdditionalTypesEditor({
                       max={720}
                       value={editDuration}
                       onChange={(e) => setEditDuration(e.target.value)}
+                      disabled={busy}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <DoctorSettingsFieldLabel icon={Euro} iconClassName="text-emerald-600">
+                      Visit fee (€)
+                    </DoctorSettingsFieldLabel>
+                    <DoctorSettingsGlassInput
+                      tone="emerald"
+                      density="compact"
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      value={editPrice}
+                      onChange={(e) => setEditPrice(e.target.value)}
+                      placeholder="0.00"
                       disabled={busy}
                     />
                   </div>
@@ -322,7 +388,13 @@ export function DoctorAdditionalTypesEditor({
                       type="checkbox"
                       checked={ownedTypeActive(t)}
                       disabled={busy}
-                      onChange={(e) => void handleToggleActive(t, e.target.checked)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          void handleToggleActive(t, true);
+                        } else {
+                          setDisableTarget(t);
+                        }
+                      }}
                       className={doctorSettingsGlassCheckboxClass("emerald")}
                       aria-label={`${ownedTypeActive(t) ? "Disable" : "Enable"} ${t.name}`}
                     />
@@ -331,7 +403,8 @@ export function DoctorAdditionalTypesEditor({
                 title={toTitleCaseLabel(t.name)}
                 meta={`${t.duration_minutes} min · ${toTitleCaseLabel("slot step")} ${t.slot_interval_minutes} min`}
                 trailing={
-                  <div className="flex gap-1">
+                  <div className="flex flex-wrap items-center justify-end gap-1">
+                    <VisitFeeBadge priceCents={t.price_cents ?? 0} />
                     <Button
                       type="button"
                       size="icon"
@@ -350,7 +423,7 @@ export function DoctorAdditionalTypesEditor({
                       className="h-8 w-8 rounded-xl border-red-200/80 text-red-600 hover:bg-red-50"
                       disabled={busy}
                       title={toTitleCaseLabel("Delete type")}
-                      onClick={() => deleteType(t.id)}
+                      onClick={() => setDeleteTypeId(t.id)}
                     >
                       <Trash2 className="h-3.5 w-3.5" aria-hidden />
                     </Button>
@@ -381,6 +454,52 @@ export function DoctorAdditionalTypesEditor({
       ) : (
         addFormFields
       )}
+
+      <ConfirmActionDialog
+        open={Boolean(disableTarget)}
+        onOpenChange={(open) => {
+          if (!open) setDisableTarget(null);
+        }}
+        variant="warning"
+        title={DISABLE_VISIT_TYPE_CONFIRM_TITLE}
+        subtitle={
+          disableTarget
+            ? buildDisableOwnedVisitTypeConfirmSubtitle(disableTarget, variant)
+            : ""
+        }
+        confirmLabel="Disable"
+        cancelLabel="Cancel"
+        confirmDisabled={disableTarget ? togglePendingIds.has(disableTarget.id) : false}
+        onConfirm={() => {
+          if (disableTarget) {
+            void handleToggleActive(disableTarget, false);
+          }
+          setDisableTarget(null);
+        }}
+      />
+
+      <ConfirmActionDialog
+        open={Boolean(deleteTypeId && typePendingDelete)}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTypeId(null);
+        }}
+        variant="destructive"
+        title={DELETE_APPOINTMENT_TYPE_CONFIRM_TITLE}
+        subtitle={
+          typePendingDelete
+            ? buildAppointmentTypeDeleteConfirmSubtitle(typePendingDelete)
+            : ""
+        }
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        confirmDisabled={isDeleting}
+        onConfirm={() => {
+          if (deleteTypeId) {
+            void deleteType(deleteTypeId);
+          }
+          setDeleteTypeId(null);
+        }}
+      />
     </div>
   );
 }

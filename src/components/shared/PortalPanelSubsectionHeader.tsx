@@ -4,23 +4,27 @@ import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PortalPanelCountBadge } from "@/components/shared/PortalPanelCountBadge";
+import { PortalPanelStatusOutlineChip } from "@/components/shared/PortalPanelStatusOutlineChip";
 import { cn, toSentenceCaseSubtitle, toTitleCaseLabel } from "@/lib/utils";
 
 type PortalPanelSubsectionHeaderProps = {
-  title: string;
-  /** Plain string is title-cased; pass JSX for inline emphasis (e.g. timezone). */
+  title: string | ReactNode;
   subtitle?: ReactNode;
   icon: LucideIcon;
   iconClassName?: string;
   id?: string;
   className?: string;
-  /** Live count from TanStack cache (availability / time off / visit types). */
   count?: number | string;
   countSkeleton?: boolean;
+  /** Same flex row as title + count (Today KPI) — wraps on narrow screens. */
+  statusChip?: ReactNode;
+  statusChipSkeleton?: boolean;
+  headerActions?: ReactNode;
 };
 
 /**
- * In-card subsection title — icon tile stretches to title + subtitle row height (doctor portal schedule).
+ * Title row: title · count pill · status chip · (optional action) — one `flex-wrap` line.
+ * Subtitle on the next line (Weekly Hours / billing parity).
  */
 export function PortalPanelSubsectionHeader({
   title,
@@ -31,6 +35,9 @@ export function PortalPanelSubsectionHeader({
   className,
   count,
   countSkeleton = false,
+  statusChip,
+  statusChipSkeleton = false,
+  headerActions,
 }: PortalPanelSubsectionHeaderProps) {
   return (
     <div className={cn("mb-3 flex gap-3", className)}>
@@ -43,20 +50,36 @@ export function PortalPanelSubsectionHeader({
       >
         <Icon className="h-4 w-4" />
       </span>
-      <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5">
-        <h3
-          id={id}
-          className="flex flex-wrap items-center gap-2 text-sm font-semibold text-gray-800"
-        >
-          <span>{toTitleCaseLabel(title)}</span>
-          {count !== undefined ? (
-            countSkeleton ? (
-              <Skeleton className="h-5 w-8 shrink-0 rounded-full" aria-hidden />
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <h3
+            id={id}
+            className="flex shrink-0 items-center gap-2 text-sm font-semibold text-gray-800"
+          >
+            <span className="min-w-0">
+              {typeof title === "string" ? toTitleCaseLabel(title) : title}
+            </span>
+            {count !== undefined ? (
+              countSkeleton ? (
+                <Skeleton className="h-5 w-8 shrink-0 rounded-full" aria-hidden />
+              ) : (
+                <PortalPanelCountBadge>{count}</PortalPanelCountBadge>
+              )
+            ) : null}
+          </h3>
+          {statusChipSkeleton ? (
+            <Skeleton className="h-5 w-48 shrink-0 rounded-full" aria-hidden />
+          ) : statusChip != null ? (
+            typeof statusChip === "string" ? (
+              <PortalPanelStatusOutlineChip>{statusChip}</PortalPanelStatusOutlineChip>
             ) : (
-              <PortalPanelCountBadge>{count}</PortalPanelCountBadge>
+              statusChip
             )
           ) : null}
-        </h3>
+          {headerActions ? (
+            <span className="ml-auto flex shrink-0 self-start">{headerActions}</span>
+          ) : null}
+        </div>
         {subtitle ? (
           <p className="text-xs leading-snug text-muted-foreground">
             {typeof subtitle === "string" ? toSentenceCaseSubtitle(subtitle) : subtitle}

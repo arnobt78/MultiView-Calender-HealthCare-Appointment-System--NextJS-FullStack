@@ -51,6 +51,11 @@ import { useCanEditDoctorSettings } from "@/components/shared/doctor-settings/us
 import { doctorSettingsAddFormClass, doctorSettingsRowClass } from "@/components/shared/doctor-settings/doctor-settings-classes";
 import { doctorSettingsGlassSelectTriggerClass } from "@/lib/doctor-settings-glass-fields";
 import { isValidWeeklyAvailabilityWindow } from "@/lib/doctor-settings-form-validity";
+import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
+import {
+  buildWeeklyHoursWindowDeleteConfirmSubtitle,
+  DELETE_WEEKLY_HOURS_WINDOW_CONFIRM_TITLE,
+} from "@/lib/confirm-delete-dialog-copy";
 import { cn, toTitleCaseLabel } from "@/lib/utils";
 
 type Props = {
@@ -108,6 +113,11 @@ export function DoctorWeeklyScheduleEditor({
   const [newTz, setNewTz] = useState(browserTz);
 
   const [editingId, setEditingId] = useState<string | null>(null);
+  /** Glass confirm before DELETE — matches calendar appointment delete. */
+  const [deleteWindowId, setDeleteWindowId] = useState<string | null>(null);
+  const windowPendingDelete = deleteWindowId
+    ? (windows.find((w) => w.id === deleteWindowId) ?? null)
+    : null;
   const [editWeekday, setEditWeekday] = useState("1");
   const [editStartTime, setEditStartTime] = useState("09:00");
   const [editEndTime, setEditEndTime] = useState("17:00");
@@ -330,7 +340,7 @@ export function DoctorWeeklyScheduleEditor({
           variant="ghost"
           size="icon"
           className="h-7 w-7 text-red-500 hover:bg-red-50"
-          onClick={() => deleteWindowMutation.mutate(w.id)}
+          onClick={() => setDeleteWindowId(w.id)}
           disabled={busy}
           title={toTitleCaseLabel("Delete window")}
         >
@@ -502,6 +512,29 @@ export function DoctorWeeklyScheduleEditor({
           </div>
         )
       ) : null}
+
+      <ConfirmActionDialog
+        open={Boolean(deleteWindowId && windowPendingDelete)}
+        onOpenChange={(open) => {
+          if (!open) setDeleteWindowId(null);
+        }}
+        variant="destructive"
+        title={DELETE_WEEKLY_HOURS_WINDOW_CONFIRM_TITLE}
+        subtitle={
+          windowPendingDelete
+            ? buildWeeklyHoursWindowDeleteConfirmSubtitle(windowPendingDelete)
+            : ""
+        }
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        confirmDisabled={deleteWindowMutation.isPending}
+        onConfirm={() => {
+          if (deleteWindowId) {
+            deleteWindowMutation.mutate(deleteWindowId);
+          }
+          setDeleteWindowId(null);
+        }}
+      />
     </div>
   );
 }

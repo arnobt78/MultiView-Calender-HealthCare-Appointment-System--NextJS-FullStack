@@ -9,9 +9,10 @@ describe("VisitFeeBadge", () => {
     expect(html).toBe("");
   });
 
-  it("renders formatted EUR label for positive cents", () => {
+  it("renders de-DE amount without a second currency suffix", () => {
     const html = renderToStaticMarkup(createElement(VisitFeeBadge, { priceCents: 9250 }));
     expect(html).toContain("92,50");
-    expect(html).toContain("€");
+    expect(html).not.toMatch(/92,50\s*€/);
+    expect(html).not.toContain("€&nbsp;92");
   });
 });

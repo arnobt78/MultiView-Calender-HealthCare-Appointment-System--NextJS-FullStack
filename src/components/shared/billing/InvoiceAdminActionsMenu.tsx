@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import {
   MoreHorizontal,
+  EllipsisVertical,
   CreditCard,
   Send,
   CheckCircle2,
@@ -19,19 +21,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import type { Invoice } from "@/hooks/usePayments";
+import {
+  buildInvoiceDeleteConfirmSubtitle,
+  DELETE_INVOICE_CONFIRM_TITLE,
+} from "@/lib/confirm-delete-dialog-copy";
 import { invoiceDetailHref } from "@/lib/entity-routes";
+import {
+  INVOICE_LIST_ACTIONS_MENU_ICON,
+  invoiceActionsMenuTriggerClassName,
+} from "@/lib/billing-ui-presets";
+import { cn } from "@/lib/utils";
 
 type Props = {
   invoice: Invoice;
@@ -44,6 +45,9 @@ type Props = {
   onRefund?: (id: string) => void;
   isPaying?: boolean;
   isUpdating?: boolean;
+  /** Defaults to vertical ⋮ — CP patient list parity; pass `horizontal` for dense toolbars only. */
+  menuIcon?: "horizontal" | "vertical";
+  triggerClassName?: string;
 };
 
 export function InvoiceAdminActionsMenu({
@@ -57,7 +61,11 @@ export function InvoiceAdminActionsMenu({
   onRefund,
   isPaying,
   isUpdating,
+  menuIcon = INVOICE_LIST_ACTIONS_MENU_ICON,
+  triggerClassName,
 }: Props) {
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const MenuIcon = menuIcon === "vertical" ? EllipsisVertical : MoreHorizontal;
   const canPay =
     viewerRole === "admin" &&
     (invoice.status === "draft" || invoice.status === "sent" || invoice.status === "overdue");
@@ -68,10 +76,16 @@ export function InvoiceAdminActionsMenu({
   const canRefund = viewerRole === "admin" && invoice.status === "paid";
 
   return (
+    <>
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8">
-          <MoreHorizontal className="h-4 w-4" />
+        <Button
+          variant="ghost"
+          size="icon"
+          className={cn(invoiceActionsMenuTriggerClassName, triggerClassName)}
+        >
+          <MenuIcon className="h-4 w-4" aria-hidden />
+          <span className="sr-only">Open invoice menu</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -128,36 +142,36 @@ export function InvoiceAdminActionsMenu({
         {canDelete && onDelete && (
           <>
             <DropdownMenuSeparator />
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <DropdownMenuItem
-                  className="text-red-600 focus:text-red-600"
-                  onSelect={(e) => e.preventDefault()}
-                >
-                  <Trash2 className="h-4 w-4" /> Delete
-                </DropdownMenuItem>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete invoice?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Permanently delete invoice #{invoice.id.slice(0, 8)}.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    className="bg-red-600 hover:bg-red-700"
-                    onClick={() => onDelete(invoice.id)}
-                  >
-                    Delete
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            <DropdownMenuItem
+              className="gap-2 text-red-600 focus:text-red-600"
+              disabled={isUpdating}
+              onSelect={(e) => {
+                e.preventDefault();
+                setDeleteOpen(true);
+              }}
+            >
+              <Trash2 className="h-4 w-4" /> Delete
+            </DropdownMenuItem>
           </>
         )}
       </DropdownMenuContent>
     </DropdownMenu>
+    {canDelete && onDelete ? (
+      <ConfirmActionDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        variant="destructive"
+        title={DELETE_INVOICE_CONFIRM_TITLE}
+        subtitle={buildInvoiceDeleteConfirmSubtitle(invoice)}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        confirmDisabled={isUpdating}
+        onConfirm={() => {
+          onDelete(invoice.id);
+          setDeleteOpen(false);
+        }}
+      />
+    ) : null}
+    </>
   );
 }

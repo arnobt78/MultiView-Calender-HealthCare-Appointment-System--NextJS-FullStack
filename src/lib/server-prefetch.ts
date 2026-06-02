@@ -490,9 +490,8 @@ export async function prefetchInvoices(
 ): Promise<Invoice[] | null> {
   try {
     const { fetchInvoicesForViewer } = await import("@/lib/invoices-scope");
-    const { attachVisitSummariesToInvoices } = await import(
-      "@/lib/invoice-visit-summary"
-    );
+    const { attachInvoiceIssuerLabels, attachVisitSummariesToInvoices } =
+      await import("@/lib/invoice-visit-summary");
     const rows = await fetchInvoicesForViewer({ userId, role, email });
 
     const mapped = rows.map((i) => {
@@ -513,7 +512,8 @@ export async function prefetchInvoices(
       } satisfies Invoice;
     });
 
-    return attachVisitSummariesToInvoices(mapped);
+    const withVisits = await attachVisitSummariesToInvoices(mapped);
+    return attachInvoiceIssuerLabels(withVisits);
   } catch {
     return null;
   }
@@ -1228,8 +1228,12 @@ export async function prefetchDoctorPortal(userId: string): Promise<DoctorPortal
       metricWeek,
       metricMonth,
       metricPending,
+      metricAlert,
       metricDone,
       metricOverdue,
+      metricThisMonthDone,
+      metricWeekPassed,
+      metricMonthPassed,
     ] = await Promise.all([
       prisma.user.findUnique({
         where: { id: userId },
@@ -1289,12 +1293,31 @@ export async function prefetchDoctorPortal(userId: string): Promise<DoctorPortal
         where: staffCalendarAppointmentFilter(userId, { status: "pending" }),
       }),
       prisma.appointment.count({
+        where: staffCalendarAppointmentFilter(userId, { status: "alert" }),
+      }),
+      prisma.appointment.count({
         where: staffCalendarAppointmentFilter(userId, { status: "done" }),
       }),
       prisma.appointment.count({
         where: staffCalendarAppointmentFilter(userId, {
           end: { lt: now },
           status: { not: "done" },
+        }),
+      }),
+      prisma.appointment.count({
+        where: staffCalendarAppointmentFilter(userId, {
+          start: { gte: monthStart, lte: monthEnd },
+          status: "done",
+        }),
+      }),
+      prisma.appointment.count({
+        where: staffCalendarAppointmentFilter(userId, {
+          start: { gte: weekStart, lt: todayStart },
+        }),
+      }),
+      prisma.appointment.count({
+        where: staffCalendarAppointmentFilter(userId, {
+          start: { gte: monthStart, lt: todayStart },
         }),
       }),
     ]);
@@ -1358,8 +1381,12 @@ export async function prefetchDoctorPortal(userId: string): Promise<DoctorPortal
         thisWeek: metricWeek,
         thisMonth: metricMonth,
         pending: metricPending,
+        alert: metricAlert,
         done: metricDone,
         overdue: metricOverdue,
+        thisMonthDone: metricThisMonthDone,
+        weekPassed: metricWeekPassed,
+        monthPassed: metricMonthPassed,
       },
     };
   } catch {

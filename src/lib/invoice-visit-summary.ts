@@ -7,10 +7,17 @@ import { prisma } from "@/lib/prisma";
 import type { InvoiceVisitSummary } from "@/lib/billing-types";
 
 export const invoiceAppointmentVisitInclude = {
-  category: { select: { label: true, color: true } },
+  category: { select: { id: true, label: true, color: true, icon: true } },
   appointment_type: { select: { name: true } },
   patient: {
-    select: { id: true, firstname: true, lastname: true, email: true },
+    select: {
+      id: true,
+      firstname: true,
+      lastname: true,
+      email: true,
+      birth_date: true,
+      care_level: true,
+    },
   },
   owner: {
     select: { id: true, display_name: true, email: true, specialty: true },
@@ -27,13 +34,20 @@ type VisitApptRow = {
   end: Date;
   location: string | null;
   is_telehealth: boolean;
-  category: { label: string | null; color: string | null } | null;
+  category: {
+    id: string;
+    label: string | null;
+    color: string | null;
+    icon: string | null;
+  } | null;
   appointment_type: { name: string | null } | null;
   patient: {
     id: string;
     firstname: string;
     lastname: string;
     email: string | null;
+    birth_date: Date | null;
+    care_level: number | null;
   } | null;
   owner: {
     id: string;
@@ -81,8 +95,13 @@ export function mapAppointmentToInvoiceVisitSummary(
     is_telehealth: row.is_telehealth,
     patient_id: row.patient?.id ?? null,
     patient_label: patientName,
+    patient_email: row.patient?.email ?? null,
+    patient_birth_date: row.patient?.birth_date?.toISOString() ?? null,
+    patient_care_level: row.patient?.care_level ?? null,
+    category_id: row.category?.id ?? null,
     category_label: row.category?.label ?? row.appointment_type?.name ?? null,
     category_color: row.category?.color ?? null,
+    category_icon: row.category?.icon ?? null,
     treating_physician_id: row.treating_physician?.id ?? null,
     treating_physician_label: staffLabel(row.treating_physician),
     treating_physician_specialty: row.treating_physician?.specialty ?? null,
@@ -144,6 +163,45 @@ export async function attachVisitSummariesToInvoices<
     if (!aid) return inv;
     const visit_summary = byId.get(aid);
     return visit_summary ? { ...inv, visit_summary } : inv;
+  });
+}
+
+/** Batch issuer display for invoice list cards (billing `user_id`). */
+export async function attachInvoiceIssuerLabels<
+  T extends { user_id: string },
+>(invoices: T[]): Promise<
+  (T & { issuer_label: string | null; issuer_image: string | null })[]
+> {
+  const userIds = [...new Set(invoices.map((i) => i.user_id).filter(Boolean))];
+  if (userIds.length === 0) {
+    return invoices.map((inv) => ({
+      ...inv,
+      issuer_label: null,
+      issuer_image: null,
+    }));
+  }
+
+  const users = await prisma.user.findMany({
+    where: { id: { in: userIds } },
+    select: { id: true, display_name: true, email: true, image: true },
+  });
+  const byId = new Map(
+    users.map((u) => [
+      u.id,
+      {
+        label: (u.display_name?.trim() || u.email?.trim() || null) as string | null,
+        image: u.image ?? null,
+      },
+    ])
+  );
+
+  return invoices.map((inv) => {
+    const issuer = byId.get(inv.user_id);
+    return {
+      ...inv,
+      issuer_label: issuer?.label ?? null,
+      issuer_image: issuer?.image ?? null,
+    };
   });
 }
 

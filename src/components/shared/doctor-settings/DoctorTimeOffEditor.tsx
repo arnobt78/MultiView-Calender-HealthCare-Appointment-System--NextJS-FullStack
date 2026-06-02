@@ -43,6 +43,11 @@ import {
 import { useCanEditDoctorSettings } from "@/components/shared/doctor-settings/useCanEditDoctorSettings";
 import { doctorSettingsAddFormClass, doctorSettingsRowClass } from "@/components/shared/doctor-settings/doctor-settings-classes";
 import { isValidTimeOffDatetimeRange } from "@/lib/doctor-settings-form-validity";
+import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
+import {
+  buildUnavailableDateDeleteConfirmSubtitle,
+  DELETE_UNAVAILABLE_DATE_CONFIRM_TITLE,
+} from "@/lib/confirm-delete-dialog-copy";
 import { cn, toTitleCaseLabel } from "@/lib/utils";
 
 type Props = {
@@ -94,6 +99,11 @@ export function DoctorTimeOffEditor({
   const [newTimeOffReason, setNewTimeOffReason] = useState("");
 
   const [editingId, setEditingId] = useState<string | null>(null);
+  /** Glass confirm before DELETE — matches calendar appointment delete. */
+  const [deleteBlockId, setDeleteBlockId] = useState<string | null>(null);
+  const blockPendingDelete = deleteBlockId
+    ? (timeOffBlocks.find((b) => b.id === deleteBlockId) ?? null)
+    : null;
   const [editStart, setEditStart] = useState("");
   const [editEnd, setEditEnd] = useState("");
   const [editReason, setEditReason] = useState("");
@@ -283,7 +293,7 @@ export function DoctorTimeOffEditor({
           variant="ghost"
           size="icon"
           className="h-7 w-7 text-red-500 hover:bg-red-50"
-          onClick={() => deleteTimeOffMutation.mutate(b.id)}
+          onClick={() => setDeleteBlockId(b.id)}
           disabled={busy}
           title={toTitleCaseLabel("Delete block")}
         >
@@ -422,6 +432,29 @@ export function DoctorTimeOffEditor({
           </div>
         )
       ) : null}
+
+      <ConfirmActionDialog
+        open={Boolean(deleteBlockId && blockPendingDelete)}
+        onOpenChange={(open) => {
+          if (!open) setDeleteBlockId(null);
+        }}
+        variant="destructive"
+        title={DELETE_UNAVAILABLE_DATE_CONFIRM_TITLE}
+        subtitle={
+          blockPendingDelete
+            ? buildUnavailableDateDeleteConfirmSubtitle(blockPendingDelete)
+            : ""
+        }
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        confirmDisabled={deleteTimeOffMutation.isPending}
+        onConfirm={() => {
+          if (deleteBlockId) {
+            deleteTimeOffMutation.mutate(deleteBlockId);
+          }
+          setDeleteBlockId(null);
+        }}
+      />
     </div>
   );
 }

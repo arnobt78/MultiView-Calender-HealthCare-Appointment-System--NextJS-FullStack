@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import type { LucideIcon } from "lucide-react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -28,7 +30,10 @@ type Props = {
   variant: "admin" | "doctor";
   onCreate: (body: CreateBody) => void;
   appointmentId?: string;
+  /** Override defaults; prefer `billingCreateInvoiceTriggerAdmin` / `billingCreateInvoiceTriggerDoctor`. */
   triggerLabel?: string;
+  triggerClassName?: string;
+  triggerIcon?: LucideIcon;
 };
 
 export function CreateInvoiceDialog({
@@ -36,6 +41,8 @@ export function CreateInvoiceDialog({
   onCreate,
   appointmentId,
   triggerLabel = "New Invoice",
+  triggerClassName,
+  triggerIcon: TriggerIcon = Plus,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("");
@@ -78,8 +85,8 @@ export function CreateInvoiceDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="gap-2">
-          <Plus className="h-4 w-4" /> {triggerLabel}
+        <Button size="sm" className={cn("gap-2", triggerClassName)}>
+          <TriggerIcon className="h-4 w-4" aria-hidden /> {triggerLabel}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">

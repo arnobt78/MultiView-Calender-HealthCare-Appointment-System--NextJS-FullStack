@@ -11,7 +11,7 @@
  * Cache: SSR seeds `doctorPortal.all`, `patients.all`, and schedule/type query keys via `initialScheduleSettings`.
  */
 
-import { useState, useLayoutEffect, useMemo } from "react";
+import { useLayoutEffect, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
 import type { Invoice } from "@/hooks/usePayments";
@@ -28,8 +28,7 @@ import { PortalDoctorChromeHeader } from "@/components/shared/PortalDoctorChrome
 import { PortalPanelSection } from "@/components/shared/PortalPanelSection";
 import { DoctorPortalStatsRow } from "@/components/doctor-portal/DoctorPortalStatsRow";
 import { DoctorPortalInvoicesCard } from "@/components/doctor-portal/DoctorPortalInvoicesCard";
-import { PatientManagementInner } from "@/components/control-panel/PatientManagement";
-import { PatientListFiltersProvider } from "@/components/control-panel/PatientListFiltersContext";
+import { DoctorPortalPatientsCard } from "@/components/doctor-portal/DoctorPortalPatientsCard";
 import { DoctorPortalAppointmentListRow } from "@/components/shared/appointments/DoctorPortalAppointmentListRow";
 import {
   DoctorPortalWeeklyHoursCard,
@@ -41,17 +40,14 @@ import { useAppointmentTypesForDoctor } from "@/hooks/useAppointmentTypes";
 import { doctorSettingsGlassPanelShadowClass } from "@/lib/doctor-settings-glass-surfaces";
 import { GLOBAL_APPOINTMENT_TYPES_TITLE } from "@/lib/doctor-portal-schedule-copy";
 import { DOCTOR_PORTAL_VISIT_TYPE_COPY } from "@/lib/doctor-portal-visit-type-copy";
+import { doctorPortalPanelPairGridClass } from "@/lib/doctor-portal-layout";
 import {
   Calendar,
   CalendarCheck,
   CalendarClock,
   CheckCircle2,
   Layers,
-  Users,
 } from "lucide-react";
-
-/** Two-column portal rows — single column below `lg` for readability on narrow viewports. */
-const portalPanelPairGridClass = "grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6";
 
 interface DoctorPortalPageProps {
   initialData: DoctorPortalData | null;
@@ -72,7 +68,6 @@ export default function DoctorPortalPage({
   initialBillingAppointmentOptions = null,
 }: DoctorPortalPageProps) {
   const queryClient = useQueryClient();
-  const [patientSectionCount, setPatientSectionCount] = useState<number | null>(null);
 
   useLayoutEffect(() => {
     if (initialData != null) {
@@ -133,15 +128,6 @@ export default function DoctorPortalPage({
 
   const upcomingCountLabel = portalLoading ? undefined : String(upcomingAppts.length);
 
-  const patientCountLabel =
-    portalLoading
-      ? undefined
-      : patientSectionCount != null
-        ? `${patientSectionCount} total`
-        : data?.patients?.length != null
-          ? `${data.patients.length} total`
-          : "0 total";
-
   return (
     <div className={appPortalSectionRootClass}>
       <PortalDoctorChromeHeader
@@ -159,9 +145,13 @@ export default function DoctorPortalPage({
         profileLoading={profileLoading}
       />
 
-      <DoctorPortalStatsRow metrics={data?.metrics} valueSkeleton={portalLoading} />
+      <DoctorPortalStatsRow
+        metrics={data?.metrics}
+        todayAppointments={todayAppts}
+        valueSkeleton={portalLoading}
+      />
 
-      <div className={portalPanelPairGridClass}>
+      <div className={doctorPortalPanelPairGridClass}>
         <PortalPanelSection
           id="dp-today-schedule"
           title="Today's Schedule"
@@ -235,7 +225,7 @@ export default function DoctorPortalPage({
         </PortalPanelSection>
       </div>
 
-      <div className={portalPanelPairGridClass}>
+      <div className={doctorPortalPanelPairGridClass}>
         <DoctorPortalWeeklyHoursCard
           doctorId={doctorId}
           portalLoading={portalLoading}
@@ -269,7 +259,7 @@ export default function DoctorPortalPage({
         </PortalPanelSection>
       </div>
 
-      <div className={portalPanelPairGridClass}>
+      <div className={doctorPortalPanelPairGridClass}>
         <DoctorPortalTimeOffCard
           doctorId={doctorId}
           portalLoading={portalLoading}
@@ -282,32 +272,16 @@ export default function DoctorPortalPage({
         />
       </div>
 
-      <DoctorPortalInvoicesCard listBodyLoading={portalLoading} />
+      <DoctorPortalInvoicesCard
+        doctorDisplayName={data?.doctor?.display_name}
+        listBodyLoading={portalLoading}
+      />
 
-      {doctorId ? (
-        <PortalPanelSection
-          id="dp-my-patients"
-          title="My Patients"
-          icon={Users}
-          iconClassName="border-emerald-100 bg-emerald-50 [&_svg]:text-emerald-600"
-          count={patientCountLabel}
-          countInline
-          countSkeleton={portalLoading}
-          contentClassName="pt-0"
-        >
-          <PatientListFiltersProvider
-            initialPrimaryDoctorId={doctorId}
-            lockPrimaryDoctor
-          >
-            <PatientManagementInner
-              variant="doctor-portal"
-              viewerRole="doctor"
-              lockedPrimaryDoctorId={doctorId}
-              onFilteredCountChange={setPatientSectionCount}
-            />
-          </PatientListFiltersProvider>
-        </PortalPanelSection>
-      ) : null}
+      <DoctorPortalPatientsCard
+        doctorId={doctorId}
+        doctorDisplayName={data?.doctor?.display_name}
+        listBodyLoading={portalLoading}
+      />
     </div>
   );
 }

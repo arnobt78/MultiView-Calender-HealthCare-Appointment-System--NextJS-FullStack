@@ -43,8 +43,14 @@ export type InvoiceVisitSummary = {
   is_telehealth: boolean;
   patient_id: string | null;
   patient_label: string | null;
+  patient_email?: string | null;
+  patient_birth_date?: string | null;
+  /** Acuity tier 1–10 for compact list rows. */
+  patient_care_level?: number | null;
+  category_id: string | null;
   category_label: string | null;
   category_color: string | null;
+  category_icon: string | null;
   treating_physician_id: string | null;
   treating_physician_label: string | null;
   treating_physician_specialty: string | null;
@@ -67,6 +73,9 @@ export type InvoiceRow = {
   created_at: string;
   payments: InvoicePaymentRow[];
   visit_summary?: InvoiceVisitSummary;
+  /** Billing owner display — list “Issued by” line (batch-loaded on GET /api/invoices). */
+  issuer_label?: string | null;
+  issuer_image?: string | null;
 };
 
 /** GET /api/billing/appointment-options — compact visit picker row. */

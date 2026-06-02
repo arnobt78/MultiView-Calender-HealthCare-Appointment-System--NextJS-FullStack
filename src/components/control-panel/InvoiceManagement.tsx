@@ -38,7 +38,7 @@ import { PatientStatCard } from "@/components/control-panel/PatientStatCard";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { format } from "date-fns";
 import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
-import { emeraldGlassPrimaryButtonClass } from "@/lib/calendar-header-action-styles";
+import { billingCreateInvoiceTriggerAdmin } from "@/lib/billing-ui-presets";
 
 const columnHelper = createColumnHelper<Invoice>();
 
@@ -172,7 +172,13 @@ export default function InvoiceManagement() {
           </span>
         }
         description="Manage all patient invoices, track payments, and process billing across your organisation."
-        actions={<CreateInvoiceDialog variant="admin" onCreate={createInvoice} />}
+        actions={
+          <CreateInvoiceDialog
+            variant="admin"
+            onCreate={createInvoice}
+            {...billingCreateInvoiceTriggerAdmin}
+          />
+        }
       />
 
       {/* KPI strip — outstanding excludes refunded/cancelled (dashboard parity). */}

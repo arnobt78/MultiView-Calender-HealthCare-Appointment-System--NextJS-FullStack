@@ -286,8 +286,16 @@ export interface DoctorPortalData {
     thisWeek: number;
     thisMonth: number;
     pending: number;
+    /** Practice-wide visits in `alert` status (pending tile badge). */
+    alert: number;
     done: number;
     overdue: number;
+    /** Appointments marked done with start in the current calendar month. */
+    thisMonthDone: number;
+    /** Visits before today within the current Mon–Sun week (start before today 00:00). */
+    weekPassed: number;
+    /** Visits before today within the current calendar month. */
+    monthPassed: number;
   };
 }
 

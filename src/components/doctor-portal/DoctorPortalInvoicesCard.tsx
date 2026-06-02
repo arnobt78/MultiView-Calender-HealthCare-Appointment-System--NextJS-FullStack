@@ -1,99 +1,156 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { format } from "date-fns";
-import { Receipt } from "lucide-react";
+import { useMemo, useState, useEffect } from "react";
+import { ListFilter, Receipt } from "lucide-react";
 import { usePayments } from "@/hooks/usePayments";
 import { PortalPanelSection } from "@/components/shared/PortalPanelSection";
-import { CreateInvoiceDialog } from "@/components/shared/billing/CreateInvoiceDialog";
-import { InvoiceStatusBadge } from "@/components/shared/billing/InvoiceStatusBadge";
-import { InvoiceAmountDisplay } from "@/components/shared/billing/InvoiceAmountDisplay";
-import { InvoiceVisitSummaryLine } from "@/components/shared/billing/InvoiceVisitSummaryLine";
-import { InvoiceAdminActionsMenu } from "@/components/shared/billing/InvoiceAdminActionsMenu";
+import { DoctorPortalInvoiceListRow } from "@/components/shared/billing/DoctorPortalInvoiceListRow";
+import { ClinicalListFilterToolbar } from "@/components/shared/filters/ClinicalListFilterToolbar";
+import { FilterSelect } from "@/components/shared/filters/FilterSelect";
 import { Skeleton } from "@/components/ui/skeleton";
+import { doctorPortalBillingPanelClass } from "@/lib/doctor-portal-layout";
+import {
+  countDoctorPortalInvoicesByStatus,
+  doctorPortalBillingSectionTitle,
+  doctorPortalInvoiceStatusBadgeLabel,
+  DOCTOR_PORTAL_BILLING_SHOW_MANUAL_CREATE,
+  DOCTOR_PORTAL_BILLING_SUBTITLE,
+} from "@/lib/doctor-portal-billing-display";
+import { CreateInvoiceDialog } from "@/components/shared/billing/CreateInvoiceDialog";
+import { billingCreateInvoiceTriggerDoctor } from "@/lib/billing-ui-presets";
+import {
+  filterDoctorPortalInvoices,
+  type DoctorPortalInvoiceStatusFilter,
+} from "@/lib/invoice-list-display";
 
 type Props = {
+  /** Signed-in doctor display name — drives possessive panel title. */
+  doctorDisplayName?: string | null;
+  /** Pulse list + filters only — panel chrome stays mounted. */
   listBodyLoading?: boolean;
 };
 
-/** Doctor-scoped invoices — create draft + send; list from role-aware GET /api/invoices. */
-export function DoctorPortalInvoicesCard({ listBodyLoading }: Props) {
-  const {
-    invoices,
-    isLoading,
-    createInvoice,
-    updateInvoice,
-    deleteInvoice,
-    isUpdating,
-  } = usePayments();
+const STATUS_OPTIONS: { value: DoctorPortalInvoiceStatusFilter; label: string }[] = [
+  { value: "all", label: "All Statuses" },
+  { value: "draft", label: "Draft" },
+  { value: "sent", label: "Sent" },
+  { value: "paid", label: "Paid" },
+  { value: "overdue", label: "Overdue" },
+  { value: "cancelled", label: "Cancelled" },
+  { value: "refunded", label: "Refunded" },
+];
+
+/**
+ * Doctor-scoped invoices — same stacked header as Weekly Hours / visit types:
+ * one title row: name · count · status chip (Today KPI); muted subtitle below.
+ */
+export function DoctorPortalInvoicesCard({
+  doctorDisplayName,
+  listBodyLoading,
+}: Props) {
+  const { invoices, isLoading, createInvoice, updateInvoice, deleteInvoice, isUpdating } =
+    usePayments();
 
   const [isMounted, setIsMounted] = useState(false);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<DoctorPortalInvoiceStatusFilter>("all");
+
   useEffect(() => {
     requestAnimationFrame(() => setIsMounted(true));
   }, []);
 
-  const loading = listBodyLoading || !isMounted || isLoading;
-  const outstanding = invoices.filter(
-    (i) => i.status !== "paid" && i.status !== "cancelled"
-  ).length;
+  const listLoading = listBodyLoading || !isMounted || isLoading;
+  const statusCounts = useMemo(
+    () => countDoctorPortalInvoicesByStatus(invoices),
+    [invoices]
+  );
+
+  const filtered = useMemo(
+    () => filterDoctorPortalInvoices(invoices, { search, status: statusFilter }),
+    [invoices, search, statusFilter]
+  );
+
+  const statusChip = useMemo(
+    () => doctorPortalInvoiceStatusBadgeLabel(statusCounts),
+    [statusCounts]
+  );
+
+  const showReset = search.trim().length > 0 || statusFilter !== "all";
 
   return (
     <PortalPanelSection
       id="dp-invoices-heading"
-      title="Billing"
-      subtitle="Draft invoices for your visits"
+      title={doctorPortalBillingSectionTitle(doctorDisplayName)}
+      subtitle={DOCTOR_PORTAL_BILLING_SUBTITLE}
+      headerVariant="stacked"
       icon={Receipt}
-      count={loading ? undefined : invoices.length}
-      headerSlot={
-        <div className="flex w-full flex-wrap items-center justify-between gap-2">
-          <span className="text-sm font-semibold text-gray-800">Billing</span>
+      iconClassName="border-sky-100 bg-sky-50 [&_svg]:text-sky-600"
+      count={invoices.length}
+      countSkeleton={listLoading}
+      statusChip={statusChip}
+      statusChipSkeleton={listLoading}
+      className={doctorPortalBillingPanelClass}
+      headerActions={
+        DOCTOR_PORTAL_BILLING_SHOW_MANUAL_CREATE ? (
           <CreateInvoiceDialog
             variant="doctor"
-            triggerLabel="New draft"
+            {...billingCreateInvoiceTriggerDoctor}
             onCreate={(body) => createInvoice(body)}
           />
-        </div>
+        ) : undefined
       }
     >
-      {loading ? (
-        <div className="space-y-2">
+      <ClinicalListFilterToolbar
+        search={{
+          value: search,
+          onChange: setSearch,
+          placeholder: "Search invoices…",
+          ariaLabel: "Search invoices",
+        }}
+        showReset={showReset}
+        onReset={() => {
+          setSearch("");
+          setStatusFilter("all");
+        }}
+        className="mb-3"
+      >
+        <FilterSelect
+          value={statusFilter}
+          onValueChange={(v) => setStatusFilter(v as DoctorPortalInvoiceStatusFilter)}
+          displayLabel={
+            STATUS_OPTIONS.find((o) => o.value === statusFilter)?.label ?? "All Statuses"
+          }
+          icon={ListFilter}
+          size="toolbar"
+          options={STATUS_OPTIONS}
+          ariaLabel="Filter by invoice status"
+        />
+      </ClinicalListFilterToolbar>
+
+      {listLoading ? (
+        <ul className="divide-y divide-border/40" aria-hidden>
           {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-12 w-full rounded-lg" />
-          ))}
-        </div>
-      ) : invoices.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No invoices yet.</p>
-      ) : (
-        <ul className="space-y-2">
-          {invoices.slice(0, 8).map((inv) => (
-            <li
-              key={inv.id}
-              className="flex items-center justify-between gap-2 rounded-lg border bg-card px-3 py-2 text-xs"
-            >
-              <div className="min-w-0">
-                <p className="truncate font-medium">
-                  {inv.description ?? `Invoice #${inv.id.slice(0, 8)}`}
-                </p>
-                <p className="text-[10px] text-muted-foreground">
-                  {format(new Date(inv.created_at), "dd MMM yyyy")}
-                  {outstanding > 0 ? ` · ${outstanding} open` : ""}
-                </p>
-                <InvoiceVisitSummaryLine summary={inv.visit_summary} />
-              </div>
-              <div className="flex shrink-0 items-center gap-2">
-                <InvoiceAmountDisplay amountCents={inv.amount} currency={inv.currency} />
-                <InvoiceStatusBadge invoice={inv} />
-                <InvoiceAdminActionsMenu
-                  invoice={inv}
-                  viewerRole="doctor"
-                  onSend={(id) =>
-                    updateInvoice({ invoiceId: id, body: { status: "sent" } })
-                  }
-                  onDelete={deleteInvoice}
-                  isUpdating={isUpdating}
-                />
-              </div>
+            <li key={i} className="border-b border-border/40 py-2 last:border-0">
+              <Skeleton className="h-4 w-3/4 max-w-md rounded" />
+              <Skeleton className="mt-1 h-3 w-1/2 rounded" />
+              <Skeleton className="mt-1 h-3 w-2/3 rounded" />
             </li>
+          ))}
+        </ul>
+      ) : filtered.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          {invoices.length === 0 ? "No invoices yet." : "No invoices match your filters."}
+        </p>
+      ) : (
+        <ul className="divide-y divide-border/40">
+          {filtered.slice(0, 12).map((inv) => (
+            <DoctorPortalInvoiceListRow
+              key={inv.id}
+              invoice={inv}
+              onSend={(id) => updateInvoice({ invoiceId: id, body: { status: "sent" } })}
+              onDelete={deleteInvoice}
+              isUpdating={isUpdating}
+            />
           ))}
         </ul>
       )}

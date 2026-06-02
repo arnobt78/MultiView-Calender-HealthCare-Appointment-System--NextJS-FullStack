@@ -68,8 +68,12 @@ export async function GET() {
       metricWeek,
       metricMonth,
       metricPending,
+      metricAlert,
       metricDone,
       metricOverdue,
+      metricThisMonthDone,
+      metricWeekPassed,
+      metricMonthPassed,
     ] = await Promise.all([
       // Doctor's own user row with extended fields
       prisma.user.findUnique({
@@ -142,9 +146,26 @@ export async function GET() {
         where: appt({ start: { gte: monthStart, lte: monthEnd } }),
       }),
       prisma.appointment.count({ where: appt({ status: "pending" }) }),
+      prisma.appointment.count({ where: appt({ status: "alert" }) }),
       prisma.appointment.count({ where: appt({ status: "done" }) }),
       prisma.appointment.count({
         where: appt({ end: { lt: now }, status: { not: "done" } }),
+      }),
+      prisma.appointment.count({
+        where: appt({
+          start: { gte: monthStart, lte: monthEnd },
+          status: "done",
+        }),
+      }),
+      prisma.appointment.count({
+        where: appt({
+          start: { gte: weekStart, lt: todayStart },
+        }),
+      }),
+      prisma.appointment.count({
+        where: appt({
+          start: { gte: monthStart, lt: todayStart },
+        }),
       }),
     ]);
 
@@ -219,8 +240,12 @@ export async function GET() {
         thisWeek: metricWeek,
         thisMonth: metricMonth,
         pending: metricPending,
+        alert: metricAlert,
         done: metricDone,
         overdue: metricOverdue,
+        thisMonthDone: metricThisMonthDone,
+        weekPassed: metricWeekPassed,
+        monthPassed: metricMonthPassed,
       },
     });
   } catch (error: unknown) {

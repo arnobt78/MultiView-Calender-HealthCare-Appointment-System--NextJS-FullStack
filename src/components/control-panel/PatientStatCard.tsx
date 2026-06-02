@@ -51,7 +51,8 @@ export function PatientStatCard({
   icon: LucideIcon;
   title: string;
   subtitle?: string;
-  badge?: string;
+  /** Inline title chip — string or dashboard-style status badges. */
+  badge?: ReactNode;
   value: number;
   valueDisplay?: ReactNode;
   valueSkeleton: boolean;
@@ -78,10 +79,14 @@ export function PatientStatCard({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <p className="text-sm font-medium text-gray-700">{displayTitle}</p>
-            {badge ? (
-              <Badge variant="outline" className="text-[10px] font-normal text-muted-foreground">
-                {badge}
-              </Badge>
+            {badge != null ? (
+              typeof badge === "string" ? (
+                <Badge variant="outline" className="text-[10px] font-normal text-muted-foreground">
+                  {badge}
+                </Badge>
+              ) : (
+                badge
+              )
             ) : null}
           </div>
           {displaySubtitle ? (
