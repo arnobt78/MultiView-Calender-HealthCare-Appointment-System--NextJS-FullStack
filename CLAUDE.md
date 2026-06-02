@@ -6,10 +6,10 @@ Compact agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 - **Doctor portal billing:** `DoctorPortalInvoicesCard` — stacked header (`PortalPanelSubsectionHeader`): possessive title, total count, status chip (`doctor-portal-billing-display.ts`). Rows: `DoctorPortalInvoiceListRow` + `InvoiceListPatientStrip` / `InvoiceVisitListMeta` / `InvoiceIssuedByMeta`. SSR `prefetchInvoices` seeds visit_summary + issuer labels. No manual Create Draft on portal (`DOCTOR_PORTAL_BILLING_SHOW_MANUAL_CREATE`).
 - **Doctor portal patients:** `DoctorPortalPatientsCard` — same header pattern; `doctor-portal-patients-display.ts` (Active/Inactive chip). Roster from `usePatients` + `primary_doctor_id` scope.
-- **Confirm dialogs:** `ConfirmActionDialog` + `confirm-delete-dialog-copy.tsx` — invoice delete, owned-type delete/disable, global-type disable (warning), weekly hours delete, unavailable dates delete. Invoice menu: controlled dialog sibling of dropdown (not nested `AlertDialog`).
-- **Visit types (portal):** Owned types — visit fee on create/edit (`appointment-type-price.ts`, `VisitFeeBadge`). Global/owned disable = confirm before off; owned delete = destructive confirm.
-- **Staff scope / invalidation:** Unchanged — `invalidateAppointmentTypeDerived`, `invalidateDoctorSchedule`, `invalidateInvoicesBilling`, `patients.all` + `doctorPortal.all` seeds on portal page.
-- **Verify:** `npm test` **621** / **112** files, tsc, lint, build.
+- **Confirm dialogs:** `ConfirmActionDialog` + `confirm-delete-dialog-copy.tsx` — portal invoice/schedule/visit-type actions; CP `GlobalAppointmentTypesEditor` delete (`buildCpAdminAppointmentTypeDeleteConfirmSubtitle`). Dropdown deletes: dialog sibling of menu (fragment).
+- **Visit types:** Portal owned fee + disable/delete confirms; CP admin-all global/custom delete confirm. Mutations → `invalidateAppointmentTypeDerived`.
+- **Invalidation / SSR:** Portal page seeds `doctorPortal.all`, `patients.all`, invoices, schedule settings; hooks unchanged.
+- **Verify:** `npm test` **623** / **113** files, tsc, lint, build.
 
 ## Never / Always
 
@@ -46,7 +46,7 @@ Cross-tab: `query-cache-cross-tab.ts` in `QueryProvider`.
 
 ## Follow-ups (optional)
 
-`calendar/export`, `calendar/sync`, `appointments/search` = owner-only. Assignee batch / `?ids=` treating OR gap unchanged.
+`calendar/export`, `calendar/sync`, `appointments/search` = owner-only. Legacy raw `AlertDialog` on some CP detail forms (org, appointment detail) — migrate to `ConfirmActionDialog` if UX parity needed. Assignee / `?ids=` treating OR gap unchanged.
 
 ## Principle
 
