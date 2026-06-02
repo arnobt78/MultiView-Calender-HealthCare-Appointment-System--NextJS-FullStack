@@ -16,7 +16,10 @@ import {
   assertNoOwnerAppointmentOverlap,
 } from "@/lib/scheduling/validate-appointment-window";
 import { getUserRole, isPatientRole } from "@/lib/rbac";
-import { staffCalendarAppointmentFilter } from "@/lib/staff-appointment-calendar-scope";
+import {
+  staffCalendarAppointmentFilter,
+  staffCalendarAppointmentIdsBatchWhere,
+} from "@/lib/staff-appointment-calendar-scope";
 import { isValidUUID } from "@/lib/validation";
 import { appointmentDetailHref, appointmentNotificationLink } from "@/lib/entity-routes";
 import { redis } from "@/lib/redis";
@@ -68,23 +71,11 @@ export async function GET(req: NextRequest) {
       }
 
       const rows = await prisma.appointment.findMany({
-        where: {
-          id: { in: ids },
-          OR: [
-            { owner_id: sessionUser.userId },
-            {
-              assignees: {
-                some: {
-                  OR: [
-                    { user_id: sessionUser.userId },
-                    ...(sessionUser.email ? [{ invited_email: sessionUser.email }] : []),
-                  ],
-                  status: "accepted",
-                },
-              },
-            },
-          ],
-        },
+        where: staffCalendarAppointmentIdsBatchWhere(
+          sessionUser.userId,
+          ids,
+          sessionUser.email
+        ),
         orderBy: { start: "asc" },
         include: BASE_APPOINTMENT_INCLUDE,
       });
@@ -146,7 +137,11 @@ export async function GET(req: NextRequest) {
 
       where = { patient_id: patientRecord.id, ...listFilters };
     } else {
-      where = staffCalendarAppointmentFilter(sessionUser.userId, listFilters);
+      where = staffCalendarAppointmentFilter(
+        sessionUser.userId,
+        listFilters,
+        sessionUser.email
+      );
     }
 
     const [appointments, total] = await Promise.all([

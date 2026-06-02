@@ -37,7 +37,7 @@ describe("countTodayAppointmentsForLoginUser", () => {
     );
   });
 
-  it("counts owner or treating visits for doctor role", async () => {
+  it("counts owner, treating, or accepted assignee visits for doctor role", async () => {
     vi.mocked(prisma.appointment.count).mockResolvedValue(5);
 
     const n = await countTodayAppointmentsForLoginUser(
@@ -52,7 +52,21 @@ describe("countTodayAppointmentsForLoginUser", () => {
       where: {
         AND: [
           {
-            OR: [{ owner_id: "doc-1" }, { treating_physician_id: "doc-1" }],
+            OR: [
+              { owner_id: "doc-1" },
+              { treating_physician_id: "doc-1" },
+              {
+                assignees: {
+                  some: {
+                    status: "accepted",
+                    OR: [
+                      { user_id: "doc-1" },
+                      { invited_email: "test@doctor.com" },
+                    ],
+                  },
+                },
+              },
+            ],
           },
           { start: { gte: expect.any(Date), lte: expect.any(Date) } },
         ],

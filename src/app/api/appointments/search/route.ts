@@ -38,15 +38,21 @@ export async function GET(req: NextRequest) {
     let appointments;
     if (isValidUUID(searchQuery)) {
       appointments = await prisma.appointment.findMany({
-        where: staffCalendarAppointmentFilter(sessionUser.userId, { id: searchQuery }),
+        where: staffCalendarAppointmentFilter(
+          sessionUser.userId,
+          { id: searchQuery },
+          sessionUser.email
+        ),
         select: { id: true, title: true, start: true, end: true, status: true },
         take: safeLimit,
       });
     } else {
       appointments = await prisma.appointment.findMany({
-        where: staffCalendarAppointmentFilter(sessionUser.userId, {
-          title: { contains: searchQuery, mode: "insensitive" },
-        }),
+        where: staffCalendarAppointmentFilter(
+          sessionUser.userId,
+          { title: { contains: searchQuery, mode: "insensitive" } },
+          sessionUser.email
+        ),
         select: { id: true, title: true, start: true, end: true, status: true },
         orderBy: { start: "desc" },
         take: safeLimit,

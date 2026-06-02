@@ -54,7 +54,7 @@ export async function GET() {
     const monthEnd = endOfMonth(now);
 
     const appt = (extra?: Parameters<typeof staffCalendarAppointmentFilter>[1]) =>
-      staffCalendarAppointmentFilter(sessionUser.userId, extra);
+      staffCalendarAppointmentFilter(sessionUser.userId, extra, sessionUser.email);
 
     // Run all queries in parallel for performance
     const [

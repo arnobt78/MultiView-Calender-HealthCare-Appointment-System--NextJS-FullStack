@@ -67,7 +67,7 @@ export async function prefetchControlPanelSection(
   switch (tab) {
     case "overview":
       return {
-        dashboardOverview: await prefetchDashboardOverview(userId, role),
+        dashboardOverview: await prefetchDashboardOverview(userId, role, email),
       };
     case "patients":
       return { patients: await prefetchPatients() };

@@ -1,7 +1,7 @@
 /**
  * Post-login welcome toast: today's appointment count scoped by role.
  * Patients: `patient_id` via chart email (not `owner_id` — patients rarely own rows).
- * Staff: calendar owner OR treating physician (aligned with dashboard list + insights).
+ * Staff: owner OR treating OR accepted assignee (staff-appointment-calendar-scope).
  */
 
 import { endOfDay, startOfDay } from "date-fns";
@@ -31,8 +31,10 @@ export async function countTodayAppointmentsForLoginUser(
   }
 
   return prisma.appointment.count({
-    where: staffCalendarAppointmentFilter(userId, {
-      start: { gte: todayStart, lte: todayEnd },
-    }),
+    where: staffCalendarAppointmentFilter(
+      userId,
+      { start: { gte: todayStart, lte: todayEnd } },
+      email
+    ),
   });
 }

@@ -82,7 +82,12 @@ export async function GET() {
 
     const role = await getUserRole(sessionUser.userId);
     const appt = (extra?: Parameters<typeof dashboardOverviewAppointmentFilter>[2]) =>
-      dashboardOverviewAppointmentFilter(sessionUser.userId, role, extra);
+      dashboardOverviewAppointmentFilter(
+        sessionUser.userId,
+        role,
+        extra,
+        sessionUser.email
+      );
 
     const [
       totalAppointments,

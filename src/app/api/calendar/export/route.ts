@@ -31,7 +31,7 @@ export async function GET() {
     }
 
     const appointments = await prisma.appointment.findMany({
-      where: staffCalendarAppointmentWhere(sessionUser.userId),
+      where: staffCalendarAppointmentWhere(sessionUser.userId, sessionUser.email),
       include: { category: true, patient: true },
       orderBy: { start: "desc" },
     });

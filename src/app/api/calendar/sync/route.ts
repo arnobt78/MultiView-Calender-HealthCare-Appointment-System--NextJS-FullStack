@@ -77,7 +77,11 @@ export async function POST(request: NextRequest) {
 
     // Owner OR treating — same scope as GET /api/appointments and ICS export.
     const appointment = await prisma.appointment.findFirst({
-      where: staffCalendarAppointmentByIdWhere(sessionUser.userId, appointmentId),
+      where: staffCalendarAppointmentByIdWhere(
+        sessionUser.userId,
+        appointmentId,
+        sessionUser.email
+      ),
     });
 
     if (!appointment) {

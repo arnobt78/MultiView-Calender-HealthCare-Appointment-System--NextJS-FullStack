@@ -34,6 +34,7 @@ import { prisma } from "@/lib/prisma";
 import {
   dashboardOverviewAppointmentFilter,
   staffCalendarAppointmentFilter,
+  staffCalendarAppointmentIdsBatchWhere,
   staffCalendarAppointmentWhere,
 } from "@/lib/staff-appointment-calendar-scope";
 import { redis } from "@/lib/redis";
@@ -339,7 +340,7 @@ export async function prefetchDashboardAppointments(
       }
     } else {
       const rows = await prisma.appointment.findMany({
-        where: staffCalendarAppointmentWhere(userId),
+        where: staffCalendarAppointmentWhere(userId, email),
         orderBy: { start: "asc" },
         take: PAGINATION.CALENDAR_APPOINTMENTS_LIMIT,
         include: { appointment_type: { select: { price_cents: true } } },
@@ -360,20 +361,11 @@ export async function prefetchDashboardAppointments(
     const assignedRaw =
       extraAssignedIds.length > 0
         ? await prisma.appointment.findMany({
-            where: {
-              id: { in: extraAssignedIds },
-              OR: [
-                { owner_id: userId },
-                {
-                  assignees: {
-                    some: {
-                      OR: [{ user_id: userId }, { invited_email: email }],
-                      status: "accepted",
-                    },
-                  },
-                },
-              ],
-            },
+            where: staffCalendarAppointmentIdsBatchWhere(
+              userId,
+              extraAssignedIds,
+              email
+            ),
             include: { appointment_type: { select: { price_cents: true } } },
           })
         : [];
@@ -735,7 +727,8 @@ const OVERVIEW_CACHE_TTL = 90;
  */
 export async function prefetchDashboardOverview(
   userId: string,
-  role: string | null = null
+  role: string | null = null,
+  userEmail?: string | null
 ): Promise<DashboardOverview | null> {
   try {
     const cacheKey = `dashboard:overview:${userId}`;
@@ -762,8 +755,13 @@ export async function prefetchDashboardOverview(
     const monthEnd = endOfMonth(now);
 
     const resolvedRole = role ?? (await getUserRole(userId));
+    const resolvedEmail =
+      userEmail ??
+      (await prisma.user.findUnique({ where: { id: userId }, select: { email: true } }))
+        ?.email ??
+      null;
     const appt = (extra?: Parameters<typeof dashboardOverviewAppointmentFilter>[2]) =>
-      dashboardOverviewAppointmentFilter(userId, resolvedRole, extra);
+      dashboardOverviewAppointmentFilter(userId, resolvedRole, extra, resolvedEmail);
 
     const [
       totalAppointments,
@@ -1217,6 +1215,12 @@ export async function prefetchDoctorPortal(userId: string): Promise<DoctorPortal
     const monthStart = startOfMonth(now);
     const monthEnd = endOfMonth(now);
 
+    const staffEmail =
+      (await prisma.user.findUnique({ where: { id: userId }, select: { email: true } }))
+        ?.email ?? null;
+    const apptScope = (extra?: Parameters<typeof staffCalendarAppointmentFilter>[1]) =>
+      staffCalendarAppointmentFilter(userId, extra, staffEmail);
+
     const [
       doctor,
       todayAppts,
@@ -1245,14 +1249,14 @@ export async function prefetchDoctorPortal(userId: string): Promise<DoctorPortal
         },
       }),
       prisma.appointment.findMany({
-        where: staffCalendarAppointmentFilter(userId, {
+        where: apptScope({
           start: { gte: todayStart, lte: todayEnd },
         }),
         orderBy: { start: "asc" },
         include: { appointment_type: { select: { price_cents: true } } },
       }),
       prisma.appointment.findMany({
-        where: staffCalendarAppointmentFilter(userId, {
+        where: apptScope({
           start: { gt: todayEnd },
           status: { not: "done" },
         }),
@@ -1275,48 +1279,48 @@ export async function prefetchDoctorPortal(userId: string): Promise<DoctorPortal
         select: { id: true, doctor_id: true, appointment_type_id: true, is_enabled: true, created_at: true },
       }),
       prisma.appointment.count({
-        where: staffCalendarAppointmentFilter(userId, {
+        where: apptScope({
           start: { gte: todayStart, lte: todayEnd },
         }),
       }),
       prisma.appointment.count({
-        where: staffCalendarAppointmentFilter(userId, {
+        where: apptScope({
           start: { gte: weekStart, lte: weekEnd },
         }),
       }),
       prisma.appointment.count({
-        where: staffCalendarAppointmentFilter(userId, {
+        where: apptScope({
           start: { gte: monthStart, lte: monthEnd },
         }),
       }),
       prisma.appointment.count({
-        where: staffCalendarAppointmentFilter(userId, { status: "pending" }),
+        where: apptScope({ status: "pending" }),
       }),
       prisma.appointment.count({
-        where: staffCalendarAppointmentFilter(userId, { status: "alert" }),
+        where: apptScope({ status: "alert" }),
       }),
       prisma.appointment.count({
-        where: staffCalendarAppointmentFilter(userId, { status: "done" }),
+        where: apptScope({ status: "done" }),
       }),
       prisma.appointment.count({
-        where: staffCalendarAppointmentFilter(userId, {
+        where: apptScope({
           end: { lt: now },
           status: { not: "done" },
         }),
       }),
       prisma.appointment.count({
-        where: staffCalendarAppointmentFilter(userId, {
+        where: apptScope({
           start: { gte: monthStart, lte: monthEnd },
           status: "done",
         }),
       }),
       prisma.appointment.count({
-        where: staffCalendarAppointmentFilter(userId, {
+        where: apptScope({
           start: { gte: weekStart, lt: todayStart },
         }),
       }),
       prisma.appointment.count({
-        where: staffCalendarAppointmentFilter(userId, {
+        where: apptScope({
           start: { gte: monthStart, lt: todayStart },
         }),
       }),

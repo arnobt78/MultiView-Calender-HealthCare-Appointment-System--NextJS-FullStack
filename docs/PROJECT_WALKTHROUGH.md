@@ -1,6 +1,14 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-02 — Appointment Type Pricing + Doctor Profiles + CP UI)
+## Latest (2026-06-02 — Portal UI + Staff scope + Confirm dialogs)
+
+- **Staff calendar scope:** `staff-appointment-calendar-scope.ts` — `staffCalendarVisibilityOrClauses`: owner **OR** treating **OR** accepted assignee (`user_id` / `invited_email`). Same filter on `GET /api/appointments`, `?ids=` batch, **`GET /api/calendar/export`**, **`POST /api/calendar/sync`**, **`GET /api/appointments/search`**, doctor-portal API, login-today count, non-admin dashboard overview. SSR: `prefetchDashboardAppointments`, `prefetchDoctorPortal`, `prefetchDashboardOverview(userId, role, email)` via `control-panel-section-prefetch`.
+- **Doctor portal:** stacked panel headers (billing/patients); invoice rows (`DoctorPortalInvoiceListRow`, `invoice-list-display`); SSR visit summaries on invoices.
+- **Confirm dialogs:** `ConfirmActionDialog` + `confirm-delete-dialog-copy.tsx` — destructive/warning actions portal + CP + calendar/settings; dropdown deletes: dialog as menu **sibling**.
+- **Org billing KPI:** `invoice-billing-totals.ts`, `GET /api/invoices/billing-totals`, dual query keys + `prefetchOrgBillingInvoicesByOrgIds`.
+- **Verify:** Vitest **629** (113 files), tsc, lint, build.
+
+## Prior (2026-06-02 — Appointment Type Pricing + Doctor Profiles + CP UI)
 
 - **DB:** `012_appointment_type_price_cents.sql` — `price_cents INT DEFAULT 0` on `appointment_types`. Seed (`db:seed-extended`) sets prices on all 4 global types (Initial €150, Follow-up €92.50, Telehealth €85, Annual €120) + full doctor profiles (bio, specialty, phone, license, department, office, fee, experience, languages).
 - **Price threading:** `appointment_type_price_cents` flows from every Prisma query site through `serializeAppointment` to `Appointment` type. Covered: main GET/POST/PATCH/PUT, batch `?ids=`, PATCH `[id]`, patient-portal GET+POST, admin-portal, doctor-portal, all SSR prefetch paths, snapshot rows. `PortalAppointmentIncludeRow` extended. `appointmentSnapshotInclude` includes `price_cents`.
@@ -18,7 +26,7 @@
 - **Invoice billing KPI + org list:** `invoice-billing-totals.ts` — `INVOICE_OUTSTANDING_STATUSES` shared by UI and server aggregates. `fetchInvoiceBillingTotalsForOrganization` now actively powers org KPI cards through new API `GET /api/invoices/billing-totals?organizationId=`. Query keys: `queryKeys.invoices.byOrganization(orgId)` + `queryKeys.invoices.byOrganizationTotals(orgId)`. **Org SSR:** `prefetchOrgBillingInvoicesByOrgIds` seeds both list + totals for every org on CP organizations tab (cap 20). **Organization billing:** all org panels render (removed `slice(0,3)`), all invoices shown, `InvoiceBillingStatsRow` + `InvoiceBillingListRow`. Invalidation: `invalidateInvoices*` → `invoices.all` prefix includes both org list + totals keys.
 - **Entity detail empty values:** `ClinicalEmptyDash` — single em-dash; `clinicalEmptyOr` / `clinicalEmptyOrNode` on patient, doctor, category CP detail schema rows (`patient-care-level.ts` `hasPatientCareLevel`).
 - **Dashboard calendar filters:** `CategoryFilterSelect` + `PatientFilterSelect` (brand mark / portrait + age + care tier); `ClinicalListFilterToolbar` reset right-aligned. **Clinical role** filter (`calendar-clinical-role-filter.ts`): default **All My Visits**; **Created by Me**; **Referred to Me (Treating)** — client-side on staff views; hidden for patients.
-- **Staff calendar scope:** `src/lib/staff-appointment-calendar-scope.ts` — staff list/dashboard calendar uses `owner_id OR treating_physician_id` (aligned with insights + billing). Wired: `GET /api/appointments`, `prefetchDashboardAppointments`, `prefetchDoctorPortal`, `GET /api/doctor-portal`, `login-today-appointments`. **Admin** dashboard overview KPI counts stay **org-wide** via `dashboardOverviewAppointmentFilter` (doctors use staff scope).
+- **Staff calendar scope:** owner **OR** treating **OR** accepted assignee — see Latest section. **Admin** overview KPIs stay org-wide via `dashboardOverviewAppointmentFilter`.
 - **Curated demo seed:** `npm run db:seed-demo-appointments` → `scripts/seed-demo-appointments-curated.ts` (exactly **10** rows, marker `seed-demo-curated:v1`, invoice matrix). Bulk timeline: `db:seed-demo-appointments-timeline`. Full reset: `CONFIRM_DB_CLEAR=YES npm run db:clear` → `db:prepare` → `db:seed-extended` → `db:seed-demo-appointments` → `db:migrate`.
 - **Cross-portal revenue fix:** Admin **Dashboard Overview** revenue now uses `fetchRevenueOverviewForViewer` (global totals — same universe as CP Invoice Management). Doctor Management **Revenue** column attributes paid cents to treating physician, then calendar owner (`fetchPaidRevenueCentsByDoctorIds`). Invoice writes bust all admin overview Redis keys (`invalidateAdminDashboardOverviewCaches`).
 - **Billing owner:** `resolveInvoiceBillingUserId` prefers `treating_physician_id` over `owner_id` on create.
@@ -29,7 +37,7 @@
 - **One bill per visit / picker / Refunded badge:** `billing-appointment-eligibility.ts`, POST **409**, `009` migration, shared picker + SSR seed (unchanged contract).
 - **Payments:** `011_payment_stripe_id_unique.sql`; payment history UI dedupes duplicate Stripe IDs.
 - **Tests:** Vitest **589** (102 files), incl. `invoice-billing-totals.test.ts`, `org-billing-prefetch.test.ts`, `clinical-empty-dash.test.tsx`, `control-panel-section-prefetch.test.ts`. **DB:** `npm run db:migrate` (silent OK) runs `009`–`011`.
-- **Staff calendar scope:** `staff-appointment-calendar-scope.ts` — `staffCalendarAppointmentWhere` (owner OR treating) on GET `/api/appointments`, doctor portal, prefetch, **`GET /api/calendar/export`**, **`POST /api/calendar/sync`**, **`GET /api/appointments/search`**. Assignee-only: `?ids=` batch still owner OR accepted assignee (not treating).
+- **Staff calendar scope:** unified owner/treating/assignee — see Latest (2026-06-02).
 
 ## Prior (2026-05-31)
 
