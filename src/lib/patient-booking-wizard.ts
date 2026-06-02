@@ -14,6 +14,8 @@ export type PatientBookingAppointmentType = {
   slot_interval_minutes: number;
   minimum_notice_minutes: number;
   user_id: string | null;
+  /** Visit fee in cents — shown in booking dialog; 0 = no explicit price set. */
+  price_cents?: number;
 };
 
 export type PatientBookingWizardState = {

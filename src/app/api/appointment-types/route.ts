@@ -124,6 +124,16 @@ export async function POST(req: NextRequest) {
     const icon =
       typeof body.icon === "string" && body.icon.trim() ? body.icon.trim() : null;
 
+    const priceCentsRaw =
+      typeof body.price_cents === "number"
+        ? body.price_cents
+        : typeof body.price_cents === "string"
+          ? Number(body.price_cents)
+          : 0;
+    const price_cents = Number.isFinite(priceCentsRaw) && priceCentsRaw >= 0
+      ? Math.round(priceCentsRaw)
+      : 0;
+
     const type = await prisma.appointmentType.create({
       data: {
         user_id,
@@ -152,6 +162,7 @@ export async function POST(req: NextRequest) {
         is_telehealth: isTelehealth,
         color,
         icon,
+        price_cents,
       },
     });
 

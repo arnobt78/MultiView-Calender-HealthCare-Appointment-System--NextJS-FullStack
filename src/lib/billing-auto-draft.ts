@@ -17,6 +17,8 @@ import {
   invalidateBillingRedisCaches,
   resolvePatientPortalUserIdForAppointment,
 } from "@/lib/billing-cache";
+import { resolveVisitFeeCents } from "@/lib/billing-visit-fee";
+import { notifyPatientDraftInvoiceCreated } from "@/lib/billing-notify-patient";
 import { format } from "date-fns";
 
 export type MaybeAutoDraftResult =
@@ -54,10 +56,11 @@ export async function maybeCreateDraftInvoiceForCompletedVisit(
       status: true,
       owner_id: true,
       treating_physician_id: true,
+      patient_id: true,
       patient: {
         select: { firstname: true, lastname: true, email: true },
       },
-      appointment_type: { select: { name: true } },
+      appointment_type: { select: { name: true, price_cents: true } },
       owner: { select: { consultation_fee: true } },
       treating_physician: { select: { consultation_fee: true } },
     },
@@ -79,9 +82,12 @@ export async function maybeCreateDraftInvoiceForCompletedVisit(
   );
 
   const feeDoctor = appt.treating_physician ?? appt.owner;
-  const amountCents = feeDoctor?.consultation_fee ?? 0;
+  const amountCents = resolveVisitFeeCents({
+    typePriceCents: appt.appointment_type?.price_cents,
+    doctorConsultationFeeCents: feeDoctor?.consultation_fee,
+  });
   if (amountCents <= 0) {
-    return { created: false, reason: "no_consultation_fee" };
+    return { created: false, reason: "no_price" };
   }
 
   const patientLabel =
@@ -124,6 +130,15 @@ export async function maybeCreateDraftInvoiceForCompletedVisit(
     invoiceUserId: billingUserId,
     appointmentId,
     patientPortalUserId,
+  });
+
+  notifyPatientDraftInvoiceCreated({
+    invoiceId: invoice.id,
+    patientId: appt.patient_id,
+    patientEmail: appt.patient?.email ?? null,
+    amountCents,
+    appointmentTitle: appt.title,
+    visitDate: appt.start,
   });
 
   return { created: true, invoiceId: invoice.id };

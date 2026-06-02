@@ -96,6 +96,7 @@ export async function GET() {
       prisma.appointment.findMany({
         where: appt({ start: { gte: todayStart, lte: todayEnd } }),
         orderBy: { start: "asc" },
+        include: { appointment_type: { select: { price_cents: true } } },
       }),
       // Upcoming: next 20 beyond today (not done)
       prisma.appointment.findMany({
@@ -105,6 +106,7 @@ export async function GET() {
         }),
         orderBy: { start: "asc" },
         take: 20,
+        include: { appointment_type: { select: { price_cents: true } } },
       }),
       // Patients assigned to this doctor
       prisma.patient.findMany({
@@ -197,8 +199,14 @@ export async function GET() {
         ...doctor,
         created_at: doctor.created_at.toISOString(),
       },
-      todayAppointments: todayAppts.map(serializeAppointment),
-      upcomingAppointments: upcomingAppts.map(serializeAppointment),
+      todayAppointments: todayAppts.map((a) => serializeAppointment({
+        ...a,
+        appointment_type_price_cents: (a as typeof a & { appointment_type?: { price_cents: number } | null }).appointment_type?.price_cents ?? null,
+      })),
+      upcomingAppointments: upcomingAppts.map((a) => serializeAppointment({
+        ...a,
+        appointment_type_price_cents: (a as typeof a & { appointment_type?: { price_cents: number } | null }).appointment_type?.price_cents ?? null,
+      })),
       patients: patients.map(serializePatient),
       enabledTypes,
       allGlobalTypes,

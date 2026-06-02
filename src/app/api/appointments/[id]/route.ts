@@ -55,7 +55,12 @@ export async function GET(_req: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Appointment not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ appointment: serializeAppointment(raw) });
+    return NextResponse.json({
+      appointment: serializeAppointment({
+        ...raw,
+        appointment_type_price_cents: (raw as typeof raw & { appointment_type?: { price_cents: number } | null }).appointment_type?.price_cents ?? null,
+      }),
+    });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Internal server error";
     return NextResponse.json({ error: message }, { status: 500 });
@@ -137,11 +142,17 @@ export async function PUT(req: NextRequest, context: RouteContext) {
     const updated = await prisma.appointment.update({
       where: { id },
       data,
+      include: { appointment_type: { select: { price_cents: true } } },
     });
 
     void redis.invalidateDashboardOverview(ctx.sessionUser.userId);
 
-    return NextResponse.json({ appointment: serializeAppointment(updated) });
+    return NextResponse.json({
+      appointment: serializeAppointment({
+        ...updated,
+        appointment_type_price_cents: updated.appointment_type?.price_cents ?? null,
+      }),
+    });
   } catch (err: unknown) {
     if (err && typeof err === "object" && "code" in err && err.code === "P2025") {
       return NextResponse.json({ error: "Appointment not found or unauthorized" }, { status: 404 });
@@ -300,6 +311,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     const updated = await prisma.appointment.update({
       where: { id },
       data,
+      include: { appointment_type: { select: { price_cents: true } } },
     });
 
     if (
@@ -310,7 +322,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       const { maybeCreateDraftInvoiceForCompletedVisit } = await import(
         "@/lib/billing-auto-draft"
       );
-      void maybeCreateDraftInvoiceForCompletedVisit(id, ctx.accessSession);
+      await maybeCreateDraftInvoiceForCompletedVisit(id, ctx.accessSession);
     }
 
     void redis.invalidateDashboardOverview(ctx.sessionUser.userId);
@@ -337,7 +349,12 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       }
     }
 
-    return NextResponse.json({ appointment: serializeAppointment(updated) });
+    return NextResponse.json({
+      appointment: serializeAppointment({
+        ...updated,
+        appointment_type_price_cents: updated.appointment_type?.price_cents ?? null,
+      }),
+    });
   } catch (err: unknown) {
     if (err && typeof err === "object" && "code" in err && err.code === "P2025") {
       return NextResponse.json({ error: "Appointment not found or unauthorized" }, { status: 404 });

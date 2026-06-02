@@ -29,6 +29,17 @@ const GLOBAL_TYPE_IDS = {
   annualCheckup: "22222222-2222-4222-8222-222222222204",
 } as const;
 
+/** Visit fees in cents — drives UI price badges + auto-draft invoice amounts. */
+const GLOBAL_TYPE_PRICE_CENTS: Record<
+  (typeof GLOBAL_TYPE_IDS)[keyof typeof GLOBAL_TYPE_IDS],
+  number
+> = {
+  [GLOBAL_TYPE_IDS.initialConsultation]: 15000,
+  [GLOBAL_TYPE_IDS.followUp]: 9250,
+  [GLOBAL_TYPE_IDS.telehealth]: 8500,
+  [GLOBAL_TYPE_IDS.annualCheckup]: 12000,
+};
+
 /** Stable ids for professional service categories (sort_order 1–6 wins appointment seed pick). */
 const DEMO_SERVICE_CATEGORIES = [
   {
@@ -103,11 +114,13 @@ const DEMO_ADMIN_PROFILE = {
   years_of_experience: 12,
 };
 
-// ─── Extended doctor profile data ────────────────────────────────────────────
+// ─── Extended doctor profile data (all fields) ───────────────────────────────
 
 const DOCTOR_PROFILES: Record<
   string,
   {
+    specialty: string;
+    bio: string;
     phone: string;
     license_number: string;
     department: string;
@@ -115,9 +128,12 @@ const DOCTOR_PROFILES: Record<
     office_location: string;
     languages_spoken: string[];
     years_of_experience: number;
+    is_active: boolean;
   }
 > = {
   "test@doctor.com": {
+    specialty: "Internal Medicine",
+    bio: "Dr. Müller is a board-certified internist with over 8 years of clinical experience at HealthCal Berlin. She specialises in preventive care, chronic disease management, and comprehensive annual health evaluations.",
     phone: "+49 30 123 456 00",
     license_number: "MED-2018-DE-001",
     department: "Internal Medicine",
@@ -125,8 +141,11 @@ const DOCTOR_PROFILES: Record<
     office_location: "Room 101, Block A",
     languages_spoken: ["English", "German"],
     years_of_experience: 8,
+    is_active: true,
   },
   "demo.doctor2@healthcal.dev": {
+    specialty: "Cardiology",
+    bio: "Dr. Laurent is an interventional cardiologist with 11 years of expertise in coronary artery disease, heart failure, and non-invasive cardiac imaging. He conducts regular electrocardiography and echocardiography clinics.",
     phone: "+49 30 234 567 00",
     license_number: "MED-2015-DE-002",
     department: "Cardiology",
@@ -134,8 +153,11 @@ const DOCTOR_PROFILES: Record<
     office_location: "Cardiac Wing, Floor 2",
     languages_spoken: ["English", "French"],
     years_of_experience: 11,
+    is_active: true,
   },
   "demo.doctor3@healthcal.dev": {
+    specialty: "Dermatology",
+    bio: "Dr. García is a dermatologist specialising in medical and cosmetic skin conditions, including acne, eczema, psoriasis, and mole mapping. She has 6 years of dedicated clinical dermatology practice.",
     phone: "+49 30 345 678 00",
     license_number: "MED-2019-DE-003",
     department: "Dermatology",
@@ -143,8 +165,11 @@ const DOCTOR_PROFILES: Record<
     office_location: "Derma Suite, Room 3B",
     languages_spoken: ["English", "Spanish"],
     years_of_experience: 6,
+    is_active: true,
   },
   "demo.doctor4@healthcal.dev": {
+    specialty: "Neurology",
+    bio: "Dr. Al-Rashid is a consultant neurologist with 14 years of experience treating headache disorders, epilepsy, multiple sclerosis, and movement disorders. He is an active researcher in neuroinflammatory diseases.",
     phone: "+49 30 456 789 00",
     license_number: "MED-2012-DE-004",
     department: "Neurology",
@@ -152,8 +177,11 @@ const DOCTOR_PROFILES: Record<
     office_location: "Neuro Clinic, Floor 4",
     languages_spoken: ["English", "German", "Arabic"],
     years_of_experience: 14,
+    is_active: true,
   },
   "demo.doctor5@healthcal.dev": {
+    specialty: "Pediatrics",
+    bio: "Dr. Yıldız is a paediatric physician with 5 years of experience in child wellness, vaccinations, developmental assessments, and management of acute childhood illnesses. She takes a family-centred care approach.",
     phone: "+49 30 567 890 00",
     license_number: "MED-2020-DE-005",
     department: "Pediatrics",
@@ -161,8 +189,11 @@ const DOCTOR_PROFILES: Record<
     office_location: "Children's Wing, Room 5",
     languages_spoken: ["English", "Turkish"],
     years_of_experience: 5,
+    is_active: true,
   },
   "demo.doctor6@healthcal.dev": {
+    specialty: "Oncology",
+    bio: "Dr. Kowalski is a medical oncologist with 16 years of clinical and research experience in haematological malignancies, solid tumour chemotherapy, and targeted therapies. He leads the tumour board at HealthCal Berlin.",
     phone: "+49 30 678 901 00",
     license_number: "MED-2010-DE-006",
     department: "Oncology",
@@ -170,8 +201,11 @@ const DOCTOR_PROFILES: Record<
     office_location: "Cancer Centre, Floor 6",
     languages_spoken: ["English", "German", "Polish"],
     years_of_experience: 16,
+    is_active: true,
   },
   "demo.doctor7@healthcal.dev": {
+    specialty: "Orthopedics",
+    bio: "Dr. Rossi is an orthopaedic surgeon specialising in sports injuries, joint replacement, and spinal disorders. With 10 years of surgical experience, he combines minimally invasive techniques with evidence-based rehabilitation.",
     phone: "+49 30 789 012 00",
     license_number: "MED-2016-DE-007",
     department: "Orthopedics",
@@ -179,8 +213,11 @@ const DOCTOR_PROFILES: Record<
     office_location: "Ortho Block, Room 7",
     languages_spoken: ["English", "Italian"],
     years_of_experience: 10,
+    is_active: true,
   },
   "demo.doctor8@healthcal.dev": {
+    specialty: "Psychiatry",
+    bio: "Dr. Volkov is a consultant psychiatrist with 9 years of clinical experience in mood disorders, anxiety, PTSD, and psychotherapy. He integrates pharmacotherapy with cognitive-behavioural approaches for holistic patient care.",
     phone: "+49 30 890 123 00",
     license_number: "MED-2017-DE-008",
     department: "Psychiatry",
@@ -188,6 +225,7 @@ const DOCTOR_PROFILES: Record<
     office_location: "Mental Health Suite, Level 2",
     languages_spoken: ["English", "German", "Russian"],
     years_of_experience: 9,
+    is_active: true,
   },
 };
 
@@ -331,26 +369,32 @@ async function seedExtendedSchema() {
     console.log(`  ✔ ${email}`);
   }
 
-  // ── 2. Update global appointment types with is_telehealth + color + icon ──
-  console.log("\n📅  Updating global appointment type metadata…");
-  await prisma.appointmentType.update({
-    where: { id: GLOBAL_TYPE_IDS.initialConsultation },
-    data: { color: "#6366f1", icon: "stethoscope", is_telehealth: false, is_active: true },
-  });
-  await prisma.appointmentType.update({
-    where: { id: GLOBAL_TYPE_IDS.followUp },
-    data: { color: "#10b981", icon: "clock", is_telehealth: false, is_active: true },
-  });
-  // Telehealth Session must have is_telehealth = true so the badge + video gate work
-  await prisma.appointmentType.update({
-    where: { id: GLOBAL_TYPE_IDS.telehealth },
-    data: { color: "#0ea5e9", icon: "video", is_telehealth: true, is_active: true },
-  });
-  await prisma.appointmentType.update({
-    where: { id: GLOBAL_TYPE_IDS.annualCheckup },
-    data: { color: "#f59e0b", icon: "heart", is_telehealth: false, is_active: true },
-  });
-  console.log("  ✔ 4 global types updated");
+  // ── 2. Update global appointment types with metadata + price_cents ──
+  console.log("\n📅  Updating global appointment type metadata + visit fees…");
+  const globalMeta: {
+    id: (typeof GLOBAL_TYPE_IDS)[keyof typeof GLOBAL_TYPE_IDS];
+    color: string;
+    icon: string;
+    is_telehealth: boolean;
+  }[] = [
+    { id: GLOBAL_TYPE_IDS.initialConsultation, color: "#6366f1", icon: "stethoscope", is_telehealth: false },
+    { id: GLOBAL_TYPE_IDS.followUp, color: "#10b981", icon: "clock", is_telehealth: false },
+    { id: GLOBAL_TYPE_IDS.telehealth, color: "#0ea5e9", icon: "video", is_telehealth: true },
+    { id: GLOBAL_TYPE_IDS.annualCheckup, color: "#f59e0b", icon: "heart", is_telehealth: false },
+  ];
+  for (const g of globalMeta) {
+    await prisma.appointmentType.update({
+      where: { id: g.id },
+      data: {
+        color: g.color,
+        icon: g.icon,
+        is_telehealth: g.is_telehealth,
+        is_active: true,
+        price_cents: GLOBAL_TYPE_PRICE_CENTS[g.id],
+      },
+    });
+  }
+  console.log("  ✔ 4 global types updated (price_cents set)");
 
   // ── 3. Update demo patient (test@patient.com) with extended clinical fields ─
   console.log("\n🧑‍⚕️  Updating demo patient clinical fields…");
@@ -578,12 +622,14 @@ async function seedExtendedSchema() {
       doctorEmail: "test@doctor.com",
       name: "Physio Theraphy",
       duration_minutes: 30,
+      price_cents: 7500,
       description: "Custom physiotherapy session for Demo Doctor.",
     },
     {
       doctorEmail: "demo.doctor2@healthcal.dev",
       name: "Test Report Show",
       duration_minutes: 40,
+      price_cents: 9500,
       description: "Review diagnostic imaging and lab reports with the patient.",
     },
   ] as const;
@@ -613,10 +659,11 @@ async function seedExtendedSchema() {
         data: {
           description: spec.description,
           duration_minutes: spec.duration_minutes,
+          price_cents: spec.price_cents,
           ...scheduling,
         },
       });
-      console.log(`  ✔ ${spec.name} (updated scheduling)`);
+      console.log(`  ✔ ${spec.name} (updated scheduling + price)`);
     } else {
       await prisma.appointmentType.create({
         data: {
@@ -624,6 +671,7 @@ async function seedExtendedSchema() {
           name: spec.name,
           description: spec.description,
           duration_minutes: spec.duration_minutes,
+          price_cents: spec.price_cents,
           ...scheduling,
         },
       });

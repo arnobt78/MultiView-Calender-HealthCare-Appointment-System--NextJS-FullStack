@@ -20,6 +20,7 @@ const catalog: ServiceCatalogRow[] = [
     buffer_after_minutes: 0,
     slot_interval_minutes: 30,
     is_telehealth: true,
+    price_cents: 0,
     source: "global",
   },
   {
@@ -31,6 +32,7 @@ const catalog: ServiceCatalogRow[] = [
     buffer_after_minutes: 0,
     slot_interval_minutes: 30,
     is_telehealth: false,
+    price_cents: 0,
     source: "additional",
     doctor_offers: [{ id: "doc-b", label: "Dr B", specialty: null }],
   },

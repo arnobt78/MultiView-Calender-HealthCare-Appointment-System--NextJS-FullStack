@@ -214,6 +214,8 @@ export function serializeAppointment(a: {
   duration_minutes?: number | null;
   /** Video call meeting URL — shown as Join Call button when is_telehealth = true */
   telehealth_link?: string | null;
+  /** Joined from appointment_type — fee in cents for the visit fee badge on appointment cards. */
+  appointment_type_price_cents?: number | null;
 }) {
   const attachmentList = a.attachments ?? [];
   return {
@@ -236,6 +238,7 @@ export function serializeAppointment(a: {
     chief_complaint: a.chief_complaint ?? null,
     duration_minutes: a.duration_minutes ?? null,
     telehealth_link: a.telehealth_link ?? null,
+    appointment_type_price_cents: a.appointment_type_price_cents ?? null,
   };
 }
 
@@ -263,6 +266,8 @@ export type PortalAppointmentIncludeRow = Parameters<typeof serializeAppointment
   owner?: PortalAppointmentStaffUser | null;
   /** B2: joined user row for `treating_physician_id` when set (display chip). */
   treating_physician?: PortalAppointmentStaffUser | null;
+  /** Joined from appointment_type — price for the visit fee badge on patient portal cards. */
+  appointment_type?: { price_cents: number } | null;
 };
 
 /** Serialized portal appointment — `category` stays UUID; rich chip uses `category_data`. */
@@ -274,7 +279,10 @@ export type PortalAppointmentRow = ReturnType<typeof mapPortalAppointmentsFromRo
  */
 export function mapPortalAppointmentsFromRows(rows: PortalAppointmentIncludeRow[]) {
   return rows.map((a) => {
-    const base = serializeAppointment(a);
+    const base = serializeAppointment({
+      ...a,
+      appointment_type_price_cents: a.appointment_type?.price_cents ?? null,
+    });
     return {
       ...base,
       category_data: a.category

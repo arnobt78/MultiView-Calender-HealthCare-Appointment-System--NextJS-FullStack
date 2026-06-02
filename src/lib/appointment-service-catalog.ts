@@ -21,6 +21,8 @@ export type ServiceCatalogRow = {
   buffer_after_minutes: number;
   slot_interval_minutes: number;
   is_telehealth: boolean;
+  /** Visit fee in cents — 0 = no price set. */
+  price_cents: number;
   source: ServiceCatalogSource;
   /** Present when source === "additional" — owners after name dedupe. */
   doctor_offers?: ServiceCatalogDoctorOffer[];
@@ -36,6 +38,7 @@ export type GlobalCatalogInput = {
   buffer_after_minutes: number;
   slot_interval_minutes: number;
   is_telehealth: boolean;
+  price_cents: number;
 };
 
 /** Raw doctor-owned row with owner display fields. */
@@ -48,6 +51,7 @@ export type AdditionalCatalogInput = {
   buffer_after_minutes: number;
   slot_interval_minutes: number;
   is_telehealth: boolean;
+  price_cents: number;
   user_id: string;
   owner_display_name: string | null;
   owner_email: string;
@@ -94,6 +98,7 @@ export function buildServiceCatalog(
     buffer_after_minutes: g.buffer_after_minutes,
     slot_interval_minutes: g.slot_interval_minutes,
     is_telehealth: g.is_telehealth,
+    price_cents: g.price_cents,
     source: "global",
   }));
 
@@ -138,6 +143,7 @@ export function buildServiceCatalog(
       buffer_after_minutes: rep.buffer_after_minutes,
       slot_interval_minutes: rep.slot_interval_minutes,
       is_telehealth: rep.is_telehealth,
+      price_cents: rep.price_cents,
       source: "additional" as const,
       doctor_offers,
     };

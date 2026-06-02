@@ -24,6 +24,7 @@ const globalSelect = {
   slot_interval_minutes: true,
   minimum_notice_minutes: true,
   created_at: true,
+  price_cents: true,
 } as const;
 
 function numField(v: unknown, min: number, max: number, fallback: number): number {
@@ -92,6 +93,16 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    const priceCentsRaw =
+      typeof body.price_cents === "number"
+        ? body.price_cents
+        : typeof body.price_cents === "string"
+          ? Number(body.price_cents)
+          : 0;
+    const price_cents = Number.isFinite(priceCentsRaw) && priceCentsRaw >= 0
+      ? Math.round(priceCentsRaw)
+      : 0;
+
     const type = await prisma.appointmentType.create({
       data: {
         user_id: null,
@@ -102,6 +113,7 @@ export async function POST(req: NextRequest) {
         buffer_after_minutes: numField(body.buffer_after_minutes, 0, 240, 0),
         slot_interval_minutes: numField(body.slot_interval_minutes, 5, 12 * 60, 30),
         minimum_notice_minutes: numField(body.minimum_notice_minutes, 0, 7 * 24 * 60, 60),
+        price_cents,
       },
       select: globalSelect,
     });

@@ -88,6 +88,7 @@ export async function GET() {
         include: {
           patient: { select: { firstname: true, lastname: true } },
           owner: { select: { display_name: true, email: true } },
+          appointment_type: { select: { price_cents: true } },
         },
       }),
       prisma.invoice.aggregate({ where: { status: "paid" }, _sum: { amount: true } }),
@@ -128,7 +129,10 @@ export async function GET() {
         patient_count: d.patients_primary_doctor.length,
       })),
       recentAppointments: recentAppointments.map((a) => ({
-        ...serializeAppointment(a),
+        ...serializeAppointment({
+          ...a,
+          appointment_type_price_cents: (a as typeof a & { appointment_type?: { price_cents: number } | null }).appointment_type?.price_cents ?? null,
+        }),
         patient_name: a.patient
           ? `${a.patient.firstname} ${a.patient.lastname}`
           : null,

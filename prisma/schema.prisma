@@ -249,6 +249,9 @@ model AppointmentType {
   icon                   String?  @db.Text
   /// Soft-delete flag — inactive types are hidden from booking but preserved in historical appointments
   is_active              Boolean  @default(true)
+  /// Visit fee in cents — used as the invoice amount when auto-draft fires on appointment completion.
+  /// Falls back to the treating doctor's consultation_fee when 0.
+  price_cents            Int      @default(0)
 
   user         User?                        @relation("AppointmentTypeUser", fields: [user_id], references: [id], onDelete: Cascade)
   /// Junction rows tracking which doctors have enabled this (global) type

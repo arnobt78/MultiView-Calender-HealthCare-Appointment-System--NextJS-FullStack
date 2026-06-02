@@ -45,6 +45,8 @@ export type AppointmentTypeApiRow = {
   is_telehealth?: boolean;
   color?: string | null;
   icon?: string | null;
+  /** Visit fee in cents — 0 = no explicit price. Auto-draft falls back to doctor consultation_fee. */
+  price_cents?: number;
 };
 
 async function afterTypeMutation(
@@ -87,7 +89,7 @@ export function useAppointmentTypeMutations(
   const suppressNotify = options?.suppressNotify === true;
 
   const createType = useMutation({
-    mutationFn: (body: { name: string; duration_minutes: number; description?: string | null }) =>
+    mutationFn: (body: { name: string; duration_minutes: number; description?: string | null; price_cents?: number }) =>
       apiClient<{ type: AppointmentTypeApiRow }>("/api/appointment-types", {
         method: "POST",
         body: JSON.stringify({ user_id: doctorId, ...body }),
@@ -110,7 +112,7 @@ export function useAppointmentTypeMutations(
   const updateType = useMutation({
     mutationFn: (
       vars: { id: string } & Partial<
-        Pick<AppointmentTypeApiRow, "name" | "description" | "duration_minutes" | "is_active">
+        Pick<AppointmentTypeApiRow, "name" | "description" | "duration_minutes" | "is_active" | "price_cents">
       >
     ) => {
       const { id, ...patch } = vars;
@@ -190,7 +192,7 @@ export function useGlobalAppointmentTypeMutations(options?: { suppressNotify?: b
   const suppressNotify = options?.suppressNotify === true;
 
   const createGlobalType = useMutation({
-    mutationFn: (body: { name: string; duration_minutes: number; description?: string | null }) =>
+    mutationFn: (body: { name: string; duration_minutes: number; description?: string | null; price_cents?: number }) =>
       apiClient<{ type: AppointmentTypeApiRow }>("/api/appointment-types/global", {
         method: "POST",
         body: JSON.stringify(body),
@@ -210,7 +212,7 @@ export function useGlobalAppointmentTypeMutations(options?: { suppressNotify?: b
   });
 
   const updateGlobalType = useMutation({
-    mutationFn: (vars: { id: string } & Partial<Pick<AppointmentTypeApiRow, "name" | "description" | "duration_minutes">>) => {
+    mutationFn: (vars: { id: string } & Partial<Pick<AppointmentTypeApiRow, "name" | "description" | "duration_minutes" | "price_cents">>) => {
       const { id, ...patch } = vars;
       return apiClient<{ type: AppointmentTypeApiRow }>(`/api/appointment-types/${id}`, {
         method: "PATCH",
@@ -260,4 +262,34 @@ export function useGlobalAppointmentTypeMutations(options?: { suppressNotify?: b
     isUpdating: updateGlobalType.isPending,
     isDeleting: deleteGlobalType.isPending,
   };
+}
+
+/** Admin-only: all appointment types (global + every doctor's custom) with owner info. */
+export type AdminAllTypeRow = {
+  id: string;
+  user_id: string | null;
+  name: string;
+  description: string | null;
+  duration_minutes: number;
+  slot_interval_minutes: number;
+  price_cents: number;
+  is_active: boolean;
+  is_telehealth: boolean;
+  color: string | null;
+  icon: string | null;
+  created_at: string;
+  owner_display_name: string | null;
+  owner_email: string | null;
+};
+
+export function useAdminAllAppointmentTypes(options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKeys.appointmentTypes.all,
+    queryFn: () =>
+      apiClient<{ globalTypes: AdminAllTypeRow[]; customTypes: AdminAllTypeRow[] }>(
+        "/api/appointment-types/admin-all"
+      ),
+    staleTime: 5 * 60 * 1000,
+    enabled: options?.enabled !== false,
+  });
 }

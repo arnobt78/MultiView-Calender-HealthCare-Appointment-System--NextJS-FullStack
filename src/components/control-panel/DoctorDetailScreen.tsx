@@ -7,14 +7,21 @@ import { format } from "date-fns";
 import {
   ArrowLeft,
   BookOpen,
+  BadgeDollarSign,
+  Building2,
   Hash,
+  Languages,
   Mail,
+  MapPin,
   Pencil,
+  Phone,
   Power,
   PowerOff,
+  ShieldCheck,
   Stethoscope,
   User as UserIcon,
   Users,
+  Clock,
 } from "lucide-react";
 import { BackNavigationLink } from "@/components/shared/BackNavigationLink";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -246,6 +253,58 @@ export function DoctorDetailScreen({
                 <FieldLabel icon={Stethoscope}>Specialty</FieldLabel>
                 <dd>{clinicalEmptyOr(liveUser.specialty, "definition")}</dd>
               </div>
+              {liveUser.phone ? (
+                <div className={patientDetailDefinitionRowClass}>
+                  <FieldLabel icon={Phone}>Phone</FieldLabel>
+                  <dd className="text-sm">{liveUser.phone}</dd>
+                </div>
+              ) : null}
+              {liveUser.license_number ? (
+                <div className={patientDetailDefinitionRowClass}>
+                  <FieldLabel icon={ShieldCheck}>License #</FieldLabel>
+                  <dd className="font-mono text-xs">{liveUser.license_number}</dd>
+                </div>
+              ) : null}
+              {liveUser.department ? (
+                <div className={patientDetailDefinitionRowClass}>
+                  <FieldLabel icon={Building2}>Department</FieldLabel>
+                  <dd className="text-sm">{liveUser.department}</dd>
+                </div>
+              ) : null}
+              {liveUser.office_location ? (
+                <div className={patientDetailDefinitionRowClass}>
+                  <FieldLabel icon={MapPin}>Office</FieldLabel>
+                  <dd className="text-sm">{liveUser.office_location}</dd>
+                </div>
+              ) : null}
+              {(liveUser.consultation_fee ?? 0) > 0 ? (
+                <div className={patientDetailDefinitionRowClass}>
+                  <FieldLabel icon={BadgeDollarSign}>Consultation fee</FieldLabel>
+                  <dd>
+                    <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200/70 bg-emerald-50/80 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                      €{((liveUser.consultation_fee ?? 0) / 100).toFixed(2)}
+                    </span>
+                  </dd>
+                </div>
+              ) : null}
+              {liveUser.years_of_experience != null ? (
+                <div className={patientDetailDefinitionRowClass}>
+                  <FieldLabel icon={Clock}>Experience</FieldLabel>
+                  <dd className="text-sm">{liveUser.years_of_experience} {liveUser.years_of_experience === 1 ? "year" : "years"}</dd>
+                </div>
+              ) : null}
+              {(liveUser.languages_spoken ?? []).length > 0 ? (
+                <div className={patientDetailDefinitionRowClass}>
+                  <FieldLabel icon={Languages}>Languages</FieldLabel>
+                  <dd className="flex flex-wrap gap-1">
+                    {(liveUser.languages_spoken ?? []).map((lang) => (
+                      <span key={lang} className="rounded-full border border-sky-200/70 bg-sky-50/80 px-2 py-0.5 text-[11px] font-medium text-sky-700">
+                        {lang}
+                      </span>
+                    ))}
+                  </dd>
+                </div>
+              ) : null}
               {liveUser.created_at ? (
                 <div className={patientDetailDefinitionRowClass}>
                   <FieldLabel icon={UserIcon}>Joined</FieldLabel>
@@ -272,7 +331,7 @@ export function DoctorDetailScreen({
               <span className={doctorDetailSectionIconCircleClass}>
                 <Stethoscope className="h-3.5 w-3.5 text-emerald-600" aria-hidden />
               </span>
-              Global Visit Type Access
+              Appointment type access
             </h3>
             <DoctorGlobalTypeConfigEditor doctorId={doctorId} />
           </div>

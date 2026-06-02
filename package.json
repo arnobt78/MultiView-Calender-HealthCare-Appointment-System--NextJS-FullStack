@@ -21,6 +21,7 @@
     "db:seed-demo-clinical": "tsx scripts/seed-demo-patient-clinical.ts",
     "db:seed-extended": "tsx scripts/seed-extended-schema.ts",
     "db:seed-demo-appointments": "tsx scripts/seed-demo-appointments-curated.ts",
+    "db:audit-billing-seed": "tsx scripts/audit-billing-seed.ts",
     "db:seed-demo-appointments-timeline": "tsx scripts/seed-demo-appointments-timeline.ts",
     "db:patch-demo-billing-reset": "tsx scripts/patch-demo-billing-reset.ts",
     "db:clear": "tsx scripts/db-clear.ts",

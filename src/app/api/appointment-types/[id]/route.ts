@@ -23,6 +23,8 @@ type PatchBody = {
   minimum_notice_minutes?: unknown;
   /** Doctor-owned rows only — soft-hide from booking without DELETE. */
   is_active?: unknown;
+  /** Visit fee in cents — 0 = no explicit price (falls back to doctor consultation_fee on auto-draft). */
+  price_cents?: unknown;
 };
 
 function numOrUndef(v: unknown, min: number, max: number): number | undefined {
@@ -88,6 +90,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
       slot_interval_minutes?: number;
       minimum_notice_minutes?: number;
       is_active?: boolean;
+      price_cents?: number;
     } = {};
     if (name !== undefined) {
       const trimmed = name.trim();
@@ -120,6 +123,19 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
         );
       }
       data.is_active = body.is_active;
+    }
+
+    if (body.price_cents !== undefined) {
+      const raw =
+        typeof body.price_cents === "number"
+          ? body.price_cents
+          : typeof body.price_cents === "string"
+            ? Number(body.price_cents)
+            : NaN;
+      if (!Number.isFinite(raw) || raw < 0) {
+        return NextResponse.json({ error: "price_cents must be a non-negative integer" }, { status: 400 });
+      }
+      data.price_cents = Math.round(raw);
     }
 
     if (Object.keys(data).length === 0) {

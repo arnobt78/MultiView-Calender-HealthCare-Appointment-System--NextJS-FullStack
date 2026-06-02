@@ -19,6 +19,7 @@ describe("buildServiceCatalog", () => {
           buffer_after_minutes: 10,
           slot_interval_minutes: 30,
           is_telehealth: false,
+          price_cents: 0,
         },
       ],
       [
@@ -31,6 +32,7 @@ describe("buildServiceCatalog", () => {
           buffer_after_minutes: 5,
           slot_interval_minutes: 30,
           is_telehealth: false,
+          price_cents: 0,
           user_id: "d1",
           owner_display_name: "Dr. One",
           owner_email: "one@test.com",
@@ -45,6 +47,7 @@ describe("buildServiceCatalog", () => {
           buffer_after_minutes: 5,
           slot_interval_minutes: 15,
           is_telehealth: false,
+          price_cents: 0,
           user_id: "d2",
           owner_display_name: "Dr. Two",
           owner_email: "two@test.com",
@@ -76,6 +79,7 @@ describe("filterServiceCatalog", () => {
         buffer_after_minutes: 5,
         slot_interval_minutes: 30,
         is_telehealth: false,
+        price_cents: 0,
       },
     ],
     []

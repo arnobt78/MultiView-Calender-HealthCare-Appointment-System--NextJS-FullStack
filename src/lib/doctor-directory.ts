@@ -20,6 +20,8 @@ export type DoctorDirectoryAppointmentType = {
   slot_interval_minutes: number;
   /** Set on `bookable_appointment_types` — global template vs doctor-owned. */
   is_global?: boolean;
+  /** Visit fee in cents — drives price badges in the booking dialog and appointment cards. */
+  price_cents?: number;
 };
 
 /** Mirrors serialized row from `src/app/api/doctors/route.ts`. */

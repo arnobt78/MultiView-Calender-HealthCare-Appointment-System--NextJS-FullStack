@@ -65,6 +65,7 @@ import {
 import Link from "next/link";
 import { format } from "date-fns";
 import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
+import { PageHeader } from "@/components/shared/PageHeader";
 
 const columnHelper = createColumnHelper<FullAppointment>();
 
@@ -276,6 +277,17 @@ export default function AppointmentsManagement() {
 
   return (
     <div className={controlPanelSectionRootClass}>
+      {/* Page header */}
+      <PageHeader
+        title={
+          <span className="flex items-center gap-2">
+            <CalendarDays className="h-5 w-5 text-indigo-500" aria-hidden />
+            Appointment Management
+          </span>
+        }
+        description="View and manage all appointments across the platform. Filter by status or export records."
+      />
+
       {/* Stats row — card shells always visible; value slots pulse while loading */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {(
@@ -304,19 +316,11 @@ export default function AppointmentsManagement() {
         ))}
       </div>
 
-      {/* Chrome — heading, filter, and export button always static */}
+      {/* Chrome — filter and export button always static */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            <CalendarDays className="h-5 w-5 text-indigo-500" />
-            Appointment Management
-          </h2>
-          {loading ? (
-            <Skeleton className="h-4 w-32 mt-1 rounded" />
-          ) : (
-            <p className="text-sm text-muted-foreground">{filtered.length} appointment{filtered.length !== 1 ? "s" : ""}</p>
-          )}
-        </div>
+        <p className="text-sm text-muted-foreground">
+          {loading ? "" : `${filtered.length} appointment${filtered.length !== 1 ? "s" : ""}`}
+        </p>
         <Input
           placeholder="Filter appointments…"
           value={globalFilter}

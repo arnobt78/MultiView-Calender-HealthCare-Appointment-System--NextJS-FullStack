@@ -29,7 +29,7 @@ export type AppointmentSnapshotPrismaRow = Parameters<typeof serializeAppointmen
     color: string | null;
     icon: string | null;
   } | null;
-  appointment_type?: { name: string } | null;
+  appointment_type?: { name: string; price_cents?: number } | null;
   owner?: SnapshotUserPick | null;
   treating_physician?: SnapshotUserPick | null;
   patient?: SnapshotPatientPick | null;
@@ -38,7 +38,10 @@ export type AppointmentSnapshotPrismaRow = Parameters<typeof serializeAppointmen
 export function mapAppointmentToSnapshotRow(
   row: AppointmentSnapshotPrismaRow
 ): AppointmentSnapshotRow {
-  const serialized = serializeAppointment(row);
+  const serialized = serializeAppointment({
+    ...row,
+    appointment_type_price_cents: row.appointment_type?.price_cents ?? null,
+  });
   const clinicalId = resolveTreatingPhysicianUserId(serialized);
   const clinical =
     row.treating_physician_id && row.treating_physician?.id === clinicalId
@@ -74,7 +77,7 @@ export function mapAppointmentToSnapshotRow(
 /** Prisma `include` for category/patient snapshot appointment queries. */
 export const appointmentSnapshotInclude = {
   category: true,
-  appointment_type: { select: { name: true } },
+  appointment_type: { select: { name: true, price_cents: true } },
   owner: {
     select: {
       id: true,

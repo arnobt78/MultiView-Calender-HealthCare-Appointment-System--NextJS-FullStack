@@ -66,6 +66,7 @@ export async function GET() {
         treating_physician: {
           select: { id: true, display_name: true, email: true, role: true, image: true, specialty: true },
         },
+        appointment_type: { select: { price_cents: true } },
       },
       orderBy: { start: "desc" },
     });
@@ -219,6 +220,7 @@ export async function POST(request: NextRequest) {
         patient_id: patient?.id || null,
         status: "pending",
       },
+      include: { appointment_type: { select: { price_cents: true } } },
     });
 
     // Create notification for the doctor
@@ -241,7 +243,12 @@ export async function POST(request: NextRequest) {
     // reflects the new booking immediately on next load (non-critical, fire-and-forget).
     void redis.invalidateDashboardOverview(doctorId);
 
-    return NextResponse.json({ appointment: serializeAppointment(appointment) }, { status: 201 });
+    return NextResponse.json({
+      appointment: serializeAppointment({
+        ...appointment,
+        appointment_type_price_cents: appointment.appointment_type?.price_cents ?? null,
+      }),
+    }, { status: 201 });
   } catch (error: unknown) {
     console.error("Patient booking error:", error);
     return NextResponse.json({ error: "Failed to book appointment" }, { status: 500 });

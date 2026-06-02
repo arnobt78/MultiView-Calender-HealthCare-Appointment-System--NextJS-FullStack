@@ -12,6 +12,14 @@ export type StaffDirectoryEntry = {
   display_name?: string | null;
   image?: string | null;
   specialty?: string | null;
+  /** Extended doctor profile fields — populated from useUsers/prefetchDoctors rows. */
+  phone?: string | null;
+  license_number?: string | null;
+  department?: string | null;
+  office_location?: string | null;
+  consultation_fee?: number | null;
+  years_of_experience?: number | null;
+  languages_spoken?: string[];
 };
 
 export type PatientPrimaryDoctorFields = Pick<
@@ -37,6 +45,13 @@ function mergeStaffEntry(
     // Keep first non-empty portrait so SSR-seeded rows are not overwritten by later empty fetches.
     image: prevImage || nextImage || prev?.image?.trim() || null,
     specialty: u.specialty ?? prev?.specialty ?? null,
+    phone: u.phone ?? prev?.phone ?? null,
+    license_number: u.license_number ?? prev?.license_number ?? null,
+    department: u.department ?? prev?.department ?? null,
+    office_location: u.office_location ?? prev?.office_location ?? null,
+    consultation_fee: u.consultation_fee ?? prev?.consultation_fee ?? null,
+    years_of_experience: u.years_of_experience ?? prev?.years_of_experience ?? null,
+    languages_spoken: u.languages_spoken ?? prev?.languages_spoken ?? [],
   });
 }
 
@@ -64,6 +79,13 @@ export function buildStaffDirectoryMap(input: {
       display_name: u.display_name,
       image: u.image,
       specialty: u.specialty ?? null,
+      phone: u.phone ?? null,
+      license_number: u.license_number ?? null,
+      department: u.department ?? null,
+      office_location: u.office_location ?? null,
+      consultation_fee: u.consultation_fee ?? null,
+      years_of_experience: u.years_of_experience ?? null,
+      languages_spoken: u.languages_spoken ?? [],
     });
   }
   for (const u of input.adminUsers ?? []) {

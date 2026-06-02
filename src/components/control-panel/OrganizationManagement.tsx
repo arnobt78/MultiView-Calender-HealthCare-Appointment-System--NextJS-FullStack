@@ -60,6 +60,9 @@ import {
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MoreHorizontal, Plus, Users, Building2 } from "lucide-react";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { PatientStatCard } from "@/components/control-panel/PatientStatCard";
+import { emeraldGlassPrimaryButtonClass } from "@/lib/calendar-header-action-styles";
 import { format } from "date-fns";
 import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
 import { OrganizationBillingPanel } from "@/components/control-panel/OrganizationBillingPanel";
@@ -228,6 +231,8 @@ export default function OrganizationManagement() {
     addMember,
     deleteOrg,
   } = useOrganization();
+  const { data: allUsersData } = useUsers(CP_ALL_USERS_FILTERS);
+  const allUsers = allUsersData?.users ?? [];
 
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
@@ -342,22 +347,42 @@ export default function OrganizationManagement() {
 
   return (
     <div className={controlPanelSectionRootClass}>
-      {/* Chrome — heading, filter, and add button are always static */}
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            <Building2 className="h-5 w-5 text-blue-500" />
+      {/* Page header */}
+      <PageHeader
+        title={
+          <span className="flex items-center gap-2">
+            <Building2 className="h-5 w-5 text-blue-500" aria-hidden />
             Organization Management
-          </h2>
-          {/* Count slot: pulse while loading */}
-          {loading ? (
-            <Skeleton className="h-4 w-32 mt-1 rounded" />
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              {organizations.length} organization{organizations.length !== 1 ? "s" : ""}
-            </p>
-          )}
-        </div>
+          </span>
+        }
+        description="Manage all organisations, members, and billing configurations across the platform."
+      />
+
+      {/* Stats row */}
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <PatientStatCard
+          variant="sky"
+          icon={Building2}
+          title="Total Organisations"
+          subtitle="All registered organisations"
+          value={organizations.length}
+          valueSkeleton={loading}
+        />
+        <PatientStatCard
+          variant="violet"
+          icon={Users}
+          title="Total Users"
+          subtitle="All users across the platform"
+          value={allUsers.length}
+          valueSkeleton={loading}
+        />
+      </div>
+
+      {/* Chrome — filter and add button */}
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <p className="text-sm text-muted-foreground">
+          {loading ? "" : `${organizations.length} organisation${organizations.length !== 1 ? "s" : ""}`}
+        </p>
         <div className="flex items-center gap-2 flex-wrap">
           <Input
             placeholder="Filter organizations..."

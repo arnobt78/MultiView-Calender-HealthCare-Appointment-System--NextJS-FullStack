@@ -45,6 +45,14 @@ export function CreateInvoiceDialog({
   const [includeBilled, setIncludeBilled] = useState(false);
   const [selection, setSelection] = useState<InvoiceAppointmentOptionRow | null>(null);
 
+  function handleSelectionChange(option: InvoiceAppointmentOptionRow | null) {
+    setSelection(option);
+    const suggested = option?.suggested_amount_cents ?? 0;
+    if (suggested > 0) {
+      setAmount((suggested / 100).toFixed(2));
+    }
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const parsed = parseFloat(amount);
@@ -96,13 +104,18 @@ export function CreateInvoiceDialog({
               onChange={(e) => setAmount(e.target.value)}
               required
             />
+            {(selection?.suggested_amount_cents ?? 0) > 0 ? (
+              <p className="text-[11px] text-muted-foreground">
+                Suggested from visit type fee — you can override.
+              </p>
+            ) : null}
           </div>
           {!appointmentId && (
             <InvoiceAppointmentPickerField
               variant={variant}
               value={apptId}
               onChange={setApptId}
-              onSelectionChange={setSelection}
+              onSelectionChange={handleSelectionChange}
               required
               includeBilled={includeBilled}
               onIncludeBilledChange={

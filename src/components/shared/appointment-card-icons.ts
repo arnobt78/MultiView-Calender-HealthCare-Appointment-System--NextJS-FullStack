@@ -16,4 +16,5 @@ export {
   UserCog,
   Share2,
   Receipt,
+  Euro,
 } from "lucide-react";

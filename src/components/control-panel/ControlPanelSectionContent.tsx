@@ -71,18 +71,8 @@ export function ControlPanelSectionContent({ tab }: { tab: ControlPanelSidebarTa
     case "categories":
       return <CategoryManagement />;
     case "visit_types_global":
-      return (
-        <div className={controlPanelSectionRootClass}>
-          <div>
-            <h2 className="text-lg font-semibold text-gray-800">Global Visit Types</h2>
-            <p className="text-sm text-muted-foreground">
-              Organization-wide visit templates available to every doctor for booking and the public
-              Services page. Only admins can add or remove templates here.
-            </p>
-          </div>
-          <GlobalAppointmentTypesEditor />
-        </div>
-      );
+      /* Header + stats row are rendered inside GlobalAppointmentTypesEditor */
+      return <GlobalAppointmentTypesEditor />;
     case "doctors":
       return <DoctorManagement />;
     case "users_admin":

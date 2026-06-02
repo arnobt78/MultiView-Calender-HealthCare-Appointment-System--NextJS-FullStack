@@ -1,6 +1,18 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest Audit Update (2026-06-02)
+## Latest (2026-06-02 — Appointment Type Pricing + Doctor Profiles + CP UI)
+
+- **DB:** `012_appointment_type_price_cents.sql` — `price_cents INT DEFAULT 0` on `appointment_types`. Seed (`db:seed-extended`) sets prices on all 4 global types (Initial €150, Follow-up €92.50, Telehealth €85, Annual €120) + full doctor profiles (bio, specialty, phone, license, department, office, fee, experience, languages).
+- **Price threading:** `appointment_type_price_cents` flows from every Prisma query site through `serializeAppointment` to `Appointment` type. Covered: main GET/POST/PATCH/PUT, batch `?ids=`, PATCH `[id]`, patient-portal GET+POST, admin-portal, doctor-portal, all SSR prefetch paths, snapshot rows. `PortalAppointmentIncludeRow` extended. `appointmentSnapshotInclude` includes `price_cents`.
+- **Booking UI:** `VisitTypePickerList` + `VisitTypeSummaryCard` show emerald price badge. Draft disclaimer note. Works in patient booking wizard and staff dialog (shared component). `DoctorDirectoryAppointmentType`, `DoctorBookableTypeRow`, `AppointmentTypeDoctorApiRow` all carry `price_cents`. `mapApiBookableToPatientBookingType` + `mapDirectoryBookableToPatientBookingType` pass price through.
+- **Appointment card:** `appointmentTypePriceCents` prop → "Visit fee: €X.XX · est." badge. Wired in `AppointmentList`, `MonthView`, `AppointmentHoverCard`. `InvoiceStatusBadge` already present.
+- **Auto-draft:** `billing-auto-draft.ts` uses `resolveVisitFeeCents` (`billing-visit-fee.ts`) — type price first, doctor `consultation_fee` fallback. `notifyPatientDraftInvoiceCreated` (`billing-notify.ts`) emails patient on invoice creation.
+- **Appointment Types page:** `GlobalAppointmentTypesEditor` rewritten — stats row (4 `PatientStatCard`), Global A-Z section, Custom by Doctor A-Z section, 3-field forms (Name/Duration/Price). `GET /api/appointment-types/admin-all` (admin-only). Page title "Appointment Types" via `APPOINTMENT_TYPE_COPY`.
+- **Doctor profiles:** `StaffDirectoryEntry` extended with all profile fields. `DoctorDetailScreen` shows phone/license/department/office/fee/experience/languages. `PatientDetailScreen` doctor card shows all extended fields. `buildStaffDirectoryMap` merges new fields.
+- **CP consistency:** `InvoiceManagement` + `AppointmentsManagement` + `OrganizationManagement` — `PageHeader` added. Invoice: Draft stat card (`PatientStatCard` amber). Org: 2-tile stats row. UserManagement already had PageHeader+stats.
+- **Tests:** 596 / 104 files. tsc 0 errors. lint clean. build ✓.
+
+## Previous Audit (2026-06-02)
 
 - **Invoice billing KPI + org list:** `invoice-billing-totals.ts` — `INVOICE_OUTSTANDING_STATUSES` shared by UI and server aggregates. `fetchInvoiceBillingTotalsForOrganization` now actively powers org KPI cards through new API `GET /api/invoices/billing-totals?organizationId=`. Query keys: `queryKeys.invoices.byOrganization(orgId)` + `queryKeys.invoices.byOrganizationTotals(orgId)`. **Org SSR:** `prefetchOrgBillingInvoicesByOrgIds` seeds both list + totals for every org on CP organizations tab (cap 20). **Organization billing:** all org panels render (removed `slice(0,3)`), all invoices shown, `InvoiceBillingStatsRow` + `InvoiceBillingListRow`. Invalidation: `invalidateInvoices*` → `invoices.all` prefix includes both org list + totals keys.
 - **Entity detail empty values:** `ClinicalEmptyDash` — single em-dash; `clinicalEmptyOr` / `clinicalEmptyOrNode` on patient, doctor, category CP detail schema rows (`patient-care-level.ts` `hasPatientCareLevel`).

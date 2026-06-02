@@ -25,6 +25,7 @@ import {
   Layers,
   X,
 } from "lucide-react";
+import { APPOINTMENT_TYPE_COPY } from "@/lib/appointment-type-copy";
 
 interface QuickAction {
   icon: React.ElementType;
@@ -91,11 +92,11 @@ export default function QuickActionsModal() {
       href: "/control-panel/doctor-management",
       color: "bg-purple-100 text-purple-700",
     },
-    // Admin-only editor in control panel — same route as sidebar "Global Visit Types".
+    // Admin-only editor in control panel — same route as sidebar Appointment Types.
     {
       icon: Layers,
-      label: "Global Visit Types",
-      description: "Shared visit types (user_id null) applied across all doctors.",
+      label: APPOINTMENT_TYPE_COPY.pageTitleLabel,
+      description: APPOINTMENT_TYPE_COPY.globalSectionBlurb,
       href: "/control-panel/global-visit-types",
       color: "bg-cyan-100 text-cyan-800",
     },

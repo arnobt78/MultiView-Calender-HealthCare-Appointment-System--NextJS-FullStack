@@ -201,6 +201,8 @@ export interface Appointment {
   duration_minutes?: number | null;
   /** Video call / telehealth meeting URL */
   telehealth_link?: string | null;
+  /** Joined from appointment_type.price_cents — visit fee in cents for card price badge. */
+  appointment_type_price_cents?: number | null;
 }
 
 // Appointment Assignee
@@ -237,6 +239,8 @@ export interface AppointmentType {
   is_active: boolean;
   /** For patient booking: whether this doctor has enabled this global type */
   is_enabled?: boolean;
+  /** Visit fee in cents — 0 = no explicit price set. Auto-draft falls back to doctor consultation_fee. */
+  price_cents?: number;
 }
 
 // DoctorAppointmentTypeConfig — junction: doctor ↔ global appointment type
@@ -264,7 +268,7 @@ export interface DoctorRow {
   years_of_experience?: number | null;
   office_location?: string | null;
   availabilities: { weekday: number; start_min: number; end_min: number; timezone: string }[];
-  appointment_types: Pick<AppointmentType, "id" | "name" | "duration_minutes" | "is_telehealth">[];
+  appointment_types: Pick<AppointmentType, "id" | "name" | "duration_minutes" | "is_telehealth" | "price_cents">[];
   patient_count: number;
 }
 

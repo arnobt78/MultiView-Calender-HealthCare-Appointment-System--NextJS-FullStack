@@ -34,6 +34,12 @@ const PATIENT_APPOINTMENT_INCLUDE = {
   treating_physician: {
     select: { id: true, display_name: true, email: true, role: true, image: true, specialty: true },
   },
+  appointment_type: { select: { price_cents: true } },
+} as const;
+
+/** All callers get appointment_type.price_cents for the visit fee badge. */
+const BASE_APPOINTMENT_INCLUDE = {
+  appointment_type: { select: { price_cents: true } },
 } as const;
 
 export async function GET(req: NextRequest) {
@@ -80,10 +86,14 @@ export async function GET(req: NextRequest) {
           ],
         },
         orderBy: { start: "asc" },
+        include: BASE_APPOINTMENT_INCLUDE,
       });
 
       return NextResponse.json({
-        appointments: rows.map(serializeAppointment),
+        appointments: rows.map((a) => serializeAppointment({
+          ...a,
+          appointment_type_price_cents: (a as typeof a & { appointment_type?: { price_cents: number } | null }).appointment_type?.price_cents ?? null,
+        })),
         pagination: {
           limit: ids.length,
           offset: 0,
@@ -145,7 +155,7 @@ export async function GET(req: NextRequest) {
         orderBy: { start: "asc" },
         take: limit,
         skip: offset,
-        ...(patientCaller ? { include: PATIENT_APPOINTMENT_INCLUDE } : {}),
+        include: patientCaller ? PATIENT_APPOINTMENT_INCLUDE : BASE_APPOINTMENT_INCLUDE,
       }),
       prisma.appointment.count({ where }),
     ]);
@@ -154,7 +164,12 @@ export async function GET(req: NextRequest) {
       ? mapPortalAppointmentsFromRows(
           appointments as Parameters<typeof mapPortalAppointmentsFromRows>[0]
         )
-      : appointments.map(serializeAppointment);
+      : appointments.map((a) =>
+          serializeAppointment({
+            ...a,
+            appointment_type_price_cents: (a as typeof a & { appointment_type?: { price_cents: number } | null }).appointment_type?.price_cents ?? null,
+          })
+        );
 
     return NextResponse.json({
       appointments: serialized,
@@ -239,6 +254,7 @@ export async function POST(req: NextRequest) {
         duration_minutes: body.duration_minutes ?? null,
         telehealth_link: body.telehealth_link ?? null,
       },
+      include: { appointment_type: { select: { price_cents: true } } },
     });
 
     /*
@@ -294,7 +310,12 @@ export async function POST(req: NextRequest) {
       // Notification failures are non-critical — swallow silently.
     }
 
-    return NextResponse.json({ appointment: serializeAppointment(appointment) });
+    return NextResponse.json({
+      appointment: serializeAppointment({
+        ...appointment,
+        appointment_type_price_cents: appointment.appointment_type?.price_cents ?? null,
+      }),
+    });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });

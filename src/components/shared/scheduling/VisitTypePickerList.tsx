@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, Clock } from "lucide-react";
+import { ChevronDown, Clock, Euro, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -25,6 +25,8 @@ import {
 export type VisitTypePickerItem = AppointmentTypeSchedulingFields & {
   id: string;
   name: string;
+  /** Visit fee in cents — 0 = no explicit price. Shown as emerald price badge on each tile. */
+  price_cents?: number;
 };
 
 type VisitTypePickerListProps = {
@@ -56,6 +58,7 @@ export function VisitTypeSummaryCard({
 }) {
   const title = flexLabel ?? type?.name ?? "";
   const duration = type?.duration_minutes;
+  const priceCents = type?.price_cents ?? 0;
 
   return (
     <div
@@ -64,17 +67,25 @@ export function VisitTypeSummaryCard({
     >
       <div className="flex items-center justify-between gap-2">
         <span className="text-sm font-medium">{title}</span>
-        {duration != null ? (
-          <Badge variant="outline" className="gap-1 text-xs calendar-glass-badge-sky">
-            <Clock className="h-3 w-3" />
-            {duration} min
-          </Badge>
-        ) : flexLabel ? (
-          <Badge variant="outline" className="gap-1 text-xs calendar-glass-badge-sky">
-            <Clock className="h-3 w-3" />
-            {flexLabel.replace(/^Flexible booking · /, "")}
-          </Badge>
-        ) : null}
+        <div className="flex shrink-0 items-center gap-1.5">
+          {duration != null ? (
+            <Badge variant="outline" className="gap-1 text-xs calendar-glass-badge-sky">
+              <Clock className="h-3 w-3" />
+              {duration} min
+            </Badge>
+          ) : flexLabel ? (
+            <Badge variant="outline" className="gap-1 text-xs calendar-glass-badge-sky">
+              <Clock className="h-3 w-3" />
+              {flexLabel.replace(/^Flexible booking · /, "")}
+            </Badge>
+          ) : null}
+          {priceCents > 0 && (
+            <Badge variant="outline" className="gap-1 text-xs calendar-glass-badge-emerald">
+              <Euro className="h-3 w-3" />
+              {(priceCents / 100).toFixed(2)}
+            </Badge>
+          )}
+        </div>
       </div>
       {type
         ? (() => {
@@ -236,10 +247,18 @@ export function VisitTypePickerList({
         >
           <div className="flex items-center justify-between gap-2">
             <span className="text-sm font-medium">{t.name}</span>
-            <Badge variant="outline" className="gap-1 text-xs calendar-glass-badge-sky">
-              <Clock className="h-3 w-3" />
-              {t.duration_minutes} min
-            </Badge>
+            <div className="flex shrink-0 items-center gap-1.5">
+              <Badge variant="outline" className="gap-1 text-xs calendar-glass-badge-sky">
+                <Clock className="h-3 w-3" />
+                {t.duration_minutes} min
+              </Badge>
+              {(t.price_cents ?? 0) > 0 && (
+                <Badge variant="outline" className="gap-1 text-xs calendar-glass-badge-emerald">
+                  <Euro className="h-3 w-3" />
+                  {((t.price_cents ?? 0) / 100).toFixed(2)}
+                </Badge>
+              )}
+            </div>
           </div>
           {(() => {
             const bufferLine = formatAppointmentTypeBufferLine(t);
@@ -251,6 +270,15 @@ export function VisitTypePickerList({
           })()}
         </button>
       ))}
+      {/* Draft invoice note — shown when any type in the list has a price set */}
+      {types.some((t) => (t.price_cents ?? 0) > 0) && (
+        <div className="flex items-start gap-1.5 rounded-xl border border-sky-200/50 bg-sky-50/60 px-3 py-2">
+          <Info className="mt-0.5 h-3 w-3 shrink-0 text-sky-600" aria-hidden />
+          <p className="text-[11px] leading-relaxed text-sky-800">
+            Visit fee is reserved at booking. An invoice is generated automatically once the appointment is marked as completed.
+          </p>
+        </div>
+      )}
     </ScrollOverflowPanel>
   );
 }

@@ -359,6 +359,7 @@ export default function MonthView() {
                   onEdit={(appt) => setEditAppt(appt)}
                   onDelete={(id) => setDeleteTargetId(id)}
                   onToggleStatus={toggleStatus}
+                  appointmentTypePriceCents={fullAppt.appointment_type_price_cents}
                 />
               );
             })}

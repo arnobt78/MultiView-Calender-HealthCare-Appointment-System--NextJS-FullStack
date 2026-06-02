@@ -281,6 +281,7 @@ const PATIENT_DASHBOARD_APPOINTMENT_INCLUDE = {
       specialty: true,
     },
   },
+  appointment_type: { select: { price_cents: true } },
 } as const;
 
 /**
@@ -341,8 +342,12 @@ export async function prefetchDashboardAppointments(
         where: staffCalendarAppointmentWhere(userId),
         orderBy: { start: "asc" },
         take: PAGINATION.CALENDAR_APPOINTMENTS_LIMIT,
+        include: { appointment_type: { select: { price_cents: true } } },
       });
-      ownedRows = rows.map(serializeAppointment) as Appointment[];
+      ownedRows = rows.map((a) => serializeAppointment({
+        ...a,
+        appointment_type_price_cents: a.appointment_type?.price_cents ?? null,
+      })) as Appointment[];
     }
 
     const extraAssignedIds = resolveExtraAssignedAppointmentIds(
@@ -369,11 +374,15 @@ export async function prefetchDashboardAppointments(
                 },
               ],
             },
+            include: { appointment_type: { select: { price_cents: true } } },
           })
         : [];
 
-    const serializedAssigned = assignedRaw.map(
-      (row) => serializeAppointment(row) as Appointment
+    const serializedAssigned = assignedRaw.map((row) =>
+      serializeAppointment({
+        ...row,
+        appointment_type_price_cents: row.appointment_type?.price_cents ?? null,
+      }) as Appointment
     );
 
     return buildFullAppointmentsList({
@@ -891,7 +900,7 @@ export type DoctorPrefetchRow = {
   role: string | null;
   created_at: string;
   availabilities: { weekday: number; start_min: number; end_min: number; timezone: string }[];
-  appointment_types: { id: string; name: string; duration_minutes: number }[];
+  appointment_types: { id: string; name: string; duration_minutes: number; price_cents?: number }[];
   bookable_appointment_types: {
     id: string;
     name: string;
@@ -902,6 +911,7 @@ export type DoctorPrefetchRow = {
     buffer_after_minutes: number;
     slot_interval_minutes: number;
     is_global?: boolean;
+    price_cents?: number;
   }[];
   patient_count: number;
   is_active?: boolean;
@@ -944,6 +954,7 @@ export async function prefetchDoctors(): Promise<{ doctors: DoctorPrefetchRow[] 
               buffer_before_minutes: true,
               buffer_after_minutes: true,
               slot_interval_minutes: true,
+              price_cents: true,
             },
           },
           _count: { select: { patients_primary_doctor: true } },
@@ -961,6 +972,7 @@ export async function prefetchDoctors(): Promise<{ doctors: DoctorPrefetchRow[] 
           buffer_before_minutes: true,
           buffer_after_minutes: true,
           slot_interval_minutes: true,
+          price_cents: true,
           doctor_configs: { select: { doctor_id: true, is_enabled: true } },
         },
         orderBy: { name: "asc" },
@@ -1081,6 +1093,7 @@ export async function prefetchAppointmentServiceCatalog(): Promise<ServiceCatalo
       slot_interval_minutes: true,
       is_telehealth: true,
       user_id: true,
+      price_cents: true,
     } as const;
 
     const [globalRows, additionalRaw] = await Promise.all([
@@ -1108,6 +1121,7 @@ export async function prefetchAppointmentServiceCatalog(): Promise<ServiceCatalo
       buffer_after_minutes: g.buffer_after_minutes,
       slot_interval_minutes: g.slot_interval_minutes,
       is_telehealth: g.is_telehealth,
+      price_cents: g.price_cents,
     }));
 
     const additionals: AdditionalCatalogInput[] = additionalRaw
@@ -1123,6 +1137,7 @@ export async function prefetchAppointmentServiceCatalog(): Promise<ServiceCatalo
         buffer_after_minutes: r.buffer_after_minutes,
         slot_interval_minutes: r.slot_interval_minutes,
         is_telehealth: r.is_telehealth,
+        price_cents: r.price_cents,
         user_id: r.user_id,
         owner_display_name: r.user.display_name,
         owner_email: r.user.email,
@@ -1170,6 +1185,7 @@ export async function prefetchPortalData(userId: string): Promise<PortalPrefetch
         treating_physician: {
           select: { id: true, display_name: true, email: true, role: true, image: true, specialty: true },
         },
+        appointment_type: { select: { price_cents: true } },
       },
       orderBy: { start: "desc" },
     });
@@ -1229,6 +1245,7 @@ export async function prefetchDoctorPortal(userId: string): Promise<DoctorPortal
           start: { gte: todayStart, lte: todayEnd },
         }),
         orderBy: { start: "asc" },
+        include: { appointment_type: { select: { price_cents: true } } },
       }),
       prisma.appointment.findMany({
         where: staffCalendarAppointmentFilter(userId, {
@@ -1237,6 +1254,7 @@ export async function prefetchDoctorPortal(userId: string): Promise<DoctorPortal
         }),
         orderBy: { start: "asc" },
         take: 20,
+        include: { appointment_type: { select: { price_cents: true } } },
       }),
       prisma.patient.findMany({
         where: { primary_doctor_id: userId },
@@ -1320,8 +1338,14 @@ export async function prefetchDoctorPortal(userId: string): Promise<DoctorPortal
         years_of_experience: doctor.years_of_experience,
         created_at: doctor.created_at.toISOString(),
       } as User,
-      todayAppointments: todayAppts.map(serializeAppointment),
-      upcomingAppointments: upcomingAppts.map(serializeAppointment),
+      todayAppointments: todayAppts.map((a) => serializeAppointment({
+        ...a,
+        appointment_type_price_cents: (a as typeof a & { appointment_type?: { price_cents: number } | null }).appointment_type?.price_cents ?? null,
+      })),
+      upcomingAppointments: upcomingAppts.map((a) => serializeAppointment({
+        ...a,
+        appointment_type_price_cents: (a as typeof a & { appointment_type?: { price_cents: number } | null }).appointment_type?.price_cents ?? null,
+      })),
       patients: patients.map(serializePatient) as Patient[],
       enabledTypes: globalTypes.filter((t) => configMap.get(t.id) !== false).map(mapType),
       allGlobalTypes: globalTypes.map(mapType),
@@ -1383,7 +1407,7 @@ export async function prefetchAdminPortal(): Promise<AdminPortalData | null> {
           doctor_availabilities: { select: { weekday: true, start_min: true, end_min: true, timezone: true } },
           appointment_types_owned: {
             where: { is_active: true },
-            select: { id: true, name: true, duration_minutes: true, is_telehealth: true },
+            select: { id: true, name: true, duration_minutes: true, is_telehealth: true, price_cents: true },
           },
           patients_primary_doctor: { select: { id: true } },
         },
@@ -1392,6 +1416,7 @@ export async function prefetchAdminPortal(): Promise<AdminPortalData | null> {
       prisma.appointment.findMany({
         orderBy: { created_at: "desc" },
         take: 15,
+        include: { appointment_type: { select: { price_cents: true } } },
       }),
       prisma.invoice.aggregate({ where: { status: "paid" }, _sum: { amount: true } }),
       prisma.invoice.aggregate({ where: { status: { in: ["draft", "sent"] } }, _sum: { amount: true } }),
@@ -1427,7 +1452,10 @@ export async function prefetchAdminPortal(): Promise<AdminPortalData | null> {
         appointment_types: d.appointment_types_owned as Pick<AppointmentType, "id" | "name" | "duration_minutes" | "is_telehealth">[],
         patient_count: d.patients_primary_doctor.length,
       })) as DoctorRow[],
-      recentAppointments: recentAppointments.map(serializeAppointment),
+      recentAppointments: recentAppointments.map((a) => serializeAppointment({
+        ...a,
+        appointment_type_price_cents: (a as typeof a & { appointment_type?: { price_cents: number } | null }).appointment_type?.price_cents ?? null,
+      })),
     };
   } catch {
     return null;

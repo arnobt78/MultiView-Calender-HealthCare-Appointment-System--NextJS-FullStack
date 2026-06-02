@@ -40,6 +40,7 @@ import {
   Users,
   Video,
   Receipt,
+  Euro,
 } from "@/components/shared/appointment-card-icons";
 import { RoleEntityLink } from "@/components/shared/RoleEntityLink";
 import { TruncatedText, WrappingText } from "@/components/shared/TruncatedText";
@@ -81,6 +82,8 @@ export type AppointmentCardProps = {
   portalTreatingLabel?: string;
   /** Latest linked invoice display status (from invoices cache). */
   invoiceDisplayStatus?: InvoiceDisplayStatus | null;
+  /** Visit fee in cents from the appointment type — shown as price badge on the card. */
+  appointmentTypePriceCents?: number | null;
   /** When set, card is a hover/grid trigger only (no outer chrome) */
   /** Inside `AppointmentHoverCard` — no role=button so Radix hover pointer events work. */
   asHoverTrigger?: boolean;
@@ -246,6 +249,7 @@ function AppointmentCardMeta({
   variant,
   ownerUsers,
   invoiceDisplayStatus,
+  appointmentTypePriceCents,
 }: {
   appointment: FullAppointment;
   model: ReturnType<typeof useAppointmentCardModel>;
@@ -253,6 +257,7 @@ function AppointmentCardMeta({
   variant: AppointmentCardVariant;
   ownerUsers: OwnerUserSummary[];
   invoiceDisplayStatus?: InvoiceDisplayStatus | null;
+  appointmentTypePriceCents?: number | null;
 }) {
   const {
     isDone,
@@ -480,6 +485,17 @@ function AppointmentCardMeta({
         {invoiceDisplayStatus ? (
           <AppointmentCardMetaRow icon={<Receipt className="h-3.5 w-3.5" />} label="Invoice:">
             <InvoiceStatusBadge displayStatus={invoiceDisplayStatus} />
+          </AppointmentCardMetaRow>
+        ) : null}
+
+        {(appointmentTypePriceCents ?? 0) > 0 ? (
+          <AppointmentCardMetaRow icon={<Euro className="h-3.5 w-3.5" />} label="Visit fee:">
+            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200/70 bg-emerald-50/80 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 shadow-[0_2px_8px_rgba(16,185,129,0.15)]">
+              €{((appointmentTypePriceCents ?? 0) / 100).toFixed(2)}
+              {!invoiceDisplayStatus && (
+                <span className="ml-0.5 text-[9px] font-normal text-emerald-500/90">· est.</span>
+              )}
+            </span>
           </AppointmentCardMetaRow>
         ) : null}
 
@@ -954,6 +970,7 @@ export function AppointmentCard({
   portalOwnerLabel,
   portalTreatingLabel,
   invoiceDisplayStatus,
+  appointmentTypePriceCents,
   asHoverTrigger,
   asTrigger,
   triggerClassName,
@@ -1034,6 +1051,7 @@ export function AppointmentCard({
         variant={variant}
         ownerUsers={ownerUsers}
         invoiceDisplayStatus={invoiceDisplayStatus}
+        appointmentTypePriceCents={appointmentTypePriceCents}
       />
     ) : (
       compactMeta

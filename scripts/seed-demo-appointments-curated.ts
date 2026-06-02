@@ -19,7 +19,14 @@ config({ path: resolve(process.cwd(), ".env.local") });
 const SEED_MARKER = "seed-demo-curated:v1";
 const ORG_SLUG = "healthcal-demo-clinic";
 
-const GLOBAL_TYPE_ID = "22222222-2222-4222-8222-222222222202"; // Follow-up Visit
+const TYPE_IDS = {
+  initial: "22222222-2222-4222-8222-222222222201",
+  followUp: "22222222-2222-4222-8222-222222222202",
+  telehealth: "22222222-2222-4222-8222-222222222203",
+  annual: "22222222-2222-4222-8222-222222222204",
+} as const;
+
+type TypeKey = keyof typeof TYPE_IDS;
 
 const DOCTOR_EMAILS = [
   "test@doctor.com",
@@ -57,6 +64,7 @@ type CuratedRow = {
   startIso: string;
   durationMin: number;
   telehealth: boolean;
+  typeKey: TypeKey;
   invoice: InvoiceSpec;
 };
 
@@ -71,6 +79,7 @@ const CURATED: CuratedRow[] = [
     startIso: "2026-05-28T09:00:00.000Z",
     durationMin: 30,
     telehealth: false,
+    typeKey: "followUp",
     invoice: { kind: "paid", stripeId: "pi_demo_curated_paid_01" },
   },
   {
@@ -82,6 +91,7 @@ const CURATED: CuratedRow[] = [
     startIso: "2026-06-01T10:00:00.000Z",
     durationMin: 30,
     telehealth: false,
+    typeKey: "initial",
     invoice: { kind: "none" },
   },
   {
@@ -93,6 +103,7 @@ const CURATED: CuratedRow[] = [
     startIso: "2026-05-10T11:00:00.000Z",
     durationMin: 45,
     telehealth: false,
+    typeKey: "annual",
     invoice: { kind: "paid", stripeId: "pi_demo_curated_paid_03" },
   },
   {
@@ -104,6 +115,7 @@ const CURATED: CuratedRow[] = [
     startIso: "2026-05-15T14:00:00.000Z",
     durationMin: 30,
     telehealth: true,
+    typeKey: "telehealth",
     invoice: { kind: "draft" },
   },
   {
@@ -115,6 +127,7 @@ const CURATED: CuratedRow[] = [
     startIso: "2026-07-15T08:30:00.000Z",
     durationMin: 30,
     telehealth: false,
+    typeKey: "followUp",
     invoice: { kind: "sent" },
   },
   {
@@ -126,6 +139,7 @@ const CURATED: CuratedRow[] = [
     startIso: "2026-04-08T13:00:00.000Z",
     durationMin: 30,
     telehealth: false,
+    typeKey: "initial",
     invoice: { kind: "cancelled" },
   },
   {
@@ -137,6 +151,7 @@ const CURATED: CuratedRow[] = [
     startIso: "2026-03-25T15:30:00.000Z",
     durationMin: 45,
     telehealth: false,
+    typeKey: "annual",
     invoice: { kind: "refunded", stripeId: "pi_demo_curated_ref_07" },
   },
   {
@@ -148,6 +163,7 @@ const CURATED: CuratedRow[] = [
     startIso: "2026-06-15T09:00:00.000Z",
     durationMin: 30,
     telehealth: false,
+    typeKey: "followUp",
     invoice: { kind: "none" },
   },
   {
@@ -159,6 +175,7 @@ const CURATED: CuratedRow[] = [
     startIso: "2026-08-01T10:00:00.000Z",
     durationMin: 30,
     telehealth: true,
+    typeKey: "telehealth",
     invoice: { kind: "none" },
   },
   {
@@ -170,9 +187,21 @@ const CURATED: CuratedRow[] = [
     startIso: "2026-06-01T14:00:00.000Z",
     durationMin: 30,
     telehealth: false,
+    typeKey: "followUp",
     invoice: { kind: "none" },
   },
 ];
+
+async function resolveVisitFeeCents(
+  typeId: string,
+  treatingUserId: string,
+  typeById: Map<string, { price_cents: number }>,
+  doctorFeeById: Map<string, number>
+): Promise<number> {
+  const typePrice = typeById.get(typeId)?.price_cents ?? 0;
+  if (typePrice > 0) return typePrice;
+  return doctorFeeById.get(treatingUserId) ?? 8500;
+}
 
 const prisma = new PrismaClient();
 
@@ -219,11 +248,11 @@ async function clearPriorCurated() {
 }
 
 async function seedCurated() {
-  const [admin, doctors, patients, category, apptType] = await Promise.all([
+  const [admin, doctors, patients, category, apptTypes] = await Promise.all([
     prisma.user.findFirst({ where: { email: "test@admin.com" }, select: { id: true } }),
     prisma.user.findMany({
       where: { email: { in: [...DOCTOR_EMAILS] } },
-      select: { id: true, email: true },
+      select: { id: true, email: true, consultation_fee: true },
     }),
     prisma.patient.findMany({
       where: { email: { in: [...PATIENT_EMAILS] } },
@@ -234,9 +263,15 @@ async function seedCurated() {
       orderBy: { sort_order: "asc" },
       select: { id: true, label: true },
     }),
-    prisma.appointmentType.findUnique({
-      where: { id: GLOBAL_TYPE_ID },
-      select: { id: true, name: true, is_telehealth: true, duration_minutes: true },
+    prisma.appointmentType.findMany({
+      where: { id: { in: Object.values(TYPE_IDS) } },
+      select: {
+        id: true,
+        name: true,
+        is_telehealth: true,
+        duration_minutes: true,
+        price_cents: true,
+      },
     }),
   ]);
 
@@ -244,7 +279,10 @@ async function seedCurated() {
   if (doctors.length < 8) throw new Error("Missing demo doctors — run db:prepare");
   if (patients.length < 5) throw new Error("Missing demo patients — run db:seed-extended");
   if (!category) throw new Error("Missing categories — run db:seed-extended");
-  if (!apptType) throw new Error("Missing global Follow-up type — run db:seed-test-user");
+  if (apptTypes.length < 4) throw new Error("Missing global appointment types — run db:seed-test-user");
+
+  const typeById = new Map(apptTypes.map((t) => [t.id, t]));
+  const doctorFeeById = new Map(doctors.map((d) => [d.id, d.consultation_fee ?? 0]));
 
   const userByEmail = new Map<string, string>([
     ["test@admin.com", admin.id],
@@ -280,6 +318,10 @@ async function seedCurated() {
     const existing = await prisma.appointment.findFirst({ where: { title } });
     if (existing) continue;
 
+    const typeId = TYPE_IDS[row.typeKey];
+    const apptType = typeById.get(typeId);
+    if (!apptType) throw new Error(`Missing appointment type: ${row.typeKey}`);
+
     const appt = await prisma.appointment.create({
       data: {
         title,
@@ -292,9 +334,9 @@ async function seedCurated() {
         status: row.status,
         owner_id: ownerId,
         treating_physician_id: treatingId,
-        appointment_type_id: apptType.id,
+        appointment_type_id: typeId,
         is_telehealth: row.telehealth || apptType.is_telehealth,
-        chief_complaint: `Curated demo visit (${row.status}).`,
+        chief_complaint: `Curated demo visit (${row.status}) — ${apptType.name}.`,
         duration_minutes: row.durationMin,
         telehealth_link: row.telehealth ? "https://meet.healthcal.dev/room/demo-curated" : null,
         attachments: [],
@@ -305,7 +347,12 @@ async function seedCurated() {
     const desc = `Demo curated invoice — ${title}`;
 
     if (row.invoice.kind !== "none") {
-      const amount = 8_500 + created * 250;
+      const amount = await resolveVisitFeeCents(
+        typeId,
+        treatingId,
+        typeById,
+        doctorFeeById
+      );
       const paidAt =
         row.invoice.kind === "paid" || row.invoice.kind === "refunded"
           ? new Date(end.getTime() + 2 * 24 * 60 * 60 * 1000)

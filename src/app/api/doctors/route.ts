@@ -64,6 +64,7 @@ export async function GET() {
             buffer_before_minutes: true,
             buffer_after_minutes: true,
             slot_interval_minutes: true,
+            price_cents: true,
           },
         },
         // Count enabled global types from the junction table
@@ -89,6 +90,7 @@ export async function GET() {
           buffer_before_minutes: true,
           buffer_after_minutes: true,
           slot_interval_minutes: true,
+          price_cents: true,
           doctor_configs: {
             select: { doctor_id: true, is_enabled: true },
           },

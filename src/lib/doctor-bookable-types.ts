@@ -20,6 +20,8 @@ export type DoctorBookableTypeRow = {
   slot_interval_minutes: number;
   /** True when `user_id` is null on the type row. */
   is_global: boolean;
+  /** Visit fee in cents — shown as price badge in booking UI; 0 = no price set. */
+  price_cents?: number;
 };
 
 export type DoctorOwnedTypeInput = {
@@ -31,6 +33,7 @@ export type DoctorOwnedTypeInput = {
   buffer_before_minutes?: number;
   buffer_after_minutes?: number;
   slot_interval_minutes?: number;
+  price_cents?: number;
 };
 
 export type GlobalTypeWithConfigs = {
@@ -43,6 +46,7 @@ export type GlobalTypeWithConfigs = {
   buffer_after_minutes: number;
   slot_interval_minutes: number;
   doctor_configs: { doctor_id: string; is_enabled: boolean }[];
+  price_cents?: number;
 };
 
 function mapOwnedRow(t: DoctorOwnedTypeInput): DoctorBookableTypeRow {
@@ -56,6 +60,7 @@ function mapOwnedRow(t: DoctorOwnedTypeInput): DoctorBookableTypeRow {
     buffer_after_minutes: t.buffer_after_minutes ?? 0,
     slot_interval_minutes: t.slot_interval_minutes ?? 30,
     is_global: false,
+    price_cents: t.price_cents ?? 0,
   };
 }
 
@@ -82,6 +87,7 @@ export function mergeBookableTypesForDoctor(
       buffer_after_minutes: g.buffer_after_minutes,
       slot_interval_minutes: g.slot_interval_minutes,
       is_global: true,
+      price_cents: g.price_cents ?? 0,
     });
   }
 
@@ -101,6 +107,7 @@ export type AppointmentTypeDoctorApiRow = {
   minimum_notice_minutes?: number;
   is_enabled?: boolean;
   is_active?: boolean;
+  price_cents?: number;
 };
 
 /**
@@ -131,6 +138,7 @@ export function mapDirectoryBookableToPatientBookingType(
     buffer_after_minutes: number;
     slot_interval_minutes: number;
     is_global?: boolean;
+    price_cents?: number;
   }
 ): PatientBookingAppointmentType {
   return {
@@ -142,6 +150,7 @@ export function mapDirectoryBookableToPatientBookingType(
     slot_interval_minutes: row.slot_interval_minutes,
     minimum_notice_minutes: PATIENT_BOOKING_DEFAULT_MINIMUM_NOTICE_MINUTES,
     user_id: row.is_global === false ? doctorId : null,
+    price_cents: row.price_cents ?? 0,
   };
 }
 
@@ -159,5 +168,6 @@ export function mapApiBookableToPatientBookingType(
     minimum_notice_minutes:
       row.minimum_notice_minutes ?? PATIENT_BOOKING_DEFAULT_MINIMUM_NOTICE_MINUTES,
     user_id: row.user_id,
+    price_cents: row.price_cents ?? 0,
   };
 }

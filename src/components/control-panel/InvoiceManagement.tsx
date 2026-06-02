@@ -28,14 +28,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Receipt } from "lucide-react";
+import { ClipboardList, FileEdit, Receipt } from "lucide-react";
 import { InvoiceBillingStatsRow } from "@/components/shared/billing/InvoiceBillingStatsRow";
 import { CreateInvoiceDialog } from "@/components/shared/billing/CreateInvoiceDialog";
 import { InvoiceAdminActionsMenu } from "@/components/shared/billing/InvoiceAdminActionsMenu";
 import { InvoiceStatusBadge } from "@/components/shared/billing/InvoiceStatusBadge";
 import { InvoiceVisitSummaryLine } from "@/components/shared/billing/InvoiceVisitSummaryLine";
+import { PatientStatCard } from "@/components/control-panel/PatientStatCard";
+import { PageHeader } from "@/components/shared/PageHeader";
 import { format } from "date-fns";
 import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
+import { emeraldGlassPrimaryButtonClass } from "@/lib/calendar-header-action-styles";
 
 const columnHelper = createColumnHelper<Invoice>();
 
@@ -156,26 +159,50 @@ export default function InvoiceManagement() {
     return <div className="p-4 text-red-500">Error: {error?.message}</div>;
   }
 
+  const draftCount = isMounted ? invoices.filter((i) => i.status === "draft").length : 0;
+
   return (
     <div className={controlPanelSectionRootClass}>
+      {/* Page header */}
+      <PageHeader
+        title={
+          <span className="flex items-center gap-2">
+            <Receipt className="h-5 w-5 text-amber-500" aria-hidden />
+            Invoice Management
+          </span>
+        }
+        description="Manage all patient invoices, track payments, and process billing across your organisation."
+        actions={<CreateInvoiceDialog variant="admin" onCreate={createInvoice} />}
+      />
+
       {/* KPI strip — outstanding excludes refunded/cancelled (dashboard parity). */}
       <InvoiceBillingStatsRow invoices={invoices} valueSkeleton={loading} />
 
-      {/* Chrome — heading, filter, and add button always static */}
+      {/* Draft state card — auto-generated draft invoices awaiting review. */}
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        <PatientStatCard
+          variant="amber"
+          icon={FileEdit}
+          title="Draft Invoices"
+          subtitle="Auto-generated, not yet sent"
+          value={draftCount}
+          valueSkeleton={loading}
+        />
+        <PatientStatCard
+          variant="sky"
+          icon={ClipboardList}
+          title="Total Invoices"
+          subtitle="All statuses combined"
+          value={isMounted ? invoices.length : 0}
+          valueSkeleton={loading}
+        />
+      </div>
+
+      {/* Chrome — filter and table heading */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            <Receipt className="h-5 w-5 text-amber-500" />
-            Invoice Management
-          </h2>
-          {loading ? (
-            <Skeleton className="h-4 w-28 mt-1 rounded" />
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              {invoices.length} invoice{invoices.length !== 1 ? "s" : ""}
-            </p>
-          )}
-        </div>
+        <p className="text-sm text-muted-foreground">
+          {loading ? "" : `${invoices.length} invoice${invoices.length !== 1 ? "s" : ""}`}
+        </p>
         <div className="flex items-center gap-2 flex-wrap">
           <Input
             placeholder="Filter invoices..."
@@ -183,7 +210,6 @@ export default function InvoiceManagement() {
             onChange={(e) => setGlobalFilter(e.target.value)}
             className="w-56"
           />
-          <CreateInvoiceDialog variant="admin" onCreate={createInvoice} />
         </div>
       </div>
 

@@ -667,13 +667,53 @@ export function PatientDetailScreen({
                   rowClassName={patientDetailPrimaryDoctorRowClass}
                 >
                   {primaryDoctorIdentity ? (
-                    <DoctorIdentityRow
-                      layout="inline"
-                      doctor={primaryDoctorIdentity}
-                      linkKind={isAdminRole(viewerRole) ? "admin-cp" : "role"}
-                      showEmail
-                      showSpecialty
-                    />
+                    <div className="space-y-2">
+                      <DoctorIdentityRow
+                        layout="inline"
+                        doctor={primaryDoctorIdentity}
+                        linkKind={isAdminRole(viewerRole) ? "admin-cp" : "role"}
+                        showEmail
+                        showSpecialty
+                      />
+                      {/* Doctor profile details */}
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-1 rounded-xl border border-emerald-100/60 bg-emerald-50/30 p-2 text-xs">
+                        {primaryDoctorIdentity.phone ? (
+                          <div className="flex items-center gap-1 text-gray-600">
+                            <span className="font-medium text-gray-500">Phone:</span>
+                            {primaryDoctorIdentity.phone}
+                          </div>
+                        ) : null}
+                        {primaryDoctorIdentity.office_location ? (
+                          <div className="flex items-center gap-1 text-gray-600">
+                            <span className="font-medium text-gray-500">Office:</span>
+                            {primaryDoctorIdentity.office_location}
+                          </div>
+                        ) : null}
+                        {(primaryDoctorIdentity.consultation_fee ?? 0) > 0 ? (
+                          <div className="flex items-center gap-1 text-gray-600">
+                            <span className="font-medium text-gray-500">Fee:</span>
+                            <span className="font-semibold text-emerald-700">
+                              €{((primaryDoctorIdentity.consultation_fee ?? 0) / 100).toFixed(2)}
+                            </span>
+                          </div>
+                        ) : null}
+                        {primaryDoctorIdentity.years_of_experience != null ? (
+                          <div className="flex items-center gap-1 text-gray-600">
+                            <span className="font-medium text-gray-500">Exp:</span>
+                            {primaryDoctorIdentity.years_of_experience} yrs
+                          </div>
+                        ) : null}
+                        {(primaryDoctorIdentity.languages_spoken ?? []).length > 0 ? (
+                          <div className="col-span-2 flex flex-wrap gap-1 pt-0.5">
+                            {(primaryDoctorIdentity.languages_spoken ?? []).map((lang) => (
+                              <span key={lang} className="rounded-full border border-sky-200/70 bg-sky-50/80 px-2 py-0.5 text-[10px] font-medium text-sky-700">
+                                {lang}
+                              </span>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
                   ) : (
                     clinicalEmptyOr(p!.primary_doctor_display, "definition")
                   )}
