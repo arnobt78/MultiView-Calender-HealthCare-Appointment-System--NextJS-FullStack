@@ -43,6 +43,7 @@ import {
   CalendarX,
   Clock,
   CreditCard,
+  Euro,
   MapPin,
   Stethoscope,
   Users,
@@ -155,6 +156,14 @@ function RecentAppointmentRow({ appt }: { appt: Appointment & { patient_name?: s
             Telehealth
           </span>
         )}
+        {/* Visit fee badge — sourced from appointment_type.price_cents via serializeAppointment */}
+        {(appt.appointment_type_price_cents ?? 0) > 0 ? (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border border-emerald-200/70 bg-emerald-50/80 text-emerald-700 shadow-[0_2px_8px_rgba(16,185,129,0.15)]">
+            <Euro className="h-3 w-3" aria-hidden />
+            {((appt.appointment_type_price_cents ?? 0) / 100).toFixed(2)}
+            <span className="ml-0.5 text-[9px] font-normal text-emerald-500/90">· est.</span>
+          </span>
+        ) : null}
       </div>
     </div>
   );

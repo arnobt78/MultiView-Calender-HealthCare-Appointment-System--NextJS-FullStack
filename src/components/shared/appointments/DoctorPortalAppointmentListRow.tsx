@@ -13,6 +13,7 @@ import {
   CalendarClock,
   CalendarX,
   AlertCircle,
+  Euro,
   MapPin,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -111,6 +112,14 @@ export function DoctorPortalAppointmentListRow({
           <span className="inline-flex items-center gap-1 rounded-full border border-red-200/60 bg-red-100/80 px-2 py-0.5 text-[10px] font-medium text-red-700">
             <AlertCircle className="h-3 w-3" aria-hidden />
             Overdue
+          </span>
+        ) : null}
+        {/* Visit fee badge — sourced from appointment_type.price_cents via serializeAppointment */}
+        {(appt.appointment_type_price_cents ?? 0) > 0 ? (
+          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200/70 bg-emerald-50/80 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 shadow-[0_2px_8px_rgba(16,185,129,0.15)]">
+            <Euro className="h-3 w-3" aria-hidden />
+            {((appt.appointment_type_price_cents ?? 0) / 100).toFixed(2)}
+            <span className="ml-0.5 text-[9px] font-normal text-emerald-500/90">· est.</span>
           </span>
         ) : null}
       </div>
