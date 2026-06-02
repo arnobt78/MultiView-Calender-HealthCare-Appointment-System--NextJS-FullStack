@@ -42,6 +42,11 @@ import { APPOINTMENT_TYPE_COPY } from "@/lib/appointment-type-copy";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { emeraldGlassPrimaryButtonClass } from "@/lib/calendar-header-action-styles";
 import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
+import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
+import {
+  buildCpAdminAppointmentTypeDeleteConfirmSubtitle,
+  DELETE_APPOINTMENT_TYPE_CONFIRM_TITLE,
+} from "@/lib/confirm-delete-dialog-copy";
 
 /** Format cents → "€X.XX" */
 function formatPrice(cents: number): string {
@@ -102,6 +107,8 @@ export function GlobalAppointmentTypesEditor() {
   const [newDuration, setNewDuration] = useState("30");
   const [newPrice, setNewPrice] = useState("");
   const [editing, setEditing] = useState<EditState | null>(null);
+  /** Glass confirm before DELETE — parity with portal visit-type editors. */
+  const [deleteTarget, setDeleteTarget] = useState<AdminAllTypeRow | null>(null);
 
   const busy = isCreating || isUpdating || isDeleting;
 
@@ -264,7 +271,7 @@ export function GlobalAppointmentTypesEditor() {
                 onStartEdit={() => startEdit(t)}
                 onCancelEdit={cancelEdit}
                 onSaveEdit={handleSaveEdit}
-                onDelete={() => void handleDelete(t.id)}
+                onRequestDelete={() => setDeleteTarget(t)}
                 onEditChange={(field, val) =>
                   setEditing((prev) => (prev ? { ...prev, [field]: val } : prev))
                 }
@@ -380,7 +387,7 @@ export function GlobalAppointmentTypesEditor() {
                         onStartEdit={() => startEdit(t)}
                         onCancelEdit={cancelEdit}
                         onSaveEdit={handleSaveEdit}
-                        onDelete={() => void handleDelete(t.id)}
+                        onRequestDelete={() => setDeleteTarget(t)}
                         onEditChange={(field, val) =>
                           setEditing((prev) => (prev ? { ...prev, [field]: val } : prev))
                         }
@@ -394,6 +401,29 @@ export function GlobalAppointmentTypesEditor() {
           )}
         </section>
       )}
+
+      <ConfirmActionDialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+        variant="destructive"
+        title={DELETE_APPOINTMENT_TYPE_CONFIRM_TITLE}
+        subtitle={
+          deleteTarget
+            ? buildCpAdminAppointmentTypeDeleteConfirmSubtitle(deleteTarget)
+            : ""
+        }
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        confirmDisabled={isDeleting}
+        onConfirm={() => {
+          if (deleteTarget) {
+            void handleDelete(deleteTarget.id);
+          }
+          setDeleteTarget(null);
+        }}
+      />
     </div>
   );
 }
@@ -407,7 +437,7 @@ function TypeRow({
   onStartEdit,
   onCancelEdit,
   onSaveEdit,
-  onDelete,
+  onRequestDelete,
   onEditChange,
   rowClass,
 }: {
@@ -418,7 +448,7 @@ function TypeRow({
   onStartEdit: () => void;
   onCancelEdit: () => void;
   onSaveEdit: () => void;
-  onDelete: () => void;
+  onRequestDelete: () => void;
   onEditChange: (field: "name" | "duration" | "price", val: string) => void;
   rowClass?: string;
 }) {
@@ -545,7 +575,7 @@ function TypeRow({
             className="h-7 w-7 border-red-200/80 text-red-600 hover:bg-red-50"
             disabled={busy}
             title="Delete type"
-            onClick={onDelete}
+            onClick={onRequestDelete}
           >
             <Trash2 className="h-3 w-3" aria-hidden />
           </Button>

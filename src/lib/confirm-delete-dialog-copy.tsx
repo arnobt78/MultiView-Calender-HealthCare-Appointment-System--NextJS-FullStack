@@ -72,6 +72,57 @@ type AppointmentTypeDeleteInput = {
   price_cents?: number;
 };
 
+type CpAdminAppointmentTypeDeleteInput = AppointmentTypeDeleteInput & {
+  user_id: string | null;
+  owner_display_name?: string | null;
+  owner_email?: string | null;
+};
+
+/** CP Appointment Types page — global template vs doctor-owned custom row delete. */
+export function buildCpAdminAppointmentTypeDeleteConfirmSubtitle(
+  type: CpAdminAppointmentTypeDeleteInput
+): ReactNode {
+  const fee =
+    (type.price_cents ?? 0) > 0
+      ? formatCentsToPriceInput(type.price_cents ?? 0)
+      : null;
+  const durationMeta = (
+    <>
+      <span className="font-medium text-gray-800">{type.duration_minutes} min</span>
+      {fee ? (
+        <>
+          , <span className="font-medium text-gray-800">€{fee}</span>
+        </>
+      ) : null}
+    </>
+  );
+
+  if (type.user_id == null) {
+    return (
+      <>
+        This will permanently delete the organization-wide template{" "}
+        <span className="font-medium text-gray-800">{type.name.trim()}</span> ({durationMeta}
+        ). All doctors lose this visit type for new bookings. Existing appointments are not
+        removed.
+      </>
+    );
+  }
+
+  const owner =
+    type.owner_display_name?.trim() ||
+    type.owner_email?.trim() ||
+    "this doctor";
+
+  return (
+    <>
+      This will permanently delete{" "}
+      <span className="font-medium text-gray-800">{type.name.trim()}</span> ({durationMeta}) for{" "}
+      <span className="font-medium text-gray-800">{owner}</span>. Patients can no longer book this
+      custom visit type.
+    </>
+  );
+}
+
 /** Doctor-owned visit type row delete — name, duration, optional fee. */
 export function buildAppointmentTypeDeleteConfirmSubtitle(
   type: AppointmentTypeDeleteInput

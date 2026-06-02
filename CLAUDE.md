@@ -46,7 +46,7 @@ Cross-tab: `query-cache-cross-tab.ts` in `QueryProvider`.
 
 ## Follow-ups (optional)
 
-`calendar/export`, `calendar/sync`, `appointments/search` = owner-only. CP `GlobalAppointmentTypesEditor` row delete still plain (no `ConfirmActionDialog`). Assignee batch / `?ids=` treating OR gap unchanged.
+`calendar/export`, `calendar/sync`, `appointments/search` = owner-only. Assignee batch / `?ids=` treating OR gap unchanged.
 
 ## Principle
 

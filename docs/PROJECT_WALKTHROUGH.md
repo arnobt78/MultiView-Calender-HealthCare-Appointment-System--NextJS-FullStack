@@ -895,7 +895,7 @@ Set by `proxy.ts` on every response. CDN headers use both `CDN-Cache-Control` an
 
 - `src/components/shared/ConfirmActionDialog.tsx` — shadcn `AlertDialog`; variants `destructive` | `warning` | `info`; rose/amber/sky media + violet cancel + glow confirm.
 - Dynamic copy: `src/lib/confirm-delete-dialog-copy.tsx` (invoice delete, owned-type delete/disable, global-type disable, weekly window delete, time-off delete).
-- Wired: calendar appointment delete, CP category/patient/doctor deletes, navbar actions, **doctor portal** invoice menu + schedule editors + visit-type toggles. Dropdown pattern: menu sets `open` state; dialog is **sibling** of `DropdownMenu` (fragment wrapper).
+- Wired: calendar appointment delete, CP category/patient/doctor deletes, **`GlobalAppointmentTypesEditor`** (global + custom row delete), navbar actions, **doctor portal** invoice menu + schedule editors + visit-type toggles. Copy: `buildCpAdminAppointmentTypeDeleteConfirmSubtitle` for CP admin-all rows. Dropdown pattern: menu sets `open` state; dialog is **sibling** of `DropdownMenu` (fragment wrapper).
 
 ### Typed Validation Foundation (Zod)
 
