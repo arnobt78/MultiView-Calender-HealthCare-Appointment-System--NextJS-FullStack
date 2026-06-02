@@ -312,7 +312,7 @@ export function GlobalAppointmentTypesEditor() {
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="global-appt-type-price" className="text-xs">
-                    Visit fee (€)
+                    Visit Fee (€)
                   </Label>
                   <Input
                     id="global-appt-type-price"

@@ -18,6 +18,7 @@ import {
   serviceCatalogFilterValue,
   type ServiceCatalogRow,
 } from "@/lib/appointment-service-catalog";
+import { APPOINTMENT_TYPE_COPY } from "@/lib/appointment-type-copy";
 import { cn, toTitleCaseLabel } from "@/lib/utils";
 
 function serviceRowOptionLabel(name: string, durationMinutes: number): string {
@@ -26,7 +27,9 @@ function serviceRowOptionLabel(name: string, durationMinutes: number): string {
 
 function resolveFilterLabel(selection: string, services: ServiceCatalogRow[]): string {
   if (selection === SERVICES_CATALOG_FILTER_ALL) return toTitleCaseLabel("All services");
-  if (selection === SERVICES_CATALOG_FILTER_GLOBAL) return toTitleCaseLabel("Global visit types");
+  if (selection === SERVICES_CATALOG_FILTER_GLOBAL) {
+    return toTitleCaseLabel(APPOINTMENT_TYPE_COPY.globalCatalogFilterLabel);
+  }
   if (selection === SERVICES_CATALOG_FILTER_ADDITIONAL) {
     return toTitleCaseLabel("Additional appointment types");
   }
@@ -72,7 +75,7 @@ export function ServicesCatalogTypeSelect({
         <SelectItem value={SERVICES_CATALOG_FILTER_GLOBAL}>
           <span className="flex items-center gap-2">
             <Layers className="h-3.5 w-3.5 text-violet-600" />
-            {toTitleCaseLabel("Global visit types")}
+            {toTitleCaseLabel(APPOINTMENT_TYPE_COPY.globalCatalogFilterLabel)}
           </span>
         </SelectItem>
         <SelectItem value={SERVICES_CATALOG_FILTER_ADDITIONAL}>
@@ -86,7 +89,7 @@ export function ServicesCatalogTypeSelect({
             <SelectSeparator />
             <SelectGroup>
               <SelectLabel className="text-violet-700">
-                {toTitleCaseLabel("Global templates")}
+                {toTitleCaseLabel(APPOINTMENT_TYPE_COPY.globalCatalogGroupLabel)}
               </SelectLabel>
               {globals.map((s) => (
                 <SelectItem

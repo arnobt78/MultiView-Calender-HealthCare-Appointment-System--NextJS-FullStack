@@ -21,6 +21,8 @@ export type SerializedDoctorAppointmentType = {
   icon: string | null;
   is_active: boolean;
   is_enabled: boolean;
+  /** Visit fee in cents — 0 means no explicit price set; auto-draft falls back to doctor consultation_fee. */
+  price_cents: number;
 };
 
 export async function fetchAppointmentTypesForDoctorManager(
@@ -61,5 +63,6 @@ export async function fetchAppointmentTypesForDoctorManager(
       t.user_id === doctorId
         ? t.is_active
         : (t.doctor_configs[0]?.is_enabled ?? true),
+    price_cents: t.price_cents,
   }));
 }

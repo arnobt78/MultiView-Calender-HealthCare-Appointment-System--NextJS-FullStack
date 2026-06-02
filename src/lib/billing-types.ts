@@ -84,4 +84,6 @@ export type InvoiceAppointmentOptionRow = {
   display_status: string | null;
   amount_cents: number | null;
   currency: string | null;
+  /** Visit fee from appointment type or doctor — for manual create prefill when eligible. */
+  suggested_amount_cents: number | null;
 };

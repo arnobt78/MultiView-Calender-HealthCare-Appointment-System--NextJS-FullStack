@@ -46,6 +46,7 @@ const appointmentDetailInclude = {
   assignees: {
     include: { user: { select: { id: true, email: true, display_name: true } } },
   },
+  appointment_type: { select: { price_cents: true } },
 } as const;
 
 function isAcceptedAssignee(

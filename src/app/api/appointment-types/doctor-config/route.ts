@@ -131,7 +131,7 @@ export async function POST(req: NextRequest) {
       actorUserId: sessionUser.userId,
       doctorUserId: doctorId,
       changeKind: "global_visit_toggle",
-      detail: `Global visit type access was ${isEnabled ? "enabled" : "disabled"} for your calendar.`,
+      detail: `Organization-wide appointment type access was ${isEnabled ? "enabled" : "disabled"} for your calendar.`,
     });
 
     return NextResponse.json({

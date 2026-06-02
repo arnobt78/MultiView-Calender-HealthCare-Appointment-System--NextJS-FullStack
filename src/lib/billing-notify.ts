@@ -4,7 +4,9 @@
 
 import { prisma } from "@/lib/prisma";
 
+/** SSE + bell: draft creation busts invoice caches same as paid/refunded events. */
 export const BILLING_NOTIFICATION_TYPES = [
+  "invoice_draft",
   "invoice_paid",
   "invoice_failed",
   "invoice_refunded",

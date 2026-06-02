@@ -25,6 +25,10 @@ vi.mock("@/lib/billing-cache", () => ({
   resolvePatientPortalUserIdForAppointment: vi.fn(),
 }));
 
+vi.mock("@/lib/billing-notify-patient", () => ({
+  notifyPatientDraftInvoiceCreated: vi.fn(),
+}));
+
 import { prisma } from "@/lib/prisma";
 import {
   canCreateInvoiceForAppointment,
@@ -33,6 +37,7 @@ import {
 import { assertAppointmentEligibleForNewInvoice } from "@/lib/billing-appointment-eligibility";
 import { resolveInvoiceOrganizationId } from "@/lib/invoice-organization-resolve";
 import { maybeCreateDraftInvoiceForCompletedVisit } from "@/lib/billing-auto-draft";
+import { notifyPatientDraftInvoiceCreated } from "@/lib/billing-notify-patient";
 
 const APPT = "appt-1";
 const DOC = "doc-1";
@@ -82,7 +87,8 @@ describe("maybeCreateDraftInvoiceForCompletedVisit", () => {
       owner_id: DOC,
       treating_physician_id: DOC,
       patient: { firstname: "Demo", lastname: "Patient", email: "p@test.com" },
-      appointment_type: { name: "Follow-up" },
+      appointment_type: { name: "Follow-up", price_cents: 9250 },
+      patient_id: "pat-1",
       owner: { consultation_fee: 5900 },
       treating_physician: { consultation_fee: 5900 },
     } as never);
@@ -99,6 +105,11 @@ describe("maybeCreateDraftInvoiceForCompletedVisit", () => {
     });
 
     expect(result).toEqual({ created: true, invoiceId: "new-inv" });
-    expect(prisma.invoice.create).toHaveBeenCalled();
+    expect(prisma.invoice.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ amount: 9250 }),
+      })
+    );
+    expect(notifyPatientDraftInvoiceCreated).toHaveBeenCalled();
   });
 });

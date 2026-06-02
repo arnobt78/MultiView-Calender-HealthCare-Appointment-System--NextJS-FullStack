@@ -17,7 +17,7 @@ const KIND_LABEL: Record<DoctorSettingsChangeKind, string> = {
   weekly_schedule: "weekly availability",
   time_off: "time off",
   visit_type: "appointment type",
-  global_visit_toggle: "global visit type access",
+  global_visit_toggle: "organization appointment type access",
 };
 
 /**

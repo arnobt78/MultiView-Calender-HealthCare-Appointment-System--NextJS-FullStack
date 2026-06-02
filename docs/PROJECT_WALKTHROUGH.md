@@ -10,7 +10,8 @@
 - **Appointment Types page:** `GlobalAppointmentTypesEditor` rewritten — stats row (4 `PatientStatCard`), Global A-Z section, Custom by Doctor A-Z section, 3-field forms (Name/Duration/Price). `GET /api/appointment-types/admin-all` (admin-only). Page title "Appointment Types" via `APPOINTMENT_TYPE_COPY`.
 - **Doctor profiles:** `StaffDirectoryEntry` extended with all profile fields. `DoctorDetailScreen` shows phone/license/department/office/fee/experience/languages. `PatientDetailScreen` doctor card shows all extended fields. `buildStaffDirectoryMap` merges new fields.
 - **CP consistency:** `InvoiceManagement` + `AppointmentsManagement` + `OrganizationManagement` — `PageHeader` added. Invoice: Draft stat card (`PatientStatCard` amber). Org: 2-tile stats row. UserManagement already had PageHeader+stats.
-- **Tests:** 596 / 104 files. tsc 0 errors. lint clean. build ✓.
+- **Portal compact rows:** Emerald price badge (`€X.XX · est.` + Euro icon) added to `PortalAppointmentTimelineCard` (patient portal timeline), `DoctorPortalAppointmentListRow` (doctor portal today/upcoming panels), `RecentAppointmentRow` inline in `AdminPortalPage`. Data already flowed via `serializeAppointment`; only UI rendering was missing. `billing-notify-patient.ts` = draft invoice email (separate from `billing-notify.ts` which handles paid/failed/refunded events).
+- **Tests:** 600 / 106 files. tsc 0 errors. lint clean. build ✓.
 
 ## Previous Audit (2026-06-02)
 

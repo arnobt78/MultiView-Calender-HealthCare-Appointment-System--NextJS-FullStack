@@ -162,7 +162,10 @@ function DoctorProfileCard({ doctor }: { doctor: DoctorCard }) {
           </span>
           <span className="flex items-center gap-1">
             <Clock className="h-3.5 w-3.5" />
-            {doctor.appointment_types.length} type{doctor.appointment_types.length !== 1 ? "s" : ""}
+            {(doctor.bookable_appointment_types?.length ?? doctor.appointment_types.length)} type
+            {(doctor.bookable_appointment_types?.length ?? doctor.appointment_types.length) !== 1
+              ? "s"
+              : ""}
           </span>
         </div>
 

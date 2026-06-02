@@ -80,4 +80,29 @@ describe("fetchBillingAppointmentOptions", () => {
     expect(options[0]?.eligible).toBe(false);
     expect(options[0]?.display_status).toBe("paid");
   });
+
+  it("sets suggested_amount_cents for eligible visits from type price", async () => {
+    vi.mocked(prisma.appointment.findMany).mockResolvedValue([
+      {
+        id: APPT,
+        title: "Visit",
+        start: new Date("2026-06-01"),
+        end: new Date("2026-06-01"),
+        owner_id: ADMIN,
+        treating_physician_id: ADMIN,
+        patient: { firstname: "Demo", lastname: "Patient", email: "p@test.com" },
+        appointment_type: { price_cents: 9250 },
+        owner: { consultation_fee: 15000 },
+        treating_physician: { consultation_fee: 15000 },
+      },
+    ] as never);
+    vi.mocked(prisma.invoice.findMany).mockResolvedValue([]);
+
+    const options = await fetchBillingAppointmentOptions({
+      sessionUserId: ADMIN,
+      role: "admin",
+    });
+    expect(options).toHaveLength(1);
+    expect(options[0]?.suggested_amount_cents).toBe(9250);
+  });
 });

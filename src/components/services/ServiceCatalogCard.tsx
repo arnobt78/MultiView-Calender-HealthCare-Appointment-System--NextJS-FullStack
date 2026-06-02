@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { formatAppointmentTypeChipMeta } from "@/lib/appointment-type-scheduling-meta";
 import type { ServiceCatalogRow } from "@/lib/appointment-service-catalog";
 import { ServiceCatalogDoctorOffers } from "@/components/services/ServiceCatalogDoctorOffers";
+import { VisitFeeBadge } from "@/components/shared/billing/VisitFeeBadge";
 
 type Props = {
   service: ServiceCatalogRow;
@@ -63,11 +64,12 @@ export function ServiceCatalogCard({ service }: Props) {
           {!isGlobal && service.doctor_offers?.length ? (
             <ServiceCatalogDoctorOffers offers={service.doctor_offers} />
           ) : null}
-          <div className="flex items-center gap-1.5 mt-1.5">
+          <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
             <Badge variant="outline" className="text-[10px] py-0 bg-violet-50 text-violet-700 border-violet-200">
               <Clock className="h-2.5 w-2.5 mr-0.5" aria-hidden />
               {service.duration_minutes} min
             </Badge>
+            <VisitFeeBadge priceCents={service.price_cents} className="text-[10px] py-0" />
           </div>
         </div>
       </CardContent>

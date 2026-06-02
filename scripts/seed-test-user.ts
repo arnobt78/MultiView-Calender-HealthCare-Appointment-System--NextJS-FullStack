@@ -77,6 +77,7 @@ const GLOBAL_APPOINTMENT_TYPES = [
     id: "22222222-2222-4222-8222-222222222201",
     name: "Initial Consultation",
     description: "First visit to discuss medical history, symptoms, and treatment goals.",
+    price_cents: 15000,
     duration_minutes: 60,
     buffer_before_minutes: 10,
     buffer_after_minutes: 10,
@@ -87,6 +88,7 @@ const GLOBAL_APPOINTMENT_TYPES = [
     id: "22222222-2222-4222-8222-222222222202",
     name: "Follow-up Visit",
     description: "Review of treatment progress and adjustment of care plan.",
+    price_cents: 9250,
     duration_minutes: 30,
     buffer_before_minutes: 5,
     buffer_after_minutes: 5,
@@ -97,6 +99,7 @@ const GLOBAL_APPOINTMENT_TYPES = [
     id: "22222222-2222-4222-8222-222222222203",
     name: "Telehealth Session",
     description: "Remote consultation via secure video call — no travel required.",
+    price_cents: 8500,
     duration_minutes: 20,
     buffer_before_minutes: 5,
     buffer_after_minutes: 5,
@@ -107,6 +110,7 @@ const GLOBAL_APPOINTMENT_TYPES = [
     id: "22222222-2222-4222-8222-222222222204",
     name: "Annual Check-up",
     description: "Comprehensive yearly health assessment including lab work review.",
+    price_cents: 12000,
     duration_minutes: 45,
     buffer_before_minutes: 10,
     buffer_after_minutes: 10,
@@ -184,6 +188,7 @@ async function seedDemoUsers() {
         id: DEMO_DOCTOR_APPOINTMENT_TYPE_ID,
         user_id: doctor.id,
         name: "Consultation",
+        price_cents: 12500,
         duration_minutes: 30,
         buffer_before_minutes: 5,
         buffer_after_minutes: 5,
@@ -193,6 +198,7 @@ async function seedDemoUsers() {
       update: {
         user_id: doctor.id,
         name: "Consultation",
+        price_cents: 12500,
         duration_minutes: 30,
         buffer_before_minutes: 5,
         buffer_after_minutes: 5,
@@ -264,7 +270,12 @@ async function seedDemoUsers() {
     await prisma.appointmentType.upsert({
       where: { id: t.id },
       create: { ...t, user_id: null },
-      update: { name: t.name, description: t.description, duration_minutes: t.duration_minutes },
+      update: {
+        name: t.name,
+        description: t.description,
+        duration_minutes: t.duration_minutes,
+        price_cents: t.price_cents,
+      },
     });
   }
 

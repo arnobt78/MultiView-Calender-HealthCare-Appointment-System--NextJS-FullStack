@@ -302,7 +302,7 @@ export function globalVisitTypeCrudMessage(
   params: { name: string; duration_minutes?: number }
 ): CrudNotifyPayload {
   const quoted = quoteName(params.name);
-  const entity = "Global visit type";
+  const entity = "Appointment type template";
   const duration =
     params.duration_minutes != null ? ` (${params.duration_minutes} min)` : "";
   if (action === "created") {

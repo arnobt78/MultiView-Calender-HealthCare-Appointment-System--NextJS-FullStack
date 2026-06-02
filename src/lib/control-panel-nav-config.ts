@@ -24,7 +24,7 @@ export const CONTROL_PANEL_SIDEBAR_ITEMS = [
   { value: "dashboard", label: "User Dashboard Access Invitation" },
   { value: "patients", label: "Patient Management" },
   { value: "categories", label: "Category Management" },
-  { value: "visit_types_global", label: "Global Visit Types" },
+  { value: "visit_types_global", label: "Appointment Types" },
   { value: "doctors", label: "Doctor Management" },
   { value: "users_admin", label: "User / Admin Management" },
   { value: "organizations", label: "Organization Management" },

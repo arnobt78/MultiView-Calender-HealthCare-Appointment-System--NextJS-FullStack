@@ -101,6 +101,7 @@ describe("GET /api/billing/appointment-options", () => {
         display_status: null,
         amount_cents: null,
         currency: null,
+        suggested_amount_cents: 9250,
       },
     ]);
 

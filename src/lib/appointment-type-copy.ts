@@ -11,4 +11,9 @@ export const APPOINTMENT_TYPE_COPY = {
     "Organization-wide visit templates available to every doctor for booking and the public Services page. Only admins can add or remove templates here.",
   customSectionBlurb:
     "Doctor-specific visit types created by individual doctors. Admins can edit or remove any custom type. Prices set here override the doctor's default consultation fee for auto-invoicing.",
+  /** Services page catalog filter + dropdown bucket label. */
+  globalCatalogFilterLabel: "Organization-wide types",
+  globalCatalogGroupLabel: "Organization-wide templates",
+  /** Toast entity label for admin global template CRUD. */
+  globalTemplateCrudEntity: "Appointment type template",
 } as const;

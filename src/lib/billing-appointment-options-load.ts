@@ -11,6 +11,7 @@ import {
   mapLatestInvoicesByAppointmentId,
   resolveAppointmentBillingSummary,
 } from "@/lib/billing-appointment-eligibility";
+import { resolveVisitFeeCents } from "@/lib/billing-visit-fee";
 
 const PICKER_LIMIT = 40;
 
@@ -64,7 +65,11 @@ export async function fetchBillingAppointmentOptions(
       start: true,
       end: true,
       owner_id: true,
+      treating_physician_id: true,
       patient: { select: { firstname: true, lastname: true, email: true } },
+      appointment_type: { select: { price_cents: true } },
+      owner: { select: { consultation_fee: true } },
+      treating_physician: { select: { consultation_fee: true } },
     },
   });
 
@@ -94,6 +99,14 @@ export async function fetchBillingAppointmentOptions(
     const billing = resolveAppointmentBillingSummary(latest);
     if (!billing.eligible && !includeBilled) continue;
 
+    const feeDoctor = row.treating_physician ?? row.owner;
+    const visitFeeCents = resolveVisitFeeCents({
+      typePriceCents: row.appointment_type?.price_cents,
+      doctorConsultationFeeCents: feeDoctor?.consultation_fee,
+    });
+    const suggestedAmountCents =
+      billing.eligible && visitFeeCents > 0 ? visitFeeCents : null;
+
     options.push({
       id: row.id,
       title: row.title,
@@ -111,6 +124,7 @@ export async function fetchBillingAppointmentOptions(
       display_status: billing.displayStatus,
       amount_cents: billing.amountCents,
       currency: billing.currency,
+      suggested_amount_cents: suggestedAmountCents,
     });
   }
 
