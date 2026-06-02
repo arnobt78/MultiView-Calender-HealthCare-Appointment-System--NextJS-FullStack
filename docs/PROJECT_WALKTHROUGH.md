@@ -29,7 +29,7 @@
 - **One bill per visit / picker / Refunded badge:** `billing-appointment-eligibility.ts`, POST **409**, `009` migration, shared picker + SSR seed (unchanged contract).
 - **Payments:** `011_payment_stripe_id_unique.sql`; payment history UI dedupes duplicate Stripe IDs.
 - **Tests:** Vitest **589** (102 files), incl. `invoice-billing-totals.test.ts`, `org-billing-prefetch.test.ts`, `clinical-empty-dash.test.tsx`, `control-panel-section-prefetch.test.ts`. **DB:** `npm run db:migrate` (silent OK) runs `009`–`011`.
-- **Known follow-ups (not blocking demo):** `calendar/export`, `calendar/sync`, `appointments/search` still filter `owner_id` only; assignee-only visibility unchanged (assignee batch); `GET /api/appointments?ids=` batch does not OR `treating_physician_id` (main list already includes treating).
+- **Staff calendar scope:** `staff-appointment-calendar-scope.ts` — `staffCalendarAppointmentWhere` (owner OR treating) on GET `/api/appointments`, doctor portal, prefetch, **`GET /api/calendar/export`**, **`POST /api/calendar/sync`**, **`GET /api/appointments/search`**. Assignee-only: `?ids=` batch still owner OR accepted assignee (not treating).
 
 ## Prior (2026-05-31)
 

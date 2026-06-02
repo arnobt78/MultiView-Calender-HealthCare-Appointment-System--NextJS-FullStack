@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   dashboardOverviewAppointmentFilter,
+  staffCalendarAppointmentByIdWhere,
   staffCalendarAppointmentFilter,
   staffCalendarAppointmentWhere,
 } from "@/lib/staff-appointment-calendar-scope";
@@ -34,6 +35,13 @@ describe("staff-appointment-calendar-scope", () => {
 
   it("dashboardOverviewAppointmentFilter uses staff scope for doctors", () => {
     expect(dashboardOverviewAppointmentFilter("doc-a", "doctor")).toEqual({
+      OR: [{ owner_id: "doc-a" }, { treating_physician_id: "doc-a" }],
+    });
+  });
+
+  it("staffCalendarAppointmentByIdWhere scopes single id to owner or treating", () => {
+    expect(staffCalendarAppointmentByIdWhere("doc-a", "appt-1")).toEqual({
+      id: "appt-1",
       OR: [{ owner_id: "doc-a" }, { treating_physician_id: "doc-a" }],
     });
   });

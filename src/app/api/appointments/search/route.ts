@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { isValidUUID } from "@/lib/validation";
 import { PAGINATION, VALIDATION } from "@/lib/constants";
+import { staffCalendarAppointmentFilter } from "@/lib/staff-appointment-calendar-scope";
 
 /** Per-request API handler (see api-route-dynamic.test.ts). */
 export const dynamic = "force-dynamic";
@@ -37,16 +38,15 @@ export async function GET(req: NextRequest) {
     let appointments;
     if (isValidUUID(searchQuery)) {
       appointments = await prisma.appointment.findMany({
-        where: { owner_id: sessionUser.userId, id: searchQuery },
+        where: staffCalendarAppointmentFilter(sessionUser.userId, { id: searchQuery }),
         select: { id: true, title: true, start: true, end: true, status: true },
         take: safeLimit,
       });
     } else {
       appointments = await prisma.appointment.findMany({
-        where: {
-          owner_id: sessionUser.userId,
+        where: staffCalendarAppointmentFilter(sessionUser.userId, {
           title: { contains: searchQuery, mode: "insensitive" },
-        },
+        }),
         select: { id: true, title: true, start: true, end: true, status: true },
         orderBy: { start: "desc" },
         take: safeLimit,

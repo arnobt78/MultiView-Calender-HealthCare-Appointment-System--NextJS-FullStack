@@ -7,6 +7,7 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import { staffCalendarAppointmentWhere } from "@/lib/staff-appointment-calendar-scope";
 
 function escapeICS(text: string): string {
   return text.replace(/[\\;,\n]/g, (match) => {
@@ -30,7 +31,7 @@ export async function GET() {
     }
 
     const appointments = await prisma.appointment.findMany({
-      where: { owner_id: sessionUser.userId },
+      where: staffCalendarAppointmentWhere(sessionUser.userId),
       include: { category: true, patient: true },
       orderBy: { start: "desc" },
     });

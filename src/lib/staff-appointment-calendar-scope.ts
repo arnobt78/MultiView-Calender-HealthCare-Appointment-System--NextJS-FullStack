@@ -26,6 +26,17 @@ export function staffCalendarAppointmentFilter(
   return { AND: [base, extra] };
 }
 
+/** Single-row guard — export, Google sync POST, search by id (owner OR treating). */
+export function staffCalendarAppointmentByIdWhere(
+  userId: string,
+  appointmentId: string
+): Prisma.AppointmentWhereInput {
+  return {
+    id: appointmentId,
+    OR: [{ owner_id: userId }, { treating_physician_id: userId }],
+  };
+}
+
 /** Dashboard overview appointment KPIs — admin sees all rows; doctors/staff see owner OR treating. */
 export function dashboardOverviewAppointmentFilter(
   userId: string,

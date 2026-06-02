@@ -15,6 +15,7 @@ import {
   listGoogleEvents,
   appointmentToGoogleEvent,
 } from "@/lib/google-calendar";
+import { staffCalendarAppointmentByIdWhere } from "@/lib/staff-appointment-calendar-scope";
 
 /** Per-request API handler (see api-route-dynamic.test.ts). */
 export const dynamic = "force-dynamic";
@@ -74,9 +75,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid appointmentId format" }, { status: 400 });
     }
 
-    // Scope to the session user's own appointment — prevents syncing foreign data to someone's calendar.
+    // Owner OR treating — same scope as GET /api/appointments and ICS export.
     const appointment = await prisma.appointment.findFirst({
-      where: { id: appointmentId, owner_id: sessionUser.userId },
+      where: staffCalendarAppointmentByIdWhere(sessionUser.userId, appointmentId),
     });
 
     if (!appointment) {
