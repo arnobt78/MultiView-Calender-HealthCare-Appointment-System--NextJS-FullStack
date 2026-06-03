@@ -1,4 +1,4 @@
-# MultiView Calendar Health Care Appointment Management System – Next.js, Postgresql FullStack Project (Admin Control Panel Permission Dashboard)
+# MultiView Calendar Health Care Appointment Management System – Next.js, Postgresql FullStack Project (Role Based Access Control Admin Panel, Doctor & Patient Portal with Appointment Booking with Time Slot, Invitation System)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Next.js](https://img.shields.io/badge/Next.js-15-black)](https://nextjs.org/)
