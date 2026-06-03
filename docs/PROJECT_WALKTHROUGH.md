@@ -8,7 +8,7 @@
 - **Detail live edit:** `InvoiceDetailLiveBody` subscribes `useInvoice`; `InvoiceDetailClient` **Edit details**; `hideViewLink` on detail; doctor mutate on sent/overdue own invoices.
 - **API parity:** `GET /api/invoices/[id]`, `GET /api/payments`, `prefetchInvoiceDetail` attach `visit_summary`.
 - **SSE hardening:** `createSafeSseEnqueue`; poll error → single error event + stop (no `ERR_INVALID_STATE` heartbeat spam).
-- **Optional follow-up:** Day/Week hover cards omit `invoiceDisplayStatus` badge (List + Month have it).
+- **Optional follow-up:** ~~Day/Week hover cards omit `invoiceDisplayStatus` badge~~ — Day + Week now wired (List/Month/Hover popover parity).
 - **Verify:** Vitest **666** (120 files), tsc, lint, build.
 
 ## Prior (2026-06-02 — Portal UI + Staff scope + Confirm dialogs)

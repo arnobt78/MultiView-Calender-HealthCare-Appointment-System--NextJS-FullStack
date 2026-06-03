@@ -35,6 +35,7 @@ import type { FullAppointment } from "@/hooks/useAppointments";
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import AppointmentDialogController from "./AppointmentDialogController";
 import AppointmentHoverCard from "./AppointmentHoverCard";
+import { useAppointmentInvoiceDisplayMap } from "@/hooks/useAppointmentInvoiceDisplayMap";
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 const SLOT_HEIGHT = 64; // px per hour
@@ -81,6 +82,12 @@ export default function DayView() {
     if (!filteredAppointments) return [];
     return filteredAppointments.filter((a: Appointment) => isSameDay(new Date(a.start), currentDate));
   }, [filteredAppointments, currentDate]);
+
+  /** Invoice badge on hover popover — from warm `invoices.all` cache (list/month parity). */
+  const invoiceDisplayByAppt = useAppointmentInvoiceDisplayMap(
+    dayAppointments.map((a) => a.id)
+  );
+
   const dayStats = useMemo(() => {
     return dayAppointments.reduce(
       (acc, appt) => {
@@ -192,6 +199,7 @@ export default function DayView() {
                             onToggleStatus={(id, next) =>
                               handleToggleStatus(id, next as "pending" | "done" | "alert")
                             }
+                            invoiceDisplayStatus={invoiceDisplayByAppt.get(appt.id)}
                             showDetails
                           />
                         </div>

@@ -18,6 +18,7 @@ import { useOwnerUserSummaries } from "@/hooks/useOwnerUserSummaries";
 import { cn } from "@/lib/utils";
 import { collectAppointmentStaffUserIds } from "@/lib/appointment-card";
 import AppointmentHoverCard from "./AppointmentHoverCard";
+import { useAppointmentInvoiceDisplayMap } from "@/hooks/useAppointmentInvoiceDisplayMap";
 import { Badge } from "../ui/badge";
 import GlobalCalendarFilters from "./GlobalCalendarFilters";
 import CalendarStickyHeader from "./CalendarStickyHeader";
@@ -97,6 +98,12 @@ export default function WeekView() {
       }),
     [filteredGlobalAppointments, weekStart, weekEnd]
   );
+
+  /** Invoice badge on hover popover — from warm `invoices.all` cache (list/month parity). */
+  const invoiceDisplayByAppt = useAppointmentInvoiceDisplayMap(
+    weekAppointments.map((a) => a.id)
+  );
+
   const today = new Date();
   const selectedWeekHasToday = (() => {
     const t = today.getTime();
@@ -360,6 +367,7 @@ export default function WeekView() {
                             onEdit={setEditAppt}
                             onDelete={(id) => setDeleteTargetId(id)}
                             onToggleStatus={toggleStatus}
+                            invoiceDisplayStatus={invoiceDisplayByAppt.get(a.id)}
                             showDetails={true}
                           />
                         </div>

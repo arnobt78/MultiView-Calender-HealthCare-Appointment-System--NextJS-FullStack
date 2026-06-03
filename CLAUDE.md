@@ -9,7 +9,7 @@ Compact agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 - **Doctor edit RBAC:** own draft/sent/overdue → `mutate` (description/due_date PATCH).
 - **SSE:** `notification-stream-sse.ts` safe enqueue; route abort + error stop (no heartbeat spam).
 - **Invalidation:** invoice CRUD → `invalidateAfterInvoiceWrite` busts `invoices.*` + `billing.root` (picker); unchanged.
-- **Verify:** `npm test` **666** / **120** files, tsc, lint, build.
+- **Verify:** `npm test` **666** / **120** files, tsc, lint, build. Day/Week/Month/List hover cards show invoice badge via `useAppointmentInvoiceDisplayMap`.
 
 ## Never / Always
 
