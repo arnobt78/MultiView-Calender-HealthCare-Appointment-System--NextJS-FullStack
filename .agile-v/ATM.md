@@ -18,6 +18,9 @@
 | REQ-0010 | approved [C3] | ART-0055..0060 | C3 | VER-0021 | C3 | PASS |
 | REQ-0011 | approved [C3] | ART-0061..0066, ART-0069 | C3 | VER-0022 | C3 | PASS |
 | REQ-0012 | approved [C3] | ART-0067..0068, ART-0070 | C3 | VER-0023..0024 | C3 | PASS |
+| REQ-0013 | approved [C3] | ART-0071..0074 | C3 | VER-0025 | C3 | PASS |
+| REQ-0014 | approved [C3] | ART-0075..0077 | C3 | VER-0026 | C3 | PASS |
+| REQ-0015 | approved [C3] | ART-0078..0085 | C3 | VER-0027..0028 | C3 | PASS |
 
 ## Dangling Artifacts
 
@@ -29,3 +32,4 @@ _None._
 |-----|------|------|
 | `invalidateDoctorAssignedPatients` predicate | R2 | No dedicated unit test; covered by integration regression |
 | E2E deactivate→409 booking | R2 | Manual QA only |
+| Export/sync/search treating-only scope | R2 | Follow-up C4 per CLAUDE.md |

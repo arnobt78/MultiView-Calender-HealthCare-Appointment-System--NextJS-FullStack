@@ -31,9 +31,9 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 | 2 | `config.json` | Project metadata, cycle, authority matrix, verification commands | ✓ |
 | 3 | `POLICY.yaml` | Policy-as-code (versioned) | ✓ v1.0.0 |
 | 4 | `STATE.md` | Current cycle, phase, stage — **read first on resume** | ✓ |
-| 5 | `REQUIREMENTS.md` | Canonical REQ-XXXX + traceability index | ✓ REQ-0001..0012 |
-| 6 | `BUILD_MANIFEST.md` | ART-XXXX → code paths | ✓ ART-0001..0070 |
-| 7 | `TEST_SPEC.md` | TC-XXXX (requirements-derived) | ✓ TC-0001..0020 |
+| 5 | `REQUIREMENTS.md` | Canonical REQ-XXXX + traceability index | ✓ REQ-0001..0015 |
+| 6 | `BUILD_MANIFEST.md` | ART-XXXX → code paths | ✓ ART-0001..0085 |
+| 7 | `TEST_SPEC.md` | TC-XXXX (requirements-derived) | ✓ TC-0001..0024 |
 | 8 | `VALIDATION_SUMMARY.md` | VER-XXXX results + EvalGate lines | ✓ |
 | 9 | `ATM.md` | REQ → ART → VER matrix | ✓ |
 | 10 | `DECISION_LOG.md` | Append-only decisions | ✓ |
@@ -86,16 +86,16 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 
 ---
 
-## C3 Bootstrap (2026-06-01 → verify refresh 2026-06-02) — Calendar, filters, billing
+## C3 Bootstrap (2026-06-01 → extension 2026-06-02) — Calendar, filters, billing, insights
 
 | Step | Artifact | Status |
 |------|----------|--------|
-| 1 | REQ-0009..0012 in living `REQUIREMENTS.md` | ✓ `approved [C3]` |
-| 2 | ART-0049..0070 in `BUILD_MANIFEST.md` | ✓ |
-| 3 | TC-0016..0020 + VER-0019..0024 | ✓ |
-| 4 | Code on `main` (staff scope, filters, billing KPI, org SSR) | ✓ shipped |
+| 1 | REQ-0009..0015 in living `REQUIREMENTS.md` | ✓ `approved [C3]` |
+| 2 | ART-0049..0085 in `BUILD_MANIFEST.md` | ✓ |
+| 3 | TC-0016..0024 + VER-0019..0028 | ✓ |
+| 4 | Code on `main` (scope, filters, billing KPI, telehealth period, invoice grid) | ✓ `faee3f7`, `6f13cc2` |
 | 5 | Human Gate 1 (GATE-0005) | ⏳ pending |
-| 6 | Automated verification | ✓ **589/589** tests (102 files), tsc, lint, build |
+| 6 | Automated verification | ✓ **638/638** tests (114 files), tsc, lint, build |
 | 7 | Human Gate 2 (GATE-0006) → archive `cycles/C3/` | ⏳ pending |
 
 **Note:** Re-running “bootstrap C1” only reads `cycles/C1/` — living C1 docs are not rewritten.
@@ -108,8 +108,8 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 |-------|-------|---------|---------------|---------|
 | C1 | Category CP + SSR prefetch | REQ-0001..0004 | `3a563d7` | `cycles/C1/` (frozen) |
 | C2 | Doctor CP + admin roster + dev stubs | REQ-0005..0008 | `2d9a932` | `cycles/C2/` (frozen) |
-| C3 | Calendar scope, filters, billing KPI + totals API | REQ-0009..0012 | (pending GATE-0006) | `cycles/C3/` (living) |
-| C4 | (planned) Follow-ups: export/sync/search treating scope | REQ-0013+ | — | — |
+| C3 | Calendar scope, filters, billing KPI, insights telehealth + invoice grid | REQ-0009..0015 | (pending GATE-0006) | `cycles/C3/` (living) |
+| C4 | (planned) Export/sync/search treating scope | REQ-0016+ | — | — |
 
 ---
 
@@ -125,4 +125,4 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 npm test && npx tsc --noEmit && npm run lint && npm run build
 ```
 
-Current baseline: **589** tests, **102** files (2026-06-02).
+Current baseline: **638** tests, **114** files (2026-06-02).

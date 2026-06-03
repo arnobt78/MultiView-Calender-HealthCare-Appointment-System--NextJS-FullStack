@@ -5,12 +5,12 @@ Living AQMS for the **Agile V Infinity Loop** on this repository.
 ## Quick Start
 
 1. **Read** `STATE.md` — current cycle, stage, status.
-2. **Read** `BOOTSTRAP.md` — C1/C2 index + infinity loop.
-3. **Read** `SKILLS.md` — 24 agent skills + pipeline mapping.
-4. **Specify** — add `REQ-XXXX` to `REQUIREMENTS.md` (`new [C3]`).
+2. **Read** `BOOTSTRAP.md` — C1/C2/C3 index + infinity loop.
+3. **Load skills** — `agile-v-core` → `agile-v-pipeline` → role skill (see `SKILLS.md`, 24 agents).
+4. **Specify** — add `REQ-XXXX` to `REQUIREMENTS.md` (`new [CN]`).
 5. **Gate 1** → `APPROVALS.md` → **Build** → `BUILD_MANIFEST.md` / `TEST_SPEC.md`.
 6. **Verify** → `VALIDATION_SUMMARY.md` + `EVAL_RESULTS.md`.
-7. **Gate 2** → archive `cycles/C3/`.
+7. **Gate 2** → archive `cycles/CN/`.
 
 ## File Map
 
@@ -35,7 +35,7 @@ Living AQMS for the **Agile V Infinity Loop** on this repository.
 |-------|--------|---------|---------|
 | C1 | closed | REQ-0001..0004 | `cycles/C1/` |
 | C2 | closed | REQ-0005..0008 | `cycles/C2/` |
-| C3 | verify (retroactive) | REQ-0009..0012 | `cycles/C3/` (living) |
+| C3 | verify | REQ-0009..0015 | `cycles/C3/` (living) |
 
 ## Verification
 
@@ -43,4 +43,4 @@ Living AQMS for the **Agile V Infinity Loop** on this repository.
 npm test && npx tsc --noEmit && npm run lint && npm run build
 ```
 
-Initialized: **2026-05-30** | Bootstrap completed: **2026-06-02** | Policy: **1.0.0** | Active: **C3** (Gates 5–6 pending)
+Initialized: **2026-05-30** | Bootstrap: **2026-06-02** | Policy: **1.0.0** | Active: **C3** (Gates 5–6 pending)

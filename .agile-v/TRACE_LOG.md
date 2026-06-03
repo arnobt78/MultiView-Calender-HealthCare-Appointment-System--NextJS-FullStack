@@ -14,6 +14,7 @@
 | TRACE-0008 | 2026-06-01T00:00:00Z | init | bootstrap | POLICY.yaml@1.0.0 | C3 retroactive bootstrap REQ-0009..0012 | — |
 | TRACE-0009 | 2026-06-01T00:00:00Z | red-team | tool | POLICY.yaml@1.0.0 | npm test 588/588 | REQ-0009..0012 |
 | TRACE-0010 | 2026-06-02T12:19:00Z | init | bootstrap | POLICY.yaml@1.0.0 | Framework refresh; npm test 589/589; BOOTSTRAP.md v1.4 checklist | REQ-0009..0012 |
+| TRACE-0011 | 2026-06-02T19:45:00Z | init | bootstrap | POLICY.yaml@1.0.0 | C3 extension REQ-0013..0015; Infinity Loop refresh; npm test 638/638 | REQ-0013..0015 |
 
 ## Span Types
 

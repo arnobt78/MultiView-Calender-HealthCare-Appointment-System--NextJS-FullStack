@@ -9,19 +9,19 @@
 | **Cycle** | C3 (active) |
 | **Phase** | Verify |
 | **Stage** | 4 — Red Team / automated verification |
-| **Status** | `in_progress` — framework bootstrapped; automated verify PASS (589 tests) |
+| **Status** | `in_progress` — bootstrap refresh complete; automated verify PASS (638 tests) |
 | **Last Updated** | 2026-06-02 |
-| **Agent** | agile-v-core (bootstrap refresh) |
+| **Agent** | agile-v-core (Infinity Loop bootstrap) |
 | **Prior archives** | `cycles/C1/`, `cycles/C2/` |
 
 ## Pipeline Position
 
 ```
-Stage 1: Requirements  ✓  REQ-0009..0012 [C3]
+Stage 1: Requirements  ✓  REQ-0009..0015 [C3]
 Stage 2: Validation  ✓  (pattern-aligned — no REQ conflicts)
 [Human Gate 1]  ⏳  GATE-0005 pending
-Stage 3: Synthesis  ✓  (shipped: 30d9fd3, 47c4913, 5407996, 2f0855d)
-Stage 4: Verification  ⏳  automated suite
+Stage 3: Synthesis  ✓  (shipped: faee3f7, 6f13cc2)
+Stage 4: Verification  ✓  automated suite 638/638
 [Human Gate 2]  ⏳  GATE-0006 pending
 Stage 5: Acceptance  —
 ```
@@ -30,9 +30,9 @@ Stage 5: Acceptance  —
 
 | Item | ID | Status |
 |------|-----|--------|
-| Requirements | REQ-0009..0012 | `approved [C3]` — retroactive |
-| Artifacts | ART-0049..0070 | built (on main) |
-| Verification | VER-0019..0024 | in_progress |
+| Requirements | REQ-0009..0015 | `approved [C3]` — retroactive + extension |
+| Artifacts | ART-0049..0085 | built (on main) |
+| Verification | VER-0019..0028 | PASS (automated) |
 | Open checkpoints | — | none |
 
 ## Cycle Index
@@ -41,9 +41,10 @@ Stage 5: Acceptance  —
 |-------|---------|-----------|---------------|
 | C1 | `cycles/C1/` | REQ-0001..0004 | `3a563d7` |
 | C2 | `cycles/C2/` | REQ-0005..0008 | `2d9a932` |
-| C3 | (living) | REQ-0009..0012 | `297cd51` (docs); code `47c4913` |
+| C3 | (living) | REQ-0009..0015 | `6f13cc2` (pending GATE-0006) |
 
 ## Notes
 
-- **C1 bootstrap** is frozen in `.agile-v/cycles/C1/` — do not modify.
-- C3 bootstrapped to trace billing KPI, org billing SSR, calendar scope/filters, empty-dash fixes already merged after C2.
+- **C1 bootstrap** frozen in `.agile-v/cycles/C1/` — do not modify.
+- **Skills:** load `agile-v-core` → `agile-v-pipeline` → role skill → `agile-v-compliance` at gates. Registry: `SKILLS.md` (24).
+- **Next:** Human approve GATE-0005/0006 → archive `cycles/C3/` → C4 for export/sync/search treating scope.

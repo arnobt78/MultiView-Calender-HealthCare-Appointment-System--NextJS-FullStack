@@ -1,12 +1,12 @@
 # Requirements — HealthCal Pro
 
-<!-- Revision: C1+C2+C3 | C1/C2 archived | C3 active | Last updated: 2026-06-02 -->
+<!-- Revision: C1+C2+C3 | C1/C2 archived | C3 active (REQ-0013..0015 extension) | Last updated: 2026-06-02 -->
 
 ## Document Control
 
 | Field | Value |
 |-------|-------|
-| Cycle | C1 (archived) + C2 (archived) + C3 (active) |
+| Cycle | C1 (archived) + C2 (archived) + C3 (active, REQ-0013..0015 extension) |
 | Author | Requirement Architect |
 | Gate 1 status | C1 GATE-0001 · C2 GATE-0003 approved |
 | Canonical source | this file |
@@ -58,6 +58,9 @@
 | REQ-0010 | approved [C3] | — | ART-0055..0060 | VER-0021 |
 | REQ-0011 | approved [C3] | — | ART-0061..0066, ART-0069 | VER-0022 |
 | REQ-0012 | approved [C3] | REQ-0011 | ART-0067..0068, ART-0070 | VER-0023..0024 |
+| REQ-0013 | approved [C3] | REQ-0009 | ART-0071..0074 | VER-0025 |
+| REQ-0014 | approved [C3] | — | ART-0075..0077 | VER-0026 |
+| REQ-0015 | approved [C3] | REQ-0011 | ART-0078..0088 | VER-0027..0028 |
 
 ### REQ-0004 — Dashboard/CP SSR prefetch + calendar batch assignee fetch
 
@@ -209,7 +212,7 @@
 | Risk | R1 |
 | Owner | Human |
 
-**Statement:** Doctor/staff calendar and portal appointment lists include visits where the user is calendar owner **or** treating physician; demo seed provides deterministic 10-row curated matrix aligned with insights/dashboard QA.
+**Statement:** Doctor/staff calendar and portal appointment lists include visits where the user is calendar owner **or** treating physician **or** accepted assignee; demo seed provides deterministic 10-row curated matrix aligned with insights/dashboard QA.
 
 **Acceptance criteria:**
 1. `staff-appointment-calendar-scope.ts` wired: `GET /api/appointments`, dashboard prefetch, doctor portal, login-today counts.
@@ -272,3 +275,62 @@
 2. `invoices-scope.ts` + `invoices-revenue-scope.ts` import shared outstanding statuses.
 3. `ClinicalEmptyDash` single glyph; `clinicalEmptyOr` on patient/doctor/category detail rows.
 4. `npm test`: `invoice-billing-totals.test.ts`, `org-billing-prefetch.test.ts`, `clinical-empty-dash.test.tsx`.
+
+### REQ-0013 — Assignee calendar scope (export, sync, search, portal)
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C3] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0009 |
+| Owner | Human |
+
+**Statement:** Extend staff calendar visibility to accepted assignees (`user_id` / `invited_email`) on all calendar list paths — not only main appointments API.
+
+**Acceptance criteria:**
+1. `staff-appointment-calendar-scope.ts` — `staffCalendarVisibilityOrClauses` includes accepted assignee OR clauses.
+2. Wired: `GET /api/calendar/export`, `POST /api/calendar/sync`, `GET /api/appointments/search`, doctor-portal API, login-today, non-admin dashboard overview prefetch.
+3. SSR: `prefetchDashboardAppointments`, `prefetchDoctorPortal`, `control-panel-section-prefetch`.
+4. Tests: `staff-appointment-calendar-scope.test.ts`, `login-today-appointments.test.ts`.
+
+**Out of scope:** Owner-only export/search treating-only follow-up (see CLAUDE.md follow-ups).
+
+### REQ-0014 — Insights telehealth View-as period scope
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C3] |
+| Priority | P2 |
+| Risk | R1 |
+| Owner | Human |
+
+**Statement:** Telehealth % KPI follows active View-as period (day/week/month/year/all) — same `start` window as pending chips and avg duration; top-row Today/week/month/YTD remain fixed calendar windows.
+
+**Acceptance criteria:**
+1. `fetchTelehealthShareForPeriod` in `insights-aggregate.ts` uses `withAppointmentStartInPeriod`.
+2. `getInsightsData` sets `telehealthCount` + `telehealthPct` from period share (not `totals.all`).
+3. `AnalyticsOverviewStatsRow` period hint aligns with computed %.
+4. Tests: `insights-period-charts.test.ts` (`fetchTelehealthShareForPeriod`).
+
+**Constraints:** Same SSR/API path via `getInsightsData`; `invalidateInsightsAndAnalytics` on appointment CRUD.
+
+### REQ-0015 — Invoice revenue KPI grid + insights billing parity
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C3] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0011 |
+| Owner | Human |
+
+**Statement:** Unified invoice revenue KPI grid (~12 cards) on `/insights`, CP invoice-management, and org billing — exact EUR formatting, status breakdown buckets, paid-in-period with `paid_at` + `created_at` fallback, vs-prior month comparison.
+
+**Acceptance criteria:**
+1. `InvoiceRevenueKpiGrid` + `invoice-revenue-kpi-presets.ts`; `formatBillingKpiMoney` exact decimals.
+2. `fetchRevenueAggregates` + `billing-totals` API return `statusTotals` + `paidInPeriodCount`.
+3. `insights-paid-collected.ts` — paid_in_period uses `paid_at`, fallback `created_at`.
+4. `AnalyticsRevenueStatsRow` + `InvoiceManagement` + `OrganizationBillingPanel` wired; chart labels use `formatBillingKpiMoney`.
+5. Invalidation: `invalidateInvoices*` busts `invoices.all` incl. `byOrganizationTotals`.
+6. Tests: `invoice-billing-totals.test.ts`, `invoice-paid-period.test.ts`, `org-billing-prefetch.test.ts`.

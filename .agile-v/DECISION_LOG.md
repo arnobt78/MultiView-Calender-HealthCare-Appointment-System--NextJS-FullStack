@@ -26,3 +26,8 @@
 | 2026-06-01T00:00:00Z | build | REQ-0012 org SSR prefetch all orgs + empty dash | `byOrganization` keys; single em-dash placeholder | REQ-0012 |
 | 2026-06-01T00:00:00Z | compliance | C1 bootstrap frozen — do not rewrite | Living docs append only; archives in `cycles/C1/` | REQ-0001..0004 |
 | 2026-06-02T12:19:00Z | init | Refresh Agile V bootstrap (C1/C2/C3 index) | 589/589 tests; ART-0069/0070 billing-totals API traceability; BOOTSTRAP checklist v1.4 | REQ-0009..0012 |
+| 2026-06-02T19:45:00Z | init | C3 extension bootstrap (Infinity Loop refresh) | REQ-0013 assignee scope; REQ-0014 telehealth period; REQ-0015 invoice KPI grid; 638/638 tests | REQ-0013..0015 |
+| 2026-06-02T19:45:00Z | build | REQ-0013 assignee calendar scope | faee3f7 — export/sync/search/portal/login-today | REQ-0013 |
+| 2026-06-02T19:45:00Z | build | REQ-0014 insights telehealth View-as | fetchTelehealthShareForPeriod; 6f13cc2 | REQ-0014 |
+| 2026-06-02T19:45:00Z | build | REQ-0015 invoice revenue KPI grid | InvoiceRevenueKpiGrid, statusTotals, paid_at period; 6f13cc2 | REQ-0015 |
+| 2026-06-02T19:45:00Z | red-team | C3 automated verification PASS (extended) | 638 tests, tsc, lint, build; GATE-0006 pending | REQ-0009..0015 |

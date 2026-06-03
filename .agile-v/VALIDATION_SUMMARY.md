@@ -100,7 +100,7 @@ EvalGate (C2): status=PASS | eval_run_id=ER-C2-CLOSE | release_commit=2d9a932
 | ART-IDs | ART-0049..ART-0068 |
 | REQ-IDs | REQ-0009..REQ-0012 |
 | Mode | Retroactive (code on `main` before Gate 1) |
-| Regression | 589/589 Vitest (102 files) |
+| Regression | 638/638 Vitest (114 files) |
 
 | VER-ID | TC-ID | REQ-ID | Result | Description |
 |--------|-------|--------|--------|-------------|
@@ -110,6 +110,10 @@ EvalGate (C2): status=PASS | eval_run_id=ER-C2-CLOSE | release_commit=2d9a932
 | VER-0022 | TC-0018 | REQ-0011 | PASS | Invoice billing totals (outstanding excludes refunded) |
 | VER-0023 | TC-0019 | REQ-0012 | PASS | Org billing prefetch + clinical empty dash |
 | VER-0024 | TC-0020 | REQ-0009..0012 | PASS | tsc + lint + build |
+| VER-0025 | TC-0021 | REQ-0013 | PASS | Assignee scope export/sync/search/portal |
+| VER-0026 | TC-0022 | REQ-0014 | PASS | Telehealth View-as period share |
+| VER-0027 | TC-0023 | REQ-0015 | PASS | Invoice revenue KPI + paid period |
+| VER-0028 | TC-0024 | REQ-0009..0015 | PASS | Full regression 638 + tsc + lint + build |
 
 ## Coverage (C3)
 
@@ -119,15 +123,18 @@ EvalGate (C2): status=PASS | eval_run_id=ER-C2-CLOSE | release_commit=2d9a932
 | REQ-0010 | TC-0017 + regression | PASS |
 | REQ-0011 | TC-0018 + regression | PASS |
 | REQ-0012 | TC-0019 + regression | PASS |
+| REQ-0013 | TC-0021 + regression | PASS |
+| REQ-0014 | TC-0022 + regression | PASS |
+| REQ-0015 | TC-0023 + regression | PASS |
 
 ## Red Team Sign-Off (C3)
 
 | Field | Value |
 |-------|-------|
 | Agent | Red Team Verifier (automated) |
-| Timestamp | 2026-06-01T00:00:00Z |
-| Evidence | commits `30d9fd3`, `47c4913`, `297cd51`; 589 tests (2026-06-02 verify) |
-| LINKED_REQ | REQ-0009..0012 |
+| Timestamp | 2026-06-02T19:45:00Z |
+| Evidence | commits `faee3f7`, `6f13cc2`; 638 tests (114 files) |
+| LINKED_REQ | REQ-0009..0015 |
 | Human Gate 2 | pending GATE-0006 |
 
 EvalGate (C3): status=PASS | eval_run_id=ER-C3-VERIFY | policy_version_ref=1.0.0 | gate2_pending=GATE-0006

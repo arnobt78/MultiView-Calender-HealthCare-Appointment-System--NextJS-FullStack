@@ -76,11 +76,26 @@
 | ART-0068 | C3 | REQ-0012 | `ClinicalTableEmptyDash.tsx`, `clinical-empty-dash.test.tsx` | built |
 | ART-0069 | C3 | REQ-0011 | `src/app/api/invoices/billing-totals/route.ts` | built |
 | ART-0070 | C3 | REQ-0012 | `prefetchInvoiceBillingTotalsForOrganization` in `server-prefetch.ts` | built |
+| ART-0071 | C3 | REQ-0013 | `staff-appointment-calendar-scope.ts` assignee OR clauses | built |
+| ART-0072 | C3 | REQ-0013 | `calendar/export`, `calendar/sync`, `appointments/search` scope | built |
+| ART-0073 | C3 | REQ-0013 | `login-today-appointments.ts` + tests | built |
+| ART-0074 | C3 | REQ-0013 | SSR prefetch scope in `server-prefetch.ts`, `control-panel-section-prefetch.ts` | built |
+| ART-0075 | C3 | REQ-0014 | `fetchTelehealthShareForPeriod` in `insights-aggregate.ts` | built |
+| ART-0076 | C3 | REQ-0014 | `insights-data.ts` period telehealth wiring | built |
+| ART-0077 | C3 | REQ-0014 | `insights-period-charts.test.ts` telehealth tests | built |
+| ART-0078 | C3 | REQ-0015 | `InvoiceRevenueKpiGrid.tsx`, `invoice-revenue-kpi-presets.ts` | built |
+| ART-0079 | C3 | REQ-0015 | `insights-paid-collected.ts`, `invoice-paid-period.ts` | built |
+| ART-0080 | C3 | REQ-0015 | `invoice-billing-totals.ts` extended buckets + `computeInvoiceExtendedKpis` | built |
+| ART-0081 | C3 | REQ-0015 | `fetchRevenueAggregates` statusTotals + `billing-totals/route.ts` | built |
+| ART-0082 | C3 | REQ-0015 | `AnalyticsRevenueStatsRow.tsx`, `AnalyticsOverviewStatsRow.tsx` hints | built |
+| ART-0083 | C3 | REQ-0015 | `insights-kpi-format.ts` `formatBillingKpiMoney` | built |
+| ART-0084 | C3 | REQ-0015 | `InvoiceManagement.tsx`, `OrganizationBillingPanel.tsx` KPI grid | built |
+| ART-0085 | C3 | REQ-0015 | `invoice-paid-period.test.ts`, extended billing-total tests | built |
 
 ## Verification Commands (project default)
 
 ```bash
-npm test        # 589 passed (C3 bootstrap verify, 2026-06-02)
+npm test        # 638 passed (C3 verify refresh, 2026-06-02)
 npx tsc --noEmit
 npm run lint
 npm run build
