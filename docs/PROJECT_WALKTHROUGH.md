@@ -1,6 +1,17 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-02 — Portal UI + Staff scope + Confirm dialogs)
+## Latest (2026-06-02 — Invoice dialog + preset create + SSE)
+
+- **InvoiceFormDialog:** amber glass 90vw shell; create (picker/preset) + edit (description/due date); `invoice-dialog-ui-classes.ts`, rich `InvoiceVisitPickerCard` / `InvoiceVisitSummaryCard`; enriched `billing-appointment-options-load` + SSR seed `queryKeys.billing.appointmentOptions`.
+- **Shared dialog:** `StaffInvoiceDialogShell` → `InvoiceFormDialogProvider` on CP, dashboard (`HomePage`), doctor portal, `/appointments`, `/invoices` layouts. Lists use `useInvoiceFormDialog()`; cards use `useInvoiceFormDialogOptional()` + **Create invoice** in `AppointmentActionsMenu`.
+- **Preset create:** `openCreateForAppointment(id)` from calendar ⋮ or `AppointmentDetailBillingActions`; `useBillingAppointmentOptionById` + amount prefill via `invoice-form-guards.ts`.
+- **Detail live edit:** `InvoiceDetailLiveBody` subscribes `useInvoice`; `InvoiceDetailClient` **Edit details**; `hideViewLink` on detail; doctor mutate on sent/overdue own invoices.
+- **API parity:** `GET /api/invoices/[id]`, `GET /api/payments`, `prefetchInvoiceDetail` attach `visit_summary`.
+- **SSE hardening:** `createSafeSseEnqueue`; poll error → single error event + stop (no `ERR_INVALID_STATE` heartbeat spam).
+- **Optional follow-up:** Day/Week hover cards omit `invoiceDisplayStatus` badge (List + Month have it).
+- **Verify:** Vitest **666** (120 files), tsc, lint, build.
+
+## Prior (2026-06-02 — Portal UI + Staff scope + Confirm dialogs)
 
 - **Staff calendar scope:** `staff-appointment-calendar-scope.ts` — `staffCalendarVisibilityOrClauses`: owner **OR** treating **OR** accepted assignee (`user_id` / `invited_email`). Same filter on `GET /api/appointments`, `?ids=` batch, **`GET /api/calendar/export`**, **`POST /api/calendar/sync`**, **`GET /api/appointments/search`**, doctor-portal API, login-today count, non-admin dashboard overview. SSR: `prefetchDashboardAppointments`, `prefetchDoctorPortal`, `prefetchDashboardOverview(userId, role, email)` via `control-panel-section-prefetch`.
 - **Doctor portal:** stacked panel headers (billing/patients); invoice rows (`DoctorPortalInvoiceListRow`, `invoice-list-display`); SSR visit summaries on invoices.

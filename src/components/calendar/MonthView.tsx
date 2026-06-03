@@ -44,6 +44,7 @@ import { Badge } from "../ui/badge";
 import GlobalCalendarFilters from "./GlobalCalendarFilters";
 import CalendarStickyHeader from "./CalendarStickyHeader";
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
+import { useAppointmentInvoiceDisplayMap } from "@/hooks/useAppointmentInvoiceDisplayMap";
 
 type AppointmentWithCategory = Appointment & {
   category_data?: Category;
@@ -117,6 +118,11 @@ export default function MonthView() {
     () => filteredGlobalAppointments.filter((a) => isSameMonth(new Date(a.start), currentDate)),
     [filteredGlobalAppointments, currentDate]
   );
+  const monthApptIds = useMemo(
+    () => monthAppointments.map((a) => a.id),
+    [monthAppointments]
+  );
+  const invoiceDisplayByAppt = useAppointmentInvoiceDisplayMap(monthApptIds);
   const todayDate = new Date();
   const isSelectedMonthCurrentMonth =
     currentDate.getFullYear() === todayDate.getFullYear() &&
@@ -301,6 +307,7 @@ export default function MonthView() {
                           userId={userId}
                           ownerUsers={ownerUsers}
                           detailWrap
+                          invoiceDisplayStatus={invoiceDisplayByAppt.get(a.id)}
                           onEdit={setEditAppt}
                           onDelete={(id) => setDeleteTargetId(id)}
                           onToggleStatus={toggleStatus}
@@ -360,6 +367,7 @@ export default function MonthView() {
                   onDelete={(id) => setDeleteTargetId(id)}
                   onToggleStatus={toggleStatus}
                   appointmentTypePriceCents={fullAppt.appointment_type_price_cents}
+                  invoiceDisplayStatus={invoiceDisplayByAppt.get(a.id)}
                 />
               );
             })}

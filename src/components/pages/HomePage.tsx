@@ -17,6 +17,7 @@ import WeekView from "@/components/calendar/WeekView";
 import DayView from "@/components/calendar/DayView";
 import AppointmentList from "@/components/calendar/AppointmentList";
 import CalendarHeader from "@/components/calendar/CalendarHeader";
+import { StaffInvoiceDialogShell } from "@/components/shared/billing/StaffInvoiceDialogShell";
 import type { Category, Patient, AppointmentAssignee } from "@/types/types";
 import type { FullAppointment } from "@/hooks/useAppointments";
 import type { DashboardAccessRow } from "@/lib/query-fetchers";
@@ -120,18 +121,20 @@ const HomePage: React.FC<HomePageProps> = ({
   );
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col overflow-visible">
-      <div className="shrink-0">
-        <CalendarHeader view={view} setView={setView} />
+    <StaffInvoiceDialogShell>
+      <div className="flex h-full min-h-0 flex-1 flex-col overflow-visible">
+        <div className="shrink-0">
+          <CalendarHeader view={view} setView={setView} />
+        </div>
+        {/* Only the calendar stack scrolls here (dashboard is height-locked); thin track via globals.css — rest of app scrolls the document. */}
+        <div className="inner-dashboard-scroll flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-contain">
+          {view === "List" && <AppointmentList />}
+          {view === "Day" && <DayView />}
+          {view === "Week" && <WeekView />}
+          {view === "Month" && <MonthView />}
+        </div>
       </div>
-      {/* Only the calendar stack scrolls here (dashboard is height-locked); thin track via globals.css — rest of app scrolls the document. */}
-      <div className="inner-dashboard-scroll flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-contain">
-        {view === "List" && <AppointmentList />}
-        {view === "Day" && <DayView />}
-        {view === "Week" && <WeekView />}
-        {view === "Month" && <MonthView />}
-      </div>
-    </div>
+    </StaffInvoiceDialogShell>
   );
 };
 

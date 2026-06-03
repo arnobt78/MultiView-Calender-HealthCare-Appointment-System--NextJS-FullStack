@@ -48,6 +48,7 @@ import {
   CheckCircle2,
   Layers,
 } from "lucide-react";
+import { StaffInvoiceDialogShell } from "@/components/shared/billing/StaffInvoiceDialogShell";
 
 interface DoctorPortalPageProps {
   initialData: DoctorPortalData | null;
@@ -129,7 +130,8 @@ export default function DoctorPortalPage({
   const upcomingCountLabel = portalLoading ? undefined : String(upcomingAppts.length);
 
   return (
-    <div className={appPortalSectionRootClass}>
+    <StaffInvoiceDialogShell variant="doctor">
+      <div className={appPortalSectionRootClass}>
       <PortalDoctorChromeHeader
         doctor={
           data?.doctor
@@ -282,6 +284,7 @@ export default function DoctorPortalPage({
         doctorDisplayName={data?.doctor?.display_name}
         listBodyLoading={portalLoading}
       />
-    </div>
+      </div>
+    </StaffInvoiceDialogShell>
   );
 }

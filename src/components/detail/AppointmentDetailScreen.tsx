@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, MapPin, Calendar, Clock, Lock } from "lucide-react";
 import { AppointmentDetailForm } from "@/components/control-panel/AppointmentDetailForm";
+import { AppointmentDetailBillingActions } from "@/components/shared/billing/AppointmentDetailBillingActions";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { resolveAppSectionRootClass } from "@/lib/section-page-layout";
 
@@ -68,12 +69,15 @@ export function AppointmentDetailScreen({
             : "Appointment details"
         }
         actions={
-          <Button variant="outline" asChild>
-            <BackNavigationLink href={backHref}>
-              <ArrowLeft className="size-4" />
-              Back
-            </BackNavigationLink>
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <AppointmentDetailBillingActions appointmentId={appointment.id} />
+            <Button variant="outline" asChild>
+              <BackNavigationLink href={backHref}>
+                <ArrowLeft className="size-4" />
+                Back
+              </BackNavigationLink>
+            </Button>
+          </div>
         }
       />
 

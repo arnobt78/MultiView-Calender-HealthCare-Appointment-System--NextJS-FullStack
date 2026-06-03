@@ -78,7 +78,7 @@ export type InvoiceRow = {
   issuer_image?: string | null;
 };
 
-/** GET /api/billing/appointment-options — compact visit picker row. */
+/** GET /api/billing/appointment-options — rich visit picker row for invoice create dialog. */
 export type InvoiceAppointmentOptionRow = {
   id: string;
   title: string;
@@ -95,4 +95,24 @@ export type InvoiceAppointmentOptionRow = {
   currency: string | null;
   /** Visit fee from appointment type or doctor — for manual create prefill when eligible. */
   suggested_amount_cents: number | null;
+  /** Rich display — aligned with InvoiceVisitSummary for picker cards. */
+  patient_id?: string | null;
+  patient_email?: string | null;
+  patient_birth_date?: string | null;
+  patient_care_level?: number | null;
+  patient_clinical_profile?: { image_url?: string } | null;
+  when_label?: string;
+  location_label?: string | null;
+  is_telehealth?: boolean;
+  appointment_type_name?: string | null;
+  category_id?: string | null;
+  category_label?: string | null;
+  category_color?: string | null;
+  category_icon?: string | null;
+  treating_physician_id?: string | null;
+  treating_physician_label?: string | null;
+  treating_physician_specialty?: string | null;
+  calendar_owner_id?: string | null;
+  calendar_owner_label?: string | null;
+  calendar_owner_specialty?: string | null;
 };

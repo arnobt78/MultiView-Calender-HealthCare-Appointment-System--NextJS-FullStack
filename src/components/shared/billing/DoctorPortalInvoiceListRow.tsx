@@ -20,6 +20,7 @@ type Props = {
   invoice: Invoice;
   onSend: (id: string) => void;
   onDelete: (id: string) => void;
+  onEdit?: (invoice: Invoice) => void;
   isUpdating?: boolean;
 };
 
@@ -31,6 +32,7 @@ export function DoctorPortalInvoiceListRow({
   invoice,
   onSend,
   onDelete,
+  onEdit,
   isUpdating,
 }: Props) {
   const summary = invoice.visit_summary;
@@ -86,6 +88,7 @@ export function DoctorPortalInvoiceListRow({
             <InvoiceAdminActionsMenu
               invoice={invoice}
               viewerRole="doctor"
+              onEdit={onEdit}
               onSend={onSend}
               onDelete={onDelete}
               isUpdating={isUpdating}

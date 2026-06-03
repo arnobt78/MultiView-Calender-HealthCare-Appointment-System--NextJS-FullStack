@@ -430,7 +430,7 @@ export async function prefetchInvoiceDetail(
     });
     if (!raw) return null;
     const base = serializeInvoice(raw);
-    return mapApiInvoiceToRow({
+    const mapped = mapApiInvoiceToRow({
       ...raw,
       ...base,
       appointment_id: raw.appointment_id,
@@ -447,6 +447,9 @@ export async function prefetchInvoiceDetail(
         stripe_payment_id: p.stripe_payment_id,
       })),
     }) as Invoice;
+    const { attachVisitSummariesToInvoices } = await import("@/lib/invoice-visit-summary");
+    const [withVisit] = await attachVisitSummariesToInvoices([mapped]);
+    return withVisit as Invoice;
   } catch {
     return null;
   }

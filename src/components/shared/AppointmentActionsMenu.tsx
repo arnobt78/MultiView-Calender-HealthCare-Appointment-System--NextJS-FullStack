@@ -9,6 +9,7 @@
 import { useMemo } from "react";
 import Link from "next/link";
 import {
+  Receipt,
   MoreVertical,
   Eye,
   CheckCircle,
@@ -46,6 +47,9 @@ type AppointmentActionsMenuProps = {
   onToggleStatus: (id: string, nextStatus: "pending" | "done") => void;
   onEdit: () => void;
   onDelete: (id: string) => void;
+  /** Staff billing — preset create from this visit. */
+  onCreateInvoice?: (appointmentId: string) => void;
+  showCreateInvoice?: boolean;
   triggerClassName?: string;
   contentClassName?: string;
 };
@@ -70,6 +74,10 @@ const toggleOpenClass =
 const deleteActionClass =
   "gap-2 text-rose-600 [&_svg]:text-rose-500 focus:bg-rose-50 focus:text-rose-700 data-[highlighted]:bg-rose-50 data-[highlighted]:text-rose-700 data-[highlighted]:[&_svg]:text-rose-600";
 
+/** Create invoice — amber hover/focus (billing). */
+const createInvoiceClass =
+  "gap-2 text-amber-800 [&_svg]:text-amber-600 focus:bg-amber-50 focus:text-amber-900 data-[highlighted]:bg-amber-50 data-[highlighted]:text-amber-900 data-[highlighted]:[&_svg]:text-amber-700";
+
 export function AppointmentActionsMenu({
   appointment,
   userId,
@@ -78,6 +86,8 @@ export function AppointmentActionsMenu({
   onToggleStatus,
   onEdit,
   onDelete,
+  onCreateInvoice,
+  showCreateInvoice = false,
   triggerClassName,
   contentClassName,
 }: AppointmentActionsMenuProps) {
@@ -183,6 +193,22 @@ export function AppointmentActionsMenu({
           <Pencil className="h-4 w-4" />
           <span>Edit</span>
         </DropdownMenuItem>
+
+        {onCreateInvoice && (
+          <DropdownMenuItem
+            disabled={!showCreateInvoice}
+            className={cn(
+              showCreateInvoice ? createInvoiceClass : disabledItemClass
+            )}
+            onClick={() => {
+              if (!showCreateInvoice) return;
+              onCreateInvoice(appointment.id);
+            }}
+          >
+            <Receipt className="h-4 w-4" />
+            <span>Create invoice</span>
+          </DropdownMenuItem>
+        )}
 
         <DropdownMenuItem
           disabled={!capabilities.canDelete}

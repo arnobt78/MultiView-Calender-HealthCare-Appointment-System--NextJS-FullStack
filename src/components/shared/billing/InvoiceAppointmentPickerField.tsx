@@ -4,11 +4,14 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import type { InvoiceAppointmentOptionRow } from "@/lib/billing-types";
 import { InvoiceVisitPickerList } from "@/components/shared/billing/InvoiceVisitPickerList";
 import type { EntityRole } from "@/lib/entity-routes";
+import { InvoiceDialogFieldLabel } from "@/components/shared/billing/invoice-dialog/InvoiceDialogFieldLabel";
+import { invoiceDialogGlassInputClass } from "@/lib/invoice-dialog-ui-classes";
+import { Input } from "@/components/ui/input";
+import { Link2 } from "lucide-react";
+import type { ReactNode } from "react";
 
 type Props = {
   value: string;
@@ -19,9 +22,10 @@ type Props = {
   variant: "admin" | "doctor";
   includeBilled?: boolean;
   onIncludeBilledChange?: (value: boolean) => void;
+  loadingFallback?: ReactNode;
 };
 
-/** Search + compact visit list for invoice create (eligibility from GET /api/billing/appointment-options). */
+/** Search + rich visit tiles for invoice create (GET /api/billing/appointment-options). */
 export function InvoiceAppointmentPickerField({
   value,
   onChange,
@@ -31,6 +35,7 @@ export function InvoiceAppointmentPickerField({
   variant,
   includeBilled = false,
   onIncludeBilledChange,
+  loadingFallback,
 }: Props) {
   const [search, setSearch] = useState("");
 
@@ -57,16 +62,16 @@ export function InvoiceAppointmentPickerField({
   );
 
   return (
-    <div className="space-y-1.5">
-      <div className="flex items-center justify-between gap-2">
-        <Label>
-          Link visit{required ? " *" : ""}
-        </Label>
+    <div className="space-y-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <InvoiceDialogFieldLabel htmlFor="inv-visit-search" icon={Link2} required={required}>
+          Link visit
+        </InvoiceDialogFieldLabel>
         {variant === "admin" && onIncludeBilledChange && (
-          <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-muted-foreground">
+          <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-muted-foreground">
             <input
               type="checkbox"
-              className="h-3.5 w-3.5 rounded border-gray-300"
+              className="h-3.5 w-3.5 rounded border-amber-300 text-amber-600"
               checked={includeBilled}
               onChange={(e) => onIncludeBilledChange(e.target.checked)}
               disabled={disabled}
@@ -76,13 +81,17 @@ export function InvoiceAppointmentPickerField({
         )}
       </div>
       <Input
+        id="inv-visit-search"
         placeholder="Search patient or visit title…"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         disabled={disabled}
+        className={invoiceDialogGlassInputClass}
       />
       {isLoading ? (
-        <p className="text-xs text-muted-foreground py-2">Loading visits…</p>
+        loadingFallback ?? (
+          <p className="py-4 text-center text-xs text-muted-foreground">Loading visits…</p>
+        )
       ) : (
         <InvoiceVisitPickerList
           options={options}
@@ -97,11 +106,11 @@ export function InvoiceAppointmentPickerField({
       )}
       {selected && selected.eligible && (
         <p className="text-[10px] text-muted-foreground">
-          Selected: {selected.patient_label}
+          Selected: {selected.patient_label} · {selected.when_label ?? selected.title}
         </p>
       )}
       {selected && !selected.eligible && (
-        <p className="text-[10px] text-amber-700">
+        <p className="text-[10px] text-amber-800">
           This visit already has an invoice — pick another or open the existing bill.
         </p>
       )}

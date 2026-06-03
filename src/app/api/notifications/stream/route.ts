@@ -9,29 +9,54 @@ import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { serializeNotificationRow } from "@/lib/serialize-notification-row";
+import {
+  createSafeSseEnqueue,
+  encodeSseData,
+  encodeSseError,
+  encodeSseHeartbeat,
+} from "@/lib/notification-stream-sse";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-export async function GET() {
+const POLL_MS = 10_000;
+
+export async function GET(request: Request) {
   const sessionUser = await getSessionUser();
   if (!sessionUser) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const encoder = new TextEncoder();
-  let intervalId: NodeJS.Timeout;
+  let intervalId: ReturnType<typeof setInterval> | undefined;
 
   const stream = new ReadableStream({
-    async start(controller) {
-      // Send initial connection event
-      controller.enqueue(
-        encoder.encode(`data: ${JSON.stringify({ type: "connected", userId: sessionUser.userId })}\n\n`)
+    start(controller) {
+      const safe = createSafeSseEnqueue(controller, () => {
+        if (intervalId) clearInterval(intervalId);
+      });
+
+      safe.enqueue(
+        encodeSseData({ type: "connected", userId: sessionUser.userId })
       );
 
-      // Poll for new notifications every 10 seconds
       let lastCheck = new Date();
+
+      const stop = () => {
+        if (intervalId) {
+          clearInterval(intervalId);
+          intervalId = undefined;
+        }
+        safe.close();
+      };
+
+      request.signal.addEventListener("abort", stop, { once: true });
+
       intervalId = setInterval(async () => {
+        if (safe.isClosed()) {
+          stop();
+          return;
+        }
+
         try {
           const newNotifications = await prisma.notification.findMany({
             where: {
@@ -41,28 +66,41 @@ export async function GET() {
             orderBy: { created_at: "desc" },
           });
 
+          if (safe.isClosed()) return;
+
           if (newNotifications.length > 0) {
-            controller.enqueue(
-              encoder.encode(
-                `data: ${JSON.stringify({
-                  type: "notifications",
-                  data: newNotifications.map(serializeNotificationRow),
-                })}\n\n`
-              )
+            safe.enqueue(
+              encodeSseData({
+                type: "notifications",
+                data: newNotifications.map(serializeNotificationRow),
+              })
             );
             lastCheck = new Date();
           }
 
-          // Send heartbeat
-          controller.enqueue(encoder.encode(`: heartbeat\n\n`));
+          safe.enqueue(encodeSseHeartbeat());
         } catch (error: unknown) {
+          const code =
+            error &&
+            typeof error === "object" &&
+            "code" in error &&
+            typeof (error as { code: unknown }).code === "string"
+              ? (error as { code: string }).code
+              : undefined;
+
+          if (!safe.isClosed()) {
+            safe.enqueue(
+              encodeSseError(
+                error instanceof Error ? error.message : "SSE poll failed",
+                code
+              )
+            );
+          }
+
           console.error("SSE poll error:", error);
-          // Stop the interval if the stream is broken — avoids orphaned Prisma
-          // connections and timer leaks when the client has already disconnected.
-          clearInterval(intervalId);
-          try { controller.close(); } catch { /* already closed */ }
+          stop();
         }
-      }, 10_000);
+      }, POLL_MS);
     },
     cancel() {
       if (intervalId) clearInterval(intervalId);

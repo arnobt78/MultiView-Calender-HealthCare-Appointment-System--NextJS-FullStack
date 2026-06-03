@@ -14,6 +14,7 @@
 
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { StaffInvoiceDialogShell } from "@/components/shared/billing/StaffInvoiceDialogShell";
 import ControlPanelSidebarNav from "@/components/control-panel/ControlPanelSidebarNav";
 import ControlPanelSsrCacheSeed from "@/components/control-panel/ControlPanelSsrCacheSeed";
 import {
@@ -74,16 +75,18 @@ export default async function ControlPanelLayout({
   }
 
   return (
-    <div className="flex h-full min-h-0 w-full max-w-9xl mx-auto bg-gradient-to-br from-slate-50 via-white to-slate-100">
-      <ControlPanelSidebarNav />
-      <ControlPanelSsrCacheSeed
-        initialDoctorUsers={initialDoctorUsers}
-        initialAdminUsers={initialAdminUsers}
-        initialAllUsers={initialAllUsers}
-      />
-      <div className="cp-right-scroll flex-1 min-w-0 overflow-y-auto overscroll-contain px-2 sm:px-4 lg:px-8">
-        {children}
+    <StaffInvoiceDialogShell variant="admin">
+      <div className="flex h-full min-h-0 w-full max-w-9xl mx-auto bg-gradient-to-br from-slate-50 via-white to-slate-100">
+        <ControlPanelSidebarNav />
+        <ControlPanelSsrCacheSeed
+          initialDoctorUsers={initialDoctorUsers}
+          initialAdminUsers={initialAdminUsers}
+          initialAllUsers={initialAllUsers}
+        />
+        <div className="cp-right-scroll flex-1 min-w-0 overflow-y-auto overscroll-contain px-2 sm:px-4 lg:px-8">
+          {children}
+        </div>
       </div>
-    </div>
+    </StaffInvoiceDialogShell>
   );
 }

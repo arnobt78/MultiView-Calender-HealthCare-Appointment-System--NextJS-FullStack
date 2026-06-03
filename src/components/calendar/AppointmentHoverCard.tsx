@@ -27,6 +27,7 @@ import {
 } from "@/lib/appointment-card";
 import { dedupeAssignees } from "@/lib/appointment-assignees";
 import type { Appointment, AppointmentAssignee, Category, Patient } from "@/types/types";
+import type { InvoiceDisplayStatus } from "@/lib/billing-appointment-eligibility";
 
 export { dedupeAssignees };
 
@@ -53,6 +54,8 @@ export interface AppointmentHoverCardProps {
   ) => void;
   onDelete: (id: string) => void;
   onToggleStatus: (id: string, newStatus: string) => void;
+  /** Latest invoice status for billing badge + create menu gate. */
+  invoiceDisplayStatus?: InvoiceDisplayStatus | null;
   showDetails?: boolean;
   triggerContent?: React.ReactNode;
 }
@@ -71,6 +74,7 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
   onEdit,
   onDelete,
   onToggleStatus,
+  invoiceDisplayStatus,
   showDetails = false,
   triggerContent,
 }) => {
@@ -108,6 +112,7 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
               onEdit={onEdit}
               onDelete={onDelete}
               onToggleStatus={handleToggle}
+              invoiceDisplayStatus={invoiceDisplayStatus}
               asTrigger
               asHoverTrigger
               onTriggerClick={(e) => {
@@ -135,6 +140,7 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
           onDelete={onDelete}
           onToggleStatus={handleToggle}
           appointmentTypePriceCents={fullAppt.appointment_type_price_cents}
+          invoiceDisplayStatus={invoiceDisplayStatus}
         />
       </HoverCardContent>
     </HoverCard>

@@ -9,11 +9,16 @@ import { getSessionUser } from "@/lib/session";
 import { getUserRole, isPatientRole } from "@/lib/rbac";
 import { createCheckoutSession, type StripeCheckoutReturnPath } from "@/lib/stripe";
 import { fetchInvoicesForViewer } from "@/lib/invoices-scope";
+import { serializeInvoice } from "@/lib/serializers";
 import {
   assertInvoiceAccess,
   type InvoiceAccessSession,
 } from "@/lib/invoice-access";
 import { canPatientPayInvoiceStatus } from "@/lib/billing-status";
+import {
+  attachInvoiceIssuerLabels,
+  attachVisitSummariesToInvoices,
+} from "@/lib/invoice-visit-summary";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +36,15 @@ export async function GET() {
       email: sessionUser.email,
     });
 
-    return NextResponse.json({ invoices: rows });
+    const withVisits = await attachVisitSummariesToInvoices(
+      rows.map((row) => ({
+        ...serializeInvoice(row),
+        payments: row.payments,
+      }))
+    );
+    const invoices = await attachInvoiceIssuerLabels(withVisits);
+
+    return NextResponse.json({ invoices });
   } catch (error: unknown) {
     console.error("Payments GET error:", error);
     return NextResponse.json({ error: "Failed to fetch invoices" }, { status: 500 });

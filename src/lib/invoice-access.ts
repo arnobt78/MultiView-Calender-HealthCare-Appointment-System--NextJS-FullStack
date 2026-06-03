@@ -171,8 +171,11 @@ export async function resolveInvoiceAccess(
       (await doctorIsLinkedToInvoice(userId, row)) ||
       (await orgMemberCanViewInvoice(userId, row));
     if (!linked) return "none";
-    if (row.status === "paid" || row.status === "cancelled") return "view";
-    if (row.user_id === userId && row.status === "draft") return "mutate";
+    if (row.status === "paid" || row.status === "cancelled" || row.status === "refunded") {
+      return "view";
+    }
+    // Own invoice (draft/sent/overdue) — description/due_date PATCH + draft→send.
+    if (row.user_id === userId) return "mutate";
     return "view";
   }
 

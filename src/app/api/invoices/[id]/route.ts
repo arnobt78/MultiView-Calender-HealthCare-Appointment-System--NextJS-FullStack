@@ -17,6 +17,11 @@ import { invoicePatchSchema } from "@/lib/schemas/invoice";
 import { zodBadRequest } from "@/lib/schemas/parse";
 import { invalidateBillingRedisCaches } from "@/lib/billing-cache";
 import { notifyBillingStatusChange } from "@/lib/billing-notify";
+import { serializeInvoice } from "@/lib/serializers";
+import {
+  attachInvoiceIssuerLabels,
+  attachVisitSummariesToInvoices,
+} from "@/lib/invoice-visit-summary";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -46,7 +51,12 @@ export async function GET(_req: NextRequest, { params }: Params) {
     });
     if (!invoice) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    return NextResponse.json({ invoice });
+    const [withVisit] = await attachVisitSummariesToInvoices([
+      { ...serializeInvoice(invoice), payments: invoice.payments },
+    ]);
+    const [enriched] = await attachInvoiceIssuerLabels([withVisit]);
+
+    return NextResponse.json({ invoice: enriched });
   } catch (error: unknown) {
     console.error("Invoice GET error:", error);
     return NextResponse.json({ error: "Failed to fetch invoice" }, { status: 500 });

@@ -59,6 +59,9 @@ import { patientAgeYears } from "@/lib/patient-age";
 import type { AppointmentAssignee, Patient } from "@/types/types";
 import { InvoiceStatusBadge } from "@/components/shared/billing/InvoiceStatusBadge";
 import type { InvoiceDisplayStatus } from "@/lib/billing-appointment-eligibility";
+import { useInvoiceFormDialogOptional } from "@/context/InvoiceFormDialogContext";
+import { useAuth } from "@/hooks/useAuth";
+import { canShowCreateInvoiceAction } from "@/lib/appointment-invoice-create-eligibility";
 
 export type AppointmentCardProps = {
   appointment: FullAppointment;
@@ -976,6 +979,17 @@ export function AppointmentCard({
   triggerClassName,
   onTriggerClick,
 }: AppointmentCardProps) {
+  const { user: authUser } = useAuth();
+  const invoiceDialog = useInvoiceFormDialogOptional();
+  const showCreateInvoice = canShowCreateInvoiceAction({
+    role: authUser?.role,
+    invoiceDisplayStatus,
+  });
+  const handleCreateInvoice =
+    invoiceDialog && showCreateInvoice
+      ? (id: string) => invoiceDialog.openCreateForAppointment(id)
+      : undefined;
+
   const model = useAppointmentCardModel({
     appointment,
     patients,
@@ -999,12 +1013,14 @@ export function AppointmentCard({
   const menu = (
     <AppointmentActionsMenu
       appointment={appointment}
-      userId={user?.id}
-      userEmail={user?.email}
-      userRole={user?.role}
+      userId={authUser?.id}
+      userEmail={authUser?.email}
+      userRole={authUser?.role}
       onToggleStatus={onToggleStatus}
       onEdit={() => onEdit(appointment)}
       onDelete={onDelete}
+      onCreateInvoice={handleCreateInvoice}
+      showCreateInvoice={Boolean(handleCreateInvoice)}
       triggerClassName="h-8 w-8 rounded-full hover:bg-black/10"
       // Popover: dropdown must render above HoverCardContent z-[60]:
       contentClassName={variant === "popover" ? "w-56 z-[80]" : undefined}

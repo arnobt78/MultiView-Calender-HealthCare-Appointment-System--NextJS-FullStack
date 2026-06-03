@@ -46,3 +46,7 @@ export const violetGlassBackButtonClass =
 /** Amber glass back — portal category detail + category-management list parity. */
 export const amberGlassBackButtonClass =
   "inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-amber-300/50 bg-white/75 px-4 text-sm font-medium text-amber-900 shadow-[0_10px_28px_rgba(217,119,6,0.2)] backdrop-blur-md transition-all duration-200 hover:border-amber-400/55 hover:bg-amber-50/90 hover:shadow-[0_12px_34px_rgba(217,119,6,0.28)] disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4";
+
+/** Amber glass primary — invoice create/edit dialog submit (pairs with invoiceDialogGlassBackButtonClass). */
+export const amberGlassPrimaryButtonClass =
+  "inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-amber-400/45 bg-linear-to-r from-amber-500 to-amber-600 px-4 text-sm font-medium text-white shadow-[0_10px_40px_rgba(245,158,11,0.42)] backdrop-blur-md transition-all duration-200 hover:from-amber-500 hover:via-amber-500 hover:to-amber-700 hover:text-white hover:shadow-[0_14px_48px_rgba(245,158,11,0.55)] active:text-white disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4";

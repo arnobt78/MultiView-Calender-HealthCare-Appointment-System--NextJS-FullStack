@@ -28,16 +28,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import { Receipt } from "lucide-react";
 import { InvoiceBillingStatsRow } from "@/components/shared/billing/InvoiceBillingStatsRow";
-import { CreateInvoiceDialog } from "@/components/shared/billing/CreateInvoiceDialog";
 import { InvoiceAdminActionsMenu } from "@/components/shared/billing/InvoiceAdminActionsMenu";
+import { useInvoiceFormDialog } from "@/context/InvoiceFormDialogContext";
 import { InvoiceStatusBadge } from "@/components/shared/billing/InvoiceStatusBadge";
 import { InvoiceVisitSummaryLine } from "@/components/shared/billing/InvoiceVisitSummaryLine";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { format } from "date-fns";
 import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
 import { billingCreateInvoiceTriggerAdmin } from "@/lib/billing-ui-presets";
+const CreateInvoiceIcon = billingCreateInvoiceTriggerAdmin.triggerIcon;
 
 const columnHelper = createColumnHelper<Invoice>();
 
@@ -49,8 +51,6 @@ export default function InvoiceManagement() {
     error,
     pay,
     isPaying,
-    createInvoice,
-    isCreating,
     deleteInvoice,
     updateInvoice,
     recordPayment,
@@ -59,6 +59,8 @@ export default function InvoiceManagement() {
     isRecording,
     isRefunding,
   } = usePayments();
+
+  const { openCreate, openEdit } = useInvoiceFormDialog();
 
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
@@ -121,6 +123,7 @@ export default function InvoiceManagement() {
           <InvoiceAdminActionsMenu
             invoice={invoice}
             viewerRole="admin"
+            onEdit={openEdit}
             onPay={pay}
             onSend={(id) => updateInvoice({ invoiceId: id, body: { status: "sent" } })}
             onMarkPaid={recordPayment}
@@ -170,11 +173,15 @@ export default function InvoiceManagement() {
         }
         description="Manage all patient invoices, track payments, and process billing across your organisation."
         actions={
-          <CreateInvoiceDialog
-            variant="admin"
-            onCreate={createInvoice}
-            {...billingCreateInvoiceTriggerAdmin}
-          />
+          <Button
+            type="button"
+            size="sm"
+            className={billingCreateInvoiceTriggerAdmin.triggerClassName}
+            onClick={openCreate}
+          >
+            <CreateInvoiceIcon className="h-4 w-4" aria-hidden />{" "}
+            {billingCreateInvoiceTriggerAdmin.triggerLabel}
+          </Button>
         }
       />
 
@@ -266,7 +273,6 @@ export default function InvoiceManagement() {
           </div>
         )}
       </div>
-      {isCreating && <p className="text-sm text-muted-foreground">Creating invoice…</p>}
     </div>
   );
 }

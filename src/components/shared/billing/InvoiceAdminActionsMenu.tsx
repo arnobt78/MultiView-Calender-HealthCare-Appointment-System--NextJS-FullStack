@@ -12,6 +12,7 @@ import {
   Trash2,
   RotateCcw,
   Eye,
+  Pencil,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -43,8 +44,11 @@ type Props = {
   onCancel?: (id: string) => void;
   onDelete?: (id: string) => void;
   onRefund?: (id: string) => void;
+  onEdit?: (invoice: Invoice) => void;
   isPaying?: boolean;
   isUpdating?: boolean;
+  /** When true, omit View link (detail page). */
+  hideViewLink?: boolean;
   /** Defaults to vertical ⋮ — CP patient list parity; pass `horizontal` for dense toolbars only. */
   menuIcon?: "horizontal" | "vertical";
   triggerClassName?: string;
@@ -59,8 +63,10 @@ export function InvoiceAdminActionsMenu({
   onCancel,
   onDelete,
   onRefund,
+  onEdit,
   isPaying,
   isUpdating,
+  hideViewLink = false,
   menuIcon = INVOICE_LIST_ACTIONS_MENU_ICON,
   triggerClassName,
 }: Props) {
@@ -74,6 +80,9 @@ export function InvoiceAdminActionsMenu({
   const canCancel = invoice.status !== "paid" && invoice.status !== "cancelled";
   const canDelete = invoice.status !== "paid";
   const canRefund = viewerRole === "admin" && invoice.status === "paid";
+  const canEditDetails =
+    Boolean(onEdit) &&
+    (invoice.status === "draft" || invoice.status === "sent" || invoice.status === "overdue");
 
   return (
     <>
@@ -89,11 +98,22 @@ export function InvoiceAdminActionsMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem asChild>
-          <Link href={invoiceDetailHref(viewerRole, invoice.id)} className="gap-2">
-            <Eye className="h-4 w-4" /> View
-          </Link>
-        </DropdownMenuItem>
+        {!hideViewLink && (
+          <DropdownMenuItem asChild>
+            <Link href={invoiceDetailHref(viewerRole, invoice.id)} className="gap-2">
+              <Eye className="h-4 w-4" /> View
+            </Link>
+          </DropdownMenuItem>
+        )}
+        {canEditDetails && onEdit && (
+          <DropdownMenuItem
+            className="gap-2"
+            disabled={isUpdating}
+            onClick={() => onEdit(invoice)}
+          >
+            <Pencil className="h-4 w-4" /> Edit details
+          </DropdownMenuItem>
+        )}
         {canSend && onSend && (
           <DropdownMenuItem
             className="gap-2"

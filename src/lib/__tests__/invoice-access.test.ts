@@ -110,4 +110,40 @@ describe("resolveInvoiceAccess", () => {
     );
     expect(level).toBe("mutate");
   });
+
+  it("returns mutate for doctor owner on sent or overdue", async () => {
+    for (const status of ["sent", "overdue"] as const) {
+      invoiceFindUnique.mockResolvedValue({
+        id: INVOICE_ID,
+        user_id: "doc-1",
+        appointment_id: APPT_ID,
+        organization_id: null,
+        status,
+      });
+      appointmentFindFirst.mockResolvedValue({ id: APPT_ID });
+
+      const level = await resolveInvoiceAccess(
+        { userId: "doc-1", email: "doc@test.com", role: "doctor" },
+        INVOICE_ID
+      );
+      expect(level).toBe("mutate");
+    }
+  });
+
+  it("returns view for doctor owner on paid invoice", async () => {
+    invoiceFindUnique.mockResolvedValue({
+      id: INVOICE_ID,
+      user_id: "doc-1",
+      appointment_id: APPT_ID,
+      organization_id: null,
+      status: "paid",
+    });
+    appointmentFindFirst.mockResolvedValue({ id: APPT_ID });
+
+    const level = await resolveInvoiceAccess(
+      { userId: "doc-1", email: "doc@test.com", role: "doctor" },
+      INVOICE_ID
+    );
+    expect(level).toBe("view");
+  });
 });

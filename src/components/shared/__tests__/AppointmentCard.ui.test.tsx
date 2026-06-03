@@ -11,6 +11,14 @@ vi.mock("@/hooks/useAppointmentCardModel", () => ({
   useAppointmentCardModel: () => mockModel,
 }));
 
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: () => ({ user: { id: "u1", email: "a@test.com", role: "admin" } }),
+}));
+
+vi.mock("@/context/InvoiceFormDialogContext", () => ({
+  useInvoiceFormDialogOptional: () => null,
+}));
+
 vi.mock("@/components/shared/AppointmentActionsMenu", () => ({
   AppointmentActionsMenu: () => <button type="button">menu</button>,
 }));
