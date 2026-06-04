@@ -1,53 +1,50 @@
 # Agile V — Living State
 
-<!-- Updated: 2026-06-04 | Project: HealthCal Pro -->
+<!-- Updated: 2026-06-04 | Project: HealthCal Pro | Resume: read this first -->
 
 ## Current Status
 
 | Field | Value |
 |-------|-------|
-| **Cycle** | C3 (active) |
+| **Cycle** | **C5** (active) |
 | **Phase** | Verify |
 | **Stage** | 4 — Red Team / automated verification |
-| **Status** | `in_progress` — Infinity Loop bootstrap refresh; automated verify PASS (666 tests) |
+| **Status** | `verify_complete` — automated PASS **742** tests; Human Gates pending |
 | **Last Updated** | 2026-06-04 |
-| **Agent** | agile-v-core (Infinity Loop bootstrap) |
-| **Prior archives** | `cycles/C1/`, `cycles/C2/` |
-| **Activation** | `AGENTS.md` + `.cursor/rules/agile-v-infinity-loop.mdc` (always on) |
+| **Commits** | `9785c8d`, `d826ca7` |
+| **Activation** | `AGENTS.md` + `.agile-v/agile-v-core.md` + `.cursor/rules/agile-v-infinity-loop.mdc` |
 
-## Pipeline Position
+## Pipeline (C5)
 
 ```
-Stage 1: Requirements  ✓  REQ-0009..0015 [C3]
-Stage 2: Validation  ✓  (pattern-aligned — no REQ conflicts)
-[Human Gate 1]  ⏳  GATE-0005 pending
-Stage 3: Synthesis  ✓  (shipped: faee3f7, 6f13cc2)
-Stage 4: Verification  ✓  automated suite 666/666 (120 files)
-[Human Gate 2]  ⏳  GATE-0006 pending
+Stage 1: Requirements  ✓  REQ-0021..0026 [C5]
+Stage 2: Validation  ✓  pattern-aligned
+[Human Gate 1]  ⏳  GATE-0009 pending
+Stage 3: Synthesis  ✓  shipped on main
+Stage 4: Verification  ✓  742/742 · tsc · lint · build
+[Human Gate 2]  ⏳  GATE-0010 pending
 Stage 5: Acceptance  —
 ```
 
-## Active Scope (C3)
+## Backlog (human / optional)
 
-| Item | ID | Status |
-|------|-----|--------|
-| Requirements | REQ-0009..0015 | `approved [C3]` — retroactive + extension |
-| Artifacts | ART-0049..0085 | built (on main) |
-| Verification | VER-0019..0028 | PASS (automated) |
-| Open checkpoints | — | none |
+| Item | Gate / REQ | Status |
+|------|------------|--------|
+| Archive C3 | GATE-0005, GATE-0006 | pending |
+| Close C4 invoice tranche | GATE-0007, GATE-0008 | pending |
+| Close C5 Record Audit | GATE-0009, GATE-0010 | pending |
+| Portal admin audit | REQ-0027 (optional) | not specified |
 
 ## Cycle Index
 
-| Cycle | Archive | REQ scope | Gate 2 commit |
-|-------|---------|-----------|---------------|
-| C1 | `cycles/C1/` | REQ-0001..0004 | `3a563d7` |
-| C2 | `cycles/C2/` | REQ-0005..0008 | `2d9a932` |
-| C3 | (living) | REQ-0009..0015 | `6f13cc2` (pending GATE-0006) |
-| C4 | `cycles/C4/README.md` | REQ-0016..0020 (`new [C4]`) | — |
+| Cycle | Archive | REQ scope | Notes |
+|-------|---------|-----------|-------|
+| C1 | `cycles/C1/` frozen | REQ-0001..0004 | Gate 2 `3a563d7` |
+| C2 | `cycles/C2/` frozen | REQ-0005..0008 | Gate 2 `2d9a932` |
+| C3 | `cycles/C3/` | REQ-0009..0015 | verify PASS 742; gates 5–6 pending |
+| C4 | `cycles/C4/README.md` | REQ-0016..0020 | shipped on main; gates 7–8 pending |
+| C5 | living | REQ-0021..0026 | **active** — Record Audit |
 
-## Notes
+## Skills (24)
 
-- **C1 bootstrap** frozen in `.agile-v/cycles/C1/` — do not modify.
-- **Skills:** load `agile-v-core` → `agile-v-pipeline` → role skill → `agile-v-compliance` at gates. Registry: `SKILLS.md` (24).
-- **Every prompt:** `AGENTS.md` + `.cursor/rules/agile-v-infinity-loop.mdc` enforce Infinity Loop.
-- **Next:** Human approve GATE-0005/0006 → archive `cycles/C3/` → C4 Specify (REQ-0016..0020).
+`SKILLS.md` — load `agile-v-core` → `agile-v-pipeline` → role → `agile-v-compliance` at gates.

@@ -95,6 +95,7 @@ Skills load from user skills directory (Read tool). Primary paths:
 | Agent instructions | `AGENTS.md` |
 | Cursor rule (always on) | `.cursor/rules/agile-v-infinity-loop.mdc` |
 | Living state | `.agile-v/STATE.md` |
+| Project core binding | `.agile-v/agile-v-core.md` |
 | Requirements | `.agile-v/REQUIREMENTS.md` |
 | This registry | `.agile-v/SKILLS.md` |
 | Frozen cycles | `.agile-v/cycles/CN/` |

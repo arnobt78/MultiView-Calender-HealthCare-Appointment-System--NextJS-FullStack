@@ -6,15 +6,15 @@
     "repository": "calendar-appointment",
     "initialized": "2026-05-30",
     "bootstrap_completed": "2026-06-04",
-    "bootstrap_refresh": "2026-06-04T12:24:00Z"
+    "bootstrap_refresh": "2026-06-04T18:30:00Z"
   },
   "cycle": {
-    "current": "C3",
-    "status": "verify",
-    "started": "2026-06-01",
+    "current": "C5",
+    "status": "verify_complete",
+    "started": "2026-06-04",
     "closed": null,
     "gate_2_commit": null,
-    "archive_path": ".agile-v/cycles/C3/",
+    "archive_path": ".agile-v/cycles/C5/",
     "prior_cycles": [
       {
         "id": "C1",

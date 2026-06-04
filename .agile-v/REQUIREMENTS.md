@@ -1,12 +1,12 @@
 # Requirements — HealthCal Pro
 
-<!-- Revision: C1+C2+C3+C4 draft | C3 active | C4 new [C4] | Last updated: 2026-06-04 -->
+<!-- Revision: C1..C5 | C5 active | Last updated: 2026-06-04 -->
 
 ## Document Control
 
 | Field | Value |
 |-------|-------|
-| Cycle | C1 (archived) + C2 (archived) + C3 (active) + C4 draft (REQ-0016..0020) |
+| Cycle | C1–C2 archived · C3/C4 verify+gate pending · **C5 active** (REQ-0021..0026) |
 | Author | Requirement Architect |
 | Gate 1 status | C1 GATE-0001 · C2 GATE-0003 approved |
 | Canonical source | this file |
@@ -61,11 +61,17 @@
 | REQ-0013 | approved [C3] | REQ-0009 | ART-0071..0074 | VER-0025 |
 | REQ-0014 | approved [C3] | — | ART-0075..0077 | VER-0026 |
 | REQ-0015 | approved [C3] | REQ-0011 | ART-0078..0088 | VER-0027..0028 |
-| REQ-0016 | new [C4] | — | — | — |
-| REQ-0017 | new [C4] | REQ-0016 | — | — |
-| REQ-0018 | new [C4] | — | — | — |
-| REQ-0019 | new [C4] | REQ-0009 | — | — |
-| REQ-0020 | new [C4] | — | — | — |
+| REQ-0016 | approved [C4] | — | ART-0086..0100 | VER-0029..0037 |
+| REQ-0017 | approved [C4] | REQ-0016 | ART-0094..0095 | VER-0031 |
+| REQ-0018 | approved [C4] | — | (main) | verify C4 |
+| REQ-0019 | approved [C4] | REQ-0009 | (main) | verify C4 |
+| REQ-0020 | approved [C4] | — | (main) | verify C4 |
+| REQ-0021 | approved [C5] | — | ART-0101..0108 | VER-0038..0040 |
+| REQ-0022 | approved [C5] | REQ-0021 | ART-0109..0114 | VER-0041 |
+| REQ-0023 | approved [C5] | REQ-0021 | ART-0115..0118 | VER-0042 |
+| REQ-0024 | approved [C5] | REQ-0022 | ART-0119..0122 | VER-0043 |
+| REQ-0025 | approved [C5] | REQ-0022 | ART-0123..0124 | VER-0044 |
+| REQ-0026 | approved [C5] | — | — | constraint doc |
 
 ### REQ-0004 — Dashboard/CP SSR prefetch + calendar batch assignee fetch
 
@@ -348,7 +354,7 @@
 
 | Field | Value |
 |-------|-------|
-| Status | new [C4] |
+| Status | approved [C4] |
 | Priority | P1 |
 | Risk | R1 |
 | Owner | Human |
@@ -365,7 +371,7 @@
 
 | Field | Value |
 |-------|-------|
-| Status | new [C4] |
+| Status | approved [C4] |
 | Priority | P1 |
 | Risk | R1 |
 | Parent | REQ-0016 |
@@ -376,7 +382,7 @@
 
 | Field | Value |
 |-------|-------|
-| Status | new [C4] |
+| Status | approved [C4] |
 | Priority | P1 |
 | Risk | R2 |
 
@@ -386,7 +392,7 @@
 
 | Field | Value |
 |-------|-------|
-| Status | new [C4] |
+| Status | approved [C4] |
 | Priority | P2 |
 | Risk | R1 |
 | Parent | REQ-0009 |
@@ -397,8 +403,85 @@
 
 | Field | Value |
 |-------|-------|
-| Status | new [C4] |
+| Status | approved [C4] |
 | Priority | P2 |
 | Risk | R1 |
 
 **Statement:** `notification-stream-sse.ts` safe enqueue; stream route abort + error stop; no heartbeat spam on disconnect.
+
+---
+
+## C5 — Entity detail Record Audit (active)
+
+### REQ-0021 — Shared Record Audit UI + entity mappers
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C5] |
+| Priority | P1 |
+| Risk | R1 |
+
+**Statement:** Entity detail pages show Record Audit block: Created / Last updated with timestamp · avatar · email · role badge via shared components and mappers.
+
+**Acceptance criteria:**
+1. `EntityDetailRecordAuditCard`, `EntityDetailAuditActorInline`, `entity-detail-audit-actor.ts` mappers for patient/category/user/appointment.
+2. Wired on appointment, patient, category, doctor detail screens.
+3. Sentence case **Last updated:** label.
+4. Unit tests in `entity-detail-audit-actor.test.ts`.
+
+### REQ-0022 — DB audit FKs + Prisma includes + serializers
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C5] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0021 |
+
+**Statement:** Appointments, users, categories, patients expose `created_by`/`updated_by` with denormalized serializer fields for client cache.
+
+**Acceptance criteria:**
+1. Migrations `013`–`015` + `schema.prisma` audit relations.
+2. `*AuditUserPick` includes; `serializePatient/Category/User`; appointment view-model actors.
+3. API writes set `updated_by_id` on PATCH/POST where applicable.
+4. List endpoints omit audit joins (see REQ-0026).
+
+### REQ-0023 — Appointment detail polish + invoice issued audit rows
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C5] |
+| Priority | P1 |
+| Parent | REQ-0021 |
+
+**Statement:** Appointment detail header live subtitle; Visit Overview; invoice issued/due/paid rows; `issuer_email`/`issuer_role` on visit summary.
+
+### REQ-0024 — CP admin user Record Audit parity
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C5] |
+| Priority | P1 |
+| Parent | REQ-0022 |
+
+**Statement:** `/control-panel/users/[id]` admin roster detail shows Record Audit like doctor detail; SSR `userDetailInclude`; `useUser` SSR seed.
+
+### REQ-0025 — User audit backfill + seed stamp
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C5] |
+| Priority | P2 |
+| Parent | REQ-0022 |
+
+**Statement:** Idempotent `npm run db:backfill-user-audit`; `seed-test-user` stamps `created_by_id`/`updated_by_id`/`updated_at` for demo users.
+
+### REQ-0026 — List API performance constraint (document)
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C5] |
+| Priority | P3 |
+| Risk | R0 |
+
+**Statement:** List endpoints use `USER_API_SELECT` / light selects without audit joins; detail GET + SSR use full includes. Not a defect.

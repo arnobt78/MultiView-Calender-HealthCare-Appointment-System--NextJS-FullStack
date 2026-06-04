@@ -92,3 +92,30 @@ human_gate_2: GATE-0006
 | release build | npm run build | PASS | REQ-0009..0015 |
 
 **EvalGate (active):** PASS (automated) — Human Gate 2 pending before `cycles/C3/` freeze.
+
+---
+
+## C5 Verify — ER-C5-VERIFY
+
+```yaml
+eval_run_id: ER-C5-VERIFY
+eval_timestamp: "2026-06-04T18:30:00Z"
+policy_version_ref: "1.0.0"
+eval_gate_status: PASS
+eval_gate_rationale: "C5 Record Audit — npm test 742/742 (138 files), tsc, eslint, build PASS for REQ-0021..0025"
+cycle: C5
+release_commit: "d826ca7"
+human_gate_1: GATE-0009
+human_gate_2: GATE-0010
+```
+
+| Suite | Command | Result | LINKED_REQ |
+|-------|---------|--------|------------|
+| entity-detail-audit-actor | npm test entity-detail-audit-actor | PASS | REQ-0021 |
+| appointment-detail-view-model | npm test appointment-detail-view-model | PASS | REQ-0021, REQ-0023 |
+| full regression | npm test | PASS 742/742 | REQ-0021..0025 |
+| typecheck | npx tsc --noEmit | PASS | REQ-0021..0025 |
+| lint | npm run lint | PASS | REQ-0021..0025 |
+| release build | npm run build | PASS | REQ-0021..0025 |
+
+**EvalGate (C5 active):** PASS (automated) — Human Gates 9–10 pending before `cycles/C5/` freeze.

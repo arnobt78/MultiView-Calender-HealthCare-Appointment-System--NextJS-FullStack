@@ -193,3 +193,49 @@ EvalGate (C4-UI): status=PASS | eval_run_id=ER-C4-UI-VERIFY | policy_version_ref
 | VER-0035 | REQ-0016 | PASS | Doctor portal invoice-table-cells parity |
 | VER-0036 | REQ-0016 | PASS | db:seed-demo-full / db:seed-doctor-profiles |
 | VER-0037 | REQ-0016 | PASS | tsc + lint + build |
+
+---
+
+## C5 — Entity detail Record Audit (2026-06-04)
+
+| Item | Value |
+|------|-------|
+| Cycle | C5 |
+| ART-IDs | ART-0101..ART-0125 |
+| REQ-IDs | REQ-0021..REQ-0026 |
+| Regression | **742/742** Vitest (138 files) |
+| Commits | `9785c8d`, `d826ca7` |
+
+| VER-ID | TC-ID | REQ-ID | Result | Description |
+|--------|-------|--------|--------|-------------|
+| VER-0038 | TC-0027 | REQ-0021 | PASS | `entity-detail-audit-actor.test.ts` |
+| VER-0039 | TC-0027 | REQ-0021 | PASS | `appointment-detail-view-model.test.ts` audit actors |
+| VER-0040 | TC-0027 | REQ-0021 | PASS | Full regression 742 |
+| VER-0041 | TC-0028 | REQ-0022 | PASS | Serializer + include contract (regression) |
+| VER-0042 | TC-0029 | REQ-0023 | PASS | Invoice audit rows + view-model |
+| VER-0043 | TC-0030 | REQ-0024 | PASS | Admin user detail SSR + mapper |
+| VER-0044 | TC-0031 | REQ-0025 | PASS | Backfill script idempotent (0/0 when stamped) |
+| VER-0045 | REQ-0021..0026 | PASS | tsc + lint + build |
+
+## Coverage (C5)
+
+| REQ-ID | Tests | Status |
+|--------|-------|--------|
+| REQ-0021 | TC-0027 + regression | PASS |
+| REQ-0022 | TC-0028 + regression | PASS |
+| REQ-0023 | TC-0029 + regression | PASS |
+| REQ-0024 | TC-0030 + regression | PASS |
+| REQ-0025 | TC-0031 | PASS |
+| REQ-0026 | — | constraint (no VER) |
+
+## Red Team Sign-Off (C5)
+
+| Field | Value |
+|-------|-------|
+| Agent | Red Team Verifier (automated) |
+| Timestamp | 2026-06-04T18:30:00Z |
+| Evidence | `9785c8d`, `d826ca7`; 742 tests |
+| LINKED_REQ | REQ-0021..0025 |
+| Human Gate 2 | pending GATE-0010 |
+
+EvalGate (C5): status=PASS | eval_run_id=ER-C5-VERIFY | policy_version_ref=1.0.0 | gate2_pending=GATE-0010

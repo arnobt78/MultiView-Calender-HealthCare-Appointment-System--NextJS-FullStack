@@ -4,11 +4,12 @@
 
 | Field | Value |
 |-------|-------|
-| **Status** | `planned` |
-| **REQ-IDs** | REQ-0016..REQ-0020 (`new [C4]` in living REQUIREMENTS.md) |
-| **Gate 1** | GATE-0007 (not opened) |
-| **Gate 2** | GATE-0008 (not opened) |
-| **Depends on** | C3 closed → archive `cycles/C3/` |
+| **Status** | `shipped` — gates pending |
+| **REQ-IDs** | REQ-0016..REQ-0020 (`approved [C4]`) |
+| **ART-IDs** | ART-0086..0100 |
+| **Gate 1** | GATE-0007 (pending) |
+| **Gate 2** | GATE-0008 (pending) |
+| **Depends on** | C3 archive optional before C4 freeze |
 
 ## Planned scope (from product baseline 2026-06-02)
 
@@ -20,8 +21,10 @@
 | REQ-0019 | Calendar day/week/month/list hover invoice badge via `useAppointmentInvoiceDisplayMap` |
 | REQ-0020 | SSE notification stream safe enqueue + route abort (no heartbeat spam) |
 
-## Entry
+## Verify
 
-1. Human approves C3 GATE-0005/0006 → freeze `cycles/C3/`.
-2. Set `STATE.md` → C4, Stage 1 Specify.
-3. Move REQ-0016..0020 from `new [C4]` → `approved [C4]` at Gate 1.
+671+ tests at UI tranche; superseded by C5 baseline **742**. ER-C4-UI-VERIFY.
+
+## Archive
+
+Approve GATE-0007/0008 → copy living snapshot → `cycles/C4/` (immutable).

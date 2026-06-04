@@ -1,6 +1,6 @@
 # Automated Traceability Matrix (ATM) — HealthCal Pro
 
-<!-- Cycle: C1+C2+C3 | Last updated: 2026-06-02 | C3 verify (Gate 2 pending) -->
+<!-- Cycle: C1..C5 | Last updated: 2026-06-04 | C5 active -->
 
 ## Matrix
 
@@ -21,6 +21,17 @@
 | REQ-0013 | approved [C3] | ART-0071..0074 | C3 | VER-0025 | C3 | PASS |
 | REQ-0014 | approved [C3] | ART-0075..0077 | C3 | VER-0026 | C3 | PASS |
 | REQ-0015 | approved [C3] | ART-0078..0085 | C3 | VER-0027..0028 | C3 | PASS |
+| REQ-0016 | approved [C4] | ART-0086..0100 | C4 | VER-0029..0037 | C4 | PASS |
+| REQ-0017 | approved [C4] | ART-0094..0095 | C4 | VER-0031 | C4 | PASS |
+| REQ-0018 | approved [C4] | (main) | C4 | verify C4 | C4 | PASS |
+| REQ-0019 | approved [C4] | (main) | C4 | verify C4 | C4 | PASS |
+| REQ-0020 | approved [C4] | (main) | C4 | verify C4 | C4 | PASS |
+| REQ-0021 | approved [C5] | ART-0101..0108 | C5 | VER-0038..0040 | C5 | PASS |
+| REQ-0022 | approved [C5] | ART-0109..0114 | C5 | VER-0041 | C5 | PASS |
+| REQ-0023 | approved [C5] | ART-0115..0118 | C5 | VER-0042 | C5 | PASS |
+| REQ-0024 | approved [C5] | ART-0119..0122 | C5 | VER-0043 | C5 | PASS |
+| REQ-0025 | approved [C5] | ART-0123..0124 | C5 | VER-0044 | C5 | PASS |
+| REQ-0026 | approved [C5] | ART-0125 | C5 | — | C5 | constraint |
 
 ## Dangling Artifacts
 

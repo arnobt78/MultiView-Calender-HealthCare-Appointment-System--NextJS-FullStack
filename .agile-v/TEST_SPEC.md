@@ -30,12 +30,19 @@
 | TC-0022 | C3 | REQ-0014 | unit | Telehealth View-as period | `insights-period-charts.test.ts` | PASS |
 | TC-0023 | C3 | REQ-0015 | unit | Invoice revenue KPI + paid period | `invoice-billing-totals.test.ts`, `invoice-paid-period.test.ts`, `org-billing-prefetch.test.ts` | PASS |
 | TC-0024 | C3 | REQ-0009..0015 | regression | Full suite + tsc + lint + build | project default | PASS |
+| TC-0025 | C4 | REQ-0016 | unit | Invoice list + visit fee | `billing-visit-fee`, `invoice-management-columns` | PASS |
+| TC-0026 | C4 | REQ-0017 | unit | Invoice detail UI classes | `invoice-detail-ui-classes` | PASS |
+| TC-0027 | C5 | REQ-0021 | unit | Entity audit mappers | `entity-detail-audit-actor.test.ts` | PASS |
+| TC-0028 | C5 | REQ-0022 | regression | Serializers + includes | full regression | PASS |
+| TC-0029 | C5 | REQ-0023 | unit | Appointment view-model audit | `appointment-detail-view-model.test.ts` | PASS |
+| TC-0030 | C5 | REQ-0024 | regression | Admin user detail path | full regression | PASS |
+| TC-0031 | C5 | REQ-0025 | manual | Backfill idempotent | `db:backfill-user-audit` | PASS |
 
 ## Regression Baseline
 
 | Suite | Command | Scope |
 |-------|---------|-------|
-| Unit / lib | `npm test` | 114 files, 638 tests (C3) |
+| Unit / lib | `npm test` | 138 files, 742 tests (C5) |
 | Typecheck | `npx tsc --noEmit` | strict TS |
 | Lint | `npm run lint` | ESLint |
 | Release | `npm run build` | Next.js production |

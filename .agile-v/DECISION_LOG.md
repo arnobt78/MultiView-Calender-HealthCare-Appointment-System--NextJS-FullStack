@@ -39,3 +39,8 @@
 | 2026-06-04T13:20:00Z | red-team | C4 UI tranche automated verification PASS | 667 tests, tsc, lint, build; ART-0086..0097 | REQ-0016, REQ-0017 |
 | 2026-06-04T13:25:00Z | build | C4 polish — date picker, portal rows, seeds | `ClinicalGlassDatePicker` align end; location hint; `db:seed-demo-full`; portal `invoice-table-cells` | REQ-0016 |
 | 2026-06-04T13:25:00Z | red-team | C4 polish verification PASS | 671 tests, tsc, lint, build; ART-0098..0100 | REQ-0016 |
+| 2026-06-04T18:00:00Z | build | REQ-0021..0023 unified Record Audit actors | EntityDetailRecordAuditCard; appt/patient/category/doctor; migrations 013–015 | REQ-0021..0023 |
+| 2026-06-04T18:15:00Z | build | REQ-0024 CP admin user Record Audit | AdminUserDetailScreen; userDetailInclude SSR | REQ-0024 |
+| 2026-06-04T18:20:00Z | build | REQ-0025 user audit backfill | db:backfill-user-audit; seed-test-user stamp | REQ-0025 |
+| 2026-06-04T18:30:00Z | init | Bootstrap C5 + Infinity Loop refresh for tomorrow | STATE C5; agile-v-core.md; Cursor rule; GATE-0009/0010 | REQ-0021..0026 |
+| 2026-06-04T18:30:00Z | red-team | C5 automated verification PASS | 742 tests, tsc, lint, build; commits 9785c8d d826ca7 | REQ-0021..0025 |

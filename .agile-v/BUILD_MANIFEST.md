@@ -106,11 +106,36 @@
 | ART-0098 | C4 | REQ-0016 | `ui/popover.tsx`, `ClinicalGlassDatePicker.tsx`, invoice + patient due/birth date | built |
 | ART-0099 | C4 | REQ-0016 | `DoctorPortalInvoiceListRow` reuses `invoice-table-cells` | built |
 | ART-0100 | C4 | REQ-0016 | `invoice-management-columns.test.ts`; seed `db:seed-demo-full` / `db:seed-doctor-profiles` | built |
+| ART-0101 | C5 | REQ-0021 | `EntityDetailRecordAuditCard.tsx`, `EntityDetailAuditActorInline.tsx` | built |
+| ART-0102 | C5 | REQ-0021 | `entity-detail-audit-actor.ts` + `entity-detail-audit-actor.test.ts` | built |
+| ART-0103 | C5 | REQ-0021 | `PatientDetailScreen.tsx` Record Audit wiring | built |
+| ART-0104 | C5 | REQ-0021 | `CategoryDetailScreenShared.tsx` Record Audit wiring | built |
+| ART-0105 | C5 | REQ-0021 | `DoctorDetailScreenShared.tsx` + `mapUserRecordAuditActors` | built |
+| ART-0106 | C5 | REQ-0021 | `AppointmentDetailScreenShared.tsx` audit + visit overview | built |
+| ART-0107 | C5 | REQ-0021 | `appointment-detail-view-model.ts` audit actors | built |
+| ART-0108 | C5 | REQ-0021 | `appointment-detail-view-model.test.ts` | built |
+| ART-0109 | C5 | REQ-0022 | `migrations/013_appointment_audit_users.sql`, Prisma `20260604180000` | built |
+| ART-0110 | C5 | REQ-0022 | `migrations/014_category_audit_backfill.sql` | built |
+| ART-0111 | C5 | REQ-0022 | `migrations/015_user_audit_users.sql`, Prisma `20260604190000` | built |
+| ART-0112 | C5 | REQ-0022 | `patient-api-include.ts`, `category-api-include.ts`, `user-api-include.ts` | built |
+| ART-0113 | C5 | REQ-0022 | `serializers.ts` denormalized audit fields; `types/types.ts` | built |
+| ART-0114 | C5 | REQ-0022 | API `updated_by_id` on appointments/patients/categories/users PATCH | built |
+| ART-0115 | C5 | REQ-0023 | `appointment-detail-invoice-audit-rows.tsx` | built |
+| ART-0116 | C5 | REQ-0023 | `invoice-visit-summary.ts` issuer_email/issuer_role | built |
+| ART-0117 | C5 | REQ-0023 | `formatAppointmentDetailWhenRange` subtitle | built |
+| ART-0118 | C5 | REQ-0023 | `entity-detail-snapshot-section-copy.ts` section titles | built |
+| ART-0119 | C5 | REQ-0024 | `AdminUserDetailScreen.tsx` Record Audit | built |
+| ART-0120 | C5 | REQ-0024 | `control-panel/users/[id]/page.tsx` `userDetailInclude` SSR | built |
+| ART-0121 | C5 | REQ-0024 | `useUsers.ts` detail `initialData` + `setQueryData` on PATCH | built |
+| ART-0122 | C5 | REQ-0024 | `GET/PATCH /api/users/[id]` include audit actors | built |
+| ART-0123 | C5 | REQ-0025 | `scripts/backfill-user-audit.ts`, `db:backfill-user-audit` | built |
+| ART-0124 | C5 | REQ-0025 | `seed-test-user.ts` audit stamp + `updateMany` backfill | built |
+| ART-0125 | C5 | REQ-0026 | `user-api-select.ts` list scalars only (documented constraint) | built |
 
 ## Verification Commands (project default)
 
 ```bash
-npm test        # 671 passed (C4 polish tranche, 2026-06-04)
+npm test        # 742 passed (C5, 2026-06-04)
 npx tsc --noEmit
 npm run lint
 npm run build

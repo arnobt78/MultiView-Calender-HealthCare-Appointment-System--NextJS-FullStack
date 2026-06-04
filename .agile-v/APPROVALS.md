@@ -10,6 +10,10 @@
 | GATE-0004 | 2 | C2 | REQ-0005..0008 release | Approved | Automated Red Team PASS; 520 tests; build green | Red Team Verifier (automated) | Release Manager (delegated) | 2026-05-31T16:10:00Z | EvalGate ER-C2-CLOSE | 2d9a932 | — | — |
 | GATE-0005 | 1 | C3 | REQ-0009..0015 | Pending | Retroactive scope approval | — | — | — | — | ER-C3-VERIFY | — | — |
 | GATE-0006 | 2 | C3 | REQ-0009..0015 release | Pending | After GATE-0005; archive cycles/C3 | — | — | — | — | ER-C3-VERIFY | — | — |
+| GATE-0007 | 1 | C4 | REQ-0016..0020 | Pending | Invoice + SSE tranche | — | — | — | — | ER-C4-UI-VERIFY | — | — |
+| GATE-0008 | 2 | C4 | REQ-0016..0020 release | Pending | After GATE-0007; archive cycles/C4 | — | — | — | — | ER-C4-UI-VERIFY | — | — |
+| GATE-0009 | 1 | C5 | REQ-0021..0026 | Pending | Record Audit tranche | — | — | — | — | ER-C5-VERIFY | — | — |
+| GATE-0010 | 2 | C5 | REQ-0021..0026 release | Pending | After GATE-0009; archive cycles/C5 | — | — | — | — | ER-C5-VERIFY | — | — |
 
 ## Authority Matrix
 

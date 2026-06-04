@@ -1,6 +1,6 @@
 # Agile V Bootstrap — HealthCal Pro
 
-<!-- Framework initialization + cycle index | Agile V v1.4 | Last refresh: 2026-06-04 -->
+<!-- Framework initialization + cycle index | Agile V v1.4 | Last refresh: 2026-06-04 (C5 bootstrap) -->
 
 ## Infinity Loop (SCOPE-V)
 
@@ -31,7 +31,7 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 | 2 | `config.json` | Project metadata, cycle, authority matrix, verification commands | ✓ |
 | 3 | `POLICY.yaml` | Policy-as-code (versioned) | ✓ v1.0.0 |
 | 4 | `STATE.md` | Current cycle, phase, stage — **read first on resume** | ✓ |
-| 5 | `REQUIREMENTS.md` | Canonical REQ-XXXX + traceability index | ✓ REQ-0001..0015 |
+| 5 | `REQUIREMENTS.md` | Canonical REQ-XXXX + traceability index | ✓ REQ-0001..0026 |
 | 6 | `BUILD_MANIFEST.md` | ART-XXXX → code paths | ✓ ART-0001..0085 |
 | 7 | `TEST_SPEC.md` | TC-XXXX (requirements-derived) | ✓ TC-0001..0024 |
 | 8 | `VALIDATION_SUMMARY.md` | VER-XXXX results + EvalGate lines | ✓ |
@@ -51,9 +51,11 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 | 22 | `phases/01-specify/` … `05-acceptance/` | PLAN + SUMMARY + CONTEXT per SCOPE-V phase | ✓ |
 | 23 | `cycles/C1/`, `C2/` | Frozen archives (immutable) | ✓ |
 | 24 | `cycles/C3/README.md` | Active cycle archive scaffold | ✓ (freeze on GATE-0006) |
-| 25 | `cycles/C4/README.md` | Next cycle scaffold (REQ-0016..0020) | ✓ |
-| 26 | `AGENTS.md` (repo root) | Agent load order + resume | ✓ |
-| 27 | `.cursor/rules/agile-v-infinity-loop.mdc` | Always-on Cursor rule | ✓ |
+| 25 | `cycles/C4/README.md` | Invoice tranche (gates pending) | ✓ |
+| 26 | `cycles/C5/README.md` | Record Audit active cycle | ✓ |
+| 27 | `agile-v-core.md` | Project-local core binding | ✓ |
+| 28 | `AGENTS.md` (repo root) | Agent load order + resume | ✓ |
+| 29 | `.cursor/rules/agile-v-infinity-loop.mdc` | Always-on Cursor rule | ✓ |
 
 ---
 
@@ -98,20 +100,33 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 | 3 | TC-0016..0024 + VER-0019..0028 | ✓ |
 | 4 | Code on `main` (scope, filters, billing KPI, telehealth period, invoice grid) | ✓ `faee3f7`, `6f13cc2` |
 | 5 | Human Gate 1 (GATE-0005) | ⏳ pending |
-| 6 | Automated verification | ✓ **666/666** tests (120 files), tsc, lint, build |
+| 6 | Automated verification | ✓ **742/742** tests (138 files), tsc, lint, build |
 | 7 | Human Gate 2 (GATE-0006) → archive `cycles/C3/` | ⏳ pending |
 
 **Note:** Re-running “bootstrap C1” only reads `cycles/C1/` — living C1 docs are not rewritten.
 
 ---
 
-## C4 Scaffold (2026-06-04) — Invoice + notifications tranche
+## C4 Bootstrap (2026-06-04) — Invoice + notifications tranche
 
 | Step | Artifact | Status |
 |------|----------|--------|
-| 1 | `cycles/C4/README.md` | ✓ planned scope |
-| 2 | REQ-0016..0020 in `REQUIREMENTS.md` (`new [C4]`) | ✓ draft |
-| 3 | Gate 1 GATE-0007 | — after C3 close |
+| 1 | REQ-0016..0020 `approved [C4]` | ✓ shipped on main |
+| 2 | ART-0086..0100 | ✓ |
+| 3 | Gates GATE-0007/0008 | ⏳ pending archive |
+
+---
+
+## C5 Bootstrap (2026-06-04) — Record Audit (active)
+
+| Step | Artifact | Status |
+|------|----------|--------|
+| 1 | REQ-0021..0026 in `REQUIREMENTS.md` | ✓ `approved [C5]` |
+| 2 | ART-0101..0125 in `BUILD_MANIFEST.md` | ✓ |
+| 3 | Code on `main` | ✓ `9785c8d`, `d826ca7` |
+| 4 | `db:backfill-user-audit` + seed stamp | ✓ |
+| 5 | Automated verify | ✓ **742/742** |
+| 6 | Gates GATE-0009/0010 | ⏳ pending |
 
 ---
 
@@ -121,16 +136,18 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 |-------|-------|---------|---------------|---------|
 | C1 | Category CP + SSR prefetch | REQ-0001..0004 | `3a563d7` | `cycles/C1/` (frozen) |
 | C2 | Doctor CP + admin roster + dev stubs | REQ-0005..0008 | `2d9a932` | `cycles/C2/` (frozen) |
-| C3 | Calendar scope, filters, billing KPI, insights telehealth + invoice grid | REQ-0009..0015 | (pending GATE-0006) | `cycles/C3/` (living) |
-| C4 | Invoice dialog, detail live, doctor RBAC, calendar badges, SSE | REQ-0016..0020 | — | `cycles/C4/README.md` |
+| C3 | Calendar, filters, billing KPI | REQ-0009..0015 | pending GATE-0006 | `cycles/C3/` |
+| C4 | Invoice dialog, detail, RBAC, badges, SSE | REQ-0016..0020 | pending GATE-0008 | `cycles/C4/` |
+| C5 | **Record Audit** (active) | REQ-0021..0026 | pending GATE-0010 | `cycles/C5/` |
 
 ---
 
-## Next Actions (C3 close)
+## Next Actions (tomorrow)
 
-1. **Human Gate 1** — approve GATE-0005 in `APPROVALS.md` (name + role + timestamp).
-2. **Human Gate 2** — approve GATE-0006; copy living snapshot → `cycles/C3/`; set `STATE.md` → C3 closed.
-3. **C4** — append `REQ-0013+` for owner-only calendar tools per `CLAUDE.md` follow-ups.
+1. Approve **GATE-0005..0010** in `APPROVALS.md` as cycles close.
+2. Archive C3 → `cycles/C3/`; C4 → `cycles/C4/`; C5 → `cycles/C5/` after Gate 2.
+3. Optional new REQ-0027: portal `/admins/[id]` Record Audit.
+4. New work: specify **C6** in `REQUIREMENTS.md` before coding.
 
 ## Verification (default)
 
@@ -138,4 +155,4 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 npm test && npx tsc --noEmit && npm run lint && npm run build
 ```
 
-Current baseline: **666** tests, **120** files (2026-06-04).
+Current baseline: **742** tests, **138** files (2026-06-04).
