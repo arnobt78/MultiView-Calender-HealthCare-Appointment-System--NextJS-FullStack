@@ -33,6 +33,7 @@ import {
   INVOICE_LIST_ACTIONS_MENU_ICON,
   invoiceActionsMenuTriggerClassName,
 } from "@/lib/billing-ui-presets";
+import { resolveInvoiceDetailActionCapabilities } from "@/lib/invoice-detail-action-capabilities";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -72,17 +73,14 @@ export function InvoiceAdminActionsMenu({
 }: Props) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const MenuIcon = menuIcon === "vertical" ? EllipsisVertical : MoreHorizontal;
-  const canPay =
-    viewerRole === "admin" &&
-    (invoice.status === "draft" || invoice.status === "sent" || invoice.status === "overdue");
-  const canSend = invoice.status === "draft";
-  const canMarkPaid = invoice.status !== "paid" && invoice.status !== "cancelled";
-  const canCancel = invoice.status !== "paid" && invoice.status !== "cancelled";
-  const canDelete = invoice.status !== "paid";
-  const canRefund = viewerRole === "admin" && invoice.status === "paid";
-  const canEditDetails =
-    Boolean(onEdit) &&
-    (invoice.status === "draft" || invoice.status === "sent" || invoice.status === "overdue");
+  const caps = resolveInvoiceDetailActionCapabilities(invoice, viewerRole);
+  const canPay = caps.canPay;
+  const canSend = caps.canSend;
+  const canMarkPaid = caps.canMarkPaid;
+  const canCancel = caps.canCancel;
+  const canDelete = caps.canDelete;
+  const canRefund = caps.canRefund;
+  const canEditDetails = Boolean(onEdit) && caps.canEditDetails;
 
   return (
     <>

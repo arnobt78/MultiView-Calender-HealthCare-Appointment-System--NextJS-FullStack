@@ -1,14 +1,12 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-04 — Portal entity detail links + clinician naming)
+## Latest (2026-06-04 — Appointment + invoice detail)
 
-- **Snapshot link policy:** `resolvePortalEntityDetailSnapshotLinkPolicy` on portal **`/doctors/[id]`** and **`/categories/[id]`** (`CategoryDetailScreenShared` + `DoctorDetailScreenShared`). Patient: plain appointment title, patient row, admin calendar owners; doctor owners/treating stay linked. Doctor: `/admins/:id` for admin owners; no cross-patient/title links. CP entity pages: full links (no policy).
-- **Doctor detail:** `GET /api/doctors/[id]/snapshot`; SSR `prefetchDoctorSnapshot`; `invalidateDoctorDetailAndSnapshot`; FK + patient primary-doctor invalidation.
-- **Admin portal profile:** `/admins/[id]` + `PortalAdminDetailScreen` (removed `/staff/[id]`); `portalAdminDetailHref`; `admin-portal-profile-access.ts`.
-- **Invalidation:** `invalidateDoctorDetailAndSnapshot`; appointment mutations pass explicit FK ids (`appointment-invalidation-fk.ts`); patient CRUD → `invalidateDoctorsAffectedByPatientWrite`.
-- **Clinician naming (portal cards/invoice shell):** `ClinicianInvoiceDialogShell`, `PortalClinicianLink`, `PortalAppointmentClinicianIdentityBlock`, `PortalAppointmentClinicianUser`, `portal-appointment-clinician.ts`, `appointment-card-clinician-image.ts` — deprecated `Staff*` re-exports kept. RBAC `isStaffRole` / `staff-directory-cache` / `StaffAppointmentPickerField` unchanged (admin|doctor product term).
-- **Doctor portal fix:** `InvoiceFormDialogProvider` always mounts when layout passes `variant="doctor"` (no throw before auth hydrate).
-- **Verify:** Vitest **712** (133 files), tsc, lint, build.
+- **Appointment detail (glass + live cache):** `/appointments/[id]`, `/control-panel/appointments/[id]` → `AppointmentDetailScreenShared` + `AppointmentDetailActionBar`. SSR `prefetchAppointmentDetailViewModel`; API `appointment-detail-api.ts` (`GET`/`PATCH`/`PUT` → `{ appointment, detail }`); client `useAppointmentDetail` refetch + `patchAppointmentDetailCache` / optimistic form+toggles; `queryKeys.appointments.detail` invalidated on `invalidateAfterAppointmentMutation`.
+- **Invoice detail:** `InvoiceDetailActionBar` footer (portal + CP); header title+status only; `resolveInvoiceDetailActionCapabilities`; `InvoiceLinkedVisitPanel` + portal `linkPolicy` + `calendar_owner_role` / `treating_physician_role` on visit summary.
+- **Portal snapshot links:** `resolvePortalEntityDetailSnapshotLinkPolicy` on `/doctors/[id]`, `/categories/[id]`, invoice linked visit.
+- **Doctor/admin:** `/admins/[id]`, doctor snapshot API + invalidation; clinician portal naming (`Clinician*`).
+- **Verify:** **724** tests (136 files), tsc, lint, build.
 
 ## Prior (2026-06-04 — Appointment card meta + portraits + cache)
 

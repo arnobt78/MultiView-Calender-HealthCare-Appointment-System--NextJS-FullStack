@@ -20,6 +20,12 @@ import { resolveExtraAssignedAppointmentIds } from "@/lib/appointments-calendar-
 import { Appointment, Category, Patient, AppointmentAssignee } from "@/types/types";
 import type { PortalAppointmentClinicianUser } from "@/lib/serializers";
 import { buildFullAppointmentsList } from "@/lib/appointments-list-build";
+import type { AppointmentDetailApiPayload } from "@/lib/appointment-detail-api";
+import {
+  patchAppointmentDetailCache,
+  patchAppointmentDetailCacheOptimistic,
+} from "@/lib/appointment-detail-cache";
+import type { AppointmentDetailViewModel } from "@/lib/appointment-detail-view-model";
 import { PAGINATION } from "@/lib/constants";
 import { notify } from "@/lib/notify";
 import { useAuth } from "./useAuth";
@@ -171,18 +177,25 @@ export function useAppointments() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, ...updateData }: Partial<Appointment> & { id: string }) => 
-      apiClient<{ appointment: FullAppointment }>(`/api/appointments/${id}`, {
+    mutationFn: ({ id, ...updateData }: Partial<Appointment> & { id: string }) =>
+      apiClient<AppointmentDetailApiPayload>(`/api/appointments/${id}`, {
         method: "PATCH",
         body: JSON.stringify(updateData),
       }),
-    onMutate: async ({ id }) => {
+    onMutate: async (variables) => {
       const current = queryClient.getQueryData<FullAppointment[]>(queryKeys.appointments.all) || [];
-      const previous = current.find((appt) => appt.id === id) ?? null;
-      return { previous };
+      const previous = current.find((appt) => appt.id === variables.id) ?? null;
+      const previousDetail = queryClient.getQueryData<AppointmentDetailViewModel>(
+        queryKeys.appointments.detail(variables.id)
+      );
+      patchAppointmentDetailCacheOptimistic(queryClient, variables.id, variables);
+      return { previous, previousDetail };
     },
     onSuccess: async (data, variables, context) => {
-      const appointment = data.appointment;
+      const appointment = data.appointment as FullAppointment;
+      if (data.detail) {
+        patchAppointmentDetailCache(queryClient, variables.id, data.detail);
+      }
       const updatedLabels = getUpdatedFieldLabels(variables);
       await invalidateAfterAppointmentMutation(queryClient, {
         appointmentId: appointment?.id,
@@ -201,7 +214,12 @@ export function useAppointments() {
             : `"${getSafeAppointmentTitle(appointment)}" has been saved.`,
       });
     },
-    onError: (error) => handleApiError(error, "Failed to update appointment"),
+    onError: (error, variables, context) => {
+      if (context?.previousDetail) {
+        patchAppointmentDetailCache(queryClient, variables.id, context.previousDetail);
+      }
+      handleApiError(error, "Failed to update appointment");
+    },
   });
 
   const deleteMutation = useMutation({
@@ -245,30 +263,35 @@ export function useAppointments() {
   });
 
   const toggleStatusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: "pending" | "done" | "alert" }) => 
-      apiClient<{ appointment: FullAppointment }>(`/api/appointments/${id}`, {
+    mutationFn: ({ id, status }: { id: string; status: "pending" | "done" | "alert" }) =>
+      apiClient<AppointmentDetailApiPayload>(`/api/appointments/${id}`, {
         method: "PATCH",
         body: JSON.stringify({ status }),
       }),
     onMutate: async ({ id, status }) => {
-      // Cancel any outgoing refetches to avoid overwriting the optimistic update
       await queryClient.cancelQueries({ queryKey: queryKeys.appointments.all });
-      
-      // Snapshot previous value
-      const previousAppointments = queryClient.getQueryData<FullAppointment[]>(queryKeys.appointments.all);
-      
-      // Optimistically update
+
+      const previousAppointments = queryClient.getQueryData<FullAppointment[]>(
+        queryKeys.appointments.all
+      );
+      const previousDetail = queryClient.getQueryData<AppointmentDetailViewModel>(
+        queryKeys.appointments.detail(id)
+      );
+
       if (previousAppointments) {
-        queryClient.setQueryData<FullAppointment[]>(queryKeys.appointments.all, 
-          previousAppointments.map((appt) => 
-            appt.id === id ? { ...appt, status } : appt
-          )
+        queryClient.setQueryData<FullAppointment[]>(
+          queryKeys.appointments.all,
+          previousAppointments.map((appt) => (appt.id === id ? { ...appt, status } : appt))
         );
       }
-      return { previousAppointments };
+      patchAppointmentDetailCacheOptimistic(queryClient, id, { id, status });
+      return { previousAppointments, previousDetail };
     },
     onSuccess: async (data) => {
-      const appt = data.appointment;
+      const appt = data.appointment as FullAppointment;
+      if (data.detail) {
+        patchAppointmentDetailCache(queryClient, appt.id, data.detail);
+      }
       queryClient.setQueryData<FullAppointment[]>(queryKeys.appointments.all, (old = []) =>
         old.map((item) => (item.id === appt.id ? { ...item, ...appt } : item))
       );
@@ -290,9 +313,11 @@ export function useAppointments() {
       });
     },
     onError: (error, variables, context) => {
-      // Rollback on error
       if (context?.previousAppointments) {
         queryClient.setQueryData(queryKeys.appointments.all, context.previousAppointments);
+      }
+      if (context?.previousDetail) {
+        patchAppointmentDetailCache(queryClient, variables.id, context.previousDetail);
       }
       handleApiError(error, "Failed to update status");
     },

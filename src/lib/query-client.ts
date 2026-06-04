@@ -315,6 +315,15 @@ export async function invalidateAfterAppointmentMutation(
 ) {
   const targets = resolveAppointmentMutationTargets(queryClient, opts);
 
+  const detailInvalidations: Promise<void>[] = [];
+  if (opts?.appointmentId) {
+    detailInvalidations.push(
+      queryClient
+        .invalidateQueries({ queryKey: queryKeys.appointments.detail(opts.appointmentId) })
+        .then(() => undefined)
+    );
+  }
+
   await Promise.all([
     invalidateAppointmentData(queryClient),
     invalidateNotificationsData(queryClient),
@@ -327,6 +336,7 @@ export async function invalidateAfterAppointmentMutation(
     invalidateDoctorPortal(queryClient),
     invalidateAdminPortal(queryClient),
     invalidateAppointmentEntitySnapshots(queryClient, targets),
+    ...detailInvalidations,
   ]);
   publishQueryCacheCrossTab(CROSS_TAB_SCOPES.APPOINTMENT_MUTATION);
 }

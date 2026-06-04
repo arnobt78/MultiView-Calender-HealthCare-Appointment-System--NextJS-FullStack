@@ -20,10 +20,24 @@ export const invoiceAppointmentVisitInclude = {
     },
   },
   owner: {
-    select: { id: true, display_name: true, email: true, specialty: true, image: true },
+    select: {
+      id: true,
+      display_name: true,
+      email: true,
+      specialty: true,
+      image: true,
+      role: true,
+    },
   },
   treating_physician: {
-    select: { id: true, display_name: true, email: true, specialty: true, image: true },
+    select: {
+      id: true,
+      display_name: true,
+      email: true,
+      specialty: true,
+      image: true,
+      role: true,
+    },
   },
 } as const;
 
@@ -56,6 +70,7 @@ type VisitApptRow = {
     email: string;
     specialty: string | null;
     image: string | null;
+    role: string | null;
   } | null;
   treating_physician: {
     id: string;
@@ -63,6 +78,7 @@ type VisitApptRow = {
     email: string;
     specialty: string | null;
     image: string | null;
+    role: string | null;
   } | null;
 };
 
@@ -113,11 +129,13 @@ export function mapAppointmentToInvoiceVisitSummary(
     treating_physician_email: row.treating_physician?.email ?? null,
     treating_physician_specialty: row.treating_physician?.specialty ?? null,
     treating_physician_image: row.treating_physician?.image?.trim() || null,
+    treating_physician_role: row.treating_physician?.role ?? null,
     calendar_owner_id: row.owner?.id ?? null,
     calendar_owner_label: staffLabel(row.owner),
     calendar_owner_email: row.owner?.email ?? null,
     calendar_owner_specialty: row.owner?.specialty ?? null,
     calendar_owner_image: row.owner?.image?.trim() || null,
+    calendar_owner_role: row.owner?.role ?? null,
   };
 }
 

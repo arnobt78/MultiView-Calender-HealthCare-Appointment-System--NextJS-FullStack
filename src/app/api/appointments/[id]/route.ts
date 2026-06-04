@@ -8,13 +8,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { isValidUUID } from "@/lib/validation";
-import {
-  APPOINTMENT_TYPE_CARD_SELECT,
-  appointmentTypeSerializedFields,
-} from "@/lib/appointment-type-include";
-import { serializeAppointment } from "@/lib/serializers";
+import { APPOINTMENT_TYPE_CARD_SELECT } from "@/lib/appointment-type-include";
 import { getUserRole, isPatientRole } from "@/lib/rbac";
 import { resolveAppointmentAccess } from "@/lib/appointment-access";
+import { buildAppointmentDetailApiPayload } from "@/lib/appointment-detail-api";
 import { appointmentNotificationLink } from "@/lib/entity-routes";
 import { redis } from "@/lib/redis";
 import { format } from "date-fns";
@@ -54,25 +51,12 @@ export async function GET(_req: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Invalid appointment ID format" }, { status: 400 });
     }
 
-    const { level, raw } = await resolveAppointmentAccess(ctx.accessSession, id);
-    if (level === "none" || !raw) {
+    const payload = await buildAppointmentDetailApiPayload(ctx.accessSession, id);
+    if (!payload) {
       return NextResponse.json({ error: "Appointment not found" }, { status: 404 });
     }
 
-    const rawFeeDoc = (raw as typeof raw & {
-      treating_physician?: { consultation_fee: number | null } | null;
-      owner?: { consultation_fee: number | null } | null;
-    });
-    return NextResponse.json({
-      appointment: serializeAppointment({
-        ...raw,
-        ...appointmentTypeSerializedFields(
-          (raw as typeof raw & { appointment_type?: { price_cents: number; name?: string | null; duration_minutes?: number | null } | null })
-            .appointment_type
-        ),
-        doctor_consultation_fee_cents: rawFeeDoc.treating_physician?.consultation_fee ?? rawFeeDoc.owner?.consultation_fee ?? null,
-      }),
-    });
+    return NextResponse.json(payload);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Internal server error";
     return NextResponse.json({ error: message }, { status: 500 });
@@ -163,13 +147,12 @@ export async function PUT(req: NextRequest, context: RouteContext) {
 
     void redis.invalidateDashboardOverview(ctx.sessionUser.userId);
 
-    return NextResponse.json({
-      appointment: serializeAppointment({
-        ...updated,
-        ...appointmentTypeSerializedFields(updated.appointment_type),
-        doctor_consultation_fee_cents: updated.treating_physician?.consultation_fee ?? updated.owner?.consultation_fee ?? null,
-      }),
-    });
+    const payload = await buildAppointmentDetailApiPayload(ctx.accessSession, id);
+    if (!payload) {
+      return NextResponse.json({ error: "Appointment not found or unauthorized" }, { status: 404 });
+    }
+
+    return NextResponse.json(payload);
   } catch (err: unknown) {
     if (err && typeof err === "object" && "code" in err && err.code === "P2025") {
       return NextResponse.json({ error: "Appointment not found or unauthorized" }, { status: 404 });
@@ -370,13 +353,12 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       }
     }
 
-    return NextResponse.json({
-      appointment: serializeAppointment({
-        ...updated,
-        ...appointmentTypeSerializedFields(updated.appointment_type),
-        doctor_consultation_fee_cents: updated.treating_physician?.consultation_fee ?? updated.owner?.consultation_fee ?? null,
-      }),
-    });
+    const payload = await buildAppointmentDetailApiPayload(ctx.accessSession, id);
+    if (!payload) {
+      return NextResponse.json({ error: "Appointment not found or unauthorized" }, { status: 404 });
+    }
+
+    return NextResponse.json(payload);
   } catch (err: unknown) {
     if (err && typeof err === "object" && "code" in err && err.code === "P2025") {
       return NextResponse.json({ error: "Appointment not found or unauthorized" }, { status: 404 });

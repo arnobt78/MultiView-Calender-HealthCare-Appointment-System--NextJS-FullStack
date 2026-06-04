@@ -68,6 +68,43 @@ describe("doctor detail snapshot calendar owner links", () => {
   });
 });
 
+/** Invoice linked visit panel — reuses portal snapshot policy + visit_summary roles. */
+describe("invoice linked visit clinician link kinds", () => {
+  it("patient viewer: admin calendar owner plain (invoice visit panel)", () => {
+    expect(
+      resolveCalendarOwnerLinkKind(
+        "patient",
+        "admin",
+        DOCTOR_DETAIL_PATIENT_SNAPSHOT_LINKS
+      )
+    ).toBe("none");
+    expect(
+      resolveTreatingPhysicianLinkKind(
+        "patient",
+        DOCTOR_DETAIL_PATIENT_SNAPSHOT_LINKS,
+        "admin"
+      )
+    ).toBe("none");
+  });
+
+  it("doctor viewer: admin owner portal-admin when role on summary", () => {
+    expect(
+      resolveCalendarOwnerLinkKind(
+        "doctor",
+        "admin",
+        DOCTOR_DETAIL_DOCTOR_SNAPSHOT_LINKS
+      )
+    ).toBe("portal-admin");
+    expect(
+      resolveTreatingPhysicianLinkKind(
+        "doctor",
+        DOCTOR_DETAIL_DOCTOR_SNAPSHOT_LINKS,
+        "admin"
+      )
+    ).toBe("portal-admin");
+  });
+});
+
 describe("resolveCalendarOwnerLinkKind legacy default", () => {
   it("admin viewer uses admin-cp without policy", () => {
     expect(resolveCalendarOwnerLinkKind("admin", "admin")).toBe("admin-cp");

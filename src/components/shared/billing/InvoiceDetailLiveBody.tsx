@@ -21,7 +21,8 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
-import { InvoiceDetailClient } from "@/components/shared/billing/InvoiceDetailClient";
+import { InvoiceDetailActionBar } from "@/components/shared/billing/InvoiceDetailActionBar";
+import { resolvePortalEntityDetailSnapshotLinkPolicy } from "@/lib/entity-detail-snapshot-links";
 import { InvoiceStatusBadge } from "@/components/shared/billing/InvoiceStatusBadge";
 import { InvoiceAmountDisplay } from "@/components/shared/billing/InvoiceAmountDisplay";
 import { InvoiceLinkedVisitPanel } from "@/components/shared/billing/InvoiceLinkedVisitPanel";
@@ -50,7 +51,8 @@ type Props = {
   uiAccess: InvoiceDetailUiAccess;
   viewerRole: EntityRole;
   variant: "control-panel" | "portal";
-  headerActions?: React.ReactNode;
+  backHref: string;
+  backLabel?: string;
   initialInvoicesList?: Invoice[] | null;
 };
 
@@ -84,7 +86,8 @@ export function InvoiceDetailLiveBody({
   uiAccess,
   viewerRole,
   variant,
-  headerActions,
+  backHref,
+  backLabel,
   initialInvoicesList,
 }: Props) {
   const { data: invoice = initialInvoice } = useInvoice(initialInvoice.id, {
@@ -111,6 +114,9 @@ export function InvoiceDetailLiveBody({
         ? patientDetailHref(viewerRole, invoice.visit_summary.patient_id)
         : null;
 
+  const linkPolicy =
+    variant === "portal" ? resolvePortalEntityDetailSnapshotLinkPolicy(viewerRole) : undefined;
+
   return (
     <div className="space-y-3 text-gray-700">
       <PageHeader
@@ -125,17 +131,6 @@ export function InvoiceDetailLiveBody({
           </span>
         }
         description={subtitle}
-        actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <InvoiceDetailClient
-              invoice={invoice}
-              accessLevel={uiAccess}
-              hideViewLink
-              invoicesInitialData={initialInvoicesList ?? undefined}
-            />
-            {headerActions}
-          </div>
-        }
       />
 
       <Card className={cn(invoiceDetailCardFrameClass, "border-amber-100/50 shadow-none")}>
@@ -219,6 +214,7 @@ export function InvoiceDetailLiveBody({
           patientHref={patientHref}
           viewerRole={viewerRole}
           visitTitle={visitTitle}
+          linkPolicy={linkPolicy}
         />
       ) : null}
 
@@ -240,6 +236,14 @@ export function InvoiceDetailLiveBody({
           </CardContent>
         </Card>
       </div>
+
+      <InvoiceDetailActionBar
+        initialInvoice={invoice}
+        accessLevel={uiAccess}
+        backHref={backHref}
+        backLabel={backLabel}
+        invoicesInitialData={initialInvoicesList ?? undefined}
+      />
     </div>
   );
 }

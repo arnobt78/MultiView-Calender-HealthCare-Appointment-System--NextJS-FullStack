@@ -1,13 +1,17 @@
 /**
  * Doctor / patient appointment detail — dashboard shell (no control-panel sidebar).
  */
+export const dynamic = "force-dynamic";
+
 import { notFound, redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/session";
 import { getUserRole, isAdminRole } from "@/lib/rbac";
 import { isValidUUID } from "@/lib/validation";
 import { resolveAppointmentAccess } from "@/lib/appointment-access";
 import { appointmentDetailHref } from "@/lib/entity-routes";
+import { canClientFetchAdminUsersList } from "@/lib/user-list-access";
 import { AppointmentDetailScreen } from "@/components/detail/AppointmentDetailScreen";
+import { prefetchAppointmentDetailViewModel, prefetchInvoices, prefetchUsersList } from "@/lib/server-prefetch";
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -25,27 +29,41 @@ export default async function PortalAppointmentDetailPage({ params }: PageProps)
 
   const role = await getUserRole(sessionUser.userId);
 
-  /* Admins use the control-panel route exclusively. */
   if (isAdminRole(role)) {
     redirect(appointmentDetailHref(role, id));
   }
 
-  const { level, raw } = await resolveAppointmentAccess(
-    { userId: sessionUser.userId, email: sessionUser.email, role },
-    id
-  );
+  const session = {
+    userId: sessionUser.userId,
+    email: sessionUser.email,
+    role,
+  };
 
+  const { level, raw } = await resolveAppointmentAccess(session, id);
   if (level === "none" || !raw) notFound();
+
+  const [initialDetail, initialDoctorUsers, initialAdminUsers, initialInvoices] =
+    await Promise.all([
+      prefetchAppointmentDetailViewModel(raw, role, level),
+      prefetchUsersList({ role: "doctor", limit: 200 }),
+      canClientFetchAdminUsersList(role)
+        ? prefetchUsersList({ role: "admin", limit: 50 })
+        : Promise.resolve(null),
+      prefetchInvoices(sessionUser.userId, role, sessionUser.email),
+    ]);
+
+  if (!initialDetail) notFound();
 
   const backHref = role === "patient" ? "/patient-portal" : "/doctor-portal";
 
   return (
     <AppointmentDetailScreen
-      accessLevel={level}
-      viewerRole={role}
       backHref={backHref}
       variant="portal"
-      raw={raw}
+      initialDetail={initialDetail}
+      initialDoctorUsers={initialDoctorUsers}
+      initialAdminUsers={initialAdminUsers}
+      initialInvoices={initialInvoices}
     />
   );
 }

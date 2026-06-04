@@ -41,16 +41,26 @@ export type AppointmentAccessRow = {
   assignees: AssigneeRow[];
 };
 
+/** Clinician pick for detail identity rows — owner + treating physician portraits/links. */
+export const appointmentDetailClinicianSelect = {
+  id: true,
+  email: true,
+  display_name: true,
+  image: true,
+  role: true,
+  specialty: true,
+  consultation_fee: true,
+} as const;
+
 const appointmentDetailInclude = {
   patient: true,
   category: true,
   assignees: {
-    include: { user: { select: { id: true, email: true, display_name: true } } },
+    include: { user: { select: { id: true, email: true, display_name: true, image: true } } },
   },
   appointment_type: { select: APPOINTMENT_TYPE_CARD_SELECT },
-  /** consultation_fee feeds doctor_consultation_fee_cents on serialized appointment */
-  treating_physician: { select: { consultation_fee: true } },
-  owner: { select: { consultation_fee: true } },
+  treating_physician: { select: appointmentDetailClinicianSelect },
+  owner: { select: appointmentDetailClinicianSelect },
 } as const;
 
 function isAcceptedAssignee(

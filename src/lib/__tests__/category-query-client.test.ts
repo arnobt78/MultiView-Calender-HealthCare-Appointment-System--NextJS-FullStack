@@ -143,4 +143,14 @@ describe("invalidateAfterAppointmentMutation category wiring", () => {
     expect(qc.getQueryState(oldKey)?.isInvalidated).toBe(true);
     expect(qc.getQueryState(newKey)?.isInvalidated).toBe(true);
   });
+
+  it("invalidates appointment detail cache when appointmentId is provided", async () => {
+    const qc = createQueryClient();
+    const detailKey = queryKeys.appointments.detail("appt-detail-1");
+    qc.setQueryData(detailKey, { appointmentId: "appt-detail-1" });
+
+    await invalidateAfterAppointmentMutation(qc, { appointmentId: "appt-detail-1" });
+
+    expect(qc.getQueryState(detailKey)?.isInvalidated).toBe(true);
+  });
 });

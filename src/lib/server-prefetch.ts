@@ -690,6 +690,29 @@ export async function prefetchDoctorSnapshot(
   }
 }
 
+/**
+ * Appointment detail SSR — pages must use this (not inline `buildAppointmentDetailViewModel`).
+ * Client seeds via `seedAppointmentDetailCache` / `useAppointmentDetail` initialData.
+ */
+export async function prefetchAppointmentDetailViewModel(
+  raw: import("@/lib/appointment-access").AppointmentDetailRaw,
+  viewerRole: string | null,
+  accessLevel: import("@/lib/appointment-access").AppointmentAccessLevel
+): Promise<import("@/lib/appointment-detail-view-model").AppointmentDetailViewModel | null> {
+  try {
+    const { buildAppointmentDetailViewModel } = await import(
+      "@/lib/appointment-detail-view-model"
+    );
+    return buildAppointmentDetailViewModel(
+      raw,
+      (viewerRole ?? "patient") as import("@/lib/entity-routes").EntityRole,
+      accessLevel
+    );
+  } catch {
+    return null;
+  }
+}
+
 // ─── Patients list ────────────────────────────────────────────────────────────
 
 /**

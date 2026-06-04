@@ -1,13 +1,14 @@
 # CLAUDE.md
 
-Compact agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
+Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-04)
 
-- **Portal entity detail links:** `resolvePortalEntityDetailSnapshotLinkPolicy` on portal `/doctors/[id]` + `/categories/[id]` — patient: plain title/patient/admin owner; doctor owners linked; doctor viewer: `/admins/:id` for admin owners. CP = full links.
-- **Doctor snapshot:** `GET /api/doctors/[id]/snapshot`, `prefetchDoctorSnapshot`, `invalidateDoctorDetailAndSnapshot`, FK invalidation + patient→doctor snapshot.
-- **Routes:** `/admins/[id]`; clinician UI (`ClinicianInvoiceDialogShell`, `PortalClinicianLink`, …); deprecated `Staff*` shims.
-- **Verify:** **712** tests / **133** files · tsc · lint · build.
+- **Appt detail:** `appointment-detail-api.ts` → GET/PATCH/PUT `{ appointment, detail }`; SSR `prefetchAppointmentDetailViewModel`; `useAppointmentDetail` refetch; `patchAppointmentDetailCache` + optimistic PATCH/toggle; `invalidateAfterAppointmentMutation` → `appointments.detail`.
+- **Appt UI:** `AppointmentDetailScreenShared` + footer `AppointmentDetailActionBar` (sky/violet); no dead `raw` props.
+- **Invoice detail:** `InvoiceDetailActionBar` footer; `resolveInvoiceDetailActionCapabilities`; linked visit `linkPolicy` + owner roles on summary.
+- **Portal links:** `resolvePortalEntityDetailSnapshotLinkPolicy` on `/doctors/[id]`, `/categories/[id]`, invoice visit panel.
+- **Verify:** **724** / **136** · tsc · lint · build.
 
 ## Never / Always
 
@@ -17,29 +18,28 @@ Compact agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Verify
 
-```bash
-npm test && npx tsc --noEmit && npm run lint && npm run build
-```
+`npm test && npx tsc --noEmit && npm run lint && npm run build`
 
 ## Invalidation
 
 | Write | Helper |
 |-------|--------|
-| Appointment | `invalidateAfterAppointmentMutation` (+ FK ids) |
+| Appointment | `invalidateAfterAppointmentMutation` (+ FK, `appointmentId` → detail) |
 | Patient | `invalidateEntityAffectingAppointments` + `invalidateDoctorsAffectedByPatientWrite` |
-| Invoice/payment | `invalidateInvoicesAndOverview` / `invalidateInvoicesBilling` |
-| Types | `invalidateAppointmentTypeDerived` (+ `appointments.all`) |
+| Invoice | `invalidateInvoicesAndOverview` / `invalidateInvoicesBilling` |
+| Types | `invalidateAppointmentTypeDerived` |
 | Users | `invalidateUsersAndAuth` + `invalidateDoctorDetailAndSnapshot` |
 
 Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Key paths
 
-- Links: `entity-detail-snapshot-links.ts`, `patient-detail-snapshot-columns.tsx`
-- Doctor/category detail: `DoctorDetailScreenShared.tsx`, `CategoryDetailScreenShared.tsx`, `doctor-snapshot-data.ts`
-- Clinician cards: `PortalClinicianLink`, `portal-appointment-clinician.ts`, `appointment-card-clinician-image.ts`
-- Invoice: `ClinicianInvoiceDialogShell`, `InvoiceFormDialogContext.tsx`
+- Appt: `appointment-detail-api.ts`, `appointment-detail-cache.ts`, `useAppointmentDetail.ts`, `appointment-detail/`
+- Invoice: `InvoiceDetailActionBar.tsx`, `invoice-detail-action-capabilities.ts`
+- Links: `entity-detail-snapshot-links.ts`
+- Entity detail: `DoctorDetailScreenShared`, `CategoryDetailScreenShared`, `doctor-snapshot-data.ts`
+- Invoice shell: `InvoiceFormDialogContext.tsx`, `ClinicianInvoiceDialogShell`
 
 ## Principle
 
-Minimal typed diffs; shared libs; preserve SSR/cache/invalidation unless task requires change.
+Minimal typed diffs; shared libs; SSR seed + invalidate on every CRUD.

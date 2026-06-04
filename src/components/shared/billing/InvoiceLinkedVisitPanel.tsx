@@ -11,6 +11,12 @@ import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { TelehealthSessionBadge } from "@/components/shared/appointments/TelehealthSessionBadge";
 import { EntityDetailSnapshotSectionHeading } from "@/components/shared/entity-detail/EntityDetailSnapshotSectionHeading";
 import type { EntityRole } from "@/lib/entity-routes";
+import type { RelatedAppointmentsLinkPolicy } from "@/lib/entity-detail-snapshot-links";
+import {
+  resolveCalendarOwnerLinkKind,
+  resolveCategoryLinkEnabled,
+  resolveTreatingPhysicianLinkKind,
+} from "@/lib/entity-detail-snapshot-links";
 import {
   invoiceDetailCardFrameClass,
   invoiceDetailDefinitionListClass,
@@ -26,6 +32,8 @@ type Props = {
   patientHref: string | null;
   viewerRole: EntityRole;
   visitTitle: string;
+  /** Portal snapshot link policy — omit on CP for full links. */
+  linkPolicy?: RelatedAppointmentsLinkPolicy;
 };
 
 function VisitDefinitionRow({
@@ -57,7 +65,20 @@ export function InvoiceLinkedVisitPanel({
   patientHref,
   viewerRole,
   visitTitle,
+  linkPolicy,
 }: Props) {
+  const linkPatient = linkPolicy?.patientInTitle ?? true;
+  const categoryLinkEnabled = resolveCategoryLinkEnabled(linkPolicy);
+  const treatingLinkKind = resolveTreatingPhysicianLinkKind(
+    viewerRole,
+    linkPolicy,
+    summary.treating_physician_role ?? null
+  );
+  const ownerLinkKind = resolveCalendarOwnerLinkKind(
+    viewerRole,
+    summary.calendar_owner_role ?? null,
+    linkPolicy
+  );
   const patientPortrait = summary.patient_id
     ? {
         id: summary.patient_id,
@@ -101,9 +122,10 @@ export function InvoiceLinkedVisitPanel({
             ) : null}
           </VisitDefinitionRow>
           <VisitDefinitionRow icon={User} label="Patient">
-            {summary.patient_label && patientPortrait && patientHref ? (
+            {summary.patient_label && patientPortrait ? (
               <PatientIdentityCell
-                href={patientHref}
+                href={patientHref ?? undefined}
+                linkPatient={linkPatient}
                 name={summary.patient_label}
                 email={summary.patient_email}
                 patient={patientPortrait}
@@ -123,7 +145,9 @@ export function InvoiceLinkedVisitPanel({
                   specialty: summary.treating_physician_specialty,
                   image: null,
                 }}
-                linkKind={viewerRole === "admin" ? "admin-cp" : "role"}
+                linkKind={treatingLinkKind}
+                staffRole={summary.treating_physician_role ?? undefined}
+                viewerRole={viewerRole}
                 layout="inline"
                 showEmail={false}
               />
@@ -140,7 +164,9 @@ export function InvoiceLinkedVisitPanel({
                   specialty: summary.calendar_owner_specialty,
                   image: null,
                 }}
-                linkKind={viewerRole === "admin" ? "admin-cp" : "role"}
+                linkKind={ownerLinkKind}
+                staffRole={summary.calendar_owner_role ?? undefined}
+                viewerRole={viewerRole}
                 layout="inline"
                 showEmail={false}
               />
@@ -152,7 +178,7 @@ export function InvoiceLinkedVisitPanel({
                 label={summary.category_label}
                 color={summary.category_color}
                 icon={summary.category_icon}
-                categoryId={summary.category_id}
+                categoryId={categoryLinkEnabled ? summary.category_id : null}
                 viewerRole={viewerRole}
                 markVariant="brand"
               />

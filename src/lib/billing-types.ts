@@ -62,11 +62,13 @@ export type InvoiceVisitSummary = {
   treating_physician_specialty: string | null;
   /** OAuth/upload avatar for treating physician row. */
   treating_physician_image?: string | null;
+  treating_physician_role?: string | null;
   calendar_owner_id: string | null;
   calendar_owner_label: string | null;
   calendar_owner_email?: string | null;
   calendar_owner_specialty: string | null;
   calendar_owner_image?: string | null;
+  calendar_owner_role?: string | null;
 };
 
 export type InvoiceRow = {

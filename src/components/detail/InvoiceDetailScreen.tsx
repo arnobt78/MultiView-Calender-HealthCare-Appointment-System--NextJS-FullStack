@@ -2,9 +2,6 @@
  * Invoice detail body — shared by CP admin route and portal `/invoices/[id]` (doctor/patient).
  */
 
-import { BackNavigationLink } from "@/components/shared/BackNavigationLink";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
 import { InvoiceDetailQuerySeed } from "@/components/shared/billing/InvoiceDetailQuerySeed";
 import { InvoiceDetailLiveBody } from "@/components/shared/billing/InvoiceDetailLiveBody";
 import type { InvoiceDetailUiAccess } from "@/lib/invoice-detail-ssr";
@@ -42,14 +39,7 @@ export function InvoiceDetailScreen({
         uiAccess={uiAccess}
         viewerRole={viewerRole}
         variant={variant}
-        headerActions={
-          <Button variant="outline" asChild>
-            <BackNavigationLink href={backHref}>
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </BackNavigationLink>
-          </Button>
-        }
+        backHref={backHref}
       />
     </div>
   );
