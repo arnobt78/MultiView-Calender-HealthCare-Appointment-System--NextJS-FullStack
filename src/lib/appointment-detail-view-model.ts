@@ -1,7 +1,7 @@
 /**
  * Appointment detail SSR + TanStack cache view-model — maps Prisma row to UI-ready shape.
  */
-import { differenceInMinutes } from "date-fns";
+import { differenceInMinutes, format } from "date-fns";
 import type { AppointmentAccessLevel, AppointmentDetailRaw } from "@/lib/appointment-access";
 import {
   formatVisitFeeEurLabel,
@@ -122,10 +122,7 @@ export function buildAppointmentDetailViewModel(
     : null;
 
   const whenLabel = appointment.start
-    ? new Date(appointment.start).toLocaleString(undefined, {
-        dateStyle: "medium",
-        timeStyle: "short",
-      })
+    ? format(new Date(appointment.start), "PP · p")
     : null;
   const subtitle =
     patientSubtitleLabel && whenLabel
@@ -177,10 +174,7 @@ export function recomputeAppointmentDetailLabels(
     ? `${model.patient.firstname} ${model.patient.lastname}`.trim() || model.patient.email || null
     : null;
   const whenLabel = model.appointment.start
-    ? new Date(model.appointment.start).toLocaleString(undefined, {
-        dateStyle: "medium",
-        timeStyle: "short",
-      })
+    ? format(new Date(model.appointment.start), "PP · p")
     : null;
   const subtitle =
     patientSubtitleLabel && whenLabel

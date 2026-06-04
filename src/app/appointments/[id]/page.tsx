@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 import { notFound, redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/session";
-import { getUserRole, isAdminRole } from "@/lib/rbac";
+import { getUserRole, isAdminRole, isDoctorRole } from "@/lib/rbac";
 import { isValidUUID } from "@/lib/validation";
 import { resolveAppointmentAccess } from "@/lib/appointment-access";
 import { appointmentDetailHref } from "@/lib/entity-routes";
@@ -42,11 +42,12 @@ export default async function PortalAppointmentDetailPage({ params }: PageProps)
   const { level, raw } = await resolveAppointmentAccess(session, id);
   if (level === "none" || !raw) notFound();
 
+  const staffPrefetch = isDoctorRole(role) || isAdminRole(role);
   const [initialDetail, initialDoctorUsers, initialAdminUsers, initialInvoices] =
     await Promise.all([
       prefetchAppointmentDetailViewModel(raw, role, level),
-      prefetchUsersList({ role: "doctor", limit: 200 }),
-      canClientFetchAdminUsersList(role)
+      staffPrefetch ? prefetchUsersList({ role: "doctor", limit: 200 }) : Promise.resolve(null),
+      staffPrefetch && canClientFetchAdminUsersList(role)
         ? prefetchUsersList({ role: "admin", limit: 50 })
         : Promise.resolve(null),
       prefetchInvoices(sessionUser.userId, role, sessionUser.email),

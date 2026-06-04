@@ -13,6 +13,7 @@ import type {
 import { prefetchCategoryDetailStaffUsers } from "@/lib/prefetch-category-detail-staff";
 import { mapApiInvoiceToRow } from "@/lib/billing-invoice-map";
 import type { InvoiceRow } from "@/lib/billing-types";
+import { isPatientRole } from "@/lib/rbac";
 
 type PrefetchViewer = { userId: string; role: string | null };
 
@@ -86,29 +87,37 @@ export function prefetchQueriesForControlPanelHref(
         return;
       }
       if (isDoctors) {
-        await Promise.all([
+        /** Patients use `/api/doctors/:id/snapshot` on portal detail — `GET /api/users/:id` is 403. */
+        const doctorPrefetches: Promise<unknown>[] = [
           queryClient.prefetchQuery({
+            queryKey: queryKeys.doctors.snapshot(id),
+            queryFn: () => apiClient<DoctorSnapshot>(`/api/doctors/${id}/snapshot`),
+          }),
+        ];
+        if (!isPatientRole(resolvedViewer?.role)) {
+          doctorPrefetches.unshift(
+            queryClient.prefetchQuery({
+              queryKey: queryKeys.users.detail(id),
+              queryFn: async () => {
+                const res = await apiClient<{ user: User }>(`/api/users/${id}`);
+                return res.user;
+              },
+            })
+          );
+        }
+        await Promise.all(doctorPrefetches);
+        return;
+      }
+      if (isAdmins) {
+        if (!isPatientRole(resolvedViewer?.role)) {
+          await queryClient.prefetchQuery({
             queryKey: queryKeys.users.detail(id),
             queryFn: async () => {
               const res = await apiClient<{ user: User }>(`/api/users/${id}`);
               return res.user;
             },
-          }),
-          queryClient.prefetchQuery({
-            queryKey: queryKeys.doctors.snapshot(id),
-            queryFn: () => apiClient<DoctorSnapshot>(`/api/doctors/${id}/snapshot`),
-          }),
-        ]);
-        return;
-      }
-      if (isAdmins) {
-        await queryClient.prefetchQuery({
-          queryKey: queryKeys.users.detail(id),
-          queryFn: async () => {
-            const res = await apiClient<{ user: User }>(`/api/users/${id}`);
-            return res.user;
-          },
-        });
+          });
+        }
         return;
       }
       if (isCategories) {

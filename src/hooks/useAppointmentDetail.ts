@@ -1,33 +1,25 @@
 "use client";
 
-import { useLayoutEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import type { AppointmentDetailApiPayload } from "@/lib/appointment-detail-api";
 import type { AppointmentDetailViewModel } from "@/lib/appointment-detail-view-model";
 
 type Options = {
-  /** SSR seed — stable first paint; invalidated mutations refetch via GET. */
+  /** SSR seed — TanStack `initialData` only; do not re-seed in layout effects (avoids update loops). */
   initialData?: AppointmentDetailViewModel;
 };
 
 /**
  * Appointment detail — mirrors GET `/api/appointments/[id]` `detail` field.
- * SSR seeds cache; `invalidateAfterAppointmentMutation` busts key → background refetch.
+ * SSR `initialData` + `refetchOnMount: false`; mutations invalidate → background refetch.
  */
 export function useAppointmentDetail(appointmentId: string, options?: Options) {
-  const queryClient = useQueryClient();
-  const key = queryKeys.appointments.detail(appointmentId);
-
-  useLayoutEffect(() => {
-    if (options?.initialData != null) {
-      queryClient.setQueryData(key, options.initialData);
-    }
-  }, [queryClient, key, options?.initialData]);
+  const hasSsrSeed = options?.initialData != null;
 
   return useQuery({
-    queryKey: key,
+    queryKey: queryKeys.appointments.detail(appointmentId),
     queryFn: async () => {
       const res = await apiClient<AppointmentDetailApiPayload>(
         `/api/appointments/${appointmentId}`
@@ -36,6 +28,7 @@ export function useAppointmentDetail(appointmentId: string, options?: Options) {
     },
     initialData: options?.initialData,
     staleTime: 60_000,
+    refetchOnMount: hasSsrSeed ? false : true,
     enabled: Boolean(appointmentId),
   });
 }

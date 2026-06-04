@@ -46,3 +46,23 @@ describe("prefetchQueriesForDetailHref invoices", () => {
     });
   });
 });
+
+describe("prefetchQueriesForDetailHref doctors (patient RBAC)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    apiClient.mockResolvedValue({ snapshot: {} });
+  });
+
+  it("skips GET /api/users/:id for patient viewers — warms doctor snapshot only", async () => {
+    const doctorId = "4f9ab5e7-7d89-4add-9b3b-ae017c11ec25";
+    const qc = new QueryClient();
+    qc.setQueryData(queryKeys.auth.me, { id: "patient-1", role: "patient" });
+
+    prefetchQueriesForDetailHref(qc, `/doctors/${doctorId}`);
+
+    await vi.waitFor(() => {
+      expect(apiClient).toHaveBeenCalledWith(`/api/doctors/${doctorId}/snapshot`);
+    });
+    expect(apiClient).not.toHaveBeenCalledWith(`/api/users/${doctorId}`);
+  });
+});

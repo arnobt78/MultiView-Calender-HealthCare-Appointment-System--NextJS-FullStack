@@ -13,7 +13,7 @@ import {
   Users,
 } from "lucide-react";
 import { format } from "date-fns";
-import { useEffect, useLayoutEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -34,7 +34,6 @@ import { buildAppointmentLinkedInvoiceColumns } from "@/components/shared/appoin
 import { clinicalEmptyOr } from "@/components/shared/ClinicalTableEmptyDash";
 import { buildStaffDirectoryMap } from "@/lib/staff-directory-cache";
 import { seedUsersListCache, seedInvoicesListCache } from "@/lib/ssr-query-seed";
-import { seedAppointmentDetailCache } from "@/lib/appointment-detail-cache";
 import {
   APPOINTMENT_DETAIL_ADMIN_USERS_FILTERS,
   APPOINTMENT_DETAIL_DOCTOR_USERS_FILTERS,
@@ -133,15 +132,15 @@ export function AppointmentDetailScreenShared({
   const entityRole = initialDetail.viewerRole as EntityRole;
   const canEdit = initialDetail.accessLevel === "mutate";
 
-  const { data: detail = initialDetail } = useAppointmentDetail(initialDetail.appointmentId, {
+  const appointmentId = initialDetail.appointmentId;
+  const { data: detail = initialDetail } = useAppointmentDetail(appointmentId, {
     initialData: initialDetail,
   });
 
+  /** One-shot SSR seeds — keyed by id so object identity changes do not re-trigger setQueryData loops. */
+  const ancillarySeededRef = useRef(false);
   useLayoutEffect(() => {
-    seedAppointmentDetailCache(queryClient, initialDetail.appointmentId, initialDetail);
-  }, [queryClient, initialDetail]);
-
-  useLayoutEffect(() => {
+    if (ancillarySeededRef.current) return;
     if (initialDoctorUsers != null) {
       seedUsersListCache(queryClient, APPOINTMENT_DETAIL_DOCTOR_USERS_FILTERS, initialDoctorUsers);
     }
@@ -151,12 +150,16 @@ export function AppointmentDetailScreenShared({
     if (initialInvoices != null) {
       seedInvoicesListCache(queryClient, initialInvoices);
     }
-  }, [queryClient, initialDoctorUsers, initialAdminUsers, initialInvoices]);
+    ancillarySeededRef.current = true;
+  }, [queryClient, appointmentId, initialDoctorUsers, initialAdminUsers, initialInvoices]);
 
   const staffViewer = entityRole === "admin" || entityRole === "doctor";
-  const { data: doctorUsers } = useUsers(APPOINTMENT_DETAIL_DOCTOR_USERS_FILTERS);
+  const { data: doctorUsers } = useUsers(APPOINTMENT_DETAIL_DOCTOR_USERS_FILTERS, {
+    enabled: staffViewer,
+    initialData: staffViewer ? initialDoctorUsers ?? undefined : undefined,
+  });
   const { data: adminUsers } = useUsers(APPOINTMENT_DETAIL_ADMIN_USERS_FILTERS, {
-    enabled: canClientFetchAdminUsersList(entityRole),
+    enabled: staffViewer && canClientFetchAdminUsersList(entityRole),
     initialData: staffViewer ? initialAdminUsers ?? undefined : undefined,
   });
   const { invoices } = usePayments({ invoicesInitialData: initialInvoices ?? undefined });
