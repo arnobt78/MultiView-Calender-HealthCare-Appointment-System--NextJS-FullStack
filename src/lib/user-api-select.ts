@@ -20,4 +20,7 @@ export const USER_API_SELECT = {
   is_active: true,
   active_since: true,
   created_at: true,
+  updated_at: true,
+  created_by_id: true,
+  updated_by_id: true,
 } as const;

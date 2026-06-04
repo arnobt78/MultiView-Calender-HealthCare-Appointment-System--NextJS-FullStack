@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { AppointmentDetailRaw } from "@/lib/appointment-access";
 import {
   buildAppointmentDetailViewModel,
+  formatAppointmentDetailWhenRange,
   mergeAppointmentIntoDetailViewModel,
 } from "@/lib/appointment-detail-view-model";
 import type { Appointment } from "@/types/types";
@@ -56,15 +57,61 @@ const BASE_RAW = {
     specialty: "GP",
     consultation_fee: 9000,
   },
+  created_by: {
+    id: "admin-1",
+    email: "admin@clinic.test",
+    display_name: "Demo Admin",
+    image: null,
+    role: "admin",
+  },
+  updated_by: {
+    id: "admin-1",
+    email: "admin@clinic.test",
+    display_name: "Demo Admin",
+    image: null,
+    role: "admin",
+  },
 } as unknown as AppointmentDetailRaw;
 
 describe("buildAppointmentDetailViewModel", () => {
+  it("serializes primary doctor from nested patient.primary_doctor relation", () => {
+    const raw = {
+      ...BASE_RAW,
+      patient: {
+        ...BASE_RAW.patient,
+        primary_doctor_id: "doc-1",
+        primary_doctor: {
+          display_name: "Demo Doctor",
+          email: "test@doctor.com",
+          specialty: "Internal Medicine",
+          image: null,
+        },
+      },
+    } as unknown as AppointmentDetailRaw;
+    const vm = buildAppointmentDetailViewModel(raw, "patient", "view");
+    expect(vm.patient?.primary_doctor_display).toBe("Demo Doctor");
+    expect(vm.patient?.primary_doctor_email).toBe("test@doctor.com");
+  });
+
   it("prefers appointment duration and type price for fee label", () => {
     const vm = buildAppointmentDetailViewModel(BASE_RAW, "admin", "view");
     expect(vm.durationMinutes).toBe(30);
     expect(vm.visitFeeCents).toBe(12000);
     expect(vm.visitFeeLabel).toContain("120");
     expect(vm.subtitle).toContain("Ada Lovelace");
+    expect(vm.subtitle).toMatch(/–/);
+    expect(vm.auditCreatedBy?.label).toBe("Demo Admin");
+    expect(vm.auditCreatedBy?.role).toBe("admin");
+    expect(vm.auditUpdatedBy?.label).toBe("Demo Admin");
+  });
+
+  it("formatAppointmentDetailWhenRange includes end time", () => {
+    const label = formatAppointmentDetailWhenRange({
+      start: "2026-05-28T09:00:00.000Z",
+      end: "2026-05-28T09:30:00.000Z",
+    } as Appointment);
+    expect(label).toContain("–");
+    expect(label).toMatch(/\d{1,2}:\d{2}/);
   });
 
   it("falls back to start/end delta when duration_minutes unset", () => {

@@ -1,12 +1,22 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-04 — Appointment + invoice detail)
+## Latest (2026-06-04 — Entity detail Record Audit + appointment polish)
+
+- **Record Audit (shared):** `EntityDetailAuditActorInline` — inline row: `Label: timestamp · avatar · name (email) · UserRoleBadge`. Mappers: `mapPatientRecordAuditActors`, `mapCategoryRecordAuditActors`, `mapUserRecordAuditActors`; appointments via `auditCreatedBy`/`auditUpdatedBy` on `AppointmentDetailViewModel` (`appointmentAuditUserPick`).
+- **Prisma / SQL:** `appointments.created_by`/`updated_by` (`013`); category backfill `014`; `users.updated_at` + audit FKs `015`. Seeds: `seed-extended-schema` (categories), `seed-test-user` (doctors). API writes: appt POST/PATCH/PUT, patient/category/user PATCH set `updated_by_id`.
+- **SSR includes:** `patientDetailInclude`, `categoryDetailInclude` (`*AuditUserPick`), `userDetailInclude`, `appointmentDetailInclude`. List APIs stay light (`USER_API_SELECT` scalars only).
+- **Appointment detail UI:** Live header subtitle `formatAppointmentDetailWhenRange`; Visit Overview; People inline (`DoctorIdentityRow`); invoice audit rows (`appointment-detail-invoice-audit-rows.tsx`); `issuer_email`/`issuer_role` on invoice list payload.
+- **Cache:** `setQueryData` on patient PUT, user PATCH; `seedCategoryDetailCache`; `useCategory`/`useUser`/`useAppointmentDetail` SSR `initialData`. Invalidation matrix unchanged — helpers above still run on CRUD.
+- **Gap (optional):** CP `/control-panel/users/[id]` admin roster page has no Record Audit block (doctor/patient/category/appointment do).
+- **Deploy DB:** `npm run prisma:push` or run `migrations/013`–`015`; re-seed optional for demo actors.
+- **Verify:** **742** tests (138 files), tsc, lint, build.
+
+## Prior (2026-06-04 — Appointment + invoice detail)
 
 - **Appointment detail (glass + live cache):** API `GET`/`PATCH`/`PUT`/`POST` → `{ appointment, detail }`; optimistic form patch resolves patient/category from `patients.all`/`categories.all`; create seeds detail cache; `useAppointmentDetail` refetch on invalidate.
 - **Invoice detail:** `InvoiceDetailActionBar` footer (portal + CP); header title+status only; `resolveInvoiceDetailActionCapabilities`; `InvoiceLinkedVisitPanel` + portal `linkPolicy` + `calendar_owner_role` / `treating_physician_role` on visit summary.
 - **Portal snapshot links:** `resolvePortalEntityDetailSnapshotLinkPolicy` on `/doctors/[id]`, `/categories/[id]`, invoice linked visit.
 - **Doctor/admin:** `/admins/[id]`, doctor snapshot API + invalidation; clinician portal naming (`Clinician*`).
-- **Verify:** **725** tests (136 files), tsc, lint, build.
 
 ## Prior (2026-06-04 — Appointment card meta + portraits + cache)
 

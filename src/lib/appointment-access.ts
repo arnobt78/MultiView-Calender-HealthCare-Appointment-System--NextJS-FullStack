@@ -14,6 +14,10 @@
  */
 
 import { APPOINTMENT_TYPE_CARD_SELECT } from "@/lib/appointment-type-include";
+import {
+  appointmentAuditUserPick,
+  patientPrimaryDoctorPick,
+} from "@/lib/patient-api-include";
 import { prisma } from "@/lib/prisma";
 import { isAdminRole, isDoctorRole, isPatientRole } from "@/lib/rbac";
 import { doctorIsRelatedToPatient, patientOwnsPatientRecord } from "@/lib/patient-access";
@@ -53,7 +57,8 @@ export const appointmentDetailClinicianSelect = {
 } as const;
 
 const appointmentDetailInclude = {
-  patient: true,
+  /** Include primary_doctor portrait/name for People row SSR (matches patient detail API). */
+  patient: { include: { primary_doctor: patientPrimaryDoctorPick } },
   category: true,
   assignees: {
     include: { user: { select: { id: true, email: true, display_name: true, image: true } } },
@@ -61,6 +66,8 @@ const appointmentDetailInclude = {
   appointment_type: { select: APPOINTMENT_TYPE_CARD_SELECT },
   treating_physician: { select: appointmentDetailClinicianSelect },
   owner: { select: appointmentDetailClinicianSelect },
+  created_by: appointmentAuditUserPick,
+  updated_by: appointmentAuditUserPick,
 } as const;
 
 function isAcceptedAssignee(

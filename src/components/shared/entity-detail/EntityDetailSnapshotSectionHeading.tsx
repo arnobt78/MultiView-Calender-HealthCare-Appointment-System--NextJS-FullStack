@@ -37,7 +37,9 @@ export function EntityDetailSnapshotSectionHeading({
       <span className={sectionIconCircleClass}>
         <Icon className={iconClassName} aria-hidden />
       </span>
-      <span className="min-w-0">{children}</span>
+      <span className="min-w-0 max-w-full truncate" title={typeof children === "string" ? children : undefined}>
+        {children}
+      </span>
       {count !== undefined ? (
         countSkeleton ? (
           <Skeleton className="h-5 w-10 shrink-0 rounded-full" aria-hidden />

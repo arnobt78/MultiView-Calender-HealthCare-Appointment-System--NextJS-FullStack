@@ -11,6 +11,7 @@ import { serializeUser } from "@/lib/serializers";
 import { redis } from "@/lib/redis";
 import { getUserRole, isDoctorRole } from "@/lib/rbac";
 import { USER_API_SELECT } from "@/lib/user-api-select";
+import { userDetailInclude } from "@/lib/user-api-include";
 
 /** Per-request API handler (see api-route-dynamic.test.ts). */
 export const dynamic = "force-dynamic";
@@ -43,7 +44,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
       }
     }
 
-    const user = await prisma.user.findUnique({ where: { id }, select: USER_API_SELECT });
+    const user = await prisma.user.findUnique({ where: { id }, include: userDetailInclude });
     if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
     return NextResponse.json({ user: serializeUser(user) });
@@ -148,6 +149,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     const user = await prisma.user.update({
       where: { id },
       data: {
+        updated_by_id: sessionUser.userId,
         ...(role !== undefined && { role }),
         ...(display_name !== undefined && { display_name }),
         ...(image !== undefined && { image }),
@@ -165,7 +167,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
           active_since: is_active ? new Date() : null,
         }),
       },
-      select: USER_API_SELECT,
+      include: userDetailInclude,
     });
 
     /*

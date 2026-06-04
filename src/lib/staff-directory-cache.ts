@@ -101,13 +101,62 @@ export function buildStaffDirectoryMap(input: {
   return map;
 }
 
+/** CP patient detail — emerald profile grid only when at least one extra field exists. */
+export function hasPrimaryDoctorProfileExtras(
+  doctor: StaffDirectoryEntry | null | undefined
+): boolean {
+  if (!doctor) return false;
+  if (doctor.phone?.trim()) return true;
+  if (doctor.office_location?.trim()) return true;
+  if ((doctor.consultation_fee ?? 0) > 0) return true;
+  if (doctor.years_of_experience != null) return true;
+  if ((doctor.languages_spoken ?? []).length > 0) return true;
+  return false;
+}
+
+type PrimaryDoctorLabelFallback = {
+  id: string;
+  display_name?: string | null;
+  email?: string | null;
+} | null;
+
+/**
+ * Display name for primary doctor row — denormalized patient fields, staff directory,
+ * treating physician when same id, then email local-part.
+ */
+export function resolvePrimaryDoctorDisplayName(
+  patient: PatientPrimaryDoctorFields,
+  staffById: Map<string, StaffDirectoryEntry>,
+  treatingPhysician?: PrimaryDoctorLabelFallback
+): string {
+  const identity = resolvePrimaryDoctorIdentity(patient, staffById);
+  if (identity?.display_name?.trim()) return identity.display_name.trim();
+  const id = patient.primary_doctor_id;
+  if (!id) return "—";
+  const cached = staffById.get(id);
+  if (cached?.display_name?.trim()) return cached.display_name.trim();
+  if (treatingPhysician?.id === id) {
+    const label =
+      treatingPhysician.display_name?.trim() || treatingPhysician.email?.trim();
+    if (label) return label.includes("@") ? label.split("@")[0]! : label;
+  }
+  const email = patient.primary_doctor_email?.trim() || cached?.email?.trim();
+  if (email) return email.split("@")[0] ?? email;
+  return "—";
+}
+
 /** Primary doctor block — patient denormalized fields win on first paint; directory fills gaps. */
 export function resolvePrimaryDoctorIdentity(
   patient: PatientPrimaryDoctorFields,
   staffById: Map<string, StaffDirectoryEntry>
 ): StaffDirectoryEntry | null {
   const id = patient.primary_doctor_id;
-  if (!id || !patient.primary_doctor_display?.trim()) return null;
+  if (!id) return null;
+  const display =
+    patient.primary_doctor_display?.trim() ||
+    staffById.get(id)?.display_name?.trim() ||
+    null;
+  if (!display) return null;
   const cached = staffById.get(id);
   const image =
     patient.primary_doctor_image?.trim() ||
@@ -116,7 +165,7 @@ export function resolvePrimaryDoctorIdentity(
   return {
     id,
     email: patient.primary_doctor_email ?? cached?.email ?? null,
-    display_name: patient.primary_doctor_display.trim(),
+    display_name: display,
     image,
     specialty: patient.primary_doctor_specialty ?? cached?.specialty ?? null,
   };

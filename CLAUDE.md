@@ -4,11 +4,12 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-04)
 
-- **Appt detail:** GET/PATCH/PUT/POST `{ appointment, detail }`; optimistic patch resolves patient/category from list caches; `useAppointmentDetail` refetch on invalidate.
-- **Appt UI:** `AppointmentDetailScreenShared` + footer `AppointmentDetailActionBar` (sky/violet); no dead `raw` props.
-- **Invoice detail:** `InvoiceDetailActionBar` footer; `resolveInvoiceDetailActionCapabilities`; linked visit `linkPolicy` + owner roles on summary.
-- **Portal links:** `resolvePortalEntityDetailSnapshotLinkPolicy` on `/doctors/[id]`, `/categories/[id]`, invoice visit panel.
-- **Verify:** **725** / **136** · tsc · lint · build.
+- **Record Audit (entity detail):** `EntityDetailAuditActorInline` + `entity-detail-audit-actor.ts` (`mapPatient/Category/User` + appt `auditCreatedBy` from Prisma includes). Card: Created / Last updated / Invoice issued (appt) — timestamp · avatar · email · role badge.
+- **DB audit FKs:** `appointments` + `users` `created_by`/`updated_by`; migrations `013`–`015`; seeds backfill demo admin. Category/patient already had FKs; `categoryAuditUserPick` / `patientAuditUserPick` / `userDetailInclude`.
+- **Appt detail:** `formatAppointmentDetailWhenRange` live subtitle; `appointment-detail-invoice-audit-rows.tsx`; `issuer_email`/`issuer_role` on invoices; PATCH/POST set `updated_by_id`.
+- **Cache:** `setQueryData` on patient/category/user PUT; `useCategory`/`useUser` SSR `initialData` + `refetchOnMount: false`; appt `invalidateAfterAppointmentMutation` + detail API payload.
+- **UI polish:** Visit Overview title; People inline rows; `InvoiceVisitDescriptionStack`; primary doctor SSR pick.
+- **Verify:** **742** / **138** · tsc · lint · build. DB: `npm run prisma:push` or `013`–`015` + `db:seed-extended` / `db:seed-test-user`.
 
 ## Never / Always
 
@@ -24,21 +25,20 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 | Write | Helper |
 |-------|--------|
-| Appointment | `invalidateAfterAppointmentMutation` (+ FK, `appointmentId` → detail) |
-| Patient | `invalidateEntityAffectingAppointments` + `invalidateDoctorsAffectedByPatientWrite` |
+| Appointment | `invalidateAfterAppointmentMutation` (+ `appointmentId` → detail) |
+| Patient | `invalidateEntityAffectingAppointments` + `invalidatePatientDetailAndSnapshot` |
+| Category | `invalidateCategoryDetailAndSnapshot` + `seedCategoryDetailCache` |
+| User/doctor | `invalidateUsersAndAuth` + `invalidateDoctorDetailAndSnapshot` |
 | Invoice | `invalidateInvoicesAndOverview` / `invalidateInvoicesBilling` |
-| Types | `invalidateAppointmentTypeDerived` |
-| Users | `invalidateUsersAndAuth` + `invalidateDoctorDetailAndSnapshot` |
 
 Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Key paths
 
-- Appt: `appointment-detail-api.ts`, `appointment-detail-cache.ts`, `useAppointmentDetail.ts`, `appointment-detail/`
-- Invoice: `InvoiceDetailActionBar.tsx`, `invoice-detail-action-capabilities.ts`
-- Links: `entity-detail-snapshot-links.ts`
-- Entity detail: `DoctorDetailScreenShared`, `CategoryDetailScreenShared`, `doctor-snapshot-data.ts`
-- Invoice shell: `InvoiceFormDialogContext.tsx`, `ClinicianInvoiceDialogShell`
+- Audit: `entity-detail-audit-actor.ts`, `EntityDetailAuditActorInline.tsx`, `EntityDetailRecordAuditCard.tsx`
+- Includes: `patient-api-include.ts`, `category-api-include.ts`, `user-api-include.ts`, `appointment-access.ts`
+- Appt: `appointment-detail-api.ts`, `appointment-detail-view-model.ts`, `useAppointmentDetail.ts`
+- Detail screens: `AppointmentDetailScreenShared`, `PatientDetailScreen`, `CategoryDetailScreenShared`, `DoctorDetailScreenShared`
 
 ## Principle
 

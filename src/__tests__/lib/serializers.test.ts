@@ -37,6 +37,100 @@ describe("serializeUser", () => {
     const result = serializeUser(raw);
     expect(result.image).toBeNull();
   });
+
+  it("denormalizes audit actor portrait and role from detail include", () => {
+    const result = serializeUser({
+      ...raw,
+      updated_at: new Date("2026-06-04"),
+      created_by_id: "admin-1",
+      updated_by_id: "admin-1",
+      created_by: {
+        id: "admin-1",
+        display_name: "Demo Admin",
+        email: "test@admin.com",
+        image: null,
+        role: "admin",
+      },
+      updated_by: {
+        id: "admin-1",
+        display_name: "Demo Admin",
+        email: "test@admin.com",
+        image: null,
+        role: "admin",
+      },
+    });
+    expect(result.created_by_role).toBe("admin");
+    expect(result.updated_at).toContain("2026-06-04");
+  });
+});
+
+describe("serializePatient", () => {
+  it("denormalizes audit actor portrait and role from detail include", () => {
+    const result = serializePatient({
+      id: "p1",
+      created_at: new Date("2026-06-01"),
+      updated_at: new Date("2026-06-04"),
+      firstname: "Demo",
+      lastname: "Patient",
+      birth_date: null,
+      care_level: null,
+      pronoun: null,
+      email: "test@patient.com",
+      active: true,
+      active_since: null,
+      created_by_id: "u1",
+      updated_by_id: "u1",
+      created_by: {
+        id: "u1",
+        display_name: "Demo Admin",
+        email: "test@admin.com",
+        image: "/avatar.png",
+        role: "admin",
+      },
+      updated_by: {
+        id: "u1",
+        display_name: "Demo Admin",
+        email: "test@admin.com",
+        image: "/avatar.png",
+        role: "admin",
+      },
+    });
+    expect(result.created_by_role).toBe("admin");
+    expect(result.created_by_image).toBe("/avatar.png");
+    expect(result.updated_by_role).toBe("admin");
+  });
+});
+
+describe("serializeCategory audit", () => {
+  it("denormalizes audit actor portrait and role from detail include", () => {
+    const result = serializeCategory({
+      id: "c1",
+      label: "Cardiology",
+      color: "#f00",
+      icon: "heart",
+      description: null,
+      created_at: new Date("2026-06-01"),
+      updated_at: new Date("2026-06-04"),
+      created_by_id: "u1",
+      updated_by_id: "u1",
+      created_by: {
+        id: "u1",
+        display_name: "Demo Admin",
+        email: "test@admin.com",
+        image: "/a.png",
+        role: "admin",
+      },
+      updated_by: {
+        id: "u1",
+        display_name: "Demo Admin",
+        email: "test@admin.com",
+        image: "/a.png",
+        role: "admin",
+      },
+    });
+    expect(result.created_by_role).toBe("admin");
+    expect(result.updated_by_image).toBe("/a.png");
+  });
 });
 
 describe("serializeCategory", () => {

@@ -85,7 +85,10 @@ export async function PUT(req: NextRequest, context: RouteContext) {
     }
 
     const body = await req.json();
-    const data: Record<string, unknown> = { updated_at: new Date() };
+    const data: Record<string, unknown> = {
+      updated_at: new Date(),
+      updated_by_id: ctx.sessionUser.userId,
+    };
 
     if (body.title !== undefined) data.title = body.title;
     if (body.start !== undefined) {
@@ -186,6 +189,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     const body = await req.json();
     const data: {
       updated_at: Date;
+      updated_by_id: string;
       title?: string;
       start?: Date;
       end?: Date;
@@ -201,7 +205,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       chief_complaint?: string | null;
       duration_minutes?: number | null;
       telehealth_link?: string | null;
-    } = { updated_at: new Date() };
+    } = { updated_at: new Date(), updated_by_id: ctx.sessionUser.userId };
     if (body.title !== undefined) data.title = body.title;
     if (body.start !== undefined) {
       const start = new Date(body.start);

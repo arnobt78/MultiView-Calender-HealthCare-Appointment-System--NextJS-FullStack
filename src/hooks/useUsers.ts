@@ -91,8 +91,14 @@ export function useUsers(
   };
 }
 
-export function useUser(id: string | null) {
+type UseUserQueryOptions = {
+  /** SSR prefetch — stable first paint on doctor/user detail. */
+  initialData?: User;
+};
+
+export function useUser(id: string | null, options?: UseUserQueryOptions) {
   const queryClient = useQueryClient();
+  const hasSsrSeed = options?.initialData != null;
 
   const query = useQuery({
     queryKey: queryKeys.users.detail(id ?? ""),
@@ -101,7 +107,9 @@ export function useUser(id: string | null) {
       return res.user;
     },
     enabled: !!id,
-    staleTime: 5 * 60 * 1000,
+    initialData: options?.initialData,
+    staleTime: 60_000,
+    refetchOnMount: hasSsrSeed ? false : true,
   });
 
   const updateMutation = useMutation({
@@ -114,6 +122,9 @@ export function useUser(id: string | null) {
       });
     },
     onSuccess: async (data) => {
+      if (id) {
+        queryClient.setQueryData(queryKeys.users.detail(id), data.user);
+      }
       await invalidateUsersAndAuth(queryClient);
       if (id) await invalidateDoctorDetailAndSnapshot(queryClient, id);
       // Role changes affect dashboard overview aggregate counts (e.g. total doctors).

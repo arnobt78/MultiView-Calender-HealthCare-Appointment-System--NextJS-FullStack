@@ -88,6 +88,8 @@ export type InvoiceRow = {
   /** Billing owner display — list “Issued by” line (batch-loaded on GET /api/invoices). */
   issuer_label?: string | null;
   issuer_image?: string | null;
+  issuer_email?: string | null;
+  issuer_role?: string | null;
 };
 
 /** GET /api/billing/appointment-options — rich visit picker row for invoice create dialog. */

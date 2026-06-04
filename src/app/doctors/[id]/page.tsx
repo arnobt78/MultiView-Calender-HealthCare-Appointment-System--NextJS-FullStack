@@ -12,7 +12,7 @@ import { isValidUUID } from "@/lib/validation";
 import { getUserRole, isAdminRole, isDoctorRole } from "@/lib/rbac";
 import { doctorDetailHref } from "@/lib/entity-routes";
 import { canViewDoctorPortalProfile } from "@/lib/doctor-access";
-import { USER_API_SELECT } from "@/lib/user-api-select";
+import { userDetailInclude } from "@/lib/user-api-include";
 import { serializeUser } from "@/lib/serializers";
 import { fetchDoctorAssignedPatients } from "@/lib/doctor-assigned-patients";
 import { canClientFetchAdminUsersList } from "@/lib/user-list-access";
@@ -42,7 +42,7 @@ export default async function PortalDoctorDetailPage({ params }: PageProps) {
 
   const raw = await prisma.user.findFirst({
     where: { id, role: "doctor" },
-    select: USER_API_SELECT,
+    include: userDetailInclude,
   });
   if (!raw) notFound();
 

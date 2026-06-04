@@ -30,6 +30,7 @@ import { CategoryFormDialog } from "@/components/control-panel/category-dialog/C
 import { ClinicalDataTable } from "@/components/shared/ClinicalDataTable";
 import { CategoryBrandMark } from "@/components/shared/category-display/CategoryBrandMark";
 import { EntityDetailRecordAuditCard } from "@/components/shared/entity-detail/EntityDetailRecordAuditCard";
+import { mapCategoryRecordAuditActors } from "@/lib/entity-detail-audit-actor";
 import { buildRelatedAppointmentsColumns } from "@/components/control-panel/patient-detail-snapshot-columns";
 import { resolvePortalEntityDetailSnapshotLinkPolicy } from "@/lib/entity-detail-snapshot-links";
 import { EntityDetailSnapshotSectionHeading } from "@/components/shared/entity-detail/EntityDetailSnapshotSectionHeading";
@@ -180,7 +181,9 @@ export function CategoryDetailScreenShared({
   const router = useRouter();
   const queryClient = useQueryClient();
   const { updateCategory, isUpdating, deleteCategory, isDeleting } = useCategories();
-  const { data: liveCategory, isLoading } = useCategory(categoryId);
+  const { data: liveCategory, isLoading } = useCategory(categoryId, {
+    initialData: initialCategory ?? undefined,
+  });
   const {
     data: liveSnapshot,
     isLoading: snapshotLoading,
@@ -222,6 +225,13 @@ export function CategoryDetailScreenShared({
   }, []);
 
   const cat = liveCategory ?? initialCategory;
+
+  /** Record Audit actors — denormalized on `Category` from SSR/API (`categoryAuditUserPick`). */
+  const recordAuditActors = useMemo(
+    () => (cat ? mapCategoryRecordAuditActors(cat) : { createdBy: null, updatedBy: null }),
+    [cat]
+  );
+
   const hasCategory = cat != null;
   const showBodySkeleton = !hasCategory && (isLoading || !isMounted);
   const showLiveBody = hasCategory && isMounted;
@@ -393,24 +403,8 @@ export function CategoryDetailScreenShared({
                 <EntityDetailRecordAuditCard
                   createdAt={cat.created_at}
                   updatedAt={cat.updated_at}
-                  createdBy={
-                    cat.created_by_display
-                      ? {
-                          userId: cat.created_by_id,
-                          label: cat.created_by_display,
-                          email: cat.created_by_email,
-                        }
-                      : null
-                  }
-                  updatedBy={
-                    cat.updated_by_display
-                      ? {
-                          userId: cat.updated_by_id,
-                          label: cat.updated_by_display,
-                          email: cat.updated_by_email,
-                        }
-                      : null
-                  }
+                  createdBy={recordAuditActors.createdBy}
+                  updatedBy={recordAuditActors.updatedBy}
                   viewerRole={entityRole}
                   iconCircleClass={toneClasses.fieldIconCircleClass}
                   iconClassName={toneClasses.fieldIconClass}

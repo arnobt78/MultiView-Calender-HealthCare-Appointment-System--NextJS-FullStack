@@ -6,6 +6,8 @@
 export const ENTITY_DETAIL_SNAPSHOT_SECTION_LABELS = {
   relatedAppointments: "Related Appointments",
   relatedInvoicesViaAppointments: "Related Invoices (Via Appointments)",
+  relatedPeople: "Related People",
+  relatedBilling: "Related Billing",
   assignedPatients: "Assigned Patients",
 } as const;
 

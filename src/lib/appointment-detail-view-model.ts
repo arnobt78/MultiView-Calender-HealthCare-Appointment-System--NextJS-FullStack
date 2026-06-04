@@ -14,6 +14,10 @@ import {
   serializePatient,
 } from "@/lib/serializers";
 import type { EntityRole } from "@/lib/entity-routes";
+import {
+  mapEntityDetailAuditActor,
+  type EntityDetailAuditActor,
+} from "@/lib/entity-detail-audit-actor";
 import type { Appointment, Category, Patient } from "@/types/types";
 
 export type AppointmentDetailClinician = {
@@ -52,6 +56,9 @@ export type AppointmentDetailViewModel = {
   /** Page header subtitle — when line + patient label. */
   subtitle: string;
   patientSubtitleLabel: string | null;
+  /** Record audit — created/updated actors (falls back to calendar owner when FK unset). */
+  auditCreatedBy: EntityDetailAuditActor | null;
+  auditUpdatedBy: EntityDetailAuditActor | null;
 };
 
 function mapClinician(
@@ -121,9 +128,7 @@ export function buildAppointmentDetailViewModel(
     ? `${patient.firstname} ${patient.lastname}`.trim() || patient.email || null
     : null;
 
-  const whenLabel = appointment.start
-    ? format(new Date(appointment.start), "PP · p")
-    : null;
+  const whenLabel = formatAppointmentDetailWhenRange(appointment);
   const subtitle =
     patientSubtitleLabel && whenLabel
       ? `${patientSubtitleLabel} · ${whenLabel}`
@@ -143,6 +148,9 @@ export function buildAppointmentDetailViewModel(
       "—",
   }));
 
+  const auditCreatedBy = mapEntityDetailAuditActor(raw.created_by, calendarOwner);
+  const auditUpdatedBy = mapEntityDetailAuditActor(raw.updated_by, calendarOwner);
+
   return {
     appointmentId: raw.id,
     accessLevel,
@@ -158,12 +166,31 @@ export function buildAppointmentDetailViewModel(
     durationMinutes: resolveDurationMinutes(raw, appointment),
     subtitle,
     patientSubtitleLabel,
+    auditCreatedBy,
+    auditUpdatedBy,
   };
 }
 
 export function clinicianDisplayLabel(c: AppointmentDetailClinician | null): string {
   if (!c) return "—";
   return formatClinicianNameEmailLabel(c.display_name, c.email);
+}
+
+/** People rows — name only (email rendered separately in inline layout). */
+export function clinicianDisplayNameOnly(c: AppointmentDetailClinician | null): string {
+  if (!c) return "—";
+  return c.display_name?.trim() || c.email?.trim() || "—";
+}
+
+/** Page header subtitle time — start through end when `end` is set. */
+export function formatAppointmentDetailWhenRange(appointment: Appointment): string | null {
+  if (!appointment.start) return null;
+  const start = new Date(appointment.start);
+  const datePart = format(start, "PP");
+  const startTime = format(start, "p");
+  if (!appointment.end) return `${datePart} · ${startTime}`;
+  const endTime = format(new Date(appointment.end), "p");
+  return `${datePart} · ${startTime} – ${endTime}`;
 }
 
 /** Recompute header subtitle after patient or schedule fields change. */
@@ -173,9 +200,7 @@ export function recomputeAppointmentDetailLabels(
   const patientSubtitleLabel = model.patient
     ? `${model.patient.firstname} ${model.patient.lastname}`.trim() || model.patient.email || null
     : null;
-  const whenLabel = model.appointment.start
-    ? format(new Date(model.appointment.start), "PP · p")
-    : null;
+  const whenLabel = formatAppointmentDetailWhenRange(model.appointment);
   const subtitle =
     patientSubtitleLabel && whenLabel
       ? `${patientSubtitleLabel} · ${whenLabel}`

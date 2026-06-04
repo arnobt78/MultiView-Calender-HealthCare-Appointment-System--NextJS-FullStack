@@ -173,7 +173,7 @@ export async function GET(req: NextRequest) {
 
     const serialized = patientCaller
       ? mapPortalAppointmentsFromRows(
-          appointments as Parameters<typeof mapPortalAppointmentsFromRows>[0]
+          appointments as unknown as Parameters<typeof mapPortalAppointmentsFromRows>[0]
         )
       : appointments.map((a) => {
           const ta = a as typeof a & {
@@ -265,6 +265,8 @@ export async function POST(req: NextRequest) {
         status: body.status ?? null,
         attachments: body.attachments ?? [],
         owner_id: sessionUser.userId,
+        created_by_id: sessionUser.userId,
+        updated_by_id: sessionUser.userId,
         treating_physician_id: body.treating_physician ?? sessionUser.userId,
         appointment_type_id: body.appointment_type_id ?? null,
         is_telehealth: isTelehealth,

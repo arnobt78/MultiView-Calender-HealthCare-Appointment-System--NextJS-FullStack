@@ -2,6 +2,7 @@
 
 import type { LucideIcon } from "lucide-react";
 import {
+  ArrowLeft,
   Calendar,
   FileText,
   Hash,
@@ -9,6 +10,7 @@ import {
   MapPin,
   Receipt,
   Stethoscope,
+  Tags,
   User,
   Users,
 } from "lucide-react";
@@ -18,8 +20,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BackNavigationLink } from "@/components/shared/BackNavigationLink";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { CategoryBrandMark } from "@/components/shared/category-display/CategoryBrandMark";
+import { CategoryInlineLink } from "@/components/shared/CategoryInlineLink";
 import { ClinicalAppointmentStatusBadge } from "@/components/shared/entity-detail/ClinicalAppointmentStatusBadge";
 import { AppointmentTypeGlassBadge } from "@/components/shared/appointment-display/AppointmentTypeGlassBadge";
 import { TelehealthSessionBadge } from "@/components/shared/appointments/TelehealthSessionBadge";
@@ -41,11 +45,17 @@ import {
   type AppointmentDetailTone,
 } from "@/lib/appointment-detail-ui-classes";
 import {
+  entityDetailDefinitionValueClass,
   entityDetailPageHeaderClass,
   entityDetailSnapshotSectionShellClass,
 } from "@/lib/patient-detail-ui-classes";
+import { entityDetailOwnedSnapshotSectionTitle } from "@/lib/entity-detail-snapshot-section-copy";
+import { buildAppointmentInvoiceAuditExtraRows } from "@/lib/appointment-detail-invoice-audit-rows";
+import {
+  resolvePrimaryDoctorDisplayName,
+} from "@/lib/staff-directory-cache";
 import { resolveEntityDetailRootClass, type AppSectionScrollShell } from "@/lib/section-page-layout";
-import { patientDetailHref, type EntityRole } from "@/lib/entity-routes";
+import { categoryDetailHref, patientDetailHref, type EntityRole } from "@/lib/entity-routes";
 import {
   resolveCalendarOwnerLinkKind,
   resolvePortalEntityDetailSnapshotLinkPolicy,
@@ -59,7 +69,11 @@ import { usePayments, type Invoice } from "@/hooks/usePayments";
 import { cn } from "@/lib/utils";
 import type { AppointmentAssignee } from "@/types/types";
 import type { AppointmentDetailViewModel } from "@/lib/appointment-detail-view-model";
-import { clinicianDisplayLabel } from "@/lib/appointment-detail-view-model";
+import {
+  clinicianDisplayNameOnly,
+  recomputeAppointmentDetailLabels,
+} from "@/lib/appointment-detail-view-model";
+import { PatientCareTierGlassBadge } from "@/components/shared/person-display/PatientCareTierGlassBadge";
 
 export type AppointmentDetailScreenSharedProps = {
   tone: AppointmentDetailTone;
@@ -107,7 +121,7 @@ function DefinitionRow({
       <FieldLabel icon={icon} toneClasses={toneClasses}>
         {label}
       </FieldLabel>
-      <dd className="min-w-0 text-sm text-gray-800">{children}</dd>
+      <dd className={entityDetailDefinitionValueClass}>{children}</dd>
     </div>
   );
 }
@@ -227,6 +241,42 @@ export function AppointmentDetailScreenShared({
     detail.treatingPhysician?.role ?? "doctor"
   );
 
+  const primaryDoctorName = useMemo(
+    () =>
+      patient
+        ? resolvePrimaryDoctorDisplayName(patient, staffById, detail.treatingPhysician)
+        : "—",
+    [patient, staffById, detail.treatingPhysician]
+  );
+
+  const invoiceAuditExtraRows = useMemo(
+    () => buildAppointmentInvoiceAuditExtraRows(linkedInvoices, entityRole),
+    [linkedInvoices, entityRole]
+  );
+
+  /** Live schedule fields — avoids stale SSR subtitle when `refetchOnMount` is false. */
+  const headerSubtitle = useMemo(
+    () =>
+      recomputeAppointmentDetailLabels({ appointment, patient }).subtitle,
+    [appointment, patient]
+  );
+
+  const relatedPeopleTitle = entityDetailOwnedSnapshotSectionTitle(
+    appointment.title,
+    "relatedPeople",
+    "appointment"
+  );
+  const relatedBillingTitle = entityDetailOwnedSnapshotSectionTitle(
+    appointment.title,
+    "relatedBilling",
+    "appointment"
+  );
+
+  const categoryHref =
+    category && (linkPolicy?.categoryLink ?? true)
+      ? categoryDetailHref(entityRole, category.id)
+      : null;
+
   const showLive = isMounted;
 
   return (
@@ -235,26 +285,24 @@ export function AppointmentDetailScreenShared({
         className={entityDetailPageHeaderClass}
         title={
           showLive ? (
-            <span className="flex flex-wrap items-center gap-2">
-              <span className="min-w-0">{appointment.title}</span>
-              <ClinicalAppointmentStatusBadge status={appointment.status} />
-              {appointment.appointment_type_name ? (
-                <AppointmentTypeGlassBadge
-                  name={appointment.appointment_type_name}
-                  durationLabel={
-                    appointment.appointment_type_duration_minutes != null
-                      ? `${appointment.appointment_type_duration_minutes} min`
-                      : null
-                  }
-                />
-              ) : null}
+            <span className="flex min-w-0 flex-wrap items-center gap-2">
+              <span className="min-w-0 truncate">{appointment.title}</span>
               {appointment.is_telehealth ? <TelehealthSessionBadge /> : null}
             </span>
           ) : (
             <Skeleton className="h-7 w-64 max-w-full" aria-hidden />
           )
         }
-        description={showLive ? detail.subtitle : "Appointment details"}
+        description={showLive ? headerSubtitle : "Appointment details"}
+        actions={
+          <BackNavigationLink
+            href={backHref}
+            className={cn(toneClasses.backButtonClass, "no-underline")}
+          >
+            <ArrowLeft className="shrink-0" aria-hidden />
+            Back
+          </BackNavigationLink>
+        }
       />
 
       {!canEdit && showLive ? (
@@ -273,7 +321,7 @@ export function AppointmentDetailScreenShared({
       >
         <CardContent className="space-y-3 px-4 sm:px-6 text-gray-700">
           <div className="min-h-6">
-            <h2 className="text-lg font-semibold text-gray-700">Visit overview</h2>
+            <h2 className="text-lg font-semibold text-gray-700">Visit Overview</h2>
           </div>
 
           <div className={toneClasses.schemaSectionClass}>
@@ -290,15 +338,30 @@ export function AppointmentDetailScreenShared({
                 <Skeleton className="h-16 w-16 shrink-0 rounded-full" aria-hidden />
               )}
               <div className="min-w-0 flex-1 space-y-2">
-                <div className="flex flex-wrap gap-2">
-                  {detail.durationMinutes != null ? (
+                <div className="flex min-w-0 flex-wrap items-center gap-2">
+                  {appointment.appointment_type_name ? (
+                    <AppointmentTypeGlassBadge
+                      name={appointment.appointment_type_name}
+                      durationLabel={
+                        detail.durationMinutes != null
+                          ? `${detail.durationMinutes} min`
+                          : appointment.appointment_type_duration_minutes != null
+                            ? `${appointment.appointment_type_duration_minutes} min`
+                            : null
+                      }
+                    />
+                  ) : detail.durationMinutes != null ? (
                     <Badge variant="outline" className={toneClasses.durationBadgeClass}>
                       {detail.durationMinutes} min
                     </Badge>
                   ) : null}
-                  <Badge variant="outline" className={toneClasses.durationBadgeClass}>
-                    {detail.visitFeeLabel} · est.
-                  </Badge>
+                  {detail.visitFeeCents > 0 ? (
+                    <Badge variant="outline" className={toneClasses.durationBadgeClass}>
+                      {detail.visitFeeLabel}
+                      {appointment.appointment_type_price_cents != null ? " · est." : ""}
+                    </Badge>
+                  ) : null}
+                  <ClinicalAppointmentStatusBadge status={appointment.status} />
                 </div>
                 <p className="text-sm text-gray-600">
                   <Calendar className="mr-1 inline h-3.5 w-3.5" aria-hidden />
@@ -328,55 +391,85 @@ export function AppointmentDetailScreenShared({
                 </DefinitionRow>
               ) : null}
               {category ? (
-                <DefinitionRow icon={Calendar} label="Category" toneClasses={toneClasses}>
-                  <span className="font-medium text-sky-700">
-                    {category.label}
-                  </span>
+                <DefinitionRow icon={Tags} label="Category" toneClasses={toneClasses}>
+                  {categoryHref ? (
+                    <CategoryInlineLink
+                      categoryId={category.id}
+                      label={category.label}
+                      color={category.color}
+                      icon={category.icon}
+                      markSize="compact"
+                      linkClassName="text-sm font-medium"
+                    />
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5">
+                      <CategoryBrandMark
+                        color={category.color}
+                        icon={category.icon}
+                        variant="brand"
+                        size="compact"
+                      />
+                      <span className="font-medium text-sky-700">{category.label}</span>
+                    </span>
+                  )}
                 </DefinitionRow>
               ) : null}
             </dl>
           </div>
 
-          <div className={cn("border-t pt-3", toneClasses.sectionDividerClass)}>
+          <div
+            className={cn(
+              entityDetailSnapshotSectionShellClass,
+              tone === "violet" && "border-violet-100/80"
+            )}
+          >
             <EntityDetailSnapshotSectionHeading
               icon={Users}
               sectionIconCircleClass={toneClasses.sectionIconCircleClass}
               iconClassName={toneClasses.sectionIconClass}
             >
-              People
+              {relatedPeopleTitle}
             </EntityDetailSnapshotSectionHeading>
-            <dl className={cn(toneClasses.definitionListClass, "mt-2")}>
+            <dl className={toneClasses.definitionListClass}>
               {patient ? (
                 <DefinitionRow icon={User} label="Patient" toneClasses={toneClasses}>
-                  <PatientIdentityCell
-                    href={patientDetailHref(entityRole, patient.id)}
-                    linkPatient={linkPatientInTitle}
-                    name={`${patient.firstname} ${patient.lastname}`.trim()}
-                    email={patient.email}
-                    patient={{
-                      id: patient.id,
-                      firstname: patient.firstname,
-                      lastname: patient.lastname,
-                      email: patient.email ?? "",
-                      birth_date: patient.birth_date,
-                      clinical_profile: patient.clinical_profile,
-                    }}
-                    avatarSizeClassName="h-8 w-8"
-                  />
+                  <div className="flex min-w-0 flex-wrap items-center gap-2">
+                    <PatientIdentityCell
+                      href={patientDetailHref(entityRole, patient.id)}
+                      linkPatient={linkPatientInTitle}
+                      name={`${patient.firstname} ${patient.lastname}`.trim()}
+                      email={patient.email}
+                      layout="inline"
+                      patient={{
+                        id: patient.id,
+                        firstname: patient.firstname,
+                        lastname: patient.lastname,
+                        email: patient.email ?? "",
+                        birth_date: patient.birth_date,
+                        clinical_profile: patient.clinical_profile,
+                      }}
+                      avatarSizeClassName="h-8 w-8"
+                    />
+                    {patient.care_level != null ? (
+                      <PatientCareTierGlassBadge careLevel={patient.care_level} />
+                    ) : null}
+                  </div>
                 </DefinitionRow>
               ) : null}
               {detail.calendarOwner ? (
                 <DefinitionRow icon={Calendar} label="Calendar owner" toneClasses={toneClasses}>
                   <DoctorIdentityCell
                     doctorId={detail.calendarOwner.id}
-                    name={clinicianDisplayLabel(detail.calendarOwner)}
+                    name={clinicianDisplayNameOnly(detail.calendarOwner)}
                     email={detail.calendarOwner.email}
                     image={detail.calendarOwner.image}
                     viewerRole={entityRole}
                     linkKind={ownerLinkKind}
                     staffRole={detail.calendarOwner.role}
                     doctorById={staffById}
-                    showSpecialty={false}
+                    layout="inline"
+                    showRoleBadge
+                    showSpecialty={detail.calendarOwner.role === "doctor"}
                   />
                 </DefinitionRow>
               ) : null}
@@ -385,7 +478,7 @@ export function AppointmentDetailScreenShared({
                 <DefinitionRow icon={Stethoscope} label="Treating physician" toneClasses={toneClasses}>
                   <DoctorIdentityCell
                     doctorId={detail.treatingPhysician.id}
-                    name={clinicianDisplayLabel(detail.treatingPhysician)}
+                    name={clinicianDisplayNameOnly(detail.treatingPhysician)}
                     email={detail.treatingPhysician.email}
                     image={detail.treatingPhysician.image}
                     specialty={detail.treatingPhysician.specialty}
@@ -393,6 +486,9 @@ export function AppointmentDetailScreenShared({
                     linkKind={treatingLinkKind}
                     staffRole={detail.treatingPhysician.role}
                     doctorById={staffById}
+                    layout="inline"
+                    showRoleBadge
+                    showSpecialty
                   />
                 </DefinitionRow>
               ) : null}
@@ -400,7 +496,7 @@ export function AppointmentDetailScreenShared({
                 <DefinitionRow icon={Stethoscope} label="Primary doctor" toneClasses={toneClasses}>
                   <DoctorIdentityCell
                     doctorId={patient.primary_doctor_id}
-                    name={patient.primary_doctor_display ?? "—"}
+                    name={primaryDoctorName}
                     email={patient.primary_doctor_email}
                     image={patient.primary_doctor_image}
                     specialty={patient.primary_doctor_specialty}
@@ -408,6 +504,9 @@ export function AppointmentDetailScreenShared({
                     linkKind={treatingLinkKind}
                     staffRole="doctor"
                     doctorById={staffById}
+                    layout="inline"
+                    showRoleBadge
+                    showSpecialty
                   />
                 </DefinitionRow>
               ) : null}
@@ -441,7 +540,10 @@ export function AppointmentDetailScreenShared({
           <EntityDetailRecordAuditCard
             createdAt={appointment.created_at}
             updatedAt={appointment.updated_at}
+            createdBy={detail.auditCreatedBy}
+            updatedBy={detail.auditUpdatedBy}
             viewerRole={entityRole}
+            extraRows={invoiceAuditExtraRows}
             iconCircleClass={toneClasses.fieldIconCircleClass}
             iconClassName={toneClasses.fieldIconClass}
           />
@@ -477,14 +579,19 @@ export function AppointmentDetailScreenShared({
             </div>
           ) : null}
 
-          <div className={cn("border-t pt-3", toneClasses.sectionDividerClass)}>
+          <div
+            className={cn(
+              entityDetailSnapshotSectionShellClass,
+              tone === "violet" && "border-violet-100/80"
+            )}
+          >
             <EntityDetailSnapshotSectionHeading
               icon={Receipt}
               sectionIconCircleClass={toneClasses.sectionIconCircleClass}
               iconClassName={toneClasses.sectionIconClass}
               count={linkedInvoices.length}
             >
-              Billing
+              {relatedBillingTitle}
             </EntityDetailSnapshotSectionHeading>
             <ClinicalDataTable
               data={linkedInvoices}

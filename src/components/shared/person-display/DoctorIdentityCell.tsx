@@ -34,6 +34,9 @@ export type DoctorIdentityCellProps = {
   doctorById?: Map<string, DoctorLookup>;
   size?: "sm" | "md";
   showSpecialty?: boolean;
+  /** `inline` — avatar + name + email + badges on one responsive row (entity detail People). */
+  layout?: "stack" | "inline";
+  showRoleBadge?: boolean;
   className?: string;
   /** Optional footnote under stack (e.g. primary care line on treating physician). */
   footer?: ReactNode;
@@ -54,6 +57,8 @@ export function DoctorIdentityCell({
   doctorById,
   size = "sm",
   showSpecialty = true,
+  layout = "stack",
+  showRoleBadge = false,
   className,
   footer,
 }: DoctorIdentityCellProps) {
@@ -76,8 +81,10 @@ export function DoctorIdentityCell({
         staffRole={staffRole}
         viewerRole={viewerRole}
         size={size}
+        layout={layout}
         showEmail
         showSpecialty={showSpecialty}
+        showRoleBadge={showRoleBadge}
       />
       {footer}
     </div>

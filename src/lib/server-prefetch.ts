@@ -54,7 +54,6 @@ import type { UsersListResponse } from "@/hooks/useUsers";
 import {
   patientDetailInclude,
   patientPrimaryDoctorPick,
-  patientUserPick,
 } from "@/lib/patient-api-include";
 import { USER_API_SELECT } from "@/lib/user-api-select";
 import { getInsightsData, type InsightsPayload } from "@/lib/insights-data";

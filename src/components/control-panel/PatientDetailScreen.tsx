@@ -38,6 +38,7 @@ import type { DoctorPrefetchRow } from "@/lib/server-prefetch";
 import type { UsersListResponse } from "@/hooks/useUsers";
 import {
   buildStaffDirectoryMap,
+  hasPrimaryDoctorProfileExtras,
   resolvePrimaryDoctorIdentity,
 } from "@/lib/staff-directory-cache";
 import { seedUsersListCache } from "@/lib/ssr-query-seed";
@@ -79,6 +80,7 @@ import {
 } from "@/lib/patient-detail-ui-classes";
 import { ControlPanelGlassActionButton } from "@/components/shared/ControlPanelGlassActionButton";
 import { EntityDetailRecordAuditCard } from "@/components/shared/entity-detail/EntityDetailRecordAuditCard";
+import { mapPatientRecordAuditActors } from "@/lib/entity-detail-audit-actor";
 import { EntityDetailSnapshotSectionHeading } from "@/components/shared/entity-detail/EntityDetailSnapshotSectionHeading";
 import { entityDetailOwnedSnapshotSectionTitle } from "@/lib/entity-detail-snapshot-section-copy";
 import { cn } from "@/lib/utils";
@@ -363,6 +365,14 @@ export function PatientDetailScreen({
     return resolvePrimaryDoctorIdentity(patient, staffById);
   }, [patient, staffById]);
 
+  const showPrimaryDoctorExtras = hasPrimaryDoctorProfileExtras(primaryDoctorIdentity);
+
+  /** Record Audit actors — denormalized on `Patient` from SSR/API (`patientAuditUserPick`). */
+  const recordAuditActors = useMemo(
+    () => (patient ? mapPatientRecordAuditActors(patient) : { createdBy: null, updatedBy: null }),
+    [patient]
+  );
+
   /** Latest appointment category for schema block (primary doctor sits on the row below). */
   const schemaCategory = useMemo(() => {
     const row = (snap.data?.appointments ?? []).find((a) => a.category_label?.trim());
@@ -613,24 +623,8 @@ export function PatientDetailScreen({
                 <EntityDetailRecordAuditCard
                   createdAt={p!.created_at}
                   updatedAt={p!.updated_at}
-                  createdBy={
-                    p!.created_by_display
-                      ? {
-                          userId: p!.created_by_id,
-                          label: p!.created_by_display,
-                          email: p!.created_by_email,
-                        }
-                      : null
-                  }
-                  updatedBy={
-                    p!.updated_by_display
-                      ? {
-                          userId: p!.updated_by_id,
-                          label: p!.updated_by_display,
-                          email: p!.updated_by_email,
-                        }
-                      : null
-                  }
+                  createdBy={recordAuditActors.createdBy}
+                  updatedBy={recordAuditActors.updatedBy}
                   viewerRole={viewerRole as EntityRole}
                 />
                 <PatientDetailDefinitionRow icon={Fingerprint} label="Patient ID">
@@ -675,7 +669,7 @@ export function PatientDetailScreen({
                         showEmail
                         showSpecialty
                       />
-                      {/* Doctor profile details */}
+                      {showPrimaryDoctorExtras ? (
                       <div className="grid grid-cols-2 gap-x-4 gap-y-1 rounded-xl border border-emerald-100/60 bg-emerald-50/30 p-2 text-xs">
                         {primaryDoctorIdentity.phone ? (
                           <div className="flex items-center gap-1 text-gray-600">
@@ -713,6 +707,7 @@ export function PatientDetailScreen({
                           </div>
                         ) : null}
                       </div>
+                      ) : null}
                     </div>
                   ) : (
                     clinicalEmptyOr(p!.primary_doctor_display, "definition")

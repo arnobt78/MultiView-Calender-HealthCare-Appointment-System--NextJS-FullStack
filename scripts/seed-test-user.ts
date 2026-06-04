@@ -139,6 +139,14 @@ async function seedDemoUsers() {
   } = await import("../src/lib/demo-credentials");
 
   const passwordHash = await hashPassword(DEMO_PASSWORD);
+  const adminForUserAudit = await prisma.user.findFirst({ where: { email: "test@admin.com" } });
+  const userAuditStamp = adminForUserAudit
+    ? {
+        created_by_id: adminForUserAudit.id,
+        updated_by_id: adminForUserAudit.id,
+        updated_at: new Date(),
+      }
+    : {};
 
   for (const acc of DEMO_ACCOUNTS) {
     const existing = await getUserByEmail(acc.email);
@@ -151,6 +159,7 @@ async function seedDemoUsers() {
           password_hash: passwordHash,
           email_verified: true,
           role: acc.role,
+          ...userAuditStamp,
         },
       });
     } else {
@@ -164,6 +173,7 @@ async function seedDemoUsers() {
           password_hash: passwordHash,
           email_verified: true,
           role: acc.role,
+          ...userAuditStamp,
         },
       });
     }
@@ -235,6 +245,7 @@ async function seedDemoUsers() {
           role: "doctor",
           email_verified: true,
           ...profile,
+          ...userAuditStamp,
         },
       });
     } else {
@@ -250,6 +261,7 @@ async function seedDemoUsers() {
           email_verified: true,
           password_hash: demoHash,
           ...profile,
+          ...userAuditStamp,
         },
       });
       // Seed Mon–Fri 9–17 availability for each new doctor

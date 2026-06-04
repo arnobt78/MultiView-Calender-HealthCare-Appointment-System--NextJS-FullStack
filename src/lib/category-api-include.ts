@@ -1,10 +1,10 @@
-/** User pick for category detail audit rows (created_by / updated_by). */
-export const categoryUserPick = {
-  select: { display_name: true, email: true, specialty: true },
+/** Record Audit on category detail — portrait + role badge (SSR first paint). */
+export const categoryAuditUserPick = {
+  select: { id: true, display_name: true, email: true, image: true, role: true },
 } as const;
 
 /** Prisma include for category detail GET + SSR prefetch (audit actor labels). */
 export const categoryDetailInclude = {
-  created_by: categoryUserPick,
-  updated_by: categoryUserPick,
+  created_by: categoryAuditUserPick,
+  updated_by: categoryAuditUserPick,
 } as const;

@@ -24,8 +24,12 @@ type PatientIdentityCellProps = {
   href?: string;
   linkPatient?: boolean;
   patient: PatientPortraitInput;
-  /** `table` = avatar left + stacked name/email; `detail` = name + email on one row, no avatar column split */
-  layout?: "table" | "detail";
+  /**
+   * `table` = avatar + stacked name/age + email;
+   * `detail` = name + email baseline row (no avatar);
+   * `inline` = avatar + name + age + email on one responsive wrap row.
+   */
+  layout?: "table" | "detail" | "inline";
   className?: string;
   avatarSizeClassName?: string;
 };
@@ -54,6 +58,29 @@ export function PatientIdentityCell({
   ) : (
     <span className="min-w-0 self-start truncate font-normal text-foreground">{label}</span>
   );
+
+  if (layout === "inline") {
+    return (
+      <div
+        className={cn(
+          "flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1",
+          clinicalTableCellMinRowClass,
+          className
+        )}
+      >
+        <PatientPortraitAvatar patient={patient} sizeClassName={avatarSizeClassName} />
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-0.5">
+          {nameNode}
+          {age != null ? <PatientAgeGlassBadge age={age} /> : null}
+          {emailTrim ? (
+            <span className={cn("truncate", clinicalCellMutedTextClass)} title={emailTrim}>
+              ({emailTrim})
+            </span>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
 
   if (layout === "detail") {
     return (

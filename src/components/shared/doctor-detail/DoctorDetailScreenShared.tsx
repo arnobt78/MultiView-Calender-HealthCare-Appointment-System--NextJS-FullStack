@@ -34,6 +34,7 @@ import { ClinicalDataTable } from "@/components/shared/ClinicalDataTable";
 import { PatientIdentityCell } from "@/components/shared/person-display/PatientIdentityCell";
 import { EntityDetailSnapshotSectionHeading } from "@/components/shared/entity-detail/EntityDetailSnapshotSectionHeading";
 import { EntityDetailRecordAuditCard } from "@/components/shared/entity-detail/EntityDetailRecordAuditCard";
+import { mapUserRecordAuditActors } from "@/lib/entity-detail-audit-actor";
 import { entityDetailOwnedSnapshotSectionTitle } from "@/lib/entity-detail-snapshot-section-copy";
 import { buildRelatedAppointmentsColumns } from "@/components/control-panel/patient-detail-snapshot-columns";
 import { buildStaffDirectoryMap } from "@/lib/staff-directory-cache";
@@ -179,7 +180,7 @@ export function DoctorDetailScreenShared({
     }
   }, [queryClient, initialDoctorUsers, initialAdminUsers]);
 
-  const { data: user } = useUser(doctorId);
+  const { data: user } = useUser(doctorId, { initialData: initialUser });
   const {
     data: liveSnapshot,
     isLoading: snapshotLoading,
@@ -205,6 +206,12 @@ export function DoctorDetailScreenShared({
 
   const liveUser = user ?? initialUser;
   const displayName = liveUser.display_name?.trim() || liveUser.email;
+
+  /** Record Audit — staff who created/updated this user row (`userDetailInclude` on SSR/API). */
+  const recordAuditActors = useMemo(
+    () => mapUserRecordAuditActors(liveUser),
+    [liveUser]
+  );
   const active = isDoctorActive(liveUser);
   const showPortalReadOnlyBanner = mode === "portal";
 
@@ -365,9 +372,9 @@ export function DoctorDetailScreenShared({
             <dl className={patientDetailDefinitionListClass}>
               <EntityDetailRecordAuditCard
                 createdAt={liveUser.created_at}
-                updatedAt={null}
-                createdBy={null}
-                updatedBy={null}
+                updatedAt={liveUser.updated_at}
+                createdBy={recordAuditActors.createdBy}
+                updatedBy={recordAuditActors.updatedBy}
                 viewerRole={entityRole}
                 iconCircleClass={toneClasses.fieldIconCircleClass}
                 iconClassName={toneClasses.fieldIconClass}

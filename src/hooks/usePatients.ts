@@ -81,6 +81,8 @@ export function usePatients() {
       previousPrimaryDoctorId: getPrimaryDoctorIdFromPatientCache(queryClient, id) ?? null,
     }),
     onSuccess: async (data, _vars, context) => {
+      // PUT returns full patient + audit includes — paint detail immediately before refetch.
+      queryClient.setQueryData(queryKeys.patients.detail(data.patient.id), data.patient);
       await invalidateEntityAffectingAppointments(queryClient, "patients");
       await invalidateDoctorPortal(queryClient);
       await invalidatePatientDetailAndSnapshot(queryClient, data.patient.id);

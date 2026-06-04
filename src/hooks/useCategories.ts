@@ -100,7 +100,13 @@ export function useCategories() {
   };
 }
 
-export function useCategory(id: string | null) {
+type UseCategoryQueryOptions = {
+  /** SSR prefetch — stable first paint; optional background refetch when not seeded. */
+  initialData?: Category | null;
+};
+
+export function useCategory(id: string | null, options?: UseCategoryQueryOptions) {
+  const hasSsrSeed = options?.initialData != null;
   return useQuery({
     queryKey: queryKeys.categories.detail(id ?? ""),
     queryFn: async () => {
@@ -108,6 +114,9 @@ export function useCategory(id: string | null) {
       return res.category;
     },
     enabled: !!id,
+    initialData: options?.initialData ?? undefined,
+    staleTime: 60_000,
+    refetchOnMount: hasSsrSeed ? false : true,
   });
 }
 

@@ -18,6 +18,9 @@ model User {
   display_name            String?   @db.Text
   image                   String?   @db.Text
   created_at              DateTime  @default(now())
+  updated_at              DateTime? @updatedAt @db.Timestamptz(6)
+  created_by_id           String?   @map("created_by") @db.Uuid
+  updated_by_id           String?   @map("updated_by") @db.Uuid
   password_hash           String?   @db.Text
   email_verified         Boolean   @default(false)
   email_verification_token String?  @db.Uuid
@@ -62,8 +65,14 @@ model User {
   patients_primary_doctor     Patient[]             @relation("PatientPrimaryDoctor")
   categories_created          Category[]            @relation("CategoryCreatedBy")
   categories_updated          Category[]            @relation("CategoryUpdatedBy")
+  appointments_created        Appointment[]         @relation("AppointmentCreatedBy")
+  appointments_updated        Appointment[]         @relation("AppointmentUpdatedBy")
   /// Junction table: which global appointment types this doctor has enabled
   doctor_type_configs         DoctorAppointmentTypeConfig[] @relation("DoctorTypeConfigUser")
+  created_by                  User?                         @relation("UserCreatedBy", fields: [created_by_id], references: [id], onDelete: SetNull)
+  updated_by                  User?                         @relation("UserUpdatedBy", fields: [updated_by_id], references: [id], onDelete: SetNull)
+  users_created               User[]                        @relation("UserCreatedBy")
+  users_updated               User[]                        @relation("UserUpdatedBy")
 
   @@map("users")
 }
@@ -166,10 +175,14 @@ model Appointment {
   duration_minutes      Int?
   /// Video / telehealth meeting URL — shown as "Join Call" button when is_telehealth = true
   telehealth_link       String?  @db.Text
+  created_by_id         String?  @map("created_by") @db.Uuid
+  updated_by_id         String?  @map("updated_by") @db.Uuid
 
   patient     Patient?   @relation(fields: [patient_id], references: [id], onDelete: SetNull)
   category    Category?  @relation(fields: [category_id], references: [id], onDelete: SetNull)
   owner       User       @relation("AppointmentOwner", fields: [owner_id], references: [id], onDelete: Cascade)
+  created_by  User?      @relation("AppointmentCreatedBy", fields: [created_by_id], references: [id], onDelete: SetNull)
+  updated_by  User?      @relation("AppointmentUpdatedBy", fields: [updated_by_id], references: [id], onDelete: SetNull)
   treating_physician User? @relation("AppointmentTreatingPhysician", fields: [treating_physician_id], references: [id], onDelete: SetNull)
   appointment_type    AppointmentType? @relation("AppointmentTypeAppointments", fields: [appointment_type_id], references: [id], onDelete: SetNull)
   assignees   AppointmentAssignee[]

@@ -39,6 +39,8 @@ const MODEL: AppointmentDetailViewModel = {
   durationMinutes: 30,
   subtitle: "Visit",
   patientSubtitleLabel: null,
+  auditCreatedBy: null,
+  auditUpdatedBy: null,
 };
 
 describe("appointment detail cache helpers", () => {

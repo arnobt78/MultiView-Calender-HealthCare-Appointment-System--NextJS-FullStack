@@ -12,6 +12,7 @@ import {
 import type { Invoice } from "@/hooks/usePayments";
 import type { EntityRole } from "@/lib/entity-routes";
 import { clinicalTableCellMinRowClass } from "@/lib/table-display-styles";
+import { cn } from "@/lib/utils";
 
 /** Linked invoice table on appointment detail — read-only, no row menu. */
 export function buildAppointmentLinkedInvoiceColumns(
@@ -22,16 +23,20 @@ export function buildAppointmentLinkedInvoiceColumns(
       id: "invoice_number",
       accessorFn: (row) => row.id,
       header: ({ column }) => <DataTableColumnHeader column={column} title="Invoice #" />,
+      meta: { cellClassName: "align-middle" },
       cell: ({ row }) => (
-        <InvoiceNumberTableCell invoice={row.original} viewerRole={viewerRole} />
+        <div className={cn(clinicalTableCellMinRowClass, "flex items-center")}>
+          <InvoiceNumberTableCell invoice={row.original} viewerRole={viewerRole} />
+        </div>
       ),
     },
     {
       id: "amount",
       accessorKey: "amount",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Amount" />,
+      meta: { cellClassName: "align-middle" },
       cell: ({ row }) => (
-        <div className={clinicalTableCellMinRowClass}>
+        <div className={cn(clinicalTableCellMinRowClass, "flex items-center")}>
           <InvoiceAmountDisplay
             amountCents={row.original.amount}
             currency={row.original.currency}
@@ -44,8 +49,9 @@ export function buildAppointmentLinkedInvoiceColumns(
       id: "status",
       accessorKey: "status",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Status" />,
+      meta: { cellClassName: "align-middle" },
       cell: ({ row }) => (
-        <div className={clinicalTableCellMinRowClass}>
+        <div className={cn(clinicalTableCellMinRowClass, "flex items-center")}>
           <InvoiceStatusBadge invoice={row.original} />
         </div>
       ),
@@ -54,7 +60,12 @@ export function buildAppointmentLinkedInvoiceColumns(
       id: "created",
       accessorKey: "created_at",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Created" />,
-      cell: ({ row }) => <InvoiceCreatedTableCell invoice={row.original} />,
+      meta: { cellClassName: "align-middle" },
+      cell: ({ row }) => (
+        <div className={cn(clinicalTableCellMinRowClass, "flex items-center")}>
+          <InvoiceCreatedTableCell invoice={row.original} />
+        </div>
+      ),
     },
     {
       id: "description",

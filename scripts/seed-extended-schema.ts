@@ -217,6 +217,16 @@ async function seedExtendedSchema() {
   }
 
   // ── 0b. Professional medical / service categories (idempotent upsert) ─────
+  const adminForCategoryAudit =
+    adminUser ?? (await prisma.user.findFirst({ where: { role: "admin" } }));
+  const categoryAuditStamp = adminForCategoryAudit
+    ? {
+        created_by_id: adminForCategoryAudit.id,
+        updated_by_id: adminForCategoryAudit.id,
+        updated_at: new Date(),
+      }
+    : {};
+
   console.log("\n🏷️  Upserting demo service categories…");
   for (const cat of DEMO_SERVICE_CATEGORIES) {
     await prisma.category.upsert({
@@ -230,6 +240,7 @@ async function seedExtendedSchema() {
         is_active: true,
         sort_order: cat.sort_order,
         duration_minutes_default: cat.duration_minutes_default,
+        ...categoryAuditStamp,
       },
       update: {
         label: cat.label,
@@ -239,6 +250,7 @@ async function seedExtendedSchema() {
         is_active: true,
         sort_order: cat.sort_order,
         duration_minutes_default: cat.duration_minutes_default,
+        ...categoryAuditStamp,
       },
     });
     console.log(`  ✔ ${cat.label}`);

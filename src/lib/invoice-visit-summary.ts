@@ -198,7 +198,12 @@ export async function attachVisitSummariesToInvoices<
 export async function attachInvoiceIssuerLabels<
   T extends { user_id: string },
 >(invoices: T[]): Promise<
-  (T & { issuer_label: string | null; issuer_image: string | null })[]
+  (T & {
+    issuer_label: string | null;
+    issuer_image: string | null;
+    issuer_email: string | null;
+    issuer_role: string | null;
+  })[]
 > {
   const userIds = [...new Set(invoices.map((i) => i.user_id).filter(Boolean))];
   if (userIds.length === 0) {
@@ -206,12 +211,14 @@ export async function attachInvoiceIssuerLabels<
       ...inv,
       issuer_label: null,
       issuer_image: null,
+      issuer_email: null,
+      issuer_role: null,
     }));
   }
 
   const users = await prisma.user.findMany({
     where: { id: { in: userIds } },
-    select: { id: true, display_name: true, email: true, image: true },
+    select: { id: true, display_name: true, email: true, image: true, role: true },
   });
   const byId = new Map(
     users.map((u) => [
@@ -219,6 +226,8 @@ export async function attachInvoiceIssuerLabels<
       {
         label: (u.display_name?.trim() || u.email?.trim() || null) as string | null,
         image: u.image ?? null,
+        email: u.email?.trim() ?? null,
+        role: u.role ?? null,
       },
     ])
   );
@@ -229,6 +238,8 @@ export async function attachInvoiceIssuerLabels<
       ...inv,
       issuer_label: issuer?.label ?? null,
       issuer_image: issuer?.image ?? null,
+      issuer_email: issuer?.email ?? null,
+      issuer_role: issuer?.role ?? null,
     };
   });
 }

@@ -6,6 +6,18 @@ export interface User {
   display_name?: string | null;
   image?: string | null;
   created_at?: string;
+  /** Server-maintained; doctor/admin detail Record Audit */
+  updated_at?: string | null;
+  created_by_id?: string | null;
+  updated_by_id?: string | null;
+  created_by_display?: string | null;
+  updated_by_display?: string | null;
+  created_by_email?: string | null;
+  updated_by_email?: string | null;
+  created_by_image?: string | null;
+  created_by_role?: string | null;
+  updated_by_image?: string | null;
+  updated_by_role?: string | null;
   /** Doctor specialty — e.g. "Cardiology", "Pediatrics" */
   specialty?: string | null;
   /** Short bio for the doctor services page */
@@ -65,6 +77,11 @@ export interface Patient {
   updated_by_display?: string | null;
   created_by_email?: string | null;
   updated_by_email?: string | null;
+  /** Audit actor portrait + role from `patientDetailInclude` (detail / portal profile). */
+  created_by_image?: string | null;
+  created_by_role?: string | null;
+  updated_by_image?: string | null;
+  updated_by_role?: string | null;
   primary_doctor_display?: string | null;
   primary_doctor_email?: string | null;
   primary_doctor_specialty?: string | null;
@@ -185,6 +202,11 @@ export interface Category {
   updated_by_display?: string | null;
   created_by_email?: string | null;
   updated_by_email?: string | null;
+  /** Audit actor portrait + role from `categoryDetailInclude` (detail pages). */
+  created_by_image?: string | null;
+  created_by_role?: string | null;
+  updated_by_image?: string | null;
+  updated_by_role?: string | null;
 }
 
 // Appointment

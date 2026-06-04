@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { DoctorAvatar } from "./DoctorAvatar";
 import { DoctorSpecialtyBadge } from "./DoctorSpecialtyBadge";
 import { EntityActiveStatusBadge } from "@/components/shared/entity-display/EntityActiveStatusBadge";
+import { UserRoleBadge } from "@/components/shared/UserRoleBadge";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { RoleEntityLink } from "@/components/shared/RoleEntityLink";
 import { doctorDetailHref, portalAdminDetailHref } from "@/lib/entity-routes";
@@ -42,6 +43,8 @@ type DoctorIdentityRowProps = {
   layout?: "stack" | "inline";
   /** When set, Active/Inactive pill sits inline with specialty (doctor management table). */
   activeStatus?: boolean;
+  /** Staff role pill (admin/doctor) — appointment detail People rows. */
+  showRoleBadge?: boolean;
 };
 
 /**
@@ -60,6 +63,7 @@ export function DoctorIdentityRow({
   stackGapClassName = clinicalStackGapClass,
   layout = "stack",
   activeStatus,
+  showRoleBadge = false,
 }: DoctorIdentityRowProps) {
   const label = doctor.display_name?.trim() || doctor.email?.trim() || "Doctor";
   const avatarSize = size === "sm" ? "h-7 w-7" : "h-9 w-9";
@@ -68,8 +72,11 @@ export function DoctorIdentityRow({
   const nameTextClass = size === "sm" ? "text-sm" : "text-sm";
 
   const badgeRow =
-    showSpecialty || activeStatus !== undefined ? (
+    showRoleBadge || showSpecialty || activeStatus !== undefined ? (
       <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+        {showRoleBadge && staffRole ? (
+          <UserRoleBadge role={staffRole} className="shrink-0" />
+        ) : null}
         {showSpecialty ? (
           <DoctorSpecialtyBadge specialty={doctor.specialty} className="shrink-0" />
         ) : null}

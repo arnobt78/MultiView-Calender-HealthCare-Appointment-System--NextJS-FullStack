@@ -3,23 +3,21 @@
 import type { LucideIcon } from "lucide-react";
 import { CalendarClock } from "lucide-react";
 import { format } from "date-fns";
-import { EntityDetailAuditStaffLink } from "@/components/shared/entity-detail/EntityDetailAuditStaffLink";
+import { EntityDetailAuditActorInline } from "@/components/shared/entity-detail/EntityDetailAuditActorInline";
 import { ClinicalEmptyDash } from "@/components/shared/ClinicalTableEmptyDash";
 import { entityDetailAuditIconCircleClass } from "@/lib/patient-detail-ui-classes";
 import type { EntityRole } from "@/lib/entity-routes";
-
-type AuditActor = {
-  userId?: string | null;
-  label?: string | null;
-  email?: string | null;
-};
+import type { EntityDetailAuditExtraRow } from "@/lib/appointment-detail-invoice-audit-rows";
+import type { EntityDetailAuditActor } from "@/lib/entity-detail-audit-actor";
 
 type EntityDetailRecordAuditCardProps = {
   createdAt?: string | null;
   updatedAt?: string | null;
-  createdBy?: AuditActor | null;
-  updatedBy?: AuditActor | null;
+  createdBy?: EntityDetailAuditActor | null;
+  updatedBy?: EntityDetailAuditActor | null;
   viewerRole?: EntityRole | null;
+  /** Invoice issued / due / paid rows (appointment detail). */
+  extraRows?: EntityDetailAuditExtraRow[];
   /** Override icon circle when category portal uses amber tone. */
   iconCircleClass?: string;
   iconClassName?: string;
@@ -27,7 +25,7 @@ type EntityDetailRecordAuditCardProps = {
 };
 
 /**
- * Record audit block — timestamps + optional staff links (patient/category detail).
+ * Record audit block — timestamps + optional staff links + optional extra rows.
  */
 export function EntityDetailRecordAuditCard({
   createdAt,
@@ -35,6 +33,7 @@ export function EntityDetailRecordAuditCard({
   createdBy,
   updatedBy,
   viewerRole,
+  extraRows,
   iconCircleClass = entityDetailAuditIconCircleClass,
   iconClassName = "h-3 w-3 text-sky-600",
   icon: Icon = CalendarClock,
@@ -47,45 +46,69 @@ export function EntityDetailRecordAuditCard({
         </span>
         Record Audit
       </div>
-      <div className="mt-1 space-y-1 text-gray-700">
-        <p>
-          <span className="text-gray-500">Created: </span>
-          {createdAt ? (
-            format(new Date(createdAt), "M/d/yyyy, h:mm:ss a")
-          ) : (
-            <ClinicalEmptyDash layout="inline" />
-          )}
-          {createdBy?.label ? (
-            <>
-              <span className="text-gray-500"> · By </span>
-              <EntityDetailAuditStaffLink
-                userId={createdBy.userId}
-                label={createdBy.label}
-                email={createdBy.email}
-                viewerRole={viewerRole}
-              />
-            </>
-          ) : null}
-        </p>
-        <p>
-          <span className="text-gray-500">Last Updated: </span>
-          {updatedAt ? (
-            format(new Date(updatedAt), "M/d/yyyy, h:mm:ss a")
-          ) : (
-            <ClinicalEmptyDash layout="inline" />
-          )}
-          {updatedBy?.label ? (
-            <>
-              <span className="text-gray-500"> · By </span>
-              <EntityDetailAuditStaffLink
-                userId={updatedBy.userId}
-                label={updatedBy.label}
-                email={updatedBy.email}
-                viewerRole={viewerRole}
-              />
-            </>
-          ) : null}
-        </p>
+      <div className="mt-1 space-y-1.5 text-gray-700">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 text-sm">
+          <span className={iconCircleClass} aria-hidden>
+            <CalendarClock className={iconClassName} />
+          </span>
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 gap-y-1">
+            <span>
+              <span className="text-gray-500">Created: </span>
+              {createdAt ? (
+                format(new Date(createdAt), "M/d/yyyy, h:mm:ss a")
+              ) : (
+                <ClinicalEmptyDash layout="inline" />
+              )}
+            </span>
+            {createdBy ? (
+              <>
+                <span className="text-gray-500" aria-hidden>
+                  ·
+                </span>
+                <EntityDetailAuditActorInline actor={createdBy} viewerRole={viewerRole} />
+              </>
+            ) : null}
+          </div>
+        </div>
+        <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 text-sm">
+          <span className={iconCircleClass} aria-hidden>
+            <CalendarClock className={iconClassName} />
+          </span>
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 gap-y-1">
+            <span>
+              <span className="text-gray-500">Last updated: </span>
+              {updatedAt ? (
+                format(new Date(updatedAt), "M/d/yyyy, h:mm:ss a")
+              ) : (
+                <ClinicalEmptyDash layout="inline" />
+              )}
+            </span>
+            {updatedBy ? (
+              <>
+                <span className="text-gray-500" aria-hidden>
+                  ·
+                </span>
+                <EntityDetailAuditActorInline actor={updatedBy} viewerRole={viewerRole} />
+              </>
+            ) : null}
+          </div>
+        </div>
+        {extraRows?.map((row, index) => (
+          <div
+            key={`${row.label ?? "row"}-${index}`}
+            className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 text-sm"
+          >
+            <span className={iconCircleClass} aria-hidden>
+              <row.icon className={iconClassName} />
+            </span>
+            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 gap-y-1">
+              {row.label ? (
+                <span className="text-gray-500">{row.label}: </span>
+              ) : null}
+              {row.children}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

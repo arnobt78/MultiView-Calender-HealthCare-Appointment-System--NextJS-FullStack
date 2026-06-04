@@ -22,6 +22,10 @@ export const patientDetailSchemaSectionClass = "space-y-2";
 /** Definition list grid rhythm inside entity detail cards. */
 export const patientDetailDefinitionListClass = "grid gap-2 text-sm";
 
+/** Value column — aligns with label row on sm+ grids (appointment/invoice detail). */
+export const entityDetailDefinitionValueClass =
+  "min-w-0 text-sm text-gray-800 sm:pt-0.5";
+
 /** Glass icon circle for schema field labels (sky tone). */
 export const entityDetailFieldIconCircleClass =
   "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-sky-200/70 bg-sky-50/80 shadow-[0_2px_8px_rgba(14,165,233,0.15)]";

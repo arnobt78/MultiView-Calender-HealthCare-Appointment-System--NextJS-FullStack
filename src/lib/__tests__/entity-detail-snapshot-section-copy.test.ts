@@ -34,6 +34,23 @@ describe("entityDetailOwnedSnapshotSectionTitle", () => {
     ).toBe("Dr. Smith's Assigned Patients");
   });
 
+  it("formats appointment related people and billing", () => {
+    expect(
+      entityDetailOwnedSnapshotSectionTitle(
+        "Demo curated visit",
+        "relatedPeople",
+        "appointment"
+      )
+    ).toBe("Demo curated visit's Related People");
+    expect(
+      entityDetailOwnedSnapshotSectionTitle(
+        "Demo curated visit",
+        "relatedBilling",
+        "appointment"
+      )
+    ).toBe("Demo curated visit's Related Billing");
+  });
+
   it("falls back to entity kind when name is blank or placeholder", () => {
     expect(entityDetailOwnedSnapshotSectionTitle("—", "relatedAppointments", "patient")).toBe(
       "Patient's Related Appointments"

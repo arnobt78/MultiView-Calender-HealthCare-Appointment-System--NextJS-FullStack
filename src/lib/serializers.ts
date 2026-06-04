@@ -38,11 +38,23 @@ export function serializeCategory(
     updated_by_display: userDisplay(c.updated_by),
     created_by_email: c.created_by?.email ?? null,
     updated_by_email: c.updated_by?.email ?? null,
+    /** Audit actor portrait + role — detail Record Audit inline row (SSR denormalized). */
+    created_by_image: c.created_by?.image ?? null,
+    created_by_role: c.created_by?.role ?? null,
+    updated_by_image: c.updated_by?.image ?? null,
+    updated_by_role: c.updated_by?.role ?? null,
   };
 }
 
 type UserMini =
-  | { display_name: string | null; email: string; specialty?: string | null }
+  | {
+      id?: string;
+      display_name: string | null;
+      email: string;
+      image?: string | null;
+      role?: string | null;
+      specialty?: string | null;
+    }
   | null
   | undefined;
 
@@ -99,6 +111,11 @@ export function serializePatient(
     updated_by_display: userDisplay(p.updated_by),
     created_by_email: p.created_by?.email ?? null,
     updated_by_email: p.updated_by?.email ?? null,
+    /** Audit actor portrait + role — detail Record Audit inline row (SSR denormalized). */
+    created_by_image: p.created_by?.image ?? null,
+    created_by_role: p.created_by?.role ?? null,
+    updated_by_image: p.updated_by?.image ?? null,
+    updated_by_role: p.updated_by?.role ?? null,
     primary_doctor_display: userDisplay(p.primary_doctor),
     /** Same relation pick as display — list UI shows email under doctor name. */
     primary_doctor_email: p.primary_doctor?.email ?? null,
@@ -116,6 +133,9 @@ export function serializeUser(u: {
   role: string | null;
   image: string | null;
   created_at: Date;
+  updated_at?: Date | null;
+  created_by_id?: string | null;
+  updated_by_id?: string | null;
   specialty?: string | null;
   bio?: string | null;
   phone?: string | null;
@@ -127,11 +147,38 @@ export function serializeUser(u: {
   years_of_experience?: number | null;
   is_active?: boolean;
   active_since?: Date | null;
+  created_by?: UserMini;
+  updated_by?: UserMini;
 }) {
   return {
-    ...u,
+    id: u.id,
+    email: u.email,
+    display_name: u.display_name,
+    role: u.role,
+    image: u.image,
     created_at: u.created_at?.toISOString?.(),
+    updated_at: u.updated_at?.toISOString?.() ?? null,
+    created_by_id: u.created_by_id ?? null,
+    updated_by_id: u.updated_by_id ?? null,
+    specialty: u.specialty ?? null,
+    bio: u.bio ?? null,
+    phone: u.phone ?? null,
+    license_number: u.license_number ?? null,
+    department: u.department ?? null,
+    consultation_fee: u.consultation_fee ?? null,
+    office_location: u.office_location ?? null,
+    languages_spoken: u.languages_spoken ?? [],
+    years_of_experience: u.years_of_experience ?? null,
+    is_active: u.is_active,
     active_since: u.active_since?.toISOString?.() ?? null,
+    created_by_display: userDisplay(u.created_by),
+    updated_by_display: userDisplay(u.updated_by),
+    created_by_email: u.created_by?.email ?? null,
+    updated_by_email: u.updated_by?.email ?? null,
+    created_by_image: u.created_by?.image ?? null,
+    created_by_role: u.created_by?.role ?? null,
+    updated_by_image: u.updated_by?.image ?? null,
+    updated_by_role: u.updated_by?.role ?? null,
   };
 }
 
