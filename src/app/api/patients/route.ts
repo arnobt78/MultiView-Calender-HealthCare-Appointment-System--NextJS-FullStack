@@ -8,7 +8,10 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { isValidUUID } from "@/lib/validation";
 import { serializePatient } from "@/lib/serializers";
-import { patientDetailInclude, patientUserPick } from "@/lib/patient-api-include";
+import {
+  patientDetailInclude,
+  patientPrimaryDoctorPick,
+} from "@/lib/patient-api-include";
 import { redis } from "@/lib/redis";
 import { getUserRole, isPatientRole } from "@/lib/rbac";
 import { assertDoctorActiveForBooking, InactiveDoctorBookingError } from "@/lib/doctor-active-booking";
@@ -33,11 +36,11 @@ export async function GET() {
       ? { email: sessionUser.email }
       : {};
 
-    // Light join: primary doctor label only (list + filters) — avoids N+1 client fetches
+    // Light join: primary doctor label + portrait (appointment cards, no robohash flash)
     const patients = await prisma.patient.findMany({
       where,
       orderBy: { created_at: "desc" },
-      include: { primary_doctor: patientUserPick },
+      include: { primary_doctor: patientPrimaryDoctorPick },
     });
 
     return NextResponse.json({

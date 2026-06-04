@@ -287,11 +287,14 @@ export async function invalidateAppointmentTypesData(queryClient: QueryClient) {
  * - `availability` slot math (duration / buffers / intervals)
  * - `doctors.all` directory (`GET /api/doctors` embeds `appointment_types` for /services + Doctor Management)
  * - `doctorPortal.all` visit-type checkboxes (CP `DoctorGlobalTypeConfigEditor` + `/doctor-portal` toggles)
+ * - `appointments.all` calendar cards (denormalized type name / visit fee on list rows)
  */
 export async function invalidateAppointmentTypeDerived(queryClient: QueryClient) {
   await Promise.all([
     invalidateAppointmentTypesData(queryClient),
     invalidateAvailabilitySlots(queryClient),
+    /** Cards denormalize type name/fee from joined rows — bust calendar list after type CRUD. */
+    invalidateAppointmentData(queryClient),
     queryClient.invalidateQueries({ queryKey: queryKeys.doctors.all }),
     invalidateDoctorPortal(queryClient),
     invalidateInsightsAndAnalytics(queryClient),

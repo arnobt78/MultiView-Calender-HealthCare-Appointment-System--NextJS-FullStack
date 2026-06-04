@@ -8,8 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session";
 import { getUserRole, isPatientRole } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
-import { fetchInvoicesForViewer } from "@/lib/invoices-scope";
-import { serializeInvoice } from "@/lib/serializers";
+import { loadInvoicesListForViewer } from "@/lib/invoices-list-response";
 import {
   canCreateInvoiceForAppointment,
   resolveInvoiceBillingUserId,
@@ -23,11 +22,6 @@ import {
 } from "@/lib/billing-cache";
 import { resolveInvoiceOrganizationId } from "@/lib/invoice-organization-resolve";
 import { assertAppointmentEligibleForNewInvoice } from "@/lib/billing-appointment-eligibility";
-import {
-  attachInvoiceIssuerLabels,
-  attachVisitSummariesToInvoices,
-} from "@/lib/invoice-visit-summary";
-
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
@@ -37,20 +31,12 @@ export async function GET(req: NextRequest) {
 
     const role = await getUserRole(sessionUser.userId);
     const organizationId = req.nextUrl.searchParams.get("organizationId");
-    const rows = await fetchInvoicesForViewer({
+    const invoices = await loadInvoicesListForViewer({
       userId: sessionUser.userId,
       role,
       email: sessionUser.email,
       organizationId,
     });
-
-    const withVisits = await attachVisitSummariesToInvoices(
-      rows.map((row) => ({
-        ...serializeInvoice(row),
-        payments: row.payments,
-      }))
-    );
-    const invoices = await attachInvoiceIssuerLabels(withVisits);
 
     return NextResponse.json({ invoices });
   } catch (error: unknown) {

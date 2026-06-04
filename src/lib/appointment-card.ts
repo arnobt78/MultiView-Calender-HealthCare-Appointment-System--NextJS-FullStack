@@ -5,6 +5,13 @@ import type { Patient } from "@/types/types";
 export const appointmentCardMetaGroupClass =
   "flex min-w-0 flex-wrap items-center gap-x-4 text-xs text-gray-600";
 
+/** Patient portal timeline — when/location can wrap on sm+; staff/category always stacked. */
+export const portalAppointmentWhenWhereClass =
+  "flex min-w-0 flex-col gap-1 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-4 text-xs text-gray-600";
+
+export const portalAppointmentDetailStackClass =
+  "flex w-full min-w-0 flex-col gap-2.5 text-xs text-gray-600";
+
 /** Tailwind width for hover/popover surfaces — fixed so text wraps with break-words inside. */
 export const APPOINTMENT_CARD_POPOVER_WIDTH = "w-[320px]";
 

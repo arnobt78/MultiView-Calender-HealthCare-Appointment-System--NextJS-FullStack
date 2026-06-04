@@ -14,25 +14,28 @@ import {
   CalendarClock,
   CalendarX,
   Clock3,
-  Euro,
   FileText,
   MapPin,
+  NotebookPen,
   Stethoscope,
-  Tags,
   Video,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { AppointmentCardMetaRow } from "@/components/shared/AppointmentCardMetaRow";
 import { AppointmentListColorBar } from "@/components/shared/AppointmentListColorBar";
-import { CategoryInlineLink } from "@/components/shared/CategoryInlineLink";
-import { PortalStaffLink } from "@/components/shared/PortalStaffLink";
+import { AppointmentCategoryTypeMetaRow } from "@/components/shared/appointment-display/AppointmentCategoryTypeMetaRow";
+import { shouldShowAppointmentCategoryTypeRow } from "@/lib/appointment-type-display";
+import { resolveDisplayedVisitFeeCents } from "@/lib/appointment-visit-fee-display";
+import { PortalAppointmentStaffIdentityBlock } from "@/components/shared/portal-appointment/PortalAppointmentStaffIdentityBlock";
 import { RoleEntityLink } from "@/components/shared/RoleEntityLink";
+import { resolvePortalTreatingStaff } from "@/lib/portal-appointment-staff";
+import { canShowAppointmentClinicalNotes } from "@/lib/portal-appointment-card-visibility";
 import { useAppointmentColor } from "@/context/AppointmentColorContext";
-import { appointmentCardMetaGroupClass } from "@/lib/appointment-card";
+import { useAuth } from "@/hooks/useAuth";
 import {
-  portalOwnerDisplayLabel,
-  portalTreatingDisplayLabel,
-} from "@/lib/portal-appointment";
+  portalAppointmentDetailStackClass,
+  portalAppointmentWhenWhereClass,
+} from "@/lib/appointment-card";
 import type { PortalAppointmentRow } from "@/lib/serializers";
 import { cn } from "@/lib/utils";
 
@@ -57,20 +60,32 @@ const STATUS_GLASS: Record<string, { icon: ReactNode; glassCls: string; label: s
 export type PortalAppointmentTimelineCardProps = {
   appointment: PortalAppointmentRow;
   className?: string;
+  /** Override notes visibility — default: admin/doctor only (hidden on patient portal). */
+  showClinicalNotes?: boolean;
 };
 
 export function PortalAppointmentTimelineCard({
   appointment: appt,
   className,
+  showClinicalNotes,
 }: PortalAppointmentTimelineCardProps) {
+  const { user } = useAuth();
+  const showNotes =
+    showClinicalNotes ?? canShowAppointmentClinicalNotes(user?.role ?? null);
+
   // Seed-only tint (appointment.id) — same rule as dashboard list cards; category hex is for swatch links only.
   const { getAppointmentColorToken } = useAppointmentColor();
   const colorToken = getAppointmentColorToken(appt.id, null);
   const status = appt.status ?? "pending";
   const statusMeta = STATUS_GLASS[status] ?? STATUS_GLASS.pending;
   const startDate = new Date(appt.start);
-  const treatingDiffers =
-    Boolean(appt.treating_physician_id) && appt.treating_physician_id !== appt.user_id;
+  const treatingStaff = resolvePortalTreatingStaff(appt);
+  const displayFeeCents = resolveDisplayedVisitFeeCents({
+    typePriceCents: appt.appointment_type_price_cents,
+    doctorConsultationFeeCents: appt.doctor_consultation_fee_cents,
+  });
+  const showCategoryTypeRow =
+    Boolean(appt.category_data) || shouldShowAppointmentCategoryTypeRow(appt, displayFeeCents);
 
   return (
     <div
@@ -107,17 +122,9 @@ export function PortalAppointmentTimelineCard({
                   Telehealth
                 </span>
               ) : null}
-              {/* Visit fee badge — sourced from appointment_type.price_cents via serializeAppointment */}
-              {(appt.appointment_type_price_cents ?? 0) > 0 ? (
-                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200/70 bg-emerald-50/80 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 shadow-[0_2px_8px_rgba(16,185,129,0.15)]">
-                  <Euro className="h-3 w-3" aria-hidden />
-                  {((appt.appointment_type_price_cents ?? 0) / 100).toFixed(2)}
-                  <span className="ml-0.5 text-[9px] font-normal text-emerald-500/90">· est.</span>
-                </span>
-              ) : null}
             </div>
 
-            <div className={appointmentCardMetaGroupClass}>
+            <div className={portalAppointmentWhenWhereClass}>
               <AppointmentCardMetaRow icon={<Clock3 className="h-3.5 w-3.5" />}>
                 <span className="font-medium text-gray-700">
                   {format(startDate, "dd MMM yyyy, HH:mm")}
@@ -131,44 +138,64 @@ export function PortalAppointmentTimelineCard({
                   <span className="font-medium text-gray-700">{appt.location}</span>
                 </AppointmentCardMetaRow>
               ) : null}
+            </div>
 
+            <div className={portalAppointmentDetailStackClass}>
               {appt.owner ? (
-                <AppointmentCardMetaRow icon={<Calendar className="h-3.5 w-3.5" />} label="Calendar owner:">
-                  <PortalStaffLink
-                    staffUserId={appt.owner.id}
-                    staffRole={appt.owner.role}
-                    label={portalOwnerDisplayLabel(appt.owner)}
-                  />
-                </AppointmentCardMetaRow>
+                <PortalAppointmentStaffIdentityBlock
+                  icon={<Calendar className="h-3.5 w-3.5" />}
+                  label="Calendar owner"
+                  staff={appt.owner}
+                />
               ) : null}
 
-              {treatingDiffers && appt.treating_physician ? (
-                <AppointmentCardMetaRow icon={<Stethoscope className="h-3.5 w-3.5" />} label="Treating physician:">
-                  <PortalStaffLink
-                    staffUserId={appt.treating_physician.id}
-                    staffRole={appt.treating_physician.role}
-                    label={portalTreatingDisplayLabel(appt.treating_physician)}
-                  />
-                </AppointmentCardMetaRow>
+              {treatingStaff ? (
+                <PortalAppointmentStaffIdentityBlock
+                  icon={<Stethoscope className="h-3.5 w-3.5" />}
+                  label="Treating physician"
+                  staff={treatingStaff}
+                />
               ) : null}
 
-              {appt.category_data ? (
-                <AppointmentCardMetaRow icon={<Tags className="h-3.5 w-3.5" />} label="Category:">
-                  <CategoryInlineLink
-                    categoryId={appt.category_data.id}
-                    label={appt.category_data.label}
-                    color={appt.category_data.color}
-                    icon={appt.category_data.icon}
-                  />
-                </AppointmentCardMetaRow>
+              {showCategoryTypeRow ? (
+                <AppointmentCategoryTypeMetaRow
+                  category={
+                    appt.category_data
+                      ? {
+                          categoryId: appt.category_data.id,
+                          label: appt.category_data.label,
+                          color: appt.category_data.color,
+                          icon: appt.category_data.icon,
+                        }
+                      : null
+                  }
+                  appointment={appt}
+                  displayFeeCents={displayFeeCents}
+                  showFeeEstimateHint
+                />
               ) : null}
             </div>
 
-            {appt.notes ? (
-              <p className="flex items-start gap-1 text-xs text-gray-600">
-                <FileText className="h-3 w-3 shrink-0 text-gray-500" aria-hidden />
-                {appt.notes}
-              </p>
+            {appt.chief_complaint?.trim() ? (
+              <AppointmentCardMetaRow
+                icon={<NotebookPen className="h-3.5 w-3.5" />}
+                label="Chief complaint:"
+                wrap
+                className="flex w-full min-w-0 items-center"
+              >
+                <span className="font-medium text-gray-700">{appt.chief_complaint.trim()}</span>
+              </AppointmentCardMetaRow>
+            ) : null}
+
+            {showNotes && appt.notes?.trim() ? (
+              <AppointmentCardMetaRow
+                icon={<FileText className="h-3.5 w-3.5" />}
+                label="Notes:"
+                wrap
+                className="flex w-full min-w-0 items-center"
+              >
+                <span className="font-medium text-gray-700">{appt.notes.trim()}</span>
+              </AppointmentCardMetaRow>
             ) : null}
           </div>
 

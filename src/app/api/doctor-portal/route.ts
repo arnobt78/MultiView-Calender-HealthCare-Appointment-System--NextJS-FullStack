@@ -19,8 +19,12 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { getUserRole, isDoctorRole } from "@/lib/rbac";
+import {
+  APPOINTMENT_TYPE_CARD_SELECT,
+  appointmentTypeSerializedFields,
+} from "@/lib/appointment-type-include";
 import { serializeAppointment, serializePatient } from "@/lib/serializers";
-import { patientUserPick } from "@/lib/patient-api-include";
+import { patientPrimaryDoctorPick } from "@/lib/patient-api-include";
 import {
   startOfDay,
   endOfDay,
@@ -101,7 +105,7 @@ export async function GET() {
         where: appt({ start: { gte: todayStart, lte: todayEnd } }),
         orderBy: { start: "asc" },
         include: {
-          appointment_type: { select: { price_cents: true } },
+          appointment_type: { select: APPOINTMENT_TYPE_CARD_SELECT },
           treating_physician: { select: { consultation_fee: true } },
           owner: { select: { consultation_fee: true } },
         },
@@ -115,7 +119,7 @@ export async function GET() {
         orderBy: { start: "asc" },
         take: 20,
         include: {
-          appointment_type: { select: { price_cents: true } },
+          appointment_type: { select: APPOINTMENT_TYPE_CARD_SELECT },
           treating_physician: { select: { consultation_fee: true } },
           owner: { select: { consultation_fee: true } },
         },
@@ -125,7 +129,7 @@ export async function GET() {
         where: { primary_doctor_id: sessionUser.userId },
         orderBy: { firstname: "asc" },
         take: 50,
-        include: { primary_doctor: patientUserPick },
+        include: { primary_doctor: patientPrimaryDoctorPick },
       }),
       // All active global appointment types
       prisma.appointmentType.findMany({
@@ -237,7 +241,7 @@ export async function GET() {
         const feeDoc = ta.treating_physician ?? ta.owner;
         return serializeAppointment({
           ...a,
-          appointment_type_price_cents: ta.appointment_type?.price_cents ?? null,
+          ...appointmentTypeSerializedFields(ta.appointment_type),
           doctor_consultation_fee_cents: feeDoc?.consultation_fee ?? null,
         });
       }),
@@ -250,7 +254,7 @@ export async function GET() {
         const feeDoc = ta.treating_physician ?? ta.owner;
         return serializeAppointment({
           ...a,
-          appointment_type_price_cents: ta.appointment_type?.price_cents ?? null,
+          ...appointmentTypeSerializedFields(ta.appointment_type),
           doctor_consultation_fee_cents: feeDoc?.consultation_fee ?? null,
         });
       }),

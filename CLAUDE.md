@@ -4,15 +4,13 @@ Compact agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-04)
 
-- **C4 invoice UI:** CP `InvoiceManagement` DataTable + amber filters/columns (`invoice-table-cells`); `InvoiceVisitDirectoryPickerCard`; `ClinicalGlassDatePicker` (due align end); glass `InvoiceDetailLiveBody`; `DEFAULT_DOCTOR_VISIT_FEE_CENTS` (15000); doctor portal list reuses table cells.
-- **Visit meta:** `invoice-visit-meta-line.ts` + `InvoiceVisitMetaLine` only (picker `text` + summary `icons`).
-- **Seeds:** `db:seed-demo-full`, `db:seed-doctor-profiles`, `db:check-demo-seed`; `scripts/lib/doctor-profile-seed-data.ts`. Roles: **admin | doctor | patient** only (`rbac.isStaffRole`).
-- **Appt dialog:** location prefill from doctor `office_location` when empty + hint.
-- **Verify:** `npm test` **674** / **122** files · tsc · lint · build.
-
-## Prior (2026-06-02)
-
-- Invoice dialog/shell, `useInvoiceFormDialog`, detail live edit, SSE hardening, calendar invoice badge (`useAppointmentInvoiceDisplayMap`), `invalidateAfterInvoiceWrite` → `invoices.*` + `billing.*`.
+- **Appointment cards:** `AppointmentCategoryTypeMetaRow` — category + visit type + duration + fee (+ time on list); `APPOINTMENT_TYPE_CARD_SELECT` on calendar/portal APIs + SSR; type-only row when no `category_data`.
+- **Staff portraits:** `resolvePrimaryDoctorCardImage` (patient `primary_doctor_image`, portal owner/treating, directory); `patientPrimaryDoctorPick` on `prefetchPatients` + `GET /api/patients`.
+- **Notes RBAC:** `canShowAppointmentClinicalNotes` — `AppointmentCard` + `PortalAppointmentTimelineCard` (admin/doctor only).
+- **Invalidation:** `invalidateAppointmentTypeDerived` also busts `appointments.all` (type name/fee on cached cards).
+- **Portal staff rows:** inline `MetaIdentityBlock` + `PortalAppointmentStaffIdentityBlock` (one row).
+- **Invoices (prior):** `loadInvoicesListForViewer`, Stripe checkout copy/session track, visit physician images on summaries.
+- **Verify:** `npm test` **693** / **130** files · tsc · lint · build.
 
 ## Never / Always
 
@@ -33,7 +31,7 @@ npm test && npx tsc --noEmit && npm run lint && npm run build
 | Appointment | `invalidateAfterAppointmentMutation` |
 | Patient/category | `invalidateEntityAffectingAppointments` |
 | Invoice/payment | `invalidateInvoicesAndOverview` / `invalidateInvoicesBilling` |
-| Types/config | `invalidateAppointmentTypeDerived` |
+| Types/config | `invalidateAppointmentTypeDerived` (+ `appointments.all`) |
 | Schedule | `invalidateDoctorSchedule` |
 | Users | `invalidateUsersAndAuth` |
 
@@ -41,9 +39,9 @@ Cross-tab: `query-cache-cross-tab.ts` in `QueryProvider`.
 
 ## Key paths
 
-- Invoice: `invoice-dialog/`, `InvoiceFormDialogContext`, `invoice-visit-meta-line.ts`, `invoice-management-columns.tsx`
-- Billing: `billing-visit-fee.ts`, `billing-appointment-options-load.ts`, `invoice-billing-totals.ts`
-- SSR: `server-prefetch.ts`, `control-panel-section-prefetch.ts`, `org-billing-prefetch.ts`
+- Cards: `AppointmentCard.tsx`, `appointment-display/AppointmentCategoryTypeMetaRow.tsx`, `appointment-type-include.ts`, `appointment-card-staff-image.ts`, `portal-appointment-card-visibility.ts`
+- Invoice: `invoice-dialog/`, `invoice-visit-meta-line.ts`, `invoices-list-response.ts`
+- SSR: `server-prefetch.ts`, `appointments-list-build.ts`, `portal-appointment.ts`
 - Seeds: `seed-demo-full.ts`, `doctor-profile-seed-data.ts`
 
 ## Principle

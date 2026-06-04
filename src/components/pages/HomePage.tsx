@@ -21,6 +21,8 @@ import { StaffInvoiceDialogShell } from "@/components/shared/billing/StaffInvoic
 import type { Category, Patient, AppointmentAssignee } from "@/types/types";
 import type { FullAppointment } from "@/hooks/useAppointments";
 import type { DashboardAccessRow } from "@/lib/query-fetchers";
+import type { Invoice } from "@/hooks/usePayments";
+import { seedInvoicesListCacheFromSsr } from "@/lib/invoices-query-ssr-seed";
 
 const views = ["List", "Day", "Week", "Month"] as const;
 export type ViewType = (typeof views)[number];
@@ -42,6 +44,8 @@ type HomePageProps = {
   initialAppointments?: FullAppointment[] | null;
   /** Accepted dashboard shares — seeds queryKeys.dashboardAccess.accepted for useAppointments. */
   initialDashboardAccessAccepted?: DashboardAccessRow[] | null;
+  /** SSR invoice list — calendar appointment invoice badges (useAppointmentInvoiceDisplayMap). */
+  initialInvoices?: Invoice[] | null;
 };
 
 const HomePage: React.FC<HomePageProps> = ({
@@ -50,8 +54,14 @@ const HomePage: React.FC<HomePageProps> = ({
   initialAssignees,
   initialAppointments,
   initialDashboardAccessAccepted,
+  initialInvoices,
 }) => {
   const queryClient = useQueryClient();
+
+  useMemo(() => {
+    seedInvoicesListCacheFromSsr(queryClient, initialInvoices ?? undefined);
+    return null;
+  }, [queryClient, initialInvoices]);
 
   /**
    * Seed the TanStack Query cache with server-prefetched data.
@@ -78,6 +88,7 @@ const HomePage: React.FC<HomePageProps> = ({
         initialDashboardAccessAccepted
       );
     }
+    seedInvoicesListCacheFromSsr(queryClient, initialInvoices ?? undefined);
   }, [
     queryClient,
     initialCategories,
@@ -85,6 +96,7 @@ const HomePage: React.FC<HomePageProps> = ({
     initialAssignees,
     initialAppointments,
     initialDashboardAccessAccepted,
+    initialInvoices,
   ]);
   const searchParams = useSearchParams();
   const initialView = useMemo(
@@ -121,7 +133,7 @@ const HomePage: React.FC<HomePageProps> = ({
   );
 
   return (
-    <StaffInvoiceDialogShell>
+    <StaffInvoiceDialogShell initialInvoices={initialInvoices}>
       <div className="flex h-full min-h-0 flex-1 flex-col overflow-visible">
         <div className="shrink-0">
           <CalendarHeader view={view} setView={setView} />

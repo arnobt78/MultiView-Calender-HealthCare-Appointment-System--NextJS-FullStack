@@ -57,7 +57,7 @@ function InvoiceManagementInner() {
     isUpdating,
     isRecording,
     isRefunding,
-  } = usePayments();
+  } = usePayments(); // SSR: ControlPanelSectionPageClient sync-seeds queryKeys.invoices.all before mount
 
   const { openCreate, openEdit } = useInvoiceFormDialog();
   const { status, setStatus, filterInvoices } = useInvoiceListFilters();

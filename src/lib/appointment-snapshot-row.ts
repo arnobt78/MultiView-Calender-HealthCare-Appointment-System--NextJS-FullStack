@@ -12,6 +12,8 @@ type SnapshotUserPick = {
   email: string;
   specialty?: string | null;
   image?: string | null;
+  /** consultation_fee → doctor_consultation_fee_cents on serialized snapshot row */
+  consultation_fee?: number | null;
 };
 
 type SnapshotPatientPick = {
@@ -38,9 +40,11 @@ export type AppointmentSnapshotPrismaRow = Parameters<typeof serializeAppointmen
 export function mapAppointmentToSnapshotRow(
   row: AppointmentSnapshotPrismaRow
 ): AppointmentSnapshotRow {
+  const feeDoc = row.treating_physician ?? row.owner;
   const serialized = serializeAppointment({
     ...row,
     appointment_type_price_cents: row.appointment_type?.price_cents ?? null,
+    doctor_consultation_fee_cents: feeDoc?.consultation_fee ?? null,
   });
   const clinicalId = resolveTreatingPhysicianUserId(serialized);
   const clinical =
@@ -85,6 +89,8 @@ export const appointmentSnapshotInclude = {
       email: true,
       specialty: true,
       image: true,
+      /** consultation_fee → doctor_consultation_fee_cents on snapshot row */
+      consultation_fee: true,
     },
   },
   treating_physician: {
@@ -94,6 +100,8 @@ export const appointmentSnapshotInclude = {
       email: true,
       specialty: true,
       image: true,
+      /** consultation_fee → doctor_consultation_fee_cents on snapshot row */
+      consultation_fee: true,
     },
   },
   patient: {

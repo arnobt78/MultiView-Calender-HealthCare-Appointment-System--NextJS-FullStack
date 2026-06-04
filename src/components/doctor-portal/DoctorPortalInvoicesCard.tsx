@@ -31,6 +31,8 @@ type Props = {
   doctorDisplayName?: string | null;
   /** Pulse list + filters only — panel chrome stays mounted. */
   listBodyLoading?: boolean;
+  /** SSR seed — pairs with DoctorPortalPage sync cache seed; skips mount refetch in usePayments. */
+  invoicesInitialData?: Invoice[];
 };
 
 const STATUS_OPTIONS: { value: DoctorPortalInvoiceStatusFilter; label: string }[] = [
@@ -50,6 +52,7 @@ const STATUS_OPTIONS: { value: DoctorPortalInvoiceStatusFilter; label: string }[
 export function DoctorPortalInvoicesCard({
   doctorDisplayName,
   listBodyLoading,
+  invoicesInitialData,
 }: Props) {
   const {
     invoices,
@@ -57,7 +60,7 @@ export function DoctorPortalInvoicesCard({
     updateInvoice,
     deleteInvoice,
     isUpdating,
-  } = usePayments();
+  } = usePayments({ invoicesInitialData });
 
   const { openCreate, openEdit } = useInvoiceFormDialog();
 

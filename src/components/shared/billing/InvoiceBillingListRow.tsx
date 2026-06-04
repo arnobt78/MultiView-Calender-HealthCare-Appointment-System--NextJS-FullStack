@@ -7,7 +7,12 @@ import { DoctorIdentityRow } from "@/components/shared/doctor-display/DoctorIden
 import { InvoiceAmountDisplay } from "@/components/shared/billing/InvoiceAmountDisplay";
 import { InvoiceStatusBadge } from "@/components/shared/billing/InvoiceStatusBadge";
 import { InvoiceVisitSummaryLine } from "@/components/shared/billing/InvoiceVisitSummaryLine";
+import { InvoiceIssuedByMeta } from "@/components/shared/billing/InvoiceIssuedByMeta";
+import { getInvoiceListTitle } from "@/lib/invoice-list-display";
+import { invoiceTreatingDoctorFromSummary } from "@/lib/invoice-visit-doctor";
 import { invoiceDetailHref } from "@/lib/entity-routes";
+import { invoiceDueDateTextClassForStatus } from "@/lib/invoice-status-display";
+import { resolveInvoiceDisplayStatus } from "@/lib/billing-appointment-eligibility";
 import {
   clinicalCellMutedTextClass,
   entityDetailLinkClass,
@@ -32,18 +37,9 @@ export function InvoiceBillingListRow({
 }: Props) {
   const summary = invoice.visit_summary;
   const href = invoiceDetailHref(viewerRole, invoice.id);
-  const title =
-    invoice.description?.trim() || `#${invoice.id.slice(0, 8)}`;
-
-  const treatingDoctor =
-    summary?.treating_physician_id && summary.treating_physician_label
-      ? {
-          id: summary.treating_physician_id,
-          display_name: summary.treating_physician_label,
-          email: null,
-          specialty: summary.treating_physician_specialty,
-        }
-      : null;
+  const title = getInvoiceListTitle(invoice);
+  const displayStatus = resolveInvoiceDisplayStatus(invoice);
+  const treatingDoctor = invoiceTreatingDoctorFromSummary(summary);
 
   return (
     <li className={cn(invoiceBillingListRowShellClass, className)}>
@@ -58,34 +54,48 @@ export function InvoiceBillingListRow({
           >
             {title}
           </PrefetchingLink>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div
+              className={cn(
+                "inline-flex items-center gap-1 text-[11px]",
+                invoice.due_date
+                  ? invoiceDueDateTextClassForStatus(displayStatus)
+                  : clinicalCellMutedTextClass
+              )}
+            >
+              <CalendarClock className="h-3 w-3 shrink-0 opacity-80" aria-hidden />
+              {invoice.due_date ? (
+                <span>
+                  Due {format(new Date(invoice.due_date), "dd MMM yyyy")}
+                </span>
+              ) : (
+                <span>Issued {format(new Date(invoice.created_at), "dd MMM yyyy")}</span>
+              )}
+            </div>
+          </div>
           <InvoiceVisitSummaryLine summary={summary} className="text-xs" />
           {treatingDoctor ? (
             <DoctorIdentityRow
               doctor={treatingDoctor}
-              linkKind="admin-cp"
+              linkKind={viewerRole === "patient" ? "none" : "admin-cp"}
               size="sm"
               layout="inline"
               showEmail={false}
               showSpecialty
             />
           ) : null}
-          <div
-            className={cn(
-              "flex flex-wrap items-center gap-x-3 gap-y-0.5",
-              clinicalCellMutedTextClass
-            )}
-          >
-            {invoice.due_date ? (
-              <span className="inline-flex items-center gap-1">
-                <CalendarClock className="h-3 w-3 shrink-0" aria-hidden />
-                Due {format(new Date(invoice.due_date), "dd MMM yyyy")}
-              </span>
-            ) : null}
-            <span>Created {format(new Date(invoice.created_at), "dd MMM yyyy")}</span>
-          </div>
+          <InvoiceIssuedByMeta
+            createdAt={invoice.created_at}
+            issuerLabel={invoice.issuer_label}
+            issuerImage={invoice.issuer_image}
+          />
         </div>
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 sm:flex-col sm:items-end">
-          <InvoiceAmountDisplay amountCents={invoice.amount} currency={invoice.currency} />
+          <InvoiceAmountDisplay
+            amountCents={invoice.amount}
+            currency={invoice.currency}
+            invoice={invoice}
+          />
           <InvoiceStatusBadge invoice={invoice} />
         </div>
       </div>

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useLayoutEffect } from "react";
+import { useEffect, useLayoutEffect, useMemo } from "react";
+import { seedInvoicesListCacheFromSsr } from "@/lib/invoices-query-ssr-seed";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { invalidateInvoicesAndOverview } from "@/lib/query-client";
@@ -22,6 +23,13 @@ export function ControlPanelSectionPageClient({ tab, initial }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
+
+  useMemo(() => {
+    if (initial?.invoices != null) {
+      seedInvoicesListCacheFromSsr(queryClient, initial.invoices);
+    }
+    return null;
+  }, [queryClient, initial?.invoices]);
 
   /** Stripe return on invoice tab — bust overview/invoices without full reload. */
   useEffect(() => {

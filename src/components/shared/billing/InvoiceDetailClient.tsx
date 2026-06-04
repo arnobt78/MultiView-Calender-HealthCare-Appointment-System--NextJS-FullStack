@@ -13,6 +13,8 @@ type Props = {
   accessLevel: "admin" | "view" | "mutate" | "pay";
   /** Hide redundant View link when already on detail page. */
   hideViewLink?: boolean;
+  /** SSR invoices.all seed — pairs with InvoiceDetailQuerySeed. */
+  invoicesInitialData?: Invoice[];
 };
 
 /** Admin/doctor/patient footer actions on invoice detail — useInvoice keeps menu in sync after CRUD. */
@@ -20,6 +22,7 @@ export function InvoiceDetailClient({
   invoice: initialInvoice,
   accessLevel,
   hideViewLink = false,
+  invoicesInitialData,
 }: Props) {
   const { data: invoice = initialInvoice } = useInvoice(initialInvoice.id, {
     initialData: initialInvoice,
@@ -35,7 +38,7 @@ export function InvoiceDetailClient({
     isRecording,
     isRefunding,
     isDeleting,
-  } = usePayments();
+  } = usePayments({ invoicesInitialData });
 
   const ctx = useInvoiceFormDialogOptional();
   const local = useInvoiceFormDialogController({

@@ -7,6 +7,10 @@
  */
 
 import { createHmac, timingSafeEqual } from "crypto";
+import {
+  expireStoredCheckoutSessionForInvoice,
+  storeCheckoutSessionForInvoice,
+} from "@/lib/stripe-checkout-session-track";
 
 // File-local only — never re-exported so secrets cannot be imported by client bundles.
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || "";
@@ -22,6 +26,9 @@ interface StripeSession {
 export type StripeCheckoutReturnPath =
   | "patient-portal"
   | "control-panel/invoice-management";
+
+/** Hosted Checkout expires — stale tabs must start a new Pay Now for fresh product copy. */
+export const STRIPE_CHECKOUT_EXPIRES_SEC = 30 * 60;
 
 function checkoutReturnUrls(returnPath: StripeCheckoutReturnPath) {
   const base = `${APP_URL}/${returnPath}`;
@@ -39,13 +46,17 @@ export async function createCheckoutSession({
   amount,
   currency,
   description,
+  productDescription,
   customerEmail,
   returnPath = "control-panel/invoice-management",
 }: {
   invoiceId: string;
   amount: number; // in cents
   currency: string;
+  /** Stripe product name (short). */
   description: string;
+  /** Optional multi-line Stripe product description (visit context). */
+  productDescription?: string;
   customerEmail: string;
   returnPath?: StripeCheckoutReturnPath;
 }): Promise<StripeSession> {
@@ -53,25 +64,38 @@ export async function createCheckoutSession({
     throw new Error("Stripe is not configured (STRIPE_SECRET_KEY missing)");
   }
 
+  await expireStoredCheckoutSessionForInvoice(invoiceId);
+
   const response = await fetch("https://api.stripe.com/v1/checkout/sessions", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${STRIPE_SECRET_KEY}`,
       "Content-Type": "application/x-www-form-urlencoded",
     },
-    body: new URLSearchParams({
-      "payment_method_types[0]": "card",
-      "line_items[0][price_data][currency]": currency,
-      "line_items[0][price_data][product_data][name]": description,
-      "line_items[0][price_data][unit_amount]": String(amount),
-      "line_items[0][quantity]": "1",
-      mode: "payment",
-      customer_email: customerEmail,
-      ...checkoutReturnUrls(returnPath),
-      "metadata[invoice_id]": invoiceId,
-      // Propagate to PaymentIntent so payment_intent.payment_failed webhooks can resolve invoice.
-      "payment_intent_data[metadata][invoice_id]": invoiceId,
-    }),
+    body: (() => {
+      const params: Record<string, string> = {
+        "payment_method_types[0]": "card",
+        "line_items[0][price_data][currency]": currency,
+        "line_items[0][price_data][product_data][name]": description,
+        "line_items[0][price_data][unit_amount]": String(amount),
+        "line_items[0][quantity]": "1",
+        mode: "payment",
+        customer_email: customerEmail,
+        ...checkoutReturnUrls(returnPath),
+        "metadata[invoice_id]": invoiceId,
+        "payment_intent_data[metadata][invoice_id]": invoiceId,
+      };
+      const detail = productDescription?.trim();
+      if (detail) {
+        params["line_items[0][price_data][product_data][description]"] = detail;
+      }
+      params.expires_at = String(
+        Math.floor(Date.now() / 1000) + STRIPE_CHECKOUT_EXPIRES_SEC
+      );
+      params["custom_text[submit][message]"] =
+        "This link expires in 30 minutes. Return to the app and tap Pay Now again if it has expired.";
+      return new URLSearchParams(params);
+    })(),
   });
 
   if (!response.ok) {
@@ -80,6 +104,7 @@ export async function createCheckoutSession({
   }
 
   const session = await response.json();
+  await storeCheckoutSessionForInvoice(invoiceId, session.id);
   return { id: session.id, url: session.url };
 }
 

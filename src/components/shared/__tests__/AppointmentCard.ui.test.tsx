@@ -188,20 +188,19 @@ describe("AppointmentCard identity layout", () => {
     };
   });
 
-  it("keeps popover/month-panel identity rows stacked", () => {
+  it("keeps popover/month-panel identity rows inline on one baseline", () => {
     const popoverMarkup = renderCard("popover");
     const monthPanelMarkup = renderCard("month-panel");
 
-    expect(popoverMarkup).toContain("flex min-w-0 flex-col gap-1");
-    expect(monthPanelMarkup).toContain("flex min-w-0 flex-col gap-1");
-    expect(popoverMarkup).toContain("Calendar owner:");
+    expect(popoverMarkup).toContain("flex w-full min-w-0 items-center");
+    expect(monthPanelMarkup).toContain("Calendar owner:");
     expect(monthPanelMarkup).toContain("Treating physician:");
     expect(popoverMarkup).not.toContain("Age / Care Tier:");
     expect(monthPanelMarkup).not.toContain("Age / Care Tier:");
-    // Client demographics share MetaIdentityBlock second line (same as doctor specialty).
     expect(popoverMarkup).toContain("Client:");
     expect(popoverMarkup).toContain("AGE:");
     expect(monthPanelMarkup).toContain("CARE:7");
+    expect(popoverMarkup).toContain("Category:");
   });
 
   it("keeps list identity rows inline with client demographics after email", () => {

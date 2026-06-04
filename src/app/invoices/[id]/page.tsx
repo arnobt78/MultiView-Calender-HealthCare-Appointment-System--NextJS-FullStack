@@ -9,7 +9,7 @@ import { getUserRole, isAdminRole, isPatientRole } from "@/lib/rbac";
 import { isValidUUID } from "@/lib/validation";
 import { invoiceDetailHref } from "@/lib/entity-routes";
 import { loadInvoiceDetailForPage } from "@/lib/invoice-detail-ssr";
-import { prefetchInvoiceDetail } from "@/lib/server-prefetch";
+import { prefetchInvoiceDetail, prefetchInvoices } from "@/lib/server-prefetch";
 import { InvoiceDetailScreen } from "@/components/detail/InvoiceDetailScreen";
 import type { Invoice } from "@/hooks/usePayments";
 
@@ -41,9 +41,10 @@ export default async function PortalInvoiceDetailPage({ params }: PageProps) {
     role,
   };
 
-  const [payload, prefetched] = await Promise.all([
+  const [payload, prefetched, initialInvoicesList] = await Promise.all([
     loadInvoiceDetailForPage(id, session),
     prefetchInvoiceDetail(id, sessionUser.userId, role, sessionUser.email),
+    prefetchInvoices(sessionUser.userId, role, sessionUser.email),
   ]);
 
   if (!payload) notFound();
@@ -54,6 +55,7 @@ export default async function PortalInvoiceDetailPage({ params }: PageProps) {
   return (
     <InvoiceDetailScreen
       clientInvoice={clientInvoice}
+      initialInvoicesList={(initialInvoicesList ?? []) as Invoice[]}
       uiAccess={payload.uiAccess}
       backHref={backHref}
       viewerRole={role}

@@ -24,7 +24,10 @@ import { DoctorSpecialtyBadge } from "@/components/shared/doctor-display/DoctorS
 import { PatientAgeGlassBadge } from "@/components/shared/person-display/PatientAgeGlassBadge";
 import { PatientCareTierGlassBadge } from "@/components/shared/person-display/PatientCareTierGlassBadge";
 import { PatientPortraitAvatar } from "@/components/shared/person-display/PatientPortraitAvatar";
-import { CategoryInlineLink } from "@/components/shared/CategoryInlineLink";
+import { AppointmentCategoryTypeMetaRow } from "@/components/shared/appointment-display/AppointmentCategoryTypeMetaRow";
+import { resolvePrimaryDoctorCardImage } from "@/lib/appointment-card-staff-image";
+import { canShowAppointmentClinicalNotes } from "@/lib/portal-appointment-card-visibility";
+import { shouldShowAppointmentCategoryTypeRow } from "@/lib/appointment-type-display";
 import {
   CalendarDays,
   Clock3,
@@ -40,7 +43,6 @@ import {
   Users,
   Video,
   Receipt,
-  Euro,
 } from "@/components/shared/appointment-card-icons";
 import { RoleEntityLink } from "@/components/shared/RoleEntityLink";
 import { TruncatedText, WrappingText } from "@/components/shared/TruncatedText";
@@ -62,10 +64,7 @@ import type { InvoiceDisplayStatus } from "@/lib/billing-appointment-eligibility
 import { useInvoiceFormDialogOptional } from "@/context/InvoiceFormDialogContext";
 import { useAuth } from "@/hooks/useAuth";
 import { canShowCreateInvoiceAction } from "@/lib/appointment-invoice-create-eligibility";
-import {
-  formatVisitFeeEurLabel,
-  resolveDisplayedVisitFeeCents,
-} from "@/lib/appointment-visit-fee-display";
+import { resolveDisplayedVisitFeeCents } from "@/lib/appointment-visit-fee-display";
 
 export type AppointmentCardProps = {
   appointment: FullAppointment;
@@ -171,6 +170,7 @@ function PatientDemographicBadgesRow({
  * Popover / month-panel identity row (label + avatar + name/email) kept outside render scope
  * so eslint static-components rule passes and row state remains stable.
  */
+/** Popover / month-panel — one responsive row: label + avatar + name + email + badges. */
 function MetaIdentityBlock({
   icon,
   label,
@@ -182,18 +182,14 @@ function MetaIdentityBlock({
   avatarNode,
 }: MetaIdentityBlockProps) {
   const bracketEmail = formatBracketEmail(email);
-  const secondaryRow =
-    badgeRow ??
-    (specialty?.trim() ? (
-      <DoctorSpecialtyBadge specialty={specialty} className="self-start" />
-    ) : null);
   return (
-    <div className="flex min-w-0 flex-col gap-1">
-      <span className="inline-flex items-center gap-1.5 text-xs text-gray-400">
-        <span className="inline-flex shrink-0 items-center text-gray-400">{icon}</span>
-        <span>{label}:</span>
-      </span>
-      <div className="flex min-w-0 items-center gap-2 pl-5">
+    <AppointmentCardMetaRow
+      icon={icon}
+      label={`${label}:`}
+      wrap
+      className="flex w-full min-w-0 items-center"
+    >
+      <span className="inline-flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
         {avatarNode ?? (
           <UserAvatar
             src={null}
@@ -203,17 +199,14 @@ function MetaIdentityBlock({
             className="shrink-0"
           />
         )}
-        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span className="inline-flex min-w-0 items-baseline gap-1 text-xs font-medium text-gray-700">
-            <span className="min-w-0 truncate">{nameNode}</span>
-            <span className="min-w-0 truncate text-xs font-normal text-gray-500">
-              {bracketEmail || "(—)"}
-            </span>
-          </span>
-          {secondaryRow}
-        </div>
-      </div>
-    </div>
+        <span className="min-w-0 text-xs font-medium text-gray-700">{nameNode}</span>
+        <span className="min-w-0 truncate text-xs text-gray-500">{bracketEmail || "(—)"}</span>
+        {badgeRow}
+        {specialty?.trim() ? (
+          <DoctorSpecialtyBadge specialty={specialty} className="shrink-0" />
+        ) : null}
+      </span>
+    </AppointmentCardMetaRow>
   );
 }
 
@@ -357,6 +350,27 @@ function AppointmentCardMeta({
     null;
   const patientAge = patientAgeYears(appointment.patient_data?.birth_date ?? null);
   const patientCareLevel = appointment.patient_data?.care_level ?? null;
+  const displayFeeCents = resolveDisplayedVisitFeeCents({
+    typePriceCents: appointmentTypePriceCents,
+    doctorConsultationFeeCents,
+  });
+  const showClinicalNotes = canShowAppointmentClinicalNotes(user?.role ?? null);
+  const primaryDoctorImage = primaryDoctorId
+    ? resolvePrimaryDoctorCardImage(
+        {
+          patient_data: appointment.patient_data,
+          calendarOwnerId,
+          treatingPhysicianId,
+          portal_owner: appointment.portal_owner,
+          portal_treating_physician: appointment.portal_treating_physician,
+        },
+        primaryDoctorId,
+        ownerUsers
+      )
+    : null;
+  const showCategoryTypeRow =
+    Boolean(appointment.category_data) ||
+    shouldShowAppointmentCategoryTypeRow(appointment, displayFeeCents);
 
   return (
     <>
@@ -471,20 +485,25 @@ function AppointmentCardMeta({
       </div>
 
       <div className={clsx(appointmentCardMetaGroupClass, "text-gray-700")}>
-        {appointment.category_data ? (
-          <AppointmentCardMetaRow
-            icon={<Tags className="h-3.5 w-3.5" />}
-            label="Category:"
+        {showCategoryTypeRow ? (
+          <AppointmentCategoryTypeMetaRow
+            category={
+              appointment.category_data
+                ? {
+                    categoryId: appointment.category_data.id,
+                    label: appointment.category_data.label,
+                    color: appointment.category_data.color,
+                    icon: appointment.category_data.icon,
+                    wrapLabel: useInlinePeopleRows || wrapValues,
+                  }
+                : null
+            }
+            appointment={appointment}
+            displayFeeCents={displayFeeCents}
+            showFeeEstimateHint={!invoiceDisplayStatus}
+            timeRangeLabel={useInlinePeopleRows ? formattedTime : null}
             wrap={useInlinePeopleRows || wrapValues}
-          >
-            <CategoryInlineLink
-              categoryId={appointment.category_data.id}
-              label={appointment.category_data.label}
-              color={appointment.category_data.color}
-              icon={appointment.category_data.icon}
-              wrapLabel={useInlinePeopleRows || wrapValues}
-            />
-          </AppointmentCardMetaRow>
+          />
         ) : null}
 
         <AppointmentCardMetaRow icon={<Flag className="h-3.5 w-3.5" />} label="Status:">
@@ -498,23 +517,6 @@ function AppointmentCardMeta({
             <InvoiceStatusBadge displayStatus={invoiceDisplayStatus} />
           </AppointmentCardMetaRow>
         ) : null}
-
-        {(() => {
-          const displayFeeCents = resolveDisplayedVisitFeeCents({
-            typePriceCents: appointmentTypePriceCents,
-            doctorConsultationFeeCents,
-          });
-          return (
-            <AppointmentCardMetaRow icon={<Euro className="h-3.5 w-3.5" />} label="Visit fee:">
-              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200/70 bg-emerald-50/80 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 shadow-[0_2px_8px_rgba(16,185,129,0.15)]">
-                {formatVisitFeeEurLabel(displayFeeCents)}
-                {!invoiceDisplayStatus && (
-                  <span className="ml-0.5 text-[9px] font-normal text-emerald-500/90">· est.</span>
-                )}
-              </span>
-            </AppointmentCardMetaRow>
-          );
-        })()}
 
         {appointment.is_telehealth ? (
           <span className="inline-flex items-center gap-1 rounded-full border border-sky-200/60 bg-sky-100/80 px-2 py-0.5 text-[10px] font-medium text-sky-700">
@@ -827,7 +829,7 @@ function AppointmentCardMeta({
                     primarySummary?.display_name ??
                     null,
                   email: primaryEmail ?? undefined,
-                  image: primarySummary?.image ?? null,
+                  image: primaryDoctorImage,
                 }}
                 sizeClassName="h-7 w-7"
               />
@@ -866,7 +868,7 @@ function AppointmentCardMeta({
                       primarySummary?.display_name ??
                       null,
                     email: primaryEmail ?? undefined,
-                    image: primarySummary?.image ?? null,
+                    image: primaryDoctorImage,
                   }}
                   sizeClassName="h-6 w-6"
                 />
@@ -920,7 +922,7 @@ function AppointmentCardMeta({
         </AppointmentCardMetaRow>
       ) : null}
 
-      {appointment.notes ? (
+      {showClinicalNotes && appointment.notes ? (
         <AppointmentCardMetaRow icon={<NotebookPen className="h-3.5 w-3.5" />} label="Note:" wrap={wrapValues}>
           <TextWrap className={isDone ? "text-gray-400" : "text-gray-600"} title={appointment.notes}>
             {appointment.notes}

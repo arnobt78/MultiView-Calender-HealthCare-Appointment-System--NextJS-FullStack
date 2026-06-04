@@ -13,16 +13,12 @@
  */
 
 import { useState, useEffect, useLayoutEffect, useMemo, type ReactNode } from "react";
-import Link from "next/link";
+import { seedInvoicesListCacheFromSsr } from "@/lib/invoices-query-ssr-seed";
 import { useRouter } from "next/navigation";
-import { invoiceDetailHref } from "@/lib/entity-routes";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { invalidateInvoicesAndOverview } from "@/lib/query-client";
 import { usePayments, type Invoice } from "@/hooks/usePayments";
-import { InvoiceStatusBadge } from "@/components/shared/billing/InvoiceStatusBadge";
-import { InvoiceVisitSummaryLine } from "@/components/shared/billing/InvoiceVisitSummaryLine";
-import { InvoicePayActions } from "@/components/shared/billing/InvoicePayActions";
-import { InvoiceAmountDisplay } from "@/components/shared/billing/InvoiceAmountDisplay";
+import { PatientPortalInvoiceCard } from "@/components/shared/billing/PatientPortalInvoiceCard";
 import { differenceInYears, format, isPast, isFuture, isToday } from "date-fns";
 import type { PortalPrefetchData } from "@/lib/server-prefetch";
 import { apiClient } from "@/lib/api-client";
@@ -381,7 +377,18 @@ export default function PatientPortalPage({
 }: PatientPortalPageProps = {}) {
   const queryClient = useQueryClient();
   const router = useRouter();
-  const { pay, isPaying } = usePayments();
+  useMemo(() => {
+    seedInvoicesListCacheFromSsr(queryClient, initialInvoices);
+    return null;
+  }, [queryClient, initialInvoices]);
+
+  const {
+    invoices: invoicesList,
+    isLoading: invoicesLoading,
+    isError: invoicesError,
+    pay,
+    isPaying,
+  } = usePayments({ invoicesInitialData: initialInvoices });
 
   // Seed cache synchronously before first paint to avoid skeleton flash
   useLayoutEffect(() => {
@@ -391,7 +398,7 @@ export default function PatientPortalPage({
     // Warm doctor directory for booking step 1 cards (availabilities + service labels).
     prefetchDoctorsDirectory(queryClient);
     // SSR invoice list — always seed (including []) so client matches server without isMounted gate.
-    queryClient.setQueryData(queryKeys.invoices.all, initialInvoices);
+    seedInvoicesListCacheFromSsr(queryClient, initialInvoices);
   }, [queryClient, initialPortalData, initialInvoices]);
 
   /** Stripe return — bust invoice cache without full page reload. */
@@ -406,17 +413,6 @@ export default function PatientPortalPage({
     queryFn: () => apiClient<PortalPrefetchData>("/api/patient-portal"),
     initialData: initialPortalData ?? undefined,
     // SSR seed + initialData keeps profile chrome stable; 30 s window avoids redundant refetch.
-    staleTime: 30_000,
-  });
-
-  // Chart-linked invoices — SSR initialData + layout seed (no isMounted delay).
-  const { data: invoicesList, isLoading: invoicesLoading, isError: invoicesError } = useQuery({
-    queryKey: queryKeys.invoices.all,
-    queryFn: async () => {
-      const data = await apiClient<{ invoices: Invoice[] }>("/api/invoices");
-      return data.invoices ?? [];
-    },
-    initialData: initialInvoices,
     staleTime: 30_000,
   });
 
@@ -732,7 +728,7 @@ export default function PatientPortalPage({
                   {invoicesLoading ? (
                     <div className="space-y-2">
                       {Array.from({ length: 2 }).map((_, i) => (
-                        <Skeleton key={i} className="h-8 w-full rounded" />
+                        <Skeleton key={i} className="h-28 w-full rounded-xl" />
                       ))}
                     </div>
                   ) : invoicesError ? (
@@ -748,41 +744,12 @@ export default function PatientPortalPage({
                   ) : (
                     <div className="space-y-2">
                       {invoices.map((inv) => (
-                        <div
+                        <PatientPortalInvoiceCard
                           key={inv.id}
-                          className="flex items-center justify-between rounded-lg border bg-card px-3 py-2 text-xs"
-                        >
-                          <div className="min-w-0">
-                            <Link
-                              href={invoiceDetailHref("patient", inv.id)}
-                              className="truncate font-medium text-gray-700 hover:underline"
-                            >
-                              {inv.description ?? "Invoice"}
-                            </Link>
-                            {inv.due_date && (
-                              <p className="text-[10px] text-gray-600">
-                                Due {format(new Date(inv.due_date), "dd MMM yyyy")}
-                              </p>
-                            )}
-                            <InvoiceVisitSummaryLine
-                              summary={inv.visit_summary}
-                              className="text-gray-600"
-                            />
-                          </div>
-                          <div className="flex shrink-0 items-center gap-2">
-                            <InvoiceAmountDisplay
-                              amountCents={inv.amount}
-                              currency={inv.currency}
-                              className="font-semibold text-gray-700"
-                            />
-                            <InvoiceStatusBadge invoice={inv} />
-                            <InvoicePayActions
-                              status={inv.status}
-                              onPay={() => pay(inv.id)}
-                              isPaying={isPaying}
-                            />
-                          </div>
-                        </div>
+                          invoice={inv}
+                          onPay={() => pay(inv.id)}
+                          isPaying={isPaying}
+                        />
                       ))}
                     </div>
                   )}

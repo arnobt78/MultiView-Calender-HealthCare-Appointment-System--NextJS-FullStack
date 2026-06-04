@@ -15,6 +15,10 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { getUserRole, isAdminRole } from "@/lib/rbac";
+import {
+  APPOINTMENT_TYPE_CARD_SELECT,
+  appointmentTypeSerializedFields,
+} from "@/lib/appointment-type-include";
 import { serializeAppointment } from "@/lib/serializers";
 import { startOfDay, endOfDay } from "date-fns";
 
@@ -89,7 +93,7 @@ export async function GET() {
           patient: { select: { firstname: true, lastname: true } },
           owner: { select: { display_name: true, email: true, consultation_fee: true } },
           treating_physician: { select: { consultation_fee: true } },
-          appointment_type: { select: { price_cents: true } },
+          appointment_type: { select: APPOINTMENT_TYPE_CARD_SELECT },
         },
       }),
       prisma.invoice.aggregate({ where: { status: "paid" }, _sum: { amount: true } }),
@@ -139,7 +143,7 @@ export async function GET() {
         return {
           ...serializeAppointment({
             ...a,
-            appointment_type_price_cents: ta.appointment_type?.price_cents ?? null,
+            ...appointmentTypeSerializedFields(ta.appointment_type),
             doctor_consultation_fee_cents: feeDoc?.consultation_fee ?? null,
           }),
           patient_name: a.patient

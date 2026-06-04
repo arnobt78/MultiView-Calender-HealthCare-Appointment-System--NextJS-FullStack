@@ -20,10 +20,10 @@ export const invoiceAppointmentVisitInclude = {
     },
   },
   owner: {
-    select: { id: true, display_name: true, email: true, specialty: true },
+    select: { id: true, display_name: true, email: true, specialty: true, image: true },
   },
   treating_physician: {
-    select: { id: true, display_name: true, email: true, specialty: true },
+    select: { id: true, display_name: true, email: true, specialty: true, image: true },
   },
 } as const;
 
@@ -54,12 +54,14 @@ type VisitApptRow = {
     display_name: string | null;
     email: string;
     specialty: string | null;
+    image: string | null;
   } | null;
   treating_physician: {
     id: string;
     display_name: string | null;
     email: string;
     specialty: string | null;
+    image: string | null;
   } | null;
 };
 
@@ -105,14 +107,18 @@ export function mapAppointmentToInvoiceVisitSummary(
     category_icon: row.category?.icon ?? null,
     treating_physician_id: row.treating_physician?.id ?? null,
     treating_physician_label: staffLabel(row.treating_physician),
+    treating_physician_email: row.treating_physician?.email ?? null,
     treating_physician_specialty: row.treating_physician?.specialty ?? null,
+    treating_physician_image: row.treating_physician?.image?.trim() || null,
     calendar_owner_id: row.owner?.id ?? null,
     calendar_owner_label: staffLabel(row.owner),
+    calendar_owner_email: row.owner?.email ?? null,
     calendar_owner_specialty: row.owner?.specialty ?? null,
+    calendar_owner_image: row.owner?.image?.trim() || null,
   };
 }
 
-/** One-line subtitle for invoice list rows. */
+/** One-line subtitle — when/patient/doctor only (title lives on row link). */
 export function formatInvoiceVisitSummaryLine(summary: InvoiceVisitSummary): string {
   const parts = [
     summary.when_label,
@@ -120,7 +126,6 @@ export function formatInvoiceVisitSummaryLine(summary: InvoiceVisitSummary): str
     summary.treating_physician_label
       ? `Dr. ${summary.treating_physician_label}`
       : null,
-    summary.title,
   ].filter(Boolean);
   return parts.join(" · ");
 }

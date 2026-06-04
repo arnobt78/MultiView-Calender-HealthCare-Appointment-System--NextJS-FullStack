@@ -18,6 +18,8 @@ type Props = {
   viewerRole: EntityRole;
   /** CP uses control-panel appointment link; portal uses role-aware href. */
   variant: "control-panel" | "portal";
+  /** SSR list — seeds invoices.all for detail actions without extra client fetch. */
+  initialInvoicesList?: Invoice[] | null;
 };
 
 export function InvoiceDetailScreen({
@@ -26,12 +28,17 @@ export function InvoiceDetailScreen({
   backHref,
   viewerRole,
   variant,
+  initialInvoicesList,
 }: Props) {
   return (
     <div className="space-y-2">
-      <InvoiceDetailQuerySeed invoice={clientInvoice} />
+      <InvoiceDetailQuerySeed
+        invoice={clientInvoice}
+        initialInvoicesList={initialInvoicesList}
+      />
       <InvoiceDetailLiveBody
         initialInvoice={clientInvoice}
+        initialInvoicesList={initialInvoicesList}
         uiAccess={uiAccess}
         viewerRole={viewerRole}
         variant={variant}

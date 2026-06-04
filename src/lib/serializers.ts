@@ -216,6 +216,10 @@ export function serializeAppointment(a: {
   telehealth_link?: string | null;
   /** Joined from appointment_type — fee in cents for the visit fee badge on appointment cards. */
   appointment_type_price_cents?: number | null;
+  /** Joined from appointment_types.name — category meta row visit type chip. */
+  appointment_type_name?: string | null;
+  /** Type default slot length — shown beside visit type when booking duration absent. */
+  appointment_type_duration_minutes?: number | null;
   /** Treating physician (or owner) consultation_fee — second fallback for visit fee badge. */
   doctor_consultation_fee_cents?: number | null;
 }) {
@@ -241,6 +245,8 @@ export function serializeAppointment(a: {
     duration_minutes: a.duration_minutes ?? null,
     telehealth_link: a.telehealth_link ?? null,
     appointment_type_price_cents: a.appointment_type_price_cents ?? null,
+    appointment_type_name: a.appointment_type_name ?? null,
+    appointment_type_duration_minutes: a.appointment_type_duration_minutes ?? null,
     doctor_consultation_fee_cents: a.doctor_consultation_fee_cents ?? null,
   };
 }
@@ -271,8 +277,12 @@ export type PortalAppointmentIncludeRow = Parameters<typeof serializeAppointment
   owner?: PortalAppointmentStaffUser | null;
   /** B2: joined user row for `treating_physician_id` when set (display chip). */
   treating_physician?: PortalAppointmentStaffUser | null;
-  /** Joined from appointment_type — price for the visit fee badge on patient portal cards. */
-  appointment_type?: { price_cents: number } | null;
+  /** Joined from appointment_type — name/price/duration for portal + dashboard cards. */
+  appointment_type?: {
+    name?: string | null;
+    price_cents: number;
+    duration_minutes?: number | null;
+  } | null;
 };
 
 /** Serialized portal appointment — `category` stays UUID; rich chip uses `category_data`. */
@@ -288,6 +298,8 @@ export function mapPortalAppointmentsFromRows(rows: PortalAppointmentIncludeRow[
     const base = serializeAppointment({
       ...a,
       appointment_type_price_cents: a.appointment_type?.price_cents ?? null,
+      appointment_type_name: a.appointment_type?.name ?? null,
+      appointment_type_duration_minutes: a.appointment_type?.duration_minutes ?? null,
       doctor_consultation_fee_cents: feeDoctor?.consultation_fee ?? null,
     });
     return {

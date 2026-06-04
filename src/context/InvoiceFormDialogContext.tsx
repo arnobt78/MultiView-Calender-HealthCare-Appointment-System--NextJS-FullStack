@@ -6,6 +6,7 @@ import {
   type InvoiceFormDialogVariant,
 } from "@/hooks/useInvoiceFormDialogController";
 import { useAuth } from "@/hooks/useAuth";
+import type { Invoice } from "@/hooks/usePayments";
 import { isAdminRole, isDoctorRole } from "@/lib/rbac";
 
 type InvoiceFormDialogContextValue = ReturnType<typeof useInvoiceFormDialogController>;
@@ -18,19 +19,26 @@ type ProviderProps = {
   children: ReactNode;
   /** Force variant when nav role is ambiguous (e.g. CP admin shell). */
   variant?: InvoiceFormDialogVariant;
+  /** SSR invoices.all — avoids list GET when opening dialog on deep-linked staff routes. */
+  invoicesInitialData?: Invoice[];
 };
 
 /**
  * One invoice create/edit dialog per staff layout — calendar + appointment menus call
  * openCreateForAppointment without prop drilling. Patients skip provider (no-op passthrough).
  */
-export function InvoiceFormDialogProvider({ children, variant }: ProviderProps) {
+export function InvoiceFormDialogProvider({
+  children,
+  variant,
+  invoicesInitialData,
+}: ProviderProps) {
   const { user } = useAuth();
   const role = user?.role ?? null;
   const isStaff = isAdminRole(role) || isDoctorRole(role);
-  const controller = useInvoiceFormDialogController(
-    variant ? { variant } : undefined
-  );
+  const controller = useInvoiceFormDialogController({
+    ...(variant ? { variant } : {}),
+    invoicesInitialData,
+  });
 
   const value = useMemo(() => controller, [controller]);
 

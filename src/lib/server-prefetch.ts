@@ -19,6 +19,10 @@
  */
 
 import {
+  APPOINTMENT_TYPE_CARD_SELECT,
+  appointmentTypeSerializedFields,
+} from "@/lib/appointment-type-include";
+import {
   buildServiceCatalog,
   type AdditionalCatalogInput,
   type GlobalCatalogInput,
@@ -47,7 +51,11 @@ import {
   mapPortalAppointmentsFromRows,
 } from "@/lib/serializers";
 import type { UsersListResponse } from "@/hooks/useUsers";
-import { patientDetailInclude, patientUserPick } from "@/lib/patient-api-include";
+import {
+  patientDetailInclude,
+  patientPrimaryDoctorPick,
+  patientUserPick,
+} from "@/lib/patient-api-include";
 import { USER_API_SELECT } from "@/lib/user-api-select";
 import { getInsightsData, type InsightsPayload } from "@/lib/insights-data";
 import { fetchInsightsWithRedisCache } from "@/lib/insights/insights-redis-cache";
@@ -270,6 +278,8 @@ const PATIENT_DASHBOARD_APPOINTMENT_INCLUDE = {
       role: true,
       image: true,
       specialty: true,
+      /** consultation_fee → doctor_consultation_fee_cents in mapPortalAppointmentsFromRows */
+      consultation_fee: true,
     },
   },
   treating_physician: {
@@ -280,9 +290,11 @@ const PATIENT_DASHBOARD_APPOINTMENT_INCLUDE = {
       role: true,
       image: true,
       specialty: true,
+      /** consultation_fee → doctor_consultation_fee_cents in mapPortalAppointmentsFromRows */
+      consultation_fee: true,
     },
   },
-  appointment_type: { select: { price_cents: true } },
+  appointment_type: { select: APPOINTMENT_TYPE_CARD_SELECT },
 } as const;
 
 /**
@@ -343,12 +355,24 @@ export async function prefetchDashboardAppointments(
         where: staffCalendarAppointmentWhere(userId, email),
         orderBy: { start: "asc" },
         take: PAGINATION.CALENDAR_APPOINTMENTS_LIMIT,
-        include: { appointment_type: { select: { price_cents: true } } },
+        include: {
+          appointment_type: { select: APPOINTMENT_TYPE_CARD_SELECT },
+          treating_physician: { select: { consultation_fee: true } },
+          owner: { select: { consultation_fee: true } },
+        },
       });
-      ownedRows = rows.map((a) => serializeAppointment({
-        ...a,
-        appointment_type_price_cents: a.appointment_type?.price_cents ?? null,
-      })) as Appointment[];
+      ownedRows = rows.map((a) => {
+        const ta = a as typeof a & {
+          treating_physician?: { consultation_fee: number | null } | null;
+          owner?: { consultation_fee: number | null } | null;
+        };
+        const feeDoc = ta.treating_physician ?? ta.owner;
+        return serializeAppointment({
+          ...a,
+          ...appointmentTypeSerializedFields(a.appointment_type),
+          doctor_consultation_fee_cents: feeDoc?.consultation_fee ?? null,
+        });
+      }) as Appointment[];
     }
 
     const extraAssignedIds = resolveExtraAssignedAppointmentIds(
@@ -366,16 +390,26 @@ export async function prefetchDashboardAppointments(
               extraAssignedIds,
               email
             ),
-            include: { appointment_type: { select: { price_cents: true } } },
+            include: {
+              appointment_type: { select: APPOINTMENT_TYPE_CARD_SELECT },
+              treating_physician: { select: { consultation_fee: true } },
+              owner: { select: { consultation_fee: true } },
+            },
           })
         : [];
 
-    const serializedAssigned = assignedRaw.map((row) =>
-      serializeAppointment({
+    const serializedAssigned = assignedRaw.map((row) => {
+      const tr = row as typeof row & {
+        treating_physician?: { consultation_fee: number | null } | null;
+        owner?: { consultation_fee: number | null } | null;
+      };
+      const feeDoc = tr.treating_physician ?? tr.owner;
+      return serializeAppointment({
         ...row,
-        appointment_type_price_cents: row.appointment_type?.price_cents ?? null,
-      }) as Appointment
-    );
+        ...appointmentTypeSerializedFields(row.appointment_type),
+        doctor_consultation_fee_cents: feeDoc?.consultation_fee ?? null,
+      }) as Appointment;
+    });
 
     return buildFullAppointmentsList({
       userId,
@@ -477,38 +511,22 @@ export async function prefetchBillingAppointmentOptions(
   }
 }
 
-/** Mirrors GET /api/payments — cache key: queryKeys.invoices.all → Invoice[] */
+/** Mirrors GET /api/invoices — cache key: queryKeys.invoices.all → Invoice[] */
 export async function prefetchInvoices(
   userId: string,
   role: string | null,
   email?: string | null
 ): Promise<Invoice[] | null> {
   try {
-    const { fetchInvoicesForViewer } = await import("@/lib/invoices-scope");
-    const { attachInvoiceIssuerLabels, attachVisitSummariesToInvoices } =
-      await import("@/lib/invoice-visit-summary");
-    const rows = await fetchInvoicesForViewer({ userId, role, email });
-
-    const mapped = rows.map((i) => {
-      const base = serializeInvoice(i);
-      return {
-        ...base,
-        appointment_id: i.appointment_id ?? undefined,
-        description: i.description ?? undefined,
-        due_date: base.due_date ?? undefined,
-        paid_at: base.paid_at ?? undefined,
-        payments: i.payments.map((p) => ({
-          id: p.id,
-          amount: p.amount,
-          status: p.status,
-          created_at: p.created_at?.toISOString?.() ?? "",
-          stripe_payment_id: p.stripe_payment_id ?? undefined,
-        })),
-      } satisfies Invoice;
-    });
-
-    const withVisits = await attachVisitSummariesToInvoices(mapped);
-    return attachInvoiceIssuerLabels(withVisits);
+    const { loadInvoicesListForViewer } = await import("@/lib/invoices-list-response");
+    const rows = await loadInvoicesListForViewer({ userId, role, email });
+    return rows.map((row) => ({
+      ...row,
+      appointment_id: row.appointment_id ?? undefined,
+      description: row.description ?? undefined,
+      due_date: row.due_date ?? undefined,
+      paid_at: row.paid_at ?? undefined,
+    })) satisfies Invoice[];
   } catch {
     return null;
   }
@@ -671,7 +689,7 @@ export async function prefetchPatients(): Promise<Patient[] | null> {
   try {
     const rows = await prisma.patient.findMany({
       orderBy: { created_at: "desc" },
-      include: { primary_doctor: patientUserPick },
+      include: { primary_doctor: patientPrimaryDoctorPick },
     });
     return rows.map(serializePatient) as Patient[];
   } catch {
@@ -1181,12 +1199,12 @@ export async function prefetchPortalData(userId: string): Promise<PortalPrefetch
       include: {
         category: true,
         owner: {
-          select: { id: true, display_name: true, email: true, role: true, image: true, specialty: true },
+          select: { id: true, display_name: true, email: true, role: true, image: true, specialty: true, consultation_fee: true },
         },
         treating_physician: {
-          select: { id: true, display_name: true, email: true, role: true, image: true, specialty: true },
+          select: { id: true, display_name: true, email: true, role: true, image: true, specialty: true, consultation_fee: true },
         },
-        appointment_type: { select: { price_cents: true } },
+        appointment_type: { select: APPOINTMENT_TYPE_CARD_SELECT },
       },
       orderBy: { start: "desc" },
     });
@@ -1256,7 +1274,11 @@ export async function prefetchDoctorPortal(userId: string): Promise<DoctorPortal
           start: { gte: todayStart, lte: todayEnd },
         }),
         orderBy: { start: "asc" },
-        include: { appointment_type: { select: { price_cents: true } } },
+        include: {
+          appointment_type: { select: APPOINTMENT_TYPE_CARD_SELECT },
+          treating_physician: { select: { consultation_fee: true } },
+          owner: { select: { consultation_fee: true } },
+        },
       }),
       prisma.appointment.findMany({
         where: apptScope({
@@ -1265,13 +1287,17 @@ export async function prefetchDoctorPortal(userId: string): Promise<DoctorPortal
         }),
         orderBy: { start: "asc" },
         take: 20,
-        include: { appointment_type: { select: { price_cents: true } } },
+        include: {
+          appointment_type: { select: APPOINTMENT_TYPE_CARD_SELECT },
+          treating_physician: { select: { consultation_fee: true } },
+          owner: { select: { consultation_fee: true } },
+        },
       }),
       prisma.patient.findMany({
         where: { primary_doctor_id: userId },
         orderBy: { firstname: "asc" },
         take: 50,
-        include: { primary_doctor: patientUserPick },
+        include: { primary_doctor: patientPrimaryDoctorPick },
       }),
       prisma.appointmentType.findMany({
         where: { user_id: null, is_active: true },
@@ -1368,14 +1394,32 @@ export async function prefetchDoctorPortal(userId: string): Promise<DoctorPortal
         years_of_experience: doctor.years_of_experience,
         created_at: doctor.created_at.toISOString(),
       } as User,
-      todayAppointments: todayAppts.map((a) => serializeAppointment({
-        ...a,
-        appointment_type_price_cents: (a as typeof a & { appointment_type?: { price_cents: number } | null }).appointment_type?.price_cents ?? null,
-      })),
-      upcomingAppointments: upcomingAppts.map((a) => serializeAppointment({
-        ...a,
-        appointment_type_price_cents: (a as typeof a & { appointment_type?: { price_cents: number } | null }).appointment_type?.price_cents ?? null,
-      })),
+      todayAppointments: todayAppts.map((a) => {
+        const ta = a as typeof a & {
+          appointment_type?: { price_cents: number } | null;
+          treating_physician?: { consultation_fee: number | null } | null;
+          owner?: { consultation_fee: number | null } | null;
+        };
+        const feeDoc = ta.treating_physician ?? ta.owner;
+        return serializeAppointment({
+          ...a,
+          ...appointmentTypeSerializedFields(ta.appointment_type),
+          doctor_consultation_fee_cents: feeDoc?.consultation_fee ?? null,
+        });
+      }),
+      upcomingAppointments: upcomingAppts.map((a) => {
+        const ta = a as typeof a & {
+          appointment_type?: { price_cents: number } | null;
+          treating_physician?: { consultation_fee: number | null } | null;
+          owner?: { consultation_fee: number | null } | null;
+        };
+        const feeDoc = ta.treating_physician ?? ta.owner;
+        return serializeAppointment({
+          ...a,
+          ...appointmentTypeSerializedFields(ta.appointment_type),
+          doctor_consultation_fee_cents: feeDoc?.consultation_fee ?? null,
+        });
+      }),
       patients: patients.map(serializePatient) as Patient[],
       enabledTypes: globalTypes.filter((t) => configMap.get(t.id) !== false).map(mapType),
       allGlobalTypes: globalTypes.map(mapType),
@@ -1450,7 +1494,11 @@ export async function prefetchAdminPortal(): Promise<AdminPortalData | null> {
       prisma.appointment.findMany({
         orderBy: { created_at: "desc" },
         take: 15,
-        include: { appointment_type: { select: { price_cents: true } } },
+        include: {
+          appointment_type: { select: APPOINTMENT_TYPE_CARD_SELECT },
+          treating_physician: { select: { consultation_fee: true } },
+          owner: { select: { consultation_fee: true } },
+        },
       }),
       prisma.invoice.aggregate({ where: { status: "paid" }, _sum: { amount: true } }),
       prisma.invoice.aggregate({ where: { status: { in: ["draft", "sent"] } }, _sum: { amount: true } }),
@@ -1486,10 +1534,19 @@ export async function prefetchAdminPortal(): Promise<AdminPortalData | null> {
         appointment_types: d.appointment_types_owned as Pick<AppointmentType, "id" | "name" | "duration_minutes" | "is_telehealth">[],
         patient_count: d.patients_primary_doctor.length,
       })) as DoctorRow[],
-      recentAppointments: recentAppointments.map((a) => serializeAppointment({
-        ...a,
-        appointment_type_price_cents: (a as typeof a & { appointment_type?: { price_cents: number } | null }).appointment_type?.price_cents ?? null,
-      })),
+      recentAppointments: recentAppointments.map((a) => {
+        const ta = a as typeof a & {
+          appointment_type?: { price_cents: number } | null;
+          treating_physician?: { consultation_fee: number | null } | null;
+          owner?: { consultation_fee: number | null } | null;
+        };
+        const feeDoc = ta.treating_physician ?? ta.owner;
+        return serializeAppointment({
+          ...a,
+          ...appointmentTypeSerializedFields(ta.appointment_type),
+          doctor_consultation_fee_cents: feeDoc?.consultation_fee ?? null,
+        });
+      }),
     };
   } catch {
     return null;

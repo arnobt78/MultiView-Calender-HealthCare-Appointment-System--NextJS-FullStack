@@ -1,6 +1,16 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-04 — C4 invoice UI polish)
+## Latest (2026-06-04 — Appointment card meta + portraits + cache)
+
+- **Category row:** `AppointmentCategoryTypeMetaRow` — `CategoryInlineLink` + `AppointmentTypeGlassBadge` + optional duration + visit fee (+ clock on list). `appointment_type_name` / `appointment_type_duration_minutes` via `APPOINTMENT_TYPE_CARD_SELECT` + `appointmentTypeSerializedFields` on calendar GET, portal, doctor/admin portal, `prefetchDashboardAppointments`, `mapPortalAppointmentsFromRows`.
+- **Type-only edge:** row renders with label **Visit type:** when category missing but FK name/fee exists (`shouldShowAppointmentCategoryTypeRow`).
+- **Primary doctor avatar:** `resolvePrimaryDoctorCardImage` — `primary_doctor_image` (SSR), `portal_owner` / `portal_treating_physician` joins, `ownerUsers` directory, peer owner/treating id match. `patientPrimaryDoctorPick` on `prefetchPatients`, `GET /api/patients`, doctor-portal roster (was `patientUserPick` without `image`).
+- **Notes:** `portal-appointment-card-visibility.ts` — clinical notes hidden for patient role on `AppointmentCard` (list/hover/month) and portal timeline.
+- **Invalidation:** `invalidateAppointmentTypeDerived` → `invalidateAppointmentData` so type rename/price updates calendar cards without appointment CRUD.
+- **Inline identity:** popover/month `MetaIdentityBlock` + portal `PortalAppointmentStaffIdentityBlock` — single responsive row (label + avatar + name + email + specialty).
+- **Verify:** Vitest **693** (130 files), tsc, lint, build.
+
+## Prior (2026-06-04 — C4 invoice UI polish)
 
 - **CP list:** `InvoiceManagement` → `DataTable` + `ClinicalListFilterToolbar` + `invoice-management-columns` / `invoice-table-cells` (amber frame). SSR unchanged: `control-panel/invoice-management` → `prefetchInvoices` + `prefetchBillingAppointmentOptions`.
 - **Dialog:** `ClinicalGlassDatePicker` (due align end); `InvoiceVisitDirectoryPickerCard`; `InvoiceVisitMetaLine` + `invoice-visit-meta-line.ts` (sole visit when/location UI — no legacy `InvoiceVisitListMeta`). Fee default €150: `DEFAULT_DOCTOR_VISIT_FEE_CENTS`.

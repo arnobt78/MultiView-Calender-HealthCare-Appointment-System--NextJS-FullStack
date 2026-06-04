@@ -8,6 +8,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { isValidUUID } from "@/lib/validation";
+import {
+  APPOINTMENT_TYPE_CARD_SELECT,
+  appointmentTypeSerializedFields,
+} from "@/lib/appointment-type-include";
 import { serializeAppointment } from "@/lib/serializers";
 import { getUserRole, isPatientRole } from "@/lib/rbac";
 import { resolveAppointmentAccess } from "@/lib/appointment-access";
@@ -62,7 +66,10 @@ export async function GET(_req: NextRequest, context: RouteContext) {
     return NextResponse.json({
       appointment: serializeAppointment({
         ...raw,
-        appointment_type_price_cents: (raw as typeof raw & { appointment_type?: { price_cents: number } | null }).appointment_type?.price_cents ?? null,
+        ...appointmentTypeSerializedFields(
+          (raw as typeof raw & { appointment_type?: { price_cents: number; name?: string | null; duration_minutes?: number | null } | null })
+            .appointment_type
+        ),
         doctor_consultation_fee_cents: rawFeeDoc.treating_physician?.consultation_fee ?? rawFeeDoc.owner?.consultation_fee ?? null,
       }),
     });
@@ -148,7 +155,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
       where: { id },
       data,
       include: {
-        appointment_type: { select: { price_cents: true } },
+        appointment_type: { select: APPOINTMENT_TYPE_CARD_SELECT },
         treating_physician: { select: { consultation_fee: true } },
         owner: { select: { consultation_fee: true } },
       },
@@ -159,7 +166,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
     return NextResponse.json({
       appointment: serializeAppointment({
         ...updated,
-        appointment_type_price_cents: updated.appointment_type?.price_cents ?? null,
+        ...appointmentTypeSerializedFields(updated.appointment_type),
         doctor_consultation_fee_cents: updated.treating_physician?.consultation_fee ?? updated.owner?.consultation_fee ?? null,
       }),
     });
@@ -322,7 +329,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       where: { id },
       data,
       include: {
-        appointment_type: { select: { price_cents: true } },
+        appointment_type: { select: APPOINTMENT_TYPE_CARD_SELECT },
         treating_physician: { select: { consultation_fee: true } },
         owner: { select: { consultation_fee: true } },
       },
@@ -366,7 +373,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     return NextResponse.json({
       appointment: serializeAppointment({
         ...updated,
-        appointment_type_price_cents: updated.appointment_type?.price_cents ?? null,
+        ...appointmentTypeSerializedFields(updated.appointment_type),
         doctor_consultation_fee_cents: updated.treating_physician?.consultation_fee ?? updated.owner?.consultation_fee ?? null,
       }),
     });

@@ -54,7 +54,12 @@ export function AppointmentDetailScreen({
   variant,
   raw,
 }: AppointmentDetailScreenProps) {
-  const appointment = serializeAppointment(raw);
+  // Compute denormalized fee fields from Prisma joins (appointment-access.ts appointmentDetailInclude)
+  const appointment = serializeAppointment({
+    ...raw,
+    appointment_type_price_cents: raw.appointment_type?.price_cents ?? null,
+    doctor_consultation_fee_cents: raw.treating_physician?.consultation_fee ?? raw.owner?.consultation_fee ?? null,
+  });
   const patientData = raw.patient ? serializePatient(raw.patient) : null;
   const categoryData = raw.category ? serializeCategory(raw.category) : null;
   const canEdit = accessLevel === "mutate";

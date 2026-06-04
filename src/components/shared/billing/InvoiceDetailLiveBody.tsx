@@ -51,6 +51,7 @@ type Props = {
   viewerRole: EntityRole;
   variant: "control-panel" | "portal";
   headerActions?: React.ReactNode;
+  initialInvoicesList?: Invoice[] | null;
 };
 
 function InvoiceDetailDefinitionRow({
@@ -84,6 +85,7 @@ export function InvoiceDetailLiveBody({
   viewerRole,
   variant,
   headerActions,
+  initialInvoicesList,
 }: Props) {
   const { data: invoice = initialInvoice } = useInvoice(initialInvoice.id, {
     initialData: initialInvoice,
@@ -125,7 +127,12 @@ export function InvoiceDetailLiveBody({
         description={subtitle}
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <InvoiceDetailClient invoice={invoice} accessLevel={uiAccess} hideViewLink />
+            <InvoiceDetailClient
+              invoice={invoice}
+              accessLevel={uiAccess}
+              hideViewLink
+              invoicesInitialData={initialInvoicesList ?? undefined}
+            />
             {headerActions}
           </div>
         }

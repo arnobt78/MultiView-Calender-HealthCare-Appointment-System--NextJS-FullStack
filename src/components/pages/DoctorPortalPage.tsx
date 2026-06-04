@@ -12,6 +12,7 @@
  */
 
 import { useLayoutEffect, useMemo } from "react";
+import { seedInvoicesListCacheFromSsr } from "@/lib/invoices-query-ssr-seed";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
 import type { Invoice } from "@/hooks/usePayments";
@@ -70,6 +71,11 @@ export default function DoctorPortalPage({
 }: DoctorPortalPageProps) {
   const queryClient = useQueryClient();
 
+  useMemo(() => {
+    seedInvoicesListCacheFromSsr(queryClient, initialInvoices);
+    return null;
+  }, [queryClient, initialInvoices]);
+
   useLayoutEffect(() => {
     if (initialData != null) {
       queryClient.setQueryData(queryKeys.doctorPortal.all, initialData);
@@ -81,9 +87,7 @@ export default function DoctorPortalPage({
     } else if (doctorId) {
       prefetchDoctorScheduleSettings(queryClient, doctorId);
     }
-    if (initialInvoices.length > 0) {
-      queryClient.setQueryData(queryKeys.invoices.all, initialInvoices);
-    }
+    seedInvoicesListCacheFromSsr(queryClient, initialInvoices);
     if (initialBillingAppointmentOptions != null) {
       queryClient.setQueryData(
         queryKeys.billing.appointmentOptions("", false),
@@ -277,6 +281,7 @@ export default function DoctorPortalPage({
       <DoctorPortalInvoicesCard
         doctorDisplayName={data?.doctor?.display_name}
         listBodyLoading={portalLoading}
+        invoicesInitialData={initialInvoices}
       />
 
       <DoctorPortalPatientsCard

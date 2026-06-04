@@ -1,7 +1,8 @@
 "use client";
 
 import type { InvoiceVisitSummary } from "@/lib/billing-types";
-import { formatInvoiceVisitSummaryLine } from "@/lib/invoice-visit-summary";
+import { InvoiceVisitMetaLine } from "@/components/shared/billing/InvoiceVisitMetaLine";
+import { invoiceVisitSummaryToMetaInput } from "@/lib/invoice-visit-meta-line";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -9,12 +10,14 @@ type Props = {
   className?: string;
 };
 
-/** Compact visit context under invoice title in list cards/tables. */
+/** Visit when/location/telehealth icons — shared under invoice titles (CP, org billing, patient snapshot). */
 export function InvoiceVisitSummaryLine({ summary, className }: Props) {
   if (!summary) return null;
   return (
-    <p className={cn("text-[10px] text-muted-foreground line-clamp-2", className)}>
-      {formatInvoiceVisitSummaryLine(summary)}
-    </p>
+    <InvoiceVisitMetaLine
+      source={invoiceVisitSummaryToMetaInput(summary)}
+      variant="icons"
+      className={cn("text-[10px]", className)}
+    />
   );
 }

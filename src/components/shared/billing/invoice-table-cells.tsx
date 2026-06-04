@@ -9,11 +9,15 @@ import { CategoryTableCell } from "@/components/control-panel/patient-detail-sna
 import { InvoiceIssuedByMeta } from "@/components/shared/billing/InvoiceIssuedByMeta";
 import { TelehealthSessionBadge } from "@/components/shared/appointments/TelehealthSessionBadge";
 import type { Invoice } from "@/hooks/usePayments";
+import { getInvoiceListTitle } from "@/lib/invoice-list-display";
 import {
-  getInvoiceAppointmentTitle,
   formatInvoiceVisitDateLabel,
   formatInvoiceVisitTimeRange,
 } from "@/lib/invoice-list-row-display";
+import {
+  invoiceCalendarOwnerDoctorFromSummary,
+  invoiceTreatingDoctorFromSummary,
+} from "@/lib/invoice-visit-doctor";
 import {
   invoiceDetailHref,
   patientDetailHref,
@@ -48,7 +52,7 @@ export function InvoiceNumberTableCell({ invoice, viewerRole }: InvoiceTableCell
 /** Stacked visit context — title, type badge, when, patient, doctors, category. */
 export function InvoiceDescriptionTableCell({ invoice, viewerRole }: InvoiceTableCellsProps) {
   const summary = invoice.visit_summary;
-  const title = getInvoiceAppointmentTitle(invoice);
+  const title = getInvoiceListTitle(invoice);
   const href = invoiceDetailHref(viewerRole, invoice.id);
   const dateLabel =
     summary?.start_iso ? formatInvoiceVisitDateLabel(summary.start_iso) : null;
@@ -72,27 +76,8 @@ export function InvoiceDescriptionTableCell({ invoice, viewerRole }: InvoiceTabl
       }
     : null;
 
-  const treatingDoctor = summary?.treating_physician_id
-    ? {
-        id: summary.treating_physician_id,
-        display_name: summary.treating_physician_label,
-        email: null,
-        specialty: summary.treating_physician_specialty,
-        image: null,
-      }
-    : null;
-
-  const ownerDoctor =
-    summary?.calendar_owner_id &&
-    summary.calendar_owner_id !== summary.treating_physician_id
-      ? {
-          id: summary.calendar_owner_id,
-          display_name: summary.calendar_owner_label,
-          email: null,
-          specialty: summary.calendar_owner_specialty,
-          image: null,
-        }
-      : null;
+  const treatingDoctor = invoiceTreatingDoctorFromSummary(summary);
+  const ownerDoctor = invoiceCalendarOwnerDoctorFromSummary(summary);
 
   return (
     <div

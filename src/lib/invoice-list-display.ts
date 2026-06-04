@@ -26,7 +26,8 @@ export function getInvoiceListTitle(invoice: Pick<InvoiceRow, "id" | "descriptio
 }
 
 function buildTitleFromVisitSummary(summary: InvoiceVisitSummary): string | null {
-  const typeLabel = summary.category_label?.trim();
+  const typeLabel =
+    summary.appointment_type_name?.trim() || summary.category_label?.trim();
   const patient = summary.patient_label?.trim();
   if (typeLabel && patient) return `${typeLabel} — ${patient}`;
   if (patient) return patient;

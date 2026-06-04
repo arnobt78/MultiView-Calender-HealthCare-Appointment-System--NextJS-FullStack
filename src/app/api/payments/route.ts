@@ -10,15 +10,14 @@ import { getUserRole, isPatientRole } from "@/lib/rbac";
 import { createCheckoutSession, type StripeCheckoutReturnPath } from "@/lib/stripe";
 import { fetchInvoicesForViewer } from "@/lib/invoices-scope";
 import { serializeInvoice } from "@/lib/serializers";
+import { loadInvoicesListForViewer } from "@/lib/invoices-list-response";
 import {
   assertInvoiceAccess,
   type InvoiceAccessSession,
 } from "@/lib/invoice-access";
 import { canPatientPayInvoiceStatus } from "@/lib/billing-status";
-import {
-  attachInvoiceIssuerLabels,
-  attachVisitSummariesToInvoices,
-} from "@/lib/invoice-visit-summary";
+import { attachVisitSummariesToInvoices } from "@/lib/invoice-visit-summary";
+import { buildStripeCheckoutProductCopy } from "@/lib/stripe-checkout-product";
 
 export const dynamic = "force-dynamic";
 
@@ -30,19 +29,11 @@ export async function GET() {
     }
 
     const role = await getUserRole(sessionUser.userId);
-    const rows = await fetchInvoicesForViewer({
+    const invoices = await loadInvoicesListForViewer({
       userId: sessionUser.userId,
       role,
       email: sessionUser.email,
     });
-
-    const withVisits = await attachVisitSummariesToInvoices(
-      rows.map((row) => ({
-        ...serializeInvoice(row),
-        payments: row.payments,
-      }))
-    );
-    const invoices = await attachInvoiceIssuerLabels(withVisits);
 
     return NextResponse.json({ invoices });
   } catch (error: unknown) {
@@ -103,11 +94,20 @@ export async function POST(request: NextRequest) {
       ? "patient-portal"
       : "control-panel/invoice-management";
 
+    const [withVisit] = await attachVisitSummariesToInvoices([
+      {
+        ...serializeInvoice(invoice),
+        payments: invoice.payments,
+      },
+    ]);
+    const stripeProduct = buildStripeCheckoutProductCopy(withVisit);
+
     const checkout = await createCheckoutSession({
       invoiceId: invoice.id,
       amount: invoice.amount,
       currency: invoice.currency,
-      description: invoice.description || `Invoice #${invoice.id.substring(0, 8)}`,
+      description: stripeProduct.name,
+      productDescription: stripeProduct.description,
       customerEmail: sessionUser.email,
       returnPath,
     });

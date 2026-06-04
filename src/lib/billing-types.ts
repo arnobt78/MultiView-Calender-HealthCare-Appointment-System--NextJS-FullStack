@@ -54,10 +54,15 @@ export type InvoiceVisitSummary = {
   category_icon: string | null;
   treating_physician_id: string | null;
   treating_physician_label: string | null;
+  treating_physician_email?: string | null;
   treating_physician_specialty: string | null;
+  /** OAuth/upload avatar for treating physician row. */
+  treating_physician_image?: string | null;
   calendar_owner_id: string | null;
   calendar_owner_label: string | null;
+  calendar_owner_email?: string | null;
   calendar_owner_specialty: string | null;
+  calendar_owner_image?: string | null;
 };
 
 export type InvoiceRow = {

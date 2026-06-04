@@ -8,6 +8,10 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { PAGINATION } from "@/lib/constants";
+import {
+  APPOINTMENT_TYPE_CARD_SELECT,
+  appointmentTypeSerializedFields,
+} from "@/lib/appointment-type-include";
 import { mapPortalAppointmentsFromRows, serializeAppointment } from "@/lib/serializers";
 import { appointmentCreateSchema } from "@/lib/schemas/appointment";
 import { zodBadRequest } from "@/lib/schemas/parse";
@@ -37,12 +41,12 @@ const PATIENT_APPOINTMENT_INCLUDE = {
   treating_physician: {
     select: { id: true, display_name: true, email: true, role: true, image: true, specialty: true, consultation_fee: true },
   },
-  appointment_type: { select: { price_cents: true } },
+  appointment_type: { select: APPOINTMENT_TYPE_CARD_SELECT },
 } as const;
 
 /** All callers get appointment_type.price_cents + doctor consultation_fee for the visit fee badge fallback chain. */
 const BASE_APPOINTMENT_INCLUDE = {
-  appointment_type: { select: { price_cents: true } },
+  appointment_type: { select: APPOINTMENT_TYPE_CARD_SELECT },
   treating_physician: { select: { consultation_fee: true } },
   owner: { select: { consultation_fee: true } },
 } as const;
@@ -85,14 +89,14 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({
         appointments: rows.map((a) => {
           const ta = a as typeof a & {
-            appointment_type?: { price_cents: number } | null;
+            appointment_type?: { price_cents: number; name?: string | null; duration_minutes?: number | null } | null;
             treating_physician?: { consultation_fee: number | null } | null;
             owner?: { consultation_fee: number | null } | null;
           };
           const feeDoc = ta.treating_physician ?? ta.owner;
           return serializeAppointment({
             ...a,
-            appointment_type_price_cents: ta.appointment_type?.price_cents ?? null,
+            ...appointmentTypeSerializedFields(ta.appointment_type),
             doctor_consultation_fee_cents: feeDoc?.consultation_fee ?? null,
           });
         }),
@@ -172,14 +176,14 @@ export async function GET(req: NextRequest) {
         )
       : appointments.map((a) => {
           const ta = a as typeof a & {
-            appointment_type?: { price_cents: number } | null;
+            appointment_type?: { price_cents: number; name?: string | null; duration_minutes?: number | null } | null;
             treating_physician?: { consultation_fee: number | null } | null;
             owner?: { consultation_fee: number | null } | null;
           };
           const feeDoc = ta.treating_physician ?? ta.owner;
           return serializeAppointment({
             ...a,
-            appointment_type_price_cents: ta.appointment_type?.price_cents ?? null,
+            ...appointmentTypeSerializedFields(ta.appointment_type),
             doctor_consultation_fee_cents: feeDoc?.consultation_fee ?? null,
           });
         });
@@ -267,7 +271,7 @@ export async function POST(req: NextRequest) {
         duration_minutes: body.duration_minutes ?? null,
         telehealth_link: body.telehealth_link ?? null,
       },
-      include: { appointment_type: { select: { price_cents: true } } },
+      include: { appointment_type: { select: APPOINTMENT_TYPE_CARD_SELECT } },
     });
 
     /*
@@ -326,7 +330,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       appointment: serializeAppointment({
         ...appointment,
-        appointment_type_price_cents: appointment.appointment_type?.price_cents ?? null,
+        ...appointmentTypeSerializedFields(appointment.appointment_type),
         // POST doesn't join treating_physician on create; doctor_consultation_fee_cents populated after list refetch
         doctor_consultation_fee_cents: null,
       }),

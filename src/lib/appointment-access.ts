@@ -13,6 +13,7 @@
  * Assignee = per-appointment invite (read/write/full). Dashboard access = whole-calendar share (view path only).
  */
 
+import { APPOINTMENT_TYPE_CARD_SELECT } from "@/lib/appointment-type-include";
 import { prisma } from "@/lib/prisma";
 import { isAdminRole, isDoctorRole, isPatientRole } from "@/lib/rbac";
 import { doctorIsRelatedToPatient, patientOwnsPatientRecord } from "@/lib/patient-access";
@@ -46,7 +47,7 @@ const appointmentDetailInclude = {
   assignees: {
     include: { user: { select: { id: true, email: true, display_name: true } } },
   },
-  appointment_type: { select: { price_cents: true } },
+  appointment_type: { select: APPOINTMENT_TYPE_CARD_SELECT },
   /** consultation_fee feeds doctor_consultation_fee_cents on serialized appointment */
   treating_physician: { select: { consultation_fee: true } },
   owner: { select: { consultation_fee: true } },

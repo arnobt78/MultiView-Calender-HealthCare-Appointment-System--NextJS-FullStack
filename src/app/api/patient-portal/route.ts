@@ -10,6 +10,10 @@ import { getSessionUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { isValidUUID } from "@/lib/validation";
 import { redis } from "@/lib/redis";
+import {
+  APPOINTMENT_TYPE_CARD_SELECT,
+  appointmentTypeSerializedFields,
+} from "@/lib/appointment-type-include";
 import { mapPortalAppointmentsFromRows, serializePatient, serializeAppointment } from "@/lib/serializers";
 import { patientDetailInclude } from "@/lib/patient-api-include";
 import { resolvePatientBookingCategoryId } from "@/lib/patient-booking-category";
@@ -66,7 +70,7 @@ export async function GET() {
         treating_physician: {
           select: { id: true, display_name: true, email: true, role: true, image: true, specialty: true, consultation_fee: true },
         },
-        appointment_type: { select: { price_cents: true } },
+        appointment_type: { select: APPOINTMENT_TYPE_CARD_SELECT },
       },
       orderBy: { start: "desc" },
     });
@@ -220,7 +224,12 @@ export async function POST(request: NextRequest) {
         patient_id: patient?.id || null,
         status: "pending",
       },
-      include: { appointment_type: { select: { price_cents: true } } },
+      include: {
+        appointment_type: { select: APPOINTMENT_TYPE_CARD_SELECT },
+        /** consultation_fee feeds doctor_consultation_fee_cents for immediate fee badge on booking confirmation */
+        treating_physician: { select: { consultation_fee: true } },
+        owner: { select: { consultation_fee: true } },
+      },
     });
 
     // Create notification for the doctor
@@ -246,7 +255,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       appointment: serializeAppointment({
         ...appointment,
-        appointment_type_price_cents: appointment.appointment_type?.price_cents ?? null,
+        ...appointmentTypeSerializedFields(appointment.appointment_type),
+        doctor_consultation_fee_cents: appointment.treating_physician?.consultation_fee ?? appointment.owner?.consultation_fee ?? null,
       }),
     }, { status: 201 });
   } catch (error: unknown) {

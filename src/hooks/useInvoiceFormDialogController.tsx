@@ -15,6 +15,8 @@ export type InvoiceFormDialogVariant = "admin" | "doctor";
 export type UseInvoiceFormDialogControllerOptions = {
   /** Override variant — defaults from nav role (admin vs doctor). */
   variant?: InvoiceFormDialogVariant;
+  /** SSR/layout seed for invoices.all — shared with StaffInvoiceDialogShell. */
+  invoicesInitialData?: Invoice[];
 };
 
 /**
@@ -33,7 +35,7 @@ export function useInvoiceFormDialogController(
     updateInvoice,
     isCreating,
     isUpdating,
-  } = usePayments();
+  } = usePayments({ invoicesInitialData: opts?.invoicesInitialData });
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<"create" | "edit">("create");

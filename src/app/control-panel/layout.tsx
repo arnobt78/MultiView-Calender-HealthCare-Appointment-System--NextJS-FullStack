@@ -24,7 +24,8 @@ import {
 } from "@/lib/control-panel-users-filters";
 import { getSessionUser } from "@/lib/session";
 import { getUserRole, isDoctorRole, isPatientRole } from "@/lib/rbac";
-import { prefetchUsersList } from "@/lib/server-prefetch";
+import { prefetchUsersList, prefetchInvoices } from "@/lib/server-prefetch";
+import type { Invoice } from "@/hooks/usePayments";
 
 export const dynamic = "force-dynamic";
 
@@ -65,23 +66,31 @@ export default async function ControlPanelLayout({
   let initialDoctorUsers = null;
   let initialAdminUsers = null;
   let initialAllUsers = null;
+  let initialInvoices: Invoice[] | null = null;
 
   if (sessionUser) {
-    [initialDoctorUsers, initialAdminUsers, initialAllUsers] = await Promise.all([
-      prefetchUsersList(CP_DOCTOR_USERS_FILTERS),
-      prefetchUsersList(CP_ADMIN_USERS_FILTERS),
-      prefetchUsersList(CP_ALL_USERS_FILTERS),
-    ]);
+    const role = await getUserRole(sessionUser.userId);
+    [initialDoctorUsers, initialAdminUsers, initialAllUsers, initialInvoices] =
+      await Promise.all([
+        prefetchUsersList(CP_DOCTOR_USERS_FILTERS),
+        prefetchUsersList(CP_ADMIN_USERS_FILTERS),
+        prefetchUsersList(CP_ALL_USERS_FILTERS),
+        prefetchInvoices(sessionUser.userId, role, sessionUser.email),
+      ]);
   }
 
   return (
-    <StaffInvoiceDialogShell variant="admin">
+    <StaffInvoiceDialogShell
+      variant="admin"
+      initialInvoices={(initialInvoices ?? []) as Invoice[]}
+    >
       <div className="flex h-full min-h-0 w-full max-w-9xl mx-auto bg-gradient-to-br from-slate-50 via-white to-slate-100">
         <ControlPanelSidebarNav />
         <ControlPanelSsrCacheSeed
           initialDoctorUsers={initialDoctorUsers}
           initialAdminUsers={initialAdminUsers}
           initialAllUsers={initialAllUsers}
+          initialInvoices={(initialInvoices ?? []) as Invoice[]}
         />
         <div className="cp-right-scroll flex-1 min-w-0 overflow-y-auto overscroll-contain px-2 sm:px-4 lg:px-8">
           {children}

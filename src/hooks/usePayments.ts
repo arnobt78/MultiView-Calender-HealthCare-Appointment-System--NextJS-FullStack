@@ -14,6 +14,10 @@ import {
   invoiceCrudMessage,
 } from "@/lib/crud-notify-messages";
 import type { InvoiceRow, InvoicePaymentRow } from "@/lib/billing-types";
+import {
+  fetchInvoicesListClient,
+  INVOICES_LIST_STALE_MS,
+} from "@/lib/invoices-list-client";
 
 export type InvoicePayment = InvoicePaymentRow;
 export type Invoice = InvoiceRow;
@@ -43,16 +47,26 @@ async function invalidateAfterInvoiceWrite(
   await invalidateInvoicesAndOverview(queryClient, invalidationOpts);
 }
 
-export function usePayments() {
+export type UsePaymentsOptions = {
+  /** SSR seed — avoids duplicate fetch on first paint when layout already hydrated cache. */
+  invoicesInitialData?: Invoice[];
+};
+
+export function usePayments(options?: UsePaymentsOptions) {
   const queryClient = useQueryClient();
+
+  /** SSR prop, sync parent seed, or hydrated cache — first paint without extra GET. */
+  const invoicesInitialData =
+    options?.invoicesInitialData ??
+    queryClient.getQueryData<Invoice[]>(queryKeys.invoices.all);
 
   const invoicesQuery = useQuery({
     queryKey: queryKeys.invoices.all,
-    queryFn: async () => {
-      const data = await apiClient<{ invoices: Invoice[] }>("/api/payments");
-      return data.invoices || [];
-    },
-    staleTime: 30_000,
+    queryFn: fetchInvoicesListClient,
+    initialData: invoicesInitialData,
+    staleTime: INVOICES_LIST_STALE_MS,
+    // SSR/cache hit — skip mount refetch; invalidateAfterInvoiceWrite still busts list everywhere.
+    refetchOnMount: invoicesInitialData !== undefined ? false : true,
   });
 
   const payMutation = useMutation({
@@ -65,7 +79,8 @@ export function usePayments() {
     },
     onSuccess: async (url, invoiceId) => {
       await invalidateAfterInvoiceWrite(queryClient, { invoiceId });
-      window.location.href = url;
+      // Always navigate to fresh Checkout URL (server expired prior open session).
+      window.location.assign(url);
     },
     onError: (error) => {
       handleApiError(error, "Payment failed");

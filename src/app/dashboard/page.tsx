@@ -6,13 +6,16 @@ export const dynamic = "force-dynamic";
 
 import HomePage from "@/components/pages/HomePage";
 import { getSessionUser } from "@/lib/session";
+import { getUserRole } from "@/lib/rbac";
 import {
   prefetchCategories,
   prefetchPatients,
   prefetchDashboardAppointments,
   prefetchAppointmentAssigneesForUser,
   prefetchDashboardAccessAccepted,
+  prefetchInvoices,
 } from "@/lib/server-prefetch";
+import type { Invoice } from "@/hooks/usePayments";
 import type { Category, Patient, AppointmentAssignee } from "@/types/types";
 import type { FullAppointment } from "@/hooks/useAppointments";
 import type { DashboardAccessRow } from "@/lib/query-fetchers";
@@ -25,14 +28,17 @@ export default async function DashboardPage() {
   let initialAssignees: AppointmentAssignee[] | null = null;
   let initialAppointments: FullAppointment[] | null = null;
   let initialDashboardAccessAccepted: DashboardAccessRow[] | null = null;
+  let initialInvoices: Invoice[] | null = null;
 
   if (session) {
-    [initialCategories, initialPatients, initialAssignees, initialDashboardAccessAccepted] =
+    const role = await getUserRole(session.userId);
+    [initialCategories, initialPatients, initialAssignees, initialDashboardAccessAccepted, initialInvoices] =
       await Promise.all([
         prefetchCategories(),
         prefetchPatients(),
         prefetchAppointmentAssigneesForUser(session.userId, session.email),
         prefetchDashboardAccessAccepted(session.userId, session.email),
+        prefetchInvoices(session.userId, role, session.email),
       ]);
 
     initialAppointments = await prefetchDashboardAppointments(
@@ -54,6 +60,7 @@ export default async function DashboardPage() {
         initialAssignees={initialAssignees}
         initialAppointments={initialAppointments}
         initialDashboardAccessAccepted={initialDashboardAccessAccepted}
+        initialInvoices={(initialInvoices ?? []) as Invoice[]}
       />
     </div>
   );
