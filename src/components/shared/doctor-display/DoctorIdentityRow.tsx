@@ -6,7 +6,8 @@ import { DoctorSpecialtyBadge } from "./DoctorSpecialtyBadge";
 import { EntityActiveStatusBadge } from "@/components/shared/entity-display/EntityActiveStatusBadge";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { RoleEntityLink } from "@/components/shared/RoleEntityLink";
-import { doctorDetailHref } from "@/lib/entity-routes";
+import { doctorDetailHref, portalAdminDetailHref } from "@/lib/entity-routes";
+import type { EntityRole } from "@/lib/entity-routes";
 import {
   clinicalCellMutedTextClass,
   clinicalStackGapClass,
@@ -22,8 +23,11 @@ export type DoctorIdentityDoctor = DoctorAvatarInput & {
 
 type DoctorIdentityRowProps = {
   doctor: DoctorIdentityDoctor;
-  /** When set, name links to role-aware doctor detail (admin CP vs /doctors/:id). */
-  linkKind?: "role" | "admin-cp" | "none";
+  /** When set, name links to role-aware doctor detail (admin CP vs /doctors/:id vs portal /admins/:id). */
+  linkKind?: "role" | "admin-cp" | "portal-admin" | "none";
+  /** Required when `linkKind` is `portal-admin` — must be `admin`. */
+  staffRole?: string | null;
+  viewerRole?: EntityRole;
   size?: "sm" | "md";
   className?: string;
   showSpecialty?: boolean;
@@ -47,6 +51,8 @@ type DoctorIdentityRowProps = {
 export function DoctorIdentityRow({
   doctor,
   linkKind = "role",
+  staffRole = null,
+  viewerRole = null,
   size = "md",
   className,
   showSpecialty = true,
@@ -88,6 +94,31 @@ export function DoctorIdentityRow({
           nameTextClass
         )}
       />
+    ) : linkKind === "portal-admin" ? (
+      (() => {
+        const href = portalAdminDetailHref(viewerRole, doctor.id, staffRole);
+        return href ? (
+          <EntityTitleLink
+            href={href}
+            label={label}
+            className={cn(
+              "min-w-0 font-normal",
+              layout === "inline" ? "shrink-0" : "self-start truncate",
+              nameTextClass
+            )}
+          />
+        ) : (
+          <span
+            className={cn(
+              "font-normal text-foreground",
+              layout === "inline" ? "shrink-0" : "truncate",
+              nameTextClass
+            )}
+          >
+            {label}
+          </span>
+        );
+      })()
     ) : (
       <RoleEntityLink
         kind="doctor"

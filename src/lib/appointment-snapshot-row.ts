@@ -10,6 +10,7 @@ type SnapshotUserPick = {
   id: string;
   display_name: string | null;
   email: string;
+  role?: string | null;
   specialty?: string | null;
   image?: string | null;
   /** consultation_fee → doctor_consultation_fee_cents on serialized snapshot row */
@@ -64,11 +65,13 @@ export function mapAppointmentToSnapshotRow(
     calendar_owner_display: row.owner?.display_name ?? null,
     calendar_owner_email: row.owner?.email ?? null,
     calendar_owner_image: row.owner?.image ?? null,
+    calendar_owner_role: row.owner?.role ?? null,
     doctor_id: clinical?.id ?? null,
     doctor_display: clinical?.display_name ?? null,
     doctor_email: clinical?.email ?? null,
     doctor_specialty: clinical?.specialty ?? null,
     doctor_image: clinical?.image ?? null,
+    treating_physician_role: row.treating_physician?.role ?? null,
     patient_firstname: patient?.firstname ?? null,
     patient_lastname: patient?.lastname ?? null,
     patient_email: patient?.email ?? null,
@@ -87,6 +90,7 @@ export const appointmentSnapshotInclude = {
       id: true,
       display_name: true,
       email: true,
+      role: true,
       specialty: true,
       image: true,
       /** consultation_fee → doctor_consultation_fee_cents on snapshot row */
@@ -98,6 +102,7 @@ export const appointmentSnapshotInclude = {
       id: true,
       display_name: true,
       email: true,
+      role: true,
       specialty: true,
       image: true,
       /** consultation_fee → doctor_consultation_fee_cents on snapshot row */

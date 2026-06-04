@@ -1,6 +1,7 @@
 /**
  * Doctor profile for portal users — `/doctors/:id`.
- * Doctor: self or clinically related colleagues. Patient: primary doctor only.
+ * Doctor: self or directory colleagues. Patient: primary doctor from `/services`.
+ * SSR seeds user + snapshot + assigned patients + staff directory (appointment table portraits).
  */
 export const dynamic = "force-dynamic";
 
@@ -9,16 +10,17 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { isValidUUID } from "@/lib/validation";
 import { getUserRole, isAdminRole, isDoctorRole } from "@/lib/rbac";
-import { doctorDetailHref, patientDetailHrefWithContext } from "@/lib/entity-routes";
+import { doctorDetailHref } from "@/lib/entity-routes";
 import { canViewDoctorPortalProfile } from "@/lib/doctor-access";
-import { PageHeader } from "@/components/shared/PageHeader";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { UserAvatar } from "@/components/shared/UserAvatar";
-import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
-import { BackNavigationLink } from "@/components/shared/BackNavigationLink";
-import { appPortalSectionRootClass } from "@/lib/section-page-layout";
-import { ArrowLeft, Stethoscope } from "lucide-react";
+import { USER_API_SELECT } from "@/lib/user-api-select";
+import { serializeUser } from "@/lib/serializers";
+import { fetchDoctorAssignedPatients } from "@/lib/doctor-assigned-patients";
+import { canClientFetchAdminUsersList } from "@/lib/user-list-access";
+import { DoctorDetailScreen } from "@/components/detail/DoctorDetailScreen";
+import {
+  prefetchDoctorSnapshot,
+  prefetchUsersList,
+} from "@/lib/server-prefetch";
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -38,86 +40,38 @@ export default async function PortalDoctorDetailPage({ params }: PageProps) {
   );
   if (!canView) notFound();
 
-  const doc = await prisma.user.findUnique({
-    where: { id },
-    select: {
-      id: true,
-      email: true,
-      display_name: true,
-      specialty: true,
-      bio: true,
-      image: true,
-      patients_primary_doctor: {
-        select: { id: true, firstname: true, lastname: true },
-        take: 20,
-        orderBy: { firstname: "asc" },
-      },
-    },
+  const raw = await prisma.user.findFirst({
+    where: { id, role: "doctor" },
+    select: USER_API_SELECT,
   });
-  if (!doc) notFound();
+  if (!raw) notFound();
 
-  /** Directory links from `/services` — back to catalog for all portal roles. */
-  const backHref =
-    role === "patient" ? "/services" : role === "doctor" ? "/services" : "/dashboard";
+  const staffRoster = isDoctorRole(role);
+  const [initialSnapshot, initialAssignedPatients, initialDoctorUsers, initialAdminUsers] =
+    await Promise.all([
+      prefetchDoctorSnapshot(id),
+      fetchDoctorAssignedPatients(id),
+      prefetchUsersList({ role: "doctor", limit: 200 }),
+      staffRoster && canClientFetchAdminUsersList(role)
+        ? prefetchUsersList({ role: "admin", limit: 50 })
+        : Promise.resolve(null),
+    ]);
 
-  const viewerIsProfileDoctor = sessionUser.userId === doc.id;
+  const initialUser = serializeUser(raw);
+
+  /** Directory links from `/services` — back to catalog for doctor and patient roles. */
+  const backHref = role === "patient" ? "/services" : role === "doctor" ? "/services" : "/dashboard";
 
   return (
-    <div className={appPortalSectionRootClass}>
-      <PageHeader
-        title={doc.display_name ?? doc.email}
-        description={doc.specialty ?? "Doctor profile"}
-        actions={
-          <Button variant="outline" asChild size="sm">
-            <BackNavigationLink href={backHref}>
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </BackNavigationLink>
-          </Button>
-        }
-      />
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Stethoscope className="h-4 w-4" />
-            Profile
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-2">
-            <UserAvatar
-              src={doc.image}
-              fallbackText={(doc.display_name ?? doc.email).slice(0, 2)}
-              sizeClassName="h-16 w-16"
-            />
-            <div>
-              <p className="font-semibold">{doc.display_name ?? "—"}</p>
-              <p className="text-sm text-muted-foreground">{doc.email}</p>
-              {doc.specialty && <p className="text-sm">{doc.specialty}</p>}
-            </div>
-          </div>
-          {doc.bio && <p className="text-sm text-muted-foreground">{doc.bio}</p>}
-          {doc.patients_primary_doctor.length > 0 && isDoctorRole(role) && (
-            <div>
-              <p className="text-sm font-medium mb-2">Patients</p>
-              <ul className="space-y-1">
-                {doc.patients_primary_doctor.map((p) => (
-                  <li key={p.id}>
-                    <EntityTitleLink
-                      href={patientDetailHrefWithContext(
-                        role,
-                        p.id,
-                        viewerIsProfileDoctor ? null : doc.id
-                      )}
-                      label={`${p.firstname} ${p.lastname}`}
-                    />
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+    <DoctorDetailScreen
+      doctorId={id}
+      viewerRole={role}
+      backHref={backHref}
+      initialUser={initialUser}
+      initialSnapshot={initialSnapshot}
+      initialAssignedPatients={initialAssignedPatients}
+      initialDoctorUsers={initialDoctorUsers}
+      initialAdminUsers={initialAdminUsers}
+    />
   );
 }

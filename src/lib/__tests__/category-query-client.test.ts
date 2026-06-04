@@ -46,6 +46,26 @@ describe("resolveAppointmentMutationTargets", () => {
     expect(targets.categoryIds).toEqual(["cat-from-cache"]);
     expect(getCategoryIdFromAppointmentCache(qc, "appt-del")).toBe("cat-from-cache");
   });
+
+  it("resolves doctor ids from cache and explicit owner/treating opts", () => {
+    const qc = createQueryClient();
+    qc.setQueryData(queryKeys.appointments.all, [
+      {
+        id: "appt-doc",
+        patient: "pat-1",
+        category: "cat-1",
+        user_id: "doc-owner",
+        treating_physician_id: "doc-treat",
+      },
+    ]);
+    const targets = resolveAppointmentMutationTargets(qc, {
+      appointmentId: "appt-doc",
+      previousOwnerId: "doc-prev",
+    });
+    expect(targets.doctorIds.sort()).toEqual(
+      ["doc-owner", "doc-treat", "doc-prev"].sort()
+    );
+  });
 });
 
 describe("invalidateCategoryDetailAndSnapshot", () => {
@@ -74,6 +94,7 @@ describe("invalidateAppointmentEntitySnapshots bustAllCategorySnapshots", () => 
     await invalidateAppointmentEntitySnapshots(qc, {
       patientIds: [],
       categoryIds: [],
+      doctorIds: [],
       bustAllCategorySnapshots: true,
     });
 
@@ -83,6 +104,20 @@ describe("invalidateAppointmentEntitySnapshots bustAllCategorySnapshots", () => 
 });
 
 describe("invalidateAfterAppointmentMutation category wiring", () => {
+  it("invalidates doctor snapshot when ownerId is provided", async () => {
+    const qc = createQueryClient();
+    const snapshotKey = queryKeys.doctors.snapshot("doc-9");
+    qc.setQueryData(snapshotKey, {
+      doctor: { id: "doc-9" },
+      appointments: [],
+      totalCount: 1,
+    });
+
+    await invalidateAfterAppointmentMutation(qc, { ownerId: "doc-9" });
+
+    expect(qc.getQueryState(snapshotKey)?.isInvalidated).toBe(true);
+  });
+
   it("invalidates category snapshot when categoryId is provided", async () => {
     const qc = createQueryClient();
     const snapshotKey = queryKeys.categories.snapshot("cat-9");

@@ -17,7 +17,7 @@ import WeekView from "@/components/calendar/WeekView";
 import DayView from "@/components/calendar/DayView";
 import AppointmentList from "@/components/calendar/AppointmentList";
 import CalendarHeader from "@/components/calendar/CalendarHeader";
-import { StaffInvoiceDialogShell } from "@/components/shared/billing/StaffInvoiceDialogShell";
+import { ClinicianInvoiceDialogShell } from "@/components/shared/billing/ClinicianInvoiceDialogShell";
 import type { Category, Patient, AppointmentAssignee } from "@/types/types";
 import type { FullAppointment } from "@/hooks/useAppointments";
 import type { DashboardAccessRow } from "@/lib/query-fetchers";
@@ -133,7 +133,7 @@ const HomePage: React.FC<HomePageProps> = ({
   );
 
   return (
-    <StaffInvoiceDialogShell initialInvoices={initialInvoices}>
+    <ClinicianInvoiceDialogShell initialInvoices={initialInvoices}>
       <div className="flex h-full min-h-0 flex-1 flex-col overflow-visible">
         <div className="shrink-0">
           <CalendarHeader view={view} setView={setView} />
@@ -146,7 +146,7 @@ const HomePage: React.FC<HomePageProps> = ({
           {view === "Month" && <MonthView />}
         </div>
       </div>
-    </StaffInvoiceDialogShell>
+    </ClinicianInvoiceDialogShell>
   );
 };
 

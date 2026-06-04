@@ -48,6 +48,10 @@ export type InvoiceVisitSummary = {
   /** Acuity tier 1–10 for compact list rows. */
   patient_care_level?: number | null;
   appointment_type_name?: string | null;
+  /** Booked slot length — shown on Stripe Checkout description. */
+  duration_minutes?: number | null;
+  /** Type default when appointment.duration_minutes unset. */
+  appointment_type_duration_minutes?: number | null;
   category_id: string | null;
   category_label: string | null;
   category_color: string | null;

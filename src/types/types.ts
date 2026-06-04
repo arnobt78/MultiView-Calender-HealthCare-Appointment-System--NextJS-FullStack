@@ -120,12 +120,16 @@ export type AppointmentSnapshotRow = Appointment & {
   calendar_owner_email?: string | null;
   /** OAuth/upload portrait for calendar owner — avoids robohash when `useUsers` is still loading. */
   calendar_owner_image?: string | null;
+  /** `users.role` for calendar owner — drives portal snapshot link policy (admin vs doctor). */
+  calendar_owner_role?: string | null;
   /** Resolved treating / clinical user (`treating_physician_id ?? user_id`). */
   doctor_id?: string | null;
   doctor_display?: string | null;
   doctor_email?: string | null;
   doctor_specialty?: string | null;
   doctor_image?: string | null;
+  /** `users.role` for treating physician — snapshot link policy (admin vs doctor). */
+  treating_physician_role?: string | null;
   /** Denormalized patient fields for category snapshot / multi-patient tables. */
   patient_firstname?: string | null;
   patient_lastname?: string | null;
@@ -150,6 +154,16 @@ export type CategorySnapshotAppointmentRow = AppointmentSnapshotRow;
 export type CategorySnapshot = {
   category: Category;
   appointments: CategorySnapshotAppointmentRow[];
+  totalCount: number;
+};
+
+/** Appointment rows where doctor is calendar owner or treating physician (portal + CP doctor detail). */
+export type DoctorSnapshotAppointmentRow = AppointmentSnapshotRow;
+
+export type DoctorSnapshot = {
+  doctor: User;
+  appointments: DoctorSnapshotAppointmentRow[];
+  /** Full count — table capped at 50 rows. */
   totalCount: number;
 };
 

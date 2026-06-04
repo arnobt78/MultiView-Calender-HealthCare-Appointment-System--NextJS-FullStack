@@ -25,7 +25,7 @@ import { PatientAgeGlassBadge } from "@/components/shared/person-display/Patient
 import { PatientCareTierGlassBadge } from "@/components/shared/person-display/PatientCareTierGlassBadge";
 import { PatientPortraitAvatar } from "@/components/shared/person-display/PatientPortraitAvatar";
 import { AppointmentCategoryTypeMetaRow } from "@/components/shared/appointment-display/AppointmentCategoryTypeMetaRow";
-import { resolvePrimaryDoctorCardImage } from "@/lib/appointment-card-staff-image";
+import { resolvePrimaryDoctorCardImage } from "@/lib/appointment-card-clinician-image";
 import { canShowAppointmentClinicalNotes } from "@/lib/portal-appointment-card-visibility";
 import { shouldShowAppointmentCategoryTypeRow } from "@/lib/appointment-type-display";
 import {
@@ -54,7 +54,7 @@ import {
 } from "@/hooks/useAppointmentCardModel";
 import type { OwnerUserSummary } from "@/hooks/useOwnerUserSummaries";
 import { appointmentCardMetaGroupClass, type AppointmentCardVariant } from "@/lib/appointment-card";
-import { PortalStaffLink } from "@/components/shared/PortalStaffLink";
+import { PortalClinicianLink } from "@/components/shared/PortalClinicianLink";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { getPublicUrl } from "@/lib/vercelBlob";
 import { patientAgeYears } from "@/lib/patient-age";
@@ -285,9 +285,9 @@ function AppointmentCardMeta({
     portalTreating,
   } = model;
   /** Embedded staff from portal-shaped API — patient dashboard + portal (no `/api/users/search`). */
-  const showEmbeddedStaff = Boolean(portalOwner);
+  const showEmbeddedClinician = Boolean(portalOwner);
   const isPatientViewer = user?.role === "patient";
-  const showStaffForDashboard = !isPatientViewer;
+  const showClinicianForDashboard = !isPatientViewer;
   const useInlinePeopleRows = variant === "list";
   const useStructuredPeopleRows =
     variant === "popover" || variant === "month-panel";
@@ -526,15 +526,15 @@ function AppointmentCardMeta({
         ) : null}
       </div>
 
-      {showEmbeddedStaff && calendarOwnerId && portalOwner ? (
+      {showEmbeddedClinician && calendarOwnerId && portalOwner ? (
         useStructuredPeopleRows ? (
           <MetaIdentityBlock
             icon={<UserCog className="h-3.5 w-3.5" />}
             label="Calendar owner"
             nameNode={
-              <PortalStaffLink
-                staffUserId={portalOwner.id}
-                staffRole={portalOwner.role}
+              <PortalClinicianLink
+                clinicianUserId={portalOwner.id}
+                clinicianRole={portalOwner.role}
                 label={ownerName}
                 wrapLabel={false}
               />
@@ -558,9 +558,9 @@ function AppointmentCardMeta({
           <InlineIdentityMetaRow icon={<UserCog className="h-3.5 w-3.5" />} label="Calendar owner/creator:">
             <InlineIdentityValue
               nameNode={
-                <PortalStaffLink
-                  staffUserId={portalOwner.id}
-                  staffRole={portalOwner.role}
+                <PortalClinicianLink
+                  clinicianUserId={portalOwner.id}
+                  clinicianRole={portalOwner.role}
                   label={ownerName}
                   wrapLabel={false}
                 />
@@ -583,9 +583,9 @@ function AppointmentCardMeta({
           </InlineIdentityMetaRow>
         ) : (
           <AppointmentCardMetaRow icon={<UserCog className="h-3.5 w-3.5" />} label="Calendar owner:">
-            <PortalStaffLink
-              staffUserId={portalOwner.id}
-              staffRole={portalOwner.role}
+            <PortalClinicianLink
+              clinicianUserId={portalOwner.id}
+              clinicianRole={portalOwner.role}
               label={ownerLabel}
               wrapLabel={wrapValues}
             />
@@ -593,15 +593,15 @@ function AppointmentCardMeta({
         )
       ) : null}
 
-      {showEmbeddedStaff && treatingDiffersFromOwner && portalTreating ? (
+      {showEmbeddedClinician && treatingDiffersFromOwner && portalTreating ? (
         useStructuredPeopleRows ? (
           <MetaIdentityBlock
             icon={<Stethoscope className="h-3.5 w-3.5" />}
             label="Treating physician"
             nameNode={
-              <PortalStaffLink
-                staffUserId={portalTreating.id}
-                staffRole={portalTreating.role}
+              <PortalClinicianLink
+                clinicianUserId={portalTreating.id}
+                clinicianRole={portalTreating.role}
                 label={treatingName}
                 wrapLabel={false}
               />
@@ -625,9 +625,9 @@ function AppointmentCardMeta({
           <InlineIdentityMetaRow icon={<Stethoscope className="h-3.5 w-3.5" />} label="Treating physician:">
             <InlineIdentityValue
               nameNode={
-                <PortalStaffLink
-                  staffUserId={portalTreating.id}
-                  staffRole={portalTreating.role}
+                <PortalClinicianLink
+                  clinicianUserId={portalTreating.id}
+                  clinicianRole={portalTreating.role}
                   label={treatingName}
                   wrapLabel={false}
                 />
@@ -650,9 +650,9 @@ function AppointmentCardMeta({
           </InlineIdentityMetaRow>
         ) : (
           <AppointmentCardMetaRow icon={<Stethoscope className="h-3.5 w-3.5" />} label="Treating physician:">
-            <PortalStaffLink
-              staffUserId={portalTreating.id}
-              staffRole={portalTreating.role}
+            <PortalClinicianLink
+              clinicianUserId={portalTreating.id}
+              clinicianRole={portalTreating.role}
               label={treatingPhysicianLabel}
               wrapLabel={wrapValues}
             />
@@ -660,7 +660,7 @@ function AppointmentCardMeta({
         )
       ) : null}
 
-      {showStaffForDashboard && calendarOwnerId ? (
+      {showClinicianForDashboard && calendarOwnerId ? (
         useStructuredPeopleRows ? (
           <MetaIdentityBlock
             icon={<UserCog className="h-3.5 w-3.5" />}
@@ -724,7 +724,7 @@ function AppointmentCardMeta({
         )
       ) : null}
 
-      {showStaffForDashboard && treatingDiffersFromOwner ? (
+      {showClinicianForDashboard && treatingDiffersFromOwner ? (
         useStructuredPeopleRows ? (
           <MetaIdentityBlock
             icon={<Stethoscope className="h-3.5 w-3.5" />}
@@ -801,9 +801,9 @@ function AppointmentCardMeta({
             label="Primary doctor"
             nameNode={
               isPatientViewer ? (
-                <PortalStaffLink
-                  staffUserId={primaryDoctorId}
-                  staffRole="doctor"
+                <PortalClinicianLink
+                  clinicianUserId={primaryDoctorId}
+                  clinicianRole="doctor"
                   label={primaryName}
                   wrapLabel={false}
                 />
@@ -840,9 +840,9 @@ function AppointmentCardMeta({
             <InlineIdentityValue
               nameNode={
                 isPatientViewer ? (
-                  <PortalStaffLink
-                    staffUserId={primaryDoctorId}
-                    staffRole="doctor"
+                  <PortalClinicianLink
+                    clinicianUserId={primaryDoctorId}
+                    clinicianRole="doctor"
                     label={primaryName}
                     wrapLabel={false}
                   />
@@ -878,9 +878,9 @@ function AppointmentCardMeta({
         ) : (
           <AppointmentCardMetaRow icon={<Stethoscope className="h-3.5 w-3.5" />} label="Primary doctor:">
             {isPatientViewer ? (
-              <PortalStaffLink
-                staffUserId={primaryDoctorId}
-                staffRole="doctor"
+              <PortalClinicianLink
+                clinicianUserId={primaryDoctorId}
+                clinicianRole="doctor"
                 label={primaryDoctorLabel}
                 wrapLabel={wrapValues}
               />

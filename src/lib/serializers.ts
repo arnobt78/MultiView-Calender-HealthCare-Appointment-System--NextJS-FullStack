@@ -251,8 +251,8 @@ export function serializeAppointment(a: {
   };
 }
 
-/** Joined staff user on portal appointment rows — `id` + `role` drive `/doctors/:id` links for patients. */
-export type PortalAppointmentStaffUser = {
+/** Joined doctor/admin on portal appointment rows — `id` + `role` drive portal profile links. */
+export type PortalAppointmentClinicianUser = {
   id: string;
   display_name: string | null;
   email: string;
@@ -262,6 +262,9 @@ export type PortalAppointmentStaffUser = {
   /** Included when select contains consultation_fee — drives visit fee badge second fallback. */
   consultation_fee?: number | null;
 };
+
+/** @deprecated Use `PortalAppointmentClinicianUser` — not `/staff` routes. */
+export type PortalAppointmentStaffUser = PortalAppointmentClinicianUser;
 
 /** Prisma appointment row + optional `category` / `owner` / `treating_physician` includes for portal responses */
 export type PortalAppointmentIncludeRow = Parameters<typeof serializeAppointment>[0] & {
@@ -274,9 +277,9 @@ export type PortalAppointmentIncludeRow = Parameters<typeof serializeAppointment
     updated_at?: Date | null;
     description?: string | null;
   } | null;
-  owner?: PortalAppointmentStaffUser | null;
+  owner?: PortalAppointmentClinicianUser | null;
   /** B2: joined user row for `treating_physician_id` when set (display chip). */
-  treating_physician?: PortalAppointmentStaffUser | null;
+  treating_physician?: PortalAppointmentClinicianUser | null;
   /** Joined from appointment_type — name/price/duration for portal + dashboard cards. */
   appointment_type?: {
     name?: string | null;

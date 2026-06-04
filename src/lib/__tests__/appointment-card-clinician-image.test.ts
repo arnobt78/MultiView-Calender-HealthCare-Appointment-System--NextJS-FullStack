@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolvePrimaryDoctorCardImage } from "@/lib/appointment-card-staff-image";
+import { resolvePrimaryDoctorCardImage } from "@/lib/appointment-card-clinician-image";
 import type { OwnerUserSummary } from "@/hooks/useOwnerUserSummaries";
 
 const owners: OwnerUserSummary[] = [

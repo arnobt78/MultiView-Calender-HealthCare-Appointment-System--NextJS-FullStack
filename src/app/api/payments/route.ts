@@ -16,7 +16,10 @@ import {
   type InvoiceAccessSession,
 } from "@/lib/invoice-access";
 import { canPatientPayInvoiceStatus } from "@/lib/billing-status";
-import { attachVisitSummariesToInvoices } from "@/lib/invoice-visit-summary";
+import {
+  attachInvoiceIssuerLabels,
+  attachVisitSummariesToInvoices,
+} from "@/lib/invoice-visit-summary";
 import { buildStripeCheckoutProductCopy } from "@/lib/stripe-checkout-product";
 
 export const dynamic = "force-dynamic";
@@ -94,13 +97,14 @@ export async function POST(request: NextRequest) {
       ? "patient-portal"
       : "control-panel/invoice-management";
 
-    const [withVisit] = await attachVisitSummariesToInvoices([
+    const withVisit = await attachVisitSummariesToInvoices([
       {
         ...serializeInvoice(invoice),
         payments: invoice.payments,
       },
     ]);
-    const stripeProduct = buildStripeCheckoutProductCopy(withVisit);
+    const [payableRow] = await attachInvoiceIssuerLabels(withVisit);
+    const stripeProduct = buildStripeCheckoutProductCopy(payableRow);
 
     const checkout = await createCheckoutSession({
       invoiceId: invoice.id,

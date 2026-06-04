@@ -7,7 +7,7 @@ import { getSessionUser } from "@/lib/session";
 import { getUserRole, isAdminRole } from "@/lib/rbac";
 import { prefetchInvoices } from "@/lib/server-prefetch";
 import type { Invoice } from "@/hooks/usePayments";
-import InvoicesStaffLayoutClient from "./InvoicesStaffLayoutClient";
+import InvoicesClinicianLayoutClient from "./InvoicesClinicianLayoutClient";
 
 export const dynamic = "force-dynamic";
 
@@ -25,10 +25,10 @@ export default async function InvoicesLayout({
     : await prefetchInvoices(sessionUser.userId, role, sessionUser.email);
 
   return (
-    <InvoicesStaffLayoutClient
+    <InvoicesClinicianLayoutClient
       initialInvoices={(initialInvoices ?? []) as Invoice[]}
     >
       {children}
-    </InvoicesStaffLayoutClient>
+    </InvoicesClinicianLayoutClient>
   );
 }

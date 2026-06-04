@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { resolvePortalTreatingStaff } from "@/lib/portal-appointment-staff";
+import { resolvePortalTreatingClinician } from "@/lib/portal-appointment-clinician";
 
-describe("resolvePortalTreatingStaff", () => {
+describe("resolvePortalTreatingClinician", () => {
   it("returns treating_physician when set", () => {
     const treating = {
       id: "d1",
@@ -12,7 +12,7 @@ describe("resolvePortalTreatingStaff", () => {
       specialty: "GP",
     };
     expect(
-      resolvePortalTreatingStaff({
+      resolvePortalTreatingClinician({
         treating_physician: treating,
         treating_physician_id: "d1",
         user_id: "d2",
@@ -31,7 +31,7 @@ describe("resolvePortalTreatingStaff", () => {
       specialty: "Internal Medicine",
     };
     expect(
-      resolvePortalTreatingStaff({
+      resolvePortalTreatingClinician({
         treating_physician: undefined,
         treating_physician_id: "d1",
         user_id: "d1",

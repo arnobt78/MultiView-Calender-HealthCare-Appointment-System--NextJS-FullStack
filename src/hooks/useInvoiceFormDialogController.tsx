@@ -15,7 +15,7 @@ export type InvoiceFormDialogVariant = "admin" | "doctor";
 export type UseInvoiceFormDialogControllerOptions = {
   /** Override variant — defaults from nav role (admin vs doctor). */
   variant?: InvoiceFormDialogVariant;
-  /** SSR/layout seed for invoices.all — shared with StaffInvoiceDialogShell. */
+  /** SSR/layout seed for invoices.all — shared with ClinicianInvoiceDialogShell. */
   invoicesInitialData?: Invoice[];
 };
 

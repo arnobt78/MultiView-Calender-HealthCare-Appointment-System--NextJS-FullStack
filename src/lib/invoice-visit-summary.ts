@@ -8,7 +8,7 @@ import type { InvoiceVisitSummary } from "@/lib/billing-types";
 
 export const invoiceAppointmentVisitInclude = {
   category: { select: { id: true, label: true, color: true, icon: true } },
-  appointment_type: { select: { name: true } },
+  appointment_type: { select: { name: true, duration_minutes: true } },
   patient: {
     select: {
       id: true,
@@ -40,7 +40,8 @@ type VisitApptRow = {
     color: string | null;
     icon: string | null;
   } | null;
-  appointment_type: { name: string | null } | null;
+  duration_minutes?: number | null;
+  appointment_type?: { name: string | null; duration_minutes?: number | null } | null;
   patient: {
     id: string;
     firstname: string;
@@ -101,6 +102,8 @@ export function mapAppointmentToInvoiceVisitSummary(
     patient_birth_date: row.patient?.birth_date?.toISOString() ?? null,
     patient_care_level: row.patient?.care_level ?? null,
     appointment_type_name: row.appointment_type?.name ?? null,
+    duration_minutes: row.duration_minutes ?? null,
+    appointment_type_duration_minutes: row.appointment_type?.duration_minutes ?? null,
     category_id: row.category?.id ?? null,
     category_label: row.category?.label ?? row.appointment_type?.name ?? null,
     category_color: row.category?.color ?? null,
@@ -151,6 +154,7 @@ export async function attachVisitSummariesToInvoices<
       start: true,
       end: true,
       location: true,
+      duration_minutes: true,
       is_telehealth: true,
       category: invoiceAppointmentVisitInclude.category,
       appointment_type: invoiceAppointmentVisitInclude.appointment_type,
@@ -222,6 +226,7 @@ export async function loadInvoiceVisitSummary(
       start: true,
       end: true,
       location: true,
+      duration_minutes: true,
       is_telehealth: true,
       category: invoiceAppointmentVisitInclude.category,
       appointment_type: invoiceAppointmentVisitInclude.appointment_type,

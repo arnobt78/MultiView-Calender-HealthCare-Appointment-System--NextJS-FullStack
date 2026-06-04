@@ -1,14 +1,22 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-04 — Appointment card meta + portraits + cache)
+## Latest (2026-06-04 — Doctor detail + portal clinician terminology)
 
-- **Category row:** `AppointmentCategoryTypeMetaRow` — `CategoryInlineLink` + `AppointmentTypeGlassBadge` + optional duration + visit fee (+ clock on list). `appointment_type_name` / `appointment_type_duration_minutes` via `APPOINTMENT_TYPE_CARD_SELECT` + `appointmentTypeSerializedFields` on calendar GET, portal, doctor/admin portal, `prefetchDashboardAppointments`, `mapPortalAppointmentsFromRows`.
-- **Type-only edge:** row renders with label **Visit type:** when category missing but FK name/fee exists (`shouldShowAppointmentCategoryTypeRow`).
-- **Primary doctor avatar:** `resolvePrimaryDoctorCardImage` — `primary_doctor_image` (SSR), `portal_owner` / `portal_treating_physician` joins, `ownerUsers` directory, peer owner/treating id match. `patientPrimaryDoctorPick` on `prefetchPatients`, `GET /api/patients`, doctor-portal roster (was `patientUserPick` without `image`).
-- **Notes:** `portal-appointment-card-visibility.ts` — clinical notes hidden for patient role on `AppointmentCard` (list/hover/month) and portal timeline.
-- **Invalidation:** `invalidateAppointmentTypeDerived` → `invalidateAppointmentData` so type rename/price updates calendar cards without appointment CRUD.
-- **Inline identity:** popover/month `MetaIdentityBlock` + portal `PortalAppointmentStaffIdentityBlock` — single responsive row (label + avatar + name + email + specialty).
-- **Verify:** Vitest **693** (130 files), tsc, lint, build.
+- **Doctor detail parity:** `GET /api/doctors/[id]/snapshot` (`force-dynamic`); `DoctorSnapshot` + related appointments (owner or treating); `DoctorDetailScreenShared` on portal `/doctors/[id]` + CP; SSR `prefetchDoctorSnapshot` + `useDoctorSnapshot`; `buildStaffDirectoryMap` for portraits.
+- **Snapshot link policy:** `entity-detail-snapshot-links.ts` — portal doctor detail only: no appointment title/patient links (404-safe); `calendar_owner_role` / `treating_physician_role` on rows; patient → doctor owner links, plain admin owners; doctor → `/admins/:id` for admin calendar owners.
+- **Admin portal profile:** `/admins/[id]` + `PortalAdminDetailScreen` (removed `/staff/[id]`); `portalAdminDetailHref`; `admin-portal-profile-access.ts`.
+- **Invalidation:** `invalidateDoctorDetailAndSnapshot`; appointment mutations pass explicit FK ids (`appointment-invalidation-fk.ts`); patient CRUD → `invalidateDoctorsAffectedByPatientWrite`.
+- **Clinician naming (portal cards/invoice shell):** `ClinicianInvoiceDialogShell`, `PortalClinicianLink`, `PortalAppointmentClinicianIdentityBlock`, `PortalAppointmentClinicianUser`, `portal-appointment-clinician.ts`, `appointment-card-clinician-image.ts` — deprecated `Staff*` re-exports kept. RBAC `isStaffRole` / `staff-directory-cache` / `StaffAppointmentPickerField` unchanged (admin|doctor product term).
+- **Doctor portal fix:** `InvoiceFormDialogProvider` always mounts when layout passes `variant="doctor"` (no throw before auth hydrate).
+- **Verify:** Vitest **711** (133 files), tsc, lint, build.
+
+## Prior (2026-06-04 — Appointment card meta + portraits + cache)
+
+- **Category row:** `AppointmentCategoryTypeMetaRow` — category + visit type + duration + fee on cards; `APPOINTMENT_TYPE_CARD_SELECT` on calendar/portal APIs + SSR.
+- **Primary doctor avatar:** `resolvePrimaryDoctorCardImage` (`appointment-card-clinician-image.ts`); `patientPrimaryDoctorPick` on patients API/prefetch.
+- **Notes:** `canShowAppointmentClinicalNotes` — patient role hidden on cards + portal timeline.
+- **Invalidation:** `invalidateAppointmentTypeDerived` busts `appointments.all`.
+- **Inline identity:** `MetaIdentityBlock` + `PortalAppointmentClinicianIdentityBlock`.
 
 ## Prior (2026-06-04 — C4 invoice UI polish)
 
@@ -23,7 +31,7 @@
 ## Prior (2026-06-02 — Invoice dialog + preset create + SSE)
 
 - **InvoiceFormDialog:** amber glass 90vw shell; create (picker/preset) + edit; `invoice-dialog-ui-classes.ts`, `InvoiceVisitDirectoryPickerCard` / `InvoiceVisitSummaryCard`; `billing-appointment-options-load` + SSR `queryKeys.billing.appointmentOptions`.
-- **Shared dialog:** `StaffInvoiceDialogShell` → `InvoiceFormDialogProvider` on CP, dashboard (`HomePage`), doctor portal, `/appointments`, `/invoices` layouts. Lists use `useInvoiceFormDialog()`; cards use `useInvoiceFormDialogOptional()` + **Create invoice** in `AppointmentActionsMenu`.
+- **Shared dialog:** `ClinicianInvoiceDialogShell` → `InvoiceFormDialogProvider` on CP, dashboard, doctor portal, `/appointments`, `/invoices` layouts (`StaffInvoiceDialogShell` deprecated alias).
 - **Preset create:** `openCreateForAppointment(id)` from calendar ⋮ or `AppointmentDetailBillingActions`; `useBillingAppointmentOptionById` + amount prefill via `invoice-form-guards.ts`.
 - **Detail live edit:** `InvoiceDetailLiveBody` subscribes `useInvoice`; `InvoiceDetailClient` **Edit details**; `hideViewLink` on detail; doctor mutate on sent/overdue own invoices.
 - **API parity:** `GET /api/invoices/[id]`, `GET /api/payments`, `prefetchInvoiceDetail` attach `visit_summary`.
@@ -432,7 +440,7 @@ Shared primitives keep layout fixed while data loads:
 | `CalendarHeaderRoleActions` | `src/components/calendar/CalendarHeaderRoleActions.tsx` | Dashboard toolbar: patient Book vs staff Import/New (SSR role, no flash) |
 | `PatientBookingDialog` | `src/components/shared/patient-booking/PatientBookingDialog.tsx` | Patient/services booking wizard — directory cards step 1, inline slots, `lockDoctor` on services |
 | `DoctorDirectoryPickerCard` | `src/components/shared/doctor-display/DoctorDirectoryPickerCard.tsx` | Booking + locked services doctor preview (availability + service chips) |
-| `PortalStaffLink` | `src/components/shared/PortalStaffLink.tsx` | Sky link to `/doctors/:id` for doctor staff on portal cards |
+| `PortalClinicianLink` | `src/components/shared/PortalClinicianLink.tsx` | Portal doctor name link (`/doctors/:id` when role=doctor; admin owners plain or `/admins/:id` per viewer) |
 | `portal-appointment.ts` | `src/lib/portal-appointment.ts` | `portalAppointmentToFullAppointment` adapter for timeline cards |
 | `ProfileDefinitionRow` | `src/components/shared/profile/ProfileDefinitionRow.tsx` | `<dl>` row: icon + label static; variant-matched skeleton in `dd` only (`doctorStack` = Primary Doctor height) |
 | `DoctorProfileCardSkeleton` | `src/components/shared/services/DoctorProfileCardSkeleton.tsx` | 1:1 `/services` doctor card shell |

@@ -30,6 +30,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useDoctorsDirectory } from "@/hooks/useDoctorsDirectory";
 import { queryKeys } from "@/lib/query-keys";
 import { invalidateAfterAppointmentMutation } from "@/lib/query-client";
+import { appointmentDoctorFkOpts } from "@/lib/appointment-invalidation-fk";
 import type { FullAppointment } from "@/hooks/useAppointments";
 import { prefetchAppointmentTypesForDoctor } from "@/lib/prefetch-appointment-types";
 import { usePatientBookableAppointmentTypes } from "@/hooks/usePatientBookableAppointmentTypes";
@@ -309,6 +310,7 @@ export function PatientBookingDialog({
         appointmentId: appointment?.id,
         patientId: appointment?.patient ?? undefined,
         categoryId: appointment?.category ?? undefined,
+        ...appointmentDoctorFkOpts(appointment),
       });
       handleOpenChange(false);
     },

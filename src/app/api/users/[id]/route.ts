@@ -9,7 +9,7 @@ import { getSessionUser } from "@/lib/session";
 import { isValidUUID } from "@/lib/validation";
 import { serializeUser } from "@/lib/serializers";
 import { redis } from "@/lib/redis";
-import { getUserRole } from "@/lib/rbac";
+import { getUserRole, isDoctorRole } from "@/lib/rbac";
 import { USER_API_SELECT } from "@/lib/user-api-select";
 
 /** Per-request API handler (see api-route-dynamic.test.ts). */
@@ -30,7 +30,17 @@ export async function GET(req: NextRequest, context: RouteContext) {
     const callerRole = await getUserRole(sessionUser.userId);
     const isSelf = id === sessionUser.userId;
     if (!isSelf && callerRole !== "admin") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      // Doctors may read admin rows for portal `/admins/:id` + snapshot hydration.
+      if (!isDoctorRole(callerRole)) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+      const targetRole = await prisma.user.findUnique({
+        where: { id },
+        select: { role: true },
+      });
+      if (targetRole?.role !== "admin") {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
     }
 
     const user = await prisma.user.findUnique({ where: { id }, select: USER_API_SELECT });

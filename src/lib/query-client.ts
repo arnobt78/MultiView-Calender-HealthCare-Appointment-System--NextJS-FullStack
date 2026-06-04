@@ -27,6 +27,8 @@ import {
 } from "./entity-snapshot-invalidation";
 export {
   invalidateCategoryDetailAndSnapshot,
+  invalidateDoctorDetailAndSnapshot,
+  invalidateDoctorsAffectedByPatientWrite,
   invalidatePatientDetailAndSnapshot,
 } from "./entity-snapshot-invalidation";
 import {

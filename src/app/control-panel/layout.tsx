@@ -14,7 +14,7 @@
 
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { StaffInvoiceDialogShell } from "@/components/shared/billing/StaffInvoiceDialogShell";
+import { ClinicianInvoiceDialogShell } from "@/components/shared/billing/ClinicianInvoiceDialogShell";
 import ControlPanelSidebarNav from "@/components/control-panel/ControlPanelSidebarNav";
 import ControlPanelSsrCacheSeed from "@/components/control-panel/ControlPanelSsrCacheSeed";
 import {
@@ -80,7 +80,7 @@ export default async function ControlPanelLayout({
   }
 
   return (
-    <StaffInvoiceDialogShell
+    <ClinicianInvoiceDialogShell
       variant="admin"
       initialInvoices={(initialInvoices ?? []) as Invoice[]}
     >
@@ -96,6 +96,6 @@ export default async function ControlPanelLayout({
           {children}
         </div>
       </div>
-    </StaffInvoiceDialogShell>
+    </ClinicianInvoiceDialogShell>
   );
 }

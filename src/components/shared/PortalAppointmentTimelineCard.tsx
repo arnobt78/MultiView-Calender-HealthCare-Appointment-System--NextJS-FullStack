@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 
 /**
  * Compact patient-portal timeline card — previous horizontal meta layout (not full dashboard list card).
- * Reuses shared color bar tokens, `PortalStaffLink`, `CategoryInlineLink`, status glass badges.
+ * Reuses shared color bar tokens, `PortalClinicianLink`, `CategoryInlineLink`, status glass badges.
  */
 
 import { format, isToday } from "date-fns";
@@ -26,9 +26,9 @@ import { AppointmentListColorBar } from "@/components/shared/AppointmentListColo
 import { AppointmentCategoryTypeMetaRow } from "@/components/shared/appointment-display/AppointmentCategoryTypeMetaRow";
 import { shouldShowAppointmentCategoryTypeRow } from "@/lib/appointment-type-display";
 import { resolveDisplayedVisitFeeCents } from "@/lib/appointment-visit-fee-display";
-import { PortalAppointmentStaffIdentityBlock } from "@/components/shared/portal-appointment/PortalAppointmentStaffIdentityBlock";
+import { PortalAppointmentClinicianIdentityBlock } from "@/components/shared/portal-appointment/PortalAppointmentClinicianIdentityBlock";
 import { RoleEntityLink } from "@/components/shared/RoleEntityLink";
-import { resolvePortalTreatingStaff } from "@/lib/portal-appointment-staff";
+import { resolvePortalTreatingClinician } from "@/lib/portal-appointment-clinician";
 import { canShowAppointmentClinicalNotes } from "@/lib/portal-appointment-card-visibility";
 import { useAppointmentColor } from "@/context/AppointmentColorContext";
 import { useAuth } from "@/hooks/useAuth";
@@ -79,7 +79,7 @@ export function PortalAppointmentTimelineCard({
   const status = appt.status ?? "pending";
   const statusMeta = STATUS_GLASS[status] ?? STATUS_GLASS.pending;
   const startDate = new Date(appt.start);
-  const treatingStaff = resolvePortalTreatingStaff(appt);
+  const treatingClinician = resolvePortalTreatingClinician(appt);
   const displayFeeCents = resolveDisplayedVisitFeeCents({
     typePriceCents: appt.appointment_type_price_cents,
     doctorConsultationFeeCents: appt.doctor_consultation_fee_cents,
@@ -142,18 +142,18 @@ export function PortalAppointmentTimelineCard({
 
             <div className={portalAppointmentDetailStackClass}>
               {appt.owner ? (
-                <PortalAppointmentStaffIdentityBlock
+                <PortalAppointmentClinicianIdentityBlock
                   icon={<Calendar className="h-3.5 w-3.5" />}
                   label="Calendar owner"
-                  staff={appt.owner}
+                  clinician={appt.owner}
                 />
               ) : null}
 
-              {treatingStaff ? (
-                <PortalAppointmentStaffIdentityBlock
+              {treatingClinician ? (
+                <PortalAppointmentClinicianIdentityBlock
                   icon={<Stethoscope className="h-3.5 w-3.5" />}
                   label="Treating physician"
-                  staff={treatingStaff}
+                  clinician={treatingClinician}
                 />
               ) : null}
 

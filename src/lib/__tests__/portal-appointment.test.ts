@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
-  attachPortalStaffToFullAppointment,
-  formatStaffNameEmailLabel,
+  attachPortalClinicianToFullAppointment,
+  formatClinicianNameEmailLabel,
   portalAppointmentToFullAppointment,
   portalOwnerDisplayLabel,
-  portalStaffDisplayLabel,
+  portalClinicianDisplayLabel,
   portalTreatingDisplayLabel,
   resolvePrimaryDoctorCardLabel,
 } from "@/lib/portal-appointment";
@@ -46,7 +46,7 @@ describe("mapPortalAppointmentsFromRows", () => {
   });
 });
 
-describe("attachPortalStaffToFullAppointment", () => {
+describe("attachPortalClinicianToFullAppointment", () => {
   it("sets portal_owner and portal_treating for patient dashboard cards", () => {
     const row = mapPortalAppointmentsFromRows([
       {
@@ -81,18 +81,18 @@ describe("attachPortalStaffToFullAppointment", () => {
         },
       },
     ])[0];
-    const full = attachPortalStaffToFullAppointment(row);
+    const full = attachPortalClinicianToFullAppointment(row);
     expect(full.portal_owner?.id).toBe("u1");
-    expect(portalStaffDisplayLabel(full.portal_owner)).toBe("Demo Admin (admin@test.com)");
-    expect(portalStaffDisplayLabel(full.portal_treating_physician)).toBe(
+    expect(portalClinicianDisplayLabel(full.portal_owner)).toBe("Demo Admin (admin@test.com)");
+    expect(portalClinicianDisplayLabel(full.portal_treating_physician)).toBe(
       "Demo Doctor 2 (d2@test.com)"
     );
   });
 });
 
-describe("formatStaffNameEmailLabel", () => {
+describe("formatClinicianNameEmailLabel", () => {
   it("never returns a UUID-shaped primary doctor label", () => {
-    const label = formatStaffNameEmailLabel("Demo Doctor", "doc@test.com");
+    const label = formatClinicianNameEmailLabel("Demo Doctor", "doc@test.com");
     expect(label).toBe("Demo Doctor (doc@test.com)");
     expect(label).not.toMatch(/^[0-9a-f-]{36}$/i);
   });
@@ -152,8 +152,8 @@ describe("resolvePrimaryDoctorCardLabel", () => {
         },
       },
     ])[0];
-    const full = attachPortalStaffToFullAppointment(row);
-    expect(portalStaffDisplayLabel(full.portal_owner)).toBe("Demo Admin (admin@test.com)");
+    const full = attachPortalClinicianToFullAppointment(row);
+    expect(portalClinicianDisplayLabel(full.portal_owner)).toBe("Demo Admin (admin@test.com)");
   });
 });
 

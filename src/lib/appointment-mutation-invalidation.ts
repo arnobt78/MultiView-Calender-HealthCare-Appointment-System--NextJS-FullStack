@@ -6,10 +6,12 @@ import type { QueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
 import {
   getCategoryIdFromAppointmentCache,
+  getDoctorIdsFromAppointmentCache,
   getPatientIdFromAppointmentCache,
 } from "@/lib/appointment-cache-read";
 import {
   invalidateCategoryDetailAndSnapshot,
+  invalidateDoctorDetailAndSnapshot,
   invalidatePatientDetailAndSnapshot,
 } from "@/lib/entity-snapshot-invalidation";
 
@@ -19,6 +21,11 @@ export type AppointmentMutationInvalidationOpts = {
   categoryId?: string | null;
   previousPatientId?: string | null;
   previousCategoryId?: string | null;
+  /** Explicit calendar owner / treating physician — overrides cache when PATCH moves doctors. */
+  ownerId?: string | null;
+  treatingPhysicianId?: string | null;
+  previousOwnerId?: string | null;
+  previousTreatingPhysicianId?: string | null;
   /** ICS / Google calendar import — rows may lack category_id; bust entire categories tree */
   bustAllCategorySnapshots?: boolean;
 };
@@ -26,6 +33,7 @@ export type AppointmentMutationInvalidationOpts = {
 export type AppointmentMutationInvalidationTargets = {
   patientIds: string[];
   categoryIds: string[];
+  doctorIds: string[];
   bustAllCategorySnapshots: boolean;
 };
 
@@ -44,6 +52,9 @@ export function resolveAppointmentMutationTargets(
   const fromCacheCategory = opts?.appointmentId
     ? getCategoryIdFromAppointmentCache(queryClient, opts.appointmentId)
     : undefined;
+  const fromCacheDoctors = opts?.appointmentId
+    ? getDoctorIdsFromAppointmentCache(queryClient, opts.appointmentId)
+    : [];
 
   return {
     patientIds: uniqueNonEmpty([
@@ -55,6 +66,13 @@ export function resolveAppointmentMutationTargets(
       opts?.categoryId,
       opts?.previousCategoryId,
       fromCacheCategory,
+    ]),
+    doctorIds: uniqueNonEmpty([
+      opts?.ownerId,
+      opts?.treatingPhysicianId,
+      opts?.previousOwnerId,
+      opts?.previousTreatingPhysicianId,
+      ...fromCacheDoctors,
     ]),
     bustAllCategorySnapshots: opts?.bustAllCategorySnapshots === true,
   };
@@ -68,6 +86,7 @@ export async function invalidateAppointmentEntitySnapshots(
   const tasks: Promise<void>[] = [
     ...targets.patientIds.map((id) => invalidatePatientDetailAndSnapshot(queryClient, id)),
     ...targets.categoryIds.map((id) => invalidateCategoryDetailAndSnapshot(queryClient, id)),
+    ...targets.doctorIds.map((id) => invalidateDoctorDetailAndSnapshot(queryClient, id)),
   ];
 
   if (targets.bustAllCategorySnapshots) {

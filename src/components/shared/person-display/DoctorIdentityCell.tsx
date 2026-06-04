@@ -8,6 +8,7 @@ import {
 import { doctorDetailHref } from "@/lib/entity-routes";
 import { isAdminRole } from "@/lib/rbac";
 import type { EntityRole } from "@/lib/entity-routes";
+import type { CalendarOwnerLinkKind } from "@/lib/entity-detail-snapshot-links";
 
 type DoctorLookup = {
   id: string;
@@ -25,6 +26,10 @@ export type DoctorIdentityCellProps = {
   image?: string | null;
   specialty?: string | null;
   viewerRole: EntityRole;
+  /** Override default admin-cp / role link (snapshot tables pass policy-resolved kind). */
+  linkKind?: CalendarOwnerLinkKind;
+  /** Snapshot `calendar_owner_role` — required for `portal-admin` owner links. */
+  staffRole?: string | null;
   /** Enriched user row from `useUsers` when snapshot only has denormalized strings. */
   doctorById?: Map<string, DoctorLookup>;
   size?: "sm" | "md";
@@ -44,6 +49,8 @@ export function DoctorIdentityCell({
   image,
   specialty,
   viewerRole,
+  linkKind: linkKindOverride,
+  staffRole = null,
   doctorById,
   size = "sm",
   showSpecialty = true,
@@ -65,7 +72,9 @@ export function DoctorIdentityCell({
     <div className={className}>
       <DoctorIdentityRow
         doctor={doctor}
-        linkKind={isAdminRole(viewerRole) ? "admin-cp" : "role"}
+        linkKind={linkKindOverride ?? (isAdminRole(viewerRole) ? "admin-cp" : "role")}
+        staffRole={staffRole}
+        viewerRole={viewerRole}
         size={size}
         showEmail
         showSpecialty={showSpecialty}

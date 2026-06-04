@@ -111,6 +111,8 @@ export const queryKeys = {
     /** Primary-doctor roster on CP doctor detail */
     assignedPatients: (doctorId: string) =>
       ["app", "doctors", doctorId, "assigned-patients"] as const,
+    /** Related appointments panel — owner or treating physician (portal + CP doctor detail). */
+    snapshot: (doctorId: string) => ["app", "doctors", doctorId, "snapshot"] as const,
   },
   /**
    * Appointment types: per-doctor lists (`GET /api/appointment-types?doctorId=`) + global card data.

@@ -5,7 +5,7 @@
 
 import type { FullAppointment } from "@/hooks/useAppointments";
 import {
-  attachPortalStaffToFullAppointment,
+  attachPortalClinicianToFullAppointment,
   isPortalSerializedAppointmentRow,
 } from "@/lib/portal-appointment";
 import type { PortalAppointmentRow } from "@/lib/serializers";
@@ -57,7 +57,7 @@ export function buildFullAppointmentsList(
       patientViewer &&
       isPortalSerializedAppointmentRow(appt as unknown as Record<string, unknown>)
     ) {
-      return attachPortalStaffToFullAppointment(appt as PortalAppointmentRow, {
+      return attachPortalClinicianToFullAppointment(appt as PortalAppointmentRow, {
         patient_data: patientRow,
         appointment_assignee: assigneesForAppt,
       });

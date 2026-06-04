@@ -3,9 +3,11 @@ import { apiClient, handleApiError } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import {
   invalidateDoctorPortal,
+  invalidateDoctorsAffectedByPatientWrite,
   invalidateEntityAffectingAppointments,
   invalidatePatientDetailAndSnapshot,
 } from "@/lib/query-client";
+import { getPrimaryDoctorIdFromPatientCache } from "@/lib/patient-cache-read";
 import { Patient, type PatientSnapshot } from "@/types/types";
 import { notify } from "@/lib/notify";
 import { fetchPatients } from "@/lib/query-fetchers";
@@ -61,6 +63,9 @@ export function usePatients() {
       await invalidateEntityAffectingAppointments(queryClient, "patients");
       await invalidateDoctorPortal(queryClient);
       await invalidatePatientDetailAndSnapshot(queryClient, data.patient.id);
+      await invalidateDoctorsAffectedByPatientWrite(queryClient, {
+        primaryDoctorId: data.patient.primary_doctor_id,
+      });
       notify.crud({ action: "created", entity: "Patient", detail: `${data.patient.firstname} ${data.patient.lastname} was added.` });
     },
     onError: (e) => handleApiError(e, "Failed to create patient"),
@@ -72,10 +77,17 @@ export function usePatients() {
         method: "PUT",
         body: JSON.stringify(data),
       }),
-    onSuccess: async (data) => {
+    onMutate: async ({ id }) => ({
+      previousPrimaryDoctorId: getPrimaryDoctorIdFromPatientCache(queryClient, id) ?? null,
+    }),
+    onSuccess: async (data, _vars, context) => {
       await invalidateEntityAffectingAppointments(queryClient, "patients");
       await invalidateDoctorPortal(queryClient);
       await invalidatePatientDetailAndSnapshot(queryClient, data.patient.id);
+      await invalidateDoctorsAffectedByPatientWrite(queryClient, {
+        primaryDoctorId: data.patient.primary_doctor_id,
+        previousPrimaryDoctorId: context?.previousPrimaryDoctorId,
+      });
       const nm = `${data.patient.firstname} ${data.patient.lastname}`.trim();
       const em = data.patient.email?.trim();
       notify.crud({
@@ -90,12 +102,18 @@ export function usePatients() {
   const deleteMutation = useMutation({
     mutationFn: (vars: { id: string; name?: string; email?: string | null }) =>
       apiClient(`/api/patients/${vars.id}`, { method: "DELETE" }).then(() => vars),
-    onSuccess: async (vars) => {
+    onMutate: async (vars) => ({
+      previousPrimaryDoctorId: getPrimaryDoctorIdFromPatientCache(queryClient, vars.id) ?? null,
+    }),
+    onSuccess: async (vars, _input, context) => {
       // Drop detail/snapshot so nothing refetches a deleted id; list + appointments still invalidate below.
       queryClient.removeQueries({ queryKey: queryKeys.patients.detail(vars.id) });
       queryClient.removeQueries({ queryKey: queryKeys.patients.snapshot(vars.id) });
       await invalidateEntityAffectingAppointments(queryClient, "patients");
       await invalidateDoctorPortal(queryClient);
+      await invalidateDoctorsAffectedByPatientWrite(queryClient, {
+        previousPrimaryDoctorId: context?.previousPrimaryDoctorId,
+      });
       const nm = vars.name?.trim();
       const em = vars.email?.trim();
       const who = nm ? `${nm}${em ? ` (${em})` : ""}` : "The patient record";

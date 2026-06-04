@@ -46,6 +46,12 @@ import type { AppointmentSnapshotRow, SnapshotInvoice } from "@/types/types";
 import type { EntityRole } from "@/lib/entity-routes";
 import { CLINICAL_SNAPSHOT_APPOINTMENT_COL_WIDTH } from "@/lib/clinical-snapshot-table-columns";
 import type { RelatedAppointmentsColumnId } from "@/lib/clinical-snapshot-table-columns";
+import {
+  resolveCalendarOwnerLinkKind,
+  resolveCategoryLinkEnabled,
+  resolveTreatingPhysicianLinkKind,
+  type RelatedAppointmentsLinkPolicy,
+} from "@/lib/entity-detail-snapshot-links";
 
 /**
  * Category pill — role-aware link via `categoryDetailHref`.
@@ -60,12 +66,15 @@ export function CategoryTableCell({
   emptyLayout = "table",
   markVariant = "dot",
   markSize = "list",
+  linkEnabled = true,
 }: {
   label: string | null | undefined;
   color: string | null | undefined;
   icon?: string | null;
   categoryId?: string | null;
   viewerRole?: EntityRole;
+  /** Portal doctor detail passes `false` via snapshot link policy. */
+  linkEnabled?: boolean;
   /** `definition` for patient schema `<dd>`; `table` for snapshot grids (default). */
   emptyLayout?: ClinicalEmptyLayout;
   /** `brand` = logo tile; `dot` = compact swatch. */
@@ -85,7 +94,7 @@ export function CategoryTableCell({
         <CategoryBrandMark color={color} icon={icon} variant="dot" />
       </span>
     );
-  const canLink = categoryId && isValidUUID(categoryId);
+  const canLink = linkEnabled && categoryId && isValidUUID(categoryId);
   return (
     <span
       className={cn(
@@ -201,6 +210,8 @@ export type BuildSnapshotColumnsOpts = {
   hiddenColumns?: readonly RelatedAppointmentsColumnId[];
   /** Related Appointments title column layout — reuse on patient/category/portal detail tables. */
   titleColumn?: RelatedAppointmentsTitleColumnDisplay;
+  /** Portal doctor detail — disables links that would 404 for patient/doctor viewers. */
+  linkPolicy?: RelatedAppointmentsLinkPolicy;
 };
 
 export type { RelatedAppointmentsColumnId };
@@ -209,10 +220,13 @@ export type { RelatedAppointmentsColumnId };
 export function buildRelatedAppointmentsColumns(
   opts: BuildSnapshotColumnsOpts
 ): ColumnDef<AppointmentSnapshotRow>[] {
-  const { viewerRole, patientDisplayName, staffById, pagePatient, hiddenColumns, titleColumn } = opts;
+  const { viewerRole, patientDisplayName, staffById, pagePatient, hiddenColumns, titleColumn, linkPolicy } =
+    opts;
   const hidden = new Set(hiddenColumns ?? []);
   const showPatientIdentity = titleColumn?.showPatientIdentity ?? true;
   const showStatus = titleColumn?.showStatus ?? true;
+  const linkAppointmentTitle = linkPolicy?.appointmentTitle ?? true;
+  const linkPatientInTitle = linkPolicy?.patientInTitle ?? true;
 
   const columns: ColumnDef<AppointmentSnapshotRow>[] = [
     {
@@ -237,15 +251,27 @@ export function buildRelatedAppointmentsColumns(
               "flex min-w-0 flex-col justify-center gap-1"
             )}
           >
-            <EntityTitleLink
-              href={appointmentDetailHref(viewerRole, a.id)}
-              label={typeLine}
-              className={cn("block font-normal", clinicalTableCellWrapClass)}
-            />
+            {linkAppointmentTitle ? (
+              <EntityTitleLink
+                href={appointmentDetailHref(viewerRole, a.id)}
+                label={typeLine}
+                className={cn("block font-normal", clinicalTableCellWrapClass)}
+              />
+            ) : (
+              <span
+                className={cn(
+                  "block font-normal text-foreground",
+                  clinicalTableCellWrapClass
+                )}
+              >
+                {typeLine}
+              </span>
+            )}
             {showPatientIdentity ? (
               patientIdentity ? (
                 <PatientIdentityCell
                   href={patientIdentity.href}
+                  linkPatient={linkPatientInTitle}
                   name={patientIdentity.name}
                   email={patientIdentity.email}
                   patient={patientIdentity.patient}
@@ -307,6 +333,7 @@ export function buildRelatedAppointmentsColumns(
             icon={row.original.category_icon}
             categoryId={row.original.category}
             viewerRole={viewerRole}
+            linkEnabled={resolveCategoryLinkEnabled(linkPolicy)}
             markVariant="brand"
             markSize="compact"
           />
@@ -322,6 +349,11 @@ export function buildRelatedAppointmentsColumns(
       },
       cell: ({ row }) => {
         const a = row.original;
+        const ownerLinkKind = resolveCalendarOwnerLinkKind(
+          viewerRole,
+          a.calendar_owner_role,
+          linkPolicy
+        );
         return clinicalEmptyOrNode(
           Boolean(a.calendar_owner_id && a.calendar_owner_display),
           () => (
@@ -332,6 +364,8 @@ export function buildRelatedAppointmentsColumns(
               image={a.calendar_owner_image}
               specialty={null}
               viewerRole={viewerRole}
+              linkKind={ownerLinkKind}
+              staffRole={a.calendar_owner_role}
               doctorById={staffById}
               showSpecialty={false}
             />
@@ -349,6 +383,12 @@ export function buildRelatedAppointmentsColumns(
       },
       cell: ({ row }) => {
         const a = row.original;
+        const treatRole = a.treating_physician_role ?? "doctor";
+        const treatLinkKind = resolveTreatingPhysicianLinkKind(
+          viewerRole,
+          linkPolicy,
+          treatRole
+        );
         return clinicalEmptyOrNode(
           Boolean(a.doctor_id && a.doctor_display),
           () => (
@@ -359,6 +399,8 @@ export function buildRelatedAppointmentsColumns(
               image={a.doctor_image}
               specialty={a.doctor_specialty ?? staffById.get(a.doctor_id!)?.specialty ?? null}
               viewerRole={viewerRole}
+              linkKind={treatLinkKind}
+              staffRole={treatRole}
               doctorById={staffById}
             />
           ),

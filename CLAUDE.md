@@ -4,13 +4,12 @@ Compact agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-04)
 
-- **Appointment cards:** `AppointmentCategoryTypeMetaRow` — category + visit type + duration + fee (+ time on list); `APPOINTMENT_TYPE_CARD_SELECT` on calendar/portal APIs + SSR; type-only row when no `category_data`.
-- **Staff portraits:** `resolvePrimaryDoctorCardImage` (patient `primary_doctor_image`, portal owner/treating, directory); `patientPrimaryDoctorPick` on `prefetchPatients` + `GET /api/patients`.
-- **Notes RBAC:** `canShowAppointmentClinicalNotes` — `AppointmentCard` + `PortalAppointmentTimelineCard` (admin/doctor only).
-- **Invalidation:** `invalidateAppointmentTypeDerived` also busts `appointments.all` (type name/fee on cached cards).
-- **Portal staff rows:** inline `MetaIdentityBlock` + `PortalAppointmentStaffIdentityBlock` (one row).
-- **Invoices (prior):** `loadInvoicesListForViewer`, Stripe checkout copy/session track, visit physician images on summaries.
-- **Verify:** `npm test` **693** / **130** files · tsc · lint · build.
+- **Doctor detail:** `GET /api/doctors/[id]/snapshot` + `DoctorDetailScreenShared`; SSR `prefetchDoctorSnapshot` on `/doctors/[id]` + CP; `queryKeys.doctors.snapshot`.
+- **Portal links:** `entity-detail-snapshot-links.ts` + `linkPolicy` on portal doctor detail — no title/patient 404s; doctor viewers → `/admins/:id` for admin owners; patient viewers → plain admin owners.
+- **Invalidation:** `invalidateDoctorDetailAndSnapshot`; `appointment-invalidation-fk` + `invalidateDoctorsAffectedByPatientWrite` (patient primary doctor).
+- **Routes:** `/admins/[id]` (removed `/staff/[id]`); `portalAdminDetailHref`. **Terminology:** portal clinician = doctor|admin on cards — `ClinicianInvoiceDialogShell`, `PortalClinicianLink`, `PortalAppointmentClinicianUser` (deprecated `Staff*` shims remain).
+- **Doctor portal:** `InvoiceFormDialogProvider` mounts when layout `variant="doctor"` (auth hydrate-safe).
+- **Verify:** `npm test` **711** / **133** files · tsc · lint · build.
 
 ## Never / Always
 
@@ -28,21 +27,22 @@ npm test && npx tsc --noEmit && npm run lint && npm run build
 
 | Write | Helper |
 |-------|--------|
-| Appointment | `invalidateAfterAppointmentMutation` |
-| Patient/category | `invalidateEntityAffectingAppointments` |
+| Appointment | `invalidateAfterAppointmentMutation` (+ FK `ownerId`/`treatingPhysicianId`) |
+| Patient | `invalidateEntityAffectingAppointments` + `invalidateDoctorsAffectedByPatientWrite` |
 | Invoice/payment | `invalidateInvoicesAndOverview` / `invalidateInvoicesBilling` |
 | Types/config | `invalidateAppointmentTypeDerived` (+ `appointments.all`) |
 | Schedule | `invalidateDoctorSchedule` |
-| Users | `invalidateUsersAndAuth` |
+| Users | `invalidateUsersAndAuth` + `invalidateDoctorDetailAndSnapshot` |
 
 Cross-tab: `query-cache-cross-tab.ts` in `QueryProvider`.
 
 ## Key paths
 
-- Cards: `AppointmentCard.tsx`, `appointment-display/AppointmentCategoryTypeMetaRow.tsx`, `appointment-type-include.ts`, `appointment-card-staff-image.ts`, `portal-appointment-card-visibility.ts`
-- Invoice: `invoice-dialog/`, `invoice-visit-meta-line.ts`, `invoices-list-response.ts`
+- Doctor: `doctor-snapshot-data.ts`, `doctor-detail/DoctorDetailScreenShared.tsx`, `useDoctorSnapshot.ts`, `entity-detail-snapshot-links.ts`
+- Portal clinician UI: `ClinicianInvoiceDialogShell`, `PortalClinicianLink`, `portal-appointment-clinician.ts`, `appointment-card-clinician-image.ts`
+- Cards: `AppointmentCard.tsx`, `AppointmentCategoryTypeMetaRow.tsx`, `portal-appointment-card-visibility.ts`
+- Invoice: `invoice-dialog/`, `InvoiceFormDialogContext.tsx`
 - SSR: `server-prefetch.ts`, `appointments-list-build.ts`, `portal-appointment.ts`
-- Seeds: `seed-demo-full.ts`, `doctor-profile-seed-data.ts`
 
 ## Principle
 

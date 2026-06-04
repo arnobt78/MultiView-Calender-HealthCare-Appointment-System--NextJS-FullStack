@@ -24,8 +24,11 @@ type ProviderProps = {
 };
 
 /**
- * One invoice create/edit dialog per staff layout — calendar + appointment menus call
- * openCreateForAppointment without prop drilling. Patients skip provider (no-op passthrough).
+ * One invoice create/edit dialog per doctor/admin layout — calendar + portal billing call
+ * openCreateForAppointment without prop drilling. Patients skip provider (passthrough).
+ *
+ * When `variant` is set (doctor-portal, CP, appointments layout), always mount the provider
+ * so children can call useInvoiceFormDialog before /api/auth/me hydrates role.
  */
 export function InvoiceFormDialogProvider({
   children,
@@ -34,7 +37,9 @@ export function InvoiceFormDialogProvider({
 }: ProviderProps) {
   const { user } = useAuth();
   const role = user?.role ?? null;
-  const isStaff = isAdminRole(role) || isDoctorRole(role);
+  const isDoctorOrAdmin = isAdminRole(role) || isDoctorRole(role);
+  /** Layout declares doctor/admin shell — do not omit context while auth role is still null. */
+  const mountProvider = variant != null || isDoctorOrAdmin;
   const controller = useInvoiceFormDialogController({
     ...(variant ? { variant } : {}),
     invoicesInitialData,
@@ -42,7 +47,7 @@ export function InvoiceFormDialogProvider({
 
   const value = useMemo(() => controller, [controller]);
 
-  if (!isStaff) {
+  if (!mountProvider) {
     return <>{children}</>;
   }
 
@@ -54,12 +59,12 @@ export function InvoiceFormDialogProvider({
   );
 }
 
-/** Access shared invoice dialog — must be under InvoiceFormDialogProvider (staff routes). */
+/** Access shared invoice dialog — must be under InvoiceFormDialogProvider on doctor/admin layouts. */
 export function useInvoiceFormDialog(): InvoiceFormDialogContextValue {
   const ctx = useContext(InvoiceFormDialogContext);
   if (!ctx) {
     throw new Error(
-      "useInvoiceFormDialog must be used within InvoiceFormDialogProvider on staff routes"
+      "useInvoiceFormDialog must be used within InvoiceFormDialogProvider on doctor or admin layouts"
     );
   }
   return ctx;

@@ -14,6 +14,11 @@ import { getUserRole } from "@/lib/rbac";
 import { DoctorDetailScreen } from "@/components/control-panel/DoctorDetailScreen";
 import { serializeUser } from "@/lib/serializers";
 import { fetchDoctorAssignedPatients } from "@/lib/doctor-assigned-patients";
+import { canClientFetchAdminUsersList } from "@/lib/user-list-access";
+import {
+  prefetchDoctorSnapshot,
+  prefetchUsersList,
+} from "@/lib/server-prefetch";
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -44,16 +49,26 @@ export default async function DoctorDetailPage({ params }: PageProps) {
   if (!raw) notFound();
 
   const initialUser = serializeUser(raw);
-  const initialAssignedPatients = await fetchDoctorAssignedPatients(id);
+  const [initialAssignedPatients, initialSnapshot, initialDoctorUsers, initialAdminUsers] =
+    await Promise.all([
+      fetchDoctorAssignedPatients(id),
+      prefetchDoctorSnapshot(id),
+      prefetchUsersList({ role: "doctor", limit: 200 }),
+      canClientFetchAdminUsersList(callerRole)
+        ? prefetchUsersList({ role: "admin", limit: 50 })
+        : Promise.resolve(null),
+    ]);
 
   return (
     <DoctorDetailScreen
       doctorId={id}
       canAdminEdit={callerRole === "admin"}
       listBackHref="/control-panel/doctor-management"
-      scrollShell="control-panel"
       initialUser={initialUser}
+      initialSnapshot={initialSnapshot}
       initialAssignedPatients={initialAssignedPatients}
+      initialDoctorUsers={initialDoctorUsers}
+      initialAdminUsers={initialAdminUsers}
     />
   );
 }

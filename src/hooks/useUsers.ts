@@ -1,7 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient, handleApiError } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
-import { invalidateUsersAndAuth, invalidateDashboardOverview } from "@/lib/query-client";
+import {
+  invalidateDoctorDetailAndSnapshot,
+  invalidateUsersAndAuth,
+  invalidateDashboardOverview,
+} from "@/lib/query-client";
 import type { User } from "@/types/types";
 import { notify } from "@/lib/notify";
 
@@ -67,6 +71,7 @@ export function useUsers(
       }),
     onSuccess: async (data) => {
       await invalidateUsersAndAuth(queryClient);
+      await invalidateDoctorDetailAndSnapshot(queryClient, data.user.id);
       // Role changes affect the "Doctors" and other aggregate counts in dashboard overview.
       await invalidateDashboardOverview(queryClient);
       notify.crud({ action: "updated", entity: "User", detail: `${data.user.display_name ?? data.user.email} was updated.` });
@@ -110,6 +115,7 @@ export function useUser(id: string | null) {
     },
     onSuccess: async (data) => {
       await invalidateUsersAndAuth(queryClient);
+      if (id) await invalidateDoctorDetailAndSnapshot(queryClient, id);
       // Role changes affect dashboard overview aggregate counts (e.g. total doctors).
       void invalidateDashboardOverview(queryClient);
       notify.crud({ action: "updated", entity: "User", detail: `${data.user.display_name ?? data.user.email} was updated.` });

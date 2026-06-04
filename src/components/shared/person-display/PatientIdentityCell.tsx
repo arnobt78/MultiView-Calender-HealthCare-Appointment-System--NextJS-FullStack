@@ -20,7 +20,9 @@ type PatientPortraitInput = Pick<Patient, "id" | "email" | "clinical_profile" | 
 type PatientIdentityCellProps = {
   name: string;
   email?: string | null;
-  href: string;
+  /** Omit or set `linkPatient={false}` for read-only snapshot rows (portal doctor detail). */
+  href?: string;
+  linkPatient?: boolean;
   patient: PatientPortraitInput;
   /** `table` = avatar left + stacked name/email; `detail` = name + email on one row, no avatar column split */
   layout?: "table" | "detail";
@@ -36,6 +38,7 @@ export function PatientIdentityCell({
   name,
   email,
   href,
+  linkPatient = true,
   patient,
   layout = "table",
   className,
@@ -44,11 +47,22 @@ export function PatientIdentityCell({
   const emailTrim = email?.trim();
   const label = name.trim() || emailTrim || "—";
   const age = patientAgeYears(patient.birth_date);
+  const canLink = linkPatient && Boolean(href?.trim());
+
+  const nameNode = canLink ? (
+    <EntityTitleLink href={href!} label={label} className="min-w-0 self-start truncate font-normal" />
+  ) : (
+    <span className="min-w-0 self-start truncate font-normal text-foreground">{label}</span>
+  );
 
   if (layout === "detail") {
     return (
       <div className={cn("flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5", className)}>
-        <EntityTitleLink href={href} label={label} className="font-normal" />
+        {canLink ? (
+          <EntityTitleLink href={href!} label={label} className="font-normal" />
+        ) : (
+          <span className="font-normal text-foreground">{label}</span>
+        )}
         {emailTrim ? (
           <span className={cn("truncate", clinicalCellMutedTextClass)} title={emailTrim}>
             {emailTrim}
@@ -69,7 +83,7 @@ export function PatientIdentityCell({
       <PatientPortraitAvatar patient={patient} sizeClassName={avatarSizeClassName} />
       <div className={cn("flex min-w-0 flex-1 flex-col justify-center", clinicalStackGapClass)}>
         <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-          <EntityTitleLink href={href} label={label} className="min-w-0 self-start truncate font-normal" />
+          {nameNode}
           {age != null ? <PatientAgeGlassBadge age={age} /> : null}
         </div>
         {emailTrim ? (

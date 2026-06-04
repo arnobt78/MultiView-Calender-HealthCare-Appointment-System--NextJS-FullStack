@@ -6,6 +6,10 @@ import {
   invalidateAssigneesData,
 } from "@/lib/query-client";
 import {
+  appointmentDoctorFkOpts,
+  appointmentDoctorFkOptsWithPrevious,
+} from "@/lib/appointment-invalidation-fk";
+import {
   fetchAssignees,
   fetchCategories,
   fetchPatients,
@@ -14,7 +18,7 @@ import {
 } from "@/lib/query-fetchers";
 import { resolveExtraAssignedAppointmentIds } from "@/lib/appointments-calendar-assignees";
 import { Appointment, Category, Patient, AppointmentAssignee } from "@/types/types";
-import type { PortalAppointmentStaffUser } from "@/lib/serializers";
+import type { PortalAppointmentClinicianUser } from "@/lib/serializers";
 import { buildFullAppointmentsList } from "@/lib/appointments-list-build";
 import { PAGINATION } from "@/lib/constants";
 import { notify } from "@/lib/notify";
@@ -28,8 +32,8 @@ export type FullAppointment = Appointment & {
   appointment_assignee?: (AppointmentAssignee & { invited_email?: string })[];
   invited_email?: string;
   /** Patient portal joins — staff links without `/api/users/search`. */
-  portal_owner?: PortalAppointmentStaffUser;
-  portal_treating_physician?: PortalAppointmentStaffUser;
+  portal_owner?: PortalAppointmentClinicianUser;
+  portal_treating_physician?: PortalAppointmentClinicianUser;
 };
 
 function formatAppointmentRange(start?: string, end?: string) {
@@ -152,6 +156,7 @@ export function useAppointments() {
         appointmentId: appointment?.id,
         patientId: appointment?.patient ?? undefined,
         categoryId: appointment?.category ?? undefined,
+        ...appointmentDoctorFkOpts(appointment),
       });
       notify.crud({
         action: "created",
@@ -185,6 +190,7 @@ export function useAppointments() {
         categoryId: appointment?.category ?? undefined,
         previousPatientId: context?.previous?.patient ?? undefined,
         previousCategoryId: context?.previous?.category ?? undefined,
+        ...appointmentDoctorFkOptsWithPrevious(appointment, context?.previous),
       });
       notify.crud({
         action: "updated",
@@ -214,6 +220,7 @@ export function useAppointments() {
           appointmentId: deletedId,
           patientId: context?.deleted?.patient ?? undefined,
           categoryId: context?.deleted?.category ?? undefined,
+          ...appointmentDoctorFkOptsWithPrevious(null, context?.deleted),
         }),
         invalidateAssigneesData(queryClient),
       ]);
@@ -274,6 +281,7 @@ export function useAppointments() {
         appointmentId: appt.id,
         patientId: appt.patient ?? undefined,
         categoryId: appt.category ?? undefined,
+        ...appointmentDoctorFkOpts(appt),
       });
       notify.crud({
         action: "updated",

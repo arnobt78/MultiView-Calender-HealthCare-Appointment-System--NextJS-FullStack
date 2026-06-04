@@ -35,8 +35,8 @@ vi.mock("@/components/shared/RoleEntityLink", () => ({
   RoleEntityLink: ({ label }: { label: string }) => <span>{label}</span>,
 }));
 
-vi.mock("@/components/shared/PortalStaffLink", () => ({
-  PortalStaffLink: ({ label }: { label: string }) => <span>{label}</span>,
+vi.mock("@/components/shared/PortalClinicianLink", () => ({
+  PortalClinicianLink: ({ label }: { label: string }) => <span>{label}</span>,
 }));
 
 vi.mock("@/components/shared/doctor-display/DoctorAvatar", () => ({

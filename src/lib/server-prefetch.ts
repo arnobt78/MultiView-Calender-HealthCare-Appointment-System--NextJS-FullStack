@@ -678,6 +678,18 @@ export async function prefetchCategorySnapshot(
   }
 }
 
+/** Mirrors GET /api/doctors/:id/snapshot — seeds `queryKeys.doctors.snapshot(id)`. */
+export async function prefetchDoctorSnapshot(
+  doctorId: string
+): Promise<import("@/types/types").DoctorSnapshot | null> {
+  try {
+    const { loadDoctorSnapshotData } = await import("@/lib/doctor-snapshot-data");
+    return await loadDoctorSnapshotData(doctorId);
+  } catch {
+    return null;
+  }
+}
+
 // ─── Patients list ────────────────────────────────────────────────────────────
 
 /**

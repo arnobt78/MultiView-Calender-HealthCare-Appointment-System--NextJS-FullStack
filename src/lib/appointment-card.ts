@@ -104,8 +104,8 @@ export function statusTextClass(status: string | null | undefined): string {
   return "text-amber-600";
 }
 
-/** Staff user ids to resolve via `useOwnerUserSummaries` (calendar owner + treating + patient primary doctor). */
-export function collectAppointmentStaffUserIds(
+/** Clinician user ids to resolve via `useOwnerUserSummaries` (calendar owner + treating + patient primary doctor). */
+export function collectAppointmentClinicianUserIds(
   appointments: {
     user_id: string;
     treating_physician_id?: string | null;
@@ -122,6 +122,9 @@ export function collectAppointmentStaffUserIds(
   }
   return [...ids];
 }
+
+/** @deprecated Use `collectAppointmentClinicianUserIds`. */
+export const collectAppointmentStaffUserIds = collectAppointmentClinicianUserIds;
 
 export function categorySwatchFill(color: string | null | undefined): string {
   if (!color?.trim()) return "#94a3b8";

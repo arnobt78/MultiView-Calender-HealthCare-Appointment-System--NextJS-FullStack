@@ -2,8 +2,14 @@ import type { QueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import { isValidUUID } from "@/lib/validation";
-import { isAdminRole } from "@/lib/rbac";
-import type { Category, Patient, PatientSnapshot, User, CategorySnapshot } from "@/types/types";
+import type {
+  Category,
+  CategorySnapshot,
+  DoctorSnapshot,
+  Patient,
+  PatientSnapshot,
+  User,
+} from "@/types/types";
 import { prefetchCategoryDetailStaffUsers } from "@/lib/prefetch-category-detail-staff";
 import { mapApiInvoiceToRow } from "@/lib/billing-invoice-map";
 import type { InvoiceRow } from "@/lib/billing-types";
@@ -54,6 +60,7 @@ export function prefetchQueriesForControlPanelHref(
   const id = last;
   const isPatients = segments.includes("patients");
   const isDoctors = segments.includes("doctors");
+  const isAdmins = segments.includes("admins");
   const isCategories = segments.includes("categories");
   /** Portal `/invoices/:id` and CP `/control-panel/invoices/:id` share the same detail API. */
   const isInvoices = segments.includes("invoices");
@@ -79,10 +86,22 @@ export function prefetchQueriesForControlPanelHref(
         return;
       }
       if (isDoctors) {
-        const role = resolvedViewer?.role ?? null;
-        const canPrefetchUser =
-          isAdminRole(role) || (resolvedViewer && id === resolvedViewer.userId);
-        if (!canPrefetchUser) return;
+        await Promise.all([
+          queryClient.prefetchQuery({
+            queryKey: queryKeys.users.detail(id),
+            queryFn: async () => {
+              const res = await apiClient<{ user: User }>(`/api/users/${id}`);
+              return res.user;
+            },
+          }),
+          queryClient.prefetchQuery({
+            queryKey: queryKeys.doctors.snapshot(id),
+            queryFn: () => apiClient<DoctorSnapshot>(`/api/doctors/${id}/snapshot`),
+          }),
+        ]);
+        return;
+      }
+      if (isAdmins) {
         await queryClient.prefetchQuery({
           queryKey: queryKeys.users.detail(id),
           queryFn: async () => {
