@@ -169,6 +169,26 @@ export function clinicianDisplayLabel(c: AppointmentDetailClinician | null): str
   return formatClinicianNameEmailLabel(c.display_name, c.email);
 }
 
+/** Recompute header subtitle after patient or schedule fields change. */
+export function recomputeAppointmentDetailLabels(
+  model: Pick<AppointmentDetailViewModel, "appointment" | "patient">
+): Pick<AppointmentDetailViewModel, "subtitle" | "patientSubtitleLabel"> {
+  const patientSubtitleLabel = model.patient
+    ? `${model.patient.firstname} ${model.patient.lastname}`.trim() || model.patient.email || null
+    : null;
+  const whenLabel = model.appointment.start
+    ? new Date(model.appointment.start).toLocaleString(undefined, {
+        dateStyle: "medium",
+        timeStyle: "short",
+      })
+    : null;
+  const subtitle =
+    patientSubtitleLabel && whenLabel
+      ? `${patientSubtitleLabel} · ${whenLabel}`
+      : patientSubtitleLabel ?? whenLabel ?? model.appointment.title;
+  return { subtitle, patientSubtitleLabel };
+}
+
 /** Merge list-row appointment fields into detail cache after calendar mutations. */
 export function mergeAppointmentIntoDetailViewModel(
   model: AppointmentDetailViewModel,
@@ -178,10 +198,26 @@ export function mergeAppointmentIntoDetailViewModel(
     typePriceCents: appointment.appointment_type_price_cents,
     doctorConsultationFeeCents: appointment.doctor_consultation_fee_cents,
   });
-  return {
+  const next = {
     ...model,
     appointment,
     visitFeeCents,
     visitFeeLabel: formatVisitFeeEurLabel(visitFeeCents),
   };
+  return { ...next, ...recomputeAppointmentDetailLabels(next) };
+}
+
+/**
+ * Optimistic/detail patch — updates appointment row plus optional patient/category swaps.
+ */
+export function applyAppointmentDetailNestedEntities(
+  model: AppointmentDetailViewModel,
+  appointment: Appointment,
+  nested?: { patient?: Patient | null; category?: Category | null }
+): AppointmentDetailViewModel {
+  const merged = mergeAppointmentIntoDetailViewModel(model, appointment);
+  const patient = nested && "patient" in nested ? nested.patient ?? null : merged.patient;
+  const category = nested && "category" in nested ? nested.category ?? null : merged.category;
+  const withNested = { ...merged, patient, category };
+  return { ...withNested, ...recomputeAppointmentDetailLabels(withNested) };
 }

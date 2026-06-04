@@ -26,6 +26,7 @@ import {
 } from "@/lib/staff-appointment-calendar-scope";
 import { isValidUUID } from "@/lib/validation";
 import { appointmentDetailHref, appointmentNotificationLink } from "@/lib/entity-routes";
+import { buildAppointmentDetailApiPayload } from "@/lib/appointment-detail-api";
 import { redis } from "@/lib/redis";
 import { assertDoctorActiveForBooking, InactiveDoctorBookingError } from "@/lib/doctor-active-booking";
 import { format } from "date-fns";
@@ -327,11 +328,20 @@ export async function POST(req: NextRequest) {
       // Notification failures are non-critical — swallow silently.
     }
 
+    const accessSession = {
+      userId: sessionUser.userId,
+      email: sessionUser.email,
+      role,
+    };
+    const payload = await buildAppointmentDetailApiPayload(accessSession, appointment.id);
+    if (payload) {
+      return NextResponse.json(payload);
+    }
+
     return NextResponse.json({
       appointment: serializeAppointment({
         ...appointment,
         ...appointmentTypeSerializedFields(appointment.appointment_type),
-        // POST doesn't join treating_physician on create; doctor_consultation_fee_cents populated after list refetch
         doctor_consultation_fee_cents: null,
       }),
     });

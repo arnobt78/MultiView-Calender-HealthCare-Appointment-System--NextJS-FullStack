@@ -151,13 +151,16 @@ export function useAppointments() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (newAppointment: Partial<Appointment>) => 
-      apiClient<{ appointment: FullAppointment }>("/api/appointments", {
+    mutationFn: (newAppointment: Partial<Appointment>) =>
+      apiClient<AppointmentDetailApiPayload>("/api/appointments", {
         method: "POST",
         body: JSON.stringify(newAppointment),
       }),
     onSuccess: async (data) => {
-      const appointment = data.appointment;
+      const appointment = data.appointment as FullAppointment;
+      if (data.detail && appointment?.id) {
+        patchAppointmentDetailCache(queryClient, appointment.id, data.detail);
+      }
       await invalidateAfterAppointmentMutation(queryClient, {
         appointmentId: appointment?.id,
         patientId: appointment?.patient ?? undefined,

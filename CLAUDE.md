@@ -4,11 +4,11 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-04)
 
-- **Appt detail:** `appointment-detail-api.ts` → GET/PATCH/PUT `{ appointment, detail }`; SSR `prefetchAppointmentDetailViewModel`; `useAppointmentDetail` refetch; `patchAppointmentDetailCache` + optimistic PATCH/toggle; `invalidateAfterAppointmentMutation` → `appointments.detail`.
+- **Appt detail:** GET/PATCH/PUT/POST `{ appointment, detail }`; optimistic patch resolves patient/category from list caches; `useAppointmentDetail` refetch on invalidate.
 - **Appt UI:** `AppointmentDetailScreenShared` + footer `AppointmentDetailActionBar` (sky/violet); no dead `raw` props.
 - **Invoice detail:** `InvoiceDetailActionBar` footer; `resolveInvoiceDetailActionCapabilities`; linked visit `linkPolicy` + owner roles on summary.
 - **Portal links:** `resolvePortalEntityDetailSnapshotLinkPolicy` on `/doctors/[id]`, `/categories/[id]`, invoice visit panel.
-- **Verify:** **724** / **136** · tsc · lint · build.
+- **Verify:** **725** / **136** · tsc · lint · build.
 
 ## Never / Always
 

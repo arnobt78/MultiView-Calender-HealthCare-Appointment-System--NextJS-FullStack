@@ -3,9 +3,11 @@ import { createQueryClient } from "@/lib/query-client";
 import { queryKeys } from "@/lib/query-keys";
 import {
   patchAppointmentDetailCache,
+  patchAppointmentDetailCacheOptimistic,
   seedAppointmentDetailCache,
 } from "@/lib/appointment-detail-cache";
 import type { AppointmentDetailViewModel } from "@/lib/appointment-detail-view-model";
+import type { Patient } from "@/types/types";
 
 const MODEL: AppointmentDetailViewModel = {
   appointmentId: "appt-cache-1",
@@ -58,5 +60,35 @@ describe("appointment detail cache helpers", () => {
       (qc.getQueryData(queryKeys.appointments.detail("appt-cache-1")) as AppointmentDetailViewModel)
         .appointment.status
     ).toBe("done");
+  });
+
+  it("optimistic patch resolves patient from patients.all for subtitle", () => {
+    const qc = createQueryClient();
+    const patient: Patient = {
+      id: "pat-2",
+      firstname: "Jane",
+      lastname: "Doe",
+      email: "jane@example.com",
+      birth_date: null,
+      care_level: null,
+      pronoun: null,
+      active: true,
+      active_since: null,
+      clinical_profile: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    };
+    qc.setQueryData(queryKeys.patients.all, [patient]);
+    seedAppointmentDetailCache(qc, "appt-cache-1", MODEL);
+
+    patchAppointmentDetailCacheOptimistic(qc, "appt-cache-1", {
+      id: "appt-cache-1",
+      patient: "pat-2",
+    });
+
+    const cached = qc.getQueryData(
+      queryKeys.appointments.detail("appt-cache-1")
+    ) as AppointmentDetailViewModel;
+    expect(cached.patient?.firstname).toBe("Jane");
+    expect(cached.patientSubtitleLabel).toContain("Jane Doe");
   });
 });

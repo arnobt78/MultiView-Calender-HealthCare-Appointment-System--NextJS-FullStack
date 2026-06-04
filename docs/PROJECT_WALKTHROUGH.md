@@ -2,11 +2,11 @@
 
 ## Latest (2026-06-04 — Appointment + invoice detail)
 
-- **Appointment detail (glass + live cache):** `/appointments/[id]`, `/control-panel/appointments/[id]` → `AppointmentDetailScreenShared` + `AppointmentDetailActionBar`. SSR `prefetchAppointmentDetailViewModel`; API `appointment-detail-api.ts` (`GET`/`PATCH`/`PUT` → `{ appointment, detail }`); client `useAppointmentDetail` refetch + `patchAppointmentDetailCache` / optimistic form+toggles; `queryKeys.appointments.detail` invalidated on `invalidateAfterAppointmentMutation`.
+- **Appointment detail (glass + live cache):** API `GET`/`PATCH`/`PUT`/`POST` → `{ appointment, detail }`; optimistic form patch resolves patient/category from `patients.all`/`categories.all`; create seeds detail cache; `useAppointmentDetail` refetch on invalidate.
 - **Invoice detail:** `InvoiceDetailActionBar` footer (portal + CP); header title+status only; `resolveInvoiceDetailActionCapabilities`; `InvoiceLinkedVisitPanel` + portal `linkPolicy` + `calendar_owner_role` / `treating_physician_role` on visit summary.
 - **Portal snapshot links:** `resolvePortalEntityDetailSnapshotLinkPolicy` on `/doctors/[id]`, `/categories/[id]`, invoice linked visit.
 - **Doctor/admin:** `/admins/[id]`, doctor snapshot API + invalidation; clinician portal naming (`Clinician*`).
-- **Verify:** **724** tests (136 files), tsc, lint, build.
+- **Verify:** **725** tests (136 files), tsc, lint, build.
 
 ## Prior (2026-06-04 — Appointment card meta + portraits + cache)
 
