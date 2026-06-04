@@ -23,7 +23,7 @@
 
 ## Verify evidence
 
-638/638 Vitest, tsc, lint, build — `ER-C3-VERIFY` (2026-06-02).
+666/666 Vitest (120 files), tsc, lint, build — `ER-C3-VERIFY` (refresh 2026-06-04).
 
 ## Archive procedure (Gate 2)
 

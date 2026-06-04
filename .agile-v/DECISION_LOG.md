@@ -31,3 +31,11 @@
 | 2026-06-02T19:45:00Z | build | REQ-0014 insights telehealth View-as | fetchTelehealthShareForPeriod; 6f13cc2 | REQ-0014 |
 | 2026-06-02T19:45:00Z | build | REQ-0015 invoice revenue KPI grid | InvoiceRevenueKpiGrid, statusTotals, paid_at period; 6f13cc2 | REQ-0015 |
 | 2026-06-02T19:45:00Z | red-team | C3 automated verification PASS (extended) | 638 tests, tsc, lint, build; GATE-0006 pending | REQ-0009..0015 |
+| 2026-06-04T12:24:00Z | init | Infinity Loop bootstrap refresh + session activation | AGENTS.md + Cursor always-on rule; 666/666 tests; C4 scaffold REQ-0016..0020 | REQ-0009..0015 |
+| 2026-06-04T12:24:00Z | requirement-architect | Draft C4 REQs for invoice dialog tranche | Product baseline 2026-06-02 in CLAUDE.md; Gate after C3 archive | REQ-0016..0020 |
+| 2026-06-04T13:20:00Z | build | REQ-0016 visit fee default €150 + CP invoice DataTable parity | `DEFAULT_DOCTOR_VISIT_FEE_CENTS`; amber list/dialog picker; shared `invoice-table-cells` | REQ-0016 |
+| 2026-06-04T13:20:00Z | build | REQ-0017 invoice detail glass + audit | `invoice-detail-ui-classes`; `EntityDetailRecordAuditCard`; expanded `InvoiceLinkedVisitPanel` | REQ-0017 |
+| 2026-06-04T13:20:00Z | build | Doctor seed unify + appointment location prefill | `scripts/lib/doctor-profile-seed-data.ts`; `office_location` on doctor select when location empty | REQ-0016 |
+| 2026-06-04T13:20:00Z | red-team | C4 UI tranche automated verification PASS | 667 tests, tsc, lint, build; ART-0086..0097 | REQ-0016, REQ-0017 |
+| 2026-06-04T13:25:00Z | build | C4 polish — date picker, portal rows, seeds | `ClinicalGlassDatePicker` align end; location hint; `db:seed-demo-full`; portal `invoice-table-cells` | REQ-0016 |
+| 2026-06-04T13:25:00Z | red-team | C4 polish verification PASS | 671 tests, tsc, lint, build; ART-0098..0100 | REQ-0016 |

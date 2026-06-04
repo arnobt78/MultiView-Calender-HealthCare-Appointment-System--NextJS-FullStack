@@ -1,12 +1,12 @@
 # Requirements — HealthCal Pro
 
-<!-- Revision: C1+C2+C3 | C1/C2 archived | C3 active (REQ-0013..0015 extension) | Last updated: 2026-06-02 -->
+<!-- Revision: C1+C2+C3+C4 draft | C3 active | C4 new [C4] | Last updated: 2026-06-04 -->
 
 ## Document Control
 
 | Field | Value |
 |-------|-------|
-| Cycle | C1 (archived) + C2 (archived) + C3 (active, REQ-0013..0015 extension) |
+| Cycle | C1 (archived) + C2 (archived) + C3 (active) + C4 draft (REQ-0016..0020) |
 | Author | Requirement Architect |
 | Gate 1 status | C1 GATE-0001 · C2 GATE-0003 approved |
 | Canonical source | this file |
@@ -61,6 +61,11 @@
 | REQ-0013 | approved [C3] | REQ-0009 | ART-0071..0074 | VER-0025 |
 | REQ-0014 | approved [C3] | — | ART-0075..0077 | VER-0026 |
 | REQ-0015 | approved [C3] | REQ-0011 | ART-0078..0088 | VER-0027..0028 |
+| REQ-0016 | new [C4] | — | — | — |
+| REQ-0017 | new [C4] | REQ-0016 | — | — |
+| REQ-0018 | new [C4] | — | — | — |
+| REQ-0019 | new [C4] | REQ-0009 | — | — |
+| REQ-0020 | new [C4] | — | — | — |
 
 ### REQ-0004 — Dashboard/CP SSR prefetch + calendar batch assignee fetch
 
@@ -334,3 +339,66 @@
 4. `AnalyticsRevenueStatsRow` + `InvoiceManagement` + `OrganizationBillingPanel` wired; chart labels use `formatBillingKpiMoney`.
 5. Invalidation: `invalidateInvoices*` busts `invoices.all` incl. `byOrganizationTotals`.
 6. Tests: `invoice-billing-totals.test.ts`, `invoice-paid-period.test.ts`, `org-billing-prefetch.test.ts`.
+
+---
+
+## C4 — Invoice dialog + detail + RBAC + badges (draft)
+
+### REQ-0016 — Amber glass invoice form dialog + staff shell
+
+| Field | Value |
+|-------|-------|
+| Status | new [C4] |
+| Priority | P1 |
+| Risk | R1 |
+| Owner | Human |
+
+**Statement:** Staff can create and edit invoices via amber glass `InvoiceFormDialog` with rich visit picker; dialog available on CP, dashboard, doctor, appointments, and invoices layouts via `StaffInvoiceDialogShell` and `InvoiceFormDialogProvider`.
+
+**Acceptance criteria:**
+1. Create + edit modes share one dialog; preset create from appointment ⋮ and detail **New Invoice**.
+2. `useInvoiceFormDialogController` + `invoice-form-guards.ts` enforce RBAC and form guards.
+3. Visit picker uses `useBillingAppointmentOptionById` + billing invalidation on write.
+4. `npm test` regression green for invoice-dialog paths.
+
+### REQ-0017 — Invoice detail live + visit summary on payments
+
+| Field | Value |
+|-------|-------|
+| Status | new [C4] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0016 |
+
+**Statement:** Invoice detail page uses `InvoiceDetailLiveBody` + `useInvoice`; header **Edit details**; `GET /api/invoices/[id]` with prefetch; `/api/payments` attaches `visit_summary`.
+
+### REQ-0018 — Doctor invoice edit RBAC
+
+| Field | Value |
+|-------|-------|
+| Status | new [C4] |
+| Priority | P1 |
+| Risk | R2 |
+
+**Statement:** Doctors may PATCH own invoices in `draft`, `sent`, or `overdue` only — fields `description`, `due_date` via `mutate`; other statuses blocked.
+
+### REQ-0019 — Calendar hover invoice badge map
+
+| Field | Value |
+|-------|-------|
+| Status | new [C4] |
+| Priority | P2 |
+| Risk | R1 |
+| Parent | REQ-0009 |
+
+**Statement:** Day/Week/Month/List hover cards show invoice badge via `useAppointmentInvoiceDisplayMap` without N+1 fetches.
+
+### REQ-0020 — SSE notification stream hardening
+
+| Field | Value |
+|-------|-------|
+| Status | new [C4] |
+| Priority | P2 |
+| Risk | R1 |
+
+**Statement:** `notification-stream-sse.ts` safe enqueue; stream route abort + error stop; no heartbeat spam on disconnect.

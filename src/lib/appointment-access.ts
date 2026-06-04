@@ -47,6 +47,9 @@ const appointmentDetailInclude = {
     include: { user: { select: { id: true, email: true, display_name: true } } },
   },
   appointment_type: { select: { price_cents: true } },
+  /** consultation_fee feeds doctor_consultation_fee_cents on serialized appointment */
+  treating_physician: { select: { consultation_fee: true } },
+  owner: { select: { consultation_fee: true } },
 } as const;
 
 function isAcceptedAssignee(

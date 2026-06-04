@@ -129,8 +129,7 @@ export async function fetchBillingAppointmentOptions(
       typePriceCents: row.appointment_type?.price_cents,
       doctorConsultationFeeCents: feeDoctor?.consultation_fee ?? null,
     });
-    const suggestedAmountCents =
-      billing.eligible && visitFeeCents > 0 ? visitFeeCents : null;
+    const suggestedAmountCents = billing.eligible ? visitFeeCents : null;
 
     const visitSummary = mapAppointmentToInvoiceVisitSummary(row);
     const clinicalProfile = row.patient?.clinical_profile;
@@ -156,6 +155,8 @@ export async function fetchBillingAppointmentOptions(
       amount_cents: billing.amountCents,
       currency: billing.currency,
       suggested_amount_cents: suggestedAmountCents,
+      appointment_type_price_cents: row.appointment_type?.price_cents ?? null,
+      doctor_consultation_fee_cents: feeDoctor?.consultation_fee ?? null,
       patient_id: visitSummary.patient_id,
       patient_email: visitSummary.patient_email,
       patient_birth_date: visitSummary.patient_birth_date,

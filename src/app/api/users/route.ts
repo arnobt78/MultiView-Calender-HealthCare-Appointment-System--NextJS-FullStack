@@ -1,7 +1,7 @@
 /**
  * Users list for Control Panel (Prisma)
  * GET: List users (profile + active status — same shape as GET /api/users/[id] for edit forms).
- * Query: role=doctor | roles=admin,secretary (comma-separated; roles wins when non-empty).
+ * Query: role=doctor | roles=admin (comma-separated; roles wins when non-empty).
  */
 
 import { NextRequest, NextResponse } from "next/server";

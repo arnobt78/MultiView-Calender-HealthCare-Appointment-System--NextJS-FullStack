@@ -28,6 +28,20 @@ export const invoiceDialogDropdownPanelClass = cn(
   "w-full min-w-0 rounded-2xl border border-amber-200/55 bg-amber-50/35 p-2 shadow-[0_10px_28px_rgba(245,158,11,0.1)]"
 );
 
+/** StaffAppointmentPickerField amber tone — matches invoice glass inputs. */
+export const invoiceDialogGlassSelectTriggerClass = cn(
+  invoiceDialogGlassRowControlBase,
+  "flex cursor-pointer items-center justify-between gap-2 text-left"
+);
+
+export const invoiceDialogGlassSelectChevronClass =
+  "size-4 shrink-0 opacity-50 text-muted-foreground pointer-events-none";
+
+export const invoiceDialogGlassSelectPlaceholderClass = "text-gray-500";
+
+export const invoiceDialogGlassSelectValueClass =
+  "min-w-0 flex-1 truncate text-left font-medium text-gray-800";
+
 /** Visit picker tiles — amber tint (parity with patient booking sky tiles). */
 export const invoiceDialogGlassTileClass =
   "w-full text-left rounded-2xl border border-amber-200/60 bg-white p-3 shadow-[0_10px_30px_rgba(245,158,11,0.12)] transition-all hover:border-amber-300/70 hover:shadow-[0_14px_34px_rgba(245,158,11,0.18)]";

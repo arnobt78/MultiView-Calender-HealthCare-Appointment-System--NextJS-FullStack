@@ -1,5 +1,5 @@
 /**
- * Idempotent demo users (test@admin.com / test@doctor.com / test@patient.com / test@secretary.com).
+ * Idempotent demo users (test@admin.com / test@doctor.com / test@patient.com).
  * Same password for all — see src/lib/demo-credentials.ts.
  *
  * Also seeds:
@@ -9,9 +9,13 @@
  *  - Up to two idempotent `appointments` rows (B2 `treating_physician_id` + B3 `owner_id`) for calendar / portal QA when category + demo patient exist
  *
  * Usage: npm run db:seed-test-user
+ * Full demo environment (users, doctors, categories, patients, appointments):
+ *   npm run prisma:push && npm run db:seed-demo-full
+ * Doctor profiles only: npm run db:seed-doctor-profiles
  */
 
 import { config } from "dotenv";
+import { getDoctorProfileSeed } from "./lib/doctor-profile-seed-data";
 import { resolve } from "path";
 
 config({ path: resolve(process.cwd(), ".env.local") });
@@ -208,14 +212,12 @@ async function seedDemoUsers() {
     });
   }
 
-  // Update Demo Doctor 1 (test@doctor.com) with specialty + bio
-  if (doctor) {
+  // Demo Doctor 1 — full professional profile (matches Add Doctor dialog fields)
+  const primaryProfile = getDoctorProfileSeed("test@doctor.com");
+  if (doctor && primaryProfile) {
     await prisma.user.update({
       where: { id: doctor.id },
-      data: {
-        specialty: "General Medicine",
-        bio: "Board-certified general practitioner with expertise in preventive care and chronic disease management.",
-      },
+      data: primaryProfile,
     });
   }
 
@@ -223,6 +225,7 @@ async function seedDemoUsers() {
   const { randomUUID } = await import("crypto");
   for (const d of EXTRA_DOCTORS) {
     const existing = await prisma.user.findFirst({ where: { email: d.email } });
+    const profile = getDoctorProfileSeed(d.email)!;
     if (existing) {
       await prisma.user.update({
         where: { id: existing.id },
@@ -231,8 +234,7 @@ async function seedDemoUsers() {
           image: d.image,
           role: "doctor",
           email_verified: true,
-          specialty: d.specialty,
-          bio: d.bio,
+          ...profile,
         },
       });
     } else {
@@ -247,8 +249,7 @@ async function seedDemoUsers() {
           role: "doctor",
           email_verified: true,
           password_hash: demoHash,
-          specialty: d.specialty,
-          bio: d.bio,
+          ...profile,
         },
       });
       // Seed Mon–Fri 9–17 availability for each new doctor

@@ -47,6 +47,7 @@ export type InvoiceVisitSummary = {
   patient_birth_date?: string | null;
   /** Acuity tier 1–10 for compact list rows. */
   patient_care_level?: number | null;
+  appointment_type_name?: string | null;
   category_id: string | null;
   category_label: string | null;
   category_color: string | null;
@@ -95,6 +96,9 @@ export type InvoiceAppointmentOptionRow = {
   currency: string | null;
   /** Visit fee from appointment type or doctor — for manual create prefill when eligible. */
   suggested_amount_cents: number | null;
+  /** Raw fee inputs — invoice dialog amount hint (type → doctor → default). */
+  appointment_type_price_cents?: number | null;
+  doctor_consultation_fee_cents?: number | null;
   /** Rich display — aligned with InvoiceVisitSummary for picker cards. */
   patient_id?: string | null;
   patient_email?: string | null;

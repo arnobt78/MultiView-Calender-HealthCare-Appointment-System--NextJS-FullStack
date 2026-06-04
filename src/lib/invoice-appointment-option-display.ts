@@ -50,7 +50,7 @@ export function invoiceVisitSummaryToDisplay(
     when_label: summary.when_label,
     location_label: summary.location_label,
     is_telehealth: summary.is_telehealth,
-    appointment_type_name: summary.category_label,
+    appointment_type_name: summary.appointment_type_name ?? null,
     category_label: summary.category_label,
     treating_physician_label: summary.treating_physician_label,
     calendar_owner_label: summary.calendar_owner_label,

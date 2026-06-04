@@ -44,6 +44,15 @@ export type DoctorDirectoryRow = {
   active_since?: string | null;
   /** All-time paid invoice revenue (cents) — `Invoice.user_id` = doctor. */
   paid_revenue_cents?: number;
+  /** Default visit fee when appointment type has no price_cents (cents). */
+  consultation_fee?: number | null;
+  /** Office / clinic room — prefills appointment location on doctor select. */
+  office_location?: string | null;
+  department?: string | null;
+  phone?: string | null;
+  license_number?: string | null;
+  languages_spoken?: string[];
+  years_of_experience?: number | null;
 };
 
 export type DoctorsDirectoryResponse = {

@@ -363,7 +363,7 @@ model OrganizationMember {
   id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   org_id    String   @db.Uuid
   user_id   String   @db.Uuid
-  role      String   @db.Text // 'admin' | 'doctor' | 'secretary' | 'patient'
+  role      String   @db.Text // 'admin' | 'doctor' | 'patient'
   joined_at DateTime @default(now())
 
   organization Organization @relation(fields: [org_id], references: [id], onDelete: Cascade)

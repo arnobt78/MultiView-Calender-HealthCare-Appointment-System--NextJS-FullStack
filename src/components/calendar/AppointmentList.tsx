@@ -474,6 +474,7 @@ export default function AppointmentList() {
                                     ownerUsers={ownerUsers}
                                     invoiceDisplayStatus={invoiceDisplayByAppt.get(appt.id)}
                                     appointmentTypePriceCents={appt.appointment_type_price_cents}
+                                    doctorConsultationFeeCents={appt.doctor_consultation_fee_cents}
                                     onEdit={handleEdit}
                                     onDelete={handleDelete}
                                     onToggleStatus={handleToggleStatus}

@@ -367,6 +367,7 @@ export default function MonthView() {
                   onDelete={(id) => setDeleteTargetId(id)}
                   onToggleStatus={toggleStatus}
                   appointmentTypePriceCents={fullAppt.appointment_type_price_cents}
+                  doctorConsultationFeeCents={fullAppt.doctor_consultation_fee_cents}
                   invoiceDisplayStatus={invoiceDisplayByAppt.get(a.id)}
                 />
               );

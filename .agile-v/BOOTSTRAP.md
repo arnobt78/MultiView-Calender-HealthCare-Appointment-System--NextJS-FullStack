@@ -1,6 +1,6 @@
 # Agile V Bootstrap — HealthCal Pro
 
-<!-- Framework initialization + cycle index | Agile V v1.4 | Last refresh: 2026-06-02 -->
+<!-- Framework initialization + cycle index | Agile V v1.4 | Last refresh: 2026-06-04 -->
 
 ## Infinity Loop (SCOPE-V)
 
@@ -51,6 +51,9 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 | 22 | `phases/01-specify/` … `05-acceptance/` | PLAN + SUMMARY + CONTEXT per SCOPE-V phase | ✓ |
 | 23 | `cycles/C1/`, `C2/` | Frozen archives (immutable) | ✓ |
 | 24 | `cycles/C3/README.md` | Active cycle archive scaffold | ✓ (freeze on GATE-0006) |
+| 25 | `cycles/C4/README.md` | Next cycle scaffold (REQ-0016..0020) | ✓ |
+| 26 | `AGENTS.md` (repo root) | Agent load order + resume | ✓ |
+| 27 | `.cursor/rules/agile-v-infinity-loop.mdc` | Always-on Cursor rule | ✓ |
 
 ---
 
@@ -95,10 +98,20 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 | 3 | TC-0016..0024 + VER-0019..0028 | ✓ |
 | 4 | Code on `main` (scope, filters, billing KPI, telehealth period, invoice grid) | ✓ `faee3f7`, `6f13cc2` |
 | 5 | Human Gate 1 (GATE-0005) | ⏳ pending |
-| 6 | Automated verification | ✓ **638/638** tests (114 files), tsc, lint, build |
+| 6 | Automated verification | ✓ **666/666** tests (120 files), tsc, lint, build |
 | 7 | Human Gate 2 (GATE-0006) → archive `cycles/C3/` | ⏳ pending |
 
 **Note:** Re-running “bootstrap C1” only reads `cycles/C1/` — living C1 docs are not rewritten.
+
+---
+
+## C4 Scaffold (2026-06-04) — Invoice + notifications tranche
+
+| Step | Artifact | Status |
+|------|----------|--------|
+| 1 | `cycles/C4/README.md` | ✓ planned scope |
+| 2 | REQ-0016..0020 in `REQUIREMENTS.md` (`new [C4]`) | ✓ draft |
+| 3 | Gate 1 GATE-0007 | — after C3 close |
 
 ---
 
@@ -109,7 +122,7 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 | C1 | Category CP + SSR prefetch | REQ-0001..0004 | `3a563d7` | `cycles/C1/` (frozen) |
 | C2 | Doctor CP + admin roster + dev stubs | REQ-0005..0008 | `2d9a932` | `cycles/C2/` (frozen) |
 | C3 | Calendar scope, filters, billing KPI, insights telehealth + invoice grid | REQ-0009..0015 | (pending GATE-0006) | `cycles/C3/` (living) |
-| C4 | (planned) Export/sync/search treating scope | REQ-0016+ | — | — |
+| C4 | Invoice dialog, detail live, doctor RBAC, calendar badges, SSE | REQ-0016..0020 | — | `cycles/C4/README.md` |
 
 ---
 
@@ -125,4 +138,4 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 npm test && npx tsc --noEmit && npm run lint && npm run build
 ```
 
-Current baseline: **638** tests, **114** files (2026-06-02).
+Current baseline: **666** tests, **120** files (2026-06-04).

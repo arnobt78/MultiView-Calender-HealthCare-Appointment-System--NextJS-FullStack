@@ -204,6 +204,14 @@ function InvoiceFormDialogInner({
             readOnlyAmountCents={isEdit ? editInvoice?.amount : undefined}
             readOnlyCurrency={editInvoice?.currency}
             suggestedAmountCents={selection?.suggested_amount_cents}
+            visitFeeHintInput={
+              selection
+                ? {
+                    typePriceCents: selection.appointment_type_price_cents,
+                    doctorConsultationFeeCents: selection.doctor_consultation_fee_cents,
+                  }
+                : null
+            }
             disabled={isSubmitting}
           />
         </div>

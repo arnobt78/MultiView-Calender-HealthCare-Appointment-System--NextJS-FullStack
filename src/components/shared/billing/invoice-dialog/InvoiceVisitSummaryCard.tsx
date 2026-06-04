@@ -6,12 +6,13 @@ import { PatientPortraitAvatar } from "@/components/shared/person-display/Patien
 import { PatientAgeGlassBadge } from "@/components/shared/person-display/PatientAgeGlassBadge";
 import { CategoryBrandMark } from "@/components/shared/category-display/CategoryBrandMark";
 import { TelehealthSessionBadge } from "@/components/shared/appointments/TelehealthSessionBadge";
-import { InvoiceVisitListMeta } from "@/components/shared/billing/InvoiceVisitListMeta";
-import type { InvoiceAppointmentOptionRow, InvoiceVisitSummary } from "@/lib/billing-types";
+import { InvoiceVisitMetaLine } from "@/components/shared/billing/InvoiceVisitMetaLine";
 import {
-  formatInvoiceVisitPickerMeta,
-  invoiceVisitSummaryToDisplay,
-} from "@/lib/invoice-appointment-option-display";
+  invoiceAppointmentOptionToMetaInput,
+  invoiceVisitSummaryToMetaInput,
+} from "@/lib/invoice-visit-meta-line";
+import type { InvoiceAppointmentOptionRow, InvoiceVisitSummary } from "@/lib/billing-types";
+import type { InvoiceVisitMetaInput } from "@/lib/invoice-visit-meta-line";
 import { patientAgeYears } from "@/lib/patient-age";
 import { invoiceDialogSummaryCardClass } from "@/lib/invoice-dialog-ui-classes";
 import { cn } from "@/lib/utils";
@@ -63,7 +64,6 @@ function SummaryFromOption({
   className?: string;
 }) {
   const patientLabel = visit.patient_label;
-  const metaLine = formatInvoiceVisitPickerMeta(visit);
 
   return (
     <SummaryShell
@@ -80,7 +80,7 @@ function SummaryFromOption({
       isTelehealth={visit.is_telehealth}
       patientLabel={patientLabel}
       title={visit.title}
-      metaLine={metaLine}
+      visitMeta={invoiceAppointmentOptionToMetaInput(visit)}
       categoryLabel={visit.category_label}
       categoryColor={visit.category_color}
       treatingLabel={visit.treating_physician_label}
@@ -99,9 +99,7 @@ function SummaryFromVisitSummary({
   onChangeVisit?: () => void;
   className?: string;
 }) {
-  const display = invoiceVisitSummaryToDisplay(visit);
   const patientLabel = visit.patient_label ?? "Patient";
-  const metaLine = formatInvoiceVisitPickerMeta(display);
 
   return (
     <SummaryShell
@@ -118,13 +116,12 @@ function SummaryFromVisitSummary({
       isTelehealth={visit.is_telehealth}
       patientLabel={patientLabel}
       title={visit.title}
-      metaLine={metaLine}
+      visitMeta={invoiceVisitSummaryToMetaInput(visit)}
       categoryLabel={visit.category_label}
       categoryColor={visit.category_color}
       treatingLabel={visit.treating_physician_label}
       treatingSpecialty={visit.treating_physician_specialty}
       ownerLabel={visit.calendar_owner_label}
-      visitSummary={visit}
     />
   );
 }
@@ -137,13 +134,12 @@ function SummaryShell({
   isTelehealth,
   patientLabel,
   title,
-  metaLine,
+  visitMeta,
   categoryLabel,
   categoryColor,
   treatingLabel,
   treatingSpecialty,
   ownerLabel,
-  visitSummary,
 }: {
   onChangeVisit?: () => void;
   className?: string;
@@ -158,13 +154,12 @@ function SummaryShell({
   isTelehealth?: boolean;
   patientLabel: string;
   title: string;
-  metaLine: string;
+  visitMeta: InvoiceVisitMetaInput;
   categoryLabel?: string | null;
   categoryColor?: string | null;
   treatingLabel?: string | null;
   treatingSpecialty?: string | null;
   ownerLabel?: string | null;
-  visitSummary?: InvoiceVisitSummary;
 }) {
   const age = birthDate ? patientAgeYears(birthDate) : null;
 
@@ -183,7 +178,6 @@ function SummaryShell({
             {isTelehealth ? <TelehealthSessionBadge /> : null}
           </div>
           <p className="text-sm font-medium text-gray-700">{title}</p>
-          {metaLine ? <p className="text-xs text-muted-foreground">{metaLine}</p> : null}
         </div>
         {onChangeVisit ? (
           <Button
@@ -199,7 +193,7 @@ function SummaryShell({
         ) : null}
       </div>
 
-      {visitSummary ? <InvoiceVisitListMeta summary={visitSummary} /> : null}
+      <InvoiceVisitMetaLine source={visitMeta} variant="icons" />
 
       <div className="flex flex-wrap gap-2">
         {categoryLabel ? (

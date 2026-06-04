@@ -26,7 +26,7 @@ export async function GET() {
 
     /*
      * Access control:
-     * - Staff (admin / doctor / secretary): can list all patients.
+     * - Staff (admin / doctor): can list all patients.
      * - Patient role: scoped to their own record by email match (portal-style read-only).
      */
     const where = isPatientRole(role)

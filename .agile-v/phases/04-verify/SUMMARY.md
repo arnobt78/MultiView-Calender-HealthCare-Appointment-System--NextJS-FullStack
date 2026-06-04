@@ -1,11 +1,11 @@
 # Phase 04 — Verify — Summary
 
-<!-- Cycle: C3 | Last run: 2026-06-02 (extension) -->
+<!-- Cycle: C3 | Last run: 2026-06-04 (bootstrap refresh) -->
 
 | Metric | Value |
 |--------|-------|
 | VER-IDs | VER-0019..0028 |
-| PASS | 638 tests (114 files) |
+| PASS | 666 tests (120 files) |
 | FAIL | 0 |
 | eval_run_id | ER-C3-VERIFY |
 | eval_gate_status | PASS (automated) |

@@ -2,7 +2,7 @@
  * File Delete API Route
  *
  * Handles file deletion from Vercel Blob storage.
- * Restricted to staff roles (admin / doctor / secretary).
+ * Restricted to staff roles (admin / doctor).
  * Patients cannot delete arbitrary blob URLs — they update their profile image
  * through dedicated profile endpoints that handle cleanup internally.
  */
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Only staff (admin / doctor / secretary) may delete stored files.
+    // Only staff (admin / doctor) may delete stored files.
     // This prevents patients from constructing a payload to delete arbitrary blobs.
     const role = await getUserRole(sessionUser.userId);
     if (!isStaffRole(role)) {

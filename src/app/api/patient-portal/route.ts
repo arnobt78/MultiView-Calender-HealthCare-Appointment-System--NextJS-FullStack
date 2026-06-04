@@ -61,10 +61,10 @@ export async function GET() {
       include: {
         category: true,
         owner: {
-          select: { id: true, display_name: true, email: true, role: true, image: true, specialty: true },
+          select: { id: true, display_name: true, email: true, role: true, image: true, specialty: true, consultation_fee: true },
         },
         treating_physician: {
-          select: { id: true, display_name: true, email: true, role: true, image: true, specialty: true },
+          select: { id: true, display_name: true, email: true, role: true, image: true, specialty: true, consultation_fee: true },
         },
         appointment_type: { select: { price_cents: true } },
       },

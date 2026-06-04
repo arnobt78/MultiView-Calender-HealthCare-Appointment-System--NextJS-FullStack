@@ -98,6 +98,7 @@ export function mapAppointmentToInvoiceVisitSummary(
     patient_email: row.patient?.email ?? null,
     patient_birth_date: row.patient?.birth_date?.toISOString() ?? null,
     patient_care_level: row.patient?.care_level ?? null,
+    appointment_type_name: row.appointment_type?.name ?? null,
     category_id: row.category?.id ?? null,
     category_label: row.category?.label ?? row.appointment_type?.name ?? null,
     category_color: row.category?.color ?? null,

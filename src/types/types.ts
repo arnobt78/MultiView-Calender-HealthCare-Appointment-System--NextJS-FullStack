@@ -203,6 +203,8 @@ export interface Appointment {
   telehealth_link?: string | null;
   /** Joined from appointment_type.price_cents — visit fee in cents for card price badge. */
   appointment_type_price_cents?: number | null;
+  /** Treating physician (or owner) consultation_fee in cents — second fallback for visit fee badge after type price. */
+  doctor_consultation_fee_cents?: number | null;
 }
 
 // Appointment Assignee

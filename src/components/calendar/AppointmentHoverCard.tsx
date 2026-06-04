@@ -140,6 +140,7 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
           onDelete={onDelete}
           onToggleStatus={handleToggle}
           appointmentTypePriceCents={fullAppt.appointment_type_price_cents}
+          doctorConsultationFeeCents={fullAppt.doctor_consultation_fee_cents}
           invoiceDisplayStatus={invoiceDisplayStatus}
         />
       </HoverCardContent>

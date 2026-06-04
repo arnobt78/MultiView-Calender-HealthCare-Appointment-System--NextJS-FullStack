@@ -20,6 +20,13 @@ import {
   patientDialogGlassSelectTriggerClass,
   patientDialogGlassSelectValueClass,
 } from "@/lib/patient-dialog-ui-classes";
+import {
+  invoiceDialogDropdownPanelClass,
+  invoiceDialogGlassSelectChevronClass,
+  invoiceDialogGlassSelectPlaceholderClass,
+  invoiceDialogGlassSelectTriggerClass,
+  invoiceDialogGlassSelectValueClass,
+} from "@/lib/invoice-dialog-ui-classes";
 import { bookingPickerCollapsedInsetClass } from "@/components/shared/patient-booking/patient-booking-dialog-styles";
 import { useDismissOnPointerDownOutside } from "@/hooks/useDismissOnPointerDownOutside";
 import { cn } from "@/lib/utils";
@@ -37,8 +44,8 @@ type StaffAppointmentPickerFieldProps = {
   changeLabel: string;
   children: ReactNode;
   disabled?: boolean;
-  /** `sky` = appointment dialog; `emerald` = patient add/edit dialog. */
-  tone?: "sky" | "emerald";
+  /** `sky` = appointment dialog; `emerald` = patient; `amber` = invoice dialog. */
+  tone?: "sky" | "emerald" | "amber";
   className?: string;
 };
 
@@ -61,26 +68,47 @@ export function StaffAppointmentPickerField({
   className,
 }: StaffAppointmentPickerFieldProps) {
   const isEmerald = tone === "emerald";
-  const triggerClass = isEmerald
-    ? patientDialogGlassSelectTriggerClass
-    : staffAppointmentGlassSelectTriggerClass;
-  const panelClass = isEmerald ? patientDialogDropdownPanelClass : staffAppointmentDropdownPanelClass;
-  const chevronClass = isEmerald
-    ? patientDialogGlassSelectChevronClass
-    : staffAppointmentGlassSelectChevronClass;
-  const placeholderClass = isEmerald
-    ? patientDialogGlassSelectPlaceholderClass
-    : staffAppointmentGlassSelectPlaceholderClass;
-  const valueClass = isEmerald
-    ? patientDialogGlassSelectValueClass
-    : staffAppointmentGlassSelectValueClass;
-  const labelIconClass = isEmerald ? "text-emerald-600" : "text-sky-600";
-  const openRingClass = isEmerald
-    ? "border-emerald-400/50 ring-2 ring-emerald-200/40"
-    : "border-sky-400/50 ring-2 ring-sky-200/40";
-  const changeBtnClass = isEmerald
-    ? "text-emerald-700 hover:bg-emerald-50 hover:text-emerald-900"
-    : "text-sky-700 hover:bg-sky-50 hover:text-sky-900";
+  const isAmber = tone === "amber";
+  const triggerClass = isAmber
+    ? invoiceDialogGlassSelectTriggerClass
+    : isEmerald
+      ? patientDialogGlassSelectTriggerClass
+      : staffAppointmentGlassSelectTriggerClass;
+  const panelClass = isAmber
+    ? invoiceDialogDropdownPanelClass
+    : isEmerald
+      ? patientDialogDropdownPanelClass
+      : staffAppointmentDropdownPanelClass;
+  const chevronClass = isAmber
+    ? invoiceDialogGlassSelectChevronClass
+    : isEmerald
+      ? patientDialogGlassSelectChevronClass
+      : staffAppointmentGlassSelectChevronClass;
+  const placeholderClass = isAmber
+    ? invoiceDialogGlassSelectPlaceholderClass
+    : isEmerald
+      ? patientDialogGlassSelectPlaceholderClass
+      : staffAppointmentGlassSelectPlaceholderClass;
+  const valueClass = isAmber
+    ? invoiceDialogGlassSelectValueClass
+    : isEmerald
+      ? patientDialogGlassSelectValueClass
+      : staffAppointmentGlassSelectValueClass;
+  const labelIconClass = isAmber
+    ? "text-amber-600"
+    : isEmerald
+      ? "text-emerald-600"
+      : "text-sky-600";
+  const openRingClass = isAmber
+    ? "border-amber-400/50 ring-2 ring-amber-200/40"
+    : isEmerald
+      ? "border-emerald-400/50 ring-2 ring-emerald-200/40"
+      : "border-sky-400/50 ring-2 ring-sky-200/40";
+  const changeBtnClass = isAmber
+    ? "text-amber-800 hover:bg-amber-50 hover:text-amber-950"
+    : isEmerald
+      ? "text-emerald-700 hover:bg-emerald-50 hover:text-emerald-900"
+      : "text-sky-700 hover:bg-sky-50 hover:text-sky-900";
 
   const rootRef = useRef<HTMLDivElement>(null);
   const hasSelection = selectedContent != null && selectedContent !== false;

@@ -481,6 +481,11 @@ export function AppointmentDialogGeneralSection({
             currentDoctorId={treatingPhysicianId}
             onSelectDoctor={(id) => {
               setTreatingPhysicianId(id);
+              const picked = directoryDoctors.find((d) => d.id === id);
+              const office = picked?.office_location?.trim();
+              if (office && !location.trim()) {
+                setLocation(office);
+              }
               setSlotPickDateStr("");
               setSlotPickTypeId("");
               setSlotPickStartIso(null);
@@ -659,6 +664,9 @@ export function AppointmentDialogGeneralSection({
             onChange={(e) => setLocation(e.target.value)}
             className={cn(glassInputClass, "cursor-text")}
           />
+          <p className="text-[11px] text-muted-foreground">
+            Prefilled from the treating doctor&apos;s office when empty — you can edit.
+          </p>
         </div>
         <div className="space-y-2">
           <FieldLabel icon={ListTodo}>{toTitleCaseLabel("Select Status")}</FieldLabel>

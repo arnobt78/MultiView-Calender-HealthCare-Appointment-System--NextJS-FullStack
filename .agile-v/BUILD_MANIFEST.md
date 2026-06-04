@@ -91,11 +91,26 @@
 | ART-0083 | C3 | REQ-0015 | `insights-kpi-format.ts` `formatBillingKpiMoney` | built |
 | ART-0084 | C3 | REQ-0015 | `InvoiceManagement.tsx`, `OrganizationBillingPanel.tsx` KPI grid | built |
 | ART-0085 | C3 | REQ-0015 | `invoice-paid-period.test.ts`, extended billing-total tests | built |
+| ART-0086 | C4 | REQ-0016 | `billing-visit-fee.ts` `DEFAULT_DOCTOR_VISIT_FEE_CENTS` + `appointment-visit-fee-display.ts` | built |
+| ART-0087 | C4 | REQ-0016 | `billing-appointment-options-load.ts` suggested fee; options-load tests | built |
+| ART-0088 | C4 | REQ-0016 | `invoice-status-display.ts`; `InvoiceAmountDisplay` status tint | built |
+| ART-0089 | C4 | REQ-0016 | `InvoiceListFiltersContext.tsx`, `invoice-management-columns.tsx`, `invoice-table-cells.tsx` | built |
+| ART-0090 | C4 | REQ-0016 | `InvoiceManagement.tsx` DataTable + `ClinicalListFilterToolbar` amber frame | built |
+| ART-0091 | C4 | REQ-0016 | `invoice-management-toolbar-classes.ts`; `invoice-dialog-ui-classes.ts` amber picker | built |
+| ART-0092 | C4 | REQ-0016 | `InvoiceVisitDirectoryPickerCard.tsx`; `StaffAppointmentPickerField` tone amber | built |
+| ART-0093 | C4 | REQ-0016 | `InvoiceAppointmentPickerField.tsx` + `InvoiceDialogFieldsSection` fee hint | built |
+| ART-0094 | C4 | REQ-0017 | `invoice-detail-ui-classes.ts`; `InvoiceDetailLiveBody` glass + audit card | built |
+| ART-0095 | C4 | REQ-0017 | `InvoiceLinkedVisitPanel.tsx` patient/doctor sky links | built |
+| ART-0096 | C4 | REQ-0016 | `scripts/lib/doctor-profile-seed-data.ts`; seed-test-user + seed-extended import | built |
+| ART-0097 | C4 | REQ-0016 | `AppointmentDialogGeneralSection.tsx` office_location prefill on doctor select | built |
+| ART-0098 | C4 | REQ-0016 | `ui/popover.tsx`, `ClinicalGlassDatePicker.tsx`, invoice + patient due/birth date | built |
+| ART-0099 | C4 | REQ-0016 | `DoctorPortalInvoiceListRow` reuses `invoice-table-cells` | built |
+| ART-0100 | C4 | REQ-0016 | `invoice-management-columns.test.ts`; seed `db:seed-demo-full` / `db:seed-doctor-profiles` | built |
 
 ## Verification Commands (project default)
 
 ```bash
-npm test        # 638 passed (C3 verify refresh, 2026-06-02)
+npm test        # 671 passed (C4 polish tranche, 2026-06-04)
 npx tsc --noEmit
 npm run lint
 npm run build

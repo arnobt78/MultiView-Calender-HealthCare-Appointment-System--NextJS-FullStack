@@ -302,7 +302,7 @@ export async function invalidateAppointmentTypeDerived(queryClient: QueryClient)
 /**
  * After appointment create/update/import — pass `patientId` when known for cheaper patient cache updates.
  * Also invalidates insights/analytics since all charts aggregate appointment data.
- * Portal caches (doctor, secretary, admin) are included because all portals show appointment counts and lists.
+ * Portal caches (doctor, admin, patient) are included because portals show appointment counts and lists.
  */
 export async function invalidateAfterAppointmentMutation(
   queryClient: QueryClient,

@@ -1,24 +1,28 @@
 /**
- * Visit fee resolution — appointment type price_cents overrides doctor consultation_fee.
- * Shared by auto-draft, manual invoice picker, and UI prefill.
+ * Visit fee resolution — appointment type price_cents overrides doctor consultation_fee,
+ * then product default (€150) when neither is set.
  */
 
 import { prisma } from "@/lib/prisma";
+
+/** Default visit fee when type and doctor consultation_fee are unset (€150.00). */
+export const DEFAULT_DOCTOR_VISIT_FEE_CENTS = 15000;
 
 export type VisitFeeInput = {
   typePriceCents?: number | null;
   doctorConsultationFeeCents?: number | null;
 };
 
-/** Returns fee in cents; 0 when neither type nor doctor fee is set. */
+/** Returns fee in cents; falls back to {@link DEFAULT_DOCTOR_VISIT_FEE_CENTS}. */
 export function resolveVisitFeeCents(input: VisitFeeInput): number {
   const typePrice = input.typePriceCents ?? 0;
   if (typePrice > 0) return typePrice;
   const doctorFee = input.doctorConsultationFeeCents ?? 0;
-  return doctorFee > 0 ? doctorFee : 0;
+  if (doctorFee > 0) return doctorFee;
+  return DEFAULT_DOCTOR_VISIT_FEE_CENTS;
 }
 
-/** Load visit fee for an appointment (type price, else treating then owner consultation_fee). */
+/** Load visit fee for an appointment (type price, else treating then owner consultation_fee, else default). */
 export async function loadVisitFeeCentsForAppointment(
   appointmentId: string
 ): Promise<number | null> {
@@ -33,9 +37,8 @@ export async function loadVisitFeeCentsForAppointment(
   if (!appt) return null;
 
   const feeDoctor = appt.treating_physician ?? appt.owner;
-  const cents = resolveVisitFeeCents({
+  return resolveVisitFeeCents({
     typePriceCents: appt.appointment_type?.price_cents,
     doctorConsultationFeeCents: feeDoctor?.consultation_fee,
   });
-  return cents > 0 ? cents : null;
 }

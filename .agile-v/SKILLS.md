@@ -74,10 +74,26 @@
 4. agile-v-compliance on gate pause / close
 ```
 
+## Skill file locations (Cursor)
+
+Skills load from user skills directory (Read tool). Primary paths:
+
+| Skill | Path |
+|-------|------|
+| agile-v-core | `~/.cursor/skills/agile-v-core/SKILL.md` |
+| agile-v-pipeline | `~/.cursor/skills/agile-v-pipeline/SKILL.md` |
+| agile-v-lifecycle | `~/.cursor/skills/agile-v-lifecycle/SKILL.md` |
+| agile-v-compliance | `~/.cursor/skills/agile-v-compliance/SKILL.md` |
+| agile-v-quality-gates | `~/.cursor/skills/agile-v-quality-gates/SKILL.md` |
+| agile-v-product-owner | `~/.cursor/skills/agile-v-product-owner/SKILL.md` |
+| requirement-architect … release-manager | `~/.cursor/skills/<name>/SKILL.md` |
+
 ## Project Paths
 
 | Artifact | Path |
 |----------|------|
+| Agent instructions | `AGENTS.md` |
+| Cursor rule (always on) | `.cursor/rules/agile-v-infinity-loop.mdc` |
 | Living state | `.agile-v/STATE.md` |
 | Requirements | `.agile-v/REQUIREMENTS.md` |
 | This registry | `.agile-v/SKILLS.md` |

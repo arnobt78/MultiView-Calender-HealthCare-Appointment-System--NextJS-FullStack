@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils";
 import type { InvoiceAppointmentOptionRow } from "@/lib/billing-types";
 import type { EntityRole } from "@/lib/entity-routes";
-import { InvoiceVisitPickerCard } from "@/components/shared/billing/invoice-dialog/InvoiceVisitPickerCard";
+import { InvoiceVisitDirectoryPickerCard } from "@/components/shared/billing/invoice-dialog/InvoiceVisitDirectoryPickerCard";
 import { invoiceDialogDropdownPanelClass, invoiceDialogPickerScrollClass } from "@/lib/invoice-dialog-ui-classes";
 
 type Props = {
@@ -14,7 +14,7 @@ type Props = {
   disabled?: boolean;
 };
 
-/** Rich visit list for invoice create — delegates rows to `InvoiceVisitPickerCard`. */
+/** Rich visit list for invoice create — patient-first directory tiles. */
 export function InvoiceVisitPickerList({
   options,
   value,
@@ -35,7 +35,7 @@ export function InvoiceVisitPickerList({
       <ul className={invoiceDialogPickerScrollClass}>
         {options.map((opt) => (
           <li key={opt.id}>
-            <InvoiceVisitPickerCard
+            <InvoiceVisitDirectoryPickerCard
               option={opt}
               selected={value === opt.id}
               disabled={disabled}

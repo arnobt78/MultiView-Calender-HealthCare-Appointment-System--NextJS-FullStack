@@ -62,6 +62,10 @@ import type { InvoiceDisplayStatus } from "@/lib/billing-appointment-eligibility
 import { useInvoiceFormDialogOptional } from "@/context/InvoiceFormDialogContext";
 import { useAuth } from "@/hooks/useAuth";
 import { canShowCreateInvoiceAction } from "@/lib/appointment-invoice-create-eligibility";
+import {
+  formatVisitFeeEurLabel,
+  resolveDisplayedVisitFeeCents,
+} from "@/lib/appointment-visit-fee-display";
 
 export type AppointmentCardProps = {
   appointment: FullAppointment;
@@ -87,6 +91,8 @@ export type AppointmentCardProps = {
   invoiceDisplayStatus?: InvoiceDisplayStatus | null;
   /** Visit fee in cents from the appointment type — shown as price badge on the card. */
   appointmentTypePriceCents?: number | null;
+  /** Treating physician (or owner) consultation_fee — second fallback in resolveDisplayedVisitFeeCents. */
+  doctorConsultationFeeCents?: number | null;
   /** When set, card is a hover/grid trigger only (no outer chrome) */
   /** Inside `AppointmentHoverCard` — no role=button so Radix hover pointer events work. */
   asHoverTrigger?: boolean;
@@ -253,6 +259,7 @@ function AppointmentCardMeta({
   ownerUsers,
   invoiceDisplayStatus,
   appointmentTypePriceCents,
+  doctorConsultationFeeCents,
 }: {
   appointment: FullAppointment;
   model: ReturnType<typeof useAppointmentCardModel>;
@@ -261,6 +268,7 @@ function AppointmentCardMeta({
   ownerUsers: OwnerUserSummary[];
   invoiceDisplayStatus?: InvoiceDisplayStatus | null;
   appointmentTypePriceCents?: number | null;
+  doctorConsultationFeeCents?: number | null;
 }) {
   const {
     isDone,
@@ -491,16 +499,22 @@ function AppointmentCardMeta({
           </AppointmentCardMetaRow>
         ) : null}
 
-        {(appointmentTypePriceCents ?? 0) > 0 ? (
-          <AppointmentCardMetaRow icon={<Euro className="h-3.5 w-3.5" />} label="Visit fee:">
-            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200/70 bg-emerald-50/80 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 shadow-[0_2px_8px_rgba(16,185,129,0.15)]">
-              €{((appointmentTypePriceCents ?? 0) / 100).toFixed(2)}
-              {!invoiceDisplayStatus && (
-                <span className="ml-0.5 text-[9px] font-normal text-emerald-500/90">· est.</span>
-              )}
-            </span>
-          </AppointmentCardMetaRow>
-        ) : null}
+        {(() => {
+          const displayFeeCents = resolveDisplayedVisitFeeCents({
+            typePriceCents: appointmentTypePriceCents,
+            doctorConsultationFeeCents,
+          });
+          return (
+            <AppointmentCardMetaRow icon={<Euro className="h-3.5 w-3.5" />} label="Visit fee:">
+              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200/70 bg-emerald-50/80 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 shadow-[0_2px_8px_rgba(16,185,129,0.15)]">
+                {formatVisitFeeEurLabel(displayFeeCents)}
+                {!invoiceDisplayStatus && (
+                  <span className="ml-0.5 text-[9px] font-normal text-emerald-500/90">· est.</span>
+                )}
+              </span>
+            </AppointmentCardMetaRow>
+          );
+        })()}
 
         {appointment.is_telehealth ? (
           <span className="inline-flex items-center gap-1 rounded-full border border-sky-200/60 bg-sky-100/80 px-2 py-0.5 text-[10px] font-medium text-sky-700">
@@ -974,6 +988,7 @@ export function AppointmentCard({
   portalTreatingLabel,
   invoiceDisplayStatus,
   appointmentTypePriceCents,
+  doctorConsultationFeeCents,
   asHoverTrigger,
   asTrigger,
   triggerClassName,
@@ -1068,6 +1083,7 @@ export function AppointmentCard({
         ownerUsers={ownerUsers}
         invoiceDisplayStatus={invoiceDisplayStatus}
         appointmentTypePriceCents={appointmentTypePriceCents}
+        doctorConsultationFeeCents={doctorConsultationFeeCents}
       />
     ) : (
       compactMeta

@@ -5,13 +5,17 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { InvoiceDialogFieldLabel } from "@/components/shared/billing/invoice-dialog/InvoiceDialogFieldLabel";
 import { InvoiceAmountDisplay } from "@/components/shared/billing/InvoiceAmountDisplay";
+import { ClinicalGlassDatePicker } from "@/components/shared/scheduling/ClinicalGlassDatePicker";
 import {
-  invoiceDialogGlassDateInputClass,
   invoiceDialogGlassInputClass,
   invoiceDialogGlassTextareaClass,
   invoiceDialogSectionHeadingClass,
 } from "@/lib/invoice-dialog-ui-classes";
 import { cn } from "@/lib/utils";
+import {
+  buildInvoiceAmountFeeHint,
+  type VisitFeeInput,
+} from "@/lib/appointment-visit-fee-display";
 
 type Props = {
   mode: "create" | "edit";
@@ -25,6 +29,7 @@ type Props = {
   readOnlyAmountCents?: number;
   readOnlyCurrency?: string;
   suggestedAmountCents?: number | null;
+  visitFeeHintInput?: VisitFeeInput | null;
   disabled?: boolean;
 };
 
@@ -40,6 +45,7 @@ export function InvoiceDialogFieldsSection({
   readOnlyAmountCents,
   readOnlyCurrency = "eur",
   suggestedAmountCents,
+  visitFeeHintInput,
   disabled = false,
 }: Props) {
   const isEdit = mode === "edit";
@@ -75,9 +81,13 @@ export function InvoiceDialogFieldsSection({
                 disabled={disabled}
                 className={invoiceDialogGlassInputClass}
               />
-              {(suggestedAmountCents ?? 0) > 0 ? (
+              {!isEdit && visitFeeHintInput ? (
                 <p className="text-[11px] text-muted-foreground">
-                  Suggested from visit type fee — you can override.
+                  {buildInvoiceAmountFeeHint(visitFeeHintInput)}
+                </p>
+              ) : (suggestedAmountCents ?? 0) > 0 ? (
+                <p className="text-[11px] text-muted-foreground">
+                  Suggested from visit fee — you can override.
                 </p>
               ) : null}
             </>
@@ -87,14 +97,14 @@ export function InvoiceDialogFieldsSection({
           <InvoiceDialogFieldLabel htmlFor="inv-due" icon={CalendarDays}>
             Due date
           </InvoiceDialogFieldLabel>
-          <Input
+          <ClinicalGlassDatePicker
             id="inv-due"
-            type="date"
-            title="Due date"
             value={dueDate}
-            onChange={(e) => onDueDateChange(e.target.value)}
+            onChange={onDueDateChange}
             disabled={disabled}
-            className={invoiceDialogGlassDateInputClass}
+            tone="amber"
+            align="end"
+            placeholder="Select due date"
           />
         </div>
       </div>

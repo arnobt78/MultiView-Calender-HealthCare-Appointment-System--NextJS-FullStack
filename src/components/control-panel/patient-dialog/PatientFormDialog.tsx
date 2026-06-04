@@ -36,11 +36,11 @@ import {
 import { PatientDialogFieldLabel } from "@/components/control-panel/patient-dialog/PatientDialogFieldLabel";
 import { PatientPrimaryDoctorPickerField } from "@/components/control-panel/patient-dialog/PatientPrimaryDoctorPickerField";
 import { PatientCareLevelSelect } from "@/components/control-panel/PatientCareLevelSelect";
+import { ClinicalGlassDatePicker } from "@/components/shared/scheduling/ClinicalGlassDatePicker";
 import type { PatientCreateInput } from "@/hooks/usePatients";
 import { PATIENT_REFERRAL_SOURCES } from "@/lib/patient-referral-sources";
 import {
   patientDialogGlassBackButtonClass,
-  patientDialogGlassDateInputClass,
   patientDialogGlassInputClass,
   patientDialogGlassSelectTriggerClass,
   patientDialogGlassTextareaClass,
@@ -175,13 +175,14 @@ export function PatientFormDialog({
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <FieldBlock icon={CalendarDays} htmlFor="pf-birth-date" label="Select Birth Date">
-                <Input
+                <ClinicalGlassDatePicker
                   id="pf-birth-date"
-                  type="date"
-                  title="Birth date"
                   value={form.birth_date ?? ""}
-                  onChange={(e) => onFormChange({ birth_date: e.target.value })}
-                  className={patientDialogGlassDateInputClass}
+                  onChange={(iso) => onFormChange({ birth_date: iso })}
+                  tone="sky"
+                  align="end"
+                  placeholder="Select birth date"
+                  disabled={isSubmitting}
                 />
               </FieldBlock>
               <FieldBlock icon={Activity} htmlFor="pf-care-level" label="Select Care Level (1–10)">

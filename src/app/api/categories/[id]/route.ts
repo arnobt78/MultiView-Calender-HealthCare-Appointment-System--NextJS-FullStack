@@ -107,7 +107,7 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Only admin/doctor/secretary may delete shared categories — patients cannot.
+    // Only admin/doctor may delete shared categories — patients cannot.
     const deleteRole = await getUserRole(sessionUser.userId);
     if (isPatientRole(deleteRole)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });

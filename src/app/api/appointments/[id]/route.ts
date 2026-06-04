@@ -55,10 +55,15 @@ export async function GET(_req: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Appointment not found" }, { status: 404 });
     }
 
+    const rawFeeDoc = (raw as typeof raw & {
+      treating_physician?: { consultation_fee: number | null } | null;
+      owner?: { consultation_fee: number | null } | null;
+    });
     return NextResponse.json({
       appointment: serializeAppointment({
         ...raw,
         appointment_type_price_cents: (raw as typeof raw & { appointment_type?: { price_cents: number } | null }).appointment_type?.price_cents ?? null,
+        doctor_consultation_fee_cents: rawFeeDoc.treating_physician?.consultation_fee ?? rawFeeDoc.owner?.consultation_fee ?? null,
       }),
     });
   } catch (error: unknown) {
@@ -142,7 +147,11 @@ export async function PUT(req: NextRequest, context: RouteContext) {
     const updated = await prisma.appointment.update({
       where: { id },
       data,
-      include: { appointment_type: { select: { price_cents: true } } },
+      include: {
+        appointment_type: { select: { price_cents: true } },
+        treating_physician: { select: { consultation_fee: true } },
+        owner: { select: { consultation_fee: true } },
+      },
     });
 
     void redis.invalidateDashboardOverview(ctx.sessionUser.userId);
@@ -151,6 +160,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
       appointment: serializeAppointment({
         ...updated,
         appointment_type_price_cents: updated.appointment_type?.price_cents ?? null,
+        doctor_consultation_fee_cents: updated.treating_physician?.consultation_fee ?? updated.owner?.consultation_fee ?? null,
       }),
     });
   } catch (err: unknown) {
@@ -311,7 +321,11 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     const updated = await prisma.appointment.update({
       where: { id },
       data,
-      include: { appointment_type: { select: { price_cents: true } } },
+      include: {
+        appointment_type: { select: { price_cents: true } },
+        treating_physician: { select: { consultation_fee: true } },
+        owner: { select: { consultation_fee: true } },
+      },
     });
 
     if (
@@ -353,6 +367,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       appointment: serializeAppointment({
         ...updated,
         appointment_type_price_cents: updated.appointment_type?.price_cents ?? null,
+        doctor_consultation_fee_cents: updated.treating_physician?.consultation_fee ?? updated.owner?.consultation_fee ?? null,
       }),
     });
   } catch (err: unknown) {

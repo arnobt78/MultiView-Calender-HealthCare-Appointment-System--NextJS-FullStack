@@ -1,22 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { MapPin, Stethoscope, User } from "lucide-react";
+import { User } from "lucide-react";
+import { InvoiceVisitMetaLine } from "@/components/shared/billing/InvoiceVisitMetaLine";
+import { invoiceAppointmentOptionToMetaInput } from "@/lib/invoice-visit-meta-line";
 import { PatientPortraitAvatar } from "@/components/shared/person-display/PatientPortraitAvatar";
 import { PatientAgeGlassBadge } from "@/components/shared/person-display/PatientAgeGlassBadge";
 import { CategoryBrandMark } from "@/components/shared/category-display/CategoryBrandMark";
 import { TelehealthSessionBadge } from "@/components/shared/appointments/TelehealthSessionBadge";
 import { InvoiceStatusBadge } from "@/components/shared/billing/InvoiceStatusBadge";
 import { InvoiceAmountDisplay } from "@/components/shared/billing/InvoiceAmountDisplay";
+import { DoctorMiniAvatar } from "@/components/shared/doctor-display/DoctorMiniAvatar";
+import { DoctorSpecialtyBadge } from "@/components/shared/doctor-display/DoctorSpecialtyBadge";
 import type { InvoiceAppointmentOptionRow } from "@/lib/billing-types";
-import { formatInvoiceVisitPickerMeta } from "@/lib/invoice-appointment-option-display";
-import { patientAgeYears } from "@/lib/patient-age";
 import {
   invoiceDialogGlassTileClass,
   invoiceDialogGlassTileSelectedClass,
 } from "@/lib/invoice-dialog-ui-classes";
 import { invoiceDetailHref } from "@/lib/entity-routes";
 import type { EntityRole } from "@/lib/entity-routes";
+import { patientAgeYears } from "@/lib/patient-age";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -27,8 +30,10 @@ type Props = {
   onSelect: () => void;
 };
 
-/** Rich visit tile for invoice create picker — portrait, badges, doctors, category, billing state. */
-export function InvoiceVisitPickerCard({
+/**
+ * Visit picker tile — patient-first layout (no curated slug title); mirrors doctor directory cards.
+ */
+export function InvoiceVisitDirectoryPickerCard({
   option,
   selected,
   disabled = false,
@@ -36,7 +41,6 @@ export function InvoiceVisitPickerCard({
   onSelect,
 }: Props) {
   const rowDisabled = disabled || !option.eligible;
-  const metaLine = formatInvoiceVisitPickerMeta(option);
 
   return (
     <div className="space-y-1">
@@ -48,7 +52,7 @@ export function InvoiceVisitPickerCard({
         }}
         className={cn(
           invoiceDialogGlassTileClass,
-          "flex gap-3 p-3",
+          "flex w-full items-stretch gap-3 p-3 text-left",
           selected && option.eligible && invoiceDialogGlassTileSelectedClass,
           rowDisabled && "cursor-not-allowed opacity-60"
         )}
@@ -61,10 +65,10 @@ export function InvoiceVisitPickerCard({
             lastname: option.patient_label.split(" ").slice(1).join(" "),
             clinical_profile: option.patient_clinical_profile ?? undefined,
           }}
-          sizeClassName="h-14 w-14 shrink-0 rounded-xl"
+          sizeClassName="h-14 w-14 min-h-[3.5rem] shrink-0 self-stretch rounded-xl"
           className="rounded-xl ring-2 ring-amber-200/60"
         />
-        <div className="min-w-0 flex-1 space-y-1.5 text-left">
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="truncate text-sm font-semibold text-gray-800">
               {option.patient_label}
@@ -77,60 +81,54 @@ export function InvoiceVisitPickerCard({
             ) : null}
             {option.is_telehealth ? <TelehealthSessionBadge /> : null}
           </div>
-          <p className="line-clamp-1 text-xs font-medium text-gray-700">{option.title}</p>
-          {metaLine ? (
-            <p className="line-clamp-2 text-[11px] leading-snug text-muted-foreground">{metaLine}</p>
-          ) : null}
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5">
+            {option.appointment_type_name ? (
+              <span className="rounded-full border border-sky-200/60 bg-sky-50/80 px-2 py-0.5 text-[10px] font-medium text-sky-900">
+                {option.appointment_type_name}
+              </span>
+            ) : null}
             {option.category_label ? (
               <span className="inline-flex items-center gap-1 rounded-full border border-amber-200/60 bg-amber-50/80 px-2 py-0.5 text-[10px] font-medium text-amber-900">
                 <CategoryBrandMark color={option.category_color} size="compact" />
                 {option.category_label}
               </span>
             ) : null}
-            {option.appointment_type_name && option.appointment_type_name !== option.category_label ? (
-              <span className="rounded-full border border-sky-200/60 bg-sky-50/80 px-2 py-0.5 text-[10px] font-medium text-sky-900">
-                {option.appointment_type_name}
-              </span>
-            ) : null}
           </div>
-          <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">
-            {option.treating_physician_label ? (
-              <span className="inline-flex items-center gap-1">
-                <Stethoscope className="h-3 w-3" aria-hidden />
-                {option.treating_physician_label}
-                {option.treating_physician_specialty
-                  ? ` · ${option.treating_physician_specialty}`
-                  : ""}
-              </span>
-            ) : null}
-            {option.calendar_owner_label &&
-            option.calendar_owner_label !== option.treating_physician_label ? (
-              <span className="inline-flex items-center gap-1">
-                <User className="h-3 w-3" aria-hidden />
-                Owner: {option.calendar_owner_label}
-              </span>
-            ) : null}
-            {option.location_label && !option.is_telehealth ? (
-              <span className="inline-flex items-center gap-1">
-                <MapPin className="h-3 w-3" aria-hidden />
-                {option.location_label}
-              </span>
-            ) : null}
-          </div>
+          <InvoiceVisitMetaLine
+            source={invoiceAppointmentOptionToMetaInput(option)}
+            variant="text"
+          />
+          {option.treating_physician_label ? (
+            <div className="flex items-center gap-1.5 text-[10px] text-gray-700">
+              <DoctorMiniAvatar
+                doctor={{
+                  id: option.treating_physician_id ?? option.owner_id,
+                  display_name: option.treating_physician_label,
+                  email: null,
+                  image: null,
+                }}
+                className="h-6 w-6"
+              />
+              <span className="font-medium">{option.treating_physician_label}</span>
+              {option.treating_physician_specialty ? (
+                <DoctorSpecialtyBadge specialty={option.treating_physician_specialty} />
+              ) : null}
+            </div>
+          ) : null}
+          {option.calendar_owner_label &&
+          option.calendar_owner_label !== option.treating_physician_label ? (
+            <p className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
+              <User className="h-3 w-3" aria-hidden />
+              Owner: {option.calendar_owner_label}
+            </p>
+          ) : null}
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1 self-start">
-          {option.suggested_amount_cents != null && option.currency ? (
+          {option.suggested_amount_cents != null ? (
             <InvoiceAmountDisplay
               amountCents={option.suggested_amount_cents}
-              currency={option.currency}
-              className="text-xs font-semibold text-emerald-700"
-            />
-          ) : option.amount_cents != null && option.currency ? (
-            <InvoiceAmountDisplay
-              amountCents={option.amount_cents}
-              currency={option.currency}
-              className="text-xs font-semibold text-gray-700"
+              currency={option.currency ?? "eur"}
+              className="text-xs"
             />
           ) : null}
           {option.display_status ? (

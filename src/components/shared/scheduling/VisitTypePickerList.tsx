@@ -20,6 +20,7 @@ import {
   patientBookingGlassTileClass,
   patientBookingGlassTileSelectedClass,
 } from "@/components/shared/patient-booking/patient-booking-dialog-styles";
+import { bookingVisitFeeInfoNote } from "@/lib/appointment-visit-fee-display";
 
 /** Minimal fields for visit-type tiles (patient wizard + staff dialog). */
 export type VisitTypePickerItem = AppointmentTypeSchedulingFields & {
@@ -270,15 +271,12 @@ export function VisitTypePickerList({
           })()}
         </button>
       ))}
-      {/* Draft invoice note — shown when any type in the list has a price set */}
-      {types.some((t) => (t.price_cents ?? 0) > 0) && (
+      {types.length > 0 ? (
         <div className="flex items-start gap-1.5 rounded-xl border border-sky-200/50 bg-sky-50/60 px-3 py-2">
           <Info className="mt-0.5 h-3 w-3 shrink-0 text-sky-600" aria-hidden />
-          <p className="text-[11px] leading-relaxed text-sky-800">
-            Visit fee is reserved at booking. An invoice is generated automatically once the appointment is marked as completed.
-          </p>
+          <p className="text-[11px] leading-relaxed text-sky-800">{bookingVisitFeeInfoNote()}</p>
         </div>
-      )}
+      ) : null}
     </ScrollOverflowPanel>
   );
 }

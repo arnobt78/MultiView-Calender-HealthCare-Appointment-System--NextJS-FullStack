@@ -2,20 +2,23 @@
 
 Compact agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
-## Latest (2026-06-02)
+## Latest (2026-06-04)
 
-- **Invoice dialog:** amber glass `InvoiceFormDialog` (create+edit); rich visit picker; `StaffInvoiceDialogShell` on CP/dashboard/doctor/appointments/invoices layouts; preset create from appointment ⋮ + detail **New Invoice**; `useInvoiceFormDialogController` + `InvoiceFormDialogProvider`.
-- **Invoice detail live:** `InvoiceDetailLiveBody` + `useInvoice`; **Edit details** on detail header; `GET /api/invoices/[id]` + prefetch + `/api/payments` attach `visit_summary`.
-- **Doctor edit RBAC:** own draft/sent/overdue → `mutate` (description/due_date PATCH).
-- **SSE:** `notification-stream-sse.ts` safe enqueue; route abort + error stop (no heartbeat spam).
-- **Invalidation:** invoice CRUD → `invalidateAfterInvoiceWrite` busts `invoices.*` + `billing.root` (picker); unchanged.
-- **Verify:** `npm test` **666** / **120** files, tsc, lint, build. Day/Week/Month/List hover cards show invoice badge via `useAppointmentInvoiceDisplayMap`.
+- **C4 invoice UI:** CP `InvoiceManagement` DataTable + amber filters/columns (`invoice-table-cells`); `InvoiceVisitDirectoryPickerCard`; `ClinicalGlassDatePicker` (due align end); glass `InvoiceDetailLiveBody`; `DEFAULT_DOCTOR_VISIT_FEE_CENTS` (15000); doctor portal list reuses table cells.
+- **Visit meta:** `invoice-visit-meta-line.ts` + `InvoiceVisitMetaLine` (picker text + summary icons); `InvoiceVisitListMeta` wrapper.
+- **Seeds:** `db:seed-demo-full`, `db:seed-doctor-profiles`, `db:check-demo-seed`; `scripts/lib/doctor-profile-seed-data.ts`. Roles: **admin | doctor | patient** only (`rbac.isStaffRole`).
+- **Appt dialog:** location prefill from doctor `office_location` when empty + hint.
+- **Verify:** `npm test` **674** / **122** files · tsc · lint · build.
+
+## Prior (2026-06-02)
+
+- Invoice dialog/shell, `useInvoiceFormDialog`, detail live edit, SSE hardening, calendar invoice badge (`useAppointmentInvoiceDisplayMap`), `invalidateAfterInvoiceWrite` → `invoices.*` + `billing.*`.
 
 ## Never / Always
 
 **Never:** hardcode query keys; skip invalidation; `<a href>` internal; shadcn Checkbox; `user` on `UserAvatar`; extra impl `.md`.
 
-**Always:** `queryKeys` + `query-client` helpers; `getSessionUser()` APIs; `dynamic = "force-dynamic"` new APIs; RBAC `rbac.ts`; `Link` internal; native checkbox.
+**Always:** `queryKeys` + `query-client` helpers; `getSessionUser()`; `dynamic = "force-dynamic"` on APIs; `rbac.ts`; `Link` internal.
 
 ## Verify
 
@@ -38,12 +41,11 @@ Cross-tab: `query-cache-cross-tab.ts` in `QueryProvider`.
 
 ## Key paths
 
-- Invoice dialog: `invoice-dialog/`, `InvoiceFormDialogContext.tsx`, `useInvoiceFormDialogController.tsx`, `invoice-form-guards.ts`, `useBillingAppointmentOptionById.ts`
-- Billing KPI: `invoice-billing-totals.ts`, `InvoiceRevenueKpiGrid.tsx`
-- SSE: `notification-stream-sse.ts`, `notifications/stream/route.ts`
-- Query/SSR: `query-keys.ts`, `server-prefetch.ts`, `org-billing-prefetch.ts`
-- Scope: `staff-appointment-calendar-scope.ts`
+- Invoice: `invoice-dialog/`, `InvoiceFormDialogContext`, `invoice-visit-meta-line.ts`, `invoice-management-columns.tsx`
+- Billing: `billing-visit-fee.ts`, `billing-appointment-options-load.ts`, `invoice-billing-totals.ts`
+- SSR: `server-prefetch.ts`, `control-panel-section-prefetch.ts`, `org-billing-prefetch.ts`
+- Seeds: `seed-demo-full.ts`, `doctor-profile-seed-data.ts`
 
 ## Principle
 
-Minimal typed diffs; shared abstractions; preserve cache/SSR/invalidation unless task requires change.
+Minimal typed diffs; shared libs; preserve SSR/cache/invalidation unless task requires change.

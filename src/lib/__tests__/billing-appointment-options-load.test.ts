@@ -106,6 +106,30 @@ describe("fetchBillingAppointmentOptions", () => {
     expect(options[0]?.suggested_amount_cents).toBe(9250);
   });
 
+  it("uses default doctor visit fee when type and doctor fees are unset", async () => {
+    vi.mocked(prisma.appointment.findMany).mockResolvedValue([
+      {
+        id: APPT,
+        title: "Visit",
+        start: new Date("2026-06-01"),
+        end: new Date("2026-06-01"),
+        owner_id: ADMIN,
+        treating_physician_id: ADMIN,
+        patient: { firstname: "Demo", lastname: "Patient", email: "p@test.com" },
+        appointment_type: { price_cents: 0, name: "Follow-up" },
+        owner: { consultation_fee: 0 },
+        treating_physician: { consultation_fee: 0 },
+      },
+    ] as never);
+    vi.mocked(prisma.invoice.findMany).mockResolvedValue([]);
+
+    const options = await fetchBillingAppointmentOptions({
+      sessionUserId: ADMIN,
+      role: "admin",
+    });
+    expect(options[0]?.suggested_amount_cents).toBe(15000);
+  });
+
   it("includes rich visit display fields for picker cards", async () => {
     vi.mocked(prisma.appointment.findMany).mockResolvedValue([
       {

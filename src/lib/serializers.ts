@@ -216,6 +216,8 @@ export function serializeAppointment(a: {
   telehealth_link?: string | null;
   /** Joined from appointment_type — fee in cents for the visit fee badge on appointment cards. */
   appointment_type_price_cents?: number | null;
+  /** Treating physician (or owner) consultation_fee — second fallback for visit fee badge. */
+  doctor_consultation_fee_cents?: number | null;
 }) {
   const attachmentList = a.attachments ?? [];
   return {
@@ -239,6 +241,7 @@ export function serializeAppointment(a: {
     duration_minutes: a.duration_minutes ?? null,
     telehealth_link: a.telehealth_link ?? null,
     appointment_type_price_cents: a.appointment_type_price_cents ?? null,
+    doctor_consultation_fee_cents: a.doctor_consultation_fee_cents ?? null,
   };
 }
 
@@ -250,6 +253,8 @@ export type PortalAppointmentStaffUser = {
   role: string | null;
   image?: string | null;
   specialty?: string | null;
+  /** Included when select contains consultation_fee — drives visit fee badge second fallback. */
+  consultation_fee?: number | null;
 };
 
 /** Prisma appointment row + optional `category` / `owner` / `treating_physician` includes for portal responses */
@@ -279,9 +284,11 @@ export type PortalAppointmentRow = ReturnType<typeof mapPortalAppointmentsFromRo
  */
 export function mapPortalAppointmentsFromRows(rows: PortalAppointmentIncludeRow[]) {
   return rows.map((a) => {
+    const feeDoctor = a.treating_physician ?? a.owner;
     const base = serializeAppointment({
       ...a,
       appointment_type_price_cents: a.appointment_type?.price_cents ?? null,
+      doctor_consultation_fee_cents: feeDoctor?.consultation_fee ?? null,
     });
     return {
       ...base,

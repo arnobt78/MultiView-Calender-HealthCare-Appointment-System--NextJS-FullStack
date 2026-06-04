@@ -100,7 +100,7 @@ EvalGate (C2): status=PASS | eval_run_id=ER-C2-CLOSE | release_commit=2d9a932
 | ART-IDs | ART-0049..ART-0068 |
 | REQ-IDs | REQ-0009..REQ-0012 |
 | Mode | Retroactive (code on `main` before Gate 1) |
-| Regression | 638/638 Vitest (114 files) |
+| Regression | 666/666 Vitest (120 files) — refresh 2026-06-04 |
 
 | VER-ID | TC-ID | REQ-ID | Result | Description |
 |--------|-------|--------|--------|-------------|
@@ -113,7 +113,7 @@ EvalGate (C2): status=PASS | eval_run_id=ER-C2-CLOSE | release_commit=2d9a932
 | VER-0025 | TC-0021 | REQ-0013 | PASS | Assignee scope export/sync/search/portal |
 | VER-0026 | TC-0022 | REQ-0014 | PASS | Telehealth View-as period share |
 | VER-0027 | TC-0023 | REQ-0015 | PASS | Invoice revenue KPI + paid period |
-| VER-0028 | TC-0024 | REQ-0009..0015 | PASS | Full regression 638 + tsc + lint + build |
+| VER-0028 | TC-0024 | REQ-0009..0015 | PASS | Full regression 666 + tsc + lint + build |
 
 ## Coverage (C3)
 
@@ -132,9 +132,64 @@ EvalGate (C2): status=PASS | eval_run_id=ER-C2-CLOSE | release_commit=2d9a932
 | Field | Value |
 |-------|-------|
 | Agent | Red Team Verifier (automated) |
-| Timestamp | 2026-06-02T19:45:00Z |
-| Evidence | commits `faee3f7`, `6f13cc2`; 638 tests (114 files) |
+| Timestamp | 2026-06-04T12:24:00Z |
+| Evidence | commits `faee3f7`, `6f13cc2`; 666 tests (120 files) |
 | LINKED_REQ | REQ-0009..0015 |
 | Human Gate 2 | pending GATE-0006 |
 
 EvalGate (C3): status=PASS | eval_run_id=ER-C3-VERIFY | policy_version_ref=1.0.0 | gate2_pending=GATE-0006
+
+---
+
+## C4 — Invoice UI parity tranche (2026-06-04)
+
+| Item | Value |
+|------|-------|
+| Cycle | C4 (draft REQs) |
+| ART-IDs | ART-0086..ART-0097 |
+| REQ-IDs | REQ-0016, REQ-0017 (UI); REQ-0018..0020 unchanged |
+| Regression | 667/667 Vitest (120 files) |
+
+| VER-ID | TC-ID | REQ-ID | Result | Description |
+|--------|-------|--------|--------|-------------|
+| VER-0029 | TC-0025 | REQ-0016 | PASS | `billing-visit-fee` default €150 fallback + options-load |
+| VER-0030 | TC-0025 | REQ-0016 | PASS | CP invoice DataTable + filters + visit picker amber |
+| VER-0031 | TC-0026 | REQ-0017 | PASS | Invoice detail glass + linked visit + audit card |
+| VER-0032 | TC-0025 | REQ-0016 | PASS | Doctor profile seed unify (`doctor-profile-seed-data.ts`) |
+| VER-0033 | TC-0025..0017 | PASS | tsc + lint + build |
+
+## Coverage (C4 draft)
+
+| REQ-ID | Tests | Status |
+|--------|-------|--------|
+| REQ-0016 | TC-0025 + regression | PASS (automated) |
+| REQ-0017 | TC-0026 + regression | PASS (automated) |
+| REQ-0018 | — | verify-only (prior tranche) |
+| REQ-0019 | — | deferred |
+| REQ-0020 | — | out of scope |
+
+## Red Team Sign-Off (C4 tranche)
+
+| Field | Value |
+|-------|-------|
+| Agent | Red Team Verifier (automated) |
+| Timestamp | 2026-06-04T13:20:00Z |
+| Evidence | 667 tests, tsc, lint, build PASS |
+| LINKED_REQ | REQ-0016, REQ-0017 |
+| Human Gate 2 | pending (C4 not archived) |
+
+EvalGate (C4-UI): status=PASS | eval_run_id=ER-C4-UI-VERIFY | policy_version_ref=1.0.0
+
+## C4 polish tranche (2026-06-04)
+
+| Item | Value |
+|------|-------|
+| ART-IDs | ART-0098..ART-0100 |
+| Regression | 671/671 Vitest (121 files) |
+
+| VER-ID | REQ-ID | Result | Description |
+|--------|--------|--------|-------------|
+| VER-0034 | REQ-0016 | PASS | ClinicalGlassDatePicker + location hint |
+| VER-0035 | REQ-0016 | PASS | Doctor portal invoice-table-cells parity |
+| VER-0036 | REQ-0016 | PASS | db:seed-demo-full / db:seed-doctor-profiles |
+| VER-0037 | REQ-0016 | PASS | tsc + lint + build |

@@ -87,7 +87,8 @@ export async function GET() {
         take: 15,
         include: {
           patient: { select: { firstname: true, lastname: true } },
-          owner: { select: { display_name: true, email: true } },
+          owner: { select: { display_name: true, email: true, consultation_fee: true } },
+          treating_physician: { select: { consultation_fee: true } },
           appointment_type: { select: { price_cents: true } },
         },
       }),
@@ -128,16 +129,25 @@ export async function GET() {
         appointment_types: d.appointment_types_owned,
         patient_count: d.patients_primary_doctor.length,
       })),
-      recentAppointments: recentAppointments.map((a) => ({
-        ...serializeAppointment({
-          ...a,
-          appointment_type_price_cents: (a as typeof a & { appointment_type?: { price_cents: number } | null }).appointment_type?.price_cents ?? null,
-        }),
-        patient_name: a.patient
-          ? `${a.patient.firstname} ${a.patient.lastname}`
-          : null,
-        owner_display: a.owner?.display_name ?? a.owner?.email ?? null,
-      })),
+      recentAppointments: recentAppointments.map((a) => {
+        const ta = a as typeof a & {
+          appointment_type?: { price_cents: number } | null;
+          treating_physician?: { consultation_fee: number | null } | null;
+          owner?: { display_name: string | null; email: string; consultation_fee: number | null } | null;
+        };
+        const feeDoc = ta.treating_physician ?? ta.owner;
+        return {
+          ...serializeAppointment({
+            ...a,
+            appointment_type_price_cents: ta.appointment_type?.price_cents ?? null,
+            doctor_consultation_fee_cents: feeDoc?.consultation_fee ?? null,
+          }),
+          patient_name: a.patient
+            ? `${a.patient.firstname} ${a.patient.lastname}`
+            : null,
+          owner_display: ta.owner?.display_name ?? ta.owner?.email ?? null,
+        };
+      }),
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Internal server error";

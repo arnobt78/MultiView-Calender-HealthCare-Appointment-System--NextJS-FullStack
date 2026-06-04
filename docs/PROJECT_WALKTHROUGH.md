@@ -1,8 +1,18 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-02 — Invoice dialog + preset create + SSE)
+## Latest (2026-06-04 — C4 invoice UI polish)
 
-- **InvoiceFormDialog:** amber glass 90vw shell; create (picker/preset) + edit (description/due date); `invoice-dialog-ui-classes.ts`, rich `InvoiceVisitPickerCard` / `InvoiceVisitSummaryCard`; enriched `billing-appointment-options-load` + SSR seed `queryKeys.billing.appointmentOptions`.
+- **CP list:** `InvoiceManagement` → `DataTable` + `ClinicalListFilterToolbar` + `invoice-management-columns` / `invoice-table-cells` (amber frame). SSR unchanged: `control-panel/invoice-management` → `prefetchInvoices` + `prefetchBillingAppointmentOptions`.
+- **Dialog:** `ClinicalGlassDatePicker` (due date, popover align end); `InvoiceVisitDirectoryPickerCard` + `InvoiceVisitMetaLine` / `invoice-visit-meta-line.ts` (shared when/location with `InvoiceVisitSummaryCard`). Fee default €150: `DEFAULT_DOCTOR_VISIT_FEE_CENTS` in `billing-visit-fee.ts`.
+- **Detail:** `invoice-detail-ui-classes.ts`, `InvoiceDetailLiveBody` (glass + audit card). Doctor portal invoices: `DoctorPortalInvoiceListRow` composes same table cells (`viewerRole=doctor`).
+- **Appointment create:** `office_location` prefill when location empty; helper hint under location field.
+- **Seeds:** `npm run db:seed-demo-full` (test-user → extended → clinical → curated appts); `db:seed-doctor-profiles`; `db:check-demo-seed`. Map: `scripts/lib/doctor-profile-seed-data.ts`.
+- **Roles:** demo + RBAC staff = **admin | doctor | patient** only (no secretary).
+- **Verify:** Vitest **674** (122 files), tsc, lint, build.
+
+## Prior (2026-06-02 — Invoice dialog + preset create + SSE)
+
+- **InvoiceFormDialog:** amber glass 90vw shell; create (picker/preset) + edit; `invoice-dialog-ui-classes.ts`, `InvoiceVisitDirectoryPickerCard` / `InvoiceVisitSummaryCard`; `billing-appointment-options-load` + SSR `queryKeys.billing.appointmentOptions`.
 - **Shared dialog:** `StaffInvoiceDialogShell` → `InvoiceFormDialogProvider` on CP, dashboard (`HomePage`), doctor portal, `/appointments`, `/invoices` layouts. Lists use `useInvoiceFormDialog()`; cards use `useInvoiceFormDialogOptional()` + **Create invoice** in `AppointmentActionsMenu`.
 - **Preset create:** `openCreateForAppointment(id)` from calendar ⋮ or `AppointmentDetailBillingActions`; `useBillingAppointmentOptionById` + amount prefill via `invoice-form-guards.ts`.
 - **Detail live edit:** `InvoiceDetailLiveBody` subscribes `useInvoice`; `InvoiceDetailClient` **Edit details**; `hideViewLink` on detail; doctor mutate on sent/overdue own invoices.
@@ -14,7 +24,7 @@
 ## Prior (2026-06-02 — Portal UI + Staff scope + Confirm dialogs)
 
 - **Staff calendar scope:** `staff-appointment-calendar-scope.ts` — `staffCalendarVisibilityOrClauses`: owner **OR** treating **OR** accepted assignee (`user_id` / `invited_email`). Same filter on `GET /api/appointments`, `?ids=` batch, **`GET /api/calendar/export`**, **`POST /api/calendar/sync`**, **`GET /api/appointments/search`**, doctor-portal API, login-today count, non-admin dashboard overview. SSR: `prefetchDashboardAppointments`, `prefetchDoctorPortal`, `prefetchDashboardOverview(userId, role, email)` via `control-panel-section-prefetch`.
-- **Doctor portal:** stacked panel headers (billing/patients); invoice rows (`DoctorPortalInvoiceListRow`, `invoice-list-display`); SSR visit summaries on invoices.
+- **Doctor portal:** stacked panel headers (billing/patients); invoice rows (`DoctorPortalInvoiceListRow` → `invoice-table-cells`, `invoice-list-display`); SSR visit summaries on invoices.
 - **Confirm dialogs:** `ConfirmActionDialog` + `confirm-delete-dialog-copy.tsx` — destructive/warning actions portal + CP + calendar/settings; dropdown deletes: dialog as menu **sibling**.
 - **Org billing KPI:** `invoice-billing-totals.ts`, `GET /api/invoices/billing-totals`, dual query keys + `prefetchOrgBillingInvoicesByOrgIds`.
 - **Invoice revenue KPI grid:** `InvoiceRevenueKpiGrid` — amount + count badge + insights period hint; `formatBillingKpiMoney` (exact EUR). Used on `/insights`, CP invoice-management, org billing. API `billing-totals` returns `{ totals, statusTotals }`; insights `fetchRevenueAggregates` adds `statusTotals` + `paidInPeriodCount`.
@@ -40,7 +50,7 @@
 - **Entity detail empty values:** `ClinicalEmptyDash` — single em-dash; `clinicalEmptyOr` / `clinicalEmptyOrNode` on patient, doctor, category CP detail schema rows (`patient-care-level.ts` `hasPatientCareLevel`).
 - **Dashboard calendar filters:** `CategoryFilterSelect` + `PatientFilterSelect` (brand mark / portrait + age + care tier); `ClinicalListFilterToolbar` reset right-aligned. **Clinical role** filter (`calendar-clinical-role-filter.ts`): default **All My Visits**; **Created by Me**; **Referred to Me (Treating)** — client-side on staff views; hidden for patients.
 - **Staff calendar scope:** owner **OR** treating **OR** accepted assignee — see Latest section. **Admin** overview KPIs stay org-wide via `dashboardOverviewAppointmentFilter`.
-- **Curated demo seed:** `npm run db:seed-demo-appointments` → `scripts/seed-demo-appointments-curated.ts` (exactly **10** rows, marker `seed-demo-curated:v1`, invoice matrix). Bulk timeline: `db:seed-demo-appointments-timeline`. Full reset: `CONFIRM_DB_CLEAR=YES npm run db:clear` → `db:prepare` → `db:seed-extended` → `db:seed-demo-appointments` → `db:migrate`.
+- **Curated demo seed:** prefer `npm run db:seed-demo-full` (or `db:prepare` → `db:seed-extended` → `db:seed-demo-appointments`). Curated script: **10** rows + invoice matrix. Reset: `CONFIRM_DB_CLEAR=YES npm run db:clear` → `prisma:push` → `db:seed-demo-full`.
 - **Cross-portal revenue fix:** Admin **Dashboard Overview** revenue now uses `fetchRevenueOverviewForViewer` (global totals — same universe as CP Invoice Management). Doctor Management **Revenue** column attributes paid cents to treating physician, then calendar owner (`fetchPaidRevenueCentsByDoctorIds`). Invoice writes bust all admin overview Redis keys (`invalidateAdminDashboardOverviewCaches`).
 - **Billing owner:** `resolveInvoiceBillingUserId` prefers `treating_physician_id` over `owner_id` on create.
 - **Visit context on invoices:** `InvoiceLinkedVisitPanel` on `/invoices/[id]` and CP invoice detail; `visit_summary` on list APIs + patient/doctor portal cards + CP invoice table; snapshot invoices include visit line under description.
@@ -1079,7 +1089,7 @@ Patients are normally forbidden from listing all users. Exception: `?role=doctor
 
 ### Landing page demo dropdown (`src/components/pages/LandingPage.tsx`)
 
-The "Try demo account" button is a split dropdown with three roles (secretary removed):
+The "Try demo account" button is a split dropdown with three roles (admin, doctor, patient):
 
 | Option | Credentials | Redirects to |
 |---|---|---|

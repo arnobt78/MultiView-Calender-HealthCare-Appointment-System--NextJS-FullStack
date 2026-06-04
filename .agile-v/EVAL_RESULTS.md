@@ -63,14 +63,14 @@ release_commit: "2d9a932"
 
 ---
 
-## C3 Verify — ER-C3-VERIFY (refresh 2026-06-02)
+## C3 Verify — ER-C3-VERIFY (refresh 2026-06-04)
 
 ```yaml
 eval_run_id: ER-C3-VERIFY
-eval_timestamp: "2026-06-02T19:45:00Z"
+eval_timestamp: "2026-06-04T12:24:00Z"
 policy_version_ref: "1.0.0"
 eval_gate_status: PASS
-eval_gate_rationale: "C3 extended — npm test 638/638, tsc, eslint, build PASS for REQ-0009..0015"
+eval_gate_rationale: "C3 extended — npm test 666/666 (120 files), tsc, eslint, build PASS for REQ-0009..0015"
 cycle: C3
 release_commit: "6f13cc2"
 human_gate_2: GATE-0006
@@ -86,7 +86,7 @@ human_gate_2: GATE-0006
 | org-billing-prefetch | npm test org-billing-prefetch | PASS | REQ-0012, REQ-0015 |
 | insights-period-charts | npm test insights-period-charts | PASS | REQ-0014 |
 | clinical-empty-dash | npm test clinical-empty-dash | PASS | REQ-0012 |
-| full regression | npm test | PASS 638/638 | REQ-0009..0015 |
+| full regression | npm test | PASS 666/666 | REQ-0009..0015 |
 | typecheck | npx tsc --noEmit | PASS | REQ-0009..0015 |
 | lint | npm run lint | PASS | REQ-0009..0015 |
 | release build | npm run build | PASS | REQ-0009..0015 |

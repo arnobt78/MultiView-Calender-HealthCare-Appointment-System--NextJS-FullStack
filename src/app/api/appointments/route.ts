@@ -32,17 +32,19 @@ export const dynamic = "force-dynamic";
 const PATIENT_APPOINTMENT_INCLUDE = {
   category: true,
   owner: {
-    select: { id: true, display_name: true, email: true, role: true, image: true, specialty: true },
+    select: { id: true, display_name: true, email: true, role: true, image: true, specialty: true, consultation_fee: true },
   },
   treating_physician: {
-    select: { id: true, display_name: true, email: true, role: true, image: true, specialty: true },
+    select: { id: true, display_name: true, email: true, role: true, image: true, specialty: true, consultation_fee: true },
   },
   appointment_type: { select: { price_cents: true } },
 } as const;
 
-/** All callers get appointment_type.price_cents for the visit fee badge. */
+/** All callers get appointment_type.price_cents + doctor consultation_fee for the visit fee badge fallback chain. */
 const BASE_APPOINTMENT_INCLUDE = {
   appointment_type: { select: { price_cents: true } },
+  treating_physician: { select: { consultation_fee: true } },
+  owner: { select: { consultation_fee: true } },
 } as const;
 
 export async function GET(req: NextRequest) {
@@ -81,10 +83,19 @@ export async function GET(req: NextRequest) {
       });
 
       return NextResponse.json({
-        appointments: rows.map((a) => serializeAppointment({
-          ...a,
-          appointment_type_price_cents: (a as typeof a & { appointment_type?: { price_cents: number } | null }).appointment_type?.price_cents ?? null,
-        })),
+        appointments: rows.map((a) => {
+          const ta = a as typeof a & {
+            appointment_type?: { price_cents: number } | null;
+            treating_physician?: { consultation_fee: number | null } | null;
+            owner?: { consultation_fee: number | null } | null;
+          };
+          const feeDoc = ta.treating_physician ?? ta.owner;
+          return serializeAppointment({
+            ...a,
+            appointment_type_price_cents: ta.appointment_type?.price_cents ?? null,
+            doctor_consultation_fee_cents: feeDoc?.consultation_fee ?? null,
+          });
+        }),
         pagination: {
           limit: ids.length,
           offset: 0,
@@ -159,12 +170,19 @@ export async function GET(req: NextRequest) {
       ? mapPortalAppointmentsFromRows(
           appointments as Parameters<typeof mapPortalAppointmentsFromRows>[0]
         )
-      : appointments.map((a) =>
-          serializeAppointment({
+      : appointments.map((a) => {
+          const ta = a as typeof a & {
+            appointment_type?: { price_cents: number } | null;
+            treating_physician?: { consultation_fee: number | null } | null;
+            owner?: { consultation_fee: number | null } | null;
+          };
+          const feeDoc = ta.treating_physician ?? ta.owner;
+          return serializeAppointment({
             ...a,
-            appointment_type_price_cents: (a as typeof a & { appointment_type?: { price_cents: number } | null }).appointment_type?.price_cents ?? null,
-          })
-        );
+            appointment_type_price_cents: ta.appointment_type?.price_cents ?? null,
+            doctor_consultation_fee_cents: feeDoc?.consultation_fee ?? null,
+          });
+        });
 
     return NextResponse.json({
       appointments: serialized,
@@ -309,6 +327,8 @@ export async function POST(req: NextRequest) {
       appointment: serializeAppointment({
         ...appointment,
         appointment_type_price_cents: appointment.appointment_type?.price_cents ?? null,
+        // POST doesn't join treating_physician on create; doctor_consultation_fee_cents populated after list refetch
+        doctor_consultation_fee_cents: null,
       }),
     });
   } catch (err: unknown) {
