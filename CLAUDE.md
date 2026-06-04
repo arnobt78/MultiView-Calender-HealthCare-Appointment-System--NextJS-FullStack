@@ -9,7 +9,9 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 - **Appt detail:** `formatAppointmentDetailWhenRange` live subtitle; `appointment-detail-invoice-audit-rows.tsx`; `issuer_email`/`issuer_role` on invoices; PATCH/POST set `updated_by_id`.
 - **Cache:** `setQueryData` on patient/category/user PUT; `useCategory`/`useUser` SSR `initialData` + `refetchOnMount: false`; appt `invalidateAfterAppointmentMutation` + detail API payload.
 - **UI polish:** Visit Overview title; People inline rows; `InvoiceVisitDescriptionStack`; primary doctor SSR pick.
-- **Verify:** **742** / **138** · tsc · lint · build. DB: `npm run prisma:push` or `013`–`015` + `db:seed-extended` / `db:seed-test-user`.
+- **CP admin user:** `/control-panel/users/[id]` — `AdminUserDetailScreen` + `userDetailInclude` (Record Audit parity).
+- **DB ops:** `db:backfill-user-audit` (`scripts/backfill-user-audit.ts`); seed-test-user stamps + backfills null `created_by_id`.
+- **Verify:** **742** / **138** · tsc · lint · build. DB: `prisma:push` → `db:backfill-user-audit` (0/0 = already stamped).
 
 ## Never / Always
 
@@ -38,7 +40,7 @@ Cross-tab: `query-cache-cross-tab.ts`.
 - Audit: `entity-detail-audit-actor.ts`, `EntityDetailAuditActorInline.tsx`, `EntityDetailRecordAuditCard.tsx`
 - Includes: `patient-api-include.ts`, `category-api-include.ts`, `user-api-include.ts`, `appointment-access.ts`
 - Appt: `appointment-detail-api.ts`, `appointment-detail-view-model.ts`, `useAppointmentDetail.ts`
-- Detail screens: `AppointmentDetailScreenShared`, `PatientDetailScreen`, `CategoryDetailScreenShared`, `DoctorDetailScreenShared`
+- Detail screens: appt/patient/category/doctor/`AdminUserDetailScreen`; backfill: `scripts/backfill-user-audit.ts`
 
 ## Principle
 

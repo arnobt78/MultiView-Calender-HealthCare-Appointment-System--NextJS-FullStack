@@ -6,9 +6,10 @@
 - **Prisma / SQL:** `appointments.created_by`/`updated_by` (`013`); category backfill `014`; `users.updated_at` + audit FKs `015`. Seeds: `seed-extended-schema` (categories), `seed-test-user` (doctors). API writes: appt POST/PATCH/PUT, patient/category/user PATCH set `updated_by_id`.
 - **SSR includes:** `patientDetailInclude`, `categoryDetailInclude` (`*AuditUserPick`), `userDetailInclude`, `appointmentDetailInclude`. List APIs stay light (`USER_API_SELECT` scalars only).
 - **Appointment detail UI:** Live header subtitle `formatAppointmentDetailWhenRange`; Visit Overview; People inline (`DoctorIdentityRow`); invoice audit rows (`appointment-detail-invoice-audit-rows.tsx`); `issuer_email`/`issuer_role` on invoice list payload.
-- **Cache:** `setQueryData` on patient PUT, user PATCH; `seedCategoryDetailCache`; `useCategory`/`useUser`/`useAppointmentDetail` SSR `initialData`. Invalidation matrix unchanged — helpers above still run on CRUD.
-- **Gap (optional):** CP `/control-panel/users/[id]` admin roster page has no Record Audit block (doctor/patient/category/appointment do).
-- **Deploy DB:** `npm run prisma:push` or run `migrations/013`–`015`; re-seed optional for demo actors.
+- **Cache:** `setQueryData` on patient PUT, user PATCH; `seedCategoryDetailCache`; `useCategory`/`useUser`/`useAppointmentDetail` SSR `initialData`. Invalidation: `invalidateUsersAndAuth` + `invalidateDoctorDetailAndSnapshot` on user PATCH.
+- **CP admin user detail:** `/control-panel/users/[id]` — `AdminUserDetailScreen` + SSR `userDetailInclude` (same Record Audit as doctor detail).
+- **Deploy DB:** `npm run prisma:push`; `npm run db:backfill-user-audit` (idempotent) or `db:seed-test-user` for demo actors on existing DBs.
+- **Intentional gap:** Portal `/admins/[id]` read-only profile — no Record Audit block.
 - **Verify:** **742** tests (138 files), tsc, lint, build.
 
 ## Prior (2026-06-04 — Appointment + invoice detail)

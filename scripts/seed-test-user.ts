@@ -278,6 +278,20 @@ async function seedDemoUsers() {
     }
   }
 
+  if (adminForUserAudit) {
+    const backfill = await prisma.user.updateMany({
+      where: { created_by_id: null },
+      data: {
+        created_by_id: adminForUserAudit.id,
+        updated_by_id: adminForUserAudit.id,
+        updated_at: new Date(),
+      },
+    });
+    if (backfill.count > 0) {
+      console.log(`  ✔ backfilled audit FKs on ${backfill.count} user(s)`);
+    }
+  }
+
   // Seed global appointment types (user_id = null) — shared across all doctors
   for (const t of GLOBAL_APPOINTMENT_TYPES) {
     await prisma.appointmentType.upsert({

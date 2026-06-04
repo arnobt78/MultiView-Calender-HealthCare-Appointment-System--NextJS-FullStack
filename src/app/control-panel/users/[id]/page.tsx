@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { USER_API_SELECT } from "@/lib/user-api-select";
+import { userDetailInclude } from "@/lib/user-api-include";
 import { getSessionUser } from "@/lib/session";
 import { isValidUUID } from "@/lib/validation";
 import { getUserRole } from "@/lib/rbac";
@@ -35,10 +35,7 @@ export default async function UserDetailPage({ params }: PageProps) {
 
   const raw = await prisma.user.findUnique({
     where: { id },
-    select: {
-      ...USER_API_SELECT,
-      email_verified: true,
-    },
+    include: userDetailInclude,
   });
   if (!raw) notFound();
 

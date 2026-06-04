@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useState } from "react";
+import { useLayoutEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { clinicalEmptyOr } from "@/components/shared/ClinicalTableEmptyDash";
@@ -45,6 +45,10 @@ import {
   type AdminUserFormValues,
 } from "@/lib/admin-user-form-state";
 import { cn } from "@/lib/utils";
+import { EntityDetailRecordAuditCard } from "@/components/shared/entity-detail/EntityDetailRecordAuditCard";
+import { mapUserRecordAuditActors } from "@/lib/entity-detail-audit-actor";
+import { entityDetailAuditIconCircleClass } from "@/lib/patient-detail-ui-classes";
+import type { EntityRole } from "@/lib/entity-routes";
 
 type AdminUserDetailScreenProps = {
   userId: string;
@@ -91,9 +95,12 @@ export function AdminUserDetailScreen({
     queryClient.setQueryData(queryKeys.users.detail(userId), initialUser);
   }, [queryClient, userId, initialUser]);
 
-  const { data: user, updateUser, isUpdating } = useUser(userId);
+  const { data: user, updateUser, isUpdating } = useUser(userId, { initialData: initialUser });
   const liveUser = user ?? initialUser;
   const displayName = liveUser.display_name?.trim() || liveUser.email;
+
+  /** Record Audit — `userDetailInclude` on SSR + GET/PATCH `/api/users/[id]`. */
+  const recordAuditActors = useMemo(() => mapUserRecordAuditActors(liveUser), [liveUser]);
 
   const openEditDialog = () => {
     setDialogForm(userToAdminUserForm(liveUser));
@@ -155,6 +162,15 @@ export function AdminUserDetailScreen({
             </div>
 
             <dl className={patientDetailDefinitionListClass}>
+              <EntityDetailRecordAuditCard
+                createdAt={liveUser.created_at}
+                updatedAt={liveUser.updated_at}
+                createdBy={recordAuditActors.createdBy}
+                updatedBy={recordAuditActors.updatedBy}
+                viewerRole={"admin" as EntityRole}
+                iconCircleClass={entityDetailAuditIconCircleClass}
+                iconClassName="h-3 w-3 text-sky-600"
+              />
               <div className={patientDetailDefinitionRowClass}>
                 <FieldLabel icon={Hash}>User ID</FieldLabel>
                 <dd className="font-mono text-xs break-all">{liveUser.id}</dd>
