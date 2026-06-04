@@ -4,19 +4,26 @@ import {
   DOCTOR_DETAIL_PATIENT_SNAPSHOT_LINKS,
   resolveCalendarOwnerLinkKind,
   resolveDoctorDetailSnapshotLinkPolicy,
+  resolvePortalEntityDetailSnapshotLinkPolicy,
   resolveTreatingPhysicianLinkKind,
 } from "@/lib/entity-detail-snapshot-links";
 
-describe("resolveDoctorDetailSnapshotLinkPolicy", () => {
+describe("resolvePortalEntityDetailSnapshotLinkPolicy", () => {
   it("returns patient policy for patient role", () => {
-    expect(resolveDoctorDetailSnapshotLinkPolicy("patient")).toBe(
+    expect(resolvePortalEntityDetailSnapshotLinkPolicy("patient")).toBe(
       DOCTOR_DETAIL_PATIENT_SNAPSHOT_LINKS
     );
   });
 
   it("returns doctor policy for doctor role", () => {
-    expect(resolveDoctorDetailSnapshotLinkPolicy("doctor")).toBe(
+    expect(resolvePortalEntityDetailSnapshotLinkPolicy("doctor")).toBe(
       DOCTOR_DETAIL_DOCTOR_SNAPSHOT_LINKS
+    );
+  });
+
+  it("aliases resolveDoctorDetailSnapshotLinkPolicy", () => {
+    expect(resolveDoctorDetailSnapshotLinkPolicy("patient")).toBe(
+      resolvePortalEntityDetailSnapshotLinkPolicy("patient")
     );
   });
 });
@@ -34,7 +41,7 @@ describe("doctor detail snapshot calendar owner links", () => {
     ).toBe("role");
   });
 
-  it("doctor viewer: admin owner links to portal staff", () => {
+  it("doctor viewer: admin owner links to portal admin profile", () => {
     expect(
       resolveCalendarOwnerLinkKind("doctor", "admin", DOCTOR_DETAIL_DOCTOR_SNAPSHOT_LINKS)
     ).toBe("portal-admin");

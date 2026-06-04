@@ -57,7 +57,7 @@ import {
 import { resolveEntityDetailRootClass, type AppSectionScrollShell } from "@/lib/section-page-layout";
 import { isDoctorActive } from "@/lib/entity-active-status";
 import { isDoctorRole } from "@/lib/rbac";
-import { resolveDoctorDetailSnapshotLinkPolicy } from "@/lib/entity-detail-snapshot-links";
+import { resolvePortalEntityDetailSnapshotLinkPolicy } from "@/lib/entity-detail-snapshot-links";
 import { canClientFetchAdminUsersList } from "@/lib/user-list-access";
 import { patientDetailHrefWithContext, type EntityRole } from "@/lib/entity-routes";
 import { useUser, type UsersListResponse } from "@/hooks/useUsers";
@@ -225,7 +225,7 @@ export function DoctorDetailScreenShared({
   );
 
   const snapshotLinkPolicy = useMemo(
-    () => (mode === "portal" ? resolveDoctorDetailSnapshotLinkPolicy(entityRole) : undefined),
+    () => (mode === "portal" ? resolvePortalEntityDetailSnapshotLinkPolicy(entityRole) : undefined),
     [mode, entityRole]
   );
 

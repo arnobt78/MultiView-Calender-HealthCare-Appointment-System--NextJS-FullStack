@@ -31,6 +31,7 @@ import { ClinicalDataTable } from "@/components/shared/ClinicalDataTable";
 import { CategoryBrandMark } from "@/components/shared/category-display/CategoryBrandMark";
 import { EntityDetailRecordAuditCard } from "@/components/shared/entity-detail/EntityDetailRecordAuditCard";
 import { buildRelatedAppointmentsColumns } from "@/components/control-panel/patient-detail-snapshot-columns";
+import { resolvePortalEntityDetailSnapshotLinkPolicy } from "@/lib/entity-detail-snapshot-links";
 import { EntityDetailSnapshotSectionHeading } from "@/components/shared/entity-detail/EntityDetailSnapshotSectionHeading";
 import { entityDetailOwnedSnapshotSectionTitle } from "@/lib/entity-detail-snapshot-section-copy";
 import { useCategories, useCategory, useCategorySnapshot } from "@/hooks/useCategories";
@@ -267,6 +268,12 @@ export function CategoryDetailScreenShared({
     [doctorUsers?.users, adminUsers?.users]
   );
 
+  /** Portal category detail — same link policy as portal doctor detail (no patient/admin 404s). */
+  const snapshotLinkPolicy = useMemo(
+    () => (mode === "portal" ? resolvePortalEntityDetailSnapshotLinkPolicy(entityRole) : undefined),
+    [mode, entityRole]
+  );
+
   const appointmentColumns = useMemo(
     () =>
       buildRelatedAppointmentsColumns({
@@ -274,8 +281,9 @@ export function CategoryDetailScreenShared({
         patientDisplayName: "—",
         staffById,
         hiddenColumns: CATEGORY_DETAIL_RELATED_APPOINTMENTS_HIDDEN_COLUMNS,
+        linkPolicy: snapshotLinkPolicy,
       }),
-    [entityRole, staffById]
+    [entityRole, staffById, snapshotLinkPolicy]
   );
 
   const appointmentTableMinWidthClass = useMemo(

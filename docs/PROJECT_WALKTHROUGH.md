@@ -1,14 +1,14 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-04 — Doctor detail + portal clinician terminology)
+## Latest (2026-06-04 — Portal entity detail links + clinician naming)
 
-- **Doctor detail parity:** `GET /api/doctors/[id]/snapshot` (`force-dynamic`); `DoctorSnapshot` + related appointments (owner or treating); `DoctorDetailScreenShared` on portal `/doctors/[id]` + CP; SSR `prefetchDoctorSnapshot` + `useDoctorSnapshot`; `buildStaffDirectoryMap` for portraits.
-- **Snapshot link policy:** `entity-detail-snapshot-links.ts` — portal doctor detail only: no appointment title/patient links (404-safe); `calendar_owner_role` / `treating_physician_role` on rows; patient → doctor owner links, plain admin owners; doctor → `/admins/:id` for admin calendar owners.
+- **Snapshot link policy:** `resolvePortalEntityDetailSnapshotLinkPolicy` on portal **`/doctors/[id]`** and **`/categories/[id]`** (`CategoryDetailScreenShared` + `DoctorDetailScreenShared`). Patient: plain appointment title, patient row, admin calendar owners; doctor owners/treating stay linked. Doctor: `/admins/:id` for admin owners; no cross-patient/title links. CP entity pages: full links (no policy).
+- **Doctor detail:** `GET /api/doctors/[id]/snapshot`; SSR `prefetchDoctorSnapshot`; `invalidateDoctorDetailAndSnapshot`; FK + patient primary-doctor invalidation.
 - **Admin portal profile:** `/admins/[id]` + `PortalAdminDetailScreen` (removed `/staff/[id]`); `portalAdminDetailHref`; `admin-portal-profile-access.ts`.
 - **Invalidation:** `invalidateDoctorDetailAndSnapshot`; appointment mutations pass explicit FK ids (`appointment-invalidation-fk.ts`); patient CRUD → `invalidateDoctorsAffectedByPatientWrite`.
 - **Clinician naming (portal cards/invoice shell):** `ClinicianInvoiceDialogShell`, `PortalClinicianLink`, `PortalAppointmentClinicianIdentityBlock`, `PortalAppointmentClinicianUser`, `portal-appointment-clinician.ts`, `appointment-card-clinician-image.ts` — deprecated `Staff*` re-exports kept. RBAC `isStaffRole` / `staff-directory-cache` / `StaffAppointmentPickerField` unchanged (admin|doctor product term).
 - **Doctor portal fix:** `InvoiceFormDialogProvider` always mounts when layout passes `variant="doctor"` (no throw before auth hydrate).
-- **Verify:** Vitest **711** (133 files), tsc, lint, build.
+- **Verify:** Vitest **712** (133 files), tsc, lint, build.
 
 ## Prior (2026-06-04 — Appointment card meta + portraits + cache)
 

@@ -210,7 +210,7 @@ export type BuildSnapshotColumnsOpts = {
   hiddenColumns?: readonly RelatedAppointmentsColumnId[];
   /** Related Appointments title column layout — reuse on patient/category/portal detail tables. */
   titleColumn?: RelatedAppointmentsTitleColumnDisplay;
-  /** Portal doctor detail — disables links that would 404 for patient/doctor viewers. */
+  /** Portal doctor/category detail — disables links that would 404 for patient/doctor viewers. */
   linkPolicy?: RelatedAppointmentsLinkPolicy;
 };
 

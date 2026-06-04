@@ -46,14 +46,21 @@ export const DOCTOR_DETAIL_DOCTOR_SNAPSHOT_LINKS: RelatedAppointmentsLinkPolicy 
     ownerRole === "admin" ? "portal-admin" : ownerRole === "doctor" ? "role" : "none",
 };
 
-/** Pick snapshot link policy for portal doctor detail from signed-in role. */
-export function resolveDoctorDetailSnapshotLinkPolicy(
+/**
+ * Portal entity detail (`/doctors/:id`, `/categories/:id`) — related appointments table.
+ * CP admin keeps full links when policy omitted.
+ */
+export function resolvePortalEntityDetailSnapshotLinkPolicy(
   viewerRole: EntityRole
 ): RelatedAppointmentsLinkPolicy | undefined {
   if (isPatientRole(viewerRole)) return DOCTOR_DETAIL_PATIENT_SNAPSHOT_LINKS;
   if (isDoctorRole(viewerRole)) return DOCTOR_DETAIL_DOCTOR_SNAPSHOT_LINKS;
   return undefined;
 }
+
+/** @deprecated Use `resolvePortalEntityDetailSnapshotLinkPolicy`. */
+export const resolveDoctorDetailSnapshotLinkPolicy =
+  resolvePortalEntityDetailSnapshotLinkPolicy;
 
 /** Resolve calendar owner link kind — falls back to legacy admin-cp / role when no policy. */
 export function resolveCalendarOwnerLinkKind(
