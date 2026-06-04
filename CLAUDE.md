@@ -5,7 +5,7 @@ Compact agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 ## Latest (2026-06-04)
 
 - **C4 invoice UI:** CP `InvoiceManagement` DataTable + amber filters/columns (`invoice-table-cells`); `InvoiceVisitDirectoryPickerCard`; `ClinicalGlassDatePicker` (due align end); glass `InvoiceDetailLiveBody`; `DEFAULT_DOCTOR_VISIT_FEE_CENTS` (15000); doctor portal list reuses table cells.
-- **Visit meta:** `invoice-visit-meta-line.ts` + `InvoiceVisitMetaLine` (picker text + summary icons); `InvoiceVisitListMeta` wrapper.
+- **Visit meta:** `invoice-visit-meta-line.ts` + `InvoiceVisitMetaLine` only (picker `text` + summary `icons`).
 - **Seeds:** `db:seed-demo-full`, `db:seed-doctor-profiles`, `db:check-demo-seed`; `scripts/lib/doctor-profile-seed-data.ts`. Roles: **admin | doctor | patient** only (`rbac.isStaffRole`).
 - **Appt dialog:** location prefill from doctor `office_location` when empty + hint.
 - **Verify:** `npm test` **674** / **122** files · tsc · lint · build.

@@ -3,7 +3,7 @@
 ## Latest (2026-06-04 — C4 invoice UI polish)
 
 - **CP list:** `InvoiceManagement` → `DataTable` + `ClinicalListFilterToolbar` + `invoice-management-columns` / `invoice-table-cells` (amber frame). SSR unchanged: `control-panel/invoice-management` → `prefetchInvoices` + `prefetchBillingAppointmentOptions`.
-- **Dialog:** `ClinicalGlassDatePicker` (due date, popover align end); `InvoiceVisitDirectoryPickerCard` + `InvoiceVisitMetaLine` / `invoice-visit-meta-line.ts` (shared when/location with `InvoiceVisitSummaryCard`). Fee default €150: `DEFAULT_DOCTOR_VISIT_FEE_CENTS` in `billing-visit-fee.ts`.
+- **Dialog:** `ClinicalGlassDatePicker` (due align end); `InvoiceVisitDirectoryPickerCard`; `InvoiceVisitMetaLine` + `invoice-visit-meta-line.ts` (sole visit when/location UI — no legacy `InvoiceVisitListMeta`). Fee default €150: `DEFAULT_DOCTOR_VISIT_FEE_CENTS`.
 - **Detail:** `invoice-detail-ui-classes.ts`, `InvoiceDetailLiveBody` (glass + audit card). Doctor portal invoices: `DoctorPortalInvoiceListRow` composes same table cells (`viewerRole=doctor`).
 - **Appointment create:** `office_location` prefill when location empty; helper hint under location field.
 - **Seeds:** `npm run db:seed-demo-full` (test-user → extended → clinical → curated appts); `db:seed-doctor-profiles`; `db:check-demo-seed`. Map: `scripts/lib/doctor-profile-seed-data.ts`.

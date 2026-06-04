@@ -52,7 +52,10 @@ export function invoiceAppointmentOptionToMetaInput(
   };
 }
 
-/** Resolved icon-row fields for {@link InvoiceVisitMetaLine} variant `icons`. */
+/**
+ * Single source for invoice visit when/location display — use {@link InvoiceVisitMetaLine} in UI.
+ * Resolved icon-row fields for variant `icons`.
+ */
 export function resolveInvoiceVisitMetaIcons(input: InvoiceVisitMetaInput): {
   dateLabel: string | null;
   timeLabel: string | null;
