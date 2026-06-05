@@ -4,10 +4,10 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-05)
 
-- **Visit location:** shared resolver everywhere incl. `DoctorPortalAppointmentListRow` + CP dashboard queue; `doctorPortalAppointmentListInclude` + `mapDoctorPortalAppointmentsFromRows`; booking persists `office_location`; portal/prefetch clinician embeds synced.
+- **Visit location:** shared resolver on portal/cards/detail/doctor portal/dashboard queue + patient snapshot table; `appointmentSnapshotInclude` office embed; `resolveSnapshotAppointmentDisplayLocation`.
 - **Invoice billing violet:** detail/dialog/list; header Generate/Download; footer Send deduped; PDF `?download=1`.
 - **Invalidation:** booking → `invalidateAfterAppointmentMutation`; invoice → `invalidateAfterInvoiceWrite`.
-- **Verify:** **771** / **145** · tsc · lint · build.
+- **Verify:** **772** / **145** · tsc · lint · build.
 
 ## Never / Always
 

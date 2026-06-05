@@ -2,9 +2,9 @@
 
 ## Latest (2026-06-05 — Visit location parity + invoice billing violet)
 
-- **Visit location:** `resolveAppointmentDisplayLocation` on doctor portal list rows + CP dashboard queue; `doctorPortalAppointmentListInclude` + `mapDoctorPortalAppointmentsFromRows` (API + SSR prefetch); portal timeline/booking/cards/detail/compact unchanged; patient book POST persists `office_location`.
+- **Visit location:** full parity incl. patient snapshot Location column via `resolveSnapshotAppointmentDisplayLocation`; `appointmentSnapshotInclude` adds clinician `office_location`; doctor portal + dashboard queue unchanged from prior commit.
 - **Invoice violet:** detail/dialog/list; header Generate/Download; footer Send deduped; PDF attachment download.
-- **Tests:** `appointment-visit-location`, portal clinician fixtures. **771** / **145** · tsc · lint · build.
+- **Tests:** `appointment-visit-location` (+ snapshot fallback). **772** / **145** · tsc · lint · build.
 
 ## Prior (2026-06-05 — Visit fee badges + patient booking price)
 

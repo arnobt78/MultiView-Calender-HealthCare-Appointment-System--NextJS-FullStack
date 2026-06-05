@@ -64,6 +64,27 @@ export function resolveAppointmentDisplayLocation(
   );
 }
 
+/** Snapshot tables — denormalized owner/treating office columns from `mapAppointmentToSnapshotRow`. */
+export type SnapshotAppointmentLocationRow = AppointmentVisitLocationInput & {
+  treating_physician_office_location?: string | null;
+  calendar_owner_office_location?: string | null;
+};
+
+export function resolveSnapshotAppointmentDisplayLocation(
+  row: SnapshotAppointmentLocationRow
+): string | null {
+  return resolveAppointmentDisplayLocation({
+    location: row.location,
+    is_telehealth: row.is_telehealth,
+    treating_physician: row.treating_physician_office_location
+      ? { office_location: row.treating_physician_office_location }
+      : null,
+    owner: row.calendar_owner_office_location
+      ? { office_location: row.calendar_owner_office_location }
+      : null,
+  });
+}
+
 /** Location to persist on patient self-book — telehealth omits physical place. */
 export function resolvePatientBookingPersistedLocation(
   isTelehealth: boolean,

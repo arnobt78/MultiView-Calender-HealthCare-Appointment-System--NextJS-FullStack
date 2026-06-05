@@ -147,6 +147,9 @@ export type AppointmentSnapshotRow = Appointment & {
   doctor_image?: string | null;
   /** `users.role` for treating physician — snapshot link policy (admin vs doctor). */
   treating_physician_role?: string | null;
+  /** Clinician office embeds — `resolveSnapshotAppointmentDisplayLocation` fallback. */
+  treating_physician_office_location?: string | null;
+  calendar_owner_office_location?: string | null;
   /** Denormalized patient fields for category snapshot / multi-patient tables. */
   patient_firstname?: string | null;
   patient_lastname?: string | null;

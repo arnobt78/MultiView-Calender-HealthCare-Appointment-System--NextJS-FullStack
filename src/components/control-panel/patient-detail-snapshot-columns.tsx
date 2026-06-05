@@ -13,6 +13,7 @@ import {
   type ClinicalEmptyLayout,
 } from "@/components/shared/ClinicalTableEmptyDash";
 import { clinicalHasTextValue } from "@/lib/clinical-empty-value";
+import { resolveSnapshotAppointmentDisplayLocation } from "@/lib/appointment-visit-location";
 import { DoctorIdentityCell } from "@/components/shared/person-display/DoctorIdentityCell";
 import { PatientIdentityCell } from "@/components/shared/person-display/PatientIdentityCell";
 import {
@@ -416,9 +417,10 @@ export function buildRelatedAppointmentsColumns(
         shellClassName: clinicalTableColumnWrapShellClass,
         colWidth: CLINICAL_SNAPSHOT_APPOINTMENT_COL_WIDTH.location,
       },
-      cell: ({ row }) =>
-        clinicalEmptyOrNode(
-          clinicalHasTextValue(row.original.location),
+      cell: ({ row }) => {
+        const locationLabel = resolveSnapshotAppointmentDisplayLocation(row.original);
+        return clinicalEmptyOrNode(
+          clinicalHasTextValue(locationLabel),
           () => (
             <p
               className={cn(
@@ -428,11 +430,12 @@ export function buildRelatedAppointmentsColumns(
                 "m-0 w-full max-w-full overflow-hidden whitespace-normal"
               )}
             >
-              {row.original.location!.trim()}
+              {locationLabel!.trim()}
             </p>
           ),
           "table"
-        ),
+        );
+      },
     },
   ];
 

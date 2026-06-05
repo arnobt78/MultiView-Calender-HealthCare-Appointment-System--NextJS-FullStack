@@ -15,6 +15,8 @@ type SnapshotUserPick = {
   image?: string | null;
   /** consultation_fee → doctor_consultation_fee_cents on serialized snapshot row */
   consultation_fee?: number | null;
+  /** Doctor office — visit location fallback when `appointment.location` unset. */
+  office_location?: string | null;
 };
 
 type SnapshotPatientPick = {
@@ -72,6 +74,8 @@ export function mapAppointmentToSnapshotRow(
     doctor_specialty: clinical?.specialty ?? null,
     doctor_image: clinical?.image ?? null,
     treating_physician_role: row.treating_physician?.role ?? null,
+    treating_physician_office_location: row.treating_physician?.office_location ?? null,
+    calendar_owner_office_location: row.owner?.office_location ?? null,
     patient_firstname: patient?.firstname ?? null,
     patient_lastname: patient?.lastname ?? null,
     patient_email: patient?.email ?? null,
@@ -95,6 +99,7 @@ export const appointmentSnapshotInclude = {
       image: true,
       /** consultation_fee → doctor_consultation_fee_cents on snapshot row */
       consultation_fee: true,
+      office_location: true,
     },
   },
   treating_physician: {
@@ -107,6 +112,7 @@ export const appointmentSnapshotInclude = {
       image: true,
       /** consultation_fee → doctor_consultation_fee_cents on snapshot row */
       consultation_fee: true,
+      office_location: true,
     },
   },
   patient: {
