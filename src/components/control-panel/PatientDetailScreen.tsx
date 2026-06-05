@@ -22,7 +22,11 @@ import {
 import { BackNavigationLink } from "@/components/shared/BackNavigationLink";
 import { useRouter, useSearchParams } from "next/navigation";
 import { usePatient, usePatientSnapshot } from "@/hooks/usePatients";
-import { PageHeader } from "@/components/shared/PageHeader";
+import { EntityDetailChromeHeader } from "@/components/shared/entity-detail/EntityDetailChromeHeader";
+import {
+  entityDetailChromeSkyIconClass,
+  entityDetailChromeSkyIconTileClass,
+} from "@/lib/page-chrome-classes";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PatientFormDialog } from "@/components/control-panel/patient-dialog/PatientFormDialog";
@@ -520,8 +524,11 @@ export function PatientDetailScreen({
 
   return (
     <div className={sectionRootClass}>
-      <PageHeader
+      <EntityDetailChromeHeader
         className={entityDetailPageHeaderClass}
+        icon={User}
+        iconTileClassName={entityDetailChromeSkyIconTileClass}
+        iconClassName={entityDetailChromeSkyIconClass}
         title={
           showLiveBody ? (
             nameLabel || "—"
@@ -529,7 +536,6 @@ export function PatientDetailScreen({
             <Skeleton className="h-7 w-56 max-w-full" aria-hidden />
           )
         }
-        // Static descriptor text should not flicker on refresh.
         description="Patient Record — Schema Fields, Clinical Profile, Related Activity"
         actions={
           <BackNavigationLink

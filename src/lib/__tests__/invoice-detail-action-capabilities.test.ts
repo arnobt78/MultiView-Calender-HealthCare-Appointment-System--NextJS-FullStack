@@ -17,6 +17,8 @@ function invoice(status: string): Invoice {
 describe("resolveInvoiceDetailActionCapabilities", () => {
   it("admin draft: pay, send, mark paid, edit, delete; no refund", () => {
     const caps = resolveInvoiceDetailActionCapabilities(invoice("draft"), "admin");
+    expect(caps.canGenerateInvoice).toBe(true);
+    expect(caps.canDownloadPdf).toBe(true);
     expect(caps.canPay).toBe(true);
     expect(caps.canSend).toBe(true);
     expect(caps.canMarkPaid).toBe(true);
@@ -27,6 +29,8 @@ describe("resolveInvoiceDetailActionCapabilities", () => {
 
   it("admin paid: refund only among write actions", () => {
     const caps = resolveInvoiceDetailActionCapabilities(invoice("paid"), "admin");
+    expect(caps.canGenerateInvoice).toBe(false);
+    expect(caps.canDownloadPdf).toBe(true);
     expect(caps.canPay).toBe(false);
     expect(caps.canSend).toBe(false);
     expect(caps.canMarkPaid).toBe(false);

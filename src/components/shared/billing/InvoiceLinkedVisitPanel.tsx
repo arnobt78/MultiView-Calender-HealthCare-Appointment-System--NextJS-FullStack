@@ -9,6 +9,7 @@ import { PatientIdentityCell } from "@/components/shared/person-display/PatientI
 import { DoctorIdentityCell } from "@/components/shared/person-display/DoctorIdentityCell";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { TelehealthSessionBadge } from "@/components/shared/appointments/TelehealthSessionBadge";
+import { AppointmentTypeGlassBadge } from "@/components/shared/appointment-display/AppointmentTypeGlassBadge";
 import { EntityDetailSnapshotSectionHeading } from "@/components/shared/entity-detail/EntityDetailSnapshotSectionHeading";
 import type { EntityRole } from "@/lib/entity-routes";
 import type { RelatedAppointmentsLinkPolicy } from "@/lib/entity-detail-snapshot-links";
@@ -19,16 +20,23 @@ import {
 } from "@/lib/entity-detail-snapshot-links";
 import { entityDetailOwnedSnapshotSectionTitle } from "@/lib/entity-detail-snapshot-section-copy";
 import {
+  formatAppointmentTypeDurationLabel,
+  resolveAppointmentTypeDurationMinutes,
+} from "@/lib/appointment-type-display";
+import {
   entityDetailDefinitionIdentityRowClass,
   entityDetailDefinitionIdentityValueClass,
   entityDetailDefinitionValueClass,
 } from "@/lib/patient-detail-ui-classes";
 import {
+  invoiceDetailCardBorderClass,
   invoiceDetailCardFrameClass,
   invoiceDetailDefinitionListClass,
   invoiceDetailDefinitionRowClass,
   invoiceDetailFieldIconCircleClass,
+  invoiceDetailFieldIconClass,
   invoiceDetailSectionIconCircleClass,
+  invoiceDetailSectionIconClass,
 } from "@/lib/invoice-detail-ui-classes";
 import { cn } from "@/lib/utils";
 
@@ -58,7 +66,7 @@ function VisitDefinitionRow({
     <div className={identity ? entityDetailDefinitionIdentityRowClass : invoiceDetailDefinitionRowClass}>
       <dt className="flex items-center gap-2 text-sm font-medium text-gray-600">
         <span className={invoiceDetailFieldIconCircleClass} aria-hidden>
-          <Icon className="h-3 w-3 text-amber-600" />
+          <Icon className={invoiceDetailFieldIconClass} />
         </span>
         {label}
       </dt>
@@ -99,6 +107,9 @@ export function InvoiceLinkedVisitPanel({
     "linkedVisit",
     "appointment"
   );
+  const visitTypeDurationLabel = summary.appointment_type_name
+    ? formatAppointmentTypeDurationLabel(resolveAppointmentTypeDurationMinutes(summary))
+    : null;
   const patientPortrait = summary.patient_id
     ? {
         id: summary.patient_id,
@@ -111,27 +122,30 @@ export function InvoiceLinkedVisitPanel({
     : null;
 
   return (
-    <Card className={cn(invoiceDetailCardFrameClass, "border-amber-100/50 shadow-none")}>
+    <Card className={cn(invoiceDetailCardFrameClass, invoiceDetailCardBorderClass)}>
       <CardContent className="space-y-3 p-4 sm:p-5">
         <EntityDetailSnapshotSectionHeading
           icon={Calendar}
           sectionIconCircleClass={invoiceDetailSectionIconCircleClass}
-          iconClassName="h-3.5 w-3.5 text-amber-600"
+          iconClassName={invoiceDetailSectionIconClass}
         >
           {linkedVisitTitle}
         </EntityDetailSnapshotSectionHeading>
         <dl className={invoiceDetailDefinitionListClass}>
           <VisitDefinitionRow icon={Calendar} label="Visit">
-            {appointmentHref ? (
-              <EntityTitleLink href={appointmentHref} label={visitTitle} wrapLabel />
-            ) : (
-              visitTitle
-            )}
-            {summary.appointment_type_name ? (
-              <span className="mt-1 inline-flex rounded-full border border-sky-200/60 bg-sky-50/80 px-2 py-0.5 text-[10px] font-medium text-sky-900">
-                {summary.appointment_type_name}
-              </span>
-            ) : null}
+            <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+              {appointmentHref ? (
+                <EntityTitleLink href={appointmentHref} label={visitTitle} wrapLabel />
+              ) : (
+                <span className="min-w-0">{visitTitle}</span>
+              )}
+              {summary.appointment_type_name ? (
+                <AppointmentTypeGlassBadge
+                  name={summary.appointment_type_name}
+                  durationLabel={visitTypeDurationLabel}
+                />
+              ) : null}
+            </div>
           </VisitDefinitionRow>
           <VisitDefinitionRow icon={Calendar} label="When">
             <span className="text-muted-foreground">{summary.when_label}</span>

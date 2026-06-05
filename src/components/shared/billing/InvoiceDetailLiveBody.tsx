@@ -1,15 +1,7 @@
 "use client";
 
 import type { LucideIcon } from "lucide-react";
-import {
-  ArrowLeft,
-  CreditCard,
-  Euro,
-  FileText,
-  Fingerprint,
-  Receipt,
-  Stethoscope,
-} from "lucide-react";
+import { CreditCard, Euro, FileText, Fingerprint, Receipt, Stethoscope } from "lucide-react";
 import { useMemo } from "react";
 import { useInvoice } from "@/hooks/useInvoice";
 import type { Invoice } from "@/hooks/usePayments";
@@ -21,9 +13,9 @@ import {
 } from "@/lib/entity-routes";
 import { Card, CardContent } from "@/components/ui/card";
 import { EntityDetailChromeHeader } from "@/components/shared/entity-detail/EntityDetailChromeHeader";
-import { BackNavigationLink } from "@/components/shared/BackNavigationLink";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { InvoiceDetailActionBar } from "@/components/shared/billing/InvoiceDetailActionBar";
+import { InvoiceDetailHeaderActions } from "@/components/shared/billing/InvoiceDetailHeaderActions";
 import { resolvePortalEntityDetailSnapshotLinkPolicy } from "@/lib/entity-detail-snapshot-links";
 import { InvoiceStatusBadge } from "@/components/shared/billing/InvoiceStatusBadge";
 import { InvoiceAmountDisplay } from "@/components/shared/billing/InvoiceAmountDisplay";
@@ -47,14 +39,16 @@ import { entityDetailOwnedSnapshotSectionTitle } from "@/lib/entity-detail-snaps
 import { entityDetailPageHeaderClass } from "@/lib/patient-detail-ui-classes";
 import {
   invoiceDetailAuditIconCircleClass,
-  invoiceDetailBackButtonClass,
+  invoiceDetailCardBorderClass,
+  invoiceDetailCardFrameClass,
   invoiceDetailChromeIconClass,
   invoiceDetailChromeIconTileClass,
-  invoiceDetailCardFrameClass,
   invoiceDetailDefinitionListClass,
   invoiceDetailDefinitionRowClass,
   invoiceDetailFieldIconCircleClass,
+  invoiceDetailFieldIconClass,
   invoiceDetailSectionIconCircleClass,
+  invoiceDetailSectionIconClass,
   invoiceDetailSnapshotSectionClass,
 } from "@/lib/invoice-detail-ui-classes";
 import { clinicalCellMutedTextClass } from "@/lib/table-display-styles";
@@ -83,7 +77,7 @@ function InvoiceDetailDefinitionRow({
     <div className={invoiceDetailDefinitionRowClass}>
       <dt className="flex items-center gap-2 text-sm font-medium text-gray-600">
         <span className={invoiceDetailFieldIconCircleClass} aria-hidden>
-          <Icon className="h-3 w-3 text-amber-600" />
+          <Icon className={invoiceDetailFieldIconClass} />
         </span>
         {label}
       </dt>
@@ -169,22 +163,21 @@ export function InvoiceDetailLiveBody({
         }
         description={subtitle}
         actions={
-          <BackNavigationLink
-            href={backHref}
-            className={cn(invoiceDetailBackButtonClass, "no-underline")}
-          >
-            <ArrowLeft className="shrink-0" aria-hidden />
-            Back
-          </BackNavigationLink>
+          <InvoiceDetailHeaderActions
+            initialInvoice={invoice}
+            accessLevel={uiAccess}
+            backHref={backHref}
+            invoicesInitialData={initialInvoicesList ?? undefined}
+          />
         }
       />
 
-      <Card className={cn(invoiceDetailCardFrameClass, "border-amber-100/50 shadow-none")}>
+      <Card className={cn(invoiceDetailCardFrameClass, invoiceDetailCardBorderClass)}>
         <CardContent className="space-y-3 p-4 sm:p-5">
           <EntityDetailSnapshotSectionHeading
             icon={Receipt}
             sectionIconCircleClass={invoiceDetailSectionIconCircleClass}
-            iconClassName="h-3.5 w-3.5 text-amber-600"
+            iconClassName={invoiceDetailSectionIconClass}
           >
             Invoice
           </EntityDetailSnapshotSectionHeading>
@@ -223,7 +216,7 @@ export function InvoiceDetailLiveBody({
             viewerRole={viewerRole}
             extraRows={auditExtraRows}
             iconCircleClass={invoiceDetailAuditIconCircleClass}
-            iconClassName="h-3 w-3 text-amber-600"
+            iconClassName={invoiceDetailFieldIconClass}
           />
         </CardContent>
       </Card>
@@ -243,7 +236,7 @@ export function InvoiceDetailLiveBody({
         <EntityDetailSnapshotSectionHeading
           icon={CreditCard}
           sectionIconCircleClass={invoiceDetailSectionIconCircleClass}
-          iconClassName="h-3.5 w-3.5 text-amber-600"
+          iconClassName={invoiceDetailSectionIconClass}
           count={invoice.payments.length}
         >
           {paymentHistoryTitle}

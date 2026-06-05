@@ -51,7 +51,9 @@ export function EntityDetailChromeHeader({
             ) : null}
           </div>
         </div>
-        {actions ? <div className="flex shrink-0 items-center">{actions}</div> : null}
+        {actions ? (
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">{actions}</div>
+        ) : null}
       </div>
     </div>
   );
