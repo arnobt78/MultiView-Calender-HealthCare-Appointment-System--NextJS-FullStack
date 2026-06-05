@@ -6,6 +6,12 @@ import {
   skyGlassTableFrameClass,
 } from "@/lib/calendar-header-action-styles";
 import {
+  entityDetailChromeSkyIconClass,
+  entityDetailChromeSkyIconTileClass,
+  entityDetailChromeVioletIconClass,
+  entityDetailChromeVioletIconTileClass,
+} from "@/lib/page-chrome-classes";
+import {
   entityDetailActionsRowClass,
   entityDetailFieldIconCircleClass,
   entityDetailSectionIconCircleClass,
@@ -32,6 +38,8 @@ export type AppointmentDetailToneClasses = {
   definitionListClass: string;
   definitionRowClass: string;
   schemaSectionClass: string;
+  chromeIconTileClass: string;
+  chromeIconClass: string;
 };
 
 const VIOLET_BACK =
@@ -67,6 +75,8 @@ export function resolveAppointmentDetailToneClasses(
       definitionListClass: patientDetailDefinitionListClass,
       definitionRowClass: patientDetailDefinitionRowClass,
       schemaSectionClass: patientDetailSchemaSectionClass,
+      chromeIconTileClass: entityDetailChromeVioletIconTileClass,
+      chromeIconClass: entityDetailChromeVioletIconClass,
     };
   }
   return {
@@ -84,6 +94,8 @@ export function resolveAppointmentDetailToneClasses(
     definitionListClass: patientDetailDefinitionListClass,
     definitionRowClass: patientDetailDefinitionRowClass,
     schemaSectionClass: patientDetailSchemaSectionClass,
+    chromeIconTileClass: entityDetailChromeSkyIconTileClass,
+    chromeIconClass: entityDetailChromeSkyIconClass,
   };
 }
 

@@ -16,6 +16,23 @@ export const pageChromeTitleStackClass = "flex min-w-0 flex-1 flex-col justify-c
 
 export const pageChromeIconClass = "h-6 w-6 text-sky-600";
 
+/** Entity detail chrome icon tiles — scaled portal tile per tone (appointment/invoice/doctor/category). */
+export const entityDetailChromeSkyIconTileClass = pageChromeIconTileClass;
+
+export const entityDetailChromeVioletIconTileClass =
+  "flex w-12 shrink-0 items-center justify-center self-stretch min-h-[3.5rem] rounded-xl border border-violet-200 bg-violet-100";
+
+export const entityDetailChromeAmberIconTileClass =
+  "flex w-12 shrink-0 items-center justify-center self-stretch min-h-[3.5rem] rounded-xl border border-amber-200 bg-amber-100";
+
+export const entityDetailChromeEmeraldIconTileClass =
+  "flex w-12 shrink-0 items-center justify-center self-stretch min-h-[3.5rem] rounded-xl border border-emerald-200 bg-emerald-100";
+
+export const entityDetailChromeSkyIconClass = pageChromeIconClass;
+export const entityDetailChromeVioletIconClass = "h-6 w-6 text-violet-600";
+export const entityDetailChromeAmberIconClass = "h-6 w-6 text-amber-600";
+export const entityDetailChromeEmeraldIconClass = "h-6 w-6 text-emerald-600";
+
 export const pageChromeTitleClass =
   "text-xl font-semibold tracking-tight text-gray-700 md:text-2xl";
 

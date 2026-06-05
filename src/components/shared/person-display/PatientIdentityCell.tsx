@@ -2,7 +2,15 @@
 
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { PatientAgeGlassBadge } from "@/components/shared/person-display/PatientAgeGlassBadge";
+import { PatientCareTierGlassBadge } from "@/components/shared/person-display/PatientCareTierGlassBadge";
 import { PatientPortraitAvatar } from "@/components/shared/person-display/PatientPortraitAvatar";
+import {
+  clinicalIdentityInlineAvatarClass,
+  clinicalIdentityInlineBadgeRowClass,
+  clinicalIdentityInlineInnerClass,
+  clinicalIdentityInlineNameClass,
+  clinicalIdentityInlineRowClass,
+} from "@/lib/clinical-identity-inline-ui";
 import { patientAgeYears } from "@/lib/patient-age";
 import {
   clinicalCellMutedTextClass,
@@ -32,6 +40,8 @@ type PatientIdentityCellProps = {
   layout?: "table" | "detail" | "inline";
   className?: string;
   avatarSizeClassName?: string;
+  /** Inline layout — care tier badge beside age (entity detail Related People). */
+  careLevel?: number | null;
 };
 
 /**
@@ -46,37 +56,51 @@ export function PatientIdentityCell({
   patient,
   layout = "table",
   className,
-  avatarSizeClassName = "h-9 w-9",
+  avatarSizeClassName,
+  careLevel,
 }: PatientIdentityCellProps) {
+  const resolvedAvatarSize =
+    avatarSizeClassName ??
+    (layout === "inline" ? clinicalIdentityInlineAvatarClass : "h-9 w-9");
   const emailTrim = email?.trim();
   const label = name.trim() || emailTrim || "—";
   const age = patientAgeYears(patient.birth_date);
   const canLink = linkPatient && Boolean(href?.trim());
 
-  const nameNode = canLink ? (
+  const tableNameNode = canLink ? (
     <EntityTitleLink href={href!} label={label} className="min-w-0 self-start truncate font-normal" />
   ) : (
     <span className="min-w-0 self-start truncate font-normal text-foreground">{label}</span>
   );
 
+  const inlineNameNode = canLink ? (
+    <EntityTitleLink href={href!} label={label} className={clinicalIdentityInlineNameClass} />
+  ) : (
+    <span className={cn(clinicalIdentityInlineNameClass, "text-foreground")}>{label}</span>
+  );
+
+  const inlineBadgeRow =
+    age != null || careLevel != null ? (
+      <div className={clinicalIdentityInlineBadgeRowClass}>
+        {age != null ? <PatientAgeGlassBadge age={age} compact /> : null}
+        {careLevel != null ? (
+          <PatientCareTierGlassBadge careLevel={careLevel} compact className="shrink-0" />
+        ) : null}
+      </div>
+    ) : null;
+
   if (layout === "inline") {
     return (
-      <div
-        className={cn(
-          "flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1",
-          clinicalTableCellMinRowClass,
-          className
-        )}
-      >
-        <PatientPortraitAvatar patient={patient} sizeClassName={avatarSizeClassName} />
-        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-0.5">
-          {nameNode}
-          {age != null ? <PatientAgeGlassBadge age={age} /> : null}
+      <div className={cn(clinicalIdentityInlineRowClass, className)}>
+        <PatientPortraitAvatar patient={patient} sizeClassName={resolvedAvatarSize} />
+        <div className={clinicalIdentityInlineInnerClass}>
+          {inlineNameNode}
           {emailTrim ? (
-            <span className={cn("truncate", clinicalCellMutedTextClass)} title={emailTrim}>
+            <span className={cn("shrink-0", clinicalCellMutedTextClass)} title={emailTrim}>
               ({emailTrim})
             </span>
           ) : null}
+          {inlineBadgeRow}
         </div>
       </div>
     );
@@ -107,10 +131,10 @@ export function PatientIdentityCell({
         className
       )}
     >
-      <PatientPortraitAvatar patient={patient} sizeClassName={avatarSizeClassName} />
+      <PatientPortraitAvatar patient={patient} sizeClassName={resolvedAvatarSize} />
       <div className={cn("flex min-w-0 flex-1 flex-col justify-center", clinicalStackGapClass)}>
         <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-          {nameNode}
+          {tableNameNode}
           {age != null ? <PatientAgeGlassBadge age={age} /> : null}
         </div>
         {emailTrim ? (

@@ -10,6 +10,12 @@ import { RoleEntityLink } from "@/components/shared/RoleEntityLink";
 import { doctorDetailHref, portalAdminDetailHref } from "@/lib/entity-routes";
 import type { EntityRole } from "@/lib/entity-routes";
 import {
+  clinicalIdentityInlineBadgeRowClass,
+  clinicalIdentityInlineInnerClass,
+  clinicalIdentityInlineNameClass,
+  clinicalIdentityInlineRowClass,
+} from "@/lib/clinical-identity-inline-ui";
+import {
   clinicalCellMutedTextClass,
   clinicalStackGapClass,
   clinicalTableCellMinRowClass,
@@ -73,7 +79,7 @@ export function DoctorIdentityRow({
 
   const badgeRow =
     showRoleBadge || showSpecialty || activeStatus !== undefined ? (
-      <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+      <div className={clinicalIdentityInlineBadgeRowClass}>
         {showRoleBadge && staffRole ? (
           <UserRoleBadge role={staffRole} className="shrink-0" />
         ) : null}
@@ -86,9 +92,17 @@ export function DoctorIdentityRow({
       </div>
     ) : null;
 
+  const inlineNameClass = layout === "inline" ? clinicalIdentityInlineNameClass : nameTextClass;
+
   const nameLink =
     linkKind === "none" ? (
-      <span className={cn("font-normal text-foreground", layout === "inline" ? "shrink-0" : "truncate", nameTextClass)}>
+      <span
+        className={cn(
+          "font-normal text-foreground",
+          layout === "inline" ? inlineNameClass : "truncate",
+          layout !== "inline" ? nameTextClass : undefined
+        )}
+      >
         {label}
       </span>
     ) : linkKind === "admin-cp" ? (
@@ -96,9 +110,8 @@ export function DoctorIdentityRow({
         href={doctorDetailHref("admin", doctor.id)}
         label={label}
         className={cn(
-          "min-w-0 font-normal",
-          layout === "inline" ? "shrink-0" : "self-start truncate",
-          nameTextClass
+          layout === "inline" ? inlineNameClass : "min-w-0 self-start truncate font-normal",
+          layout !== "inline" ? nameTextClass : undefined
         )}
       />
     ) : linkKind === "portal-admin" ? (
@@ -109,17 +122,16 @@ export function DoctorIdentityRow({
             href={href}
             label={label}
             className={cn(
-              "min-w-0 font-normal",
-              layout === "inline" ? "shrink-0" : "self-start truncate",
-              nameTextClass
+              layout === "inline" ? inlineNameClass : "min-w-0 self-start truncate font-normal",
+              layout !== "inline" ? nameTextClass : undefined
             )}
           />
         ) : (
           <span
             className={cn(
               "font-normal text-foreground",
-              layout === "inline" ? "shrink-0" : "truncate",
-              nameTextClass
+              layout === "inline" ? inlineNameClass : "truncate",
+              layout !== "inline" ? nameTextClass : undefined
             )}
           >
             {label}
@@ -132,18 +144,17 @@ export function DoctorIdentityRow({
         id={doctor.id}
         label={label}
         className={cn(
-          "min-w-0 font-normal",
-          layout === "inline" ? "shrink-0" : "self-start truncate",
-          nameTextClass
+          layout === "inline" ? inlineNameClass : "min-w-0 self-start truncate font-normal",
+          layout !== "inline" ? nameTextClass : undefined
         )}
       />
     );
 
   if (layout === "inline") {
     return (
-      <div className={cn("flex min-w-0 flex-wrap items-center gap-2", className)}>
+      <div className={cn(clinicalIdentityInlineRowClass, className)}>
         <DoctorAvatar doctor={doctor} sizeClassName={avatarSize} />
-        <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1">
+        <div className={clinicalIdentityInlineInnerClass}>
           {nameLink}
           {emailVisible && emailTrimmed ? (
             <span className={cn("shrink-0", clinicalCellMutedTextClass)} title={emailTrimmed}>

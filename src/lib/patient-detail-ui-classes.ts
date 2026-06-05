@@ -26,6 +26,14 @@ export const patientDetailDefinitionListClass = "grid gap-2 text-sm";
 export const entityDetailDefinitionValueClass =
   "min-w-0 text-sm text-gray-800 sm:pt-0.5";
 
+/** Related People / linked visit identity rows — center label + avatar row on y-axis. */
+export const entityDetailDefinitionIdentityRowClass =
+  "grid grid-cols-1 gap-1 sm:grid-cols-[minmax(8.5rem,11rem)_minmax(0,1fr)] sm:items-center sm:gap-x-4";
+
+/** Identity value column — flex center, no `sm:pt-0.5` offset. */
+export const entityDetailDefinitionIdentityValueClass =
+  "min-w-0 flex items-center text-sm text-gray-800";
+
 /** Glass icon circle for schema field labels (sky tone). */
 export const entityDetailFieldIconCircleClass =
   "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-sky-200/70 bg-sky-50/80 shadow-[0_2px_8px_rgba(14,165,233,0.15)]";

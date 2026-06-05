@@ -1,13 +1,21 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-05 — Visit fee badges + patient booking price)
+## Latest (2026-06-05 — Identity parity + invoice detail + entity chrome)
 
-- **Shared:** `VisitFeeBadge` (`size`: `cardMeta` | `wizard` | `picker` | `table` | `services`) + `visit-fee-badge-ui-classes.ts` — sibling type chip height per surface (cards, wizard, dropdown tiles, settings table).
-- **Booking:** `resolveBookingVisitFeeDisplay` — steps 2–3 show type `price_cents` or doctor/`DEFAULT_DOCTOR_VISIT_FEE_CENTS` fallback with `· est.`; `bookingWizardTypeBadgeClass` on sky type badges.
-- **Cards:** `AppointmentCategoryTypeMetaRow` + `PortalAppointmentTimelineCard` — `cardMeta`; no duplicate `€` (icon + `formatVisitFeeAmountLabel` only).
-- **Picker:** `VisitTypePickerList` — explicit type price on step 1 tiles; fallback fee on steps 2–3 only.
-- **Tests:** `appointment-visit-fee-display.test.ts`, `visit-fee-badge.test.tsx`.
-- **Verify:** **749** tests (139 files), tsc, lint, build.
+- **Inline identity:** `clinical-identity-inline-ui.ts` — shared avatar/gap/name/badge tokens. `PatientIdentityCell` inline: no `min-h`, compact age+care tier badge row; `entityDetailDefinitionIdentityRowClass` centers People rows. Wired on appointment Related People + invoice `InvoiceLinkedVisitPanel`.
+- **Invoice detail:** `EntityDetailChromeHeader` (amber `Receipt` tile, border-b). Definition: ID/amount/status/visit type+duration/description only; Record Audit via `mapInvoiceIssuerActor` + `buildInvoiceDetailAuditExtraRows` (due/paid). Linked visit possessive titles; `DoctorIdentityCell`/`PatientIdentityCell` inline with portrait. Payment: `invoice-payment-history-columns` + `ClinicalDataTable` + `invoiceDetailTableFrameClass` amber glow.
+- **SSR:** `attachInvoiceIssuerLabels` in `loadInvoiceDetailForPage` + `prefetchInvoiceDetail`; `patient_clinical_profile` on `InvoiceVisitSummary`.
+- **Entity chrome:** `EntityDetailChromeHeader` replaces `PageHeader` on appointment/invoice/doctor/category detail — tone icon tiles in `page-chrome-classes.ts` + tone resolvers.
+- **Visit fee (prior):** `VisitFeeBadge` sizes; `AppointmentListVisitFeeBadge` on admin/doctor portal list rows.
+- **Cache:** display/SSR only — no new mutations; existing `useInvoice` + `invalidateInvoicesAndOverview` unchanged.
+- **Tests:** `clinical-identity-inline-ui`, `invoice-detail-audit-rows`, `invoice-visit-summary-profile`, `entity-detail-snapshot-section-copy` (linkedVisit/paymentHistory).
+- **Verify:** **760** tests (143 files), tsc, lint, build.
+
+## Prior (2026-06-05 — Visit fee badges + patient booking price)
+
+- **Shared:** `VisitFeeBadge` (`size`: `cardMeta` | `wizard` | `picker` | `table` | `services`) + `visit-fee-badge-ui-classes.ts`.
+- **Booking:** `resolveBookingVisitFeeDisplay`; `bookingWizardTypeBadgeClass`.
+- **Cards/picker:** `AppointmentCategoryTypeMetaRow`, `VisitTypePickerList`; Euro icon only (no duplicate `€`).
 
 ## Prior (2026-06-04 — Entity detail Record Audit + appointment polish)
 

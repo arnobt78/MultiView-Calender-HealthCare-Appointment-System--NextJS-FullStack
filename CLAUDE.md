@@ -4,11 +4,12 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-05)
 
-- **Visit fee UI:** `VisitFeeBadge` + `visit-fee-badge-ui-classes.ts` (`cardMeta`/`wizard`/`picker`/`table`/`services`) — height matches sibling type chip per surface. `resolveBookingVisitFeeDisplay` — booking steps 2–3 type price or doctor/default + `· est.`; `bookingWizardTypeBadgeClass` pairs sky type badge.
-- **Fee display:** Euro icon only (no duplicate `€` text); `AppointmentCategoryTypeMetaRow`, portal cards, appt detail, patient booking, picker, services, doctor settings.
-- **Record Audit:** `entity-detail-audit-actor.ts`; migrations `013`–`015`; CP admin `userDetailInclude`; `db:backfill-user-audit`.
-- **Cache/SSR:** unchanged — display-only; booking types from `usePatientBookableAppointmentTypes` + `doctors.all` seed.
-- **Verify:** **749** / **139** · tsc · lint · build.
+- **Identity parity:** `clinical-identity-inline-ui.ts` tokens; `PatientIdentityCell` inline (badge row, compact care tier); `entityDetailDefinitionIdentityRowClass`; appointment Related People + invoice linked visit `identity` rows.
+- **Invoice detail:** `EntityDetailChromeHeader` + `Receipt` tile; `mapInvoiceIssuerActor` + `buildInvoiceDetailAuditExtraRows`; visit type/duration; `ClinicalDataTable` payment cols; `invoiceDetailTableFrameClass` glow; SSR `attachInvoiceIssuerLabels` in `invoice-detail-ssr` + `prefetchInvoiceDetail`; `patient_clinical_profile` on visit summary.
+- **Entity chrome:** `EntityDetailChromeHeader` on appt/invoice/doctor/category detail — `pageChromeHeaderShellClass` border-b + tone icon tiles (`page-chrome-classes.ts`).
+- **Visit fee:** `VisitFeeBadge` sizes + `AppointmentListVisitFeeBadge`; portal list rows; `resolveBookingVisitFeeDisplay`.
+- **Record Audit:** `entity-detail-audit-actor.ts`; migrations `013`–`015`; `db:backfill-user-audit`.
+- **Verify:** **760** / **143** · tsc · lint · build.
 
 ## Never / Always
 
@@ -34,11 +35,12 @@ Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Key paths
 
-- Audit: `entity-detail-audit-actor.ts`, `EntityDetailAuditActorInline.tsx`, `EntityDetailRecordAuditCard.tsx`
-- Includes: `patient-api-include.ts`, `category-api-include.ts`, `user-api-include.ts`, `appointment-access.ts`
-- Appt: `appointment-detail-api.ts`, `appointment-detail-view-model.ts`, `useAppointmentDetail.ts`
-- Visit fee: `VisitFeeBadge.tsx`, `visit-fee-badge-ui-classes.ts`, `appointment-visit-fee-display.ts`, `billing-visit-fee.ts`
-- Booking: `PatientBookingDoctorVisitSummary`, `VisitTypePickerList`, `patient-booking-wizard.ts`
+- Identity: `clinical-identity-inline-ui.ts`, `PatientIdentityCell`, `DoctorIdentityRow`, `entityDetailDefinitionIdentityRowClass`
+- Chrome: `EntityDetailChromeHeader.tsx`, `page-chrome-classes.ts` (tone icon tiles)
+- Invoice detail: `InvoiceDetailLiveBody`, `InvoiceLinkedVisitPanel`, `invoice-payment-history-columns.tsx`, `appointment-detail-invoice-audit-rows.tsx`
+- Audit: `entity-detail-audit-actor.ts`, `EntityDetailRecordAuditCard.tsx`
+- Appt: `appointment-detail-view-model.ts`, `useAppointmentDetail.ts`
+- Visit fee: `VisitFeeBadge.tsx`, `AppointmentListVisitFeeBadge.tsx`, `appointment-visit-fee-display.ts`
 
 ## Principle
 

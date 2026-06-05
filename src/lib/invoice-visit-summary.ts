@@ -17,6 +17,7 @@ export const invoiceAppointmentVisitInclude = {
       email: true,
       birth_date: true,
       care_level: true,
+      clinical_profile: true,
     },
   },
   owner: {
@@ -63,6 +64,7 @@ type VisitApptRow = {
     email: string | null;
     birth_date: Date | null;
     care_level: number | null;
+    clinical_profile: unknown;
   } | null;
   owner: {
     id: string;
@@ -87,6 +89,17 @@ function staffLabel(
 ): string | null {
   if (!u) return null;
   return (u.display_name?.trim() || u.email) ?? null;
+}
+
+/** Extract portrait URL from patient `clinical_profile` JSON for linked visit rows. */
+function resolvePatientClinicalProfileImage(
+  clinicalProfile: unknown
+): { image_url?: string } | null {
+  if (!clinicalProfile || typeof clinicalProfile !== "object" || Array.isArray(clinicalProfile)) {
+    return null;
+  }
+  const imageUrl = (clinicalProfile as { image_url?: string }).image_url?.trim();
+  return imageUrl ? { image_url: imageUrl } : null;
 }
 
 export function mapAppointmentToInvoiceVisitSummary(
@@ -116,6 +129,7 @@ export function mapAppointmentToInvoiceVisitSummary(
     patient_label: patientName,
     patient_email: row.patient?.email ?? null,
     patient_birth_date: row.patient?.birth_date?.toISOString() ?? null,
+    patient_clinical_profile: resolvePatientClinicalProfileImage(row.patient?.clinical_profile),
     patient_care_level: row.patient?.care_level ?? null,
     appointment_type_name: row.appointment_type?.name ?? null,
     duration_minutes: row.duration_minutes ?? null,

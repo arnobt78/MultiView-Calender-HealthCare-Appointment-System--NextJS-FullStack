@@ -2,14 +2,15 @@
 
 import type { LucideIcon } from "lucide-react";
 import {
-  Calendar,
+  ArrowLeft,
   CreditCard,
   Euro,
   FileText,
   Fingerprint,
   Receipt,
+  Stethoscope,
 } from "lucide-react";
-import { format } from "date-fns";
+import { useMemo } from "react";
 import { useInvoice } from "@/hooks/useInvoice";
 import type { Invoice } from "@/hooks/usePayments";
 import type { EntityRole } from "@/lib/entity-routes";
@@ -19,7 +20,8 @@ import {
   patientDetailHref,
 } from "@/lib/entity-routes";
 import { Card, CardContent } from "@/components/ui/card";
-import { PageHeader } from "@/components/shared/PageHeader";
+import { EntityDetailChromeHeader } from "@/components/shared/entity-detail/EntityDetailChromeHeader";
+import { BackNavigationLink } from "@/components/shared/BackNavigationLink";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { InvoiceDetailActionBar } from "@/components/shared/billing/InvoiceDetailActionBar";
 import { resolvePortalEntityDetailSnapshotLinkPolicy } from "@/lib/entity-detail-snapshot-links";
@@ -27,15 +29,27 @@ import { InvoiceStatusBadge } from "@/components/shared/billing/InvoiceStatusBad
 import { InvoiceAmountDisplay } from "@/components/shared/billing/InvoiceAmountDisplay";
 import { InvoiceLinkedVisitPanel } from "@/components/shared/billing/InvoiceLinkedVisitPanel";
 import { InvoicePaymentHistoryTable } from "@/components/shared/billing/InvoicePaymentHistoryTable";
-import { InvoiceIssuedByMeta } from "@/components/shared/billing/InvoiceIssuedByMeta";
+import { AppointmentTypeGlassBadge } from "@/components/shared/appointment-display/AppointmentTypeGlassBadge";
 import { EntityDetailSnapshotSectionHeading } from "@/components/shared/entity-detail/EntityDetailSnapshotSectionHeading";
 import { EntityDetailRecordAuditCard } from "@/components/shared/entity-detail/EntityDetailRecordAuditCard";
+import {
+  buildInvoiceDetailAuditExtraRows,
+  mapInvoiceIssuerActor,
+} from "@/lib/appointment-detail-invoice-audit-rows";
 import type { InvoiceDetailUiAccess } from "@/lib/invoice-detail-ssr";
 import { getInvoiceAppointmentTitle } from "@/lib/invoice-list-row-display";
-import { invoiceDueDateTextClassForStatus } from "@/lib/invoice-status-display";
-import { resolveInvoiceDisplayStatus } from "@/lib/billing-appointment-eligibility";
+import {
+  formatAppointmentTypeDurationLabel,
+  resolveAppointmentTypeDurationMinutes,
+  resolveAppointmentTypeDisplayName,
+} from "@/lib/appointment-type-display";
+import { entityDetailOwnedSnapshotSectionTitle } from "@/lib/entity-detail-snapshot-section-copy";
+import { entityDetailPageHeaderClass } from "@/lib/patient-detail-ui-classes";
 import {
   invoiceDetailAuditIconCircleClass,
+  invoiceDetailBackButtonClass,
+  invoiceDetailChromeIconClass,
+  invoiceDetailChromeIconTileClass,
   invoiceDetailCardFrameClass,
   invoiceDetailDefinitionListClass,
   invoiceDetailDefinitionRowClass,
@@ -94,7 +108,6 @@ export function InvoiceDetailLiveBody({
     initialData: initialInvoice,
   });
 
-  const displayStatus = resolveInvoiceDisplayStatus(invoice);
   const visitTitle = getInvoiceAppointmentTitle(invoice);
   const subtitle =
     invoice.visit_summary?.patient_label && invoice.visit_summary?.when_label
@@ -117,9 +130,33 @@ export function InvoiceDetailLiveBody({
   const linkPolicy =
     variant === "portal" ? resolvePortalEntityDetailSnapshotLinkPolicy(viewerRole) : undefined;
 
+  const paymentHistoryTitle = entityDetailOwnedSnapshotSectionTitle(
+    invoice.visit_summary?.patient_label,
+    "paymentHistory",
+    "patient"
+  );
+
+  const auditExtraRows = useMemo(
+    () => buildInvoiceDetailAuditExtraRows(invoice),
+    [invoice]
+  );
+
+  const visitTypeName = invoice.visit_summary
+    ? resolveAppointmentTypeDisplayName(invoice.visit_summary)
+    : null;
+  const visitDurationLabel = invoice.visit_summary
+    ? formatAppointmentTypeDurationLabel(
+        resolveAppointmentTypeDurationMinutes(invoice.visit_summary)
+      )
+    : null;
+
   return (
     <div className="space-y-3 text-gray-700">
-      <PageHeader
+      <EntityDetailChromeHeader
+        className={entityDetailPageHeaderClass}
+        icon={Receipt}
+        iconTileClassName={invoiceDetailChromeIconTileClass}
+        iconClassName={invoiceDetailChromeIconClass}
         title={
           <span className="flex flex-wrap items-center gap-2">
             <EntityTitleLink
@@ -131,6 +168,15 @@ export function InvoiceDetailLiveBody({
           </span>
         }
         description={subtitle}
+        actions={
+          <BackNavigationLink
+            href={backHref}
+            className={cn(invoiceDetailBackButtonClass, "no-underline")}
+          >
+            <ArrowLeft className="shrink-0" aria-hidden />
+            Back
+          </BackNavigationLink>
+        }
       />
 
       <Card className={cn(invoiceDetailCardFrameClass, "border-amber-100/50 shadow-none")}>
@@ -154,16 +200,12 @@ export function InvoiceDetailLiveBody({
             <InvoiceDetailDefinitionRow icon={Receipt} label="Status">
               <InvoiceStatusBadge invoice={invoice} />
             </InvoiceDetailDefinitionRow>
-            {invoice.due_date ? (
-              <InvoiceDetailDefinitionRow icon={Calendar} label="Due date">
-                <span
-                  className={cn(
-                    "tabular-nums",
-                    invoiceDueDateTextClassForStatus(displayStatus)
-                  )}
-                >
-                  {format(new Date(invoice.due_date), "PPP")}
-                </span>
+            {visitTypeName ? (
+              <InvoiceDetailDefinitionRow icon={Stethoscope} label="Visit type">
+                <AppointmentTypeGlassBadge
+                  name={visitTypeName}
+                  durationLabel={visitDurationLabel}
+                />
               </InvoiceDetailDefinitionRow>
             ) : null}
             <InvoiceDetailDefinitionRow icon={FileText} label="Description">
@@ -173,34 +215,13 @@ export function InvoiceDetailLiveBody({
                 <span className={clinicalCellMutedTextClass}>—</span>
               )}
             </InvoiceDetailDefinitionRow>
-            <InvoiceDetailDefinitionRow icon={Calendar} label="Created">
-              <div className="space-y-1">
-                <span className={cn(clinicalCellMutedTextClass, "text-xs tabular-nums")}>
-                  {format(new Date(invoice.created_at), "PPP · p")}
-                </span>
-                <InvoiceIssuedByMeta
-                  createdAt={invoice.created_at}
-                  issuerLabel={invoice.issuer_label}
-                  issuerImage={invoice.issuer_image}
-                />
-              </div>
-            </InvoiceDetailDefinitionRow>
-            {invoice.paid_at ? (
-              <InvoiceDetailDefinitionRow icon={CreditCard} label="Paid at">
-                <span className="tabular-nums text-emerald-700">
-                  {format(new Date(invoice.paid_at), "PPP · p")}
-                </span>
-              </InvoiceDetailDefinitionRow>
-            ) : null}
           </dl>
           <EntityDetailRecordAuditCard
             createdAt={invoice.created_at}
-            createdBy={
-              invoice.issuer_label
-                ? { userId: invoice.user_id, label: invoice.issuer_label }
-                : null
-            }
+            updatedAt={null}
+            createdBy={mapInvoiceIssuerActor(invoice)}
             viewerRole={viewerRole}
+            extraRows={auditExtraRows}
             iconCircleClass={invoiceDetailAuditIconCircleClass}
             iconClassName="h-3 w-3 text-amber-600"
           />
@@ -225,16 +246,12 @@ export function InvoiceDetailLiveBody({
           iconClassName="h-3.5 w-3.5 text-amber-600"
           count={invoice.payments.length}
         >
-          Payment history
+          {paymentHistoryTitle}
         </EntityDetailSnapshotSectionHeading>
-        <Card className={cn(invoiceDetailCardFrameClass, "border-amber-100/50 shadow-none")}>
-          <CardContent className="p-3 sm:p-4">
-            <InvoicePaymentHistoryTable
-              payments={invoice.payments}
-              currency={invoice.currency}
-            />
-          </CardContent>
-        </Card>
+        <InvoicePaymentHistoryTable
+          payments={invoice.payments}
+          currency={invoice.currency}
+        />
       </div>
 
       <InvoiceDetailActionBar

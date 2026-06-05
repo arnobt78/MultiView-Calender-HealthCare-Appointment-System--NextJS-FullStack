@@ -6,6 +6,12 @@ import {
   skyGlassTableFrameClass,
 } from "@/lib/calendar-header-action-styles";
 import {
+  entityDetailChromeEmeraldIconClass,
+  entityDetailChromeEmeraldIconTileClass,
+  entityDetailChromeSkyIconClass,
+  entityDetailChromeSkyIconTileClass,
+} from "@/lib/page-chrome-classes";
+import {
   entityDetailActionsRowClass,
   entityDetailFieldIconCircleClass,
   entityDetailSectionIconCircleClass,
@@ -33,6 +39,8 @@ export type DoctorDetailToneClasses = {
   sectionIconCircleClass: string;
   sectionIconClass: string;
   stickyFooterClass: string;
+  chromeIconTileClass: string;
+  chromeIconClass: string;
 };
 
 const EMERALD_BACK =
@@ -51,6 +59,8 @@ export function resolveDoctorDetailToneClasses(tone: DoctorDetailTone): DoctorDe
       sectionIconCircleClass: doctorDetailSectionIconCircleClass,
       sectionIconClass: "h-3.5 w-3.5 text-emerald-600",
       stickyFooterClass: entityDetailActionsRowClass,
+      chromeIconTileClass: entityDetailChromeEmeraldIconTileClass,
+      chromeIconClass: entityDetailChromeEmeraldIconClass,
     };
   }
   return {
@@ -63,6 +73,8 @@ export function resolveDoctorDetailToneClasses(tone: DoctorDetailTone): DoctorDe
     sectionIconCircleClass: entityDetailSectionIconCircleClass,
     sectionIconClass: "h-3.5 w-3.5 text-sky-600",
     stickyFooterClass: entityDetailActionsRowClass,
+    chromeIconTileClass: entityDetailChromeSkyIconTileClass,
+    chromeIconClass: entityDetailChromeSkyIconClass,
   };
 }
 

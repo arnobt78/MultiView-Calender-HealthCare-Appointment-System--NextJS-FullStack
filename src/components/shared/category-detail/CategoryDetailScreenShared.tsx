@@ -20,7 +20,7 @@ import { useRouter } from "next/navigation";
 import { useLayoutEffect, useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { BackNavigationLink } from "@/components/shared/BackNavigationLink";
-import { PageHeader } from "@/components/shared/PageHeader";
+import { EntityDetailChromeHeader } from "@/components/shared/entity-detail/EntityDetailChromeHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -316,8 +316,11 @@ export function CategoryDetailScreenShared({
 
   return (
     <div className={resolveEntityDetailRootClass(scrollShell)}>
-      <PageHeader
+      <EntityDetailChromeHeader
         className={entityDetailPageHeaderClass}
+        icon={Tag}
+        iconTileClassName={toneClasses.chromeIconTileClass}
+        iconClassName={toneClasses.chromeIconClass}
         title={showLiveBody && cat ? cat.label : <Skeleton className="h-7 w-56 max-w-full" aria-hidden />}
         description="Category Record — Schema Fields, Related Appointments"
         actions={

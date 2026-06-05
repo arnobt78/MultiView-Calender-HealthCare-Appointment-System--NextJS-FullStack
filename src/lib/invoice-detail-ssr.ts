@@ -10,7 +10,10 @@ import {
 } from "@/lib/invoice-access";
 import type { InvoiceAccessLevel } from "@/lib/billing-types";
 import type { Invoice } from "@/hooks/usePayments";
-import { loadInvoiceVisitSummary } from "@/lib/invoice-visit-summary";
+import {
+  attachInvoiceIssuerLabels,
+  loadInvoiceVisitSummary,
+} from "@/lib/invoice-visit-summary";
 
 export type InvoiceDetailUiAccess = "admin" | "view" | "mutate" | "pay";
 
@@ -74,8 +77,11 @@ export async function loadInvoiceDetailForPage(
       (await loadInvoiceVisitSummary(raw.appointment_id)) ?? undefined;
   }
 
+  const [enriched] = await attachInvoiceIssuerLabels([clientInvoice]);
+  const clientInvoiceWithIssuer = enriched ?? clientInvoice;
+
   return {
-    clientInvoice,
+    clientInvoice: clientInvoiceWithIssuer,
     accessLevel,
     uiAccess: toInvoiceUiAccess(accessLevel),
   };

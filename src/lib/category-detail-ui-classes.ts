@@ -10,6 +10,12 @@ import {
   skyGlassTableFrameClass,
 } from "@/lib/calendar-header-action-styles";
 import {
+  entityDetailChromeAmberIconClass,
+  entityDetailChromeAmberIconTileClass,
+  entityDetailChromeSkyIconClass,
+  entityDetailChromeSkyIconTileClass,
+} from "@/lib/page-chrome-classes";
+import {
   entityDetailActionsRowClass,
   entityDetailFieldIconCircleClass,
   entityDetailSectionIconCircleClass,
@@ -28,6 +34,8 @@ export type CategoryDetailToneClasses = {
   sectionIconClass: string;
   durationBadgeClass: string;
   stickyFooterClass: string;
+  chromeIconTileClass: string;
+  chromeIconClass: string;
 };
 
 const AMBER_FIELD_ICON_CIRCLE =
@@ -56,6 +64,8 @@ export function resolveCategoryDetailToneClasses(
       durationBadgeClass:
         "border-amber-200/80 bg-amber-50/90 text-xs font-normal text-gray-700",
       stickyFooterClass: entityDetailActionsRowClass,
+      chromeIconTileClass: entityDetailChromeAmberIconTileClass,
+      chromeIconClass: entityDetailChromeAmberIconClass,
     };
   }
   return {
@@ -69,6 +79,8 @@ export function resolveCategoryDetailToneClasses(
     sectionIconClass: "h-3.5 w-3.5 text-sky-600",
     durationBadgeClass: "border-sky-200/80 bg-sky-50/90 text-xs font-normal text-gray-700",
     stickyFooterClass: entityDetailActionsRowClass,
+    chromeIconTileClass: entityDetailChromeSkyIconTileClass,
+    chromeIconClass: entityDetailChromeSkyIconClass,
   };
 }
 

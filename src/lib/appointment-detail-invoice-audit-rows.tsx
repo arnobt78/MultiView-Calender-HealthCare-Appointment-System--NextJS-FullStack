@@ -22,7 +22,8 @@ export type EntityDetailAuditExtraRow = {
   children: ReactNode;
 };
 
-function mapInvoiceIssuerActor(invoice: Invoice): EntityDetailAuditActor | null {
+/** Invoice issuer — avatar, email, role for Record Audit Created row. */
+export function mapInvoiceIssuerActor(invoice: Invoice): EntityDetailAuditActor | null {
   const label = invoice.issuer_label?.trim();
   if (!invoice.user_id || !label) return null;
   return {
@@ -110,6 +111,40 @@ export function buildAppointmentInvoiceAuditExtraRows(
         ),
       });
     }
+  }
+  return rows;
+}
+
+/** Invoice detail — due + paid only (Created row covers issuer; no duplicate Invoice issued). */
+export function buildInvoiceDetailAuditExtraRows(invoice: Invoice): EntityDetailAuditExtraRow[] {
+  const rows: EntityDetailAuditExtraRow[] = [
+    {
+      icon: CalendarClock,
+      label: "Due date",
+      children: invoice.due_date ? (
+        <span
+          className={cn(
+            "text-xs tabular-nums",
+            invoiceDueDateTextClassForStatus(resolveInvoiceDisplayStatus(invoice))
+          )}
+        >
+          {format(new Date(invoice.due_date), "PPP · p")}
+        </span>
+      ) : (
+        <ClinicalEmptyDash layout="inline" />
+      ),
+    },
+  ];
+  if (invoice.paid_at) {
+    rows.push({
+      icon: CreditCard,
+      label: "Paid at",
+      children: (
+        <span className="text-xs tabular-nums text-emerald-700">
+          {format(new Date(invoice.paid_at), "PPP · p")}
+        </span>
+      ),
+    });
   }
   return rows;
 }

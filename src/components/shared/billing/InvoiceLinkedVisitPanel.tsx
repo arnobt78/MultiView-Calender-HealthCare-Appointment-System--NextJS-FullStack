@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import type { InvoiceVisitSummary } from "@/lib/billing-types";
 import { CategoryTableCell } from "@/components/control-panel/patient-detail-snapshot-columns";
 import { PatientIdentityCell } from "@/components/shared/person-display/PatientIdentityCell";
-import { DoctorIdentityRow } from "@/components/shared/doctor-display/DoctorIdentityRow";
+import { DoctorIdentityCell } from "@/components/shared/person-display/DoctorIdentityCell";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { TelehealthSessionBadge } from "@/components/shared/appointments/TelehealthSessionBadge";
 import { EntityDetailSnapshotSectionHeading } from "@/components/shared/entity-detail/EntityDetailSnapshotSectionHeading";
@@ -17,6 +17,12 @@ import {
   resolveCategoryLinkEnabled,
   resolveTreatingPhysicianLinkKind,
 } from "@/lib/entity-detail-snapshot-links";
+import { entityDetailOwnedSnapshotSectionTitle } from "@/lib/entity-detail-snapshot-section-copy";
+import {
+  entityDetailDefinitionIdentityRowClass,
+  entityDetailDefinitionIdentityValueClass,
+  entityDetailDefinitionValueClass,
+} from "@/lib/patient-detail-ui-classes";
 import {
   invoiceDetailCardFrameClass,
   invoiceDetailDefinitionListClass,
@@ -39,26 +45,35 @@ type Props = {
 function VisitDefinitionRow({
   icon: Icon,
   label,
+  identity = false,
   children,
 }: {
   icon: LucideIcon;
   label: string;
+  /** Patient / physician / owner — center avatar row with label. */
+  identity?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <div className={invoiceDetailDefinitionRowClass}>
+    <div className={identity ? entityDetailDefinitionIdentityRowClass : invoiceDetailDefinitionRowClass}>
       <dt className="flex items-center gap-2 text-sm font-medium text-gray-600">
         <span className={invoiceDetailFieldIconCircleClass} aria-hidden>
           <Icon className="h-3 w-3 text-amber-600" />
         </span>
         {label}
       </dt>
-      <dd className="min-w-0 text-sm">{children}</dd>
+      <dd
+        className={
+          identity ? entityDetailDefinitionIdentityValueClass : entityDetailDefinitionValueClass
+        }
+      >
+        {children}
+      </dd>
     </div>
   );
 }
 
-/** Linked visit — patient detail schema with sky entity links. */
+/** Linked visit — inline identity rows parity with appointment detail Related People. */
 export function InvoiceLinkedVisitPanel({
   summary,
   appointmentHref,
@@ -79,11 +94,16 @@ export function InvoiceLinkedVisitPanel({
     summary.calendar_owner_role ?? null,
     linkPolicy
   );
+  const linkedVisitTitle = entityDetailOwnedSnapshotSectionTitle(
+    visitTitle,
+    "linkedVisit",
+    "appointment"
+  );
   const patientPortrait = summary.patient_id
     ? {
         id: summary.patient_id,
         email: summary.patient_email ?? null,
-        clinical_profile: null,
+        clinical_profile: summary.patient_clinical_profile ?? null,
         birth_date: summary.patient_birth_date ?? null,
         firstname: summary.patient_label?.split(" ")[0],
         lastname: summary.patient_label?.split(" ").slice(1).join(" "),
@@ -98,7 +118,7 @@ export function InvoiceLinkedVisitPanel({
           sectionIconCircleClass={invoiceDetailSectionIconCircleClass}
           iconClassName="h-3.5 w-3.5 text-amber-600"
         >
-          Linked visit
+          {linkedVisitTitle}
         </EntityDetailSnapshotSectionHeading>
         <dl className={invoiceDetailDefinitionListClass}>
           <VisitDefinitionRow icon={Calendar} label="Visit">
@@ -121,7 +141,7 @@ export function InvoiceLinkedVisitPanel({
               </span>
             ) : null}
           </VisitDefinitionRow>
-          <VisitDefinitionRow icon={User} label="Patient">
+          <VisitDefinitionRow icon={User} label="Patient" identity>
             {summary.patient_label && patientPortrait ? (
               <PatientIdentityCell
                 href={patientHref ?? undefined}
@@ -129,46 +149,48 @@ export function InvoiceLinkedVisitPanel({
                 name={summary.patient_label}
                 email={summary.patient_email}
                 patient={patientPortrait}
-                layout="detail"
+                layout="inline"
+                careLevel={summary.patient_care_level}
               />
             ) : (
               (summary.patient_label ?? "—")
             )}
           </VisitDefinitionRow>
-          {summary.treating_physician_label ? (
-            <VisitDefinitionRow icon={Stethoscope} label="Treating physician">
-              <DoctorIdentityRow
-                doctor={{
-                  id: summary.treating_physician_id ?? "unknown",
-                  display_name: summary.treating_physician_label,
-                  email: null,
-                  specialty: summary.treating_physician_specialty,
-                  image: null,
-                }}
-                linkKind={treatingLinkKind}
-                staffRole={summary.treating_physician_role ?? undefined}
+          {summary.treating_physician_label && summary.treating_physician_id ? (
+            <VisitDefinitionRow icon={Stethoscope} label="Treating physician" identity>
+              <DoctorIdentityCell
+                doctorId={summary.treating_physician_id}
+                name={summary.treating_physician_label}
+                email={summary.treating_physician_email}
+                image={summary.treating_physician_image}
+                specialty={summary.treating_physician_specialty}
                 viewerRole={viewerRole}
+                linkKind={treatingLinkKind}
+                staffRole={summary.treating_physician_role}
                 layout="inline"
-                showEmail={false}
+                size="sm"
+                showRoleBadge
+                showSpecialty
               />
             </VisitDefinitionRow>
           ) : null}
           {summary.calendar_owner_label &&
+          summary.calendar_owner_id &&
           summary.calendar_owner_label !== summary.treating_physician_label ? (
-            <VisitDefinitionRow icon={User} label="Calendar owner">
-              <DoctorIdentityRow
-                doctor={{
-                  id: summary.calendar_owner_id ?? "unknown",
-                  display_name: summary.calendar_owner_label,
-                  email: null,
-                  specialty: summary.calendar_owner_specialty,
-                  image: null,
-                }}
-                linkKind={ownerLinkKind}
-                staffRole={summary.calendar_owner_role ?? undefined}
+            <VisitDefinitionRow icon={User} label="Calendar owner" identity>
+              <DoctorIdentityCell
+                doctorId={summary.calendar_owner_id}
+                name={summary.calendar_owner_label}
+                email={summary.calendar_owner_email}
+                image={summary.calendar_owner_image}
+                specialty={summary.calendar_owner_specialty}
                 viewerRole={viewerRole}
+                linkKind={ownerLinkKind}
+                staffRole={summary.calendar_owner_role}
                 layout="inline"
-                showEmail={false}
+                size="sm"
+                showRoleBadge
+                showSpecialty={summary.calendar_owner_role === "doctor"}
               />
             </VisitDefinitionRow>
           ) : null}

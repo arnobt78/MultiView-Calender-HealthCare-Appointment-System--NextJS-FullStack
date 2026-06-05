@@ -51,6 +51,19 @@ describe("entityDetailOwnedSnapshotSectionTitle", () => {
     ).toBe("Demo curated visit's Related Billing");
   });
 
+  it("formats invoice linked visit and payment history", () => {
+    expect(
+      entityDetailOwnedSnapshotSectionTitle(
+        "Demo curated — paid visit",
+        "linkedVisit",
+        "appointment"
+      )
+    ).toBe("Demo curated — paid visit's Linked Visit");
+    expect(
+      entityDetailOwnedSnapshotSectionTitle("Demo Patient", "paymentHistory", "patient")
+    ).toBe("Demo Patient's Payment History");
+  });
+
   it("falls back to entity kind when name is blank or placeholder", () => {
     expect(entityDetailOwnedSnapshotSectionTitle("—", "relatedAppointments", "patient")).toBe(
       "Patient's Related Appointments"

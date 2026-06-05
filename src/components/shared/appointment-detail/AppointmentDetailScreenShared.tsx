@@ -21,7 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BackNavigationLink } from "@/components/shared/BackNavigationLink";
-import { PageHeader } from "@/components/shared/PageHeader";
+import { EntityDetailChromeHeader } from "@/components/shared/entity-detail/EntityDetailChromeHeader";
 import { CategoryBrandMark } from "@/components/shared/category-display/CategoryBrandMark";
 import { CategoryInlineLink } from "@/components/shared/CategoryInlineLink";
 import { ClinicalAppointmentStatusBadge } from "@/components/shared/entity-detail/ClinicalAppointmentStatusBadge";
@@ -46,6 +46,8 @@ import {
   type AppointmentDetailTone,
 } from "@/lib/appointment-detail-ui-classes";
 import {
+  entityDetailDefinitionIdentityRowClass,
+  entityDetailDefinitionIdentityValueClass,
   entityDetailDefinitionValueClass,
   entityDetailPageHeaderClass,
   entityDetailSnapshotSectionShellClass,
@@ -74,8 +76,6 @@ import {
   clinicianDisplayNameOnly,
   recomputeAppointmentDetailLabels,
 } from "@/lib/appointment-detail-view-model";
-import { PatientCareTierGlassBadge } from "@/components/shared/person-display/PatientCareTierGlassBadge";
-
 export type AppointmentDetailScreenSharedProps = {
   tone: AppointmentDetailTone;
   mode: "portal" | "control-panel";
@@ -110,19 +110,32 @@ function DefinitionRow({
   icon,
   label,
   toneClasses,
+  identity = false,
   children,
 }: {
   icon: LucideIcon;
   label: string;
   toneClasses: ReturnType<typeof resolveAppointmentDetailToneClasses>;
+  /** Related People rows — center avatar row on y-axis with label. */
+  identity?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <div className={toneClasses.definitionRowClass}>
+    <div
+      className={
+        identity ? entityDetailDefinitionIdentityRowClass : toneClasses.definitionRowClass
+      }
+    >
       <FieldLabel icon={icon} toneClasses={toneClasses}>
         {label}
       </FieldLabel>
-      <dd className={entityDetailDefinitionValueClass}>{children}</dd>
+      <dd
+        className={
+          identity ? entityDetailDefinitionIdentityValueClass : entityDetailDefinitionValueClass
+        }
+      >
+        {children}
+      </dd>
     </div>
   );
 }
@@ -282,8 +295,11 @@ export function AppointmentDetailScreenShared({
 
   return (
     <div className={resolveEntityDetailRootClass(scrollShell)}>
-      <PageHeader
+      <EntityDetailChromeHeader
         className={entityDetailPageHeaderClass}
+        icon={Calendar}
+        iconTileClassName={toneClasses.chromeIconTileClass}
+        iconClassName={toneClasses.chromeIconClass}
         title={
           showLive ? (
             <span className="flex min-w-0 flex-wrap items-center gap-2">
@@ -436,32 +452,27 @@ export function AppointmentDetailScreenShared({
             </EntityDetailSnapshotSectionHeading>
             <dl className={toneClasses.definitionListClass}>
               {patient ? (
-                <DefinitionRow icon={User} label="Patient" toneClasses={toneClasses}>
-                  <div className="flex min-w-0 flex-wrap items-center gap-2">
-                    <PatientIdentityCell
-                      href={patientDetailHref(entityRole, patient.id)}
-                      linkPatient={linkPatientInTitle}
-                      name={`${patient.firstname} ${patient.lastname}`.trim()}
-                      email={patient.email}
-                      layout="inline"
-                      patient={{
-                        id: patient.id,
-                        firstname: patient.firstname,
-                        lastname: patient.lastname,
-                        email: patient.email ?? "",
-                        birth_date: patient.birth_date,
-                        clinical_profile: patient.clinical_profile,
-                      }}
-                      avatarSizeClassName="h-8 w-8"
-                    />
-                    {patient.care_level != null ? (
-                      <PatientCareTierGlassBadge careLevel={patient.care_level} />
-                    ) : null}
-                  </div>
+                <DefinitionRow icon={User} label="Patient" toneClasses={toneClasses} identity>
+                  <PatientIdentityCell
+                    href={patientDetailHref(entityRole, patient.id)}
+                    linkPatient={linkPatientInTitle}
+                    name={`${patient.firstname} ${patient.lastname}`.trim()}
+                    email={patient.email}
+                    layout="inline"
+                    careLevel={patient.care_level}
+                    patient={{
+                      id: patient.id,
+                      firstname: patient.firstname,
+                      lastname: patient.lastname,
+                      email: patient.email ?? "",
+                      birth_date: patient.birth_date,
+                      clinical_profile: patient.clinical_profile,
+                    }}
+                  />
                 </DefinitionRow>
               ) : null}
               {detail.calendarOwner ? (
-                <DefinitionRow icon={Calendar} label="Calendar owner" toneClasses={toneClasses}>
+                <DefinitionRow icon={Calendar} label="Calendar owner" toneClasses={toneClasses} identity>
                   <DoctorIdentityCell
                     doctorId={detail.calendarOwner.id}
                     name={clinicianDisplayNameOnly(detail.calendarOwner)}
@@ -479,7 +490,7 @@ export function AppointmentDetailScreenShared({
               ) : null}
               {detail.treatingPhysician &&
               detail.treatingPhysician.id !== detail.calendarOwner?.id ? (
-                <DefinitionRow icon={Stethoscope} label="Treating physician" toneClasses={toneClasses}>
+                <DefinitionRow icon={Stethoscope} label="Treating physician" toneClasses={toneClasses} identity>
                   <DoctorIdentityCell
                     doctorId={detail.treatingPhysician.id}
                     name={clinicianDisplayNameOnly(detail.treatingPhysician)}
@@ -497,7 +508,7 @@ export function AppointmentDetailScreenShared({
                 </DefinitionRow>
               ) : null}
               {patient?.primary_doctor_id ? (
-                <DefinitionRow icon={Stethoscope} label="Primary doctor" toneClasses={toneClasses}>
+                <DefinitionRow icon={Stethoscope} label="Primary doctor" toneClasses={toneClasses} identity>
                   <DoctorIdentityCell
                     doctorId={patient.primary_doctor_id}
                     name={primaryDoctorName}

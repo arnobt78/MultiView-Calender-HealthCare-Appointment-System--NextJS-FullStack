@@ -25,7 +25,7 @@ import { format } from "date-fns";
 import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { BackNavigationLink } from "@/components/shared/BackNavigationLink";
-import { PageHeader } from "@/components/shared/PageHeader";
+import { EntityDetailChromeHeader } from "@/components/shared/entity-detail/EntityDetailChromeHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { DoctorSpecialtyBadge } from "@/components/shared/doctor-display/DoctorSpecialtyBadge";
@@ -308,8 +308,11 @@ export function DoctorDetailScreenShared({
 
   return (
     <div className={resolveEntityDetailRootClass(scrollShell)}>
-      <PageHeader
+      <EntityDetailChromeHeader
         className={entityDetailPageHeaderClass}
+        icon={Stethoscope}
+        iconTileClassName={toneClasses.chromeIconTileClass}
+        iconClassName={toneClasses.chromeIconClass}
         title={displayName}
         description={descriptionSubtitle}
         actions={

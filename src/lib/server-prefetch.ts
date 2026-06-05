@@ -480,9 +480,11 @@ export async function prefetchInvoiceDetail(
         stripe_payment_id: p.stripe_payment_id,
       })),
     }) as Invoice;
-    const { attachVisitSummariesToInvoices } = await import("@/lib/invoice-visit-summary");
+    const { attachInvoiceIssuerLabels, attachVisitSummariesToInvoices } =
+      await import("@/lib/invoice-visit-summary");
     const [withVisit] = await attachVisitSummariesToInvoices([mapped]);
-    return withVisit as Invoice;
+    const [enriched] = await attachInvoiceIssuerLabels([withVisit]);
+    return (enriched ?? withVisit) as Invoice;
   } catch {
     return null;
   }

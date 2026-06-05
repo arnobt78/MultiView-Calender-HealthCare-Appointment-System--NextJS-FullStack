@@ -45,6 +45,8 @@ export type InvoiceVisitSummary = {
   patient_label: string | null;
   patient_email?: string | null;
   patient_birth_date?: string | null;
+  /** Portrait URL inside `clinical_profile` — invoice linked visit patient row. */
+  patient_clinical_profile?: { image_url?: string } | null;
   /** Acuity tier 1–10 for compact list rows. */
   patient_care_level?: number | null;
   appointment_type_name?: string | null;

@@ -9,6 +9,8 @@ export const ENTITY_DETAIL_SNAPSHOT_SECTION_LABELS = {
   relatedPeople: "Related People",
   relatedBilling: "Related Billing",
   assignedPatients: "Assigned Patients",
+  linkedVisit: "Linked Visit",
+  paymentHistory: "Payment History",
 } as const;
 
 export type EntityDetailSnapshotSectionLabelKey = keyof typeof ENTITY_DETAIL_SNAPSHOT_SECTION_LABELS;

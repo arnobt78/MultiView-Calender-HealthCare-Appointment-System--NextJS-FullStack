@@ -6,6 +6,7 @@ import { RoleEntityLink } from "@/components/shared/RoleEntityLink";
 import { AppointmentDateTag } from "@/components/shared/AppointmentDateTag";
 import { AppointmentScheduleColorDot } from "@/components/shared/appointments/AppointmentScheduleColorDot";
 import { TelehealthSessionBadge } from "@/components/shared/appointments/TelehealthSessionBadge";
+import { AppointmentListVisitFeeBadge } from "@/components/shared/appointment-display/AppointmentListVisitFeeBadge";
 import { resolveAppointmentLineColor } from "@/context/AppointmentColorContext";
 import type { Appointment } from "@/types/types";
 import {
@@ -13,7 +14,6 @@ import {
   CalendarClock,
   CalendarX,
   AlertCircle,
-  Euro,
   MapPin,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -114,14 +114,10 @@ export function DoctorPortalAppointmentListRow({
             Overdue
           </span>
         ) : null}
-        {/* Visit fee badge — sourced from appointment_type.price_cents via serializeAppointment */}
-        {(appt.appointment_type_price_cents ?? 0) > 0 ? (
-          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200/70 bg-emerald-50/80 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 shadow-[0_2px_8px_rgba(16,185,129,0.15)]">
-            <Euro className="h-3 w-3" aria-hidden />
-            {((appt.appointment_type_price_cents ?? 0) / 100).toFixed(2)}
-            <span className="ml-0.5 text-[9px] font-normal text-emerald-500/90">· est.</span>
-          </span>
-        ) : null}
+        <AppointmentListVisitFeeBadge
+          appointmentTypePriceCents={appt.appointment_type_price_cents}
+          doctorConsultationFeeCents={appt.doctor_consultation_fee_cents}
+        />
       </div>
     </div>
   );
