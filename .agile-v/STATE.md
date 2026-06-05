@@ -1,6 +1,6 @@
 # Agile V — Living State
 
-<!-- Updated: 2026-06-04 | Project: HealthCal Pro | Resume: read this first -->
+<!-- Updated: 2026-06-04 (session activation) | Project: HealthCal Pro | Resume: STATE → ACTIVATION.md -->
 
 ## Current Status
 
@@ -12,7 +12,7 @@
 | **Status** | `verify_complete` — automated PASS **742** tests; Human Gates pending |
 | **Last Updated** | 2026-06-04 |
 | **Commits** | `9785c8d`, `d826ca7` |
-| **Activation** | `AGENTS.md` + `.agile-v/agile-v-core.md` + `.cursor/rules/agile-v-infinity-loop.mdc` |
+| **Activation** | `ACTIVATION.md` + `agile-v-core.md` + `AGENTS.md` + Cursor rule (always on) |
 
 ## Pipeline (C5)
 

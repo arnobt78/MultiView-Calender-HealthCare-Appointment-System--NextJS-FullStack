@@ -4,8 +4,8 @@ Living AQMS — **Agile V Infinity Loop** on this repository.
 
 ## Quick Start (every session)
 
-1. **Read** `STATE.md` — cycle **C5**, stage 4 verify PASS
-2. **Read** `agile-v-core.md` + load skill `agile-v-core`
+1. **Read** `ACTIVATION.md` + `STATE.md` — cycle **C5**, verify PASS
+2. Load skill `agile-v-core` + `agile-v-pipeline`
 3. **Registry** `SKILLS.md` — 24 agents
 4. **Bootstrap** `BOOTSTRAP.md` — C1..C5 index
 

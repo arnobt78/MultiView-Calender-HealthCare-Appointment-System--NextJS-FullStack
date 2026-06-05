@@ -10,7 +10,7 @@
 4. **Role skill** — `.agile-v/SKILLS.md` (24 agents)
 5. **`agile-v-compliance`** — Human Gates, risk/CAPA, Gate 2 close
 
-**Repo quick ref:** `.agile-v/agile-v-core.md` · **Cursor rule:** `.cursor/rules/agile-v-infinity-loop.mdc` (always on)
+**Session card:** `.agile-v/ACTIVATION.md` (read every prompt) · **Core:** `.agile-v/agile-v-core.md` · **Cursor rule:** `.cursor/rules/agile-v-infinity-loop.mdc` (always on)
 
 ## Resume protocol
 

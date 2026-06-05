@@ -44,6 +44,6 @@ Read `STATE.md` first · pass paths not dumps · fresh sub-agent context · task
 
 `queryKeys` + invalidation helpers · `getSessionUser()` · `dynamic = "force-dynamic"` APIs · `rbac.ts` · SSR seed + TanStack `setQueryData` on CRUD · `Link` not `<a href>`
 
-## Resume (tomorrow)
+## Resume (every session)
 
-Cycle **C5** · Stage **4 Verify** (automated PASS 742) · Human **GATE-0009/0010** pending · Backlog: archive C3/C4 gates · optional portal `/admins/[id]` audit
+Read `ACTIVATION.md` → `STATE.md` · Cycle **C5** · Stage **4 Verify** PASS **742** · Gates **0005–0010** pending · Next: gate approve → archive C3/C4/C5 → **C6** Specify
