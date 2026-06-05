@@ -169,7 +169,7 @@ function SummaryShell({
         <PatientPortraitAvatar
           patient={patientPortrait}
           sizeClassName="h-16 w-16 shrink-0 rounded-xl"
-          className="rounded-xl ring-2 ring-amber-300/50"
+          className="rounded-xl ring-2 ring-violet-300/50"
         />
         <div className="min-w-0 flex-1 space-y-1">
           <div className="flex flex-wrap items-center gap-1.5">
@@ -184,7 +184,7 @@ function SummaryShell({
             type="button"
             variant="ghost"
             size="sm"
-            className="shrink-0 gap-1 rounded-full text-amber-800 hover:bg-amber-100/80"
+            className="shrink-0 gap-1 rounded-full text-violet-800 hover:bg-violet-100/80"
             onClick={onChangeVisit}
           >
             Change visit
@@ -197,7 +197,7 @@ function SummaryShell({
 
       <div className="flex flex-wrap gap-2">
         {categoryLabel ? (
-          <span className="inline-flex items-center gap-1 rounded-full border border-amber-200/60 bg-white/90 px-2.5 py-0.5 text-xs font-medium text-amber-900">
+          <span className="inline-flex items-center gap-1 rounded-full border border-violet-200/60 bg-white/90 px-2.5 py-0.5 text-xs font-medium text-violet-900">
             <CategoryBrandMark color={categoryColor} size="compact" />
             {categoryLabel}
           </span>
@@ -207,7 +207,7 @@ function SummaryShell({
       <div className="grid gap-1 text-xs text-muted-foreground sm:grid-cols-2">
         {treatingLabel ? (
           <span className="inline-flex items-center gap-1.5">
-            <Stethoscope className="h-3.5 w-3.5 shrink-0 text-amber-600" aria-hidden />
+            <Stethoscope className="h-3.5 w-3.5 shrink-0 text-violet-600" aria-hidden />
             <span>
               Treating: <span className="font-medium text-gray-700">{treatingLabel}</span>
               {treatingSpecialty ? ` · ${treatingSpecialty}` : ""}
@@ -216,7 +216,7 @@ function SummaryShell({
         ) : null}
         {ownerLabel && ownerLabel !== treatingLabel ? (
           <span className="inline-flex items-center gap-1.5">
-            <User className="h-3.5 w-3.5 shrink-0 text-amber-600" aria-hidden />
+            <User className="h-3.5 w-3.5 shrink-0 text-violet-600" aria-hidden />
             <span>
               Calendar owner: <span className="font-medium text-gray-700">{ownerLabel}</span>
             </span>

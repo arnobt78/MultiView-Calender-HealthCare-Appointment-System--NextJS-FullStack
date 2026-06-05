@@ -1,19 +1,23 @@
 "use client";
 
 import { ArrowLeft, Download, FileOutput } from "lucide-react";
+import { useMemo, useState } from "react";
 import { BackNavigationLink } from "@/components/shared/BackNavigationLink";
 import { ControlPanelGlassActionButton } from "@/components/shared/ControlPanelGlassActionButton";
 import { useInvoice } from "@/hooks/useInvoice";
 import { usePayments, type Invoice } from "@/hooks/usePayments";
-import { resolveInvoiceDetailActionCapabilities } from "@/lib/invoice-detail-action-capabilities";
+import {
+  resolveInvoiceDetailActionCapabilities,
+  resolveInvoiceDetailGenerateInHeader,
+} from "@/lib/invoice-detail-action-capabilities";
 import type { InvoiceDetailUiAccess } from "@/lib/invoice-detail-ssr";
-import { openInvoicePdfDownload } from "@/lib/invoice-pdf-document";
+import { downloadInvoicePdf } from "@/lib/invoice-pdf-document";
+import { notify } from "@/lib/notify";
 import {
   invoiceDetailBackButtonClass,
   invoiceDetailHeaderActionsClass,
 } from "@/lib/invoice-detail-ui-classes";
 import { cn } from "@/lib/utils";
-import { useMemo } from "react";
 
 type Props = {
   initialInvoice: Invoice;
@@ -36,6 +40,7 @@ export function InvoiceDetailHeaderActions({
     initialData: initialInvoice,
   });
   const { updateInvoice, isUpdating } = usePayments({ invoicesInitialData });
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const capsRole = accessLevel === "admin" ? "admin" : "doctor";
   const caps = useMemo(
@@ -43,10 +48,7 @@ export function InvoiceDetailHeaderActions({
     [invoice, capsRole]
   );
 
-  const canGenerate =
-    caps.canGenerateInvoice &&
-    caps.canSend &&
-    (accessLevel === "admin" || accessLevel === "mutate");
+  const canGenerate = resolveInvoiceDetailGenerateInHeader(accessLevel, caps);
 
   return (
     <div className={invoiceDetailHeaderActionsClass}>
@@ -58,7 +60,7 @@ export function InvoiceDetailHeaderActions({
           onClick={() => updateInvoice({ invoiceId: invoice.id, body: { status: "sent" } })}
         >
           <FileOutput className="shrink-0" aria-hidden />
-          {isUpdating ? "Generating…" : "Generate invoice"}
+          {isUpdating ? "Generating…" : "Generate Invoice"}
         </ControlPanelGlassActionButton>
       ) : null}
 
@@ -66,10 +68,23 @@ export function InvoiceDetailHeaderActions({
         <ControlPanelGlassActionButton
           type="button"
           variant="violet"
-          onClick={() => openInvoicePdfDownload(invoice.id)}
+          disabled={isDownloading}
+          onClick={async () => {
+            setIsDownloading(true);
+            try {
+              await downloadInvoicePdf(invoice.id);
+            } catch {
+              notify.error({
+                title: "Could not download invoice",
+                subtitle: "Please try again.",
+              });
+            } finally {
+              setIsDownloading(false);
+            }
+          }}
         >
           <Download className="shrink-0" aria-hidden />
-          Download invoice
+          {isDownloading ? "Downloading…" : "Download Invoice"}
         </ControlPanelGlassActionButton>
       ) : null}
 

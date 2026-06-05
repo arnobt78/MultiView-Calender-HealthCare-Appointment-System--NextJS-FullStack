@@ -33,7 +33,7 @@ type Props = {
   disabled?: boolean;
 };
 
-/** Amount, description, due date — amber glass inputs. */
+/** Amount, description, due date — violet glass inputs. */
 export function InvoiceDialogFieldsSection({
   mode,
   amount,
@@ -62,7 +62,7 @@ export function InvoiceDialogFieldsSection({
             <div
               className={cn(
                 invoiceDialogGlassInputClass,
-                "flex cursor-default items-center bg-amber-50/50 font-semibold text-gray-800"
+                "flex cursor-default items-center bg-violet-50/50 font-semibold text-gray-800"
               )}
             >
               <InvoiceAmountDisplay amountCents={readOnlyAmountCents} currency={readOnlyCurrency} />
@@ -102,7 +102,7 @@ export function InvoiceDialogFieldsSection({
             value={dueDate}
             onChange={onDueDateChange}
             disabled={disabled}
-            tone="amber"
+            tone="violet"
             align="end"
             placeholder="Select due date"
           />

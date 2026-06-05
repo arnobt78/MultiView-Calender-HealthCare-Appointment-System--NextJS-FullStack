@@ -16,7 +16,7 @@ type Props = {
 export function InvoiceDialogFieldLabel({ htmlFor, icon: Icon, children, required }: Props) {
   return (
     <div className="flex items-center gap-1.5 text-gray-700">
-      <Icon className="h-3.5 w-3.5 shrink-0 text-amber-600" aria-hidden />
+      <Icon className="h-3.5 w-3.5 shrink-0 text-violet-600" aria-hidden />
       <Label htmlFor={htmlFor} className="text-gray-700">
         {children}
         {required ? <FormRequiredMark /> : null}

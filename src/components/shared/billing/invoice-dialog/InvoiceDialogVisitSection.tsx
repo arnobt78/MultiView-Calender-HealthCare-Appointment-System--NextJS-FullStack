@@ -86,7 +86,7 @@ export function InvoiceDialogVisitSection({
           <>
             <InvoiceVisitSummaryCard source="option" visit={presetOption} />
             {!presetOption.eligible && (
-              <p className="text-sm text-amber-800">
+              <p className="text-sm text-violet-800">
                 This visit already has an active invoice — open the existing bill or pick another
                 visit.
               </p>
@@ -113,7 +113,7 @@ export function InvoiceDialogVisitSection({
       ) : (
         <>
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Link2 className="h-3.5 w-3.5 text-amber-600" aria-hidden />
+            <Link2 className="h-3.5 w-3.5 text-violet-600" aria-hidden />
             {variant === "admin"
               ? "Pick an unpaid visit — billed visits are hidden unless you enable Show billed visits."
               : "Draft invoice for a visit without an active bill."}

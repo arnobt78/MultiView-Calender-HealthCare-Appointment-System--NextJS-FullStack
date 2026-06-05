@@ -12,7 +12,10 @@ import {
 } from "@/lib/invoice-visit-summary";
 import { serializeInvoice } from "@/lib/serializers";
 import { prisma } from "@/lib/prisma";
-import { buildInvoicePrintHtml } from "@/lib/invoice-pdf-document";
+import {
+  buildInvoicePrintHtml,
+  invoicePdfDownloadFilename,
+} from "@/lib/invoice-pdf-document";
 import type { Invoice } from "@/hooks/usePayments";
 
 type Params = { params: Promise<{ id: string }> };
@@ -66,7 +69,8 @@ export async function GET(req: NextRequest, { params }: Params) {
     const [withVisit] = await attachVisitSummariesToInvoices([base]);
     const [enriched] = await attachInvoiceIssuerLabels([withVisit]);
 
-    const autoPrint = req.nextUrl.searchParams.get("print") === "1";
+    const download = req.nextUrl.searchParams.get("download") === "1";
+    const autoPrint = !download && req.nextUrl.searchParams.get("print") === "1";
     const html = buildInvoicePrintHtml(enriched, { autoPrint });
 
     return new NextResponse(html, {
@@ -74,6 +78,11 @@ export async function GET(req: NextRequest, { params }: Params) {
       headers: {
         "Content-Type": "text/html; charset=utf-8",
         "Cache-Control": "no-store",
+        ...(download
+          ? {
+              "Content-Disposition": `attachment; filename="${invoicePdfDownloadFilename(enriched.id)}"`,
+            }
+          : {}),
       },
     });
   } catch {

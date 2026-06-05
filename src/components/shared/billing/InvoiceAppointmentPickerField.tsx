@@ -28,7 +28,7 @@ type Props = {
   loadingFallback?: ReactNode;
 };
 
-/** Collapsible visit picker — StaffAppointmentPickerField amber shell + directory list. */
+/** Collapsible visit picker — StaffAppointmentPickerField violet shell + directory list. */
 export function InvoiceAppointmentPickerField({
   value,
   onChange,
@@ -79,7 +79,7 @@ export function InvoiceAppointmentPickerField({
           <label className="ml-auto flex cursor-pointer items-center gap-1.5 text-[11px] text-muted-foreground">
             <input
               type="checkbox"
-              className="h-3.5 w-3.5 rounded border-amber-300 text-amber-600"
+              className="h-3.5 w-3.5 rounded border-violet-300 text-violet-600"
               checked={includeBilled}
               onChange={(e) => onIncludeBilledChange(e.target.checked)}
               disabled={disabled}
@@ -89,7 +89,7 @@ export function InvoiceAppointmentPickerField({
         ) : null}
       </div>
       <StaffAppointmentPickerField
-        tone="amber"
+        tone="violet"
         icon={Link2}
         label={
           <>
@@ -143,7 +143,7 @@ export function InvoiceAppointmentPickerField({
         </div>
       </StaffAppointmentPickerField>
       {selected && !selected.eligible ? (
-        <p className="text-[10px] text-amber-800">
+        <p className="text-[10px] text-violet-800">
           This visit already has an invoice — pick another or open the existing bill.
         </p>
       ) : null}

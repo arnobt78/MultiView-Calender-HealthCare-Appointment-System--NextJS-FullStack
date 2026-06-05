@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { buildInvoicePrintHtml } from "@/lib/invoice-pdf-document";
+import {
+  buildInvoicePrintHtml,
+  invoicePdfApiUrl,
+  invoicePdfDownloadFilename,
+} from "@/lib/invoice-pdf-document";
 import type { Invoice } from "@/hooks/usePayments";
 
 function baseInvoice(): Invoice {
@@ -60,5 +64,11 @@ describe("buildInvoicePrintHtml", () => {
   it("injects auto-print script when requested", () => {
     const html = buildInvoicePrintHtml(baseInvoice(), { autoPrint: true });
     expect(html).toContain("window.print");
+  });
+
+  it("builds download API url and filename", () => {
+    const id = "7d041eb7-aaaa-bbbb-cccc-ddddeeeeffff";
+    expect(invoicePdfDownloadFilename(id)).toBe("invoice-7d041eb7.html");
+    expect(invoicePdfApiUrl(id, "download")).toContain("download=1");
   });
 });

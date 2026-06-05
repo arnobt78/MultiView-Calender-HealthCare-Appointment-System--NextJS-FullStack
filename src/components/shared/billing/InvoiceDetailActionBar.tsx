@@ -22,7 +22,10 @@ import {
   buildInvoiceDeleteConfirmSubtitle,
   DELETE_INVOICE_CONFIRM_TITLE,
 } from "@/lib/confirm-delete-dialog-copy";
-import { resolveInvoiceDetailActionCapabilities } from "@/lib/invoice-detail-action-capabilities";
+import {
+  resolveInvoiceDetailActionCapabilities,
+  resolveInvoiceDetailSendInFooter,
+} from "@/lib/invoice-detail-action-capabilities";
 import type { InvoiceDetailUiAccess } from "@/lib/invoice-detail-ssr";
 import { invoiceDetailActionsRowClass, invoiceDetailBackButtonClass } from "@/lib/invoice-detail-ui-classes";
 import { cn } from "@/lib/utils";
@@ -76,6 +79,7 @@ export function InvoiceDetailActionBar({
     [invoice, viewerRole]
   );
   const canEditDetails = caps.canEditDetails && (accessLevel === "admin" || accessLevel === "mutate");
+  const canSendInFooter = resolveInvoiceDetailSendInFooter(accessLevel, caps);
 
   return (
     <>
@@ -111,7 +115,7 @@ export function InvoiceDetailActionBar({
               </ControlPanelGlassActionButton>
             ) : null}
 
-            {accessLevel === "admin" && caps.canSend ? (
+            {accessLevel === "admin" && canSendInFooter ? (
               <ControlPanelGlassActionButton
                 type="button"
                 variant="sky"
@@ -147,7 +151,7 @@ export function InvoiceDetailActionBar({
               </ControlPanelGlassActionButton>
             ) : null}
 
-            {accessLevel === "mutate" && caps.canSend ? (
+            {accessLevel === "mutate" && canSendInFooter ? (
               <ControlPanelGlassActionButton
                 type="button"
                 variant="sky"

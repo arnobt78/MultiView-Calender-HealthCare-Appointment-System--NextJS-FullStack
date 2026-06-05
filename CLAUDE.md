@@ -4,10 +4,11 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-05)
 
-- **Invoice violet detail:** `invoice-detail-ui-classes.ts` purple shadow/icons; `InvoiceLinkedVisitPanel` Visit row flex+`AppointmentTypeGlassBadge`; `InvoiceDetailHeaderActions` (Generate draft→sent, Download PDF); `api/invoices/[id]/pdf` + `invoice-pdf-document.ts` (`force-dynamic`, `assertInvoiceAccess`).
-- **Identity + chrome:** `clinical-identity-inline-ui.ts`; `EntityDetailChromeHeader` on appt/invoice/doctor/category/**CP patient**; `entityDetailDefinitionIdentityRowClass`.
-- **Invalidation:** Generate reuses `updateInvoice` → `invalidateAfterInvoiceWrite` / `invalidateInvoicesAndOverview` (no new keys).
-- **Verify:** **764** / **144** · tsc · lint · build.
+- **Invoice billing violet:** detail + dialog + management list share violet tokens (`invoice-detail-ui-classes.ts`, `invoice-dialog-ui-classes.ts`).
+- **Detail actions:** header Generate/Download; footer Send deduped via `resolveInvoiceDetailSendInFooter`; PDF `?download=1` attachment (`downloadInvoicePdf`).
+- **Identity + chrome:** `clinical-identity-inline-ui.ts`; `EntityDetailChromeHeader` on appt/invoice/doctor/category/CP patient.
+- **Invalidation:** Generate → `updateInvoice` → `invalidateAfterInvoiceWrite`.
+- **Verify:** **767** / **144** · tsc · lint · build.
 
 ## Never / Always
 
@@ -33,9 +34,9 @@ Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Key paths
 
-- Invoice: `InvoiceDetailLiveBody`, `InvoiceDetailHeaderActions`, `InvoiceLinkedVisitPanel`, `invoice-pdf-document.ts`, `invoice-detail-ui-classes.ts`
-- Chrome/identity: `EntityDetailChromeHeader`, `clinical-identity-inline-ui.ts`, `PatientIdentityCell`, `page-chrome-classes.ts`
-- Appt/audit: `appointment-detail-view-model.ts`, `entity-detail-audit-actor.ts`
+- Invoice: `InvoiceDetailHeaderActions`, `InvoiceDetailActionBar`, `invoice-pdf-document.ts`, `invoice-detail-action-capabilities.ts`, `api/invoices/[id]/pdf`
+- Dialog: `invoice-dialog-ui-classes.ts`, `InvoiceFormDialog`
+- Chrome/identity: `EntityDetailChromeHeader`, `clinical-identity-inline-ui.ts`
 
 ## Principle
 

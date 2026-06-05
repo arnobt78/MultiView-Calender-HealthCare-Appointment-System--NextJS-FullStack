@@ -19,7 +19,7 @@ import {
   invoiceDialogGlassBackButtonClass,
   invoiceDialogShellClass,
 } from "@/lib/invoice-dialog-ui-classes";
-import { amberGlassPrimaryButtonClass } from "@/lib/calendar-header-action-styles";
+import { violetGlassPrimaryButtonClass } from "@/lib/calendar-header-action-styles";
 import { cn, toTitleCaseLabel } from "@/lib/utils";
 import {
   buildInvoiceCreateBody,
@@ -134,7 +134,7 @@ function InvoiceFormDialogInner({
       <div className="shrink-0 bg-white pt-6 text-gray-700">
         <div className="px-6">
           <div className="flex items-start gap-2">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-amber-200/70 bg-amber-50 text-amber-700">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-violet-200/70 bg-violet-50 text-violet-700">
               <HeaderIcon className="h-5 w-5" aria-hidden />
             </span>
             <div className="min-w-0">
@@ -162,7 +162,7 @@ function InvoiceFormDialogInner({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="ml-auto h-8 w-8 shrink-0 rounded-full text-muted-foreground hover:bg-amber-100 hover:text-amber-800"
+                className="ml-auto h-8 w-8 shrink-0 rounded-full text-muted-foreground hover:bg-violet-100 hover:text-violet-800"
               >
                 <X className="h-4 w-4" aria-hidden />
                 <span className="sr-only">Close</span>
@@ -170,7 +170,7 @@ function InvoiceFormDialogInner({
             </DialogClose>
           </div>
         </div>
-        <div className="mx-6 mt-4 border-b border-amber-200/60" />
+        <div className="mx-6 mt-4 border-b border-violet-200/60" />
       </div>
 
       <form
@@ -216,7 +216,7 @@ function InvoiceFormDialogInner({
           />
         </div>
 
-        <div className="flex shrink-0 flex-wrap justify-end gap-2 border-t border-amber-200/60 bg-amber-50/40 px-6 py-3">
+        <div className="flex shrink-0 flex-wrap justify-end gap-2 border-t border-violet-200/60 bg-violet-50/40 px-6 py-3">
           <Button
             type="button"
             variant="ghost"
@@ -229,7 +229,7 @@ function InvoiceFormDialogInner({
           </Button>
           <Button
             type="submit"
-            className={cn(amberGlassPrimaryButtonClass)}
+            className={cn(violetGlassPrimaryButtonClass)}
             disabled={!canSubmit}
           >
             {isSubmitting ? (
@@ -252,7 +252,7 @@ function InvoiceFormDialogInner({
 }
 
 /**
- * Create/Edit invoice — amber glass shell aligned with patient/appointment dialogs.
+ * Create/Edit invoice — violet glass shell aligned with invoice detail billing tone.
  * Parent owns open state + mutations (`InvoiceManagement`, `DoctorPortalInvoicesCard`).
  */
 export function InvoiceFormDialog({

@@ -44,8 +44,8 @@ type StaffAppointmentPickerFieldProps = {
   changeLabel: string;
   children: ReactNode;
   disabled?: boolean;
-  /** `sky` = appointment dialog; `emerald` = patient; `amber` = invoice dialog. */
-  tone?: "sky" | "emerald" | "amber";
+  /** `sky` = appointment dialog; `emerald` = patient; `violet` = invoice dialog. */
+  tone?: "sky" | "emerald" | "violet";
   className?: string;
 };
 
@@ -68,44 +68,44 @@ export function StaffAppointmentPickerField({
   className,
 }: StaffAppointmentPickerFieldProps) {
   const isEmerald = tone === "emerald";
-  const isAmber = tone === "amber";
-  const triggerClass = isAmber
+  const isViolet = tone === "violet";
+  const triggerClass = isViolet
     ? invoiceDialogGlassSelectTriggerClass
     : isEmerald
       ? patientDialogGlassSelectTriggerClass
       : staffAppointmentGlassSelectTriggerClass;
-  const panelClass = isAmber
+  const panelClass = isViolet
     ? invoiceDialogDropdownPanelClass
     : isEmerald
       ? patientDialogDropdownPanelClass
       : staffAppointmentDropdownPanelClass;
-  const chevronClass = isAmber
+  const chevronClass = isViolet
     ? invoiceDialogGlassSelectChevronClass
     : isEmerald
       ? patientDialogGlassSelectChevronClass
       : staffAppointmentGlassSelectChevronClass;
-  const placeholderClass = isAmber
+  const placeholderClass = isViolet
     ? invoiceDialogGlassSelectPlaceholderClass
     : isEmerald
       ? patientDialogGlassSelectPlaceholderClass
       : staffAppointmentGlassSelectPlaceholderClass;
-  const valueClass = isAmber
+  const valueClass = isViolet
     ? invoiceDialogGlassSelectValueClass
     : isEmerald
       ? patientDialogGlassSelectValueClass
       : staffAppointmentGlassSelectValueClass;
-  const labelIconClass = isAmber
-    ? "text-amber-600"
+  const labelIconClass = isViolet
+    ? "text-violet-600"
     : isEmerald
       ? "text-emerald-600"
       : "text-sky-600";
-  const openRingClass = isAmber
-    ? "border-amber-400/50 ring-2 ring-amber-200/40"
+  const openRingClass = isViolet
+    ? "border-violet-400/50 ring-2 ring-violet-200/40"
     : isEmerald
       ? "border-emerald-400/50 ring-2 ring-emerald-200/40"
       : "border-sky-400/50 ring-2 ring-sky-200/40";
-  const changeBtnClass = isAmber
-    ? "text-amber-800 hover:bg-amber-50 hover:text-amber-950"
+  const changeBtnClass = isViolet
+    ? "text-violet-800 hover:bg-violet-50 hover:text-violet-950"
     : isEmerald
       ? "text-emerald-700 hover:bg-emerald-50 hover:text-emerald-900"
       : "text-sky-700 hover:bg-sky-50 hover:text-sky-900";

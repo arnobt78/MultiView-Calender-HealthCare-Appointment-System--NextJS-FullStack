@@ -1,13 +1,12 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-05 — Invoice violet + PDF + identity + entity chrome)
+## Latest (2026-06-05 — Invoice billing violet parity)
 
-- **Violet invoice detail:** `invoice-detail-ui-classes.ts` purple shadow/icons; cards keep glow; linked visit Visit row flex+`AppointmentTypeGlassBadge`; payment table same frame.
-- **Header:** `InvoiceDetailHeaderActions` — Generate (draft→sent, `updateInvoice`+invalidation), Download (`/api/invoices/[id]/pdf?print=1`, `invoice-pdf-document.ts`, RBAC view).
-- **Routes:** CP + portal `/invoices/[id]` → `InvoiceDetailScreen` → `InvoiceDetailLiveBody`; SSR prefetch unchanged.
-- **Chrome:** `EntityDetailChromeHeader` on appt/invoice/doctor/category/**CP patient**; identity rows `clinical-identity-inline-ui.ts`.
-- **Tests:** +`invoice-pdf-document`, capabilities `canGenerateInvoice`/`canDownloadPdf`. **764** / **144** · tsc · lint · build.
-- **Note:** PDF = printable HTML (browser Save as PDF); invoice create/edit dialog stays amber (separate surface).
+- **Violet everywhere (billing):** detail cards, dialog (`invoice-dialog-ui-classes.ts`), management list frame — shared purple tokens.
+- **Detail actions:** header Generate + Download; footer Send hidden when header Generate (`resolveInvoiceDetailSendInFooter`); list menus unchanged.
+- **PDF download:** `GET /api/invoices/[id]/pdf?download=1` → `Content-Disposition` attachment; client `downloadInvoicePdf` (no popup blocker).
+- **Routes/SSR:** CP + portal `/invoices/[id]` unchanged prefetch; Generate invalidates via `updateInvoice`.
+- **Tests:** header/footer caps, pdf url/filename. **767** / **144** · tsc · lint · build.
 
 ## Prior (2026-06-05 — Visit fee badges + patient booking price)
 

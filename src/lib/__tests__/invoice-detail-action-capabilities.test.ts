@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { resolveInvoiceDetailActionCapabilities } from "@/lib/invoice-detail-action-capabilities";
+import {
+  resolveInvoiceDetailActionCapabilities,
+  resolveInvoiceDetailGenerateInHeader,
+  resolveInvoiceDetailSendInFooter,
+} from "@/lib/invoice-detail-action-capabilities";
 import type { Invoice } from "@/hooks/usePayments";
 
 function invoice(status: string): Invoice {
@@ -52,5 +56,17 @@ describe("resolveInvoiceDetailActionCapabilities", () => {
     expect(caps.canMarkPaid).toBe(false);
     expect(caps.canCancel).toBe(false);
     expect(caps.canDelete).toBe(true);
+  });
+
+  it("draft admin: Generate in header, not Send in footer", () => {
+    const caps = resolveInvoiceDetailActionCapabilities(invoice("draft"), "admin");
+    expect(resolveInvoiceDetailGenerateInHeader("admin", caps)).toBe(true);
+    expect(resolveInvoiceDetailSendInFooter("admin", caps)).toBe(false);
+  });
+
+  it("draft mutate doctor: Generate in header hides footer Send", () => {
+    const caps = resolveInvoiceDetailActionCapabilities(invoice("draft"), "doctor");
+    expect(resolveInvoiceDetailGenerateInHeader("mutate", caps)).toBe(true);
+    expect(resolveInvoiceDetailSendInFooter("mutate", caps)).toBe(false);
   });
 });

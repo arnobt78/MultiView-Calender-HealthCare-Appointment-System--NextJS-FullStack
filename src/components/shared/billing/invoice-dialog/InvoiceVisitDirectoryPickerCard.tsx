@@ -66,7 +66,7 @@ export function InvoiceVisitDirectoryPickerCard({
             clinical_profile: option.patient_clinical_profile ?? undefined,
           }}
           sizeClassName="h-14 w-14 min-h-[3.5rem] shrink-0 self-stretch rounded-xl"
-          className="rounded-xl ring-2 ring-amber-200/60"
+          className="rounded-xl ring-2 ring-violet-200/60"
         />
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
           <div className="flex flex-wrap items-center gap-1.5">
@@ -88,7 +88,7 @@ export function InvoiceVisitDirectoryPickerCard({
               </span>
             ) : null}
             {option.category_label ? (
-              <span className="inline-flex items-center gap-1 rounded-full border border-amber-200/60 bg-amber-50/80 px-2 py-0.5 text-[10px] font-medium text-amber-900">
+              <span className="inline-flex items-center gap-1 rounded-full border border-violet-200/60 bg-violet-50/80 px-2 py-0.5 text-[10px] font-medium text-violet-900">
                 <CategoryBrandMark color={option.category_color} size="compact" />
                 {option.category_label}
               </span>
@@ -141,7 +141,7 @@ export function InvoiceVisitDirectoryPickerCard({
           {option.block_reason}{" "}
           <Link
             href={invoiceDetailHref(viewerRole, option.invoice_id)}
-            className="text-amber-800 underline"
+            className="text-violet-800 underline"
             onClick={(e) => e.stopPropagation()}
           >
             View invoice

@@ -26,7 +26,7 @@ vi.mock("@/lib/invoice-dialog-ui-classes", () => ({
 }));
 
 vi.mock("@/lib/calendar-header-action-styles", () => ({
-  amberGlassPrimaryButtonClass: "primary",
+  violetGlassPrimaryButtonClass: "primary",
 }));
 
 vi.mock("@/lib/utils", async (importOriginal) => {

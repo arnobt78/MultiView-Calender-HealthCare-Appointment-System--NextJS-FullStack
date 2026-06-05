@@ -44,7 +44,7 @@ export function ClinicalGlassDatePicker({
   onChange,
   id,
   disabled = false,
-  tone = "amber",
+  tone = "violet",
   align = "end",
   placeholder = "Select date",
   className,

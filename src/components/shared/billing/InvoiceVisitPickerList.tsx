@@ -24,7 +24,7 @@ export function InvoiceVisitPickerList({
 }: Props) {
   if (options.length === 0) {
     return (
-      <p className="rounded-2xl border border-dashed border-amber-200/60 px-4 py-6 text-center text-xs text-muted-foreground">
+      <p className="rounded-2xl border border-dashed border-violet-200/60 px-4 py-6 text-center text-xs text-muted-foreground">
         No billable visits match. Try search or enable &quot;Show billed visits&quot; (admin).
       </p>
     );

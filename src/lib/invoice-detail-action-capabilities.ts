@@ -1,4 +1,9 @@
 import type { Invoice } from "@/hooks/usePayments";
+import type { InvoiceDetailUiAccess } from "@/lib/invoice-detail-ssr";
+
+export type InvoiceDetailActionCapabilities = ReturnType<
+  typeof resolveInvoiceDetailActionCapabilities
+>;
 
 /** Shared invoice action visibility — used by dropdown menu, detail footer, and header actions. */
 export function resolveInvoiceDetailActionCapabilities(
@@ -25,4 +30,24 @@ export function resolveInvoiceDetailActionCapabilities(
       invoice.status === "sent" ||
       invoice.status === "overdue",
   };
+}
+
+/** Draft send lives in chrome header on invoice detail — admin/doctor mutate only. */
+export function resolveInvoiceDetailGenerateInHeader(
+  accessLevel: InvoiceDetailUiAccess,
+  caps: InvoiceDetailActionCapabilities
+): boolean {
+  return (
+    caps.canGenerateInvoice &&
+    caps.canSend &&
+    (accessLevel === "admin" || accessLevel === "mutate")
+  );
+}
+
+/** Footer Send hidden when header already exposes Generate (avoids duplicate draft→sent). */
+export function resolveInvoiceDetailSendInFooter(
+  accessLevel: InvoiceDetailUiAccess,
+  caps: InvoiceDetailActionCapabilities
+): boolean {
+  return caps.canSend && !resolveInvoiceDetailGenerateInHeader(accessLevel, caps);
 }

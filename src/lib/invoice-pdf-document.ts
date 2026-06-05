@@ -12,6 +12,20 @@ function escapeHtml(value: string): string {
     .replaceAll('"', "&quot;");
 }
 
+export function invoicePdfDownloadFilename(invoiceId: string): string {
+  return `invoice-${invoiceId.slice(0, 8)}.html`;
+}
+
+export function invoicePdfApiUrl(
+  invoiceId: string,
+  mode: "download" | "print" | "view" = "download"
+): string {
+  const base = `/api/invoices/${encodeURIComponent(invoiceId)}/pdf`;
+  if (mode === "download") return `${base}?download=1`;
+  if (mode === "print") return `${base}?print=1`;
+  return base;
+}
+
 /** Build a self-contained HTML document for print / Save as PDF. */
 export function buildInvoicePrintHtml(invoice: Invoice, options?: { autoPrint?: boolean }): string {
   const shortId = invoice.id.slice(0, 8);
@@ -60,11 +74,12 @@ export function buildInvoicePrintHtml(invoice: Invoice, options?: { autoPrint?: 
     body { font-family: system-ui, sans-serif; color: #1f2937; margin: 2rem; }
     h1 { font-size: 1.5rem; margin: 0 0 0.25rem; }
     .meta { color: #6b7280; font-size: 0.875rem; margin-bottom: 1.5rem; }
+    .hint { color: #7c3aed; font-size: 0.75rem; margin-top: 2rem; }
     table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
     th, td { border: 1px solid #e5e7eb; padding: 0.5rem 0.75rem; text-align: left; font-size: 0.875rem; }
     th { background: #f5f3ff; }
     .amount { font-size: 1.25rem; font-weight: 600; }
-    @media print { body { margin: 0.5in; } }
+    @media print { body { margin: 0.5in; } .hint { display: none; } }
   </style>
 </head>
 <body>
@@ -93,13 +108,40 @@ export function buildInvoicePrintHtml(invoice: Invoice, options?: { autoPrint?: 
   </table>`
       : ""
   }
+  <p class="hint">To save as PDF: open this file in your browser → Print → Save as PDF.</p>
   ${autoPrintScript}
 </body>
 </html>`;
 }
 
-/** Open printable invoice in a new tab (browser Save as PDF via print dialog). */
-export function openInvoicePdfDownload(invoiceId: string, autoPrint = true): void {
-  const url = `/api/invoices/${encodeURIComponent(invoiceId)}/pdf${autoPrint ? "?print=1" : ""}`;
-  window.open(url, "_blank", "noopener,noreferrer");
+/**
+ * Download invoice HTML via authenticated API (`Content-Disposition: attachment`).
+ * User can open the file and Print → Save as PDF without a popup blocker.
+ */
+export async function downloadInvoicePdf(invoiceId: string): Promise<void> {
+  const res = await fetch(invoicePdfApiUrl(invoiceId, "download"), {
+    credentials: "include",
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    throw new Error("Failed to download invoice");
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  try {
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = invoicePdfDownloadFilename(invoiceId);
+    anchor.rel = "noopener";
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+/** @deprecated Prefer `downloadInvoicePdf` — opens print preview tab. */
+export function openInvoicePdfDownload(invoiceId: string): void {
+  window.open(invoicePdfApiUrl(invoiceId, "print"), "_blank", "noopener,noreferrer");
 }
