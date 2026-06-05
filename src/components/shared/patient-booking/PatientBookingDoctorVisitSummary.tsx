@@ -13,7 +13,10 @@ import { Badge } from "@/components/ui/badge";
 import { DoctorAvatar } from "@/components/shared/doctor-display/DoctorAvatar";
 import { DoctorAvailabilityGroups } from "@/components/shared/doctor-display/DoctorAvailabilityGroups";
 import { DoctorSpecialtyBadge } from "@/components/shared/doctor-display/DoctorSpecialtyBadge";
+import { VisitFeeBadge } from "@/components/shared/billing/VisitFeeBadge";
 import { formatAppointmentTypeSchedulingBracket } from "@/lib/appointment-type-scheduling-meta";
+import { resolveBookingVisitFeeDisplay } from "@/lib/appointment-visit-fee-display";
+import { bookingWizardTypeBadgeClass } from "@/lib/visit-fee-badge-ui-classes";
 import { cn } from "@/lib/utils";
 import type { PatientBookingAppointmentType } from "@/lib/patient-booking-wizard";
 import type { DoctorDirectoryRow } from "@/lib/doctor-directory";
@@ -41,6 +44,31 @@ function doctorDisplayLabel(doctor: DoctorDirectoryRow): string {
   return raw.startsWith("Dr.") ? raw : `Dr. ${raw}`;
 }
 
+/** Type price when set; else doctor/default fee with · est. (appointment card parity). */
+function BookingVisitFeeBadge({
+  doctor,
+  selectedType,
+  isFlexible,
+}: {
+  doctor: DoctorDirectoryRow;
+  selectedType: PatientBookingAppointmentType | null;
+  isFlexible: boolean;
+}) {
+  const fee = resolveBookingVisitFeeDisplay({
+    selectedType,
+    doctorConsultationFeeCents: doctor.consultation_fee,
+    isFlexible,
+  });
+  if (!fee) return null;
+  return (
+    <VisitFeeBadge
+      size="wizard"
+      priceCents={fee.cents}
+      showEstimateHint={fee.showEstimateHint}
+    />
+  );
+}
+
 function VisitTypeBadge({
   selectedType,
   isFlexible,
@@ -52,7 +80,7 @@ function VisitTypeBadge({
 }) {
   if (isFlexible) {
     return (
-      <Badge variant="outline" className="gap-1 text-xs calendar-glass-badge-sky">
+      <Badge variant="outline" className={bookingWizardTypeBadgeClass}>
         <Clock className="h-3 w-3" />
         Flexible · {flexDuration} min
       </Badge>
@@ -60,7 +88,7 @@ function VisitTypeBadge({
   }
   if (!selectedType) return null;
   return (
-    <Badge variant="outline" className="gap-1 text-xs calendar-glass-badge-sky">
+    <Badge variant="outline" className={bookingWizardTypeBadgeClass}>
       <Timer className="h-3 w-3" />
       {selectedType.name} · {selectedType.duration_minutes} min
     </Badge>
@@ -88,11 +116,13 @@ function formatConfirmDateTimeLine(
 
 /** Visit type + “Availability” label + weekday pills in one wrapping row (picker inline layout). */
 function PatientBookingScheduleMetaRow({
+  doctor,
   availabilities,
   selectedType,
   isFlexible,
   flexDuration,
 }: {
+  doctor: DoctorDirectoryRow;
   availabilities: DoctorDirectoryRow["availabilities"];
   selectedType: PatientBookingAppointmentType | null;
   isFlexible: boolean;
@@ -101,11 +131,18 @@ function PatientBookingScheduleMetaRow({
   return (
     <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1">
       {(isFlexible || selectedType) && (
-        <VisitTypeBadge
-          selectedType={selectedType}
-          isFlexible={isFlexible}
-          flexDuration={flexDuration}
-        />
+        <>
+          <VisitTypeBadge
+            selectedType={selectedType}
+            isFlexible={isFlexible}
+            flexDuration={flexDuration}
+          />
+          <BookingVisitFeeBadge
+            doctor={doctor}
+            selectedType={selectedType}
+            isFlexible={isFlexible}
+          />
+        </>
       )}
       <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
         Availability
@@ -189,6 +226,7 @@ function ScheduleLayout({
         ) : null}
       </div>
       <PatientBookingScheduleMetaRow
+        doctor={doctor}
         availabilities={doctor.availabilities}
         selectedType={selectedType}
         isFlexible={isFlexible}
@@ -249,11 +287,16 @@ function ConfirmLayout({
         </span>
       </p>
       {selectedType || isFlexible ? (
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
           <VisitTypeBadge
             selectedType={selectedType}
             isFlexible={isFlexible}
             flexDuration={flexDuration}
+          />
+          <BookingVisitFeeBadge
+            doctor={doctor}
+            selectedType={selectedType}
+            isFlexible={isFlexible}
           />
         </div>
       ) : null}

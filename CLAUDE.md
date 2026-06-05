@@ -2,16 +2,13 @@
 
 Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
-## Latest (2026-06-04)
+## Latest (2026-06-05)
 
-- **Record Audit (entity detail):** `EntityDetailAuditActorInline` + `entity-detail-audit-actor.ts` (`mapPatient/Category/User` + appt `auditCreatedBy` from Prisma includes). Card: Created / Last updated / Invoice issued (appt) — timestamp · avatar · email · role badge.
-- **DB audit FKs:** `appointments` + `users` `created_by`/`updated_by`; migrations `013`–`015`; seeds backfill demo admin. Category/patient already had FKs; `categoryAuditUserPick` / `patientAuditUserPick` / `userDetailInclude`.
-- **Appt detail:** `formatAppointmentDetailWhenRange` live subtitle; `appointment-detail-invoice-audit-rows.tsx`; `issuer_email`/`issuer_role` on invoices; PATCH/POST set `updated_by_id`.
-- **Cache:** `setQueryData` on patient/category/user PUT; `useCategory`/`useUser` SSR `initialData` + `refetchOnMount: false`; appt `invalidateAfterAppointmentMutation` + detail API payload.
-- **UI polish:** Visit Overview title; People inline rows; `InvoiceVisitDescriptionStack`; primary doctor SSR pick.
-- **CP admin user:** `/control-panel/users/[id]` — `AdminUserDetailScreen` + `userDetailInclude` (Record Audit parity).
-- **DB ops:** `db:backfill-user-audit` (`scripts/backfill-user-audit.ts`); seed-test-user stamps + backfills null `created_by_id`.
-- **Verify:** **742** / **138** · tsc · lint · build. DB: `prisma:push` → `db:backfill-user-audit` (0/0 = already stamped).
+- **Visit fee UI:** `VisitFeeBadge` + `visit-fee-badge-ui-classes.ts` (`cardMeta`/`wizard`/`picker`/`table`/`services`) — height matches sibling type chip per surface. `resolveBookingVisitFeeDisplay` — booking steps 2–3 type price or doctor/default + `· est.`; `bookingWizardTypeBadgeClass` pairs sky type badge.
+- **Fee display:** Euro icon only (no duplicate `€` text); `AppointmentCategoryTypeMetaRow`, portal cards, appt detail, patient booking, picker, services, doctor settings.
+- **Record Audit:** `entity-detail-audit-actor.ts`; migrations `013`–`015`; CP admin `userDetailInclude`; `db:backfill-user-audit`.
+- **Cache/SSR:** unchanged — display-only; booking types from `usePatientBookableAppointmentTypes` + `doctors.all` seed.
+- **Verify:** **749** / **139** · tsc · lint · build.
 
 ## Never / Always
 
@@ -40,7 +37,8 @@ Cross-tab: `query-cache-cross-tab.ts`.
 - Audit: `entity-detail-audit-actor.ts`, `EntityDetailAuditActorInline.tsx`, `EntityDetailRecordAuditCard.tsx`
 - Includes: `patient-api-include.ts`, `category-api-include.ts`, `user-api-include.ts`, `appointment-access.ts`
 - Appt: `appointment-detail-api.ts`, `appointment-detail-view-model.ts`, `useAppointmentDetail.ts`
-- Detail screens: appt/patient/category/doctor/`AdminUserDetailScreen`; backfill: `scripts/backfill-user-audit.ts`
+- Visit fee: `VisitFeeBadge.tsx`, `visit-fee-badge-ui-classes.ts`, `appointment-visit-fee-display.ts`, `billing-visit-fee.ts`
+- Booking: `PatientBookingDoctorVisitSummary`, `VisitTypePickerList`, `patient-booking-wizard.ts`
 
 ## Principle
 

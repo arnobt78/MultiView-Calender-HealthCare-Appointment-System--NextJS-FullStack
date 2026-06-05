@@ -182,7 +182,7 @@ export function DoctorGlobalVisitTypesEditor({
               meta={`${t.duration_minutes} min${t.is_telehealth ? " · Telehealth" : ""}`}
               trailing={
                 <span className="flex shrink-0 flex-wrap items-center justify-end gap-1">
-                  <VisitFeeBadge priceCents={t.price_cents ?? 0} />
+                  <VisitFeeBadge size="table" priceCents={t.price_cents ?? 0} />
                   {t.is_telehealth ? (
                     <span className="flex shrink-0 items-center gap-1 rounded-full border border-sky-200/60 bg-sky-50/90 px-2 py-0.5 text-[10px] font-medium text-sky-700 shadow-[0_4px_12px_rgba(2,132,199,0.1)]">
                       <Video className="h-3 w-3" aria-hidden />

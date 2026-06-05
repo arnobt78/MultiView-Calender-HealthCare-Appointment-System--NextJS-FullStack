@@ -26,6 +26,7 @@ import { CategoryBrandMark } from "@/components/shared/category-display/Category
 import { CategoryInlineLink } from "@/components/shared/CategoryInlineLink";
 import { ClinicalAppointmentStatusBadge } from "@/components/shared/entity-detail/ClinicalAppointmentStatusBadge";
 import { AppointmentTypeGlassBadge } from "@/components/shared/appointment-display/AppointmentTypeGlassBadge";
+import { VisitFeeBadge } from "@/components/shared/billing/VisitFeeBadge";
 import { TelehealthSessionBadge } from "@/components/shared/appointments/TelehealthSessionBadge";
 import { ClinicalDataTable } from "@/components/shared/ClinicalDataTable";
 import { PatientIdentityCell } from "@/components/shared/person-display/PatientIdentityCell";
@@ -356,10 +357,13 @@ export function AppointmentDetailScreenShared({
                     </Badge>
                   ) : null}
                   {detail.visitFeeCents > 0 ? (
-                    <Badge variant="outline" className={toneClasses.durationBadgeClass}>
-                      {detail.visitFeeLabel}
-                      {appointment.appointment_type_price_cents != null ? " · est." : ""}
-                    </Badge>
+                    <VisitFeeBadge
+                      size="cardMeta"
+                      priceCents={detail.visitFeeCents}
+                      showEstimateHint={
+                        (appointment.appointment_type_price_cents ?? 0) <= 0
+                      }
+                    />
                   ) : null}
                   <ClinicalAppointmentStatusBadge status={appointment.status} />
                 </div>

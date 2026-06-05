@@ -1,6 +1,15 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-04 — Entity detail Record Audit + appointment polish)
+## Latest (2026-06-05 — Visit fee badges + patient booking price)
+
+- **Shared:** `VisitFeeBadge` (`size`: `cardMeta` | `wizard` | `picker` | `table` | `services`) + `visit-fee-badge-ui-classes.ts` — sibling type chip height per surface (cards, wizard, dropdown tiles, settings table).
+- **Booking:** `resolveBookingVisitFeeDisplay` — steps 2–3 show type `price_cents` or doctor/`DEFAULT_DOCTOR_VISIT_FEE_CENTS` fallback with `· est.`; `bookingWizardTypeBadgeClass` on sky type badges.
+- **Cards:** `AppointmentCategoryTypeMetaRow` + `PortalAppointmentTimelineCard` — `cardMeta`; no duplicate `€` (icon + `formatVisitFeeAmountLabel` only).
+- **Picker:** `VisitTypePickerList` — explicit type price on step 1 tiles; fallback fee on steps 2–3 only.
+- **Tests:** `appointment-visit-fee-display.test.ts`, `visit-fee-badge.test.tsx`.
+- **Verify:** **749** tests (139 files), tsc, lint, build.
+
+## Prior (2026-06-04 — Entity detail Record Audit + appointment polish)
 
 - **Record Audit (shared):** `EntityDetailAuditActorInline` — inline row: `Label: timestamp · avatar · name (email) · UserRoleBadge`. Mappers: `mapPatientRecordAuditActors`, `mapCategoryRecordAuditActors`, `mapUserRecordAuditActors`; appointments via `auditCreatedBy`/`auditUpdatedBy` on `AppointmentDetailViewModel` (`appointmentAuditUserPick`).
 - **Prisma / SQL:** `appointments.created_by`/`updated_by` (`013`); category backfill `014`; `users.updated_at` + audit FKs `015`. Seeds: `seed-extended-schema` (categories), `seed-test-user` (doctors). API writes: appt POST/PATCH/PUT, patient/category/user PATCH set `updated_by_id`.

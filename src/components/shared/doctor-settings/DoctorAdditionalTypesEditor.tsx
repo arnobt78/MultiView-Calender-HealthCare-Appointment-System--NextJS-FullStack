@@ -404,7 +404,7 @@ export function DoctorAdditionalTypesEditor({
                 meta={`${t.duration_minutes} min · ${toTitleCaseLabel("slot step")} ${t.slot_interval_minutes} min`}
                 trailing={
                   <div className="flex flex-wrap items-center justify-end gap-1">
-                    <VisitFeeBadge priceCents={t.price_cents ?? 0} />
+                    <VisitFeeBadge size="table" priceCents={t.price_cents ?? 0} />
                     <Button
                       type="button"
                       size="icon"

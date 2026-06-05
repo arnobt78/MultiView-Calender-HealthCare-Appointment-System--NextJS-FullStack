@@ -1,0 +1,59 @@
+import { describe, it, expect } from "vitest";
+import {
+  resolveBookingVisitFeeDisplay,
+  resolveDisplayedVisitFeeCents,
+} from "@/lib/appointment-visit-fee-display";
+import { DEFAULT_DOCTOR_VISIT_FEE_CENTS } from "@/lib/billing-visit-fee";
+
+describe("resolveBookingVisitFeeDisplay", () => {
+  it("uses explicit type price without estimate hint", () => {
+    const result = resolveBookingVisitFeeDisplay({
+      selectedType: { price_cents: 12000 },
+      doctorConsultationFeeCents: 8000,
+      isFlexible: false,
+    });
+    expect(result).toEqual({ cents: 12000, showEstimateHint: false });
+  });
+
+  it("falls back to doctor fee with estimate hint when type has no price", () => {
+    const result = resolveBookingVisitFeeDisplay({
+      selectedType: { price_cents: 0 },
+      doctorConsultationFeeCents: 12500,
+      isFlexible: false,
+    });
+    expect(result).toEqual({ cents: 12500, showEstimateHint: true });
+  });
+
+  it("uses default doctor visit fee for flexible booking", () => {
+    const result = resolveBookingVisitFeeDisplay({
+      selectedType: null,
+      doctorConsultationFeeCents: null,
+      isFlexible: true,
+    });
+    expect(result).toEqual({
+      cents: DEFAULT_DOCTOR_VISIT_FEE_CENTS,
+      showEstimateHint: true,
+    });
+  });
+
+  it("returns null when no type selected and not flexible", () => {
+    expect(
+      resolveBookingVisitFeeDisplay({
+        selectedType: null,
+        doctorConsultationFeeCents: 10000,
+        isFlexible: false,
+      })
+    ).toBeNull();
+  });
+});
+
+describe("resolveDisplayedVisitFeeCents", () => {
+  it("prefers type price over doctor fee", () => {
+    expect(
+      resolveDisplayedVisitFeeCents({
+        typePriceCents: 9000,
+        doctorConsultationFeeCents: 5000,
+      })
+    ).toBe(9000);
+  });
+});

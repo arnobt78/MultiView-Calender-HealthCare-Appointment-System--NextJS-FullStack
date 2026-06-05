@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, Clock, Euro, Info } from "lucide-react";
+import { ChevronDown, Clock, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { VisitFeeBadge } from "@/components/shared/billing/VisitFeeBadge";
+import { bookingWizardTypeBadgeClass } from "@/lib/visit-fee-badge-ui-classes";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -70,22 +72,17 @@ export function VisitTypeSummaryCard({
         <span className="text-sm font-medium">{title}</span>
         <div className="flex shrink-0 items-center gap-1.5">
           {duration != null ? (
-            <Badge variant="outline" className="gap-1 text-xs calendar-glass-badge-sky">
+            <Badge variant="outline" className={bookingWizardTypeBadgeClass}>
               <Clock className="h-3 w-3" />
               {duration} min
             </Badge>
           ) : flexLabel ? (
-            <Badge variant="outline" className="gap-1 text-xs calendar-glass-badge-sky">
+            <Badge variant="outline" className={bookingWizardTypeBadgeClass}>
               <Clock className="h-3 w-3" />
               {flexLabel.replace(/^Flexible booking · /, "")}
             </Badge>
           ) : null}
-          {priceCents > 0 && (
-            <Badge variant="outline" className="gap-1 text-xs calendar-glass-badge-emerald">
-              <Euro className="h-3 w-3" />
-              {(priceCents / 100).toFixed(2)}
-            </Badge>
-          )}
+          {priceCents > 0 ? <VisitFeeBadge size="picker" priceCents={priceCents} /> : null}
         </div>
       </div>
       {type
@@ -249,16 +246,13 @@ export function VisitTypePickerList({
           <div className="flex items-center justify-between gap-2">
             <span className="text-sm font-medium">{t.name}</span>
             <div className="flex shrink-0 items-center gap-1.5">
-              <Badge variant="outline" className="gap-1 text-xs calendar-glass-badge-sky">
+              <Badge variant="outline" className={bookingWizardTypeBadgeClass}>
                 <Clock className="h-3 w-3" />
                 {t.duration_minutes} min
               </Badge>
-              {(t.price_cents ?? 0) > 0 && (
-                <Badge variant="outline" className="gap-1 text-xs calendar-glass-badge-emerald">
-                  <Euro className="h-3 w-3" />
-                  {((t.price_cents ?? 0) / 100).toFixed(2)}
-                </Badge>
-              )}
+              {(t.price_cents ?? 0) > 0 ? (
+                <VisitFeeBadge size="picker" priceCents={t.price_cents ?? 0} />
+              ) : null}
             </div>
           </div>
           {(() => {

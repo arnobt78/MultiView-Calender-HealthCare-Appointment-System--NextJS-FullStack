@@ -4,14 +4,14 @@ import type { ReactNode } from "react";
 import { AppointmentCardMetaRow } from "@/components/shared/AppointmentCardMetaRow";
 import { CategoryInlineLink } from "@/components/shared/CategoryInlineLink";
 import { AppointmentTypeGlassBadge } from "@/components/shared/appointment-display/AppointmentTypeGlassBadge";
-import { Clock3, Euro, Tags } from "@/components/shared/appointment-card-icons";
+import { VisitFeeBadge } from "@/components/shared/billing/VisitFeeBadge";
+import { Clock3, Tags } from "@/components/shared/appointment-card-icons";
 import {
   formatAppointmentTypeDurationLabel,
   resolveAppointmentTypeDisplayName,
   resolveAppointmentTypeDurationMinutes,
   type AppointmentTypeDisplaySource,
 } from "@/lib/appointment-type-display";
-import { formatVisitFeeEurLabel } from "@/lib/appointment-visit-fee-display";
 import { cn } from "@/lib/utils";
 
 type CategoryProps = {
@@ -88,13 +88,11 @@ export function AppointmentCategoryTypeMetaRow({
           </span>
         ) : null}
         {showFee ? (
-          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200/70 bg-emerald-50/80 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 shadow-[0_2px_8px_rgba(16,185,129,0.15)]">
-            <Euro className="h-3 w-3 shrink-0" aria-hidden />
-            {formatVisitFeeEurLabel(feeCents)}
-            {showFeeEstimateHint ? (
-              <span className="ml-0.5 text-[9px] font-normal text-emerald-500/90">· est.</span>
-            ) : null}
-          </span>
+          <VisitFeeBadge
+            size="cardMeta"
+            priceCents={feeCents}
+            showEstimateHint={showFeeEstimateHint}
+          />
         ) : null}
       </span>
     </AppointmentCardMetaRow>

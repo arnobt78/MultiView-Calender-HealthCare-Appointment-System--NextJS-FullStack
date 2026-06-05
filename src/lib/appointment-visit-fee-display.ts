@@ -16,9 +16,32 @@ export function resolveDisplayedVisitFeeCents(input: VisitFeeInput): number {
   return resolveVisitFeeCents(input);
 }
 
-/** EUR label for badges (de-DE, two decimals). */
+/** EUR label for prose / detail rows (includes € prefix — do not pair with Euro icon). */
 export function formatVisitFeeEurLabel(cents: number): string {
   return `€${(cents / 100).toFixed(2)}`;
+}
+
+/** Patient booking steps 2–3 — type price when set, else doctor/default with · est. */
+export function resolveBookingVisitFeeDisplay(input: {
+  selectedType: { price_cents?: number } | null;
+  doctorConsultationFeeCents?: number | null;
+  isFlexible: boolean;
+}): { cents: number; showEstimateHint: boolean } | null {
+  const { selectedType, doctorConsultationFeeCents, isFlexible } = input;
+  if (!isFlexible && !selectedType) return null;
+
+  const typePrice =
+    !isFlexible && selectedType ? (selectedType.price_cents ?? 0) : 0;
+  if (typePrice > 0) {
+    return { cents: typePrice, showEstimateHint: false };
+  }
+
+  const cents = resolveDisplayedVisitFeeCents({
+    typePriceCents: 0,
+    doctorConsultationFeeCents,
+  });
+  if (cents <= 0) return null;
+  return { cents, showEstimateHint: true };
 }
 
 export type VisitFeeHintSource = "type" | "doctor" | "default";

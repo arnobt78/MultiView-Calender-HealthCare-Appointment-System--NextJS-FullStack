@@ -69,7 +69,7 @@ export function ServiceCatalogCard({ service }: Props) {
               <Clock className="h-2.5 w-2.5 mr-0.5" aria-hidden />
               {service.duration_minutes} min
             </Badge>
-            <VisitFeeBadge priceCents={service.price_cents} className="text-[10px] py-0" />
+            <VisitFeeBadge size="services" priceCents={service.price_cents} />
           </div>
         </div>
       </CardContent>
