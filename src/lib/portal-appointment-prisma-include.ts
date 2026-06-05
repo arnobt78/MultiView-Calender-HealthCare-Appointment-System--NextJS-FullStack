@@ -21,3 +21,15 @@ export const portalAppointmentListInclude = {
   treating_physician: { select: portalAppointmentClinicianSelect },
   appointment_type: { select: APPOINTMENT_TYPE_CARD_SELECT },
 } as const;
+
+/** Doctor portal today/upcoming lists — fee + office fallback for visit location display. */
+export const doctorPortalAppointmentClinicianSelect = {
+  consultation_fee: true,
+  office_location: true,
+} as const;
+
+export const doctorPortalAppointmentListInclude = {
+  appointment_type: { select: APPOINTMENT_TYPE_CARD_SELECT },
+  treating_physician: { select: doctorPortalAppointmentClinicianSelect },
+  owner: { select: doctorPortalAppointmentClinicianSelect },
+} as const;

@@ -8,7 +8,8 @@ import { AppointmentScheduleColorDot } from "@/components/shared/appointments/Ap
 import { TelehealthSessionBadge } from "@/components/shared/appointments/TelehealthSessionBadge";
 import { AppointmentListVisitFeeBadge } from "@/components/shared/appointment-display/AppointmentListVisitFeeBadge";
 import { resolveAppointmentLineColor } from "@/context/AppointmentColorContext";
-import type { Appointment } from "@/types/types";
+import { resolveAppointmentDisplayLocation } from "@/lib/appointment-visit-location";
+import type { DoctorPortalAppointmentRow } from "@/types/types";
 import {
   CalendarCheck,
   CalendarClock,
@@ -37,7 +38,7 @@ const STATUS_META: Record<string, { cls: string; icon: ReactNode; label: string 
 };
 
 type DoctorPortalAppointmentListRowProps = {
-  appt: Appointment;
+  appt: DoctorPortalAppointmentRow;
   /** Today panel shows status + overdue; upcoming shows Today/Tomorrow/Later glass tag. */
   variant: "today" | "upcoming";
 };
@@ -52,6 +53,7 @@ export function DoctorPortalAppointmentListRow({
   const statusKey = appt.status ?? "pending";
   const meta = STATUS_META[statusKey] ?? STATUS_META.pending;
   const overdue = isPast(end) && appt.status !== "done";
+  const locationLabel = resolveAppointmentDisplayLocation(appt);
 
   return (
     <div className="flex items-start gap-2 border-b border-border/40 py-3 last:border-0">
@@ -83,10 +85,10 @@ export function DoctorPortalAppointmentListRow({
           label={appt.title}
           className="block truncate text-sm font-medium"
         />
-        {appt.location ? (
+        {locationLabel ? (
           <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
             <MapPin className="h-3 w-3 shrink-0" aria-hidden />
-            {appt.location}
+            {locationLabel}
           </p>
         ) : null}
         {appt.chief_complaint ? (

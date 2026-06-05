@@ -314,11 +314,17 @@ export interface DoctorRow {
   patient_count: number;
 }
 
+/** Doctor portal list row — clinician office embed for shared visit location resolver. */
+export type DoctorPortalAppointmentRow = Appointment & {
+  owner?: { office_location?: string | null } | null;
+  treating_physician?: { office_location?: string | null } | null;
+};
+
 // DoctorPortalData — shape returned by GET /api/doctor-portal (SSR prefetch)
 export interface DoctorPortalData {
   doctor: User;
-  todayAppointments: Appointment[];
-  upcomingAppointments: Appointment[];
+  todayAppointments: DoctorPortalAppointmentRow[];
+  upcomingAppointments: DoctorPortalAppointmentRow[];
   patients: Patient[];
   enabledTypes: AppointmentType[];
   allGlobalTypes: AppointmentType[];

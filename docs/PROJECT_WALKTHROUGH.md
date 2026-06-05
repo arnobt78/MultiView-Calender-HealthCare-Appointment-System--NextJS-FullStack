@@ -1,8 +1,8 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-05 — Visit location + invoice billing violet)
+## Latest (2026-06-05 — Visit location parity + invoice billing violet)
 
-- **Visit location:** `appointment-visit-location.ts` resolver; `AppointmentVisitScheduleMeta` on portal timeline + booking steps 2/3; patient book POST sets `location` from doctor `office_location`; `portal-appointment-prisma-include.ts` adds `office_location` to clinician embeds; `AppointmentCard` / detail / compact grid show place + telehealth badge.
+- **Visit location:** `resolveAppointmentDisplayLocation` on doctor portal list rows + CP dashboard queue; `doctorPortalAppointmentListInclude` + `mapDoctorPortalAppointmentsFromRows` (API + SSR prefetch); portal timeline/booking/cards/detail/compact unchanged; patient book POST persists `office_location`.
 - **Invoice violet:** detail/dialog/list; header Generate/Download; footer Send deduped; PDF attachment download.
 - **Tests:** `appointment-visit-location`, portal clinician fixtures. **771** / **145** · tsc · lint · build.
 

@@ -4,7 +4,7 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-05)
 
-- **Visit location:** `appointment-visit-location.ts` + `AppointmentVisitScheduleMeta`; booking persists `office_location`; portal includes `office_location`; cards/detail/timeline/compact show place + `TelehealthSessionBadge`.
+- **Visit location:** shared resolver everywhere incl. `DoctorPortalAppointmentListRow` + CP dashboard queue; `doctorPortalAppointmentListInclude` + `mapDoctorPortalAppointmentsFromRows`; booking persists `office_location`; portal/prefetch clinician embeds synced.
 - **Invoice billing violet:** detail/dialog/list; header Generate/Download; footer Send deduped; PDF `?download=1`.
 - **Invalidation:** booking → `invalidateAfterAppointmentMutation`; invoice → `invalidateAfterInvoiceWrite`.
 - **Verify:** **771** / **145** · tsc · lint · build.
@@ -31,7 +31,7 @@ Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Key paths
 
-- Location: `appointment-visit-location.ts`, `AppointmentVisitScheduleMeta`, `portal-appointment-prisma-include.ts`
+- Location: `appointment-visit-location.ts`, `doctorPortalAppointmentListInclude`, `mapDoctorPortalAppointmentsFromRows`, `DashboardQueueAppointmentRow`
 - Booking: `PatientBookingDoctorVisitSummary`, `patient-portal/route.ts` POST
 - Invoice: `InvoiceDetailHeaderActions`, `invoice-pdf-document.ts`
 - Cards: `AppointmentCard`, `PortalAppointmentTimelineCard`, `AppointmentDetailScreenShared`

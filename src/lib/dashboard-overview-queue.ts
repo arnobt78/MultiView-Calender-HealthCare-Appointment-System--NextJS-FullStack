@@ -98,6 +98,17 @@ export const dashboardOverviewAppointmentQueueSelect = {
       email: true,
       image: true,
       specialty: true,
+      office_location: true,
+    },
+  },
+  owner: {
+    select: {
+      id: true,
+      display_name: true,
+      email: true,
+      image: true,
+      specialty: true,
+      office_location: true,
     },
   },
 } satisfies Prisma.AppointmentSelect;
@@ -108,6 +119,7 @@ export type DashboardOverviewQueueDoctor = {
   email: string;
   image: string | null;
   specialty: string | null;
+  office_location?: string | null;
 };
 
 /** Calendar owner shown as Created/Updated actor on recent-activity rows. */
@@ -138,6 +150,8 @@ export type DashboardOverviewQueueAppointment = {
   is_telehealth: boolean;
   patient: DashboardOverviewQueuePatient | null;
   treatingDoctor: DashboardOverviewQueueDoctor | null;
+  /** Calendar owner — office fallback when `location` unset (legacy rows). */
+  calendarOwner: DashboardOverviewQueueDoctor | null;
 };
 
 type AppointmentQueueRow = {
@@ -163,6 +177,15 @@ type AppointmentQueueRow = {
     email: string;
     image: string | null;
     specialty: string | null;
+    office_location: string | null;
+  } | null;
+  owner: {
+    id: string;
+    display_name: string | null;
+    email: string;
+    image: string | null;
+    specialty: string | null;
+    office_location: string | null;
   } | null;
 };
 
@@ -186,7 +209,7 @@ function mapPatient(
 }
 
 function mapDoctor(
-  doctor: NonNullable<AppointmentQueueRow["treating_physician"]>
+  doctor: NonNullable<AppointmentQueueRow["treating_physician"] | AppointmentQueueRow["owner"]>
 ): DashboardOverviewQueueDoctor {
   return {
     id: doctor.id,
@@ -194,6 +217,7 @@ function mapDoctor(
     email: doctor.email,
     image: doctor.image,
     specialty: doctor.specialty,
+    office_location: doctor.office_location,
   };
 }
 
@@ -210,6 +234,7 @@ export function mapDashboardOverviewQueueAppointment(
     is_telehealth: row.is_telehealth === true,
     patient: row.patient ? mapPatient(row.patient) : null,
     treatingDoctor: row.treating_physician ? mapDoctor(row.treating_physician) : null,
+    calendarOwner: row.owner ? mapDoctor(row.owner) : null,
   };
 }
 

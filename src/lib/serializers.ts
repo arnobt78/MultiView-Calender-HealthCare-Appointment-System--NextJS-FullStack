@@ -392,3 +392,34 @@ export function mapPortalAppointmentsFromRows(rows: PortalAppointmentIncludeRow[
     };
   });
 }
+
+/** Doctor portal today/upcoming — clinician office embed for `resolveAppointmentDisplayLocation`. */
+export type DoctorPortalAppointmentIncludeRow = Parameters<typeof serializeAppointment>[0] & {
+  treating_physician?: { consultation_fee?: number | null; office_location?: string | null } | null;
+  owner?: { consultation_fee?: number | null; office_location?: string | null } | null;
+  appointment_type?: {
+    name?: string | null;
+    price_cents: number;
+    duration_minutes?: number | null;
+  } | null;
+};
+
+export function mapDoctorPortalAppointmentsFromRows(rows: DoctorPortalAppointmentIncludeRow[]) {
+  return rows.map((a) => {
+    const feeDoctor = a.treating_physician ?? a.owner;
+    const base = serializeAppointment({
+      ...a,
+      appointment_type_price_cents: a.appointment_type?.price_cents ?? null,
+      appointment_type_name: a.appointment_type?.name ?? null,
+      appointment_type_duration_minutes: a.appointment_type?.duration_minutes ?? null,
+      doctor_consultation_fee_cents: feeDoctor?.consultation_fee ?? null,
+    });
+    return {
+      ...base,
+      owner: a.owner ? { office_location: a.owner.office_location ?? null } : undefined,
+      treating_physician: a.treating_physician
+        ? { office_location: a.treating_physician.office_location ?? null }
+        : undefined,
+    };
+  });
+}

@@ -19,6 +19,7 @@ import {
   controlPanelDashboardQueueItemStackClass,
 } from "@/lib/control-panel-glass-card";
 import type { DashboardOverviewQueueAppointment } from "@/lib/dashboard-overview-queue";
+import { resolveAppointmentDisplayLocation } from "@/lib/appointment-visit-location";
 
 type Props = {
   appointment: DashboardOverviewQueueAppointment;
@@ -37,6 +38,16 @@ export function DashboardQueueAppointmentRow({
 }: Props) {
   const href = appointmentDetailHref("admin", appointment.id);
   const relativeTone = resolveDashboardAppointmentRelativeTone(appointment.start);
+  const displayLocation = resolveAppointmentDisplayLocation({
+    location: appointment.location,
+    is_telehealth: appointment.is_telehealth,
+    treating_physician: appointment.treatingDoctor
+      ? { office_location: appointment.treatingDoctor.office_location ?? null }
+      : null,
+    owner: appointment.calendarOwner
+      ? { office_location: appointment.calendarOwner.office_location ?? null }
+      : null,
+  });
 
   return (
     <div className={embedded ? controlPanelDashboardQueueItemStackClass : controlPanelDashboardListRowClass}>
@@ -52,7 +63,7 @@ export function DashboardQueueAppointmentRow({
       <DashboardAppointmentScheduleMetaRow
         start={appointment.start}
         end={appointment.end}
-        location={appointment.location}
+        location={displayLocation}
         isTelehealth={appointment.is_telehealth}
         dateVariant={dateVariant}
         relativeTone={relativeTone}

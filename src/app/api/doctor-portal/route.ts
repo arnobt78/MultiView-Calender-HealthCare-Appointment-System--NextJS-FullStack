@@ -19,11 +19,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { getUserRole, isDoctorRole } from "@/lib/rbac";
-import {
-  APPOINTMENT_TYPE_CARD_SELECT,
-  appointmentTypeSerializedFields,
-} from "@/lib/appointment-type-include";
-import { serializeAppointment, serializePatient } from "@/lib/serializers";
+import { mapDoctorPortalAppointmentsFromRows, serializePatient } from "@/lib/serializers";
+import { doctorPortalAppointmentListInclude } from "@/lib/portal-appointment-prisma-include";
 import { patientPrimaryDoctorPick } from "@/lib/patient-api-include";
 import {
   startOfDay,
@@ -104,11 +101,7 @@ export async function GET() {
       prisma.appointment.findMany({
         where: appt({ start: { gte: todayStart, lte: todayEnd } }),
         orderBy: { start: "asc" },
-        include: {
-          appointment_type: { select: APPOINTMENT_TYPE_CARD_SELECT },
-          treating_physician: { select: { consultation_fee: true } },
-          owner: { select: { consultation_fee: true } },
-        },
+        include: doctorPortalAppointmentListInclude,
       }),
       // Upcoming: next 20 beyond today (not done)
       prisma.appointment.findMany({
@@ -118,11 +111,7 @@ export async function GET() {
         }),
         orderBy: { start: "asc" },
         take: 20,
-        include: {
-          appointment_type: { select: APPOINTMENT_TYPE_CARD_SELECT },
-          treating_physician: { select: { consultation_fee: true } },
-          owner: { select: { consultation_fee: true } },
-        },
+        include: doctorPortalAppointmentListInclude,
       }),
       // Patients assigned to this doctor
       prisma.patient.findMany({
@@ -232,32 +221,8 @@ export async function GET() {
         ...doctor,
         created_at: doctor.created_at.toISOString(),
       },
-      todayAppointments: todayAppts.map((a) => {
-        const ta = a as typeof a & {
-          appointment_type?: { price_cents: number } | null;
-          treating_physician?: { consultation_fee: number | null } | null;
-          owner?: { consultation_fee: number | null } | null;
-        };
-        const feeDoc = ta.treating_physician ?? ta.owner;
-        return serializeAppointment({
-          ...a,
-          ...appointmentTypeSerializedFields(ta.appointment_type),
-          doctor_consultation_fee_cents: feeDoc?.consultation_fee ?? null,
-        });
-      }),
-      upcomingAppointments: upcomingAppts.map((a) => {
-        const ta = a as typeof a & {
-          appointment_type?: { price_cents: number } | null;
-          treating_physician?: { consultation_fee: number | null } | null;
-          owner?: { consultation_fee: number | null } | null;
-        };
-        const feeDoc = ta.treating_physician ?? ta.owner;
-        return serializeAppointment({
-          ...a,
-          ...appointmentTypeSerializedFields(ta.appointment_type),
-          doctor_consultation_fee_cents: feeDoc?.consultation_fee ?? null,
-        });
-      }),
+      todayAppointments: mapDoctorPortalAppointmentsFromRows(todayAppts),
+      upcomingAppointments: mapDoctorPortalAppointmentsFromRows(upcomingAppts),
       patients: patients.map(serializePatient),
       enabledTypes,
       allGlobalTypes,

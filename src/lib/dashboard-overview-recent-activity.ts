@@ -74,6 +74,7 @@ export const dashboardOverviewRecentQueueSelect = {
       email: true,
       image: true,
       specialty: true,
+      office_location: true,
     },
   },
   owner: {
@@ -83,6 +84,7 @@ export const dashboardOverviewRecentQueueSelect = {
       email: true,
       image: true,
       specialty: true,
+      office_location: true,
     },
   },
 } satisfies Prisma.AppointmentSelect;

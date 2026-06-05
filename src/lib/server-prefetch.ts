@@ -49,7 +49,9 @@ import {
   serializeInvoice,
   serializeUser,
   mapPortalAppointmentsFromRows,
+  mapDoctorPortalAppointmentsFromRows,
 } from "@/lib/serializers";
+import { doctorPortalAppointmentListInclude } from "@/lib/portal-appointment-prisma-include";
 import type { UsersListResponse } from "@/hooks/useUsers";
 import {
   patientDetailInclude,
@@ -1302,11 +1304,7 @@ export async function prefetchDoctorPortal(userId: string): Promise<DoctorPortal
           start: { gte: todayStart, lte: todayEnd },
         }),
         orderBy: { start: "asc" },
-        include: {
-          appointment_type: { select: APPOINTMENT_TYPE_CARD_SELECT },
-          treating_physician: { select: { consultation_fee: true } },
-          owner: { select: { consultation_fee: true } },
-        },
+        include: doctorPortalAppointmentListInclude,
       }),
       prisma.appointment.findMany({
         where: apptScope({
@@ -1315,11 +1313,7 @@ export async function prefetchDoctorPortal(userId: string): Promise<DoctorPortal
         }),
         orderBy: { start: "asc" },
         take: 20,
-        include: {
-          appointment_type: { select: APPOINTMENT_TYPE_CARD_SELECT },
-          treating_physician: { select: { consultation_fee: true } },
-          owner: { select: { consultation_fee: true } },
-        },
+        include: doctorPortalAppointmentListInclude,
       }),
       prisma.patient.findMany({
         where: { primary_doctor_id: userId },
@@ -1422,32 +1416,8 @@ export async function prefetchDoctorPortal(userId: string): Promise<DoctorPortal
         years_of_experience: doctor.years_of_experience,
         created_at: doctor.created_at.toISOString(),
       } as User,
-      todayAppointments: todayAppts.map((a) => {
-        const ta = a as typeof a & {
-          appointment_type?: { price_cents: number } | null;
-          treating_physician?: { consultation_fee: number | null } | null;
-          owner?: { consultation_fee: number | null } | null;
-        };
-        const feeDoc = ta.treating_physician ?? ta.owner;
-        return serializeAppointment({
-          ...a,
-          ...appointmentTypeSerializedFields(ta.appointment_type),
-          doctor_consultation_fee_cents: feeDoc?.consultation_fee ?? null,
-        });
-      }),
-      upcomingAppointments: upcomingAppts.map((a) => {
-        const ta = a as typeof a & {
-          appointment_type?: { price_cents: number } | null;
-          treating_physician?: { consultation_fee: number | null } | null;
-          owner?: { consultation_fee: number | null } | null;
-        };
-        const feeDoc = ta.treating_physician ?? ta.owner;
-        return serializeAppointment({
-          ...a,
-          ...appointmentTypeSerializedFields(ta.appointment_type),
-          doctor_consultation_fee_cents: feeDoc?.consultation_fee ?? null,
-        });
-      }),
+      todayAppointments: mapDoctorPortalAppointmentsFromRows(todayAppts),
+      upcomingAppointments: mapDoctorPortalAppointmentsFromRows(upcomingAppts),
       patients: patients.map(serializePatient) as Patient[],
       enabledTypes: globalTypes.filter((t) => configMap.get(t.id) !== false).map(mapType),
       allGlobalTypes: globalTypes.map(mapType),
