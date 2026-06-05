@@ -1,12 +1,10 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-05 — Invoice billing violet parity)
+## Latest (2026-06-05 — Visit location + invoice billing violet)
 
-- **Violet everywhere (billing):** detail cards, dialog (`invoice-dialog-ui-classes.ts`), management list frame — shared purple tokens.
-- **Detail actions:** header Generate + Download; footer Send hidden when header Generate (`resolveInvoiceDetailSendInFooter`); list menus unchanged.
-- **PDF download:** `GET /api/invoices/[id]/pdf?download=1` → `Content-Disposition` attachment; client `downloadInvoicePdf` (no popup blocker).
-- **Routes/SSR:** CP + portal `/invoices/[id]` unchanged prefetch; Generate invalidates via `updateInvoice`.
-- **Tests:** header/footer caps, pdf url/filename. **767** / **144** · tsc · lint · build.
+- **Visit location:** `appointment-visit-location.ts` resolver; `AppointmentVisitScheduleMeta` on portal timeline + booking steps 2/3; patient book POST sets `location` from doctor `office_location`; `portal-appointment-prisma-include.ts` adds `office_location` to clinician embeds; `AppointmentCard` / detail / compact grid show place + telehealth badge.
+- **Invoice violet:** detail/dialog/list; header Generate/Download; footer Send deduped; PDF attachment download.
+- **Tests:** `appointment-visit-location`, portal clinician fixtures. **771** / **145** · tsc · lint · build.
 
 ## Prior (2026-06-05 — Visit fee badges + patient booking price)
 

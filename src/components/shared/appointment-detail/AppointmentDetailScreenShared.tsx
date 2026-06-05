@@ -28,6 +28,7 @@ import { ClinicalAppointmentStatusBadge } from "@/components/shared/entity-detai
 import { AppointmentTypeGlassBadge } from "@/components/shared/appointment-display/AppointmentTypeGlassBadge";
 import { VisitFeeBadge } from "@/components/shared/billing/VisitFeeBadge";
 import { TelehealthSessionBadge } from "@/components/shared/appointments/TelehealthSessionBadge";
+import { resolveAppointmentDisplayLocation } from "@/lib/appointment-visit-location";
 import { ClinicalDataTable } from "@/components/shared/ClinicalDataTable";
 import { PatientIdentityCell } from "@/components/shared/person-display/PatientIdentityCell";
 import { DoctorIdentityCell } from "@/components/shared/person-display/DoctorIdentityCell";
@@ -390,12 +391,15 @@ export function AppointmentDetailScreenShared({
                     : "—"}
                   {appointment.end ? ` – ${format(new Date(appointment.end), "p")}` : ""}
                 </p>
-                {appointment.location ? (
-                  <p className="text-sm text-gray-600">
-                    <MapPin className="mr-1 inline h-3.5 w-3.5" aria-hidden />
-                    {appointment.location}
-                  </p>
-                ) : null}
+                {(() => {
+                  const place = resolveAppointmentDisplayLocation(appointment);
+                  return place ? (
+                    <p className="text-sm text-gray-600">
+                      <MapPin className="mr-1 inline h-3.5 w-3.5" aria-hidden />
+                      {place}
+                    </p>
+                  ) : null;
+                })()}
               </div>
             </div>
 

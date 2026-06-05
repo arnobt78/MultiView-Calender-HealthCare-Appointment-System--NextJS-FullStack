@@ -112,6 +112,7 @@ import type { Invoice } from "@/hooks/usePayments";
 import type { Organization } from "@/hooks/useOrganization";
 import { getUserRole, isPatientRole } from "@/lib/rbac";
 import type { InvoiceBillingTotalsPayload } from "@/lib/invoice-billing-totals";
+import { portalAppointmentListInclude } from "@/lib/portal-appointment-prisma-include";
 
 // ─── Shared types ─────────────────────────────────────────────────────────────
 
@@ -1232,16 +1233,7 @@ export async function prefetchPortalData(userId: string): Promise<PortalPrefetch
 
     const appointmentsRaw = await prisma.appointment.findMany({
       where: { patient_id: patientRow.id },
-      include: {
-        category: true,
-        owner: {
-          select: { id: true, display_name: true, email: true, role: true, image: true, specialty: true, consultation_fee: true },
-        },
-        treating_physician: {
-          select: { id: true, display_name: true, email: true, role: true, image: true, specialty: true, consultation_fee: true },
-        },
-        appointment_type: { select: APPOINTMENT_TYPE_CARD_SELECT },
-      },
+      include: portalAppointmentListInclude,
       orderBy: { start: "desc" },
     });
 

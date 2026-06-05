@@ -25,6 +25,8 @@ import { PatientAgeGlassBadge } from "@/components/shared/person-display/Patient
 import { PatientCareTierGlassBadge } from "@/components/shared/person-display/PatientCareTierGlassBadge";
 import { PatientPortraitAvatar } from "@/components/shared/person-display/PatientPortraitAvatar";
 import { AppointmentCategoryTypeMetaRow } from "@/components/shared/appointment-display/AppointmentCategoryTypeMetaRow";
+import { TelehealthSessionBadge } from "@/components/shared/appointments/TelehealthSessionBadge";
+import { resolveAppointmentDisplayLocation } from "@/lib/appointment-visit-location";
 import { resolvePrimaryDoctorCardImage } from "@/lib/appointment-card-clinician-image";
 import { canShowAppointmentClinicalNotes } from "@/lib/portal-appointment-card-visibility";
 import { shouldShowAppointmentCategoryTypeRow } from "@/lib/appointment-type-display";
@@ -371,6 +373,7 @@ function AppointmentCardMeta({
   const showCategoryTypeRow =
     Boolean(appointment.category_data) ||
     shouldShowAppointmentCategoryTypeRow(appointment, displayFeeCents);
+  const displayLocation = resolveAppointmentDisplayLocation(appointment);
 
   return (
     <>
@@ -381,17 +384,19 @@ function AppointmentCardMeta({
         <AppointmentCardMetaRow icon={<Clock3 className="h-3.5 w-3.5" />}>
           <span className={clsx(isDone && "line-through text-gray-400")}>{formattedTime}</span>
         </AppointmentCardMetaRow>
-        <AppointmentCardMetaRow icon={<MapPin className="h-3.5 w-3.5" />} wrap={wrapValues}>
-          {wrapValues ? (
-            <WrappingText className={isDone ? "text-gray-400" : "text-gray-700"}>
-              {appointment.location || "--"}
-            </WrappingText>
-          ) : (
-            <span className={clsx("truncate text-gray-700", isDone && "text-gray-400")}>
-              {appointment.location || "--"}
-            </span>
-          )}
-        </AppointmentCardMetaRow>
+        {!appointment.is_telehealth ? (
+          <AppointmentCardMetaRow icon={<MapPin className="h-3.5 w-3.5" />} wrap={wrapValues}>
+            {wrapValues ? (
+              <WrappingText className={isDone ? "text-gray-400" : "text-gray-700"}>
+                {displayLocation || "--"}
+              </WrappingText>
+            ) : (
+              <span className={clsx("truncate text-gray-700", isDone && "text-gray-400")}>
+                {displayLocation || "--"}
+              </span>
+            )}
+          </AppointmentCardMetaRow>
+        ) : null}
       </div>
 
       <div className={clsx(appointmentCardMetaGroupClass, "text-gray-700")}>
@@ -518,12 +523,7 @@ function AppointmentCardMeta({
           </AppointmentCardMetaRow>
         ) : null}
 
-        {appointment.is_telehealth ? (
-          <span className="inline-flex items-center gap-1 rounded-full border border-sky-200/60 bg-sky-100/80 px-2 py-0.5 text-[10px] font-medium text-sky-700">
-            <Video className="h-3 w-3" />
-            Telehealth
-          </span>
-        ) : null}
+        {appointment.is_telehealth ? <TelehealthSessionBadge /> : null}
       </div>
 
       {showEmbeddedClinician && calendarOwnerId && portalOwner ? (
@@ -1066,12 +1066,16 @@ export function AppointmentCard({
       titleRow
     );
 
+  const compactLocation = resolveAppointmentDisplayLocation(appointment);
+
   const compactMeta =
     density === "compact" ? (
       <div className="flex min-w-0 flex-wrap items-center gap-x-2 text-[10px] text-gray-500">
         <span className="truncate">{model.formattedDate}</span>
         <span className="truncate">{model.formattedTime}</span>
+        {compactLocation ? <span className="truncate">{compactLocation}</span> : null}
         <span className="truncate">{model.patientLabel}</span>
+        {appointment.is_telehealth ? <TelehealthSessionBadge className="scale-90" /> : null}
       </div>
     ) : null;
 

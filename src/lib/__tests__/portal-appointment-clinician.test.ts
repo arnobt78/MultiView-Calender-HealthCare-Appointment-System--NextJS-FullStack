@@ -10,6 +10,7 @@ describe("resolvePortalTreatingClinician", () => {
       role: "doctor",
       image: null,
       specialty: "GP",
+      office_location: null,
     };
     expect(
       resolvePortalTreatingClinician({
@@ -29,6 +30,7 @@ describe("resolvePortalTreatingClinician", () => {
       role: "doctor",
       image: null,
       specialty: "Internal Medicine",
+      office_location: null,
     };
     expect(
       resolvePortalTreatingClinician({

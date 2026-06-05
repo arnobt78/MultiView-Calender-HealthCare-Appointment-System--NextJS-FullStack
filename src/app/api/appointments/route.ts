@@ -30,20 +30,12 @@ import { buildAppointmentDetailApiPayload } from "@/lib/appointment-detail-api";
 import { redis } from "@/lib/redis";
 import { assertDoctorActiveForBooking, InactiveDoctorBookingError } from "@/lib/doctor-active-booking";
 import { format } from "date-fns";
+import { portalAppointmentListInclude } from "@/lib/portal-appointment-prisma-include";
 
 export const dynamic = "force-dynamic";
 
 /** Patient callers: same joins as GET /api/patient-portal for RBAC-safe staff labels on dashboard cards. */
-const PATIENT_APPOINTMENT_INCLUDE = {
-  category: true,
-  owner: {
-    select: { id: true, display_name: true, email: true, role: true, image: true, specialty: true, consultation_fee: true },
-  },
-  treating_physician: {
-    select: { id: true, display_name: true, email: true, role: true, image: true, specialty: true, consultation_fee: true },
-  },
-  appointment_type: { select: APPOINTMENT_TYPE_CARD_SELECT },
-} as const;
+const PATIENT_APPOINTMENT_INCLUDE = portalAppointmentListInclude;
 
 /** All callers get appointment_type.price_cents + doctor consultation_fee for the visit fee badge fallback chain. */
 const BASE_APPOINTMENT_INCLUDE = {

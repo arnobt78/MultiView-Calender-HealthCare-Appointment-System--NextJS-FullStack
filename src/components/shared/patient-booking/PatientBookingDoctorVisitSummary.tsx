@@ -8,7 +8,10 @@ import type { ReactNode } from "react";
  */
 
 import { addMinutes, format } from "date-fns";
-import { CalendarDays, Clock, Timer } from "lucide-react";
+import { CalendarDays, Clock, MapPin, Timer } from "lucide-react";
+import { TelehealthSessionBadge } from "@/components/shared/appointments/TelehealthSessionBadge";
+import { AppointmentVisitScheduleMeta } from "@/components/shared/appointments/AppointmentVisitScheduleMeta";
+import { resolveAppointmentVisitLocationLabel } from "@/lib/appointment-visit-location";
 import { Badge } from "@/components/ui/badge";
 import { DoctorAvatar } from "@/components/shared/doctor-display/DoctorAvatar";
 import { DoctorAvailabilityGroups } from "@/components/shared/doctor-display/DoctorAvailabilityGroups";
@@ -92,6 +95,37 @@ function VisitTypeBadge({
       <Timer className="h-3 w-3" />
       {selectedType.name} · {selectedType.duration_minutes} min
     </Badge>
+  );
+}
+
+function resolveBookingIsTelehealth(
+  selectedType: PatientBookingAppointmentType | null,
+  isFlexible: boolean
+): boolean {
+  if (isFlexible || !selectedType) return false;
+  return Boolean(selectedType.is_telehealth);
+}
+
+/** Doctor office preview — hidden for telehealth visit types. */
+function BookingVisitLocationPreview({
+  doctor,
+  isTelehealth,
+}: {
+  doctor: DoctorDirectoryRow;
+  isTelehealth: boolean;
+}) {
+  const label = resolveAppointmentVisitLocationLabel({
+    office_location: doctor.office_location,
+    is_telehealth: isTelehealth,
+  });
+  if (!label) {
+    return isTelehealth ? <TelehealthSessionBadge /> : null;
+  }
+  return (
+    <p className="flex items-center gap-1.5 text-[10px] leading-snug text-sky-800">
+      <MapPin className="h-3 w-3 shrink-0 text-sky-600" aria-hidden />
+      <span>{label}</span>
+    </p>
   );
 }
 
@@ -214,6 +248,7 @@ function ScheduleLayout({
     flexDuration,
     duration
   );
+  const isTelehealth = resolveBookingIsTelehealth(selectedType, isFlexible);
 
   return (
     <PatientBookingDoctorVisitContextColumn doctor={doctor} className={className}>
@@ -233,14 +268,21 @@ function ScheduleLayout({
         flexDuration={flexDuration}
       />
       {selectedLine ? (
-        <p className="flex items-center gap-1.5 text-[10px] leading-snug text-sky-800">
-          <CalendarDays className="h-3 w-3 shrink-0 text-sky-600" aria-hidden />
-          <span>
-            <span className="font-semibold text-sky-900">Selected: </span>
-            {selectedLine}
-          </span>
-        </p>
-      ) : null}
+        <AppointmentVisitScheduleMeta
+          dateTimeLabel={
+            <>
+              <span className="font-semibold text-sky-900">Selected: </span>
+              {selectedLine}
+            </>
+          }
+          office_location={doctor.office_location}
+          is_telehealth={isTelehealth}
+          showTelehealthBadge={isTelehealth}
+          className="text-[10px] leading-snug text-sky-800"
+        />
+      ) : (
+        <BookingVisitLocationPreview doctor={doctor} isTelehealth={isTelehealth} />
+      )}
     </PatientBookingDoctorVisitContextColumn>
   );
 }
@@ -266,6 +308,7 @@ function ConfirmLayout({
   const schedulingBracket = !isFlexible
     ? formatAppointmentTypeSchedulingBracket(selectedType ?? undefined)
     : null;
+  const isTelehealth = resolveBookingIsTelehealth(selectedType, isFlexible);
 
   return (
     <PatientBookingDoctorVisitContextColumn doctor={doctor} className={className}>
@@ -277,15 +320,20 @@ function ConfirmLayout({
           <DoctorSpecialtyBadge specialty={doctor.specialty} showIcon />
         ) : null}
       </div>
-      <p className="flex items-start gap-1.5 text-sm leading-snug text-sky-800 break-words">
-        <CalendarDays className="mt-0.5 h-3.5 w-3.5 shrink-0 text-sky-600" aria-hidden />
-        <span className="min-w-0 break-words">
-          {dateTimeLine}
-          {schedulingBracket ? (
-            <span className="text-muted-foreground"> ({schedulingBracket})</span>
-          ) : null}
-        </span>
-      </p>
+      <AppointmentVisitScheduleMeta
+        dateTimeLabel={
+          <span className="min-w-0 break-words">
+            {dateTimeLine}
+            {schedulingBracket ? (
+              <span className="text-muted-foreground"> ({schedulingBracket})</span>
+            ) : null}
+          </span>
+        }
+        office_location={doctor.office_location}
+        is_telehealth={isTelehealth}
+        showTelehealthBadge={isTelehealth}
+        className="text-sm leading-snug text-sky-800"
+      />
       {selectedType || isFlexible ? (
         <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
           <VisitTypeBadge

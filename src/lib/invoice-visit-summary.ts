@@ -4,6 +4,7 @@
 
 import { format } from "date-fns";
 import { prisma } from "@/lib/prisma";
+import { resolveAppointmentVisitLocationLabel } from "@/lib/appointment-visit-location";
 import type { InvoiceVisitSummary } from "@/lib/billing-types";
 
 export const invoiceAppointmentVisitInclude = {
@@ -113,9 +114,11 @@ export function mapAppointmentToInvoiceVisitSummary(
 
   const whenLabel = `${format(row.start, "EEE, dd MMM yyyy")} · ${format(row.start, "HH:mm")} – ${format(row.end, "HH:mm")}`;
 
-  const locationLabel = row.is_telehealth
-    ? "Video call (telehealth)"
-    : row.location?.trim() || "—";
+  const locationLabel =
+    resolveAppointmentVisitLocationLabel(
+      { location: row.location, is_telehealth: row.is_telehealth },
+      { telehealthPlaceholder: "Video call (telehealth)" }
+    ) ?? "—";
 
   return {
     appointment_id: row.id,

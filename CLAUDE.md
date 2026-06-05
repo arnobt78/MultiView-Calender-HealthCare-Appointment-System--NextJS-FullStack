@@ -4,11 +4,10 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-05)
 
-- **Invoice billing violet:** detail + dialog + management list share violet tokens (`invoice-detail-ui-classes.ts`, `invoice-dialog-ui-classes.ts`).
-- **Detail actions:** header Generate/Download; footer Send deduped via `resolveInvoiceDetailSendInFooter`; PDF `?download=1` attachment (`downloadInvoicePdf`).
-- **Identity + chrome:** `clinical-identity-inline-ui.ts`; `EntityDetailChromeHeader` on appt/invoice/doctor/category/CP patient.
-- **Invalidation:** Generate → `updateInvoice` → `invalidateAfterInvoiceWrite`.
-- **Verify:** **767** / **144** · tsc · lint · build.
+- **Visit location:** `appointment-visit-location.ts` + `AppointmentVisitScheduleMeta`; booking persists `office_location`; portal includes `office_location`; cards/detail/timeline/compact show place + `TelehealthSessionBadge`.
+- **Invoice billing violet:** detail/dialog/list; header Generate/Download; footer Send deduped; PDF `?download=1`.
+- **Invalidation:** booking → `invalidateAfterAppointmentMutation`; invoice → `invalidateAfterInvoiceWrite`.
+- **Verify:** **771** / **145** · tsc · lint · build.
 
 ## Never / Always
 
@@ -26,17 +25,16 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 |-------|--------|
 | Appointment | `invalidateAfterAppointmentMutation` |
 | Patient | `invalidateEntityAffectingAppointments` + `invalidatePatientDetailAndSnapshot` |
-| Category | `invalidateCategoryDetailAndSnapshot` |
-| User/doctor | `invalidateUsersAndAuth` + `invalidateDoctorDetailAndSnapshot` |
 | Invoice | `invalidateInvoicesAndOverview` / `invalidateInvoicesBilling` |
 
 Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Key paths
 
-- Invoice: `InvoiceDetailHeaderActions`, `InvoiceDetailActionBar`, `invoice-pdf-document.ts`, `invoice-detail-action-capabilities.ts`, `api/invoices/[id]/pdf`
-- Dialog: `invoice-dialog-ui-classes.ts`, `InvoiceFormDialog`
-- Chrome/identity: `EntityDetailChromeHeader`, `clinical-identity-inline-ui.ts`
+- Location: `appointment-visit-location.ts`, `AppointmentVisitScheduleMeta`, `portal-appointment-prisma-include.ts`
+- Booking: `PatientBookingDoctorVisitSummary`, `patient-portal/route.ts` POST
+- Invoice: `InvoiceDetailHeaderActions`, `invoice-pdf-document.ts`
+- Cards: `AppointmentCard`, `PortalAppointmentTimelineCard`, `AppointmentDetailScreenShared`
 
 ## Principle
 

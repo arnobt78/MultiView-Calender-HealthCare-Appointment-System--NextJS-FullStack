@@ -16,6 +16,8 @@ export type PatientBookingAppointmentType = {
   user_id: string | null;
   /** Visit fee in cents — shown in booking dialog; 0 = no explicit price set. */
   price_cents?: number;
+  /** Drives telehealth badge + omits physical location in booking preview. */
+  is_telehealth?: boolean;
 };
 
 export type PatientBookingWizardState = {

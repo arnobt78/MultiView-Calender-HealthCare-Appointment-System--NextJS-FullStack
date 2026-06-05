@@ -35,6 +35,7 @@ describe("mapPortalAppointmentsFromRows", () => {
           role: "doctor",
           image: null,
           specialty: null,
+          office_location: null,
         },
       },
     ]);
@@ -70,6 +71,7 @@ describe("attachPortalClinicianToFullAppointment", () => {
           role: "admin",
           image: null,
           specialty: null,
+          office_location: null,
         },
         treating_physician: {
           id: "u2",
@@ -78,6 +80,7 @@ describe("attachPortalClinicianToFullAppointment", () => {
           role: "doctor",
           image: null,
           specialty: null,
+          office_location: null,
         },
       },
     ])[0];
@@ -149,6 +152,7 @@ describe("resolvePrimaryDoctorCardLabel", () => {
           role: "admin",
           image: null,
           specialty: null,
+          office_location: null,
         },
       },
     ])[0];
@@ -180,6 +184,7 @@ describe("portalAppointmentToFullAppointment", () => {
           role: "doctor",
           image: null,
           specialty: null,
+          office_location: null,
         },
       },
     ])[0];
@@ -199,6 +204,7 @@ describe("portal display labels", () => {
         role: "doctor",
         image: null,
         specialty: null,
+        office_location: null,
       })
     ).toBe("Demo Doctor (d@test.com)");
   });
@@ -224,6 +230,7 @@ describe("portalTreatingDisplayLabel", () => {
         role: "doctor",
         image: null,
         specialty: null,
+        office_location: null,
       })
     ).toBe("t2@test.com");
   });

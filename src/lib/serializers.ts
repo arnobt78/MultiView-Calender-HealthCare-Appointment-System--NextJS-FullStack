@@ -308,6 +308,8 @@ export type PortalAppointmentClinicianUser = {
   specialty?: string | null;
   /** Included when select contains consultation_fee — drives visit fee badge second fallback. */
   consultation_fee?: number | null;
+  /** Doctor office — display fallback when `appointment.location` unset. */
+  office_location?: string | null;
 };
 
 /** @deprecated Use `PortalAppointmentClinicianUser` — not `/staff` routes. */
@@ -373,6 +375,7 @@ export function mapPortalAppointmentsFromRows(rows: PortalAppointmentIncludeRow[
             role: a.owner.role,
             image: a.owner.image ?? null,
             specialty: a.owner.specialty ?? null,
+            office_location: a.owner.office_location ?? null,
           }
         : undefined,
       treating_physician: a.treating_physician
@@ -383,6 +386,7 @@ export function mapPortalAppointmentsFromRows(rows: PortalAppointmentIncludeRow[
             role: a.treating_physician.role,
             image: a.treating_physician.image ?? null,
             specialty: a.treating_physician.specialty ?? null,
+            office_location: a.treating_physician.office_location ?? null,
           }
         : undefined,
     };

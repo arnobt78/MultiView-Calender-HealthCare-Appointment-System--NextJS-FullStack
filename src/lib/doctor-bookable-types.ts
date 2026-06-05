@@ -107,6 +107,7 @@ export type AppointmentTypeDoctorApiRow = {
   minimum_notice_minutes?: number;
   is_enabled?: boolean;
   is_active?: boolean;
+  is_telehealth?: boolean;
   price_cents?: number;
 };
 
@@ -138,6 +139,7 @@ export function mapDirectoryBookableToPatientBookingType(
     buffer_after_minutes: number;
     slot_interval_minutes: number;
     is_global?: boolean;
+    is_telehealth?: boolean;
     price_cents?: number;
   }
 ): PatientBookingAppointmentType {
@@ -151,6 +153,7 @@ export function mapDirectoryBookableToPatientBookingType(
     minimum_notice_minutes: PATIENT_BOOKING_DEFAULT_MINIMUM_NOTICE_MINUTES,
     user_id: row.is_global === false ? doctorId : null,
     price_cents: row.price_cents ?? 0,
+    is_telehealth: row.is_telehealth ?? false,
   };
 }
 
@@ -169,5 +172,6 @@ export function mapApiBookableToPatientBookingType(
       row.minimum_notice_minutes ?? PATIENT_BOOKING_DEFAULT_MINIMUM_NOTICE_MINUTES,
     user_id: row.user_id,
     price_cents: row.price_cents ?? 0,
+    is_telehealth: row.is_telehealth ?? false,
   };
 }

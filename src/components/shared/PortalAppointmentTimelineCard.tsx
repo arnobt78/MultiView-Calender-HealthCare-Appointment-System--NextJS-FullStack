@@ -15,11 +15,11 @@ import {
   CalendarX,
   Clock3,
   FileText,
-  MapPin,
   NotebookPen,
   Stethoscope,
-  Video,
 } from "lucide-react";
+import { TelehealthSessionBadge } from "@/components/shared/appointments/TelehealthSessionBadge";
+import { AppointmentVisitScheduleMeta } from "@/components/shared/appointments/AppointmentVisitScheduleMeta";
 import { Badge } from "@/components/ui/badge";
 import { AppointmentCardMetaRow } from "@/components/shared/AppointmentCardMetaRow";
 import { AppointmentListColorBar } from "@/components/shared/AppointmentListColorBar";
@@ -32,10 +32,7 @@ import { resolvePortalTreatingClinician } from "@/lib/portal-appointment-clinici
 import { canShowAppointmentClinicalNotes } from "@/lib/portal-appointment-card-visibility";
 import { useAppointmentColor } from "@/context/AppointmentColorContext";
 import { useAuth } from "@/hooks/useAuth";
-import {
-  portalAppointmentDetailStackClass,
-  portalAppointmentWhenWhereClass,
-} from "@/lib/appointment-card";
+import { portalAppointmentDetailStackClass } from "@/lib/appointment-card";
 import type { PortalAppointmentRow } from "@/lib/serializers";
 import { cn } from "@/lib/utils";
 
@@ -116,29 +113,23 @@ export function PortalAppointmentTimelineCard({
                 {statusMeta.icon}
                 <span className="ml-1">{statusMeta.label}</span>
               </Badge>
-              {appt.is_telehealth ? (
-                <span className="inline-flex items-center gap-1 rounded-full border border-sky-200/60 bg-sky-100/80 px-2 py-0.5 text-[10px] font-medium text-sky-700">
-                  <Video className="h-3 w-3" aria-hidden />
-                  Telehealth
-                </span>
-              ) : null}
+              {appt.is_telehealth ? <TelehealthSessionBadge /> : null}
             </div>
 
-            <div className={portalAppointmentWhenWhereClass}>
-              <AppointmentCardMetaRow icon={<Clock3 className="h-3.5 w-3.5" />}>
-                <span className="font-medium text-gray-700">
+            <AppointmentVisitScheduleMeta
+              dateTimeLabel={
+                <>
                   {format(startDate, "dd MMM yyyy, HH:mm")}
                   {" — "}
                   {format(new Date(appt.end), "HH:mm")}
-                </span>
-              </AppointmentCardMetaRow>
-
-              {appt.location ? (
-                <AppointmentCardMetaRow icon={<MapPin className="h-3.5 w-3.5" />}>
-                  <span className="font-medium text-gray-700">{appt.location}</span>
-                </AppointmentCardMetaRow>
-              ) : null}
-            </div>
+                </>
+              }
+              location={appt.location}
+              office_location={
+                appt.treating_physician?.office_location ?? appt.owner?.office_location
+              }
+              is_telehealth={appt.is_telehealth}
+            />
 
             <div className={portalAppointmentDetailStackClass}>
               {appt.owner ? (

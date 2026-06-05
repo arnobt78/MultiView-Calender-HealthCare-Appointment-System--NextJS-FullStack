@@ -15,6 +15,8 @@ import {
   appointmentTypeSerializedFields,
 } from "@/lib/appointment-type-include";
 import { mapPortalAppointmentsFromRows, serializePatient, serializeAppointment } from "@/lib/serializers";
+import { portalAppointmentListInclude } from "@/lib/portal-appointment-prisma-include";
+import { resolvePatientBookingPersistedLocation } from "@/lib/appointment-visit-location";
 import { patientDetailInclude } from "@/lib/patient-api-include";
 import { resolvePatientBookingCategoryId } from "@/lib/patient-booking-category";
 import {
@@ -62,16 +64,7 @@ export async function GET() {
 
     const appointmentsRaw = await prisma.appointment.findMany({
       where: { patient_id: patientRow.id },
-      include: {
-        category: true,
-        owner: {
-          select: { id: true, display_name: true, email: true, role: true, image: true, specialty: true, consultation_fee: true },
-        },
-        treating_physician: {
-          select: { id: true, display_name: true, email: true, role: true, image: true, specialty: true, consultation_fee: true },
-        },
-        appointment_type: { select: APPOINTMENT_TYPE_CARD_SELECT },
-      },
+      include: portalAppointmentListInclude,
       orderBy: { start: "desc" },
     });
 
@@ -121,7 +114,7 @@ export async function POST(request: NextRequest) {
     }
     const doctor = await prisma.user.findUnique({
       where: { id: doctorId },
-      select: { id: true, role: true, is_active: true },
+      select: { id: true, role: true, is_active: true, office_location: true },
     });
     if (!doctor || doctor.role !== "doctor") {
       return NextResponse.json({ error: "Doctor not found" }, { status: 404 });
@@ -205,6 +198,11 @@ export async function POST(request: NextRequest) {
 
     const categoryId = await resolvePatientBookingCategoryId(prisma, doctorId, typeId);
 
+    const persistedLocation = resolvePatientBookingPersistedLocation(
+      isTelehealth,
+      doctor.office_location
+    );
+
     const appointment = await prisma.appointment.create({
       data: {
         title,
@@ -218,6 +216,7 @@ export async function POST(request: NextRequest) {
         appointment_type_id: typeId,
         duration_minutes: durationMinutes,
         is_telehealth: isTelehealth,
+        location: persistedLocation,
         category_id: categoryId,
         owner_id: doctorId, // B3 Prisma field; DB column remains `user_id`
         treating_physician_id: doctorId, // B2: portal booking — same doctor until product allows decoupling
