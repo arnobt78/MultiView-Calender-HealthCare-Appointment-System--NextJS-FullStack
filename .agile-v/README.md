@@ -4,10 +4,10 @@ Living AQMS — **Agile V Infinity Loop** on this repository.
 
 ## Quick Start (every session)
 
-1. **Read** `ACTIVATION.md` + `STATE.md` — cycle **C5**, verify PASS
+1. **Read** `ACTIVATION.md` + `STATE.md` — cycle **C6**, verify PASS
 2. Load skill `agile-v-core` + `agile-v-pipeline`
 3. **Registry** `SKILLS.md` — 24 agents
-4. **Bootstrap** `BOOTSTRAP.md` — C1..C5 index
+4. **Bootstrap** `BOOTSTRAP.md` — C1..C6 index
 
 ## Cycles
 
@@ -15,9 +15,10 @@ Living AQMS — **Agile V Infinity Loop** on this repository.
 |-------|--------|---------|---------|
 | C1 | closed | REQ-0001..0004 | `cycles/C1/` frozen |
 | C2 | closed | REQ-0005..0008 | `cycles/C2/` frozen |
-| C3 | verify PASS | REQ-0009..0015 | `cycles/C3/` · gates 5–6 pending |
-| C4 | shipped | REQ-0016..0020 | `cycles/C4/` · gates 7–8 pending |
-| **C5** | **active** | REQ-0021..0026 | `cycles/C5/` · gates 9–10 pending |
+| C3 | verify PASS | REQ-0009..0015 | gates 5–6 pending |
+| C4 | shipped | REQ-0016..0020 | gates 7–8 pending |
+| C5 | verify PASS | REQ-0021..0026 | gates 9–10 pending |
+| **C6** | **active** | REQ-0027..0031 | gates 11–12 pending |
 
 ## Activation
 
@@ -31,4 +32,4 @@ Living AQMS — **Agile V Infinity Loop** on this repository.
 npm test && npx tsc --noEmit && npm run lint && npm run build
 ```
 
-**742** tests · **138** files (2026-06-04)
+**772** tests · **145** files (2026-06-05)

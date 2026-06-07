@@ -45,3 +45,8 @@
 | 2026-06-04T18:30:00Z | init | Bootstrap C5 + Infinity Loop refresh for tomorrow | STATE C5; agile-v-core.md; Cursor rule; GATE-0009/0010 | REQ-0021..0026 |
 | 2026-06-04T18:30:00Z | red-team | C5 automated verification PASS | 742 tests, tsc, lint, build; commits 9785c8d d826ca7 | REQ-0021..0025 |
 | 2026-06-04T16:01:00Z | init | Session activation confirm — Infinity Loop always on | ACTIVATION.md; C1..C5 bootstrap intact; 742/742 re-verify | REQ-0021..0026 |
+| 2026-06-05T17:40:00Z | init | Bootstrap C6 — invoice violet + visit location parity | REQ-0027..0031; ART-0126..0155; Cursor rule restored | REQ-0027..0031 |
+| 2026-06-05T17:40:00Z | build | REQ-0028..0029 invoice violet + entity chrome | cad0b07, 636282e, bcfe6d4 | REQ-0028, REQ-0029 |
+| 2026-06-05T17:40:00Z | build | REQ-0030 visit location portal/booking/cards | a31bf78; portal includes + booking POST | REQ-0030 |
+| 2026-06-05T17:40:00Z | build | REQ-0031 location fallback doctor portal/dashboard/snapshot | 84967f6, 629c3ed | REQ-0031 |
+| 2026-06-05T17:40:00Z | red-team | C6 automated verification PASS | 772 tests, tsc, lint, build; GATE-0011/0012 pending | REQ-0027..0031 |

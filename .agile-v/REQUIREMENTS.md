@@ -1,12 +1,12 @@
 # Requirements — HealthCal Pro
 
-<!-- Revision: C1..C5 | C5 active | Last updated: 2026-06-04 -->
+<!-- Revision: C1..C6 | C6 active | Last updated: 2026-06-05 -->
 
 ## Document Control
 
 | Field | Value |
 |-------|-------|
-| Cycle | C1–C2 archived · C3/C4 verify+gate pending · **C5 active** (REQ-0021..0026) |
+| Cycle | C1–C2 archived · C3–C5 verify+gate pending · **C6 active** (REQ-0027..0031) |
 | Author | Requirement Architect |
 | Gate 1 status | C1 GATE-0001 · C2 GATE-0003 approved |
 | Canonical source | this file |
@@ -72,6 +72,11 @@
 | REQ-0024 | approved [C5] | REQ-0022 | ART-0119..0122 | VER-0043 |
 | REQ-0025 | approved [C5] | REQ-0022 | ART-0123..0124 | VER-0044 |
 | REQ-0026 | approved [C5] | — | — | constraint doc |
+| REQ-0027 | approved [C6] | — | ART-0126..0130 | VER-0046..0047 |
+| REQ-0028 | approved [C6] | REQ-0027 | ART-0131..0138 | VER-0048..0049 |
+| REQ-0029 | approved [C6] | REQ-0028 | ART-0139..0142 | VER-0050 |
+| REQ-0030 | approved [C6] | — | ART-0143..0150 | VER-0051..0052 |
+| REQ-0031 | approved [C6] | REQ-0030 | ART-0151..0155 | VER-0053..0054 |
 
 ### REQ-0004 — Dashboard/CP SSR prefetch + calendar batch assignee fetch
 
@@ -485,3 +490,71 @@
 | Risk | R0 |
 
 **Statement:** List endpoints use `USER_API_SELECT` / light selects without audit joins; detail GET + SSR use full includes. Not a defect.
+
+---
+
+## C6 — Invoice violet + visit location parity (active)
+
+### REQ-0027 — Visit fee badge surface parity
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C6] |
+| Priority | P2 |
+| Risk | R1 |
+
+**Statement:** `VisitFeeBadge` + per-surface size tokens (`cardMeta`, `wizard`, `picker`, `table`, `services`) on booking, cards, portal, services.
+
+### REQ-0028 — Invoice detail violet + header actions + PDF
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C6] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0017 |
+
+**Statement:** Invoice detail violet glass; header Generate (draft→sent) + Download; `GET /api/invoices/[id]/pdf?download=1`; linked visit badge alignment.
+
+**Acceptance criteria:**
+1. `invoice-detail-ui-classes.ts` violet tokens; card shadows restored.
+2. `InvoiceDetailHeaderActions` — Generate via `updateInvoice`; Download attachment.
+3. `invoice-detail-action-capabilities.ts` dedupes footer Send when header Generate shows.
+4. `invalidateAfterInvoiceWrite` on status change.
+
+### REQ-0029 — Invoice dialog violet + entity chrome
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C6] |
+| Priority | P1 |
+| Parent | REQ-0028 |
+
+**Statement:** Amber→violet invoice dialog/list; `PatientDetailScreen` → `EntityDetailChromeHeader`; identity row alignment.
+
+### REQ-0030 — Visit location shared resolver (portal/booking/cards)
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C6] |
+| Priority | P1 |
+| Risk | R1 |
+
+**Statement:** `appointment-visit-location.ts` + `AppointmentVisitScheduleMeta`; patient book POST persists doctor `office_location`; portal includes `office_location`; cards/detail/timeline/compact.
+
+**Acceptance criteria:**
+1. `portal-appointment-prisma-include.ts` clinician embed synced (API + prefetch).
+2. `AppointmentCard`, `PortalAppointmentTimelineCard`, `AppointmentDetailScreenShared`, booking steps 2/3.
+3. `invalidateAfterAppointmentMutation` on patient booking.
+
+### REQ-0031 — Location fallback (doctor portal, dashboard, snapshot)
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C6] |
+| Priority | P1 |
+| Parent | REQ-0030 |
+
+**Statement:** `resolveAppointmentDisplayLocation` / `resolveSnapshotAppointmentDisplayLocation` on doctor portal list, CP dashboard queue, patient snapshot Location column.
+
+**Out of scope:** Native binary PDF (HTML print attachment accepted).

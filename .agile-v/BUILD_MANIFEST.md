@@ -131,11 +131,41 @@
 | ART-0123 | C5 | REQ-0025 | `scripts/backfill-user-audit.ts`, `db:backfill-user-audit` | built |
 | ART-0124 | C5 | REQ-0025 | `seed-test-user.ts` audit stamp + `updateMany` backfill | built |
 | ART-0125 | C5 | REQ-0026 | `user-api-select.ts` list scalars only (documented constraint) | built |
+| ART-0126 | C6 | REQ-0027 | `VisitFeeBadge.tsx`, `visit-fee-badge-ui-classes.ts` | built |
+| ART-0127 | C6 | REQ-0027 | `resolveBookingVisitFeeDisplay`; booking wizard badge | built |
+| ART-0128 | C6 | REQ-0027 | `AppointmentListVisitFeeBadge`; card meta integration | built |
+| ART-0129 | C6 | REQ-0027 | `VisitTypePickerList`; services page fee display | built |
+| ART-0130 | C6 | REQ-0027 | Visit fee badge tests + surface parity | built |
+| ART-0131 | C6 | REQ-0028 | `invoice-detail-ui-classes.ts` violet + shadows | built |
+| ART-0132 | C6 | REQ-0028 | `InvoiceDetailHeaderActions.tsx` Generate/Download | built |
+| ART-0133 | C6 | REQ-0028 | `invoice-pdf-document.ts`, `api/invoices/[id]/pdf/route.ts` | built |
+| ART-0134 | C6 | REQ-0028 | `invoice-detail-action-capabilities.ts` footer dedupe | built |
+| ART-0135 | C6 | REQ-0028 | `InvoiceLinkedVisitPanel.tsx` badge alignment | built |
+| ART-0136 | C6 | REQ-0029 | `invoice-dialog-ui-classes.ts` violet migration | built |
+| ART-0137 | C6 | REQ-0029 | `EntityDetailChromeHeader.tsx`; CP patient chrome | built |
+| ART-0138 | C6 | REQ-0029 | `clinical-identity-inline-ui.ts` identity row alignment | built |
+| ART-0139 | C6 | REQ-0030 | `appointment-visit-location.ts` shared resolver | built |
+| ART-0140 | C6 | REQ-0030 | `AppointmentVisitScheduleMeta.tsx` | built |
+| ART-0141 | C6 | REQ-0030 | `portal-appointment-prisma-include.ts`; patient-portal POST location | built |
+| ART-0142 | C6 | REQ-0030 | `AppointmentCard`, timeline, detail, booking summary | built |
+| ART-0143 | C6 | REQ-0031 | `doctorPortalAppointmentListInclude`; `mapDoctorPortalAppointmentsFromRows` | built |
+| ART-0144 | C6 | REQ-0031 | `DoctorPortalAppointmentListRow.tsx` resolver | built |
+| ART-0145 | C6 | REQ-0031 | `dashboard-overview-queue.ts` office embed + queue row | built |
+| ART-0146 | C6 | REQ-0031 | `appointment-snapshot-row.ts` office embed | built |
+| ART-0147 | C6 | REQ-0031 | `resolveSnapshotAppointmentDisplayLocation` | built |
+| ART-0148 | C6 | REQ-0031 | `patient-detail-snapshot-columns.tsx` Location column | built |
+| ART-0149 | C6 | REQ-0031 | `appointment-visit-location.test.ts` | built |
+| ART-0150 | C6 | REQ-0030..0031 | `server-prefetch.ts` + doctor-portal route sync | built |
+| ART-0151 | C6 | REQ-0031 | `DoctorPortalAppointmentRow` type | built |
+| ART-0152 | C6 | REQ-0031 | `DashboardQueueAppointmentRow` display location | built |
+| ART-0153 | C6 | REQ-0028 | `invalidateAfterInvoiceWrite` on Generate | built |
+| ART-0154 | C6 | REQ-0030 | `invalidateAfterAppointmentMutation` booking | built |
+| ART-0155 | C6 | REQ-0031 | Constraint: PDF HTML attachment (native PDF deferred) | built |
 
 ## Verification Commands (project default)
 
 ```bash
-npm test        # 742 passed (C5, 2026-06-04)
+npm test        # 772 passed (C6, 2026-06-05)
 npx tsc --noEmit
 npm run lint
 npm run build

@@ -37,12 +37,18 @@
 | TC-0029 | C5 | REQ-0023 | unit | Appointment view-model audit | `appointment-detail-view-model.test.ts` | PASS |
 | TC-0030 | C5 | REQ-0024 | regression | Admin user detail path | full regression | PASS |
 | TC-0031 | C5 | REQ-0025 | manual | Backfill idempotent | `db:backfill-user-audit` | PASS |
+| TC-0032 | C6 | REQ-0027 | unit | Visit fee + booking display | `appointment-visit-fee-display`, visit fee tests | PASS |
+| TC-0033 | C6 | REQ-0028..0029 | unit | Invoice detail/dialog capabilities | `invoice-detail-action-capabilities` | PASS |
+| TC-0034 | C6 | REQ-0030 | unit | Visit location resolver | `appointment-visit-location.test.ts` | PASS |
+| TC-0035 | C6 | REQ-0031 | regression | Doctor portal + dashboard embed | full regression | PASS |
+| TC-0036 | C6 | REQ-0031 | unit | Snapshot location fallback | `appointment-visit-location.test.ts` snapshot case | PASS |
+| TC-0037 | C6 | REQ-0027..0031 | regression | Full suite + tsc + lint + build | project default | PASS |
 
 ## Regression Baseline
 
 | Suite | Command | Scope |
 |-------|---------|-------|
-| Unit / lib | `npm test` | 138 files, 742 tests (C5) |
+| Unit / lib | `npm test` | **145** files, **772** tests (C6) |
 | Typecheck | `npx tsc --noEmit` | strict TS |
 | Lint | `npm run lint` | ESLint |
 | Release | `npm run build` | Next.js production |

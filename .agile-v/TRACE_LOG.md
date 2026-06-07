@@ -19,6 +19,7 @@
 | TRACE-0013 | 2026-06-04T12:24:00Z | red-team | tool | POLICY.yaml@1.0.0 | npm test 666/666 — bootstrap verify refresh | REQ-0009..0015 |
 | TRACE-0014 | 2026-06-04T18:30:00Z | init | bootstrap | POLICY.yaml@1.0.0 | C5 bootstrap; REQ-0021..0026; agile-v-core.md; commit 16c74b8 | REQ-0021..0026 |
 | TRACE-0015 | 2026-06-04T16:01:00Z | init | bootstrap | POLICY.yaml@1.0.0 | ACTIVATION.md session card; Infinity Loop re-confirm; npm test 742/742 | REQ-0021..0026 |
+| TRACE-0016 | 2026-06-05T17:40:00Z | init | bootstrap | POLICY.yaml@1.0.0 | C6 bootstrap REQ-0027..0031; Cursor rule; npm test 772/772 | REQ-0027..0031 |
 
 ## Span Types
 

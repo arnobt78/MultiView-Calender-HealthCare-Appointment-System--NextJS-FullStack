@@ -119,3 +119,29 @@ human_gate_2: GATE-0010
 | release build | npm run build | PASS | REQ-0021..0025 |
 
 **EvalGate (C5 active):** PASS (automated) — Human Gates 9–10 pending before `cycles/C5/` freeze.
+
+---
+
+## C6 Verify — ER-C6-VERIFY
+
+```yaml
+eval_run_id: ER-C6-VERIFY
+eval_timestamp: "2026-06-05T17:40:00Z"
+policy_version_ref: "1.0.0"
+eval_gate_status: PASS
+eval_gate_rationale: "C6 invoice violet + visit location — npm test 772/772 (145 files), tsc, eslint, build PASS for REQ-0027..0031"
+cycle: C6
+release_commit: "629c3ed"
+human_gate_1: GATE-0011
+human_gate_2: GATE-0012
+```
+
+| Suite | Command | Result | LINKED_REQ |
+|-------|---------|--------|------------|
+| appointment-visit-location | npm test appointment-visit-location | PASS | REQ-0030, REQ-0031 |
+| full regression | npm test | PASS 772/772 | REQ-0027..0031 |
+| typecheck | npx tsc --noEmit | PASS | REQ-0027..0031 |
+| lint | npm run lint | PASS | REQ-0027..0031 |
+| release build | npm run build | PASS | REQ-0027..0031 |
+
+**EvalGate (C6 active):** PASS (automated) — Human Gates 11–12 pending before `cycles/C6/` freeze.

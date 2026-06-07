@@ -24,12 +24,12 @@
 | File | Purpose |
 |------|---------|
 | `STATE.md` | Current cycle / stage — read first |
-| `REQUIREMENTS.md` | Canonical REQ-XXXX (0001..0026) |
+| `REQUIREMENTS.md` | Canonical REQ-XXXX (0001..0031) |
 | `BUILD_MANIFEST.md` | ART-XXXX → code paths |
 | `TEST_SPEC.md` | TC-XXXX |
 | `VALIDATION_SUMMARY.md` | VER-XXXX + EvalGate |
 | `DECISION_LOG.md` | Append-only |
-| `BOOTSTRAP.md` | C1..C5 index |
+| `BOOTSTRAP.md` | C1..C6 index |
 | `SKILLS.md` | 24 companion skills |
 
 ## Engineering
@@ -53,6 +53,7 @@ Decision Points: [choices] | Log → DECISION_LOG.md
 |-------|--------|---------|-------------|
 | C3 | verify PASS | REQ-0009..0015 | GATE-0005, 0006 pending |
 | C4 | shipped | REQ-0016..0020 | GATE-0007, 0008 pending |
-| **C5** | **active** verify PASS | REQ-0021..0026 | GATE-0009, 0010 pending |
+| C5 | verify PASS | REQ-0021..0026 | GATE-0009, 0010 pending |
+| **C6** | **active** verify PASS | REQ-0027..0031 | GATE-0011, 0012 pending |
 
-**Tomorrow:** approve gates → archive cycles → specify **C6** before new code.
+**Next:** approve gates → archive cycles → specify **C7** before new code.

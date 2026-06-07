@@ -14,6 +14,8 @@
 | GATE-0008 | 2 | C4 | REQ-0016..0020 release | Pending | After GATE-0007; archive cycles/C4 | — | — | — | — | ER-C4-UI-VERIFY | — | — |
 | GATE-0009 | 1 | C5 | REQ-0021..0026 | Pending | Record Audit tranche | — | — | — | — | ER-C5-VERIFY | — | — |
 | GATE-0010 | 2 | C5 | REQ-0021..0026 release | Pending | After GATE-0009; archive cycles/C5 | — | — | — | — | ER-C5-VERIFY | — | — |
+| GATE-0011 | 1 | C6 | REQ-0027..0031 | Pending | Invoice violet + visit location | — | — | — | — | ER-C6-VERIFY | — | — |
+| GATE-0012 | 2 | C6 | REQ-0027..0031 release | Pending | After GATE-0011; archive cycles/C6 | — | — | — | — | ER-C6-VERIFY | — | — |
 
 ## Authority Matrix
 

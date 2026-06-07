@@ -239,3 +239,49 @@ EvalGate (C4-UI): status=PASS | eval_run_id=ER-C4-UI-VERIFY | policy_version_ref
 | Human Gate 2 | pending GATE-0010 |
 
 EvalGate (C5): status=PASS | eval_run_id=ER-C5-VERIFY | policy_version_ref=1.0.0 | gate2_pending=GATE-0010
+
+---
+
+## C6 — Invoice violet + visit location (2026-06-05)
+
+| Item | Value |
+|------|-------|
+| Cycle | C6 |
+| ART-IDs | ART-0126..ART-0155 |
+| REQ-IDs | REQ-0027..REQ-0031 |
+| Regression | **772/772** Vitest (145 files) |
+| Commits | `629c3ed`, `84967f6`, `a31bf78`, `bcfe6d4`, `636282e`, `cad0b07`, `29fd3b5` |
+
+| VER-ID | TC-ID | REQ-ID | Result | Description |
+|--------|-------|--------|--------|-------------|
+| VER-0046 | TC-0032 | REQ-0027 | PASS | Visit fee badge + booking fee display tests |
+| VER-0047 | TC-0032 | REQ-0027 | PASS | Full regression at C6 start |
+| VER-0048 | TC-0033 | REQ-0028 | PASS | Invoice detail capabilities + PDF route |
+| VER-0049 | TC-0033 | REQ-0029 | PASS | Violet dialog classes + entity chrome |
+| VER-0050 | TC-0034 | REQ-0030 | PASS | `appointment-visit-location.test.ts` |
+| VER-0051 | TC-0035 | REQ-0031 | PASS | Doctor portal + dashboard location embed |
+| VER-0052 | TC-0036 | REQ-0031 | PASS | Snapshot location resolver test |
+| VER-0053 | REQ-0027..0031 | PASS | tsc + lint + build |
+| VER-0054 | TC-0037 | REQ-0027..0031 | PASS | Full regression **772/772** |
+
+## Coverage (C6)
+
+| REQ-ID | Tests | Status |
+|--------|-------|--------|
+| REQ-0027 | TC-0032 + regression | PASS |
+| REQ-0028 | TC-0033 + regression | PASS |
+| REQ-0029 | TC-0033 + regression | PASS |
+| REQ-0030 | TC-0034 + regression | PASS |
+| REQ-0031 | TC-0035..0036 + regression | PASS |
+
+## Red Team Sign-Off (C6)
+
+| Field | Value |
+|-------|-------|
+| Agent | Red Team Verifier (automated) |
+| Timestamp | 2026-06-05T17:40:00Z |
+| Evidence | `629c3ed`; 772 tests, tsc, lint, build |
+| LINKED_REQ | REQ-0027..0031 |
+| Human Gate 2 | pending GATE-0012 |
+
+EvalGate (C6): status=PASS | eval_run_id=ER-C6-VERIFY | policy_version_ref=1.0.0 | gate2_pending=GATE-0012

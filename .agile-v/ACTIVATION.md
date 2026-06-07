@@ -16,7 +16,7 @@
 
 ## 2. Read files (resume)
 
-1. `STATE.md` — cycle **C5**, stage 4 verify PASS
+1. `STATE.md` — cycle **C6**, stage 4 verify PASS
 2. `CHECKPOINTS.md` — only if PENDING HITL
 3. `REQUIREMENTS.md` — parent REQ before any work
 4. `agile-v-core.md` — repo binding + engineering rules
@@ -38,9 +38,10 @@ Specify → Constrain → [Gate1] → Orchestrate → Prove → Verify → [Gate
 |-------|-----|--------|------|
 | C3 | 0009..0015 | verify PASS | GATE-0005/0006 pending |
 | C4 | 0016..0020 | shipped | GATE-0007/0008 pending |
-| **C5** | **0021..0026** | **active verify PASS** | GATE-0009/0010 pending |
+| C5 | 0021..0026 | verify PASS | GATE-0009/0010 pending |
+| **C6** | **0027..0031** | **active verify PASS** | GATE-0011/0012 pending |
 
-**Baseline:** 742 tests · 138 files · commits `9785c8d`, `d826ca7`, `16c74b8`
+**Baseline:** **772** tests · **145** files · commit `629c3ed`
 
 ## 6. Halt if
 
@@ -53,5 +54,5 @@ Specify → Constrain → [Gate1] → Orchestrate → Prove → Verify → [Gate
 ## 8. Cursor / repo hooks
 
 - `AGENTS.md` (repo root)
-- `.cursor/rules/agile-v-infinity-loop.mdc` (`alwaysApply: true`, local)
+- `.cursor/rules/agile-v-infinity-loop.mdc` (`alwaysApply: true`)
 - `CLAUDE.md` + `docs/PROJECT_WALKTHROUGH.md` (engineering)
