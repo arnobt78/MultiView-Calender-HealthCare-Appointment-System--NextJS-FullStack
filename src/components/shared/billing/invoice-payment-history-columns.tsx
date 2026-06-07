@@ -2,19 +2,16 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { Badge } from "@/components/ui/badge";
 import { DataTableColumnHeader } from "@/components/shared/DataTableColumnHeader";
 import { InvoiceAmountDisplay } from "@/components/shared/billing/InvoiceAmountDisplay";
+import { PaymentStatusBadge } from "@/components/shared/billing/PaymentStatusBadge";
 import type { InvoicePaymentRow } from "@/lib/billing-types";
+import {
+  formatPaymentReferenceLabel,
+  paymentAmountTextClassForStatus,
+} from "@/lib/payment-status-display";
 import { clinicalCellMutedTextClass, clinicalTableCellMinRowClass } from "@/lib/table-display-styles";
 import { cn } from "@/lib/utils";
-
-const PAYMENT_STATUS_CLASS: Record<string, string> = {
-  pending: "bg-yellow-100 text-yellow-700",
-  succeeded: "bg-green-100 text-green-700",
-  failed: "bg-red-100 text-red-700",
-  refunded: "bg-orange-100 text-orange-700",
-};
 
 /** Payment history table on invoice detail — read-only ClinicalDataTable columns. */
 export function buildInvoicePaymentHistoryColumns(currency: string): ColumnDef<InvoicePaymentRow>[] {
@@ -42,7 +39,10 @@ export function buildInvoicePaymentHistoryColumns(currency: string): ColumnDef<I
           <InvoiceAmountDisplay
             amountCents={row.original.amount}
             currency={currency}
-            className="font-semibold"
+            className={cn(
+              "font-semibold",
+              paymentAmountTextClassForStatus(row.original.status)
+            )}
           />
         </div>
       ),
@@ -54,32 +54,25 @@ export function buildInvoicePaymentHistoryColumns(currency: string): ColumnDef<I
       meta: { cellClassName: "align-middle" },
       cell: ({ row }) => (
         <div className={cn(clinicalTableCellMinRowClass, "flex items-center")}>
-          <Badge
-            className={cn(
-              "shrink-0",
-              PAYMENT_STATUS_CLASS[row.original.status] ?? "bg-gray-100 text-gray-700"
-            )}
-          >
-            {row.original.status}
-          </Badge>
+          <PaymentStatusBadge status={row.original.status} />
         </div>
       ),
     },
     {
       id: "stripe_id",
       accessorFn: (row) => row.stripe_payment_id ?? "",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Stripe ID" />,
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Payment reference" />,
       meta: { cellClassName: "align-middle" },
       cell: ({ row }) => {
-        const stripeId = row.original.stripe_payment_id?.trim();
+        const { label, title } = formatPaymentReferenceLabel(row.original.stripe_payment_id);
         return (
           <div className={cn(clinicalTableCellMinRowClass, "flex items-center")}>
-            {stripeId ? (
-              <span className="font-mono text-xs text-muted-foreground" title={stripeId}>
-                {stripeId}
-              </span>
-            ) : (
+            {label === "—" ? (
               <span className={clinicalCellMutedTextClass}>—</span>
+            ) : (
+              <span className="text-sm text-foreground" title={title}>
+                {label}
+              </span>
             )}
           </div>
         );

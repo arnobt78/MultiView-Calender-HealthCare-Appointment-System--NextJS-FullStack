@@ -77,6 +77,7 @@
 | REQ-0029 | approved [C6] | REQ-0028 | ART-0139..0142 | VER-0050 |
 | REQ-0030 | approved [C6] | — | ART-0143..0150 | VER-0051..0052 |
 | REQ-0031 | approved [C6] | REQ-0030 | ART-0151..0155 | VER-0053..0054 |
+| REQ-0032 | approved [C6] | REQ-0028 | ART-0156..0162 | VER-0055..0057 |
 
 ### REQ-0004 — Dashboard/CP SSR prefetch + calendar batch assignee fetch
 
@@ -558,3 +559,18 @@
 **Statement:** `resolveAppointmentDisplayLocation` / `resolveSnapshotAppointmentDisplayLocation` on doctor portal list, CP dashboard queue, patient snapshot Location column.
 
 **Out of scope:** Native binary PDF (HTML print attachment accepted).
+
+### REQ-0032 — Invoice detail patient UX (title + payment history)
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C6] |
+| Priority | P1 |
+| Parent | REQ-0028 |
+
+**Statement:** Detail header plain visit title (no self-link); `{visit} · Invoice` section heading; payment history glass badges + tinted amounts + human payment reference labels.
+
+**Acceptance criteria:**
+1. `resolveInvoiceDetailHeaderTitle` skips demo seed slugs.
+2. `PaymentStatusBadge` + `payment-status-display.ts`.
+3. `InvoiceStatusBadge` icons; payment table column Payment reference.

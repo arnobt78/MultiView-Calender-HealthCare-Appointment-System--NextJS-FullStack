@@ -8,12 +8,10 @@ import type { Invoice } from "@/hooks/usePayments";
 import type { EntityRole } from "@/lib/entity-routes";
 import {
   appointmentDetailHref,
-  invoiceDetailHref,
   patientDetailHref,
 } from "@/lib/entity-routes";
 import { Card, CardContent } from "@/components/ui/card";
 import { EntityDetailChromeHeader } from "@/components/shared/entity-detail/EntityDetailChromeHeader";
-import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { InvoiceDetailActionBar } from "@/components/shared/billing/InvoiceDetailActionBar";
 import { InvoiceDetailHeaderActions } from "@/components/shared/billing/InvoiceDetailHeaderActions";
 import { resolvePortalEntityDetailSnapshotLinkPolicy } from "@/lib/entity-detail-snapshot-links";
@@ -29,13 +27,20 @@ import {
   mapInvoiceIssuerActor,
 } from "@/lib/appointment-detail-invoice-audit-rows";
 import type { InvoiceDetailUiAccess } from "@/lib/invoice-detail-ssr";
-import { getInvoiceAppointmentTitle } from "@/lib/invoice-list-row-display";
+import {
+  getInvoiceAppointmentTitle,
+  resolveInvoiceDetailHeaderTitle,
+} from "@/lib/invoice-list-row-display";
 import {
   formatAppointmentTypeDurationLabel,
   resolveAppointmentTypeDurationMinutes,
   resolveAppointmentTypeDisplayName,
 } from "@/lib/appointment-type-display";
-import { entityDetailOwnedSnapshotSectionTitle } from "@/lib/entity-detail-snapshot-section-copy";
+import {
+  entityDetailInvoiceRecordSectionTitle,
+  entityDetailOwnedSnapshotSectionTitle,
+} from "@/lib/entity-detail-snapshot-section-copy";
+import { pageChromeTitleClass } from "@/lib/page-chrome-classes";
 import { entityDetailPageHeaderClass } from "@/lib/patient-detail-ui-classes";
 import {
   invoiceDetailAuditIconCircleClass,
@@ -102,11 +107,14 @@ export function InvoiceDetailLiveBody({
     initialData: initialInvoice,
   });
 
+  const displayTitle = resolveInvoiceDetailHeaderTitle(invoice);
   const visitTitle = getInvoiceAppointmentTitle(invoice);
-  const subtitle =
+  const invoiceRecordSectionTitle = entityDetailInvoiceRecordSectionTitle(displayTitle);
+  const baseSubtitle =
     invoice.visit_summary?.patient_label && invoice.visit_summary?.when_label
       ? `${invoice.visit_summary.patient_label} · ${invoice.visit_summary.when_label}`
       : invoice.description ?? "Billing record";
+  const subtitle = `${baseSubtitle} · #${invoice.id.slice(0, 8)}`;
 
   const appointmentHref = invoice.appointment_id
     ? variant === "control-panel"
@@ -153,11 +161,7 @@ export function InvoiceDetailLiveBody({
         iconClassName={invoiceDetailChromeIconClass}
         title={
           <span className="flex flex-wrap items-center gap-2">
-            <EntityTitleLink
-              href={invoiceDetailHref(viewerRole, invoice.id)}
-              label={`Invoice #${invoice.id.slice(0, 8)}`}
-              className="text-xl font-semibold"
-            />
+            <span className={cn(pageChromeTitleClass, "min-w-0 break-words")}>{displayTitle}</span>
             <InvoiceStatusBadge invoice={invoice} />
           </span>
         }
@@ -179,7 +183,7 @@ export function InvoiceDetailLiveBody({
             sectionIconCircleClass={invoiceDetailSectionIconCircleClass}
             iconClassName={invoiceDetailSectionIconClass}
           >
-            Invoice
+            {invoiceRecordSectionTitle}
           </EntityDetailSnapshotSectionHeading>
           <dl className={invoiceDetailDefinitionListClass}>
             <InvoiceDetailDefinitionRow icon={Fingerprint} label="Invoice ID">

@@ -50,3 +50,4 @@
 | 2026-06-05T17:40:00Z | build | REQ-0030 visit location portal/booking/cards | a31bf78; portal includes + booking POST | REQ-0030 |
 | 2026-06-05T17:40:00Z | build | REQ-0031 location fallback doctor portal/dashboard/snapshot | 84967f6, 629c3ed | REQ-0031 |
 | 2026-06-05T17:40:00Z | red-team | C6 automated verification PASS | 772 tests, tsc, lint, build; GATE-0011/0012 pending | REQ-0027..0031 |
+| 2026-06-07T12:45:00Z | build | REQ-0032 invoice detail patient UX | plain header; PaymentStatusBadge; payment reference labels | REQ-0032 |

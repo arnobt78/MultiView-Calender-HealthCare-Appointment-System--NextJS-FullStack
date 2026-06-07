@@ -1,6 +1,13 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-05 — Visit location parity + invoice billing violet)
+## Latest (2026-06-07 — Invoice detail patient UX)
+
+- **Detail header:** plain visit title (`resolveInvoiceDetailHeaderTitle`); no self-link; `#shortId` in subtitle.
+- **Payment history:** `PaymentStatusBadge` glass + icons; tinted amounts; Payment reference labels (demo/Stripe).
+- **Invoice status:** `InvoiceStatusBadge` icons (draft/sent/paid/overdue/cancelled/refunded).
+- **Tests:** **780** / **146** · tsc · lint · build.
+
+## Prior (2026-06-05 — Visit location parity + invoice billing violet)
 
 - **Visit location:** full parity incl. patient snapshot Location column via `resolveSnapshotAppointmentDisplayLocation`; `appointmentSnapshotInclude` adds clinician `office_location`; doctor portal + dashboard queue unchanged from prior commit.
 - **Invoice violet:** detail/dialog/list; header Generate/Download; footer Send deduped; PDF attachment download.

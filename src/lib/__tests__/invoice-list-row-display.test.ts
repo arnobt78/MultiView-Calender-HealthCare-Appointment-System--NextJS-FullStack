@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   getInvoiceAppointmentTitle,
+  isSeededDemoAppointmentTitle,
+  resolveInvoiceDetailHeaderTitle,
   resolveInvoiceLocationDisplay,
 } from "@/lib/invoice-list-row-display";
 import type { InvoiceVisitSummary } from "@/lib/billing-types";
@@ -31,6 +33,39 @@ describe("getInvoiceAppointmentTitle", () => {
   it("uses visit title instead of category — patient composite", () => {
     expect(
       getInvoiceAppointmentTitle({
+        id: "inv-1",
+        description: "Demo",
+        visit_summary: summary,
+      })
+    ).toBe("Testing Custom Date");
+  });
+
+  it("falls back to list title for demo curated seed slug", () => {
+    expect(
+      getInvoiceAppointmentTitle({
+        id: "inv-1",
+        description: "Demo curated invoice",
+        visit_summary: {
+          ...summary,
+          title: "Demo curated — 01-admin-treating-demo-paid — Demo Patient",
+          appointment_type_name: "Follow-up Visit",
+        },
+      })
+    ).toBe("Follow-up Visit — Demo Patient");
+  });
+});
+
+describe("isSeededDemoAppointmentTitle", () => {
+  it("detects demo curated prefix", () => {
+    expect(isSeededDemoAppointmentTitle("Demo curated — slug")).toBe(true);
+    expect(isSeededDemoAppointmentTitle("Testing Custom Date")).toBe(false);
+  });
+});
+
+describe("resolveInvoiceDetailHeaderTitle", () => {
+  it("delegates to appointment title resolver", () => {
+    expect(
+      resolveInvoiceDetailHeaderTitle({
         id: "inv-1",
         description: "Demo",
         visit_summary: summary,

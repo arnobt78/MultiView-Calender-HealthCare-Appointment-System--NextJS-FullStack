@@ -161,11 +161,18 @@
 | ART-0153 | C6 | REQ-0028 | `invalidateAfterInvoiceWrite` on Generate | built |
 | ART-0154 | C6 | REQ-0030 | `invalidateAfterAppointmentMutation` booking | built |
 | ART-0155 | C6 | REQ-0031 | Constraint: PDF HTML attachment (native PDF deferred) | built |
+| ART-0156 | C6 | REQ-0032 | `resolveInvoiceDetailHeaderTitle`; demo slug filter | built |
+| ART-0157 | C6 | REQ-0032 | `InvoiceDetailLiveBody` plain header + section title | built |
+| ART-0158 | C6 | REQ-0032 | `payment-status-display.ts` + `PaymentStatusBadge.tsx` | built |
+| ART-0159 | C6 | REQ-0032 | `invoice-payment-history-columns` glass + reference labels | built |
+| ART-0160 | C6 | REQ-0032 | `InvoiceStatusBadge` icons | built |
+| ART-0161 | C6 | REQ-0032 | `entityDetailInvoiceRecordSectionTitle` | built |
+| ART-0162 | C6 | REQ-0032 | Tests payment-status-display + invoice-list-row-display | built |
 
 ## Verification Commands (project default)
 
 ```bash
-npm test        # 772 passed (C6, 2026-06-05)
+npm test        # 780 passed (C6, 2026-06-07)
 npx tsc --noEmit
 npm run lint
 npm run build

@@ -285,3 +285,13 @@ EvalGate (C5): status=PASS | eval_run_id=ER-C5-VERIFY | policy_version_ref=1.0.0
 | Human Gate 2 | pending GATE-0012 |
 
 EvalGate (C6): status=PASS | eval_run_id=ER-C6-VERIFY | policy_version_ref=1.0.0 | gate2_pending=GATE-0012
+
+---
+
+## C6 extension — Invoice detail patient UX (2026-06-07)
+
+| VER-ID | REQ-ID | Result | Description |
+|--------|--------|--------|-------------|
+| VER-0055 | REQ-0032 | PASS | payment-status-display tests |
+| VER-0056 | REQ-0032 | PASS | invoice-list-row-display demo slug fallback |
+| VER-0057 | REQ-0032 | PASS | Full regression **780/780** + tsc + lint + build |

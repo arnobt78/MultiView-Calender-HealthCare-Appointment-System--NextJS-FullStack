@@ -6,13 +6,32 @@ import { format, parseISO } from "date-fns";
 import type { InvoiceRow, InvoiceVisitSummary } from "@/lib/billing-types";
 import { getInvoiceListTitle } from "@/lib/invoice-list-display";
 
-/** Prefer linked visit `title` (not category — patient composite). */
+/** Seeded demo appointment titles — prefer human list title over raw slug. */
+const DEMO_CURATED_TITLE = /^demo curated\s*[—-]/i;
+const DEMO_MATRIX_SLUG = /admin-treating-demo/i;
+
+export function isSeededDemoAppointmentTitle(title: string | null | undefined): boolean {
+  const trimmed = title?.trim();
+  if (!trimmed) return false;
+  return DEMO_CURATED_TITLE.test(trimmed) || DEMO_MATRIX_SLUG.test(trimmed);
+}
+
+/** Prefer linked visit `title` when not a demo seed slug; else list title composite. */
 export function getInvoiceAppointmentTitle(
   invoice: Pick<InvoiceRow, "id" | "description" | "visit_summary">
 ): string {
   const visitTitle = invoice.visit_summary?.title?.trim();
-  if (visitTitle) return visitTitle;
+  if (visitTitle && !isSeededDemoAppointmentTitle(visitTitle)) {
+    return visitTitle;
+  }
   return getInvoiceListTitle(invoice);
+}
+
+/** Detail page chrome + invoice card section — visit-related title. */
+export function resolveInvoiceDetailHeaderTitle(
+  invoice: Pick<InvoiceRow, "id" | "description" | "visit_summary">
+): string {
+  return getInvoiceAppointmentTitle(invoice);
 }
 
 export function formatInvoiceVisitDateLabel(startIso: string): string | null {

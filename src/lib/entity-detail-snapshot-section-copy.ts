@@ -50,3 +50,10 @@ export function entityDetailOwnedSnapshotSectionTitle(
   const owner = resolveEntityOwnerName(entityName, entityKind);
   return `${owner}'s ${ENTITY_DETAIL_SNAPSHOT_SECTION_LABELS[section]}`;
 }
+
+/** Invoice detail card heading — "{Visit title} · Invoice" (responsive wrap). */
+export function entityDetailInvoiceRecordSectionTitle(visitTitle: string): string {
+  const trimmed = visitTitle.trim();
+  if (!trimmed || trimmed === "—") return "Invoice";
+  return `${trimmed} · Invoice`;
+}
