@@ -224,10 +224,11 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Prism
 
 ### Doctor display + `/services`
 
-- **Route:** `/services` — `src/app/services/page.tsx` SSR-prefetches doctors + global types; client `ServicesPage.tsx`.
+- **Route:** `/services` — `src/app/services/page.tsx` (`force-dynamic`) SSR-prefetches doctors + catalog; client `ServicesPage.tsx`.
 - **API:** `GET /api/doctors` → specialty, bio, image, `is_active`, `doctor_availabilities`, `bookable_appointment_types`, `patient_count`, `paid_revenue_cents` (`queryKeys.doctors.all`).
 - **Provider:** `DoctorDisplayProvider` (`src/context/DoctorDisplayContext.tsx`) in `AppProviders` — specialty glass classes + robohash helper (no extra network).
-- **Components:** `src/components/shared/doctor-display/*` — badges, avatars, `DoctorIdentityRow`, `DoctorLinkStack`, `DoctorCardHeroImage`, availability groups; **`ServicesDoctorFilters`** (search + **`ServicesCatalogTypeSelect`** visit-type filter + specialty/weekday/date); **`filterDoctorsByServiceCatalog`** (`src/lib/services-doctor-catalog-filter.ts`) matches `bookable_appointment_types` on each doctor row. **Appointment Services** block shows full catalog (no duplicate filter there).
+- **Components:** `ServicesDoctorFilters` (search + catalog type select + specialty/weekday/date) → `filterDoctorsByServiceCatalog`. **Appointment Services:** `ServiceCatalogCard` + `AppointmentTypeBrandMark` (light tint); own `ServicesServiceFilters` + `filterServiceCatalog`; glow via `service-catalog-card-ui-classes.ts`; labels `service-catalog-select-labels.ts`.
+- **Catalog data:** `GET /api/appointment-types/catalog` + `prefetchAppointmentServiceCatalog` — `icon`, `color`, buffers; dedupe additionals in `buildServiceCatalog`. Invalidate: `invalidateAppointmentTypeDerived` (prefix `appointmentTypes.all` covers `catalog`).
 - **Layout:** specialty badge always on its own line below name/email (`showIcon` default true). `/services` hero uses full-bleed cover with blurred backdrop fill (uniform tiles, face-biased crop); badge is in the card body under email, not on the image.
 - **Card UX:** flush hero image, `RoleEntityLink` doctor name, copy-email, `EntityActiveStatusBadge`, grouped availability rows; book CTA only when `isDoctorActive` — else “Inactive — booking unavailable”. Date filter matches calendar chrome (left calendar icon, `pl-8`, `min-w-[155px]`).
 - **Global reuse:** CP patient list/detail primary doctor + snapshot tables (`DoctorIdentityRow` / `DoctorIdentityCell`); Doctor Management stacks specialty + status in Doctor column; revenue column sortable.

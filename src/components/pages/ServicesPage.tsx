@@ -31,7 +31,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { queryKeys } from "@/lib/query-keys";
 import { apiClient } from "@/lib/api-client";
-import { SERVICES_CATALOG_FILTER_ALL, type ServiceCatalogRow } from "@/lib/appointment-service-catalog";
+import {
+  SERVICES_CATALOG_FILTER_ALL,
+  defaultServicesCatalogFilter,
+  filterServiceCatalog,
+  type ServiceCatalogRow,
+} from "@/lib/appointment-service-catalog";
 import type { DoctorBookableTypeRow } from "@/lib/doctor-bookable-types";
 import { filterDoctorsByServiceCatalog } from "@/lib/services-doctor-catalog-filter";
 import { useAppointmentServiceCatalog } from "@/hooks/useAppointmentServiceCatalog";
@@ -54,6 +59,7 @@ import {
   defaultServicesDoctorFilters,
   type ServicesDoctorFilterState,
 } from "@/components/services/ServicesDoctorFilters";
+import { ServicesServiceFilters } from "@/components/services/ServicesServiceFilters";
 import { VisitFeeInfoNoteCard } from "@/components/shared/billing/VisitFeeInfoNoteCard";
 import { buildServicesVisitFeePolicyNote } from "@/lib/appointment-visit-fee-display";
 
@@ -210,6 +216,7 @@ interface ServicesPageProps {
 export default function ServicesPage({ initialDoctors, initialServiceCatalog }: ServicesPageProps) {
   const queryClient = useQueryClient();
   const [filters, setFilters] = useState<ServicesDoctorFilterState>(defaultServicesDoctorFilters);
+  const [catalogFilters, setCatalogFilters] = useState(defaultServicesCatalogFilter);
 
   useLayoutEffect(() => {
     if (initialDoctors?.length) {
@@ -242,12 +249,20 @@ export default function ServicesPage({ initialDoctors, initialServiceCatalog }: 
     [catalogData?.services]
   );
 
+  const filteredCatalogServices = useMemo(
+    () => filterServiceCatalog(catalogServices, catalogFilters),
+    [catalogServices, catalogFilters]
+  );
+
   const filteredDoctors = useMemo(() => {
     const list = doctorsData?.doctors ?? [];
     return filterDoctors(list, filters, catalogServices);
   }, [doctorsData?.doctors, filters, catalogServices]);
 
   const doctors = doctorsData?.doctors ?? [];
+
+  const hasActiveCatalogFilter =
+    catalogFilters.selection !== SERVICES_CATALOG_FILTER_ALL;
 
   const hasActiveFilters =
     filters.search.trim().length > 0 ||
@@ -318,10 +333,18 @@ export default function ServicesPage({ initialDoctors, initialServiceCatalog }: 
               <Skeleton className="h-5 w-8 rounded-full" />
             ) : (
               <Badge variant="outline" className="bg-violet-50 text-violet-700 border-violet-200 font-normal">
-                {catalogServices.length}
+                {filteredCatalogServices.length}
               </Badge>
             )}
           </div>
+
+          <ServicesServiceFilters
+            services={catalogServices}
+            filters={catalogFilters}
+            onChange={setCatalogFilters}
+            onReset={() => setCatalogFilters(defaultServicesCatalogFilter())}
+            hasActiveFilter={hasActiveCatalogFilter}
+          />
         </div>
 
         {catalogLoading && !catalogServices.length ? (
@@ -336,9 +359,14 @@ export default function ServicesPage({ initialDoctors, initialServiceCatalog }: 
           </AppSectionErrorBanner>
         ) : catalogServices.length === 0 ? (
           <p className="text-sm text-muted-foreground">No services listed yet.</p>
+        ) : filteredCatalogServices.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            <Activity className="h-10 w-10 mx-auto mb-2 opacity-30" />
+            No services match this filter.
+          </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {catalogServices.map((s) => (
+            {filteredCatalogServices.map((s) => (
               <ServiceCatalogCard key={`${s.source}-${s.id}`} service={s} />
             ))}
           </div>

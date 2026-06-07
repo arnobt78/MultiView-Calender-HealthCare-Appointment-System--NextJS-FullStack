@@ -28,6 +28,8 @@ const typeSelect = {
   is_telehealth: true,
   user_id: true,
   price_cents: true,
+  icon: true,
+  color: true,
 } as const;
 
 export async function GET() {
@@ -63,6 +65,8 @@ export async function GET() {
       slot_interval_minutes: g.slot_interval_minutes,
       is_telehealth: g.is_telehealth,
       price_cents: g.price_cents,
+      icon: g.icon,
+      color: g.color,
     }));
 
     const additionals: AdditionalCatalogInput[] = additionalRaw
@@ -79,6 +83,8 @@ export async function GET() {
         slot_interval_minutes: r.slot_interval_minutes,
         is_telehealth: r.is_telehealth,
         price_cents: r.price_cents,
+        icon: r.icon,
+        color: r.color,
         user_id: r.user_id,
         owner_display_name: r.user.display_name,
         owner_email: r.user.email,

@@ -17,6 +17,8 @@ import {
 } from "@/lib/server-prefetch";
 import type { ServiceCatalogRow } from "@/lib/appointment-service-catalog";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Doctors & Services",
   description: "Browse our specialist doctors and available appointment types",

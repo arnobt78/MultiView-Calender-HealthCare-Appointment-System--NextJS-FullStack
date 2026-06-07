@@ -20,6 +20,8 @@ describe("buildServiceCatalog", () => {
           slot_interval_minutes: 30,
           is_telehealth: false,
           price_cents: 0,
+          icon: "stethoscope",
+          color: "#6366f1",
         },
       ],
       [
@@ -57,6 +59,9 @@ describe("buildServiceCatalog", () => {
     );
 
     expect(services).toHaveLength(2);
+    const global = services.find((s) => s.source === "global");
+    expect(global?.icon).toBe("stethoscope");
+    expect(global?.color).toBe("#6366f1");
     const additional = services.find((s) => s.source === "additional");
     expect(additional?.name).toBe("Physio Theraphy");
     expect(additional?.duration_minutes).toBe(30);

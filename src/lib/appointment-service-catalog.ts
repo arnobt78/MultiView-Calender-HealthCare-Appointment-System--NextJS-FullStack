@@ -23,6 +23,9 @@ export type ServiceCatalogRow = {
   is_telehealth: boolean;
   /** Visit fee in cents — 0 = no price set. */
   price_cents: number;
+  /** Lucide icon name + hex tint from appointment type (optional — name heuristics fallback). */
+  icon?: string | null;
+  color?: string | null;
   source: ServiceCatalogSource;
   /** Present when source === "additional" — owners after name dedupe. */
   doctor_offers?: ServiceCatalogDoctorOffer[];
@@ -39,6 +42,8 @@ export type GlobalCatalogInput = {
   slot_interval_minutes: number;
   is_telehealth: boolean;
   price_cents: number;
+  icon?: string | null;
+  color?: string | null;
 };
 
 /** Raw doctor-owned row with owner display fields. */
@@ -52,6 +57,8 @@ export type AdditionalCatalogInput = {
   slot_interval_minutes: number;
   is_telehealth: boolean;
   price_cents: number;
+  icon?: string | null;
+  color?: string | null;
   user_id: string;
   owner_display_name: string | null;
   owner_email: string;
@@ -99,6 +106,8 @@ export function buildServiceCatalog(
     slot_interval_minutes: g.slot_interval_minutes,
     is_telehealth: g.is_telehealth,
     price_cents: g.price_cents,
+    icon: g.icon ?? null,
+    color: g.color ?? null,
     source: "global",
   }));
 
@@ -144,6 +153,8 @@ export function buildServiceCatalog(
       slot_interval_minutes: rep.slot_interval_minutes,
       is_telehealth: rep.is_telehealth,
       price_cents: rep.price_cents,
+      icon: rep.icon ?? null,
+      color: rep.color ?? null,
       source: "additional" as const,
       doctor_offers,
     };
