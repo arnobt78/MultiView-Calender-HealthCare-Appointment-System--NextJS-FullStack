@@ -57,6 +57,14 @@ describe("patientCoreSchema", () => {
     const { email: _e, ...rest } = valid;
     expect(patientCreateSchema.safeParse(rest).success).toBe(true);
   });
+
+  it("rejects invalid phone format", () => {
+    expect(patientCreateSchema.safeParse({ ...valid, phone: "12" }).success).toBe(false);
+  });
+
+  it("accepts valid E.164 phone", () => {
+    expect(patientCreateSchema.safeParse({ ...valid, phone: "+491701234567" }).success).toBe(true);
+  });
 });
 
 describe("appointmentCreateSchema", () => {

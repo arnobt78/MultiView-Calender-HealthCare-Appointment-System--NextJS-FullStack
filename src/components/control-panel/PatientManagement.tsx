@@ -73,6 +73,8 @@ import { useUsers } from "@/hooks/useUsers";
 import { CP_DOCTOR_USERS_FILTERS } from "@/lib/control-panel-users-filters";
 import { useQueryClient } from "@tanstack/react-query";
 import { prefetchDoctorsDirectory } from "@/lib/prefetch-doctors-directory";
+import { validateOptionalPatientPhoneInput } from "@/lib/phone-validation";
+import { notify } from "@/lib/notify";
 import {
   patientManagementStatsStripClass,
 } from "@/lib/patient-management-toolbar-classes";
@@ -411,7 +413,7 @@ export function PatientManagementInner({
       id: "name",
       // Avatar + name + email in one column so layout stays grouped on wide screens (no split image / text columns).
       accessorFn: (row) =>
-        `${row.firstname} ${row.lastname} ${row.email ?? ""}`.trim(),
+        `${row.firstname} ${row.lastname} ${row.email ?? ""} ${row.phone ?? ""}`.trim(),
       header: ({ column }) => <DataTableColumnHeader column={column} title="Patient Name" />,
       meta: {
         shellClassName: isDoctorPortal
@@ -428,6 +430,30 @@ export function PatientManagementInner({
             href={patientDetailHref(viewerRole, p.id)}
             patient={p}
           />
+        );
+      },
+    },
+    {
+      id: "phone",
+      accessorFn: (row) => row.phone ?? "",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Phone" />,
+      meta: {
+        shellClassName: isDoctorPortal
+          ? "w-[14%] min-w-[9rem] whitespace-nowrap"
+          : "w-[12%] min-w-[9rem] whitespace-nowrap",
+      },
+      cell: ({ row }) => {
+        const phone = row.original.phone?.trim();
+        return (
+          <div className="flex min-h-[2.75rem] items-center">
+            {phone ? (
+              <span className={cn("truncate", clinicalCellMutedTextClass)} title={phone}>
+                {phone}
+              </span>
+            ) : (
+              <span className={clinicalCellMutedTextClass}>—</span>
+            )}
+          </div>
         );
       },
     },
@@ -517,6 +543,12 @@ export function PatientManagementInner({
   const metrics = usePatientListMetrics(patients);
 
   const handleDialogSubmit = () => {
+    const phoneError = validateOptionalPatientPhoneInput(form.phone);
+    if (phoneError) {
+      notify.error({ title: "Invalid phone", subtitle: phoneError });
+      return;
+    }
+
     const primary_doctor_id =
       createExtra.primaryDoctorId && createExtra.primaryDoctorId !== "none"
         ? createExtra.primaryDoctorId
@@ -535,6 +567,7 @@ export function PatientManagementInner({
           birth_date: form.birth_date || undefined,
           care_level: form.care_level,
           pronoun: form.pronoun || undefined,
+          phone: form.phone?.trim() || undefined,
           active: form.active,
           clinical_profile,
           primary_doctor_id,
@@ -550,6 +583,7 @@ export function PatientManagementInner({
         ...form,
         firstname: form.firstname.trim(),
         lastname: form.lastname.trim(),
+        phone: form.phone?.trim() || undefined,
         primary_doctor_id: primary_doctor_id ?? undefined,
         ...(clinical_profile ? { clinical_profile } : {}),
       },
@@ -620,8 +654,8 @@ export function PatientManagementInner({
           search={{
             value: listSearch,
             onChange: setListSearch,
-            placeholder: "Search… (name or email)",
-            ariaLabel: "Search patients by name or email",
+            placeholder: "Search… (name, email, or phone)",
+            ariaLabel: "Search patients by name, email, or phone",
           }}
           showReset={hasPatientToolbarFilters}
           onReset={resetPatientToolbar}
@@ -686,17 +720,17 @@ export function PatientManagementInner({
             if (!s) return true;
             const p = row;
             const tierText = getPatientCareLevelLabel(p.care_level).toLowerCase();
-            const blob = `${p.firstname} ${p.lastname} ${p.email ?? ""} ${p.primary_doctor_display ?? ""} ${p.primary_doctor_email ?? ""} ${String(p.care_level ?? "")} ${tierText}`;
+            const blob = `${p.firstname} ${p.lastname} ${p.email ?? ""} ${p.phone ?? ""} ${p.primary_doctor_display ?? ""} ${p.primary_doctor_email ?? ""} ${String(p.care_level ?? "")} ${tierText}`;
             return blob.includes(s);
           }}
           externalGlobalFilter={{ value: listSearch, onChange: setListSearch }}
-          searchPlaceholder="Search by name or email…"
+          searchPlaceholder="Search by name, email, or phone…"
           emptyMessage={
             isDoctorPortal
               ? "No patients assigned to you yet."
               : "No patients yet. Add one to get started."
           }
-          tableClassName="min-w-[980px] w-full"
+          tableClassName="min-w-[1080px] w-full"
           tableFrameClassName={skyGlassTableFrameClass}
         />
 

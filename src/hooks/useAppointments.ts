@@ -59,6 +59,7 @@ function getSafeAppointmentTitle(appt?: Partial<Appointment> | null) {
 function getStatusLabel(status?: string | null) {
   if (status === "done") return "done";
   if (status === "alert") return "alert";
+  if (status === "cancelled") return "cancelled";
   return "pending";
 }
 
@@ -326,6 +327,62 @@ export function useAppointments() {
     },
   });
 
+  const cancelAppointmentMutation = useMutation({
+    mutationFn: (id: string) =>
+      apiClient<AppointmentDetailApiPayload>(`/api/appointments/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: "cancelled" }),
+      }),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.appointments.all });
+      const previousAppointments = queryClient.getQueryData<FullAppointment[]>(
+        queryKeys.appointments.all
+      );
+      const previousDetail = queryClient.getQueryData<AppointmentDetailViewModel>(
+        queryKeys.appointments.detail(id)
+      );
+      if (previousAppointments) {
+        queryClient.setQueryData<FullAppointment[]>(
+          queryKeys.appointments.all,
+          previousAppointments.map((appt) =>
+            appt.id === id ? { ...appt, status: "cancelled" } : appt
+          )
+        );
+      }
+      patchAppointmentDetailCacheOptimistic(queryClient, id, { id, status: "cancelled" });
+      return { previousAppointments, previousDetail };
+    },
+    onSuccess: async (data) => {
+      const appt = data.appointment as FullAppointment;
+      if (data.detail) {
+        patchAppointmentDetailCache(queryClient, appt.id, data.detail);
+      }
+      queryClient.setQueryData<FullAppointment[]>(queryKeys.appointments.all, (old = []) =>
+        old.map((item) => (item.id === appt.id ? { ...item, ...appt } : item))
+      );
+      await invalidateAfterAppointmentMutation(queryClient, {
+        appointmentId: appt.id,
+        patientId: appt.patient ?? undefined,
+        categoryId: appt.category ?? undefined,
+        ...appointmentDoctorFkOpts(appt),
+      });
+      notify.crud({
+        action: "updated",
+        entity: "Appointment",
+        detail: `"${getSafeAppointmentTitle(appt)}" was cancelled (${formatAppointmentRange(appt?.start, appt?.end)}).`,
+      });
+    },
+    onError: (error, id, context) => {
+      if (context?.previousAppointments) {
+        queryClient.setQueryData(queryKeys.appointments.all, context.previousAppointments);
+      }
+      if (context?.previousDetail) {
+        patchAppointmentDetailCache(queryClient, id, context.previousDetail);
+      }
+      handleApiError(error, "Failed to cancel appointment");
+    },
+  });
+
   return {
     appointments: query.data || [],
     isLoading:
@@ -352,6 +409,8 @@ export function useAppointments() {
     isDeleting: deleteMutation.isPending,
     toggleStatus: toggleStatusMutation.mutate,
     isTogglingStatus: toggleStatusMutation.isPending,
+    cancelAppointment: cancelAppointmentMutation.mutate,
+    isCancelling: cancelAppointmentMutation.isPending,
   };
 }
 

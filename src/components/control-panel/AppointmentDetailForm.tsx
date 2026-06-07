@@ -218,6 +218,7 @@ export function AppointmentDetailForm({ appointment }: AppointmentDetailFormProp
               <SelectItem value="pending">Pending</SelectItem>
               <SelectItem value="done">Done</SelectItem>
               <SelectItem value="alert">Alert</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
             </SelectContent>
           </Select>
         </div>

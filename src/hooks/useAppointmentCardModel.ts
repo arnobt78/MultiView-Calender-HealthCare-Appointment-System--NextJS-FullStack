@@ -10,7 +10,8 @@ import {
   deriveCardDensity,
   resolvePatientDisplayName,
   resolvePatientId,
-  statusTextClass,
+  isAppointmentCancelled,
+  isAppointmentDone,
   type AppointmentCardDensity,
   type AppointmentCardVariant,
 } from "@/lib/appointment-card";
@@ -62,7 +63,8 @@ export function useAppointmentCardModel({
 
   const start = useMemo(() => new Date(appointment.start), [appointment.start]);
   const end = useMemo(() => new Date(appointment.end), [appointment.end]);
-  const isDone = appointment.status === "done";
+  const isDone = isAppointmentDone(appointment.status);
+  const isCancelled = isAppointmentCancelled(appointment.status);
 
   const density = useMemo(
     () => deriveCardDensity({ variant, slotHeightPx, densityOverride }),
@@ -164,12 +166,11 @@ export function useAppointmentCardModel({
 
   const formattedDate = format(start, "dd.MM.yyyy");
   const formattedTime = `${format(start, "HH:mm")} – ${format(end, "HH:mm")}`;
-  const statusClass = statusTextClass(appointment.status);
-
   return {
     start,
     end,
     isDone,
+    isCancelled,
     density,
     colorToken,
     patientLabel,
@@ -186,7 +187,6 @@ export function useAppointmentCardModel({
     capabilities,
     formattedDate,
     formattedTime,
-    statusClass,
     user,
     audience,
     portalOwner: appointment.portal_owner,

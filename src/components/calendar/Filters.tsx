@@ -36,6 +36,7 @@ const STATUS_LABEL: Record<string, string> = {
   pending: "Open",
   done: "Done",
   alert: "Alert",
+  cancelled: "Cancelled",
 };
 
 /** Dashboard calendar filter controls — parent wraps with `ClinicalListFilterToolbar` + search. */
@@ -118,6 +119,7 @@ export default function Filters({
           { value: "pending", label: "Open" },
           { value: "done", label: "Done" },
           { value: "alert", label: "Alert" },
+          { value: "cancelled", label: "Cancelled" },
         ]}
       />
 

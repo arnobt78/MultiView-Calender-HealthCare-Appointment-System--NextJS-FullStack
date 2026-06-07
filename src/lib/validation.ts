@@ -79,7 +79,7 @@ export function isValidDate(dateString: string): boolean {
  * @returns True if status is valid
  */
 export function isValidAppointmentStatus(status: string): boolean {
-  return ["done", "pending", "alert"].includes(status);
+  return ["done", "pending", "alert", "cancelled"].includes(status);
 }
 
 /**

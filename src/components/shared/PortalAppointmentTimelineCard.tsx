@@ -1,26 +1,16 @@
 "use client";
 
-import type { ReactNode } from "react";
-
-/**
- * Compact patient-portal timeline card — previous horizontal meta layout (not full dashboard list card).
- * Reuses shared color bar tokens, `PortalClinicianLink`, `CategoryInlineLink`, status glass badges.
- */
-
 import { format, isToday } from "date-fns";
 import {
   Calendar,
-  CalendarCheck,
-  CalendarClock,
-  CalendarX,
   Clock3,
   FileText,
   NotebookPen,
   Stethoscope,
 } from "lucide-react";
 import { TelehealthSessionBadge } from "@/components/shared/appointments/TelehealthSessionBadge";
+import { AppointmentStatusGlassBadge } from "@/components/shared/appointments/AppointmentStatusGlassBadge";
 import { AppointmentVisitScheduleMeta } from "@/components/shared/appointments/AppointmentVisitScheduleMeta";
-import { Badge } from "@/components/ui/badge";
 import { AppointmentCardMetaRow } from "@/components/shared/AppointmentCardMetaRow";
 import { AppointmentListColorBar } from "@/components/shared/AppointmentListColorBar";
 import { AppointmentCategoryTypeMetaRow } from "@/components/shared/appointment-display/AppointmentCategoryTypeMetaRow";
@@ -35,24 +25,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { portalAppointmentDetailStackClass } from "@/lib/appointment-card";
 import type { PortalAppointmentRow } from "@/lib/serializers";
 import { cn } from "@/lib/utils";
-
-const STATUS_GLASS: Record<string, { icon: ReactNode; glassCls: string; label: string }> = {
-  done: {
-    icon: <CalendarCheck className="h-3.5 w-3.5" />,
-    glassCls: "calendar-glass-badge-emerald",
-    label: "Done",
-  },
-  pending: {
-    icon: <CalendarClock className="h-3.5 w-3.5" />,
-    glassCls: "calendar-glass-badge-amber",
-    label: "Pending",
-  },
-  alert: {
-    icon: <CalendarX className="h-3.5 w-3.5" />,
-    glassCls: "calendar-glass-badge-rose",
-    label: "Alert",
-  },
-};
 
 export type PortalAppointmentTimelineCardProps = {
   appointment: PortalAppointmentRow;
@@ -70,11 +42,8 @@ export function PortalAppointmentTimelineCard({
   const showNotes =
     showClinicalNotes ?? canShowAppointmentClinicalNotes(user?.role ?? null);
 
-  // Seed-only tint (appointment.id) — same rule as dashboard list cards; category hex is for swatch links only.
   const { getAppointmentColorToken } = useAppointmentColor();
   const colorToken = getAppointmentColorToken(appt.id, null);
-  const status = appt.status ?? "pending";
-  const statusMeta = STATUS_GLASS[status] ?? STATUS_GLASS.pending;
   const startDate = new Date(appt.start);
   const treatingClinician = resolvePortalTreatingClinician(appt);
   const displayFeeCents = resolveDisplayedVisitFeeCents({
@@ -88,6 +57,7 @@ export function PortalAppointmentTimelineCard({
     <div
       className={cn(
         "relative flex min-h-[100px] items-stretch overflow-hidden rounded-2xl border shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl",
+        appt.status === "cancelled" && "opacity-75 border-slate-200/80 bg-slate-50/40",
         className
       )}
       style={{
@@ -106,13 +76,7 @@ export function PortalAppointmentTimelineCard({
                 label={appt.title}
                 className="text-sm font-semibold"
               />
-              <Badge
-                variant="outline"
-                className={cn("calendar-glass-badge gap-1 text-xs", statusMeta.glassCls)}
-              >
-                {statusMeta.icon}
-                <span className="ml-1">{statusMeta.label}</span>
-              </Badge>
+              <AppointmentStatusGlassBadge status={appt.status} size="compact" />
               {appt.is_telehealth ? <TelehealthSessionBadge /> : null}
             </div>
 
@@ -162,37 +126,33 @@ export function PortalAppointmentTimelineCard({
                   }
                   appointment={appt}
                   displayFeeCents={displayFeeCents}
-                  showFeeEstimateHint
+                  timeRangeLabel={
+                    isToday(startDate)
+                      ? `Today · ${format(startDate, "HH:mm")} – ${format(new Date(appt.end), "HH:mm")}`
+                      : `${format(startDate, "dd MMM yyyy, HH:mm")} – ${format(new Date(appt.end), "HH:mm")}`
+                  }
                 />
               ) : null}
+
+              {appt.chief_complaint ? (
+                <AppointmentCardMetaRow icon={<Stethoscope className="h-3.5 w-3.5" />} label="Chief complaint:">
+                  {appt.chief_complaint}
+                </AppointmentCardMetaRow>
+              ) : null}
+
+              {showNotes && appt.notes ? (
+                <AppointmentCardMetaRow icon={<NotebookPen className="h-3.5 w-3.5" />} label="Notes:">
+                  {appt.notes}
+                </AppointmentCardMetaRow>
+              ) : null}
+
+              {appt.attachments?.length ? (
+                <AppointmentCardMetaRow icon={<FileText className="h-3.5 w-3.5" />} label="Attachments:">
+                  {appt.attachments.length} file{appt.attachments.length !== 1 ? "s" : ""}
+                </AppointmentCardMetaRow>
+              ) : null}
             </div>
-
-            {appt.chief_complaint?.trim() ? (
-              <AppointmentCardMetaRow
-                icon={<NotebookPen className="h-3.5 w-3.5" />}
-                label="Chief complaint:"
-                wrap
-                className="flex w-full min-w-0 items-center"
-              >
-                <span className="font-medium text-gray-700">{appt.chief_complaint.trim()}</span>
-              </AppointmentCardMetaRow>
-            ) : null}
-
-            {showNotes && appt.notes?.trim() ? (
-              <AppointmentCardMetaRow
-                icon={<FileText className="h-3.5 w-3.5" />}
-                label="Notes:"
-                wrap
-                className="flex w-full min-w-0 items-center"
-              >
-                <span className="font-medium text-gray-700">{appt.notes.trim()}</span>
-              </AppointmentCardMetaRow>
-            ) : null}
           </div>
-
-          <p className="shrink-0 text-xs font-medium text-gray-500">
-            {isToday(startDate) ? "Today" : format(startDate, "EEE, dd MMM")}
-          </p>
         </div>
       </div>
     </div>

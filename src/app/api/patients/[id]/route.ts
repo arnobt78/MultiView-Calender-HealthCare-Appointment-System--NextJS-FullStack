@@ -17,6 +17,7 @@ import {
   assertDoctorActiveForBookingUnlessCurrent,
   InactiveDoctorBookingError,
 } from "@/lib/doctor-active-booking";
+import { parseOptionalPatientPhone } from "@/lib/phone-validation";
 /** Per-request detail CRUD — literal required (see api-route-dynamic.test.ts). */
 export const dynamic = "force-dynamic";
 
@@ -130,6 +131,15 @@ export async function PUT(req: NextRequest, context: RouteContext) {
       }
     }
 
+    let phoneUpdate: string | null | undefined;
+    if (body.phone !== undefined) {
+      const phoneParsed = parseOptionalPatientPhone(body.phone);
+      if (!phoneParsed.ok) {
+        return NextResponse.json({ error: phoneParsed.error }, { status: 400 });
+      }
+      phoneUpdate = phoneParsed.phone;
+    }
+
     const patient = await prisma.patient.update({
       where: { id },
       data: {
@@ -138,6 +148,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
         birth_date: body.birth_date ? new Date(body.birth_date) : null,
         care_level: body.care_level != null && Number.isFinite(Number(body.care_level)) ? Number(body.care_level) : null,
         pronoun: body.pronoun ?? null,
+        ...(phoneUpdate !== undefined ? { phone: phoneUpdate } : {}),
         active: body.active !== false,
         active_since: body.active_since ? new Date(body.active_since) : null,
         updated_by_id: sessionUser.userId,

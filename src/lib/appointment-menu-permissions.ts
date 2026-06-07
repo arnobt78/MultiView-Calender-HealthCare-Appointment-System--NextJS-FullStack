@@ -6,13 +6,15 @@
 
 import { Appointment, AppointmentAssignee } from "@/types/types";
 import { getUserAppointmentPermission } from "@/lib/permissions";
-import { isPatientRole } from "@/lib/rbac";
+import { isAdminRole, isPatientRole } from "@/lib/rbac";
+import { canCancelAppointment } from "@/lib/appointment-cancel-access";
 
 export type AppointmentMenuCapabilities = {
   canView: boolean;
   canToggleStatus: boolean;
   canEdit: boolean;
   canDelete: boolean;
+  canCancel: boolean;
 };
 
 /** Accepted assignee row matched by user id or invited email (email-aware). */
@@ -42,18 +44,25 @@ export function getAppointmentMenuCapabilities({
   userEmail,
   userRole,
 }: {
-  appointment: Pick<Appointment, "id" | "user_id">;
+  appointment: Pick<Appointment, "id" | "user_id"> & {
+    treating_physician_id?: string | null;
+    status?: string | null;
+  };
   assignees?: AppointmentAssignee[];
   userId: string | null | undefined;
   userEmail: string | null | undefined;
   userRole: string | null | undefined;
 }): AppointmentMenuCapabilities {
+  const isTerminal =
+    appointment.status === "done" || appointment.status === "cancelled";
+
   if (isPatientRole(userRole)) {
     return {
       canView: true,
       canToggleStatus: false,
       canEdit: false,
       canDelete: false,
+      canCancel: false,
     };
   }
 
@@ -71,11 +80,35 @@ export function getAppointmentMenuCapabilities({
   const isOwner = !!userId && appointment.user_id === userId;
   const perm = ownerPerm ?? assigneePerm;
 
+  const assigneeRows =
+    assignees?.map((a) => ({
+      user_id: a.user ?? null,
+      invited_email: a.invited_email ?? null,
+      status: a.status ?? null,
+      permission: a.permission ?? null,
+    })) ?? [];
+
+  const canCancel =
+    !isTerminal &&
+    !!userId &&
+    canCancelAppointment(
+      { userId, email: userEmail ?? "", role: userRole ?? null },
+      {
+        owner_id: appointment.user_id,
+        treating_physician_id: appointment.treating_physician_id ?? null,
+        assignees: assigneeRows,
+      }
+    );
+
   return {
     canView: true,
     canToggleStatus:
-      isOwner || perm === "owner" || perm === "full" || perm === "write",
-    canEdit: isOwner || perm === "owner" || perm === "full",
+      !isTerminal &&
+      (isOwner || perm === "owner" || perm === "full" || perm === "write"),
+    canEdit:
+      appointment.status !== "cancelled" &&
+      (isOwner || perm === "owner" || perm === "full"),
     canDelete: isOwner || perm === "owner" || perm === "full",
+    canCancel: canCancel || (isAdminRole(userRole) && !isTerminal),
   };
 }

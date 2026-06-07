@@ -4,6 +4,7 @@ import {
   deriveCardDensity,
   resolvePatientDisplayName,
   statusTextClass,
+  isAppointmentCancelled,
 } from "@/lib/appointment-card";
 import type { AppointmentAssignee, Patient } from "@/types/types";
 
@@ -70,5 +71,13 @@ describe("statusTextClass", () => {
     expect(statusTextClass("done")).toContain("green");
     expect(statusTextClass("alert")).toContain("red");
     expect(statusTextClass("pending")).toContain("amber");
+    expect(statusTextClass("cancelled")).toContain("slate");
+  });
+});
+
+describe("isAppointmentCancelled", () => {
+  it("detects cancelled status", () => {
+    expect(isAppointmentCancelled("cancelled")).toBe(true);
+    expect(isAppointmentCancelled("pending")).toBe(false);
   });
 });

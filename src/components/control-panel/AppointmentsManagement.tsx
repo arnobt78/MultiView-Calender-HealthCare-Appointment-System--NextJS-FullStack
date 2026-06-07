@@ -21,6 +21,7 @@ import {
 import { useAppointments, type FullAppointment } from "@/hooks/useAppointments";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { AppointmentStatusGlassBadge } from "@/components/shared/appointments/AppointmentStatusGlassBadge";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -31,33 +32,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
-import {
-  buildAppointmentDeleteConfirmSubtitle,
-  DELETE_APPOINTMENT_CONFIRM_TITLE,
-} from "@/lib/confirm-delete-dialog-copy";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   CalendarDays,
-  MoreHorizontal,
-  Eye,
-  Trash2,
-  CheckCircle2,
-  AlertTriangle,
-  Clock,
   ChevronLeft,
   ChevronRight,
   Download,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { format } from "date-fns";
+import { useAuth } from "@/hooks/useAuth";
+import { AppointmentActionsMenu } from "@/components/shared/AppointmentActionsMenu";
 import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
 import { PageHeader } from "@/components/shared/PageHeader";
 
@@ -89,84 +75,19 @@ function exportToCSV(rows: FullAppointment[]) {
   URL.revokeObjectURL(url);
 }
 
-const STATUS_META: Record<string, { cls: string; icon: React.ReactNode; label: string }> = {
-  done: { cls: "bg-green-100 text-green-700", icon: <CheckCircle2 className="h-3 w-3" />, label: "Done" },
-  pending: { cls: "bg-yellow-100 text-yellow-700", icon: <Clock className="h-3 w-3" />, label: "Pending" },
-  alert: { cls: "bg-red-100 text-red-700", icon: <AlertTriangle className="h-3 w-3" />, label: "Alert" },
-};
-
-/** Appointment list row menu — delete confirm matches calendar copy. */
-function AppointmentListRowActions({
-  appt,
-  onDelete,
-  onToggleStatus,
-  confirmDisabled,
-}: {
-  appt: FullAppointment;
-  onDelete: (id: string) => void;
-  onToggleStatus: (args: { id: string; status: "done" | "pending" | "alert" }) => void;
-  confirmDisabled?: boolean;
-}) {
-  const [confirmOpen, setConfirmOpen] = useState(false);
-
-  return (
-    <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem asChild className="gap-2">
-            <Link href={`/control-panel/appointments/${appt.id}`}>
-              <Eye className="h-4 w-4" /> View Details
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            className="gap-2"
-            onClick={() =>
-              onToggleStatus({
-                id: appt.id,
-                status: appt.status === "done" ? "pending" : "done",
-              })
-            }
-          >
-            <CheckCircle2 className="h-4 w-4" />
-            {appt.status === "done" ? "Mark Pending" : "Mark Done"}
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            className="gap-2 text-red-600 focus:text-red-600"
-            onSelect={(e) => {
-              e.preventDefault();
-              setConfirmOpen(true);
-            }}
-          >
-            <Trash2 className="h-4 w-4" /> Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-      <ConfirmActionDialog
-        open={confirmOpen}
-        onOpenChange={setConfirmOpen}
-        variant="destructive"
-        title={DELETE_APPOINTMENT_CONFIRM_TITLE}
-        subtitle={buildAppointmentDeleteConfirmSubtitle(appt.title ?? "", "list")}
-        confirmLabel="Delete"
-        cancelLabel="Cancel"
-        confirmDisabled={confirmDisabled}
-        onConfirm={() => {
-          onDelete(appt.id);
-          setConfirmOpen(false);
-        }}
-      />
-    </>
-  );
-}
-
 export default function AppointmentsManagement() {
-  const { appointments, isLoading, isError, error, deleteAppointment, toggleStatus, isDeleting } = useAppointments();
+  const router = useRouter();
+  const { user } = useAuth();
+  const {
+    appointments,
+    isLoading,
+    isError,
+    error,
+    deleteAppointment,
+    toggleStatus,
+    cancelAppointment,
+    isDeleting,
+  } = useAppointments();
   const [sorting, setSorting] = useState<SortingState>([{ id: "start", desc: true }]);
   const [globalFilter, setGlobalFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -183,15 +104,9 @@ export default function AppointmentsManagement() {
     }),
     columnHelper.accessor("status", {
       header: "Status",
-      cell: (info) => {
-        const s = info.getValue() ?? "pending";
-        const meta = STATUS_META[s] ?? STATUS_META.pending;
-        return (
-          <Badge className={`gap-1 ${meta.cls}`}>
-            {meta.icon} {meta.label}
-          </Badge>
-        );
-      },
+      cell: (info) => (
+        <AppointmentStatusGlassBadge status={info.getValue()} size="compact" />
+      ),
     }),
     columnHelper.accessor("start", {
       header: "Start",
@@ -251,11 +166,22 @@ export default function AppointmentsManagement() {
       cell: ({ row }) => {
         const appt = row.original;
         return (
-          <AppointmentListRowActions
-            appt={appt}
+          <AppointmentActionsMenu
+            appointment={{
+              id: appt.id,
+              user_id: appt.user_id,
+              status: appt.status,
+              treating_physician_id: appt.treating_physician_id,
+              appointment_assignee: appt.appointment_assignee,
+            }}
+            userId={user?.id}
+            userEmail={user?.email}
+            userRole={user?.role}
+            onToggleStatus={(id, next) => toggleStatus({ id, status: next })}
+            onEdit={() => router.push(`/control-panel/appointments/${appt.id}`)}
             onDelete={deleteAppointment}
-            onToggleStatus={toggleStatus}
-            confirmDisabled={isDeleting}
+            onCancel={cancelAppointment}
+            triggerClassName="h-8 w-8"
           />
         );
       },
@@ -286,6 +212,7 @@ export default function AppointmentsManagement() {
   const doneCount = appointments.filter((a) => a.status === "done").length;
   const pendingCount = appointments.filter((a) => (a.status ?? "pending") === "pending").length;
   const alertCount = appointments.filter((a) => a.status === "alert").length;
+  const cancelledCount = appointments.filter((a) => a.status === "cancelled").length;
 
   if (isError) {
     return <p className="p-4 text-red-500">Error: {error?.message}</p>;
@@ -305,13 +232,14 @@ export default function AppointmentsManagement() {
       />
 
       {/* Stats row — card shells always visible; value slots pulse while loading */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
         {(
           [
             { label: "Total", value: appointments.length, color: "text-foreground", variant: "border-slate-400/20 from-slate-500/10 via-white to-white/95 shadow-[0_24px_60px_rgba(100,116,139,0.1)]", filter: "all" },
             { label: "Done", value: doneCount, color: "text-green-600", variant: "border-green-400/20 from-green-500/10 via-white to-white/95 shadow-[0_24px_60px_rgba(34,197,94,0.12)]", filter: "done" },
             { label: "Pending", value: pendingCount, color: "text-yellow-600", variant: "border-yellow-400/20 from-yellow-500/10 via-white to-white/95 shadow-[0_24px_60px_rgba(234,179,8,0.12)]", filter: "pending" },
             { label: "Alert", value: alertCount, color: "text-red-600", variant: "border-red-400/20 from-red-500/10 via-white to-white/95 shadow-[0_24px_60px_rgba(225,29,72,0.12)]", filter: "alert" },
+            { label: "Cancelled", value: cancelledCount, color: "text-slate-600", variant: "border-slate-400/20 from-slate-500/10 via-white to-white/95 shadow-[0_24px_60px_rgba(100,116,139,0.12)]", filter: "cancelled" },
           ] as const
         ).map(({ label, value, color, variant, filter }) => (
           <Card

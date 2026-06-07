@@ -1,6 +1,7 @@
 "use client";
 
-import { AlertCircle, CheckCircle2, CircleDashed, ListFilter } from "lucide-react";
+import { resolveAppointmentStatusMeta } from "@/lib/appointment-status-display";
+import { ListFilter } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -10,43 +11,18 @@ import {
 import { cn } from "@/lib/utils";
 
 /** Stable display order for appointment status chips on /insights. */
-export const INSIGHTS_STATUS_ORDER = ["done", "pending", "alert"] as const;
+export const INSIGHTS_STATUS_ORDER = ["done", "pending", "alert", "cancelled"] as const;
 
 type StatusKey = (typeof INSIGHTS_STATUS_ORDER)[number];
 
-const STATUS_META: Record<
-  StatusKey,
-  { label: string; icon: typeof CheckCircle2; hint: string; badgeTone: string }
-> = {
-  done: {
-    label: "Done",
-    icon: CheckCircle2,
-    hint: "Completed appointments in scope",
-    badgeTone: "calendar-glass-badge-emerald",
-  },
-  pending: {
-    label: "Pending",
-    icon: CircleDashed,
-    hint: "Scheduled or in-progress visits",
-    badgeTone: "calendar-glass-badge-amber",
-  },
-  alert: {
-    label: "Alert",
-    icon: AlertCircle,
-    hint: "Escalated or flagged appointments",
-    badgeTone: "calendar-glass-badge-rose",
-  },
-};
-
-/** Collapse Prisma status keys into done / pending / alert buckets for the summary row. */
+/** Collapse Prisma status keys into done / pending / alert / cancelled buckets. */
 export function normalizeInsightsByStatus(
   byStatus: Record<string, number> | undefined
 ): Record<StatusKey, number> {
-  const out: Record<StatusKey, number> = { done: 0, pending: 0, alert: 0 };
+  const out: Record<StatusKey, number> = { done: 0, pending: 0, alert: 0, cancelled: 0 };
   if (!byStatus) return out;
   for (const [key, count] of Object.entries(byStatus)) {
-    const normalized =
-      key === "done" ? "done" : key === "alert" ? "alert" : "pending";
+    const normalized = resolveAppointmentStatusMeta(key).status as StatusKey;
     out[normalized] += count;
   }
   return out;
@@ -81,19 +57,27 @@ export function AnalyticsStatusSummaryRow({
         ) : null}
       </span>
       {INSIGHTS_STATUS_ORDER.map((status) => {
-        const meta = STATUS_META[status];
-        const Icon = meta.icon;
+        const meta = resolveAppointmentStatusMeta(status);
+        const Icon = meta.Icon;
+        const hint =
+          status === "done"
+            ? "Completed appointments in scope"
+            : status === "alert"
+              ? "Escalated or flagged appointments"
+              : status === "cancelled"
+                ? "Cancelled visits in scope"
+                : "Scheduled or in-progress visits";
         return (
           <div
             key={status}
             className="flex items-center gap-2"
-            title={meta.hint}
+            title={hint}
           >
             <Badge
               variant="outline"
               className={cn(
                 "calendar-glass-badge inline-flex min-h-6 items-center gap-1.5 rounded-full px-2 text-xs font-normal",
-                meta.badgeTone
+                meta.glassClass
               )}
             >
               <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />

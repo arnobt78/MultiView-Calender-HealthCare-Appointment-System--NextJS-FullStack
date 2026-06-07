@@ -90,8 +90,7 @@ export default function PatientDetailView({ patientId }: { patientId: string }) 
                 <div>
                   <p className="font-medium">Phone</p>
                   <p className="text-muted-foreground">
-                    {/* Placeholder phone, add to DB if needed */}
-                    +1 (555) 123-4567
+                    {patient.phone?.trim() ? patient.phone : "—"}
                   </p>
                 </div>
               </div>

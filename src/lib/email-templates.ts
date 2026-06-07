@@ -178,6 +178,98 @@ export function appointmentReminderTemplate({
   };
 }
 
+// --- Appointment Cancelled Email ---
+export function appointmentCancelledTemplate({
+  recipientName,
+  appointmentTitle,
+  appointmentDate,
+  appointmentTime,
+  location,
+  detailUrl,
+}: {
+  recipientName: string;
+  appointmentTitle: string;
+  appointmentDate: string;
+  appointmentTime: string;
+  location?: string;
+  detailUrl: string;
+}): { subject: string; html: string } {
+  const recipientNameE = escapeHtml(recipientName);
+  const appointmentTitleE = escapeHtml(appointmentTitle);
+  const appointmentDateE = escapeHtml(appointmentDate);
+  const appointmentTimeE = escapeHtml(appointmentTime);
+  const locationE = location ? escapeHtml(location) : "";
+  const detailUrlE = escapeHtml(detailUrl);
+
+  return {
+    subject: `Cancelled: ${appointmentTitle.replace(/[<>]/g, "")} — ${appointmentDate.replace(/[<>]/g, "")}`,
+    html: wrapTemplate(`
+      <div style="${headerStyle}">
+        <h1 style="color:#ffffff;margin:0;font-size:24px;">Appointment cancelled</h1>
+      </div>
+      <div style="${bodyStyle}">
+        <p style="font-size:16px;color:#374151;">Hello ${recipientNameE},</p>
+        <p style="font-size:14px;color:#6b7280;">The following appointment has been cancelled:</p>
+        <div style="background:#f3f4f6;border-radius:8px;padding:16px;margin:16px 0;">
+          <p style="margin:4px 0;font-size:14px;"><strong>Title:</strong> ${appointmentTitleE}</p>
+          <p style="margin:4px 0;font-size:14px;"><strong>Date:</strong> ${appointmentDateE}</p>
+          <p style="margin:4px 0;font-size:14px;"><strong>Time:</strong> ${appointmentTimeE}</p>
+          ${location ? `<p style="margin:4px 0;font-size:14px;"><strong>Location:</strong> ${locationE}</p>` : ""}
+        </div>
+        <div style="text-align:center;">
+          <a href="${detailUrlE}" style="${buttonStyle}">View details</a>
+        </div>
+      </div>
+    `),
+  };
+}
+
+// --- Appointment Status Changed Email ---
+export function appointmentStatusChangedTemplate({
+  recipientName,
+  appointmentTitle,
+  statusLabel,
+  appointmentDate,
+  appointmentTime,
+  detailUrl,
+}: {
+  recipientName: string;
+  appointmentTitle: string;
+  statusLabel: string;
+  appointmentDate: string;
+  appointmentTime: string;
+  detailUrl: string;
+}): { subject: string; html: string } {
+  const recipientNameE = escapeHtml(recipientName);
+  const appointmentTitleE = escapeHtml(appointmentTitle);
+  const statusLabelE = escapeHtml(statusLabel);
+  const appointmentDateE = escapeHtml(appointmentDate);
+  const appointmentTimeE = escapeHtml(appointmentTime);
+  const detailUrlE = escapeHtml(detailUrl);
+
+  return {
+    subject: `Status update: ${appointmentTitle.replace(/[<>]/g, "")} — ${statusLabel.replace(/[<>]/g, "")}`,
+    html: wrapTemplate(`
+      <div style="${headerStyle}">
+        <h1 style="color:#ffffff;margin:0;font-size:24px;">Appointment status updated</h1>
+      </div>
+      <div style="${bodyStyle}">
+        <p style="font-size:16px;color:#374151;">Hello ${recipientNameE},</p>
+        <p style="font-size:14px;color:#6b7280;">
+          <strong>${appointmentTitleE}</strong> is now <strong>${statusLabelE}</strong>.
+        </p>
+        <div style="background:#f3f4f6;border-radius:8px;padding:16px;margin:16px 0;">
+          <p style="margin:4px 0;font-size:14px;"><strong>Date:</strong> ${appointmentDateE}</p>
+          <p style="margin:4px 0;font-size:14px;"><strong>Time:</strong> ${appointmentTimeE}</p>
+        </div>
+        <div style="text-align:center;">
+          <a href="${detailUrlE}" style="${buttonStyle}">View appointment</a>
+        </div>
+      </div>
+    `),
+  };
+}
+
 // --- Welcome Email ---
 export function welcomeEmailTemplate({
   userName,

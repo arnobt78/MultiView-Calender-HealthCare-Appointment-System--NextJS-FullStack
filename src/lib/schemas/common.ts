@@ -16,6 +16,6 @@ export const notesSchema = z
   .optional()
   .or(z.literal(""));
 
-export const statusSchema = z.enum(["pending", "done", "alert"]);
+export const statusSchema = z.enum(["pending", "done", "alert", "cancelled"]);
 
 export const optionalStringSchema = z.string().trim().optional().nullable();

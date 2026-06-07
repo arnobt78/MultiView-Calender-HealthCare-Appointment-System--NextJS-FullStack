@@ -25,6 +25,7 @@ import { PatientAgeGlassBadge } from "@/components/shared/person-display/Patient
 import { PatientCareTierGlassBadge } from "@/components/shared/person-display/PatientCareTierGlassBadge";
 import { PatientPortraitAvatar } from "@/components/shared/person-display/PatientPortraitAvatar";
 import { AppointmentCategoryTypeMetaRow } from "@/components/shared/appointment-display/AppointmentCategoryTypeMetaRow";
+import { AppointmentStatusGlassBadge } from "@/components/shared/appointments/AppointmentStatusGlassBadge";
 import { TelehealthSessionBadge } from "@/components/shared/appointments/TelehealthSessionBadge";
 import { resolveAppointmentDisplayLocation } from "@/lib/appointment-visit-location";
 import { resolvePrimaryDoctorCardImage } from "@/lib/appointment-card-clinician-image";
@@ -78,6 +79,7 @@ export type AppointmentCardProps = {
   className?: string;
   onEdit: (appt: FullAppointment) => void;
   onDelete: (id: string) => void;
+  onCancel?: (id: string) => void;
   onToggleStatus: (id: string, nextStatus: "pending" | "done" | "alert") => void;
   /** List rail only — telehealth VideoCall below ⋮ menu */
   telehealthSlot?: ReactNode;
@@ -267,9 +269,9 @@ function AppointmentCardMeta({
 }) {
   const {
     isDone,
+    isCancelled,
     formattedDate,
     formattedTime,
-    statusClass,
     patientLabel,
     patientId,
     ownerLabel,
@@ -512,9 +514,7 @@ function AppointmentCardMeta({
         ) : null}
 
         <AppointmentCardMetaRow icon={<Flag className="h-3.5 w-3.5" />} label="Status:">
-          <span className={clsx("text-xs font-semibold capitalize", statusClass)}>
-            {appointment.status || "pending"}
-          </span>
+          <AppointmentStatusGlassBadge status={appointment.status} size="card" />
         </AppointmentCardMetaRow>
 
         {invoiceDisplayStatus ? (
@@ -982,6 +982,7 @@ export function AppointmentCard({
   className,
   onEdit,
   onDelete,
+  onCancel,
   onToggleStatus,
   telehealthSlot,
   audience = "dashboard",
@@ -1019,7 +1020,7 @@ export function AppointmentCard({
     portalTreatingLabel,
   } as UseAppointmentCardModelParams);
 
-  const { density, colorToken, isDone, start, user } = model;
+  const { density, colorToken, isDone, isCancelled, start, user } = model;
   const wrapValues =
     density === "full" && (variant === "month-panel" || variant === "popover");
   /** List keeps single-line title; month panel + popover wrap with break-words. */
@@ -1036,6 +1037,7 @@ export function AppointmentCard({
       onToggleStatus={onToggleStatus}
       onEdit={() => onEdit(appointment)}
       onDelete={onDelete}
+      onCancel={onCancel}
       onCreateInvoice={handleCreateInvoice}
       showCreateInvoice={Boolean(handleCreateInvoice)}
       triggerClassName="h-8 w-8 rounded-full hover:bg-black/10"
@@ -1115,6 +1117,7 @@ export function AppointmentCard({
           asHoverTrigger ? "cursor-default" : "cursor-pointer hover:brightness-110",
           isMinimal ? "hover-card-simple items-center" : "hover-card-rich h-full w-full flex-col",
           isDone && "opacity-60",
+          isCancelled && "bg-slate-100/70 opacity-75",
           triggerClassName
         )}
         onClick={onTriggerClick}
@@ -1186,6 +1189,7 @@ export function AppointmentCard({
         "relative flex items-stretch rounded-2xl border shadow-md transition hover:shadow-xl",
         variant === "list" ? "min-h-[130px]" : "min-h-[110px]",
         isDone && "bg-gray-100/80 opacity-60",
+        isCancelled && "bg-slate-100/80 opacity-75 border-slate-200/80",
         className
       )}
       style={{

@@ -1,6 +1,15 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-07 — REQ-0033 badge + ID clipboard)
+## Latest (2026-06-08 — Patient phone + appointment cancel/cron)
+
+- **Patient phone:** Prisma `patients.phone`; POST/PUT + `serializePatient`; `PatientFormDialog` field; CP detail row; list **Phone** column + search; `phone-validation.ts` (Zod + API + client toast); `npm run db:seed-phones` after `prisma:push`.
+- **Optional Brevo SMS:** `brevo-sms.ts` + `BREVO_SMS_API_KEY` (opt-in; no key = skip SMS); `reminder-recipient-phone.ts` (user.phone → patient.phone).
+- **Appointment cancel:** `cancelled` status; `cancelled_at`/`cancelled_by_id`; `appointment-cancel-access.ts`; PATCH cancel + `appointment-notify.ts`; `AppointmentStatusGlassBadge` everywhere; CP `AppointmentActionsMenu`; scheduling excludes cancelled.
+- **Cron:** `/api/cron/reminders` — `reminder_sent_at` dedupe; email + in-app; optional SMS; `appointment-id-write.ts` shared PUT/PATCH.
+- **Verify:** **829** / **158** · tsc · lint · build.
+
+## Prior (2026-06-07 — Appointment status UI groundwork)
+
 
 - **Badges:** `font-normal` on `Badge` + `.calendar-glass-badge`; status/type chips swept.
 - **ID copy:** detail rows + invoice header + payment table + **invoice list** (`InvoiceNumberTableCell` link + copy via `labelNode`).

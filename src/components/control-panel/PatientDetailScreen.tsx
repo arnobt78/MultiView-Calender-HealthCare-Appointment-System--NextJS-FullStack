@@ -12,6 +12,7 @@ import {
   List,
   Lock,
   Pencil,
+  Phone,
   Receipt,
   Share2,
   Stethoscope,
@@ -103,6 +104,8 @@ const PATIENT_DETAIL_DOCTOR_USERS_FILTERS = { role: "doctor" as const, limit: 20
 const PATIENT_DETAIL_ADMIN_USERS_FILTERS = { role: "admin" as const, limit: 50 };
 import { invalidateQueriesForRoute } from "@/lib/query-client";
 import { prefetchDoctorsDirectory } from "@/lib/prefetch-doctors-directory";
+import { validateOptionalPatientPhoneInput } from "@/lib/phone-validation";
+import { notify } from "@/lib/notify";
 import { clinicalSnapshotAppointmentsTableMinWidthClass } from "@/lib/clinical-snapshot-table-columns";
 import type { Patient, PatientSnapshot } from "@/types/types";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
@@ -424,6 +427,11 @@ export function PatientDetailScreen({
 
   const handleEditDialogSubmit = () => {
     if (!p) return;
+    const phoneError = validateOptionalPatientPhoneInput(dialogForm.phone);
+    if (phoneError) {
+      notify.error({ title: "Invalid phone", subtitle: phoneError });
+      return;
+    }
     const primary_doctor_id =
       dialogExtra.primaryDoctorId && dialogExtra.primaryDoctorId !== "none"
         ? dialogExtra.primaryDoctorId
@@ -437,6 +445,7 @@ export function PatientDetailScreen({
         birth_date: dialogForm.birth_date || undefined,
         care_level: dialogForm.care_level,
         pronoun: dialogForm.pronoun || undefined,
+        phone: dialogForm.phone?.trim() || undefined,
         active: dialogForm.active,
         clinical_profile,
         primary_doctor_id,
@@ -649,6 +658,9 @@ export function PatientDetailScreen({
                 </PatientDetailDefinitionRow>
                 <PatientDetailDefinitionRow icon={User} label="Pronoun">
                   {clinicalEmptyOr(p!.pronoun, "definition")}
+                </PatientDetailDefinitionRow>
+                <PatientDetailDefinitionRow icon={Phone} label="Contact Phone">
+                  {clinicalEmptyOr(p!.phone, "definition")}
                 </PatientDetailDefinitionRow>
                 <PatientDetailDefinitionRow icon={Tag} label="Category">
                   <CategoryTableCell

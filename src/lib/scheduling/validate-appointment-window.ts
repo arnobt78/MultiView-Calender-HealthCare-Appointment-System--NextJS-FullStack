@@ -52,6 +52,7 @@ export async function assertNoOwnerAppointmentOverlap(
   const conflict = await prisma.appointment.findFirst({
     where: {
       owner_id: doctorId,
+      status: { not: "cancelled" },
       ...(excludeAppointmentId ? { id: { not: excludeAppointmentId } } : {}),
       start: { lt: end },
       end: { gt: start },

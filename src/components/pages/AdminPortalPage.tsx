@@ -32,6 +32,7 @@ import { UserAvatar } from "@/components/shared/UserAvatar";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { appointmentDetailHref, doctorDetailHref } from "@/lib/entity-routes";
 import { DoctorSpecialtyBadge } from "@/components/shared/doctor-display/DoctorSpecialtyBadge";
+import { AppointmentStatusGlassBadge } from "@/components/shared/appointments/AppointmentStatusGlassBadge";
 import {
   Activity,
   AlertCircle,
@@ -40,7 +41,6 @@ import {
   Calendar,
   CalendarCheck,
   CalendarClock,
-  CalendarX,
   Clock,
   CreditCard,
   MapPin,
@@ -66,11 +66,6 @@ const GLASS: Record<string, string> = {
   slate: "rounded-[28px] border border-slate-400/20 bg-gradient-to-br from-slate-500/10 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(100,116,139,0.1)]",
 };
 
-const STATUS_META: Record<string, { cls: string; icon: React.ReactNode; label: string }> = {
-  done: { cls: "calendar-glass-badge-emerald", icon: <CalendarCheck className="h-3 w-3" />, label: "Done" },
-  pending: { cls: "calendar-glass-badge-amber", icon: <CalendarClock className="h-3 w-3" />, label: "Pending" },
-  alert: { cls: "calendar-glass-badge-rose", icon: <CalendarX className="h-3 w-3" />, label: "Alert" },
-};
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -117,7 +112,6 @@ function KpiCard({ label, value, icon, color, isLoading, sub }: KpiCardProps) {
 
 function RecentAppointmentRow({ appt }: { appt: Appointment & { patient_name?: string | null; owner_display?: string | null } }) {
   const start = parseISO(appt.start);
-  const meta = STATUS_META[appt.status ?? "pending"] ?? STATUS_META.pending;
 
   return (
     <div className="flex items-start gap-2 py-3 border-b border-border/40 last:border-0">
@@ -146,10 +140,7 @@ function RecentAppointmentRow({ appt }: { appt: Appointment & { patient_name?: s
         </div>
       </div>
       <div className="flex flex-col items-end gap-1 flex-shrink-0">
-        <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-normal", meta.cls)}>
-          {meta.icon}
-          {meta.label}
-        </span>
+        <AppointmentStatusGlassBadge status={appt.status} size="compact" />
         {appt.is_telehealth && (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-normal bg-sky-100/80 text-sky-700 border border-sky-200/60">
             <Video className="h-3 w-3" />

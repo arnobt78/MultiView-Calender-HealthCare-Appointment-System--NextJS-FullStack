@@ -43,7 +43,7 @@ const SLOT_ROW_HEIGHT = 65; // 64px row + 1px border
 
 export default function DayView() {
   const { currentDate } = useDateContext();
-  const { appointments, isLoading, isError: appointmentsError, toggleStatus, deleteAppointment } = useAppointmentData();
+  const { appointments, isLoading, isError: appointmentsError, toggleStatus, deleteAppointment, cancelAppointment } = useAppointmentData();
   const { user } = useAuth();
   const { category, patient, date, status, month, search, clinicalRole } =
     useCalendarFilters();
@@ -196,6 +196,7 @@ export default function DayView() {
                             slotHeightPx={slotHeight}
                             onEdit={(a) => setEditAppt(a as Appointment)}
                             onDelete={(id) => setDeleteTargetId(id)}
+                            onCancel={cancelAppointment}
                             onToggleStatus={(id, next) =>
                               handleToggleStatus(id, next as "pending" | "done" | "alert")
                             }

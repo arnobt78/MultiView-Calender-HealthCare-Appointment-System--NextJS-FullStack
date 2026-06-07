@@ -11,10 +11,15 @@ import { isValidUUID } from "@/lib/validation";
 import { APPOINTMENT_TYPE_CARD_SELECT } from "@/lib/appointment-type-include";
 import { getUserRole, isPatientRole } from "@/lib/rbac";
 import { resolveAppointmentAccess } from "@/lib/appointment-access";
+import {
+  assertAppointmentWriteAccess,
+  applyAppointmentStatusFields,
+  applyReminderSentAtClearOnStart,
+  fireAppointmentStatusNotifications,
+  loadAppointmentAccessRow,
+} from "@/lib/appointment-id-write";
 import { buildAppointmentDetailApiPayload } from "@/lib/appointment-detail-api";
-import { appointmentNotificationLink } from "@/lib/entity-routes";
 import { redis } from "@/lib/redis";
-import { format } from "date-fns";
 import {
   AppointmentSchedulingConflictError,
   assertNoOwnerAppointmentOverlap,
@@ -79,12 +84,22 @@ export async function PUT(req: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Invalid appointment ID format" }, { status: 400 });
     }
 
-    const { level } = await resolveAppointmentAccess(ctx.accessSession, id);
-    if (level !== "mutate") {
+    const body = await req.json();
+    const accessRow = await loadAppointmentAccessRow(id);
+    if (!accessRow) {
       return NextResponse.json({ error: "Appointment not found or unauthorized" }, { status: 404 });
     }
 
-    const body = await req.json();
+    const accessError = await assertAppointmentWriteAccess(
+      ctx.accessSession,
+      id,
+      body,
+      accessRow
+    );
+    if (accessError) {
+      return NextResponse.json({ error: accessError.message }, { status: accessError.status });
+    }
+
     const data: Record<string, unknown> = {
       updated_at: new Date(),
       updated_by_id: ctx.sessionUser.userId,
@@ -97,6 +112,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
         return NextResponse.json({ error: "Invalid start date" }, { status: 400 });
       }
       data.start = start;
+      applyReminderSentAtClearOnStart(data, body);
     }
     if (body.end !== undefined) {
       const end = new Date(body.end);
@@ -109,7 +125,9 @@ export async function PUT(req: NextRequest, context: RouteContext) {
     if (body.patient !== undefined) data.patient_id = body.patient ?? null;
     if (body.category !== undefined) data.category_id = body.category ?? null;
     if (body.notes !== undefined) data.notes = body.notes ?? null;
-    if (body.status !== undefined) data.status = body.status ?? null;
+    if (body.status !== undefined) {
+      applyAppointmentStatusFields(data, body, ctx.sessionUser.userId);
+    }
     if (body.attachments !== undefined) data.attachments = body.attachments ?? [];
     if (body.treating_physician !== undefined) {
       const v = body.treating_physician as unknown;
@@ -138,6 +156,9 @@ export async function PUT(req: NextRequest, context: RouteContext) {
       }
     }
 
+    const previousStatus =
+      body.status !== undefined ? accessRow.status : undefined;
+
     const updated = await prisma.appointment.update({
       where: { id },
       data,
@@ -148,7 +169,26 @@ export async function PUT(req: NextRequest, context: RouteContext) {
       },
     });
 
+    if (
+      body.status === "done" &&
+      previousStatus !== "done" &&
+      updated.status === "done"
+    ) {
+      const { maybeCreateDraftInvoiceForCompletedVisit } = await import(
+        "@/lib/billing-auto-draft"
+      );
+      await maybeCreateDraftInvoiceForCompletedVisit(id, ctx.accessSession);
+    }
+
     void redis.invalidateDashboardOverview(ctx.sessionUser.userId);
+
+    fireAppointmentStatusNotifications({
+      appointmentId: id,
+      actorUserId: ctx.sessionUser.userId,
+      previousStatus,
+      newStatus: updated.status,
+      requestedStatus: body.status,
+    });
 
     const payload = await buildAppointmentDetailApiPayload(ctx.accessSession, id);
     if (!payload) {
@@ -181,12 +221,23 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Invalid appointment ID format" }, { status: 400 });
     }
 
-    const { level } = await resolveAppointmentAccess(ctx.accessSession, id);
-    if (level !== "mutate") {
+    const body = await req.json();
+
+    const accessRow = await loadAppointmentAccessRow(id);
+    if (!accessRow) {
       return NextResponse.json({ error: "Appointment not found or unauthorized" }, { status: 404 });
     }
 
-    const body = await req.json();
+    const accessError = await assertAppointmentWriteAccess(
+      ctx.accessSession,
+      id,
+      body,
+      accessRow
+    );
+    if (accessError) {
+      return NextResponse.json({ error: accessError.message }, { status: accessError.status });
+    }
+
     const data: {
       updated_at: Date;
       updated_by_id: string;
@@ -205,6 +256,9 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       chief_complaint?: string | null;
       duration_minutes?: number | null;
       telehealth_link?: string | null;
+      cancelled_at?: Date | null;
+      cancelled_by_id?: string | null;
+      reminder_sent_at?: Date | null;
     } = { updated_at: new Date(), updated_by_id: ctx.sessionUser.userId };
     if (body.title !== undefined) data.title = body.title;
     if (body.start !== undefined) {
@@ -213,6 +267,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
         return NextResponse.json({ error: "Invalid start date" }, { status: 400 });
       }
       data.start = start;
+      data.reminder_sent_at = null;
     }
     if (body.end !== undefined) {
       const end = new Date(body.end);
@@ -226,7 +281,9 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     if (body.attachments !== undefined) data.attachments = body.attachments;
     if (body.category !== undefined) data.category_id = body.category;
     if (body.notes !== undefined) data.notes = body.notes;
-    if (body.status !== undefined) data.status = body.status;
+    if (body.status !== undefined) {
+      applyAppointmentStatusFields(data as Record<string, unknown>, body, ctx.sessionUser.userId);
+    }
     if (body.chief_complaint !== undefined) data.chief_complaint = body.chief_complaint ?? null;
     if (body.duration_minutes !== undefined) data.duration_minutes = body.duration_minutes ?? null;
     if (body.telehealth_link !== undefined) data.telehealth_link = body.telehealth_link ?? null;
@@ -303,14 +360,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     }
 
     const previousStatus =
-      body.status !== undefined
-        ? (
-            await prisma.appointment.findUnique({
-              where: { id },
-              select: { status: true },
-            })
-          )?.status
-        : undefined;
+      body.status !== undefined ? accessRow.status : undefined;
 
     const updated = await prisma.appointment.update({
       where: { id },
@@ -335,26 +385,14 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 
     void redis.invalidateDashboardOverview(ctx.sessionUser.userId);
 
-    const statusMessages: Record<string, string> = {
-      done: "marked as completed",
-      alert: "flagged as alert",
-      pending: "set back to pending",
-    };
-    if (body.status !== undefined && updated.status) {
-      const statusLabel = statusMessages[updated.status] ?? updated.status;
-      try {
-        await prisma.notification.create({
-          data: {
-            user_id: ctx.sessionUser.userId,
-            title: "Appointment Status Updated",
-            message: `"${updated.title}" was ${statusLabel} — ${format(updated.start, "dd.MM.yyyy")}`,
-            type: "status_update",
-            link: appointmentNotificationLink(ctx.accessSession.role, updated.id),
-          },
-        });
-      } catch {
-        /* notification failure is non-critical */
-      }
+    if (body.status !== undefined && updated.status && body.status !== previousStatus) {
+      fireAppointmentStatusNotifications({
+        appointmentId: id,
+        actorUserId: ctx.sessionUser.userId,
+        previousStatus,
+        newStatus: updated.status,
+        requestedStatus: body.status,
+      });
     }
 
     const payload = await buildAppointmentDetailApiPayload(ctx.accessSession, id);

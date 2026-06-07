@@ -120,6 +120,7 @@ const EXTRA_PATIENTS = [
     firstname: "Maria",
     lastname: "Schmidt",
     email: "maria.schmidt@demo.healthcal",
+    phone: "+49 30 201 001 01",
     portraitUrl: "/users/img-4.avif",
     birth_date: new Date("1985-03-14"),
     active: true,
@@ -138,6 +139,7 @@ const EXTRA_PATIENTS = [
     firstname: "Jan",
     lastname: "Mueller",
     email: "jan.mueller@demo.healthcal",
+    phone: "+49 30 201 001 02",
     portraitUrl: "/users/img-5.avif",
     birth_date: new Date("1978-07-22"),
     active: true,
@@ -156,6 +158,7 @@ const EXTRA_PATIENTS = [
     firstname: "Anya",
     lastname: "Petrov",
     email: "anya.petrov@demo.healthcal",
+    phone: "+49 30 201 001 03",
     portraitUrl: "/users/img-6.avif",
     birth_date: new Date("1992-11-05"),
     active: true,
@@ -174,6 +177,7 @@ const EXTRA_PATIENTS = [
     firstname: "Thomas",
     lastname: "Weber",
     email: "thomas.weber@demo.healthcal",
+    phone: "+49 30 201 001 04",
     portraitUrl: "/users/img-7.avif",
     birth_date: new Date("1969-09-30"),
     active: true,
@@ -299,6 +303,7 @@ async function seedExtendedSchema() {
     await prisma.patient.update({
       where: { id: demoPatient.id },
       data: {
+        phone: "+49 30 111 222 33",
         blood_type: "O+",
         height_cm: 172,
         weight_kg: 68.5,
@@ -337,6 +342,7 @@ async function seedExtendedSchema() {
       await prisma.patient.update({
         where: { id: existing.id },
         data: {
+          phone: p.phone,
           blood_type: p.blood_type,
           height_cm: p.height_cm,
           weight_kg: p.weight_kg,
@@ -356,6 +362,7 @@ async function seedExtendedSchema() {
           firstname: p.firstname,
           lastname: p.lastname,
           email: p.email,
+          phone: p.phone,
           birth_date: p.birth_date,
           active: p.active,
           pronoun: p.pronoun,

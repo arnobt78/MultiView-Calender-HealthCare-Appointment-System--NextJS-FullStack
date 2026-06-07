@@ -80,6 +80,7 @@ export function serializePatient(
     care_level: number | null;
     pronoun: string | null;
     email: string | null;
+    phone?: string | null;
     active: boolean;
     active_since: Date | null;
     clinical_profile?: unknown | null;
@@ -101,6 +102,7 @@ export function serializePatient(
     care_level: p.care_level,
     pronoun: p.pronoun,
     email: p.email,
+    phone: p.phone ?? null,
     active: p.active,
     active_since: p.active_since?.toISOString?.() ?? null,
     clinical_profile: p.clinical_profile ?? null,

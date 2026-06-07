@@ -16,6 +16,7 @@ describe("getAppointmentMenuCapabilities", () => {
       canToggleStatus: false,
       canEdit: false,
       canDelete: false,
+      canCancel: false,
     });
   });
 
@@ -52,5 +53,27 @@ describe("getAppointmentMenuCapabilities", () => {
     expect(caps.canToggleStatus).toBe(false);
     expect(caps.canEdit).toBe(false);
     expect(caps.canDelete).toBe(false);
+    expect(caps.canCancel).toBe(false);
+  });
+
+  it("admin without assignee: can cancel but not delete", () => {
+    const caps = getAppointmentMenuCapabilities({
+      appointment: appt,
+      userId: "admin-1",
+      userEmail: "admin@test.com",
+      userRole: "admin",
+    });
+    expect(caps.canCancel).toBe(true);
+    expect(caps.canDelete).toBe(false);
+  });
+
+  it("done appointment: no cancel", () => {
+    const caps = getAppointmentMenuCapabilities({
+      appointment: { ...appt, status: "done" },
+      userId: "owner-1",
+      userEmail: "d@test.com",
+      userRole: "doctor",
+    });
+    expect(caps.canCancel).toBe(false);
   });
 });

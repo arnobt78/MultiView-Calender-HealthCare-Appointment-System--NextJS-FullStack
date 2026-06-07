@@ -12,6 +12,7 @@ export type AppointmentSummaryStats = {
   open: number;
   alert: number;
   done: number;
+  cancelled: number;
 };
 
 export type DailyAppointmentStats = {
@@ -51,6 +52,7 @@ export function summarizeAppointments(
 
       if (appt.status === "done") acc.done += 1;
       else if (appt.status === "alert") acc.alert += 1;
+      else if (appt.status === "cancelled") acc.cancelled += 1;
       else acc.open += 1;
 
       return acc;
@@ -64,6 +66,7 @@ export function summarizeAppointments(
       open: 0,
       alert: 0,
       done: 0,
+      cancelled: 0,
     }
   );
 }
@@ -76,7 +79,9 @@ export function summarizeDayAppointments(
       acc.total += 1;
       if (appt.status === "done") acc.done += 1;
       else if (appt.status === "alert") acc.alert += 1;
-      else acc.open += 1;
+      else if (appt.status === "cancelled") {
+        /* cancelled excluded from open bucket */
+      } else acc.open += 1;
       return acc;
     },
     { total: 0, open: 0, alert: 0, done: 0 }

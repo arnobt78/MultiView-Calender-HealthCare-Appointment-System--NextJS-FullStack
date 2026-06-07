@@ -9,6 +9,7 @@ import {
   Pencil,
   Receipt,
   Trash2,
+  Ban,
 } from "lucide-react";
 import { BackNavigationLink } from "@/components/shared/BackNavigationLink";
 import { ControlPanelGlassActionButton } from "@/components/shared/ControlPanelGlassActionButton";
@@ -58,11 +59,14 @@ export function AppointmentDetailActionBar({
   const navRole = useInitialNavRole();
   const role = user?.role ?? navRole;
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false);
   const {
     toggleStatus,
     isTogglingStatus,
     deleteAppointment,
     isDeleting,
+    cancelAppointment,
+    isCancelling,
   } = useAppointments();
   const invoiceMap = useAppointmentInvoiceDisplayMap([appointment.id]);
   const invoiceDisplayStatus = invoiceMap.get(appointment.id) ?? null;
@@ -92,7 +96,8 @@ export function AppointmentDetailActionBar({
   );
 
   const isDone = appointment.status === "done";
-  const busy = isTogglingStatus || isDeleting;
+  const isCancelled = appointment.status === "cancelled";
+  const busy = isTogglingStatus || isDeleting || isCancelling;
 
   const scrollToEdit = () => {
     document.getElementById("appointment-detail-edit")?.scrollIntoView({ behavior: "smooth" });
@@ -106,7 +111,7 @@ export function AppointmentDetailActionBar({
           {backLabel}
         </BackNavigationLink>
         <div className="flex flex-wrap gap-2">
-          {canEdit && capabilities.canToggleStatus ? (
+          {canEdit && capabilities.canToggleStatus && !isCancelled ? (
             <ControlPanelGlassActionButton
               type="button"
               variant={isDone ? "sky" : "emerald"}
@@ -126,7 +131,7 @@ export function AppointmentDetailActionBar({
               {isDone ? "Mark open" : "Mark done"}
             </ControlPanelGlassActionButton>
           ) : null}
-          {canEdit && capabilities.canEdit ? (
+          {canEdit && capabilities.canEdit && !isCancelled ? (
             <ControlPanelGlassActionButton
               type="button"
               variant="emerald"
@@ -146,6 +151,29 @@ export function AppointmentDetailActionBar({
               <Receipt className="shrink-0" aria-hidden />
               {billingCreateInvoiceTriggerDefault.triggerLabel}
             </ControlPanelGlassActionButton>
+          ) : null}
+          {canEdit && capabilities.canCancel ? (
+            <ConfirmActionDialog
+              open={cancelOpen}
+              onOpenChange={setCancelOpen}
+              variant="warning"
+              title="Cancel appointment?"
+              subtitle="This visit will be marked cancelled. Stakeholders will be notified."
+              confirmLabel="Cancel visit"
+              onConfirm={() => {
+                cancelAppointment(appointment.id);
+              }}
+              trigger={
+                <ControlPanelGlassActionButton
+                  type="button"
+                  variant="sky"
+                  disabled={busy}
+                >
+                  <Ban className="shrink-0" aria-hidden />
+                  {isCancelling ? "Cancelling…" : "Cancel visit"}
+                </ControlPanelGlassActionButton>
+              }
+            />
           ) : null}
           {canEdit && capabilities.canDelete ? (
             <ConfirmActionDialog

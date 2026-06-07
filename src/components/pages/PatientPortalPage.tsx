@@ -12,7 +12,7 @@
  * - Inline skeleton pattern: structural chrome always mounted, only data values pulse
  */
 
-import { useState, useEffect, useLayoutEffect, useMemo, type ReactNode } from "react";
+import { useState, useEffect, useLayoutEffect, useMemo, createElement, type ReactNode } from "react";
 import { seedInvoicesListCacheFromSsr } from "@/lib/invoices-query-ssr-seed";
 import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -77,6 +77,8 @@ import { EntityIdCopyInline } from "@/components/shared/EntityIdCopyInline";
 import { BookAppointmentDialog } from "@/components/shared/patient-booking/PatientBookingDialog";
 import { useUsers } from "@/hooks/useUsers";
 import { queryKeys } from "@/lib/query-keys";
+import { AppointmentStatusGlassBadge } from "@/components/shared/appointments/AppointmentStatusGlassBadge";
+import { resolveAppointmentStatusMeta } from "@/lib/appointment-status-display";
 import { prefetchDoctorsDirectory } from "@/lib/prefetch-doctors-directory";
 import { getPatientCareLevelLabel } from "@/lib/patient-care-level";
 
@@ -85,45 +87,13 @@ import { getPatientCareLevelLabel } from "@/lib/patient-care-level";
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
-// Status meta
-// ---------------------------------------------------------------------------
-
-/**
- * Status row badges — use the same `calendar-glass-badge*` utilities as MonthView /
- * CalendarHeader so portal appointment chips match dashboard calendar styling.
- */
-const STATUS_META: Record<
-  string,
-  { icon: React.ReactNode; glassCls: string; label: string; dotCls: string }
-> = {
-  done: {
-    icon: <CalendarCheck className="h-3.5 w-3.5" />,
-    glassCls: "calendar-glass-badge-emerald",
-    label: "Done",
-    dotCls: "bg-emerald-400",
-  },
-  pending: {
-    icon: <CalendarClock className="h-3.5 w-3.5" />,
-    glassCls: "calendar-glass-badge-amber",
-    label: "Pending",
-    dotCls: "bg-amber-400",
-  },
-  alert: {
-    icon: <CalendarX className="h-3.5 w-3.5" />,
-    glassCls: "calendar-glass-badge-rose",
-    label: "Alert",
-    dotCls: "bg-red-400",
-  },
-};
-
-/** Re-export for pages that import booking dialog from the portal module. */
-export { BookAppointmentDialog } from "@/components/shared/patient-booking/PatientBookingDialog";
-
-// ---------------------------------------------------------------------------
 // APPOINTMENT TIMELINE — dashboard list sections + per-id color palette
 // ---------------------------------------------------------------------------
 
 type ApptRow = PortalPrefetchData["appointments"][number];
+
+/** Re-export for pages that import booking dialog from the portal module. */
+export { BookAppointmentDialog } from "@/components/shared/patient-booking/PatientBookingDialog";
 
 const PORTAL_LIST_SECTION_ICONS: Record<
   AppointmentListSectionKey,
@@ -135,22 +105,17 @@ const PORTAL_LIST_SECTION_ICONS: Record<
   later: CalendarDays,
 };
 
-function PortalTimelineRailItem({
-  appt,
-  statusMeta,
-}: {
-  appt: ApptRow;
-  statusMeta: { icon: ReactNode };
-}) {
+function PortalTimelineRailItem({ appt }: { appt: ApptRow }) {
   const { getAppointmentColorToken } = useAppointmentColor();
   const lineColor = getAppointmentColorToken(appt.id, null).lineColor;
+  const StatusIcon = resolveAppointmentStatusMeta(appt.status).Icon;
   return (
     <div className="relative pl-12">
       <div
         className="absolute left-2 top-4 z-10 flex h-5 w-5 items-center justify-center rounded-full border-2 border-background text-white shadow-sm"
         style={{ backgroundColor: lineColor }}
       >
-        {statusMeta.icon}
+        {createElement(StatusIcon, { className: "h-3 w-3", "aria-hidden": true })}
       </div>
       <PortalAppointmentTimelineCard appointment={appt} />
     </div>
@@ -291,17 +256,9 @@ function AppointmentTimeline({
                     ) : (
                       <div className="relative space-y-3 before:absolute before:inset-y-0 before:left-[18px] before:w-0.5 before:bg-linear-to-b before:from-sky-300/60 before:via-sky-200/40 before:to-transparent">
                         {groups.flatMap((group) =>
-                          group.items.map((appt) => {
-                            const status = appt.status ?? "pending";
-                            const meta = STATUS_META[status] ?? STATUS_META.pending;
-                            return (
-                              <PortalTimelineRailItem
-                                key={appt.id}
-                                appt={appt}
-                                statusMeta={meta}
-                              />
-                            );
-                          })
+                          group.items.map((appt) => (
+                              <PortalTimelineRailItem key={appt.id} appt={appt} />
+                            ))
                         )}
                       </div>
                     )}

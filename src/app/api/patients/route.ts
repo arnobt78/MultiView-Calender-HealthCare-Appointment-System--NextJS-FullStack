@@ -15,6 +15,7 @@ import {
 import { redis } from "@/lib/redis";
 import { getUserRole, isPatientRole } from "@/lib/rbac";
 import { assertDoctorActiveForBooking, InactiveDoctorBookingError } from "@/lib/doctor-active-booking";
+import { parseOptionalPatientPhone } from "@/lib/phone-validation";
 /** Per-request list/create — literal required by Next segment config (see api-route-dynamic.test.ts). */
 export const dynamic = "force-dynamic";
 
@@ -88,6 +89,11 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    const phoneParsed = parseOptionalPatientPhone(body.phone);
+    if (!phoneParsed.ok) {
+      return NextResponse.json({ error: phoneParsed.error }, { status: 400 });
+    }
+
     const patient = await prisma.patient.create({
       data: {
         firstname: body.firstname.trim(),
@@ -99,6 +105,7 @@ export async function POST(req: NextRequest) {
           : null,
         pronoun: body.pronoun ?? null,
         email: body.email ?? null,
+        phone: phoneParsed.phone,
         active: body.active !== false,
         active_since: body.active_since ? new Date(body.active_since) : null,
         created_by_id: sessionUser.userId,

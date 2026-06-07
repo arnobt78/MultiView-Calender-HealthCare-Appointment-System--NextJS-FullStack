@@ -67,6 +67,7 @@ model User {
   categories_updated          Category[]            @relation("CategoryUpdatedBy")
   appointments_created        Appointment[]         @relation("AppointmentCreatedBy")
   appointments_updated        Appointment[]         @relation("AppointmentUpdatedBy")
+  appointments_cancelled      Appointment[]         @relation("AppointmentCancelledBy")
   /// Junction table: which global appointment types this doctor has enabled
   doctor_type_configs         DoctorAppointmentTypeConfig[] @relation("DoctorTypeConfigUser")
   created_by                  User?                         @relation("UserCreatedBy", fields: [created_by_id], references: [id], onDelete: SetNull)
@@ -88,6 +89,8 @@ model Patient {
   care_level  Int?
   pronoun     String?   @db.Text
   email       String?   @db.Text
+  /// E.164 or local format — reminder SMS when no linked user.phone
+  phone       String?   @db.Text
   active      Boolean   @default(true)
   active_since DateTime? @db.Timestamptz(6)
   /// Flexible demo/clinical fields (allergies, meds, notes) — merged on PUT, not replaced blindly.
@@ -158,7 +161,12 @@ model Appointment {
   category_id String?   @map("category") @db.Uuid
   notes       String?   @db.Text
   title       String    @db.Text
-  status      String?   @db.Text // 'done' | 'pending' | 'alert'
+  status      String?   @db.Text // 'done' | 'pending' | 'alert' | 'cancelled'
+  /// When status was set to cancelled — audit + reporting.
+  cancelled_at      DateTime? @db.Timestamptz(6)
+  cancelled_by_id   String?   @db.Uuid
+  /// Set by reminder cron after 24h-before email/SMS batch — cleared when start changes.
+  reminder_sent_at  DateTime? @db.Timestamptz(6)
   /// Calendar owner — maps to DB column `user_id` (B3: Prisma name `owner_id` only; no migration).
   owner_id    String    @map("user_id") @db.Uuid
   /// B2: optional treating / referring physician; display rule: `treating_physician_id ?? owner_id` (see `appointment-display-doctor.ts`).
@@ -183,6 +191,7 @@ model Appointment {
   owner       User       @relation("AppointmentOwner", fields: [owner_id], references: [id], onDelete: Cascade)
   created_by  User?      @relation("AppointmentCreatedBy", fields: [created_by_id], references: [id], onDelete: SetNull)
   updated_by  User?      @relation("AppointmentUpdatedBy", fields: [updated_by_id], references: [id], onDelete: SetNull)
+  cancelled_by User?     @relation("AppointmentCancelledBy", fields: [cancelled_by_id], references: [id], onDelete: SetNull)
   treating_physician User? @relation("AppointmentTreatingPhysician", fields: [treating_physician_id], references: [id], onDelete: SetNull)
   appointment_type    AppointmentType? @relation("AppointmentTypeAppointments", fields: [appointment_type_id], references: [id], onDelete: SetNull)
   assignees   AppointmentAssignee[]

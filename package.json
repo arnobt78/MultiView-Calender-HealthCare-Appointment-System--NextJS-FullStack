@@ -22,6 +22,7 @@
     "db:seed-demo-clinical": "tsx scripts/seed-demo-patient-clinical.ts",
     "db:seed-extended": "tsx scripts/seed-extended-schema.ts",
     "db:seed-doctor-profiles": "tsx scripts/seed-doctor-profiles.ts",
+    "db:seed-phones": "tsx scripts/seed-phone-backfill.ts",
     "db:seed-demo-full": "tsx scripts/seed-demo-full.ts",
     "db:check-demo-seed": "tsx scripts/check-demo-seed-health.ts",
     "db:seed-demo-appointments": "tsx scripts/seed-demo-appointments-curated.ts",

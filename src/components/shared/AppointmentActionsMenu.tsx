@@ -6,7 +6,7 @@
  * View href: admin → control-panel; doctor/patient → /appointments/:id.
  */
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Receipt,
@@ -16,6 +16,7 @@ import {
   Circle,
   Pencil,
   Trash2,
+  Ban,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +26,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import { appointmentDetailHref } from "@/lib/entity-routes";
 import { getAppointmentMenuCapabilities } from "@/lib/appointment-menu-permissions";
 import { useInitialNavRole } from "@/context/NavRoleContext";
@@ -35,6 +37,7 @@ type AppointmentMenuTarget = {
   id: string;
   user_id: string;
   status?: string | null;
+  treating_physician_id?: string | null;
   appointment_assignee?: AppointmentAssignee[];
 };
 
@@ -47,6 +50,7 @@ type AppointmentActionsMenuProps = {
   onToggleStatus: (id: string, nextStatus: "pending" | "done") => void;
   onEdit: () => void;
   onDelete: (id: string) => void;
+  onCancel?: (id: string) => void;
   /** Staff billing — preset create from this visit. */
   onCreateInvoice?: (appointmentId: string) => void;
   showCreateInvoice?: boolean;
@@ -78,6 +82,10 @@ const deleteActionClass =
 const createInvoiceClass =
   "gap-2 text-amber-800 [&_svg]:text-amber-600 focus:bg-amber-50 focus:text-amber-900 data-[highlighted]:bg-amber-50 data-[highlighted]:text-amber-900 data-[highlighted]:[&_svg]:text-amber-700";
 
+/** Cancel — slate hover/focus. */
+const cancelActionClass =
+  "gap-2 text-slate-700 [&_svg]:text-slate-600 focus:bg-slate-50 focus:text-slate-800 data-[highlighted]:bg-slate-50 data-[highlighted]:text-slate-800 data-[highlighted]:[&_svg]:text-slate-700";
+
 export function AppointmentActionsMenu({
   appointment,
   userId,
@@ -86,6 +94,7 @@ export function AppointmentActionsMenu({
   onToggleStatus,
   onEdit,
   onDelete,
+  onCancel,
   onCreateInvoice,
   showCreateInvoice = false,
   triggerClassName,
@@ -94,6 +103,8 @@ export function AppointmentActionsMenu({
   const initialNavRole = useInitialNavRole();
   const role = userRole ?? initialNavRole;
   const isDone = appointment.status === "done";
+  const isCancelled = appointment.status === "cancelled";
+  const [cancelOpen, setCancelOpen] = useState(false);
 
   const capabilities = useMemo(
     () =>
@@ -110,6 +121,7 @@ export function AppointmentActionsMenu({
   const viewHref = appointmentDetailHref(role, appointment.id);
 
   return (
+    <>
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
@@ -181,18 +193,34 @@ export function AppointmentActionsMenu({
         </DropdownMenuItem>
 
         <DropdownMenuItem
-          disabled={!capabilities.canEdit}
+          disabled={!capabilities.canEdit || isCancelled}
           className={cn(
-            capabilities.canEdit ? skyActionClass : disabledItemClass
+            capabilities.canEdit && !isCancelled ? skyActionClass : disabledItemClass
           )}
           onClick={() => {
-            if (!capabilities.canEdit) return;
+            if (!capabilities.canEdit || isCancelled) return;
             onEdit();
           }}
         >
           <Pencil className="h-4 w-4" />
           <span>Edit</span>
         </DropdownMenuItem>
+
+        {onCancel ? (
+          <DropdownMenuItem
+            disabled={!capabilities.canCancel}
+            className={cn(
+              capabilities.canCancel ? cancelActionClass : disabledItemClass
+            )}
+            onClick={() => {
+              if (!capabilities.canCancel) return;
+              setCancelOpen(true);
+            }}
+          >
+            <Ban className="h-4 w-4" />
+            <span>Cancel appointment</span>
+          </DropdownMenuItem>
+        ) : null}
 
         {onCreateInvoice && (
           <DropdownMenuItem
@@ -225,5 +253,21 @@ export function AppointmentActionsMenu({
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+
+    {onCancel ? (
+      <ConfirmActionDialog
+        open={cancelOpen}
+        onOpenChange={setCancelOpen}
+        variant="warning"
+        title="Cancel appointment?"
+        subtitle="This visit will be marked cancelled. Stakeholders will be notified."
+        confirmLabel="Cancel visit"
+        onConfirm={() => {
+          onCancel(appointment.id);
+          setCancelOpen(false);
+        }}
+      />
+    ) : null}
+    </>
   );
 }

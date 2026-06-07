@@ -271,6 +271,7 @@ async function loadBusyForRange(
   const appts = await prisma.appointment.findMany({
     where: {
       owner_id: doctorId,
+      status: { not: "cancelled" },
       start: { lt: addMinutes(rangeEnd, 1) },
       end: { gt: rangeStart },
     },

@@ -98,10 +98,20 @@ export function resolvePatientId(
   return null;
 }
 
+/** @deprecated Prefer `AppointmentStatusGlassBadge` — kept for legacy callers during migration. */
 export function statusTextClass(status: string | null | undefined): string {
   if (status === "done") return "text-green-600";
   if (status === "alert") return "text-red-500";
+  if (status === "cancelled") return "text-slate-500";
   return "text-amber-600";
+}
+
+export function isAppointmentDone(status: string | null | undefined): boolean {
+  return status === "done";
+}
+
+export function isAppointmentCancelled(status: string | null | undefined): boolean {
+  return status === "cancelled";
 }
 
 /** Clinician user ids to resolve via `useOwnerUserSummaries` (calendar owner + treating + patient primary doctor). */

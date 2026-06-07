@@ -7,6 +7,7 @@ import {
   FileText,
   Loader2,
   Mail,
+  Phone,
   MessageSquare,
   Stethoscope,
   Pencil,
@@ -163,6 +164,19 @@ export function PatientFormDialog({
                   patientDialogGlassInputClass,
                   isEdit && "cursor-default bg-emerald-50/50 text-muted-foreground"
                 )}
+              />
+            </FieldBlock>
+
+            {/* Contact phone — persisted on POST/PUT; used for SMS reminders when user.phone is absent. */}
+            <FieldBlock icon={Phone} htmlFor="pf-phone" label="Phone">
+              <Input
+                id="pf-phone"
+                type="tel"
+                autoComplete="tel"
+                value={form.phone ?? ""}
+                onChange={(e) => onFormChange({ phone: e.target.value })}
+                placeholder="+49 170 1234567"
+                className={patientDialogGlassInputClass}
               />
             </FieldBlock>
 

@@ -130,6 +130,7 @@ export default function AppointmentList() {
     isLoading: loadingAppointments,
     isFetching: fetchingAppointments,
     deleteAppointment,
+    cancelAppointment,
     toggleStatus,
     refetch: refetchAppointments,
     summaryStats,
@@ -477,6 +478,7 @@ export default function AppointmentList() {
                                     doctorConsultationFeeCents={appt.doctor_consultation_fee_cents}
                                     onEdit={handleEdit}
                                     onDelete={handleDelete}
+                                    onCancel={cancelAppointment}
                                     onToggleStatus={handleToggleStatus}
                                     telehealthSlot={
                                       appt.is_telehealth ? (

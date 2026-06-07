@@ -1,41 +1,17 @@
 "use client";
 
-import type { ReactNode } from "react";
 import { format, isPast, parseISO } from "date-fns";
 import { RoleEntityLink } from "@/components/shared/RoleEntityLink";
 import { AppointmentDateTag } from "@/components/shared/AppointmentDateTag";
 import { AppointmentScheduleColorDot } from "@/components/shared/appointments/AppointmentScheduleColorDot";
+import { AppointmentStatusGlassBadge } from "@/components/shared/appointments/AppointmentStatusGlassBadge";
 import { TelehealthSessionBadge } from "@/components/shared/appointments/TelehealthSessionBadge";
 import { AppointmentListVisitFeeBadge } from "@/components/shared/appointment-display/AppointmentListVisitFeeBadge";
 import { resolveAppointmentLineColor } from "@/context/AppointmentColorContext";
 import { resolveAppointmentDisplayLocation } from "@/lib/appointment-visit-location";
 import type { DoctorPortalAppointmentRow } from "@/types/types";
-import {
-  CalendarCheck,
-  CalendarClock,
-  CalendarX,
-  AlertCircle,
-  MapPin,
-} from "lucide-react";
+import { AlertCircle, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const STATUS_META: Record<string, { cls: string; icon: ReactNode; label: string }> = {
-  done: {
-    cls: "calendar-glass-badge calendar-glass-badge-emerald",
-    icon: <CalendarCheck className="h-3 w-3" aria-hidden />,
-    label: "Done",
-  },
-  pending: {
-    cls: "calendar-glass-badge calendar-glass-badge-amber",
-    icon: <CalendarClock className="h-3 w-3" aria-hidden />,
-    label: "Pending",
-  },
-  alert: {
-    cls: "calendar-glass-badge calendar-glass-badge-rose",
-    icon: <CalendarX className="h-3 w-3" aria-hidden />,
-    label: "Alert",
-  },
-};
 
 type DoctorPortalAppointmentListRowProps = {
   appt: DoctorPortalAppointmentRow;
@@ -50,9 +26,7 @@ export function DoctorPortalAppointmentListRow({
   const start = parseISO(appt.start);
   const end = parseISO(appt.end);
   const lineColor = resolveAppointmentLineColor(appt.id);
-  const statusKey = appt.status ?? "pending";
-  const meta = STATUS_META[statusKey] ?? STATUS_META.pending;
-  const overdue = isPast(end) && appt.status !== "done";
+  const overdue = isPast(end) && appt.status !== "done" && appt.status !== "cancelled";
   const locationLabel = resolveAppointmentDisplayLocation(appt);
 
   return (
@@ -99,15 +73,7 @@ export function DoctorPortalAppointmentListRow({
         {variant === "upcoming" ? (
           <AppointmentDateTag date={start} className="text-[10px]" />
         ) : (
-          <span
-            className={cn(
-              "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-normal",
-              meta.cls
-            )}
-          >
-            {meta.icon}
-            {meta.label}
-          </span>
+          <AppointmentStatusGlassBadge status={appt.status} size="compact" />
         )}
         {appt.is_telehealth ? <TelehealthSessionBadge /> : null}
         {variant === "today" && overdue ? (

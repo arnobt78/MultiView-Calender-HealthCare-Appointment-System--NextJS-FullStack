@@ -64,6 +64,8 @@ export interface Patient {
   care_level: number | null;
   pronoun: string | null;
   email: string | null;
+  /** Contact phone — SMS fallback when no linked auth user.phone */
+  phone?: string | null;
   active: boolean;
   active_since: string | null;
   created_at: string;
