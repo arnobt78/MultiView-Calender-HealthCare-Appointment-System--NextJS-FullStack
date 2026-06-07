@@ -93,6 +93,7 @@ export function PatientBookingDoctorTypeSection({
         flexDuration={flexDuration}
         onFlexDurationChange={onFlexDurationChange}
         fillLayout={fillLayout}
+        doctorConsultationFeeCents={selectedDoctor?.consultation_fee}
       />
     </div>
   ) : null;

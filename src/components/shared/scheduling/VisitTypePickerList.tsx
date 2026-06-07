@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, Clock, Info } from "lucide-react";
+import { ChevronDown, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { VisitFeeBadge } from "@/components/shared/billing/VisitFeeBadge";
+import { VisitFeeInfoNoteCard } from "@/components/shared/billing/VisitFeeInfoNoteCard";
 import { bookingWizardTypeBadgeClass } from "@/lib/visit-fee-badge-ui-classes";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -22,7 +23,7 @@ import {
   patientBookingGlassTileClass,
   patientBookingGlassTileSelectedClass,
 } from "@/components/shared/patient-booking/patient-booking-dialog-styles";
-import { bookingVisitFeeInfoNote } from "@/lib/appointment-visit-fee-display";
+import { buildBookingVisitFeeInfoNote } from "@/lib/appointment-visit-fee-display";
 
 /** Minimal fields for visit-type tiles (patient wizard + staff dialog). */
 export type VisitTypePickerItem = AppointmentTypeSchedulingFields & {
@@ -49,6 +50,8 @@ type VisitTypePickerListProps = {
   dropdownMode?: boolean;
   onAfterSelect?: () => void;
   className?: string;
+  /** Treating / calendar owner fee — drives disclaimer when type has no price_cents. */
+  doctorConsultationFeeCents?: number | null;
 };
 
 /** Collapsed visit-type row — patient step 1 and staff appointment dropdown field. */
@@ -117,6 +120,7 @@ export function VisitTypePickerList({
   dropdownMode = false,
   onAfterSelect,
   className,
+  doctorConsultationFeeCents,
 }: VisitTypePickerListProps) {
   const collapsedInset = bookingPickerCollapsedInsetClass;
   const [pickerOpen, setPickerOpen] = useState(true);
@@ -124,6 +128,11 @@ export function VisitTypePickerList({
 
   const flexCollapsed = isFlexible && flexPicked;
   const typeCollapsed = !isFlexible && Boolean(selectedType) && !pickerOpen;
+  const feeInfoNote = buildBookingVisitFeeInfoNote({
+    doctorConsultationFeeCents,
+    selectedTypePriceCents: isFlexible ? 0 : (selectedType?.price_cents ?? 0),
+    isFlexible,
+  });
   const showList = dropdownMode
     ? true
     : isFlexible
@@ -266,10 +275,7 @@ export function VisitTypePickerList({
         </button>
       ))}
       {types.length > 0 ? (
-        <div className="flex items-start gap-1.5 rounded-xl border border-sky-200/50 bg-sky-50/60 px-3 py-2">
-          <Info className="mt-0.5 h-3 w-3 shrink-0 text-sky-600" aria-hidden />
-          <p className="text-[11px] leading-relaxed text-sky-800">{bookingVisitFeeInfoNote()}</p>
-        </div>
+        <VisitFeeInfoNoteCard variant="compact">{feeInfoNote}</VisitFeeInfoNoteCard>
       ) : null}
     </ScrollOverflowPanel>
   );

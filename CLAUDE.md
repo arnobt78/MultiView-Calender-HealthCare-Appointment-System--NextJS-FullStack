@@ -4,7 +4,7 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-07)
 
-- **REQ-0033:** Badge `font-normal` everywhere (badges + filter/toggle pills). `EntityIdCopyInline` on detail IDs, invoice header, payment ID, org members, **invoice list `#shortId` + link** (`InvoiceNumberTableCell`). `labelNode` for link+ copy tables.
+- **REQ-0033:** Badge `font-normal`; `EntityIdCopyInline` on detail/list IDs. Visit-fee disclaimer: `buildBookingVisitFeeInfoNote` + `VisitFeeInfoNoteCard` (picker + `/services`).
 - **REQ-0032:** Invoice detail plain title; `PaymentStatusBadge`; payment reference labels; status icons.
 - **Verify:** **786** / **148** · tsc · lint · build.
 
@@ -30,7 +30,8 @@ Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Key paths
 
-- ID copy: `EntityIdCopyInline` (`labelNode` for tables), `InvoiceNumberTableCell`, `useCopyToClipboard`, `entity-id-display`
+- ID copy: `EntityIdCopyInline`, `InvoiceNumberTableCell`, `useCopyToClipboard`
+- Visit fee copy: `appointment-visit-fee-display.ts`, `VisitFeeInfoNoteCard.tsx`, `visit-fee-info-note-ui-classes.ts`
 - Invoice: `InvoiceDetailLiveBody`, `PaymentStatusBadge`, `payment-status-display.ts`, `invoice-payment-history-columns.tsx`
 - Location: `appointment-visit-location.ts`, `DashboardQueueAppointmentRow`
 - Cards: `AppointmentCard`, `PortalAppointmentTimelineCard`, `AppointmentDetailScreenShared`

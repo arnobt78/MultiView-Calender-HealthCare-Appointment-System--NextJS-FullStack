@@ -4,7 +4,7 @@
 
 - **Badges:** `font-normal` on `Badge` + `.calendar-glass-badge`; status/type chips swept.
 - **ID copy:** detail rows + invoice header + payment table + **invoice list** (`InvoiceNumberTableCell` link + copy via `labelNode`).
-- **Typography:** filter/toggle pills (`CalendarHeader`, patient portal, visit picker, section accordion) → `font-normal`.
+- **Visit fee copy:** `buildBookingVisitFeeInfoNote` (type → doctor · est. → €150) in picker + staff dialog; `VisitFeeInfoNoteCard` panel on `/services`.
 - **Stack:** client-only; no API/query/invalidation changes.
 - **Audit (2026-06-07):** full scope verified · commits `e97d4e8` + `824666b` on `main`.
 

@@ -74,7 +74,47 @@ export function buildInvoiceAmountFeeHint(input: VisitFeeInput): string {
   return `No visit type fee on file — default doctor visit (${formatVisitFeeEurLabel(DEFAULT_DOCTOR_VISIT_FEE_CENTS)}) prefilled. You can override.`;
 }
 
-/** Booking wizard note — includes default fallback when types lack price_cents. */
+/** Context for booking / dialog visit-fee disclaimer copy. */
+export type BookingVisitFeeNoteInput = {
+  doctorConsultationFeeCents?: number | null;
+  /** Selected visit type price — when &gt; 0, type fee applies (no doctor/default mention). */
+  selectedTypePriceCents?: number | null;
+  isFlexible?: boolean;
+};
+
+const BOOKING_FEE_NOTE_LEAD =
+  "Visit fee is reserved at booking. An invoice is generated automatically once the appointment is marked as completed.";
+
+/**
+ * Dynamic booking disclaimer — mirrors `resolveVisitFeeCents` (type → doctor → default).
+ * When type has a price, omits misleading €150-only wording.
+ */
+export function buildBookingVisitFeeInfoNote(
+  input: BookingVisitFeeNoteInput = {}
+): string {
+  const typePrice = input.selectedTypePriceCents ?? 0;
+  if (typePrice > 0) {
+    return `${BOOKING_FEE_NOTE_LEAD} This visit type includes a listed fee (${formatVisitFeeEurLabel(typePrice)}). Staff can adjust the invoice amount before sending if needed.`;
+  }
+
+  const { source, cents } = describeVisitFeeSource({
+    typePriceCents: 0,
+    doctorConsultationFeeCents: input.doctorConsultationFeeCents,
+  });
+
+  if (source === "doctor") {
+    return `${BOOKING_FEE_NOTE_LEAD} When a visit type has no fee, this doctor's consultation fee (${formatVisitFeeEurLabel(cents)} · est.) applies unless you enter another amount on the invoice.`;
+  }
+
+  return `${BOOKING_FEE_NOTE_LEAD} When a visit type has no fee and no doctor consultation fee is on file, the clinic default (${formatVisitFeeEurLabel(DEFAULT_DOCTOR_VISIT_FEE_CENTS)}) applies unless you enter another amount on the invoice.`;
+}
+
+/** /services — explains tiered fees before a doctor is chosen in the wizard. */
+export function buildServicesVisitFeePolicyNote(): string {
+  return `Each service shows its visit fee when listed. If a service has no price, your doctor's consultation fee applies (amounts vary by specialist). If neither is set, the clinic default (${formatVisitFeeEurLabel(DEFAULT_DOCTOR_VISIT_FEE_CENTS)}) is used. Invoices are created automatically when the visit is marked completed; staff can adjust the amount before sending.`;
+}
+
+/** @deprecated Prefer `buildBookingVisitFeeInfoNote` with doctor/type context. */
 export function bookingVisitFeeInfoNote(): string {
-  return `Visit fee is reserved at booking. An invoice is generated automatically once the appointment is marked as completed. When a visit type has no fee, the default doctor visit (${formatVisitFeeEurLabel(DEFAULT_DOCTOR_VISIT_FEE_CENTS)}) applies unless you enter another amount on the invoice.`;
+  return buildBookingVisitFeeInfoNote();
 }

@@ -21,6 +21,7 @@ type PatientBookingTypePickerListProps = {
   onFlexDurationChange: (minutes: number) => void;
   fillLayout?: boolean;
   className?: string;
+  doctorConsultationFeeCents?: number | null;
 };
 
 export function PatientBookingTypePickerList(props: PatientBookingTypePickerListProps) {

@@ -54,6 +54,8 @@ import {
   defaultServicesDoctorFilters,
   type ServicesDoctorFilterState,
 } from "@/components/services/ServicesDoctorFilters";
+import { VisitFeeInfoNoteCard } from "@/components/shared/billing/VisitFeeInfoNoteCard";
+import { buildServicesVisitFeePolicyNote } from "@/lib/appointment-visit-fee-display";
 
 interface DoctorAvailability {
   weekday: number;
@@ -75,6 +77,8 @@ export interface DoctorCard {
   /** Merged owned + enabled globals — used for visit-type filter on this page. */
   bookable_appointment_types?: DoctorBookableTypeRow[];
   patient_count: number;
+  /** Default visit fee when type has no price (cents) — from `GET /api/doctors`. */
+  consultation_fee?: number | null;
   /** Doctor account active — inactive doctors stay listed but cannot be booked. */
   is_active?: boolean;
 }
@@ -339,6 +343,9 @@ export default function ServicesPage({ initialDoctors, initialServiceCatalog }: 
             ))}
           </div>
         )}
+        <VisitFeeInfoNoteCard variant="panel">
+          {buildServicesVisitFeePolicyNote()}
+        </VisitFeeInfoNoteCard>
       </section>
     </div>
   );

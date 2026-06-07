@@ -1,9 +1,44 @@
 import { describe, it, expect } from "vitest";
 import {
+  buildBookingVisitFeeInfoNote,
+  buildServicesVisitFeePolicyNote,
   resolveBookingVisitFeeDisplay,
   resolveDisplayedVisitFeeCents,
 } from "@/lib/appointment-visit-fee-display";
 import { DEFAULT_DOCTOR_VISIT_FEE_CENTS } from "@/lib/billing-visit-fee";
+
+describe("buildBookingVisitFeeInfoNote", () => {
+  it("mentions type fee when type has price", () => {
+    const note = buildBookingVisitFeeInfoNote({ selectedTypePriceCents: 9250 });
+    expect(note).toContain("92.50");
+    expect(note).not.toContain("€150.00");
+  });
+
+  it("mentions doctor consultation fee when type has no price", () => {
+    const note = buildBookingVisitFeeInfoNote({
+      doctorConsultationFeeCents: 20000,
+      selectedTypePriceCents: 0,
+    });
+    expect(note).toContain("200.00");
+    expect(note).toContain("· est.");
+  });
+
+  it("mentions clinic default when no type or doctor fee", () => {
+    const note = buildBookingVisitFeeInfoNote({
+      doctorConsultationFeeCents: 0,
+      selectedTypePriceCents: 0,
+    });
+    expect(note).toContain("150.00");
+  });
+});
+
+describe("buildServicesVisitFeePolicyNote", () => {
+  it("explains tiered fees and clinic default", () => {
+    const note = buildServicesVisitFeePolicyNote();
+    expect(note).toContain("consultation fee");
+    expect(note).toContain("150.00");
+  });
+});
 
 describe("resolveBookingVisitFeeDisplay", () => {
   it("uses explicit type price without estimate hint", () => {

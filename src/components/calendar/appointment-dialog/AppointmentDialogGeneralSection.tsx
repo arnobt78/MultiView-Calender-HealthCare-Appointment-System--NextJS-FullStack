@@ -308,6 +308,11 @@ export function AppointmentDialogGeneralSection({
     [directoryDoctors, treatingPhysicianId]
   );
 
+  const staffSchedulingDoctor = useMemo(
+    () => directoryDoctors.find((d) => d.id === staffSchedulingDoctorId),
+    [directoryDoctors, staffSchedulingDoctorId]
+  );
+
   const prefetchStaffSchedulingScope = useCallback(
     (scope: { kind: "type"; typeId: string } | { kind: "flex"; durationMinutes: number }) => {
       if (!isValidUUID(staffSchedulingDoctorId)) return;
@@ -543,6 +548,7 @@ export function AppointmentDialogGeneralSection({
             onFlexDurationChange={handleStaffFlexDuration}
             dropdownMode
             onAfterSelect={() => setTypePickerOpen(false)}
+            doctorConsultationFeeCents={staffSchedulingDoctor?.consultation_fee}
           />
         </StaffAppointmentPickerField>
       ) : null}
