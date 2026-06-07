@@ -79,7 +79,7 @@ export function InvoiceStatusBadge({
     <Badge
       variant="outline"
       className={cn(
-        "calendar-glass-badge inline-flex items-center gap-1 text-[10px] py-0 capitalize",
+        "calendar-glass-badge inline-flex items-center gap-1 text-[10px] py-0 capitalize font-normal",
         STATUS_CLASS[resolved] ?? "calendar-glass-badge-slate",
         className
       )}

@@ -1,9 +1,16 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-07 — Invoice detail patient UX)
+## Latest (2026-06-07 — REQ-0033 badge + ID clipboard)
 
-- **Detail header:** plain visit title (`resolveInvoiceDetailHeaderTitle`); no self-link; `#shortId` in subtitle.
-- **Payment history:** `PaymentStatusBadge` glass + icons; tinted amounts; Payment reference labels (demo/Stripe).
+- **Badges:** `font-normal` on `Badge` + `.calendar-glass-badge`; status/type chips swept.
+- **ID copy:** `EntityIdCopyInline` — invoice header `#shortId`, detail ID rows (patient/doctor/category/appointment/admin/invoice), payment Payment ID, org members; full UUID copied.
+- **Stack:** client-only; no API/query/invalidation changes.
+- **Verify:** **786** / **148** · tsc · lint · build · REQ-0033 in `.agile-v`.
+
+## Prior (2026-06-07 — Invoice detail patient UX)
+
+- **Detail header:** plain visit title (`resolveInvoiceDetailHeaderTitle`); no self-link; `#shortId` in subtitle (now with copy icon).
+- **Payment history:** `PaymentStatusBadge` glass + icons; tinted amounts; Payment reference labels (demo/Stripe); Payment ID copy.
 - **Invoice status:** `InvoiceStatusBadge` icons (draft/sent/paid/overdue/cancelled/refunded).
 - **Tests:** **780** / **146** · tsc · lint · build.
 

@@ -46,6 +46,7 @@ import {
 } from "@/lib/admin-user-form-state";
 import { cn } from "@/lib/utils";
 import { EntityDetailRecordAuditCard } from "@/components/shared/entity-detail/EntityDetailRecordAuditCard";
+import { EntityIdCopyInline } from "@/components/shared/EntityIdCopyInline";
 import { mapUserRecordAuditActors } from "@/lib/entity-detail-audit-actor";
 import { entityDetailAuditIconCircleClass } from "@/lib/patient-detail-ui-classes";
 import type { EntityRole } from "@/lib/entity-routes";
@@ -173,7 +174,9 @@ export function AdminUserDetailScreen({
               />
               <div className={patientDetailDefinitionRowClass}>
                 <FieldLabel icon={Hash}>User ID</FieldLabel>
-                <dd className="font-mono text-xs break-all">{liveUser.id}</dd>
+                <dd>
+                  <EntityIdCopyInline value={liveUser.id} />
+                </dd>
               </div>
               <div className={patientDetailDefinitionRowClass}>
                 <FieldLabel icon={Mail}>Email</FieldLabel>

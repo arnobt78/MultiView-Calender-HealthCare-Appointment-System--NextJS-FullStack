@@ -4,14 +4,15 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-07)
 
-- **Invoice detail UX:** plain visit title header; `{visit} · Invoice` section; `PaymentStatusBadge` + payment reference labels; `InvoiceStatusBadge` icons.
-- **Agile V:** C6 REQ-0032; **780** / **146** · tsc · lint · build.
+- **REQ-0033:** Badge `font-normal` (`Badge` + `.calendar-glass-badge` + chip sweep). `EntityIdCopyInline` + `useCopyToClipboard` on detail IDs, invoice header `#shortId`, payment Payment ID, org members. Services email copy shared.
+- **REQ-0032:** Invoice detail plain title; `PaymentStatusBadge`; payment reference labels; status icons.
+- **Verify:** **786** / **148** · tsc · lint · build.
 
 ## Never / Always
 
 **Never:** hardcode query keys; skip invalidation; `<a href>` internal; shadcn Checkbox; `user` on `UserAvatar`; extra impl `.md`.
 
-**Always:** `queryKeys` + `query-client` helpers; `getSessionUser()`; `dynamic = "force-dynamic"` on APIs; `rbac.ts`; `Link` internal.
+**Always:** `queryKeys` + `query-client` helpers; `getSessionUser()`; `dynamic = "force-dynamic"` APIs; `rbac.ts`; `Link` internal.
 
 ## Verify
 
@@ -29,9 +30,9 @@ Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Key paths
 
-- Location: `appointment-visit-location.ts`, `doctorPortalAppointmentListInclude`, `mapDoctorPortalAppointmentsFromRows`, `DashboardQueueAppointmentRow`
-- Booking: `PatientBookingDoctorVisitSummary`, `patient-portal/route.ts` POST
-- Invoice: `PaymentStatusBadge`, `payment-status-display.ts`, `InvoiceDetailLiveBody` header title
+- ID copy: `EntityIdCopyInline.tsx`, `useCopyToClipboard.ts`, `entity-id-display.ts`, `copy-to-clipboard.ts`
+- Invoice: `InvoiceDetailLiveBody`, `PaymentStatusBadge`, `payment-status-display.ts`, `invoice-payment-history-columns.tsx`
+- Location: `appointment-visit-location.ts`, `DashboardQueueAppointmentRow`
 - Cards: `AppointmentCard`, `PortalAppointmentTimelineCard`, `AppointmentDetailScreenShared`
 
 ## Principle

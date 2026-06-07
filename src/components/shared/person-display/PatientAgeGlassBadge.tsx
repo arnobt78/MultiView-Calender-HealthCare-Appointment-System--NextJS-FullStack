@@ -18,7 +18,7 @@ export function PatientAgeGlassBadge({ age, compact = false, className }: Patien
     <Badge
       variant="outline"
       className={cn(
-        "calendar-glass-badge calendar-glass-badge-sky shrink-0 font-medium tabular-nums",
+        "calendar-glass-badge calendar-glass-badge-sky shrink-0 font-normal tabular-nums",
         compact ? "h-4 min-h-4 px-1.5 py-0 text-[9px] leading-none" : "px-2 py-0 text-[10px]",
         className
       )}

@@ -168,6 +168,12 @@
 | ART-0160 | C6 | REQ-0032 | `InvoiceStatusBadge` icons | built |
 | ART-0161 | C6 | REQ-0032 | `entityDetailInvoiceRecordSectionTitle` | built |
 | ART-0162 | C6 | REQ-0032 | Tests payment-status-display + invoice-list-row-display | built |
+| ART-0163 | C6 | REQ-0033 | `badge.tsx` + `calendar-glass-badge` font-normal | built |
+| ART-0164 | C6 | REQ-0033 | `entity-id-display.ts` + `copy-to-clipboard.ts` | built |
+| ART-0165 | C6 | REQ-0033 | `useCopyToClipboard` + `EntityIdCopyInline` | built |
+| ART-0166 | C6 | REQ-0033 | Detail pages + payment history ID copy wiring | built |
+| ART-0167 | C6 | REQ-0033 | Badge component sweep (remove font-medium overrides) | built |
+| ART-0168 | C6 | REQ-0033 | Tests entity-id-display + copy-to-clipboard | built |
 
 ## Verification Commands (project default)
 

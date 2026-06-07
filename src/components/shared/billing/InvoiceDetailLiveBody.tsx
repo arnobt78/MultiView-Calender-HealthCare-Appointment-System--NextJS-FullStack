@@ -22,6 +22,7 @@ import { InvoicePaymentHistoryTable } from "@/components/shared/billing/InvoiceP
 import { AppointmentTypeGlassBadge } from "@/components/shared/appointment-display/AppointmentTypeGlassBadge";
 import { EntityDetailSnapshotSectionHeading } from "@/components/shared/entity-detail/EntityDetailSnapshotSectionHeading";
 import { EntityDetailRecordAuditCard } from "@/components/shared/entity-detail/EntityDetailRecordAuditCard";
+import { EntityIdCopyInline } from "@/components/shared/EntityIdCopyInline";
 import {
   buildInvoiceDetailAuditExtraRows,
   mapInvoiceIssuerActor,
@@ -57,6 +58,7 @@ import {
   invoiceDetailSnapshotSectionClass,
 } from "@/lib/invoice-detail-ui-classes";
 import { clinicalCellMutedTextClass } from "@/lib/table-display-styles";
+import { formatShortEntityId } from "@/lib/entity-id-display";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -114,7 +116,6 @@ export function InvoiceDetailLiveBody({
     invoice.visit_summary?.patient_label && invoice.visit_summary?.when_label
       ? `${invoice.visit_summary.patient_label} · ${invoice.visit_summary.when_label}`
       : invoice.description ?? "Billing record";
-  const subtitle = `${baseSubtitle} · #${invoice.id.slice(0, 8)}`;
 
   const appointmentHref = invoice.appointment_id
     ? variant === "control-panel"
@@ -165,7 +166,17 @@ export function InvoiceDetailLiveBody({
             <InvoiceStatusBadge invoice={invoice} />
           </span>
         }
-        description={subtitle}
+        description={
+          <span className="inline-flex flex-wrap items-center gap-x-1 gap-y-0.5">
+            {baseSubtitle}
+            <span aria-hidden> · </span>
+            <EntityIdCopyInline
+              value={invoice.id}
+              displayValue={formatShortEntityId(invoice.id)}
+              textClassName="text-sm text-muted-foreground font-mono"
+            />
+          </span>
+        }
         actions={
           <InvoiceDetailHeaderActions
             initialInvoice={invoice}
@@ -187,9 +198,7 @@ export function InvoiceDetailLiveBody({
           </EntityDetailSnapshotSectionHeading>
           <dl className={invoiceDetailDefinitionListClass}>
             <InvoiceDetailDefinitionRow icon={Fingerprint} label="Invoice ID">
-              <span className="font-mono text-xs break-all text-muted-foreground">
-                {invoice.id}
-              </span>
+              <EntityIdCopyInline value={invoice.id} />
             </InvoiceDetailDefinitionRow>
             <InvoiceDetailDefinitionRow icon={Euro} label="Amount">
               <InvoiceAmountDisplay amountCents={invoice.amount} currency={invoice.currency} invoice={invoice} />

@@ -34,6 +34,7 @@ import { ClinicalDataTable } from "@/components/shared/ClinicalDataTable";
 import { PatientIdentityCell } from "@/components/shared/person-display/PatientIdentityCell";
 import { EntityDetailSnapshotSectionHeading } from "@/components/shared/entity-detail/EntityDetailSnapshotSectionHeading";
 import { EntityDetailRecordAuditCard } from "@/components/shared/entity-detail/EntityDetailRecordAuditCard";
+import { EntityIdCopyInline } from "@/components/shared/EntityIdCopyInline";
 import { mapUserRecordAuditActors } from "@/lib/entity-detail-audit-actor";
 import { entityDetailOwnedSnapshotSectionTitle } from "@/lib/entity-detail-snapshot-section-copy";
 import { buildRelatedAppointmentsColumns } from "@/components/control-panel/patient-detail-snapshot-columns";
@@ -389,7 +390,7 @@ export function DoctorDetailScreenShared({
                 </DefinitionRow>
               ) : null}
               <DefinitionRow icon={Hash} label="Doctor ID" toneClasses={toneClasses}>
-                <span className="font-mono text-xs break-all">{liveUser.id}</span>
+                <EntityIdCopyInline value={liveUser.id} />
               </DefinitionRow>
               <DefinitionRow icon={Mail} label="Email" toneClasses={toneClasses}>
                 <span className="text-sm">{liveUser.email}</span>
@@ -445,7 +446,7 @@ export function DoctorDetailScreenShared({
                     {(liveUser.languages_spoken ?? []).map((lang) => (
                       <span
                         key={lang}
-                        className="rounded-full border border-sky-200/70 bg-sky-50/80 px-2 py-0.5 text-[11px] font-medium text-sky-700"
+                        className="rounded-full border border-sky-200/70 bg-sky-50/80 px-2 py-0.5 text-[11px] font-normal text-sky-700"
                       >
                         {lang}
                       </span>

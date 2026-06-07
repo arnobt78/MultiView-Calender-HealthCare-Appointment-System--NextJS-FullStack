@@ -78,6 +78,7 @@
 | REQ-0030 | approved [C6] | — | ART-0143..0150 | VER-0051..0052 |
 | REQ-0031 | approved [C6] | REQ-0030 | ART-0151..0155 | VER-0053..0054 |
 | REQ-0032 | approved [C6] | REQ-0028 | ART-0156..0162 | VER-0055..0057 |
+| REQ-0033 | approved [C6] | REQ-0032 | ART-0163..0168 | VER-0058..0060 |
 
 ### REQ-0004 — Dashboard/CP SSR prefetch + calendar batch assignee fetch
 
@@ -574,3 +575,18 @@
 1. `resolveInvoiceDetailHeaderTitle` skips demo seed slugs.
 2. `PaymentStatusBadge` + `payment-status-display.ts`.
 3. `InvoiceStatusBadge` icons; payment table column Payment reference.
+
+### REQ-0033 — Badge font-normal + entity ID clipboard copy
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C6] |
+| Priority | P2 |
+| Parent | REQ-0032 |
+
+**Statement:** All badge label text renders `font-normal`; entity IDs on detail surfaces show inline Copy → Check clipboard (full UUID copied; short `#xxxxxxxx` display where applicable).
+
+**Acceptance criteria:**
+1. `Badge` + `.calendar-glass-badge` tokens set `font-normal`.
+2. `EntityIdCopyInline` on invoice header, detail ID rows, payment history Payment ID.
+3. `entity-id-display` + `copy-to-clipboard` unit tests; full regression pass.

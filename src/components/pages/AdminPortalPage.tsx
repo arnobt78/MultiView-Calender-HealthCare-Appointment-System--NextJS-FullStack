@@ -146,12 +146,12 @@ function RecentAppointmentRow({ appt }: { appt: Appointment & { patient_name?: s
         </div>
       </div>
       <div className="flex flex-col items-end gap-1 flex-shrink-0">
-        <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium", meta.cls)}>
+        <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-normal", meta.cls)}>
           {meta.icon}
           {meta.label}
         </span>
         {appt.is_telehealth && (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-sky-100/80 text-sky-700 border border-sky-200/60">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-normal bg-sky-100/80 text-sky-700 border border-sky-200/60">
             <Video className="h-3 w-3" />
             Telehealth
           </span>
@@ -216,7 +216,7 @@ function DoctorSummaryCard({ doctor }: { doctor: DoctorRow }) {
       {doctor.appointment_types.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {doctor.appointment_types.slice(0, 3).map((t) => (
-            <span key={t.id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-primary/5 text-primary border border-primary/10">
+            <span key={t.id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-normal bg-primary/5 text-primary border border-primary/10">
               {t.is_telehealth && <Video className="h-2.5 w-2.5" />}
               {t.name}
             </span>

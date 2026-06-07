@@ -34,6 +34,7 @@ import { PatientIdentityCell } from "@/components/shared/person-display/PatientI
 import { DoctorIdentityCell } from "@/components/shared/person-display/DoctorIdentityCell";
 import { EntityDetailSnapshotSectionHeading } from "@/components/shared/entity-detail/EntityDetailSnapshotSectionHeading";
 import { EntityDetailRecordAuditCard } from "@/components/shared/entity-detail/EntityDetailRecordAuditCard";
+import { EntityIdCopyInline } from "@/components/shared/EntityIdCopyInline";
 import { AppointmentDetailForm } from "@/components/control-panel/AppointmentDetailForm";
 import { AppointmentDetailActionBar } from "@/components/shared/appointment-detail/AppointmentDetailActionBar";
 import { buildAppointmentLinkedInvoiceColumns } from "@/components/shared/appointment-detail/appointment-linked-invoice-columns";
@@ -405,9 +406,7 @@ export function AppointmentDetailScreenShared({
 
             <dl className={toneClasses.definitionListClass}>
               <DefinitionRow icon={Hash} label="Appointment ID" toneClasses={toneClasses}>
-                <span className="font-mono text-xs break-all text-muted-foreground">
-                  {appointment.id}
-                </span>
+                <EntityIdCopyInline value={appointment.id} />
               </DefinitionRow>
               {appointment.chief_complaint ? (
                 <DefinitionRow icon={Stethoscope} label="Chief complaint" toneClasses={toneClasses}>

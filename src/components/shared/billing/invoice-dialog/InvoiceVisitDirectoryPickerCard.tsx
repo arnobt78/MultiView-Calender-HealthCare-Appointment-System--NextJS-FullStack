@@ -83,12 +83,12 @@ export function InvoiceVisitDirectoryPickerCard({
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
             {option.appointment_type_name ? (
-              <span className="rounded-full border border-sky-200/60 bg-sky-50/80 px-2 py-0.5 text-[10px] font-medium text-sky-900">
+              <span className="rounded-full border border-sky-200/60 bg-sky-50/80 px-2 py-0.5 text-[10px] font-normal text-sky-900">
                 {option.appointment_type_name}
               </span>
             ) : null}
             {option.category_label ? (
-              <span className="inline-flex items-center gap-1 rounded-full border border-violet-200/60 bg-violet-50/80 px-2 py-0.5 text-[10px] font-medium text-violet-900">
+              <span className="inline-flex items-center gap-1 rounded-full border border-violet-200/60 bg-violet-50/80 px-2 py-0.5 text-[10px] font-normal text-violet-900">
                 <CategoryBrandMark color={option.category_color} size="compact" />
                 {option.category_label}
               </span>

@@ -251,7 +251,7 @@ export function GlobalAppointmentTypesEditor() {
         <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
           <Globe className="h-4 w-4 text-sky-600 shrink-0" aria-hidden />
           <h3 className="text-sm font-semibold text-gray-800">Global Types</h3>
-          <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-medium text-sky-700">
+          <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-normal text-sky-700">
             {globalTypes.length}
           </span>
         </div>
@@ -359,7 +359,7 @@ export function GlobalAppointmentTypesEditor() {
           <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
             <UserCog className="h-4 w-4 text-violet-600 shrink-0" aria-hidden />
             <h3 className="text-sm font-semibold text-gray-800">Custom Types by Doctor</h3>
-            <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-medium text-violet-700">
+            <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-normal text-violet-700">
               {data?.customTypes?.length ?? 0}
             </span>
           </div>

@@ -456,7 +456,7 @@ export default function Navbar() {
                           </span>
                           <span className="text-xs font-medium text-gray-700 truncate flex-1">{n.title}</span>
                           {/* Glassmorphic type badge — replaces raw schema string (e.g. "status_update") */}
-                          <Badge className={`shrink-0 border px-1.5 py-0 h-5 text-[10px] font-medium leading-5 ${cfg.badgeClass}`}>
+                          <Badge className={`shrink-0 border px-1.5 py-0 h-5 text-[10px] font-normal leading-5 ${cfg.badgeClass}`}>
                             {cfg.label}
                           </Badge>
                           {/* Colored unread dot — hue matches the notification type */}

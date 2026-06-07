@@ -347,7 +347,7 @@
 
   /* Global glass badges used across calendar views/header */
   .calendar-glass-badge {
-    @apply inline-flex items-center justify-center text-center rounded-full border px-2 text-xs backdrop-blur-sm transition;
+    @apply inline-flex items-center justify-center text-center rounded-full border px-2 text-xs font-normal backdrop-blur-sm transition;
     box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
   }
   .calendar-glass-badge-emerald {

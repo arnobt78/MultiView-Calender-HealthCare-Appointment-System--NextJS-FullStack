@@ -101,7 +101,7 @@ export function DoctorPortalAppointmentListRow({
         ) : (
           <span
             className={cn(
-              "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium",
+              "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-normal",
               meta.cls
             )}
           >
@@ -111,7 +111,7 @@ export function DoctorPortalAppointmentListRow({
         )}
         {appt.is_telehealth ? <TelehealthSessionBadge /> : null}
         {variant === "today" && overdue ? (
-          <span className="inline-flex items-center gap-1 rounded-full border border-red-200/60 bg-red-100/80 px-2 py-0.5 text-[10px] font-medium text-red-700">
+          <span className="inline-flex items-center gap-1 rounded-full border border-red-200/60 bg-red-100/80 px-2 py-0.5 text-[10px] font-normal text-red-700">
             <AlertCircle className="h-3 w-3" aria-hidden />
             Overdue
           </span>

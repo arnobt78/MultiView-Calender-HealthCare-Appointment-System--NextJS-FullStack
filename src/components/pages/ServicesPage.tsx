@@ -15,13 +15,13 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLayoutEffect } from "react";
+import { CopyToClipboardIconButton } from "@/components/shared/CopyToClipboardIconButton";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import {
   Activity,
   CalendarClock,
   CalendarPlus,
-  Check,
   Clock,
-  Copy,
   Stethoscope,
   Users,
 } from "lucide-react";
@@ -79,31 +79,18 @@ export interface DoctorCard {
   is_active?: boolean;
 }
 
-/** Copy email with brief check icon feedback — local state only (no navigation). */
+/** Copy email with brief check icon feedback — shared clipboard hook. */
 function DoctorEmailRow({ email }: { email: string }) {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(email);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2000);
-    } catch {
-      /* clipboard denied — ignore */
-    }
-  };
+  const { copied, copy } = useCopyToClipboard();
 
   return (
     <div className="flex items-center gap-1 min-w-0">
       <p className="text-xs text-muted-foreground truncate">{email}</p>
-      <button
-        type="button"
-        onClick={handleCopy}
-        className="shrink-0 rounded-md p-1 text-muted-foreground hover:bg-sky-50 hover:text-sky-700 transition-colors"
-        aria-label={copied ? "Copied" : "Copy email"}
-      >
-        {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
-      </button>
+      <CopyToClipboardIconButton
+        copied={copied}
+        onCopy={() => void copy(email)}
+        label="Copy email"
+      />
     </div>
   );
 }

@@ -45,7 +45,7 @@ export function PaymentStatusBadge({ status, className, showIcon = true }: Props
     <Badge
       variant="outline"
       className={cn(
-        "calendar-glass-badge inline-flex items-center gap-1 text-[10px] py-0",
+        "calendar-glass-badge inline-flex items-center gap-1 text-[10px] py-0 font-normal",
         paymentStatusGlassClass(status),
         className
       )}

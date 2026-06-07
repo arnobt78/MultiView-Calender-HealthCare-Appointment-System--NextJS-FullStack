@@ -197,7 +197,7 @@ function SummaryShell({
 
       <div className="flex flex-wrap gap-2">
         {categoryLabel ? (
-          <span className="inline-flex items-center gap-1 rounded-full border border-violet-200/60 bg-white/90 px-2.5 py-0.5 text-xs font-medium text-violet-900">
+          <span className="inline-flex items-center gap-1 rounded-full border border-violet-200/60 bg-white/90 px-2.5 py-0.5 text-xs font-normal text-violet-900">
             <CategoryBrandMark color={categoryColor} size="compact" />
             {categoryLabel}
           </span>

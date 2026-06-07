@@ -22,7 +22,7 @@ export function ClinicalAppointmentStatusBadge({
     <Badge
       variant="outline"
       className={cn(
-        "w-fit shrink-0 capitalize text-xs",
+        "w-fit shrink-0 capitalize text-xs font-normal",
         STATUS_CLASS[key] ?? "border-slate-200 bg-slate-50 text-gray-600",
         className
       )}

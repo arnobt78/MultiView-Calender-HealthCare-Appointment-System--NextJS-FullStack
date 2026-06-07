@@ -68,7 +68,7 @@ export function CalendarFiltersEmptyState({
               return (
                 <li
                   key={`${chip.icon}-${chip.label}`}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/90 bg-slate-50/90 px-3 py-1 text-xs font-medium text-slate-700"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/90 bg-slate-50/90 px-3 py-1 text-xs font-normal text-slate-700"
                 >
                   <Icon className="size-3.5 shrink-0 text-slate-500" aria-hidden />
                   <span className="max-w-[220px] truncate">{chip.label}</span>

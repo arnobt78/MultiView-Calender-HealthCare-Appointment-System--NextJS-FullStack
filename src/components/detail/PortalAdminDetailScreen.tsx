@@ -28,6 +28,7 @@ import { useLayoutEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
 import { useUser } from "@/hooks/useUsers";
+import { EntityIdCopyInline } from "@/components/shared/EntityIdCopyInline";
 
 export type PortalAdminDetailScreenProps = {
   userId: string;
@@ -118,7 +119,9 @@ export function PortalAdminDetailScreen({
             <dl className={patientDetailDefinitionListClass}>
               <div className={patientDetailDefinitionRowClass}>
                 <FieldLabel icon={Hash}>User ID</FieldLabel>
-                <dd className="font-mono text-xs break-all">{liveUser.id}</dd>
+                <dd>
+                  <EntityIdCopyInline value={liveUser.id} />
+                </dd>
               </div>
               <div className={patientDetailDefinitionRowClass}>
                 <FieldLabel icon={Mail}>Email</FieldLabel>

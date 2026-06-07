@@ -73,6 +73,7 @@ import { DoctorIdentityRow } from "@/components/shared/doctor-display/DoctorIden
 import { PortalChromeHeader } from "@/components/shared/PortalChromeHeader";
 import { appPortalSectionRootClass } from "@/lib/section-page-layout";
 import { ProfileDefinitionRow } from "@/components/shared/profile/ProfileDefinitionRow";
+import { EntityIdCopyInline } from "@/components/shared/EntityIdCopyInline";
 import { BookAppointmentDialog } from "@/components/shared/patient-booking/PatientBookingDialog";
 import { useUsers } from "@/hooks/useUsers";
 import { queryKeys } from "@/lib/query-keys";
@@ -569,7 +570,7 @@ export default function PatientPortalPage({
                           variant="mono"
                           loading={profileLoading}
                         >
-                          {patient?.id ?? "—"}
+                          {patient?.id ? <EntityIdCopyInline value={patient.id} /> : "—"}
                         </ProfileDefinitionRow>
 
                         <ProfileDefinitionRow

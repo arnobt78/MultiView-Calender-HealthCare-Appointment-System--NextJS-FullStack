@@ -30,6 +30,7 @@ import { CategoryFormDialog } from "@/components/control-panel/category-dialog/C
 import { ClinicalDataTable } from "@/components/shared/ClinicalDataTable";
 import { CategoryBrandMark } from "@/components/shared/category-display/CategoryBrandMark";
 import { EntityDetailRecordAuditCard } from "@/components/shared/entity-detail/EntityDetailRecordAuditCard";
+import { EntityIdCopyInline } from "@/components/shared/EntityIdCopyInline";
 import { mapCategoryRecordAuditActors } from "@/lib/entity-detail-audit-actor";
 import { buildRelatedAppointmentsColumns } from "@/components/control-panel/patient-detail-snapshot-columns";
 import { resolvePortalEntityDetailSnapshotLinkPolicy } from "@/lib/entity-detail-snapshot-links";
@@ -428,7 +429,7 @@ export function CategoryDetailScreenShared({
                   </DefinitionRow>
                 ) : null}
                 <DefinitionRow icon={Hash} label="ID" toneClasses={toneClasses}>
-                  <span className="font-mono text-xs break-all">{cat.id}</span>
+                  <EntityIdCopyInline value={cat.id} />
                 </DefinitionRow>
                 <DefinitionRow icon={Activity} label="Status" toneClasses={toneClasses}>
                   <Badge

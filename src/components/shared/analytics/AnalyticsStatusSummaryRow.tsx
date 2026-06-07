@@ -92,7 +92,7 @@ export function AnalyticsStatusSummaryRow({
             <Badge
               variant="outline"
               className={cn(
-                "calendar-glass-badge inline-flex min-h-6 items-center gap-1.5 rounded-full px-2 text-xs font-medium",
+                "calendar-glass-badge inline-flex min-h-6 items-center gap-1.5 rounded-full px-2 text-xs font-normal",
                 meta.badgeTone
               )}
             >

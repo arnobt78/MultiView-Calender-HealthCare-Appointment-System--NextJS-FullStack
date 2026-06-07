@@ -295,3 +295,13 @@ EvalGate (C6): status=PASS | eval_run_id=ER-C6-VERIFY | policy_version_ref=1.0.0
 | VER-0055 | REQ-0032 | PASS | payment-status-display tests |
 | VER-0056 | REQ-0032 | PASS | invoice-list-row-display demo slug fallback |
 | VER-0057 | REQ-0032 | PASS | Full regression **780/780** + tsc + lint + build |
+
+---
+
+## C6 extension — Badge font-normal + ID clipboard (2026-06-07)
+
+| VER-ID | REQ-ID | Result | Description |
+|--------|--------|--------|-------------|
+| VER-0058 | REQ-0033 | PASS | entity-id-display + copy-to-clipboard tests |
+| VER-0059 | REQ-0033 | PASS | EntityIdCopyInline wired on detail + payment surfaces |
+| VER-0060 | REQ-0033 | PASS | Full regression **786/786** + tsc + lint + build |

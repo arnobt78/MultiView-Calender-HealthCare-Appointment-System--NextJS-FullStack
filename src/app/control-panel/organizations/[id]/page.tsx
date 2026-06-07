@@ -21,6 +21,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { EntityIdCopyInline } from "@/components/shared/EntityIdCopyInline";
+import { formatShortEntityId } from "@/lib/entity-id-display";
 import { ArrowLeft, Building2, Users } from "lucide-react";
 
 type PageProps = { params: Promise<{ id: string }> };
@@ -166,7 +168,13 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
                           </Avatar>
                           <div>
                             <p className="font-medium text-sm">{u?.display_name ?? u?.email ?? "Unknown"}</p>
-                            <p className="text-xs text-muted-foreground font-mono">{m.user_id.slice(0, 8)}</p>
+                            <p className="text-xs text-muted-foreground">
+                              <EntityIdCopyInline
+                                value={m.user_id}
+                                displayValue={formatShortEntityId(m.user_id)}
+                                textClassName="text-xs text-muted-foreground font-mono"
+                              />
+                            </p>
                           </div>
                         </div>
                       </TableCell>
@@ -176,7 +184,11 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <span className="font-mono text-xs text-muted-foreground">#{m.id.slice(0, 8)}</span>
+                        <EntityIdCopyInline
+                          value={m.id}
+                          displayValue={formatShortEntityId(m.id)}
+                          textClassName="text-xs text-muted-foreground font-mono"
+                        />
                       </TableCell>
                       <TableCell>
                         <span className="text-sm text-muted-foreground">

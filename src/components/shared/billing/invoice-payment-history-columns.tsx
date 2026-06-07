@@ -5,7 +5,9 @@ import { format } from "date-fns";
 import { DataTableColumnHeader } from "@/components/shared/DataTableColumnHeader";
 import { InvoiceAmountDisplay } from "@/components/shared/billing/InvoiceAmountDisplay";
 import { PaymentStatusBadge } from "@/components/shared/billing/PaymentStatusBadge";
+import { EntityIdCopyInline } from "@/components/shared/EntityIdCopyInline";
 import type { InvoicePaymentRow } from "@/lib/billing-types";
+import { formatShortEntityId } from "@/lib/entity-id-display";
 import {
   formatPaymentReferenceLabel,
   paymentAmountTextClassForStatus,
@@ -23,9 +25,11 @@ export function buildInvoicePaymentHistoryColumns(currency: string): ColumnDef<I
       meta: { cellClassName: "align-middle" },
       cell: ({ row }) => (
         <div className={cn(clinicalTableCellMinRowClass, "flex items-center")}>
-          <span className="font-mono text-xs text-foreground" title={row.original.id}>
-            #{row.original.id.slice(0, 8)}
-          </span>
+          <EntityIdCopyInline
+            value={row.original.id}
+            displayValue={formatShortEntityId(row.original.id)}
+            textClassName="text-xs text-foreground font-mono"
+          />
         </div>
       ),
     },

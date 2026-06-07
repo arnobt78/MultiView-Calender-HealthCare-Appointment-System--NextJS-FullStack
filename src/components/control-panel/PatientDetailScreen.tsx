@@ -84,6 +84,7 @@ import {
 } from "@/lib/patient-detail-ui-classes";
 import { ControlPanelGlassActionButton } from "@/components/shared/ControlPanelGlassActionButton";
 import { EntityDetailRecordAuditCard } from "@/components/shared/entity-detail/EntityDetailRecordAuditCard";
+import { EntityIdCopyInline } from "@/components/shared/EntityIdCopyInline";
 import { mapPatientRecordAuditActors } from "@/lib/entity-detail-audit-actor";
 import { EntityDetailSnapshotSectionHeading } from "@/components/shared/entity-detail/EntityDetailSnapshotSectionHeading";
 import { entityDetailOwnedSnapshotSectionTitle } from "@/lib/entity-detail-snapshot-section-copy";
@@ -634,7 +635,7 @@ export function PatientDetailScreen({
                   viewerRole={viewerRole as EntityRole}
                 />
                 <PatientDetailDefinitionRow icon={Fingerprint} label="Patient ID">
-                  <span className="font-mono text-xs break-all">{p!.id}</span>
+                  <EntityIdCopyInline value={p!.id} />
                 </PatientDetailDefinitionRow>
                 <PatientDetailDefinitionRow icon={Calendar} label="Birth Date">
                   {clinicalEmptyOr(p!.birth_date, "definition")}
@@ -706,7 +707,7 @@ export function PatientDetailScreen({
                         {(primaryDoctorIdentity.languages_spoken ?? []).length > 0 ? (
                           <div className="col-span-2 flex flex-wrap gap-1 pt-0.5">
                             {(primaryDoctorIdentity.languages_spoken ?? []).map((lang) => (
-                              <span key={lang} className="rounded-full border border-sky-200/70 bg-sky-50/80 px-2 py-0.5 text-[10px] font-medium text-sky-700">
+                              <span key={lang} className="rounded-full border border-sky-200/70 bg-sky-50/80 px-2 py-0.5 text-[10px] font-normal text-sky-700">
                                 {lang}
                               </span>
                             ))}
