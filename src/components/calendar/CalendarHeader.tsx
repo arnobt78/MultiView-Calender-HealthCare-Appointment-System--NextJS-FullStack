@@ -37,7 +37,7 @@ const VIEW_ICONS = {
 } as const;
 
 const tabBase =
-  "inline-flex h-10 shrink-0 items-center gap-2 rounded-full border px-4 text-sm font-medium backdrop-blur-md transition-all duration-200 [&_svg]:size-4";
+  "inline-flex h-10 shrink-0 items-center gap-2 rounded-full border px-4 text-sm font-normal backdrop-blur-md transition-all duration-200 [&_svg]:size-4";
 
 const tabInactive =
   "border-slate-300/55 bg-white/70 text-slate-700 shadow-[0_10px_24px_rgba(15,23,42,0.08)] hover:border-sky-300/60 hover:bg-sky-50/80 hover:text-sky-800 hover:shadow-[0_12px_30px_rgba(2,132,199,0.16)]";

@@ -210,7 +210,7 @@ function AppointmentTimeline({
             {!loading && (
               <Badge
                 variant="outline"
-                className="calendar-glass-badge calendar-glass-badge-sky font-bold ml-1"
+                className="calendar-glass-badge calendar-glass-badge-sky font-normal ml-1"
               >
                 {filtered.length}
               </Badge>
@@ -222,7 +222,7 @@ function AppointmentTimeline({
                 key={key}
                 type="button"
                 onClick={() => setFilter(key)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${filter === key
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-normal transition-all ${filter === key
                   ? "bg-background shadow text-foreground"
                   : "text-muted-foreground hover:text-foreground"
                   }`}
@@ -694,7 +694,7 @@ export default function PatientPortalPage({
                       ) : (
                         <Badge
                           variant="outline"
-                          className={cn("calendar-glass-badge font-bold text-sm", glassCls)}
+                          className={cn("calendar-glass-badge font-normal text-sm", glassCls)}
                         >
                           {value}
                         </Badge>
@@ -719,7 +719,7 @@ export default function PatientPortalPage({
                   {!invoicesLoading && invoices.length > 0 && (
                     <Badge
                       variant="outline"
-                      className="calendar-glass-badge calendar-glass-badge-amber font-bold ml-1"
+                      className="calendar-glass-badge calendar-glass-badge-amber font-normal ml-1"
                     >
                       {invoices.length}
                     </Badge>

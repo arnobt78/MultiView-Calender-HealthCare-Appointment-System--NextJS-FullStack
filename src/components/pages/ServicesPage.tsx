@@ -270,7 +270,7 @@ export default function ServicesPage({ initialDoctors, initialServiceCatalog }: 
             {doctorsLoading && !doctors.length ? (
               <Skeleton className="h-5 w-8 rounded-full" />
             ) : (
-              <Badge variant="outline" className="bg-sky-50 text-sky-700 border-sky-200 font-bold">
+              <Badge variant="outline" className="bg-sky-50 text-sky-700 border-sky-200 font-normal">
                 {filteredDoctors.length}
               </Badge>
             )}
@@ -313,7 +313,7 @@ export default function ServicesPage({ initialDoctors, initialServiceCatalog }: 
             {catalogLoading && !catalogServices.length ? (
               <Skeleton className="h-5 w-8 rounded-full" />
             ) : (
-              <Badge variant="outline" className="bg-violet-50 text-violet-700 border-violet-200 font-bold">
+              <Badge variant="outline" className="bg-violet-50 text-violet-700 border-violet-200 font-normal">
                 {catalogServices.length}
               </Badge>
             )}

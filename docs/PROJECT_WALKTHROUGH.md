@@ -3,7 +3,8 @@
 ## Latest (2026-06-07 — REQ-0033 badge + ID clipboard)
 
 - **Badges:** `font-normal` on `Badge` + `.calendar-glass-badge`; status/type chips swept.
-- **ID copy:** `EntityIdCopyInline` — invoice header `#shortId`, detail ID rows (patient/doctor/category/appointment/admin/invoice), payment Payment ID, org members; full UUID copied.
+- **ID copy:** detail rows + invoice header + payment table + **invoice list** (`InvoiceNumberTableCell` link + copy via `labelNode`).
+- **Typography:** filter/toggle pills (`CalendarHeader`, patient portal, visit picker, section accordion) → `font-normal`.
 - **Stack:** client-only; no API/query/invalidation changes.
 - **Verify:** **786** / **148** · tsc · lint · build · REQ-0033 in `.agile-v`.
 

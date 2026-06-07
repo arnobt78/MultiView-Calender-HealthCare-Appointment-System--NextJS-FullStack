@@ -14,19 +14,30 @@ import { format } from "date-fns";
 import type { EntityRole } from "@/lib/entity-routes";
 import { invoiceDetailHref } from "@/lib/entity-routes";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
+import { EntityIdCopyInline } from "@/components/shared/EntityIdCopyInline";
+import { formatShortEntityId } from "@/lib/entity-id-display";
 
 type InvoiceTableCellsProps = {
   invoice: Invoice;
   viewerRole: EntityRole;
 };
 
-/** Sky link — short invoice id. */
+/** Sky link + clipboard — short invoice id in list tables. */
 export function InvoiceNumberTableCell({ invoice, viewerRole }: InvoiceTableCellsProps) {
   const href = invoiceDetailHref(viewerRole, invoice.id);
-  const shortId = `#${invoice.id.slice(0, 8)}`;
   return (
     <div className={cn(clinicalTableCellMinRowClass, "flex items-center")}>
-      <EntityTitleLink href={href} label={shortId} className="font-mono text-xs font-normal" />
+      <EntityIdCopyInline
+        value={invoice.id}
+        labelNode={
+          <EntityTitleLink
+            href={href}
+            label={formatShortEntityId(invoice.id)}
+            className="font-mono text-xs font-normal"
+          />
+        }
+        monospace={false}
+      />
     </div>
   );
 }

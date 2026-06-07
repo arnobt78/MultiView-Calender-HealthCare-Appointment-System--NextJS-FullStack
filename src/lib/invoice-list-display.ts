@@ -4,6 +4,7 @@
 
 import { format } from "date-fns";
 import { resolveInvoiceDisplayStatus } from "@/lib/billing-appointment-eligibility";
+import { formatShortEntityId } from "@/lib/entity-id-display";
 import type { InvoiceRow, InvoiceVisitSummary } from "@/lib/billing-types";
 
 const DEMO_DESC_PREFIX = /^demo curated invoice/i;
@@ -22,7 +23,7 @@ export function getInvoiceListTitle(invoice: Pick<InvoiceRow, "id" | "descriptio
     return desc;
   }
 
-  return `Invoice #${invoice.id.slice(0, 8)}`;
+  return `Invoice ${formatShortEntityId(invoice.id)}`;
 }
 
 function buildTitleFromVisitSummary(summary: InvoiceVisitSummary): string | null {

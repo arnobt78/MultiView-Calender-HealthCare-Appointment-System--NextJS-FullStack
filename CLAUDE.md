@@ -4,7 +4,7 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-07)
 
-- **REQ-0033:** Badge `font-normal` (`Badge` + `.calendar-glass-badge` + chip sweep). `EntityIdCopyInline` + `useCopyToClipboard` on detail IDs, invoice header `#shortId`, payment Payment ID, org members. Services email copy shared.
+- **REQ-0033:** Badge `font-normal` everywhere (badges + filter/toggle pills). `EntityIdCopyInline` on detail IDs, invoice header, payment ID, org members, **invoice list `#shortId` + link** (`InvoiceNumberTableCell`). `labelNode` for link+ copy tables.
 - **REQ-0032:** Invoice detail plain title; `PaymentStatusBadge`; payment reference labels; status icons.
 - **Verify:** **786** / **148** · tsc · lint · build.
 

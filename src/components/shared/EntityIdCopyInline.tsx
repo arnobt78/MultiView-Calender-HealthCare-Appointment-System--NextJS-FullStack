@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { CopyToClipboardIconButton } from "@/components/shared/CopyToClipboardIconButton";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { cn } from "@/lib/utils";
@@ -7,8 +8,10 @@ import { cn } from "@/lib/utils";
 type Props = {
   /** Full UUID copied to clipboard. */
   value: string;
-  /** Visible label — defaults to full `value`. */
+  /** Visible label — defaults to full `value`. Ignored when `labelNode` is set. */
   displayValue?: string;
+  /** Custom label slot (e.g. `EntityTitleLink` in table cells). */
+  labelNode?: ReactNode;
   /** When true (default), render mono/break-all styling for UUID rows. */
   monospace?: boolean;
   className?: string;
@@ -23,6 +26,7 @@ type Props = {
 export function EntityIdCopyInline({
   value,
   displayValue,
+  labelNode,
   monospace = true,
   className,
   textClassName,
@@ -43,15 +47,17 @@ export function EntityIdCopyInline({
         className
       )}
     >
-      <span
-        className={cn(
-          monospace && "break-all font-mono text-xs text-muted-foreground",
-          textClassName
-        )}
-        title={trimmed}
-      >
-        {shown}
-      </span>
+      {labelNode ?? (
+        <span
+          className={cn(
+            monospace && "break-all font-mono text-xs text-muted-foreground",
+            textClassName
+          )}
+          title={trimmed}
+        >
+          {shown}
+        </span>
+      )}
       <CopyToClipboardIconButton
         copied={copied}
         onCopy={() => void copy(trimmed)}

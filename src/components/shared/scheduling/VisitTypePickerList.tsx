@@ -183,7 +183,7 @@ export function VisitTypePickerList({
                   else setPickerOpen(false);
                 }}
                 className={cn(
-                  "rounded-full border px-3 py-1.5 text-sm font-medium transition-all",
+                  "rounded-full border px-3 py-1.5 text-sm font-normal transition-all",
                   flexDuration === d
                     ? "border-sky-500 bg-sky-600 text-white shadow-[0_8px_20px_rgba(2,132,199,0.35)]"
                     : "border-sky-200/80 bg-white/90 text-sky-800 hover:bg-sky-50"

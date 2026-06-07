@@ -60,7 +60,7 @@ export function AppointmentListSectionAccordion({
           </div>
           <p className="text-xs text-gray-500">{section.subtitle}</p>
         </div>
-        <span className="inline-flex h-7 w-24 shrink-0 items-center justify-center gap-1 rounded-full bg-white/70 px-2 text-xs font-medium text-gray-700 shadow-lg">
+        <span className="inline-flex h-7 w-24 shrink-0 items-center justify-center gap-1 rounded-full bg-white/70 px-2 text-xs font-normal text-gray-700 shadow-lg">
           <ChevronDown
             className={cn(
               "h-3.5 w-3.5 shrink-0 transition-transform duration-200 ease-out",
