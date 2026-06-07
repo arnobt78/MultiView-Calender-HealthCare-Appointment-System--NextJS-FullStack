@@ -30,7 +30,7 @@ Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Key paths
 
-- ID copy: `EntityIdCopyInline.tsx`, `useCopyToClipboard.ts`, `entity-id-display.ts`, `copy-to-clipboard.ts`
+- ID copy: `EntityIdCopyInline` (`labelNode` for tables), `InvoiceNumberTableCell`, `useCopyToClipboard`, `entity-id-display`
 - Invoice: `InvoiceDetailLiveBody`, `PaymentStatusBadge`, `payment-status-display.ts`, `invoice-payment-history-columns.tsx`
 - Location: `appointment-visit-location.ts`, `DashboardQueueAppointmentRow`
 - Cards: `AppointmentCard`, `PortalAppointmentTimelineCard`, `AppointmentDetailScreenShared`

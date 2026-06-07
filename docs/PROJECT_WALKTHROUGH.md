@@ -6,7 +6,7 @@
 - **ID copy:** detail rows + invoice header + payment table + **invoice list** (`InvoiceNumberTableCell` link + copy via `labelNode`).
 - **Typography:** filter/toggle pills (`CalendarHeader`, patient portal, visit picker, section accordion) → `font-normal`.
 - **Stack:** client-only; no API/query/invalidation changes.
-- **Verify:** **786** / **148** · tsc · lint · build · REQ-0033 in `.agile-v`.
+- **Audit (2026-06-07):** full scope verified · commits `e97d4e8` + `824666b` on `main`.
 
 ## Prior (2026-06-07 — Invoice detail patient UX)
 
