@@ -4,6 +4,7 @@
 
 - **RBAC UI:** `doctorCanMutateInvoice` in `invoice-detail-action-capabilities.ts`; doctor portal billing ⋮ menu gates Send/Edit/Delete/Cancel on `invoice.user_id === sessionUserId` — linked calendar owner sees View only; issuer + admin unchanged on API.
 - **Wire:** `DoctorPortalPage` → `DoctorPortalInvoicesCard` → `DoctorPortalInvoiceListRow` → `InvoiceAdminActionsMenu` (`viewerUserId`).
+- **List labels:** `InvoiceVisitDescriptionStack` — `Patient:` / `Treating:` / `Owner:` inline rows on billing cards.
 - **Verify:** **862** / **166** · tsc · lint · build.
 
 ## Prior (2026-06-04 — Invoice dialog visit parity + lifecycle timestamps)

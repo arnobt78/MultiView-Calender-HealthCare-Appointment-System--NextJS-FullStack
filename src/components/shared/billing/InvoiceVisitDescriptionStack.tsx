@@ -4,7 +4,6 @@ import { AppointmentTypeGlassBadge } from "@/components/shared/appointment-displ
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { PatientIdentityCell } from "@/components/shared/person-display/PatientIdentityCell";
 import { DoctorIdentityCell } from "@/components/shared/person-display/DoctorIdentityCell";
-import { DoctorIdentityRow } from "@/components/shared/doctor-display/DoctorIdentityRow";
 import { CategoryInlineLink } from "@/components/shared/CategoryInlineLink";
 import { InvoiceVisitSummaryLine } from "@/components/shared/billing/InvoiceVisitSummaryLine";
 import type { Invoice } from "@/hooks/usePayments";
@@ -14,7 +13,10 @@ import {
   resolveAppointmentTypeDurationMinutes,
   resolveAppointmentTypeDisplayName,
 } from "@/lib/appointment-type-display";
-import { resolveCalendarOwnerLinkKind } from "@/lib/entity-detail-snapshot-links";
+import {
+  resolveCalendarOwnerLinkKind,
+  resolveTreatingPhysicianLinkKind,
+} from "@/lib/entity-detail-snapshot-links";
 import {
   invoiceCalendarOwnerDoctorFromSummary,
   invoiceTreatingDoctorFromSummary,
@@ -87,40 +89,67 @@ export function InvoiceVisitDescriptionStack({ invoice, viewerRole }: Props) {
       </div>
       <InvoiceVisitSummaryLine summary={summary} className="w-full min-w-0" />
       {summary?.patient_label && patientPortrait ? (
-        <PatientIdentityCell
-          href={patientHref}
-          name={summary.patient_label}
-          email={summary.patient_email}
-          patient={patientPortrait}
-          layout="inline"
-          avatarSizeClassName="h-7 w-7"
-          careLevel={summary.patient_care_level}
-          className="w-full min-w-0 py-0"
-        />
-      ) : null}
-      {treatingDoctor || summary?.category_id ? (
-        <div className="flex w-full min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
-          {treatingDoctor ? (
-            <DoctorIdentityRow
-              doctor={treatingDoctor}
-              linkKind={viewerRole === "admin" ? "admin-cp" : "role"}
-              layout="inline"
-              size="sm"
-              showEmail
-              className="min-h-0 shrink-0 py-0"
-            />
-          ) : null}
-          {summary?.category_id && summary.category_label ? (
-            <CategoryInlineLink
-              categoryId={summary.category_id}
-              label={summary.category_label}
-              color={summary.category_color}
-              icon={summary.category_icon}
-              markSize="compact"
-              className="shrink-0"
-            />
-          ) : null}
+        <div className="flex w-full min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+          <span
+            className={cn(
+              clinicalCellMutedTextClass,
+              "shrink-0 text-[10px] font-medium"
+            )}
+          >
+            Patient:
+          </span>
+          <PatientIdentityCell
+            href={patientHref}
+            name={summary.patient_label}
+            email={summary.patient_email}
+            patient={patientPortrait}
+            layout="inline"
+            avatarSizeClassName="h-7 w-7"
+            careLevel={summary.patient_care_level}
+            className="min-h-0 shrink py-0"
+          />
         </div>
+      ) : null}
+      {treatingDoctor && summary?.treating_physician_id && summary.treating_physician_label ? (
+        <div className="flex w-full min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+          <span
+            className={cn(
+              clinicalCellMutedTextClass,
+              "shrink-0 text-[10px] font-medium"
+            )}
+          >
+            Treating:
+          </span>
+          <DoctorIdentityCell
+            doctorId={summary.treating_physician_id}
+            name={summary.treating_physician_label}
+            email={summary.treating_physician_email}
+            image={summary.treating_physician_image}
+            specialty={summary.treating_physician_specialty}
+            viewerRole={viewerRole}
+            linkKind={resolveTreatingPhysicianLinkKind(
+              viewerRole,
+              undefined,
+              summary.treating_physician_role
+            )}
+            staffRole={summary.treating_physician_role}
+            layout="inline"
+            size="sm"
+            showRoleBadge
+            showSpecialty
+            className="min-h-0 shrink py-0"
+          />
+        </div>
+      ) : null}
+      {summary?.category_id && summary.category_label ? (
+        <CategoryInlineLink
+          categoryId={summary.category_id}
+          label={summary.category_label}
+          color={summary.category_color}
+          icon={summary.category_icon}
+          markSize="compact"
+          className="shrink-0"
+        />
       ) : null}
       {ownerDoctor &&
       summary?.calendar_owner_id &&

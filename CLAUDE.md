@@ -10,6 +10,7 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 - **SSR/prefetch:** `serializeInvoice` end-to-end — `invoice-detail-ssr`, `GET /api/invoices/[id]`, `server-prefetch` (lifecycle TS on first paint).
 - **Invalidation:** unchanged — `invalidateAfterInvoiceWrite` → `invoices.*` + `billing.root`.
 - **Doctor issuer UI:** `doctorCanMutateInvoice` + `viewerUserId` on portal list menu — Send/Edit/Delete only when `invoice.user_id` matches session doctor (API unchanged).
+- **Billing list labels:** `InvoiceVisitDescriptionStack` — Patient / Treating / Owner prefix rows (doctor portal + CP list).
 - **Verify:** **862** / **166** · `npm test && tsc && lint && build`.
 
 ## Never / Always
