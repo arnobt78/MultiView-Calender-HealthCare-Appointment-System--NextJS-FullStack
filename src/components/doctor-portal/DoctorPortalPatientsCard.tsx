@@ -8,9 +8,9 @@ import { PatientManagementInner } from "@/components/control-panel/PatientManage
 import { PatientListFiltersProvider } from "@/components/control-panel/PatientListFiltersContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { doctorPortalPatientsPanelClass } from "@/lib/doctor-portal-layout";
+import { PatientRosterStatusCountInlineRow } from "@/components/doctor-portal/PatientRosterStatusCountInlineRow";
 import {
   countDoctorPortalPatientsByStatus,
-  doctorPortalPatientStatusBadgeLabel,
   doctorPortalPatientsSectionTitle,
   DOCTOR_PORTAL_PATIENTS_SUBTITLE,
   filterDoctorPortalPatientRoster,
@@ -51,7 +51,7 @@ export function DoctorPortalPatientsCard({
   );
 
   const statusChip = useMemo(
-    () => doctorPortalPatientStatusBadgeLabel(statusCounts),
+    () => <PatientRosterStatusCountInlineRow counts={statusCounts} />,
     [statusCounts]
   );
 

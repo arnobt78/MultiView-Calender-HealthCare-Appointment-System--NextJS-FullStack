@@ -10,9 +10,13 @@ export const doctorPortalListBodyPulseClass = "animate-pulse rounded-lg bg-slate
 export const doctorPortalBillingPanelClass =
   "border-sky-400/25 bg-white/70 shadow-[0_14px_44px_rgba(2,132,199,0.18)] backdrop-blur-sm supports-[backdrop-filter]:bg-white/55";
 
-/** Per-invoice header strip — Invoice # / amount / status row in Related Billing list. */
+/** Bordered card shell — whole invoice item; sky band sits inside top edge only. */
+export const doctorPortalInvoiceListItemShellClass =
+  "overflow-hidden rounded-xl border border-sky-200/50 bg-white/80 shadow-[0_10px_28px_rgba(14,165,233,0.08)] backdrop-blur-sm";
+
+/** Per-invoice header band — sky tint only (border lives on list item shell). */
 export const doctorPortalInvoiceHeaderStripClass =
-  "rounded-lg border border-sky-200/60 bg-sky-50/80 px-2.5 py-1.5 shadow-[0_4px_14px_rgba(14,165,233,0.08)] backdrop-blur-sm";
+  "bg-sky-50/80 px-2.5 py-1.5 backdrop-blur-sm";
 
 /** Patients roster panel — emerald tone (matches Users icon row). */
 export const doctorPortalPatientsPanelClass =

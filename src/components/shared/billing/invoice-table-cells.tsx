@@ -1,5 +1,6 @@
 "use client";
 
+import { Receipt } from "lucide-react";
 import { InvoiceVisitDescriptionStack } from "@/components/shared/billing/InvoiceVisitDescriptionStack";
 import { InvoiceIssuedByMeta } from "@/components/shared/billing/InvoiceIssuedByMeta";
 import type { Invoice } from "@/hooks/usePayments";
@@ -25,6 +26,8 @@ type InvoiceTableCellsProps = {
 type InvoiceNumberTableCellProps = InvoiceTableCellsProps & {
   /** e.g. "Invoice" → `Invoice #168da90a` (doctor portal list). */
   idLabelPrefix?: string;
+  /** Doctor portal header — Receipt icon before label (invoice detail parity). */
+  showInvoiceLeadingIcon?: boolean;
 };
 
 /** Sky link + clipboard — short invoice id in list tables. */
@@ -32,6 +35,7 @@ export function InvoiceNumberTableCell({
   invoice,
   viewerRole,
   idLabelPrefix,
+  showInvoiceLeadingIcon = false,
 }: InvoiceNumberTableCellProps) {
   const href = invoiceDetailHref(viewerRole, invoice.id);
   const shortId = formatShortEntityId(invoice.id);
@@ -39,7 +43,10 @@ export function InvoiceNumberTableCell({
     ? `${idLabelPrefix.trim()} ${shortId}`
     : shortId;
   return (
-    <div className={cn(clinicalTableCellMinRowClass, "flex items-center")}>
+    <div className={cn(clinicalTableCellMinRowClass, "flex items-center gap-1.5")}>
+      {showInvoiceLeadingIcon ? (
+        <Receipt className="h-3.5 w-3.5 shrink-0 text-sky-600" aria-hidden />
+      ) : null}
       <EntityIdCopyInline
         value={invoice.id}
         labelNode={

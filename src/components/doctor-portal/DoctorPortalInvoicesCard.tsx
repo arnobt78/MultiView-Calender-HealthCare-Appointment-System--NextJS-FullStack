@@ -146,12 +146,10 @@ export function DoctorPortalInvoicesCard({
         </ClinicalListFilterToolbar>
 
         {listLoading ? (
-          <ul className="divide-y divide-border/40" aria-hidden>
+          <ul className="space-y-3" aria-hidden>
             {Array.from({ length: 3 }).map((_, i) => (
-              <li key={i} className="border-b border-border/40 py-2 last:border-0">
-                <Skeleton className="h-4 w-3/4 max-w-md rounded" />
-                <Skeleton className="mt-1 h-3 w-1/2 rounded" />
-                <Skeleton className="mt-1 h-3 w-2/3 rounded" />
+              <li key={i}>
+                <Skeleton className="h-24 w-full rounded-xl" />
               </li>
             ))}
           </ul>
@@ -160,7 +158,7 @@ export function DoctorPortalInvoicesCard({
             {invoices.length === 0 ? "No invoices yet." : "No invoices match your filters."}
           </p>
         ) : (
-          <ul className="divide-y divide-border/40">
+          <ul className="space-y-3">
             {filtered.slice(0, 12).map((inv) => (
               <DoctorPortalInvoiceListRow
                 key={inv.id}
