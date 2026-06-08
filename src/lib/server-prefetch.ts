@@ -475,13 +475,7 @@ export async function prefetchInvoiceDetail(
       due_date: base.due_date,
       paid_at: base.paid_at,
       created_at: base.created_at ?? raw.created_at.toISOString(),
-      payments: raw.payments.map((p) => ({
-        id: p.id,
-        amount: p.amount,
-        status: p.status,
-        created_at: p.created_at,
-        stripe_payment_id: p.stripe_payment_id,
-      })),
+      payments: base.payments,
     }) as Invoice;
     const { attachInvoiceIssuerLabels, attachVisitSummariesToInvoices } =
       await import("@/lib/invoice-visit-summary");
@@ -530,6 +524,7 @@ export async function prefetchInvoices(
       description: row.description ?? undefined,
       due_date: row.due_date ?? undefined,
       paid_at: row.paid_at ?? undefined,
+      cancelled_at: row.cancelled_at ?? undefined,
     })) satisfies Invoice[];
   } catch {
     return null;

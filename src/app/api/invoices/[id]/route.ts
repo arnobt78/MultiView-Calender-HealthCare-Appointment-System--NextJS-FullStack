@@ -51,9 +51,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
     });
     if (!invoice) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    const [withVisit] = await attachVisitSummariesToInvoices([
-      { ...serializeInvoice(invoice), payments: invoice.payments },
-    ]);
+    const [withVisit] = await attachVisitSummariesToInvoices([serializeInvoice(invoice)]);
     const [enriched] = await attachInvoiceIssuerLabels([withVisit]);
 
     return NextResponse.json({ invoice: enriched });

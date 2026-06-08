@@ -38,11 +38,13 @@ export function toClientInvoice(
     description: invoice.description ?? undefined,
     due_date: invoice.due_date ?? undefined,
     paid_at: invoice.paid_at ?? undefined,
-    payments: raw.payments.map((p) => ({
+    cancelled_at: invoice.cancelled_at ?? undefined,
+    payments: invoice.payments.map((p) => ({
       id: p.id,
       amount: p.amount,
       status: p.status,
-      created_at: p.created_at.toISOString(),
+      created_at: p.created_at,
+      refunded_at: p.refunded_at ?? undefined,
       stripe_payment_id: p.stripe_payment_id ?? undefined,
     })),
   };
