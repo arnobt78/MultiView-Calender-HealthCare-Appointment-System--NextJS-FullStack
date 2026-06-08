@@ -8,6 +8,7 @@
 - **Dialog parity:** `invoice-dialog-visit-display.ts`; summary card fee strip `buildInvoiceVisitFeeStripLine` + amount-field hint; `DoctorIdentityCell` / care tier / type+duration on summary + picker.
 - **SSR audit fix:** `toClientInvoice` + `GET /api/invoices/[id]` + `prefetchInvoice` use `serializeInvoice` payments (`refunded_at`) + `cancelled_at` — footer dates correct on first paint.
 - **Serialize sweep:** checkout `POST /api/payments` + org invoice prefetch use `serializeInvoice` payments.
+- **Audit:** full plan PASS — hooks/invalidation/SSR/cache/types aligned; optional nit: invoice PDF payments map omits `refunded_at`.
 - **Verify:** **859** / **166** · tsc · lint · build.
 
 ## Prior (2026-06-08 — Portal KPI parity + cancelled counters + demo seed)

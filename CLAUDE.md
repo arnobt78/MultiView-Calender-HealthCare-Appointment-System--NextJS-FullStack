@@ -9,6 +9,7 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 - **Visit summary fees:** `invoice-visit-summary` + `billing-appointment-options-load` — fee + doctor display fields on summary/option rows.
 - **SSR/prefetch:** `serializeInvoice` end-to-end — `invoice-detail-ssr`, `GET /api/invoices/[id]`, `server-prefetch` (lifecycle TS on first paint).
 - **Invalidation:** unchanged — `invalidateAfterInvoiceWrite` → `invoices.*` + `billing.root`.
+- **Audit:** plan phases 1–7 PASS · invalidation OK · SSR/prefetch serialized · nit: PDF route payments skip `refunded_at` (non-blocking).
 - **Verify:** **859** / **166** · `npm test && tsc && lint && build`.
 
 ## Never / Always
