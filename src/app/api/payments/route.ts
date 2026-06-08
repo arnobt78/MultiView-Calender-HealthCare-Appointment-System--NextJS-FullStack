@@ -97,12 +97,7 @@ export async function POST(request: NextRequest) {
       ? "patient-portal"
       : "control-panel/invoice-management";
 
-    const withVisit = await attachVisitSummariesToInvoices([
-      {
-        ...serializeInvoice(invoice),
-        payments: invoice.payments,
-      },
-    ]);
+    const withVisit = await attachVisitSummariesToInvoices([serializeInvoice(invoice)]);
     const [payableRow] = await attachInvoiceIssuerLabels(withVisit);
     const stripeProduct = buildStripeCheckoutProductCopy(payableRow);
 

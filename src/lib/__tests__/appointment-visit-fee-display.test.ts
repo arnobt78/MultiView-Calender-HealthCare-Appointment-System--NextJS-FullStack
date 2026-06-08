@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   buildBookingVisitFeeInfoNote,
+  buildInvoiceVisitFeeStripLine,
   buildServicesVisitFeePolicyNote,
   resolveBookingVisitFeeDisplay,
   resolveDisplayedVisitFeeCents,
@@ -79,6 +80,17 @@ describe("resolveBookingVisitFeeDisplay", () => {
         isFlexible: false,
       })
     ).toBeNull();
+  });
+});
+
+describe("buildInvoiceVisitFeeStripLine", () => {
+  it("includes resolved type fee and hint", () => {
+    const line = buildInvoiceVisitFeeStripLine({
+      typePriceCents: 12000,
+      doctorConsultationFeeCents: 15000,
+    });
+    expect(line).toContain("€120.00");
+    expect(line).toContain("visit type fee");
   });
 });
 

@@ -556,7 +556,7 @@ export async function prefetchInvoicesForOrganization(
         ...row,
         ...base,
         appointment_id: row.appointment_id,
-        payments: row.payments,
+        payments: base.payments,
       });
     });
     return attachVisitSummariesToInvoices(mapped);

@@ -5,11 +5,11 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 ## Latest (2026-06-04)
 
 - **Invoice lifecycle TS:** `invoices.cancelled_at`, `payments.refunded_at` (`016_invoice_lifecycle_timestamps.sql`); PATCH cancel + refund route writes; `serializeInvoice` + list footer via `invoice-list-meta-status-dates.ts` (Paid / Refunded / Cancelled).
-- **Dialog visit parity:** `invoice-dialog-visit-display.ts`; `InvoiceVisitSummaryCard` + picker tile — portrait, care tier, `AppointmentTypeGlassBadge`+duration, `DoctorIdentityCell` treating/owner; edit-mode `visitFeeHintInput` from `visit_summary` fee fields.
+- **Dialog visit parity:** `invoice-dialog-visit-display.ts`; summary + picker — portrait, care tier, type+duration, `DoctorIdentityCell`; fee strip `buildInvoiceVisitFeeStripLine` on card + amount hint (create/edit).
 - **Visit summary fees:** `invoice-visit-summary` + `billing-appointment-options-load` — fee + doctor display fields on summary/option rows.
 - **SSR/prefetch:** `serializeInvoice` end-to-end — `invoice-detail-ssr`, `GET /api/invoices/[id]`, `server-prefetch` (lifecycle TS on first paint).
 - **Invalidation:** unchanged — `invalidateAfterInvoiceWrite` → `invoices.*` + `billing.root`.
-- **Verify:** **858** / **166** · `npm test && tsc && lint && build`.
+- **Verify:** **859** / **166** · `npm test && tsc && lint && build`.
 
 ## Never / Always
 

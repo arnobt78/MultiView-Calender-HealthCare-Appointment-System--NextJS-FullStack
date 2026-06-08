@@ -21,6 +21,7 @@ import {
 } from "@/lib/entity-detail-snapshot-links";
 import type { EntityRole } from "@/lib/entity-routes";
 import { patientAgeYears } from "@/lib/patient-age";
+import { buildInvoiceVisitFeeStripLine } from "@/lib/appointment-visit-fee-display";
 import { invoiceDialogSummaryCardClass } from "@/lib/invoice-dialog-ui-classes";
 import { cn } from "@/lib/utils";
 
@@ -153,6 +154,12 @@ export function InvoiceVisitSummaryCard(props: Props) {
           </div>
         ) : null}
       </div>
+
+      {display.visitFeeInput ? (
+        <p className="text-[11px] leading-snug text-muted-foreground">
+          {buildInvoiceVisitFeeStripLine(display.visitFeeInput)}
+        </p>
+      ) : null}
     </div>
   );
 }

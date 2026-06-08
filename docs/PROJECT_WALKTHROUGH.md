@@ -5,9 +5,10 @@
 - **DB:** `invoices.cancelled_at`, `payments.refunded_at` (`migrations/016_invoice_lifecycle_timestamps.sql`); Prisma + `db push`; PATCH cancel sets `cancelled_at`; refund route sets `refunded_at` + invoice `cancelled_at`.
 - **List footer:** `invoice-list-meta-status-dates.ts` — Refunded prefers `payment.refunded_at` (fallback `created_at`); Cancelled uses `invoice.cancelled_at`; Paid unchanged.
 - **Visit summary fees:** `invoice-visit-summary` include `price_cents` + `consultation_fee`; `InvoiceVisitSummary` gains fee fields; `billing-appointment-options-load` wires doctor images/roles/duration on picker rows.
-- **Dialog parity:** `invoice-dialog-visit-display.ts` normalizers; `InvoiceVisitSummaryCard` + `InvoiceVisitDirectoryPickerCard` — `PatientCareTierGlassBadge`, `AppointmentTypeGlassBadge`+duration, `DoctorIdentityCell` treating/owner (`viewerRole`); edit `visitFeeHintInput` from `visit_summary` in `InvoiceFormDialog` / `InvoiceDialogFieldsSection`.
+- **Dialog parity:** `invoice-dialog-visit-display.ts`; summary card fee strip `buildInvoiceVisitFeeStripLine` + amount-field hint; `DoctorIdentityCell` / care tier / type+duration on summary + picker.
 - **SSR audit fix:** `toClientInvoice` + `GET /api/invoices/[id]` + `prefetchInvoice` use `serializeInvoice` payments (`refunded_at`) + `cancelled_at` — footer dates correct on first paint.
-- **Verify:** **858** / **166** · tsc · lint · build.
+- **Serialize sweep:** checkout `POST /api/payments` + org invoice prefetch use `serializeInvoice` payments.
+- **Verify:** **859** / **166** · tsc · lint · build.
 
 ## Prior (2026-06-08 — Portal KPI parity + cancelled counters + demo seed)
 

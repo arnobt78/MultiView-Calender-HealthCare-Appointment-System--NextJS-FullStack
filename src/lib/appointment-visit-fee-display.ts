@@ -62,6 +62,19 @@ export function describeVisitFeeSource(input: VisitFeeInput): {
   return { cents: DEFAULT_DOCTOR_VISIT_FEE_CENTS, source: "default" };
 }
 
+/** Read-only linked-visit strip — resolved fee + source (dialog summary card). */
+export function buildInvoiceVisitFeeStripLine(input: VisitFeeInput): string {
+  const { cents, source } = describeVisitFeeSource(input);
+  const label = formatVisitFeeEurLabel(cents);
+  if (source === "type") {
+    return `Visit type fee ${label} — ${buildInvoiceAmountFeeHint(input)}`;
+  }
+  if (source === "doctor") {
+    return `Consultation fee ${label} — ${buildInvoiceAmountFeeHint(input)}`;
+  }
+  return `Default visit fee ${label} — ${buildInvoiceAmountFeeHint(input)}`;
+}
+
 /** User-facing hint under amount field on create invoice. */
 export function buildInvoiceAmountFeeHint(input: VisitFeeInput): string {
   const { source } = describeVisitFeeSource(input);
