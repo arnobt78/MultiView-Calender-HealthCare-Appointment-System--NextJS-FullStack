@@ -73,6 +73,14 @@ export function summarizeAppointments(
   );
 }
 
+const EMPTY_DAY_STATS: DailyAppointmentStats = {
+  total: 0,
+  open: 0,
+  alert: 0,
+  done: 0,
+  cancelled: 0,
+};
+
 export function summarizeDayAppointments(
   appointments: FullAppointment[]
 ): DailyAppointmentStats {
@@ -85,6 +93,44 @@ export function summarizeDayAppointments(
       else acc.open += 1;
       return acc;
     },
-    { total: 0, open: 0, alert: 0, done: 0, cancelled: 0 }
+    { ...EMPTY_DAY_STATS }
   );
+}
+
+/** O(1) per-day status map from the warm appointments cache — keyed by `dateKey`. */
+export function buildDailyStatsMap(
+  appointments: FullAppointment[]
+): Record<string, DailyAppointmentStats> {
+  const grouped: Record<string, FullAppointment[]> = {};
+  for (const appt of appointments) {
+    const key = dateKey(new Date(appt.start));
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(appt);
+  }
+  const statsMap: Record<string, DailyAppointmentStats> = {};
+  for (const key of Object.keys(grouped)) {
+    statsMap[key] = summarizeDayAppointments(grouped[key]);
+  }
+  return statsMap;
+}
+
+type ResolveDayStatsInput = {
+  date: Date;
+  filteredDayAppts: FullAppointment[];
+  dailyStatsMap: Record<string, DailyAppointmentStats>;
+  /** When true (no active calendar filters), prefer cached map entry. */
+  preferCached: boolean;
+};
+
+/** Day headline stats — cached map when unfiltered, else filtered reduce. */
+export function resolveDayStatsForDate({
+  date,
+  filteredDayAppts,
+  dailyStatsMap,
+  preferCached,
+}: ResolveDayStatsInput): DailyAppointmentStats {
+  if (preferCached) {
+    return dailyStatsMap[dateKey(date)] ?? EMPTY_DAY_STATS;
+  }
+  return summarizeDayAppointments(filteredDayAppts);
 }

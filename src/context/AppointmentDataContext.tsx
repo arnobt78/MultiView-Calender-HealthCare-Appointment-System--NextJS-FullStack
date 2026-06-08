@@ -3,9 +3,8 @@
 import { createContext, useContext, useMemo } from "react";
 import { useAppointments } from "@/hooks/useAppointments";
 import {
-  dateKey,
+  buildDailyStatsMap,
   summarizeAppointments,
-  summarizeDayAppointments,
   type AppointmentSummaryStats,
   type DailyAppointmentStats,
 } from "@/lib/appointment-stats";
@@ -32,19 +31,10 @@ export function AppointmentDataProvider({
     [appointments]
   );
 
-  const dailyStatsMap = useMemo(() => {
-    const grouped: Record<string, typeof appointments> = {};
-    for (const appt of appointments) {
-      const key = dateKey(new Date(appt.start));
-      if (!grouped[key]) grouped[key] = [];
-      grouped[key].push(appt);
-    }
-    const statsMap: Record<string, DailyAppointmentStats> = {};
-    Object.keys(grouped).forEach((key) => {
-      statsMap[key] = summarizeDayAppointments(grouped[key]);
-    });
-    return statsMap;
-  }, [appointments]);
+  const dailyStatsMap = useMemo(
+    () => buildDailyStatsMap(appointments),
+    [appointments]
+  );
 
   const value = useMemo(
     () => ({

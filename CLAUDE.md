@@ -4,11 +4,10 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-08)
 
-- **Cancelled counters:** `DailyAppointmentStats.cancelled` + `AppointmentOpenAlertDoneBadges` (slate); list sticky/DateHeadline/section accordion; Day/Week/Month headers; doctor Today chip; client-only via `summarizeDayAppointments` — no API/invalidation change.
-- **Patient phone:** DB + API + form + CP detail + list Phone; `phone-validation.ts`.
-- **Cancel/cron:** `cancelled` status + `appointment-cancel-access.ts` + notify; cron + opt-in `brevo-sms.ts`.
-- **Demo appts (local):** `npm run db:reset-demo-appointments` — 10 curated v2; uncommitted seed scripts.
-- **Verify:** **837** / **160** · `npm test && tsc && lint && build`.
+- **Portal KPI:** doctor-portal `PatientStatCard.valueRowHint` (insights layout); Pending all-time hint; CP dashboard `cancelled` count; `buildDailyStatsMap` + `resolveDayStatsForDate` wired DayView/list.
+- **Cancelled counters:** `AppointmentOpenAlertDoneBadges` on list/Day/Week/Month/section accordion.
+- **Demo appts:** `npm run db:reset-demo-appointments` — 10 curated v2 + cancelled check migration.
+- **Verify:** **840** / **160** · `npm test && tsc && lint && build`.
 
 ## Never / Always
 

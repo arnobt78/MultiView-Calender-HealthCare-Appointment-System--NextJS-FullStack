@@ -36,7 +36,7 @@ import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import AppointmentDialogController from "./AppointmentDialogController";
 import AppointmentHoverCard from "./AppointmentHoverCard";
 import { useAppointmentInvoiceDisplayMap } from "@/hooks/useAppointmentInvoiceDisplayMap";
-import { summarizeDayAppointments } from "@/lib/appointment-stats";
+import { resolveDayStatsForDate } from "@/lib/appointment-stats";
 import { AppointmentOpenAlertDoneBadges } from "@/components/shared/appointments/AppointmentOpenAlertDoneBadges";
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
@@ -45,9 +45,17 @@ const SLOT_ROW_HEIGHT = 65; // 64px row + 1px border
 
 export default function DayView() {
   const { currentDate } = useDateContext();
-  const { appointments, isLoading, isError: appointmentsError, toggleStatus, deleteAppointment, cancelAppointment } = useAppointmentData();
+  const {
+    appointments,
+    dailyStatsMap,
+    isLoading,
+    isError: appointmentsError,
+    toggleStatus,
+    deleteAppointment,
+    cancelAppointment,
+  } = useAppointmentData();
   const { user } = useAuth();
-  const { category, patient, date, status, month, search, clinicalRole } =
+  const { category, patient, date, status, month, search, clinicalRole, hasActiveFilters } =
     useCalendarFilters();
   const { categories = [] } = useCategories();
   const { patients = [] } = usePatients();
@@ -91,8 +99,14 @@ export default function DayView() {
   );
 
   const dayStats = useMemo(
-    () => summarizeDayAppointments(dayAppointments),
-    [dayAppointments]
+    () =>
+      resolveDayStatsForDate({
+        date: currentDate,
+        filteredDayAppts: dayAppointments,
+        dailyStatsMap,
+        preferCached: !hasActiveFilters,
+      }),
+    [currentDate, dayAppointments, dailyStatsMap, hasActiveFilters]
   );
 
   const now = useLiveNow();

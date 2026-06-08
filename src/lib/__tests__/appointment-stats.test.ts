@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildDailyStatsMap,
+  dateKey,
+  resolveDayStatsForDate,
   summarizeAppointments,
   summarizeDayAppointments,
 } from "@/lib/appointment-stats";
@@ -44,6 +47,49 @@ describe("summarizeDayAppointments", () => {
     ]);
     expect(stats.open).toBe(0);
     expect(stats.cancelled).toBe(2);
+  });
+});
+
+describe("buildDailyStatsMap", () => {
+  it("indexes per-day stats by dateKey", () => {
+    const map = buildDailyStatsMap([
+      appt("2026-06-08T10:00:00Z", "pending"),
+      appt("2026-06-08T11:00:00Z", "cancelled"),
+      appt("2026-06-07T10:00:00Z", "done"),
+    ]);
+    const day8 = dateKey(new Date("2026-06-08T12:00:00Z"));
+    expect(map[day8]).toEqual({
+      total: 2,
+      open: 1,
+      alert: 0,
+      done: 0,
+      cancelled: 1,
+    });
+  });
+});
+
+describe("resolveDayStatsForDate", () => {
+  it("uses cached map when preferCached is true", () => {
+    const map = buildDailyStatsMap([appt("2026-06-08T10:00:00Z", "alert")]);
+    const stats = resolveDayStatsForDate({
+      date: new Date("2026-06-08T12:00:00Z"),
+      filteredDayAppts: [],
+      dailyStatsMap: map,
+      preferCached: true,
+    });
+    expect(stats.alert).toBe(1);
+  });
+
+  it("uses filtered list when preferCached is false", () => {
+    const map = buildDailyStatsMap([appt("2026-06-08T10:00:00Z", "alert")]);
+    const stats = resolveDayStatsForDate({
+      date: new Date("2026-06-08T12:00:00Z"),
+      filteredDayAppts: [appt("2026-06-08T10:00:00Z", "done")],
+      dailyStatsMap: map,
+      preferCached: false,
+    });
+    expect(stats.done).toBe(1);
+    expect(stats.alert).toBe(0);
   });
 });
 

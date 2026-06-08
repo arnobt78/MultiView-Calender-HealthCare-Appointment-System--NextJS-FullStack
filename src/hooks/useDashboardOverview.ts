@@ -16,6 +16,7 @@ export interface DashboardOverview {
     done: number;
     pending: number;
     alert: number;
+    cancelled: number;
     overdue: number;
   };
   patients: { total: number; active: number };

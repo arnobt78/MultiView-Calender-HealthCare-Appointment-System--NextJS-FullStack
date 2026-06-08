@@ -831,6 +831,7 @@ export async function prefetchDashboardOverview(
       doneCount,
       pendingCount,
       alertCount,
+      cancelledCount,
       totalPatients,
       activePatients,
       totalDoctors,
@@ -852,6 +853,7 @@ export async function prefetchDashboardOverview(
       prisma.appointment.count({ where: appt({ status: "done" }) }),
       prisma.appointment.count({ where: appt({ status: "pending" }) }),
       prisma.appointment.count({ where: appt({ status: "alert" }) }),
+      prisma.appointment.count({ where: appt({ status: "cancelled" }) }),
       prisma.patient.count(),
       prisma.patient.count({ where: { active: true } }),
       prisma.user.count({ where: { role: "doctor" } }),
@@ -893,6 +895,7 @@ export async function prefetchDashboardOverview(
         done: doneCount,
         pending: pendingCount,
         alert: alertCount,
+        cancelled: cancelledCount,
         overdue: overdueCount,
       },
       patients: { total: totalPatients, active: activePatients },
@@ -1291,6 +1294,7 @@ export async function prefetchDoctorPortal(userId: string): Promise<DoctorPortal
       metricPending,
       metricAlert,
       metricDone,
+      metricCancelled,
       metricOverdue,
       metricThisMonthDone,
       metricWeekPassed,
@@ -1358,6 +1362,9 @@ export async function prefetchDoctorPortal(userId: string): Promise<DoctorPortal
       }),
       prisma.appointment.count({
         where: apptScope({ status: "done" }),
+      }),
+      prisma.appointment.count({
+        where: apptScope({ status: "cancelled" }),
       }),
       prisma.appointment.count({
         where: apptScope({
@@ -1438,6 +1445,7 @@ export async function prefetchDoctorPortal(userId: string): Promise<DoctorPortal
         pending: metricPending,
         alert: metricAlert,
         done: metricDone,
+        cancelled: metricCancelled,
         overdue: metricOverdue,
         thisMonthDone: metricThisMonthDone,
         weekPassed: metricWeekPassed,

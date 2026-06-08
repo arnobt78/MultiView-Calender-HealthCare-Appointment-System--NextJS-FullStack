@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  doctorPortalAlertOverallBadgeLabel,
+  doctorPortalAllTimeStatusHintLabel,
   doctorPortalMonthPeriodBadgeLabel,
   doctorPortalTodayStatusBadgeLabel,
   doctorPortalWeekPeriodBadgeLabel,
@@ -28,9 +28,10 @@ describe("doctorPortalMonthPeriodBadgeLabel", () => {
   });
 });
 
-describe("doctorPortalAlertOverallBadgeLabel", () => {
-  it("shows practice-wide alert count", () => {
-    expect(doctorPortalAlertOverallBadgeLabel(2)).toBe("Alert: 2");
-    expect(doctorPortalAlertOverallBadgeLabel(0)).toBeUndefined();
+describe("doctorPortalAllTimeStatusHintLabel", () => {
+  it("formats all-time alert, done, and cancelled", () => {
+    expect(
+      doctorPortalAllTimeStatusHintLabel({ alert: 1, done: 4, cancelled: 2 })
+    ).toBe("Alert: 1 · Done: 4 · Cancelled: 2");
   });
 });

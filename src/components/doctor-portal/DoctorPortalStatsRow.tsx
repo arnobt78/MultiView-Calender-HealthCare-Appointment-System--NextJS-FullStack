@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { Calendar, CalendarCheck, CalendarClock, Clock } from "lucide-react";
 import { PatientStatCard } from "@/components/control-panel/PatientStatCard";
 import {
-  doctorPortalAlertOverallBadgeLabel,
+  doctorPortalAllTimeStatusHintLabel,
   doctorPortalMonthPeriodBadgeLabel,
   doctorPortalTodayStatusBadgeLabel,
   doctorPortalWeekPeriodBadgeLabel,
@@ -19,7 +19,7 @@ type DoctorPortalStatsRowProps = {
   valueSkeleton: boolean;
 };
 
-/** Doctor portal KPI strip — one compact outline badge per tile (week/month/today/pending). */
+/** Doctor portal KPI strip — insights-style value row (hint left, count right). */
 export function DoctorPortalStatsRow({
   metrics,
   todayAppointments = [],
@@ -30,21 +30,27 @@ export function DoctorPortalStatsRow({
     [todayAppointments]
   );
 
-  const todayBadge = valueSkeleton ? undefined : doctorPortalTodayStatusBadgeLabel(todayStatus);
+  const todayHint = valueSkeleton
+    ? undefined
+    : doctorPortalTodayStatusBadgeLabel(todayStatus);
 
-  const weekBadge =
+  const weekHint =
     !valueSkeleton && metrics != null
       ? doctorPortalWeekPeriodBadgeLabel(metrics.weekPassed ?? 0)
       : undefined;
 
-  const monthBadge =
+  const monthHint =
     !valueSkeleton && metrics != null
       ? doctorPortalMonthPeriodBadgeLabel(metrics.monthPassed ?? 0)
       : undefined;
 
-  const pendingBadge =
+  const pendingHint =
     !valueSkeleton && metrics != null
-      ? doctorPortalAlertOverallBadgeLabel(metrics.alert ?? 0)
+      ? doctorPortalAllTimeStatusHintLabel({
+          alert: metrics.alert ?? 0,
+          done: metrics.done ?? 0,
+          cancelled: metrics.cancelled ?? 0,
+        })
       : undefined;
 
   return (
@@ -56,7 +62,7 @@ export function DoctorPortalStatsRow({
         subtitle="Appointments scheduled today"
         value={metrics?.today ?? 0}
         valueSkeleton={valueSkeleton}
-        badge={todayBadge}
+        valueRowHint={todayHint}
       />
       <PatientStatCard
         variant="violet"
@@ -65,7 +71,7 @@ export function DoctorPortalStatsRow({
         subtitle="Mon–Sun window"
         value={metrics?.thisWeek ?? 0}
         valueSkeleton={valueSkeleton}
-        badge={weekBadge}
+        valueRowHint={weekHint}
       />
       <PatientStatCard
         variant="emerald"
@@ -74,16 +80,16 @@ export function DoctorPortalStatsRow({
         subtitle="Calendar month total"
         value={metrics?.thisMonth ?? 0}
         valueSkeleton={valueSkeleton}
-        badge={monthBadge}
+        valueRowHint={monthHint}
       />
       <PatientStatCard
         variant="amber"
         icon={Clock}
         title="Pending"
-        subtitle="Awaiting completion"
+        subtitle="Awaiting completion (all-time)"
         value={metrics?.pending ?? 0}
         valueSkeleton={valueSkeleton}
-        badge={pendingBadge}
+        valueRowHint={pendingHint}
       />
     </div>
   );

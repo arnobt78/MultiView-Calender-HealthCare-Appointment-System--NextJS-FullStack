@@ -51,8 +51,11 @@ export function doctorPortalTodayStatusBadgeLabel(
   return `Open: ${stats.open} · Alert: ${stats.alert} · Done: ${stats.done} · Cancelled: ${stats.cancelled}`;
 }
 
-/** Pending tile — practice-wide alert count (numeric pending stays in the value slot). */
-export function doctorPortalAlertOverallBadgeLabel(alertCount: number): string | undefined {
-  if (alertCount <= 0) return undefined;
-  return `Alert: ${alertCount}`;
+/** Pending tile value row — all-time alert / done / cancelled (pending count stays in value slot). */
+export function doctorPortalAllTimeStatusHintLabel(stats: {
+  alert: number;
+  done: number;
+  cancelled: number;
+}): string {
+  return `Alert: ${stats.alert} · Done: ${stats.done} · Cancelled: ${stats.cancelled}`;
 }

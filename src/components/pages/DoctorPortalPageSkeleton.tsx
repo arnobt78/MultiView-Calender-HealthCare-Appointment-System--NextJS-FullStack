@@ -77,7 +77,7 @@ export function DoctorPortalPageSkeleton() {
           variant="amber"
           icon={Clock}
           title="Pending"
-          subtitle="Awaiting completion"
+          subtitle="Awaiting completion (all-time)"
           value={0}
           valueSkeleton
         />

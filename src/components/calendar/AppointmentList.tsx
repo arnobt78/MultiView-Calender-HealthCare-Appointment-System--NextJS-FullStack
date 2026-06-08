@@ -12,7 +12,11 @@ import {
   useCalendarFilters,
   applyCalendarFilters,
 } from "@/context/CalendarFiltersContext";
-import { summarizeDayAppointments, type DailyAppointmentStats } from "@/lib/appointment-stats";
+import {
+  resolveDayStatsForDate,
+  summarizeDayAppointments,
+  type DailyAppointmentStats,
+} from "@/lib/appointment-stats";
 import { AppointmentOpenAlertDoneBadges } from "@/components/shared/appointments/AppointmentOpenAlertDoneBadges";
 import { collectAppointmentStaffUserIds } from "@/lib/appointment-card";
 import {
@@ -133,6 +137,7 @@ export default function AppointmentList() {
     toggleStatus,
     refetch: refetchAppointments,
     summaryStats,
+    dailyStatsMap,
   } = useAppointmentData();
 
   const { categories = [] } = useCategories();
@@ -145,6 +150,7 @@ export default function AppointmentList() {
     month,
     search,
     clinicalRole,
+    hasActiveFilters,
     resetFilters,
   } = useCalendarFilters();
 
@@ -451,7 +457,15 @@ export default function AppointmentList() {
                     ) : (
                       groups.map(({ date, appts }) => (
                         <div key={`${section.key}-${date.toISOString()}`}>
-                          <DateHeadline date={date} dayStats={summarizeDayAppointments(appts)} />
+                          <DateHeadline
+                            date={date}
+                            dayStats={resolveDayStatsForDate({
+                              date,
+                              filteredDayAppts: appts,
+                              dailyStatsMap,
+                              preferCached: !hasActiveFilters,
+                            })}
+                          />
                           <div className="flex flex-col gap-4">
                             {appts.map((appt: FullAppointment, i: number) => {
                               const start = new Date(appt.start);

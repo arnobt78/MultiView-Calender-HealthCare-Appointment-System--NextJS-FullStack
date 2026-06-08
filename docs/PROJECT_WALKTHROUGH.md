@@ -1,12 +1,13 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-08 — Cancelled badge counters + patient phone + cancel/cron)
+## Latest (2026-06-08 — Portal KPI parity + cancelled counters + demo seed)
 
-- **Cancelled counters:** `summarizeDayAppointments` + `DailyAppointmentStats.cancelled`; `AppointmentOpenAlertDoneBadges` (Open/Alert/Done/Cancelled slate). Wired: list sticky row, per-date headlines, Today/Tomorrow/Passed/Later section rollup (`AppointmentListSectionAccordion`), patient portal history, Day/Week/Month headers (fixes cancelled≠open), doctor portal Today chip. Insights BY STATUS unchanged. Client-derived from `appointments.all` cache — cancel mutation already invalidates via `invalidateAfterAppointmentMutation`.
-- **Patient phone:** Prisma `patients.phone`; form + CP detail + list Phone + `phone-validation.ts`.
-- **Appointment cancel:** `cancelled` + audit fields; `appointment-cancel-access.ts`; notify on cancel.
-- **Cron/SMS:** `/api/cron/reminders`; opt-in `brevo-sms.ts` (`BREVO_SMS_API_KEY`).
-- **Verify:** **837** / **160** · tsc · lint · build.
+- **Doctor portal KPI:** `DoctorPortalStatsRow` uses `PatientStatCard.valueRowHint` (insights justify-between). Today → status breakdown; Week/Month → period hints; Pending → `(all-time)` subtitle + `doctorPortalAllTimeStatusHintLabel` (alert/done/cancelled). API + SSR prefetch add `metrics.cancelled`.
+- **CP dashboard:** `appointments.cancelled` on overview API/prefetch + Cancelled `StatCard`.
+- **dailyStatsMap:** `buildDailyStatsMap` + `resolveDayStatsForDate` — DayView + list `DateHeadline` when filters inactive.
+- **Cancelled counters:** `AppointmentOpenAlertDoneBadges` on calendar list/views/sections (client cache).
+- **Demo seed:** `db:reset-demo-appointments` — wipe + 10 curated v2; `ensure-appointment-status-check`; migration `20260608130000`.
+- **Verify:** **840** / **160** · tsc · lint · build.
 
 ## Prior (2026-06-07 — Appointment status UI groundwork)
 

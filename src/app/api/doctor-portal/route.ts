@@ -71,6 +71,7 @@ export async function GET() {
       metricPending,
       metricAlert,
       metricDone,
+      metricCancelled,
       metricOverdue,
       metricThisMonthDone,
       metricWeekPassed,
@@ -149,6 +150,7 @@ export async function GET() {
       prisma.appointment.count({ where: appt({ status: "pending" }) }),
       prisma.appointment.count({ where: appt({ status: "alert" }) }),
       prisma.appointment.count({ where: appt({ status: "done" }) }),
+      prisma.appointment.count({ where: appt({ status: "cancelled" }) }),
       prisma.appointment.count({
         where: appt({ end: { lt: now }, status: { not: "done" } }),
       }),
@@ -237,6 +239,7 @@ export async function GET() {
         pending: metricPending,
         alert: metricAlert,
         done: metricDone,
+        cancelled: metricCancelled,
         overdue: metricOverdue,
         thisMonthDone: metricThisMonthDone,
         weekPassed: metricWeekPassed,

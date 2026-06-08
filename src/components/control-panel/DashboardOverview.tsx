@@ -25,6 +25,7 @@ import {
   TrendingUp,
   AlertTriangle,
   Clock,
+  Ban,
   RefreshCw,
   Banknote,
   Receipt,
@@ -167,6 +168,7 @@ export default function DashboardOverviewComponent() {
           <StatCard label="Done" value={appointments?.done ?? 0} sub="completed" icon={CalendarCheck} color="bg-green-100 text-green-600" loading={statValueLoading} />
           <StatCard label="Pending" value={appointments?.pending ?? 0} sub="in progress" icon={Clock} color="bg-yellow-100 text-yellow-600" loading={statValueLoading} />
           <StatCard label="Alert" value={appointments?.alert ?? 0} sub="need action" icon={CalendarX} color="bg-red-100 text-red-600" loading={statValueLoading} />
+          <StatCard label="Cancelled" value={appointments?.cancelled ?? 0} sub="cancelled visits" icon={Ban} color="bg-slate-100 text-slate-600" loading={statValueLoading} />
           <StatCard label="Total All Time" value={appointments?.total ?? 0} sub="all appointments" icon={CalendarDays} color="bg-gray-100 text-gray-600" loading={statValueLoading} />
         </div>
       </div>

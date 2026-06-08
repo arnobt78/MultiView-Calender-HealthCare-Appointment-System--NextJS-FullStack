@@ -97,6 +97,7 @@ export async function GET() {
       doneCount,
       pendingCount,
       alertCount,
+      cancelledCount,
       totalPatients,
       activePatients,
       totalDoctors,
@@ -118,6 +119,7 @@ export async function GET() {
       prisma.appointment.count({ where: appt({ status: "done" }) }),
       prisma.appointment.count({ where: appt({ status: "pending" }) }),
       prisma.appointment.count({ where: appt({ status: "alert" }) }),
+      prisma.appointment.count({ where: appt({ status: "cancelled" }) }),
       prisma.patient.count(),
       prisma.patient.count({ where: { active: true } }),
       prisma.user.count({ where: { role: "doctor" } }),
@@ -159,6 +161,7 @@ export async function GET() {
         done: doneCount,
         pending: pendingCount,
         alert: alertCount,
+        cancelled: cancelledCount,
         overdue: overdueCount,
       },
       patients: {
