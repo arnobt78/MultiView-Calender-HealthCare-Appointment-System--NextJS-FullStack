@@ -6,7 +6,7 @@
 |-------|-------|
 | **Status** | `shipped` — gates pending |
 | **REQ-IDs** | REQ-0016..REQ-0020 (`approved [C4]`) |
-| **ART-IDs** | ART-0086..0100 |
+| **ART-IDs** | ART-0086..0100 + **ART-0193..0201** (billing ext) |
 | **Gate 1** | GATE-0007 (pending) |
 | **Gate 2** | GATE-0008 (pending) |
 | **Depends on** | C3 archive optional before C4 freeze |
@@ -21,9 +21,17 @@
 | REQ-0019 | Calendar day/week/month/list hover invoice badge via `useAppointmentInvoiceDisplayMap` |
 | REQ-0020 | SSE notification stream safe enqueue + route abort (no heartbeat spam) |
 
+## Billing extension (2026-06-04, main `d2a4cd5`)
+
+- Lifecycle TS: `cancelled_at` / `refunded_at`; list footer dates
+- Dialog visit parity + fee strip; visit summary fee fields
+- Doctor issuer UI: `doctorCanMutateInvoice` on portal list
+- List labels: Patient / Treating / Owner on `InvoiceVisitDescriptionStack`
+- PDF: `refunded_at` on payment history rows
+
 ## Verify
 
-671+ tests at UI tranche; superseded by C5 baseline **742**. ER-C4-UI-VERIFY.
+671+ UI tranche → **863/863** (ER-C4-BILLING-EXT + C7). ER-C4-UI-VERIFY superseded.
 
 ## Archive
 

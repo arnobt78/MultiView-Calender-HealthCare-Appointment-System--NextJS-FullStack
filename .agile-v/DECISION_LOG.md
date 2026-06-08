@@ -58,3 +58,9 @@
 | 2026-06-08T14:15:00Z | build | REQ-0036 reminder cron | `reminder_sent_at`; optional Brevo SMS opt-in | REQ-0036 |
 | 2026-06-08T14:15:00Z | build | REQ-0037 patient phone | form, detail, list, validation, seed-phones | REQ-0037 |
 | 2026-06-08T14:15:00Z | red-team | C7 automated verification PASS | `e73a7d0`; 829 tests; GATE-0013/0014 pending | REQ-0034..0037 |
+| 2026-06-04T22:00:00Z | build | C4 billing ext — lifecycle TS | migration 016; `cancelled_at`/`refunded_at`; serialize + list footer | REQ-0016..0018 |
+| 2026-06-04T22:05:00Z | build | Dialog visit parity + fee strip | `invoice-dialog-visit-display`; summary/picker cards; `buildInvoiceVisitFeeStripLine` | REQ-0016 |
+| 2026-06-04T22:10:00Z | build | Doctor issuer UI gate | `doctorCanMutateInvoice`; portal `viewerUserId` wire; API RBAC unchanged | REQ-0018 |
+| 2026-06-04T22:12:00Z | build | Billing list labels | `InvoiceVisitDescriptionStack` Patient/Treating/Owner rows | REQ-0017 |
+| 2026-06-04T22:15:00Z | build | PDF refund date | `serializeInvoice` on PDF route; `formatPaymentHistoryDate` prefers `refunded_at` | REQ-0017 |
+| 2026-06-04T22:20:00Z | red-team | C4 billing ext verify PASS | `d2a4cd5`; 863/863; tsc/lint/build; GATE-0007/0008 pending | REQ-0016..0018 |

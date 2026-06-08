@@ -198,11 +198,20 @@
 | ART-0190 | C7 | REQ-0037 | `PatientFormDialog` + `patient-form-clinical` phone | built |
 | ART-0191 | C7 | REQ-0037 | `PatientManagement` Phone column + search | built |
 | ART-0192 | C7 | REQ-0037 | `scripts/seed-phone-backfill.ts`, `db:seed-phones` | built |
+| ART-0193 | C4 ext | REQ-0016 | Migration `016_invoice_lifecycle_timestamps` | built |
+| ART-0194 | C4 ext | REQ-0016 | `invoice-dialog-visit-display.ts` + visit cards | built |
+| ART-0195 | C4 ext | REQ-0016 | `buildInvoiceVisitFeeStripLine` + fee hints | built |
+| ART-0196 | C4 ext | REQ-0017 | `invoice-list-meta-status-dates.ts` footer dates | built |
+| ART-0197 | C4 ext | REQ-0017 | SSR/GET/prefetch `serializeInvoice` lifecycle TS | built |
+| ART-0198 | C4 ext | REQ-0018 | `doctorCanMutateInvoice` + portal `viewerUserId` | built |
+| ART-0199 | C4 ext | REQ-0017 | `InvoiceVisitDescriptionStack` Patient/Treating/Owner | built |
+| ART-0200 | C4 ext | REQ-0017 | PDF route `refunded_at` + payment history date | built |
+| ART-0201 | C4 ext | REQ-0016..0018 | Commits `0194566`..`d2a4cd5` | built |
 
 ## Verification Commands (project default)
 
 ```bash
-npm test        # 829 passed (C7, 2026-06-08)
+npm test        # 863 passed (C4 billing ext + C7, 2026-06-04)
 npx tsc --noEmit
 npm run lint
 npm run build

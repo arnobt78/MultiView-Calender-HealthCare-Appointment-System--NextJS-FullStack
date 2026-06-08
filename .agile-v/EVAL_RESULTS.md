@@ -174,3 +174,29 @@ human_gate_2: GATE-0014
 | release build | npm run build | PASS | REQ-0034..0037 |
 
 **EvalGate (C7 active):** PASS (automated) — Human Gates 13–14 pending before `cycles/C7/` freeze.
+
+## C4 Billing Extension — ER-C4-BILLING-EXT
+
+```yaml
+eval_run_id: ER-C4-BILLING-EXT
+eval_timestamp: "2026-06-04T22:20:00Z"
+policy_version_ref: "1.0.0"
+eval_gate_status: PASS
+eval_gate_rationale: "Lifecycle TS, dialog visit parity, issuer UI, list labels, PDF refund date — 863/863, tsc, eslint, build PASS"
+cycle: C4
+release_commit: "d2a4cd5"
+human_gate_1: GATE-0007
+human_gate_2: GATE-0008
+```
+
+| Suite | Command | Result | LINKED_REQ |
+|-------|---------|--------|------------|
+| invoice-detail-action-capabilities | npm test invoice-detail-action-capabilities | PASS | REQ-0018 |
+| invoice-pdf-document | npm test invoice-pdf-document | PASS | REQ-0017 |
+| invoice-list-meta-status-dates | npm test invoice-list-meta-status-dates | PASS | REQ-0017 |
+| full regression | npm test | PASS 863/863 | REQ-0016..0018 |
+| typecheck | npx tsc --noEmit | PASS | REQ-0016..0018 |
+| lint | npm run lint | PASS | REQ-0016..0018 |
+| release build | npm run build | PASS | REQ-0016..0018 |
+
+**EvalGate (C4 billing ext):** PASS (automated) — Human Gates 7–8 pending before `cycles/C4/` freeze.

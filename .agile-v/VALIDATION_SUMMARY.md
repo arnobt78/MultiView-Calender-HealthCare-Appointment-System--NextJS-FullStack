@@ -330,3 +330,26 @@ EvalGate (C6): status=PASS | eval_run_id=ER-C6-VERIFY | policy_version_ref=1.0.0
 | VER-0068 | TC-0043 | REQ-0034..0037 | PASS | Full regression **829/829** + tsc + lint + build |
 
 EvalGate (C7): status=PASS | eval_run_id=ER-C7-VERIFY | policy_version_ref=1.0.0 | gate2_pending=GATE-0014
+
+---
+
+## C4 billing extension — lifecycle, dialog parity, issuer UI, PDF (2026-06-04)
+
+| Item | Value |
+|------|-------|
+| Cycle | C4 ext |
+| ART-IDs | ART-0193..ART-0201 |
+| REQ-IDs | REQ-0016..REQ-0018 |
+| Regression | **863/863** Vitest (166 files) |
+| HEAD | `d2a4cd5` |
+
+| VER-ID | REQ-ID | Result | Description |
+|--------|--------|--------|-------------|
+| VER-0069 | REQ-0016 | PASS | Lifecycle TS migration + serialize + list footer |
+| VER-0070 | REQ-0016 | PASS | Dialog visit parity + fee strip |
+| VER-0071 | REQ-0018 | PASS | `doctorCanMutateInvoice` + portal wire |
+| VER-0072 | REQ-0017 | PASS | Patient/Treating/Owner list labels |
+| VER-0073 | REQ-0017 | PASS | PDF `refunded_at` payment history |
+| VER-0074 | REQ-0016..0018 | PASS | Full regression **863/863** + tsc + lint + build |
+
+EvalGate (C4 ext): status=PASS | eval_run_id=ER-C4-BILLING-EXT | gate2_pending=GATE-0008
