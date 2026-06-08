@@ -8,12 +8,16 @@ import type { ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { AppointmentListSectionUiConfig } from "@/lib/appointment-list-sections";
+import type { DailyAppointmentStats } from "@/lib/appointment-stats";
+import { AppointmentOpenAlertDoneBadges } from "@/components/shared/appointments/AppointmentOpenAlertDoneBadges";
 import { cn } from "@/lib/utils";
 
 export type AppointmentListSectionAccordionProps = {
   section: AppointmentListSectionUiConfig;
   icon: ReactNode;
   count: number;
+  /** Section-wide Open/Alert/Done/Cancelled rollup — shown when section has appointments. */
+  statusStats?: Pick<DailyAppointmentStats, "open" | "alert" | "done" | "cancelled">;
   collapsed: boolean;
   onToggle: () => void;
   children: ReactNode;
@@ -24,6 +28,7 @@ export function AppointmentListSectionAccordion({
   section,
   icon,
   count,
+  statusStats,
   collapsed,
   onToggle,
   children,
@@ -57,6 +62,9 @@ export function AppointmentListSectionAccordion({
             <Badge variant="outline" className={cn("border-transparent", section.countClass)}>
               {count}
             </Badge>
+            {statusStats ? (
+              <AppointmentOpenAlertDoneBadges stats={statusStats} showZero={false} />
+            ) : null}
           </div>
           <p className="text-xs text-gray-500">{section.subtitle}</p>
         </div>

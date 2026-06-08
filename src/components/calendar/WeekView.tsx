@@ -25,6 +25,8 @@ import CalendarStickyHeader from "./CalendarStickyHeader";
 import { useLiveNow } from "./useLiveNow";
 import { getNowLineTop } from "./timeLinePosition";
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
+import { summarizeDayAppointments } from "@/lib/appointment-stats";
+import { AppointmentOpenAlertDoneBadges } from "@/components/shared/appointments/AppointmentOpenAlertDoneBadges";
 import {
   calendarGridWeekOuterShell,
   calendarGridWeekStickyCorner,
@@ -116,16 +118,7 @@ export default function WeekView() {
     ? weekAppointments.filter((appt) => isSameDay(new Date(appt.start), today)).length
     : 0;
   const weekStatus = useMemo(
-    () =>
-      weekAppointments.reduce(
-        (acc, appt) => {
-          if (appt.status === "done") acc.done += 1;
-          else if (appt.status === "alert") acc.alert += 1;
-          else acc.open += 1;
-          return acc;
-        },
-        { open: 0, alert: 0, done: 0 }
-      ),
+    () => summarizeDayAppointments(weekAppointments),
     [weekAppointments]
   );
   const weekTitle = `${format(weekStart, "EEE dd.MM.yyyy")} - ${format(
@@ -252,9 +245,7 @@ export default function WeekView() {
           <Badge variant="outline" className="calendar-glass-badge calendar-glass-badge-blue min-h-6 min-w-[90px] justify-center">This Week: {weekAppointments.length}</Badge>
           <Badge variant="outline" className="calendar-glass-badge calendar-glass-badge-emerald min-h-6 min-w-[90px] justify-center">Today: {weekTodayCount}</Badge>
           <span className="px-1 text-xs font-semibold text-gray-500">Status:</span>
-          <Badge variant="outline" className="calendar-glass-badge calendar-glass-badge-amber min-h-6 min-w-[90px] justify-center">Open: {weekStatus.open}</Badge>
-          <Badge variant="outline" className="calendar-glass-badge calendar-glass-badge-rose min-h-6 min-w-[90px] justify-center">Alert: {weekStatus.alert}</Badge>
-          <Badge variant="outline" className="calendar-glass-badge calendar-glass-badge-emerald min-h-6 min-w-[90px] justify-center">Done: {weekStatus.done}</Badge>
+          <AppointmentOpenAlertDoneBadges stats={weekStatus} />
         </div>
         <GlobalCalendarFilters categories={categories} patients={filterPatients} />
       </CalendarStickyHeader>

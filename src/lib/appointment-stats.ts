@@ -15,11 +15,13 @@ export type AppointmentSummaryStats = {
   cancelled: number;
 };
 
+/** Per-day / per-scope status buckets — pending→open; cancelled is separate (not open). */
 export type DailyAppointmentStats = {
   total: number;
   open: number;
   alert: number;
   done: number;
+  cancelled: number;
 };
 
 export function dateKey(input: Date): string {
@@ -79,11 +81,10 @@ export function summarizeDayAppointments(
       acc.total += 1;
       if (appt.status === "done") acc.done += 1;
       else if (appt.status === "alert") acc.alert += 1;
-      else if (appt.status === "cancelled") {
-        /* cancelled excluded from open bucket */
-      } else acc.open += 1;
+      else if (appt.status === "cancelled") acc.cancelled += 1;
+      else acc.open += 1;
       return acc;
     },
-    { total: 0, open: 0, alert: 0, done: 0 }
+    { total: 0, open: 0, alert: 0, done: 0, cancelled: 0 }
   );
 }

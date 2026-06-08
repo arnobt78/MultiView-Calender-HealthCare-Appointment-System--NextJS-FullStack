@@ -10,8 +10,8 @@ const ref = new Date("2026-06-02T15:00:00");
 
 describe("doctorPortalTodayStatusBadgeLabel", () => {
   it("formats compact single-line status chip", () => {
-    expect(doctorPortalTodayStatusBadgeLabel({ open: 0, alert: 0, done: 0 })).toBe(
-      "Open: 0 · Alert: 0 · Done: 0"
+    expect(doctorPortalTodayStatusBadgeLabel({ open: 0, alert: 0, done: 0, cancelled: 0 })).toBe(
+      "Open: 0 · Alert: 0 · Done: 0 · Cancelled: 0"
     );
   });
 });

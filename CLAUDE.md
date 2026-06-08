@@ -4,9 +4,11 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-08)
 
-- **Patient phone:** DB + API + form + CP/portal detail + list column/search; `phone-validation.ts`; invalidation via existing patient mutations.
-- **Cancel/cron:** `cancelled` + `appointment-cancel-access.ts` + `appointment-id-write.ts` + `AppointmentStatusGlassBadge`; cron email/notify + optional `brevo-sms.ts` (`BREVO_SMS_API_KEY` opt-in).
-- **Verify:** **829** / **158** · `npm test && tsc && lint && build` · `prisma:push` then `db:seed-phones`.
+- **Cancelled counters:** `DailyAppointmentStats.cancelled` + `AppointmentOpenAlertDoneBadges` (slate); list sticky/DateHeadline/section accordion; Day/Week/Month headers; doctor Today chip; client-only via `summarizeDayAppointments` — no API/invalidation change.
+- **Patient phone:** DB + API + form + CP detail + list Phone; `phone-validation.ts`.
+- **Cancel/cron:** `cancelled` status + `appointment-cancel-access.ts` + notify; cron + opt-in `brevo-sms.ts`.
+- **Demo appts (local):** `npm run db:reset-demo-appointments` — 10 curated v2; uncommitted seed scripts.
+- **Verify:** **837** / **160** · `npm test && tsc && lint && build`.
 
 ## Never / Always
 

@@ -36,6 +36,8 @@ import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import AppointmentDialogController from "./AppointmentDialogController";
 import AppointmentHoverCard from "./AppointmentHoverCard";
 import { useAppointmentInvoiceDisplayMap } from "@/hooks/useAppointmentInvoiceDisplayMap";
+import { summarizeDayAppointments } from "@/lib/appointment-stats";
+import { AppointmentOpenAlertDoneBadges } from "@/components/shared/appointments/AppointmentOpenAlertDoneBadges";
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 const SLOT_HEIGHT = 64; // px per hour
@@ -88,17 +90,10 @@ export default function DayView() {
     dayAppointments.map((a) => a.id)
   );
 
-  const dayStats = useMemo(() => {
-    return dayAppointments.reduce(
-      (acc, appt) => {
-        if (appt.status === "done") acc.done += 1;
-        else if (appt.status === "alert") acc.alert += 1;
-        else acc.open += 1;
-        return acc;
-      },
-      { open: 0, alert: 0, done: 0 }
-    );
-  }, [dayAppointments]);
+  const dayStats = useMemo(
+    () => summarizeDayAppointments(dayAppointments),
+    [dayAppointments]
+  );
 
   const now = useLiveNow();
   const timeLineTopPx = now ? Math.max(0, getNowLineTop(now, SLOT_ROW_HEIGHT) - 14) : 0;
@@ -123,15 +118,7 @@ export default function DayView() {
             Today: {dayAppointments.length}
           </Badge>
           <span className="px-1 text-xs font-semibold text-gray-500">Status:</span>
-          <Badge variant="outline" className="calendar-glass-badge calendar-glass-badge-amber min-h-6 min-w-[90px] justify-center">
-            Open: {dayStats.open}
-          </Badge>
-          <Badge variant="outline" className="calendar-glass-badge calendar-glass-badge-rose min-h-6 min-w-[90px] justify-center">
-            Alert: {dayStats.alert}
-          </Badge>
-          <Badge variant="outline" className="calendar-glass-badge calendar-glass-badge-emerald min-h-6 min-w-[90px] justify-center">
-            Done: {dayStats.done}
-          </Badge>
+          <AppointmentOpenAlertDoneBadges stats={dayStats} />
         </div>
         <GlobalCalendarFilters categories={categories} patients={patients} />
       </CalendarStickyHeader>

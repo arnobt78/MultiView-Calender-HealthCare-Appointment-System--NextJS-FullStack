@@ -45,6 +45,8 @@ import GlobalCalendarFilters from "./GlobalCalendarFilters";
 import CalendarStickyHeader from "./CalendarStickyHeader";
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import { useAppointmentInvoiceDisplayMap } from "@/hooks/useAppointmentInvoiceDisplayMap";
+import { summarizeDayAppointments } from "@/lib/appointment-stats";
+import { AppointmentOpenAlertDoneBadges } from "@/components/shared/appointments/AppointmentOpenAlertDoneBadges";
 
 type AppointmentWithCategory = Appointment & {
   category_data?: Category;
@@ -132,16 +134,7 @@ export default function MonthView() {
     ? monthAppointments.filter((a) => isSameDay(new Date(a.start), todayDate)).length
     : 0;
   const monthStatus = useMemo(
-    () =>
-      monthAppointments.reduce(
-        (acc, appt) => {
-          if (appt.status === "done") acc.done += 1;
-          else if (appt.status === "alert") acc.alert += 1;
-          else acc.open += 1;
-          return acc;
-        },
-        { open: 0, alert: 0, done: 0 }
-      ),
+    () => summarizeDayAppointments(monthAppointments),
     [monthAppointments]
   );
   const monthTitle = `${format(monthStart, "MMMM yyyy")} (${format(
@@ -235,9 +228,7 @@ export default function MonthView() {
             <Badge variant="outline" className="calendar-glass-badge calendar-glass-badge-blue min-h-6 min-w-[90px] justify-center">This Month: {monthAppointments.length}</Badge>
             <Badge variant="outline" className="calendar-glass-badge calendar-glass-badge-emerald min-h-6 min-w-[90px] justify-center">Today: {monthTodayCount}</Badge>
             <span className="px-1 text-xs font-semibold text-gray-500">Status:</span>
-            <Badge variant="outline" className="calendar-glass-badge calendar-glass-badge-amber min-h-6 min-w-[90px] justify-center">Open: {monthStatus.open}</Badge>
-            <Badge variant="outline" className="calendar-glass-badge calendar-glass-badge-rose min-h-6 min-w-[90px] justify-center">Alert: {monthStatus.alert}</Badge>
-            <Badge variant="outline" className="calendar-glass-badge calendar-glass-badge-emerald min-h-6 min-w-[90px] justify-center">Done: {monthStatus.done}</Badge>
+            <AppointmentOpenAlertDoneBadges stats={monthStatus} />
           </div>
           <GlobalCalendarFilters
             categories={categories}

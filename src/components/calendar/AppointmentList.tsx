@@ -12,7 +12,8 @@ import {
   useCalendarFilters,
   applyCalendarFilters,
 } from "@/context/CalendarFiltersContext";
-import { summarizeDayAppointments } from "@/lib/appointment-stats";
+import { summarizeDayAppointments, type DailyAppointmentStats } from "@/lib/appointment-stats";
+import { AppointmentOpenAlertDoneBadges } from "@/components/shared/appointments/AppointmentOpenAlertDoneBadges";
 import { collectAppointmentStaffUserIds } from "@/lib/appointment-card";
 import {
   APPOINTMENT_LIST_SECTION_UI,
@@ -79,7 +80,7 @@ function DateHeadline({
   dayStats,
 }: {
   date: Date;
-  dayStats: { total: number; open: number; alert: number; done: number };
+  dayStats: DailyAppointmentStats;
 }) {
   return (
     <div className="my-2 flex flex-wrap items-center gap-2">
@@ -106,9 +107,7 @@ function DateHeadline({
         return null;
       })()}
       <StatBadge label="Total" value={dayStats.total} className="calendar-glass-badge-sky" />
-      <StatBadge label="Open" value={dayStats.open} className="calendar-glass-badge-amber" />
-      <StatBadge label="Alert" value={dayStats.alert} className="calendar-glass-badge-rose" />
-      <StatBadge label="Done" value={dayStats.done} className="calendar-glass-badge-emerald" />
+      <AppointmentOpenAlertDoneBadges stats={dayStats} />
     </div>
   );
 }
@@ -354,6 +353,7 @@ export default function AppointmentList() {
           <StatBadge label="Open" value={summaryStats.open} className="calendar-glass-badge-amber" />
           <StatBadge label="Alert" value={summaryStats.alert} className="calendar-glass-badge-rose" />
           <StatBadge label="Done" value={summaryStats.done} className="calendar-glass-badge-emerald" />
+          <StatBadge label="Cancelled" value={summaryStats.cancelled} className="calendar-glass-badge-slate" />
         </div>
         <GlobalCalendarFilters categories={categories} patients={patients} />
       </CalendarStickyHeader>
@@ -428,7 +428,9 @@ export default function AppointmentList() {
             >
               {sectionConfig.map((section) => {
                 const groups = groupedSections[section.key];
-                const sectionCount = groups.reduce((acc, g) => acc + g.appts.length, 0);
+                const sectionAppts = groups.flatMap((g) => g.appts);
+                const sectionCount = sectionAppts.length;
+                const sectionStats = summarizeDayAppointments(sectionAppts);
                 const isCollapsed = collapsedSections[section.key];
                 const SectionIcon = LIST_SECTION_ICONS[section.key];
                 return (
@@ -437,6 +439,7 @@ export default function AppointmentList() {
                     section={section}
                     icon={<SectionIcon className="h-4.5 w-4.5" />}
                     count={sectionCount}
+                    statusStats={sectionCount > 0 ? sectionStats : undefined}
                     collapsed={isCollapsed}
                     onToggle={() => toggleSection(section.key)}
                   >

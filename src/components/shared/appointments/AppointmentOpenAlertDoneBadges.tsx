@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Dashboard / list status chips — Open (pending), Alert, Done (`summarizeDayAppointments` rules).
+ * Dashboard / list status chips — Open (pending), Alert, Done, Cancelled (`summarizeDayAppointments` rules).
  */
 
 import { Badge } from "@/components/ui/badge";
@@ -9,9 +9,9 @@ import type { DailyAppointmentStats } from "@/lib/appointment-stats";
 import { cn } from "@/lib/utils";
 
 type Props = {
-  stats: Pick<DailyAppointmentStats, "open" | "alert" | "done">;
+  stats: Pick<DailyAppointmentStats, "open" | "alert" | "done" | "cancelled">;
   className?: string;
-  /** When false, hide chips with zero (doctor portal Today tile). */
+  /** When false, hide chips with zero (section accordion headers). */
   showZero?: boolean;
 };
 
@@ -24,6 +24,7 @@ export function AppointmentOpenAlertDoneBadges({
     { label: "Open", value: stats.open, tone: "calendar-glass-badge-amber" },
     { label: "Alert", value: stats.alert, tone: "calendar-glass-badge-rose" },
     { label: "Done", value: stats.done, tone: "calendar-glass-badge-emerald" },
+    { label: "Cancelled", value: stats.cancelled, tone: "calendar-glass-badge-slate" },
   ];
 
   return (

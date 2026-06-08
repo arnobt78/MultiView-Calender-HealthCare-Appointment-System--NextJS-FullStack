@@ -30,6 +30,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { AppointmentListSectionAccordion } from "@/components/shared/AppointmentListSectionAccordion";
+import { summarizeDayAppointments } from "@/lib/appointment-stats";
 import { PortalAppointmentTimelineCard } from "@/components/shared/PortalAppointmentTimelineCard";
 import { useAppointmentColor } from "@/context/AppointmentColorContext";
 import {
@@ -231,7 +232,9 @@ function AppointmentTimeline({
               {visibleSectionKeys.map((sectionKey) => {
                 const section = appointmentListSectionConfig(sectionKey);
                 const groups = sectionBuckets[sectionKey];
-                const sectionCount = groups.reduce((acc, g) => acc + g.items.length, 0);
+                const sectionAppts = groups.flatMap((g) => g.items);
+                const sectionCount = sectionAppts.length;
+                const sectionStats = summarizeDayAppointments(sectionAppts);
                 const isCollapsed = collapsedSections[sectionKey];
                 const SectionIcon = PORTAL_LIST_SECTION_ICONS[sectionKey];
                 return (
@@ -240,6 +243,7 @@ function AppointmentTimeline({
                     section={section}
                     icon={<SectionIcon className="h-4.5 w-4.5" />}
                     count={sectionCount}
+                    statusStats={sectionCount > 0 ? sectionStats : undefined}
                     collapsed={isCollapsed}
                     onToggle={() =>
                       setCollapsedSections((prev) => ({

@@ -46,9 +46,9 @@ export function doctorPortalMonthPeriodBadgeLabel(
 
 /** Today tile — same single-line chip style as week/month (dashboard status semantics). */
 export function doctorPortalTodayStatusBadgeLabel(
-  stats: Pick<DailyAppointmentStats, "open" | "alert" | "done">
+  stats: Pick<DailyAppointmentStats, "open" | "alert" | "done" | "cancelled">
 ): string {
-  return `Open: ${stats.open} · Alert: ${stats.alert} · Done: ${stats.done}`;
+  return `Open: ${stats.open} · Alert: ${stats.alert} · Done: ${stats.done} · Cancelled: ${stats.cancelled}`;
 }
 
 /** Pending tile — practice-wide alert count (numeric pending stays in the value slot). */
