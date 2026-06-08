@@ -33,6 +33,10 @@ export type InsightsTrendPoint = {
 export type InsightsAppointmentsSection = {
   /** Calendar KPI windows — not tied to View-as period. */
   totals: InsightsAppointmentTotals;
+  /** Status counts for visits starting today (KPI Today value row). */
+  todayByStatus: Record<string, number>;
+  /** All-time status counts in scope (KPI Pending value row). */
+  allTimeByStatus: Record<string, number>;
   /** Done / pending / alert within selected chart period + scope. */
   byStatus: Record<string, number>;
   byCategory: Record<string, number>;

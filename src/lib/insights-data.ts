@@ -41,7 +41,9 @@ import {
   fetchTopPatientsForPeriod,
   fetchTrendCountsByPeriod,
   fetchTypeBreakdownForPeriod,
+  countAppointmentsByStatus,
   countAppointmentsByStatusForPeriod,
+  fetchTodayByStatus,
   fetchTelehealthShareForPeriod,
 } from "@/lib/insights/insights-aggregate";
 
@@ -126,6 +128,8 @@ export async function getInsightsData(
 
   const [
     totals,
+    todayByStatus,
+    allTimeByStatus,
     byStatus,
     telehealthShare,
     avgDurationMinutes,
@@ -146,6 +150,8 @@ export async function getInsightsData(
     scopeLabel,
   ] = await Promise.all([
     fetchAppointmentTotals(apptBase, now),
+    fetchTodayByStatus(apptBase, now),
+    countAppointmentsByStatus(apptBase),
     countAppointmentsByStatusForPeriod(apptBase, period, now),
     fetchTelehealthShareForPeriod(apptBase, period, now),
     fetchAvgDurationMinutesForPeriod(apptBase, period, now),
@@ -202,6 +208,8 @@ export async function getInsightsData(
         telehealthPct,
         avgDurationMinutes,
       },
+      todayByStatus,
+      allTimeByStatus,
       byStatus,
       byCategory,
       trend,

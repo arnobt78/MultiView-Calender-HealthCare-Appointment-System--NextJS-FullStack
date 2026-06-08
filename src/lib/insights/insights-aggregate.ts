@@ -146,6 +146,14 @@ export async function countAppointmentsByStatusForPeriod(
   return countAppointmentsByStatusInRange(base, range.start, range.end);
 }
 
+/** Today KPI status breakdown — `start` within local calendar day. */
+export async function fetchTodayByStatus(
+  base: Prisma.AppointmentWhereInput,
+  now: Date
+): Promise<Record<string, number>> {
+  return countAppointmentsByStatusInRange(base, startOfDay(now), endOfDay(now));
+}
+
 /** Status chips on /insights — scoped to chart period (`start` within range). */
 export async function countAppointmentsByStatusInRange(
   base: Prisma.AppointmentWhereInput,
