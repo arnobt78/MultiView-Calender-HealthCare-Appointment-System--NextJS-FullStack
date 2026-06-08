@@ -50,18 +50,22 @@ export async function GET(req: NextRequest, { params }: Params) {
       return new NextResponse("Not found", { status: 404 });
     }
 
+    // Align with invoice-detail-ssr — lifecycle TS on payments (refunded_at) + cancelled_at.
+    const serialized = serializeInvoice(row);
     const base: Invoice = {
-      ...serializeInvoice(row),
-      appointment_id: row.appointment_id ?? undefined,
+      ...serialized,
+      appointment_id: serialized.appointment_id ?? undefined,
       organization_id: row.organization_id ?? undefined,
-      description: row.description ?? undefined,
-      due_date: row.due_date?.toISOString() ?? undefined,
-      paid_at: row.paid_at?.toISOString() ?? undefined,
-      payments: row.payments.map((p) => ({
+      description: serialized.description ?? undefined,
+      due_date: serialized.due_date ?? undefined,
+      paid_at: serialized.paid_at ?? undefined,
+      cancelled_at: serialized.cancelled_at ?? undefined,
+      payments: serialized.payments.map((p) => ({
         id: p.id,
         amount: p.amount,
         status: p.status,
-        created_at: p.created_at.toISOString(),
+        created_at: p.created_at,
+        refunded_at: p.refunded_at ?? undefined,
         stripe_payment_id: p.stripe_payment_id ?? undefined,
       })),
     };

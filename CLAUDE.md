@@ -7,11 +7,11 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 - **Invoice lifecycle TS:** `invoices.cancelled_at`, `payments.refunded_at` (`016_invoice_lifecycle_timestamps.sql`); PATCH cancel + refund route writes; `serializeInvoice` + list footer via `invoice-list-meta-status-dates.ts` (Paid / Refunded / Cancelled).
 - **Dialog visit parity:** `invoice-dialog-visit-display.ts`; summary + picker — portrait, care tier, type+duration, `DoctorIdentityCell`; fee strip `buildInvoiceVisitFeeStripLine` on card + amount hint (create/edit).
 - **Visit summary fees:** `invoice-visit-summary` + `billing-appointment-options-load` — fee + doctor display fields on summary/option rows.
-- **SSR/prefetch:** `serializeInvoice` end-to-end — `invoice-detail-ssr`, `GET /api/invoices/[id]`, `server-prefetch` (lifecycle TS on first paint).
+- **SSR/prefetch/PDF:** `serializeInvoice` end-to-end — detail SSR, GET invoice, prefetch, `GET /api/invoices/[id]/pdf` (`refunded_at` on payment rows).
 - **Invalidation:** unchanged — `invalidateAfterInvoiceWrite` → `invoices.*` + `billing.root`.
 - **Doctor issuer UI:** `doctorCanMutateInvoice` + `viewerUserId` on portal list menu — Send/Edit/Delete only when `invoice.user_id` matches session doctor (API unchanged).
 - **Billing list labels:** `InvoiceVisitDescriptionStack` — Patient / Treating / Owner prefix rows (doctor portal + CP list).
-- **Verify:** **862** / **166** · `npm test && tsc && lint && build`.
+- **Verify:** **863** / **166** · `npm test && tsc && lint && build`.
 
 ## Never / Always
 

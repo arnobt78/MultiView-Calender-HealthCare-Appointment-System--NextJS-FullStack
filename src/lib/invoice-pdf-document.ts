@@ -3,6 +3,16 @@
  */
 import { formatInvoiceMoney } from "@/lib/crud-notify-messages";
 import type { Invoice } from "@/hooks/usePayments";
+import type { InvoicePaymentRow } from "@/lib/billing-types";
+
+/** Payment table date — refunded rows prefer refunded_at over charge created_at. */
+function formatPaymentHistoryDate(payment: InvoicePaymentRow): string {
+  const iso =
+    payment.status === "refunded" && payment.refunded_at
+      ? payment.refunded_at
+      : payment.created_at;
+  return new Date(iso).toLocaleString("de-DE");
+}
 
 function escapeHtml(value: string): string {
   return value
@@ -54,7 +64,7 @@ export function buildInvoicePrintHtml(invoice: Invoice, options?: { autoPrint?: 
         unit: "cents",
       });
       return `<tr>
-        <td>${escapeHtml(new Date(p.created_at).toLocaleString("de-DE"))}</td>
+        <td>${escapeHtml(formatPaymentHistoryDate(p))}</td>
         <td>${escapeHtml(p.status)}</td>
         <td>${escapeHtml(payAmount)}</td>
       </tr>`;

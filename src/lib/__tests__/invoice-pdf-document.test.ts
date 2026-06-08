@@ -61,6 +61,24 @@ describe("buildInvoicePrintHtml", () => {
     expect(html).toContain("&lt;script&gt;");
   });
 
+  it("uses refunded_at for refunded payment row date", () => {
+    const html = buildInvoicePrintHtml({
+      ...baseInvoice(),
+      status: "cancelled",
+      payments: [
+        {
+          id: "pay-1",
+          amount: 15000,
+          status: "refunded",
+          created_at: "2026-06-01T10:00:00.000Z",
+          refunded_at: "2026-06-12T15:00:00.000Z",
+        },
+      ],
+    });
+    expect(html).toContain("refunded");
+    expect(html).toMatch(/12\.6\.2026, 17:00:00/);
+  });
+
   it("injects auto-print script when requested", () => {
     const html = buildInvoicePrintHtml(baseInvoice(), { autoPrint: true });
     expect(html).toContain("window.print");
