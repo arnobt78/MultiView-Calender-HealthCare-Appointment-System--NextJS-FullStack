@@ -17,6 +17,8 @@ import { cn } from "@/lib/utils";
 
 type Props = {
   invoice: Invoice;
+  /** Session doctor — gates Send/Edit/Delete to invoice issuer. */
+  viewerUserId?: string;
   onSend: (id: string) => void;
   onDelete: (id: string) => void;
   onEdit?: (invoice: Invoice) => void;
@@ -26,6 +28,7 @@ type Props = {
 /** Doctor portal billing list — bordered card, sky header band, visit body + meta footer. */
 export function DoctorPortalInvoiceListRow({
   invoice,
+  viewerUserId,
   onSend,
   onDelete,
   onEdit,
@@ -61,6 +64,7 @@ export function DoctorPortalInvoiceListRow({
             <InvoiceAdminActionsMenu
               invoice={invoice}
               viewerRole={viewerRole}
+              viewerUserId={viewerUserId}
               onEdit={onEdit}
               onSend={onSend}
               onDelete={onDelete}

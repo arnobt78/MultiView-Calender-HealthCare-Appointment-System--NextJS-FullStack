@@ -282,6 +282,7 @@ export default function DoctorPortalPage({
         doctorDisplayName={data?.doctor?.display_name}
         listBodyLoading={portalLoading}
         invoicesInitialData={initialInvoices}
+        sessionUserId={doctorId}
       />
 
       <DoctorPortalPatientsCard

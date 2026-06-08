@@ -1,6 +1,12 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-04 — Invoice dialog visit parity + lifecycle timestamps)
+## Latest (2026-06-04 — Doctor portal invoice issuer UI gate)
+
+- **RBAC UI:** `doctorCanMutateInvoice` in `invoice-detail-action-capabilities.ts`; doctor portal billing ⋮ menu gates Send/Edit/Delete/Cancel on `invoice.user_id === sessionUserId` — linked calendar owner sees View only; issuer + admin unchanged on API.
+- **Wire:** `DoctorPortalPage` → `DoctorPortalInvoicesCard` → `DoctorPortalInvoiceListRow` → `InvoiceAdminActionsMenu` (`viewerUserId`).
+- **Verify:** **862** / **166** · tsc · lint · build.
+
+## Prior (2026-06-04 — Invoice dialog visit parity + lifecycle timestamps)
 
 - **DB:** `invoices.cancelled_at`, `payments.refunded_at` (`migrations/016_invoice_lifecycle_timestamps.sql`); Prisma + `db push`; PATCH cancel sets `cancelled_at`; refund route sets `refunded_at` + invoice `cancelled_at`.
 - **List footer:** `invoice-list-meta-status-dates.ts` — Refunded prefers `payment.refunded_at` (fallback `created_at`); Cancelled uses `invoice.cancelled_at`; Paid unchanged.

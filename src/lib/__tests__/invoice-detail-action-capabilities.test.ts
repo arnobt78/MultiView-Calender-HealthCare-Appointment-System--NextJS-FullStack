@@ -43,12 +43,35 @@ describe("resolveInvoiceDetailActionCapabilities", () => {
     expect(caps.canRefund).toBe(true);
   });
 
-  it("doctor draft: send and edit; no admin pay/refund", () => {
+  it("doctor draft without viewerUserId: legacy send and edit caps", () => {
     const caps = resolveInvoiceDetailActionCapabilities(invoice("draft"), "doctor");
     expect(caps.canPay).toBe(false);
     expect(caps.canSend).toBe(true);
     expect(caps.canEditDetails).toBe(true);
     expect(caps.canRefund).toBe(false);
+  });
+
+  it("doctor draft issuer: send and edit when viewerUserId matches user_id", () => {
+    const inv = { ...invoice("draft"), user_id: "doc-issuer" };
+    const caps = resolveInvoiceDetailActionCapabilities(inv, "doctor", {
+      viewerUserId: "doc-issuer",
+    });
+    expect(caps.canSend).toBe(true);
+    expect(caps.canEditDetails).toBe(true);
+    expect(caps.canDelete).toBe(true);
+    expect(caps.canCancel).toBe(true);
+  });
+
+  it("doctor draft non-issuer: no send, edit, delete, or cancel", () => {
+    const inv = { ...invoice("draft"), user_id: "doc-issuer" };
+    const caps = resolveInvoiceDetailActionCapabilities(inv, "doctor", {
+      viewerUserId: "doc-owner-only",
+    });
+    expect(caps.canSend).toBe(false);
+    expect(caps.canEditDetails).toBe(false);
+    expect(caps.canDelete).toBe(false);
+    expect(caps.canCancel).toBe(false);
+    expect(caps.canDownloadPdf).toBe(true);
   });
 
   it("cancelled: no mark paid or cancel; delete still allowed", () => {

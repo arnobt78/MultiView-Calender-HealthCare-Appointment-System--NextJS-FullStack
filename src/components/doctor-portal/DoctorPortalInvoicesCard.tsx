@@ -33,6 +33,8 @@ type Props = {
   listBodyLoading?: boolean;
   /** SSR seed — pairs with DoctorPortalPage sync cache seed; skips mount refetch in usePayments. */
   invoicesInitialData?: Invoice[];
+  /** Signed-in doctor id — issuer-only mutate actions in row menu. */
+  sessionUserId?: string;
 };
 
 const STATUS_OPTIONS: { value: DoctorPortalInvoiceStatusFilter; label: string }[] = [
@@ -53,6 +55,7 @@ export function DoctorPortalInvoicesCard({
   doctorDisplayName,
   listBodyLoading,
   invoicesInitialData,
+  sessionUserId,
 }: Props) {
   const {
     invoices,
@@ -163,6 +166,7 @@ export function DoctorPortalInvoicesCard({
               <DoctorPortalInvoiceListRow
                 key={inv.id}
                 invoice={inv}
+                viewerUserId={sessionUserId}
                 onEdit={openEdit}
                 onSend={(id) => updateInvoice({ invoiceId: id, body: { status: "sent" } })}
                 onDelete={deleteInvoice}

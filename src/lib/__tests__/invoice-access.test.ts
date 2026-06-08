@@ -130,6 +130,23 @@ describe("resolveInvoiceAccess", () => {
     }
   });
 
+  it("returns view for linked doctor who is not invoice issuer on draft", async () => {
+    invoiceFindUnique.mockResolvedValue({
+      id: INVOICE_ID,
+      user_id: "doc-issuer",
+      appointment_id: APPT_ID,
+      organization_id: null,
+      status: "draft",
+    });
+    appointmentFindFirst.mockResolvedValue({ id: APPT_ID });
+
+    const level = await resolveInvoiceAccess(
+      { userId: "doc-owner", email: "owner@test.com", role: "doctor" },
+      INVOICE_ID
+    );
+    expect(level).toBe("view");
+  });
+
   it("returns view for doctor owner on paid invoice", async () => {
     invoiceFindUnique.mockResolvedValue({
       id: INVOICE_ID,

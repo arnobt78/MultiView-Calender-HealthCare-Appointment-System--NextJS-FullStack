@@ -53,6 +53,8 @@ type Props = {
   /** Defaults to vertical ⋮ — CP patient list parity; pass `horizontal` for dense toolbars only. */
   menuIcon?: "horizontal" | "vertical";
   triggerClassName?: string;
+  /** Doctor portal — mutate menu only when invoice.user_id matches session doctor. */
+  viewerUserId?: string;
 };
 
 export function InvoiceAdminActionsMenu({
@@ -70,10 +72,13 @@ export function InvoiceAdminActionsMenu({
   hideViewLink = false,
   menuIcon = INVOICE_LIST_ACTIONS_MENU_ICON,
   triggerClassName,
+  viewerUserId,
 }: Props) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const MenuIcon = menuIcon === "vertical" ? EllipsisVertical : MoreHorizontal;
-  const caps = resolveInvoiceDetailActionCapabilities(invoice, viewerRole);
+  const caps = resolveInvoiceDetailActionCapabilities(invoice, viewerRole, {
+    viewerUserId,
+  });
   const canPay = caps.canPay;
   const canSend = caps.canSend;
   const canMarkPaid = caps.canMarkPaid;
