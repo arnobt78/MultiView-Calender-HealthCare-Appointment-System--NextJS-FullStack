@@ -9,6 +9,7 @@ import {
   InvoiceNumberTableCell,
 } from "@/components/shared/billing/invoice-table-cells";
 import type { Invoice } from "@/hooks/usePayments";
+import { doctorPortalInvoiceHeaderStripClass } from "@/lib/doctor-portal-layout";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -22,7 +23,7 @@ type Props = {
 export const doctorPortalInvoiceListRowClass =
   "border-b border-border/40 py-2 last:border-0";
 
-/** Doctor portal billing list — reuses CP `invoice-table-cells` for parity (stacked layout). */
+/** Doctor portal billing list — sky header strip + visit stack + inline meta footer. */
 export function DoctorPortalInvoiceListRow({
   invoice,
   onSend,
@@ -34,8 +35,13 @@ export function DoctorPortalInvoiceListRow({
 
   return (
     <li className={cn(doctorPortalInvoiceListRowClass, "w-full min-w-0")}>
-      <div className="flex w-full min-w-0 flex-col gap-1.5">
-        <div className="flex w-full min-w-0 flex-wrap items-start justify-between gap-2">
+      <div className="flex w-full min-w-0 flex-col gap-2">
+        <div
+          className={cn(
+            doctorPortalInvoiceHeaderStripClass,
+            "flex w-full min-w-0 flex-wrap items-start justify-between gap-2"
+          )}
+        >
           <div className="min-w-0 shrink">
             <InvoiceNumberTableCell
               invoice={invoice}
@@ -64,7 +70,7 @@ export function DoctorPortalInvoiceListRow({
 
         <InvoiceDescriptionTableCell invoice={invoice} viewerRole={viewerRole} />
 
-        <InvoicePortalListMetaRow invoice={invoice} />
+        <InvoicePortalListMetaRow invoice={invoice} viewerRole={viewerRole} />
       </div>
     </li>
   );

@@ -4,7 +4,7 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-08)
 
-- **DP billing UI:** `InvoiceStatusCountInlineRow` colored status counts; `InvoicePortalListMetaRow` inline Due/Created/Issued; `InvoiceVisitDescriptionStack` meta+portrait+care tier; `Invoice #id` prefix.
+- **DP billing UI:** sky header strip; title+duration inline; owner `DoctorIdentityCell`; Paid/Refunded footer dates; linked issuer; `InvoiceStatusCountInlineRow`.
 - **Portal KPI:** doctor-portal + `/insights` Today/Pending `valueRowHint` + all-time pending count; CP `cancelled`; `dailyStatsMap` helpers.
 - **Cancelled counters:** `AppointmentOpenAlertDoneBadges` on list/Day/Week/Month/section accordion.
 - **Demo appts:** `npm run db:reset-demo-appointments` — 10 curated v2 + cancelled check migration.

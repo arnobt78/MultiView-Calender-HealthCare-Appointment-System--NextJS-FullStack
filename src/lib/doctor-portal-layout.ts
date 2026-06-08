@@ -10,6 +10,10 @@ export const doctorPortalListBodyPulseClass = "animate-pulse rounded-lg bg-slate
 export const doctorPortalBillingPanelClass =
   "border-sky-400/25 bg-white/70 shadow-[0_14px_44px_rgba(2,132,199,0.18)] backdrop-blur-sm supports-[backdrop-filter]:bg-white/55";
 
+/** Per-invoice header strip — Invoice # / amount / status row in Related Billing list. */
+export const doctorPortalInvoiceHeaderStripClass =
+  "rounded-lg border border-sky-200/60 bg-sky-50/80 px-2.5 py-1.5 shadow-[0_4px_14px_rgba(14,165,233,0.08)] backdrop-blur-sm";
+
 /** Patients roster panel — emerald tone (matches Users icon row). */
 export const doctorPortalPatientsPanelClass =
   "border-emerald-400/25 bg-white/70 shadow-[0_14px_44px_rgba(16,185,129,0.16)] backdrop-blur-sm supports-[backdrop-filter]:bg-white/55";

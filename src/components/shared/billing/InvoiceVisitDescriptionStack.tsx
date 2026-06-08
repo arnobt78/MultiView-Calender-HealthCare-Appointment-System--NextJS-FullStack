@@ -3,6 +3,7 @@
 import { AppointmentTypeGlassBadge } from "@/components/shared/appointment-display/AppointmentTypeGlassBadge";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { PatientIdentityCell } from "@/components/shared/person-display/PatientIdentityCell";
+import { DoctorIdentityCell } from "@/components/shared/person-display/DoctorIdentityCell";
 import { DoctorIdentityRow } from "@/components/shared/doctor-display/DoctorIdentityRow";
 import { CategoryInlineLink } from "@/components/shared/CategoryInlineLink";
 import { InvoiceVisitSummaryLine } from "@/components/shared/billing/InvoiceVisitSummaryLine";
@@ -13,6 +14,7 @@ import {
   resolveAppointmentTypeDurationMinutes,
   resolveAppointmentTypeDisplayName,
 } from "@/lib/appointment-type-display";
+import { resolveCalendarOwnerLinkKind } from "@/lib/entity-detail-snapshot-links";
 import {
   invoiceCalendarOwnerDoctorFromSummary,
   invoiceTreatingDoctorFromSummary,
@@ -56,6 +58,9 @@ export function InvoiceVisitDescriptionStack({ invoice, viewerRole }: Props) {
 
   const treatingDoctor = invoiceTreatingDoctorFromSummary(summary);
   const ownerDoctor = invoiceCalendarOwnerDoctorFromSummary(summary);
+  const ownerLinkKind = summary
+    ? resolveCalendarOwnerLinkKind(viewerRole, summary.calendar_owner_role)
+    : "role";
 
   return (
     <div
@@ -65,11 +70,11 @@ export function InvoiceVisitDescriptionStack({ invoice, viewerRole }: Props) {
         "flex w-full min-w-0 flex-col justify-center gap-1.5 py-1"
       )}
     >
-      <div className="flex w-full min-w-0 flex-wrap items-center gap-1.5">
+      <div className="inline-flex min-w-0 max-w-full flex-wrap items-center gap-x-1.5 gap-y-0.5">
         <EntityTitleLink
           href={href}
           label={title}
-          className="min-w-0 flex-1 font-normal"
+          className="min-w-0 shrink font-normal"
           wrapLabel
         />
         {typeName ? (
@@ -117,19 +122,35 @@ export function InvoiceVisitDescriptionStack({ invoice, viewerRole }: Props) {
           ) : null}
         </div>
       ) : null}
-      {ownerDoctor && ownerDoctor.id !== treatingDoctor?.id ? (
-        <p className={cn(clinicalCellMutedTextClass, "w-full min-w-0 text-[10px]")}>
-          Owner:{" "}
-          <EntityTitleLink
-            href={
-              viewerRole === "admin"
-                ? `/control-panel/doctors/${ownerDoctor.id}`
-                : `/doctors/${ownerDoctor.id}`
-            }
-            label={ownerDoctor.display_name ?? "Doctor"}
-            className="inline text-[10px] font-normal"
+      {ownerDoctor &&
+      summary?.calendar_owner_id &&
+      summary.calendar_owner_label &&
+      ownerDoctor.id !== treatingDoctor?.id ? (
+        <div className="flex w-full min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+          <span
+            className={cn(
+              clinicalCellMutedTextClass,
+              "shrink-0 text-[10px] font-medium"
+            )}
+          >
+            Owner:
+          </span>
+          <DoctorIdentityCell
+            doctorId={summary.calendar_owner_id}
+            name={summary.calendar_owner_label}
+            email={summary.calendar_owner_email}
+            image={summary.calendar_owner_image}
+            specialty={summary.calendar_owner_specialty}
+            viewerRole={viewerRole}
+            linkKind={ownerLinkKind}
+            staffRole={summary.calendar_owner_role}
+            layout="inline"
+            size="sm"
+            showRoleBadge
+            showSpecialty={summary.calendar_owner_role === "doctor"}
+            className="min-h-0 shrink py-0"
           />
-        </p>
+        </div>
       ) : null}
     </div>
   );

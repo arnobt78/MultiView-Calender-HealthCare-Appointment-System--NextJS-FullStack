@@ -2,8 +2,10 @@
 
 import { CalendarClock } from "lucide-react";
 import { UserAvatar } from "@/components/shared/UserAvatar";
+import { EntityDetailAuditActorInline } from "@/components/shared/entity-detail/EntityDetailAuditActorInline";
 import { formatInvoiceIssuedAtLabel } from "@/lib/invoice-list-row-display";
 import { clinicalCellMutedTextClass } from "@/lib/table-display-styles";
+import type { EntityRole } from "@/lib/entity-routes";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -12,6 +14,10 @@ type Props = {
   issuerImage?: string | null;
   /** Billing owner email — Record Audit / list rows after name. */
   issuerEmail?: string | null;
+  /** When set with issuerLabel — links issuer to doctor/admin profile (portal meta row). */
+  issuerUserId?: string | null;
+  issuerRole?: string | null;
+  viewerRole?: EntityRole;
   className?: string;
   /** Record audit row uses outer sky icon — omit inner clock. */
   showLeadingIcon?: boolean;
@@ -23,12 +29,17 @@ export function InvoiceIssuedByMeta({
   issuerLabel,
   issuerImage,
   issuerEmail,
+  issuerUserId,
+  issuerRole,
+  viewerRole,
   className,
   showLeadingIcon = true,
 }: Props) {
   const when = formatInvoiceIssuedAtLabel(createdAt);
   const by = issuerLabel?.trim();
   const emailTrimmed = issuerEmail?.trim() ?? "";
+  const userId = issuerUserId?.trim();
+  const useLinkedActor = Boolean(by && userId && viewerRole != null);
 
   return (
     <div
@@ -45,18 +56,36 @@ export function InvoiceIssuedByMeta({
         {by ? (
           <>
             <span aria-hidden>·</span>
-            <UserAvatar
-              src={issuerImage}
-              alt=""
-              fallbackText={by}
-              sizeClassName="h-4 w-4"
-            />
-            <span>{by}</span>
-            {emailTrimmed ? (
-              <span className={cn("shrink-0", clinicalCellMutedTextClass)} title={emailTrimmed}>
-                ({emailTrimmed})
-              </span>
-            ) : null}
+            {useLinkedActor ? (
+              <EntityDetailAuditActorInline
+                actor={{
+                  userId: userId!,
+                  label: by,
+                  email: issuerEmail,
+                  image: issuerImage,
+                  role: issuerRole,
+                }}
+                viewerRole={viewerRole}
+              />
+            ) : (
+              <>
+                <UserAvatar
+                  src={issuerImage}
+                  alt=""
+                  fallbackText={by}
+                  sizeClassName="h-4 w-4"
+                />
+                <span>{by}</span>
+                {emailTrimmed ? (
+                  <span
+                    className={cn("shrink-0", clinicalCellMutedTextClass)}
+                    title={emailTrimmed}
+                  >
+                    ({emailTrimmed})
+                  </span>
+                ) : null}
+              </>
+            )}
           </>
         ) : null}
       </div>
