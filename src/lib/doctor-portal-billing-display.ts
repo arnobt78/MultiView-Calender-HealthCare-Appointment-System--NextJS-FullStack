@@ -38,7 +38,11 @@ export type DoctorPortalInvoiceStatusCounts = Record<
   number
 >;
 
-const STATUS_ORDER: Exclude<DoctorPortalInvoiceStatusFilter, "all">[] = [
+/** Inline header row segment order — shared by string label + InvoiceStatusCountInlineRow. */
+export const DOCTOR_PORTAL_INVOICE_STATUS_INLINE_ORDER: Exclude<
+  DoctorPortalInvoiceStatusFilter,
+  "all"
+>[] = [
   "draft",
   "sent",
   "paid",
@@ -72,7 +76,7 @@ export function countDoctorPortalInvoicesByStatus(
 export function doctorPortalInvoiceStatusBadgeLabel(
   counts: DoctorPortalInvoiceStatusCounts
 ): string {
-  return STATUS_ORDER.map((key) => {
+  return DOCTOR_PORTAL_INVOICE_STATUS_INLINE_ORDER.map((key) => {
     const label = key.charAt(0).toUpperCase() + key.slice(1);
     return `${label}: ${counts[key]}`;
   }).join(" · ");

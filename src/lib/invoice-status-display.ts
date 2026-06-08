@@ -28,3 +28,11 @@ export function invoiceDueDateTextClassForStatus(
   if (status === "overdue") return "text-rose-600";
   return "text-muted-foreground";
 }
+
+/** Inline status count segments — matches InvoiceStatusBadge glass tones as text. */
+export function invoiceStatusInlineTextClass(
+  status: InvoiceDisplayStatus | string | null | undefined
+): string {
+  const key = (status ?? "draft").toLowerCase();
+  return STATUS_TEXT_CLASS[key] ?? STATUS_TEXT_CLASS.draft;
+}

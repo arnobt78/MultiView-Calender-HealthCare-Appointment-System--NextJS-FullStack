@@ -10,10 +10,10 @@ import { ClinicalListFilterToolbar } from "@/components/shared/filters/ClinicalL
 import { FilterSelect } from "@/components/shared/filters/FilterSelect";
 import { Skeleton } from "@/components/ui/skeleton";
 import { doctorPortalBillingPanelClass } from "@/lib/doctor-portal-layout";
+import { InvoiceStatusCountInlineRow } from "@/components/shared/billing/InvoiceStatusCountInlineRow";
 import {
   countDoctorPortalInvoicesByStatus,
   doctorPortalBillingSectionTitle,
-  doctorPortalInvoiceStatusBadgeLabel,
   DOCTOR_PORTAL_BILLING_SHOW_MANUAL_CREATE,
   DOCTOR_PORTAL_BILLING_SUBTITLE,
 } from "@/lib/doctor-portal-billing-display";
@@ -84,7 +84,7 @@ export function DoctorPortalInvoicesCard({
   );
 
   const statusChip = useMemo(
-    () => doctorPortalInvoiceStatusBadgeLabel(statusCounts),
+    () => <InvoiceStatusCountInlineRow counts={statusCounts} />,
     [statusCounts]
   );
 

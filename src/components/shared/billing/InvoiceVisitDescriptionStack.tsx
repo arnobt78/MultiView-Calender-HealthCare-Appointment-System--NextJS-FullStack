@@ -1,22 +1,23 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
-import { Clock } from "lucide-react";
+import { AppointmentTypeGlassBadge } from "@/components/shared/appointment-display/AppointmentTypeGlassBadge";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { PatientIdentityCell } from "@/components/shared/person-display/PatientIdentityCell";
 import { DoctorIdentityRow } from "@/components/shared/doctor-display/DoctorIdentityRow";
 import { CategoryInlineLink } from "@/components/shared/CategoryInlineLink";
-import { TelehealthSessionBadge } from "@/components/shared/appointments/TelehealthSessionBadge";
+import { InvoiceVisitSummaryLine } from "@/components/shared/billing/InvoiceVisitSummaryLine";
 import type { Invoice } from "@/hooks/usePayments";
 import { getInvoiceListTitle } from "@/lib/invoice-list-display";
 import {
-  formatInvoiceVisitDateLabel,
-  formatInvoiceVisitTimeRange,
-} from "@/lib/invoice-list-row-display";
+  formatAppointmentTypeDurationLabel,
+  resolveAppointmentTypeDurationMinutes,
+  resolveAppointmentTypeDisplayName,
+} from "@/lib/appointment-type-display";
 import {
   invoiceCalendarOwnerDoctorFromSummary,
   invoiceTreatingDoctorFromSummary,
 } from "@/lib/invoice-visit-doctor";
+import { invoiceVisitSummaryToPatientPortrait } from "@/lib/invoice-visit-patient-portrait";
 import {
   invoiceDetailHref,
   patientDetailHref,
@@ -42,26 +43,15 @@ export function InvoiceVisitDescriptionStack({ invoice, viewerRole }: Props) {
   const summary = invoice.visit_summary;
   const title = getInvoiceListTitle(invoice);
   const href = invoiceDetailHref(viewerRole, invoice.id);
-  const dateLabel =
-    summary?.start_iso ? formatInvoiceVisitDateLabel(summary.start_iso) : null;
-  const timeLabel =
-    summary?.start_iso && summary?.end_iso
-      ? formatInvoiceVisitTimeRange(summary.start_iso, summary.end_iso)
-      : null;
 
   const patientHref = summary?.patient_id
     ? patientDetailHref(viewerRole, summary.patient_id)
     : href;
 
-  const patientPortrait = summary?.patient_id
-    ? {
-        id: summary.patient_id,
-        email: summary.patient_email ?? null,
-        clinical_profile: null,
-        birth_date: summary.patient_birth_date ?? null,
-        firstname: summary.patient_label?.split(" ")[0],
-        lastname: summary.patient_label?.split(" ").slice(1).join(" "),
-      }
+  const patientPortrait = invoiceVisitSummaryToPatientPortrait(summary);
+  const typeName = summary ? resolveAppointmentTypeDisplayName(summary) : null;
+  const typeDurationLabel = summary
+    ? formatAppointmentTypeDurationLabel(resolveAppointmentTypeDurationMinutes(summary))
     : null;
 
   const treatingDoctor = invoiceTreatingDoctorFromSummary(summary);
@@ -72,38 +62,25 @@ export function InvoiceVisitDescriptionStack({ invoice, viewerRole }: Props) {
       className={cn(
         clinicalTableCellMinRowClass,
         clinicalTableCellWrapClass,
-        "flex min-w-0 flex-col justify-center gap-1.5 py-1"
+        "flex w-full min-w-0 flex-col justify-center gap-1.5 py-1"
       )}
     >
-      <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+      <div className="flex w-full min-w-0 flex-wrap items-center gap-1.5">
         <EntityTitleLink
           href={href}
           label={title}
-          className="block max-w-[240px] font-normal"
+          className="min-w-0 flex-1 font-normal"
           wrapLabel
         />
-        {summary?.appointment_type_name ? (
-          <Badge
-            variant="outline"
-            className="calendar-glass-badge calendar-glass-badge-sky shrink-0 py-0 text-[10px] capitalize"
-          >
-            {summary.appointment_type_name}
-          </Badge>
+        {typeName ? (
+          <AppointmentTypeGlassBadge
+            name={typeName}
+            durationLabel={typeDurationLabel}
+            className="shrink-0"
+          />
         ) : null}
-        {summary?.is_telehealth ? <TelehealthSessionBadge /> : null}
       </div>
-      {dateLabel || timeLabel ? (
-        <p className={cn(clinicalCellMutedTextClass, "flex min-w-0 flex-wrap items-center gap-1 text-xs")}>
-          {dateLabel ? <span>{dateLabel}</span> : null}
-          {timeLabel ? (
-            <>
-              {dateLabel ? <span aria-hidden>·</span> : null}
-              <Clock className="h-3 w-3 shrink-0 opacity-70" aria-hidden />
-              <span>{timeLabel}</span>
-            </>
-          ) : null}
-        </p>
-      ) : null}
+      <InvoiceVisitSummaryLine summary={summary} className="w-full min-w-0" />
       {summary?.patient_label && patientPortrait ? (
         <PatientIdentityCell
           href={patientHref}
@@ -112,11 +89,12 @@ export function InvoiceVisitDescriptionStack({ invoice, viewerRole }: Props) {
           patient={patientPortrait}
           layout="inline"
           avatarSizeClassName="h-7 w-7"
-          className="min-h-0 py-0"
+          careLevel={summary.patient_care_level}
+          className="w-full min-w-0 py-0"
         />
       ) : null}
       {treatingDoctor || summary?.category_id ? (
-        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+        <div className="flex w-full min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
           {treatingDoctor ? (
             <DoctorIdentityRow
               doctor={treatingDoctor}
@@ -140,7 +118,7 @@ export function InvoiceVisitDescriptionStack({ invoice, viewerRole }: Props) {
         </div>
       ) : null}
       {ownerDoctor && ownerDoctor.id !== treatingDoctor?.id ? (
-        <p className={cn(clinicalCellMutedTextClass, "text-[10px]")}>
+        <p className={cn(clinicalCellMutedTextClass, "w-full min-w-0 text-[10px]")}>
           Owner:{" "}
           <EntityTitleLink
             href={

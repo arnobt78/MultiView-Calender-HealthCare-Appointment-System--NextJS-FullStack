@@ -22,9 +22,22 @@ type InvoiceTableCellsProps = {
   viewerRole: EntityRole;
 };
 
+type InvoiceNumberTableCellProps = InvoiceTableCellsProps & {
+  /** e.g. "Invoice" → `Invoice #168da90a` (doctor portal list). */
+  idLabelPrefix?: string;
+};
+
 /** Sky link + clipboard — short invoice id in list tables. */
-export function InvoiceNumberTableCell({ invoice, viewerRole }: InvoiceTableCellsProps) {
+export function InvoiceNumberTableCell({
+  invoice,
+  viewerRole,
+  idLabelPrefix,
+}: InvoiceNumberTableCellProps) {
   const href = invoiceDetailHref(viewerRole, invoice.id);
+  const shortId = formatShortEntityId(invoice.id);
+  const displayLabel = idLabelPrefix?.trim()
+    ? `${idLabelPrefix.trim()} ${shortId}`
+    : shortId;
   return (
     <div className={cn(clinicalTableCellMinRowClass, "flex items-center")}>
       <EntityIdCopyInline
@@ -32,7 +45,7 @@ export function InvoiceNumberTableCell({ invoice, viewerRole }: InvoiceTableCell
         labelNode={
           <EntityTitleLink
             href={href}
-            label={formatShortEntityId(invoice.id)}
+            label={displayLabel}
             className="font-mono text-xs font-normal"
           />
         }

@@ -2,11 +2,10 @@
 
 import { InvoiceAdminActionsMenu } from "@/components/shared/billing/InvoiceAdminActionsMenu";
 import { InvoiceAmountDisplay } from "@/components/shared/billing/InvoiceAmountDisplay";
+import { InvoicePortalListMetaRow } from "@/components/shared/billing/InvoicePortalListMetaRow";
 import { InvoiceStatusBadge } from "@/components/shared/billing/InvoiceStatusBadge";
 import {
-  InvoiceCreatedTableCell,
   InvoiceDescriptionTableCell,
-  InvoiceDueTableCell,
   InvoiceNumberTableCell,
 } from "@/components/shared/billing/invoice-table-cells";
 import type { Invoice } from "@/hooks/usePayments";
@@ -34,11 +33,15 @@ export function DoctorPortalInvoiceListRow({
   const viewerRole = "doctor" as const;
 
   return (
-    <li className={doctorPortalInvoiceListRowClass}>
-      <div className="flex min-w-0 flex-col gap-1.5">
-        <div className="flex flex-wrap items-start justify-between gap-2">
+    <li className={cn(doctorPortalInvoiceListRowClass, "w-full min-w-0")}>
+      <div className="flex w-full min-w-0 flex-col gap-1.5">
+        <div className="flex w-full min-w-0 flex-wrap items-start justify-between gap-2">
           <div className="min-w-0 shrink">
-            <InvoiceNumberTableCell invoice={invoice} viewerRole={viewerRole} />
+            <InvoiceNumberTableCell
+              invoice={invoice}
+              viewerRole={viewerRole}
+              idLabelPrefix="Invoice"
+            />
           </div>
           <div className="flex shrink-0 flex-wrap items-center gap-1.5">
             <InvoiceAmountDisplay
@@ -61,20 +64,7 @@ export function DoctorPortalInvoiceListRow({
 
         <InvoiceDescriptionTableCell invoice={invoice} viewerRole={viewerRole} />
 
-        <div
-          className={cn(
-            "flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground"
-          )}
-        >
-          <span className="inline-flex items-center gap-1">
-            <span className="font-medium text-gray-500">Due:</span>
-            <InvoiceDueTableCell invoice={invoice} />
-          </span>
-          <span className="inline-flex min-w-0 flex-col gap-0.5">
-            <span className="font-medium text-gray-500">Created:</span>
-            <InvoiceCreatedTableCell invoice={invoice} />
-          </span>
-        </div>
+        <InvoicePortalListMetaRow invoice={invoice} />
       </div>
     </li>
   );
