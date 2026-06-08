@@ -8,7 +8,7 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 - **Portal KPI:** doctor-portal + `/insights` Today/Pending `valueRowHint` + all-time pending count; CP `cancelled`; `dailyStatsMap` helpers.
 - **Cancelled counters:** `AppointmentOpenAlertDoneBadges` on list/Day/Week/Month/section accordion.
 - **Demo appts:** `npm run db:reset-demo-appointments` — 10 curated v2 + cancelled check migration.
-- **Verify:** **843** / **161** · `npm test && tsc && lint && build`.
+- **Verify:** **854** / **165** · `npm test && tsc && lint && build`.
 
 ## Never / Always
 
@@ -33,6 +33,7 @@ Cross-tab: `query-cache-cross-tab.ts`.
 - Cancel: `appointment-cancel-access.ts`, `appointment-id-write.ts`, `appointment-notify.ts`, `AppointmentActionsMenu`
 - Status UI: `appointment-status-display.ts`, `AppointmentStatusGlassBadge`
 - Cron SMS: `brevo-sms.ts`, `cron/reminders/route.ts`
+- DP billing: `DoctorPortalInvoiceListRow`, `InvoiceStatusCountInlineRow`, `invoice-list-meta-status-dates.ts`
 - Invoice: `InvoiceDetailLiveBody`, `invoice-dialog/`
 
 ## Principle
