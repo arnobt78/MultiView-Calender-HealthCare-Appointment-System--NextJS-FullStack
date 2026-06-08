@@ -23,12 +23,7 @@ export async function loadInvoicesListForViewer(opts: {
     organizationId: opts.organizationId ?? undefined,
   });
 
-  const withVisits = await attachVisitSummariesToInvoices(
-    rows.map((row) => ({
-      ...serializeInvoice(row),
-      payments: row.payments,
-    }))
-  );
+  const withVisits = await attachVisitSummariesToInvoices(rows.map((row) => serializeInvoice(row)));
   const labeled = await attachInvoiceIssuerLabels(withVisits);
   return labeled.map((row) => ({
     ...row,
@@ -36,12 +31,13 @@ export async function loadInvoicesListForViewer(opts: {
     description: row.description ?? undefined,
     due_date: row.due_date ?? undefined,
     paid_at: row.paid_at ?? undefined,
+    cancelled_at: row.cancelled_at ?? undefined,
     payments: row.payments.map((p) => ({
-      ...p,
-      created_at:
-        typeof p.created_at === "string"
-          ? p.created_at
-          : (p.created_at?.toISOString?.() ?? ""),
+      id: p.id,
+      amount: p.amount,
+      status: p.status,
+      created_at: p.created_at,
+      refunded_at: p.refunded_at ?? undefined,
       stripe_payment_id: p.stripe_payment_id ?? undefined,
     })),
   })) satisfies InvoiceRow[];

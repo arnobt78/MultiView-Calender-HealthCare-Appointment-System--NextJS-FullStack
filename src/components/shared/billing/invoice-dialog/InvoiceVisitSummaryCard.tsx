@@ -4,164 +4,52 @@ import { ChevronDown, Stethoscope, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PatientPortraitAvatar } from "@/components/shared/person-display/PatientPortraitAvatar";
 import { PatientAgeGlassBadge } from "@/components/shared/person-display/PatientAgeGlassBadge";
+import { PatientCareTierGlassBadge } from "@/components/shared/person-display/PatientCareTierGlassBadge";
 import { CategoryBrandMark } from "@/components/shared/category-display/CategoryBrandMark";
 import { TelehealthSessionBadge } from "@/components/shared/appointments/TelehealthSessionBadge";
+import { AppointmentTypeGlassBadge } from "@/components/shared/appointment-display/AppointmentTypeGlassBadge";
+import { DoctorIdentityCell } from "@/components/shared/person-display/DoctorIdentityCell";
 import { InvoiceVisitMetaLine } from "@/components/shared/billing/InvoiceVisitMetaLine";
-import {
-  invoiceAppointmentOptionToMetaInput,
-  invoiceVisitSummaryToMetaInput,
-} from "@/lib/invoice-visit-meta-line";
 import type { InvoiceAppointmentOptionRow, InvoiceVisitSummary } from "@/lib/billing-types";
-import type { InvoiceVisitMetaInput } from "@/lib/invoice-visit-meta-line";
+import {
+  invoiceAppointmentOptionToDialogDisplay,
+  invoiceVisitSummaryToDialogDisplay,
+} from "@/lib/invoice-dialog-visit-display";
+import {
+  resolveCalendarOwnerLinkKind,
+  resolveTreatingPhysicianLinkKind,
+} from "@/lib/entity-detail-snapshot-links";
+import type { EntityRole } from "@/lib/entity-routes";
 import { patientAgeYears } from "@/lib/patient-age";
 import { invoiceDialogSummaryCardClass } from "@/lib/invoice-dialog-ui-classes";
 import { cn } from "@/lib/utils";
 
-type Props =
-  | {
-      source: "option";
-      visit: InvoiceAppointmentOptionRow;
-      onChangeVisit?: () => void;
-      className?: string;
-    }
-  | {
-      source: "summary";
-      visit: InvoiceVisitSummary;
-      onChangeVisit?: () => void;
-      className?: string;
-    };
+type Props = {
+  viewerRole: EntityRole;
+  onChangeVisit?: () => void;
+  className?: string;
+} & (
+  | { source: "option"; visit: InvoiceAppointmentOptionRow }
+  | { source: "summary"; visit: InvoiceVisitSummary }
+);
 
 /** Collapsed selected visit — create mode after pick; edit mode read-only linked visit. */
 export function InvoiceVisitSummaryCard(props: Props) {
-  const { onChangeVisit, className } = props;
+  const { viewerRole, onChangeVisit, className, source, visit } = props;
+  const display =
+    source === "summary"
+      ? invoiceVisitSummaryToDialogDisplay(visit)
+      : invoiceAppointmentOptionToDialogDisplay(visit);
 
-  if (props.source === "summary") {
-    return (
-      <SummaryFromVisitSummary
-        visit={props.visit}
-        onChangeVisit={onChangeVisit}
-        className={className}
-      />
-    );
-  }
-
-  return (
-    <SummaryFromOption
-      visit={props.visit}
-      onChangeVisit={onChangeVisit}
-      className={className}
-    />
-  );
-}
-
-function SummaryFromOption({
-  visit,
-  onChangeVisit,
-  className,
-}: {
-  visit: InvoiceAppointmentOptionRow;
-  onChangeVisit?: () => void;
-  className?: string;
-}) {
-  const patientLabel = visit.patient_label;
-
-  return (
-    <SummaryShell
-      onChangeVisit={onChangeVisit}
-      className={className}
-      patientPortrait={{
-        id: visit.patient_id ?? visit.id,
-        email: visit.patient_email ?? null,
-        firstname: patientLabel.split(" ")[0],
-        lastname: patientLabel.split(" ").slice(1).join(" "),
-        clinical_profile: visit.patient_clinical_profile ?? null,
-      }}
-      birthDate={visit.patient_birth_date}
-      isTelehealth={visit.is_telehealth}
-      patientLabel={patientLabel}
-      title={visit.title}
-      visitMeta={invoiceAppointmentOptionToMetaInput(visit)}
-      categoryLabel={visit.category_label}
-      categoryColor={visit.category_color}
-      treatingLabel={visit.treating_physician_label}
-      treatingSpecialty={visit.treating_physician_specialty}
-      ownerLabel={visit.calendar_owner_label}
-    />
-  );
-}
-
-function SummaryFromVisitSummary({
-  visit,
-  onChangeVisit,
-  className,
-}: {
-  visit: InvoiceVisitSummary;
-  onChangeVisit?: () => void;
-  className?: string;
-}) {
-  const patientLabel = visit.patient_label ?? "Patient";
-
-  return (
-    <SummaryShell
-      onChangeVisit={onChangeVisit}
-      className={className}
-      patientPortrait={{
-        id: visit.patient_id ?? visit.appointment_id,
-        email: visit.patient_email ?? null,
-        firstname: patientLabel.split(" ")[0],
-        lastname: patientLabel.split(" ").slice(1).join(" "),
-        clinical_profile: null,
-      }}
-      birthDate={visit.patient_birth_date}
-      isTelehealth={visit.is_telehealth}
-      patientLabel={patientLabel}
-      title={visit.title}
-      visitMeta={invoiceVisitSummaryToMetaInput(visit)}
-      categoryLabel={visit.category_label}
-      categoryColor={visit.category_color}
-      treatingLabel={visit.treating_physician_label}
-      treatingSpecialty={visit.treating_physician_specialty}
-      ownerLabel={visit.calendar_owner_label}
-    />
-  );
-}
-
-function SummaryShell({
-  onChangeVisit,
-  className,
-  patientPortrait,
-  birthDate,
-  isTelehealth,
-  patientLabel,
-  title,
-  visitMeta,
-  categoryLabel,
-  categoryColor,
-  treatingLabel,
-  treatingSpecialty,
-  ownerLabel,
-}: {
-  onChangeVisit?: () => void;
-  className?: string;
-  patientPortrait: {
-    id: string;
-    email: string | null;
-    firstname: string;
-    lastname: string;
-    clinical_profile: { image_url?: string } | null;
+  const age = display.birthDate ? patientAgeYears(display.birthDate) : null;
+  const patientPortrait = display.patientPortrait ?? {
+    id: source === "summary" ? visit.appointment_id : visit.id,
+    email: null,
+    clinical_profile: null,
+    birth_date: null,
+    firstname: display.patientLabel.split(" ")[0],
+    lastname: display.patientLabel.split(" ").slice(1).join(" "),
   };
-  birthDate?: string | null;
-  isTelehealth?: boolean;
-  patientLabel: string;
-  title: string;
-  visitMeta: InvoiceVisitMetaInput;
-  categoryLabel?: string | null;
-  categoryColor?: string | null;
-  treatingLabel?: string | null;
-  treatingSpecialty?: string | null;
-  ownerLabel?: string | null;
-}) {
-  const age = birthDate ? patientAgeYears(birthDate) : null;
 
   return (
     <div className={cn(invoiceDialogSummaryCardClass, "space-y-3", className)}>
@@ -173,11 +61,22 @@ function SummaryShell({
         />
         <div className="min-w-0 flex-1 space-y-1">
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-base font-semibold text-gray-800">{patientLabel}</span>
+            <span className="text-base font-semibold text-gray-800">{display.patientLabel}</span>
             {age != null ? <PatientAgeGlassBadge age={age} /> : null}
-            {isTelehealth ? <TelehealthSessionBadge /> : null}
+            {display.isTelehealth ? <TelehealthSessionBadge /> : null}
+            {display.patientCareLevel != null ? (
+              <PatientCareTierGlassBadge careLevel={display.patientCareLevel} />
+            ) : null}
           </div>
-          <p className="text-sm font-medium text-gray-700">{title}</p>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <p className="text-sm font-medium text-gray-700">{display.title}</p>
+            {display.appointmentTypeName ? (
+              <AppointmentTypeGlassBadge
+                name={display.appointmentTypeName}
+                durationLabel={display.typeDurationLabel}
+              />
+            ) : null}
+          </div>
         </div>
         {onChangeVisit ? (
           <Button
@@ -193,34 +92,65 @@ function SummaryShell({
         ) : null}
       </div>
 
-      <InvoiceVisitMetaLine source={visitMeta} variant="icons" />
+      <InvoiceVisitMetaLine source={display.visitMeta} variant="icons" />
 
       <div className="flex flex-wrap gap-2">
-        {categoryLabel ? (
+        {display.categoryLabel ? (
           <span className="inline-flex items-center gap-1 rounded-full border border-violet-200/60 bg-white/90 px-2.5 py-0.5 text-xs font-normal text-violet-900">
-            <CategoryBrandMark color={categoryColor} size="compact" />
-            {categoryLabel}
+            <CategoryBrandMark color={display.categoryColor} size="compact" />
+            {display.categoryLabel}
           </span>
         ) : null}
       </div>
 
-      <div className="grid gap-1 text-xs text-muted-foreground sm:grid-cols-2">
-        {treatingLabel ? (
-          <span className="inline-flex items-center gap-1.5">
-            <Stethoscope className="h-3.5 w-3.5 shrink-0 text-violet-600" aria-hidden />
-            <span>
-              Treating: <span className="font-medium text-gray-700">{treatingLabel}</span>
-              {treatingSpecialty ? ` · ${treatingSpecialty}` : ""}
+      <div className="grid gap-2 sm:grid-cols-2">
+        {display.treating ? (
+          <div className="space-y-0.5">
+            <span className="inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+              <Stethoscope className="h-3 w-3 text-violet-600" aria-hidden />
+              Treating
             </span>
-          </span>
+            <DoctorIdentityCell
+              doctorId={display.treating.id}
+              name={display.treating.name}
+              email={display.treating.email}
+              image={display.treating.image}
+              specialty={display.treating.specialty}
+              viewerRole={viewerRole}
+              staffRole={display.treating.role}
+              linkKind={resolveTreatingPhysicianLinkKind(
+                viewerRole,
+                undefined,
+                display.treating.role
+              )}
+              size="sm"
+              layout="inline"
+              showRoleBadge
+              showSpecialty
+            />
+          </div>
         ) : null}
-        {ownerLabel && ownerLabel !== treatingLabel ? (
-          <span className="inline-flex items-center gap-1.5">
-            <User className="h-3.5 w-3.5 shrink-0 text-violet-600" aria-hidden />
-            <span>
-              Calendar owner: <span className="font-medium text-gray-700">{ownerLabel}</span>
+        {display.owner ? (
+          <div className="space-y-0.5">
+            <span className="inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+              <User className="h-3 w-3 text-violet-600" aria-hidden />
+              Calendar owner
             </span>
-          </span>
+            <DoctorIdentityCell
+              doctorId={display.owner.id}
+              name={display.owner.name}
+              email={display.owner.email}
+              image={display.owner.image}
+              specialty={display.owner.specialty}
+              viewerRole={viewerRole}
+              staffRole={display.owner.role}
+              linkKind={resolveCalendarOwnerLinkKind(viewerRole, display.owner.role)}
+              size="sm"
+              layout="inline"
+              showRoleBadge
+              showSpecialty
+            />
+          </div>
         ) : null}
       </div>
     </div>

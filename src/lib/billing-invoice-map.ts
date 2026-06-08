@@ -15,6 +15,7 @@ type ApiPayment = {
   amount: number;
   status: string;
   created_at: string | Date;
+  refunded_at?: string | Date | null;
   stripe_payment_id?: string | null;
 };
 
@@ -29,6 +30,7 @@ type ApiInvoice = {
   description?: string | null;
   due_date?: string | Date | null;
   paid_at?: string | Date | null;
+  cancelled_at?: string | Date | null;
   created_at: string | Date;
   payments?: ApiPayment[];
   visit_summary?: InvoiceVisitSummary;
@@ -49,6 +51,7 @@ function mapPayment(p: ApiPayment): InvoicePaymentRow {
       typeof p.created_at === "string"
         ? p.created_at
         : p.created_at.toISOString(),
+    refunded_at: toIsoDateString(p.refunded_at) ?? null,
     stripe_payment_id: p.stripe_payment_id ?? undefined,
   };
 }
@@ -82,6 +85,7 @@ export function mapApiInvoiceToRow(raw: ApiInvoice): InvoiceRow {
     description: raw.description ?? undefined,
     due_date: toIsoDateString(raw.due_date)?.slice(0, 10),
     paid_at: toIsoDateString(raw.paid_at),
+    cancelled_at: toIsoDateString(raw.cancelled_at) ?? null,
     created_at:
       typeof raw.created_at === "string"
         ? raw.created_at

@@ -119,15 +119,24 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       }
     }
 
+    const patchData: {
+      status?: string;
+      description?: string | null;
+      due_date?: Date | null;
+      cancelled_at?: Date;
+    } = {};
+    if (status) patchData.status = status;
+    if (description !== undefined) patchData.description = description;
+    if (due_date !== undefined) {
+      patchData.due_date = due_date ? new Date(due_date) : null;
+    }
+    if (status === "cancelled" && invoice.status !== "cancelled") {
+      patchData.cancelled_at = new Date();
+    }
+
     const updated = await prisma.invoice.update({
       where: { id },
-      data: {
-        ...(status && { status }),
-        ...(description !== undefined && { description }),
-        ...(due_date !== undefined && {
-          due_date: due_date ? new Date(due_date) : null,
-        }),
-      },
+      data: patchData,
       include: { payments: true },
     });
 

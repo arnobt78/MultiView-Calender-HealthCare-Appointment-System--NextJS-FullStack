@@ -1,12 +1,11 @@
 /**
- * Doctor portal invoice list footer — Paid / Refunded milestone dates from existing row fields.
- * No cancelled_at on Invoice schema — cancelled-without-refund omits a date segment.
+ * Doctor portal invoice list footer — Paid / Refunded / Cancelled milestone dates.
  */
 
 import { resolveInvoiceDisplayStatus } from "@/lib/billing-appointment-eligibility";
 import type { InvoiceRow } from "@/lib/billing-types";
 
-export type InvoiceListMetaStatusDateLabel = "Paid" | "Refunded";
+export type InvoiceListMetaStatusDateLabel = "Paid" | "Refunded" | "Cancelled";
 
 export type InvoiceListMetaStatusDateSegment = {
   label: InvoiceListMetaStatusDateLabel;
@@ -16,14 +15,17 @@ export type InvoiceListMetaStatusDateSegment = {
 function latestRefundedPaymentIso(invoice: InvoiceRow): string | null {
   const refunded = (invoice.payments ?? []).filter((p) => p.status === "refunded");
   if (refunded.length === 0) return null;
-  // Payment row lacks refund timestamp — created_at is best available (original charge time).
-  const sorted = [...refunded].sort(
-    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-  );
-  return sorted[0]?.created_at ?? null;
+  const sorted = [...refunded].sort((a, b) => {
+    const aIso = a.refunded_at ?? a.created_at;
+    const bIso = b.refunded_at ?? b.created_at;
+    return new Date(bIso).getTime() - new Date(aIso).getTime();
+  });
+  const latest = sorted[0];
+  if (!latest) return null;
+  return latest.refunded_at ?? latest.created_at;
 }
 
-/** Inline footer segments after Due/Created — paid_at or refunded payment when applicable. */
+/** Inline footer segments after Due/Created — paid_at, refunded_at, or cancelled_at when applicable. */
 export function resolveInvoiceListMetaStatusDates(
   invoice: InvoiceRow
 ): InvoiceListMetaStatusDateSegment[] {
@@ -40,6 +42,11 @@ export function resolveInvoiceListMetaStatusDates(
 
   if (display === "paid" && invoice.paid_at) {
     segments.push({ label: "Paid", iso: invoice.paid_at });
+    return segments;
+  }
+
+  if (display === "cancelled" && invoice.cancelled_at) {
+    segments.push({ label: "Cancelled", iso: invoice.cancelled_at });
   }
 
   return segments;

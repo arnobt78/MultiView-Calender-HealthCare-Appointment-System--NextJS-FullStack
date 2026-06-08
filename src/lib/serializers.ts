@@ -208,12 +208,14 @@ export function serializeInvoice(i: {
   status: string;
   due_date: Date | null;
   paid_at: Date | null;
+  cancelled_at?: Date | null;
   description: string | null;
   payments?: {
     id: string;
     status: string;
     amount: number;
     created_at: Date;
+    refunded_at?: Date | null;
     stripe_payment_id?: string | null;
   }[];
 }) {
@@ -222,11 +224,13 @@ export function serializeInvoice(i: {
     created_at: i.created_at?.toISOString?.(),
     due_date: i.due_date ? i.due_date.toISOString().slice(0, 10) : null,
     paid_at: i.paid_at?.toISOString?.() ?? null,
+    cancelled_at: i.cancelled_at?.toISOString?.() ?? null,
     payments: (i.payments ?? []).map((p) => ({
       id: p.id,
       amount: p.amount,
       status: p.status,
       created_at: p.created_at?.toISOString?.() ?? "",
+      refunded_at: p.refunded_at?.toISOString?.() ?? null,
       stripe_payment_id: p.stripe_payment_id ?? undefined,
     })),
   };

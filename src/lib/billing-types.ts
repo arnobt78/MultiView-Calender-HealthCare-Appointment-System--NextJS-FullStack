@@ -29,6 +29,8 @@ export type InvoicePaymentRow = {
   amount: number;
   status: string;
   created_at: string;
+  /** Set when status becomes refunded — preferred over created_at for UI dates. */
+  refunded_at?: string | null;
   stripe_payment_id?: string;
 };
 
@@ -71,6 +73,9 @@ export type InvoiceVisitSummary = {
   calendar_owner_specialty: string | null;
   calendar_owner_image?: string | null;
   calendar_owner_role?: string | null;
+  /** Visit type list price — invoice dialog fee hint (type → doctor fallback). */
+  appointment_type_price_cents?: number | null;
+  doctor_consultation_fee_cents?: number | null;
 };
 
 export type InvoiceRow = {
@@ -84,6 +89,7 @@ export type InvoiceRow = {
   description?: string;
   due_date?: string;
   paid_at?: string;
+  cancelled_at?: string | null;
   created_at: string;
   payments: InvoicePaymentRow[];
   visit_summary?: InvoiceVisitSummary;
@@ -130,8 +136,16 @@ export type InvoiceAppointmentOptionRow = {
   category_icon?: string | null;
   treating_physician_id?: string | null;
   treating_physician_label?: string | null;
+  treating_physician_email?: string | null;
   treating_physician_specialty?: string | null;
+  treating_physician_image?: string | null;
+  treating_physician_role?: string | null;
   calendar_owner_id?: string | null;
   calendar_owner_label?: string | null;
+  calendar_owner_email?: string | null;
   calendar_owner_specialty?: string | null;
+  calendar_owner_image?: string | null;
+  calendar_owner_role?: string | null;
+  duration_minutes?: number | null;
+  appointment_type_duration_minutes?: number | null;
 };

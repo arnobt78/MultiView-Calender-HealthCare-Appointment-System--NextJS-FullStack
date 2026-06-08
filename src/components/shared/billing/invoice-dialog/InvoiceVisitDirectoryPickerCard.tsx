@@ -1,18 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { User } from "lucide-react";
+import { Stethoscope, User } from "lucide-react";
 import { InvoiceVisitMetaLine } from "@/components/shared/billing/InvoiceVisitMetaLine";
-import { invoiceAppointmentOptionToMetaInput } from "@/lib/invoice-visit-meta-line";
 import { PatientPortraitAvatar } from "@/components/shared/person-display/PatientPortraitAvatar";
 import { PatientAgeGlassBadge } from "@/components/shared/person-display/PatientAgeGlassBadge";
+import { PatientCareTierGlassBadge } from "@/components/shared/person-display/PatientCareTierGlassBadge";
 import { CategoryBrandMark } from "@/components/shared/category-display/CategoryBrandMark";
 import { TelehealthSessionBadge } from "@/components/shared/appointments/TelehealthSessionBadge";
+import { AppointmentTypeGlassBadge } from "@/components/shared/appointment-display/AppointmentTypeGlassBadge";
+import { DoctorIdentityCell } from "@/components/shared/person-display/DoctorIdentityCell";
 import { InvoiceStatusBadge } from "@/components/shared/billing/InvoiceStatusBadge";
 import { InvoiceAmountDisplay } from "@/components/shared/billing/InvoiceAmountDisplay";
-import { DoctorMiniAvatar } from "@/components/shared/doctor-display/DoctorMiniAvatar";
-import { DoctorSpecialtyBadge } from "@/components/shared/doctor-display/DoctorSpecialtyBadge";
 import type { InvoiceAppointmentOptionRow } from "@/lib/billing-types";
+import { invoiceAppointmentOptionToDialogDisplay } from "@/lib/invoice-dialog-visit-display";
+import {
+  resolveCalendarOwnerLinkKind,
+  resolveTreatingPhysicianLinkKind,
+} from "@/lib/entity-detail-snapshot-links";
 import {
   invoiceDialogGlassTileClass,
   invoiceDialogGlassTileSelectedClass,
@@ -31,7 +36,7 @@ type Props = {
 };
 
 /**
- * Visit picker tile — patient-first layout (no curated slug title); mirrors doctor directory cards.
+ * Visit picker tile — patient-first layout; mirrors collapsed summary card parity.
  */
 export function InvoiceVisitDirectoryPickerCard({
   option,
@@ -41,6 +46,15 @@ export function InvoiceVisitDirectoryPickerCard({
   onSelect,
 }: Props) {
   const rowDisabled = disabled || !option.eligible;
+  const display = invoiceAppointmentOptionToDialogDisplay(option);
+  const patientPortrait = display.patientPortrait ?? {
+    id: option.id,
+    email: null,
+    clinical_profile: null,
+    birth_date: null,
+    firstname: display.patientLabel.split(" ")[0],
+    lastname: display.patientLabel.split(" ").slice(1).join(" "),
+  };
 
   return (
     <div className="space-y-1">
@@ -58,69 +72,89 @@ export function InvoiceVisitDirectoryPickerCard({
         )}
       >
         <PatientPortraitAvatar
-          patient={{
-            id: option.patient_id ?? option.id,
-            email: option.patient_email ?? null,
-            firstname: option.patient_label.split(" ")[0],
-            lastname: option.patient_label.split(" ").slice(1).join(" "),
-            clinical_profile: option.patient_clinical_profile ?? undefined,
-          }}
+          patient={patientPortrait}
           sizeClassName="h-14 w-14 min-h-[3.5rem] shrink-0 self-stretch rounded-xl"
           className="rounded-xl ring-2 ring-violet-200/60"
         />
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="truncate text-sm font-semibold text-gray-800">
-              {option.patient_label}
+              {display.patientLabel}
             </span>
-            {option.patient_birth_date ? (
+            {display.birthDate ? (
               <PatientAgeGlassBadge
-                age={patientAgeYears(option.patient_birth_date) ?? 0}
+                age={patientAgeYears(display.birthDate) ?? 0}
                 compact
               />
             ) : null}
-            {option.is_telehealth ? <TelehealthSessionBadge /> : null}
+            {display.isTelehealth ? <TelehealthSessionBadge /> : null}
+            {display.patientCareLevel != null ? (
+              <PatientCareTierGlassBadge careLevel={display.patientCareLevel} compact />
+            ) : null}
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
-            {option.appointment_type_name ? (
-              <span className="rounded-full border border-sky-200/60 bg-sky-50/80 px-2 py-0.5 text-[10px] font-normal text-sky-900">
-                {option.appointment_type_name}
-              </span>
+            <span className="truncate text-xs font-medium text-gray-700">{display.title}</span>
+            {display.appointmentTypeName ? (
+              <AppointmentTypeGlassBadge
+                name={display.appointmentTypeName}
+                durationLabel={display.typeDurationLabel}
+              />
             ) : null}
-            {option.category_label ? (
+            {display.categoryLabel ? (
               <span className="inline-flex items-center gap-1 rounded-full border border-violet-200/60 bg-violet-50/80 px-2 py-0.5 text-[10px] font-normal text-violet-900">
-                <CategoryBrandMark color={option.category_color} size="compact" />
-                {option.category_label}
+                <CategoryBrandMark color={display.categoryColor} size="compact" />
+                {display.categoryLabel}
               </span>
             ) : null}
           </div>
-          <InvoiceVisitMetaLine
-            source={invoiceAppointmentOptionToMetaInput(option)}
-            variant="text"
-          />
-          {option.treating_physician_label ? (
-            <div className="flex items-center gap-1.5 text-[10px] text-gray-700">
-              <DoctorMiniAvatar
-                doctor={{
-                  id: option.treating_physician_id ?? option.owner_id,
-                  display_name: option.treating_physician_label,
-                  email: null,
-                  image: null,
-                }}
-                className="h-6 w-6"
+          <InvoiceVisitMetaLine source={display.visitMeta} variant="text" />
+          {display.treating ? (
+            <div className="space-y-0.5">
+              <span className="inline-flex items-center gap-1 text-[9px] font-medium uppercase tracking-wide text-muted-foreground">
+                <Stethoscope className="h-2.5 w-2.5 text-violet-600" aria-hidden />
+                Treating
+              </span>
+              <DoctorIdentityCell
+                doctorId={display.treating.id}
+                name={display.treating.name}
+                email={display.treating.email}
+                image={display.treating.image}
+                specialty={display.treating.specialty}
+                viewerRole={viewerRole}
+                staffRole={display.treating.role}
+                linkKind={resolveTreatingPhysicianLinkKind(
+                  viewerRole,
+                  undefined,
+                  display.treating.role
+                )}
+                size="sm"
+                layout="inline"
+                showRoleBadge
+                showSpecialty
               />
-              <span className="font-medium">{option.treating_physician_label}</span>
-              {option.treating_physician_specialty ? (
-                <DoctorSpecialtyBadge specialty={option.treating_physician_specialty} />
-              ) : null}
             </div>
           ) : null}
-          {option.calendar_owner_label &&
-          option.calendar_owner_label !== option.treating_physician_label ? (
-            <p className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
-              <User className="h-3 w-3" aria-hidden />
-              Owner: {option.calendar_owner_label}
-            </p>
+          {display.owner ? (
+            <div className="space-y-0.5">
+              <span className="inline-flex items-center gap-1 text-[9px] font-medium uppercase tracking-wide text-muted-foreground">
+                <User className="h-2.5 w-2.5 text-violet-600" aria-hidden />
+                Owner
+              </span>
+              <DoctorIdentityCell
+                doctorId={display.owner.id}
+                name={display.owner.name}
+                email={display.owner.email}
+                image={display.owner.image}
+                specialty={display.owner.specialty}
+                viewerRole={viewerRole}
+                staffRole={display.owner.role}
+                linkKind={resolveCalendarOwnerLinkKind(viewerRole, display.owner.role)}
+                size="sm"
+                layout="inline"
+                showRoleBadge
+                showSpecialty
+              />
+            </div>
           ) : null}
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1 self-start">

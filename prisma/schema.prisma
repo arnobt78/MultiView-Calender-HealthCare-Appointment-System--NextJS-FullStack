@@ -406,6 +406,7 @@ model Invoice {
   status          String    @default("draft") @db.Text // 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled'
   due_date        DateTime? @db.Date
   paid_at         DateTime? @db.Timestamptz(6)
+  cancelled_at    DateTime? @db.Timestamptz(6)
   description     String?   @db.Text
 
   organization Organization? @relation(fields: [organization_id], references: [id], onDelete: SetNull)
@@ -423,7 +424,8 @@ model Payment {
   invoice_id        String   @db.Uuid
   stripe_payment_id String?  @db.Text
   amount            Int      // Amount in cents
-  status            String   @db.Text // 'pending' | 'succeeded' | 'failed' | 'refunded'
+  status            String    @db.Text // 'pending' | 'succeeded' | 'failed' | 'refunded'
+  refunded_at       DateTime? @db.Timestamptz(6)
 
   invoice Invoice @relation(fields: [invoice_id], references: [id], onDelete: Cascade)
 

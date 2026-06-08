@@ -1,6 +1,14 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-08 — Portal KPI parity + cancelled counters + demo seed)
+## Latest (2026-06-04 — Invoice dialog visit parity + lifecycle timestamps)
+
+- **DB:** `invoices.cancelled_at`, `payments.refunded_at` (`migrations/016_invoice_lifecycle_timestamps.sql`); Prisma + `db push`; PATCH cancel sets `cancelled_at`; refund route sets `refunded_at` + invoice `cancelled_at`.
+- **List footer:** `invoice-list-meta-status-dates.ts` — Refunded prefers `payment.refunded_at` (fallback `created_at`); Cancelled uses `invoice.cancelled_at`; Paid unchanged.
+- **Visit summary fees:** `invoice-visit-summary` include `price_cents` + `consultation_fee`; `InvoiceVisitSummary` gains fee fields; `billing-appointment-options-load` wires doctor images/roles/duration on picker rows.
+- **Dialog parity:** `invoice-dialog-visit-display.ts` normalizers; `InvoiceVisitSummaryCard` + `InvoiceVisitDirectoryPickerCard` — `PatientCareTierGlassBadge`, `AppointmentTypeGlassBadge`+duration, `DoctorIdentityCell` treating/owner (`viewerRole`); edit `visitFeeHintInput` from `visit_summary` in `InvoiceFormDialog` / `InvoiceDialogFieldsSection`.
+- **Verify:** **858** / **166** · tsc · lint · build.
+
+## Prior (2026-06-08 — Portal KPI parity + cancelled counters + demo seed)
 
 - **KPI value rows (doctor portal + insights):** `PatientStatCard.valueRowHint` justify-between. Today → status from `todayByStatus`; Pending → all-time open count + hint from `allTimeByStatus` (not View-as period). Formatters: `doctor-portal-stat-badges.ts`, `insights-kpi-status-hints.ts`.
 - **CP dashboard:** `appointments.cancelled` on overview API/prefetch + Cancelled `StatCard`.

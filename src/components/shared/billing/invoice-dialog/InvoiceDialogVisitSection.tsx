@@ -67,7 +67,11 @@ export function InvoiceDialogVisitSection({
     return (
       <section className="space-y-3">
         <h3 className={invoiceDialogSectionHeadingClass}>Linked visit</h3>
-        <InvoiceVisitSummaryCard source="summary" visit={visitSummary} />
+        <InvoiceVisitSummaryCard
+          source="summary"
+          visit={visitSummary}
+          viewerRole={variant}
+        />
       </section>
     );
   }
@@ -84,7 +88,11 @@ export function InvoiceDialogVisitSection({
           </p>
         ) : presetOption ? (
           <>
-            <InvoiceVisitSummaryCard source="option" visit={presetOption} />
+            <InvoiceVisitSummaryCard
+              source="option"
+              visit={presetOption}
+              viewerRole={variant}
+            />
             {!presetOption.eligible && (
               <p className="text-sm text-violet-800">
                 This visit already has an active invoice — open the existing bill or pick another
@@ -108,6 +116,7 @@ export function InvoiceDialogVisitSection({
         <InvoiceVisitSummaryCard
           source="option"
           visit={selection}
+          viewerRole={variant}
           onChangeVisit={() => setPickerExpanded(true)}
         />
       ) : (

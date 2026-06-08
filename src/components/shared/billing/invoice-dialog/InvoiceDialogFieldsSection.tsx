@@ -59,14 +59,24 @@ export function InvoiceDialogFieldsSection({
             Amount (EUR)
           </InvoiceDialogFieldLabel>
           {isEdit && readOnlyAmountCents != null ? (
-            <div
-              className={cn(
-                invoiceDialogGlassInputClass,
-                "flex cursor-default items-center bg-violet-50/50 font-semibold text-gray-800"
-              )}
-            >
-              <InvoiceAmountDisplay amountCents={readOnlyAmountCents} currency={readOnlyCurrency} />
-            </div>
+            <>
+              <div
+                className={cn(
+                  invoiceDialogGlassInputClass,
+                  "flex cursor-default items-center bg-violet-50/50 font-semibold text-gray-800"
+                )}
+              >
+                <InvoiceAmountDisplay
+                  amountCents={readOnlyAmountCents}
+                  currency={readOnlyCurrency}
+                />
+              </div>
+              {visitFeeHintInput ? (
+                <p className="text-[11px] text-muted-foreground">
+                  {buildInvoiceAmountFeeHint(visitFeeHintInput)}
+                </p>
+              ) : null}
+            </>
           ) : (
             <>
               <Input

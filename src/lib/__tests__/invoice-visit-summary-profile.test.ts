@@ -12,7 +12,11 @@ describe("mapAppointmentToInvoiceVisitSummary patient_clinical_profile", () => {
       is_telehealth: false,
       duration_minutes: 30,
       category: null,
-      appointment_type: { name: "Follow-up Visit", duration_minutes: 30 },
+      appointment_type: {
+        name: "Follow-up Visit",
+        duration_minutes: 30,
+        price_cents: 9500,
+      },
       patient: {
         id: "p1",
         firstname: "Demo",
@@ -22,12 +26,30 @@ describe("mapAppointmentToInvoiceVisitSummary patient_clinical_profile", () => {
         care_level: 10,
         clinical_profile: { image_url: "demo/patient-portrait" },
       },
-      owner: null,
-      treating_physician: null,
+      owner: {
+        id: "o1",
+        display_name: "Dr. Owner",
+        email: "owner@clinic.com",
+        specialty: "GP",
+        image: null,
+        role: "doctor",
+        consultation_fee: 18000,
+      },
+      treating_physician: {
+        id: "t1",
+        display_name: "Dr. Treat",
+        email: "treat@clinic.com",
+        specialty: "Cardiology",
+        image: null,
+        role: "doctor",
+        consultation_fee: 20000,
+      },
     });
 
     expect(summary.patient_clinical_profile).toEqual({ image_url: "demo/patient-portrait" });
     expect(summary.patient_care_level).toBe(10);
+    expect(summary.appointment_type_price_cents).toBe(9500);
+    expect(summary.doctor_consultation_fee_cents).toBe(20000);
   });
 
   it("returns null clinical profile when JSON has no image_url", () => {
@@ -51,7 +73,7 @@ describe("mapAppointmentToInvoiceVisitSummary patient_clinical_profile", () => {
       },
       owner: null,
       treating_physician: null,
-    });
+    } as Parameters<typeof mapAppointmentToInvoiceVisitSummary>[0]);
 
     expect(summary.patient_clinical_profile).toBeNull();
   });

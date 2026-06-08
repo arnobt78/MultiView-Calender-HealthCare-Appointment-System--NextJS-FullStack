@@ -9,7 +9,9 @@ import type { InvoiceVisitSummary } from "@/lib/billing-types";
 
 export const invoiceAppointmentVisitInclude = {
   category: { select: { id: true, label: true, color: true, icon: true } },
-  appointment_type: { select: { name: true, duration_minutes: true } },
+  appointment_type: {
+    select: { name: true, duration_minutes: true, price_cents: true },
+  },
   patient: {
     select: {
       id: true,
@@ -29,6 +31,7 @@ export const invoiceAppointmentVisitInclude = {
       specialty: true,
       image: true,
       role: true,
+      consultation_fee: true,
     },
   },
   treating_physician: {
@@ -39,6 +42,7 @@ export const invoiceAppointmentVisitInclude = {
       specialty: true,
       image: true,
       role: true,
+      consultation_fee: true,
     },
   },
 } as const;
@@ -57,7 +61,11 @@ type VisitApptRow = {
     icon: string | null;
   } | null;
   duration_minutes?: number | null;
-  appointment_type?: { name: string | null; duration_minutes?: number | null } | null;
+  appointment_type?: {
+    name: string | null;
+    duration_minutes?: number | null;
+    price_cents?: number | null;
+  } | null;
   patient: {
     id: string;
     firstname: string;
@@ -74,6 +82,7 @@ type VisitApptRow = {
     specialty: string | null;
     image: string | null;
     role: string | null;
+    consultation_fee: number | null;
   } | null;
   treating_physician: {
     id: string;
@@ -82,6 +91,7 @@ type VisitApptRow = {
     specialty: string | null;
     image: string | null;
     role: string | null;
+    consultation_fee: number | null;
   } | null;
 };
 
@@ -153,6 +163,9 @@ export function mapAppointmentToInvoiceVisitSummary(
     calendar_owner_specialty: row.owner?.specialty ?? null,
     calendar_owner_image: row.owner?.image?.trim() || null,
     calendar_owner_role: row.owner?.role ?? null,
+    appointment_type_price_cents: row.appointment_type?.price_cents ?? null,
+    doctor_consultation_fee_cents:
+      (row.treating_physician ?? row.owner)?.consultation_fee ?? null,
   };
 }
 

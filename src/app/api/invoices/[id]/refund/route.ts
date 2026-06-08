@@ -71,14 +71,18 @@ export async function POST(req: NextRequest, { params }: Params) {
 
     await createRefund(payment.stripe_payment_id);
 
+    const refundedAt = new Date();
     const updated = await prisma.$transaction(async (tx) => {
       await tx.payment.update({
         where: { id: payment.id },
-        data: { status: "refunded" },
+        data: { status: "refunded", refunded_at: refundedAt },
       });
       return tx.invoice.update({
         where: { id },
-        data: { status: "cancelled" },
+        data: {
+          status: "cancelled",
+          cancelled_at: refundedAt,
+        },
         include: { payments: true },
       });
     });

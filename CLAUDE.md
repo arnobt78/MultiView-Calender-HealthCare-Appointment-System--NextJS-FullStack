@@ -2,13 +2,12 @@
 
 Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
-## Latest (2026-06-08)
+## Latest (2026-06-04)
 
-- **DP billing UI:** bordered invoice cards + sky header band; Receipt icon; `InvoiceStatusCountInlineRow`; `PatientRosterStatusCountInlineRow`.
-- **Portal KPI:** doctor-portal + `/insights` Today/Pending `valueRowHint` + all-time pending count; CP `cancelled`; `dailyStatsMap` helpers.
-- **Cancelled counters:** `AppointmentOpenAlertDoneBadges` on list/Day/Week/Month/section accordion.
-- **Demo appts:** `npm run db:reset-demo-appointments` — 10 curated v2 + cancelled check migration.
-- **Verify:** **854** / **165** · `npm test && tsc && lint && build`.
+- **Invoice lifecycle TS:** `invoices.cancelled_at`, `payments.refunded_at` (`016_invoice_lifecycle_timestamps.sql`); PATCH cancel + refund route writes; `serializeInvoice` + list footer via `invoice-list-meta-status-dates.ts` (Paid / Refunded / Cancelled).
+- **Dialog visit parity:** `invoice-dialog-visit-display.ts`; `InvoiceVisitSummaryCard` + picker tile — portrait, care tier, `AppointmentTypeGlassBadge`+duration, `DoctorIdentityCell` treating/owner; edit-mode `visitFeeHintInput` from `visit_summary` fee fields.
+- **Visit summary fees:** `invoice-visit-summary` + `billing-appointment-options-load` — `appointment_type_price_cents`, `doctor_consultation_fee_cents`, doctor images/roles/duration on option rows.
+- **Verify:** **858** / **166** · `npm test && tsc && lint && build`.
 
 ## Never / Always
 

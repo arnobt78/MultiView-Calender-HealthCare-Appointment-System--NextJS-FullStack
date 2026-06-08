@@ -26,7 +26,27 @@ describe("resolveInvoiceListMetaStatusDates", () => {
     ]);
   });
 
-  it("returns Refunded segment from refunded payment row", () => {
+  it("returns Refunded segment from refunded_at when set", () => {
+    const segments = resolveInvoiceListMetaStatusDates(
+      base({
+        status: "cancelled",
+        payments: [
+          {
+            id: "pay-1",
+            amount: 5000,
+            status: "refunded",
+            created_at: "2026-06-11T09:00:00.000Z",
+            refunded_at: "2026-06-12T15:00:00.000Z",
+          },
+        ],
+      })
+    );
+    expect(segments).toEqual([
+      { label: "Refunded", iso: "2026-06-12T15:00:00.000Z" },
+    ]);
+  });
+
+  it("falls back to payment created_at for legacy refunded rows", () => {
     const segments = resolveInvoiceListMetaStatusDates(
       base({
         status: "cancelled",
@@ -45,7 +65,19 @@ describe("resolveInvoiceListMetaStatusDates", () => {
     ]);
   });
 
-  it("omits segment for cancelled without refunded payment", () => {
+  it("returns Cancelled segment from cancelled_at when not refunded", () => {
+    const segments = resolveInvoiceListMetaStatusDates(
+      base({
+        status: "cancelled",
+        cancelled_at: "2026-06-13T10:00:00.000Z",
+      })
+    );
+    expect(segments).toEqual([
+      { label: "Cancelled", iso: "2026-06-13T10:00:00.000Z" },
+    ]);
+  });
+
+  it("omits segment for cancelled without cancelled_at or refund", () => {
     expect(
       resolveInvoiceListMetaStatusDates(base({ status: "cancelled" }))
     ).toEqual([]);

@@ -73,28 +73,12 @@ export async function fetchBillingAppointmentOptions(
       is_telehealth: true,
       owner_id: true,
       treating_physician_id: true,
+      duration_minutes: true,
       category: invoiceAppointmentVisitInclude.category,
-      appointment_type: {
-        select: { name: true, price_cents: true },
-      },
-      patient: {
-        select: {
-          ...invoiceAppointmentVisitInclude.patient.select,
-          clinical_profile: true,
-        },
-      },
-      owner: {
-        select: {
-          ...invoiceAppointmentVisitInclude.owner.select,
-          consultation_fee: true,
-        },
-      },
-      treating_physician: {
-        select: {
-          ...invoiceAppointmentVisitInclude.treating_physician.select,
-          consultation_fee: true,
-        },
-      },
+      appointment_type: invoiceAppointmentVisitInclude.appointment_type,
+      patient: invoiceAppointmentVisitInclude.patient,
+      owner: invoiceAppointmentVisitInclude.owner,
+      treating_physician: invoiceAppointmentVisitInclude.treating_physician,
     },
   });
 
@@ -132,13 +116,6 @@ export async function fetchBillingAppointmentOptions(
     const suggestedAmountCents = billing.eligible ? visitFeeCents : null;
 
     const visitSummary = mapAppointmentToInvoiceVisitSummary(row);
-    const clinicalProfile = row.patient?.clinical_profile;
-    const patientClinicalProfile =
-      clinicalProfile &&
-      typeof clinicalProfile === "object" &&
-      !Array.isArray(clinicalProfile)
-        ? (clinicalProfile as { image_url?: string })
-        : null;
 
     options.push({
       id: row.id,
@@ -161,21 +138,29 @@ export async function fetchBillingAppointmentOptions(
       patient_email: visitSummary.patient_email,
       patient_birth_date: visitSummary.patient_birth_date,
       patient_care_level: visitSummary.patient_care_level,
-      patient_clinical_profile: patientClinicalProfile,
+      patient_clinical_profile: visitSummary.patient_clinical_profile,
       when_label: visitSummary.when_label,
       location_label: visitSummary.location_label,
       is_telehealth: visitSummary.is_telehealth,
-      appointment_type_name: row.appointment_type?.name ?? null,
+      appointment_type_name: visitSummary.appointment_type_name,
       category_id: visitSummary.category_id,
       category_label: visitSummary.category_label,
       category_color: visitSummary.category_color,
       category_icon: visitSummary.category_icon,
       treating_physician_id: visitSummary.treating_physician_id,
       treating_physician_label: visitSummary.treating_physician_label,
+      treating_physician_email: visitSummary.treating_physician_email,
       treating_physician_specialty: visitSummary.treating_physician_specialty,
+      treating_physician_image: visitSummary.treating_physician_image,
+      treating_physician_role: visitSummary.treating_physician_role,
       calendar_owner_id: visitSummary.calendar_owner_id,
       calendar_owner_label: visitSummary.calendar_owner_label,
+      calendar_owner_email: visitSummary.calendar_owner_email,
       calendar_owner_specialty: visitSummary.calendar_owner_specialty,
+      calendar_owner_image: visitSummary.calendar_owner_image,
+      calendar_owner_role: visitSummary.calendar_owner_role,
+      duration_minutes: visitSummary.duration_minutes,
+      appointment_type_duration_minutes: visitSummary.appointment_type_duration_minutes,
     });
   }
 

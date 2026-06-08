@@ -210,7 +210,14 @@ function InvoiceFormDialogInner({
                     typePriceCents: selection.appointment_type_price_cents,
                     doctorConsultationFeeCents: selection.doctor_consultation_fee_cents,
                   }
-                : null
+                : isEdit && editInvoice?.visit_summary
+                  ? {
+                      typePriceCents:
+                        editInvoice.visit_summary.appointment_type_price_cents,
+                      doctorConsultationFeeCents:
+                        editInvoice.visit_summary.doctor_consultation_fee_cents,
+                    }
+                  : null
             }
             disabled={isSubmitting}
           />

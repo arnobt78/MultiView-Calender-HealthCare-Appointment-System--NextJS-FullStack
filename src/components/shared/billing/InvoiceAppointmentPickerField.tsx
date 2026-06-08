@@ -108,6 +108,7 @@ export function InvoiceAppointmentPickerField({
             <InvoiceVisitSummaryCard
               source="option"
               visit={selected}
+              viewerRole={variant}
               onChangeVisit={() => setPickerOpen(true)}
             />
           ) : undefined
