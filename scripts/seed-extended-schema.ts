@@ -413,7 +413,8 @@ async function seedExtendedSchema() {
     console.log(`  ✔ ${spec.doctorEmail} → typeId …${spec.typeId.slice(-4)} = ${spec.is_enabled}`);
   }
 
-  // ── 7. Seed appointments with appointment_type_id + chief_complaint ───────
+  // ── 7. Optional legacy appointments (skipped by default — use db:reset-demo-appointments) ─
+  if (process.env.SEED_EXTENDED_APPOINTMENTS === "true") {
   console.log("\n📆  Seeding typed appointments with chief complaints…");
   if (doctor) {
     const cat = await prisma.category.findFirst({
@@ -513,6 +514,11 @@ async function seedExtendedSchema() {
       });
       console.log(`  ✔ "${spec.title}"`);
     }
+  }
+  } else {
+    console.log(
+      "\n📆  Skipping extended appointment seed (default). Run npm run db:reset-demo-appointments for 10 curated rows."
+    );
   }
 
   // ── 6. Demo doctor-owned visit types + scheduling parity (buffers / slot step) ─

@@ -16,7 +16,7 @@ const steps: { label: string; script: string }[] = [
   { label: "Demo users + global types", script: "scripts/seed-test-user.ts" },
   { label: "Extended profiles (admin, doctors, categories, patients)", script: "scripts/seed-extended-schema.ts" },
   { label: "Demo patient clinical JSON", script: "scripts/seed-demo-patient-clinical.ts" },
-  { label: "Curated demo appointments", script: "scripts/seed-demo-appointments-curated.ts" },
+  { label: "Reset demo appointments (wipe + 10 curated)", script: "scripts/reset-demo-appointments.ts" },
 ];
 
 function runStep(label: string, script: string) {

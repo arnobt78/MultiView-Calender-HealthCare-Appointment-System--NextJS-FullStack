@@ -26,6 +26,7 @@
     "db:seed-demo-full": "tsx scripts/seed-demo-full.ts",
     "db:check-demo-seed": "tsx scripts/check-demo-seed-health.ts",
     "db:seed-demo-appointments": "tsx scripts/seed-demo-appointments-curated.ts",
+    "db:reset-demo-appointments": "tsx scripts/reset-demo-appointments.ts",
     "db:seed-demo-appointments-timeline": "tsx scripts/seed-demo-appointments-timeline.ts",
     "db:patch-demo-billing-reset": "tsx scripts/patch-demo-billing-reset.ts",
     "db:clear": "tsx scripts/db-clear.ts",
