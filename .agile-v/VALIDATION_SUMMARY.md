@@ -305,3 +305,28 @@ EvalGate (C6): status=PASS | eval_run_id=ER-C6-VERIFY | policy_version_ref=1.0.0
 | VER-0058 | REQ-0033 | PASS | entity-id-display + copy-to-clipboard tests |
 | VER-0059 | REQ-0033 | PASS | EntityIdCopyInline wired on detail + payment surfaces |
 | VER-0060 | REQ-0033 | PASS | Full regression **786/786** + tsc + lint + build |
+
+---
+
+## C7 — Services catalog + cancel + cron + patient phone (2026-06-08)
+
+| Item | Value |
+|------|-------|
+| Cycle | C7 |
+| ART-IDs | ART-0169..ART-0192 |
+| REQ-IDs | REQ-0034..REQ-0037 |
+| Regression | **829/829** Vitest (158 files) |
+| Commits | `dcd4374`, `e73a7d0` |
+
+| VER-ID | TC-ID | REQ-ID | Result | Description |
+|--------|-------|--------|--------|-------------|
+| VER-0061 | TC-0038 | REQ-0034 | PASS | Services catalog shipped `dcd4374` |
+| VER-0062 | TC-0038 | REQ-0034 | PASS | Regression at C7 start |
+| VER-0063 | TC-0039 | REQ-0035 | PASS | `appointment-cancel-access.test.ts` |
+| VER-0064 | TC-0039 | REQ-0035 | PASS | `appointment-id-write.test.ts` |
+| VER-0065 | TC-0040 | REQ-0035 | PASS | Status badge + card cancelled tests |
+| VER-0066 | TC-0041 | REQ-0036 | PASS | Cron + reminder phone resolver tests |
+| VER-0067 | TC-0042 | REQ-0037 | PASS | `phone-validation` + `patient-form-clinical` |
+| VER-0068 | TC-0043 | REQ-0034..0037 | PASS | Full regression **829/829** + tsc + lint + build |
+
+EvalGate (C7): status=PASS | eval_run_id=ER-C7-VERIFY | policy_version_ref=1.0.0 | gate2_pending=GATE-0014

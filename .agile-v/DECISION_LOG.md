@@ -52,3 +52,9 @@
 | 2026-06-05T17:40:00Z | red-team | C6 automated verification PASS | 772 tests, tsc, lint, build; GATE-0011/0012 pending | REQ-0027..0031 |
 | 2026-06-07T12:45:00Z | build | REQ-0032 invoice detail patient UX | plain header; PaymentStatusBadge; payment reference labels | REQ-0032 |
 | 2026-06-07T12:55:00Z | build | REQ-0033 badge font-normal + ID clipboard | EntityIdCopyInline; font-normal tokens | REQ-0033 |
+| 2026-06-08T14:15:00Z | init | Bootstrap C7 + Agile V refresh | REQ-0034..0037; STATE C7; Cursor rule restored; 829/829 verify | REQ-0034..0037 |
+| 2026-06-08T14:15:00Z | build | REQ-0034 services catalog | `dcd4374` brand icons + type filter | REQ-0034 |
+| 2026-06-08T14:15:00Z | build | REQ-0035 appointment cancel | cancel RBAC, notify, status badge, CP menu | REQ-0035 |
+| 2026-06-08T14:15:00Z | build | REQ-0036 reminder cron | `reminder_sent_at`; optional Brevo SMS opt-in | REQ-0036 |
+| 2026-06-08T14:15:00Z | build | REQ-0037 patient phone | form, detail, list, validation, seed-phones | REQ-0037 |
+| 2026-06-08T14:15:00Z | red-team | C7 automated verification PASS | `e73a7d0`; 829 tests; GATE-0013/0014 pending | REQ-0034..0037 |

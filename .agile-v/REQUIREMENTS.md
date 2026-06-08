@@ -1,12 +1,12 @@
 # Requirements — HealthCal Pro
 
-<!-- Revision: C1..C6 | C6 active | Last updated: 2026-06-05 -->
+<!-- Revision: C1..C7 | C7 active | Last updated: 2026-06-08 -->
 
 ## Document Control
 
 | Field | Value |
 |-------|-------|
-| Cycle | C1–C2 archived · C3–C5 verify+gate pending · **C6 active** (REQ-0027..0031) |
+| Cycle | C1–C2 archived · C3–C6 verify+gate pending · **C7 active** (REQ-0034..0037) |
 | Author | Requirement Architect |
 | Gate 1 status | C1 GATE-0001 · C2 GATE-0003 approved |
 | Canonical source | this file |
@@ -79,6 +79,10 @@
 | REQ-0031 | approved [C6] | REQ-0030 | ART-0151..0155 | VER-0053..0054 |
 | REQ-0032 | approved [C6] | REQ-0028 | ART-0156..0162 | VER-0055..0057 |
 | REQ-0033 | approved [C6] | REQ-0032 | ART-0163..0168 | VER-0058..0060 |
+| REQ-0034 | approved [C7] | — | ART-0169..0174 | VER-0061..0062 |
+| REQ-0035 | approved [C7] | — | ART-0175..0182 | VER-0063..0065 |
+| REQ-0036 | approved [C7] | REQ-0035 | ART-0183..0187 | VER-0066 |
+| REQ-0037 | approved [C7] | — | ART-0188..0192 | VER-0067..0068 |
 
 ### REQ-0004 — Dashboard/CP SSR prefetch + calendar batch assignee fetch
 
@@ -590,3 +594,67 @@
 1. `Badge` + `.calendar-glass-badge` tokens set `font-normal`.
 2. `EntityIdCopyInline` on invoice header, detail ID rows, payment history Payment ID.
 3. `entity-id-display` + `copy-to-clipboard` unit tests; full regression pass.
+
+### REQ-0034 — Services catalog brand mark + type filter
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C7] |
+| Priority | P2 |
+| Risk | R1 |
+
+**Statement:** Appointment service catalog shows per-type icon/color tiles; doctor grid and services row filter by selected catalog type.
+
+**Acceptance criteria:**
+1. DB `icon`/`color` on appointment types → API + SSR prefetch.
+2. `AppointmentTypeBrandMark` + `ServicesCatalogTypeSelect` filter doctor grid.
+3. `invalidateAppointmentTypeDerived` on type CRUD.
+
+### REQ-0035 — Appointment cancelled status + RBAC + notify + UI
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C7] |
+| Priority | P1 |
+| Risk | R1 |
+
+**Statement:** Staff can cancel visits via PATCH `status: "cancelled"` with RBAC; cancelled excluded from scheduling; status badge on all surfaces.
+
+**Acceptance criteria:**
+1. Prisma `cancelled_at`/`cancelled_by_id`; `appointment-cancel-access.ts`.
+2. `appointment-id-write.ts` shared PUT/PATCH; `appointment-notify.ts` fan-out.
+3. `AppointmentStatusGlassBadge` + `AppointmentActionsMenu` cancel; `useAppointments.cancelAppointment`.
+4. `invalidateAfterAppointmentMutation` on cancel.
+
+### REQ-0036 — Reminder cron + optional Brevo SMS
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C7] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0035 |
+
+**Statement:** `/api/cron/reminders` dedupes via `reminder_sent_at`; sends patient email + in-app notify; optional SMS when `BREVO_SMS_API_KEY` set.
+
+**Acceptance criteria:**
+1. Skip done/cancelled; `cron-reminder-candidates.ts`.
+2. `reminder-recipient-phone.ts` — user.phone → patient.phone.
+3. `brevo-sms.ts` no-op without API key.
+
+### REQ-0037 — Patient contact phone end-to-end
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C7] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0036 |
+
+**Statement:** `patients.phone` on create/edit/detail/list with validation; supports SMS fallback when no linked user phone.
+
+**Acceptance criteria:**
+1. Migration + `serializePatient` + POST/PUT API + `phone-validation.ts`.
+2. `PatientFormDialog` + CP/portal detail + list Phone column + search.
+3. `invalidateEntityAffectingAppointments` + `invalidatePatientDetailAndSnapshot` on write.
+4. `npm run db:seed-phones` after `prisma:push`.

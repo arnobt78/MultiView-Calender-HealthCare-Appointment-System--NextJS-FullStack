@@ -1,6 +1,6 @@
 # Agile V Bootstrap — HealthCal Pro
 
-<!-- Framework initialization + cycle index | Agile V v1.4 | Last refresh: 2026-06-05 (C6 bootstrap) -->
+<!-- Framework initialization + cycle index | Agile V v1.4 | Last refresh: 2026-06-08 (C7 bootstrap) -->
 
 ## Infinity Loop (SCOPE-V)
 
@@ -31,8 +31,8 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 | 2 | `config.json` | Project metadata, cycle, authority matrix, verification commands | ✓ |
 | 3 | `POLICY.yaml` | Policy-as-code (versioned) | ✓ v1.0.0 |
 | 4 | `STATE.md` | Current cycle, phase, stage — **read first on resume** | ✓ |
-| 5 | `REQUIREMENTS.md` | Canonical REQ-XXXX + traceability index | ✓ REQ-0001..0031 |
-| 6 | `BUILD_MANIFEST.md` | ART-XXXX → code paths | ✓ ART-0001..0085 |
+| 5 | `REQUIREMENTS.md` | Canonical REQ-XXXX + traceability index | ✓ REQ-0001..0037 |
+| 6 | `BUILD_MANIFEST.md` | ART-XXXX → code paths | ✓ ART-0001..0192 |
 | 7 | `TEST_SPEC.md` | TC-XXXX (requirements-derived) | ✓ TC-0001..0024 |
 | 8 | `VALIDATION_SUMMARY.md` | VER-XXXX results + EvalGate lines | ✓ |
 | 9 | `ATM.md` | REQ → ART → VER matrix | ✓ |
@@ -53,10 +53,11 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 | 24 | `cycles/C3/README.md` | Active cycle archive scaffold | ✓ (freeze on GATE-0006) |
 | 25 | `cycles/C4/README.md` | Invoice tranche (gates pending) | ✓ |
 | 26 | `cycles/C5/README.md` | Record Audit cycle | ✓ |
-| 27 | `cycles/C6/README.md` | Invoice violet + location active | ✓ |
-| 27 | `agile-v-core.md` | Project-local core binding | ✓ |
-| 28 | `AGENTS.md` (repo root) | Agent load order + resume | ✓ |
-| 29 | `.cursor/rules/agile-v-infinity-loop.mdc` | Always-on Cursor rule | ✓ |
+| 27 | `cycles/C6/README.md` | Invoice violet + location | ✓ |
+| 28 | `cycles/C7/README.md` | Services + cancel + cron + phone (active) | ✓ |
+| 29 | `agile-v-core.md` | Project-local core binding | ✓ |
+| 30 | `AGENTS.md` (repo root) | Agent load order + resume | ✓ |
+| 31 | `.cursor/rules/agile-v-infinity-loop.mdc` | Always-on Cursor rule | ✓ restored 2026-06-08 |
 
 ---
 
@@ -140,11 +141,12 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 | C3 | Calendar, filters, billing KPI | REQ-0009..0015 | pending GATE-0006 | `cycles/C3/` |
 | C4 | Invoice dialog, detail, RBAC, badges, SSE | REQ-0016..0020 | pending GATE-0008 | `cycles/C4/` |
 | C5 | Record Audit | REQ-0021..0026 | pending GATE-0010 | `cycles/C5/` |
-| C6 | **Invoice violet + location** (active) | REQ-0027..0031 | pending GATE-0012 | `cycles/C6/` |
+| C6 | Invoice violet + location + REQ-0032/0033 | REQ-0027..0033 | pending GATE-0012 | `cycles/C6/` |
+| C7 | **Services + cancel + cron + phone** (active) | REQ-0034..0037 | pending GATE-0014 | `cycles/C7/` |
 
 ---
 
-## C6 Bootstrap (2026-06-05) — Invoice violet + visit location (active)
+## C6 Bootstrap (2026-06-05) — Invoice violet + visit location
 
 | Step | Artifact | Status |
 |------|----------|--------|
@@ -158,11 +160,23 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 
 ---
 
+## C7 Bootstrap (2026-06-08) — Services + cancel + cron + patient phone (active)
+
+| Step | Artifact | Status |
+|------|----------|--------|
+| 1 | REQ-0034..0037 in `REQUIREMENTS.md` | ✓ `approved [C7]` |
+| 2 | ART-0169..0192 in `BUILD_MANIFEST.md` | ✓ |
+| 3 | TC-0038..0043 + VER-0061..0068 | ✓ |
+| 4 | Code on `main` | ✓ `dcd4374`, `e73a7d0` |
+| 5 | Automated verify | ✓ **829/829** |
+| 6 | Gates GATE-0013/0014 | ⏳ pending |
+| 7 | Cursor rule restored | ✓ |
+
 ## Next Actions
 
-1. Approve **GATE-0005..0012** in `APPROVALS.md` as cycles close.
-2. Archive C3–C6 → `cycles/CN/` after each Gate 2.
-3. New work: specify **C7** in `REQUIREMENTS.md` before coding.
+1. Approve **GATE-0005..0014** in `APPROVALS.md` as cycles close.
+2. Archive C3–C7 → `cycles/CN/` after each Gate 2.
+3. New work: specify **C8** in `REQUIREMENTS.md` before coding.
 
 ## Verification (default)
 
@@ -170,4 +184,4 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 npm test && npx tsc --noEmit && npm run lint && npm run build
 ```
 
-Current baseline: **772** tests, **145** files (2026-06-05).
+Current baseline: **829** tests, **158** files (2026-06-08).

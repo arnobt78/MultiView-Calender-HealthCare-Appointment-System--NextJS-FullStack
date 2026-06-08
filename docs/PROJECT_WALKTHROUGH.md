@@ -127,7 +127,7 @@
 
 ## Prior (2026-05-31)
 
-- **Agile V AQMS:** `.agile-v/` — `SKILLS.md`, `BOOTSTRAP.md`, phases `01`–`05`. C1/C2 archived; `STATE.md` → C3.
+- **Agile V AQMS:** `.agile-v/` — `ACTIVATION.md`, `SKILLS.md` (24), `BOOTSTRAP.md`, `REQUIREMENTS.md` REQ-0001..0037. C1/C2 frozen; **C7 active** (`REQ-0034..0037`); `.cursor/rules/agile-v-infinity-loop.mdc` always on.
 
 ## Prior (2026-05-30)
 

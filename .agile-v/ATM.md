@@ -32,6 +32,13 @@
 | REQ-0024 | approved [C5] | ART-0119..0122 | C5 | VER-0043 | C5 | PASS |
 | REQ-0025 | approved [C5] | ART-0123..0124 | C5 | VER-0044 | C5 | PASS |
 | REQ-0026 | approved [C5] | ART-0125 | C5 | — | C5 | constraint |
+| REQ-0027..0031 | approved [C6] | ART-0126..0155 | C6 | VER-0046..0054 | C6 | PASS |
+| REQ-0032 | approved [C6] | ART-0156..0162 | C6 | VER-0055..0057 | C6 | PASS |
+| REQ-0033 | approved [C6] | ART-0163..0168 | C6 | VER-0058..0060 | C6 | PASS |
+| REQ-0034 | approved [C7] | ART-0169..0174 | C7 | VER-0061..0062 | C7 | PASS |
+| REQ-0035 | approved [C7] | ART-0175..0182 | C7 | VER-0063..0065 | C7 | PASS |
+| REQ-0036 | approved [C7] | ART-0183..0187 | C7 | VER-0066 | C7 | PASS |
+| REQ-0037 | approved [C7] | ART-0188..0192 | C7 | VER-0067..0068 | C7 | PASS |
 
 ## Dangling Artifacts
 

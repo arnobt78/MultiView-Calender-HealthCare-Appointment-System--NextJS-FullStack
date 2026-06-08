@@ -174,11 +174,35 @@
 | ART-0166 | C6 | REQ-0033 | Detail pages + payment history ID copy wiring | built |
 | ART-0167 | C6 | REQ-0033 | Badge component sweep (remove font-medium overrides) | built |
 | ART-0168 | C6 | REQ-0033 | Tests entity-id-display + copy-to-clipboard | built |
+| ART-0169 | C7 | REQ-0034 | `service-catalog-visual.ts`, `AppointmentTypeBrandMark` | built |
+| ART-0170 | C7 | REQ-0034 | `ServicesCatalogTypeSelect`, `filterServiceCatalog` | built |
+| ART-0171 | C7 | REQ-0034 | Prisma icon/color; appointment-types API + prefetch | built |
+| ART-0172 | C7 | REQ-0034 | `ServiceCatalogCard` per-hue glow | built |
+| ART-0173 | C7 | REQ-0034 | `invalidateAppointmentTypeDerived` catalog bust | built |
+| ART-0174 | C7 | REQ-0034 | Commit `dcd4374` | built |
+| ART-0175 | C7 | REQ-0035 | Migration `20260607140000_appointment_cancel_reminder` | built |
+| ART-0176 | C7 | REQ-0035 | `appointment-cancel-access.ts` + tests | built |
+| ART-0177 | C7 | REQ-0035 | `appointment-id-write.ts` + tests | built |
+| ART-0178 | C7 | REQ-0035 | `appointment-notify.ts` + tests | built |
+| ART-0179 | C7 | REQ-0035 | `AppointmentStatusGlassBadge` + `appointment-status-display.ts` | built |
+| ART-0180 | C7 | REQ-0035 | `AppointmentActionsMenu` cancel; `AppointmentsManagement` | built |
+| ART-0181 | C7 | REQ-0035 | Scheduling excludes cancelled (availability + overlap) | built |
+| ART-0182 | C7 | REQ-0035 | `useAppointments.cancelAppointment` | built |
+| ART-0183 | C7 | REQ-0036 | `cron-reminder-candidates.ts` + tests | built |
+| ART-0184 | C7 | REQ-0036 | `cron/reminders/route.ts` refactor | built |
+| ART-0185 | C7 | REQ-0036 | `brevo-sms.ts` optional transactional SMS | built |
+| ART-0186 | C7 | REQ-0036 | `reminder-recipient-phone.ts` + tests | built |
+| ART-0187 | C7 | REQ-0036 | `.env.example` Brevo SMS docs | built |
+| ART-0188 | C7 | REQ-0037 | Migration `20260608120000_patient_phone` | built |
+| ART-0189 | C7 | REQ-0037 | `phone-validation.ts` + Zod + API POST/PUT | built |
+| ART-0190 | C7 | REQ-0037 | `PatientFormDialog` + `patient-form-clinical` phone | built |
+| ART-0191 | C7 | REQ-0037 | `PatientManagement` Phone column + search | built |
+| ART-0192 | C7 | REQ-0037 | `scripts/seed-phone-backfill.ts`, `db:seed-phones` | built |
 
 ## Verification Commands (project default)
 
 ```bash
-npm test        # 780 passed (C6, 2026-06-07)
+npm test        # 829 passed (C7, 2026-06-08)
 npx tsc --noEmit
 npm run lint
 npm run build

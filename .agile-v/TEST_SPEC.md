@@ -43,12 +43,18 @@
 | TC-0035 | C6 | REQ-0031 | regression | Doctor portal + dashboard embed | full regression | PASS |
 | TC-0036 | C6 | REQ-0031 | unit | Snapshot location fallback | `appointment-visit-location.test.ts` snapshot case | PASS |
 | TC-0037 | C6 | REQ-0027..0031 | regression | Full suite + tsc + lint + build | project default | PASS |
+| TC-0038 | C7 | REQ-0034 | regression | Services catalog + filter | full regression | PASS |
+| TC-0039 | C7 | REQ-0035 | unit | Cancel RBAC + id-write + notify | `appointment-cancel-access`, `appointment-id-write`, `appointment-notify` | PASS |
+| TC-0040 | C7 | REQ-0035 | unit | Status display + card cancelled | `appointment-status-display`, `AppointmentCard.ui` | PASS |
+| TC-0041 | C7 | REQ-0036 | unit | Cron candidates + SMS phone resolver | `cron-reminder-candidates`, `reminder-recipient-phone` | PASS |
+| TC-0042 | C7 | REQ-0037 | unit | Phone validation + form clinical | `phone-validation`, `patient-form-clinical` | PASS |
+| TC-0043 | C7 | REQ-0034..0037 | regression | Full suite + tsc + lint + build | project default | PASS |
 
 ## Regression Baseline
 
 | Suite | Command | Scope |
 |-------|---------|-------|
-| Unit / lib | `npm test` | **145** files, **772** tests (C6) |
+| Unit / lib | `npm test` | **158** files, **829** tests (C7) |
 | Typecheck | `npx tsc --noEmit` | strict TS |
 | Lint | `npm run lint` | ESLint |
 | Release | `npm run build` | Next.js production |

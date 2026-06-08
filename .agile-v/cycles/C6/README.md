@@ -4,7 +4,7 @@
 
 | Field | Value |
 |-------|-------|
-| **REQ-IDs** | REQ-0027..REQ-0031 |
+| **REQ-IDs** | REQ-0027..REQ-0033 (incl. 0032 patient UX, 0033 ID copy) |
 | **ART-IDs** | ART-0126..ART-0155 |
 | **Bootstrap** | 2026-06-05 |
 | **Commits** | `29fd3b5`, `cad0b07`, `636282e`, `bcfe6d4`, `a31bf78`, `84967f6`, `629c3ed` |

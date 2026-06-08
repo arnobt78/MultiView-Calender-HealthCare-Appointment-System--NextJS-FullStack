@@ -145,3 +145,32 @@ human_gate_2: GATE-0012
 | release build | npm run build | PASS | REQ-0027..0031 |
 
 **EvalGate (C6 active):** PASS (automated) — Human Gates 11–12 pending before `cycles/C6/` freeze.
+
+---
+
+## C7 Verify — ER-C7-VERIFY
+
+```yaml
+eval_run_id: ER-C7-VERIFY
+eval_timestamp: "2026-06-08T14:15:00Z"
+policy_version_ref: "1.0.0"
+eval_gate_status: PASS
+eval_gate_rationale: "C7 services + cancel + cron + patient phone — npm test 829/829 (158 files), tsc, eslint, build PASS for REQ-0034..0037"
+cycle: C7
+release_commit: "e73a7d0"
+human_gate_1: GATE-0013
+human_gate_2: GATE-0014
+```
+
+| Suite | Command | Result | LINKED_REQ |
+|-------|---------|--------|------------|
+| appointment-cancel-access | npm test appointment-cancel-access | PASS | REQ-0035 |
+| appointment-id-write | npm test appointment-id-write | PASS | REQ-0035 |
+| phone-validation | npm test phone-validation | PASS | REQ-0037 |
+| reminder-recipient-phone | npm test reminder-recipient-phone | PASS | REQ-0036 |
+| full regression | npm test | PASS 829/829 | REQ-0034..0037 |
+| typecheck | npx tsc --noEmit | PASS | REQ-0034..0037 |
+| lint | npm run lint | PASS | REQ-0034..0037 |
+| release build | npm run build | PASS | REQ-0034..0037 |
+
+**EvalGate (C7 active):** PASS (automated) — Human Gates 13–14 pending before `cycles/C7/` freeze.
