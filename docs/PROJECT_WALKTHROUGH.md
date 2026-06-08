@@ -2,7 +2,7 @@
 
 ## Latest (2026-06-08 — Portal KPI parity + cancelled counters + demo seed)
 
-- **KPI value rows (doctor portal + insights):** `PatientStatCard.valueRowHint` justify-between. Today → Open/Alert/Done/Cancelled (`todayByStatus` / `summarizeDayAppointments`); Pending → `(all-time)` + Alert/Done/Cancelled (`allTimeByStatus` / `metrics`). Shared formatters: `doctor-portal-stat-badges.ts`, `insights-kpi-status-hints.ts`.
+- **KPI value rows (doctor portal + insights):** `PatientStatCard.valueRowHint` justify-between. Today → status from `todayByStatus`; Pending → all-time open count + hint from `allTimeByStatus` (not View-as period). Formatters: `doctor-portal-stat-badges.ts`, `insights-kpi-status-hints.ts`.
 - **CP dashboard:** `appointments.cancelled` on overview API/prefetch + Cancelled `StatCard`.
 - **dailyStatsMap:** `buildDailyStatsMap` + `resolveDayStatsForDate` — DayView + list `DateHeadline` when filters inactive.
 - **Cancelled counters:** `AppointmentOpenAlertDoneBadges` on calendar list/views/sections (client cache).

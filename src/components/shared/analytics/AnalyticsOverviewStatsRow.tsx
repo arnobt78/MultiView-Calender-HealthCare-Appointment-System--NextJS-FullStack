@@ -13,6 +13,7 @@ import { PatientStatCard } from "@/components/control-panel/PatientStatCard";
 import type { InsightsPayload } from "@/lib/insights-data";
 import { formatInsightsPercent, formatInsightsUsdFromCents } from "@/lib/insights/insights-kpi-format";
 import {
+  insightsByStatusToDayStats,
   insightsPendingAllTimeKpiValueRowHint,
   insightsTodayKpiValueRowHint,
 } from "@/lib/insights/insights-kpi-status-hints";
@@ -48,6 +49,8 @@ export function AnalyticsOverviewStatsRow({ data, valueSkeleton, period }: Props
   const pendingHint = valueSkeleton
     ? undefined
     : insightsPendingAllTimeKpiValueRowHint(appointments?.allTimeByStatus);
+
+  const pendingAllTime = insightsByStatusToDayStats(appointments?.allTimeByStatus).open;
 
   return (
     <div className={analyticsOverviewGridClass}>
@@ -92,7 +95,7 @@ export function AnalyticsOverviewStatsRow({ data, valueSkeleton, period }: Props
         icon={Clock}
         title="Pending"
         subtitle="Awaiting completion (all-time)"
-        value={totals?.pending ?? data?.overview.pending ?? 0}
+        value={pendingAllTime}
         valueSkeleton={valueSkeleton}
         valueRowHint={pendingHint}
       />
