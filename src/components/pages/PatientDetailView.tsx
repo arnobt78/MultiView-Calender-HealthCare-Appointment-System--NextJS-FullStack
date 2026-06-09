@@ -56,11 +56,11 @@ export default function PatientDetailView({ patientId }: { patientId: string }) 
           <CardContent className="pt-6">
             <div className="flex flex-col items-center text-center">
               <Avatar className="h-24 w-24 mb-4 border-4 border-background shadow-sm">
-                <AvatarFallback className="text-2xl bg-primary/10 text-gray-700">
+                <AvatarFallback className="text-xl bg-primary/10 text-gray-700">
                   {initials}
                 </AvatarFallback>
               </Avatar>
-              <h2 className="text-xl font-bold tracking-tight">
+              <h2 className="text-lg font-bold tracking-tight">
                 {patient.firstname} {patient.lastname}
               </h2>
               <div className="flex items-center gap-2 mt-2">

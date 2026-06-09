@@ -132,7 +132,7 @@ export function InvoiceRevenueKpiGrid({
             value={0}
             valueDisplay={
               delta?.text ?? (
-                <span className="text-2xl text-muted-foreground">—</span>
+                <span className="text-xl text-muted-foreground">—</span>
               )
             }
             valueClassName={delta ? deltaToneClass(delta.positive) : undefined}

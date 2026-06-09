@@ -221,7 +221,7 @@ export default function MonthView() {
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <CalendarStickyHeader >
           <div className="mb-2 flex flex-wrap items-center gap-2">
-            <h2 className="text-xl font-semibold tracking-tight text-gray-700">
+            <h2 className="text-lg font-semibold tracking-tight text-gray-700">
               {monthTitle}
             </h2>
             <Badge variant="outline" className="calendar-glass-badge calendar-glass-badge-sky min-h-6 min-w-[90px] justify-center">Total: {summaryStats.total}</Badge>

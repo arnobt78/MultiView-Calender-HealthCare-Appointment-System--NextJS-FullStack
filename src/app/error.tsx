@@ -27,7 +27,7 @@ export default function GlobalError({ error, reset }: ErrorProps) {
         <AlertTriangle className="h-8 w-8 text-red-500" />
       </span>
       <div>
-        <h2 className="text-xl font-semibold text-gray-700 mb-1">Something went wrong</h2>
+        <h2 className="text-lg font-semibold text-gray-700 mb-1">Something went wrong</h2>
         <p className="text-sm text-muted-foreground max-w-sm">
           An unexpected error occurred. You can try again or navigate back to a known page.
         </p>

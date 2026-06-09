@@ -179,7 +179,7 @@ export function Register() {
                 <div className="p-2.5 bg-white/15 rounded-2xl backdrop-blur-md border border-white/20">
                   <CalendarDays className="h-6 w-6 text-white" />
                 </div>
-                <span className="text-xl font-bold tracking-tight">HealthCal Pro</span>
+                <span className="text-lg font-bold tracking-tight">HealthCal Pro</span>
               </div>
               <h1 className="text-4xl xl:text-5xl font-black leading-none tracking-tight mb-4">
                 Join the Modern
@@ -236,7 +236,7 @@ export function Register() {
                   <div className="inline-flex p-2.5 bg-teal-50 rounded-2xl mb-4 ring-1 ring-teal-100">
                     <CalendarDays className="h-5 w-5 text-teal-600" />
                   </div>
-                  <h2 className="text-2xl font-bold text-gray-700 tracking-tight">Create account</h2>
+                  <h2 className="text-xl font-bold text-gray-700 tracking-tight">Create account</h2>
                   <p className="text-slate-400 text-sm mt-1">Join HealthCal Pro to manage your appointments</p>
                 </motion.div>
 

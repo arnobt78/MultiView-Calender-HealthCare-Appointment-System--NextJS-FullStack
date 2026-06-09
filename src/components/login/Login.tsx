@@ -272,7 +272,7 @@ export default function Login({ redirect = null }: LoginProps) {
                 <div className="p-2.5 bg-white/15 rounded-2xl backdrop-blur-md border border-white/20">
                   <CalendarDays className="h-6 w-6 text-white" />
                 </div>
-                <span className="text-xl font-bold tracking-tight">HealthCal Pro</span>
+                <span className="text-lg font-bold tracking-tight">HealthCal Pro</span>
               </div>
               <h1 className="text-4xl xl:text-5xl font-black leading-none tracking-tight mb-4">
                 Modern Healthcare
@@ -329,7 +329,7 @@ export default function Login({ redirect = null }: LoginProps) {
                   <div className="inline-flex p-2.5 bg-blue-50 rounded-2xl mb-4 ring-1 ring-blue-100">
                     <CalendarDays className="h-5 w-5 text-blue-600" />
                   </div>
-                  <h2 className="text-2xl font-bold text-gray-700 tracking-tight">Welcome back</h2>
+                  <h2 className="text-xl font-bold text-gray-700 tracking-tight">Welcome back</h2>
                   <p className="text-slate-400 text-sm mt-1">Sign in to your account to continue</p>
                 </motion.div>
 

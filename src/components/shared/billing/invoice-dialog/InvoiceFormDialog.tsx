@@ -138,7 +138,7 @@ function InvoiceFormDialogInner({
               <HeaderIcon className="h-5 w-5" aria-hidden />
             </span>
             <div className="min-w-0">
-              <DialogTitle className="text-left text-xl font-semibold text-gray-700">
+              <DialogTitle className="text-left text-lg font-semibold text-gray-700">
                 {isEdit
                   ? toTitleCaseLabel("Edit Invoice")
                   : toTitleCaseLabel("Create Invoice")}
@@ -146,15 +146,15 @@ function InvoiceFormDialogInner({
               <DialogDescription className="text-left text-sm text-muted-foreground">
                 {isEdit
                   ? toTitleCaseLabel(
-                      "Update description and due date. Amount and linked visit are fixed after create."
-                    )
+                    "Update description and due date. Amount and linked visit are fixed after create."
+                  )
                   : variant === "admin"
                     ? toTitleCaseLabel(
-                        "Pick a visit, set amount and due date, then save as draft."
-                      )
+                      "Pick a visit, set amount and due date, then save as draft."
+                    )
                     : toTitleCaseLabel(
-                        "Draft a bill for an eligible visit in your panel."
-                      )}
+                      "Draft a bill for an eligible visit in your panel."
+                    )}
               </DialogDescription>
             </div>
             <DialogClose asChild>
@@ -207,16 +207,16 @@ function InvoiceFormDialogInner({
             visitFeeHintInput={
               selection
                 ? {
-                    typePriceCents: selection.appointment_type_price_cents,
-                    doctorConsultationFeeCents: selection.doctor_consultation_fee_cents,
-                  }
+                  typePriceCents: selection.appointment_type_price_cents,
+                  doctorConsultationFeeCents: selection.doctor_consultation_fee_cents,
+                }
                 : isEdit && editInvoice?.visit_summary
                   ? {
-                      typePriceCents:
-                        editInvoice.visit_summary.appointment_type_price_cents,
-                      doctorConsultationFeeCents:
-                        editInvoice.visit_summary.doctor_consultation_fee_cents,
-                    }
+                    typePriceCents:
+                      editInvoice.visit_summary.appointment_type_price_cents,
+                    doctorConsultationFeeCents:
+                      editInvoice.visit_summary.doctor_consultation_fee_cents,
+                  }
                   : null
             }
             disabled={isSubmitting}

@@ -158,7 +158,7 @@ export default function GlobalSearch() {
               </span>
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <DialogTitle className="text-xl font-semibold text-gray-700">
+                  <DialogTitle className="text-lg font-semibold text-gray-700">
                     Global Search
                   </DialogTitle>
                   <kbd className="rounded border bg-muted px-1.5 py-0.5 font-mono text-xs text-muted-foreground">

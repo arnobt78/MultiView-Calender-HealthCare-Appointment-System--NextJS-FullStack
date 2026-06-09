@@ -766,7 +766,7 @@ export default function LandingPage() {
                   className="rounded-2xl border border-white/10 bg-white/5 p-3.5 backdrop-blur-sm"
                 >
                   <p className="text-[10px] uppercase tracking-[0.2em] text-white/70">{s.label}</p>
-                  <p className="mt-1.5 text-2xl font-black text-white">{s.value}</p>
+                  <p className="mt-1.5 text-xl font-black text-white">{s.value}</p>
                   <p className=" text-[10px] leading-snug text-white/70">{s.sub}</p>
                 </motion.div>
               ))}

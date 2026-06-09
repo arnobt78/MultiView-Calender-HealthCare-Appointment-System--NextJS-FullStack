@@ -127,7 +127,7 @@ export default function DayView() {
       <CalendarStickyHeader >
         {/* Day header */}
         <div className="mb-2 flex flex-wrap items-center gap-2">
-          <h2 className="text-xl font-semibold">{format(currentDate, "EEEE, MMMM d, yyyy")}</h2>
+          <h2 className="text-lg font-semibold">{format(currentDate, "EEEE, MMMM d, yyyy")}</h2>
           <Badge variant="outline" className="calendar-glass-badge calendar-glass-badge-emerald min-h-6 min-w-[90px] justify-center">
             Today: {dayAppointments.length}
           </Badge>

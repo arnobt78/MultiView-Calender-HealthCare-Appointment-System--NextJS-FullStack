@@ -421,7 +421,7 @@ export default function AppointmentDialog({
                 <Calendar className="h-5 w-5" aria-hidden />
               </span>
               <div className="min-w-0">
-                <DialogTitle className="text-left text-xl font-semibold text-gray-700">
+                <DialogTitle className="text-left text-lg font-semibold text-gray-700">
                   {isEditMode
                     ? toTitleCaseLabel("Edit Appointment")
                     : toTitleCaseLabel("Create New Appointment")}

@@ -26,7 +26,7 @@ export function PatientBookingDialogHeader({ step }: PatientBookingDialogHeaderP
             <CalendarPlus className="h-5 w-5" aria-hidden />
           </span>
           <div className="min-w-0">
-            <DialogTitle className="text-left text-lg font-semibold text-gray-700 sm:text-xl">
+            <DialogTitle className="text-left text-lg font-semibold text-gray-700 sm:text-lg">
               Request New Appointment
             </DialogTitle>
             <DialogDescription className="text-left text-xs text-muted-foreground sm:text-sm">

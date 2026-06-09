@@ -66,7 +66,7 @@ export default function AcceptInvitationPage({ token = null }: AcceptInvitationP
     <div className="max-w-9xl mx-auto mt-16 py-8 px-2 sm:px-4 lg:px-8">
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl font-semibold">Accept Invitation</CardTitle>
+          <CardTitle className="text-xl font-semibold">Accept Invitation</CardTitle>
           <CardDescription>
             {checkingAuth
               ? "Checking authentication..."

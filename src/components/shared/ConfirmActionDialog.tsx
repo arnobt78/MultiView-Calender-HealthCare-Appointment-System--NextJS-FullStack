@@ -91,7 +91,7 @@ export function ConfirmActionDialog({
           <AlertDialogMedia className={cn("size-14 rounded-2xl", style.media)}>
             <Icon className={cn("size-7", style.icon)} />
           </AlertDialogMedia>
-          <AlertDialogTitle className="text-xl font-semibold text-gray-700">{title}</AlertDialogTitle>
+          <AlertDialogTitle className="text-lg font-semibold text-gray-700">{title}</AlertDialogTitle>
           <AlertDialogDescription className="text-sm leading-relaxed text-gray-600">
             {subtitle}
           </AlertDialogDescription>

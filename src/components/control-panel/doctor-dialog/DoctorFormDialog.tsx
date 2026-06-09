@@ -84,15 +84,15 @@ export function DoctorFormDialog({
                 <Pencil className="h-5 w-5" aria-hidden />
               </span>
               <div className="min-w-0">
-                <DialogTitle className="text-left text-xl font-semibold text-gray-700">
+                <DialogTitle className="text-left text-lg font-semibold text-gray-700">
                   {toTitleCaseLabel(isCreate ? "Add Doctor" : "Edit Doctor Profile")}
                 </DialogTitle>
                 <DialogDescription className="text-left text-sm text-muted-foreground">
                   {devStub
                     ? devStub.note
                     : toTitleCaseLabel(
-                        "Update specialty, contact details, and active status. Email is fixed for this demo account."
-                      )}
+                      "Update specialty, contact details, and active status. Email is fixed for this demo account."
+                    )}
                 </DialogDescription>
               </div>
               <DialogClose asChild>

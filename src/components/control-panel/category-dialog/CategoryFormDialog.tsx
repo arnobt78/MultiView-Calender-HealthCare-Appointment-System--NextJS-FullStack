@@ -81,15 +81,15 @@ export function CategoryFormDialog({
                 <HeaderIcon className="h-5 w-5" aria-hidden />
               </span>
               <div className="min-w-0">
-                <DialogTitle className="text-left text-xl font-semibold text-gray-700">
+                <DialogTitle className="text-left text-lg font-semibold text-gray-700">
                   {isEdit ? toTitleCaseLabel("Edit Category") : toTitleCaseLabel("Add Category")}
                 </DialogTitle>
                 <DialogDescription className="text-left text-sm text-muted-foreground">
                   {isEdit
                     ? toTitleCaseLabel("Update label, display order, duration, and active status.")
                     : toTitleCaseLabel(
-                        "Required: label. Inactive categories stay visible in lists but not in new booking selects."
-                      )}
+                      "Required: label. Inactive categories stay visible in lists but not in new booking selects."
+                    )}
                 </DialogDescription>
               </div>
               <DialogClose asChild>

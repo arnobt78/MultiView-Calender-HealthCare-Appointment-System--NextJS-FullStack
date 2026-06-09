@@ -98,15 +98,15 @@ export function PatientFormDialog({
                 <HeaderIcon className="h-5 w-5" aria-hidden />
               </span>
               <div className="min-w-0">
-                <DialogTitle className="text-left text-xl font-semibold text-gray-700">
+                <DialogTitle className="text-left text-lg font-semibold text-gray-700">
                   {isEdit ? toTitleCaseLabel("Edit Patient") : toTitleCaseLabel("Add Patient")}
                 </DialogTitle>
                 <DialogDescription className="text-left text-sm text-muted-foreground">
                   {isEdit
                     ? toTitleCaseLabel("Update demographics, care team, and clinical context.")
                     : toTitleCaseLabel(
-                        "Required: first and last name. Optional fields help scheduling and records stay accurate."
-                      )}
+                      "Required: first and last name. Optional fields help scheduling and records stay accurate."
+                    )}
                 </DialogDescription>
               </div>
               <DialogClose asChild>
@@ -263,17 +263,17 @@ export function PatientFormDialog({
 
             {(createExtra.referralSource === "external_partner" ||
               createExtra.referralSource === "other") && (
-              <FieldBlock icon={MessageSquare} htmlFor="pf-referral-detail" label="Referral Detail">
-                <Input
-                  id="pf-referral-detail"
-                  title="Referral detail"
-                  value={createExtra.referralDetail}
-                  onChange={(e) => onCreateExtraChange({ referralDetail: e.target.value })}
-                  placeholder="Clinic, referrer, or how they reached you"
-                  className={patientDialogGlassInputClass}
-                />
-              </FieldBlock>
-            )}
+                <FieldBlock icon={MessageSquare} htmlFor="pf-referral-detail" label="Referral Detail">
+                  <Input
+                    id="pf-referral-detail"
+                    title="Referral detail"
+                    value={createExtra.referralDetail}
+                    onChange={(e) => onCreateExtraChange({ referralDetail: e.target.value })}
+                    placeholder="Clinic, referrer, or how they reached you"
+                    className={patientDialogGlassInputClass}
+                  />
+                </FieldBlock>
+              )}
 
             <FieldBlock icon={Activity} htmlFor="pf-allergies" label="Allergies (Comma-Separated)">
               <Input

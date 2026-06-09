@@ -347,7 +347,7 @@ export default function AppointmentList() {
       {/* Sticky top rows: title/badges + filters */}
       <CalendarStickyHeader >
         <div className="mb-2 flex flex-wrap items-center gap-2">
-          <h2 className="text-xl font-semibold tracking-tight text-gray-700">
+          <h2 className="text-lg font-semibold tracking-tight text-gray-700">
             Appointment List
           </h2>
           <StatBadge label="Total" value={summaryStats.total} className="calendar-glass-badge-sky" />
