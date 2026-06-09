@@ -23,6 +23,7 @@ import type { GlobalAppointmentType, NotificationsPrefetch } from "@/lib/server-
 import {
   prefetchCategories,
   prefetchDashboardOverview,
+  prefetchDashboardAccessAccepted,
   prefetchGlobalAppointmentTypes,
   prefetchOrganizations,
   prefetchPatients,
@@ -94,9 +95,14 @@ export async function prefetchControlPanelSection(
       ]);
       return { invoices, billingAppointmentOptions };
     }
+    case "appointment":
     case "appointments_mgmt":
     case "telehealth":
       return prefetchCalendarAppointmentsBundle(userId, email);
+    case "dashboard":
+      return {
+        dashboardAccessAccepted: await prefetchDashboardAccessAccepted(userId, email),
+      };
     case "notifications":
       return { notifications: await prefetchNotifications(userId) };
     case "doctors":

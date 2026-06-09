@@ -33,8 +33,37 @@ export const entityDetailChromeVioletIconClass = "h-6 w-6 text-violet-600";
 export const entityDetailChromeAmberIconClass = "h-6 w-6 text-amber-600";
 export const entityDetailChromeEmeraldIconClass = "h-6 w-6 text-emerald-600";
 
+export const entityDetailChromeIndigoIconTileClass =
+  "flex w-12 shrink-0 items-center justify-center self-stretch min-h-[3.5rem] rounded-xl border border-indigo-200 bg-indigo-100";
+
+export const entityDetailChromeSlateIconTileClass =
+  "flex w-12 shrink-0 items-center justify-center self-stretch min-h-[3.5rem] rounded-xl border border-slate-200 bg-slate-100";
+
+export const entityDetailChromeRoseIconTileClass =
+  "flex w-12 shrink-0 items-center justify-center self-stretch min-h-[3.5rem] rounded-xl border border-rose-200 bg-rose-100";
+
+export const entityDetailChromeIndigoIconClass = "h-6 w-6 text-indigo-600";
+export const entityDetailChromeSlateIconClass = "h-6 w-6 text-slate-600";
+export const entityDetailChromeRoseIconClass = "h-6 w-6 text-rose-600";
+
+/** CP + portal page chrome tones — tile + icon class pairs for `AppPageChrome`. */
+export type PageChromeTone = "sky" | "violet" | "emerald" | "amber" | "indigo" | "slate" | "rose";
+
+export const PAGE_CHROME_TONE_CLASSES: Record<
+  PageChromeTone,
+  { tile: string; icon: string }
+> = {
+  sky: { tile: pageChromeIconTileClass, icon: pageChromeIconClass },
+  violet: { tile: entityDetailChromeVioletIconTileClass, icon: entityDetailChromeVioletIconClass },
+  emerald: { tile: entityDetailChromeEmeraldIconTileClass, icon: entityDetailChromeEmeraldIconClass },
+  amber: { tile: entityDetailChromeAmberIconTileClass, icon: entityDetailChromeAmberIconClass },
+  indigo: { tile: entityDetailChromeIndigoIconTileClass, icon: entityDetailChromeIndigoIconClass },
+  slate: { tile: entityDetailChromeSlateIconTileClass, icon: entityDetailChromeSlateIconClass },
+  rose: { tile: entityDetailChromeRoseIconTileClass, icon: entityDetailChromeRoseIconClass },
+};
+
 export const pageChromeTitleClass =
-  "text-xl font-semibold tracking-tight text-gray-700 md:text-2xl";
+  "text-lg font-semibold tracking-tight text-gray-700 md:text-xl";
 
 export const pageChromeDescriptionClass = "text-sm leading-relaxed text-gray-700";
 
@@ -61,7 +90,7 @@ export const pageHeaderRootClass =
   "flex min-h-[3.5rem] flex-col sm:flex-row sm:items-center justify-between gap-4 py-2 sticky top-0 z-20 backdrop-blur-sm";
 
 export const pageHeaderTitleClass =
-  "text-xl font-semibold tracking-tight text-gray-700";
+  "text-lg font-semibold tracking-tight text-gray-700";
 
 /** Matches list/management pages — subtitle sits flush under title (no `mt-0.5`). */
 export const pageHeaderDescriptionClass = "text-xs text-gray-500 sm:text-sm leading-relaxed";

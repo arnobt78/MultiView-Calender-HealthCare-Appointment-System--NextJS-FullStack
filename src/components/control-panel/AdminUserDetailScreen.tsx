@@ -13,9 +13,10 @@ import {
   Pencil,
   ShieldCheck,
   User as UserIcon,
+  UserCog,
 } from "lucide-react";
 import { BackNavigationLink } from "@/components/shared/BackNavigationLink";
-import { PageHeader } from "@/components/shared/PageHeader";
+import { EntityDetailChromeHeader } from "@/components/shared/entity-detail/EntityDetailChromeHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { UserAvatar } from "@/components/shared/UserAvatar";
@@ -26,6 +27,10 @@ import {
   adminUserDetailCardFrameClass,
   adminUserDetailFieldIconCircleClass,
 } from "@/lib/admin-user-detail-ui-classes";
+import {
+  entityDetailChromeSlateIconClass,
+  entityDetailChromeSlateIconTileClass,
+} from "@/lib/page-chrome-classes";
 import {
   entityDetailActionsRowClass,
   entityDetailPageHeaderClass,
@@ -115,13 +120,16 @@ export function AdminUserDetailScreen({
 
   return (
     <div className={resolveEntityDetailRootClass(scrollShell)}>
-      <PageHeader
+      <EntityDetailChromeHeader
+        icon={UserCog}
+        iconTileClassName={entityDetailChromeSlateIconTileClass}
+        iconClassName={entityDetailChromeSlateIconClass}
         className={entityDetailPageHeaderClass}
         title={displayName}
         description={
           liveUser.role
-            ? `${liveUser.role.charAt(0).toUpperCase()}${liveUser.role.slice(1)} Account`
-            : "User Account"
+            ? `${liveUser.role.charAt(0).toUpperCase()}${liveUser.role.slice(1)} account`
+            : "User account"
         }
         actions={
           <BackNavigationLink href={listBackHref} className="no-underline">

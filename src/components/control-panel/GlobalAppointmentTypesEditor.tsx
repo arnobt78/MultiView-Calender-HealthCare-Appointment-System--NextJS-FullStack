@@ -39,7 +39,7 @@ import {
 } from "@/hooks/useAppointmentTypes";
 import { PatientStatCard } from "@/components/control-panel/PatientStatCard";
 import { APPOINTMENT_TYPE_COPY } from "@/lib/appointment-type-copy";
-import { PageHeader } from "@/components/shared/PageHeader";
+import { ControlPanelPageChrome } from "@/components/control-panel/ControlPanelPageChrome";
 import { emeraldGlassPrimaryButtonClass } from "@/lib/calendar-header-action-styles";
 import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
@@ -177,13 +177,9 @@ export function GlobalAppointmentTypesEditor() {
   return (
     <div className={cn(controlPanelSectionRootClass, "space-y-6")}>
       {/* Page header */}
-      <PageHeader
-        title={
-          <span className="flex items-center gap-2">
-            <Stethoscope className="h-5 w-5 text-emerald-600" aria-hidden />
-            {APPOINTMENT_TYPE_COPY.pageTitleLabel}
-          </span>
-        }
+      <ControlPanelPageChrome
+        tab="visit_types_global"
+        title={APPOINTMENT_TYPE_COPY.pageTitleLabel}
         description={APPOINTMENT_TYPE_COPY.pageSubtitleLabel}
         actions={
           isAdmin ? (

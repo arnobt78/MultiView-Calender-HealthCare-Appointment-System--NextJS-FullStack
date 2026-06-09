@@ -76,7 +76,7 @@ export default function UserAccessPermission() {
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle className="text-lg font-semibold text-gray-700">User Dashboard Access Invitation</CardTitle>
+        <CardTitle className="text-sm font-semibold text-gray-700">Send invitation</CardTitle>
         <CardDescription className="text-base text-muted-foreground">Invite someone to access a user&apos;s dashboard.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-2">

@@ -45,7 +45,7 @@ import { format } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
 import { AppointmentActionsMenu } from "@/components/shared/AppointmentActionsMenu";
 import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
-import { PageHeader } from "@/components/shared/PageHeader";
+import { ControlPanelPageChrome } from "@/components/control-panel/ControlPanelPageChrome";
 
 const columnHelper = createColumnHelper<FullAppointment>();
 
@@ -221,15 +221,7 @@ export default function AppointmentsManagement() {
   return (
     <div className={controlPanelSectionRootClass}>
       {/* Page header */}
-      <PageHeader
-        title={
-          <span className="flex items-center gap-2">
-            <CalendarDays className="h-5 w-5 text-indigo-500" aria-hidden />
-            Appointment Management
-          </span>
-        }
-        description="View and manage all appointments across the platform. Filter by status or export records."
-      />
+      <ControlPanelPageChrome tab="appointments_mgmt" />
 
       {/* Stats row — card shells always visible; value slots pulse while loading */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
@@ -253,7 +245,7 @@ export default function AppointmentsManagement() {
               {loading ? (
                 <Skeleton className="h-7 w-10 mt-1 rounded" />
               ) : (
-                <div className={`text-xl font-bold ${color}`}>{value}</div>
+                <div className={`text-lg font-bold ${color}`}>{value}</div>
               )}
             </CardContent>
           </Card>

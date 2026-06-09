@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ControlPanelPageChrome } from "@/components/control-panel/ControlPanelPageChrome";
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import {
   buildGoogleCalendarDisconnectConfirmSubtitle,
@@ -63,16 +64,7 @@ export default function GoogleCalendarSettings() {
 
   return (
     <div className={controlPanelSectionRootClass}>
-      {/* Heading stays static */}
-      <div>
-        <h2 className="text-xl font-bold flex items-center gap-2">
-          <Calendar className="h-5 w-5 text-sky-500" />
-          Google Calendar Integration
-        </h2>
-        <p className="text-sm text-muted-foreground mt-1">
-          Connect, sync, import and export appointments with Google Calendar.
-        </p>
-      </div>
+      <ControlPanelPageChrome tab="google-calendar" />
 
       {/* Status card — card frame + title stay static; badge + description pulse while loading */}
       <Card className="rounded-[28px] border bg-gradient-to-br from-sky-500/10 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(2,132,199,0.1)]">

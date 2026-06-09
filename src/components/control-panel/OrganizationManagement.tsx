@@ -54,7 +54,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MoreHorizontal, Plus, Users, Building2 } from "lucide-react";
-import { PageHeader } from "@/components/shared/PageHeader";
+import { ControlPanelPageChrome } from "@/components/control-panel/ControlPanelPageChrome";
 import { PatientStatCard } from "@/components/control-panel/PatientStatCard";
 import { emeraldGlassPrimaryButtonClass } from "@/lib/calendar-header-action-styles";
 import { format } from "date-fns";
@@ -370,15 +370,7 @@ export default function OrganizationManagement() {
   return (
     <div className={controlPanelSectionRootClass}>
       {/* Page header */}
-      <PageHeader
-        title={
-          <span className="flex items-center gap-2">
-            <Building2 className="h-5 w-5 text-blue-500" aria-hidden />
-            Organization Management
-          </span>
-        }
-        description="Manage all organisations, members, and billing configurations across the platform."
-      />
+      <ControlPanelPageChrome tab="organizations" />
 
       {/* Stats row */}
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">

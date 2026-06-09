@@ -62,7 +62,8 @@
 - **SSR includes:** `patientDetailInclude`, `categoryDetailInclude` (`*AuditUserPick`), `userDetailInclude`, `appointmentDetailInclude`. List APIs stay light (`USER_API_SELECT` scalars only).
 - **Appointment detail UI:** Live header subtitle `formatAppointmentDetailWhenRange`; Visit Overview; People inline (`DoctorIdentityRow`); invoice audit rows (`appointment-detail-invoice-audit-rows.tsx`); `issuer_email`/`issuer_role` on invoice list payload.
 - **Cache:** `setQueryData` on patient PUT, user PATCH; `seedCategoryDetailCache`; `useCategory`/`useUser`/`useAppointmentDetail` SSR `initialData`. Invalidation: `invalidateUsersAndAuth` + `invalidateDoctorDetailAndSnapshot` on user PATCH.
-- **CP admin user detail:** `/control-panel/users/[id]` — `AdminUserDetailScreen` + SSR `userDetailInclude` (same Record Audit as doctor detail).
+- **CP admin user detail:** `/control-panel/users/[id]` — `AdminUserDetailScreen` + `EntityDetailChromeHeader` + SSR `userDetailInclude`.
+- **CP page chrome:** all 14 sidebar sections — `ControlPanelPageChrome` (icon/tone from `control-panel-page-chrome-config.ts`); layout sidebar persists; data slots pulse inline only.
 - **Deploy DB:** `npm run prisma:push`; `npm run db:backfill-user-audit` (idempotent) or `db:seed-test-user` for demo actors on existing DBs.
 - **Intentional gap:** Portal `/admins/[id]` read-only profile — no Record Audit block.
 - **Verify:** **742** tests (138 files), tsc, lint, build.
@@ -146,7 +147,8 @@
 
 ## Prior (2026-05-31)
 
-- **Agile V AQMS:** `.agile-v/` — `ACTIVATION.md`, `SKILLS.md` (24), `BOOTSTRAP.md`, `REQUIREMENTS.md` REQ-0001..0037. C1/C2 frozen; **C7 active** (`REQ-0034..0037`); `.cursor/rules/agile-v-infinity-loop.mdc` always on.
+- **Agile V AQMS:** `.agile-v/` — REQ-0001..0040. **C8 active** (`REQ-0038..0040` page chrome + admin redesign); `.cursor/rules/agile-v-infinity-loop.mdc` always on.
+- **C8 page chrome (2026-06-09):** `AppPageChrome` unifies portal + CP headers; `ControlPanelSectionChromeServer` SSR shell; invitation tabs prefetch; admin portal `PatientStatCard` KPIs. **863/863** verify.
 
 ## Prior (2026-05-30)
 

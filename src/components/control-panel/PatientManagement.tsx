@@ -5,7 +5,7 @@ import { PrefetchingLink } from "@/components/shared/PrefetchingLink";
 import { usePatients } from "@/hooks/usePatients";
 import { DataTable } from "@/components/shared/DataTable";
 import { DataTableColumnHeader } from "@/components/shared/DataTableColumnHeader";
-import { PageHeader } from "@/components/shared/PageHeader";
+import { ControlPanelPageChrome } from "@/components/control-panel/ControlPanelPageChrome";
 import { DoctorIdentityRow } from "@/components/shared/doctor-display/DoctorIdentityRow";
 import { PatientIdentityCell } from "@/components/shared/person-display/PatientIdentityCell";
 import {
@@ -263,14 +263,9 @@ export function PatientManagementInner({
     deletePatient,
   } = usePatients();
   const queryClient = useQueryClient();
-  const [listUiMounted, setListUiMounted] = useState(false);
-  useEffect(() => {
-    const id = requestAnimationFrame(() => setListUiMounted(true));
-    return () => cancelAnimationFrame(id);
-  }, []);
   /** SSR-seeded cache: chrome + stats stay real; pulse table rows only when no list data yet. */
   const hasPatientsCache = patients.length > 0;
-  const listBodyLoading = !listUiMounted || (isLoading && !hasPatientsCache);
+  const listBodyLoading = isLoading && !hasPatientsCache;
   const { data: doctorsData } = useUsers(CP_DOCTOR_USERS_FILTERS);
   const doctorById = useMemo(() => {
     const list = doctorsData?.users ?? [];
@@ -595,7 +590,7 @@ export function PatientManagementInner({
     return (
       <div className={sectionRootClass}>
         {!isDoctorPortal ? (
-          <PageHeader title="Patient Management" description="Manage patient records, care tiers, and primary doctor assignments." />
+          <ControlPanelPageChrome tab="patients" />
         ) : null}
         <AppSectionErrorBanner>
           Failed to load patients. Please refresh.
@@ -612,9 +607,8 @@ export function PatientManagementInner({
         )}
       >
         {!isDoctorPortal ? (
-          <PageHeader
-            title="Patient Management"
-            description="Manage patient records, care tiers, and primary doctor assignments."
+          <ControlPanelPageChrome
+            tab="patients"
             actions={
               <>
                 <Button

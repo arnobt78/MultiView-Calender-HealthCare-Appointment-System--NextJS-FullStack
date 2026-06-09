@@ -207,6 +207,14 @@
 | ART-0199 | C4 ext | REQ-0017 | `InvoiceVisitDescriptionStack` Patient/Treating/Owner | built |
 | ART-0200 | C4 ext | REQ-0017 | PDF route `refunded_at` + payment history date | built |
 | ART-0201 | C4 ext | REQ-0016..0018 | Commits `0194566`..`d2a4cd5` | built |
+| ART-0202 | C8 | REQ-0038 | `AppPageChrome.tsx` + `page-chrome-classes` tones | built |
+| ART-0203 | C8 | REQ-0038 | `control-panel-page-chrome-config.ts` | built |
+| ART-0204 | C8 | REQ-0038 | `ControlPanelPageChrome.tsx` — 14 CP tabs | built |
+| ART-0205 | C8 | REQ-0038 | `PageHeader` / `PortalChromeHeader` delegates | built |
+| ART-0209 | C8 | REQ-0039 | `ControlPanelSectionChromeServer` + flash fix | built |
+| ART-0210 | C8 | REQ-0039 | Invitation tab prefetch | built |
+| ART-0212 | C8 | REQ-0040 | `AdminPortalPage` redesign | built |
+| ART-0213 | C8 | REQ-0040 | `OrganizationDetailChrome` + admin user detail chrome | built |
 
 ## Verification Commands (project default)
 

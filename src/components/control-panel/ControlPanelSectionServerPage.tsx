@@ -2,6 +2,7 @@ import { getSessionUser } from "@/lib/session";
 import { getUserRole } from "@/lib/rbac";
 import type { ControlPanelSidebarTabValue } from "@/lib/control-panel-nav-config";
 import { prefetchControlPanelSection } from "@/lib/control-panel-section-prefetch";
+import { ControlPanelSectionChromeServer } from "@/components/control-panel/ControlPanelSectionChromeServer";
 import { ControlPanelSectionPageClient } from "@/components/control-panel/ControlPanelSectionPageClient";
 
 /**
@@ -20,5 +21,10 @@ export async function ControlPanelSectionServerPage({
       ? await prefetchControlPanelSection(tab, sessionUser.userId, sessionUser.email, role)
       : null;
 
-  return <ControlPanelSectionPageClient tab={tab} initial={initial} />;
+  return (
+    <div className="relative w-full">
+      <ControlPanelSectionChromeServer tab={tab} />
+      <ControlPanelSectionPageClient tab={tab} initial={initial} chromeFromServer />
+    </div>
+  );
 }

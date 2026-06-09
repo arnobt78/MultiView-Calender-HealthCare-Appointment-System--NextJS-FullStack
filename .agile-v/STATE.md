@@ -6,11 +6,11 @@
 
 | Field | Value |
 |-------|-------|
-| **Cycle** | **C7** (active) + **C4 billing extension** (shipped) |
+| **Cycle** | **C8** (active) — page chrome + admin redesign |
 | **Phase** | Verify |
 | **Stage** | 4 — automated PASS; Human Gates pending |
 | **Status** | `verify_complete` — **863/863** tests (166 files) |
-| **Last Updated** | 2026-06-04 |
+| **Last Updated** | 2026-06-09 |
 | **HEAD** | `99f13b8` |
 | **Activation** | `ACTIVATION.md` + `SKILLS.md` (24) + Cursor rule restored |
 

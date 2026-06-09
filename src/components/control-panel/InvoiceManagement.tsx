@@ -9,7 +9,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ListFilter, Receipt } from "lucide-react";
 import { usePayments, type Invoice } from "@/hooks/usePayments";
 import { Button } from "@/components/ui/button";
-import { PageHeader } from "@/components/shared/PageHeader";
+import { ControlPanelPageChrome } from "@/components/control-panel/ControlPanelPageChrome";
 import { DataTable } from "@/components/shared/DataTable";
 import { ClinicalListFilterToolbar } from "@/components/shared/filters/ClinicalListFilterToolbar";
 import { FilterSelect } from "@/components/shared/filters/FilterSelect";
@@ -63,15 +63,10 @@ function InvoiceManagementInner() {
   const { status, setStatus, filterInvoices } = useInvoiceListFilters();
   const [listSearch, setListSearch] = useState("");
 
-  const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => {
-    requestAnimationFrame(() => setIsMounted(true));
-  }, []);
-
   const hasInvoicesCache = Boolean(
     queryClient.getQueryData<Invoice[]>(queryKeys.invoices.all)?.length
   );
-  const listBodyLoading = !isMounted || (isLoading && !hasInvoicesCache);
+  const listBodyLoading = isLoading && !hasInvoicesCache;
 
   const filteredInvoices = useMemo(
     () => filterInvoices(invoices),
@@ -124,14 +119,8 @@ function InvoiceManagementInner() {
 
   return (
     <div className={controlPanelSectionRootClass}>
-      <PageHeader
-        title={
-          <span className="flex items-center gap-2">
-            <Receipt className="h-5 w-5 text-amber-500" aria-hidden />
-            Invoice Management
-          </span>
-        }
-        description="Manage all patient invoices, track payments, and process billing across your organisation."
+      <ControlPanelPageChrome
+        tab="invoices"
         actions={
           <Button
             type="button"

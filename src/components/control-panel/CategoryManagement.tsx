@@ -5,7 +5,7 @@ import { PrefetchingLink } from "@/components/shared/PrefetchingLink";
 import { useCategories, type CategoryCreateInput } from "@/hooks/useCategories";
 import { DataTable } from "@/components/shared/DataTable";
 import { DataTableColumnHeader } from "@/components/shared/DataTableColumnHeader";
-import { PageHeader } from "@/components/shared/PageHeader";
+import { ControlPanelPageChrome } from "@/components/control-panel/ControlPanelPageChrome";
 import { CategoryTableCell } from "@/components/control-panel/patient-detail-snapshot-columns";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -154,14 +154,8 @@ export function CategoryManagementInner() {
     deleteCategory,
   } = useCategories();
 
-  const [listUiMounted, setListUiMounted] = useState(false);
-  useEffect(() => {
-    const id = requestAnimationFrame(() => setListUiMounted(true));
-    return () => cancelAnimationFrame(id);
-  }, []);
-
   const hasCategoriesCache = categories.length > 0;
-  const listBodyLoading = !listUiMounted || (isLoading && !hasCategoriesCache);
+  const listBodyLoading = isLoading && !hasCategoriesCache;
 
   const { status, setStatus, filterByStatus } = useCategoryListFilters();
   const filteredCategories = filterByStatus(categories);
@@ -351,10 +345,7 @@ export function CategoryManagementInner() {
   if (isError) {
     return (
       <div className={controlPanelSectionRootClass}>
-        <PageHeader
-          title="Category Management"
-          description="Manage appointment categories with status, duration, and display order."
-        />
+        <ControlPanelPageChrome tab="categories" />
         <AppSectionErrorBanner>
           Failed to load categories. Please refresh the page.
         </AppSectionErrorBanner>
@@ -373,9 +364,8 @@ export function CategoryManagementInner() {
   return (
     <CategoryMetricsProvider value={metricsValue}>
       <div className={controlPanelSectionRootClass}>
-        <PageHeader
-          title="Category Management"
-          description="Manage appointment categories with status, duration, and display order."
+        <ControlPanelPageChrome
+          tab="categories"
           actions={
             <Button
               type="button"

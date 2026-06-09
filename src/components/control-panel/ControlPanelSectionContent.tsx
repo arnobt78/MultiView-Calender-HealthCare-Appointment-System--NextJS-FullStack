@@ -18,6 +18,7 @@ import { GlobalAppointmentTypesEditor } from "@/components/control-panel/GlobalA
 import DashboardOverviewComponent from "@/components/control-panel/DashboardOverview";
 import TelehealthDashboard from "@/components/pages/TelehealthDashboard";
 import PatientDetailView from "@/components/pages/PatientDetailView";
+import { ControlPanelPageChrome } from "@/components/control-panel/ControlPanelPageChrome";
 import type { ControlPanelSidebarTabValue } from "@/lib/control-panel-nav-config";
 import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
 import { cn } from "@/lib/utils";
@@ -55,6 +56,7 @@ export function ControlPanelSectionContent({ tab }: { tab: ControlPanelSidebarTa
     case "appointment":
       return (
         <div className={controlPanelSectionRootClass}>
+          <ControlPanelPageChrome tab="appointment" />
           <AppointmentAccessPermission />
           <InvitationList type="appointment" />
         </div>
@@ -62,6 +64,7 @@ export function ControlPanelSectionContent({ tab }: { tab: ControlPanelSidebarTa
     case "dashboard":
       return (
         <div className={controlPanelSectionRootClass}>
+          <ControlPanelPageChrome tab="dashboard" />
           <UserAccessPermission />
           <InvitationList type="dashboard" />
         </div>

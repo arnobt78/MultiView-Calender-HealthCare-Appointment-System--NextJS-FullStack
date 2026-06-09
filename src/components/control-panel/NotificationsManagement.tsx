@@ -19,6 +19,7 @@ import {
 } from "@tanstack/react-table";
 import { useNotifications } from "@/hooks/useNotifications";
 import type { Notification } from "@/types/notification";
+import { ControlPanelPageChrome } from "@/components/control-panel/ControlPanelPageChrome";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -165,22 +166,22 @@ export default function NotificationsManagement() {
 
   return (
     <div className={controlPanelSectionRootClass}>
-      {/* Chrome — heading, filter, and mark-all-read always static */}
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            <Bell className="h-5 w-5 text-purple-500" />
-            Notifications
-            {!loading && unreadCount > 0 && (
-              <Badge className="bg-primary text-primary-foreground ml-1">{unreadCount} unread</Badge>
-            )}
-          </h2>
-          {loading ? (
-            <Skeleton className="h-4 w-40 mt-1 rounded" />
+      <ControlPanelPageChrome
+        tab="notifications"
+        title={
+          !loading && unreadCount > 0 ? (
+            <span className="inline-flex items-center gap-2">
+              Notifications
+              <Badge className="bg-primary text-primary-foreground">{unreadCount} unread</Badge>
+            </span>
           ) : (
-            <p className="text-sm text-muted-foreground">{notifications.length} total notifications</p>
-          )}
-        </div>
+            "Notifications"
+          )
+        }
+        description={
+          loading ? undefined : `${notifications.length} total notifications`
+        }
+        actions={
         <div className="flex items-center gap-2 flex-wrap">
           <Input
             placeholder="Filter notifications…"
@@ -216,7 +217,8 @@ export default function NotificationsManagement() {
             </>
           ) : null}
         </div>
-      </div>
+        }
+      />
 
       {/* Table — glass card shell always visible; body rows pulse while loading */}
       <div className="rounded-[28px] border bg-gradient-to-br from-purple-500/5 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(168,85,247,0.08)] overflow-hidden">

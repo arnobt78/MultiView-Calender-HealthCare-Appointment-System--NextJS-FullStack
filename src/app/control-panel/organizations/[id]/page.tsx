@@ -2,13 +2,15 @@
  * SSR: Organization detail page — all schema properties.
  * Server-fetches org + members, passes to client form.
  */
+export const dynamic = "force-dynamic";
+
 import { notFound } from "next/navigation";
 import { BackNavigationLink } from "@/components/shared/BackNavigationLink";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { serializeOrganization } from "@/lib/serializers";
 import { isValidUUID } from "@/lib/validation";
-import { PageHeader } from "@/components/shared/PageHeader";
+import { OrganizationDetailChrome } from "@/components/control-panel/OrganizationDetailChrome";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -76,12 +78,12 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
 
   return (
     <div className="space-y-2">
-      <PageHeader
+      <OrganizationDetailChrome
         title={org.name}
         description={`Slug: ${org.slug}`}
         actions={
           <Button variant="outline" asChild>
-            <BackNavigationLink href="/control-panel">
+            <BackNavigationLink href="/control-panel/organization-management">
               <ArrowLeft className="h-4 w-4" />
               Back
             </BackNavigationLink>

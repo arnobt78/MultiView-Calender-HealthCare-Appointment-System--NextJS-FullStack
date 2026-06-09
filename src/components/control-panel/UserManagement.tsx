@@ -12,7 +12,7 @@ import { useUsers } from "@/hooks/useUsers";
 import { CP_ADMIN_USERS_FILTERS } from "@/lib/control-panel-users-filters";
 import { DataTable } from "@/components/shared/DataTable";
 import { DataTableColumnHeader } from "@/components/shared/DataTableColumnHeader";
-import { PageHeader } from "@/components/shared/PageHeader";
+import { ControlPanelPageChrome } from "@/components/control-panel/ControlPanelPageChrome";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { UserRoleBadge } from "@/components/shared/UserRoleBadge";
 import { UserAvatar } from "@/components/shared/UserAvatar";
@@ -213,10 +213,7 @@ export default function UserManagement() {
   if (isError) {
     return (
       <div className={controlPanelSectionRootClass}>
-        <PageHeader
-          title="User & Admin Management"
-          description="B2B admin accounts — register or Google sign-in."
-        />
+        <ControlPanelPageChrome tab="users_admin" />
         <AppSectionErrorBanner>
           Failed to load admin users. Please refresh the page.
         </AppSectionErrorBanner>
@@ -226,8 +223,8 @@ export default function UserManagement() {
 
   return (
     <div className={controlPanelSectionRootClass}>
-      <PageHeader
-        title="User & Admin Management"
+      <ControlPanelPageChrome
+        tab="users_admin"
         description="B2B admin accounts — register or Google sign-in. Demo doctors and patients are on their own management tabs."
         actions={
           <Button

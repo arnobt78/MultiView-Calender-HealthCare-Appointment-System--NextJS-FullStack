@@ -2,8 +2,11 @@
 
 Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
-## Latest (2026-06-04)
+## Latest (2026-06-09)
 
+- **C8 page chrome:** `AppPageChrome` + `control-panel-page-chrome-config.ts`; all 14 CP tabs use `ControlPanelPageChrome` (icon tile, border-b); server shell `ControlPanelSectionChromeServer`; `listBodyLoading = isLoading && !hasCache`.
+- **Admin portal:** `AppPageChrome` indigo header + `PatientStatCard` KPIs + sky glass list panels; `invalidateAdminPortal` unchanged.
+- **Detail chrome:** `AdminUserDetailScreen` + `OrganizationDetailChrome` → `EntityDetailChromeHeader`.
 - **Invoice lifecycle TS:** `invoices.cancelled_at`, `payments.refunded_at` (`016_invoice_lifecycle_timestamps.sql`); PATCH cancel + refund route writes; `serializeInvoice` + list footer via `invoice-list-meta-status-dates.ts` (Paid / Refunded / Cancelled).
 - **Dialog visit parity:** `invoice-dialog-visit-display.ts`; summary + picker — portrait, care tier, type+duration, `DoctorIdentityCell`; fee strip `buildInvoiceVisitFeeStripLine` on card + amount hint (create/edit).
 - **Visit summary fees:** `invoice-visit-summary` + `billing-appointment-options-load` — fee + doctor display fields on summary/option rows.
@@ -32,6 +35,7 @@ Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Key paths
 
+- Page chrome: `AppPageChrome.tsx`, `ControlPanelPageChrome.tsx`, `page-chrome-classes.ts`, `control-panel-page-chrome-config.ts`
 - Phone: `phone-validation.ts`, `patient-form-clinical.ts`, `PatientFormDialog`, `reminder-recipient-phone.ts`
 - Cancel: `appointment-cancel-access.ts`, `appointment-id-write.ts`, `appointment-notify.ts`, `AppointmentActionsMenu`
 - Status UI: `appointment-status-display.ts`, `AppointmentStatusGlassBadge`
@@ -41,7 +45,7 @@ Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Agile V
 
-Infinity Loop every prompt: `.agile-v/ACTIVATION.md` · `STATE.md` · `SKILLS.md` (24) · `.cursor/rules/agile-v-infinity-loop.mdc`. C7 active + C4 ext; **863/863**.
+Infinity Loop every prompt: `.agile-v/ACTIVATION.md` · `STATE.md` · `SKILLS.md` (24). **C8 active** (REQ-0038..0040); **863/863**.
 
 ## Principle
 

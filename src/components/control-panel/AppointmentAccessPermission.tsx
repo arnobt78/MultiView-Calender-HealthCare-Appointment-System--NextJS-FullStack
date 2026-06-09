@@ -70,8 +70,8 @@ export default function AppointmentAccessPermission() {
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle className="text-lg font-semibold text-gray-700">Appointment Access Invitation</CardTitle>
-        <CardDescription className="text-base text-muted-foreground">Invite someone to access a specific appointment.</CardDescription>
+        <CardTitle className="text-sm font-semibold text-gray-700">Send invitation</CardTitle>
+        <CardDescription className="text-sm text-muted-foreground">Invite someone to access a specific appointment.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-2">
         <div className="space-y-2">

@@ -1,12 +1,12 @@
 # Requirements — HealthCal Pro
 
-<!-- Revision: C1..C7 + C4 ext | C7 active | Last updated: 2026-06-04 -->
+<!-- Revision: C1..C8 | C8 active | Last updated: 2026-06-09 -->
 
 ## Document Control
 
 | Field | Value |
 |-------|-------|
-| Cycle | C1–C2 archived · C3–C6 verify+gate pending · C4 ext shipped · **C7 active** (REQ-0034..0037) |
+| Cycle | C1–C2 archived · C3–C7 verify+gate pending · **C8 active** (REQ-0038..0040) |
 | Author | Requirement Architect |
 | Gate 1 status | C1 GATE-0001 · C2 GATE-0003 approved |
 | Canonical source | this file |
@@ -83,6 +83,9 @@
 | REQ-0035 | approved [C7] | — | ART-0175..0182 | VER-0063..0065 |
 | REQ-0036 | approved [C7] | REQ-0035 | ART-0183..0187 | VER-0066 |
 | REQ-0037 | approved [C7] | — | ART-0188..0192 | VER-0067..0068 |
+| REQ-0038 | approved [C8] | — | ART-0202..0208 | pending |
+| REQ-0039 | approved [C8] | REQ-0038 | ART-0209..0211 | pending |
+| REQ-0040 | approved [C8] | REQ-0038 | ART-0212..0216 | pending |
 
 ### REQ-0004 — Dashboard/CP SSR prefetch + calendar batch assignee fetch
 
@@ -658,3 +661,53 @@
 2. `PatientFormDialog` + CP/portal detail + list Phone column + search.
 3. `invalidateEntityAffectingAppointments` + `invalidatePatientDetailAndSnapshot` on write.
 4. `npm run db:seed-phones` after `prisma:push`.
+
+### REQ-0038 — Unified AppPageChrome + CP section headers (14 routes)
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C8] |
+| Priority | P1 |
+| Risk | R1 |
+
+**Statement:** Single `AppPageChrome` primitive + `control-panel-page-chrome-config` drives icon tile, tone, title/subtitle, border-b on all 14 CP list routes; portal parity via thin wrappers.
+
+**Acceptance criteria:**
+1. `AppPageChrome`, `ControlPanelPageChrome`, tone tokens in `page-chrome-classes.ts`.
+2. All CP list sections use `ControlPanelPageChrome` (no inline `h2` / text-only `PageHeader`).
+3. Invitation tabs get page-level chrome in `ControlPanelSectionContent`.
+4. `PageHeader` / `PortalChromeHeader` delegate to `AppPageChrome` (no deletion).
+
+### REQ-0039 — CP SSR chrome shell + skeleton flash reduction
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C8] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0038 |
+
+**Statement:** Server-render static CP section chrome; tighten `listBodyLoading` when SSR cache warm; invitation tab prefetch.
+
+**Acceptance criteria:**
+1. `ControlPanelSectionChromeServer` in `ControlPanelSectionServerPage`.
+2. `listBodyLoading = isLoading && !hasCache` on list sections.
+3. Invitation tabs prefetch in `control-panel-section-prefetch.ts`.
+4. `force-dynamic` on `organizations/[id]/page.tsx` if missing.
+
+### REQ-0040 — Admin portal redesign (shared components)
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C8] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0038 |
+
+**Statement:** Admin portal uses `AppPageChrome`, `PatientStatCard` KPIs, shared appointment/doctor list patterns; `invalidateAdminPortal` unchanged.
+
+**Acceptance criteria:**
+1. Replace glass card `h1` with `AppPageChrome` portal variant.
+2. KPI grid uses `PatientStatCard`; pulse only when `!hasCache && isLoading`.
+3. Recent appointments + doctor directory reuse shared clinical list components.
+4. CRUD elsewhere updates admin portal in-place without refresh.

@@ -18,7 +18,7 @@ import { Separator } from "@/components/ui/separator";
 import { format, isToday, isPast, isFuture } from "date-fns";
 import { useAppStore } from "@/store/useAppStore";
 import { useState, useMemo, useEffect } from "react";
-import { PageHeader } from "@/components/shared/PageHeader";
+import { ControlPanelPageChrome } from "@/components/control-panel/ControlPanelPageChrome";
 import { AppSectionErrorBanner } from "@/components/shared/AppSectionErrorBanner";
 import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
 
@@ -62,9 +62,8 @@ export default function TelehealthDashboard() {
         </AppSectionErrorBanner>
       ) : null}
       {/* PageHeader + filter buttons always stay static */}
-      <PageHeader
-        title="Telehealth Queue"
-        description="Manage your daily appointments and video calls"
+      <ControlPanelPageChrome
+        tab="telehealth"
         actions={
           <div className="flex rounded-2xl bg-muted p-1">
             <Button variant={filter === "today" ? "secondary" : "ghost"} size="sm" onClick={() => setFilter("today")} className="text-xs">Today</Button>
@@ -115,7 +114,7 @@ export default function TelehealthDashboard() {
                   <Badge variant="default" className="text-xs">{format(new Date(nextAppt.start), "h:mm a")}</Badge>
                   <Badge variant="outline" className="text-xs text-gray-700">{nextAppt.category_data?.label || "Consultation"}</Badge>
                 </div>
-                <h4 className="text-xl font-bold mb-1 truncate" title={nextAppt.title}>{nextAppt.title}</h4>
+                <h4 className="text-lg font-bold mb-1 truncate" title={nextAppt.title}>{nextAppt.title}</h4>
                 {nextAppt.patient_data && (
                   <div className="flex items-center gap-2 mt-4 text-sm font-medium">
                     <Avatar className="h-6 w-6">

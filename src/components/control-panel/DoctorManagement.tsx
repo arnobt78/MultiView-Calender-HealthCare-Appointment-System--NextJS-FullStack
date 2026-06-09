@@ -22,7 +22,7 @@ import {
 import { PrefetchingLink } from "@/components/shared/PrefetchingLink";
 import { DataTable } from "@/components/shared/DataTable";
 import { DataTableColumnHeader } from "@/components/shared/DataTableColumnHeader";
-import { PageHeader } from "@/components/shared/PageHeader";
+import { ControlPanelPageChrome } from "@/components/control-panel/ControlPanelPageChrome";
 import { DemoShowcaseFeatureNote } from "@/components/shared/DemoShowcaseFeatureNote";
 import { DoctorIdentityRow } from "@/components/shared/doctor-display/DoctorIdentityRow";
 import { DoctorAvailabilityGroups } from "@/components/shared/doctor-display/DoctorAvailabilityGroups";
@@ -230,16 +230,11 @@ function DoctorManagementInner() {
     resetFilters,
   } = useDoctorListFilters();
 
-  const [listUiMounted, setListUiMounted] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editingDoctor, setEditingDoctor] = useState<DoctorTableRow | null>(null);
   const [dialogForm, setDialogForm] = useState<DoctorFormValues>(EMPTY_DOCTOR_FORM);
   const [createForm, setCreateForm] = useState<DoctorFormValues>(EMPTY_DOCTOR_FORM);
-
-  useEffect(() => {
-    requestAnimationFrame(() => setListUiMounted(true));
-  }, []);
 
   const doctorMap = useMemo(
     () => new Map((doctorsData?.doctors ?? []).map((d) => [d.id, d])),
@@ -256,7 +251,7 @@ function DoctorManagementInner() {
   );
 
   const hasCache = mergedRows.length > 0;
-  const listBodyLoading = !listUiMounted || ((usersLoading || doctorsLoading) && !hasCache);
+  const listBodyLoading = (usersLoading || doctorsLoading) && !hasCache;
   const isError = usersError || doctorsError;
   const metrics = useDoctorListMetrics(mergedRows);
 
@@ -394,10 +389,7 @@ function DoctorManagementInner() {
   if (isError) {
     return (
       <div className={controlPanelSectionRootClass}>
-        <PageHeader
-          title="Doctor Management"
-          description="Manage doctor profiles, specialties, and availability."
-        />
+        <ControlPanelPageChrome tab="doctors" />
         <AppSectionErrorBanner>
           Failed to load doctor data. Please refresh the page.
         </AppSectionErrorBanner>
@@ -416,9 +408,8 @@ function DoctorManagementInner() {
       }}
     >
       <div className={controlPanelSectionRootClass}>
-        <PageHeader
-          title="Doctor Management"
-          description="Manage doctor profiles, specialties, and availability."
+        <ControlPanelPageChrome
+          tab="doctors"
           actions={
             <Button
               type="button"

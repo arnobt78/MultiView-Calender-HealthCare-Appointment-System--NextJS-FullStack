@@ -6,11 +6,10 @@
  * When SSR seeds queryKeys.dashboard.overview, skip skeleton until a refetch without cache.
  */
 
-import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { PageHeader } from "@/components/shared/PageHeader";
+import { ControlPanelPageChrome } from "@/components/control-panel/ControlPanelPageChrome";
 import { skyGlassBackButtonClass } from "@/lib/calendar-header-action-styles";
 import Link from "next/link";
 import {
@@ -69,7 +68,7 @@ function StatCard({
           {loading ? (
             <Skeleton className="mt-1 h-8 w-16 rounded-lg" />
           ) : (
-            <p className="mt-1 text-2xl font-bold tracking-tight text-gray-700">{value}</p>
+            <p className="mt-1 text-xl font-bold tracking-tight text-gray-700">{value}</p>
           )}
           {sub && <p className="mt-1 text-xs text-muted-foreground">{sub}</p>}
         </div>
@@ -92,17 +91,12 @@ function StatCard({
 export default function DashboardOverviewComponent() {
   const { data, isLoading, isFetching, dataUpdatedAt, refetch, isError } = useDashboardOverview();
 
-  const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => {
-    requestAnimationFrame(() => setIsMounted(true));
-  }, []);
-
   /** SSR/cache seed: show real values immediately; pulse only when no payload yet. */
   const hasData = data != null;
-  const listBodyLoading = !hasData && (!isMounted || isLoading);
+  const listBodyLoading = isLoading && !hasData;
   const statValueLoading = listBodyLoading;
 
-  const fetchingDisplay = isMounted && isFetching;
+  const fetchingDisplay = isFetching;
 
   const appointments = data?.appointments;
   const patients = data?.patients;
@@ -115,7 +109,7 @@ export default function DashboardOverviewComponent() {
   if (isError) {
     return (
       <div className={controlPanelSectionRootClass}>
-        <PageHeader title="Dashboard Overview" description="Real-time system summary" />
+        <ControlPanelPageChrome tab="overview" />
         <AppSectionErrorBanner>
           Failed to load dashboard data. Please refresh.
         </AppSectionErrorBanner>
@@ -125,15 +119,15 @@ export default function DashboardOverviewComponent() {
 
   return (
     <div className={controlPanelSectionRootClass}>
-      <PageHeader
-        title="Dashboard Overview"
+      <ControlPanelPageChrome
+        tab="overview"
         description={
           statValueLoading
-            ? "Real-time system summary"
+            ? undefined
             : `Real-time system summary — last updated ${format(
-                dataUpdatedAt ? new Date(dataUpdatedAt) : new Date(),
-                "HH:mm:ss"
-              )}`
+              dataUpdatedAt ? new Date(dataUpdatedAt) : new Date(),
+              "HH:mm:ss"
+            )}`
         }
         actions={
           <Button

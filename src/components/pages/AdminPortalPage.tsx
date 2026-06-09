@@ -24,10 +24,13 @@ import { format, parseISO } from "date-fns";
 import { queryKeys } from "@/lib/query-keys";
 import { apiClient } from "@/lib/api-client";
 import type { AdminPortalData, Appointment, DoctorRow } from "@/types/types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AppPageChrome } from "@/components/shared/AppPageChrome";
+import { PatientStatCard } from "@/components/control-panel/PatientStatCard";
 import { appPortalSectionRootClass } from "@/lib/section-page-layout";
+import { portalPanelSectionHeadingClass } from "@/lib/page-chrome-classes";
+import { skyGlassTableFrameClass } from "@/lib/calendar-header-action-styles";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { appointmentDetailHref, doctorDetailHref } from "@/lib/entity-routes";
@@ -43,6 +46,7 @@ import {
   CalendarClock,
   Clock,
   CreditCard,
+  LayoutDashboard,
   MapPin,
   Stethoscope,
   Users,
@@ -52,58 +56,12 @@ import { AppointmentListVisitFeeBadge } from "@/components/shared/appointment-di
 import { cn } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
-// Glass variants
-// ---------------------------------------------------------------------------
-
-const GLASS: Record<string, string> = {
-  blue: "rounded-[28px] border border-blue-400/20 bg-gradient-to-br from-blue-500/10 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(59,130,246,0.12)]",
-  indigo: "rounded-[28px] border border-indigo-400/20 bg-gradient-to-br from-indigo-500/10 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(99,102,241,0.12)]",
-  green: "rounded-[28px] border border-green-400/20 bg-gradient-to-br from-green-500/10 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(34,197,94,0.12)]",
-  amber: "rounded-[28px] border border-amber-400/20 bg-gradient-to-br from-amber-500/10 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(245,158,11,0.12)]",
-  purple: "rounded-[28px] border border-purple-400/20 bg-gradient-to-br from-purple-500/10 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(168,85,247,0.12)]",
-  red: "rounded-[28px] border border-red-400/20 bg-gradient-to-br from-red-500/10 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(225,29,72,0.12)]",
-  emerald: "rounded-[28px] border border-emerald-400/20 bg-gradient-to-br from-emerald-500/10 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(16,185,129,0.12)]",
-  slate: "rounded-[28px] border border-slate-400/20 bg-gradient-to-br from-slate-500/10 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(100,116,139,0.1)]",
-};
-
-
-// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
 /** Format cents as currency string (USD) */
 function formatCents(cents: number): string {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
-}
-
-// ---------------------------------------------------------------------------
-// KPI stat card
-// ---------------------------------------------------------------------------
-
-interface KpiCardProps {
-  label: string;
-  value: string | number | undefined;
-  icon: React.ReactNode;
-  color: string;
-  isLoading: boolean;
-  sub?: string;
-}
-
-function KpiCard({ label, value, icon, color, isLoading, sub }: KpiCardProps) {
-  return (
-    <div className={cn("p-5 flex items-center gap-2", GLASS[color])}>
-      <div className="flex-shrink-0 rounded-2xl bg-white/60 p-3 shadow-sm">{icon}</div>
-      <div className="min-w-0">
-        <p className="text-xs font-medium text-muted-foreground">{label}</p>
-        {isLoading ? (
-          <Skeleton className="mt-1 h-7 w-16" />
-        ) : (
-          <p className="text-2xl font-bold tracking-tight">{value ?? 0}</p>
-        )}
-        {sub && <p className="text-[10px] text-muted-foreground ">{sub}</p>}
-      </div>
-    </div>
-  );
 }
 
 // ---------------------------------------------------------------------------
@@ -162,7 +120,7 @@ function RecentAppointmentRow({ appt }: { appt: Appointment & { patient_name?: s
 
 function DoctorSummaryCard({ doctor }: { doctor: DoctorRow }) {
   return (
-    <div className={cn("p-4 flex flex-col gap-2", GLASS.slate)}>
+    <div className={cn("flex flex-col gap-2 rounded-2xl border border-sky-200/55 bg-white/90 p-4 shadow-[0_14px_48px_-12px_rgba(14,165,233,0.2)]")}>
       <div className="flex items-center gap-2">
         <UserAvatar
           src={doctor.image}
@@ -245,7 +203,11 @@ export default function AdminPortalPage({ initialData }: AdminPortalPageProps) {
     queryKey: queryKeys.adminPortal.all,
     queryFn: () => apiClient<AdminPortalData>("/api/admin-portal"),
     staleTime: 3 * 60 * 1000,
+    initialData: initialData ?? undefined,
   });
+
+  const hasCache = initialData != null || data != null;
+  const kpiLoading = isLoading && !hasCache;
 
   const overview = data?.overview;
   const doctors = data?.doctors ?? [];
@@ -253,100 +215,56 @@ export default function AdminPortalPage({ initialData }: AdminPortalPageProps) {
 
   return (
     <div className={cn(appPortalSectionRootClass, "max-w-9xl mx-auto")}>
-      {/* ------------------------------------------------------------------ */}
-      {/* Page header                                                          */}
-      {/* ------------------------------------------------------------------ */}
-      <div className={cn("p-6", GLASS.blue)}>
-        <div className="mb-1">
-          <h1 className="text-2xl font-bold tracking-tight">Admin Portal</h1>
-          <p className="text-sm text-muted-foreground ">
-            Clinic-wide overview · {format(new Date(), "EEEE, MMMM d yyyy")}
-          </p>
-        </div>
+      <AppPageChrome
+        variant="portal"
+        icon={LayoutDashboard}
+        tone="indigo"
+        title="Admin Portal"
+        description={`Clinic-wide overview · ${format(new Date(), "EEEE, MMMM d yyyy")}`}
+        borderBottom
+      />
+
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+        <PatientStatCard variant="sky" icon={Calendar} title="Total Appointments" subtitle="All-time scheduled visits" value={overview?.totalAppointments ?? 0} valueSkeleton={kpiLoading} />
+        <PatientStatCard variant="violet" icon={CalendarClock} title="Today" subtitle="Appointments scheduled today" value={overview?.todayAppointments ?? 0} valueSkeleton={kpiLoading} />
+        <PatientStatCard variant="emerald" icon={Users} title="Total Patients" subtitle="Registered patient records" value={overview?.totalPatients ?? 0} valueSkeleton={kpiLoading} />
+        <PatientStatCard variant="violet" icon={Stethoscope} title="Total Doctors" subtitle="Active doctor profiles" value={overview?.totalDoctors ?? 0} valueSkeleton={kpiLoading} />
       </div>
 
-      {/* ------------------------------------------------------------------ */}
-      {/* Global KPI cards                                                     */}
-      {/* ------------------------------------------------------------------ */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <KpiCard
-          label="Total Appointments"
-          value={overview?.totalAppointments}
-          icon={<Calendar className="h-5 w-5 text-blue-500" />}
-          color="blue"
-          isLoading={isLoading}
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+        <PatientStatCard variant="amber" icon={Clock} title="Pending" subtitle="Awaiting completion" value={overview?.pendingAppointments ?? 0} valueSkeleton={kpiLoading} />
+        <PatientStatCard variant="rose" icon={AlertTriangle} title="Overdue" subtitle="Past due appointments" value={overview?.overdueAppointments ?? 0} valueSkeleton={kpiLoading} />
+        <PatientStatCard
+          variant="emerald"
+          icon={BadgeDollarSign}
+          title="Revenue Collected"
+          subtitle="Paid invoice total"
+          value={overview?.paidRevenueCents ?? 0}
+          valueDisplay={formatCents(overview?.paidRevenueCents ?? 0)}
+          valueSkeleton={kpiLoading}
         />
-        <KpiCard
-          label="Today"
-          value={overview?.todayAppointments}
-          icon={<CalendarClock className="h-5 w-5 text-indigo-500" />}
-          color="indigo"
-          isLoading={isLoading}
-        />
-        <KpiCard
-          label="Total Patients"
-          value={overview?.totalPatients}
-          icon={<Users className="h-5 w-5 text-green-500" />}
-          color="green"
-          isLoading={isLoading}
-        />
-        <KpiCard
-          label="Total Doctors"
-          value={overview?.totalDoctors}
-          icon={<Stethoscope className="h-5 w-5 text-purple-500" />}
-          color="purple"
-          isLoading={isLoading}
+        <PatientStatCard
+          variant="amber"
+          icon={AlertCircle}
+          title="Outstanding"
+          subtitle="Unpaid invoice balance"
+          value={overview?.outstandingRevenueCents ?? 0}
+          valueDisplay={formatCents(overview?.outstandingRevenueCents ?? 0)}
+          valueSkeleton={kpiLoading}
         />
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <KpiCard
-          label="Pending"
-          value={overview?.pendingAppointments}
-          icon={<Clock className="h-5 w-5 text-amber-500" />}
-          color="amber"
-          isLoading={isLoading}
-        />
-        <KpiCard
-          label="Overdue"
-          value={overview?.overdueAppointments}
-          icon={<AlertTriangle className="h-5 w-5 text-red-500" />}
-          color="red"
-          isLoading={isLoading}
-        />
-        <KpiCard
-          label="Revenue Collected"
-          value={isLoading ? undefined : formatCents(overview?.paidRevenueCents ?? 0)}
-          icon={<BadgeDollarSign className="h-5 w-5 text-emerald-500" />}
-          color="emerald"
-          isLoading={isLoading}
-        />
-        <KpiCard
-          label="Outstanding"
-          value={isLoading ? undefined : formatCents(overview?.outstandingRevenueCents ?? 0)}
-          icon={<AlertCircle className="h-5 w-5 text-amber-500" />}
-          color="amber"
-          isLoading={isLoading}
-        />
-      </div>
-
-      {/* ------------------------------------------------------------------ */}
-      {/* Two-column: Recent Appointments + Doctor Directory                   */}
-      {/* ------------------------------------------------------------------ */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Appointments */}
-        <Card className={cn("overflow-hidden", GLASS.slate)}>
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-base font-semibold">
-              <Activity className="h-4 w-4 text-slate-500" />
-              Recent Appointments
-              {!isLoading && (
-                <Badge variant="secondary" className="ml-auto text-xs">{recent.length}</Badge>
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0 px-5 pb-4">
-            {isLoading ? (
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className={cn("overflow-hidden p-4", skyGlassTableFrameClass)}>
+          <div className={portalPanelSectionHeadingClass}>
+            <Activity className="h-4 w-4 text-sky-600" aria-hidden />
+            Recent Appointments
+            {!kpiLoading ? (
+              <Badge variant="secondary" className="text-xs">{recent.length}</Badge>
+            ) : null}
+          </div>
+          <div className="px-1 pb-2">
+            {kpiLoading ? (
               <div className="space-y-3">
                 {[...Array(5)].map((_, i) => (
                   <div key={i} className="flex gap-2 py-3">
@@ -370,22 +288,19 @@ export default function AdminPortalPage({ initialData }: AdminPortalPageProps) {
                 ))}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        {/* Doctor Directory */}
-        <Card className={cn("overflow-hidden", GLASS.purple)}>
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-base font-semibold">
-              <Stethoscope className="h-4 w-4 text-purple-500" />
-              Doctor Directory
-              {!isLoading && (
-                <Badge variant="secondary" className="ml-auto text-xs">{doctors.length}</Badge>
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
+        <div className={cn("overflow-hidden p-4", skyGlassTableFrameClass)}>
+          <div className={portalPanelSectionHeadingClass}>
+            <Stethoscope className="h-4 w-4 text-violet-600" aria-hidden />
+            Doctor Directory
+            {!kpiLoading ? (
+              <Badge variant="secondary" className="text-xs">{doctors.length}</Badge>
+            ) : null}
+          </div>
+          <div>
+            {kpiLoading ? (
               <div className="space-y-3">
                 {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-28 w-full rounded-2xl" />)}
               </div>
@@ -395,12 +310,12 @@ export default function AdminPortalPage({ initialData }: AdminPortalPageProps) {
                 <p className="text-sm">No doctors registered</p>
               </div>
             ) : (
-              <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
+              <div className="max-h-[500px] space-y-3 overflow-y-auto pr-1">
                 {doctors.map((d) => <DoctorSummaryCard key={d.id} doctor={d} />)}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
