@@ -36,21 +36,38 @@ export function ControlPanelPageChrome({
   const config: ControlPanelPageChromeConfig = getControlPanelPageChromeConfig(tab);
 
   if (chromeFromServer) {
-    if (!actions && !toolbar) return null;
+    const titleOverride =
+      title != null && title !== config.title ? title : null;
+    const descriptionOverride =
+      description != null && description !== config.description
+        ? description
+        : null;
+    if (!actions && !toolbar && !titleOverride && !descriptionOverride) {
+      return null;
+    }
     return (
-      <div
-        className={cn(
-          "pointer-events-none absolute inset-x-0 top-0 z-30 flex min-h-[3.5rem] items-center justify-end gap-2 px-0",
-          className
-        )}
-      >
-        {actions ? (
-          <div className="pointer-events-auto flex shrink-0 flex-wrap items-center justify-end gap-2">
-            {actions}
+      <div className={cn("relative w-full", className)}>
+        {(actions || toolbar) ? (
+          <div className="pointer-events-none absolute inset-x-0 top-0 z-30 flex min-h-[3.5rem] items-center justify-end gap-2 px-0">
+            {actions ? (
+              <div className="pointer-events-auto flex shrink-0 flex-wrap items-center justify-end gap-2">
+                {actions}
+              </div>
+            ) : null}
+            {toolbar ? (
+              <div className="pointer-events-auto w-full">{toolbar}</div>
+            ) : null}
           </div>
         ) : null}
-        {toolbar ? (
-          <div className="pointer-events-auto w-full">{toolbar}</div>
+        {titleOverride || descriptionOverride ? (
+          <div className="flex min-h-[1.25rem] flex-wrap items-center justify-between gap-2 border-b border-gray-100/80 pb-2 text-xs text-gray-500">
+            {titleOverride ? (
+              <div className="text-sm font-semibold text-gray-700">{titleOverride}</div>
+            ) : (
+              <span />
+            )}
+            {descriptionOverride ? <div>{descriptionOverride}</div> : null}
+          </div>
         ) : null}
       </div>
     );

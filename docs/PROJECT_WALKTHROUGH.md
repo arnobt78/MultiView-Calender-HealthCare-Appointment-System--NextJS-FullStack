@@ -148,7 +148,7 @@
 ## Prior (2026-05-31)
 
 - **Agile V AQMS:** `.agile-v/` — REQ-0001..0040. **C8 active** (`REQ-0038..0040` page chrome + admin redesign); `.cursor/rules/agile-v-infinity-loop.mdc` always on.
-- **C8 page chrome (2026-06-09):** `AppPageChrome` unifies portal + CP headers; `ControlPanelSectionChromeServer` SSR shell; invitation tabs prefetch; admin portal `PatientStatCard` KPIs. **863/863** verify.
+- **C8 page chrome (2026-06-09):** `AppPageChrome` + `ControlPanelPageChrome` (14 tabs); SSR shell + actions overlay + dynamic subtitle row; invitation prefetch; admin `PatientStatCard` KPIs. Audit PASS **863/863** · `f30acbd`+.
 
 ## Prior (2026-05-30)
 

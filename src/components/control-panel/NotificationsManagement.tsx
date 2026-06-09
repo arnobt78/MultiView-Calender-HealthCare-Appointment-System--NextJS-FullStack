@@ -168,21 +168,14 @@ export default function NotificationsManagement() {
     <div className={controlPanelSectionRootClass}>
       <ControlPanelPageChrome
         tab="notifications"
-        title={
-          !loading && unreadCount > 0 ? (
-            <span className="inline-flex items-center gap-2">
-              Notifications
-              <Badge className="bg-primary text-primary-foreground">{unreadCount} unread</Badge>
-            </span>
-          ) : (
-            "Notifications"
-          )
-        }
         description={
           loading ? undefined : `${notifications.length} total notifications`
         }
         actions={
         <div className="flex items-center gap-2 flex-wrap">
+          {!loading && unreadCount > 0 ? (
+            <Badge className="bg-primary text-primary-foreground">{unreadCount} unread</Badge>
+          ) : null}
           <Input
             placeholder="Filter notifications…"
             value={globalFilter}

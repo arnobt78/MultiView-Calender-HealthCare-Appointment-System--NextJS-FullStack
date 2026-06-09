@@ -11,7 +11,7 @@
 | **Stage** | 4 — automated PASS; Human Gates pending |
 | **Status** | `verify_complete` — **863/863** tests (166 files) |
 | **Last Updated** | 2026-06-09 |
-| **HEAD** | `99f13b8` |
+| **HEAD** | `f30acbd` (C8 chrome) |
 | **Activation** | `ACTIVATION.md` + `SKILLS.md` (24) + Cursor rule restored |
 
 ## Infinity Loop (active session)
