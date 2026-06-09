@@ -1,6 +1,6 @@
 // API Status Page - Server Component (SSR)
-// Route entry point: exports page metadata and renders ApiStatusPage.
-// Metadata moved here from the now-deleted api-status/layout.tsx.
+
+export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
 import ApiStatusPage from "@/components/pages/ApiStatusPage";

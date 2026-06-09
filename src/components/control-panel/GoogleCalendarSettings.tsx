@@ -14,7 +14,6 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ControlPanelPageChrome } from "@/components/control-panel/ControlPanelPageChrome";
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import {
   buildGoogleCalendarDisconnectConfirmSubtitle,
@@ -64,8 +63,6 @@ export default function GoogleCalendarSettings() {
 
   return (
     <div className={controlPanelSectionRootClass}>
-      <ControlPanelPageChrome tab="google-calendar" />
-
       {/* Status card — card frame + title stay static; badge + description pulse while loading */}
       <Card className="rounded-[28px] border bg-gradient-to-br from-sky-500/10 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(2,132,199,0.1)]">
         <CardHeader>

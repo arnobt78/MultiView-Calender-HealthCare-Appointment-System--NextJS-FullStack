@@ -4,9 +4,11 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-09)
 
-- **C8 page chrome:** `AppPageChrome` + `control-panel-page-chrome-config.ts`; all 14 CP tabs use `ControlPanelPageChrome` (icon tile, border-b); server shell `ControlPanelSectionChromeServer`; `listBodyLoading = isLoading && !hasCache`.
-- **Admin portal:** `AppPageChrome` indigo header + `PatientStatCard` KPIs + sky glass list panels; `invalidateAdminPortal` unchanged.
-- **Detail chrome:** `AdminUserDetailScreen` + `OrganizationDetailChrome` → `EntityDetailChromeHeader`.
+- **C8.1 CP merged header:** SSR icon/title + client `ControlPanelChromeActions` registry in one sticky row (`ControlPanelSectionPageClient`); no `border-b` on CP chrome; prefetch/invalidation unchanged.
+- **C9 portal chrome:** `portal-page-chrome-config.ts` + `PortalPageChrome`; patient/services/admin/insights/api headers; `EntityDetailChromeHeader` + `PortalDoctorChromeHeader` → `AppPageChrome` (`leading`/`aside` slots).
+- **Dashboard:** toolbar-only `CalendarHeader` (no title/icon row).
+- **CP tabs:** `ControlPanelPageChrome` registers actions/toolbar; org + appointments_mgmt toolbar in header; invitation glass cards.
+- **Verify:** **863/863** · tsc · lint · build PASS.
 - **Invoice lifecycle TS:** `invoices.cancelled_at`, `payments.refunded_at` (`016_invoice_lifecycle_timestamps.sql`); PATCH cancel + refund route writes; `serializeInvoice` + list footer via `invoice-list-meta-status-dates.ts` (Paid / Refunded / Cancelled).
 - **Dialog visit parity:** `invoice-dialog-visit-display.ts`; summary + picker — portrait, care tier, type+duration, `DoctorIdentityCell`; fee strip `buildInvoiceVisitFeeStripLine` on card + amount hint (create/edit).
 - **Visit summary fees:** `invoice-visit-summary` + `billing-appointment-options-load` — fee + doctor display fields on summary/option rows.
@@ -14,8 +16,6 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 - **Invalidation:** unchanged — `invalidateAfterInvoiceWrite` → `invoices.*` + `billing.root`.
 - **Doctor issuer UI:** `doctorCanMutateInvoice` + `viewerUserId` on portal list menu — Send/Edit/Delete only when `invoice.user_id` matches session doctor (API unchanged).
 - **Billing list labels:** `InvoiceVisitDescriptionStack` — Patient / Treating / Owner prefix rows (doctor portal + CP list).
-- **C8 audit (2026-06-09):** PASS — server chrome + actions overlay; dynamic subtitle row; invitation prefetch; invalidation unchanged. **863/863**.
-
 ## Never / Always
 
 **Never:** hardcode query keys; skip invalidation; `<a href>` internal; shadcn Checkbox; `user` on `UserAvatar`; extra impl `.md`.

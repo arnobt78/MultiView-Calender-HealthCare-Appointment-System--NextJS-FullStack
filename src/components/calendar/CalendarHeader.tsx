@@ -27,7 +27,7 @@ import { dashboardShellClass } from "@/lib/dashboard-layout";
 
 // View modes in display order
 const views = ["List", "Day", "Week", "Month"] as const;
-type ViewType = (typeof views)[number];
+export type CalendarHeaderViewType = (typeof views)[number];
 
 const VIEW_ICONS = {
   List: LayoutList,
@@ -45,12 +45,13 @@ const tabInactive =
 const tabActive =
   "border-sky-500/55 bg-linear-to-r from-sky-500 to-sky-700 text-white shadow-[0_12px_36px_rgba(2,132,199,0.34)] hover:from-sky-600/95 hover:to-sky-700/95 hover:text-white active:text-white";
 
-export default function CalendarHeader({
+/** Date nav + view tabs + role actions — `/dashboard` toolbar row (no title/icon chrome). */
+export function CalendarHeaderToolbar({
   view,
   setView,
 }: {
-  view: ViewType;
-  setView: (v: ViewType) => void;
+  view: CalendarHeaderViewType;
+  setView: (v: CalendarHeaderViewType) => void;
 }) {
   const { currentDate, setCurrentDate } = useDateContext();
   const { user } = useAuth();
@@ -234,5 +235,20 @@ export default function CalendarHeader({
     </>
   );
 
-  return <PageToolbarChrome className={dashboardShellClass}>{toolbar}</PageToolbarChrome>;
+  return toolbar;
+}
+
+/** Default export — `PageToolbarChrome` shell around `CalendarHeaderToolbar`. */
+export default function CalendarHeader({
+  view,
+  setView,
+}: {
+  view: CalendarHeaderViewType;
+  setView: (v: CalendarHeaderViewType) => void;
+}) {
+  return (
+    <PageToolbarChrome className={dashboardShellClass}>
+      <CalendarHeaderToolbar view={view} setView={setView} />
+    </PageToolbarChrome>
+  );
 }

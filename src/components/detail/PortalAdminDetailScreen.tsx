@@ -4,9 +4,13 @@
  * Portal read-only admin account — doctors open from `/admins/:id` (calendar owner links).
  */
 import { format } from "date-fns";
-import { ArrowLeft, CalendarDays, Clock, Hash, List, Lock, Mail, ShieldCheck } from "lucide-react";
+import { ArrowLeft, CalendarDays, Clock, Hash, List, Lock, Mail, Shield, ShieldCheck } from "lucide-react";
 import { BackNavigationLink } from "@/components/shared/BackNavigationLink";
-import { PageHeader } from "@/components/shared/PageHeader";
+import { EntityDetailChromeHeader } from "@/components/shared/entity-detail/EntityDetailChromeHeader";
+import {
+  entityDetailChromeSlateIconClass,
+  entityDetailChromeSlateIconTileClass,
+} from "@/lib/page-chrome-classes";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { UserAvatar } from "@/components/shared/UserAvatar";
@@ -68,8 +72,11 @@ export function PortalAdminDetailScreen({
 
   return (
     <div className={appPortalSectionRootClass}>
-      <PageHeader
+      <EntityDetailChromeHeader
         className={entityDetailPageHeaderClass}
+        icon={Shield}
+        iconTileClassName={entityDetailChromeSlateIconTileClass}
+        iconClassName={entityDetailChromeSlateIconClass}
         title={displayName}
         description="Admin Account — Directory Profile"
         actions={

@@ -2,12 +2,16 @@ import { getSessionUser } from "@/lib/session";
 import { getUserRole } from "@/lib/rbac";
 import type { ControlPanelSidebarTabValue } from "@/lib/control-panel-nav-config";
 import { prefetchControlPanelSection } from "@/lib/control-panel-section-prefetch";
-import { ControlPanelSectionChromeServer } from "@/components/control-panel/ControlPanelSectionChromeServer";
+import { getControlPanelPageChromeConfig } from "@/lib/control-panel-page-chrome-config";
+import {
+  ControlPanelChromeIconServer,
+  ControlPanelChromeTitleServer,
+} from "@/components/control-panel/ControlPanelChromeStaticServer";
 import { ControlPanelSectionPageClient } from "@/components/control-panel/ControlPanelSectionPageClient";
 
 /**
  * Shared async server entry for dedicated `/control-panel/[segment]` list routes.
- * Prefetches only the active section's data, then seeds client cache before paint.
+ * Prefetches section data, renders SSR chrome fragments, seeds client cache before paint.
  */
 export async function ControlPanelSectionServerPage({
   tab,
@@ -21,10 +25,15 @@ export async function ControlPanelSectionServerPage({
       ? await prefetchControlPanelSection(tab, sessionUser.userId, sessionUser.email, role)
       : null;
 
+  const chromeConfig = getControlPanelPageChromeConfig(tab);
+
   return (
-    <div className="relative w-full">
-      <ControlPanelSectionChromeServer tab={tab} />
-      <ControlPanelSectionPageClient tab={tab} initial={initial} chromeFromServer />
-    </div>
+    <ControlPanelSectionPageClient
+      tab={tab}
+      initial={initial}
+      defaultDescription={chromeConfig.description}
+      serverChromeIcon={<ControlPanelChromeIconServer tab={tab} />}
+      serverChromeTitle={<ControlPanelChromeTitleServer tab={tab} />}
+    />
   );
 }

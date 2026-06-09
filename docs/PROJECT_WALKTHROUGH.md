@@ -1,6 +1,14 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-04 — Doctor portal invoice issuer UI gate)
+## Latest (2026-06-09 — C8.1 merged CP header + C9 portal chrome)
+
+- **C8.1 fix:** Replaced broken SSR+absolute-overlay split with merged sticky row — `ControlPanelChromeIconServer`/`TitleServer` (SSR) + `ControlPanelChromeActionsSlot` (client registry). `ControlPanelPageChrome` → `ControlPanelChromeActions` inside shell. CP headers omit `border-b` (body `space-y-3` separates). Prefetch + invalidation unchanged.
+- **C9 portal:** `portal-page-chrome-config.ts` + `PortalPageChrome`; migrated patient-portal, services, admin-portal, insights, api-docs/status; `/admins/[id]` slate `EntityDetailChromeHeader`; `PortalDoctorChromeHeader` uses `AppPageChrome` slots.
+- **Dashboard:** `CalendarHeader` toolbar only (date nav left) — no calendar title/icon row.
+- **Per-tab:** org + appointment-mgmt filter/export in header `toolbar`; invitation forms glass parity; google-calendar header from shell only.
+- **Verify:** **863/863** · tsc · lint · build.
+
+## Prior (2026-06-04 — Doctor portal invoice issuer UI gate)
 
 - **RBAC UI:** `doctorCanMutateInvoice` in `invoice-detail-action-capabilities.ts`; doctor portal billing ⋮ menu gates Send/Edit/Delete/Cancel on `invoice.user_id === sessionUserId` — linked calendar owner sees View only; issuer + admin unchanged on API.
 - **Wire:** `DoctorPortalPage` → `DoctorPortalInvoicesCard` → `DoctorPortalInvoiceListRow` → `InvoiceAdminActionsMenu` (`viewerUserId`).
@@ -148,7 +156,7 @@
 ## Prior (2026-05-31)
 
 - **Agile V AQMS:** `.agile-v/` — REQ-0001..0040. **C8 active** (`REQ-0038..0040` page chrome + admin redesign); `.cursor/rules/agile-v-infinity-loop.mdc` always on.
-- **C8 page chrome (2026-06-09):** `AppPageChrome` + `ControlPanelPageChrome` (14 tabs); SSR shell + actions overlay + dynamic subtitle row; invitation prefetch; admin `PatientStatCard` KPIs. Audit PASS **863/863** · `f30acbd`+.
+- **C8/C8.1 page chrome (2026-06-09):** `AppPageChrome` + CP config; C8.1 merged SSR+client header registry (replaces overlay bug); C9 `PortalPageChrome`; **863/863**.
 
 ## Prior (2026-05-30)
 

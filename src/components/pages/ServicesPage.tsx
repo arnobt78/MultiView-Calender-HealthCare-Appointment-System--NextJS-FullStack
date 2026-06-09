@@ -49,7 +49,7 @@ import { DoctorSpecialtyBadge } from "@/components/shared/doctor-display/DoctorS
 import { EntityActiveStatusBadge } from "@/components/shared/entity-display/EntityActiveStatusBadge";
 import { DoctorCardHeroImage } from "@/components/shared/doctor-display/DoctorCardHeroImage";
 import { DoctorAvailabilityGroups } from "@/components/shared/doctor-display/DoctorAvailabilityGroups";
-import { PortalChromeHeader } from "@/components/shared/PortalChromeHeader";
+import { PortalPageChrome } from "@/components/shared/PortalPageChrome";
 import { AppSectionErrorBanner } from "@/components/shared/AppSectionErrorBanner";
 import { appPortalSectionRootClass } from "@/lib/section-page-layout";
 import { isDoctorActive } from "@/lib/entity-active-status";
@@ -273,11 +273,7 @@ export default function ServicesPage({ initialDoctors, initialServiceCatalog }: 
 
   return (
     <div className={appPortalSectionRootClass}>
-      <PortalChromeHeader
-        icon={Stethoscope}
-        title="Doctors & Services"
-        description="Browse our specialist doctors and available appointment services and book your appointment with ease."
-      />
+      <PortalPageChrome route="services" />
 
       <section>
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 mb-4">

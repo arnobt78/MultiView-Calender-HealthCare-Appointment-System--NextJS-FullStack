@@ -38,7 +38,7 @@ export function AppPageChromeServer({
     <div
       className={cn(
         pageHeaderRootClass,
-        "border-b border-gray-100/80",
+        !isCp && "border-b border-gray-100/80",
         className
       )}
       data-cp-chrome-server=""

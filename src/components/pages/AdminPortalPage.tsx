@@ -26,7 +26,7 @@ import { apiClient } from "@/lib/api-client";
 import type { AdminPortalData, Appointment, DoctorRow } from "@/types/types";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AppPageChrome } from "@/components/shared/AppPageChrome";
+import { PortalPageChrome } from "@/components/shared/PortalPageChrome";
 import { PatientStatCard } from "@/components/control-panel/PatientStatCard";
 import { appPortalSectionRootClass } from "@/lib/section-page-layout";
 import { portalPanelSectionHeadingClass } from "@/lib/page-chrome-classes";
@@ -46,7 +46,6 @@ import {
   CalendarClock,
   Clock,
   CreditCard,
-  LayoutDashboard,
   MapPin,
   Stethoscope,
   Users,
@@ -215,13 +214,9 @@ export default function AdminPortalPage({ initialData }: AdminPortalPageProps) {
 
   return (
     <div className={cn(appPortalSectionRootClass, "max-w-9xl mx-auto")}>
-      <AppPageChrome
-        variant="portal"
-        icon={LayoutDashboard}
-        tone="indigo"
-        title="Admin Portal"
+      <PortalPageChrome
+        route="admin_portal"
         description={`Clinic-wide overview · ${format(new Date(), "EEEE, MMMM d yyyy")}`}
-        borderBottom
       />
 
       <div className="grid grid-cols-2 gap-2 md:grid-cols-4">

@@ -2,21 +2,24 @@
 
 import type { LucideIcon } from "lucide-react";
 import { AppPageChrome } from "@/components/shared/AppPageChrome";
+import type { PageChromeTone } from "@/lib/page-chrome-classes";
 
 type PortalChromeHeaderProps = {
   icon: LucideIcon;
   title: string;
   description: React.ReactNode;
+  tone?: PageChromeTone;
   actions?: React.ReactNode;
   toolbar?: React.ReactNode;
   className?: string;
 };
 
-/** Portal page chrome — delegates to `AppPageChrome` portal variant. */
+/** @deprecated Prefer `PortalPageChrome` with `portal-page-chrome-config` route keys. */
 export function PortalChromeHeader({
   icon,
   title,
   description,
+  tone = "sky",
   actions,
   toolbar,
   className,
@@ -25,7 +28,7 @@ export function PortalChromeHeader({
     <AppPageChrome
       variant="portal"
       icon={icon}
-      tone="sky"
+      tone={tone}
       title={title}
       description={description}
       actions={actions}

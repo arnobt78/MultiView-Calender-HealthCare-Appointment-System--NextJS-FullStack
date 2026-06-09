@@ -3,7 +3,7 @@
  * Used by `AuthShell` (main), `Navbar` inner row, and fixed footers so routes
  * stay aligned without repeating `max-w-9xl mx-auto px-*` on every page.
  *
- * Calendar (`/dashboard`) opts out in `AuthShell` — `CalendarHeader` applies `dashboardShellClass` on `PortalChromeHeader`.
+ * Calendar (`/dashboard`) opts out in `AuthShell` — `CalendarHeader` toolbar only (no title/icon row).
  */
 /** `pb-3` — default bottom inset for scrollable portal routes (`AuthShell` wrapper). */
 export const dashboardShellClass =

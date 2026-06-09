@@ -7,6 +7,7 @@
  * doctor picker via `DoctorDirectoryPickerCard` + `StaffAppointmentPickerField`.
  */
 
+import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { cn, toTitleCaseLabel } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -36,6 +37,12 @@ export type AppPageChromeProps = {
   description?: React.ReactNode;
   actions?: React.ReactNode;
   toolbar?: React.ReactNode;
+  /** Replaces `icon` tile — e.g. doctor avatar square on portal chrome. */
+  leading?: ReactNode;
+  /** Inline after title — e.g. specialty badge. */
+  titleAddon?: ReactNode;
+  /** Right column before `actions` — e.g. doctor portal "Today" block. */
+  aside?: ReactNode;
   /** CP list pages stick under navbar while scrolling table content. */
   sticky?: boolean;
   borderBottom?: boolean;
@@ -65,6 +72,9 @@ export function AppPageChrome({
   description,
   actions,
   toolbar,
+  leading,
+  titleAddon,
+  aside,
   sticky,
   borderBottom,
   loading = false,
@@ -74,7 +84,8 @@ export function AppPageChrome({
   const isCp = variant === "control-panel";
   const isEntity = variant === "entity-detail";
 
-  const useBorder = borderBottom ?? isPortal;
+  /** CP list headers omit border-b — body `space-y-3` provides separation (portal/entity keep border). */
+  const useBorder = borderBottom ?? (isPortal || isEntity);
   const useSticky = sticky ?? isCp;
 
   const toneClasses = resolveToneClasses(tone, iconTileClassName, iconClassName);
@@ -122,26 +133,32 @@ export function AppPageChrome({
         )}
       >
         <div className="flex min-w-0 flex-1 items-stretch gap-2">
-          {Icon ? (
+          {leading ? (
+            leading
+          ) : Icon ? (
             <span className={toneClasses.tile} aria-hidden>
               <Icon className={toneClasses.icon} />
             </span>
           ) : null}
           <div className={pageChromeTitleStackClass}>
-            {isPortal ? (
-              <h1 className={titleClass}>{titleNode}</h1>
-            ) : (
-              <div role="heading" aria-level={1} className={titleClass}>
-                {titleNode}
-              </div>
-            )}
+            <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+              {isPortal ? (
+                <h1 className={titleClass}>{titleNode}</h1>
+              ) : (
+                <div role="heading" aria-level={1} className={titleClass}>
+                  {titleNode}
+                </div>
+              )}
+              {titleAddon}
+            </div>
             {description ? (
               <div className={descriptionClass}>{description}</div>
             ) : null}
           </div>
         </div>
+        {aside}
         {actions ? (
-          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 self-center">
             {actions}
           </div>
         ) : null}

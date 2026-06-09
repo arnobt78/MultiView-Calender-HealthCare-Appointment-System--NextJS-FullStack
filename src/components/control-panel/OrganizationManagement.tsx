@@ -369,8 +369,25 @@ export default function OrganizationManagement() {
 
   return (
     <div className={controlPanelSectionRootClass}>
-      {/* Page header */}
-      <ControlPanelPageChrome tab="organizations" />
+      <ControlPanelPageChrome
+        tab="organizations"
+        toolbar={
+          <div className="flex w-full flex-wrap items-center justify-between gap-4">
+            <p className="text-sm text-muted-foreground">
+              {loading ? "" : `${organizations.length} organisation${organizations.length !== 1 ? "s" : ""}`}
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <Input
+                placeholder="Filter organizations..."
+                value={globalFilter}
+                onChange={(e) => setGlobalFilter(e.target.value)}
+                className="w-56"
+              />
+              <CreateOrgDialog onCreate={createOrg} />
+            </div>
+          </div>
+        }
+      />
 
       {/* Stats row */}
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -390,22 +407,6 @@ export default function OrganizationManagement() {
           value={allUsers.length}
           valueSkeleton={loading}
         />
-      </div>
-
-      {/* Chrome — filter and add button */}
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <p className="text-sm text-muted-foreground">
-          {loading ? "" : `${organizations.length} organisation${organizations.length !== 1 ? "s" : ""}`}
-        </p>
-        <div className="flex items-center gap-2 flex-wrap">
-          <Input
-            placeholder="Filter organizations..."
-            value={globalFilter}
-            onChange={(e) => setGlobalFilter(e.target.value)}
-            className="w-56"
-          />
-          <CreateOrgDialog onCreate={createOrg} />
-        </div>
       </div>
 
       {/* Table card — glassmorphic shell always visible */}

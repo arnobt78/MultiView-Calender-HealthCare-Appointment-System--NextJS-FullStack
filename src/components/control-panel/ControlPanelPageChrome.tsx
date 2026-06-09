@@ -1,16 +1,16 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { AppPageChrome } from "@/components/shared/AppPageChrome";
-import { useControlPanelChromeFromServer } from "@/components/control-panel/ControlPanelChromeContext";
 import {
   getControlPanelPageChromeConfig,
   type ControlPanelPageChromeConfig,
 } from "@/lib/control-panel-page-chrome-config";
 import type { ControlPanelSidebarTabValue } from "@/lib/control-panel-nav-config";
+import { ControlPanelChromeActions } from "@/components/control-panel/ControlPanelChromeActions";
+import { useControlPanelChromeFromServer } from "@/components/control-panel/ControlPanelChromeContext";
+
 type ControlPanelPageChromeProps = {
   tab: ControlPanelSidebarTabValue;
-  /** Override config title (default from sidebar label). */
   title?: React.ReactNode;
   description?: React.ReactNode;
   actions?: React.ReactNode;
@@ -20,8 +20,8 @@ type ControlPanelPageChromeProps = {
 };
 
 /**
- * CP list-section header — icon tile + border-b + sticky blur.
- * When server chrome is active, only `actions`/`toolbar` render (overlay row).
+ * CP section header — inside merged shell registers actions via `ControlPanelChromeActions`.
+ * Outside merged shell (legacy paths) renders full `AppPageChrome`.
  */
 export function ControlPanelPageChrome({
   tab,
@@ -32,44 +32,20 @@ export function ControlPanelPageChrome({
   loading,
   className,
 }: ControlPanelPageChromeProps) {
-  const chromeFromServer = useControlPanelChromeFromServer();
+  const inMergedShell = useControlPanelChromeFromServer();
   const config: ControlPanelPageChromeConfig = getControlPanelPageChromeConfig(tab);
 
-  if (chromeFromServer) {
-    const titleOverride =
-      title != null && title !== config.title ? title : null;
-    const descriptionOverride =
-      description != null && description !== config.description
-        ? description
-        : null;
-    if (!actions && !toolbar && !titleOverride && !descriptionOverride) {
+  if (inMergedShell) {
+    if (!actions && !toolbar && !description && !title) {
       return null;
     }
     return (
-      <div className={cn("relative w-full", className)}>
-        {(actions || toolbar) ? (
-          <div className="pointer-events-none absolute inset-x-0 top-0 z-30 flex min-h-[3.5rem] items-center justify-end gap-2 px-0">
-            {actions ? (
-              <div className="pointer-events-auto flex shrink-0 flex-wrap items-center justify-end gap-2">
-                {actions}
-              </div>
-            ) : null}
-            {toolbar ? (
-              <div className="pointer-events-auto w-full">{toolbar}</div>
-            ) : null}
-          </div>
-        ) : null}
-        {titleOverride || descriptionOverride ? (
-          <div className="flex min-h-[1.25rem] flex-wrap items-center justify-between gap-2 border-b border-gray-100/80 pb-2 text-xs text-gray-500">
-            {titleOverride ? (
-              <div className="text-sm font-semibold text-gray-700">{titleOverride}</div>
-            ) : (
-              <span />
-            )}
-            {descriptionOverride ? <div>{descriptionOverride}</div> : null}
-          </div>
-        ) : null}
-      </div>
+      <ControlPanelChromeActions
+        actions={actions}
+        toolbar={toolbar}
+        description={description}
+        title={title}
+      />
     );
   }
 
@@ -83,7 +59,6 @@ export function ControlPanelPageChrome({
       actions={actions}
       toolbar={toolbar}
       sticky
-      borderBottom
       loading={loading}
       className={className}
     />

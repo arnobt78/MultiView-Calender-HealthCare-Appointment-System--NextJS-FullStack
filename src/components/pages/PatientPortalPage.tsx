@@ -71,7 +71,7 @@ import {
 import type { Patient, PatientClinicalProfile, User as AppUser } from "@/types/types";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { DoctorIdentityRow } from "@/components/shared/doctor-display/DoctorIdentityRow";
-import { PortalChromeHeader } from "@/components/shared/PortalChromeHeader";
+import { PortalPageChrome } from "@/components/shared/PortalPageChrome";
 import { appPortalSectionRootClass } from "@/lib/section-page-layout";
 import { ProfileDefinitionRow } from "@/components/shared/profile/ProfileDefinitionRow";
 import { EntityIdCopyInline } from "@/components/shared/EntityIdCopyInline";
@@ -432,10 +432,8 @@ export default function PatientPortalPage({
 
   return (
     <div className={appPortalSectionRootClass}>
-      <PortalChromeHeader
-        icon={Activity}
-        title="Patient Portal"
-        description="View your appointment history and request new appointments"
+      <PortalPageChrome
+        route="patient_portal"
         actions={<BookAppointmentDialog />}
       />
 

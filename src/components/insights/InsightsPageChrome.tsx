@@ -1,15 +1,7 @@
 "use client";
 
-/**
- * /insights top chrome — same icon, title, and subtitle on success, loading, and error.
- */
-
-import { TrendingUp } from "lucide-react";
-import { PortalChromeHeader } from "@/components/shared/PortalChromeHeader";
-import {
-  INSIGHTS_PAGE_BODY,
-  INSIGHTS_PAGE_TITLE,
-} from "@/lib/insights-page-copy";
+import { PortalPageChrome } from "@/components/shared/PortalPageChrome";
+import { INSIGHTS_PAGE_BODY } from "@/lib/insights-page-copy";
 import { insightsScopeBodyClass, insightsScopeHintClass } from "@/lib/insights-ui-classes";
 
 type Props = {
@@ -19,9 +11,8 @@ type Props = {
 
 export function InsightsPageChrome({ scopeHint, actions }: Props) {
   return (
-    <PortalChromeHeader
-      icon={TrendingUp}
-      title={INSIGHTS_PAGE_TITLE}
+    <PortalPageChrome
+      route="insights"
       description={
         scopeHint ? (
           <>

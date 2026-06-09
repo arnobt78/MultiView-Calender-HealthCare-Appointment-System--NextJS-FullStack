@@ -220,8 +220,34 @@ export default function AppointmentsManagement() {
 
   return (
     <div className={controlPanelSectionRootClass}>
-      {/* Page header */}
-      <ControlPanelPageChrome tab="appointments_mgmt" />
+      <ControlPanelPageChrome
+        tab="appointments_mgmt"
+        toolbar={
+          <div className="flex w-full flex-wrap items-center justify-between gap-4">
+            <p className="text-sm text-muted-foreground">
+              {loading ? "" : `${filtered.length} appointment${filtered.length !== 1 ? "s" : ""}`}
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <Input
+                placeholder="Filter appointments…"
+                value={globalFilter}
+                onChange={(e) => setGlobalFilter(e.target.value)}
+                className="w-56"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => exportToCSV(filtered)}
+                disabled={loading || filtered.length === 0}
+                className="gap-2"
+              >
+                <Download className="h-4 w-4" />
+                Export CSV
+              </Button>
+            </div>
+          </div>
+        }
+      />
 
       {/* Stats row — card shells always visible; value slots pulse while loading */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
@@ -250,29 +276,6 @@ export default function AppointmentsManagement() {
             </CardContent>
           </Card>
         ))}
-      </div>
-
-      {/* Chrome — filter and export button always static */}
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <p className="text-sm text-muted-foreground">
-          {loading ? "" : `${filtered.length} appointment${filtered.length !== 1 ? "s" : ""}`}
-        </p>
-        <Input
-          placeholder="Filter appointments…"
-          value={globalFilter}
-          onChange={(e) => setGlobalFilter(e.target.value)}
-          className="w-56"
-        />
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => exportToCSV(filtered)}
-          disabled={loading || filtered.length === 0}
-          className="gap-2"
-        >
-          <Download className="h-4 w-4" />
-          Export CSV
-        </Button>
       </div>
 
       {/* Table — glass card shell always visible; body rows pulse while loading */}

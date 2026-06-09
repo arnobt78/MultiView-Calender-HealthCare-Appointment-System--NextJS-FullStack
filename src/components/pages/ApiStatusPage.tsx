@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { PortalPageChrome } from "@/components/shared/PortalPageChrome";
 
 function formatDate(date: Date) {
   return date.toLocaleString(undefined, {
@@ -90,8 +91,8 @@ export default function ApiStatusPage() {
 
   return (
     <div className="py-8">
-      <h1 className="text-2xl font-semibold mb-4">API & Project Status</h1>
-      <div className="mb-4">
+      <PortalPageChrome route="api_status" />
+      <div className="mb-4 mt-4">
         <div className="text-lg font-semibold">Project:</div>
         <div className="text-gray-700">HealthCal Pro</div>
       </div>

@@ -21,6 +21,8 @@ import {
 import { useInvitations } from "@/hooks/useInvitations";
 import { apiClient } from "@/lib/api-client";
 import { useDebounce } from "@/hooks/useDebounce";
+import { skyGlassTableFrameClass } from "@/lib/calendar-header-action-styles";
+import { cn } from "@/lib/utils";
 
 const permissions = [
   { value: "read", label: "Read Only" },
@@ -74,7 +76,7 @@ export default function UserAccessPermission() {
   };
 
   return (
-    <Card className="w-full">
+    <Card className={cn("w-full overflow-hidden rounded-[28px]", skyGlassTableFrameClass)}>
       <CardHeader>
         <CardTitle className="text-sm font-semibold text-gray-700">Send invitation</CardTitle>
         <CardDescription className="text-base text-muted-foreground">Invite someone to access a user&apos;s dashboard.</CardDescription>

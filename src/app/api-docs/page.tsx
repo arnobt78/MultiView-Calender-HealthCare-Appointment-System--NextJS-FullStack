@@ -1,6 +1,7 @@
 // API Docs Page - Server Component (SSR)
 // Route entry point: exports page metadata and renders ApiDocsPage.
-// Metadata moved here from the now-deleted api-docs/layout.tsx.
+
+export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
 import ApiDocsPage from "@/components/pages/ApiDocsPage";

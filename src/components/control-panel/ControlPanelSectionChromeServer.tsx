@@ -1,6 +1,6 @@
 /**
- * Server-rendered CP section chrome — static title/icon row (no client hooks).
- * Paired with `ControlPanelSectionPageClient` when `hideChrome` is set on the client body.
+ * @deprecated Use `ControlPanelChromeIconServer` + `ControlPanelChromeTitleServer`
+ * inside `ControlPanelSectionPageClient` merged sticky header.
  */
 
 import { AppPageChromeServer } from "@/components/shared/AppPageChromeServer";

@@ -3,19 +3,13 @@
 // Removing the directive allows Next.js to render it as a Server Component and
 // tree-shake it from the client JS bundle.
 
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import { ApiDocsPageHeader } from "@/components/pages/ApiDocsPageHeader";
 
 export default function ApiDocsPage() {
   return (
     <div className="py-8">
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-semibold">API Documentation</h1>
-        <Button asChild variant="outline" size="sm">
-          <Link href="/dashboard">Back to Dashboard</Link>
-        </Button>
-      </div>
-      <div className="mb-8">
+      <ApiDocsPageHeader />
+      <div className="mb-8 mt-4">
         <p className="text-gray-700 mb-2">
           Welcome to the HealthCal Pro API documentation. Below you&#39;ll find a summary of all available endpoints, their usage, and links to the full OpenAPI docs.
         </p>
