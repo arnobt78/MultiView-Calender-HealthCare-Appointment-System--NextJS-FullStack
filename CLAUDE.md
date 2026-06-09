@@ -6,7 +6,7 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 - **C8.1 CP merged header:** SSR icon/title + client `ControlPanelChromeActions` registry in one sticky row (`ControlPanelSectionPageClient`); no `border-b` on CP chrome; prefetch/invalidation unchanged.
 - **C9 portal chrome:** `portal-page-chrome-config.ts` + `PortalPageChrome`; patient/services/admin/insights/api headers; `EntityDetailChromeHeader` + `PortalDoctorChromeHeader` → `AppPageChrome` (`leading`/`aside` slots).
-- **Dashboard:** toolbar-only `CalendarHeader` (no title/icon row).
+- **Dashboard:** toolbar-only `CalendarHeader` (no `portal-page-chrome` calendar key).
 - **CP tabs:** `ControlPanelPageChrome` registers actions/toolbar; org + appointments_mgmt toolbar in header; invitation glass cards.
 - **Verify:** **863/863** · tsc · lint · build PASS.
 - **Invoice lifecycle TS:** `invoices.cancelled_at`, `payments.refunded_at` (`016_invoice_lifecycle_timestamps.sql`); PATCH cancel + refund route writes; `serializeInvoice` + list footer via `invoice-list-meta-status-dates.ts` (Paid / Refunded / Cancelled).

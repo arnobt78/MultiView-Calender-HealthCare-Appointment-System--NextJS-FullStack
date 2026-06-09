@@ -6,12 +6,12 @@
 
 | Field | Value |
 |-------|-------|
-| **Cycle** | **C8** (active) — page chrome + admin redesign |
-| **Phase** | Verify |
-| **Stage** | 4 — automated PASS; Human Gates pending |
-| **Status** | `verify_complete` — **863/863** tests (166 files) |
+| **Cycle** | **C8.1/C9** closed — merged CP header + portal chrome |
+| **Phase** | Acceptance (automated) |
+| **Stage** | 4 — PASS; Human smoke optional |
+| **Status** | `shipped` — **863/863** tests (166 files) |
 | **Last Updated** | 2026-06-09 |
-| **HEAD** | `f30acbd` (C8 chrome) |
+| **HEAD** | `52ba8f8+` (C8.1 merged header + C9 portal) |
 | **Activation** | `ACTIVATION.md` + `SKILLS.md` (24) + Cursor rule restored |
 
 ## Infinity Loop (active session)
@@ -22,10 +22,10 @@
 
 ## Resume next session
 
-1. **Manual smoke:** doctor portal billing — issuer vs linked-owner Send; dialog visit parity; PDF refund date.
-2. **Human Gates:** GATE-0013/0014 (C7); GATE-0007/0008 (C4 ext) when freezing archives.
-3. **Verify:** `npm test && npx tsc --noEmit && npm run lint && npm run build`
-4. **New work:** specify **C8** in `REQUIREMENTS.md` before coding.
+1. **Manual smoke:** all 14 CP tabs header/actions; portal routes; dashboard toolbar-only.
+2. **Uncommitted local:** dialogs/calendar/login typography (21 files) — separate commit or discard.
+3. **Human Gates:** GATE-0013/0014 (C7); C8 GATE pending.
+4. **New work:** specify **C10** in `REQUIREMENTS.md` before coding.
 
 ## Billing extension (C4 ext, main)
 

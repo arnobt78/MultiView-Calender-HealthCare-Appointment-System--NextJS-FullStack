@@ -5,7 +5,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Activity,
-  CalendarDays,
   FileCode,
   LayoutDashboard,
   Stethoscope,
@@ -23,8 +22,7 @@ export type PortalPageChromeRouteKey =
   | "insights"
   | "admin_portal"
   | "api_docs"
-  | "api_status"
-  | "calendar";
+  | "api_status";
 
 export type PortalPageChromeConfig = {
   route: PortalPageChromeRouteKey;
@@ -78,13 +76,6 @@ const PORTAL_PAGE_CHROME: Record<PortalPageChromeRouteKey, PortalPageChromeConfi
     tone: "slate",
     title: "API & Project Status",
     description: "Health checks and endpoint availability for HealthCal Pro",
-  },
-  calendar: {
-    route: "calendar",
-    icon: CalendarDays,
-    tone: "sky",
-    title: "Calendar",
-    description: "View and manage appointments across day, week, month, and list views",
   },
 };
 

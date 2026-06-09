@@ -4,7 +4,7 @@
 
 - **C8.1 fix:** Replaced broken SSR+absolute-overlay split with merged sticky row — `ControlPanelChromeIconServer`/`TitleServer` (SSR) + `ControlPanelChromeActionsSlot` (client registry). `ControlPanelPageChrome` → `ControlPanelChromeActions` inside shell. CP headers omit `border-b` (body `space-y-3` separates). Prefetch + invalidation unchanged.
 - **C9 portal:** `portal-page-chrome-config.ts` + `PortalPageChrome`; migrated patient-portal, services, admin-portal, insights, api-docs/status; `/admins/[id]` slate `EntityDetailChromeHeader`; `PortalDoctorChromeHeader` uses `AppPageChrome` slots.
-- **Dashboard:** `CalendarHeader` toolbar only (date nav left) — no calendar title/icon row.
+- **Dashboard:** `CalendarHeader` toolbar only — no `PortalPageChrome` / unused calendar config key.
 - **Per-tab:** org + appointment-mgmt filter/export in header `toolbar`; invitation forms glass parity; google-calendar header from shell only.
 - **Verify:** **863/863** · tsc · lint · build.
 

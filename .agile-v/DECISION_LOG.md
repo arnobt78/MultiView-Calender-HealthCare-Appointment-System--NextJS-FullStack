@@ -66,3 +66,4 @@
 | 2026-06-04T22:20:00Z | red-team | C4 billing ext verify PASS | `d2a4cd5`; 863/863; tsc/lint/build; GATE-0007/0008 pending | REQ-0016..0018 |
 | 2026-06-04T15:30:00Z | init | Infinity Loop re-init — framework bootstrap refresh | Cursor rule restored; ACTIVATION/STATE/BOOTSTRAP synced; C1..C7 index; 863/863 re-verify | REQ-0001..0037 |
 | 2026-06-09T16:20:00Z | build | C8 page chrome + admin portal redesign | AppPageChrome; 14 CP headers; SSR chrome shell; admin PatientStatCard KPIs; 863/863 | REQ-0038..0040 |
+| 2026-06-09T17:30:00Z | build | C8.1 merged CP header + C9 portal chrome | Registry slots fix overlay bug; PortalPageChrome; CP no border-b; dashboard toolbar-only; invalidation unchanged; 863/863 | REQ-0041..0045 |

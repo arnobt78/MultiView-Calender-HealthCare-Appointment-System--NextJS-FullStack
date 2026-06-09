@@ -1,12 +1,12 @@
 # Requirements — HealthCal Pro
 
-<!-- Revision: C1..C8 | C8 active | Last updated: 2026-06-09 -->
+<!-- Revision: C1..C9 | C8.1/C9 shipped | Last updated: 2026-06-09 -->
 
 ## Document Control
 
 | Field | Value |
 |-------|-------|
-| Cycle | C1–C2 archived · C3–C7 verify+gate pending · **C8 active** (REQ-0038..0040) |
+| Cycle | C1–C2 archived · C3–C7 verify+gate pending · **C8/C8.1/C9 shipped** (REQ-0038..0045) |
 | Author | Requirement Architect |
 | Gate 1 status | C1 GATE-0001 · C2 GATE-0003 approved |
 | Canonical source | this file |
@@ -85,7 +85,12 @@
 | REQ-0037 | approved [C7] | — | ART-0188..0192 | VER-0067..0068 |
 | REQ-0038 | approved [C8] | — | ART-0202..0208 | pending |
 | REQ-0039 | approved [C8] | REQ-0038 | ART-0209..0211 | pending |
-| REQ-0040 | approved [C8] | REQ-0038 | ART-0212..0216 | pending |
+| REQ-0040 | approved [C8] | REQ-0038 | ART-0212..0216 | VER-0070 |
+| REQ-0041 | approved [C8.1] | REQ-0038 | ART-0217..0219 | VER-0070 |
+| REQ-0042 | approved [C9] | REQ-0041 | ART-0220..0222 | VER-0070 |
+| REQ-0043 | approved [C9] | REQ-0042 | ART-0223 | VER-0070 |
+| REQ-0044 | approved [C9] | REQ-0042 | — | VER-0070 |
+| REQ-0045 | approved [C8.1] | REQ-0041 | — | VER-0070 |
 
 ### REQ-0004 — Dashboard/CP SSR prefetch + calendar batch assignee fetch
 
