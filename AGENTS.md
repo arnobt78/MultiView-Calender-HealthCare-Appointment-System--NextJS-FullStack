@@ -14,7 +14,7 @@
 
 ## Resume
 
-1. `.agile-v/STATE.md` — cycle **C7**, verify PASS **829**
+1. `.agile-v/STATE.md` — cycle **C7** + C4 ext, verify PASS **863/863**
 2. `.agile-v/CHECKPOINTS.md` if PENDING HITL
 3. Parent **`REQ-XXXX`** in `.agile-v/REQUIREMENTS.md` before any work
 
@@ -38,6 +38,7 @@ npm test && npx tsc --noEmit && npm run lint && npm run build
 |-------|-----|--------|-------|
 | C1–C2 | 0001..0008 | closed | ✓ |
 | C3–C6 | 0009..0033 | verify/shipped | 0005..0012 pending |
+| C4 ext | 0016..0018 | billing ext shipped | 0007/0008 pending |
 | **C7** | **0034..0037** | **verify PASS** | **0013/0014 pending** |
 
 **Next:** approve gates → archive → specify **C8** before new code.

@@ -10,7 +10,7 @@
 | **Commits** | `dcd4374`, `e73a7d0` |
 | **Gate 1** | GATE-0013 (pending) |
 | **Gate 2** | GATE-0014 (pending) |
-| **Tests** | **829**/829 Vitest (158 files) |
+| **Tests** | **863**/863 Vitest (166 files) — includes C4 billing ext on main |
 
 ## Scope
 

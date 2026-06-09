@@ -1,6 +1,6 @@
 # Agile V Bootstrap — HealthCal Pro
 
-<!-- Framework initialization + cycle index | Agile V v1.4 | Last refresh: 2026-06-08 (C7 bootstrap) -->
+<!-- Framework initialization + cycle index | Agile V v1.4 | Last refresh: 2026-06-04 (Infinity Loop re-init) -->
 
 ## Infinity Loop (SCOPE-V)
 
@@ -57,7 +57,7 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 | 28 | `cycles/C7/README.md` | Services + cancel + cron + phone (active) | ✓ |
 | 29 | `agile-v-core.md` | Project-local core binding | ✓ |
 | 30 | `AGENTS.md` (repo root) | Agent load order + resume | ✓ |
-| 31 | `.cursor/rules/agile-v-infinity-loop.mdc` | Always-on Cursor rule | ✓ restored 2026-06-08 |
+| 31 | `.cursor/rules/agile-v-infinity-loop.mdc` | Always-on Cursor rule | ✓ restored 2026-06-04 |
 
 ---
 
@@ -109,13 +109,15 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 
 ---
 
-## C4 Bootstrap (2026-06-04) — Invoice + notifications tranche
+## C4 Bootstrap (2026-06-04) — Invoice + notifications + billing extension
 
 | Step | Artifact | Status |
 |------|----------|--------|
 | 1 | REQ-0016..0020 `approved [C4]` | ✓ shipped on main |
-| 2 | ART-0086..0100 | ✓ |
-| 3 | Gates GATE-0007/0008 | ⏳ pending archive |
+| 2 | ART-0086..0100 + ART-0193..0201 (billing ext) | ✓ |
+| 3 | CR-C4-BILLING-EXT lifecycle/dialog/issuer/PDF | ✓ `d2a4cd5` |
+| 4 | ER-C4-BILLING-EXT 863/863 | ✓ |
+| 5 | Gates GATE-0007/0008 | ⏳ pending archive |
 
 ---
 
@@ -184,4 +186,16 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 npm test && npx tsc --noEmit && npm run lint && npm run build
 ```
 
-Current baseline: **829** tests, **158** files (2026-06-08).
+Current baseline: **863** tests, **166** files (2026-06-04) · HEAD `99f13b8`.
+
+---
+
+## Infinity Loop Re-Init (2026-06-04)
+
+| Step | Artifact | Status |
+|------|----------|--------|
+| 1 | `agile-v-core` + `pipeline` + `lifecycle` + `compliance` active every prompt | ✓ |
+| 2 | `.cursor/rules/agile-v-infinity-loop.mdc` `alwaysApply: true` | ✓ restored |
+| 3 | `ACTIVATION.md` + `STATE.md` + `SKILLS.md` (24) synced | ✓ |
+| 4 | C1..C7 bootstrap index intact; C1/C2 frozen | ✓ |
+| 5 | Verify regression | ✓ 863/863 |

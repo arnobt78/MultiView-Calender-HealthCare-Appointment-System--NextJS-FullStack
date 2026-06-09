@@ -39,6 +39,10 @@ Cross-tab: `query-cache-cross-tab.ts`.
 - DP billing: `DoctorPortalInvoiceListRow`, `InvoiceStatusCountInlineRow`, `invoice-list-meta-status-dates.ts`
 - Invoice: `InvoiceDetailLiveBody`, `invoice-dialog/`
 
+## Agile V
+
+Infinity Loop every prompt: `.agile-v/ACTIVATION.md` · `STATE.md` · `SKILLS.md` (24) · `.cursor/rules/agile-v-infinity-loop.mdc`. C7 active + C4 ext; **863/863**.
+
 ## Principle
 
 Minimal typed diffs; shared libs; SSR seed + invalidate on every CRUD.
