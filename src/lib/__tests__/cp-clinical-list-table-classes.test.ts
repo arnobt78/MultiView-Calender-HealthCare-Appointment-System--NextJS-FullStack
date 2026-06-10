@@ -28,4 +28,9 @@ describe("cp-clinical-list-table-classes C17", () => {
     expect(cpClinicalListIdentityColumnShellClass).toContain("w-[22%]");
     expect(cpClinicalListPhoneColumnShellClass).toContain("w-[12%]");
   });
+
+  it("inner frame is transparent (outer glow from ControlPanelEntityListShell)", () => {
+    expect(cpClinicalListTableFrameClassName).toContain("rounded-none");
+    expect(cpClinicalListTableFrameClassName).toContain("bg-transparent");
+  });
 });

@@ -18,8 +18,10 @@ describe("EntityEmailVerificationBadge C16", () => {
 });
 
 describe("violetGlassTableFrameClass C16", () => {
-  it("wires violet tone on cp entity list shell map", () => {
+  it("wires violet tone on cp entity list shell map with patient-list frame parity", () => {
     expect(cpEntityListTableFrameClass.violet).toBe(violetGlassTableFrameClass);
+    expect(violetGlassTableFrameClass).toContain("rounded-2xl");
+    expect(violetGlassTableFrameClass).toContain("bg-white/90");
     expect(violetGlassTableFrameClass).toContain("rgba(139,92,246");
   });
 });

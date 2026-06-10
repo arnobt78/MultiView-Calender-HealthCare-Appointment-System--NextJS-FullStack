@@ -288,7 +288,7 @@ function UserManagementInner() {
           search={{
             value: listSearch,
             onChange: setListSearch,
-            placeholder: "Search by name, email, or phone…",
+            placeholder: "Search… (name, email, or phone)",
             ariaLabel: "Search admin users by name, email, or phone",
           }}
           showReset={hasToolbarFilters}
@@ -300,6 +300,8 @@ function UserManagementInner() {
             displayLabel={STATUS_FILTER_LABEL[status]}
             icon={ListFilter}
             size="toolbar"
+            triggerClassName="max-w-[200px]"
+            ariaLabel="Filter by status"
             options={[
               { value: "all", label: STATUS_FILTER_LABEL.all },
               { value: "active", label: STATUS_FILTER_LABEL.active },
@@ -312,6 +314,8 @@ function UserManagementInner() {
             displayLabel={VERIFICATION_FILTER_LABEL[verification]}
             icon={ShieldCheck}
             size="toolbar"
+            triggerClassName="max-w-[220px]"
+            ariaLabel="Filter by email verification"
             options={[
               { value: "all", label: VERIFICATION_FILTER_LABEL.all },
               { value: "verified", label: VERIFICATION_FILTER_LABEL.verified },
@@ -324,6 +328,8 @@ function UserManagementInner() {
             displayLabel={PHOTO_FILTER_LABEL[photo]}
             icon={ImageIcon}
             size="toolbar"
+            triggerClassName="max-w-[200px]"
+            ariaLabel="Filter by profile photo"
             options={[
               { value: "all", label: PHOTO_FILTER_LABEL.all },
               { value: "with_photo", label: PHOTO_FILTER_LABEL.with_photo },

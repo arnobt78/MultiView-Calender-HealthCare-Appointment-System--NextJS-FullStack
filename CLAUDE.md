@@ -4,10 +4,10 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-10)
 
-- **C17 (REQ-0063):** `cpClinicalList*ColumnShellClass` tokens; admin Joined/Actions fixed (`min-w-[1080px]`); glass `cursor-pointer` global; VideoCall `triggerClassName` + `skyGlassBackButtonClass` on appointment detail.
+- **C17 (REQ-0063):** `cpClinicalList*ColumnShellClass`; admin table/footer UX; violet outer frame now `rounded-2xl` patient parity (was `rounded-[28px]` gradient).
 - **C16 (REQ-0062):** user-admin violet glass; Phone column; `EntityEmailVerificationBadge`; `violetGlassTableFrameClass`.
 - **C15–C14:** `EntityDetailPageShell` spacing; `EntityDetailBackLink`/`FooterRow`; tone glass backs.
-- **Verify:** **930/930** · tsc · lint · build PASS.
+- **Verify:** **931/931** · tsc · lint · build PASS.
 
 ## Never / Always
 

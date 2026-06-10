@@ -1,5 +1,6 @@
 /**
- * Violet glass tokens for CP user-admin-management list table shell.
+ * Violet outer table shell — patient-management parity (`skyGlassTableFrameClass` shape).
+ * Inner DataTable uses `cpClinicalListTableFrameClassName` (transparent).
  */
 export const violetGlassTableFrameClass =
-  "rounded-[28px] border border-violet-300/40 bg-gradient-to-br from-violet-500/5 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(139,92,246,0.18)]";
+  "rounded-2xl border border-violet-200/55 bg-white/90 shadow-[0_14px_48px_-12px_rgba(139,92,246,0.38)]";

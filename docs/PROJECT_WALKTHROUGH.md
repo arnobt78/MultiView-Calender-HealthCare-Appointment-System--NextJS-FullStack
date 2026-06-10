@@ -2,7 +2,7 @@
 
 ## Latest (2026-06-10 — C17 + C16)
 
-**C17:** shared `cp-clinical-list-table-classes` column tokens; admin Joined/Actions width fix; glass `cursor-pointer` global; VideoCall h-10 on appointment detail. **C16:** violet user-admin chrome; Phone column; `EntityEmailVerificationBadge`. **Verify:** **930/930** · tsc · lint · build.
+**C17:** shared list tokens + footer UX; **admin table frame** matches patient (`rounded-2xl` `bg-white/90` via `violetGlassTableFrameClass`, inner `cpClinicalListTableFrameClassName`). **C16:** violet admin chrome. **Verify:** **931/931**.
 
 ## Prior (2026-06-10 — C15 entity detail spacing + C14 gaps)
 
