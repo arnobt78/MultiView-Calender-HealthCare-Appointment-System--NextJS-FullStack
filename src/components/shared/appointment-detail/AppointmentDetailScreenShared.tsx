@@ -58,7 +58,8 @@ import { buildAppointmentInvoiceAuditExtraRows } from "@/lib/appointment-detail-
 import {
   resolvePrimaryDoctorDisplayName,
 } from "@/lib/staff-directory-cache";
-import { resolveEntityDetailRootClass, type AppSectionScrollShell } from "@/lib/section-page-layout";
+import { EntityDetailPageShell } from "@/components/shared/entity-detail/EntityDetailPageShell";
+import type { AppSectionScrollShell } from "@/lib/section-page-layout";
 import { categoryDetailHref, patientDetailHref, type EntityRole } from "@/lib/entity-routes";
 import {
   resolveCalendarOwnerLinkKind,
@@ -290,31 +291,35 @@ export function AppointmentDetailScreenShared({
   const showLive = true;
 
   return (
-    <div className={resolveEntityDetailRootClass(scrollShell)}>
-      <EntityDetailChromeHeader
-        className={entityDetailPageHeaderClass}
-        icon={Calendar}
-        iconTileClassName={toneClasses.chromeIconTileClass}
-        iconClassName={toneClasses.chromeIconClass}
-        title={
-          showLive ? (
-            <span className="flex min-w-0 flex-wrap items-center gap-2">
-              <span className="min-w-0 truncate">{appointment.title}</span>
-              {appointment.is_telehealth ? <TelehealthSessionBadge /> : null}
-            </span>
-          ) : (
-            <Skeleton className="h-7 w-64 max-w-full" aria-hidden />
-          )
-        }
-        description={showLive ? headerSubtitle : "Appointment details"}
-        actions={
-          <EntityDetailBackLink
-            href={backHref}
-            placement="header"
-            backButtonClassName={toneClasses.backButtonClass}
-          />
-        }
-      />
+    <EntityDetailPageShell
+      shell={scrollShell}
+      header={
+        <EntityDetailChromeHeader
+          className={entityDetailPageHeaderClass}
+          icon={Calendar}
+          iconTileClassName={toneClasses.chromeIconTileClass}
+          iconClassName={toneClasses.chromeIconClass}
+          title={
+            showLive ? (
+              <span className="flex min-w-0 flex-wrap items-center gap-2">
+                <span className="min-w-0 truncate">{appointment.title}</span>
+                {appointment.is_telehealth ? <TelehealthSessionBadge /> : null}
+              </span>
+            ) : (
+              <Skeleton className="h-7 w-64 max-w-full" aria-hidden />
+            )
+          }
+          description={showLive ? headerSubtitle : "Appointment details"}
+          actions={
+            <EntityDetailBackLink
+              href={backHref}
+              placement="header"
+              backButtonClassName={toneClasses.backButtonClass}
+            />
+          }
+        />
+      }
+    >
 
       {!canEdit && showLive ? (
         <div className="flex items-center gap-2 rounded-lg border border-amber-200/80 bg-amber-50/90 px-3 py-2 text-sm text-amber-900">
@@ -637,6 +642,6 @@ export function AppointmentDetailScreenShared({
           listHref={backHref}
         />
       ) : null}
-    </div>
+    </EntityDetailPageShell>
   );
 }

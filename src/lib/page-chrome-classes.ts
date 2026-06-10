@@ -95,6 +95,6 @@ export const pageHeaderTitleClass =
 /** Matches list/management pages — subtitle sits flush under title (no `mt-0.5`). */
 export const pageHeaderDescriptionClass = "text-xs text-gray-500 sm:text-sm leading-relaxed";
 
-/** Optional fade when header sticks over scrolling CP content. */
+/** Optional fade when header sticks over scrolling CP content; mb-0 — body stack owns vertical rhythm. */
 export const pageHeaderEntityDetailClass =
-  "bg-gradient-to-b from-white via-white/95 to-transparent";
+  "mb-0 bg-gradient-to-b from-white via-white/95 to-transparent";

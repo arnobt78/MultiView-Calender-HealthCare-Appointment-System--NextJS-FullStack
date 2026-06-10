@@ -46,7 +46,7 @@ import {
   patientDetailSchemaSectionClass,
   patientDetailSnapshotTableFrameClass,
 } from "@/lib/patient-detail-ui-classes";
-import { resolveEntityDetailRootClass } from "@/lib/section-page-layout";
+import { EntityDetailPageShell } from "@/components/shared/entity-detail/EntityDetailPageShell";
 import type { AppSectionScrollShell } from "@/lib/section-page-layout";
 import type { AppointmentSnapshotRow, User } from "@/types/types";
 import { useUser } from "@/hooks/useUsers";
@@ -174,28 +174,32 @@ export function AdminUserDetailScreen({
   };
 
   return (
-    <div className={resolveEntityDetailRootClass(scrollShell)}>
-      <EntityDetailChromeHeader
-        icon={UserCog}
-        iconTileClassName={entityDetailChromeSlateIconTileClass}
-        iconClassName={entityDetailChromeSlateIconClass}
-        className={entityDetailPageHeaderClass}
-        title={displayName}
-        description={
-          <ControlPanelHeaderSubtitle
-            lead={`${roleLabel} account —`}
-            metric={String(appointmentCount)}
-            metricSuffix=" appointments"
-          />
-        }
-        actions={
-          <EntityDetailBackLink
-            href={listBackHref}
-            placement="header"
-            backButtonClassName={slateGlassBackButtonClass}
-          />
-        }
-      />
+    <EntityDetailPageShell
+      shell={scrollShell}
+      header={
+        <EntityDetailChromeHeader
+          icon={UserCog}
+          iconTileClassName={entityDetailChromeSlateIconTileClass}
+          iconClassName={entityDetailChromeSlateIconClass}
+          className={entityDetailPageHeaderClass}
+          title={displayName}
+          description={
+            <ControlPanelHeaderSubtitle
+              lead={`${roleLabel} account —`}
+              metric={String(appointmentCount)}
+              metricSuffix=" appointments"
+            />
+          }
+          actions={
+            <EntityDetailBackLink
+              href={listBackHref}
+              placement="header"
+              backButtonClassName={slateGlassBackButtonClass}
+            />
+          }
+        />
+      }
+    >
 
       <Card className={cn("flex-1", adminUserDetailCardFrameClass)}>
         <CardContent className="space-y-3 px-4 sm:px-6 text-gray-700">
@@ -316,6 +320,6 @@ export function AdminUserDetailScreen({
           emailVerified={emailVerified}
         />
       ) : null}
-    </div>
+    </EntityDetailPageShell>
   );
 }

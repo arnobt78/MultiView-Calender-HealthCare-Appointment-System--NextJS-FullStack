@@ -65,8 +65,8 @@ import { isCategoryActive } from "@/lib/entity-active-status";
 import { isAdminRole, isDoctorRole } from "@/lib/rbac";
 import { canClientFetchAdminUsersList } from "@/lib/user-list-access";
 import { cn } from "@/lib/utils";
+import { EntityDetailPageShell } from "@/components/shared/entity-detail/EntityDetailPageShell";
 import {
-  resolveEntityDetailRootClass,
   type AppSectionScrollShell,
 } from "@/lib/section-page-layout";
 import {
@@ -322,22 +322,26 @@ export function CategoryDetailScreenShared({
   }
 
   return (
-    <div className={resolveEntityDetailRootClass(scrollShell)}>
-      <EntityDetailChromeHeader
-        className={entityDetailPageHeaderClass}
-        icon={Tag}
-        iconTileClassName={toneClasses.chromeIconTileClass}
-        iconClassName={toneClasses.chromeIconClass}
-        title={showLiveBody && cat ? cat.label : <Skeleton className="h-7 w-56 max-w-full" aria-hidden />}
-        description="Category Record — Schema Fields, Related Appointments"
-        actions={
-          <EntityDetailBackLink
-            href={backHref}
-            placement="header"
-            backButtonClassName={toneClasses.backButtonClass}
-          />
-        }
-      />
+    <EntityDetailPageShell
+      shell={scrollShell}
+      header={
+        <EntityDetailChromeHeader
+          className={entityDetailPageHeaderClass}
+          icon={Tag}
+          iconTileClassName={toneClasses.chromeIconTileClass}
+          iconClassName={toneClasses.chromeIconClass}
+          title={showLiveBody && cat ? cat.label : <Skeleton className="h-7 w-56 max-w-full" aria-hidden />}
+          description="Category Record — Schema Fields, Related Appointments"
+          actions={
+            <EntityDetailBackLink
+              href={backHref}
+              placement="header"
+              backButtonClassName={toneClasses.backButtonClass}
+            />
+          }
+        />
+      }
+    >
 
       <Card
         className={cn(
@@ -543,6 +547,6 @@ export function CategoryDetailScreenShared({
           isSubmitting={isUpdating}
         />
       ) : null}
-    </div>
+    </EntityDetailPageShell>
   );
 }

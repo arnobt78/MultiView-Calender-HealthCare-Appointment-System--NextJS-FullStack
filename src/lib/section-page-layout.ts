@@ -3,7 +3,8 @@
  *
  * - `appSectionRootClass` — CP right pane and other scroll areas without `dashboardShellClass` (includes `pb-3`).
  * - `appPortalSectionRootClass` — portal/insights routes inside AuthShell `dashboardShellClass` (shell already has `pb-3`).
- * - `appEntityDetailRootClass` — same single-scroll contract as dashboard-overview (no nested overflow).
+ * - `appEntityDetailRootClass` — CP entity detail outer shell (`pb-3` only; header outside body stack).
+ * - `appEntityDetailBodyStackClass` — card/footer vertical rhythm inside `EntityDetailPageShell`.
  */
 
 /** Stack gap between major sections (PageHeader, stats, tables). */
@@ -15,11 +16,17 @@ export const appSectionRootClass = `${appSectionStackClass} pb-3`;
 /** Inside `dashboardShellClass` — avoid double bottom padding. */
 export const appPortalSectionRootClass = appSectionStackClass;
 
-/** CP entity detail — identical scroll shell to dashboard-overview / patient-management. */
-export const appEntityDetailRootClass = appSectionRootClass;
+/**
+ * CP entity detail root — `pb-3` only; header sits outside body stack (REQ-0061).
+ * Body rhythm via `appEntityDetailBodyStackClass` inside `EntityDetailPageShell`.
+ */
+export const appEntityDetailRootClass = "pb-3 text-gray-700";
 
-/** Portal entity detail — portal stack rhythm; document scroll via AuthShell. */
-export const appPortalEntityDetailRootClass = appPortalSectionRootClass;
+/** Vertical gap between card, banners, and footer — not between header and first body block. */
+export const appEntityDetailBodyStackClass = appSectionStackClass;
+
+/** Portal entity detail outer shell — no space-y (body stack owns rhythm; no double pb-3). */
+export const appPortalEntityDetailRootClass = "text-gray-700";
 
 /** Resolve entity detail root — CP includes `pb-3`; portal avoids double bottom inset. */
 export function resolveEntityDetailRootClass(

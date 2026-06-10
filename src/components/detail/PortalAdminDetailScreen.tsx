@@ -25,7 +25,7 @@ import {
   patientDetailDefinitionRowClass,
   patientDetailSchemaSectionClass,
 } from "@/lib/patient-detail-ui-classes";
-import { resolveEntityDetailRootClass } from "@/lib/section-page-layout";
+import { EntityDetailPageShell } from "@/components/shared/entity-detail/EntityDetailPageShell";
 import { cn } from "@/lib/utils";
 import type { User } from "@/types/types";
 import { useLayoutEffect } from "react";
@@ -71,22 +71,26 @@ export function PortalAdminDetailScreen({
   const displayName = liveUser.display_name?.trim() || liveUser.email;
 
   return (
-    <div className={resolveEntityDetailRootClass("portal")}>
-      <EntityDetailChromeHeader
-        className={entityDetailPageHeaderClass}
-        icon={Shield}
-        iconTileClassName={entityDetailChromeSlateIconTileClass}
-        iconClassName={entityDetailChromeSlateIconClass}
-        title={displayName}
-        description="Admin Account — Directory Profile"
-        actions={
-          <EntityDetailBackLink
-            href={backHref}
-            placement="header"
-            backButtonClassName={slateGlassBackButtonClass}
-          />
-        }
-      />
+    <EntityDetailPageShell
+      shell="portal"
+      header={
+        <EntityDetailChromeHeader
+          className={entityDetailPageHeaderClass}
+          icon={Shield}
+          iconTileClassName={entityDetailChromeSlateIconTileClass}
+          iconClassName={entityDetailChromeSlateIconClass}
+          title={displayName}
+          description="Admin Account — Directory Profile"
+          actions={
+            <EntityDetailBackLink
+              href={backHref}
+              placement="header"
+              backButtonClassName={slateGlassBackButtonClass}
+            />
+          }
+        />
+      }
+    >
 
       <div className="flex items-center gap-2 rounded-lg border border-amber-200/80 bg-amber-50/90 px-3 py-2 text-sm text-amber-900">
         <Lock className="h-4 w-4 shrink-0" aria-hidden />
@@ -158,6 +162,6 @@ export function PortalAdminDetailScreen({
         backHref={backHref}
         backButtonClassName={slateGlassBackButtonClass}
       />
-    </div>
+    </EntityDetailPageShell>
   );
 }

@@ -41,7 +41,7 @@ import {
   entityDetailInvoiceRecordSectionTitle,
   entityDetailOwnedSnapshotSectionTitle,
 } from "@/lib/entity-detail-snapshot-section-copy";
-import { resolveEntityDetailRootClass } from "@/lib/section-page-layout";
+import { EntityDetailPageShell } from "@/components/shared/entity-detail/EntityDetailPageShell";
 import { pageChromeTitleClass } from "@/lib/page-chrome-classes";
 import { entityDetailPageHeaderClass } from "@/lib/patient-detail-ui-classes";
 import {
@@ -155,38 +155,42 @@ export function InvoiceDetailLiveBody({
     : null;
 
   return (
-    <div className={resolveEntityDetailRootClass(variant === "control-panel" ? "control-panel" : "portal")}>
-      <EntityDetailChromeHeader
-        className={entityDetailPageHeaderClass}
-        icon={Receipt}
-        iconTileClassName={invoiceDetailChromeIconTileClass}
-        iconClassName={invoiceDetailChromeIconClass}
-        title={
-          <span className="flex flex-wrap items-center gap-2">
-            <span className={cn(pageChromeTitleClass, "min-w-0 break-words")}>{displayTitle}</span>
-            <InvoiceStatusBadge invoice={invoice} />
-          </span>
-        }
-        description={
-          <span className="inline-flex flex-wrap items-center gap-x-1 gap-y-0.5">
-            {baseSubtitle}
-            <span aria-hidden> · </span>
-            <EntityIdCopyInline
-              value={invoice.id}
-              displayValue={formatShortEntityId(invoice.id)}
-              textClassName="text-sm text-muted-foreground font-mono"
+    <EntityDetailPageShell
+      shell={variant === "control-panel" ? "control-panel" : "portal"}
+      header={
+        <EntityDetailChromeHeader
+          className={entityDetailPageHeaderClass}
+          icon={Receipt}
+          iconTileClassName={invoiceDetailChromeIconTileClass}
+          iconClassName={invoiceDetailChromeIconClass}
+          title={
+            <span className="flex flex-wrap items-center gap-2">
+              <span className={cn(pageChromeTitleClass, "min-w-0 break-words")}>{displayTitle}</span>
+              <InvoiceStatusBadge invoice={invoice} />
+            </span>
+          }
+          description={
+            <span className="inline-flex flex-wrap items-center gap-x-1 gap-y-0.5">
+              {baseSubtitle}
+              <span aria-hidden> · </span>
+              <EntityIdCopyInline
+                value={invoice.id}
+                displayValue={formatShortEntityId(invoice.id)}
+                textClassName="text-sm text-muted-foreground font-mono"
+              />
+            </span>
+          }
+          actions={
+            <InvoiceDetailHeaderActions
+              initialInvoice={invoice}
+              accessLevel={uiAccess}
+              backHref={backHref}
+              invoicesInitialData={initialInvoicesList ?? undefined}
             />
-          </span>
-        }
-        actions={
-          <InvoiceDetailHeaderActions
-            initialInvoice={invoice}
-            accessLevel={uiAccess}
-            backHref={backHref}
-            invoicesInitialData={initialInvoicesList ?? undefined}
-          />
-        }
-      />
+          }
+        />
+      }
+    >
 
       <Card className={cn(invoiceDetailCardFrameClass, invoiceDetailCardBorderClass)}>
         <CardContent className="space-y-3 p-4 sm:p-5">
@@ -268,6 +272,6 @@ export function InvoiceDetailLiveBody({
         backLabel={backLabel}
         invoicesInitialData={initialInvoicesList ?? undefined}
       />
-    </div>
+    </EntityDetailPageShell>
   );
 }

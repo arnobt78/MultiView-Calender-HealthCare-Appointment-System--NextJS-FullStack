@@ -4,9 +4,10 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-10)
 
+- **C15 detail spacing (REQ-0061):** `EntityDetailPageShell` — header flush; body `space-y-3`; org members `ClinicalDataTable`; org list SSR seed on detail route.
 - **C14 entity detail parity (REQ-0060):** `EntityDetailBackLink` + `EntityDetailFooterRow`; no header `border-b`; tone glass backs (emerald/slate/indigo/violet); appointment single footer; org detail refactor.
 - **C13 chrome nav fix:** provider `key={tab}`; deleted legacy sync store.
-- **Verify:** **915/915** · tsc · lint · build PASS.
+- **Verify:** **916/916** · tsc · lint · build PASS.
 ## Never / Always
 
 **Never:** hardcode query keys; skip invalidation; `<a href>` internal; shadcn Checkbox; `user` on `UserAvatar`; extra impl `.md`.
@@ -26,7 +27,8 @@ Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Key paths
 
-- Page chrome: `EntityDetailBackLink.tsx`, `EntityDetailFooterRow.tsx`, `organization-detail-ui-classes.ts`, `OrganizationDetailScreen.tsx`
+- Entity detail: `EntityDetailPageShell.tsx`, `EntityDetailBackLink.tsx`, `EntityDetailFooterRow.tsx`, `section-page-layout.ts`
+- Org detail: `OrganizationDetailScreen.tsx`, `organization-detail-members-columns.tsx`, `organization-detail-ui-classes.ts`
 - Phone: `phone-validation.ts`, `patient-form-clinical.ts`, `PatientFormDialog`, `reminder-recipient-phone.ts`
 - Cancel: `appointment-cancel-access.ts`, `appointment-id-write.ts`, `appointment-notify.ts`, `AppointmentActionsMenu`
 - Status UI: `appointment-status-display.ts`, `AppointmentStatusGlassBadge`
@@ -36,7 +38,7 @@ Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Agile V
 
-Infinity Loop every prompt: `.agile-v/ACTIVATION.md` · `STATE.md` · `SKILLS.md` (24). **C14** (REQ-0060); **915/915**.
+Infinity Loop every prompt: `.agile-v/ACTIVATION.md` · `STATE.md` · `SKILLS.md` (24). **C15** (REQ-0061); **916/916**.
 
 ## Principle
 

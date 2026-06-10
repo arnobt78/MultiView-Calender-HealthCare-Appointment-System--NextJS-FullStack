@@ -214,7 +214,7 @@
 | ART-0209 | C8 | REQ-0039 | `ControlPanelSectionChromeServer` + flash fix | built |
 | ART-0210 | C8 | REQ-0039 | Invitation tab prefetch | built |
 | ART-0212 | C8 | REQ-0040 | `AdminPortalPage` redesign | built |
-| ART-0213 | C8 | REQ-0040 | `OrganizationDetailChrome` + admin user detail chrome | built |
+| ART-0213 | C8 | REQ-0040 | `OrganizationDetailScreen` + indigo glass card + members ClinicalDataTable | built |
 
 ## Verification Commands (project default)
 

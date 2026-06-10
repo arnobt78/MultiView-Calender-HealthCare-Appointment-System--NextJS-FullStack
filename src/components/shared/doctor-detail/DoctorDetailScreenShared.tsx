@@ -55,7 +55,8 @@ import {
   resolveDoctorDetailToneClasses,
   type DoctorDetailTone,
 } from "@/lib/doctor-detail-ui-classes";
-import { resolveEntityDetailRootClass, type AppSectionScrollShell } from "@/lib/section-page-layout";
+import { EntityDetailPageShell } from "@/components/shared/entity-detail/EntityDetailPageShell";
+import type { AppSectionScrollShell } from "@/lib/section-page-layout";
 import { isDoctorActive } from "@/lib/entity-active-status";
 import { isDoctorRole } from "@/lib/rbac";
 import { resolvePortalEntityDetailSnapshotLinkPolicy } from "@/lib/entity-detail-snapshot-links";
@@ -304,22 +305,26 @@ export function DoctorDetailScreenShared({
       : "Doctor Record — Schema Fields, Related Activity";
 
   return (
-    <div className={resolveEntityDetailRootClass(scrollShell)}>
-      <EntityDetailChromeHeader
-        className={entityDetailPageHeaderClass}
-        icon={Stethoscope}
-        iconTileClassName={toneClasses.chromeIconTileClass}
-        iconClassName={toneClasses.chromeIconClass}
-        title={displayName}
-        description={descriptionSubtitle}
-        actions={
-          <EntityDetailBackLink
-            href={backHref}
-            placement="header"
-            backButtonClassName={toneClasses.backButtonClass}
-          />
-        }
-      />
+    <EntityDetailPageShell
+      shell={scrollShell}
+      header={
+        <EntityDetailChromeHeader
+          className={entityDetailPageHeaderClass}
+          icon={Stethoscope}
+          iconTileClassName={toneClasses.chromeIconTileClass}
+          iconClassName={toneClasses.chromeIconClass}
+          title={displayName}
+          description={descriptionSubtitle}
+          actions={
+            <EntityDetailBackLink
+              href={backHref}
+              placement="header"
+              backButtonClassName={toneClasses.backButtonClass}
+            />
+          }
+        />
+      }
+    >
 
       {topSlot}
 
@@ -511,6 +516,6 @@ export function DoctorDetailScreenShared({
           backButtonClassName={toneClasses.backButtonClass}
         />
       )}
-    </div>
+    </EntityDetailPageShell>
   );
 }

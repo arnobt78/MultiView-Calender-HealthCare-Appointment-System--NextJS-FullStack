@@ -13,6 +13,7 @@ import {
   OrganizationDetailScreen,
   type OrganizationDetailMemberRow,
 } from "@/components/control-panel/OrganizationDetailScreen";
+import { prefetchOrganizations } from "@/lib/server-prefetch";
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -28,16 +29,19 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
   const sessionUser = await getSessionUser();
   if (!sessionUser) notFound();
 
-  const raw = await prisma.organization.findFirst({
-    where: {
-      id,
-      OR: [
-        { owner_user_id: sessionUser.userId },
-        { members: { some: { user_id: sessionUser.userId } } },
-      ],
-    },
-    include: { members: true },
-  });
+  const [raw, initialOrganizations] = await Promise.all([
+    prisma.organization.findFirst({
+      where: {
+        id,
+        OR: [
+          { owner_user_id: sessionUser.userId },
+          { members: { some: { user_id: sessionUser.userId } } },
+        ],
+      },
+      include: { members: true },
+    }),
+    prefetchOrganizations(sessionUser.userId),
+  ]);
   if (!raw) notFound();
 
   const orgSerialized = serializeOrganization(raw);
@@ -73,6 +77,7 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
           ownerUser?.display_name ?? ownerUser?.email ?? orgSerialized.owner_user_id,
       }}
       members={members}
+      initialOrganizations={initialOrganizations}
     />
   );
 }

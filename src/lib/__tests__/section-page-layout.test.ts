@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  appEntityDetailBodyStackClass,
   appEntityDetailRootClass,
   appPortalEntityDetailRootClass,
   appPortalSectionRootClass,
@@ -17,11 +18,12 @@ describe("section-page-layout", () => {
   });
 
   it("uses dashboard-overview single scroll for entity detail", () => {
-    expect(appEntityDetailRootClass).toBe(appSectionRootClass);
-    expect(appEntityDetailRootClass).toContain("space-y-3");
     expect(appEntityDetailRootClass).toContain("pb-3");
+    expect(appEntityDetailRootClass).not.toContain("space-y-3");
+    expect(appEntityDetailBodyStackClass).toContain("space-y-3");
     expect(appEntityDetailRootClass).not.toContain("overflow-y-auto");
-    expect(appPortalEntityDetailRootClass).toBe(appPortalSectionRootClass);
+    expect(appPortalEntityDetailRootClass).not.toContain("space-y-3");
+    expect(appPortalEntityDetailRootClass).not.toContain("pb-3");
     expect(resolveEntityDetailRootClass("control-panel")).toBe(appEntityDetailRootClass);
     expect(resolveEntityDetailRootClass("portal")).toBe(appPortalEntityDetailRootClass);
   });

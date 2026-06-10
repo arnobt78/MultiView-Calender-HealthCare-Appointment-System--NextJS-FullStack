@@ -6,7 +6,7 @@
 
 | Field | Value |
 |-------|-------|
-| Cycle | C1–C9 shipped · **C10–C13 shipped** · **C14 active** (REQ-0060) |
+| Cycle | C1–C9 shipped · **C10–C14 shipped** · **C15 active** (REQ-0061) |
 | Author | Requirement Architect |
 | Gate 1 status | C1 GATE-0001 · C2 GATE-0003 approved |
 | Canonical source | this file |
@@ -105,6 +105,25 @@
 | REQ-0057 | approved [C12.2] | REQ-0056 | ART-0283..0286 | pending |
 | REQ-0059 | approved [C13] | REQ-0057 | ART-0287..0292 | pending |
 | REQ-0060 | approved [C14] | REQ-0059 | ART-0293..0300 | pending |
+| REQ-0061 | approved [C15] | REQ-0060 | ART-0301..0304 | pending |
+
+### REQ-0061 — C15 entity detail spacing + C14 gap closure
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C15] |
+| Priority | P2 |
+| Risk | R1 |
+| Parent | REQ-0060 |
+
+**Statement:** Remove extra header-to-body gap on entity detail pages; close C14 minor gaps — org members ClinicalDataTable parity, org list SSR seed on detail route, BUILD_MANIFEST ART-0213 update.
+
+**Acceptance criteria:**
+1. Entity detail header flush to first body block; body siblings keep `space-y-3` via `EntityDetailPageShell`.
+2. Org members table uses `ClinicalDataTable` with indigo snapshot frame parity.
+3. Org detail SSR prefetches + seeds `queryKeys.organizations.all` for instant back-to-list.
+4. BUILD_MANIFEST ART-0213 references `OrganizationDetailScreen` (not deleted `OrganizationDetailChrome`).
+5. Verify: `npm test && npx tsc --noEmit && npm run lint && npm run build`.
 
 ### REQ-0060 — C14 entity detail chrome parity
 
@@ -118,7 +137,7 @@
 **Statement:** All entity detail pages (CP + portal, admin/doctor/patient routes) match PatientDetailScreen chrome — no header border-b, tone glass back links with list invalidation, single footer action row, appointment dedup, invoice layout, organization refactor.
 
 **Acceptance criteria:**
-1. `EntityDetailChromeHeader` omits `border-b`; body `space-y-3` separates (CP list parity).
+1. `EntityDetailChromeHeader` omits `border-b`; body blocks use `space-y-3` (amended by REQ-0061: header sits flush — no gap to first body block).
 2. Shared `EntityDetailBackLink` + `EntityDetailFooterRow`; tone glass back tokens (sky/emerald/slate/violet/indigo/amber).
 3. `invalidateQueriesForRoute` covers user-management, organization-management, billing-management list paths.
 4. Appointment detail: single footer row (no inline form CRUD strip); Save/Video/Print in footer.

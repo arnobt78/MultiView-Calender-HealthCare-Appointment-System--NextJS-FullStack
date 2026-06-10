@@ -1,12 +1,17 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-10 — C14 entity detail chrome parity)
+## Latest (2026-06-10 — C15 entity detail spacing + C14 gaps)
+
+- **Layout:** `EntityDetailPageShell` — header outside body stack (no 12px gap); `appEntityDetailBodyStackClass` for card/footer rhythm; CP + portal outer roots omit `space-y-3`.
+- **Org detail:** members `ClinicalDataTable` (`organization-detail-members-columns.tsx`); SSR `prefetchOrganizations` + `seedOrganizationsListCacheFromSsr` on detail route.
+- **Verify:** **916/916** · tsc · lint · build.
+
+## Prior (2026-06-10 — C14 entity detail chrome parity)
 
 - **Shared:** `EntityDetailBackLink` (header/footer back + invalidate); `EntityDetailFooterRow`; `EntityDetailChromeHeader` omits `border-b`; glass back tokens (emerald/slate/indigo + existing sky/violet/amber).
 - **Screens:** patient/doctor/admin/category/appointment/invoice/portal-admin wired; appointment form dedup (Save/Video/Print in footer only).
 - **Organization:** `OrganizationDetailScreen` indigo glass card + members table + footer; deleted `OrganizationDetailChrome`.
 - **Invalidation:** `invalidateQueriesForRoute` — user-admin-management, organization-management, invoice-management.
-- **Verify:** **915/915** · tsc · lint · build.
 
 ## Prior (2026-06-10 — C13 user-admin UI parity + chrome nav fix)
 
@@ -400,7 +405,7 @@ Run `npm run db:seed-test-user` after migrations: upserts demo `users`, doctor a
 - **Invalidation wiring**: `invalidateAfterAppointmentMutation` calls `invalidateInvoicesAndOverview`, which now also invalidates `queryKeys.patients.all` (appointments + invoices affect patient aggregates). `invalidateSharingAndAppointments` invalidates `patients.all` so assignee changes refresh snapshots without navigation.
 - **SSR pages**: `src/app/control-panel/patients/[id]/page.tsx` and `src/app/patients/[id]/page.tsx` use `export const dynamic = "force-dynamic"` and parallel prefetch (`prefetchPatient`, `prefetchPatientSnapshot`, `prefetchDoctors`). Control-panel **layout** (`control-panel/layout.tsx`) keeps sidebar mounted; detail route only hydrates the right pane.
 - **UI (list)**: `PatientListFiltersProvider` + status dropdown; `DataTable` global filter; row ⋮ **View** → detail route; **Edit** → **`PatientFormDialog`** (glass 90vw×90vh, emerald). Primary doctor: **`PatientPrimaryDoctorPickerField`** + `DoctorDirectoryPickerList` (same as appointment treating-physician picker). Required `*` via **`FormRequiredMark`**.
-- **UI (detail)**: **`PatientDetailScreen`** — SSR `accessLevel`; chrome + footer stay mounted; **`PatientDetailBodySkeleton`** pulses schema/table slots only; horizontal **`PatientDetailDefinitionRow`** (`patient-detail-ui-classes.ts`, `gap-2`); **`EntityDetailRecordAuditCard`**; sticky footer via **`resolveEntityDetailRootClass`**. **Update Profile** opens **`PatientFormDialog`**. **`CategoryDetailScreenShared`** — same layout/table pattern; portal tone amber, CP sky + CRUD footer.
+- **UI (detail)**: **`PatientDetailScreen`** — SSR `accessLevel`; **`EntityDetailPageShell`** (header flush, body `space-y-3`); **`PatientDetailBodySkeleton`** pulses schema/table slots only; horizontal **`PatientDetailDefinitionRow`** (`patient-detail-ui-classes.ts`, `gap-2`); **`EntityDetailRecordAuditCard`**; footer via **`EntityDetailFooterRow`**. **Update Profile** opens **`PatientFormDialog`**. **`CategoryDetailScreenShared`** — same layout/table pattern; portal tone amber, CP sky + CRUD footer.
 - **Shared table patterns**: **`ClinicalDataTable`** + `patient-detail-snapshot-columns.tsx` — category column `break-words`; single table border (`tableFrameClassName`, not double card frame). **`DoctorIdentityCell`** merges snapshot images + `useUsers` doctor map. CP + doctor-portal list **Edit** opens **`PatientFormDialog`** (same as detail **Update Profile**).
 - **Loading**: `src/app/control-panel/loading.tsx` returns `null` so route transitions don't flash a full skeleton; tables keep localized skeleton rows via `DataTable` `isLoading`.
 

@@ -2,32 +2,28 @@
 
 import { format } from "date-fns";
 import type { LucideIcon } from "lucide-react";
+import { useLayoutEffect, useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Building2,
   CalendarDays,
   Hash,
   Link2,
-  Mail,
   UserRound,
   Users,
 } from "lucide-react";
 import { EntityDetailChromeHeader } from "@/components/shared/entity-detail/EntityDetailChromeHeader";
 import { EntityDetailBackLink } from "@/components/shared/entity-detail/EntityDetailBackLink";
 import { EntityDetailFooterRow } from "@/components/shared/entity-detail/EntityDetailFooterRow";
+import { EntityDetailPageShell } from "@/components/shared/entity-detail/EntityDetailPageShell";
 import { EntityDetailSnapshotSectionHeading } from "@/components/shared/entity-detail/EntityDetailSnapshotSectionHeading";
+import { ClinicalDataTable } from "@/components/shared/ClinicalDataTable";
 import { EntityIdCopyInline } from "@/components/shared/EntityIdCopyInline";
-import { UserAvatar } from "@/components/shared/UserAvatar";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { formatShortEntityId } from "@/lib/entity-id-display";
+import type { Organization } from "@/hooks/useOrganization";
+import { seedOrganizationsListCacheFromSsr } from "@/lib/cp-list-query-ssr-seed";
+import { buildOrganizationDetailMembersColumns } from "@/lib/organization-detail-members-columns";
+import type { OrganizationDetailMemberRow } from "@/lib/organization-detail-members-columns";
 import {
   organizationDetailBackButtonClass,
   organizationDetailCardBorderClass,
@@ -41,20 +37,12 @@ import {
   organizationDetailSchemaSectionClass,
   organizationDetailSectionIconCircleClass,
   organizationDetailSectionIconClass,
+  organizationDetailSnapshotTableFrameClass,
 } from "@/lib/organization-detail-ui-classes";
 import { entityDetailPageHeaderClass } from "@/lib/patient-detail-ui-classes";
-import { resolveEntityDetailRootClass } from "@/lib/section-page-layout";
 import { cn } from "@/lib/utils";
 
-export type OrganizationDetailMemberRow = {
-  id: string;
-  org_id: string;
-  user_id: string;
-  role: string;
-  joined_at: string;
-  display_name: string | null;
-  email: string | null;
-};
+export type { OrganizationDetailMemberRow } from "@/lib/organization-detail-members-columns";
 
 export type OrganizationDetailOrg = {
   id: string;
@@ -63,12 +51,6 @@ export type OrganizationDetailOrg = {
   slug: string;
   owner_user_id: string;
   owner_label: string;
-};
-
-const ROLE_COLORS: Record<string, string> = {
-  admin: "bg-red-100 text-red-700",
-  doctor: "bg-blue-100 text-blue-700",
-  patient: "bg-green-100 text-green-700",
 };
 
 const LIST_BACK_HREF = "/control-panel/organization-management";
@@ -95,32 +77,50 @@ function DefinitionRow({
   );
 }
 
-/** CP organization detail — indigo glass card + members table + footer back (C14 parity). */
+/** CP organization detail — indigo glass card + members ClinicalDataTable + footer back. */
 export function OrganizationDetailScreen({
   org,
   members,
+  initialOrganizations,
 }: {
   org: OrganizationDetailOrg;
   members: OrganizationDetailMemberRow[];
+  /** SSR org list — seeds queryKeys.organizations.all for instant back-to-list navigation. */
+  initialOrganizations?: Organization[] | null;
 }) {
-  return (
-    <div className={resolveEntityDetailRootClass("control-panel")}>
-      <EntityDetailChromeHeader
-        icon={Building2}
-        iconTileClassName={organizationDetailChromeIconTileClass}
-        iconClassName={organizationDetailChromeIconClass}
-        className={entityDetailPageHeaderClass}
-        title={org.name}
-        description={`Organization Record — ${org.slug}`}
-        actions={
-          <EntityDetailBackLink
-            href={LIST_BACK_HREF}
-            placement="header"
-            backButtonClassName={organizationDetailBackButtonClass}
-          />
-        }
-      />
+  const queryClient = useQueryClient();
+  const memberColumns = useMemo(() => buildOrganizationDetailMembersColumns(), []);
 
+  useMemo(() => {
+    seedOrganizationsListCacheFromSsr(queryClient, initialOrganizations ?? undefined);
+    return null;
+  }, [queryClient, initialOrganizations]);
+
+  useLayoutEffect(() => {
+    seedOrganizationsListCacheFromSsr(queryClient, initialOrganizations ?? undefined);
+  }, [queryClient, initialOrganizations]);
+
+  return (
+    <EntityDetailPageShell
+      shell="control-panel"
+      header={
+        <EntityDetailChromeHeader
+          icon={Building2}
+          iconTileClassName={organizationDetailChromeIconTileClass}
+          iconClassName={organizationDetailChromeIconClass}
+          className={entityDetailPageHeaderClass}
+          title={org.name}
+          description={`Organization Record — ${org.slug}`}
+          actions={
+            <EntityDetailBackLink
+              href={LIST_BACK_HREF}
+              placement="header"
+              backButtonClassName={organizationDetailBackButtonClass}
+            />
+          }
+        />
+      }
+    >
       <Card
         className={cn(
           "flex-1 bg-white/90 text-gray-700",
@@ -162,64 +162,14 @@ export function OrganizationDetailScreen({
             >
               Members
             </EntityDetailSnapshotSectionHeading>
-            {members.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No members yet.</p>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Member</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Member ID</TableHead>
-                    <TableHead>Joined</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {members.map((m) => {
-                    const label = m.display_name ?? m.email ?? "Unknown";
-                    return (
-                      <TableRow key={m.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <UserAvatar
-                              alt={label}
-                              fallbackText={label}
-                              sizeClassName="h-7 w-7"
-                            />
-                            <div>
-                              <p className="text-sm font-medium">{label}</p>
-                              {m.email ? (
-                                <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                                  <Mail className="h-3 w-3" aria-hidden />
-                                  {m.email}
-                                </p>
-                              ) : null}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={ROLE_COLORS[m.role] ?? "bg-gray-100 text-gray-700"}>
-                            {m.role}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <EntityIdCopyInline
-                            value={m.id}
-                            displayValue={formatShortEntityId(m.id)}
-                            textClassName="text-xs text-muted-foreground font-mono"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-sm text-muted-foreground">
-                            {format(new Date(m.joined_at), "PP")}
-                          </span>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            )}
+            <ClinicalDataTable
+              columns={memberColumns}
+              data={members}
+              pagination={false}
+              emptyMessage="No members yet."
+              className={organizationDetailSnapshotTableFrameClass}
+              tableFrameClassName="rounded-md border border-slate-200/80 bg-white shadow-none"
+            />
           </div>
         </CardContent>
       </Card>
@@ -228,6 +178,6 @@ export function OrganizationDetailScreen({
         backHref={LIST_BACK_HREF}
         backButtonClassName={organizationDetailBackButtonClass}
       />
-    </div>
+    </EntityDetailPageShell>
   );
 }

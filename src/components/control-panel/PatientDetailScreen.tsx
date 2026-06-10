@@ -88,10 +88,8 @@ import { mapPatientRecordAuditActors } from "@/lib/entity-detail-audit-actor";
 import { EntityDetailSnapshotSectionHeading } from "@/components/shared/entity-detail/EntityDetailSnapshotSectionHeading";
 import { entityDetailOwnedSnapshotSectionTitle } from "@/lib/entity-detail-snapshot-section-copy";
 import { cn } from "@/lib/utils";
-import {
-  resolveEntityDetailRootClass,
-  type AppSectionScrollShell,
-} from "@/lib/section-page-layout";
+import { EntityDetailPageShell } from "@/components/shared/entity-detail/EntityDetailPageShell";
+import type { AppSectionScrollShell } from "@/lib/section-page-layout";
 import { patientDetailHref, type EntityRole } from "@/lib/entity-routes";
 import { isAdminRole, isDoctorRole } from "@/lib/rbac";
 import type { PatientAccessLevel } from "@/lib/patient-access";
@@ -289,7 +287,7 @@ export function PatientDetailScreen({
   initialDoctorUsers,
   initialAdminUsers,
 }: PatientDetailScreenProps) {
-  const sectionRootClass = resolveEntityDetailRootClass(scrollShell);
+  const scrollShellResolved = scrollShell;
 
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -527,28 +525,32 @@ export function PatientDetailScreen({
   }
 
   return (
-    <div className={sectionRootClass}>
-      <EntityDetailChromeHeader
-        className={entityDetailPageHeaderClass}
-        icon={User}
-        iconTileClassName={entityDetailChromeSkyIconTileClass}
-        iconClassName={entityDetailChromeSkyIconClass}
-        title={
-          showLiveBody ? (
-            nameLabel || "—"
-          ) : (
-            <Skeleton className="h-7 w-56 max-w-full" aria-hidden />
-          )
-        }
-        description="Patient Record — Schema Fields, Clinical Profile, Related Activity"
-        actions={
-          <EntityDetailBackLink
-            href={listBackHref}
-            placement="header"
-            backButtonClassName={skyGlassBackButtonClass}
-          />
-        }
-      />
+    <EntityDetailPageShell
+      shell={scrollShellResolved}
+      header={
+        <EntityDetailChromeHeader
+          className={entityDetailPageHeaderClass}
+          icon={User}
+          iconTileClassName={entityDetailChromeSkyIconTileClass}
+          iconClassName={entityDetailChromeSkyIconClass}
+          title={
+            showLiveBody ? (
+              nameLabel || "—"
+            ) : (
+              <Skeleton className="h-7 w-56 max-w-full" aria-hidden />
+            )
+          }
+          description="Patient Record — Schema Fields, Clinical Profile, Related Activity"
+          actions={
+            <EntityDetailBackLink
+              href={listBackHref}
+              placement="header"
+              backButtonClassName={skyGlassBackButtonClass}
+            />
+          }
+        />
+      }
+    >
 
       {accessLevel === "view" && showLiveBody && (
         <div className="flex items-center gap-2 rounded-lg border border-amber-200/80 bg-amber-50/90 px-3 py-2 text-sm text-amber-900">
@@ -874,6 +876,6 @@ export function PatientDetailScreen({
           isSubmitting={isUpdating}
         />
       ) : null}
-    </div>
+    </EntityDetailPageShell>
   );
 }
