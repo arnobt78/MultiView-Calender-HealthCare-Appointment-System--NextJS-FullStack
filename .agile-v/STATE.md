@@ -6,12 +6,12 @@
 
 | Field | Value |
 |-------|-------|
-| **Cycle** | **C11** shipped — global isMounted parity |
+| **Cycle** | **C12** shipped — CP header subtitle + action parity |
 | **Phase** | Acceptance (automated) |
 | **Stage** | 4 — PASS |
-| **Status** | `shipped` — **875/875** tests (169 files) |
+| **Status** | `shipped` — **881/881** tests (170 files) |
 | **Last Updated** | 2026-06-10 |
-| **HEAD** | pending commit |
+| **HEAD** | `b2eae84` |
 | **Activation** | Session **2026-06-10** — Infinity Loop active |
 
 ## Infinity Loop (active session)
