@@ -29,7 +29,7 @@ export function useNotifications() {
       return data;
     },
     initialData: notificationsInitialData,
-    refetchOnMount: notificationsInitialData !== undefined ? false : true,
+    refetchOnMount: true,
     staleTime: 60_000,
     gcTime: 10 * 60_000,
   });
@@ -87,6 +87,10 @@ export function useNotifications() {
     total: query.data?.total || 0,
     unreadCount: query.data?.unreadCount || 0,
     isLoading: query.isLoading,
+    isFetching: query.isFetching,
+    isRefetching: query.isRefetching,
+    hasData: query.data !== undefined,
+    dataUpdatedAt: query.dataUpdatedAt,
     isError: query.isError,
     refetch: query.refetch,
     markAsRead: markAsReadMutation.mutate,

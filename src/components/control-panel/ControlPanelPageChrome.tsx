@@ -52,7 +52,7 @@ export function ControlPanelPageChrome({
       return null;
     }
 
-    return <ControlPanelChromeActions {...chromeProps} />;
+    return <ControlPanelChromeActions tab={tab} {...chromeProps} />;
   }
 
   return (

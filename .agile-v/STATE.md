@@ -6,10 +6,10 @@
 
 | Field | Value |
 |-------|-------|
-| **Cycle** | **C12** shipped — CP header subtitle + action parity |
+| **Cycle** | **C12.2** shipped — CP chrome polish |
 | **Phase** | Acceptance (automated) |
 | **Stage** | 4 — PASS |
-| **Status** | `shipped` — **881/881** tests (170 files) |
+| **Status** | `shipped` — **894/894** tests (173 files) |
 | **Last Updated** | 2026-06-10 |
 | **HEAD** | `b2eae84` |
 | **Activation** | Session **2026-06-10** — Infinity Loop active |

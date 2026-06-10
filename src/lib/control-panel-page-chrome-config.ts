@@ -14,7 +14,7 @@ import { APPOINTMENT_TYPE_COPY } from "@/lib/appointment-type-copy";
 
 /** Static subtitle leads — dynamic segments use ControlPanelHeaderSubtitle inline skeleton. */
 export const CP_OVERVIEW_SUBTITLE_LEAD = "Real-time system summary — last updated";
-export const CP_NOTIFICATIONS_SUBTITLE_LEAD = "Review in-app notifications —";
+export const CP_NOTIFICATIONS_SUBTITLE_LEAD = "Review in-app notifications — last updated";
 export const CP_USERS_ADMIN_SUBTITLE =
   "B2B admin accounts — register or Google sign-in. Demo doctors and patients are on their own management tabs.";
 

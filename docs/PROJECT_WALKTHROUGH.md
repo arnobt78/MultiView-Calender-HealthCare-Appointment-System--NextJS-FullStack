@@ -1,8 +1,27 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-10 — C12 CP header subtitle + action parity)
+## Latest (2026-06-10 — C12.3 CP refresh + chrome runtime)
 
-- **Subtitles:** one merged sentence — static lead from config + inline metric skeleton (`ControlPanelHeaderSubtitle`); overview last-updated time + notifications count; no fallback swap.
+- **Runtime fix:** `registerControlPanelChromeSlice` never emits; `notifyControlPanelChromeRegistry` in post-commit layout effect; cleanup deps `[tab]` only — prevents registry reset on every render (static subtitle + non-interactive Refresh shell).
+- **Overview:** `resolveDashboardOverviewUpdatedAt`; Refresh calls `/api/dashboard/overview`; `showMetricSlot`; Sonner via `runCpSectionRefresh`; SSR seed `dashboardOverviewUpdatedAt`.
+- **Notifications:** parity — dynamic subtitle (time · total); Refresh + Sonner; `notificationsPrefetchUpdatedAt` seed.
+- **Header glass:** `pageHeaderRootClass` → `bg-transparent backdrop-blur-sm` on merged CP header.
+- **Verify:** **908/908** · tsc · lint · build.
+
+## Prior (2026-06-10 — C12.2 CP chrome polish)
+
+- **Context:** removed dead `registry`/`setRegistry`; slots read sync store + `{ defaultDescription, activeTab }` only.
+- **Subtitle flash:** server snapshot = live snapshot (body order-2 before header order-1; C12.1 tab guard).
+- **Wrapper:** `DescriptionSlot` fragment for ReactNode subtitles; AdminUserDetail merged subtitle.
+
+## Prior (2026-06-10 — C12.1 CP chrome tab isolation)
+
+- **Hydration fix:** module singleton `control-panel-chrome-sync-store` reset via `setControlPanelChromeActiveTab(tab)` at section entry; slots ignore sync when `snapshot.tab !== activeTab`.
+- **Unmount guard:** `ControlPanelChromeActions` cleanup clears registry only when owning tab still active.
+- **Subtitles:** overview error path registers `ControlPanelHeaderSubtitle`; no `Date.now()` fallback — metric from `dataUpdatedAt` only.
+- **Shell label:** patient Export CSV literal (not `toTitleCaseLabel`).
+
+## Prior (2026-06-10 — C12 CP header subtitle + action parity)
 - **Actions:** `ControlPanelHeaderGlassButton` h-10 parity on all CP header buttons; overview Refresh SSR shell; notifications filter in toolbar row.
 - **Registry:** `ControlPanelChromeActions` omits undefined slots (no null clear); config inlines `CP_USERS_ADMIN_SUBTITLE`.
 - **Verify:** **881/881** · tsc · lint · build.

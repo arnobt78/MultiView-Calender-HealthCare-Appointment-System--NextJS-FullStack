@@ -87,7 +87,7 @@ export const portalPanelSectionHeadingClass =
  * Top `py-2` band clears fixed navbar via `APP_MAIN_OFFSET_CLASS` (`--app-navbar-height`) on `AuthShell` `<main>`.
  */
 export const pageHeaderRootClass =
-  "flex min-h-[3.5rem] flex-col sm:flex-row sm:items-center justify-between gap-4 py-2 sticky top-0 z-20 backdrop-blur-sm";
+  "flex min-h-[3.5rem] flex-col sm:flex-row sm:items-center justify-between gap-4 py-2 sticky top-0 z-20 bg-transparent backdrop-blur-sm";
 
 export const pageHeaderTitleClass =
   "text-lg font-semibold tracking-tight text-gray-700";

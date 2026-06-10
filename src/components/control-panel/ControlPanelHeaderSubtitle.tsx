@@ -13,6 +13,8 @@ type Props = {
   metricLoading?: boolean;
   /** Suffix after metric (e.g. " total notifications"). */
   metricSuffix?: string;
+  /** When true, always reserve inline metric space (skeleton or value) after lead. */
+  showMetricSlot?: boolean;
   className?: string;
 };
 
@@ -25,9 +27,10 @@ export function ControlPanelHeaderSubtitle({
   metric,
   metricLoading = false,
   metricSuffix = "",
+  showMetricSlot = false,
   className,
 }: Props) {
-  const showMetric = metricLoading || metric !== undefined;
+  const showMetric = showMetricSlot || metricLoading || metric !== undefined;
 
   return (
     <div className={cn(pageHeaderDescriptionClass, className)}>
@@ -41,7 +44,7 @@ export function ControlPanelHeaderSubtitle({
               aria-hidden
             />
           ) : (
-            <span>
+            <span suppressHydrationWarning>
               {metric}
               {metricSuffix}
             </span>

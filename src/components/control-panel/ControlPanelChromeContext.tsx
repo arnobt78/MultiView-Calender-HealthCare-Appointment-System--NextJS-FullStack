@@ -1,15 +1,10 @@
 "use client";
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
+import { createContext, useContext, useMemo, type ReactNode } from "react";
 
-/** Client-registered chrome slots — rendered in merged header beside SSR static left. */
+import type { ControlPanelSidebarTabValue } from "@/lib/control-panel-nav-config";
+
+/** Sync-store slot shape — registered by ControlPanelChromeActions during body render. */
 export type ControlPanelChromeRegistry = {
   actions: ReactNode | null;
   toolbar: ReactNode | null;
@@ -24,48 +19,27 @@ export const EMPTY_CONTROL_PANEL_CHROME_REGISTRY: ControlPanelChromeRegistry = {
   title: null,
 };
 
-type RegistryContextValue = {
-  registry: ControlPanelChromeRegistry;
-  setRegistry: (next: ControlPanelChromeRegistry) => void;
+type ControlPanelChromeSlotContextValue = {
   defaultDescription: string;
+  activeTab: ControlPanelSidebarTabValue;
 };
 
-const ControlPanelChromeRegistryContext = createContext<RegistryContextValue | null>(
-  null
-);
+const ControlPanelChromeRegistryContext =
+  createContext<ControlPanelChromeSlotContextValue | null>(null);
 
-/** @deprecated Use `ControlPanelChromeRegistryProvider`. */
-export function ControlPanelChromeFromServerProvider({
-  children,
-}: {
-  children: ReactNode;
-  value?: boolean;
-}) {
-  return (
-    <ControlPanelChromeRegistryProvider defaultDescription="">
-      {children}
-    </ControlPanelChromeRegistryProvider>
-  );
-}
-
-/** Wraps CP section body; merged header slots read registered actions/toolbar/description. */
+/** Wraps CP section body; merged header slots read sync store + defaultDescription/activeTab. */
 export function ControlPanelChromeRegistryProvider({
   children,
   defaultDescription,
+  activeTab,
 }: {
   children: ReactNode;
   defaultDescription: string;
+  activeTab: ControlPanelSidebarTabValue;
 }) {
-  const [registry, setRegistryState] = useState<ControlPanelChromeRegistry>(
-    EMPTY_CONTROL_PANEL_CHROME_REGISTRY
-  );
-  const setRegistry = useCallback((next: ControlPanelChromeRegistry) => {
-    setRegistryState(next);
-  }, []);
-
   const value = useMemo(
-    () => ({ registry, setRegistry, defaultDescription }),
-    [registry, setRegistry, defaultDescription]
+    () => ({ defaultDescription, activeTab }),
+    [defaultDescription, activeTab]
   );
 
   return (
@@ -85,11 +59,7 @@ export function useControlPanelChromeRegistryContext() {
   return ctx;
 }
 
-export function useControlPanelChromeRegistry() {
-  return useControlPanelChromeRegistryContext().registry;
-}
-
-/** @deprecated Merged header registry replaces boolean chromeFromServer flag. */
+/** True when rendered inside merged CP section shell (ControlPanelPageChrome registers sync slots). */
 export function useControlPanelChromeFromServer() {
   return useContext(ControlPanelChromeRegistryContext) != null;
 }

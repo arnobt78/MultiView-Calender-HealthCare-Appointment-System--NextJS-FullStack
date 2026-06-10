@@ -73,3 +73,5 @@
 | 2026-06-10T19:30:00Z | build | C10.2 CP polish gap closure | notifications initialData; SSR action shells RSC; org actions slot; EntityListShell orgs/appts; billing/patient detail loading | REQ-0053 |
 | 2026-06-10T21:00:00Z | build | C11 global isMounted parity | useQueryBodyLoading; remove isMounted from portal/insights/detail/scheduling; notifications cross-tab helper | REQ-0054 |
 | 2026-06-10T22:30:00Z | build | C12 CP chrome subtitle + action parity | inline subtitle skeleton; Refresh SSR shell; HeaderGlassButton h-10; notifications toolbar split | REQ-0055 |
+| 2026-06-10T23:45:00Z | build | C12.1 CP chrome tab isolation | tab-scoped sync store reset; server snapshot; Export CSV literal; overview subtitle error path | REQ-0056 |
+| 2026-06-10T24:15:00Z | build | C12.2 CP chrome polish | slim context; aligned SSR snapshot; description wrapper fix; admin detail subtitle | REQ-0057 |

@@ -45,6 +45,8 @@ import type { OrgBillingCachePayload } from "@/lib/org-billing-prefetch";
 /** SSR payload keyed by section — seeded in `ControlPanelSectionPageClient` before paint. */
 export type ControlPanelSectionPrefetchPayload = {
   dashboardOverview?: DashboardOverview | null;
+  /** Frozen at SSR prefetch — seeds TanStack `updatedAt` so subtitle time matches server + client hydrate. */
+  dashboardOverviewUpdatedAt?: number;
   patients?: Patient[] | null;
   categories?: Category[] | null;
   organizations?: Organization[] | null;
@@ -61,6 +63,8 @@ export type ControlPanelSectionPrefetchPayload = {
   /** Default visit picker for Create Invoice dialog (empty search, eligible visits only). */
   billingAppointmentOptions?: { options: import("@/lib/billing-types").InvoiceAppointmentOptionRow[] } | null;
   notifications?: NotificationsPrefetch | null;
+  /** Frozen at SSR prefetch — seeds TanStack `updatedAt` so notifications subtitle time matches hydrate. */
+  notificationsPrefetchUpdatedAt?: number;
   appointments?: FullAppointment[] | null;
   assignees?: AppointmentAssignee[] | null;
   dashboardAccessAccepted?: DashboardAccessRow[] | null;
@@ -82,10 +86,13 @@ export async function prefetchControlPanelSection(
   role: string | null
 ): Promise<ControlPanelSectionPrefetchPayload> {
   switch (tab) {
-    case "overview":
+    case "overview": {
+      const dashboardOverviewUpdatedAt = Date.now();
       return {
         dashboardOverview: await prefetchDashboardOverview(userId, role, email),
+        dashboardOverviewUpdatedAt,
       };
+    }
     case "patients":
       return { patients: await prefetchPatients() };
     case "categories":
@@ -130,8 +137,13 @@ export async function prefetchControlPanelSection(
           []) as import("@/hooks/useInvitations").Invitation[],
       };
     }
-    case "notifications":
-      return { notifications: await prefetchNotifications(userId) };
+    case "notifications": {
+      const notificationsPrefetchUpdatedAt = Date.now();
+      return {
+        notifications: await prefetchNotifications(userId),
+        notificationsPrefetchUpdatedAt,
+      };
+    }
     case "doctors":
       return { doctorsDirectory: await prefetchDoctors() };
     case "users_admin":

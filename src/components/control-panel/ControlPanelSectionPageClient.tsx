@@ -38,6 +38,8 @@ import {
   pageHeaderRootClass,
 } from "@/lib/page-chrome-classes";
 import { cn } from "@/lib/utils";
+import { ControlPanelSectionInitialProvider } from "@/components/control-panel/ControlPanelSectionInitialContext";
+import { setControlPanelChromeActiveTab } from "@/lib/control-panel-chrome-sync-store";
 
 type Props = {
   tab: ControlPanelSidebarTabValue;
@@ -84,13 +86,21 @@ export function ControlPanelSectionPageClient({
       seedUsersListCacheFromSsr(queryClient, CP_ADMIN_USERS_FILTERS, initial.adminUsers);
     }
     if (initial?.dashboardOverview != null) {
-      seedDashboardOverviewCacheFromSsr(queryClient, initial.dashboardOverview);
+      seedDashboardOverviewCacheFromSsr(
+        queryClient,
+        initial.dashboardOverview,
+        initial.dashboardOverviewUpdatedAt
+      );
     }
     if (initial?.organizations != null) {
       seedOrganizationsListCacheFromSsr(queryClient, initial.organizations);
     }
     if (initial?.notifications != null) {
-      seedNotificationsCacheFromSsr(queryClient, initial.notifications);
+      seedNotificationsCacheFromSsr(
+        queryClient,
+        initial.notifications,
+        initial.notificationsPrefetchUpdatedAt
+      );
     }
     if (initial?.appointments != null) {
       seedAppointmentsListCacheFromSsr(queryClient, initial.appointments);
@@ -122,8 +132,10 @@ export function ControlPanelSectionPageClient({
     initial?.doctorsDirectory,
     initial?.adminUsers,
     initial?.dashboardOverview,
+    initial?.dashboardOverviewUpdatedAt,
     initial?.organizations,
     initial?.notifications,
+    initial?.notificationsPrefetchUpdatedAt,
     initial?.appointments,
     initial?.adminAllAppointmentTypes,
     initial?.appointmentInvitations,
@@ -146,6 +158,9 @@ export function ControlPanelSectionPageClient({
     seedControlPanelSectionCache(queryClient, initial);
   }, [queryClient, initial]);
 
+  // Clear module singleton chrome before body registers — prevents cross-tab stale subtitle/actions.
+  setControlPanelChromeActiveTab(tab);
+
   const mergedServerChrome =
     serverChromeIcon != null && serverChromeTitle != null;
 
@@ -162,25 +177,27 @@ export function ControlPanelSectionPageClient({
   }
 
   return (
-    <ControlPanelChromeRegistryProvider defaultDescription={defaultDescription ?? ""}>
-      <div className="flex w-full flex-col text-gray-700">
-        {/* Body renders first so ControlPanelChromeActions registers before ActionsSlot reads store. */}
-        <div className="order-2">{body}</div>
-        {/* Merged header: SSR icon/title + client description + client actions in one sticky row */}
-        <div className={cn(pageHeaderRootClass, "order-1")}>
-          <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-stretch sm:justify-between">
-            <div className="flex min-w-0 flex-1 items-stretch gap-2">
-              {serverChromeIcon}
-              <div className={pageChromeTitleStackClass}>
-                {serverChromeTitle}
-                <ControlPanelChromeDescriptionSlot />
+    <ControlPanelSectionInitialProvider initial={initial}>
+      <ControlPanelChromeRegistryProvider defaultDescription={defaultDescription ?? ""} activeTab={tab}>
+        <div className="flex w-full flex-col text-gray-700">
+          {/* Body renders first so ControlPanelChromeActions registers before ActionsSlot reads store. */}
+          <div className="order-2">{body}</div>
+          {/* Merged header: SSR icon/title + client description + client actions in one sticky row */}
+          <div className={cn(pageHeaderRootClass, "order-1")}>
+            <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-stretch sm:justify-between">
+              <div className="flex min-w-0 flex-1 items-stretch gap-2">
+                {serverChromeIcon}
+                <div className={pageChromeTitleStackClass}>
+                  {serverChromeTitle}
+                  <ControlPanelChromeDescriptionSlot />
+                </div>
               </div>
+              <ControlPanelChromeActionsSlot tab={tab} serverChromeActions={serverChromeActions} />
             </div>
-            <ControlPanelChromeActionsSlot tab={tab} serverChromeActions={serverChromeActions} />
+            <ControlPanelChromeToolbarSlot />
           </div>
-          <ControlPanelChromeToolbarSlot />
         </div>
-      </div>
-    </ControlPanelChromeRegistryProvider>
+      </ControlPanelChromeRegistryProvider>
+    </ControlPanelSectionInitialProvider>
   );
 }

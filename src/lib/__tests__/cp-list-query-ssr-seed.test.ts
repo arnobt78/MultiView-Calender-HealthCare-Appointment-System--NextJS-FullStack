@@ -14,7 +14,7 @@ describe("cp-list-query-ssr-seed", () => {
     expect(qc.getQueryData(queryKeys.notifications.all)).toEqual(payload);
   });
 
-  it("seedNotificationsCacheFromSsr is no-op when cache warm", () => {
+  it("seedNotificationsCacheFromSsr is no-op when cache warm without updatedAt", () => {
     const qc = new QueryClient();
     const warm = { notifications: [], total: 0, unreadCount: 0 };
     qc.setQueryData(queryKeys.notifications.all, warm);
@@ -24,6 +24,16 @@ describe("cp-list-query-ssr-seed", () => {
       unreadCount: 1,
     } as never);
     expect(qc.getQueryData(queryKeys.notifications.all)).toEqual(warm);
+  });
+
+  it("seedNotificationsCacheFromSsr force-writes when updatedAt provided", () => {
+    const qc = new QueryClient();
+    const warm = { notifications: [], total: 0, unreadCount: 0 };
+    qc.setQueryData(queryKeys.notifications.all, warm);
+    const ssr = { notifications: [{ id: "n2" }], total: 1, unreadCount: 1 };
+    seedNotificationsCacheFromSsr(qc, ssr as never, 12345);
+    expect(qc.getQueryData(queryKeys.notifications.all)).toEqual(ssr);
+    expect(qc.getQueryState(queryKeys.notifications.all)?.dataUpdatedAt).toBe(12345);
   });
 
   it("seedOrgBillingCacheFromSsr seeds invoices and totals per org", () => {

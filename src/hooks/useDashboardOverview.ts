@@ -48,14 +48,15 @@ export function useDashboardOverview() {
       return coerceDashboardOverviewPayload(raw);
     },
     initialData: overviewInitialData,
-    refetchOnMount: overviewInitialData !== undefined ? false : true,
-    staleTime: 60_000, // refresh every minute
+    refetchOnMount: true,
+    staleTime: 60_000,
   });
 
   return {
     data: query.data,
     isLoading: query.isLoading,
     isFetching: query.isFetching,
+    isRefetching: query.isRefetching,
     dataUpdatedAt: query.dataUpdatedAt,
     isError: query.isError,
     error: query.error,

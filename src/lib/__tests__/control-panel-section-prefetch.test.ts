@@ -110,6 +110,8 @@ describe("prefetchControlPanelSection", () => {
       total: 1,
       unreadCount: 1,
     });
+    expect(typeof result.notificationsPrefetchUpdatedAt).toBe("number");
+    expect(result.notificationsPrefetchUpdatedAt).toBeGreaterThan(0);
   });
 
   it("prefetches org billing for every organization", async () => {

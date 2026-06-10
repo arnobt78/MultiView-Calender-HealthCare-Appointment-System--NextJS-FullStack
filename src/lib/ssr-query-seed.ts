@@ -8,6 +8,8 @@ import {
   seedDoctorsDirectoryCacheFromSsr,
   seedPatientsListCacheFromSsr,
   seedUsersListCacheFromSsr,
+  seedDashboardOverviewCacheFromSsr,
+  seedNotificationsCacheFromSsr,
 } from "@/lib/cp-list-query-ssr-seed";
 import { seedInvoicesListCacheFromSsr } from "@/lib/invoices-query-ssr-seed";
 
@@ -37,7 +39,11 @@ export function seedControlPanelSectionCache(
   initial: ControlPanelSectionPrefetchPayload
 ): void {
   if (initial.dashboardOverview != null) {
-    queryClient.setQueryData(queryKeys.dashboard.overview, initial.dashboardOverview);
+    seedDashboardOverviewCacheFromSsr(
+      queryClient,
+      initial.dashboardOverview,
+      initial.dashboardOverviewUpdatedAt
+    );
   }
   if (initial.patients != null) {
     seedPatientsListCacheFromSsr(queryClient, initial.patients);
@@ -69,7 +75,11 @@ export function seedControlPanelSectionCache(
     );
   }
   if (initial.notifications != null) {
-    queryClient.setQueryData(queryKeys.notifications.all, initial.notifications);
+    seedNotificationsCacheFromSsr(
+      queryClient,
+      initial.notifications,
+      initial.notificationsPrefetchUpdatedAt
+    );
   }
   if (initial.appointments != null) {
     queryClient.setQueryData(queryKeys.appointments.all, initial.appointments);

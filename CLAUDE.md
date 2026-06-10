@@ -4,10 +4,12 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-10)
 
-- **C12 CP chrome:** `ControlPanelHeaderSubtitle` inline metric skeleton; `ControlPanelHeaderGlassButton` h-10 parity; overview Refresh SSR shell; notifications filter → toolbar.
-- **C11:** `useQueryBodyLoading`; removed `isMounted`; notifications cross-tab invalidation.
-- **Cross-tab:** BroadcastChannel + localStorage + SSE — no Redis.
-- **Verify:** **881/881** · tsc · lint · build PASS.
+- **C12.3 CP refresh + chrome runtime:** sync store register no emit; `notifyControlPanelChromeRegistry` in layout effect; cleanup `[tab]` only (fixes stale subtitle + dead Refresh); `pageHeaderRootClass` transparent blur.
+- **Overview/notifications:** dynamic subtitle (`dashboard-overview-subtitle`, `notifications-subtitle`); `showMetricSlot`; Refresh → `runCpSectionRefresh` + Sonner; SSR `updatedAt` seed/prefetch.
+- **C12.2:** slim context; SSR snapshot = live; description fragment; AdminUserDetail subtitle.
+- **C12.1:** tab-scoped sync store; unmount guard; Export CSV literal.
+- **Invalidation:** unchanged — notifications CRUD → `invalidateNotificationsAndCrossTab`.
+- **Verify:** **908/908** · tsc · lint · build PASS.
 ## Never / Always
 
 **Never:** hardcode query keys; skip invalidation; `<a href>` internal; shadcn Checkbox; `user` on `UserAvatar`; extra impl `.md`.
@@ -27,7 +29,7 @@ Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Key paths
 
-- Page chrome: `ControlPanelHeaderSubtitle.tsx`, `ControlPanelHeaderGlassButton.tsx`, `control-panel-page-chrome-config.ts`, `query-body-loading.ts`
+- Page chrome: `control-panel-chrome-sync-store.ts`, `ControlPanelChromeActions.tsx`, `control-panel-refresh-notify.ts`, `dashboard-overview-subtitle.ts`, `notifications-subtitle.ts`, `page-chrome-classes.ts`
 - Phone: `phone-validation.ts`, `patient-form-clinical.ts`, `PatientFormDialog`, `reminder-recipient-phone.ts`
 - Cancel: `appointment-cancel-access.ts`, `appointment-id-write.ts`, `appointment-notify.ts`, `AppointmentActionsMenu`
 - Status UI: `appointment-status-display.ts`, `AppointmentStatusGlassBadge`
@@ -37,7 +39,7 @@ Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Agile V
 
-Infinity Loop every prompt: `.agile-v/ACTIVATION.md` · `STATE.md` · `SKILLS.md` (24). **C12** (REQ-0055); **881/881**.
+Infinity Loop every prompt: `.agile-v/ACTIVATION.md` · `STATE.md` · `SKILLS.md` (24). **C12.2** shipped (REQ-0055..0057); runtime refresh polish un-REQ'd.
 
 ## Principle
 

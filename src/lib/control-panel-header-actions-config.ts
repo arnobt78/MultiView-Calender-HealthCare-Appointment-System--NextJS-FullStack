@@ -68,7 +68,7 @@ export function resolveHeaderActionIcon(
 
 const PATIENT_ACTIONS: ControlPanelHeaderActionShellConfig[] = [
   {
-    label: toTitleCaseLabel("Export CSV"),
+    label: "Export CSV",
     iconKey: "download",
     className: violetGlassImportButtonClass,
     slot: "actions",
@@ -145,10 +145,18 @@ const TAB_HEADER_ACTION_SHELLS: Partial<
   ],
   notifications: [
     {
+      label: toTitleCaseLabel("Refresh"),
+      iconKey: "refresh",
+      className: skyGlassBackButtonClass,
+      slot: "actions",
+      variant: "secondary",
+    },
+    {
       label: toTitleCaseLabel("Mark All Read"),
       iconKey: "checkCheck",
       className: skyGlassResetButtonClass,
       slot: "actions",
+      variant: "primary",
     },
   ],
 };

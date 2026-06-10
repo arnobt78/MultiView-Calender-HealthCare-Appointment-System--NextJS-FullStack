@@ -56,10 +56,17 @@ export function seedUsersListCacheFromSsr(
 
 export function seedDashboardOverviewCacheFromSsr(
   queryClient: QueryClient,
-  overview: import("@/hooks/useDashboardOverview").DashboardOverview | null | undefined
+  overview: import("@/hooks/useDashboardOverview").DashboardOverview | null | undefined,
+  /** SSR prefetch timestamp — when set, always writes cache so hydrate matches server subtitle metric. */
+  updatedAt?: number
 ): void {
   if (overview == null) return;
-  seedIfAbsent(queryClient, queryKeys.dashboard.overview, overview);
+  const key = queryKeys.dashboard.overview;
+  if (updatedAt != null) {
+    queryClient.setQueryData(key, overview, { updatedAt });
+    return;
+  }
+  seedIfAbsent(queryClient, key, overview);
 }
 
 export function seedOrganizationsListCacheFromSsr(
@@ -72,10 +79,17 @@ export function seedOrganizationsListCacheFromSsr(
 
 export function seedNotificationsCacheFromSsr(
   queryClient: QueryClient,
-  notifications: import("@/lib/server-prefetch").NotificationsPrefetch | null | undefined
+  notifications: import("@/lib/server-prefetch").NotificationsPrefetch | null | undefined,
+  /** SSR prefetch timestamp — when set, always writes cache so hydrate matches server subtitle metric. */
+  updatedAt?: number
 ): void {
   if (notifications == null) return;
-  seedIfAbsent(queryClient, queryKeys.notifications.all, notifications);
+  const key = queryKeys.notifications.all;
+  if (updatedAt != null) {
+    queryClient.setQueryData(key, notifications, { updatedAt });
+    return;
+  }
+  seedIfAbsent(queryClient, key, notifications);
 }
 
 export function seedAppointmentsListCacheFromSsr(

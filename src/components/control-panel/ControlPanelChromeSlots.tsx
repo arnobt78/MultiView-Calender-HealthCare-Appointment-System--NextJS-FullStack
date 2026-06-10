@@ -14,22 +14,32 @@ import {
 import { ControlPanelChromeActionsShell } from "@/components/control-panel/ControlPanelChromeActionsShell";
 import type { ControlPanelSidebarTabValue } from "@/lib/control-panel-nav-config";
 
-/** Default or section-overridden subtitle — sits in merged header left stack. */
-export function ControlPanelChromeDescriptionSlot() {
-  const { registry, defaultDescription } = useControlPanelChromeRegistryContext();
-  const syncRegistry = useSyncExternalStore(
+/**
+ * Subscribe for updates; read live snapshot each render — body (order-2) registers
+ * before header (order-1) in the same commit so getSnapshot must not be cached early.
+ */
+function useControlPanelChromeSnapshot() {
+  useSyncExternalStore(
     subscribeControlPanelChrome,
     getControlPanelChromeSnapshot,
     getControlPanelChromeSnapshot
   );
-  const description =
-    syncRegistry.description != null
-      ? syncRegistry.description
-      : registry.description != null
-        ? registry.description
-        : defaultDescription;
-  if (!description) return null;
-  return <div className={pageHeaderDescriptionClass}>{description}</div>;
+  return getControlPanelChromeSnapshot();
+}
+
+/** Default or section-overridden subtitle — sits in merged header left stack. */
+export function ControlPanelChromeDescriptionSlot() {
+  const { defaultDescription, activeTab } = useControlPanelChromeRegistryContext();
+  const syncSnapshot = useControlPanelChromeSnapshot();
+  const syncApplies =
+    syncSnapshot.tab === activeTab && syncSnapshot.registry.description != null;
+
+  if (syncApplies) {
+    return <>{syncSnapshot.registry.description}</>;
+  }
+
+  if (!defaultDescription) return null;
+  return <div className={pageHeaderDescriptionClass}>{defaultDescription}</div>;
 }
 
 type ActionsSlotProps = {
@@ -43,16 +53,15 @@ export function ControlPanelChromeActionsSlot({
   tab,
   serverChromeActions,
 }: ActionsSlotProps) {
-  const syncRegistry = useSyncExternalStore(
-    subscribeControlPanelChrome,
-    getControlPanelChromeSnapshot,
-    getControlPanelChromeSnapshot
-  );
+  const { activeTab } = useControlPanelChromeRegistryContext();
+  const syncSnapshot = useControlPanelChromeSnapshot();
+  const syncApplies =
+    syncSnapshot.tab === activeTab && syncSnapshot.registry.actions != null;
 
-  if (syncRegistry.actions) {
+  if (syncApplies) {
     return (
       <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 self-center">
-        {syncRegistry.actions}
+        {syncSnapshot.registry.actions}
       </div>
     );
   }
@@ -66,13 +75,14 @@ export function ControlPanelChromeActionsSlot({
 
 /** Optional second row under title/actions (filters, export toolbar). */
 export function ControlPanelChromeToolbarSlot() {
-  const syncRegistry = useSyncExternalStore(
-    subscribeControlPanelChrome,
-    getControlPanelChromeSnapshot,
-    getControlPanelChromeSnapshot
-  );
-  if (!syncRegistry.toolbar) return null;
+  const { activeTab } = useControlPanelChromeRegistryContext();
+  const syncSnapshot = useControlPanelChromeSnapshot();
+  const syncApplies =
+    syncSnapshot.tab === activeTab && syncSnapshot.registry.toolbar != null;
+  if (!syncApplies) return null;
   return (
-    <div className={cn(pageChromeToolbarRowClass, "w-full")}>{syncRegistry.toolbar}</div>
+    <div className={cn(pageChromeToolbarRowClass, "w-full")}>
+      {syncSnapshot.registry.toolbar}
+    </div>
   );
 }

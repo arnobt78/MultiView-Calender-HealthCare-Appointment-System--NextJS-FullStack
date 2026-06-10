@@ -18,9 +18,10 @@ describe("control-panel-page-chrome-config C12 subtitles", () => {
     expect(config.description).toContain("last updated");
   });
 
-  it("notifications uses inline-metric lead", () => {
+  it("notifications uses inline-metric lead with last updated", () => {
     const config = getControlPanelPageChromeConfig("notifications");
     expect(config.description).toBe(CP_NOTIFICATIONS_SUBTITLE_LEAD);
+    expect(config.description).toContain("last updated");
   });
 
   it("users_admin subtitle is inlined in config (no missing import file)", () => {
@@ -30,9 +31,23 @@ describe("control-panel-page-chrome-config C12 subtitles", () => {
 });
 
 describe("control-panel-header-actions-config C12", () => {
+  it("patients Export CSV shell preserves acronym casing", () => {
+    const shells = getControlPanelHeaderActionShells("patients", "actions");
+    const exportShell = shells.find((s) => s.iconKey === "download");
+    expect(exportShell?.label).toBe("Export CSV");
+  });
+
   it("overview has Refresh SSR shell", () => {
     const shells = getControlPanelHeaderActionShells("overview", "actions");
     expect(shells.some((s) => s.label === "Refresh" && s.iconKey === "refresh")).toBe(true);
+  });
+
+  it("notifications has Refresh + Mark All Read SSR shells", () => {
+    const shells = getControlPanelHeaderActionShells("notifications", "actions");
+    expect(shells.some((s) => s.label === "Refresh" && s.iconKey === "refresh")).toBe(true);
+    expect(shells.some((s) => s.label === "Mark All Read" && s.iconKey === "checkCheck")).toBe(
+      true
+    );
   });
 
   it("resolveHeaderActionIcon includes refresh", () => {

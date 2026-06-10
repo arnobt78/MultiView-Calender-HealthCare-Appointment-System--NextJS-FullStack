@@ -1,7 +1,9 @@
 "use client";
 
 /**
- * NotificationsManagement — SSR seed + useCpListBodyLoading; header chrome always mounted.
+ * NotificationsManagement — merged CP chrome (SSR icon/title + live subtitle/actions).
+ * Subtitle: last-updated time + total count; Refresh refetches queryKeys.notifications.all.
+ * CRUD mutations use invalidateNotificationsAndCrossTab (navbar badge + this list).
  */
 
 import { useState } from "react";
@@ -40,6 +42,7 @@ import {
   BellOff,
   CheckCheck,
   ExternalLink,
+  RefreshCw,
   Trash2,
 } from "lucide-react";
 import { format } from "date-fns";
@@ -48,7 +51,18 @@ import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout
 import { useCpListBodyLoading } from "@/lib/cp-list-body-loading";
 import { queryKeys } from "@/lib/query-keys";
 import { CP_NOTIFICATIONS_SUBTITLE_LEAD } from "@/lib/control-panel-page-chrome-config";
-import { skyGlassResetButtonClass } from "@/lib/calendar-header-action-styles";
+import {
+  skyGlassBackButtonClass,
+  skyGlassResetButtonClass,
+} from "@/lib/calendar-header-action-styles";
+import { useControlPanelSectionInitial } from "@/components/control-panel/ControlPanelSectionInitialContext";
+import {
+  buildNotificationsSubtitleTotalSuffix,
+  formatNotificationsSubtitleUpdatedAt,
+  resolveNotificationsSubtitleTotal,
+  resolveNotificationsSubtitleUpdatedAt,
+} from "@/lib/notifications-subtitle";
+import { runCpSectionRefresh } from "@/lib/control-panel-refresh-notify";
 
 const columnHelper = createColumnHelper<Notification>();
 
@@ -62,8 +76,47 @@ const TYPE_COLORS: Record<string, string> = {
 };
 
 export default function NotificationsManagement() {
-  const { notifications, unreadCount, isLoading, isError: notificationsError, markAsRead, markAllAsRead, isMarkingRead } = useNotifications();
+  const sectionInitial = useControlPanelSectionInitial();
+  const {
+    notifications,
+    total,
+    unreadCount,
+    isLoading,
+    isFetching,
+    isRefetching,
+    hasData,
+    dataUpdatedAt,
+    refetch,
+    isError: notificationsError,
+    markAsRead,
+    markAllAsRead,
+    isMarkingRead,
+  } = useNotifications();
   const listBodyLoading = useCpListBodyLoading(queryKeys.notifications.all, isLoading);
+
+  const resolvedTotal = resolveNotificationsSubtitleTotal(
+    total,
+    hasData,
+    sectionInitial?.notifications
+  );
+  const lastUpdatedAt = resolveNotificationsSubtitleUpdatedAt(
+    dataUpdatedAt,
+    sectionInitial?.notificationsPrefetchUpdatedAt
+  );
+  const subtitleMetricLoading =
+    isFetching || listBodyLoading || lastUpdatedAt === 0;
+  const subtitleMetric =
+    lastUpdatedAt > 0
+      ? formatNotificationsSubtitleUpdatedAt(lastUpdatedAt)
+      : undefined;
+  const subtitleTotalSuffix = buildNotificationsSubtitleTotalSuffix(resolvedTotal);
+  const fetchingDisplay = isRefetching;
+
+  const handleRefresh = () =>
+    void runCpSectionRefresh(refetch, "notifications", {
+      total: resolvedTotal ?? total,
+      unreadCount,
+    });
   const [sorting, setSorting] = useState<SortingState>([{ id: "created_at", desc: true }]);
   const [globalFilter, setGlobalFilter] = useState("");
   const [markAllConfirmOpen, setMarkAllConfirmOpen] = useState(false);
@@ -151,6 +204,25 @@ export default function NotificationsManagement() {
   if (notificationsError) {
     return (
       <div className={controlPanelSectionRootClass}>
+        <ControlPanelPageChrome
+          tab="notifications"
+          description={
+            <ControlPanelHeaderSubtitle
+              lead={CP_NOTIFICATIONS_SUBTITLE_LEAD}
+              metricLoading
+              showMetricSlot
+            />
+          }
+          actions={
+            <ControlPanelHeaderGlassButton
+              glassClassName={skyGlassBackButtonClass}
+              icon={RefreshCw}
+              onClick={handleRefresh}
+            >
+              Refresh
+            </ControlPanelHeaderGlassButton>
+          }
+        />
         <AppSectionErrorBanner>
           Failed to load notifications. Please refresh.
         </AppSectionErrorBanner>
@@ -165,9 +237,10 @@ export default function NotificationsManagement() {
         description={
           <ControlPanelHeaderSubtitle
             lead={CP_NOTIFICATIONS_SUBTITLE_LEAD}
-            metric={String(notifications.length)}
-            metricSuffix=" total"
-            metricLoading={listBodyLoading}
+            metric={subtitleMetric}
+            metricSuffix={subtitleTotalSuffix}
+            metricLoading={subtitleMetricLoading}
+            showMetricSlot
           />
         }
         toolbar={
@@ -182,6 +255,22 @@ export default function NotificationsManagement() {
         }
         actions={
           <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 self-center">
+            <ControlPanelHeaderGlassButton
+              glassClassName={skyGlassBackButtonClass}
+              icon={fetchingDisplay ? undefined : RefreshCw}
+              disabled={fetchingDisplay}
+              aria-busy={fetchingDisplay}
+              onClick={handleRefresh}
+            >
+              {fetchingDisplay ? (
+                <>
+                  <RefreshCw className="shrink-0 animate-spin" aria-hidden />
+                  Refreshing...
+                </>
+              ) : (
+                "Refresh"
+              )}
+            </ControlPanelHeaderGlassButton>
             {unreadCount > 0 ? (
               <Badge className="bg-primary text-primary-foreground">{unreadCount} unread</Badge>
             ) : null}
@@ -277,7 +366,7 @@ export default function NotificationsManagement() {
         {!listBodyLoading && (
           <div className="px-4 py-2 border-t text-xs text-muted-foreground flex items-center gap-2">
             <Trash2 className="h-3 w-3" />
-            {table.getRowModel().rows.length} of {notifications.length} notifications shown
+            {table.getRowModel().rows.length} of {total} notifications shown
           </div>
         )}
       </div>

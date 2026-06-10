@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { BackNavigationLink } from "@/components/shared/BackNavigationLink";
 import { EntityDetailChromeHeader } from "@/components/shared/entity-detail/EntityDetailChromeHeader";
+import { ControlPanelHeaderSubtitle } from "@/components/control-panel/ControlPanelHeaderSubtitle";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { UserAvatar } from "@/components/shared/UserAvatar";
@@ -104,6 +105,9 @@ export function AdminUserDetailScreen({
   const { data: user, updateUser, isUpdating } = useUser(userId, { initialData: initialUser });
   const liveUser = user ?? initialUser;
   const displayName = liveUser.display_name?.trim() || liveUser.email;
+  const roleLabel = liveUser.role
+    ? `${liveUser.role.charAt(0).toUpperCase()}${liveUser.role.slice(1)}`
+    : "User";
 
   /** Record Audit — `userDetailInclude` on SSR + GET/PATCH `/api/users/[id]`. */
   const recordAuditActors = useMemo(() => mapUserRecordAuditActors(liveUser), [liveUser]);
@@ -127,9 +131,11 @@ export function AdminUserDetailScreen({
         className={entityDetailPageHeaderClass}
         title={displayName}
         description={
-          liveUser.role
-            ? `${liveUser.role.charAt(0).toUpperCase()}${liveUser.role.slice(1)} account`
-            : "User account"
+          <ControlPanelHeaderSubtitle
+            lead={`${roleLabel} account —`}
+            metric={String(appointmentCount)}
+            metricSuffix=" appointments"
+          />
         }
         actions={
           <BackNavigationLink href={listBackHref} className="no-underline">

@@ -6,7 +6,7 @@
 
 | Field | Value |
 |-------|-------|
-| Cycle | C1–C9 shipped · **C10/C11 shipped** · **C12 active** (REQ-0055) |
+| Cycle | C1–C9 shipped · **C10/C11 shipped** · **C12 active** (REQ-0055..0057) |
 | Author | Requirement Architect |
 | Gate 1 status | C1 GATE-0001 · C2 GATE-0003 approved |
 | Canonical source | this file |
@@ -101,6 +101,42 @@
 | REQ-0053 | approved [C10.2] | REQ-0050 | ART-0256..0262 | pending |
 | REQ-0054 | approved [C11] | REQ-0050 | ART-0263..0270 | pending |
 | REQ-0055 | approved [C12] | REQ-0050 | ART-0271..0278 | pending |
+| REQ-0056 | approved [C12.1] | REQ-0055 | ART-0279..0282 | pending |
+| REQ-0057 | approved [C12.2] | REQ-0056 | ART-0283..0286 | pending |
+
+### REQ-0057 — C12.2 CP chrome polish
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C12.2] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0056 |
+
+**Statement:** Remove dead context registry; align SSR snapshot with same-commit body registration; fix nested description wrapper; AdminUserDetailScreen merged subtitle.
+
+**Acceptance criteria:**
+1. No dead `registry`/`setRegistry` in `ControlPanelChromeContext`.
+2. Overview/notifications subtitle shows lead + metric on first paint (no static-lead flash).
+3. Registered `ControlPanelHeaderSubtitle` not double-wrapped in `pageHeaderDescriptionClass`.
+4. Admin user detail shows role lead + SSR appointment count metric.
+
+### REQ-0056 — C12.1 CP chrome tab isolation + hydration fix
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C12.1] |
+| Priority | P0 |
+| Risk | R1 |
+| Parent | REQ-0055 |
+
+**Statement:** Tab-scoped chrome sync store reset on CP navigation; SSR server snapshot parity; merged subtitles without stale cross-tab bleed; Export CSV shell label parity.
+
+**Acceptance criteria:**
+1. Soft nav between CP tabs produces no hydration mismatch on description/actions slots.
+2. `setControlPanelChromeActiveTab` clears module singleton before body registers new tab chrome.
+3. Overview/notifications show static lead + inline metric skeleton (no fallback swap).
+4. Patient management SSR shell label matches live button: `Export CSV`.
 
 ### REQ-0055 — C12 CP header subtitle + action parity
 

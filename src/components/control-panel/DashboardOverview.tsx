@@ -27,11 +27,15 @@ import {
   Banknote,
   Receipt,
 } from "lucide-react";
-import { format } from "date-fns";
+import {
+  formatDashboardOverviewLastUpdated,
+  resolveDashboardOverviewUpdatedAt,
+} from "@/lib/dashboard-overview-subtitle";
 import { useDashboardOverview } from "@/hooks/useDashboardOverview";
 import { useCpListBodyLoading } from "@/lib/cp-list-body-loading";
 import { queryKeys } from "@/lib/query-keys";
 import { ControlPanelHeaderSubtitle } from "@/components/control-panel/ControlPanelHeaderSubtitle";
+import { useControlPanelSectionInitial } from "@/components/control-panel/ControlPanelSectionInitialContext";
 import { ControlPanelHeaderGlassButton } from "@/components/control-panel/ControlPanelHeaderGlassButton";
 import { CP_OVERVIEW_SUBTITLE_LEAD } from "@/lib/control-panel-page-chrome-config";
 import { skyGlassBackButtonClass } from "@/lib/calendar-header-action-styles";
@@ -46,6 +50,7 @@ import {
 } from "@/lib/control-panel-glass-card";
 import { AppSectionErrorBanner } from "@/components/shared/AppSectionErrorBanner";
 import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
+import { runCpSectionRefresh } from "@/lib/control-panel-refresh-notify";
 
 function StatCard({
   label,
@@ -93,12 +98,24 @@ function StatCard({
 }
 
 export default function DashboardOverviewComponent() {
-  const { data, isLoading, isFetching, dataUpdatedAt, refetch, isError } = useDashboardOverview();
+  const sectionInitial = useControlPanelSectionInitial();
+  const { data, isLoading, isFetching, isRefetching, dataUpdatedAt, refetch, isError } = useDashboardOverview();
 
   const listBodyLoading = useCpListBodyLoading(queryKeys.dashboard.overview, isLoading);
   const statValueLoading = listBodyLoading;
 
-  const fetchingDisplay = isFetching;
+  const fetchingDisplay = isRefetching;
+
+  const lastUpdatedAt = resolveDashboardOverviewUpdatedAt(
+    dataUpdatedAt,
+    sectionInitial?.dashboardOverviewUpdatedAt
+  );
+  const subtitleMetricLoading =
+    isFetching || listBodyLoading || lastUpdatedAt === 0;
+  const subtitleMetric =
+    lastUpdatedAt > 0
+      ? formatDashboardOverviewLastUpdated(lastUpdatedAt)
+      : undefined;
 
   const appointments = data?.appointments;
   const patients = data?.patients;
@@ -111,7 +128,16 @@ export default function DashboardOverviewComponent() {
   if (isError) {
     return (
       <div className={controlPanelSectionRootClass}>
-        <ControlPanelPageChrome tab="overview" />
+        <ControlPanelPageChrome
+          tab="overview"
+          description={
+            <ControlPanelHeaderSubtitle
+              lead={CP_OVERVIEW_SUBTITLE_LEAD}
+              metricLoading
+              showMetricSlot
+            />
+          }
+        />
         <AppSectionErrorBanner>
           Failed to load dashboard data. Please refresh.
         </AppSectionErrorBanner>
@@ -126,12 +152,9 @@ export default function DashboardOverviewComponent() {
         description={
           <ControlPanelHeaderSubtitle
             lead={CP_OVERVIEW_SUBTITLE_LEAD}
-            metric={
-              dataUpdatedAt
-                ? format(new Date(dataUpdatedAt), "HH:mm:ss")
-                : format(new Date(), "HH:mm:ss")
-            }
-            metricLoading={listBodyLoading}
+            metric={subtitleMetric}
+            metricLoading={subtitleMetricLoading}
+            showMetricSlot
           />
         }
         actions={
@@ -140,7 +163,7 @@ export default function DashboardOverviewComponent() {
             icon={fetchingDisplay ? undefined : RefreshCw}
             disabled={fetchingDisplay}
             aria-busy={fetchingDisplay}
-            onClick={() => void refetch()}
+            onClick={() => void runCpSectionRefresh(refetch, "overview")}
           >
             {fetchingDisplay ? (
               <>
