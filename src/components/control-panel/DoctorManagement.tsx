@@ -68,6 +68,10 @@ import {
   CP_DOCTOR_LIST_PAGINATION_STUB,
 } from "@/lib/cp-dev-stub-copy";
 import { emeraldGlassPrimaryButtonClass } from "@/lib/calendar-header-action-styles";
+import {
+  cpClinicalListActionsColumnShellClass,
+  cpClinicalListTableFrameClassName,
+} from "@/lib/cp-clinical-list-table-classes";
 import type { User } from "@/types/types";
 import type { DoctorDirectoryRow } from "@/lib/doctor-directory";
 import { useUsers } from "@/hooks/useUsers";
@@ -117,7 +121,7 @@ function DoctorActions({
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-7 w-7">
+          <Button variant="ghost" size="icon" className="h-7 w-7 cursor-pointer">
             <EllipsisVertical className="h-4 w-4" />
             <span className="sr-only">Open menu</span>
           </Button>
@@ -377,13 +381,15 @@ function DoctorManagementInner() {
           <DataTableColumnHeader column={column} title="Actions" className="text-right" />
         ),
         enableSorting: false,
-        meta: { shellClassName: "w-[1%] whitespace-nowrap text-right" },
+        meta: { shellClassName: cpClinicalListActionsColumnShellClass },
         cell: ({ row }) => (
-          <DoctorActions
-            row={row.original}
-            onEdit={openEditDialog}
-            onToggleActive={handleToggleActive}
-          />
+          <div className="flex min-h-[2.75rem] items-center justify-end">
+            <DoctorActions
+              row={row.original}
+              onEdit={openEditDialog}
+              onToggleActive={handleToggleActive}
+            />
+          </div>
         ),
       },
     ],
@@ -418,7 +424,7 @@ function DoctorManagementInner() {
             tab="doctors"
             actions={
               <ControlPanelHeaderGlassButton
-                glassClassName={cn(emeraldGlassPrimaryButtonClass, "cursor-pointer")}
+                glassClassName={emeraldGlassPrimaryButtonClass}
                 icon={UserPlus}
                 onClick={() => {
                   setCreateForm(EMPTY_DOCTOR_FORM);
@@ -506,7 +512,7 @@ function DoctorManagementInner() {
           emptyMessage="No doctors match your filters."
           tableClassName="min-w-[1100px] w-full"
           tableLayout="auto"
-          tableFrameClassName="min-w-0 max-w-full border-0 bg-transparent shadow-none rounded-none"
+          tableFrameClassName={cpClinicalListTableFrameClassName}
         />
         }
         footerSlot={

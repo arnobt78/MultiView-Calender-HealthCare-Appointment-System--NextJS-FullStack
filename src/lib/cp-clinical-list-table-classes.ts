@@ -1,4 +1,4 @@
-/** Inner DataTable frame — outer glow lives on ControlPanelEntityListShell tone. */
+/** Inner DataTable frame — outer glow lives on ControlPanelEntityListShell tone map. */
 export const cpClinicalListTableFrameClassName =
   "min-w-0 max-w-full border-0 bg-transparent shadow-none rounded-none";
 

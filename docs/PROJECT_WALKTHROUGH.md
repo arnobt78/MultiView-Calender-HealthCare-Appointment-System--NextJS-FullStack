@@ -2,7 +2,7 @@
 
 ## Latest (2026-06-10 — C17 + C16)
 
-**C17:** shared list tokens + footer UX; **admin table frame** matches patient (`rounded-2xl` `bg-white/90` via `violetGlassTableFrameClass`, inner `cpClinicalListTableFrameClassName`). **C16:** violet admin chrome. **Verify:** **931/931**.
+**C17+:** doctor/category lists share `cpClinicalList*` tokens (doctor Actions crush fixed). **Verify:** **940/940** · tsc · lint · build.
 
 ## Prior (2026-06-10 — C15 entity detail spacing + C14 gaps)
 

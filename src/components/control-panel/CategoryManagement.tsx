@@ -14,6 +14,11 @@ import { EntityActiveStatusBadge } from "@/components/shared/entity-display/Enti
 import { Category } from "@/types/types";
 import { cn } from "@/lib/utils";
 import { violetGlassPrimaryButtonClass } from "@/lib/calendar-header-action-styles";
+import {
+  cpClinicalListActionsColumnShellClass,
+  cpClinicalListJoinedColumnShellClass,
+  cpClinicalListTableFrameClassName,
+} from "@/lib/cp-clinical-list-table-classes";
 import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
 import { AppSectionErrorBanner } from "@/components/shared/AppSectionErrorBanner";
 import { ControlPanelEntityListShell } from "@/components/control-panel/ControlPanelEntityListShell";
@@ -309,7 +314,7 @@ export function CategoryManagementInner() {
       {
         accessorKey: "created_at",
         header: ({ column }) => <DataTableColumnHeader column={column} title="Created" />,
-        meta: { shellClassName: "w-[13.5%] min-w-[9rem] whitespace-nowrap" },
+        meta: { shellClassName: cpClinicalListJoinedColumnShellClass },
         cell: ({ row }) => (
           <div className="flex min-h-[2.75rem] items-center">
             <span className={cn("whitespace-nowrap", clinicalCellMutedTextClass)}>
@@ -326,7 +331,7 @@ export function CategoryManagementInner() {
           <DataTableColumnHeader column={column} title="Actions" className="text-right" />
         ),
         enableSorting: false,
-        meta: { shellClassName: "w-[8%] min-w-[4.75rem] whitespace-nowrap text-right" },
+        meta: { shellClassName: cpClinicalListActionsColumnShellClass },
         cell: ({ row }) => (
           <div className="flex min-h-[2.75rem] items-center justify-end">
             <CategoryActions
@@ -422,7 +427,7 @@ export function CategoryManagementInner() {
           searchPlaceholder="Search by label or description…"
           emptyMessage="No categories match your filters."
           tableClassName="min-w-[980px] w-full"
-          tableFrameClassName="min-w-0 max-w-full border-0 bg-transparent shadow-none rounded-none"
+          tableFrameClassName={cpClinicalListTableFrameClassName}
         />
         }
         footerSlot={
