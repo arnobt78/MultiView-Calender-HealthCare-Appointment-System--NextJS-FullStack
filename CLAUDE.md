@@ -4,11 +4,10 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-10)
 
-- **C11 global parity:** `query-body-loading.ts` (`useQueryBodyLoading`); removed `isMounted` from portal cards, insights, entity detail, scheduling editors/calendar.
-- **Invalidation:** `useNotifications` → `invalidateNotificationsAndCrossTab`; booking dialog drops redundant portal invalidate (appointment helper covers it).
+- **C12 CP chrome:** `ControlPanelHeaderSubtitle` inline metric skeleton; `ControlPanelHeaderGlassButton` h-10 parity; overview Refresh SSR shell; notifications filter → toolbar.
+- **C11:** `useQueryBodyLoading`; removed `isMounted`; notifications cross-tab invalidation.
 - **Cross-tab:** BroadcastChannel + localStorage + SSE — no Redis.
-- **C10 recap:** CP zero-flash SSR seeds, chrome sync, navbar auth/me seed, EntityListShell.
-- **Verify:** **875/875** · tsc · lint · build PASS.
+- **Verify:** **881/881** · tsc · lint · build PASS.
 ## Never / Always
 
 **Never:** hardcode query keys; skip invalidation; `<a href>` internal; shadcn Checkbox; `user` on `UserAvatar`; extra impl `.md`.
@@ -28,7 +27,7 @@ Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Key paths
 
-- Page chrome: `query-body-loading.ts`, `cp-list-query-ssr-seed.ts`, `ControlPanelChromeActionsServer.tsx`, `control-panel-chrome-sync-store.ts`
+- Page chrome: `ControlPanelHeaderSubtitle.tsx`, `ControlPanelHeaderGlassButton.tsx`, `control-panel-page-chrome-config.ts`, `query-body-loading.ts`
 - Phone: `phone-validation.ts`, `patient-form-clinical.ts`, `PatientFormDialog`, `reminder-recipient-phone.ts`
 - Cancel: `appointment-cancel-access.ts`, `appointment-id-write.ts`, `appointment-notify.ts`, `AppointmentActionsMenu`
 - Status UI: `appointment-status-display.ts`, `AppointmentStatusGlassBadge`
@@ -38,7 +37,7 @@ Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Agile V
 
-Infinity Loop every prompt: `.agile-v/ACTIVATION.md` · `STATE.md` · `SKILLS.md` (24). **C11** (REQ-0054); **875/875**.
+Infinity Loop every prompt: `.agile-v/ACTIVATION.md` · `STATE.md` · `SKILLS.md` (24). **C12** (REQ-0055); **881/881**.
 
 ## Principle
 

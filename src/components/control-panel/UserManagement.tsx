@@ -13,6 +13,7 @@ import { CP_ADMIN_USERS_FILTERS } from "@/lib/control-panel-users-filters";
 import { DataTable } from "@/components/shared/DataTable";
 import { DataTableColumnHeader } from "@/components/shared/DataTableColumnHeader";
 import { ControlPanelPageChrome } from "@/components/control-panel/ControlPanelPageChrome";
+import { ControlPanelHeaderGlassButton } from "@/components/control-panel/ControlPanelHeaderGlassButton";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { UserRoleBadge } from "@/components/shared/UserRoleBadge";
 import { UserAvatar } from "@/components/shared/UserAvatar";
@@ -233,21 +234,17 @@ export default function UserManagement() {
       headerSlot={
         <ControlPanelPageChrome
           tab="users_admin"
-          description="B2B admin accounts — register or Google sign-in. Demo doctors and patients are on their own management tabs."
           actions={
-            <Button
-              type="button"
-              variant="ghost"
-              size="lg"
-              className={cn(emeraldGlassPrimaryButtonClass, "cursor-pointer")}
+            <ControlPanelHeaderGlassButton
+              glassClassName={cn(emeraldGlassPrimaryButtonClass, "cursor-pointer")}
+              icon={UserPlus}
               onClick={() => {
                 setCreateForm(EMPTY_ADMIN_USER_FORM);
                 setCreateDialogOpen(true);
               }}
             >
-              <UserPlus className="shrink-0" aria-hidden />
               Add Admin
-            </Button>
+            </ControlPanelHeaderGlassButton>
           }
         />
       }

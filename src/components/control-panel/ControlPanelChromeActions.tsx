@@ -1,6 +1,7 @@
 "use client";
 
 import { useLayoutEffect, type ReactNode } from "react";
+import type { ControlPanelChromeRegistry } from "@/components/control-panel/ControlPanelChromeContext";
 import {
   registerControlPanelChromeSlice,
   resetControlPanelChromeRegistry,
@@ -16,7 +17,7 @@ type ControlPanelChromeActionsProps = {
 
 /**
  * Registers dynamic header slots synchronously during render (body must render before header).
- * useLayoutEffect notifies subscribers + clears on unmount.
+ * Only passes defined props — omitting a slot preserves the previous snapshot value (no null clear).
  */
 export function ControlPanelChromeActions({
   actions,
@@ -24,12 +25,15 @@ export function ControlPanelChromeActions({
   description,
   title,
 }: ControlPanelChromeActionsProps) {
-  registerControlPanelChromeSlice({
-    actions: actions ?? null,
-    toolbar: toolbar ?? null,
-    description: description ?? null,
-    title: title ?? null,
-  });
+  const slice: Partial<ControlPanelChromeRegistry> = {};
+  if (actions !== undefined) slice.actions = actions;
+  if (toolbar !== undefined) slice.toolbar = toolbar;
+  if (description !== undefined) slice.description = description;
+  if (title !== undefined) slice.title = title;
+
+  if (Object.keys(slice).length > 0) {
+    registerControlPanelChromeSlice(slice);
+  }
 
   useLayoutEffect(() => {
     notifyControlPanelChromeRegistry();

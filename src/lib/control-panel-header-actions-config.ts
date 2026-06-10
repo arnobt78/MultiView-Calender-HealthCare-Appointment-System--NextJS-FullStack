@@ -7,6 +7,7 @@ import {
   Download,
   FileEdit,
   Plus,
+  RefreshCw,
   Tag,
   UserPlus,
   CheckCheck,
@@ -15,6 +16,8 @@ import {
 import type { ControlPanelSidebarTabValue } from "@/lib/control-panel-nav-config";
 import {
   emeraldGlassPrimaryButtonClass,
+  skyGlassBackButtonClass,
+  skyGlassResetButtonClass,
   violetGlassImportButtonClass,
   violetGlassPrimaryButtonClass,
 } from "@/lib/calendar-header-action-styles";
@@ -24,6 +27,7 @@ export type ControlPanelHeaderActionIconKey =
   | "download"
   | "fileEdit"
   | "plus"
+  | "refresh"
   | "tag"
   | "userPlus"
   | "checkCheck"
@@ -49,6 +53,7 @@ const ICON_MAP: Record<ControlPanelHeaderActionIconKey, LucideIcon> = {
   download: Download,
   fileEdit: FileEdit,
   plus: Plus,
+  refresh: RefreshCw,
   tag: Tag,
   userPlus: UserPlus,
   checkCheck: CheckCheck,
@@ -81,6 +86,14 @@ const PATIENT_ACTIONS: ControlPanelHeaderActionShellConfig[] = [
 const TAB_HEADER_ACTION_SHELLS: Partial<
   Record<ControlPanelSidebarTabValue, ControlPanelHeaderActionShellConfig[]>
 > = {
+  overview: [
+    {
+      label: toTitleCaseLabel("Refresh"),
+      iconKey: "refresh",
+      className: skyGlassBackButtonClass,
+      slot: "actions",
+    },
+  ],
   patients: PATIENT_ACTIONS,
   categories: [
     {
@@ -134,8 +147,7 @@ const TAB_HEADER_ACTION_SHELLS: Partial<
     {
       label: toTitleCaseLabel("Mark All Read"),
       iconKey: "checkCheck",
-      className:
-        "inline-flex h-9 items-center gap-2 rounded-full border border-input bg-background px-3 text-sm opacity-60",
+      className: skyGlassResetButtonClass,
       slot: "actions",
     },
   ],

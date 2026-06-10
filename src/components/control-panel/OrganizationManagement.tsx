@@ -55,6 +55,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MoreHorizontal, Plus, Users, Building2 } from "lucide-react";
 import { ControlPanelPageChrome } from "@/components/control-panel/ControlPanelPageChrome";
+import { ControlPanelHeaderGlassButton } from "@/components/control-panel/ControlPanelHeaderGlassButton";
 import { PatientStatCard } from "@/components/control-panel/PatientStatCard";
 import { emeraldGlassPrimaryButtonClass } from "@/lib/calendar-header-action-styles";
 import { format } from "date-fns";
@@ -81,10 +82,12 @@ function CreateOrgDialog({ onCreate }: { onCreate: (name: string) => void }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button type="button" className={cn(emeraldGlassPrimaryButtonClass, "gap-2 cursor-pointer")}>
-          <Building2 className="h-4 w-4 shrink-0" aria-hidden />
+        <ControlPanelHeaderGlassButton
+          glassClassName={cn(emeraldGlassPrimaryButtonClass, "cursor-pointer")}
+          icon={Building2}
+        >
           Create Organization
-        </Button>
+        </ControlPanelHeaderGlassButton>
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>

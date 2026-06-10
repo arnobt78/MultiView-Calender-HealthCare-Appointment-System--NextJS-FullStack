@@ -17,6 +17,8 @@ import {
 import { useNotifications } from "@/hooks/useNotifications";
 import type { Notification } from "@/types/notification";
 import { ControlPanelPageChrome } from "@/components/control-panel/ControlPanelPageChrome";
+import { ControlPanelHeaderSubtitle } from "@/components/control-panel/ControlPanelHeaderSubtitle";
+import { ControlPanelHeaderGlassButton } from "@/components/control-panel/ControlPanelHeaderGlassButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -34,9 +36,7 @@ import {
   buildMarkAllNotificationsReadConfirmSubtitle,
   MARK_ALL_NOTIFICATIONS_READ_TITLE,
 } from "@/lib/confirm-delete-dialog-copy";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Bell,
   BellOff,
   CheckCheck,
   ExternalLink,
@@ -47,6 +47,8 @@ import { AppSectionErrorBanner } from "@/components/shared/AppSectionErrorBanner
 import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
 import { useCpListBodyLoading } from "@/lib/cp-list-body-loading";
 import { queryKeys } from "@/lib/query-keys";
+import { CP_NOTIFICATIONS_SUBTITLE_LEAD } from "@/lib/control-panel-page-chrome-config";
+import { skyGlassResetButtonClass } from "@/lib/calendar-header-action-styles";
 
 const columnHelper = createColumnHelper<Notification>();
 
@@ -161,50 +163,57 @@ export default function NotificationsManagement() {
       <ControlPanelPageChrome
         tab="notifications"
         description={
-          listBodyLoading ? undefined : `${notifications.length} total notifications`
+          <ControlPanelHeaderSubtitle
+            lead={CP_NOTIFICATIONS_SUBTITLE_LEAD}
+            metric={String(notifications.length)}
+            metricSuffix=" total"
+            metricLoading={listBodyLoading}
+          />
+        }
+        toolbar={
+          <div className="flex w-full flex-wrap items-center justify-end gap-2">
+            <Input
+              placeholder="Filter notifications…"
+              value={globalFilter}
+              onChange={(e) => setGlobalFilter(e.target.value)}
+              className="w-52"
+            />
+          </div>
         }
         actions={
-        <div className="flex items-center gap-2 flex-wrap">
-          {unreadCount > 0 ? (
-            <Badge className="bg-primary text-primary-foreground">{unreadCount} unread</Badge>
-          ) : null}
-          <Input
-            placeholder="Filter notifications…"
-            value={globalFilter}
-            onChange={(e) => setGlobalFilter(e.target.value)}
-            className="w-52"
-          />
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-2"
-            disabled={unreadCount === 0 || isMarkingRead}
-            onClick={() => unreadCount > 0 && setMarkAllConfirmOpen(true)}
-          >
-            <CheckCheck className="h-4 w-4" /> Mark all read
-          </Button>
-          <ConfirmActionDialog
-            open={markAllConfirmOpen}
-            onOpenChange={setMarkAllConfirmOpen}
-            variant="info"
-            title={MARK_ALL_NOTIFICATIONS_READ_TITLE}
-            subtitle={buildMarkAllNotificationsReadConfirmSubtitle(unreadCount)}
-            confirmLabel="Confirm"
-            cancelLabel="Cancel"
-            confirmDisabled={isMarkingRead}
-            onConfirm={() => {
-              markAllAsRead();
-              setMarkAllConfirmOpen(false);
-            }}
-          />
-        </div>
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 self-center">
+            {unreadCount > 0 ? (
+              <Badge className="bg-primary text-primary-foreground">{unreadCount} unread</Badge>
+            ) : null}
+            <ControlPanelHeaderGlassButton
+              glassClassName={skyGlassResetButtonClass}
+              icon={CheckCheck}
+              disabled={unreadCount === 0 || isMarkingRead}
+              onClick={() => unreadCount > 0 && setMarkAllConfirmOpen(true)}
+            >
+              Mark all read
+            </ControlPanelHeaderGlassButton>
+            <ConfirmActionDialog
+              open={markAllConfirmOpen}
+              onOpenChange={setMarkAllConfirmOpen}
+              variant="info"
+              title={MARK_ALL_NOTIFICATIONS_READ_TITLE}
+              subtitle={buildMarkAllNotificationsReadConfirmSubtitle(unreadCount)}
+              confirmLabel="Confirm"
+              cancelLabel="Cancel"
+              confirmDisabled={isMarkingRead}
+              onConfirm={() => {
+                markAllAsRead();
+                setMarkAllConfirmOpen(false);
+              }}
+            />
+          </div>
         }
       />
 
       {/* Table — glass card shell always visible; body rows pulse while loading */}
       <div className="rounded-[28px] border bg-gradient-to-br from-purple-500/5 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(168,85,247,0.08)] overflow-hidden">
         <Table>
-          {/* Table headers always stay static */}
           <TableHeader>
             {table.getHeaderGroups().map((hg) => (
               <TableRow key={hg.id} className="bg-muted/40">
@@ -223,7 +232,6 @@ export default function NotificationsManagement() {
           </TableHeader>
           <TableBody>
             {listBodyLoading ? (
-              /* Skeleton rows: read dot, type badge, title, message, received, actions */
               Array.from({ length: 6 }).map((_, i) => (
                 <TableRow key={i}>
                   <TableCell><Skeleton className="h-2 w-2 rounded-full" /></TableCell>

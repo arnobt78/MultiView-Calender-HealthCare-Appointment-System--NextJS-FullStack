@@ -23,6 +23,7 @@ import { PrefetchingLink } from "@/components/shared/PrefetchingLink";
 import { DataTable } from "@/components/shared/DataTable";
 import { DataTableColumnHeader } from "@/components/shared/DataTableColumnHeader";
 import { ControlPanelPageChrome } from "@/components/control-panel/ControlPanelPageChrome";
+import { ControlPanelHeaderGlassButton } from "@/components/control-panel/ControlPanelHeaderGlassButton";
 import { DemoShowcaseFeatureNote } from "@/components/shared/DemoShowcaseFeatureNote";
 import { DoctorIdentityRow } from "@/components/shared/doctor-display/DoctorIdentityRow";
 import { DoctorAvailabilityGroups } from "@/components/shared/doctor-display/DoctorAvailabilityGroups";
@@ -416,19 +417,16 @@ function DoctorManagementInner() {
           <ControlPanelPageChrome
             tab="doctors"
             actions={
-              <Button
-                type="button"
-                variant="ghost"
-                size="lg"
-                className={cn(emeraldGlassPrimaryButtonClass, "cursor-pointer")}
+              <ControlPanelHeaderGlassButton
+                glassClassName={cn(emeraldGlassPrimaryButtonClass, "cursor-pointer")}
+                icon={UserPlus}
                 onClick={() => {
                   setCreateForm(EMPTY_DOCTOR_FORM);
                   setCreateDialogOpen(true);
                 }}
               >
-                <UserPlus className="shrink-0" aria-hidden />
                 Add Doctor
-              </Button>
+              </ControlPanelHeaderGlassButton>
             }
           />
         }

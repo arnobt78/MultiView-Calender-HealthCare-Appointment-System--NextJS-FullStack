@@ -8,10 +8,8 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
 import { ControlPanelPageChrome } from "@/components/control-panel/ControlPanelPageChrome";
-import { skyGlassBackButtonClass } from "@/lib/calendar-header-action-styles";
-import Link from "next/link";
+import { DashboardQueuePanelCard } from "@/components/control-panel/dashboard/DashboardQueuePanelCard";
 import {
   CalendarDays,
   CalendarCheck,
@@ -33,7 +31,11 @@ import { format } from "date-fns";
 import { useDashboardOverview } from "@/hooks/useDashboardOverview";
 import { useCpListBodyLoading } from "@/lib/cp-list-body-loading";
 import { queryKeys } from "@/lib/query-keys";
-import { DashboardQueuePanelCard } from "@/components/control-panel/dashboard/DashboardQueuePanelCard";
+import { ControlPanelHeaderSubtitle } from "@/components/control-panel/ControlPanelHeaderSubtitle";
+import { ControlPanelHeaderGlassButton } from "@/components/control-panel/ControlPanelHeaderGlassButton";
+import { CP_OVERVIEW_SUBTITLE_LEAD } from "@/lib/control-panel-page-chrome-config";
+import { skyGlassBackButtonClass } from "@/lib/calendar-header-action-styles";
+import Link from "next/link";
 import { DashboardNextAppointmentBody } from "@/components/control-panel/dashboard/DashboardNextAppointmentBody";
 import { DashboardRecentAppointmentsBody } from "@/components/control-panel/dashboard/DashboardRecentAppointmentsBody";
 import {
@@ -122,27 +124,33 @@ export default function DashboardOverviewComponent() {
       <ControlPanelPageChrome
         tab="overview"
         description={
-          statValueLoading
-            ? undefined
-            : `Real-time system summary — last updated ${format(
-              dataUpdatedAt ? new Date(dataUpdatedAt) : new Date(),
-              "HH:mm:ss"
-            )}`
+          <ControlPanelHeaderSubtitle
+            lead={CP_OVERVIEW_SUBTITLE_LEAD}
+            metric={
+              dataUpdatedAt
+                ? format(new Date(dataUpdatedAt), "HH:mm:ss")
+                : format(new Date(), "HH:mm:ss")
+            }
+            metricLoading={listBodyLoading}
+          />
         }
         actions={
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={async () => {
-              await refetch();
-            }}
+          <ControlPanelHeaderGlassButton
+            glassClassName={skyGlassBackButtonClass}
+            icon={fetchingDisplay ? undefined : RefreshCw}
             disabled={fetchingDisplay}
-            className={skyGlassBackButtonClass}
             aria-busy={fetchingDisplay}
+            onClick={() => void refetch()}
           >
-            <RefreshCw className={`h-4 w-4 ${fetchingDisplay ? "animate-spin" : ""}`} />
-            {fetchingDisplay ? "Refreshing..." : "Refresh"}
-          </Button>
+            {fetchingDisplay ? (
+              <>
+                <RefreshCw className="shrink-0 animate-spin" aria-hidden />
+                Refreshing...
+              </>
+            ) : (
+              "Refresh"
+            )}
+          </ControlPanelHeaderGlassButton>
         }
       />
 

@@ -6,6 +6,7 @@ import { useCategories, type CategoryCreateInput } from "@/hooks/useCategories";
 import { DataTable } from "@/components/shared/DataTable";
 import { DataTableColumnHeader } from "@/components/shared/DataTableColumnHeader";
 import { ControlPanelPageChrome } from "@/components/control-panel/ControlPanelPageChrome";
+import { ControlPanelHeaderGlassButton } from "@/components/control-panel/ControlPanelHeaderGlassButton";
 import { CategoryTableCell } from "@/components/control-panel/patient-detail-snapshot-columns";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -367,16 +368,13 @@ export function CategoryManagementInner() {
           <ControlPanelPageChrome
             tab="categories"
             actions={
-              <Button
-                type="button"
-                variant="ghost"
-                size="lg"
-                className={cn(violetGlassPrimaryButtonClass, "cursor-pointer")}
+              <ControlPanelHeaderGlassButton
+                glassClassName={cn(violetGlassPrimaryButtonClass, "cursor-pointer")}
+                icon={Tag}
                 onClick={openCreateDialog}
               >
-                <Tag className="shrink-0" aria-hidden />
                 Add Category
-              </Button>
+              </ControlPanelHeaderGlassButton>
             }
           />
         }

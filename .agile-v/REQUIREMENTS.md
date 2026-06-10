@@ -6,7 +6,7 @@
 
 | Field | Value |
 |-------|-------|
-| Cycle | C1–C9 shipped · **C10 shipped** · **C11 active** (REQ-0054) |
+| Cycle | C1–C9 shipped · **C10/C11 shipped** · **C12 active** (REQ-0055) |
 | Author | Requirement Architect |
 | Gate 1 status | C1 GATE-0001 · C2 GATE-0003 approved |
 | Canonical source | this file |
@@ -100,6 +100,18 @@
 | REQ-0052 | approved [C10.1] | REQ-0050 | ART-0246..0255 | pending |
 | REQ-0053 | approved [C10.2] | REQ-0050 | ART-0256..0262 | pending |
 | REQ-0054 | approved [C11] | REQ-0050 | ART-0263..0270 | pending |
+| REQ-0055 | approved [C12] | REQ-0050 | ART-0271..0278 | pending |
+
+### REQ-0055 — C12 CP header subtitle + action parity
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C12] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0050 |
+
+**Statement:** Inline skeleton subtitles (no fallback swap), overview Refresh SSR shell, unified ControlPanelHeaderGlassButton h-10 parity, notifications toolbar split; fix missing cp-header-subtitle import.
 
 ### REQ-0054 — C11 global isMounted parity + invalidation audit
 

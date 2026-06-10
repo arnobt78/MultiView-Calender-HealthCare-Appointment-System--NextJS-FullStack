@@ -21,7 +21,7 @@ type ControlPanelPageChromeProps = {
 
 /**
  * CP section header — inside merged shell registers actions via `ControlPanelChromeActions`.
- * Outside merged shell (legacy paths) renders full `AppPageChrome`.
+ * Only passes props that callers supply so partial merge preserves other registry slots.
  */
 export function ControlPanelPageChrome({
   tab,
@@ -36,17 +36,23 @@ export function ControlPanelPageChrome({
   const config: ControlPanelPageChromeConfig = getControlPanelPageChromeConfig(tab);
 
   if (inMergedShell) {
-    if (!actions && !toolbar && !description && !title) {
+    const chromeProps: {
+      title?: React.ReactNode;
+      description?: React.ReactNode;
+      actions?: React.ReactNode;
+      toolbar?: React.ReactNode;
+    } = {};
+
+    if (title !== undefined) chromeProps.title = title;
+    if (description !== undefined) chromeProps.description = description;
+    if (actions !== undefined) chromeProps.actions = actions;
+    if (toolbar !== undefined) chromeProps.toolbar = toolbar;
+
+    if (Object.keys(chromeProps).length === 0) {
       return null;
     }
-    return (
-      <ControlPanelChromeActions
-        actions={actions}
-        toolbar={toolbar}
-        description={description}
-        title={title}
-      />
-    );
+
+    return <ControlPanelChromeActions {...chromeProps} />;
   }
 
   return (

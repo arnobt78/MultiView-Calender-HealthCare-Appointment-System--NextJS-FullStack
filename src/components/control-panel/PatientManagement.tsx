@@ -6,6 +6,7 @@ import { usePatients } from "@/hooks/usePatients";
 import { DataTable } from "@/components/shared/DataTable";
 import { DataTableColumnHeader } from "@/components/shared/DataTableColumnHeader";
 import { ControlPanelPageChrome } from "@/components/control-panel/ControlPanelPageChrome";
+import { ControlPanelHeaderGlassButton } from "@/components/control-panel/ControlPanelHeaderGlassButton";
 import { DoctorIdentityRow } from "@/components/shared/doctor-display/DoctorIdentityRow";
 import { PatientIdentityCell } from "@/components/shared/person-display/PatientIdentityCell";
 import {
@@ -607,27 +608,21 @@ export function PatientManagementInner({
               tab="patients"
               actions={
                 <>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="lg"
+                  <ControlPanelHeaderGlassButton
+                    glassClassName={cn(violetGlassImportButtonClass, "disabled:opacity-50")}
+                    icon={Download}
                     disabled={listBodyLoading || patients.length === 0}
-                    className={cn(violetGlassImportButtonClass, "cursor-pointer disabled:opacity-50")}
                     onClick={() => exportPatientsCSV(patients)}
                   >
-                    <Download className="shrink-0" aria-hidden />
                     Export CSV
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="lg"
-                    className={cn(emeraldGlassPrimaryButtonClass, "cursor-pointer")}
+                  </ControlPanelHeaderGlassButton>
+                  <ControlPanelHeaderGlassButton
+                    glassClassName={cn(emeraldGlassPrimaryButtonClass, "cursor-pointer")}
+                    icon={UserPlus}
                     onClick={openCreateDialog}
                   >
-                    <UserPlus className="shrink-0" aria-hidden />
                     Add Patient
-                  </Button>
+                  </ControlPanelHeaderGlassButton>
                 </>
               }
             />

@@ -1,6 +1,13 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-10 — C11 global zero-flash parity)
+## Latest (2026-06-10 — C12 CP header subtitle + action parity)
+
+- **Subtitles:** one merged sentence — static lead from config + inline metric skeleton (`ControlPanelHeaderSubtitle`); overview last-updated time + notifications count; no fallback swap.
+- **Actions:** `ControlPanelHeaderGlassButton` h-10 parity on all CP header buttons; overview Refresh SSR shell; notifications filter in toolbar row.
+- **Registry:** `ControlPanelChromeActions` omits undefined slots (no null clear); config inlines `CP_USERS_ADMIN_SUBTITLE`.
+- **Verify:** **881/881** · tsc · lint · build.
+
+## Prior (2026-06-10 — C11 global zero-flash parity)
 
 - **C11:** `query-body-loading.ts` generalizes `useCpListBodyLoading`; removed `isMounted` from doctor-portal cards, `AnalyticsPage`, entity detail screens, schedule editors, `SchedulingMonthCalendar` (chrome always mounted, opacity pulse when cache cold).
 - **Invalidation audit:** notification CRUD → `invalidateNotificationsAndCrossTab`; patient booking drops duplicate portal invalidate.

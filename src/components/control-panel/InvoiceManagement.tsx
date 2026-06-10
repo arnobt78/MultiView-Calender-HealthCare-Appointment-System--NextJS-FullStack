@@ -10,6 +10,7 @@ import { ListFilter, Receipt } from "lucide-react";
 import { usePayments, type Invoice } from "@/hooks/usePayments";
 import { Button } from "@/components/ui/button";
 import { ControlPanelPageChrome } from "@/components/control-panel/ControlPanelPageChrome";
+import { ControlPanelHeaderGlassButton } from "@/components/control-panel/ControlPanelHeaderGlassButton";
 import { DataTable } from "@/components/shared/DataTable";
 import { ClinicalListFilterToolbar } from "@/components/shared/filters/ClinicalListFilterToolbar";
 import { FilterSelect } from "@/components/shared/filters/FilterSelect";
@@ -118,15 +119,13 @@ function InvoiceManagementInner() {
       <ControlPanelPageChrome
         tab="invoices"
         actions={
-          <Button
-            type="button"
-            size="sm"
-            className={billingCreateInvoiceTriggerAdmin.triggerClassName}
+          <ControlPanelHeaderGlassButton
+            glassClassName={billingCreateInvoiceTriggerAdmin.triggerClassName}
+            icon={CreateInvoiceIcon}
             onClick={openCreate}
           >
-            <CreateInvoiceIcon className="h-4 w-4" aria-hidden />
             {billingCreateInvoiceTriggerAdmin.triggerLabel}
-          </Button>
+          </ControlPanelHeaderGlassButton>
         }
       />
 

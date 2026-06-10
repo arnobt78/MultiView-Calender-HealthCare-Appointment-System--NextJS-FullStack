@@ -40,6 +40,7 @@ import {
 import { PatientStatCard } from "@/components/control-panel/PatientStatCard";
 import { APPOINTMENT_TYPE_COPY } from "@/lib/appointment-type-copy";
 import { ControlPanelPageChrome } from "@/components/control-panel/ControlPanelPageChrome";
+import { ControlPanelHeaderGlassButton } from "@/components/control-panel/ControlPanelHeaderGlassButton";
 import { emeraldGlassPrimaryButtonClass } from "@/lib/calendar-header-action-styles";
 import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
@@ -174,12 +175,11 @@ export function GlobalAppointmentTypesEditor() {
       <ControlPanelPageChrome
         tab="visit_types_global"
         title={APPOINTMENT_TYPE_COPY.pageTitleLabel}
-        description={APPOINTMENT_TYPE_COPY.pageSubtitleLabel}
         actions={
           isAdmin ? (
-            <button
-              type="button"
-              className={emeraldGlassPrimaryButtonClass}
+            <ControlPanelHeaderGlassButton
+              glassClassName={emeraldGlassPrimaryButtonClass}
+              icon={Plus}
               disabled={busy}
               onClick={() => {
                 const el = document.getElementById("global-appt-type-name");
@@ -187,9 +187,8 @@ export function GlobalAppointmentTypesEditor() {
                 el?.focus();
               }}
             >
-              <Plus className="h-4 w-4" aria-hidden />
               Add Global Type
-            </button>
+            </ControlPanelHeaderGlassButton>
           ) : null
         }
       />

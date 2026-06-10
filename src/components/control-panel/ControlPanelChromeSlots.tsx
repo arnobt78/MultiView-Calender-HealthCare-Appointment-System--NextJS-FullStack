@@ -23,7 +23,11 @@ export function ControlPanelChromeDescriptionSlot() {
     getControlPanelChromeSnapshot
   );
   const description =
-    syncRegistry.description ?? registry.description ?? defaultDescription;
+    syncRegistry.description != null
+      ? syncRegistry.description
+      : registry.description != null
+        ? registry.description
+        : defaultDescription;
   if (!description) return null;
   return <div className={pageHeaderDescriptionClass}>{description}</div>;
 }
