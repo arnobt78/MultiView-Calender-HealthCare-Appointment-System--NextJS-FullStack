@@ -1,12 +1,12 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-10 — C13 user-admin UI parity)
+## Latest (2026-06-10 — C13 user-admin UI parity + chrome nav fix)
 
 - **List:** `AdminUserManagementStatsRow` + `PatientStatCard`; `ClinicalListFilterToolbar` (status, verification, photo); Status column; `slateGlassTableFrameClass`.
 - **Detail:** SSR `loadAdminUserOwnedAppointments`; `ClinicalDataTable` appointments owned; glass back buttons; phone/status rows.
 - **Dialog:** emerald glass `AdminUserFormDialog` (phone, is_active, role read-only); create `CP_ADMIN_CREATE_STUB`.
-- **Chrome nav fix:** provider-scoped live slots — module singleton unmount reset no longer clears new page actions after soft nav.
-- **Verify:** **913/913** · tsc · lint · build.
+- **Chrome nav fix:** provider-scoped live slots (`ControlPanelChromeRegistryProvider` + `key={tab}`); removed post-layout slot wipe that left SSR `pointer-events-none` shells on warm-cache pages; deleted legacy module singleton `control-panel-chrome-sync-store` → `control-panel-chrome-registry-merge.ts`.
+- **Verify:** **910/910** · tsc · lint · build.
 
 ## Prior (2026-06-10 — C12.3 CP refresh + chrome runtime)
 

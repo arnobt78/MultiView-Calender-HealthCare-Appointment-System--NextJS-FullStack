@@ -4,13 +4,13 @@ import {
   createContext,
   useCallback,
   useContext,
-  useLayoutEffect,
   useMemo,
   useRef,
   type ReactNode,
 } from "react";
 
 import type { ControlPanelSidebarTabValue } from "@/lib/control-panel-nav-config";
+import { mergeControlPanelChromeRegistrySlice } from "@/lib/control-panel-chrome-registry-merge";
 
 /** Live header slots — registered by ControlPanelChromeActions during body render. */
 export type ControlPanelChromeRegistry = {
@@ -76,33 +76,14 @@ export function ControlPanelChromeRegistryProvider({
     (tab: ControlPanelSidebarTabValue, slice: Partial<ControlPanelChromeRegistry>): boolean => {
       if (tab !== activeTab) return false;
 
-      const prev = liveSlotsRef.current;
-      const next: ControlPanelChromeRegistry = {
-        actions: slice.actions !== undefined ? slice.actions : prev.actions,
-        toolbar: slice.toolbar !== undefined ? slice.toolbar : prev.toolbar,
-        description:
-          slice.description !== undefined ? slice.description : prev.description,
-        title: slice.title !== undefined ? slice.title : prev.title,
-      };
-
-      const changed =
-        next.actions !== prev.actions ||
-        next.toolbar !== prev.toolbar ||
-        next.description !== prev.description ||
-        next.title !== prev.title;
-
-      if (!changed) return false;
+      const next = mergeControlPanelChromeRegistrySlice(liveSlotsRef.current, slice);
+      if (next == null) return false;
 
       liveSlotsRef.current = next;
       return true;
     },
     [activeTab]
   );
-
-  useLayoutEffect(() => {
-    liveSlotsRef.current = EMPTY_CONTROL_PANEL_CHROME_REGISTRY;
-    notifyLiveSlots();
-  }, [activeTab, notifyLiveSlots]);
 
   const value = useMemo(
     () => ({

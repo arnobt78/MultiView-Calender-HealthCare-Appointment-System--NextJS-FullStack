@@ -4,10 +4,9 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-10)
 
-- **C13 user-admin parity:** `UserManagement` — `PatientStatCard` stats, filter toolbar (status/verification/photo), Status column, slate glass frame; emerald `AdminUserFormDialog` (Doctor parity); detail owned-appointments table + glass back.
-- **C13 chrome nav fix:** live header slots in `ControlPanelChromeRegistryProvider` (not module singleton — old route unmount reset no longer wipes new tab actions).
-- **C12.3:** refresh notify; overview/notifications dynamic subtitle; header transparent blur.
-- **Verify:** **913/913** · tsc · lint · build PASS.
+- **C13 chrome nav fix (final):** `ControlPanelChromeRegistryProvider` + `key={tab}` remount; no post-layout slot wipe (SSR shells blocked clicks on warm-cache pages). Deleted legacy `control-panel-chrome-sync-store`.
+- **C13 user-admin parity:** stats/filters/status column; emerald `AdminUserFormDialog`; detail owned-appointments SSR.
+- **Verify:** **910/910** · tsc · lint · build PASS.
 ## Never / Always
 
 **Never:** hardcode query keys; skip invalidation; `<a href>` internal; shadcn Checkbox; `user` on `UserAvatar`; extra impl `.md`.
@@ -27,7 +26,7 @@ Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Key paths
 
-- Page chrome: `control-panel-chrome-sync-store.ts`, `UserManagement.tsx`, `AdminUserFormDialog.tsx`, `admin-user-owned-appointments.ts`
+- Page chrome: `ControlPanelChromeContext.tsx`, `control-panel-chrome-registry-merge.ts`, `ControlPanelSectionPageClient.tsx`
 - Phone: `phone-validation.ts`, `patient-form-clinical.ts`, `PatientFormDialog`, `reminder-recipient-phone.ts`
 - Cancel: `appointment-cancel-access.ts`, `appointment-id-write.ts`, `appointment-notify.ts`, `AppointmentActionsMenu`
 - Status UI: `appointment-status-display.ts`, `AppointmentStatusGlassBadge`
@@ -37,7 +36,7 @@ Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Agile V
 
-Infinity Loop every prompt: `.agile-v/ACTIVATION.md` · `STATE.md` · `SKILLS.md` (24). **C13** (REQ-0059); **913/913**.
+Infinity Loop every prompt: `.agile-v/ACTIVATION.md` · `STATE.md` · `SKILLS.md` (24). **C13** (REQ-0059); **910/910**.
 
 ## Principle
 

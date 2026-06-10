@@ -174,7 +174,11 @@ export function ControlPanelSectionPageClient({
 
   return (
     <ControlPanelSectionInitialProvider initial={initial}>
-      <ControlPanelChromeRegistryProvider defaultDescription={defaultDescription ?? ""} activeTab={tab}>
+      <ControlPanelChromeRegistryProvider
+        key={tab}
+        defaultDescription={defaultDescription ?? ""}
+        activeTab={tab}
+      >
         <div className="flex w-full flex-col text-gray-700">
           {/* Body renders first so ControlPanelChromeActions registers before ActionsSlot reads store. */}
           <div className="order-2">{body}</div>
