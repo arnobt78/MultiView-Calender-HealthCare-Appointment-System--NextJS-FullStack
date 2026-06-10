@@ -28,7 +28,6 @@ import { patientBookingCreatedMessage } from "@/lib/crud-notify-messages";
 import { notify } from "@/lib/notify";
 import { useAuth } from "@/hooks/useAuth";
 import { useDoctorsDirectory } from "@/hooks/useDoctorsDirectory";
-import { queryKeys } from "@/lib/query-keys";
 import { invalidateAfterAppointmentMutation } from "@/lib/query-client";
 import { appointmentDoctorFkOpts } from "@/lib/appointment-invalidation-fk";
 import type { FullAppointment } from "@/hooks/useAppointments";
@@ -305,7 +304,6 @@ export function PatientBookingDialog({
           end: variables.end,
         })
       );
-      await queryClient.invalidateQueries({ queryKey: queryKeys.patientPortal.all });
       await invalidateAfterAppointmentMutation(queryClient, {
         appointmentId: appointment?.id,
         patientId: appointment?.patient ?? undefined,

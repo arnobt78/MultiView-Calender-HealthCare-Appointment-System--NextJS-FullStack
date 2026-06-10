@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { ListFilter, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePayments, type Invoice } from "@/hooks/usePayments";
@@ -23,6 +23,8 @@ import {
   filterDoctorPortalInvoices,
   type DoctorPortalInvoiceStatusFilter,
 } from "@/lib/invoice-list-display";
+import { queryKeys } from "@/lib/query-keys";
+import { useQueryBodyLoading } from "@/lib/query-body-loading";
 
 const CreateDraftIcon = billingCreateInvoiceTriggerDoctor.triggerIcon;
 
@@ -67,15 +69,11 @@ export function DoctorPortalInvoicesCard({
 
   const { openCreate, openEdit } = useInvoiceFormDialog();
 
-  const [isMounted, setIsMounted] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<DoctorPortalInvoiceStatusFilter>("all");
 
-  useEffect(() => {
-    requestAnimationFrame(() => setIsMounted(true));
-  }, []);
-
-  const listLoading = listBodyLoading || !isMounted || isLoading;
+  const cacheBodyLoading = useQueryBodyLoading(queryKeys.invoices.all, isLoading);
+  const listLoading = listBodyLoading || cacheBodyLoading;
   const statusCounts = useMemo(
     () => countDoctorPortalInvoicesByStatus(invoices),
     [invoices]

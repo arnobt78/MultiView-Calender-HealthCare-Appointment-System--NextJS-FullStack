@@ -5,7 +5,7 @@
  * Portal: collapsible rows + add form; datetime range matches appointment manual override.
  */
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useRef, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { CalendarRange, CalendarX2, Check, MessageSquare, Pencil, Plus, Trash2 } from "lucide-react";
@@ -23,6 +23,7 @@ import { closeHtmlDetails } from "@/components/shared/doctor-settings/close-html
 import { SchedulingDatetimeRangeFields } from "@/components/shared/scheduling/SchedulingDatetimeRangeFields";
 import { apiClient } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
+import { useQueryBodyLoading } from "@/lib/query-body-loading";
 import { invalidateDoctorSchedule } from "@/lib/query-client";
 import { timeOffCrudMessage } from "@/lib/crud-notify-messages";
 import { notify } from "@/lib/notify";
@@ -78,10 +79,6 @@ export function DoctorTimeOffEditor({
   const canEdit = useCanEditDoctorSettings(doctorId, {
     portalSelfService: variant === "portal",
   });
-  const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => {
-    requestAnimationFrame(() => setIsMounted(true));
-  }, []);
 
   const { data: timeOffData, isLoading: timeOffLoading } = useQuery({
     queryKey: queryKeys.doctors.timeOff(doctorId),
@@ -217,9 +214,10 @@ export function DoctorTimeOffEditor({
     });
   }
 
-  const listBodyLoading = initialTimeOff
-    ? timeOffLoading && timeOffData === undefined
-    : !isMounted || timeOffLoading;
+  const listBodyLoading = useQueryBodyLoading(
+    queryKeys.doctors.timeOff(doctorId),
+    timeOffLoading
+  );
   const busy =
     addTimeOffMutation.isPending ||
     patchTimeOffMutation.isPending ||

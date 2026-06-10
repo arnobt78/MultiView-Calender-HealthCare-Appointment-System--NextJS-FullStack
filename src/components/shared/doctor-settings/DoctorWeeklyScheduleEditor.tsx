@@ -5,7 +5,7 @@
  * Portal `layout="collapsible"`: native `<details>` per day + add-window (matches appointment dialog).
  */
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useRef, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { CalendarDays, Check, Clock, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ import { DoctorSettingsFormActions } from "@/components/shared/doctor-settings/D
 import { closeHtmlDetails } from "@/components/shared/doctor-settings/close-html-details";
 import { apiClient } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
+import { useQueryBodyLoading } from "@/lib/query-body-loading";
 import { invalidateDoctorSchedule } from "@/lib/query-client";
 import { weeklyAvailabilityCrudMessage } from "@/lib/crud-notify-messages";
 import { notify } from "@/lib/notify";
@@ -88,10 +89,6 @@ export function DoctorWeeklyScheduleEditor({
   const canEdit = useCanEditDoctorSettings(doctorId, {
     portalSelfService: variant === "portal",
   });
-  const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => {
-    requestAnimationFrame(() => setIsMounted(true));
-  }, []);
 
   const { data: availData, isLoading: availLoading } = useQuery({
     queryKey: queryKeys.doctors.availability(doctorId),
@@ -241,9 +238,10 @@ export function DoctorWeeklyScheduleEditor({
   }
 
   /** List rows only — add-window chip stays mounted (inline skeleton pattern). */
-  const listBodyLoading = initialAvailability
-    ? availLoading && availData === undefined
-    : !isMounted || availLoading;
+  const listBodyLoading = useQueryBodyLoading(
+    queryKeys.doctors.availability(doctorId),
+    availLoading
+  );
   const busy =
     addWindowMutation.isPending ||
     patchWindowMutation.isPending ||

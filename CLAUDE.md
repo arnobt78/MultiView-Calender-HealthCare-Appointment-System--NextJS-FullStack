@@ -4,11 +4,11 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-10)
 
-- **C10/C10.1 CP zero-flash:** `cp-list-query-ssr-seed.ts` sync seeds; hooks `initialData` + warm `refetchOnMount`; `useCpListBodyLoading`; `ControlPanelEntityListShell`; entity lists (patients/categories/doctors/users/invoices).
-- **C10.1 chrome:** sync `control-panel-chrome-sync-store` (body-before-header); `ControlPanelChromeActionsServer` SSR shells + client registry; navbar `NavSessionSsrSeed` + `seedAuthMeCacheFromSsr`; admin-all visit-types prefetch (`appointmentTypes.all`).
-- **C10.2 polish:** `useNotifications` cache parity; org Create → actions slot; `seedOrgBillingCacheFromSsr`; billing panel + patient detail no `isMounted`; orgs/appts EntityListShell (indigo tone).
-- **Verify:** **870/870** · tsc · lint · build PASS.
-- **Invalidation:** unchanged — use `query-client.ts` helpers on every CRUD.
+- **C11 global parity:** `query-body-loading.ts` (`useQueryBodyLoading`); removed `isMounted` from portal cards, insights, entity detail, scheduling editors/calendar.
+- **Invalidation:** `useNotifications` → `invalidateNotificationsAndCrossTab`; booking dialog drops redundant portal invalidate (appointment helper covers it).
+- **Cross-tab:** BroadcastChannel + localStorage + SSE — no Redis.
+- **C10 recap:** CP zero-flash SSR seeds, chrome sync, navbar auth/me seed, EntityListShell.
+- **Verify:** **875/875** · tsc · lint · build PASS.
 ## Never / Always
 
 **Never:** hardcode query keys; skip invalidation; `<a href>` internal; shadcn Checkbox; `user` on `UserAvatar`; extra impl `.md`.
@@ -28,7 +28,7 @@ Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Key paths
 
-- Page chrome: `AppPageChrome.tsx`, `ControlPanelPageChrome.tsx`, `ControlPanelChromeActionsServer.tsx`, `control-panel-chrome-sync-store.ts`, `cp-list-query-ssr-seed.ts`
+- Page chrome: `query-body-loading.ts`, `cp-list-query-ssr-seed.ts`, `ControlPanelChromeActionsServer.tsx`, `control-panel-chrome-sync-store.ts`
 - Phone: `phone-validation.ts`, `patient-form-clinical.ts`, `PatientFormDialog`, `reminder-recipient-phone.ts`
 - Cancel: `appointment-cancel-access.ts`, `appointment-id-write.ts`, `appointment-notify.ts`, `AppointmentActionsMenu`
 - Status UI: `appointment-status-display.ts`, `AppointmentStatusGlassBadge`
@@ -38,7 +38,7 @@ Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Agile V
 
-Infinity Loop every prompt: `.agile-v/ACTIVATION.md` · `STATE.md` · `SKILLS.md` (24). **C10.2** (REQ-0053); **870/870**.
+Infinity Loop every prompt: `.agile-v/ACTIVATION.md` · `STATE.md` · `SKILLS.md` (24). **C11** (REQ-0054); **875/875**.
 
 ## Principle
 

@@ -71,3 +71,4 @@
 | 2026-06-10T12:20:00Z | build | C10 CP list zero-flash SSR + entity list shell | sync seed cp-list-query-ssr-seed; hooks initialData; ControlPanelEntityListShell; category detail anti-flash; 863/863 tsc lint build | REQ-0046..0049 |
 | 2026-06-10T18:00:00Z | build | C10.1 CP chrome zero-flash extension | sync chrome registry + action shells; navbar SSR auth/me seed; admin-all visit types prefetch; remaining CP tab seeds + useCpListBodyLoading | REQ-0050..0052 |
 | 2026-06-10T19:30:00Z | build | C10.2 CP polish gap closure | notifications initialData; SSR action shells RSC; org actions slot; EntityListShell orgs/appts; billing/patient detail loading | REQ-0053 |
+| 2026-06-10T21:00:00Z | build | C11 global isMounted parity | useQueryBodyLoading; remove isMounted from portal/insights/detail/scheduling; notifications cross-tab helper | REQ-0054 |

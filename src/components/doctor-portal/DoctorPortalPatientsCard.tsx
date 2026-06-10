@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo } from "react";
 import { Users } from "lucide-react";
 import { usePatients } from "@/hooks/usePatients";
 import { PortalPanelSection } from "@/components/shared/PortalPanelSection";
@@ -15,6 +15,8 @@ import {
   DOCTOR_PORTAL_PATIENTS_SUBTITLE,
   filterDoctorPortalPatientRoster,
 } from "@/lib/doctor-portal-patients-display";
+import { queryKeys } from "@/lib/query-keys";
+import { useQueryBodyLoading } from "@/lib/query-body-loading";
 
 type Props = {
   doctorId: string | undefined;
@@ -34,11 +36,6 @@ export function DoctorPortalPatientsCard({
   listBodyLoading,
 }: Props) {
   const { patients, isLoading } = usePatients();
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    requestAnimationFrame(() => setIsMounted(true));
-  }, []);
 
   const roster = useMemo(
     () => filterDoctorPortalPatientRoster(patients, doctorId),
@@ -55,7 +52,8 @@ export function DoctorPortalPatientsCard({
     [statusCounts]
   );
 
-  const listLoading = listBodyLoading || !isMounted || isLoading;
+  const cacheBodyLoading = useQueryBodyLoading(queryKeys.patients.all, isLoading);
+  const listLoading = listBodyLoading || cacheBodyLoading;
 
   return (
     <PortalPanelSection

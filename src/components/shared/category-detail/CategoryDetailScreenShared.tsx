@@ -17,7 +17,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useLayoutEffect, useEffect, useMemo, useState } from "react";
+import { useLayoutEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { BackNavigationLink } from "@/components/shared/BackNavigationLink";
 import { EntityDetailChromeHeader } from "@/components/shared/entity-detail/EntityDetailChromeHeader";
@@ -43,6 +43,7 @@ import { buildStaffDirectoryMap } from "@/lib/staff-directory-cache";
 import { seedUsersListCacheFromSsr } from "@/lib/cp-list-query-ssr-seed";
 import { invalidateQueriesForRoute } from "@/lib/query-client";
 import { queryKeys } from "@/lib/query-keys";
+import { useQueryBodyLoading } from "@/lib/query-body-loading";
 import {
   patientDetailDefinitionRowClass,
   patientDetailSchemaSectionClass,
@@ -227,12 +228,6 @@ export function CategoryDetailScreenShared({
     initialData: staffViewer ? initialAdminUsers ?? undefined : undefined,
   });
 
-  const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => {
-    const id = requestAnimationFrame(() => setIsMounted(true));
-    return () => cancelAnimationFrame(id);
-  }, []);
-
   const cat = liveCategory ?? initialCategory;
 
   /** Record Audit actors — denormalized on `Category` from SSR/API (`categoryAuditUserPick`). */
@@ -242,8 +237,11 @@ export function CategoryDetailScreenShared({
   );
 
   const hasCategory = cat != null;
-  /** SSR `initialCategory` renders body before mount — parity with PatientDetailScreen. */
-  const showLiveBody = hasCategory && (isMounted || initialCategory != null);
+  const detailBodyLoading = useQueryBodyLoading(
+    queryKeys.categories.detail(categoryId),
+    isLoading
+  );
+  const showLiveBody = hasCategory && !detailBodyLoading;
   const showBodySkeleton = !hasCategory && isLoading && initialCategory == null;
 
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -320,7 +318,7 @@ export function CategoryDetailScreenShared({
     "category"
   );
 
-  if (!cat && !showBodySkeleton && !isLoading && isMounted) {
+  if (!cat && !showBodySkeleton && !isLoading && initialCategory == null) {
     return null;
   }
 

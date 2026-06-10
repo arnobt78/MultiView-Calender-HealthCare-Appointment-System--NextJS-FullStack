@@ -4,10 +4,10 @@
  * AnalyticsPage — Recharts insights dashboard:
  *   - Portal chrome + scope/period controls stay mounted (success, loading, error)
  *   - Overview stat row + domain sections pulse only data slots while loading
- *   - `isMounted` guard prevents hydration flicker on first paint
+ *   - Cache-aware body loading via useQueryBodyLoading (SSR seed on insights/page.tsx)
  */
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
+import { useCallback, useLayoutEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
@@ -31,6 +31,7 @@ import { appPortalSectionRootClass } from "@/lib/section-page-layout";
 import { AnalyticsOverviewStatsRow } from "@/components/shared/analytics/AnalyticsOverviewStatsRow";
 import { AnalyticsInsightsSections } from "@/components/shared/analytics/AnalyticsInsightsSections";
 import { resolveInsightsScopePageHint } from "@/lib/insights-scope-display";
+import { useQueryBodyLoading } from "@/lib/query-body-loading";
 
 type AnalyticsPageProps = {
   /** SSR payload — seed queryKeys.insights.filter(initialQuery) before paint */
@@ -128,12 +129,9 @@ export default function AnalyticsPage({
     [query.scope, query.doctorId, viewerRole, doctorDisplayName]
   );
 
-  const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => {
-    requestAnimationFrame(() => setIsMounted(true));
-  }, []);
-
-  const loading = !isMounted || isLoading || (isFetching && !data);
+  const insightsQueryKey = useMemo(() => queryKeys.insights.filter(query), [query]);
+  const loading =
+    useQueryBodyLoading(insightsQueryKey, isLoading || (isFetching && !data));
   const showScopeToolbar = isDoctorRole(viewerRole) || isAdminRole(viewerRole);
 
   const scopeToolbar = showScopeToolbar ? (

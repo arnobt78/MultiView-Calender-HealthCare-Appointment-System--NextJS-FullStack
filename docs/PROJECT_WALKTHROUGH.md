@@ -1,6 +1,13 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-10 — C10/C10.1/C10.2 CP zero-flash)
+## Latest (2026-06-10 — C11 global zero-flash parity)
+
+- **C11:** `query-body-loading.ts` generalizes `useCpListBodyLoading`; removed `isMounted` from doctor-portal cards, `AnalyticsPage`, entity detail screens, schedule editors, `SchedulingMonthCalendar` (chrome always mounted, opacity pulse when cache cold).
+- **Invalidation audit:** notification CRUD → `invalidateNotificationsAndCrossTab`; patient booking drops duplicate portal invalidate.
+- **No Redis:** cross-tab = BroadcastChannel + localStorage fallback; live = SSE notification stream; persist = TanStack localStorage.
+- **Verify:** **875/875** · tsc · lint · build.
+
+## Prior (2026-06-10 — C10/C10.1/C10.2 CP zero-flash)
 
 - **C10 list SSR:** `cp-list-query-ssr-seed.ts` + sync `useMemo` in `ControlPanelSectionPageClient`; hooks read cache as `initialData`; `useCpListBodyLoading`; `ControlPanelEntityListShell` for entity tabs.
 - **C10.1 chrome/navbar:** `control-panel-chrome-sync-store` (register during render, body `order-2` before header); `ControlPanelChromeActionsServer` (SSR shells) + `control-panel-header-actions-config.ts`; `NavSessionSsrSeed` seeds `queryKeys.auth.me`; visit-types → `appointmentTypes.all` admin-all prefetch.

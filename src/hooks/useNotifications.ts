@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient, handleApiError } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
+import { invalidateNotificationsAndCrossTab } from "@/lib/query-client";
 import { Notification } from "@/types/notification";
 import { notify } from "@/lib/notify";
 import {
@@ -41,7 +42,7 @@ export function useNotifications() {
       }),
     onSuccess: async () => {
       // Await so the badge count and list refetch before onSuccess resolves.
-      await queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
+      await invalidateNotificationsAndCrossTab(queryClient);
     },
     onError: (error) => handleApiError(error, "Failed to mark notification as read"),
   });
@@ -59,7 +60,7 @@ export function useNotifications() {
       return { unreadCount: prev?.unreadCount ?? 0 };
     },
     onSuccess: async (_data, _vars, context) => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
+      await invalidateNotificationsAndCrossTab(queryClient);
       notify.crud(
         notificationsMarkAllReadMessage({ count: context?.unreadCount ?? 0 })
       );
@@ -75,7 +76,7 @@ export function useNotifications() {
       }),
     onSuccess: async (data) => {
       // Await so header badge and list both update before the toast appears.
-      await queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
+      await invalidateNotificationsAndCrossTab(queryClient);
       notify.crud(notificationsDeleteReadMessage({ deleted: data.deleted }));
     },
     onError: (error) => handleApiError(error, "Failed to delete read notifications"),

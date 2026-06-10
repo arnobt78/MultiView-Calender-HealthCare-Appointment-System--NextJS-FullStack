@@ -6,12 +6,12 @@
 
 | Field | Value |
 |-------|-------|
-| **Cycle** | **C8.1/C9** shipped — merged CP header + portal chrome |
+| **Cycle** | **C11** shipped — global isMounted parity |
 | **Phase** | Acceptance (automated) |
-| **Stage** | 4 — PASS; Human smoke optional |
-| **Status** | `shipped` — **863/863** tests (166 files) |
+| **Stage** | 4 — PASS |
+| **Status** | `shipped` — **875/875** tests (169 files) |
 | **Last Updated** | 2026-06-10 |
-| **HEAD** | `bc97070` |
+| **HEAD** | pending commit |
 | **Activation** | Session **2026-06-10** — Infinity Loop active |
 
 ## Infinity Loop (active session)

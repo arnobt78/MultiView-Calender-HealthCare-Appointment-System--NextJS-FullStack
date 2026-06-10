@@ -15,7 +15,7 @@ import {
   Users,
 } from "lucide-react";
 import { format } from "date-fns";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -194,12 +194,6 @@ export function AppointmentDetailScreenShared({
   });
   const { invoices } = usePayments({ invoicesInitialData: initialInvoices ?? undefined });
 
-  const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => {
-    const id = requestAnimationFrame(() => setIsMounted(true));
-    return () => cancelAnimationFrame(id);
-  }, []);
-
   const staffById = useMemo(
     () =>
       buildStaffDirectoryMap({
@@ -293,7 +287,8 @@ export function AppointmentDetailScreenShared({
       ? categoryDetailHref(entityRole, category.id)
       : null;
 
-  const showLive = isMounted;
+  /** SSR `initialDetail` is required — render live chrome immediately (no isMounted gate). */
+  const showLive = true;
 
   return (
     <div className={resolveEntityDetailRootClass(scrollShell)}>

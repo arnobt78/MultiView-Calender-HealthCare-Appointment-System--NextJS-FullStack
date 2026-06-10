@@ -6,7 +6,7 @@
 
 | Field | Value |
 |-------|-------|
-| Cycle | C1–C9 shipped · **C10.1 shipped** · **C10.2 active** (REQ-0053) |
+| Cycle | C1–C9 shipped · **C10 shipped** · **C11 active** (REQ-0054) |
 | Author | Requirement Architect |
 | Gate 1 status | C1 GATE-0001 · C2 GATE-0003 approved |
 | Canonical source | this file |
@@ -99,6 +99,18 @@
 | REQ-0051 | approved [C10.1] | REQ-0050 | ART-0242..0245 | pending |
 | REQ-0052 | approved [C10.1] | REQ-0050 | ART-0246..0255 | pending |
 | REQ-0053 | approved [C10.2] | REQ-0050 | ART-0256..0262 | pending |
+| REQ-0054 | approved [C11] | REQ-0050 | ART-0263..0270 | pending |
+
+### REQ-0054 — C11 global isMounted parity + invalidation audit
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C11] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0050 |
+
+**Statement:** Remove remaining `isMounted` hydration gates in doctor-portal, insights, entity detail, and scheduling editors; generalize `useQueryBodyLoading`; route notification CRUD through cross-tab invalidation helper; no Redis (BroadcastChannel + localStorage + SSE already in place).
 
 ### REQ-0053 — C10.1 gap closure (hook parity, SSR shells, shell adoption)
 

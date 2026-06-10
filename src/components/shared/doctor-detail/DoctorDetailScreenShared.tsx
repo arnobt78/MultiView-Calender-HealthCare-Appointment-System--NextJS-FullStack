@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import { type ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { useEffect, useLayoutEffect, useMemo, useState } from "react";
+import { useLayoutEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { BackNavigationLink } from "@/components/shared/BackNavigationLink";
 import { EntityDetailChromeHeader } from "@/components/shared/entity-detail/EntityDetailChromeHeader";
@@ -66,6 +66,7 @@ import { useUser, type UsersListResponse } from "@/hooks/useUsers";
 import { useDoctorSnapshot } from "@/hooks/useDoctorSnapshot";
 import { useDoctorAssignedPatients } from "@/hooks/useDoctorAssignedPatients";
 import { queryKeys } from "@/lib/query-keys";
+import { useQueryBodyLoading } from "@/lib/query-body-loading";
 import { cn } from "@/lib/utils";
 import type { DoctorAssignedPatientRow } from "@/lib/doctor-assigned-patients";
 import type { DoctorSnapshot, User } from "@/types/types";
@@ -199,12 +200,6 @@ export function DoctorDetailScreenShared({
     initialData: staffViewer ? initialAdminUsers ?? undefined : undefined,
   });
 
-  const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => {
-    const id = requestAnimationFrame(() => setIsMounted(true));
-    return () => cancelAnimationFrame(id);
-  }, []);
-
   const liveUser = user ?? initialUser;
   const displayName = liveUser.display_name?.trim() || liveUser.email;
 
@@ -218,8 +213,10 @@ export function DoctorDetailScreenShared({
 
   const snapshot = liveSnapshot ?? initialSnapshot;
   const hasSnapshot = snapshot != null;
-  const appointmentsLoading =
-    !isMounted || ((snapshotLoading || snapshotFetching) && !hasSnapshot);
+  const appointmentsLoading = useQueryBodyLoading(
+    queryKeys.doctors.snapshot(doctorId),
+    snapshotLoading || snapshotFetching
+  );
   const appointmentList = snapshot?.appointments ?? [];
   const appointmentTotalCount = snapshot?.totalCount ?? 0;
 
