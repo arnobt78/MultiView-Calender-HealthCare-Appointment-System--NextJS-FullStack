@@ -6,36 +6,26 @@ import {
   pageChromeToolbarRowClass,
   pageHeaderDescriptionClass,
 } from "@/lib/page-chrome-classes";
-import { useControlPanelChromeRegistryContext } from "@/components/control-panel/ControlPanelChromeContext";
 import {
-  getControlPanelChromeSnapshot,
-  subscribeControlPanelChrome,
-} from "@/lib/control-panel-chrome-sync-store";
+  EMPTY_CONTROL_PANEL_CHROME_REGISTRY,
+  useControlPanelChromeRegistryContext,
+} from "@/components/control-panel/ControlPanelChromeContext";
 import { ControlPanelChromeActionsShell } from "@/components/control-panel/ControlPanelChromeActionsShell";
 import type { ControlPanelSidebarTabValue } from "@/lib/control-panel-nav-config";
 
-/**
- * Subscribe for updates; read live snapshot each render — body (order-2) registers
- * before header (order-1) in the same commit so getSnapshot must not be cached early.
- */
-function useControlPanelChromeSnapshot() {
-  useSyncExternalStore(
-    subscribeControlPanelChrome,
-    getControlPanelChromeSnapshot,
-    getControlPanelChromeSnapshot
-  );
-  return getControlPanelChromeSnapshot();
+function useLiveControlPanelChromeSlots() {
+  const { subscribeLiveSlots, getLiveSlots } = useControlPanelChromeRegistryContext();
+  useSyncExternalStore(subscribeLiveSlots, getLiveSlots, () => EMPTY_CONTROL_PANEL_CHROME_REGISTRY);
+  return getLiveSlots();
 }
 
 /** Default or section-overridden subtitle — sits in merged header left stack. */
 export function ControlPanelChromeDescriptionSlot() {
-  const { defaultDescription, activeTab } = useControlPanelChromeRegistryContext();
-  const syncSnapshot = useControlPanelChromeSnapshot();
-  const syncApplies =
-    syncSnapshot.tab === activeTab && syncSnapshot.registry.description != null;
+  const { defaultDescription } = useControlPanelChromeRegistryContext();
+  const liveSlots = useLiveControlPanelChromeSlots();
 
-  if (syncApplies) {
-    return <>{syncSnapshot.registry.description}</>;
+  if (liveSlots.description != null) {
+    return <>{liveSlots.description}</>;
   }
 
   if (!defaultDescription) return null;
@@ -45,23 +35,20 @@ export function ControlPanelChromeDescriptionSlot() {
 type ActionsSlotProps = {
   tab: ControlPanelSidebarTabValue;
   /** SSR decorative shells — shown until live actions register. */
-  serverChromeActions?: React.ReactNode;
+  serverChromeActions?: ReactNode;
 };
 
-/** Right column — live actions from sync store; SSR or client shells until registered. */
+/** Right column — live actions from provider-scoped registry. */
 export function ControlPanelChromeActionsSlot({
   tab,
   serverChromeActions,
 }: ActionsSlotProps) {
-  const { activeTab } = useControlPanelChromeRegistryContext();
-  const syncSnapshot = useControlPanelChromeSnapshot();
-  const syncApplies =
-    syncSnapshot.tab === activeTab && syncSnapshot.registry.actions != null;
+  const liveSlots = useLiveControlPanelChromeSlots();
 
-  if (syncApplies) {
+  if (liveSlots.actions != null) {
     return (
       <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 self-center">
-        {syncSnapshot.registry.actions}
+        {liveSlots.actions}
       </div>
     );
   }
@@ -75,14 +62,11 @@ export function ControlPanelChromeActionsSlot({
 
 /** Optional second row under title/actions (filters, export toolbar). */
 export function ControlPanelChromeToolbarSlot() {
-  const { activeTab } = useControlPanelChromeRegistryContext();
-  const syncSnapshot = useControlPanelChromeSnapshot();
-  const syncApplies =
-    syncSnapshot.tab === activeTab && syncSnapshot.registry.toolbar != null;
-  if (!syncApplies) return null;
+  const liveSlots = useLiveControlPanelChromeSlots();
+  if (liveSlots.toolbar == null) return null;
   return (
     <div className={cn(pageChromeToolbarRowClass, "w-full")}>
-      {syncSnapshot.registry.toolbar}
+      {liveSlots.toolbar}
     </div>
   );
 }

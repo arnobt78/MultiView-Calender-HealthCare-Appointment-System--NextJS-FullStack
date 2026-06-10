@@ -5,7 +5,7 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 ## Latest (2026-06-10)
 
 - **C13 user-admin parity:** `UserManagement` — `PatientStatCard` stats, filter toolbar (status/verification/photo), Status column, slate glass frame; emerald `AdminUserFormDialog` (Doctor parity); detail owned-appointments table + glass back.
-- **C13 chrome remount:** `reinitializeControlPanelChromeTab` + unmount clears `activeTab` — fixes dead header actions after detail/back nav.
+- **C13 chrome nav fix:** live header slots in `ControlPanelChromeRegistryProvider` (not module singleton — old route unmount reset no longer wipes new tab actions).
 - **C12.3:** refresh notify; overview/notifications dynamic subtitle; header transparent blur.
 - **Verify:** **913/913** · tsc · lint · build PASS.
 ## Never / Always

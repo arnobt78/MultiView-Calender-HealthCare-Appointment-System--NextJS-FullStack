@@ -39,10 +39,6 @@ import {
 } from "@/lib/page-chrome-classes";
 import { cn } from "@/lib/utils";
 import { ControlPanelSectionInitialProvider } from "@/components/control-panel/ControlPanelSectionInitialContext";
-import {
-  reinitializeControlPanelChromeTab,
-  setControlPanelChromeActiveTab,
-} from "@/lib/control-panel-chrome-sync-store";
 
 type Props = {
   tab: ControlPanelSidebarTabValue;
@@ -160,14 +156,6 @@ export function ControlPanelSectionPageClient({
     if (!initial) return;
     seedControlPanelSectionCache(queryClient, initial);
   }, [queryClient, initial]);
-
-  // Remount-safe: detail route return may reuse same tab — always clear before body registers.
-  useLayoutEffect(() => {
-    reinitializeControlPanelChromeTab(tab);
-  }, [tab]);
-
-  // Render-time tab switch guard — skips when tab unchanged (reinitialize handles remount).
-  setControlPanelChromeActiveTab(tab);
 
   const mergedServerChrome =
     serverChromeIcon != null && serverChromeTitle != null;

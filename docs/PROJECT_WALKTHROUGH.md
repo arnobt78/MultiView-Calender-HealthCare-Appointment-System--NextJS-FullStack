@@ -5,7 +5,7 @@
 - **List:** `AdminUserManagementStatsRow` + `PatientStatCard`; `ClinicalListFilterToolbar` (status, verification, photo); Status column; `slateGlassTableFrameClass`.
 - **Detail:** SSR `loadAdminUserOwnedAppointments`; `ClinicalDataTable` appointments owned; glass back buttons; phone/status rows.
 - **Dialog:** emerald glass `AdminUserFormDialog` (phone, is_active, role read-only); create `CP_ADMIN_CREATE_STUB`.
-- **Chrome remount:** `reinitializeControlPanelChromeTab` — header Add Admin works after detail/back.
+- **Chrome nav fix:** provider-scoped live slots — module singleton unmount reset no longer clears new page actions after soft nav.
 - **Verify:** **913/913** · tsc · lint · build.
 
 ## Prior (2026-06-10 — C12.3 CP refresh + chrome runtime)

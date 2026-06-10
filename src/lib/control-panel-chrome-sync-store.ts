@@ -1,9 +1,6 @@
 /**
- * Synchronous CP merged-header registry — sections register during render (external store)
- * so ActionsSlot reads populated actions in the same commit when body renders before header.
- *
- * Module singleton survives Next.js soft navigations — `setControlPanelChromeActiveTab`
- * must run at section entry before body registers to avoid cross-tab stale chrome.
+ * Legacy module singleton — kept for unit tests (C12.1 tab isolation).
+ * Live CP merged-header slots use provider-scoped registry in ControlPanelChromeContext.
  */
 
 import type { ControlPanelChromeRegistry } from "@/components/control-panel/ControlPanelChromeContext";
@@ -35,7 +32,6 @@ export function getControlPanelChromeSnapshot(): ControlPanelChromeSyncSnapshot 
   return snapshot;
 }
 
-/** SSR/hydration snapshot — same as client; body order-2 registers before header order-1 in same commit. Tab isolation (C12.1) prevents cross-nav stale bleed. */
 export function getControlPanelChromeServerSnapshot(): ControlPanelChromeSyncSnapshot {
   return getControlPanelChromeSnapshot();
 }
@@ -45,26 +41,17 @@ export function subscribeControlPanelChrome(listener: Listener): () => void {
   return () => listeners.delete(listener);
 }
 
-/**
- * Call at ControlPanelSectionPageClient render start — clears stale chrome when tab changes.
- * Does not emit; body registration + notifyControlPanelChromeRegistry updates subscribers.
- */
 export function setControlPanelChromeActiveTab(tab: ControlPanelSidebarTabValue): void {
   if (activeTab === tab) return;
   activeTab = tab;
   snapshot = EMPTY_SYNC_SNAPSHOT;
 }
 
-/**
- * Force-clear snapshot on section remount (e.g. detail route → list tab return).
- * Same-tab remount skips setControlPanelChromeActiveTab early-return — this always re-inits.
- */
 export function reinitializeControlPanelChromeTab(tab: ControlPanelSidebarTabValue): void {
   activeTab = tab;
   snapshot = EMPTY_SYNC_SNAPSHOT;
 }
 
-/** Merge one section's slots into the live snapshot (called during section render). */
 export function registerControlPanelChromeSlice(
   tab: ControlPanelSidebarTabValue,
   slice: Partial<ControlPanelChromeRegistry>
@@ -89,7 +76,6 @@ export function registerControlPanelChromeSlice(
   if (!changed) return;
 
   snapshot = { tab, registry: nextRegistry };
-  // Do not emit here — register runs during render; notify in ControlPanelChromeActions useLayoutEffect.
 }
 
 export function resetControlPanelChromeRegistry(): void {
@@ -107,7 +93,6 @@ export function resetControlPanelChromeRegistry(): void {
   emit();
 }
 
-/** Notify subscribers after a slice registration (same commit as body render). */
 export function notifyControlPanelChromeRegistry(): void {
   emit();
 }
