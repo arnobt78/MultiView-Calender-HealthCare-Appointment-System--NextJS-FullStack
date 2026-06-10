@@ -39,7 +39,10 @@ import {
 } from "@/lib/page-chrome-classes";
 import { cn } from "@/lib/utils";
 import { ControlPanelSectionInitialProvider } from "@/components/control-panel/ControlPanelSectionInitialContext";
-import { setControlPanelChromeActiveTab } from "@/lib/control-panel-chrome-sync-store";
+import {
+  reinitializeControlPanelChromeTab,
+  setControlPanelChromeActiveTab,
+} from "@/lib/control-panel-chrome-sync-store";
 
 type Props = {
   tab: ControlPanelSidebarTabValue;
@@ -158,7 +161,12 @@ export function ControlPanelSectionPageClient({
     seedControlPanelSectionCache(queryClient, initial);
   }, [queryClient, initial]);
 
-  // Clear module singleton chrome before body registers — prevents cross-tab stale subtitle/actions.
+  // Remount-safe: detail route return may reuse same tab — always clear before body registers.
+  useLayoutEffect(() => {
+    reinitializeControlPanelChromeTab(tab);
+  }, [tab]);
+
+  // Render-time tab switch guard — skips when tab unchanged (reinitialize handles remount).
   setControlPanelChromeActiveTab(tab);
 
   const mergedServerChrome =

@@ -6,11 +6,13 @@ import { format } from "date-fns";
 import { clinicalEmptyOr } from "@/components/shared/ClinicalTableEmptyDash";
 import {
   ArrowLeft,
+  Calendar,
   CalendarDays,
   Clock,
   Hash,
   Mail,
   Pencil,
+  Phone,
   ShieldCheck,
   User as UserIcon,
   UserCog,
@@ -22,8 +24,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { UserRoleBadge } from "@/components/shared/UserRoleBadge";
+import { EntityActiveStatusBadge } from "@/components/shared/entity-display/EntityActiveStatusBadge";
 import { ControlPanelGlassActionButton } from "@/components/shared/ControlPanelGlassActionButton";
 import { AdminUserFormDialog } from "@/components/control-panel/admin-user-dialog/AdminUserFormDialog";
+import { ClinicalDataTable } from "@/components/shared/ClinicalDataTable";
+import { buildRelatedAppointmentsColumns } from "@/components/control-panel/patient-detail-snapshot-columns";
 import {
   adminUserDetailCardFrameClass,
   adminUserDetailFieldIconCircleClass,
@@ -35,13 +40,15 @@ import {
 import {
   entityDetailActionsRowClass,
   entityDetailPageHeaderClass,
+  entityDetailSnapshotSectionShellClass,
   patientDetailDefinitionListClass,
   patientDetailDefinitionRowClass,
   patientDetailSchemaSectionClass,
+  patientDetailSnapshotTableFrameClass,
 } from "@/lib/patient-detail-ui-classes";
 import { resolveEntityDetailRootClass } from "@/lib/section-page-layout";
 import type { AppSectionScrollShell } from "@/lib/section-page-layout";
-import type { User } from "@/types/types";
+import type { AppointmentSnapshotRow, User } from "@/types/types";
 import { useUser } from "@/hooks/useUsers";
 import { queryKeys } from "@/lib/query-keys";
 import {
@@ -56,6 +63,12 @@ import { EntityIdCopyInline } from "@/components/shared/EntityIdCopyInline";
 import { mapUserRecordAuditActors } from "@/lib/entity-detail-audit-actor";
 import { entityDetailAuditIconCircleClass } from "@/lib/patient-detail-ui-classes";
 import type { EntityRole } from "@/lib/entity-routes";
+import { skyGlassBackButtonClass } from "@/lib/calendar-header-action-styles";
+import { clinicalSnapshotAppointmentsTableMinWidthClass } from "@/lib/clinical-snapshot-table-columns";
+import { isUserAccountActive } from "@/lib/entity-active-status";
+import { buildStaffDirectoryMap } from "@/lib/staff-directory-cache";
+import { useUsers } from "@/hooks/useUsers";
+import { CP_DOCTOR_USERS_FILTERS } from "@/lib/control-panel-users-filters";
 
 type AdminUserDetailScreenProps = {
   userId: string;
@@ -65,6 +78,7 @@ type AdminUserDetailScreenProps = {
   initialUser: User;
   appointmentCount: number;
   emailVerified: boolean;
+  initialAppointments: AppointmentSnapshotRow[];
 };
 
 function FieldLabel({
@@ -84,6 +98,26 @@ function FieldLabel({
   );
 }
 
+function SectionHeading({
+  icon: Icon,
+  count,
+  children,
+}: {
+  icon: typeof Calendar;
+  count: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <Icon className="h-4 w-4 text-slate-600" aria-hidden />
+      <h3 className="text-sm font-semibold text-gray-700">{children}</h3>
+      <Badge variant="secondary" className="text-[10px] font-normal">
+        {count}
+      </Badge>
+    </div>
+  );
+}
+
 /** CP admin/staff user detail — SSR seed + live `useUser`; doctors redirect to `/control-panel/doctors/[id]`. */
 export function AdminUserDetailScreen({
   userId,
@@ -93,24 +127,42 @@ export function AdminUserDetailScreen({
   initialUser,
   appointmentCount,
   emailVerified,
+  initialAppointments,
 }: AdminUserDetailScreenProps) {
   const queryClient = useQueryClient();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [dialogForm, setDialogForm] = useState<AdminUserFormValues>(EMPTY_ADMIN_USER_FORM);
+  const [appointments] = useState(initialAppointments);
 
   useLayoutEffect(() => {
     queryClient.setQueryData(queryKeys.users.detail(userId), initialUser);
   }, [queryClient, userId, initialUser]);
 
   const { data: user, updateUser, isUpdating } = useUser(userId, { initialData: initialUser });
+  const { data: doctorUsersData } = useUsers(CP_DOCTOR_USERS_FILTERS);
+  const staffById = useMemo(
+    () => buildStaffDirectoryMap({ doctorUsers: doctorUsersData?.users ?? null }),
+    [doctorUsersData?.users]
+  );
+
   const liveUser = user ?? initialUser;
   const displayName = liveUser.display_name?.trim() || liveUser.email;
   const roleLabel = liveUser.role
     ? `${liveUser.role.charAt(0).toUpperCase()}${liveUser.role.slice(1)}`
     : "User";
 
-  /** Record Audit — `userDetailInclude` on SSR + GET/PATCH `/api/users/[id]`. */
   const recordAuditActors = useMemo(() => mapUserRecordAuditActors(liveUser), [liveUser]);
+
+  const appointmentColumns = useMemo(
+    () =>
+      buildRelatedAppointmentsColumns({
+        viewerRole: "admin",
+        patientDisplayName: displayName,
+        staffById,
+        pagePatient: null,
+      }),
+    [displayName, staffById]
+  );
 
   const openEditDialog = () => {
     setDialogForm(userToAdminUserForm(liveUser));
@@ -138,7 +190,10 @@ export function AdminUserDetailScreen({
           />
         }
         actions={
-          <BackNavigationLink href={listBackHref} className="no-underline">
+          <BackNavigationLink
+            href={listBackHref}
+            className={cn(skyGlassBackButtonClass, "no-underline")}
+          >
             <ArrowLeft className="shrink-0" aria-hidden />
             Back
           </BackNavigationLink>
@@ -161,6 +216,7 @@ export function AdminUserDetailScreen({
                 <p className="text-sm text-muted-foreground">{liveUser.email}</p>
                 <div className="flex flex-wrap items-center gap-2">
                   <UserRoleBadge role={liveUser.role} />
+                  <EntityActiveStatusBadge active={isUserAccountActive(liveUser)} />
                   <Badge
                     variant="outline"
                     className={cn(
@@ -200,6 +256,12 @@ export function AdminUserDetailScreen({
                 <FieldLabel icon={ShieldCheck}>Role</FieldLabel>
                 <dd className="capitalize">{clinicalEmptyOr(liveUser.role, "definition")}</dd>
               </div>
+              {liveUser.phone?.trim() ? (
+                <div className={patientDetailDefinitionRowClass}>
+                  <FieldLabel icon={Phone}>Phone</FieldLabel>
+                  <dd className="text-sm">{liveUser.phone}</dd>
+                </div>
+              ) : null}
               {liveUser.created_at ? (
                 <div className={patientDetailDefinitionRowClass}>
                   <FieldLabel icon={Clock}>Joined</FieldLabel>
@@ -212,12 +274,32 @@ export function AdminUserDetailScreen({
               </div>
             </dl>
           </div>
+
+          <div className={entityDetailSnapshotSectionShellClass}>
+            <SectionHeading icon={Calendar} count={appointmentCount}>
+              Appointments Owned
+            </SectionHeading>
+            <ClinicalDataTable
+              columns={appointmentColumns}
+              data={appointments.slice(0, 12)}
+              isLoading={false}
+              pagination={false}
+              tableLayout="fixed"
+              emptyMessage="No appointments"
+              tableClassName={cn(clinicalSnapshotAppointmentsTableMinWidthClass, "w-full")}
+              className={patientDetailSnapshotTableFrameClass}
+              tableFrameClassName="rounded-md border border-slate-200/80 bg-white shadow-none"
+            />
+          </div>
         </CardContent>
       </Card>
 
       {canAdminEdit ? (
         <div className={entityDetailActionsRowClass}>
-          <BackNavigationLink href={listBackHref} className="no-underline">
+          <BackNavigationLink
+            href={listBackHref}
+            className={cn(skyGlassBackButtonClass, "no-underline")}
+          >
             <ArrowLeft className="shrink-0" aria-hidden />
             Back To List
           </BackNavigationLink>
@@ -237,6 +319,7 @@ export function AdminUserDetailScreen({
           onFormChange={(patch) => setDialogForm((p) => ({ ...p, ...patch }))}
           onSubmit={handleSaveEdit}
           isSubmitting={isUpdating}
+          emailVerified={emailVerified}
         />
       ) : null}
     </div>

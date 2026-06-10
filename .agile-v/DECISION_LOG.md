@@ -75,3 +75,4 @@
 | 2026-06-10T22:30:00Z | build | C12 CP chrome subtitle + action parity | inline subtitle skeleton; Refresh SSR shell; HeaderGlassButton h-10; notifications toolbar split | REQ-0055 |
 | 2026-06-10T23:45:00Z | build | C12.1 CP chrome tab isolation | tab-scoped sync store reset; server snapshot; Export CSV literal; overview subtitle error path | REQ-0056 |
 | 2026-06-10T24:15:00Z | build | C12.2 CP chrome polish | slim context; aligned SSR snapshot; description wrapper fix; admin detail subtitle | REQ-0057 |
+| 2026-06-10T25:00:00Z | build | C13 user-admin UI parity + chrome remount | reinitializeControlPanelChromeTab; admin list filters/stats; emerald dialog; detail appointments SSR | REQ-0059 |

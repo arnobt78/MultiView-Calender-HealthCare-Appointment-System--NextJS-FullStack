@@ -1,6 +1,14 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-10 — C12.3 CP refresh + chrome runtime)
+## Latest (2026-06-10 — C13 user-admin UI parity)
+
+- **List:** `AdminUserManagementStatsRow` + `PatientStatCard`; `ClinicalListFilterToolbar` (status, verification, photo); Status column; `slateGlassTableFrameClass`.
+- **Detail:** SSR `loadAdminUserOwnedAppointments`; `ClinicalDataTable` appointments owned; glass back buttons; phone/status rows.
+- **Dialog:** emerald glass `AdminUserFormDialog` (phone, is_active, role read-only); create `CP_ADMIN_CREATE_STUB`.
+- **Chrome remount:** `reinitializeControlPanelChromeTab` — header Add Admin works after detail/back.
+- **Verify:** **913/913** · tsc · lint · build.
+
+## Prior (2026-06-10 — C12.3 CP refresh + chrome runtime)
 
 - **Runtime fix:** `registerControlPanelChromeSlice` never emits; `notifyControlPanelChromeRegistry` in post-commit layout effect; cleanup deps `[tab]` only — prevents registry reset on every render (static subtitle + non-interactive Refresh shell).
 - **Overview:** `resolveDashboardOverviewUpdatedAt`; Refresh calls `/api/dashboard/overview`; `showMetricSlot`; Sonner via `runCpSectionRefresh`; SSR seed `dashboardOverviewUpdatedAt`.

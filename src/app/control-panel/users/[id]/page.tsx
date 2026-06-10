@@ -1,5 +1,5 @@
 /**
- * Admin user detail — B2B admin accounts only; doctors use `/control-panel/doctors/[id]`.
+ * Admin user detail — SSR prefetch owned appointments + client screen.
  */
 export const dynamic = "force-dynamic";
 
@@ -11,6 +11,7 @@ import { isValidUUID } from "@/lib/validation";
 import { getUserRole } from "@/lib/rbac";
 import { serializeUser } from "@/lib/serializers";
 import { AdminUserDetailScreen } from "@/components/control-panel/AdminUserDetailScreen";
+import { loadAdminUserOwnedAppointments } from "@/lib/admin-user-owned-appointments";
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -43,12 +44,11 @@ export default async function UserDetailPage({ params }: PageProps) {
     redirect(`/control-panel/doctors/${id}`);
   }
 
-  // Demo patient/other auth users — not part of the B2B admin roster.
   if (raw.role !== "admin") {
     notFound();
   }
 
-  const appointmentCount = await prisma.appointment.count({ where: { owner_id: id } });
+  const ownedAppointments = await loadAdminUserOwnedAppointments(id, 20);
 
   return (
     <AdminUserDetailScreen
@@ -57,8 +57,9 @@ export default async function UserDetailPage({ params }: PageProps) {
       listBackHref="/control-panel/user-admin-management"
       scrollShell="control-panel"
       initialUser={serializeUser(raw)}
-      appointmentCount={appointmentCount}
+      appointmentCount={ownedAppointments.totalCount}
       emailVerified={raw.email_verified}
+      initialAppointments={ownedAppointments.appointments}
     />
   );
 }

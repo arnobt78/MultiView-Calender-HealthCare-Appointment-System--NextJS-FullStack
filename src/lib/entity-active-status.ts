@@ -64,6 +64,11 @@ export function isDoctorActive(
   return user.is_active !== false;
 }
 
+/** B2B admin (and any staff user) account active flag — default true when unset. */
+export function isUserAccountActive(user: Pick<User, "is_active">): boolean {
+  return user.is_active !== false;
+}
+
 /** Categories in booking UI — lower `sort_order` first, then label. */
 export function sortCategoriesForBookingSelect(a: Category, b: Category): number {
   const orderA = a.sort_order ?? 0;

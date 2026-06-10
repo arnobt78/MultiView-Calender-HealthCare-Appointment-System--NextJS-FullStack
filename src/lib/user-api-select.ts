@@ -19,6 +19,7 @@ export const USER_API_SELECT = {
   years_of_experience: true,
   is_active: true,
   active_since: true,
+  email_verified: true,
   created_at: true,
   updated_at: true,
   created_by_id: true,

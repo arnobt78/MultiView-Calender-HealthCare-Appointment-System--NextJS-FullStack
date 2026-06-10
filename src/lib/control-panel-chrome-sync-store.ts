@@ -55,6 +55,15 @@ export function setControlPanelChromeActiveTab(tab: ControlPanelSidebarTabValue)
   snapshot = EMPTY_SYNC_SNAPSHOT;
 }
 
+/**
+ * Force-clear snapshot on section remount (e.g. detail route → list tab return).
+ * Same-tab remount skips setControlPanelChromeActiveTab early-return — this always re-inits.
+ */
+export function reinitializeControlPanelChromeTab(tab: ControlPanelSidebarTabValue): void {
+  activeTab = tab;
+  snapshot = EMPTY_SYNC_SNAPSHOT;
+}
+
 /** Merge one section's slots into the live snapshot (called during section render). */
 export function registerControlPanelChromeSlice(
   tab: ControlPanelSidebarTabValue,
@@ -88,10 +97,12 @@ export function resetControlPanelChromeRegistry(): void {
     snapshot.registry.actions === null &&
     snapshot.registry.toolbar === null &&
     snapshot.registry.description === null &&
-    snapshot.registry.title === null
+    snapshot.registry.title === null &&
+    activeTab === null
   ) {
     return;
   }
+  activeTab = null;
   snapshot = EMPTY_SYNC_SNAPSHOT;
   emit();
 }

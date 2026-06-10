@@ -4,6 +4,8 @@ import {
   getControlPanelChromeServerSnapshot,
   getControlPanelChromeSnapshot,
   registerControlPanelChromeSlice,
+  reinitializeControlPanelChromeTab,
+  resetControlPanelChromeRegistry,
   setControlPanelChromeActiveTab,
   subscribeControlPanelChrome,
   notifyControlPanelChromeRegistry,
@@ -89,5 +91,28 @@ describe("control-panel-chrome-sync-store C12.1 tab isolation", () => {
       description: "Stale overview",
     });
     expect(getControlPanelChromeSnapshot().registry.description).toBeNull();
+  });
+
+  it("detail route return — reset clears activeTab; reinitialize + register restores actions", () => {
+    setControlPanelChromeActiveTab("users_admin");
+    registerControlPanelChromeSlice("users_admin", {
+      actions: "Add Admin live",
+    });
+    expect(getControlPanelChromeSnapshot().registry.actions).toBe("Add Admin live");
+
+    resetControlPanelChromeRegistry();
+    expect(getControlPanelChromeSnapshot().registry.actions).toBeNull();
+
+    setControlPanelChromeActiveTab("users_admin");
+    expect(getControlPanelChromeSnapshot().registry.actions).toBeNull();
+
+    reinitializeControlPanelChromeTab("users_admin");
+    registerControlPanelChromeSlice("users_admin", {
+      actions: "Add Admin live",
+    });
+    notifyControlPanelChromeRegistry();
+
+    expect(getControlPanelChromeSnapshot().tab).toBe("users_admin");
+    expect(getControlPanelChromeSnapshot().registry.actions).toBe("Add Admin live");
   });
 });

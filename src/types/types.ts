@@ -39,6 +39,8 @@ export interface User {
   /** Doctor account active flag — default true when unset (demo deactivate without delete). */
   is_active?: boolean;
   active_since?: string | null;
+  /** Email verification — B2B admin roster filters + detail badge. */
+  email_verified?: boolean;
 }
 export type UUID = string;
 

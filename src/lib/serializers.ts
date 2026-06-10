@@ -149,6 +149,7 @@ export function serializeUser(u: {
   years_of_experience?: number | null;
   is_active?: boolean;
   active_since?: Date | null;
+  email_verified?: boolean;
   created_by?: UserMini;
   updated_by?: UserMini;
 }) {
@@ -173,6 +174,7 @@ export function serializeUser(u: {
     years_of_experience: u.years_of_experience ?? null,
     is_active: u.is_active,
     active_since: u.active_since?.toISOString?.() ?? null,
+    email_verified: u.email_verified,
     created_by_display: userDisplay(u.created_by),
     updated_by_display: userDisplay(u.updated_by),
     created_by_email: u.created_by?.email ?? null,

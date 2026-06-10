@@ -6,7 +6,8 @@
  */
 
 import { type ColumnDef } from "@tanstack/react-table";
-import { useState } from "react";
+import { format } from "date-fns";
+import { useMemo, useState } from "react";
 import { PrefetchingLink } from "@/components/shared/PrefetchingLink";
 import { useUsers } from "@/hooks/useUsers";
 import { CP_ADMIN_USERS_FILTERS } from "@/lib/control-panel-users-filters";
@@ -17,6 +18,7 @@ import { ControlPanelHeaderGlassButton } from "@/components/control-panel/Contro
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { UserRoleBadge } from "@/components/shared/UserRoleBadge";
 import { UserAvatar } from "@/components/shared/UserAvatar";
+import { EntityActiveStatusBadge } from "@/components/shared/entity-display/EntityActiveStatusBadge";
 import { DemoShowcaseFeatureNote } from "@/components/shared/DemoShowcaseFeatureNote";
 import { ADMIN_USER_MANAGEMENT_DEMO_NOTE } from "@/lib/demo-showcase-copy";
 import { AdminUserFormDialog } from "@/components/control-panel/admin-user-dialog/AdminUserFormDialog";
@@ -37,7 +39,6 @@ import {
 } from "@/lib/table-display-styles";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,85 +48,42 @@ import {
 import { ControlPanelEntityListShell } from "@/components/control-panel/ControlPanelEntityListShell";
 import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
 import { AppSectionErrorBanner } from "@/components/shared/AppSectionErrorBanner";
-import { isDoctorActive } from "@/lib/entity-active-status";
+import { isUserAccountActive } from "@/lib/entity-active-status";
 import type { User } from "@/types/types";
-import {
-  EllipsisVertical,
-  Eye,
-  ShieldCheck,
-  ShieldOff,
-  UserCheck,
-  UserPlus,
-  Users,
-} from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { EllipsisVertical, Eye, ImageIcon, ListFilter, ShieldCheck, UserPlus } from "lucide-react";
 import { useCpListBodyLoading } from "@/lib/cp-list-body-loading";
 import { queryKeys } from "@/lib/query-keys";
+import { ClinicalListFilterToolbar } from "@/components/shared/filters/ClinicalListFilterToolbar";
+import { FilterSelect } from "@/components/shared/filters/FilterSelect";
+import { APP_INNER_SCROLL_STICKY_TOP_CLASS } from "@/lib/portal-z-index";
+import {
+  AdminUserListFiltersProvider,
+  useAdminUserListFilters,
+  type AdminUserPhotoFilter,
+  type AdminUserStatusFilter,
+  type AdminUserVerificationFilter,
+} from "@/components/control-panel/AdminUserListFiltersContext";
+import { AdminUserManagementStatsRow } from "@/components/control-panel/AdminUserManagementStatsRow";
 
 const ADMIN_ROSTER_DEMO_NOTE = ADMIN_USER_MANAGEMENT_DEMO_NOTE;
 
-function AdminUserStatCards({ users, isLoading }: { users: User[]; isLoading: boolean }) {
-  const active = users.filter((u) => isDoctorActive(u)).length;
-  const inactive = users.length - active;
-  const withPhoto = users.filter((u) => u.image?.trim()).length;
+const STATUS_FILTER_LABEL: Record<AdminUserStatusFilter, string> = {
+  all: "All Statuses",
+  active: "Active",
+  inactive: "Inactive",
+};
 
-  const stats = [
-    {
-      label: "Total Admins",
-      value: users.length,
-      icon: <Users className="h-4 w-4" />,
-      cls: "bg-slate-50/60 border-slate-200/60",
-      valueCls: "text-slate-700",
-      iconCls: "bg-slate-100 border-slate-200 text-slate-600",
-    },
-    {
-      label: "Active",
-      value: active,
-      icon: <UserCheck className="h-4 w-4" />,
-      cls: "bg-emerald-50/60 border-emerald-200/60",
-      valueCls: "text-emerald-700",
-      iconCls: "bg-emerald-100 border-emerald-200 text-emerald-600",
-    },
-    {
-      label: "Inactive",
-      value: inactive,
-      icon: <ShieldOff className="h-4 w-4" />,
-      cls: "bg-amber-50/60 border-amber-200/60",
-      valueCls: "text-amber-700",
-      iconCls: "bg-amber-100 border-amber-200 text-amber-600",
-    },
-    {
-      label: "With Photo",
-      value: withPhoto,
-      icon: <ShieldCheck className="h-4 w-4" />,
-      cls: "bg-sky-50/60 border-sky-200/60",
-      valueCls: "text-sky-700",
-      iconCls: "bg-sky-100 border-sky-200 text-sky-600",
-    },
-  ];
+const VERIFICATION_FILTER_LABEL: Record<AdminUserVerificationFilter, string> = {
+  all: "All Verification",
+  verified: "Verified",
+  unverified: "Unverified",
+};
 
-  return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-      {stats.map(({ label, value, icon, cls, valueCls, iconCls }) => (
-        <Card key={label} className={cn("rounded-[16px] border", cls)}>
-          <CardContent className="p-3 flex items-center gap-2">
-            <span className={cn("flex h-9 w-9 items-center justify-center rounded-xl border shrink-0", iconCls)}>
-              {icon}
-            </span>
-            <div>
-              {isLoading ? (
-                <Skeleton className="h-5 w-8 rounded mb-1" />
-              ) : (
-                <p className={cn("text-lg font-bold leading-none", valueCls)}>{value}</p>
-              )}
-              <p className="text-xs text-muted-foreground">{label}</p>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
-}
+const PHOTO_FILTER_LABEL: Record<AdminUserPhotoFilter, string> = {
+  all: "All Photos",
+  with_photo: "With Photo",
+  no_photo: "No Photo",
+};
 
 function ActionsCell({ user }: { user: User }) {
   return (
@@ -151,71 +109,107 @@ function ActionsCell({ user }: { user: User }) {
   );
 }
 
-export default function UserManagement() {
+function UserManagementInner() {
   const { data, isLoading, isError } = useUsers(CP_ADMIN_USERS_FILTERS);
   const users = data?.users ?? [];
   const listBodyLoading = useCpListBodyLoading(
     [...queryKeys.users.all, CP_ADMIN_USERS_FILTERS],
     isLoading
   );
+
+  const { status, setStatus, verification, setVerification, photo, setPhoto, filterUsers } =
+    useAdminUserListFilters();
+  const filteredUsers = filterUsers(users);
+
+  const [listSearch, setListSearch] = useState("");
+  const hasToolbarFilters = useMemo(
+    () =>
+      listSearch.trim().length > 0 ||
+      status !== "all" ||
+      verification !== "all" ||
+      photo !== "all",
+    [listSearch, status, verification, photo]
+  );
+  const resetToolbar = () => {
+    setListSearch("");
+    setStatus("all");
+    setVerification("all");
+    setPhoto("all");
+  };
+
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [createForm, setCreateForm] = useState<AdminUserFormValues>(EMPTY_ADMIN_USER_FORM);
 
-  const columns: ColumnDef<User>[] = [
-    {
-      id: "display_name",
-      accessorFn: (row) => `${row.display_name ?? ""} ${row.email}`.trim(),
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Admin" />,
-      meta: { shellClassName: "min-w-[12rem]" },
-      cell: ({ row }) => {
-        const u = row.original;
-        const label = u.display_name ?? "—";
-        return (
-          <div className={cn("flex min-w-0 items-center gap-2", clinicalTableCellMinRowClass)}>
-            <UserAvatar
-              src={u.image}
-              fallbackText={u.display_name || u.email || "?"}
-              sizeClassName="h-9 w-9 shrink-0"
-            />
-            <div className={cn("flex min-w-0 flex-col", clinicalStackGapClass)}>
-              <EntityTitleLink
-                href={`/control-panel/users/${u.id}`}
-                label={label}
-                className="min-w-0 self-start truncate font-normal"
+  const columns: ColumnDef<User>[] = useMemo(
+    () => [
+      {
+        id: "display_name",
+        accessorFn: (row) => `${row.display_name ?? ""} ${row.email}`.trim(),
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Admin" />,
+        meta: { shellClassName: "min-w-[12rem]" },
+        cell: ({ row }) => {
+          const u = row.original;
+          const label = u.display_name ?? "—";
+          return (
+            <div className={cn("flex min-w-0 items-center gap-2", clinicalTableCellMinRowClass)}>
+              <UserAvatar
+                src={u.image}
+                fallbackText={u.display_name || u.email || "?"}
+                sizeClassName="h-9 w-9 shrink-0"
               />
-              <span className={cn("truncate", clinicalCellMutedTextClass)}>{u.email}</span>
+              <div className={cn("flex min-w-0 flex-col", clinicalStackGapClass)}>
+                <EntityTitleLink
+                  href={`/control-panel/users/${u.id}`}
+                  label={label}
+                  className="min-w-0 self-start truncate font-normal"
+                />
+                <span className={cn("truncate", clinicalCellMutedTextClass)}>{u.email}</span>
+              </div>
             </div>
-          </div>
-        );
+          );
+        },
       },
-    },
-    {
-      id: "role",
-      header: "Role",
-      meta: { shellClassName: "min-w-[6rem] whitespace-nowrap" },
-      cell: () => <UserRoleBadge role="admin" />,
-    },
-    {
-      accessorKey: "created_at",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Joined" />,
-      meta: { shellClassName: "w-[1%] whitespace-nowrap" },
-      cell: ({ row }) =>
-        row.original.created_at ? (
-          <span className="text-xs whitespace-nowrap">
-            {new Date(row.original.created_at).toLocaleDateString()}
-          </span>
-        ) : (
-          "—"
+      {
+        id: "status",
+        accessorFn: (row) => (isUserAccountActive(row) ? "active" : "inactive"),
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Status" />,
+        meta: { shellClassName: "w-[10%] min-w-[7.25rem] whitespace-nowrap" },
+        cell: ({ row }) => (
+          <div className="flex min-h-[2.75rem] items-center">
+            <EntityActiveStatusBadge active={isUserAccountActive(row.original)} />
+          </div>
         ),
-    },
-    {
-      id: "actions",
-      header: "Actions",
-      enableSorting: false,
-      meta: { shellClassName: "w-[1%] whitespace-nowrap text-right" },
-      cell: ({ row }) => <ActionsCell user={row.original} />,
-    },
-  ];
+      },
+      {
+        id: "role",
+        header: "Role",
+        meta: { shellClassName: "min-w-[6rem] whitespace-nowrap" },
+        cell: () => <UserRoleBadge role="admin" />,
+      },
+      {
+        accessorKey: "created_at",
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Joined" />,
+        meta: { shellClassName: "w-[1%] whitespace-nowrap" },
+        cell: ({ row }) => (
+          <div className="flex min-h-[2.75rem] items-center">
+            <span className={cn("whitespace-nowrap text-xs", clinicalCellMutedTextClass)}>
+              {row.original.created_at
+                ? format(new Date(row.original.created_at), "MMM d, yyyy")
+                : "—"}
+            </span>
+          </div>
+        ),
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        enableSorting: false,
+        meta: { shellClassName: "w-[1%] whitespace-nowrap text-right" },
+        cell: ({ row }) => <ActionsCell user={row.original} />,
+      },
+    ],
+    []
+  );
 
   if (isError) {
     return (
@@ -249,12 +243,65 @@ export default function UserManagement() {
         />
       }
       bannerSlot={<DemoShowcaseFeatureNote note={ADMIN_ROSTER_DEMO_NOTE} />}
-      statsSlot={<AdminUserStatCards users={users} isLoading={listBodyLoading} />}
+      statsSlot={
+        <AdminUserManagementStatsRow users={users} valueSkeleton={listBodyLoading} />
+      }
+      toolbarSlot={
+        <ClinicalListFilterToolbar
+          stickyClassName={APP_INNER_SCROLL_STICKY_TOP_CLASS}
+          search={{
+            value: listSearch,
+            onChange: setListSearch,
+            placeholder: "Search by name or email…",
+            ariaLabel: "Search admin users by name or email",
+          }}
+          showReset={hasToolbarFilters}
+          onReset={resetToolbar}
+        >
+          <FilterSelect
+            value={status}
+            onValueChange={(v) => setStatus(v as AdminUserStatusFilter)}
+            displayLabel={STATUS_FILTER_LABEL[status]}
+            icon={ListFilter}
+            size="toolbar"
+            options={[
+              { value: "all", label: STATUS_FILTER_LABEL.all },
+              { value: "active", label: STATUS_FILTER_LABEL.active },
+              { value: "inactive", label: STATUS_FILTER_LABEL.inactive },
+            ]}
+          />
+          <FilterSelect
+            value={verification}
+            onValueChange={(v) => setVerification(v as AdminUserVerificationFilter)}
+            displayLabel={VERIFICATION_FILTER_LABEL[verification]}
+            icon={ShieldCheck}
+            size="toolbar"
+            options={[
+              { value: "all", label: VERIFICATION_FILTER_LABEL.all },
+              { value: "verified", label: VERIFICATION_FILTER_LABEL.verified },
+              { value: "unverified", label: VERIFICATION_FILTER_LABEL.unverified },
+            ]}
+          />
+          <FilterSelect
+            value={photo}
+            onValueChange={(v) => setPhoto(v as AdminUserPhotoFilter)}
+            displayLabel={PHOTO_FILTER_LABEL[photo]}
+            icon={ImageIcon}
+            size="toolbar"
+            options={[
+              { value: "all", label: PHOTO_FILTER_LABEL.all },
+              { value: "with_photo", label: PHOTO_FILTER_LABEL.with_photo },
+              { value: "no_photo", label: PHOTO_FILTER_LABEL.no_photo },
+            ]}
+          />
+        </ClinicalListFilterToolbar>
+      }
       tableSlot={
         <DataTable<User, unknown>
           columns={columns}
-          data={users}
+          data={filteredUsers}
           isLoading={listBodyLoading}
+          externalGlobalFilter={{ value: listSearch, onChange: setListSearch }}
           globalFilterFn={(row, q) => {
             const s = q.trim().toLowerCase();
             if (!s) return true;
@@ -264,7 +311,6 @@ export default function UserManagement() {
               u.email.toLowerCase().includes(s)
             );
           }}
-          searchPlaceholder="Search by name or email…"
           emptyMessage="No admin accounts found."
           tableClassName="min-w-[720px]"
           tableLayout="auto"
@@ -272,25 +318,34 @@ export default function UserManagement() {
         />
       }
       footerSlot={
-      <>
-      <CpListPaginationDevStub
-        stub={CP_ADMIN_LIST_PAGINATION_STUB}
-        visibleCount={users.length}
-        pagination={data?.pagination ?? null}
-      />
+        <>
+          <CpListPaginationDevStub
+            stub={CP_ADMIN_LIST_PAGINATION_STUB}
+            visibleCount={filteredUsers.length}
+            pagination={data?.pagination ?? null}
+          />
 
-      <AdminUserFormDialog
-        open={createDialogOpen}
-        onOpenChange={setCreateDialogOpen}
-        readOnlyEmail="new.admin@example.com"
-        form={createForm}
-        onFormChange={(patch) => setCreateForm((p) => ({ ...p, ...patch }))}
-        onSubmit={() => undefined}
-        mode="create"
-        devStub={CP_ADMIN_CREATE_STUB}
-      />
-      </>
+          <AdminUserFormDialog
+            open={createDialogOpen}
+            onOpenChange={setCreateDialogOpen}
+            readOnlyEmail="new.admin@example.com"
+            form={createForm}
+            onFormChange={(patch) => setCreateForm((p) => ({ ...p, ...patch }))}
+            onSubmit={() => undefined}
+            mode="create"
+            devStub={CP_ADMIN_CREATE_STUB}
+            emailVerified={false}
+          />
+        </>
       }
     />
+  );
+}
+
+export default function UserManagement() {
+  return (
+    <AdminUserListFiltersProvider>
+      <UserManagementInner />
+    </AdminUserListFiltersProvider>
   );
 }

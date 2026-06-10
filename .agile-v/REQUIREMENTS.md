@@ -6,7 +6,7 @@
 
 | Field | Value |
 |-------|-------|
-| Cycle | C1–C9 shipped · **C10/C11 shipped** · **C12 active** (REQ-0055..0057) |
+| Cycle | C1–C9 shipped · **C10/C11 shipped** · **C12 shipped** · **C13 active** (REQ-0059) |
 | Author | Requirement Architect |
 | Gate 1 status | C1 GATE-0001 · C2 GATE-0003 approved |
 | Canonical source | this file |
@@ -103,6 +103,25 @@
 | REQ-0055 | approved [C12] | REQ-0050 | ART-0271..0278 | pending |
 | REQ-0056 | approved [C12.1] | REQ-0055 | ART-0279..0282 | pending |
 | REQ-0057 | approved [C12.2] | REQ-0056 | ART-0283..0286 | pending |
+| REQ-0059 | approved [C13] | REQ-0057 | ART-0287..0292 | pending |
+
+### REQ-0059 — C13 user-admin UI parity + chrome remount fix
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C13] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0057 |
+
+**Statement:** User-admin-management list/detail/dialog match patient/category CP parity; fix merged-header action buttons dead after detail/back navigation.
+
+**Acceptance criteria:**
+1. `reinitializeControlPanelChromeTab` on section remount; unmount reset clears `activeTab`.
+2. Admin list: `PatientStatCard` stats, `ClinicalListFilterToolbar` (status/verification/photo), Status column, slate glass table frame.
+3. Admin detail: owned appointments table, status/phone rows, glass back buttons.
+4. Add Admin dialog: emerald glass (Doctor parity); expanded form (phone, is_active); create stays `CP_ADMIN_CREATE_STUB`.
+5. `email_verified` on user list API select + serializer for filters.
 
 ### REQ-0057 — C12.2 CP chrome polish
 
