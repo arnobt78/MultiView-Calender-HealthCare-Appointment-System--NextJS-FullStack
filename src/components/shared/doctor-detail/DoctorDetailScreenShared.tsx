@@ -2,7 +2,6 @@
 
 import type { LucideIcon } from "lucide-react";
 import {
-  ArrowLeft,
   BadgeDollarSign,
   BookOpen,
   Building2,
@@ -10,7 +9,6 @@ import {
   Clock,
   Hash,
   Languages,
-  List,
   Lock,
   Mail,
   MapPin,

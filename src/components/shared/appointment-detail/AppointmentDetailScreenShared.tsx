@@ -2,7 +2,6 @@
 
 import type { LucideIcon } from "lucide-react";
 import {
-  ArrowLeft,
   Calendar,
   FileText,
   Hash,

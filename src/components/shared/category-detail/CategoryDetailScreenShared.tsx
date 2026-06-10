@@ -3,14 +3,12 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Activity,
-  ArrowLeft,
   Calendar,
   CheckCircle2,
   CircleOff,
   Clock,
   Hash,
   Layers,
-  List,
   Pencil,
   Sparkles,
   Tag,
