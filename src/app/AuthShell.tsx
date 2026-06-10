@@ -26,6 +26,8 @@ import { APP_MAIN_OFFSET_CLASS } from "@/lib/portal-z-index";
 import { cn } from "@/lib/utils";
 import { notify } from "@/lib/notify";
 import { NavRoleProvider } from "@/context/NavRoleContext";
+import { NavSessionSsrSeed } from "@/components/navbar/NavSessionSsrSeed";
+import type { NavSsrUser } from "@/lib/nav-session-ssr-seed";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -224,14 +226,18 @@ function AuthShellInner({ children }: { children: React.ReactNode }) {
 export default function AuthShell({
   children,
   initialNavRole = null,
+  initialNavUser = null,
 }: {
   children: React.ReactNode;
   /** From root layout — same on SSR and hydration for stable navbar role links. */
   initialNavRole?: string | null;
+  /** Full session user for auth/me cache seed — avoids navbar avatar flash. */
+  initialNavUser?: NavSsrUser | null;
 }) {
   return (
     <AppProviders>
       <NavRoleProvider role={initialNavRole}>
+        <NavSessionSsrSeed user={initialNavUser} />
         <AuthShellInner>{children}</AuthShellInner>
       </NavRoleProvider>
     </AppProviders>

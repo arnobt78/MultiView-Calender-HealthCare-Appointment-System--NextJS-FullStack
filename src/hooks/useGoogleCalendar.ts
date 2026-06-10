@@ -20,9 +20,11 @@ interface GoogleCalendarStatus {
 
 export function useGoogleCalendar() {
   const queryClient = useQueryClient();
+  const statusKey = [...queryKeys.googleCalendar.root, "status"] as const;
+  const statusInitialData = queryClient.getQueryData<GoogleCalendarStatus>(statusKey);
 
   const statusQuery = useQuery({
-    queryKey: [...queryKeys.googleCalendar.root, "status"] as const,
+    queryKey: statusKey,
     queryFn: async () => {
       try {
         const data = await apiClient<GoogleCalendarStatus>("/api/calendar/sync");
@@ -31,6 +33,8 @@ export function useGoogleCalendar() {
         return { connected: false, events: [] };
       }
     },
+    initialData: statusInitialData,
+    refetchOnMount: statusInitialData !== undefined ? false : true,
     staleTime: 60_000,
   });
 

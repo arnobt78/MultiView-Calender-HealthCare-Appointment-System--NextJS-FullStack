@@ -353,3 +353,46 @@ EvalGate (C7): status=PASS | eval_run_id=ER-C7-VERIFY | policy_version_ref=1.0.0
 | VER-0074 | REQ-0016..0018 | PASS | Full regression **863/863** + tsc + lint + build |
 
 EvalGate (C4 ext): status=PASS | eval_run_id=ER-C4-BILLING-EXT | gate2_pending=GATE-0008
+
+---
+
+## C8 — Unified page chrome + admin portal redesign (2026-06-09)
+
+| Item | Value |
+|------|-------|
+| Cycle | C8 |
+| ART-IDs | ART-0202..ART-0216 |
+| REQ-IDs | REQ-0038..REQ-0040 |
+| Regression | **863/863** Vitest (166 files) |
+
+| VER-ID | REQ-ID | Result | Description |
+|--------|--------|--------|-------------|
+| VER-0075 | REQ-0038 | PASS | AppPageChrome + 14 CP section headers |
+| VER-0076 | REQ-0039 | PASS | SSR chrome shell + listBodyLoading warm-cache |
+| VER-0077 | REQ-0040 | PASS | Admin portal PatientStatCard KPIs + shared list patterns |
+| VER-0078 | REQ-0038..0040 | PASS | Full regression **863/863** + tsc + lint + build |
+
+EvalGate (C8): status=PASS | eval_run_id=ER-C8-VERIFY | gate2_pending=TBD
+
+---
+
+## C8.1 / C9 — Merged CP header + portal chrome (2026-06-09)
+
+| Item | Value |
+|------|-------|
+| Cycle | C8.1 + C9 |
+| ART-IDs | ART-0217..ART-0223 |
+| REQ-IDs | REQ-0041..REQ-0045 |
+| Regression | **863/863** Vitest (166 files) |
+| HEAD | `bc97070` |
+
+| VER-ID | REQ-ID | Result | Description |
+|--------|--------|--------|-------------|
+| VER-0079 | REQ-0041 | PASS | ControlPanelChromeActions registry; merged sticky header row |
+| VER-0080 | REQ-0042 | PASS | PortalPageChrome + portal-page-chrome-config |
+| VER-0081 | REQ-0043 | PASS | EntityDetailChromeHeader + PortalDoctorChromeHeader → AppPageChrome |
+| VER-0082 | REQ-0044 | PASS | Dashboard toolbar-only CalendarHeader (no portal chrome key) |
+| VER-0083 | REQ-0045 | PASS | CP no border-b; prefetch/invalidation unchanged |
+| VER-0084 | REQ-0041..0045 | PASS | Full regression **863/863** re-verify 2026-06-10 |
+
+EvalGate (C8.1/C9): status=PASS | eval_run_id=ER-C8-C9-VERIFY | gate2_pending=TBD

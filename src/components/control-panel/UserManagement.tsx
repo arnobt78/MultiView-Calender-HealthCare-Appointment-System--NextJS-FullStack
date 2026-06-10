@@ -43,7 +43,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { skyGlassTableFrameClass } from "@/lib/calendar-header-action-styles";
+import { ControlPanelEntityListShell } from "@/components/control-panel/ControlPanelEntityListShell";
 import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
 import { AppSectionErrorBanner } from "@/components/shared/AppSectionErrorBanner";
 import { isDoctorActive } from "@/lib/entity-active-status";
@@ -58,6 +58,8 @@ import {
   Users,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useCpListBodyLoading } from "@/lib/cp-list-body-loading";
+import { queryKeys } from "@/lib/query-keys";
 
 const ADMIN_ROSTER_DEMO_NOTE = ADMIN_USER_MANAGEMENT_DEMO_NOTE;
 
@@ -151,6 +153,10 @@ function ActionsCell({ user }: { user: User }) {
 export default function UserManagement() {
   const { data, isLoading, isError } = useUsers(CP_ADMIN_USERS_FILTERS);
   const users = data?.users ?? [];
+  const listBodyLoading = useCpListBodyLoading(
+    [...queryKeys.users.all, CP_ADMIN_USERS_FILTERS],
+    isLoading
+  );
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [createForm, setCreateForm] = useState<AdminUserFormValues>(EMPTY_ADMIN_USER_FORM);
 
@@ -222,36 +228,36 @@ export default function UserManagement() {
   }
 
   return (
-    <div className={controlPanelSectionRootClass}>
-      <ControlPanelPageChrome
-        tab="users_admin"
-        description="B2B admin accounts — register or Google sign-in. Demo doctors and patients are on their own management tabs."
-        actions={
-          <Button
-            type="button"
-            variant="ghost"
-            size="lg"
-            className={cn(emeraldGlassPrimaryButtonClass, "cursor-pointer")}
-            onClick={() => {
-              setCreateForm(EMPTY_ADMIN_USER_FORM);
-              setCreateDialogOpen(true);
-            }}
-          >
-            <UserPlus className="shrink-0" aria-hidden />
-            Add Admin
-          </Button>
-        }
-      />
-
-      <DemoShowcaseFeatureNote note={ADMIN_ROSTER_DEMO_NOTE} />
-
-      <AdminUserStatCards users={users} isLoading={isLoading} />
-
-      <div className={cn("rounded-2xl overflow-hidden", skyGlassTableFrameClass)}>
+    <ControlPanelEntityListShell
+      tone="slate"
+      headerSlot={
+        <ControlPanelPageChrome
+          tab="users_admin"
+          description="B2B admin accounts — register or Google sign-in. Demo doctors and patients are on their own management tabs."
+          actions={
+            <Button
+              type="button"
+              variant="ghost"
+              size="lg"
+              className={cn(emeraldGlassPrimaryButtonClass, "cursor-pointer")}
+              onClick={() => {
+                setCreateForm(EMPTY_ADMIN_USER_FORM);
+                setCreateDialogOpen(true);
+              }}
+            >
+              <UserPlus className="shrink-0" aria-hidden />
+              Add Admin
+            </Button>
+          }
+        />
+      }
+      bannerSlot={<DemoShowcaseFeatureNote note={ADMIN_ROSTER_DEMO_NOTE} />}
+      statsSlot={<AdminUserStatCards users={users} isLoading={listBodyLoading} />}
+      tableSlot={
         <DataTable<User, unknown>
           columns={columns}
           data={users}
-          isLoading={isLoading}
+          isLoading={listBodyLoading}
           globalFilterFn={(row, q) => {
             const s = q.trim().toLowerCase();
             if (!s) return true;
@@ -265,9 +271,11 @@ export default function UserManagement() {
           emptyMessage="No admin accounts found."
           tableClassName="min-w-[720px]"
           tableLayout="auto"
+          tableFrameClassName="min-w-0 max-w-full border-0 bg-transparent shadow-none rounded-none"
         />
-      </div>
-
+      }
+      footerSlot={
+      <>
       <CpListPaginationDevStub
         stub={CP_ADMIN_LIST_PAGINATION_STUB}
         visibleCount={users.length}
@@ -284,6 +292,8 @@ export default function UserManagement() {
         mode="create"
         devStub={CP_ADMIN_CREATE_STUB}
       />
-    </div>
+      </>
+      }
+    />
   );
 }

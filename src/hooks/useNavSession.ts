@@ -26,9 +26,9 @@ export function useNavSession() {
   const cachedUser = queryClient.getQueryData<NavUser>(queryKeys.auth.me);
 
   const role = user?.role ?? cachedUser?.role ?? initialNavRole ?? undefined;
-  const effectiveUser: NavUser =
-    user ?? cachedUser ?? (role ? { id: "" as UUID, email: "", role } : null);
+  const resolvedUser = user ?? cachedUser ?? null;
   const navLoading = authLoading && role == null;
+  const avatarLoading = authLoading && !resolvedUser?.id;
 
   const isAdmin = isAdminRole(role);
   const isDoctor = isDoctorRole(role);
@@ -36,7 +36,8 @@ export function useNavSession() {
   const isStaff = isAdmin || isDoctor;
 
   return {
-    effectiveUser,
+    effectiveUser: resolvedUser,
+    avatarLoading,
     navLoading,
     isAdmin,
     isDoctor,

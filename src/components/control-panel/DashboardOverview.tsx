@@ -31,6 +31,8 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { useDashboardOverview } from "@/hooks/useDashboardOverview";
+import { useCpListBodyLoading } from "@/lib/cp-list-body-loading";
+import { queryKeys } from "@/lib/query-keys";
 import { DashboardQueuePanelCard } from "@/components/control-panel/dashboard/DashboardQueuePanelCard";
 import { DashboardNextAppointmentBody } from "@/components/control-panel/dashboard/DashboardNextAppointmentBody";
 import { DashboardRecentAppointmentsBody } from "@/components/control-panel/dashboard/DashboardRecentAppointmentsBody";
@@ -91,9 +93,7 @@ function StatCard({
 export default function DashboardOverviewComponent() {
   const { data, isLoading, isFetching, dataUpdatedAt, refetch, isError } = useDashboardOverview();
 
-  /** SSR/cache seed: show real values immediately; pulse only when no payload yet. */
-  const hasData = data != null;
-  const listBodyLoading = isLoading && !hasData;
+  const listBodyLoading = useCpListBodyLoading(queryKeys.dashboard.overview, isLoading);
   const statValueLoading = listBodyLoading;
 
   const fetchingDisplay = isFetching;

@@ -17,15 +17,20 @@ interface NotificationsResponse {
 export function useNotifications() {
   const queryClient = useQueryClient();
 
+  const notificationsInitialData = queryClient.getQueryData<NotificationsResponse>(
+    queryKeys.notifications.all
+  );
+
   const query = useQuery({
     queryKey: queryKeys.notifications.all,
     queryFn: async () => {
       const data = await apiClient<NotificationsResponse>("/api/notifications?limit=50");
       return data;
     },
+    initialData: notificationsInitialData,
+    refetchOnMount: notificationsInitialData !== undefined ? false : true,
     staleTime: 60_000,
     gcTime: 10 * 60_000,
-    refetchOnMount: false,
   });
 
   const markAsReadMutation = useMutation({

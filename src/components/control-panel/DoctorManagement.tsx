@@ -31,10 +31,7 @@ import { Button } from "@/components/ui/button";
 import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
 import { AppSectionErrorBanner } from "@/components/shared/AppSectionErrorBanner";
 import { DOCTOR_MANAGEMENT_DEMO_NOTE } from "@/lib/demo-showcase-copy";
-import {
-  doctorManagementStatsStripClass,
-  emeraldGlassTableFrameClass,
-} from "@/lib/doctor-management-toolbar-classes";
+import { ControlPanelEntityListShell } from "@/components/control-panel/ControlPanelEntityListShell";
 import { ClinicalListFilterToolbar } from "@/components/shared/filters/ClinicalListFilterToolbar";
 import { FilterSelect } from "@/components/shared/filters/FilterSelect";
 import { APP_INNER_SCROLL_STICKY_TOP_CLASS } from "@/lib/portal-z-index";
@@ -75,6 +72,8 @@ import type { DoctorDirectoryRow } from "@/lib/doctor-directory";
 import { useUsers } from "@/hooks/useUsers";
 import { useDoctorsDirectory } from "@/hooks/useDoctorsDirectory";
 import { CP_DOCTOR_USERS_FILTERS } from "@/lib/control-panel-users-filters";
+import { useCpDoctorListBodyLoading } from "@/lib/cp-list-body-loading";
+import { queryKeys } from "@/lib/query-keys";
 import { isDoctorActive } from "@/lib/entity-active-status";
 import { formatInvoiceMoney } from "@/lib/crud-notify-messages";
 import { SPECIALTIES } from "@/lib/doctor-specialty";
@@ -250,8 +249,12 @@ function DoctorManagementInner() {
     [usersData?.users, doctorMap]
   );
 
-  const hasCache = mergedRows.length > 0;
-  const listBodyLoading = (usersLoading || doctorsLoading) && !hasCache;
+  const listBodyLoading = useCpDoctorListBodyLoading(
+    [...queryKeys.users.all, CP_DOCTOR_USERS_FILTERS],
+    queryKeys.doctors.all,
+    usersLoading,
+    doctorsLoading
+  );
   const isError = usersError || doctorsError;
   const metrics = useDoctorListMetrics(mergedRows);
 
@@ -407,32 +410,31 @@ function DoctorManagementInner() {
         listBodyLoading,
       }}
     >
-      <div className={controlPanelSectionRootClass}>
-        <ControlPanelPageChrome
-          tab="doctors"
-          actions={
-            <Button
-              type="button"
-              variant="ghost"
-              size="lg"
-              className={cn(emeraldGlassPrimaryButtonClass, "cursor-pointer")}
-              onClick={() => {
-                setCreateForm(EMPTY_DOCTOR_FORM);
-                setCreateDialogOpen(true);
-              }}
-            >
-              <UserPlus className="shrink-0" aria-hidden />
-              Add Doctor
-            </Button>
-          }
-        />
-
-        <DemoShowcaseFeatureNote note={DOCTOR_MANAGEMENT_DEMO_NOTE} />
-
-        <div className={doctorManagementStatsStripClass}>
-          <DoctorManagementStatsRow />
-        </div>
-
+      <ControlPanelEntityListShell
+        tone="emerald"
+        headerSlot={
+          <ControlPanelPageChrome
+            tab="doctors"
+            actions={
+              <Button
+                type="button"
+                variant="ghost"
+                size="lg"
+                className={cn(emeraldGlassPrimaryButtonClass, "cursor-pointer")}
+                onClick={() => {
+                  setCreateForm(EMPTY_DOCTOR_FORM);
+                  setCreateDialogOpen(true);
+                }}
+              >
+                <UserPlus className="shrink-0" aria-hidden />
+                Add Doctor
+              </Button>
+            }
+          />
+        }
+        bannerSlot={<DemoShowcaseFeatureNote note={DOCTOR_MANAGEMENT_DEMO_NOTE} />}
+        statsSlot={<DoctorManagementStatsRow />}
+        toolbarSlot={
         <ClinicalListFilterToolbar
           stickyClassName={APP_INNER_SCROLL_STICKY_TOP_CLASS}
           search={{
@@ -484,7 +486,8 @@ function DoctorManagementInner() {
             }))}
           />
         </ClinicalListFilterToolbar>
-
+        }
+        tableSlot={
         <DataTable<DoctorTableRow, unknown>
           columns={columns}
           data={filteredRows}
@@ -505,39 +508,41 @@ function DoctorManagementInner() {
           emptyMessage="No doctors match your filters."
           tableClassName="min-w-[1100px] w-full"
           tableLayout="auto"
-          tableFrameClassName={emeraldGlassTableFrameClass}
+          tableFrameClassName="min-w-0 max-w-full border-0 bg-transparent shadow-none rounded-none"
         />
-
-        <CpListPaginationDevStub
-          stub={CP_DOCTOR_LIST_PAGINATION_STUB}
-          visibleCount={filteredRows.length}
-          pagination={usersData?.pagination ?? null}
-        />
-
-        {editingDoctor ? (
-          <DoctorFormDialog
-            open={editDialogOpen}
-            onOpenChange={setEditDialogOpen}
-            readOnlyEmail={editingDoctor.email}
-            form={dialogForm}
-            onFormChange={(patch) => setDialogForm((p) => ({ ...p, ...patch }))}
-            onSubmit={handleSaveEdit}
-            isSubmitting={isUpdating}
-            mode="edit"
+        }
+        footerSlot={
+        <>
+          <CpListPaginationDevStub
+            stub={CP_DOCTOR_LIST_PAGINATION_STUB}
+            visibleCount={filteredRows.length}
+            pagination={usersData?.pagination ?? null}
           />
-        ) : null}
-
-        <DoctorFormDialog
-          open={createDialogOpen}
-          onOpenChange={setCreateDialogOpen}
-          readOnlyEmail="new.doctor@example.com"
-          form={createForm}
-          onFormChange={(patch) => setCreateForm((p) => ({ ...p, ...patch }))}
-          onSubmit={() => undefined}
-          mode="create"
-          devStub={CP_DOCTOR_CREATE_STUB}
-        />
-      </div>
+          {editingDoctor ? (
+            <DoctorFormDialog
+              open={editDialogOpen}
+              onOpenChange={setEditDialogOpen}
+              readOnlyEmail={editingDoctor.email}
+              form={dialogForm}
+              onFormChange={(patch) => setDialogForm((p) => ({ ...p, ...patch }))}
+              onSubmit={handleSaveEdit}
+              isSubmitting={isUpdating}
+              mode="edit"
+            />
+          ) : null}
+          <DoctorFormDialog
+            open={createDialogOpen}
+            onOpenChange={setCreateDialogOpen}
+            readOnlyEmail="new.doctor@example.com"
+            form={createForm}
+            onFormChange={(patch) => setCreateForm((p) => ({ ...p, ...patch }))}
+            onSubmit={() => undefined}
+            mode="create"
+            devStub={CP_DOCTOR_CREATE_STUB}
+          />
+        </>
+        }
+      />
     </DoctorMetricsProvider>
   );
 }

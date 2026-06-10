@@ -26,7 +26,7 @@ import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout
 import { billingCreateInvoiceTriggerAdmin } from "@/lib/billing-ui-presets";
 import { invoiceManagementTableFrameClass } from "@/lib/invoice-management-toolbar-classes";
 import { APP_INNER_SCROLL_STICKY_TOP_CLASS } from "@/lib/portal-z-index";
-import { useQueryClient } from "@tanstack/react-query";
+import { useCpListBodyLoading } from "@/lib/cp-list-body-loading";
 import { queryKeys } from "@/lib/query-keys";
 
 const CreateInvoiceIcon = billingCreateInvoiceTriggerAdmin.triggerIcon;
@@ -42,7 +42,6 @@ const STATUS_FILTER_LABEL: Record<InvoiceStatusFilter, string> = {
 };
 
 function InvoiceManagementInner() {
-  const queryClient = useQueryClient();
   const {
     invoices,
     isLoading,
@@ -63,10 +62,7 @@ function InvoiceManagementInner() {
   const { status, setStatus, filterInvoices } = useInvoiceListFilters();
   const [listSearch, setListSearch] = useState("");
 
-  const hasInvoicesCache = Boolean(
-    queryClient.getQueryData<Invoice[]>(queryKeys.invoices.all)?.length
-  );
-  const listBodyLoading = isLoading && !hasInvoicesCache;
+  const listBodyLoading = useCpListBodyLoading(queryKeys.invoices.all, isLoading);
 
   const filteredInvoices = useMemo(
     () => filterInvoices(invoices),

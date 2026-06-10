@@ -1,6 +1,6 @@
 # Agile V Bootstrap — HealthCal Pro
 
-<!-- Framework initialization + cycle index | Agile V v1.4 | Last refresh: 2026-06-04 (Infinity Loop re-init) -->
+<!-- Framework initialization + cycle index | Agile V v1.4 | Last refresh: 2026-06-10 (Infinity Loop session activation) -->
 
 ## Infinity Loop (SCOPE-V)
 
@@ -31,7 +31,7 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 | 2 | `config.json` | Project metadata, cycle, authority matrix, verification commands | ✓ |
 | 3 | `POLICY.yaml` | Policy-as-code (versioned) | ✓ v1.0.0 |
 | 4 | `STATE.md` | Current cycle, phase, stage — **read first on resume** | ✓ |
-| 5 | `REQUIREMENTS.md` | Canonical REQ-XXXX + traceability index | ✓ REQ-0001..0037 |
+| 5 | `REQUIREMENTS.md` | Canonical REQ-XXXX + traceability index | ✓ REQ-0001..0045 |
 | 6 | `BUILD_MANIFEST.md` | ART-XXXX → code paths | ✓ ART-0001..0192 |
 | 7 | `TEST_SPEC.md` | TC-XXXX (requirements-derived) | ✓ TC-0001..0024 |
 | 8 | `VALIDATION_SUMMARY.md` | VER-XXXX results + EvalGate lines | ✓ |
@@ -54,10 +54,11 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 | 25 | `cycles/C4/README.md` | Invoice tranche (gates pending) | ✓ |
 | 26 | `cycles/C5/README.md` | Record Audit cycle | ✓ |
 | 27 | `cycles/C6/README.md` | Invoice violet + location | ✓ |
-| 28 | `cycles/C7/README.md` | Services + cancel + cron + phone (active) | ✓ |
-| 29 | `agile-v-core.md` | Project-local core binding | ✓ |
-| 30 | `AGENTS.md` (repo root) | Agent load order + resume | ✓ |
-| 31 | `.cursor/rules/agile-v-infinity-loop.mdc` | Always-on Cursor rule | ✓ restored 2026-06-04 |
+| 28 | `cycles/C7/README.md` | Services + cancel + cron + phone | ✓ |
+| 29 | `cycles/C8/README.md` | Page chrome + portal chrome (active) | ✓ |
+| 30 | `agile-v-core.md` | Project-local core binding | ✓ |
+| 31 | `AGENTS.md` (repo root) | Agent load order + resume | ✓ |
+| 32 | `.cursor/rules/agile-v-infinity-loop.mdc` | Always-on Cursor rule | ✓ always on |
 
 ---
 
@@ -144,7 +145,8 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 | C4 | Invoice dialog, detail, RBAC, badges, SSE | REQ-0016..0020 | pending GATE-0008 | `cycles/C4/` |
 | C5 | Record Audit | REQ-0021..0026 | pending GATE-0010 | `cycles/C5/` |
 | C6 | Invoice violet + location + REQ-0032/0033 | REQ-0027..0033 | pending GATE-0012 | `cycles/C6/` |
-| C7 | **Services + cancel + cron + phone** (active) | REQ-0034..0037 | pending GATE-0014 | `cycles/C7/` |
+| C7 | Services + cancel + cron + phone | REQ-0034..0037 | pending GATE-0014 | `cycles/C7/` |
+| **C8/C8.1/C9** | **Page chrome + portal chrome** (active) | REQ-0038..0045 | gate TBD | `cycles/C8/` |
 
 ---
 
@@ -174,11 +176,32 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 | 6 | Gates GATE-0013/0014 | ⏳ pending |
 | 7 | Cursor rule restored | ✓ |
 
+## C8 Bootstrap (2026-06-09) — Unified page chrome + admin portal
+
+| Step | Artifact | Status |
+|------|----------|--------|
+| 1 | REQ-0038..0040 in `REQUIREMENTS.md` | ✓ `approved [C8]` |
+| 2 | ART-0202..0216 in `BUILD_MANIFEST.md` | ✓ |
+| 3 | Code on `main` | ✓ `52ba8f8+` |
+| 4 | Automated verify | ✓ **863/863** |
+| 5 | Gates | ⏳ TBD |
+
+## C8.1 / C9 Bootstrap (2026-06-09) — Merged CP header + portal chrome
+
+| Step | Artifact | Status |
+|------|----------|--------|
+| 1 | REQ-0041..0045 in `REQUIREMENTS.md` | ✓ `approved [C8.1/C9]` |
+| 2 | ART-0217..0223 in `BUILD_MANIFEST.md` | ✓ |
+| 3 | Code on `main` | ✓ `bc97070` |
+| 4 | Automated verify | ✓ **863/863** (re-verified 2026-06-10) |
+| 5 | `cycles/C8/README.md` scaffold | ✓ |
+| 6 | Gates | ⏳ TBD |
+
 ## Next Actions
 
-1. Approve **GATE-0005..0014** in `APPROVALS.md` as cycles close.
-2. Archive C3–C7 → `cycles/CN/` after each Gate 2.
-3. New work: specify **C8** in `REQUIREMENTS.md` before coding.
+1. Approve **GATE-0005..0014** + C8 gates in `APPROVALS.md` as cycles close.
+2. Archive C3–C8 → `cycles/CN/` after each Gate 2.
+3. New work: specify **C10** in `REQUIREMENTS.md` before coding.
 
 ## Verification (default)
 
@@ -186,16 +209,17 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 npm test && npx tsc --noEmit && npm run lint && npm run build
 ```
 
-Current baseline: **863** tests, **166** files (2026-06-04) · HEAD `99f13b8`.
+Current baseline: **863** tests, **166** files (2026-06-10) · HEAD `bc97070`.
 
 ---
 
-## Infinity Loop Re-Init (2026-06-04)
+## Infinity Loop Session Activation (2026-06-10)
 
 | Step | Artifact | Status |
 |------|----------|--------|
 | 1 | `agile-v-core` + `pipeline` + `lifecycle` + `compliance` active every prompt | ✓ |
-| 2 | `.cursor/rules/agile-v-infinity-loop.mdc` `alwaysApply: true` | ✓ restored |
+| 2 | `.cursor/rules/agile-v-infinity-loop.mdc` `alwaysApply: true` | ✓ |
 | 3 | `ACTIVATION.md` + `STATE.md` + `SKILLS.md` (24) synced | ✓ |
-| 4 | C1..C7 bootstrap index intact; C1/C2 frozen | ✓ |
+| 4 | C1..C9 bootstrap index intact; C1/C2 frozen | ✓ |
 | 5 | Verify regression | ✓ 863/863 |
+| 6 | `CHECKPOINTS.md` — no PENDING HITL | ✓ |

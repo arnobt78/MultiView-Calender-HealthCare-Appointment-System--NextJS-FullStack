@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Receipt } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
@@ -13,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { InvoiceBillingTotalsPayload } from "@/lib/invoice-billing-totals";
+import { useCpListBodyLoading } from "@/lib/cp-list-body-loading";
 
 type Props = {
   organizationId: string;
@@ -21,12 +21,16 @@ type Props = {
 
 /** Read-only org invoice list — admin filters GET /api/invoices?organizationId= */
 export function OrganizationBillingPanel({ organizationId, organizationName }: Props) {
-  const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => {
-    requestAnimationFrame(() => setIsMounted(true));
-  }, []);
-
+  const queryClient = useQueryClient();
   const orgBillingQueryKey = queryKeys.invoices.byOrganization(organizationId);
+  const orgTotalsQueryKey = queryKeys.invoices.byOrganizationTotals(organizationId);
+
+  const invoicesInitialData = queryClient.getQueryData<{ invoices: Invoice[] }>(
+    orgBillingQueryKey
+  );
+  const totalsInitialData = queryClient.getQueryData<InvoiceBillingTotalsPayload>(
+    orgTotalsQueryKey
+  );
 
   const { data, isLoading } = useQuery({
     queryKey: orgBillingQueryKey,
@@ -34,22 +38,26 @@ export function OrganizationBillingPanel({ organizationId, organizationName }: P
       apiClient<{ invoices: Invoice[] }>(
         `/api/invoices?organizationId=${encodeURIComponent(organizationId)}`
       ),
+    initialData: invoicesInitialData,
+    refetchOnMount: invoicesInitialData !== undefined ? false : true,
     staleTime: 30_000,
   });
   const { data: totalsData, isLoading: isTotalsLoading } = useQuery({
-    queryKey: queryKeys.invoices.byOrganizationTotals(organizationId),
+    queryKey: orgTotalsQueryKey,
     queryFn: () =>
       apiClient<InvoiceBillingTotalsPayload>(
         `/api/invoices/billing-totals?organizationId=${encodeURIComponent(organizationId)}`
       ),
+    initialData: totalsInitialData,
+    refetchOnMount: totalsInitialData !== undefined ? false : true,
     staleTime: 30_000,
   });
 
   const invoices = data?.invoices ?? [];
   const totals = totalsData?.totals;
   const statusTotals = totalsData?.statusTotals;
-  const loading = !isMounted || isLoading;
-  const statsLoading = !isMounted || isTotalsLoading;
+  const listBodyLoading = useCpListBodyLoading(orgBillingQueryKey, isLoading);
+  const statsLoading = useCpListBodyLoading(orgTotalsQueryKey, isTotalsLoading);
 
   return (
     <Card className="rounded-[28px] border bg-linear-to-br from-violet-500/5 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(139,92,246,0.1)]">
@@ -57,7 +65,7 @@ export function OrganizationBillingPanel({ organizationId, organizationName }: P
         <CardTitle className="flex flex-wrap items-center gap-2 text-base">
           <Receipt className="h-4 w-4 shrink-0 text-violet-600" />
           <span>Billing — {organizationName}</span>
-          {!loading ? (
+          {!listBodyLoading ? (
             <PortalPanelCountBadge>
               {invoices.length} invoice{invoices.length !== 1 ? "s" : ""}
             </PortalPanelCountBadge>
@@ -73,7 +81,7 @@ export function OrganizationBillingPanel({ organizationId, organizationName }: P
         />
       </CardHeader>
       <CardContent className="space-y-2 pt-0">
-        {loading ? (
+        {listBodyLoading ? (
           <ul className="space-y-2" aria-hidden>
             {Array.from({ length: 3 }).map((_, i) => (
               <li

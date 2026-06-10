@@ -1,13 +1,10 @@
 "use client";
 
 /**
- * NotificationsManagement — inline skeleton pattern:
- *   - Heading, unread badge, filter input, "Mark all read" button, and table headers stay mounted.
- *   - Only table body rows pulse as skeletons while loading.
- *   - `isMounted` + `requestAnimationFrame` guard prevents hydration flicker.
+ * NotificationsManagement — SSR seed + useCpListBodyLoading; header chrome always mounted.
  */
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -48,6 +45,8 @@ import {
 import { format } from "date-fns";
 import { AppSectionErrorBanner } from "@/components/shared/AppSectionErrorBanner";
 import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
+import { useCpListBodyLoading } from "@/lib/cp-list-body-loading";
+import { queryKeys } from "@/lib/query-keys";
 
 const columnHelper = createColumnHelper<Notification>();
 
@@ -62,6 +61,7 @@ const TYPE_COLORS: Record<string, string> = {
 
 export default function NotificationsManagement() {
   const { notifications, unreadCount, isLoading, isError: notificationsError, markAsRead, markAllAsRead, isMarkingRead } = useNotifications();
+  const listBodyLoading = useCpListBodyLoading(queryKeys.notifications.all, isLoading);
   const [sorting, setSorting] = useState<SortingState>([{ id: "created_at", desc: true }]);
   const [globalFilter, setGlobalFilter] = useState("");
   const [markAllConfirmOpen, setMarkAllConfirmOpen] = useState(false);
@@ -146,14 +146,6 @@ export default function NotificationsManagement() {
     getFilteredRowModel: getFilteredRowModel(),
   });
 
-  /** Mount guard: prevents hydration flash — same as PatientManagement pattern. */
-  const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => {
-    requestAnimationFrame(() => setIsMounted(true));
-  }, []);
-
-  const loading = !isMounted || isLoading;
-
   if (notificationsError) {
     return (
       <div className={controlPanelSectionRootClass}>
@@ -169,11 +161,11 @@ export default function NotificationsManagement() {
       <ControlPanelPageChrome
         tab="notifications"
         description={
-          loading ? undefined : `${notifications.length} total notifications`
+          listBodyLoading ? undefined : `${notifications.length} total notifications`
         }
         actions={
         <div className="flex items-center gap-2 flex-wrap">
-          {!loading && unreadCount > 0 ? (
+          {unreadCount > 0 ? (
             <Badge className="bg-primary text-primary-foreground">{unreadCount} unread</Badge>
           ) : null}
           <Input
@@ -182,33 +174,29 @@ export default function NotificationsManagement() {
             onChange={(e) => setGlobalFilter(e.target.value)}
             className="w-52"
           />
-          {/* Gate by !loading so the server HTML (unreadCount=0) matches the initial client frame — prevents hydration mismatch. */}
-          {!loading && unreadCount > 0 ? (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2"
-                onClick={() => setMarkAllConfirmOpen(true)}
-              >
-                <CheckCheck className="h-4 w-4" /> Mark all read
-              </Button>
-              <ConfirmActionDialog
-                open={markAllConfirmOpen}
-                onOpenChange={setMarkAllConfirmOpen}
-                variant="info"
-                title={MARK_ALL_NOTIFICATIONS_READ_TITLE}
-                subtitle={buildMarkAllNotificationsReadConfirmSubtitle(unreadCount)}
-                confirmLabel="Confirm"
-                cancelLabel="Cancel"
-                confirmDisabled={isMarkingRead}
-                onConfirm={() => {
-                  markAllAsRead();
-                  setMarkAllConfirmOpen(false);
-                }}
-              />
-            </>
-          ) : null}
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            disabled={unreadCount === 0 || isMarkingRead}
+            onClick={() => unreadCount > 0 && setMarkAllConfirmOpen(true)}
+          >
+            <CheckCheck className="h-4 w-4" /> Mark all read
+          </Button>
+          <ConfirmActionDialog
+            open={markAllConfirmOpen}
+            onOpenChange={setMarkAllConfirmOpen}
+            variant="info"
+            title={MARK_ALL_NOTIFICATIONS_READ_TITLE}
+            subtitle={buildMarkAllNotificationsReadConfirmSubtitle(unreadCount)}
+            confirmLabel="Confirm"
+            cancelLabel="Cancel"
+            confirmDisabled={isMarkingRead}
+            onConfirm={() => {
+              markAllAsRead();
+              setMarkAllConfirmOpen(false);
+            }}
+          />
         </div>
         }
       />
@@ -234,7 +222,7 @@ export default function NotificationsManagement() {
             ))}
           </TableHeader>
           <TableBody>
-            {loading ? (
+            {listBodyLoading ? (
               /* Skeleton rows: read dot, type badge, title, message, received, actions */
               Array.from({ length: 6 }).map((_, i) => (
                 <TableRow key={i}>
@@ -278,7 +266,7 @@ export default function NotificationsManagement() {
             )}
           </TableBody>
         </Table>
-        {!loading && (
+        {!listBodyLoading && (
           <div className="px-4 py-2 border-t text-xs text-muted-foreground flex items-center gap-2">
             <Trash2 className="h-3 w-3" />
             {table.getRowModel().rows.length} of {notifications.length} notifications shown

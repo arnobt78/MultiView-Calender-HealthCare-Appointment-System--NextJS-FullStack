@@ -46,7 +46,15 @@ vi.mock("@/lib/server-prefetch", () => ({
     { id: "o1" },
     { id: "o2" },
   ]),
-  prefetchGlobalAppointmentTypes: vi.fn(async () => [{ id: "t1" }]),
+  prefetchAdminAllAppointmentTypes: vi.fn(async () => ({
+    globalTypes: [{ id: "t1" }],
+    customTypes: [],
+  })),
+  prefetchInvitationsForUser: vi.fn(async () => ({
+    appointmentInvitations: [{ id: "i1" }],
+    dashboardInvitations: [{ id: "d1" }],
+  })),
+  prefetchGoogleCalendarStatus: vi.fn(async () => ({ connected: false, events: [] })),
   prefetchInvoices: vi.fn(async () => [{ id: "inv1" }]),
   prefetchBillingAppointmentOptions: vi.fn(async () => ({
     options: [{ id: "appt-bill", eligible: true }],
@@ -129,13 +137,23 @@ describe("prefetchControlPanelSection", () => {
     expect(result.orgBillingInvoicesByOrgId?.o2?.totals.paid.cents).toBe(100);
   });
 
-  it("returns empty payload for tabs without SSR prefetch", async () => {
+  it("prefetches google calendar status for google-calendar tab", async () => {
     const result = await prefetchControlPanelSection(
       "google-calendar",
       "user-1",
       "u@test.com",
       "admin"
     );
-    expect(result).toEqual({});
+    expect(result.googleCalendarStatus).toEqual({ connected: false, events: [] });
+  });
+
+  it("prefetches appointment invitations for appointment tab", async () => {
+    const result = await prefetchControlPanelSection(
+      "appointment",
+      "user-1",
+      "u@test.com",
+      "admin"
+    );
+    expect(result.appointmentInvitations).toEqual([{ id: "i1" }]);
   });
 });

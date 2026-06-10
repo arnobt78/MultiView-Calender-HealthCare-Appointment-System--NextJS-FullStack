@@ -2,6 +2,14 @@ import type { QueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
 import type { UserListFilters, UsersListResponse } from "@/hooks/useUsers";
 import type { ControlPanelSectionPrefetchPayload } from "@/lib/control-panel-section-prefetch";
+import { CP_ADMIN_USERS_FILTERS } from "@/lib/control-panel-users-filters";
+import {
+  seedCategoriesListCacheFromSsr,
+  seedDoctorsDirectoryCacheFromSsr,
+  seedPatientsListCacheFromSsr,
+  seedUsersListCacheFromSsr,
+} from "@/lib/cp-list-query-ssr-seed";
+import { seedInvoicesListCacheFromSsr } from "@/lib/invoices-query-ssr-seed";
 
 /** Seed GET /api/invoices list cache — query key must match `usePayments` / `useInvoice`. */
 export function seedInvoicesListCache(
@@ -32,13 +40,19 @@ export function seedControlPanelSectionCache(
     queryClient.setQueryData(queryKeys.dashboard.overview, initial.dashboardOverview);
   }
   if (initial.patients != null) {
-    queryClient.setQueryData(queryKeys.patients.all, initial.patients);
+    seedPatientsListCacheFromSsr(queryClient, initial.patients);
   }
   if (initial.categories != null) {
-    queryClient.setQueryData(queryKeys.categories.all, initial.categories);
+    seedCategoriesListCacheFromSsr(queryClient, initial.categories);
   }
   if (initial.organizations != null) {
     queryClient.setQueryData(queryKeys.organizations.all, initial.organizations);
+  }
+  if (initial.adminAllAppointmentTypes != null) {
+    queryClient.setQueryData(
+      queryKeys.appointmentTypes.all,
+      initial.adminAllAppointmentTypes
+    );
   }
   if (initial.globalAppointmentTypes != null) {
     queryClient.setQueryData(queryKeys.appointmentTypes.global, {
@@ -46,7 +60,7 @@ export function seedControlPanelSectionCache(
     });
   }
   if (initial.invoices != null) {
-    queryClient.setQueryData(queryKeys.invoices.all, initial.invoices);
+    seedInvoicesListCacheFromSsr(queryClient, initial.invoices);
   }
   if (initial.billingAppointmentOptions != null) {
     queryClient.setQueryData(
@@ -70,7 +84,10 @@ export function seedControlPanelSectionCache(
     );
   }
   if (initial.doctorsDirectory != null) {
-    queryClient.setQueryData(queryKeys.doctors.all, initial.doctorsDirectory);
+    seedDoctorsDirectoryCacheFromSsr(queryClient, initial.doctorsDirectory);
+  }
+  if (initial.adminUsers != null) {
+    seedUsersListCacheFromSsr(queryClient, CP_ADMIN_USERS_FILTERS, initial.adminUsers);
   }
   if (initial.orgBillingInvoicesByOrgId) {
     for (const [orgId, payload] of Object.entries(initial.orgBillingInvoicesByOrgId)) {
@@ -80,5 +97,23 @@ export function seedControlPanelSectionCache(
         statusTotals: payload.statusTotals,
       });
     }
+  }
+  if (initial.appointmentInvitations != null) {
+    queryClient.setQueryData(
+      queryKeys.invitations.byType("appointment"),
+      initial.appointmentInvitations
+    );
+  }
+  if (initial.dashboardInvitations != null) {
+    queryClient.setQueryData(
+      queryKeys.invitations.byType("dashboard"),
+      initial.dashboardInvitations
+    );
+  }
+  if (initial.googleCalendarStatus != null) {
+    queryClient.setQueryData(
+      [...queryKeys.googleCalendar.root, "status"] as const,
+      initial.googleCalendarStatus
+    );
   }
 }

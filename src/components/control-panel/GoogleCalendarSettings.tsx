@@ -1,13 +1,10 @@
 "use client";
 
 /**
- * GoogleCalendarSettings — inline skeleton pattern:
- *   - Card frames, card titles, card descriptions, and import/export buttons stay mounted.
- *   - Only the connection status badge and sync-info area pulse as skeletons while loading.
- *   - `isMounted` + `requestAnimationFrame` guard prevents hydration flicker.
+ * GoogleCalendarSettings — SSR status seed + useCpListBodyLoading; card chrome always mounted.
  */
 
-import { useRef, useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +26,8 @@ import {
   Calendar,
 } from "lucide-react";
 import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
+import { useCpListBodyLoading } from "@/lib/cp-list-body-loading";
+import { queryKeys } from "@/lib/query-keys";
 
 export default function GoogleCalendarSettings() {
   const {
@@ -42,18 +41,9 @@ export default function GoogleCalendarSettings() {
   } = useGoogleCalendar();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  /**
-   * Mount guard: hydrate with skeleton state on first paint, then swap to real connection data
-   * after the next animation frame — prevents hydration flicker.
-   */
-  const [isMounted, setIsMounted] = useState(false);
   const [disconnectConfirmOpen, setDisconnectConfirmOpen] = useState(false);
-  useEffect(() => {
-    requestAnimationFrame(() => setIsMounted(true));
-  }, []);
-
-  const loading = !isMounted || isLoading;
+  const statusKey = [...queryKeys.googleCalendar.root, "status"] as const;
+  const listBodyLoading = useCpListBodyLoading(statusKey, isLoading);
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -69,7 +59,7 @@ export default function GoogleCalendarSettings() {
           <CardTitle className="text-base flex items-center gap-2">
             Connection Status
             {/* Status badge: pulse while loading */}
-            {loading ? (
+            {listBodyLoading ? (
               <Skeleton className="h-5 w-24 rounded-full" />
             ) : (
               <Badge className={isConnected ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"}>
@@ -78,7 +68,7 @@ export default function GoogleCalendarSettings() {
             )}
           </CardTitle>
           {/* Description: pulse while loading */}
-          {loading ? (
+          {listBodyLoading ? (
             <Skeleton className="h-4 w-4/5 rounded mt-1" />
           ) : (
             <CardDescription>
@@ -89,7 +79,7 @@ export default function GoogleCalendarSettings() {
           )}
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2">
-          {loading ? (
+          {listBodyLoading ? (
             /* Action button: pulse while loading */
             <Skeleton className="h-9 w-48 rounded-lg" />
           ) : !isConnected ? (
@@ -184,7 +174,7 @@ export default function GoogleCalendarSettings() {
       </div>
 
       {/* Sync info — only visible when connected (data-driven, no skeleton needed — it appears after loading) */}
-      {!loading && isConnected && (
+      {!listBodyLoading && isConnected && (
         <Card className="border-blue-200 bg-blue-50/40 rounded-[28px]">
           <CardContent className="pt-4 flex items-start gap-2">
             <RefreshCw className="h-5 w-5 text-blue-600  shrink-0" />

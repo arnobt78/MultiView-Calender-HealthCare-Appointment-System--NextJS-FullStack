@@ -15,10 +15,7 @@ import { cn } from "@/lib/utils";
 import { violetGlassPrimaryButtonClass } from "@/lib/calendar-header-action-styles";
 import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
 import { AppSectionErrorBanner } from "@/components/shared/AppSectionErrorBanner";
-import {
-  amberGlassTableFrameClass,
-  categoryManagementStatsStripClass,
-} from "@/lib/category-management-toolbar-classes";
+import { ControlPanelEntityListShell } from "@/components/control-panel/ControlPanelEntityListShell";
 import { ClinicalListFilterToolbar } from "@/components/shared/filters/ClinicalListFilterToolbar";
 import {
   DropdownMenu,
@@ -28,6 +25,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
+import { useCpListBodyLoading } from "@/lib/cp-list-body-loading";
+import { queryKeys } from "@/lib/query-keys";
 import {
   Clock,
   EllipsisVertical,
@@ -154,8 +153,7 @@ export function CategoryManagementInner() {
     deleteCategory,
   } = useCategories();
 
-  const hasCategoriesCache = categories.length > 0;
-  const listBodyLoading = isLoading && !hasCategoriesCache;
+  const listBodyLoading = useCpListBodyLoading(queryKeys.categories.all, isLoading);
 
   const { status, setStatus, filterByStatus } = useCategoryListFilters();
   const filteredCategories = filterByStatus(categories);
@@ -363,27 +361,27 @@ export function CategoryManagementInner() {
 
   return (
     <CategoryMetricsProvider value={metricsValue}>
-      <div className={controlPanelSectionRootClass}>
-        <ControlPanelPageChrome
-          tab="categories"
-          actions={
-            <Button
-              type="button"
-              variant="ghost"
-              size="lg"
-              className={cn(violetGlassPrimaryButtonClass, "cursor-pointer")}
-              onClick={openCreateDialog}
-            >
-              <Tag className="shrink-0" aria-hidden />
-              Add Category
-            </Button>
-          }
-        />
-
-        <div className={categoryManagementStatsStripClass}>
-          <CategoryManagementStatsRow />
-        </div>
-
+      <ControlPanelEntityListShell
+        tone="amber"
+        headerSlot={
+          <ControlPanelPageChrome
+            tab="categories"
+            actions={
+              <Button
+                type="button"
+                variant="ghost"
+                size="lg"
+                className={cn(violetGlassPrimaryButtonClass, "cursor-pointer")}
+                onClick={openCreateDialog}
+              >
+                <Tag className="shrink-0" aria-hidden />
+                Add Category
+              </Button>
+            }
+          />
+        }
+        statsSlot={<CategoryManagementStatsRow />}
+        toolbarSlot={
         <ClinicalListFilterToolbar
           stickyClassName={APP_INNER_SCROLL_STICKY_TOP_CLASS}
           search={{
@@ -410,7 +408,8 @@ export function CategoryManagementInner() {
             ]}
           />
         </ClinicalListFilterToolbar>
-
+        }
+        tableSlot={
         <DataTable<Category, unknown>
           columns={columns}
           data={filteredCategories}
@@ -425,9 +424,10 @@ export function CategoryManagementInner() {
           searchPlaceholder="Search by label or description…"
           emptyMessage="No categories match your filters."
           tableClassName="min-w-[980px] w-full"
-          tableFrameClassName={amberGlassTableFrameClass}
+          tableFrameClassName="min-w-0 max-w-full border-0 bg-transparent shadow-none rounded-none"
         />
-
+        }
+        footerSlot={
         <CategoryFormDialog
           open={dialogOpen}
           onOpenChange={handleDialogOpenChange}
@@ -437,7 +437,8 @@ export function CategoryManagementInner() {
           onSubmit={handleDialogSubmit}
           isSubmitting={dialogMode === "create" ? isCreating : isUpdating}
         />
-      </div>
+        }
+      />
     </CategoryMetricsProvider>
   );
 }

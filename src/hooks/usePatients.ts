@@ -44,15 +44,26 @@ export type PatientUpdateInput = Partial<
   >
 >;
 
-export function usePatients() {
+export type UsePatientsOptions = {
+  /** SSR seed — avoids duplicate fetch on first paint when layout/section already hydrated cache. */
+  patientsInitialData?: Patient[];
+};
+
+export function usePatients(options?: UsePatientsOptions) {
   const queryClient = useQueryClient();
+
+  const patientsInitialData =
+    options?.patientsInitialData ??
+    queryClient.getQueryData<Patient[]>(queryKeys.patients.all);
 
   const query = useQuery({
     queryKey: queryKeys.patients.all,
     queryFn: () => fetchPatients(),
+    initialData: patientsInitialData,
     // Patient list changes only on create/update/delete mutations which all call
     // invalidatePatientsAndOverview; 30 s prevents redundant re-fetches.
     staleTime: 30_000,
+    refetchOnMount: patientsInitialData !== undefined ? false : true,
   });
 
   const createMutation = useMutation({

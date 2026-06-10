@@ -2,21 +2,21 @@
 
 import { useLayoutEffect, type ReactNode } from "react";
 import {
-  EMPTY_CONTROL_PANEL_CHROME_REGISTRY,
-  useControlPanelChromeRegistryContext,
-} from "@/components/control-panel/ControlPanelChromeContext";
+  registerControlPanelChromeSlice,
+  resetControlPanelChromeRegistry,
+  notifyControlPanelChromeRegistry,
+} from "@/lib/control-panel-chrome-sync-store";
 
 type ControlPanelChromeActionsProps = {
   actions?: ReactNode;
   toolbar?: ReactNode;
-  /** Overrides default SSR subtitle in merged header left stack. */
   description?: ReactNode;
   title?: ReactNode;
 };
 
 /**
- * Registers dynamic header slots — renders nothing in the section body.
- * Paired with slots in `ControlPanelSectionPageClient` merged sticky header.
+ * Registers dynamic header slots synchronously during render (body must render before header).
+ * useLayoutEffect notifies subscribers + clears on unmount.
  */
 export function ControlPanelChromeActions({
   actions,
@@ -24,17 +24,17 @@ export function ControlPanelChromeActions({
   description,
   title,
 }: ControlPanelChromeActionsProps) {
-  const { setRegistry } = useControlPanelChromeRegistryContext();
+  registerControlPanelChromeSlice({
+    actions: actions ?? null,
+    toolbar: toolbar ?? null,
+    description: description ?? null,
+    title: title ?? null,
+  });
 
   useLayoutEffect(() => {
-    setRegistry({
-      actions: actions ?? null,
-      toolbar: toolbar ?? null,
-      description: description ?? null,
-      title: title ?? null,
-    });
-    return () => setRegistry(EMPTY_CONTROL_PANEL_CHROME_REGISTRY);
-  }, [actions, toolbar, description, title, setRegistry]);
+    notifyControlPanelChromeRegistry();
+    return () => resetControlPanelChromeRegistry();
+  }, [actions, toolbar, description, title]);
 
   return null;
 }

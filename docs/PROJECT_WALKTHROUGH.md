@@ -1,6 +1,13 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-09 — C8.1 merged CP header + C9 portal chrome)
+## Latest (2026-06-10 — C10/C10.1/C10.2 CP zero-flash)
+
+- **C10 list SSR:** `cp-list-query-ssr-seed.ts` + sync `useMemo` in `ControlPanelSectionPageClient`; hooks read cache as `initialData`; `useCpListBodyLoading`; `ControlPanelEntityListShell` for entity tabs.
+- **C10.1 chrome/navbar:** `control-panel-chrome-sync-store` (register during render, body `order-2` before header); `ControlPanelChromeActionsServer` (SSR shells) + `control-panel-header-actions-config.ts`; `NavSessionSsrSeed` seeds `queryKeys.auth.me`; visit-types → `appointmentTypes.all` admin-all prefetch.
+- **C10.2 polish:** `useNotifications` initialData; org Create in actions slot; `seedOrgBillingCacheFromSsr`; billing panel + patient detail loading parity; orgs/appts EntityListShell (indigo).
+- **Verify:** **870/870** · tsc · lint · build. Invalidation helpers unchanged.
+
+## Prior (2026-06-09 — C8.1 merged CP header + C9 portal chrome)
 
 - **C8.1 fix:** Replaced broken SSR+absolute-overlay split with merged sticky row — `ControlPanelChromeIconServer`/`TitleServer` (SSR) + `ControlPanelChromeActionsSlot` (client registry). `ControlPanelPageChrome` → `ControlPanelChromeActions` inside shell. CP headers omit `border-b` (body `space-y-3` separates). Prefetch + invalidation unchanged.
 - **C9 portal:** `portal-page-chrome-config.ts` + `PortalPageChrome`; migrated patient-portal, services, admin-portal, insights, api-docs/status; `/admins/[id]` slate `EntityDetailChromeHeader`; `PortalDoctorChromeHeader` uses `AppPageChrome` slots.
@@ -156,7 +163,7 @@
 ## Prior (2026-05-31)
 
 - **Agile V AQMS:** `.agile-v/` — REQ-0001..0040. **C8 active** (`REQ-0038..0040` page chrome + admin redesign); `.cursor/rules/agile-v-infinity-loop.mdc` always on.
-- **C8/C8.1 page chrome (2026-06-09):** `AppPageChrome` + CP config; C8.1 merged SSR+client header registry (replaces overlay bug); C9 `PortalPageChrome`; **863/863**.
+- **C8/C8.1 page chrome (2026-06-09):** `AppPageChrome` + CP config; C8.1 merged SSR+client header registry; C10+ SSR action shells + sync store; C9 `PortalPageChrome`; **870/870**.
 
 ## Prior (2026-05-30)
 

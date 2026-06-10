@@ -22,6 +22,7 @@
 | TRACE-0016 | 2026-06-05T17:40:00Z | init | bootstrap | POLICY.yaml@1.0.0 | C6 bootstrap REQ-0027..0031; Cursor rule; npm test 772/772 | REQ-0027..0031 |
 | TRACE-0017 | 2026-06-08T14:15:00Z | init | bootstrap | POLICY.yaml@1.0.0 | C7 bootstrap REQ-0034..0037; Cursor rule restored; npm test 829/829 | REQ-0034..0037 |
 | TRACE-0018 | 2026-06-04T15:30:00Z | init | bootstrap | POLICY.yaml@1.0.0 | Infinity Loop re-init; agile-v-infinity-loop.mdc alwaysApply; 863/863; HEAD 99f13b8 | REQ-0001..0037 |
+| TRACE-0019 | 2026-06-10T11:50:00Z | init | bootstrap | POLICY.yaml@1.0.0 | Session activation 2026-06-10; C8.1/C9 resume; npm test 863/863; HEAD bc97070 | REQ-0038..0045 |
 
 ## Span Types
 

@@ -200,3 +200,45 @@ human_gate_2: GATE-0008
 | release build | npm run build | PASS | REQ-0016..0018 |
 
 **EvalGate (C4 billing ext):** PASS (automated) — Human Gates 7–8 pending before `cycles/C4/` freeze.
+
+## C8 — ER-C8-VERIFY
+
+```yaml
+eval_run_id: ER-C8-VERIFY
+eval_timestamp: "2026-06-09T16:20:00Z"
+policy_version_ref: "1.0.0"
+eval_gate_status: PASS
+eval_gate_rationale: "C8 page chrome + admin portal — npm test 863/863, tsc, eslint, build PASS for REQ-0038..0040"
+cycle: C8
+release_commit: "52ba8f8"
+human_gate_2: TBD
+```
+
+| Suite | Command | Result | LINKED_REQ |
+|-------|---------|--------|------------|
+| full regression | npm test | PASS 863/863 | REQ-0038..0040 |
+| typecheck | npx tsc --noEmit | PASS | REQ-0038..0040 |
+| lint | npm run lint | PASS | REQ-0038..0040 |
+| release build | npm run build | PASS | REQ-0038..0040 |
+
+## C8.1 / C9 — ER-C8-C9-VERIFY
+
+```yaml
+eval_run_id: ER-C8-C9-VERIFY
+eval_timestamp: "2026-06-10T11:50:00Z"
+policy_version_ref: "1.0.0"
+eval_gate_status: PASS
+eval_gate_rationale: "C8.1 merged CP header + C9 portal chrome — npm test 863/863 (166 files), tsc, eslint, build PASS for REQ-0041..0045"
+cycle: C8.1/C9
+release_commit: "bc97070"
+human_gate_2: TBD
+```
+
+| Suite | Command | Result | LINKED_REQ |
+|-------|---------|--------|------------|
+| full regression | npm test | PASS 863/863 | REQ-0041..0045 |
+| typecheck | npx tsc --noEmit | PASS | REQ-0041..0045 |
+| lint | npm run lint | PASS | REQ-0041..0045 |
+| release build | npm run build | PASS | REQ-0041..0045 |
+
+**EvalGate (C8.1/C9):** PASS (automated) — Human Gate TBD before `cycles/C8/` freeze.

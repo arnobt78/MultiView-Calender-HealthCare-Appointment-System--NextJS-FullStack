@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
 import { apiClient } from "@/lib/api-client";
 import {
@@ -34,6 +34,11 @@ export interface DashboardOverview {
 }
 
 export function useDashboardOverview() {
+  const queryClient = useQueryClient();
+  const overviewInitialData = queryClient.getQueryData<DashboardOverview>(
+    queryKeys.dashboard.overview
+  );
+
   const query = useQuery({
     queryKey: queryKeys.dashboard.overview,
     queryFn: async () => {
@@ -42,6 +47,8 @@ export function useDashboardOverview() {
       >("/api/dashboard/overview");
       return coerceDashboardOverviewPayload(raw);
     },
+    initialData: overviewInitialData,
+    refetchOnMount: overviewInitialData !== undefined ? false : true,
     staleTime: 60_000, // refresh every minute
   });
 

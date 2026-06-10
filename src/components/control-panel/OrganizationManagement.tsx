@@ -58,8 +58,11 @@ import { ControlPanelPageChrome } from "@/components/control-panel/ControlPanelP
 import { PatientStatCard } from "@/components/control-panel/PatientStatCard";
 import { emeraldGlassPrimaryButtonClass } from "@/lib/calendar-header-action-styles";
 import { format } from "date-fns";
-import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
+import { useCpListBodyLoading } from "@/lib/cp-list-body-loading";
+import { queryKeys } from "@/lib/query-keys";
 import { OrganizationBillingPanel } from "@/components/control-panel/OrganizationBillingPanel";
+import { ControlPanelEntityListShell } from "@/components/control-panel/ControlPanelEntityListShell";
+import { cn } from "@/lib/utils";
 
 const columnHelper = createColumnHelper<Organization>();
 
@@ -78,8 +81,9 @@ function CreateOrgDialog({ onCreate }: { onCreate: (name: string) => void }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="gap-2">
-          <Plus className="h-4 w-4" /> New Organization
+        <Button type="button" className={cn(emeraldGlassPrimaryButtonClass, "gap-2 cursor-pointer")}>
+          <Building2 className="h-4 w-4 shrink-0" aria-hidden />
+          Create Organization
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
@@ -267,16 +271,8 @@ const ROLE_COLORS: Record<string, string> = {
 };
 
 /**
- * OrganizationManagement — inline skeleton pattern:
- *   - Heading, filter input, "New Organization" button, and table headers stay mounted.
- *   - Only table body rows pulse as skeletons while data is loading.
- *   - `isMounted` + `requestAnimationFrame` guard prevents hydration flicker.
+ * OrganizationManagement — SSR seed + useCpListBodyLoading; Create in merged header actions slot.
  */
-
-import { useEffect } from "react";
-
-const ORG_GLASS_TABLE_CLASS =
-  "rounded-[28px] border bg-gradient-to-br from-blue-500/5 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(59,130,246,0.1)] overflow-hidden";
 
 export default function OrganizationManagement() {
   const {
@@ -295,16 +291,7 @@ export default function OrganizationManagement() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
 
-  /**
-   * Mount guard: hydrate with skeleton state on first paint, then swap to real data
-   * after the next animation frame — matches the PatientManagement pattern.
-   */
-  const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => {
-    requestAnimationFrame(() => setIsMounted(true));
-  }, []);
-
-  const loading = !isMounted || isLoading;
+  const listBodyLoading = useCpListBodyLoading(queryKeys.organizations.all, isLoading);
 
   const columns = [
     columnHelper.accessor("name", {
@@ -368,132 +355,154 @@ export default function OrganizationManagement() {
   }
 
   return (
-    <div className={controlPanelSectionRootClass}>
-      <ControlPanelPageChrome
-        tab="organizations"
-        toolbar={
-          <div className="flex w-full flex-wrap items-center justify-between gap-4">
-            <p className="text-sm text-muted-foreground">
-              {loading ? "" : `${organizations.length} organisation${organizations.length !== 1 ? "s" : ""}`}
-            </p>
-            <div className="flex flex-wrap items-center gap-2">
-              <Input
-                placeholder="Filter organizations..."
-                value={globalFilter}
-                onChange={(e) => setGlobalFilter(e.target.value)}
-                className="w-56"
-              />
-              <CreateOrgDialog onCreate={createOrg} />
-            </div>
-          </div>
+    <>
+      <ControlPanelEntityListShell
+        tone="violet"
+        headerSlot={
+          <ControlPanelPageChrome
+            tab="organizations"
+            actions={<CreateOrgDialog onCreate={createOrg} />}
+            toolbar={
+              <div className="flex w-full flex-wrap items-center justify-between gap-4">
+                <p className="text-sm text-muted-foreground">
+                  {listBodyLoading
+                    ? ""
+                    : `${organizations.length} organisation${organizations.length !== 1 ? "s" : ""}`}
+                </p>
+                <Input
+                  placeholder="Filter organizations..."
+                  value={globalFilter}
+                  onChange={(e) => setGlobalFilter(e.target.value)}
+                  className="w-56"
+                />
+              </div>
+            }
+          />
+        }
+        statsSlot={
+          <>
+            <PatientStatCard
+              variant="sky"
+              icon={Building2}
+              title="Total Organisations"
+              subtitle="All registered organisations"
+              value={organizations.length}
+              valueSkeleton={listBodyLoading}
+            />
+            <PatientStatCard
+              variant="violet"
+              icon={Users}
+              title="Total Users"
+              subtitle="All users across the platform"
+              value={allUsers.length}
+              valueSkeleton={listBodyLoading}
+            />
+          </>
+        }
+        tableSlot={
+          <>
+            <Table>
+              <TableHeader>
+                {table.getHeaderGroups().map((hg) => (
+                  <TableRow key={hg.id} className="bg-muted/40">
+                    {hg.headers.map((header) => (
+                      <TableHead
+                        key={header.id}
+                        className="font-semibold cursor-pointer select-none"
+                        onClick={header.column.getToggleSortingHandler()}
+                      >
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                        {header.column.getIsSorted() === "asc"
+                          ? " ↑"
+                          : header.column.getIsSorted() === "desc"
+                            ? " ↓"
+                            : ""}
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableHeader>
+              <TableBody>
+                {listBodyLoading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Skeleton className="h-4 w-4 rounded shrink-0" />
+                          <div className="space-y-1">
+                            <Skeleton className="h-4 w-36 rounded" />
+                            <Skeleton className="h-3 w-24 rounded" />
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-5 w-16 rounded-full" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-24 rounded" />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="h-8 w-8 ml-auto" />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : !listBodyLoading && organizations.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={columns.length} className="text-center py-12">
+                      <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                        <Building2 className="h-10 w-10 opacity-30" />
+                        <p className="font-medium">No organizations yet</p>
+                        <p className="text-sm">
+                          Create your first organization to manage teams and members.
+                        </p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : table.getRowModel().rows.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns.length}
+                      className="text-center py-8 text-muted-foreground"
+                    >
+                      No results found.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  table.getRowModel().rows.map((row) => (
+                    <TableRow key={row.id} className="hover:bg-muted/30 transition-colors">
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id}>
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+            {!listBodyLoading && (
+              <div className="px-4 py-2 border-t text-xs text-muted-foreground">
+                {table.getRowModel().rows.length} of {organizations.length} organizations
+              </div>
+            )}
+          </>
+        }
+        footerSlot={
+          <>
+            {isCreating && (
+              <p className="text-sm text-muted-foreground">Creating organization…</p>
+            )}
+            {!listBodyLoading &&
+              organizations.map((org) => (
+                <OrganizationBillingPanel
+                  key={org.id}
+                  organizationId={org.id}
+                  organizationName={org.name}
+                />
+              ))}
+          </>
         }
       />
-
-      {/* Stats row */}
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        <PatientStatCard
-          variant="sky"
-          icon={Building2}
-          title="Total Organisations"
-          subtitle="All registered organisations"
-          value={organizations.length}
-          valueSkeleton={loading}
-        />
-        <PatientStatCard
-          variant="violet"
-          icon={Users}
-          title="Total Users"
-          subtitle="All users across the platform"
-          value={allUsers.length}
-          valueSkeleton={loading}
-        />
-      </div>
-
-      {/* Table card — glassmorphic shell always visible */}
-      <div className={ORG_GLASS_TABLE_CLASS}>
-        <Table>
-          {/* Table headers always stay static */}
-          <TableHeader>
-            {table.getHeaderGroups().map((hg) => (
-              <TableRow key={hg.id} className="bg-muted/40">
-                {hg.headers.map((header) => (
-                  <TableHead
-                    key={header.id}
-                    className="font-semibold cursor-pointer select-none"
-                    onClick={header.column.getToggleSortingHandler()}
-                  >
-                    {flexRender(header.column.columnDef.header, header.getContext())}
-                    {header.column.getIsSorted() === "asc" ? " ↑" : header.column.getIsSorted() === "desc" ? " ↓" : ""}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              /* Skeleton rows — 5 rows matching real row structure: name/slug, role badge, date, actions */
-              Array.from({ length: 5 }).map((_, i) => (
-                <TableRow key={i}>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Skeleton className="h-4 w-4 rounded shrink-0" />
-                      <div className="space-y-1">
-                        <Skeleton className="h-4 w-36 rounded" />
-                        <Skeleton className="h-3 w-24 rounded" />
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell><Skeleton className="h-5 w-16 rounded-full" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-24 rounded" /></TableCell>
-                  {/* Actions column — static chrome, no pulse */}
-                  <TableCell className="text-right"><div className="h-8 w-8 ml-auto" /></TableCell>
-                </TableRow>
-              ))
-            ) : !loading && organizations.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="text-center py-12">
-                  <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                    <Building2 className="h-10 w-10 opacity-30" />
-                    <p className="font-medium">No organizations yet</p>
-                    <p className="text-sm">Create your first organization to manage teams and members.</p>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : table.getRowModel().rows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="text-center py-8 text-muted-foreground">
-                  No results found.
-                </TableCell>
-              </TableRow>
-            ) : (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} className="hover:bg-muted/30 transition-colors">
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-        {!loading && (
-          <div className="px-4 py-2 border-t text-xs text-muted-foreground">
-            {table.getRowModel().rows.length} of {organizations.length} organizations
-          </div>
-        )}
-      </div>
-      {isCreating && <p className="text-sm text-muted-foreground">Creating organization…</p>}
-
-      {!loading &&
-        organizations.map((org) => (
-          <OrganizationBillingPanel
-            key={org.id}
-            organizationId={org.id}
-            organizationName={org.name}
-          />
-        ))}
-    </div>
+    </>
   );
 }

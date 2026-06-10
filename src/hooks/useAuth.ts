@@ -20,6 +20,8 @@ interface AuthResponse {
 export function useAuth() {
   const queryClient = useQueryClient();
 
+  const cachedMe = queryClient.getQueryData<MeUser>(queryKeys.auth.me);
+
   const query = useQuery({
     queryKey: queryKeys.auth.me,
     queryFn: async () => {
@@ -31,6 +33,8 @@ export function useAuth() {
         return null;
       }
     },
+    initialData: cachedMe,
+    refetchOnMount: cachedMe !== undefined ? false : true,
     retry: false,
     staleTime: 5 * 60 * 1000,
   });

@@ -17,7 +17,6 @@ import { EntityActiveStatusBadge } from "@/components/shared/entity-display/Enti
 import { cn } from "@/lib/utils";
 import {
   emeraldGlassPrimaryButtonClass,
-  skyGlassTableFrameClass,
   violetGlassImportButtonClass,
 } from "@/lib/calendar-header-action-styles";
 import { resolveAppSectionRootClass } from "@/lib/section-page-layout";
@@ -72,12 +71,12 @@ import {
 import { useUsers } from "@/hooks/useUsers";
 import { CP_DOCTOR_USERS_FILTERS } from "@/lib/control-panel-users-filters";
 import { useQueryClient } from "@tanstack/react-query";
+import { useCpListBodyLoading } from "@/lib/cp-list-body-loading";
+import { queryKeys } from "@/lib/query-keys";
 import { prefetchDoctorsDirectory } from "@/lib/prefetch-doctors-directory";
 import { validateOptionalPatientPhoneInput } from "@/lib/phone-validation";
 import { notify } from "@/lib/notify";
-import {
-  patientManagementStatsStripClass,
-} from "@/lib/patient-management-toolbar-classes";
+import { ControlPanelEntityListShell } from "@/components/control-panel/ControlPanelEntityListShell";
 import { PATIENT_CARE_LEVEL_STAGES, getPatientCareLevelLabel } from "@/lib/patient-care-level";
 import { patientDetailHref, type EntityRole } from "@/lib/entity-routes";
 
@@ -263,9 +262,8 @@ export function PatientManagementInner({
     deletePatient,
   } = usePatients();
   const queryClient = useQueryClient();
-  /** SSR-seeded cache: chrome + stats stay real; pulse table rows only when no list data yet. */
-  const hasPatientsCache = patients.length > 0;
-  const listBodyLoading = isLoading && !hasPatientsCache;
+  /** SSR-seeded cache: pulse table rows only when query has no cached data yet (empty [] counts as warm). */
+  const listBodyLoading = useCpListBodyLoading(queryKeys.patients.all, isLoading);
   const { data: doctorsData } = useUsers(CP_DOCTOR_USERS_FILTERS);
   const doctorById = useMemo(() => {
     const list = doctorsData?.users ?? [];
@@ -600,49 +598,43 @@ export function PatientManagementInner({
   }
 
   const listChrome = (
-      <div
-        className={cn(
-          sectionRootClass,
-          !isDoctorPortal && "overflow-visible"
-        )}
-      >
-        {!isDoctorPortal ? (
-          <ControlPanelPageChrome
-            tab="patients"
-            actions={
-              <>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="lg"
-                  disabled={listBodyLoading || patients.length === 0}
-                  className={cn(violetGlassImportButtonClass, "cursor-pointer disabled:opacity-50")}
-                  onClick={() => exportPatientsCSV(patients)}
-                >
-                  <Download className="shrink-0" aria-hidden />
-                  Export CSV
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="lg"
-                  className={cn(emeraldGlassPrimaryButtonClass, "cursor-pointer")}
-                  onClick={openCreateDialog}
-                >
-                  <UserPlus className="shrink-0" aria-hidden />
-                  Add Patient
-                </Button>
-              </>
-            }
-          />
-        ) : null}
-
-        {!isDoctorPortal ? (
-          <div className={patientManagementStatsStripClass}>
-            <PatientManagementStatsRow />
-          </div>
-        ) : null}
-
+      <ControlPanelEntityListShell
+        tone="sky"
+        fullSection={!isDoctorPortal}
+        headerSlot={
+          !isDoctorPortal ? (
+            <ControlPanelPageChrome
+              tab="patients"
+              actions={
+                <>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="lg"
+                    disabled={listBodyLoading || patients.length === 0}
+                    className={cn(violetGlassImportButtonClass, "cursor-pointer disabled:opacity-50")}
+                    onClick={() => exportPatientsCSV(patients)}
+                  >
+                    <Download className="shrink-0" aria-hidden />
+                    Export CSV
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="lg"
+                    className={cn(emeraldGlassPrimaryButtonClass, "cursor-pointer")}
+                    onClick={openCreateDialog}
+                  >
+                    <UserPlus className="shrink-0" aria-hidden />
+                    Add Patient
+                  </Button>
+                </>
+              }
+            />
+          ) : undefined
+        }
+        statsSlot={!isDoctorPortal ? <PatientManagementStatsRow /> : undefined}
+        toolbarSlot={
         <ClinicalListFilterToolbar
           stickyClassName={APP_INNER_SCROLL_STICKY_TOP_CLASS}
           search={{
@@ -704,7 +696,8 @@ export function PatientManagementInner({
             />
           ) : null}
         </ClinicalListFilterToolbar>
-
+        }
+        tableSlot={
         <DataTable<Patient, unknown>
           columns={columns}
           data={filteredPatients}
@@ -725,9 +718,10 @@ export function PatientManagementInner({
               : "No patients yet. Add one to get started."
           }
           tableClassName="min-w-[1080px] w-full"
-          tableFrameClassName={skyGlassTableFrameClass}
+          tableFrameClassName="min-w-0 max-w-full border-0 bg-transparent shadow-none rounded-none"
         />
-
+        }
+        footerSlot={
         <PatientFormDialog
           open={dialogOpen}
           onOpenChange={handleDialogOpenChange}
@@ -740,11 +734,12 @@ export function PatientManagementInner({
           onSubmit={handleDialogSubmit}
           isSubmitting={dialogMode === "edit" ? isUpdating : isCreating}
         />
-      </div>
+        }
+      />
   );
 
   if (isDoctorPortal) {
-    return listChrome;
+    return <div className={sectionRootClass}>{listChrome}</div>;
   }
 
   return (

@@ -49,9 +49,14 @@ export function useUsers(
   if (filters.limit != null) params.set("limit", String(filters.limit));
   if (filters.offset != null) params.set("offset", String(filters.offset));
   const queryString = params.toString();
+  const queryKey = [...queryKeys.users.all, filters] as const;
+
+  const usersInitialData =
+    options?.initialData ??
+    queryClient.getQueryData<UsersListResponse>(queryKey);
 
   const query = useQuery({
-    queryKey: [...queryKeys.users.all, filters],
+    queryKey,
     queryFn: async () => {
       const res = await apiClient<UsersListResponse>(
         `/api/users${queryString ? `?${queryString}` : ""}`
@@ -59,8 +64,9 @@ export function useUsers(
       return res;
     },
     staleTime: 5 * 60 * 1000,
-    initialData: options?.initialData,
+    initialData: usersInitialData,
     enabled: options?.enabled !== false,
+    refetchOnMount: usersInitialData !== undefined ? false : true,
   });
 
   const updateMutation = useMutation({

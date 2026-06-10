@@ -15,7 +15,6 @@
 
 import { useMemo, useState } from "react";
 import {
-  Loader2,
   Pencil,
   Plus,
   Trash2,
@@ -25,6 +24,7 @@ import {
   Globe,
   UserCog,
   Tag,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,6 +47,8 @@ import {
   buildCpAdminAppointmentTypeDeleteConfirmSubtitle,
   DELETE_APPOINTMENT_TYPE_CONFIRM_TITLE,
 } from "@/lib/confirm-delete-dialog-copy";
+import { useCpListBodyLoading } from "@/lib/cp-list-body-loading";
+import { queryKeys } from "@/lib/query-keys";
 
 /** Format cents → "€X.XX" */
 function formatPrice(cents: number): string {
@@ -79,6 +81,7 @@ export function GlobalAppointmentTypesEditor() {
   const isAdmin = user?.role === "admin";
 
   const { data, isLoading, isError } = useAdminAllAppointmentTypes({ enabled: true });
+  const listBodyLoading = useCpListBodyLoading(queryKeys.appointmentTypes.all, isLoading);
   const {
     createGlobalType,
     updateGlobalType,
@@ -159,15 +162,6 @@ export function GlobalAppointmentTypesEditor() {
     await deleteGlobalType(id);
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin shrink-0" aria-hidden />
-        Loading appointment types…
-      </div>
-    );
-  }
-
   if (isError) {
     return (
       <p className="py-2 text-sm text-red-600">Could not load appointment types.</p>
@@ -208,7 +202,7 @@ export function GlobalAppointmentTypesEditor() {
           title="Total Types"
           subtitle="Global + all custom types"
           value={totalTypes}
-          valueSkeleton={isLoading}
+          valueSkeleton={listBodyLoading}
         />
         <PatientStatCard
           variant="violet"
@@ -216,7 +210,7 @@ export function GlobalAppointmentTypesEditor() {
           title="Global Types"
           subtitle="Shared across all doctors"
           value={globalTypes.length}
-          valueSkeleton={isLoading}
+          valueSkeleton={listBodyLoading}
         />
         <PatientStatCard
           variant="emerald"
@@ -224,7 +218,7 @@ export function GlobalAppointmentTypesEditor() {
           title="Custom Types"
           subtitle="Doctor-specific visit types"
           value={data?.customTypes?.length ?? 0}
-          valueSkeleton={isLoading}
+          valueSkeleton={listBodyLoading}
         />
         <PatientStatCard
           variant="amber"
@@ -232,7 +226,7 @@ export function GlobalAppointmentTypesEditor() {
           title="With Pricing"
           subtitle="Types with explicit visit fee"
           value={withPricing}
-          valueSkeleton={isLoading}
+          valueSkeleton={listBodyLoading}
         />
       </div>
 

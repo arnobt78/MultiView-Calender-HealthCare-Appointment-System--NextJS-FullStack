@@ -1,13 +1,10 @@
 "use client";
 
 /**
- * InvitationList — inline skeleton pattern:
- *   - Table heading and table headers (Resource/Email, Status, Permission, Actions) stay mounted at all times.
- *   - Only the table body rows pulse as skeletons while the invitation data is loading.
- *   - `isMounted` + `requestAnimationFrame` guard prevents hydration flash on first paint.
+ * InvitationList — SSR seed + useCpListBodyLoading; table headers always mounted.
  */
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AppSectionErrorBanner } from "@/components/shared/AppSectionErrorBanner";
@@ -25,6 +22,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { useCpListBodyLoading } from "@/lib/cp-list-body-loading";
+import { queryKeys } from "@/lib/query-keys";
 
 function isDashboardInvitation(
   inv: AppointmentInvitation | DashboardInvitation
@@ -55,16 +54,7 @@ export default function InvitationList({ type }: { type: "appointment" | "dashbo
     discardDashboardInvitation,
   } = useInvitations(type);
 
-  /**
-   * Mount guard: hydrate with skeleton state on first paint (isMounted=false → loading=true),
-   * then swap to real rows after the next animation frame — prevents hydration flicker.
-   */
-  const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => {
-    requestAnimationFrame(() => setIsMounted(true));
-  }, []);
-
-  const loading = !isMounted || isLoading;
+  const listBodyLoading = useCpListBodyLoading(queryKeys.invitations.byType(type), isLoading);
 
   if (invitationsError) {
     return (
@@ -91,7 +81,7 @@ export default function InvitationList({ type }: { type: "appointment" | "dashbo
           </TableRow>
         </TableHeader>
         <TableBody>
-          {loading ? (
+          {listBodyLoading ? (
             /* Skeleton rows — 3 placeholder rows matching real row column layout */
             Array.from({ length: 3 }).map((_, i) => (
               <TableRow key={i}>

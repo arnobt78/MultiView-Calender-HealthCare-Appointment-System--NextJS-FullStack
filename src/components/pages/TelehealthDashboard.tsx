@@ -1,10 +1,7 @@
 "use client";
 
 /**
- * TelehealthDashboard — inline skeleton pattern:
- *   - Static chrome (PageHeader, filter buttons, "Up Next" heading, queue section title) stays mounted.
- *   - Only the appointment data content areas (Up Next card body + queue rows) pulse as skeletons.
- *   - `isMounted` + `requestAnimationFrame` guard prevents hydration flicker on first paint.
+ * TelehealthDashboard — SSR appointments seed + useCpListBodyLoading; chrome always mounted.
  */
 
 import { useAppointments } from "@/hooks/useAppointments";
@@ -17,26 +14,18 @@ import { Calendar, Clock, Video, FileText, User, ChevronRight } from "lucide-rea
 import { Separator } from "@/components/ui/separator";
 import { format, isToday, isPast, isFuture } from "date-fns";
 import { useAppStore } from "@/store/useAppStore";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { ControlPanelPageChrome } from "@/components/control-panel/ControlPanelPageChrome";
 import { AppSectionErrorBanner } from "@/components/shared/AppSectionErrorBanner";
 import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
+import { useCpListBodyLoading } from "@/lib/cp-list-body-loading";
+import { queryKeys } from "@/lib/query-keys";
 
 export default function TelehealthDashboard() {
   const { appointments, isLoading, isError: appointmentsError } = useAppointments();
   const startVideoCall = useAppStore((state) => state.startVideoCall);
   const [filter, setFilter] = useState<"all" | "today" | "upcoming">("today");
-
-  /**
-   * Mount guard: hydrate with skeleton state on first paint, then swap to real data
-   * after the next animation frame — matches the PatientManagement pattern.
-   */
-  const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => {
-    requestAnimationFrame(() => setIsMounted(true));
-  }, []);
-
-  const loading = !isMounted || isLoading;
+  const listBodyLoading = useCpListBodyLoading(queryKeys.appointments.all, isLoading);
 
   const sortedAppointments = useMemo(() => {
     if (!appointments) return [];
@@ -85,7 +74,7 @@ export default function TelehealthDashboard() {
             Up Next
           </h3>
 
-          {loading ? (
+          {listBodyLoading ? (
             /* Skeleton mirrors the real card layout without replacing the heading */
             <Card>
               <CardContent className="pt-6 space-y-4">
@@ -161,7 +150,7 @@ export default function TelehealthDashboard() {
           </h3>
 
           <div className="space-y-3">
-            {loading ? (
+            {listBodyLoading ? (
               /* Skeleton rows match real row structure: time col + divider + content + action */
               Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-2 p-4 border rounded-2xl">

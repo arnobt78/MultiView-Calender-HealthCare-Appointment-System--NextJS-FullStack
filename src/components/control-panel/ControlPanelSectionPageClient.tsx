@@ -2,6 +2,22 @@
 
 import { useEffect, useLayoutEffect, useMemo, type ReactNode } from "react";
 import { seedInvoicesListCacheFromSsr } from "@/lib/invoices-query-ssr-seed";
+import {
+  seedCategoriesListCacheFromSsr,
+  seedDoctorsDirectoryCacheFromSsr,
+  seedPatientsListCacheFromSsr,
+  seedUsersListCacheFromSsr,
+  seedDashboardOverviewCacheFromSsr,
+  seedOrganizationsListCacheFromSsr,
+  seedNotificationsCacheFromSsr,
+  seedAppointmentsListCacheFromSsr,
+  seedAdminAllAppointmentTypesCacheFromSsr,
+  seedInvitationsCacheFromSsr,
+  seedGoogleCalendarStatusCacheFromSsr,
+  seedDashboardAccessAcceptedCacheFromSsr,
+  seedOrgBillingCacheFromSsr,
+} from "@/lib/cp-list-query-ssr-seed";
+import { CP_ADMIN_USERS_FILTERS } from "@/lib/control-panel-users-filters";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { invalidateInvoicesAndOverview } from "@/lib/query-client";
@@ -21,6 +37,7 @@ import {
   pageChromeTitleStackClass,
   pageHeaderRootClass,
 } from "@/lib/page-chrome-classes";
+import { cn } from "@/lib/utils";
 
 type Props = {
   tab: ControlPanelSidebarTabValue;
@@ -31,6 +48,8 @@ type Props = {
   serverChromeIcon?: ReactNode;
   /** SSR title node — server component passed as child. */
   serverChromeTitle?: ReactNode;
+  /** SSR action shells — first paint before client registry populates. */
+  serverChromeActions?: ReactNode;
 };
 
 /** Seeds SSR prefetch + merged sticky header (SSR left + client actions slot) + section body. */
@@ -40,18 +59,79 @@ export function ControlPanelSectionPageClient({
   defaultDescription,
   serverChromeIcon,
   serverChromeTitle,
+  serverChromeActions,
 }: Props) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
 
+  /** Sync seed before section children subscribe (invoice parity for all entity lists). */
   useMemo(() => {
     if (initial?.invoices != null) {
       seedInvoicesListCacheFromSsr(queryClient, initial.invoices);
     }
+    if (initial?.patients != null) {
+      seedPatientsListCacheFromSsr(queryClient, initial.patients);
+    }
+    if (initial?.categories != null) {
+      seedCategoriesListCacheFromSsr(queryClient, initial.categories);
+    }
+    if (initial?.doctorsDirectory != null) {
+      seedDoctorsDirectoryCacheFromSsr(queryClient, initial.doctorsDirectory);
+    }
+    if (initial?.adminUsers != null) {
+      seedUsersListCacheFromSsr(queryClient, CP_ADMIN_USERS_FILTERS, initial.adminUsers);
+    }
+    if (initial?.dashboardOverview != null) {
+      seedDashboardOverviewCacheFromSsr(queryClient, initial.dashboardOverview);
+    }
+    if (initial?.organizations != null) {
+      seedOrganizationsListCacheFromSsr(queryClient, initial.organizations);
+    }
+    if (initial?.notifications != null) {
+      seedNotificationsCacheFromSsr(queryClient, initial.notifications);
+    }
+    if (initial?.appointments != null) {
+      seedAppointmentsListCacheFromSsr(queryClient, initial.appointments);
+    }
+    if (initial?.adminAllAppointmentTypes != null) {
+      seedAdminAllAppointmentTypesCacheFromSsr(queryClient, initial.adminAllAppointmentTypes);
+    }
+    if (initial?.appointmentInvitations != null) {
+      seedInvitationsCacheFromSsr(queryClient, "appointment", initial.appointmentInvitations);
+    }
+    if (initial?.dashboardInvitations != null) {
+      seedInvitationsCacheFromSsr(queryClient, "dashboard", initial.dashboardInvitations);
+    }
+    if (initial?.googleCalendarStatus != null) {
+      seedGoogleCalendarStatusCacheFromSsr(queryClient, initial.googleCalendarStatus);
+    }
+    if (initial?.dashboardAccessAccepted != null) {
+      seedDashboardAccessAcceptedCacheFromSsr(queryClient, initial.dashboardAccessAccepted);
+    }
+    if (initial?.orgBillingInvoicesByOrgId != null) {
+      seedOrgBillingCacheFromSsr(queryClient, initial.orgBillingInvoicesByOrgId);
+    }
     return null;
-  }, [queryClient, initial?.invoices]);
+  }, [
+    queryClient,
+    initial?.invoices,
+    initial?.patients,
+    initial?.categories,
+    initial?.doctorsDirectory,
+    initial?.adminUsers,
+    initial?.dashboardOverview,
+    initial?.organizations,
+    initial?.notifications,
+    initial?.appointments,
+    initial?.adminAllAppointmentTypes,
+    initial?.appointmentInvitations,
+    initial?.dashboardInvitations,
+    initial?.googleCalendarStatus,
+    initial?.dashboardAccessAccepted,
+    initial?.orgBillingInvoicesByOrgId,
+  ]);
 
   /** Stripe return on invoice tab — bust overview/invoices without full reload. */
   useEffect(() => {
@@ -83,10 +163,11 @@ export function ControlPanelSectionPageClient({
 
   return (
     <ControlPanelChromeRegistryProvider defaultDescription={defaultDescription ?? ""}>
-      <div className="w-full text-gray-700">
+      <div className="flex w-full flex-col text-gray-700">
+        {/* Body renders first so ControlPanelChromeActions registers before ActionsSlot reads store. */}
+        <div className="order-2">{body}</div>
         {/* Merged header: SSR icon/title + client description + client actions in one sticky row */}
-        {/* CP header: no border-b — section body uses `appSectionStackClass` gap below */}
-        <div className={pageHeaderRootClass}>
+        <div className={cn(pageHeaderRootClass, "order-1")}>
           <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-stretch sm:justify-between">
             <div className="flex min-w-0 flex-1 items-stretch gap-2">
               {serverChromeIcon}
@@ -95,11 +176,10 @@ export function ControlPanelSectionPageClient({
                 <ControlPanelChromeDescriptionSlot />
               </div>
             </div>
-            <ControlPanelChromeActionsSlot />
+            <ControlPanelChromeActionsSlot tab={tab} serverChromeActions={serverChromeActions} />
           </div>
           <ControlPanelChromeToolbarSlot />
         </div>
-        {body}
       </div>
     </ControlPanelChromeRegistryProvider>
   );

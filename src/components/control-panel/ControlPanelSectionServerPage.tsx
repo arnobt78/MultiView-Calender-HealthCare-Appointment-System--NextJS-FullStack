@@ -7,6 +7,7 @@ import {
   ControlPanelChromeIconServer,
   ControlPanelChromeTitleServer,
 } from "@/components/control-panel/ControlPanelChromeStaticServer";
+import { ControlPanelChromeActionsServer } from "@/components/control-panel/ControlPanelChromeActionsServer";
 import { ControlPanelSectionPageClient } from "@/components/control-panel/ControlPanelSectionPageClient";
 
 /**
@@ -34,6 +35,7 @@ export async function ControlPanelSectionServerPage({
       defaultDescription={chromeConfig.description}
       serverChromeIcon={<ControlPanelChromeIconServer tab={tab} />}
       serverChromeTitle={<ControlPanelChromeTitleServer tab={tab} />}
+      serverChromeActions={<ControlPanelChromeActionsServer tab={tab} />}
     />
   );
 }

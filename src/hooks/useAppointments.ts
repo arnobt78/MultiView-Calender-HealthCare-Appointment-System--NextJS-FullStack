@@ -95,6 +95,10 @@ export function useAppointments() {
 
   const { user, isLoading: isAuthLoading } = useAuth();
 
+  const appointmentsInitialData = queryClient.getQueryData<FullAppointment[]>(
+    queryKeys.appointments.all
+  );
+
   const query = useQuery({
     queryKey: queryKeys.appointments.all,
     queryFn: async () => {
@@ -145,6 +149,8 @@ export function useAppointments() {
         assignedAppointmentRows: assignedAppointmentsData,
       });
     },
+    initialData: appointmentsInitialData,
+    refetchOnMount: appointmentsInitialData !== undefined ? false : true,
     enabled: !!user,
     // Appointments are invalidated after every create/update/delete/toggle mutation;
     // 30 s prevents redundant re-fetches on rapid view switches.

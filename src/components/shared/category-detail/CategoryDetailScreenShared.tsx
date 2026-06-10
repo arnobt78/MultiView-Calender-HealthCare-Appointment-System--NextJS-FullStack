@@ -40,7 +40,7 @@ import { useCategories, useCategory, useCategorySnapshot } from "@/hooks/useCate
 import { useUsers } from "@/hooks/useUsers";
 import type { UsersListResponse } from "@/hooks/useUsers";
 import { buildStaffDirectoryMap } from "@/lib/staff-directory-cache";
-import { seedUsersListCache } from "@/lib/ssr-query-seed";
+import { seedUsersListCacheFromSsr } from "@/lib/cp-list-query-ssr-seed";
 import { invalidateQueriesForRoute } from "@/lib/query-client";
 import { queryKeys } from "@/lib/query-keys";
 import {
@@ -205,10 +205,18 @@ export function CategoryDetailScreenShared({
 
   useLayoutEffect(() => {
     if (initialDoctorUsers != null) {
-      seedUsersListCache(queryClient, CATEGORY_DETAIL_DOCTOR_USERS_FILTERS, initialDoctorUsers);
+      seedUsersListCacheFromSsr(
+        queryClient,
+        CATEGORY_DETAIL_DOCTOR_USERS_FILTERS,
+        initialDoctorUsers
+      );
     }
     if (initialAdminUsers != null) {
-      seedUsersListCache(queryClient, CATEGORY_DETAIL_ADMIN_USERS_FILTERS, initialAdminUsers);
+      seedUsersListCacheFromSsr(
+        queryClient,
+        CATEGORY_DETAIL_ADMIN_USERS_FILTERS,
+        initialAdminUsers
+      );
     }
   }, [queryClient, initialDoctorUsers, initialAdminUsers]);
 
@@ -234,8 +242,9 @@ export function CategoryDetailScreenShared({
   );
 
   const hasCategory = cat != null;
-  const showBodySkeleton = !hasCategory && (isLoading || !isMounted);
-  const showLiveBody = hasCategory && isMounted;
+  /** SSR `initialCategory` renders body before mount — parity with PatientDetailScreen. */
+  const showLiveBody = hasCategory && (isMounted || initialCategory != null);
+  const showBodySkeleton = !hasCategory && isLoading && initialCategory == null;
 
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [dialogForm, setDialogForm] = useState<CategoryCreateInput>(EMPTY_CATEGORY_FORM);
@@ -266,7 +275,7 @@ export function CategoryDetailScreenShared({
   const snapshot = liveSnapshot ?? initialSnapshot;
   const hasSnapshot = snapshot != null;
   const appointmentsLoading =
-    !isMounted || ((snapshotLoading || snapshotFetching) && !hasSnapshot);
+    (snapshotLoading || snapshotFetching) && !hasSnapshot && initialSnapshot == null;
   const appointmentList = snapshot?.appointments ?? [];
   const totalCount = snapshot?.totalCount ?? 0;
 

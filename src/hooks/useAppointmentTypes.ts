@@ -283,12 +283,20 @@ export type AdminAllTypeRow = {
 };
 
 export function useAdminAllAppointmentTypes(options?: { enabled?: boolean }) {
+  const queryClient = useQueryClient();
+  const initialData = queryClient.getQueryData<{
+    globalTypes: AdminAllTypeRow[];
+    customTypes: AdminAllTypeRow[];
+  }>(queryKeys.appointmentTypes.all);
+
   return useQuery({
     queryKey: queryKeys.appointmentTypes.all,
     queryFn: () =>
       apiClient<{ globalTypes: AdminAllTypeRow[]; customTypes: AdminAllTypeRow[] }>(
         "/api/appointment-types/admin-all"
       ),
+    initialData,
+    refetchOnMount: initialData !== undefined ? false : true,
     staleTime: 5 * 60 * 1000,
     enabled: options?.enabled !== false,
   });

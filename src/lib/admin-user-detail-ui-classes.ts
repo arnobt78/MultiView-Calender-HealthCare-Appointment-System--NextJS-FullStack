@@ -7,3 +7,10 @@ export const adminUserDetailCardFrameClass =
 
 export const adminUserDialogShellClass =
   "flex max-h-[90vh] flex-col overflow-hidden rounded-[28px] border border-slate-200/80 bg-gradient-to-br from-slate-500/10 via-white to-white/95 p-0 shadow-[0_24px_60px_rgba(100,116,139,0.18)] sm:max-w-lg";
+
+/** Glass field chrome — matches patient/doctor dialog inputs. */
+export const adminUserDialogGlassInputClass =
+  "border-slate-200/70 bg-white/90 shadow-[0_2px_12px_rgba(100,116,139,0.08)] focus-visible:ring-slate-400/40";
+
+export const adminUserDialogGlassBackButtonClass =
+  "text-slate-700 hover:bg-slate-100 hover:text-slate-900";

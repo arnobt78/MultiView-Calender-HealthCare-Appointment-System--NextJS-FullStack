@@ -1,6 +1,6 @@
 # Agile V — Session Activation (every prompt)
 
-<!-- HealthCal Pro | v1.4 | Read with STATE.md on every chat -->
+<!-- HealthCal Pro | v1.4 | Read with STATE.md on every chat | Activated: 2026-06-10 -->
 
 ## 1. Load skills (mandatory)
 
@@ -16,9 +16,9 @@
 
 ## 2. Read (resume)
 
-1. `STATE.md` — cycle **C7** + **C4 billing ext**; **863/863** verify PASS
-2. `CHECKPOINTS.md` — only if PENDING HITL
-3. `REQUIREMENTS.md` — parent REQ before any work
+1. `STATE.md` — cycle **C8.1/C9** shipped; **863/863** verify PASS
+2. `CHECKPOINTS.md` — only if PENDING HITL (none)
+3. `REQUIREMENTS.md` — parent REQ before any work (REQ-0001..0045)
 4. `agile-v-core.md` — repo binding
 
 ## 3. Infinity Loop
@@ -37,11 +37,11 @@ Specify → Constrain → [Gate1] → Orchestrate → Prove → Verify → [Gate
 | Cycle | REQ | Status | Gate |
 |-------|-----|--------|------|
 | C1–C2 | 0001..0008 | closed (frozen) | ✓ |
-| C3–C6 | 0009..0033 | verify/shipped | GATE-0005..0012 pending |
+| C3–C7 | 0009..0037 | verify/shipped | GATE-0005..0014 pending |
 | C4 ext | 0016..0018 | billing lifecycle/dialog/issuer/PDF | GATE-0007/0008 |
-| **C7** | **0034..0037** | **verify PASS** | GATE-0013/0014 pending |
+| **C8/C8.1/C9** | **0038..0045** | **verify PASS** | gate TBD |
 
-**Baseline:** **863** tests · **166** files · HEAD `99f13b8`
+**Baseline:** **863** tests · **166** files · HEAD `bc97070` · verified 2026-06-10
 
 ## 6. Halt if
 

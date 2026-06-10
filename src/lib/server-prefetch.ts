@@ -1559,3 +1559,187 @@ export async function prefetchAdminPortal(): Promise<AdminPortalData | null> {
     return null;
   }
 }
+
+/** Mirrors GET /api/appointment-types/admin-all — seeds queryKeys.appointmentTypes.all. */
+export async function prefetchAdminAllAppointmentTypes(): Promise<{
+  globalTypes: Array<{
+    id: string;
+    user_id: string | null;
+    name: string;
+    description: string | null;
+    duration_minutes: number;
+    slot_interval_minutes: number;
+    price_cents: number;
+    is_active: boolean;
+    is_telehealth: boolean;
+    color: string | null;
+    icon: string | null;
+    created_at: string;
+    owner_display_name: string | null;
+    owner_email: string | null;
+  }>;
+  customTypes: Array<{
+    id: string;
+    user_id: string | null;
+    name: string;
+    description: string | null;
+    duration_minutes: number;
+    slot_interval_minutes: number;
+    price_cents: number;
+    is_active: boolean;
+    is_telehealth: boolean;
+    color: string | null;
+    icon: string | null;
+    created_at: string;
+    owner_display_name: string | null;
+    owner_email: string | null;
+  }>;
+} | null> {
+  try {
+    const [globalRows, customRows] = await Promise.all([
+      prisma.appointmentType.findMany({
+        where: { user_id: null },
+        orderBy: { name: "asc" },
+        select: {
+          id: true,
+          user_id: true,
+          name: true,
+          description: true,
+          duration_minutes: true,
+          slot_interval_minutes: true,
+          price_cents: true,
+          is_active: true,
+          is_telehealth: true,
+          color: true,
+          icon: true,
+          created_at: true,
+        },
+      }),
+      prisma.appointmentType.findMany({
+        where: { user_id: { not: null } },
+        orderBy: [{ user: { display_name: "asc" } }, { name: "asc" }],
+        select: {
+          id: true,
+          user_id: true,
+          name: true,
+          description: true,
+          duration_minutes: true,
+          slot_interval_minutes: true,
+          price_cents: true,
+          is_active: true,
+          is_telehealth: true,
+          color: true,
+          icon: true,
+          created_at: true,
+          user: { select: { display_name: true, email: true } },
+        },
+      }),
+    ]);
+
+    const globalTypes = globalRows.map((r) => ({
+      ...r,
+      created_at: r.created_at.toISOString(),
+      owner_display_name: null,
+      owner_email: null,
+    }));
+
+    const customTypes = customRows.map((r) => ({
+      id: r.id,
+      user_id: r.user_id,
+      name: r.name,
+      description: r.description,
+      duration_minutes: r.duration_minutes,
+      slot_interval_minutes: r.slot_interval_minutes,
+      price_cents: r.price_cents,
+      is_active: r.is_active,
+      is_telehealth: r.is_telehealth,
+      color: r.color,
+      icon: r.icon,
+      created_at: r.created_at.toISOString(),
+      owner_display_name: r.user?.display_name ?? null,
+      owner_email: r.user?.email ?? null,
+    }));
+
+    return { globalTypes, customTypes };
+  } catch {
+    return null;
+  }
+}
+
+/** Mirrors GET /api/invitations — both invitation lists for SSR seeding. */
+export async function prefetchInvitationsForUser(
+  userId: string,
+  email: string
+): Promise<{
+  appointmentInvitations: Array<Record<string, unknown>>;
+  dashboardInvitations: Array<Record<string, unknown>>;
+} | null> {
+  try {
+    const [appointmentAssignees, dashboardInvitations] = await Promise.all([
+      prisma.appointmentAssignee.findMany({
+        where: {
+          OR: [{ user_id: userId }, { invited_email: email }, { invited_by_id: userId }],
+        },
+        include: { appointment: { select: { title: true } } },
+        orderBy: { created_at: "desc" },
+        take: 100,
+      }),
+      prisma.dashboardAccess.findMany({
+        where: {
+          OR: [
+            { invited_user_id: userId },
+            { invited_email: email },
+            { invited_by_id: userId },
+          ],
+        },
+        orderBy: { created_at: "desc" },
+      }),
+    ]);
+
+    const appointmentInvitations = appointmentAssignees.map((aa) => ({
+      id: aa.id,
+      created_at: aa.created_at?.toISOString?.(),
+      appointment: aa.appointment_id,
+      user: aa.user_id,
+      user_type: aa.user_type,
+      invited_email: aa.invited_email,
+      status: aa.status,
+      invitation_token: aa.invitation_token,
+      permission: aa.permission,
+      invited_by: aa.invited_by_id,
+      appointment_title: aa.appointment?.title ?? "",
+    }));
+
+    const dashboardInvitationsSerialized = dashboardInvitations.map((d) => ({
+      id: d.id,
+      created_at: d.created_at?.toISOString?.(),
+      owner_user_id: d.owner_user_id,
+      invited_user_id: d.invited_user_id,
+      invited_email: d.invited_email,
+      status: d.status,
+      invitation_token: d.invitation_token,
+      permission: d.permission,
+      invited_by: d.invited_by_id,
+    }));
+
+    return { appointmentInvitations, dashboardInvitations: dashboardInvitationsSerialized };
+  } catch {
+    return null;
+  }
+}
+
+/** Token presence only — avoids Google API latency on SSR; client refetches events later. */
+export async function prefetchGoogleCalendarStatus(
+  userId: string
+): Promise<{ connected: boolean; events: unknown[] } | null> {
+  try {
+    const tokenRecord = await prisma.googleCalendarToken.findUnique({
+      where: { user_id: userId },
+      select: { user_id: true },
+    });
+    return { connected: Boolean(tokenRecord), events: [] };
+  } catch {
+    return null;
+  }
+}
+

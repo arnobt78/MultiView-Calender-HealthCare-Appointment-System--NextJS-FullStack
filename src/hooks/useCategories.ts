@@ -29,13 +29,24 @@ type UseCategorySnapshotQueryOptions = {
   initialData?: CategorySnapshot | null;
 };
 
-export function useCategories() {
+export type UseCategoriesOptions = {
+  /** SSR seed — avoids duplicate fetch on first paint when section already hydrated cache. */
+  categoriesInitialData?: Category[];
+};
+
+export function useCategories(options?: UseCategoriesOptions) {
   const queryClient = useQueryClient();
+
+  const categoriesInitialData =
+    options?.categoriesInitialData ??
+    queryClient.getQueryData<Category[]>(queryKeys.categories.all);
 
   const query = useQuery({
     queryKey: queryKeys.categories.all,
     queryFn: () => fetchCategories(),
+    initialData: categoriesInitialData,
     staleTime: 10 * 60 * 1000,
+    refetchOnMount: categoriesInitialData !== undefined ? false : true,
   });
 
   const createMutation = useMutation({

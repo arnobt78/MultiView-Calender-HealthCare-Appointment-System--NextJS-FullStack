@@ -110,6 +110,7 @@ import { clinicalSnapshotAppointmentsTableMinWidthClass } from "@/lib/clinical-s
 import type { Patient, PatientSnapshot } from "@/types/types";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useCpListBodyLoading } from "@/lib/cp-list-body-loading";
 import { queryKeys } from "@/lib/query-keys";
 
 function FieldLabel({ icon: Icon, children }: { icon: LucideIcon; children: React.ReactNode }) {
@@ -393,18 +394,13 @@ export function PatientDetailScreen({
     };
   }, [snap.data?.appointments]);
   const { deletePatient, isDeleting, isUpdating, updatePatient } = usePatients();
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    // Hydration guard: defer mounted flip to next frame to avoid sync setState-in-effect lint.
-    const raf = window.requestAnimationFrame(() => setIsMounted(true));
-    return () => window.cancelAnimationFrame(raf);
-  }, []);
+  const detailQueryKey = queryKeys.patients.detail(patientId);
+  const detailBodyLoading = useCpListBodyLoading(detailQueryKey, isLoading);
 
   const hasPatient = Boolean(patient);
   /** Data slots only — footer/header actions stay mounted (SSR `initialData` + cache). */
-  const showBodySkeleton = !hasPatient && (isLoading || !isMounted);
-  const showLiveBody = hasPatient && (isMounted || initialPatient != null);
+  const showBodySkeleton = !hasPatient && detailBodyLoading;
+  const showLiveBody = hasPatient;
   const p = patient as Patient | undefined;
   const footerActionsDisabled = !hasPatient || isDeleting || isUpdating;
 

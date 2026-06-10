@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, Mail, Pencil, Save, UserRound, X } from "lucide-react";
+import { ImageIcon, Loader2, Mail, Pencil, Save, UserPlus, UserRound, X } from "lucide-react";
 import {
   Dialog,
   DialogClose,
@@ -10,11 +10,16 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { AdminUserDialogFieldLabel } from "@/components/control-panel/admin-user-dialog/AdminUserDialogFieldLabel";
 import type { AdminUserFormValues } from "@/lib/admin-user-form-state";
-import { adminUserDialogShellClass } from "@/lib/admin-user-detail-ui-classes";
+import {
+  adminUserDialogGlassBackButtonClass,
+  adminUserDialogGlassInputClass,
+  adminUserDialogShellClass,
+} from "@/lib/admin-user-detail-ui-classes";
 import { CpDevStubSubmitNote } from "@/components/shared/control-panel/CpDevStubSubmitNote";
 import type { CpDevStubCopy } from "@/lib/cp-dev-stub-copy";
-import { cn } from "@/lib/utils";
+import { cn, toTitleCaseLabel } from "@/lib/utils";
 
 type AdminUserFormDialogProps = {
   open: boolean;
@@ -28,7 +33,7 @@ type AdminUserFormDialogProps = {
   devStub?: CpDevStubCopy;
 };
 
-/** Edit admin account — slate glass shell; role locked to admin. */
+/** Edit admin account — slate glass shell aligned with patient form dialog chrome. */
 export function AdminUserFormDialog({
   open,
   onOpenChange,
@@ -41,65 +46,84 @@ export function AdminUserFormDialog({
   devStub,
 }: AdminUserFormDialogProps) {
   const isCreate = mode === "create";
-  const canSubmit = !isSubmitting && !devStub;
+  const HeaderIcon = isCreate ? UserPlus : Pencil;
+  const SubmitIcon = isCreate ? UserPlus : Save;
+  const canSubmit = Boolean(form.display_name.trim()) && !isSubmitting && !devStub;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent showCloseButton={false} className={adminUserDialogShellClass}>
-        <div className="flex items-start justify-between gap-3 border-b border-slate-200/70 px-6 py-4">
-          <div className="min-w-0 space-y-1">
-            <DialogTitle className="flex items-center gap-2 text-lg font-semibold text-gray-800">
-              <Pencil className="h-4 w-4 text-slate-600" aria-hidden />
-              {isCreate ? "Add Admin Account" : "Update Admin Profile"}
-            </DialogTitle>
-            <DialogDescription className="text-sm text-muted-foreground">
-              {devStub
-                ? devStub.note
-                : "Display name and avatar URL. Role remains admin."}
-            </DialogDescription>
+        <div className="shrink-0 bg-white pt-6 text-gray-700">
+          <div className="px-6">
+            <div className="flex items-start gap-2">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-slate-200/70 bg-slate-50 text-slate-700">
+                <HeaderIcon className="h-5 w-5" aria-hidden />
+              </span>
+              <div className="min-w-0">
+                <DialogTitle className="text-left text-lg font-semibold text-gray-700">
+                  {isCreate
+                    ? toTitleCaseLabel("Add Admin Account")
+                    : toTitleCaseLabel("Update Admin Profile")}
+                </DialogTitle>
+                <DialogDescription className="text-left text-sm text-muted-foreground">
+                  {devStub
+                    ? devStub.note
+                    : toTitleCaseLabel(
+                        "Display name and avatar URL. Role remains admin for B2B accounts."
+                      )}
+                </DialogDescription>
+              </div>
+              <DialogClose asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="ml-auto h-8 w-8 shrink-0 rounded-full text-muted-foreground hover:bg-slate-100 hover:text-slate-800"
+                >
+                  <X className="h-4 w-4" aria-hidden />
+                  <span className="sr-only">Close</span>
+                </Button>
+              </DialogClose>
+            </div>
           </div>
-          <DialogClose asChild>
-            <Button type="button" variant="ghost" size="icon" className="shrink-0">
-              <X className="h-4 w-4" />
-              <span className="sr-only">Close</span>
-            </Button>
-          </DialogClose>
+          <div className="mx-6 mt-4 border-b border-slate-200/60" />
         </div>
 
-        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-4">
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-gray-600" htmlFor="admin-user-email">
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-4 text-gray-700">
+          <div className="space-y-2">
+            <AdminUserDialogFieldLabel htmlFor="admin-user-email" icon={Mail}>
               Email
-            </label>
-            <div className="relative">
-              <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input id="admin-user-email" value={readOnlyEmail} readOnly className="pl-9 bg-slate-50/80" />
-            </div>
+            </AdminUserDialogFieldLabel>
+            <Input
+              id="admin-user-email"
+              value={readOnlyEmail}
+              readOnly
+              className={cn(adminUserDialogGlassInputClass, "opacity-80")}
+            />
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-gray-600" htmlFor="admin-user-display-name">
+          <div className="space-y-2">
+            <AdminUserDialogFieldLabel htmlFor="admin-user-display-name" icon={UserRound} required>
               Display Name
-            </label>
-            <div className="relative">
-              <UserRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                id="admin-user-display-name"
-                value={form.display_name}
-                onChange={(e) => onFormChange({ display_name: e.target.value })}
-                className="pl-9"
-                placeholder="Full name"
-              />
-            </div>
+            </AdminUserDialogFieldLabel>
+            <Input
+              id="admin-user-display-name"
+              value={form.display_name}
+              onChange={(e) => onFormChange({ display_name: e.target.value })}
+              className={adminUserDialogGlassInputClass}
+              placeholder="Full name"
+            />
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-gray-600" htmlFor="admin-user-image">
+          <div className="space-y-2">
+            <AdminUserDialogFieldLabel htmlFor="admin-user-image" icon={ImageIcon}>
               Image URL
-            </label>
+            </AdminUserDialogFieldLabel>
             <Input
               id="admin-user-image"
               value={form.image}
               onChange={(e) => onFormChange({ image: e.target.value })}
+              className={adminUserDialogGlassInputClass}
               placeholder="/users/img-1.avif or https://…"
             />
           </div>
@@ -107,27 +131,34 @@ export function AdminUserFormDialog({
 
         <div className="flex shrink-0 flex-col gap-3 border-t border-slate-200/70 bg-slate-50/40 px-6 py-3">
           {devStub ? <CpDevStubSubmitNote stub={devStub} /> : null}
-          <div className="flex justify-end gap-2">
-            <DialogClose asChild>
-              <Button type="button" variant="ghost">
-                Cancel
-              </Button>
-            </DialogClose>
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              className={cn(adminUserDialogGlassBackButtonClass, "cursor-pointer rounded-full")}
+              onClick={() => onOpenChange(false)}
+              disabled={isSubmitting}
+            >
+              <X className="size-4 shrink-0" aria-hidden />
+              {toTitleCaseLabel("Cancel")}
+            </Button>
             <Button
               type="button"
               onClick={onSubmit}
               disabled={!canSubmit}
-              className={cn("gap-2 bg-slate-700 hover:bg-slate-800 text-white disabled:opacity-50")}
+              className={cn(
+                "gap-2 rounded-full bg-slate-700 text-white hover:bg-slate-800 disabled:opacity-50"
+              )}
             >
               {isSubmitting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                  Saving…
+                  {toTitleCaseLabel(isCreate ? "Creating…" : "Saving…")}
                 </>
               ) : (
                 <>
-                  <Save className="h-4 w-4" aria-hidden />
-                  {isCreate ? "Create Admin" : "Save Changes"}
+                  <SubmitIcon className="h-4 w-4 shrink-0" aria-hidden />
+                  {toTitleCaseLabel(isCreate ? "Create Admin" : "Save Changes")}
                 </>
               )}
             </Button>

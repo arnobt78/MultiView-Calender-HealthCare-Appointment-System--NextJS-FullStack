@@ -28,15 +28,19 @@ interface InvitationsResponse {
 
 export function useInvitations(type: "appointment" | "dashboard") {
   const queryClient = useQueryClient();
+  const invitationsKey = queryKeys.invitations.byType(type);
+  const invitationsInitialData = queryClient.getQueryData<Invitation[]>(invitationsKey);
 
   const query = useQuery({
-    queryKey: queryKeys.invitations.byType(type),
+    queryKey: invitationsKey,
     queryFn: async () => {
       const response = await apiClient<InvitationsResponse>("/api/invitations");
       return (type === "appointment" 
         ? response.appointmentInvitations 
         : response.dashboardInvitations) || [];
     },
+    initialData: invitationsInitialData,
+    refetchOnMount: invitationsInitialData !== undefined ? false : true,
     // Invitations change only on explicit send/discard mutations; 30 s prevents
     // redundant fetches on rapid tab switches or re-mounts.
     staleTime: 30_000,

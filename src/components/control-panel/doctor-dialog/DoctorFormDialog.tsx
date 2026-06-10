@@ -11,6 +11,7 @@ import {
   Phone,
   Save,
   Stethoscope,
+  UserPlus,
   UserRound,
   X,
 } from "lucide-react";
@@ -73,6 +74,7 @@ export function DoctorFormDialog({
 }: DoctorFormDialogProps) {
   const canSubmit = Boolean(form.display_name.trim()) && !isSubmitting && !devStub;
   const isCreate = mode === "create";
+  const HeaderIcon = isCreate ? UserPlus : Pencil;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -81,7 +83,7 @@ export function DoctorFormDialog({
           <div className="px-6">
             <div className="flex items-start gap-2">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-emerald-200/70 bg-emerald-50 text-emerald-700">
-                <Pencil className="h-5 w-5" aria-hidden />
+                <HeaderIcon className="h-5 w-5" aria-hidden />
               </span>
               <div className="min-w-0">
                 <DialogTitle className="text-left text-lg font-semibold text-gray-700">
@@ -264,23 +266,37 @@ export function DoctorFormDialog({
         <div className="shrink-0 border-t border-emerald-200/60 bg-emerald-50/40 px-6 py-4 space-y-3">
           {devStub ? <CpDevStubSubmitNote stub={devStub} /> : null}
           <div className="flex flex-wrap justify-end gap-2">
-            <DialogClose asChild>
-              <Button type="button" variant="ghost" className={doctorDialogGlassBackButtonClass}>
-                Cancel
-              </Button>
-            </DialogClose>
+            <Button
+              type="button"
+              variant="ghost"
+              className={cn(doctorDialogGlassBackButtonClass, "cursor-pointer rounded-full")}
+              onClick={() => onOpenChange(false)}
+              disabled={isSubmitting}
+            >
+              <X className="size-4 shrink-0" aria-hidden />
+              {toTitleCaseLabel("Cancel")}
+            </Button>
             <Button
               type="button"
               disabled={!canSubmit}
-              className={emeraldGlassPrimaryButtonClass}
+              className={cn(emeraldGlassPrimaryButtonClass, "cursor-pointer rounded-full")}
               onClick={onSubmit}
             >
               {isSubmitting ? (
-                <Loader2 className="animate-spin" aria-hidden />
+                <>
+                  <Loader2 className="size-4 shrink-0 animate-spin" aria-hidden />
+                  {toTitleCaseLabel(isCreate ? "Creating…" : "Saving…")}
+                </>
               ) : (
-                <Save className="shrink-0" aria-hidden />
+                <>
+                  {isCreate ? (
+                    <UserPlus className="size-4 shrink-0" aria-hidden />
+                  ) : (
+                    <Save className="size-4 shrink-0" aria-hidden />
+                  )}
+                  {toTitleCaseLabel(isCreate ? "Create Doctor" : "Update Profile")}
+                </>
               )}
-              {isCreate ? "Create Doctor" : "Update Profile"}
             </Button>
           </div>
         </div>

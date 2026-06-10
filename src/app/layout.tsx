@@ -125,6 +125,7 @@ export const metadata: Metadata = {
 import AuthShell from "./AuthShell";
 import { getSessionUser } from "@/lib/session";
 import { getUserRole } from "@/lib/rbac";
+import { getUserById } from "@/lib/auth";
 
 /**
  * Force all routes to render dynamically (no static pre-rendering).
@@ -155,6 +156,17 @@ export const dynamic = "force-dynamic";
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const session = await getSessionUser();
   const initialNavRole = session ? await getUserRole(session.userId) : null;
+  const dbUser = session ? await getUserById(session.userId) : null;
+  const initialNavUser = dbUser
+    ? {
+        id: dbUser.id,
+        email: dbUser.email,
+        display_name: dbUser.display_name ?? undefined,
+        role: dbUser.role ?? undefined,
+        email_verified: dbUser.email_verified,
+        image: dbUser.image ?? null,
+      }
+    : null;
 
   return (
     /*
@@ -178,7 +190,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <meta name="theme-color" content="#0f172a" />
       </head>
       <body suppressHydrationWarning>
-        <AuthShell initialNavRole={initialNavRole}>{children}</AuthShell>
+        <AuthShell initialNavRole={initialNavRole} initialNavUser={initialNavUser}>
+          {children}
+        </AuthShell>
       </body>
     </html>
   );

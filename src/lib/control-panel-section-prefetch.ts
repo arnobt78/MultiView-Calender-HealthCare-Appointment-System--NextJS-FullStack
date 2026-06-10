@@ -6,7 +6,7 @@
  *   patients          → queryKeys.patients.all
  *   categories        → queryKeys.categories.all
  *   organizations     → queryKeys.organizations.all
- *   visit_types_global→ queryKeys.appointmentTypes.global
+ *   visit_types_global→ queryKeys.appointmentTypes.all (admin-all shape)
  *   invoices          → queryKeys.invoices.all
  *   notifications     → queryKeys.notifications.all
  *   appointments_mgmt / telehealth → appointments.all + categories/patients/assignees/dashboardAccess.accepted
@@ -20,11 +20,12 @@ import type { Invoice } from "@/hooks/usePayments";
 import type { Category, Patient, AppointmentAssignee } from "@/types/types";
 import type { DashboardAccessRow } from "@/lib/query-fetchers";
 import type { GlobalAppointmentType, NotificationsPrefetch } from "@/lib/server-prefetch";
+import type { AdminAllTypeRow } from "@/hooks/useAppointmentTypes";
 import {
   prefetchCategories,
   prefetchDashboardOverview,
   prefetchDashboardAccessAccepted,
-  prefetchGlobalAppointmentTypes,
+  prefetchAdminAllAppointmentTypes,
   prefetchOrganizations,
   prefetchPatients,
   prefetchInvoices,
@@ -32,7 +33,12 @@ import {
   prefetchNotifications,
   prefetchCalendarAppointmentsBundle,
   prefetchDoctors,
+  prefetchUsersList,
+  prefetchInvitationsForUser,
+  prefetchGoogleCalendarStatus,
 } from "@/lib/server-prefetch";
+import { CP_ADMIN_USERS_FILTERS } from "@/lib/control-panel-users-filters";
+import type { UsersListResponse } from "@/hooks/useUsers";
 import { prefetchOrgBillingInvoicesByOrgIds } from "@/lib/org-billing-prefetch";
 import type { OrgBillingCachePayload } from "@/lib/org-billing-prefetch";
 
@@ -43,6 +49,14 @@ export type ControlPanelSectionPrefetchPayload = {
   categories?: Category[] | null;
   organizations?: Organization[] | null;
   globalAppointmentTypes?: GlobalAppointmentType[] | null;
+  /** Admin-all shape for visit_types_global tab — seeds queryKeys.appointmentTypes.all. */
+  adminAllAppointmentTypes?: {
+    globalTypes: AdminAllTypeRow[];
+    customTypes: AdminAllTypeRow[];
+  } | null;
+  appointmentInvitations?: import("@/hooks/useInvitations").Invitation[] | null;
+  dashboardInvitations?: import("@/hooks/useInvitations").Invitation[] | null;
+  googleCalendarStatus?: { connected: boolean; events: unknown[] } | null;
   invoices?: Invoice[] | null;
   /** Default visit picker for Create Invoice dialog (empty search, eligible visits only). */
   billingAppointmentOptions?: { options: import("@/lib/billing-types").InvoiceAppointmentOptionRow[] } | null;
@@ -52,6 +66,8 @@ export type ControlPanelSectionPrefetchPayload = {
   dashboardAccessAccepted?: DashboardAccessRow[] | null;
   /** Doctor directory — seeds queryKeys.doctors.all on doctor-management tab. */
   doctorsDirectory?: { doctors: import("@/lib/server-prefetch").DoctorPrefetchRow[] } | null;
+  /** Admin roster — seeds useUsers(CP_ADMIN_USERS_FILTERS) on user-admin-management tab. */
+  adminUsers?: UsersListResponse | null;
   /** Every org on CP org tab — seeds `queryKeys.invoices.byOrganization(id)`. */
   orgBillingInvoicesByOrgId?: Record<string, OrgBillingCachePayload>;
 };
@@ -87,7 +103,7 @@ export async function prefetchControlPanelSection(
       return { organizations, orgBillingInvoicesByOrgId };
     }
     case "visit_types_global":
-      return { globalAppointmentTypes: await prefetchGlobalAppointmentTypes() };
+      return { adminAllAppointmentTypes: await prefetchAdminAllAppointmentTypes() };
     case "invoices": {
       const [invoices, billingAppointmentOptions] = await Promise.all([
         prefetchInvoices(userId, role, email),
@@ -95,18 +111,33 @@ export async function prefetchControlPanelSection(
       ]);
       return { invoices, billingAppointmentOptions };
     }
-    case "appointment":
     case "appointments_mgmt":
     case "telehealth":
       return prefetchCalendarAppointmentsBundle(userId, email);
-    case "dashboard":
+    case "appointment": {
+      const bundle = await prefetchInvitationsForUser(userId, email);
       return {
-        dashboardAccessAccepted: await prefetchDashboardAccessAccepted(userId, email),
+        appointmentInvitations: (bundle?.appointmentInvitations ??
+          []) as import("@/hooks/useInvitations").Invitation[],
       };
+    }
+    case "dashboard": {
+      const access = await prefetchDashboardAccessAccepted(userId, email);
+      const bundle = await prefetchInvitationsForUser(userId, email);
+      return {
+        dashboardAccessAccepted: access,
+        dashboardInvitations: (bundle?.dashboardInvitations ??
+          []) as import("@/hooks/useInvitations").Invitation[],
+      };
+    }
     case "notifications":
       return { notifications: await prefetchNotifications(userId) };
     case "doctors":
       return { doctorsDirectory: await prefetchDoctors() };
+    case "users_admin":
+      return { adminUsers: await prefetchUsersList(CP_ADMIN_USERS_FILTERS) };
+    case "google-calendar":
+      return { googleCalendarStatus: await prefetchGoogleCalendarStatus(userId) };
     default:
       return {};
   }

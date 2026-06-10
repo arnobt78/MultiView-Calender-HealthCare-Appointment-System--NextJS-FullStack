@@ -106,12 +106,14 @@ import {
 } from "@/lib/navbar-ui-classes";
 import { useAppNavbarHeightSync } from "@/hooks/useAppNavbarHeightSync";
 import { cn } from "@/lib/utils";
+import { getDoctorAvatarSrc } from "@/lib/doctor-avatar";
 import { APP_NAVBAR_INNER_ROW_CLASS, Z_NAVBAR } from "@/lib/portal-z-index";
 
 export default function Navbar() {
   const { logout, isLoggingOut } = useAuth();
   const {
     effectiveUser: user,
+    avatarLoading,
     showStaffNavLinks,
     showPatientPortalNavLink,
     showAdminPortalLink,
@@ -127,10 +129,11 @@ export default function Navbar() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const readCount = Math.max(total - unreadCount, 0);
 
-  // Avatar: use profile image, else Robohash by email (when user exists)
+  // Avatar: profile image first; robohash only when real user id + email exist.
   const avatarSrc =
-    user?.image ||
-    (user ? `https://robohash.org/${encodeURIComponent(user.email)}.png?set=set1` : "");
+    user?.id && user.email
+      ? getDoctorAvatarSrc({ id: user.id, email: user.email, image: user.image })
+      : undefined;
   const initials = user?.email
     ? user.email.substring(0, 2).toUpperCase()
     : "U";
@@ -485,21 +488,20 @@ export default function Navbar() {
                 type="button"
                 className="h-10 w-10 overflow-hidden rounded-full bg-white ring-1 ring-slate-200 shadow-sm transition-opacity hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer"
                 aria-label="Account menu"
-                disabled={!user}
+                disabled={avatarLoading || !user?.id}
               >
-                {user ? (
-                  // Shared avatar with safe-image fallback so profile photos stay resilient.
+                {avatarLoading || !user?.id ? (
+                  <div className="h-10 w-10 rounded-full bg-gray-200/90 animate-pulse" />
+                ) : (
                   <UserAvatar
                     src={avatarSrc}
                     fallbackText={initials}
                     sizeClassName="h-10 w-10"
                   />
-                ) : (
-                  <div className="h-10 w-10 rounded-full bg-gray-200/90 animate-pulse" />
                 )}
               </button>
             </DropdownMenuTrigger>
-            {user && (
+            {user?.id && (
               <DropdownMenuContent align="end" className="w-64">
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col gap-1">

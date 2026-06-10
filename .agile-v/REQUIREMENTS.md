@@ -1,12 +1,12 @@
 # Requirements — HealthCal Pro
 
-<!-- Revision: C1..C9 | C8.1/C9 shipped | Last updated: 2026-06-09 -->
+<!-- Revision: C1..C10 | C10 active | Last updated: 2026-06-10 -->
 
 ## Document Control
 
 | Field | Value |
 |-------|-------|
-| Cycle | C1–C2 archived · C3–C7 verify+gate pending · **C8/C8.1/C9 shipped** (REQ-0038..0045) |
+| Cycle | C1–C9 shipped · **C10.1 shipped** · **C10.2 active** (REQ-0053) |
 | Author | Requirement Architect |
 | Gate 1 status | C1 GATE-0001 · C2 GATE-0003 approved |
 | Canonical source | this file |
@@ -91,6 +91,112 @@
 | REQ-0043 | approved [C9] | REQ-0042 | ART-0223 | VER-0070 |
 | REQ-0044 | approved [C9] | REQ-0042 | — | VER-0070 |
 | REQ-0045 | approved [C8.1] | REQ-0041 | — | VER-0070 |
+| REQ-0046 | approved [C10] | — | ART-0224..0228 | pending |
+| REQ-0047 | approved [C10] | REQ-0046 | ART-0229..0232 | pending |
+| REQ-0048 | approved [C10] | REQ-0046 | ART-0233..0236 | pending |
+| REQ-0049 | approved [C10] | REQ-0046 | ART-0237..0238 | pending |
+| REQ-0050 | approved [C10.1] | — | ART-0239..0241 | pending |
+| REQ-0051 | approved [C10.1] | REQ-0050 | ART-0242..0245 | pending |
+| REQ-0052 | approved [C10.1] | REQ-0050 | ART-0246..0255 | pending |
+| REQ-0053 | approved [C10.2] | REQ-0050 | ART-0256..0262 | pending |
+
+### REQ-0053 — C10.1 gap closure (hook parity, SSR shells, shell adoption)
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C10.2] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0050 |
+
+**Statement:** Close C10.1 audit gaps — notifications `initialData`, true SSR header action shells, org actions slot parity, comment cleanup, billing/patient detail `useCpListBodyLoading`, EntityListShell for orgs/appointments; sync org billing seed.
+
+### REQ-0050 — Navbar SSR portrait (no robohash flash)
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C10.1] |
+| Priority | P1 |
+| Risk | R1 |
+
+**Statement:** Root layout SSR-seeds `queryKeys.auth.me` before Navbar mounts; avatar skeleton until real user id; no robohash on role-only stub.
+
+### REQ-0051 — CP merged header static action buttons
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C10.1] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0050 |
+
+**Statement:** Header action buttons (Export CSV, Add Patient, Create Invoice, etc.) visible on first paint via sync registry + static shells; no useLayoutEffect pop-in.
+
+### REQ-0052 — Remaining CP tabs zero-flash
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C10.1] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0050 |
+
+**Statement:** Extend sync SSR seeds + `useCpListBodyLoading` to overview, telehealth, invitations, visit types, orgs, appointments, notifications, google-calendar; fix visit-types prefetch key; remove full-page spinners.
+
+### REQ-0046 — CP list SSR zero-flash (entity tabs)
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C10] |
+| Priority | P1 |
+| Risk | R1 |
+
+**Statement:** Patient, category, doctor, and user-admin CP list pages must match invoice-management refresh behavior: sync SSR cache seed before hooks subscribe; no empty-table flash on hard refresh.
+
+**Acceptance criteria:**
+1. Sync `useMemo` seed for patients, categories, doctors directory, admin users (mirror `seedInvoicesListCacheFromSsr`).
+2. Hooks read cache as `initialData` + `refetchOnMount: false` when seeded.
+3. `listBodyLoading` uses `getQueryState()?.data !== undefined`, not `length > 0`.
+4. `users_admin` section prefetch in `control-panel-section-prefetch.ts`.
+5. CRUD invalidation unchanged; 863/863 tests pass.
+
+### REQ-0047 — CP entity list server shell (RSC)
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C10] |
+| Priority | P2 |
+| Risk | R1 |
+| Parent | REQ-0046 |
+
+**Statement:** Extract static list chrome (stats strip frame, toolbar frame, table frame) into `ControlPanelEntityListShell` RSC; client islands hold data + interactions only.
+
+**Acceptance criteria:**
+1. `ControlPanelEntityListShell` with tone variants (sky/violet/emerald/slate).
+2. Patient, category, doctor, user-admin lists adopt shell without deleting existing components.
+3. Sidebar + merged CP header unchanged.
+
+### REQ-0048 — CP entity form UI parity
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C10] |
+| Priority | P2 |
+| Risk | R1 |
+| Parent | REQ-0046 |
+
+**Statement:** Category, doctor, and admin-user dialogs match patient form patterns: mandatory `*` labels, `ClinicalGlassDatePicker`, primary-doctor-style dropdowns where applicable, icon buttons.
+
+### REQ-0049 — CP detail page anti-flash
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C10] |
+| Priority | P2 |
+| Risk | R1 |
+| Parent | REQ-0046 |
+
+**Statement:** Category detail removes `isMounted` gate blocking SSR body; doctor detail skeleton only when no `initialUser`; align with patient/invoice patterns.
 
 ### REQ-0004 — Dashboard/CP SSR prefetch + calendar batch assignee fetch
 

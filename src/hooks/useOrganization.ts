@@ -28,12 +28,16 @@ export interface OrgMember {
 export function useOrganization() {
   const queryClient = useQueryClient();
 
+  const orgsInitialData = queryClient.getQueryData<Organization[]>(queryKeys.organizations.all);
+
   const orgsQuery = useQuery({
     queryKey: queryKeys.organizations.all,
     queryFn: async () => {
       const data = await apiClient<{ organizations: Organization[] }>("/api/organizations");
       return data.organizations || [];
     },
+    initialData: orgsInitialData,
+    refetchOnMount: orgsInitialData !== undefined ? false : true,
     // Org membership changes rarely; 60 s avoids redundant fetches while still
     // picking up mutations via explicit invalidateOrganizations calls.
     staleTime: 60_000,
