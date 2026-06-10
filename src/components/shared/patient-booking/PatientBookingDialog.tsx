@@ -399,7 +399,7 @@ export function PatientBookingDialog({
                 <Button
                   type="button"
                   variant="ghost"
-                  className={cn(skyGlassPrimaryButtonClass, "cursor-pointer")}
+                  className={skyGlassPrimaryButtonClass}
                   onClick={() => handleOpenChange(false)}
                 >
                   Close
@@ -474,7 +474,7 @@ export function PatientBookingDialog({
               <Button
                 type="button"
                 variant="ghost"
-                className={cn(skyGlassBackButtonClass, "cursor-pointer")}
+                className={skyGlassBackButtonClass}
                 onClick={handleBack}
                 disabled={bookMutation.isPending}
               >
@@ -490,7 +490,7 @@ export function PatientBookingDialog({
                 type="button"
                 variant="ghost"
                 disabled={bookMutation.isPending || !canAdvance}
-                className={cn(skyGlassPrimaryButtonClass, "cursor-pointer")}
+                className={skyGlassPrimaryButtonClass}
                 onClick={handleConfirmBooking}
               >
                 {bookMutation.isPending ? (
@@ -510,7 +510,7 @@ export function PatientBookingDialog({
                 type="button"
                 variant="ghost"
                 disabled={!canAdvance}
-                className={cn(skyGlassPrimaryButtonClass, "cursor-pointer")}
+                className={skyGlassPrimaryButtonClass}
                 onClick={handleNext}
               >
                 {primaryLabel}

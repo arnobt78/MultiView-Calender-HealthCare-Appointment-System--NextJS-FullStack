@@ -29,7 +29,7 @@ export const ControlPanelGlassActionButton = React.forwardRef<
     <button
       ref={ref}
       type={type}
-      className={cn(VARIANT[variant], className)}
+      className={cn(VARIANT[variant], "cursor-pointer disabled:cursor-not-allowed", className)}
       {...props}
     />
   );

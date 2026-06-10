@@ -810,7 +810,6 @@ export function PatientDetailScreen({
                 variant="emerald"
                 onClick={openEditDialog}
                 disabled={footerActionsDisabled}
-                className="cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <Pencil className="shrink-0" aria-hidden />
                 Update Profile
@@ -821,7 +820,7 @@ export function PatientDetailScreen({
                     type="button"
                     variant="rose"
                     disabled={footerActionsDisabled}
-                    className="cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+                    className="disabled:opacity-60"
                   >
                     <Trash2 className="shrink-0" aria-hidden />
                     {isDeleting ? "Deleting…" : "Delete"}

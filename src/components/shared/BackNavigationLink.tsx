@@ -16,6 +16,7 @@ function hrefToString(href: LinkProps["href"]): string {
 }
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
+import { cn } from "@/lib/utils";
 import { prefetchQueriesForDetailHref } from "@/lib/prefetch-route-queries";
 import { invalidateQueriesForRoute } from "@/lib/query-client";
 
@@ -32,6 +33,7 @@ export function BackNavigationLink({
   onClick,
   onMouseEnter,
   onFocus,
+  className,
   ...rest
 }: BackNavigationLinkProps) {
   const queryClient = useQueryClient();
@@ -42,6 +44,7 @@ export function BackNavigationLink({
     <Link
       href={href}
       prefetch
+      className={cn("cursor-pointer", className)}
       onMouseEnter={(e) => {
         prefetchQueriesForDetailHref(queryClient, hrefStr);
         onMouseEnter?.(e);

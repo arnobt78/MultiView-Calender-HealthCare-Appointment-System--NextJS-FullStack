@@ -24,8 +24,8 @@ export function EntityTitleLink({
       className={cn(
         // No horizontal/vertical padding so stacked email lines in tables align with the name link.
         wrapLabel
-          ? "inline max-w-full min-w-0 rounded-md text-sky-700 no-underline transition-colors hover:bg-sky-50/60 hover:text-sky-800"
-          : "inline-flex max-w-full min-w-0 items-center rounded-md text-sky-700 no-underline transition-colors hover:bg-sky-50/60 hover:text-sky-800",
+          ? "inline max-w-full min-w-0 cursor-pointer rounded-md text-sky-700 no-underline transition-colors hover:bg-sky-50/60 hover:text-sky-800"
+          : "inline-flex max-w-full min-w-0 cursor-pointer items-center rounded-md text-sky-700 no-underline transition-colors hover:bg-sky-50/60 hover:text-sky-800",
         className
       )}
     >

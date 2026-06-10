@@ -9,6 +9,7 @@ import {
   emeraldGlassTableFrameClass,
 } from "@/lib/doctor-management-toolbar-classes";
 import { skyGlassTableFrameClass } from "@/lib/calendar-header-action-styles";
+import { violetGlassTableFrameClass } from "@/lib/violet-glass-table-frame";
 import { clinicalListStatsStripClass } from "@/lib/clinical-list-filter-toolbar-classes";
 
 export type CpEntityListTone = "sky" | "violet" | "emerald" | "slate" | "amber" | "indigo";
@@ -20,7 +21,7 @@ export const slateGlassTableFrameClass =
 /** Glass table frame per entity list tone. */
 export const cpEntityListTableFrameClass: Record<CpEntityListTone, string> = {
   sky: skyGlassTableFrameClass,
-  violet: skyGlassTableFrameClass,
+  violet: violetGlassTableFrameClass,
   emerald: emeraldGlassTableFrameClass,
   slate: slateGlassTableFrameClass,
   amber: amberGlassTableFrameClass,

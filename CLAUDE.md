@@ -4,10 +4,11 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-10)
 
-- **C15 detail spacing (REQ-0061):** `EntityDetailPageShell` — header flush; body `space-y-3`; org members `ClinicalDataTable`; org list SSR seed on detail route.
-- **C14 entity detail parity (REQ-0060):** `EntityDetailBackLink` + `EntityDetailFooterRow`; no header `border-b`; tone glass backs (emerald/slate/indigo/violet); appointment single footer; org detail refactor.
-- **C13 chrome nav fix:** provider `key={tab}`; deleted legacy sync store.
-- **Verify:** **916/916** · tsc · lint · build PASS.
+- **C17 (REQ-0063):** `cpClinicalList*ColumnShellClass` tokens; admin Joined/Actions fixed (`min-w-[1080px]`); glass `cursor-pointer` global; VideoCall `triggerClassName` + `skyGlassBackButtonClass` on appointment detail.
+- **C16 (REQ-0062):** user-admin violet glass; Phone column; `EntityEmailVerificationBadge`; `violetGlassTableFrameClass`.
+- **C15–C14:** `EntityDetailPageShell` spacing; `EntityDetailBackLink`/`FooterRow`; tone glass backs.
+- **Verify:** **930/930** · tsc · lint · build PASS.
+
 ## Never / Always
 
 **Never:** hardcode query keys; skip invalidation; `<a href>` internal; shadcn Checkbox; `user` on `UserAvatar`; extra impl `.md`.
@@ -27,18 +28,17 @@ Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Key paths
 
-- Entity detail: `EntityDetailPageShell.tsx`, `EntityDetailBackLink.tsx`, `EntityDetailFooterRow.tsx`, `section-page-layout.ts`
-- Org detail: `OrganizationDetailScreen.tsx`, `organization-detail-members-columns.tsx`, `organization-detail-ui-classes.ts`
-- Phone: `phone-validation.ts`, `patient-form-clinical.ts`, `PatientFormDialog`, `reminder-recipient-phone.ts`
-- Cancel: `appointment-cancel-access.ts`, `appointment-id-write.ts`, `appointment-notify.ts`, `AppointmentActionsMenu`
-- Status UI: `appointment-status-display.ts`, `AppointmentStatusGlassBadge`
-- Cron SMS: `brevo-sms.ts`, `cron/reminders/route.ts`
-- DP billing: `DoctorPortalInvoiceListRow`, `InvoiceStatusCountInlineRow`, `invoice-list-meta-status-dates.ts`
+- Entity detail: `EntityDetailPageShell.tsx`, `EntityDetailBackLink.tsx`, `EntityDetailFooterRow.tsx`
+- CP list columns: `cp-clinical-list-table-classes.ts`, `UserManagement.tsx`, `PatientManagement.tsx`
+- Admin user: `admin-user-detail-ui-classes.ts`, `EntityEmailVerificationBadge.tsx`, `violet-glass-table-frame.ts`
+- Glass actions: `calendar-header-action-styles.ts`, `ControlPanelGlassActionButton.tsx`
+- Phone: `phone-validation.ts`, `patient-form-clinical.ts`, `PatientFormDialog`
+- Cancel: `appointment-cancel-access.ts`, `AppointmentActionsMenu`
 - Invoice: `InvoiceDetailLiveBody`, `invoice-dialog/`
 
 ## Agile V
 
-Infinity Loop every prompt: `.agile-v/ACTIVATION.md` · `STATE.md` · `SKILLS.md` (24). **C15** (REQ-0061); **916/916**.
+Infinity Loop: `.agile-v/ACTIVATION.md` · `STATE.md` · `SKILLS.md`. **C17 shipped** (REQ-0063); **930/930**.
 
 ## Principle
 

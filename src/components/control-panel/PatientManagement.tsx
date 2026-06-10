@@ -20,6 +20,11 @@ import {
   emeraldGlassPrimaryButtonClass,
   violetGlassImportButtonClass,
 } from "@/lib/calendar-header-action-styles";
+import {
+  cpClinicalListTableFrameClassName,
+  cpClinicalListJoinedColumnShellClass,
+  cpClinicalListActionsColumnShellClass,
+} from "@/lib/cp-clinical-list-table-classes";
 import { resolveAppSectionRootClass } from "@/lib/section-page-layout";
 import { AppSectionErrorBanner } from "@/components/shared/AppSectionErrorBanner";
 import { ClinicalListFilterToolbar } from "@/components/shared/filters/ClinicalListFilterToolbar";
@@ -482,7 +487,7 @@ export function PatientManagementInner({
     {
       accessorKey: "created_at",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Created" />,
-      meta: { shellClassName: "w-[13.5%] min-w-[9rem] whitespace-nowrap" },
+      meta: { shellClassName: cpClinicalListJoinedColumnShellClass },
       cell: ({ row }) =>
         row.original.created_at ? (
           <div className="flex min-h-[2.75rem] items-center">
@@ -502,7 +507,7 @@ export function PatientManagementInner({
         <DataTableColumnHeader column={column} title="Actions" className="text-right" />
       ),
       enableSorting: false,
-      meta: { shellClassName: "w-[8%] min-w-[4.75rem] whitespace-nowrap text-right" },
+      meta: { shellClassName: cpClinicalListActionsColumnShellClass },
       cell: ({ row }) => (
         <div className="flex min-h-[2.75rem] items-center justify-end">
           <PatientActions
@@ -713,7 +718,7 @@ export function PatientManagementInner({
               : "No patients yet. Add one to get started."
           }
           tableClassName="min-w-[1080px] w-full"
-          tableFrameClassName="min-w-0 max-w-full border-0 bg-transparent shadow-none rounded-none"
+          tableFrameClassName={cpClinicalListTableFrameClassName}
         />
         }
         footerSlot={

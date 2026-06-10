@@ -6,7 +6,7 @@
 
 | Field | Value |
 |-------|-------|
-| Cycle | C1–C9 shipped · **C10–C14 shipped** · **C15 active** (REQ-0061) |
+| Cycle | C1–C9 shipped · **C10–C16 shipped** · **C17 active** (REQ-0063) |
 | Author | Requirement Architect |
 | Gate 1 status | C1 GATE-0001 · C2 GATE-0003 approved |
 | Canonical source | this file |
@@ -106,6 +106,44 @@
 | REQ-0059 | approved [C13] | REQ-0057 | ART-0287..0292 | pending |
 | REQ-0060 | approved [C14] | REQ-0059 | ART-0293..0300 | pending |
 | REQ-0061 | approved [C15] | REQ-0060 | ART-0301..0304 | pending |
+| REQ-0062 | approved [C16] | REQ-0059 | ART-0305..0309 | pending |
+| REQ-0063 | approved [C17] | REQ-0062 | ART-0310..0313 | pending |
+
+### REQ-0063 — C17 admin table columns + detail footer interactives
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C17] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0062 |
+
+**Statement:** Fix admin list Joined/Actions column truncation after Phone column; global cursor-pointer on glass footer/back controls; VideoCall h-10 parity on appointment detail.
+
+**Acceptance criteria:**
+1. Admin Joined + Actions columns use patient-management width contract (no `w-[1%]` crush).
+2. Glass footer/back buttons include `cursor-pointer`; disabled shows `cursor-not-allowed`.
+3. VideoCall trigger matches h-10 glass footer row on appointment detail.
+4. SSR/invalidation unchanged.
+5. Verify PASS.
+
+### REQ-0062 — C16 user-admin violet glass + table/badge parity
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C16] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0059 |
+
+**Statement:** User-admin-management list, detail, and dialog use full violet glass chrome; admin list table matches patient-management shell contract with Phone column; shared Verified badge with icons and height parity.
+
+**Acceptance criteria:**
+1. List, detail card, dialog use violet glass shadows (no slate/zinc frames on admin user surfaces).
+2. Admin list uses shared CP clinical list table frame + Phone column; search includes phone.
+3. `EntityEmailVerificationBadge` with icons on detail + dialog; height matches Active/Admin badges.
+4. SSR/invalidation unchanged; `dynamic = "force-dynamic"` preserved.
+5. Verify: `npm test && npx tsc --noEmit && npm run lint && npm run build`.
 
 ### REQ-0061 — C15 entity detail spacing + C14 gap closure
 

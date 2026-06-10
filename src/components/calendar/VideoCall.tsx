@@ -17,6 +17,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Video, Maximize2, Minimize2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface VideoCallProps {
   appointmentId: string;
@@ -25,6 +26,8 @@ interface VideoCallProps {
   jitsiDomain?: string;
   /** When provided, the dialog is open immediately and this callback fires on close */
   onClose?: () => void;
+  /** Optional trigger button classes (e.g. h-10 glass footer chip). */
+  triggerClassName?: string;
 }
 
 export default function VideoCall({
@@ -32,6 +35,7 @@ export default function VideoCall({
   appointmentTitle,
   jitsiDomain = "meet.jit.si",
   onClose,
+  triggerClassName,
 }: VideoCallProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   // When onClose is provided (global overlay mode), start open; otherwise use trigger
@@ -51,7 +55,7 @@ export default function VideoCall({
       {/* Only render trigger button when NOT in global overlay mode */}
       {!onClose && (
         <DialogTrigger asChild>
-          <Button variant="outline" size="sm" className="gap-2">
+          <Button variant="outline" size="sm" className={cn("gap-2", triggerClassName)}>
             <Video className="h-4 w-4" />
             Video Call
           </Button>

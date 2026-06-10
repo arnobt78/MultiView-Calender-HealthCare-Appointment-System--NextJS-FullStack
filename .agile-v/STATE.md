@@ -6,26 +6,24 @@
 
 | Field | Value |
 |-------|-------|
-| **Cycle** | **C15** shipped — entity detail spacing + C14 gap closure |
-| **Phase** | Verification |
+| **Cycle** | **C17** — admin table columns + footer interactives |
+| **Phase** | Verify |
 | **Stage** | 4 |
-| **Status** | `verify PASS` — **916/916** |
+| **Status** | verify PASS |
 | **Last Updated** | 2026-06-10 |
-| **Parent REQ** | REQ-0061 |
+| **Parent REQ** | REQ-0063 |
 
-## Infinity Loop (active session)
+## Verify baseline
 
-1. Load **agile-v-core** + **pipeline** + **lifecycle** + role skill + **compliance** (every prompt).
-2. Parent **REQ-0061** before any code change.
-3. Verify: `npm test && npx tsc --noEmit && npm run lint && npm run build`.
+**930/930** · `npx tsc --noEmit` · `npm run lint` · `npm run build` — PASS
 
-## C15 scope (REQ-0061)
+## C17 scope (REQ-0063) — shipped
 
-- `EntityDetailPageShell` — header flush; body `space-y-3`.
-- Org members `ClinicalDataTable`; org list SSR seed on detail page.
-- BUILD_MANIFEST ART-0213 → `OrganizationDetailScreen`.
+- Shared `cpClinicalListJoinedColumnShellClass` / `Actions` tokens; admin table `min-w-[1080px]`.
+- `cursor-pointer` on glass tokens, `ControlPanelGlassActionButton`, back/title links.
+- VideoCall `triggerClassName` + `skyGlassBackButtonClass` on appointment detail footer.
 
 ## Resume next session
 
-1. Complete C15 verify + Gate 2 when ready.
-2. Human Gates: GATE-0005..0014 pending from prior cycles.
+1. Gate 2 / human gates when ready.
+2. Archive C17 → specify C18 if new work.

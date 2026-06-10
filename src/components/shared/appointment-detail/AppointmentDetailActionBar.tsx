@@ -29,6 +29,7 @@ import {
   DELETE_APPOINTMENT_CONFIRM_TITLE,
 } from "@/lib/confirm-delete-dialog-copy";
 import { billingCreateInvoiceTriggerDefault } from "@/lib/billing-ui-presets";
+import { skyGlassBackButtonClass } from "@/lib/calendar-header-action-styles";
 import { APPOINTMENT_DETAIL_EDIT_FORM_ID } from "@/lib/appointment-detail-form-id";
 import { cn } from "@/lib/utils";
 import { isAdminRole, isDoctorRole } from "@/lib/rbac";
@@ -130,6 +131,7 @@ export function AppointmentDetailActionBar({
                 <VideoCall
                   appointmentId={appointment.id}
                   appointmentTitle={appointment.title ?? "Video Consultation"}
+                  triggerClassName={skyGlassBackButtonClass}
                 />
                 <ControlPanelGlassActionButton
                   type="button"

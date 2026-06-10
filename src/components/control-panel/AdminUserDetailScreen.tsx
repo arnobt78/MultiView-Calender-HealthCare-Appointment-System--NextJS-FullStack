@@ -19,13 +19,14 @@ import {
 import { EntityDetailChromeHeader } from "@/components/shared/entity-detail/EntityDetailChromeHeader";
 import { EntityDetailBackLink } from "@/components/shared/entity-detail/EntityDetailBackLink";
 import { EntityDetailFooterRow } from "@/components/shared/entity-detail/EntityDetailFooterRow";
-import { slateGlassBackButtonClass } from "@/lib/calendar-header-action-styles";
+import { violetGlassBackButtonClass } from "@/lib/calendar-header-action-styles";
 import { ControlPanelHeaderSubtitle } from "@/components/control-panel/ControlPanelHeaderSubtitle";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { UserRoleBadge } from "@/components/shared/UserRoleBadge";
 import { EntityActiveStatusBadge } from "@/components/shared/entity-display/EntityActiveStatusBadge";
+import { EntityEmailVerificationBadge } from "@/components/shared/entity-display/EntityEmailVerificationBadge";
 import { ControlPanelGlassActionButton } from "@/components/shared/ControlPanelGlassActionButton";
 import { AdminUserFormDialog } from "@/components/control-panel/admin-user-dialog/AdminUserFormDialog";
 import { ClinicalDataTable } from "@/components/shared/ClinicalDataTable";
@@ -33,18 +34,21 @@ import { buildRelatedAppointmentsColumns } from "@/components/control-panel/pati
 import {
   adminUserDetailCardFrameClass,
   adminUserDetailFieldIconCircleClass,
+  adminUserDetailFieldIconClass,
+  adminUserDetailAuditIconCircleClass,
+  adminUserDetailSnapshotSectionShellClass,
+  adminUserDetailSnapshotTableFrameClass,
+  adminUserDetailSectionIconClass,
 } from "@/lib/admin-user-detail-ui-classes";
 import {
-  entityDetailChromeSlateIconClass,
-  entityDetailChromeSlateIconTileClass,
+  entityDetailChromeVioletIconClass,
+  entityDetailChromeVioletIconTileClass,
 } from "@/lib/page-chrome-classes";
 import {
   entityDetailPageHeaderClass,
-  entityDetailSnapshotSectionShellClass,
   patientDetailDefinitionListClass,
   patientDetailDefinitionRowClass,
   patientDetailSchemaSectionClass,
-  patientDetailSnapshotTableFrameClass,
 } from "@/lib/patient-detail-ui-classes";
 import { EntityDetailPageShell } from "@/components/shared/entity-detail/EntityDetailPageShell";
 import type { AppSectionScrollShell } from "@/lib/section-page-layout";
@@ -61,7 +65,6 @@ import { cn } from "@/lib/utils";
 import { EntityDetailRecordAuditCard } from "@/components/shared/entity-detail/EntityDetailRecordAuditCard";
 import { EntityIdCopyInline } from "@/components/shared/EntityIdCopyInline";
 import { mapUserRecordAuditActors } from "@/lib/entity-detail-audit-actor";
-import { entityDetailAuditIconCircleClass } from "@/lib/patient-detail-ui-classes";
 import type { EntityRole } from "@/lib/entity-routes";
 import { clinicalSnapshotAppointmentsTableMinWidthClass } from "@/lib/clinical-snapshot-table-columns";
 import { isUserAccountActive } from "@/lib/entity-active-status";
@@ -90,7 +93,7 @@ function FieldLabel({
   return (
     <dt className="flex items-center gap-2 text-xs font-medium text-gray-500">
       <span className={adminUserDetailFieldIconCircleClass}>
-        <Icon className="h-3 w-3 text-slate-600" aria-hidden />
+        <Icon className={adminUserDetailFieldIconClass} aria-hidden />
       </span>
       {children}
     </dt>
@@ -108,7 +111,7 @@ function SectionHeading({
 }) {
   return (
     <div className="flex items-center gap-2">
-      <Icon className="h-4 w-4 text-slate-600" aria-hidden />
+      <Icon className={adminUserDetailSectionIconClass} aria-hidden />
       <h3 className="text-sm font-semibold text-gray-700">{children}</h3>
       <Badge variant="secondary" className="text-[10px] font-normal">
         {count}
@@ -179,8 +182,8 @@ export function AdminUserDetailScreen({
       header={
         <EntityDetailChromeHeader
           icon={UserCog}
-          iconTileClassName={entityDetailChromeSlateIconTileClass}
-          iconClassName={entityDetailChromeSlateIconClass}
+          iconTileClassName={entityDetailChromeVioletIconTileClass}
+          iconClassName={entityDetailChromeVioletIconClass}
           className={entityDetailPageHeaderClass}
           title={displayName}
           description={
@@ -194,7 +197,7 @@ export function AdminUserDetailScreen({
             <EntityDetailBackLink
               href={listBackHref}
               placement="header"
-              backButtonClassName={slateGlassBackButtonClass}
+              backButtonClassName={violetGlassBackButtonClass}
             />
           }
         />
@@ -210,7 +213,7 @@ export function AdminUserDetailScreen({
                 alt={displayName}
                 fallbackText={displayName}
                 sizeClassName="h-20 w-20"
-                className="rounded-xl ring-2 ring-slate-200/70 shrink-0"
+                className="rounded-xl ring-2 ring-violet-200/70 shrink-0"
               />
               <div className="min-w-0 flex-1 space-y-1">
                 <p className="text-lg font-semibold">{displayName}</p>
@@ -218,17 +221,7 @@ export function AdminUserDetailScreen({
                 <div className="flex flex-wrap items-center gap-2">
                   <UserRoleBadge role={liveUser.role} />
                   <EntityActiveStatusBadge active={isUserAccountActive(liveUser)} />
-                  <Badge
-                    variant="outline"
-                    className={cn(
-                      "text-[10px] py-0",
-                      emailVerified
-                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                        : "bg-amber-50 text-amber-700 border-amber-200"
-                    )}
-                  >
-                    {emailVerified ? "Verified" : "Unverified"}
-                  </Badge>
+                  <EntityEmailVerificationBadge verified={emailVerified} />
                 </div>
               </div>
             </div>
@@ -240,8 +233,8 @@ export function AdminUserDetailScreen({
                 createdBy={recordAuditActors.createdBy}
                 updatedBy={recordAuditActors.updatedBy}
                 viewerRole={"admin" as EntityRole}
-                iconCircleClass={entityDetailAuditIconCircleClass}
-                iconClassName="h-3 w-3 text-sky-600"
+                iconCircleClass={adminUserDetailAuditIconCircleClass}
+                iconClassName={adminUserDetailFieldIconClass}
               />
               <div className={patientDetailDefinitionRowClass}>
                 <FieldLabel icon={Hash}>User ID</FieldLabel>
@@ -276,7 +269,7 @@ export function AdminUserDetailScreen({
             </dl>
           </div>
 
-          <div className={entityDetailSnapshotSectionShellClass}>
+          <div className={adminUserDetailSnapshotSectionShellClass}>
             <SectionHeading icon={Calendar} count={appointmentCount}>
               Appointments Owned
             </SectionHeading>
@@ -288,8 +281,8 @@ export function AdminUserDetailScreen({
               tableLayout="fixed"
               emptyMessage="No appointments"
               tableClassName={cn(clinicalSnapshotAppointmentsTableMinWidthClass, "w-full")}
-              className={patientDetailSnapshotTableFrameClass}
-              tableFrameClassName="rounded-md border border-slate-200/80 bg-white shadow-none"
+              className={adminUserDetailSnapshotTableFrameClass}
+              tableFrameClassName="rounded-md border border-violet-200/80 bg-white shadow-none"
             />
           </div>
         </CardContent>
@@ -297,10 +290,10 @@ export function AdminUserDetailScreen({
 
       <EntityDetailFooterRow
         backHref={listBackHref}
-        backButtonClassName={slateGlassBackButtonClass}
+        backButtonClassName={violetGlassBackButtonClass}
         actions={
           canAdminEdit ? (
-            <ControlPanelGlassActionButton type="button" variant="emerald" onClick={openEditDialog}>
+            <ControlPanelGlassActionButton type="button" variant="violet" onClick={openEditDialog}>
               <Pencil className="shrink-0" aria-hidden />
               Update Profile
             </ControlPanelGlassActionButton>

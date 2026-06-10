@@ -19,7 +19,7 @@ export function GlassResetFilterButton({ onClick, className, label = "Reset" }: 
       type="button"
       variant="ghost"
       onClick={onClick}
-      className={cn(skyGlassResetButtonClass, "cursor-pointer", className)}
+      className={cn(skyGlassResetButtonClass, className)}
     >
       <RotateCcw className="shrink-0" aria-hidden />
       {label}

@@ -14,7 +14,7 @@ import {
   entityDetailChromeSlateIconTileClass,
 } from "@/lib/page-chrome-classes";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { EntityEmailVerificationBadge } from "@/components/shared/entity-display/EntityEmailVerificationBadge";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { UserRoleBadge } from "@/components/shared/UserRoleBadge";
 import { clinicalEmptyOr } from "@/components/shared/ClinicalTableEmptyDash";
@@ -113,17 +113,7 @@ export function PortalAdminDetailScreen({
                 <p className="text-sm text-muted-foreground">{liveUser.email}</p>
                 <div className="flex flex-wrap items-center gap-2">
                   <UserRoleBadge role={liveUser.role} />
-                  <Badge
-                    variant="outline"
-                    className={cn(
-                      "text-[10px] py-0",
-                      emailVerified
-                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                        : "bg-amber-50 text-amber-700 border-amber-200"
-                    )}
-                  >
-                    {emailVerified ? "Verified" : "Unverified"}
-                  </Badge>
+                  <EntityEmailVerificationBadge verified={emailVerified} />
                 </div>
               </div>
             </div>

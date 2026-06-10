@@ -69,7 +69,7 @@ const CONTROL_PANEL_PAGE_TONES: Record<ControlPanelSidebarTabValue, PageChromeTo
   categories: "violet",
   visit_types_global: "amber",
   doctors: "sky",
-  users_admin: "slate",
+  users_admin: "violet",
   organizations: "indigo",
   invoices: "amber",
   appointments_mgmt: "sky",

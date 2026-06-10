@@ -31,7 +31,14 @@ import {
   EMPTY_ADMIN_USER_FORM,
   type AdminUserFormValues,
 } from "@/lib/admin-user-form-state";
-import { emeraldGlassPrimaryButtonClass } from "@/lib/calendar-header-action-styles";
+import { violetGlassPrimaryButtonClass } from "@/lib/calendar-header-action-styles";
+import {
+  cpClinicalListTableFrameClassName,
+  cpClinicalListIdentityColumnShellClass,
+  cpClinicalListPhoneColumnShellClass,
+  cpClinicalListJoinedColumnShellClass,
+  cpClinicalListActionsColumnShellClass,
+} from "@/lib/cp-clinical-list-table-classes";
 import {
   clinicalCellMutedTextClass,
   clinicalStackGapClass,
@@ -87,25 +94,27 @@ const PHOTO_FILTER_LABEL: Record<AdminUserPhotoFilter, string> = {
 
 function ActionsCell({ user }: { user: User }) {
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-7 w-7">
-          <EllipsisVertical className="h-4 w-4" />
-          <span className="sr-only">Open menu</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem asChild>
-          <PrefetchingLink
-            href={`/control-panel/users/${user.id}`}
-            className="flex items-center gap-2 cursor-pointer"
-          >
-            <Eye className="h-4 w-4" />
-            View Detail
-          </PrefetchingLink>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <div className="flex min-h-[2.75rem] items-center justify-end">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-7 w-7 cursor-pointer">
+            <EllipsisVertical className="h-4 w-4" />
+            <span className="sr-only">Open menu</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem asChild>
+            <PrefetchingLink
+              href={`/control-panel/users/${user.id}`}
+              className="flex items-center gap-2 cursor-pointer"
+            >
+              <Eye className="h-4 w-4" />
+              View Detail
+            </PrefetchingLink>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 }
 
@@ -146,7 +155,7 @@ function UserManagementInner() {
         id: "display_name",
         accessorFn: (row) => `${row.display_name ?? ""} ${row.email}`.trim(),
         header: ({ column }) => <DataTableColumnHeader column={column} title="Admin" />,
-        meta: { shellClassName: "min-w-[12rem]" },
+        meta: { shellClassName: cpClinicalListIdentityColumnShellClass },
         cell: ({ row }) => {
           const u = row.original;
           const label = u.display_name ?? "—";
@@ -170,6 +179,26 @@ function UserManagementInner() {
         },
       },
       {
+        id: "phone",
+        accessorFn: (row) => row.phone ?? "",
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Phone" />,
+        meta: { shellClassName: cpClinicalListPhoneColumnShellClass },
+        cell: ({ row }) => {
+          const phone = row.original.phone?.trim();
+          return (
+            <div className="flex min-h-[2.75rem] items-center">
+              {phone ? (
+                <span className={cn("truncate", clinicalCellMutedTextClass)} title={phone}>
+                  {phone}
+                </span>
+              ) : (
+                <span className={clinicalCellMutedTextClass}>—</span>
+              )}
+            </div>
+          );
+        },
+      },
+      {
         id: "status",
         accessorFn: (row) => (isUserAccountActive(row) ? "active" : "inactive"),
         header: ({ column }) => <DataTableColumnHeader column={column} title="Status" />,
@@ -182,14 +211,19 @@ function UserManagementInner() {
       },
       {
         id: "role",
-        header: "Role",
-        meta: { shellClassName: "min-w-[6rem] whitespace-nowrap" },
-        cell: () => <UserRoleBadge role="admin" />,
+        accessorFn: (row) => row.role ?? "admin",
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Role" />,
+        meta: { shellClassName: "w-[8%] min-w-[6rem] whitespace-nowrap" },
+        cell: () => (
+          <div className="flex min-h-[2.75rem] items-center">
+            <UserRoleBadge role="admin" />
+          </div>
+        ),
       },
       {
         accessorKey: "created_at",
         header: ({ column }) => <DataTableColumnHeader column={column} title="Joined" />,
-        meta: { shellClassName: "w-[1%] whitespace-nowrap" },
+        meta: { shellClassName: cpClinicalListJoinedColumnShellClass },
         cell: ({ row }) => (
           <div className="flex min-h-[2.75rem] items-center">
             <span className={cn("whitespace-nowrap text-xs", clinicalCellMutedTextClass)}>
@@ -202,9 +236,11 @@ function UserManagementInner() {
       },
       {
         id: "actions",
-        header: "Actions",
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Actions" className="text-right" />
+        ),
         enableSorting: false,
-        meta: { shellClassName: "w-[1%] whitespace-nowrap text-right" },
+        meta: { shellClassName: cpClinicalListActionsColumnShellClass },
         cell: ({ row }) => <ActionsCell user={row.original} />,
       },
     ],
@@ -224,13 +260,13 @@ function UserManagementInner() {
 
   return (
     <ControlPanelEntityListShell
-      tone="slate"
+      tone="violet"
       headerSlot={
         <ControlPanelPageChrome
           tab="users_admin"
           actions={
             <ControlPanelHeaderGlassButton
-              glassClassName={cn(emeraldGlassPrimaryButtonClass, "cursor-pointer")}
+              glassClassName={violetGlassPrimaryButtonClass}
               icon={UserPlus}
               onClick={() => {
                 setCreateForm(EMPTY_ADMIN_USER_FORM);
@@ -252,8 +288,8 @@ function UserManagementInner() {
           search={{
             value: listSearch,
             onChange: setListSearch,
-            placeholder: "Search by name or email…",
-            ariaLabel: "Search admin users by name or email",
+            placeholder: "Search by name, email, or phone…",
+            ariaLabel: "Search admin users by name, email, or phone",
           }}
           showReset={hasToolbarFilters}
           onReset={resetToolbar}
@@ -308,13 +344,13 @@ function UserManagementInner() {
             const u = row;
             return (
               (u.display_name?.toLowerCase().includes(s) ?? false) ||
-              u.email.toLowerCase().includes(s)
+              u.email.toLowerCase().includes(s) ||
+              (u.phone?.toLowerCase().includes(s) ?? false)
             );
           }}
           emptyMessage="No admin accounts found."
-          tableClassName="min-w-[720px]"
-          tableLayout="auto"
-          tableFrameClassName="min-w-0 max-w-full border-0 bg-transparent shadow-none rounded-none"
+          tableClassName="min-w-[1080px] w-full"
+          tableFrameClassName={cpClinicalListTableFrameClassName}
         />
       }
       footerSlot={

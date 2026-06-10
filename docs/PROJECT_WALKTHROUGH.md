@@ -1,6 +1,10 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-10 — C15 entity detail spacing + C14 gaps)
+## Latest (2026-06-10 — C17 + C16)
+
+**C17:** shared `cp-clinical-list-table-classes` column tokens; admin Joined/Actions width fix; glass `cursor-pointer` global; VideoCall h-10 on appointment detail. **C16:** violet user-admin chrome; Phone column; `EntityEmailVerificationBadge`. **Verify:** **930/930** · tsc · lint · build.
+
+## Prior (2026-06-10 — C15 entity detail spacing + C14 gaps)
 
 - **Layout:** `EntityDetailPageShell` — header outside body stack (no 12px gap); `appEntityDetailBodyStackClass` for card/footer rhythm; CP + portal outer roots omit `space-y-3`.
 - **Org detail:** members `ClinicalDataTable` (`organization-detail-members-columns.tsx`); SSR `prefetchOrganizations` + `seedOrganizationsListCacheFromSsr` on detail route.
