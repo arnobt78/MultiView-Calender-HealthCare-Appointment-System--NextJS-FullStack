@@ -20,7 +20,8 @@ import {
   Trash2,
   User,
 } from "lucide-react";
-import { BackNavigationLink } from "@/components/shared/BackNavigationLink";
+import { EntityDetailBackLink } from "@/components/shared/entity-detail/EntityDetailBackLink";
+import { EntityDetailFooterRow } from "@/components/shared/entity-detail/EntityDetailFooterRow";
 import { useRouter, useSearchParams } from "next/navigation";
 import { usePatient, usePatientSnapshot } from "@/hooks/usePatients";
 import { EntityDetailChromeHeader } from "@/components/shared/entity-detail/EntityDetailChromeHeader";
@@ -544,13 +545,11 @@ export function PatientDetailScreen({
         }
         description="Patient Record — Schema Fields, Clinical Profile, Related Activity"
         actions={
-          <BackNavigationLink
+          <EntityDetailBackLink
             href={listBackHref}
-            className={cn(skyGlassBackButtonClass, "no-underline")}
-          >
-            <ArrowLeft className="shrink-0" aria-hidden />
-            Back
-          </BackNavigationLink>
+            placement="header"
+            backButtonClassName={skyGlassBackButtonClass}
+          />
         }
       />
 
@@ -801,17 +800,12 @@ export function PatientDetailScreen({
         </CardContent>
       </Card>
 
-      {/* Actions — inline row after card (no separate footer bar layer). */}
-      <div className={entityDetailActionsRowClass}>
-        <BackNavigationLink
-          href={listBackHref}
-          className={cn(skyGlassBackButtonClass, "no-underline")}
-        >
-          <List className="shrink-0" aria-hidden />
-          Back To List
-        </BackNavigationLink>
-        {canEdit ? (
-          <div className="flex flex-wrap gap-2">
+      <EntityDetailFooterRow
+        backHref={listBackHref}
+        backButtonClassName={skyGlassBackButtonClass}
+        actions={
+          canEdit ? (
+            <>
               <ControlPanelGlassActionButton
                 type="button"
                 variant="emerald"
@@ -864,9 +858,10 @@ export function PatientDetailScreen({
                   );
                 }}
               />
-            </div>
-          ) : null}
-      </div>
+            </>
+          ) : null
+        }
+      />
 
       {canEdit && p ? (
         <PatientFormDialog

@@ -437,6 +437,30 @@ export async function invalidateQueriesForRoute(queryClient: QueryClient, href: 
     publishQueryCacheCrossTab(["categories", "dashboard"]);
     return;
   }
+  if (path === "/control-panel/user-admin-management") {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all }),
+      invalidateDashboardOverview(queryClient),
+    ]);
+    publishQueryCacheCrossTab(["users", "dashboard"]);
+    return;
+  }
+  if (path === "/control-panel/organization-management") {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.organizations.all }),
+      invalidateDashboardOverview(queryClient),
+    ]);
+    publishQueryCacheCrossTab(["organizations", "dashboard"]);
+    return;
+  }
+  if (path === "/control-panel/invoice-management") {
+    await Promise.all([
+      invalidateInvoicesAndOverview(queryClient),
+      invalidateDashboardOverview(queryClient),
+    ]);
+    publishQueryCacheCrossTab(["invoices", "dashboard"]);
+    return;
+  }
   if (path === "/control-panel" || path.startsWith("/control-panel/")) {
     await invalidateDashboardOverview(queryClient);
     publishQueryCacheCrossTab(["dashboard"]);

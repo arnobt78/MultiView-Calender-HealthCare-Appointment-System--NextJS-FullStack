@@ -5,13 +5,15 @@ import { useRouter } from "next/navigation";
 import {
   CheckCircle,
   Circle,
-  List,
   Pencil,
+  Printer,
   Receipt,
+  Save,
   Trash2,
   Ban,
 } from "lucide-react";
-import { BackNavigationLink } from "@/components/shared/BackNavigationLink";
+import VideoCall from "@/components/calendar/VideoCall";
+import { EntityDetailFooterRow } from "@/components/shared/entity-detail/EntityDetailFooterRow";
 import { ControlPanelGlassActionButton } from "@/components/shared/ControlPanelGlassActionButton";
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import { useAuth } from "@/hooks/useAuth";
@@ -27,6 +29,8 @@ import {
   DELETE_APPOINTMENT_CONFIRM_TITLE,
 } from "@/lib/confirm-delete-dialog-copy";
 import { billingCreateInvoiceTriggerDefault } from "@/lib/billing-ui-presets";
+import { APPOINTMENT_DETAIL_EDIT_FORM_ID } from "@/lib/appointment-detail-form-id";
+import { cn } from "@/lib/utils";
 import { isAdminRole, isDoctorRole } from "@/lib/rbac";
 import type { AppointmentDetailToneClasses } from "@/lib/appointment-detail-ui-classes";
 import type { Appointment } from "@/types/types";
@@ -67,6 +71,7 @@ export function AppointmentDetailActionBar({
     isDeleting,
     cancelAppointment,
     isCancelling,
+    isUpdating,
   } = useAppointments();
   const invoiceMap = useAppointmentInvoiceDisplayMap([appointment.id]);
   const invoiceDisplayStatus = invoiceMap.get(appointment.id) ?? null;
@@ -105,13 +110,38 @@ export function AppointmentDetailActionBar({
 
   return (
     <>
-      <div className={toneClasses.stickyFooterClass}>
-        <BackNavigationLink href={backHref} className={toneClasses.backButtonClass}>
-          <List className="shrink-0" aria-hidden />
-          {backLabel}
-        </BackNavigationLink>
-        <div className="flex flex-wrap gap-2">
-          {canEdit && capabilities.canToggleStatus && !isCancelled ? (
+      <EntityDetailFooterRow
+        backHref={backHref}
+        backButtonClassName={cn(toneClasses.backButtonClass, "no-underline")}
+        backLabel={backLabel}
+        actions={
+          <>
+            {canEdit && !isCancelled ? (
+              <>
+                <ControlPanelGlassActionButton
+                  type="submit"
+                  form={APPOINTMENT_DETAIL_EDIT_FORM_ID}
+                  variant="emerald"
+                  disabled={busy || isUpdating}
+                >
+                  <Save className="shrink-0" aria-hidden />
+                  {isUpdating ? "Saving…" : "Save changes"}
+                </ControlPanelGlassActionButton>
+                <VideoCall
+                  appointmentId={appointment.id}
+                  appointmentTitle={appointment.title ?? "Video Consultation"}
+                />
+                <ControlPanelGlassActionButton
+                  type="button"
+                  variant="sky"
+                  onClick={() => window.print()}
+                >
+                  <Printer className="shrink-0" aria-hidden />
+                  Print
+                </ControlPanelGlassActionButton>
+              </>
+            ) : null}
+            {canEdit && capabilities.canToggleStatus && !isCancelled ? (
             <ControlPanelGlassActionButton
               type="button"
               variant={isDone ? "sky" : "emerald"}
@@ -200,8 +230,9 @@ export function AppointmentDetailActionBar({
               }
             />
           ) : null}
-        </div>
-      </div>
+          </>
+        }
+      />
       {!ctx ? dialogNode : null}
     </>
   );

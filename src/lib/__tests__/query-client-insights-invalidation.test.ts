@@ -39,3 +39,26 @@ describe("invalidateQueriesForRoute insights", () => {
     expect(qc.getQueryState(key)?.isInvalidated).toBe(true);
   });
 });
+
+describe("invalidateQueriesForRoute CP list paths C14", () => {
+  it("invalidates users on user-admin-management back", async () => {
+    const qc = createQueryClient();
+    qc.setQueryData(queryKeys.users.all, { users: [], total: 0 });
+    await invalidateQueriesForRoute(qc, "/control-panel/user-admin-management");
+    expect(qc.getQueryState(queryKeys.users.all)?.isInvalidated).toBe(true);
+  });
+
+  it("invalidates organizations on organization-management back", async () => {
+    const qc = createQueryClient();
+    qc.setQueryData(queryKeys.organizations.all, []);
+    await invalidateQueriesForRoute(qc, "/control-panel/organization-management");
+    expect(qc.getQueryState(queryKeys.organizations.all)?.isInvalidated).toBe(true);
+  });
+
+  it("invalidates invoices on invoice-management back", async () => {
+    const qc = createQueryClient();
+    qc.setQueryData(queryKeys.invoices.all, []);
+    await invalidateQueriesForRoute(qc, "/control-panel/invoice-management");
+    expect(qc.getQueryState(queryKeys.invoices.all)?.isInvalidated).toBe(true);
+  });
+});

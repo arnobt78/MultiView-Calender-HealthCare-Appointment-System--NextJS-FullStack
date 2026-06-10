@@ -1,8 +1,8 @@
 "use client";
 
-import { ArrowLeft, Download, FileOutput } from "lucide-react";
+import { Download, FileOutput } from "lucide-react";
 import { useMemo, useState } from "react";
-import { BackNavigationLink } from "@/components/shared/BackNavigationLink";
+import { EntityDetailBackLink } from "@/components/shared/entity-detail/EntityDetailBackLink";
 import { ControlPanelGlassActionButton } from "@/components/shared/ControlPanelGlassActionButton";
 import { useInvoice } from "@/hooks/useInvoice";
 import { usePayments, type Invoice } from "@/hooks/usePayments";
@@ -17,7 +17,6 @@ import {
   invoiceDetailBackButtonClass,
   invoiceDetailHeaderActionsClass,
 } from "@/lib/invoice-detail-ui-classes";
-import { cn } from "@/lib/utils";
 
 type Props = {
   initialInvoice: Invoice;
@@ -88,13 +87,11 @@ export function InvoiceDetailHeaderActions({
         </ControlPanelGlassActionButton>
       ) : null}
 
-      <BackNavigationLink
+      <EntityDetailBackLink
         href={backHref}
-        className={cn(invoiceDetailBackButtonClass, "no-underline")}
-      >
-        <ArrowLeft className="shrink-0" aria-hidden />
-        Back
-      </BackNavigationLink>
+        placement="header"
+        backButtonClassName={invoiceDetailBackButtonClass}
+      />
     </div>
   );
 }

@@ -4,6 +4,7 @@
 import {
   skyGlassBackButtonClass,
   skyGlassTableFrameClass,
+  violetGlassBackButtonClass,
 } from "@/lib/calendar-header-action-styles";
 import {
   entityDetailChromeSkyIconClass,
@@ -42,9 +43,6 @@ export type AppointmentDetailToneClasses = {
   chromeIconClass: string;
 };
 
-const VIOLET_BACK =
-  "inline-flex items-center gap-2 rounded-full border border-violet-200/70 bg-violet-50/90 px-3 py-1.5 text-sm font-medium text-violet-800 shadow-sm transition hover:bg-violet-100/90 no-underline";
-
 const VIOLET_CARD =
   "rounded-[20px] border border-violet-100/50 bg-white/90 text-gray-700 shadow-[0_14px_48px_-12px_rgba(139,92,246,0.28)]";
 
@@ -60,7 +58,7 @@ export function resolveAppointmentDetailToneClasses(
 ): AppointmentDetailToneClasses {
   if (tone === "violet") {
     return {
-      backButtonClass: VIOLET_BACK,
+      backButtonClass: violetGlassBackButtonClass,
       cardFrameClass: VIOLET_CARD,
       cardBorderClass: "border-violet-100/50",
       sectionDividerClass: "border-violet-100/80",

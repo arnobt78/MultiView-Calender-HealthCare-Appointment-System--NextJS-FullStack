@@ -28,7 +28,7 @@ export function InvoiceDetailScreen({
   initialInvoicesList,
 }: Props) {
   return (
-    <div className="space-y-2">
+    <>
       <InvoiceDetailQuerySeed
         invoice={clientInvoice}
         initialInvoicesList={initialInvoicesList}
@@ -41,6 +41,6 @@ export function InvoiceDetailScreen({
         variant={variant}
         backHref={backHref}
       />
-    </div>
+    </>
   );
 }

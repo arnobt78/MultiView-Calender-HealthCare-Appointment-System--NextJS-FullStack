@@ -5,13 +5,13 @@ import {
   Ban,
   CheckCircle2,
   CreditCard,
-  List,
   Pencil,
   RotateCcw,
   Send,
   Trash2,
 } from "lucide-react";
-import { BackNavigationLink } from "@/components/shared/BackNavigationLink";
+import { EntityDetailBackLink } from "@/components/shared/entity-detail/EntityDetailBackLink";
+import { EntityDetailFooterRow } from "@/components/shared/entity-detail/EntityDetailFooterRow";
 import { ControlPanelGlassActionButton } from "@/components/shared/ControlPanelGlassActionButton";
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import { usePayments, type Invoice } from "@/hooks/usePayments";
@@ -27,8 +27,7 @@ import {
   resolveInvoiceDetailSendInFooter,
 } from "@/lib/invoice-detail-action-capabilities";
 import type { InvoiceDetailUiAccess } from "@/lib/invoice-detail-ssr";
-import { invoiceDetailActionsRowClass, invoiceDetailBackButtonClass } from "@/lib/invoice-detail-ui-classes";
-import { cn } from "@/lib/utils";
+import { invoiceDetailBackButtonClass } from "@/lib/invoice-detail-ui-classes";
 
 type Props = {
   initialInvoice: Invoice;
@@ -83,14 +82,13 @@ export function InvoiceDetailActionBar({
 
   return (
     <>
-      <div className={invoiceDetailActionsRowClass}>
-        <BackNavigationLink href={backHref} className={cn(invoiceDetailBackButtonClass, "no-underline")}>
-          <List className="shrink-0" aria-hidden />
-          {backLabel}
-        </BackNavigationLink>
-
-        {accessLevel === "view" ? null : (
-          <div className="flex flex-wrap gap-2">
+      <EntityDetailFooterRow
+        backHref={backHref}
+        backButtonClassName={invoiceDetailBackButtonClass}
+        backLabel={backLabel}
+        actions={
+          accessLevel === "view" ? undefined : (
+            <>
             {accessLevel === "pay" ? (
               <ControlPanelGlassActionButton
                 type="button"
@@ -211,9 +209,10 @@ export function InvoiceDetailActionBar({
                 }
               />
             ) : null}
-          </div>
-        )}
-      </div>
+            </>
+          )
+        }
+      />
       {!ctx ? dialogNode : null}
     </>
   );

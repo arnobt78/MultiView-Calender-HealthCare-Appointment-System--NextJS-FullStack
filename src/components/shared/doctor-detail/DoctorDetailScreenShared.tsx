@@ -24,7 +24,8 @@ import { type ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { useLayoutEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { BackNavigationLink } from "@/components/shared/BackNavigationLink";
+import { EntityDetailBackLink } from "@/components/shared/entity-detail/EntityDetailBackLink";
+import { EntityDetailFooterRow } from "@/components/shared/entity-detail/EntityDetailFooterRow";
 import { EntityDetailChromeHeader } from "@/components/shared/entity-detail/EntityDetailChromeHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { UserAvatar } from "@/components/shared/UserAvatar";
@@ -314,13 +315,11 @@ export function DoctorDetailScreenShared({
         title={displayName}
         description={descriptionSubtitle}
         actions={
-          <BackNavigationLink
+          <EntityDetailBackLink
             href={backHref}
-            className={cn(toneClasses.backButtonClass, "no-underline")}
-          >
-            <ArrowLeft className="shrink-0" aria-hidden />
-            Back
-          </BackNavigationLink>
+            placement="header"
+            backButtonClassName={toneClasses.backButtonClass}
+          />
         }
       />
 
@@ -509,15 +508,10 @@ export function DoctorDetailScreenShared({
       </Card>
 
       {footerSlot ?? (
-        <div className={toneClasses.stickyFooterClass}>
-          <BackNavigationLink
-            href={backHref}
-            className={cn(toneClasses.backButtonClass, "no-underline")}
-          >
-            <List className="shrink-0" aria-hidden />
-            Back To List
-          </BackNavigationLink>
-        </div>
+        <EntityDetailFooterRow
+          backHref={backHref}
+          backButtonClassName={toneClasses.backButtonClass}
+        />
       )}
     </div>
   );

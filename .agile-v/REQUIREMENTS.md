@@ -6,7 +6,7 @@
 
 | Field | Value |
 |-------|-------|
-| Cycle | C1–C9 shipped · **C10/C11 shipped** · **C12 shipped** · **C13 active** (REQ-0059) |
+| Cycle | C1–C9 shipped · **C10–C13 shipped** · **C14 active** (REQ-0060) |
 | Author | Requirement Architect |
 | Gate 1 status | C1 GATE-0001 · C2 GATE-0003 approved |
 | Canonical source | this file |
@@ -104,6 +104,27 @@
 | REQ-0056 | approved [C12.1] | REQ-0055 | ART-0279..0282 | pending |
 | REQ-0057 | approved [C12.2] | REQ-0056 | ART-0283..0286 | pending |
 | REQ-0059 | approved [C13] | REQ-0057 | ART-0287..0292 | pending |
+| REQ-0060 | approved [C14] | REQ-0059 | ART-0293..0300 | pending |
+
+### REQ-0060 — C14 entity detail chrome parity
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C14] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0059 |
+
+**Statement:** All entity detail pages (CP + portal, admin/doctor/patient routes) match PatientDetailScreen chrome — no header border-b, tone glass back links with list invalidation, single footer action row, appointment dedup, invoice layout, organization refactor.
+
+**Acceptance criteria:**
+1. `EntityDetailChromeHeader` omits `border-b`; body `space-y-3` separates (CP list parity).
+2. Shared `EntityDetailBackLink` + `EntityDetailFooterRow`; tone glass back tokens (sky/emerald/slate/violet/indigo/amber).
+3. `invalidateQueriesForRoute` covers user-management, organization-management, billing-management list paths.
+4. Appointment detail: single footer row (no inline form CRUD strip); Save/Video/Print in footer.
+5. Invoice: `resolveEntityDetailRootClass`; header utilities preserved; footer glass parity.
+6. Organization detail: client screen + indigo glass card + footer Back To List.
+7. All `[id]/page.tsx` retain `dynamic = "force-dynamic"` + SSR seed + CRUD invalidation unchanged.
 
 ### REQ-0059 — C13 user-admin UI parity + chrome remount fix
 

@@ -1,6 +1,14 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-10 — C13 user-admin UI parity + chrome nav fix)
+## Latest (2026-06-10 — C14 entity detail chrome parity)
+
+- **Shared:** `EntityDetailBackLink` (header/footer back + invalidate); `EntityDetailFooterRow`; `EntityDetailChromeHeader` omits `border-b`; glass back tokens (emerald/slate/indigo + existing sky/violet/amber).
+- **Screens:** patient/doctor/admin/category/appointment/invoice/portal-admin wired; appointment form dedup (Save/Video/Print in footer only).
+- **Organization:** `OrganizationDetailScreen` indigo glass card + members table + footer; deleted `OrganizationDetailChrome`.
+- **Invalidation:** `invalidateQueriesForRoute` — user-admin-management, organization-management, invoice-management.
+- **Verify:** **915/915** · tsc · lint · build.
+
+## Prior (2026-06-10 — C13 user-admin UI parity + chrome nav fix)
 
 - **List:** `AdminUserManagementStatsRow` + `PatientStatCard`; `ClinicalListFilterToolbar` (status, verification, photo); Status column; `slateGlassTableFrameClass`.
 - **Detail:** SSR `loadAdminUserOwnedAppointments`; `ClinicalDataTable` appointments owned; glass back buttons; phone/status rows.

@@ -31,6 +31,18 @@ export const skyGlassTableFrameClass =
 export const skyGlassBackButtonClass =
   "inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-sky-300/50 bg-white/75 px-4 text-sm font-medium text-sky-900 shadow-[0_10px_28px_rgba(2,132,199,0.2)] backdrop-blur-md transition-all duration-200 hover:border-sky-400/55 hover:bg-sky-50/90 hover:shadow-[0_12px_34px_rgba(2,132,199,0.28)] disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4";
 
+/** Emerald glass back — CP doctor detail (pairs with emerald card glow). */
+export const emeraldGlassBackButtonClass =
+  "inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-emerald-300/50 bg-white/75 px-4 text-sm font-medium text-emerald-900 shadow-[0_10px_28px_rgba(16,185,129,0.2)] backdrop-blur-md transition-all duration-200 hover:border-emerald-400/55 hover:bg-emerald-50/90 hover:shadow-[0_12px_34px_rgba(16,185,129,0.28)] disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4";
+
+/** Slate glass back — admin user detail (pairs with slate list frame). */
+export const slateGlassBackButtonClass =
+  "inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-slate-300/50 bg-white/75 px-4 text-sm font-medium text-slate-900 shadow-[0_10px_28px_rgba(100,116,139,0.2)] backdrop-blur-md transition-all duration-200 hover:border-slate-400/55 hover:bg-slate-50/90 hover:shadow-[0_12px_34px_rgba(100,116,139,0.28)] disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4";
+
+/** Indigo glass back — organization detail (pairs with indigo CP tab). */
+export const indigoGlassBackButtonClass =
+  "inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-indigo-300/50 bg-white/75 px-4 text-sm font-medium text-indigo-900 shadow-[0_10px_28px_rgba(99,102,241,0.2)] backdrop-blur-md transition-all duration-200 hover:border-indigo-400/55 hover:bg-indigo-50/90 hover:shadow-[0_12px_34px_rgba(99,102,241,0.28)] disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4";
+
 /** Destructive glass — delete / remove. */
 export const roseGlassDangerButtonClass =
   "inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-rose-300/55 bg-rose-50/85 px-4 text-sm font-medium text-rose-800 shadow-[0_10px_28px_rgba(244,63,94,0.22)] backdrop-blur-md transition-all duration-200 hover:border-rose-400/60 hover:bg-rose-100/90 hover:shadow-[0_12px_34px_rgba(244,63,94,0.3)] disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4";

@@ -4,9 +4,11 @@
  * Portal read-only admin account — doctors open from `/admins/:id` (calendar owner links).
  */
 import { format } from "date-fns";
-import { ArrowLeft, CalendarDays, Clock, Hash, List, Lock, Mail, Shield, ShieldCheck } from "lucide-react";
-import { BackNavigationLink } from "@/components/shared/BackNavigationLink";
+import { CalendarDays, Clock, Hash, Lock, Mail, Shield, ShieldCheck } from "lucide-react";
 import { EntityDetailChromeHeader } from "@/components/shared/entity-detail/EntityDetailChromeHeader";
+import { EntityDetailBackLink } from "@/components/shared/entity-detail/EntityDetailBackLink";
+import { EntityDetailFooterRow } from "@/components/shared/entity-detail/EntityDetailFooterRow";
+import { slateGlassBackButtonClass, skyGlassTableFrameClass } from "@/lib/calendar-header-action-styles";
 import {
   entityDetailChromeSlateIconClass,
   entityDetailChromeSlateIconTileClass,
@@ -16,16 +18,14 @@ import { Badge } from "@/components/ui/badge";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { UserRoleBadge } from "@/components/shared/UserRoleBadge";
 import { clinicalEmptyOr } from "@/components/shared/ClinicalTableEmptyDash";
-import { skyGlassBackButtonClass, skyGlassTableFrameClass } from "@/lib/calendar-header-action-styles";
 import {
-  entityDetailActionsRowClass,
   entityDetailFieldIconCircleClass,
   entityDetailPageHeaderClass,
   patientDetailDefinitionListClass,
   patientDetailDefinitionRowClass,
   patientDetailSchemaSectionClass,
 } from "@/lib/patient-detail-ui-classes";
-import { appPortalSectionRootClass } from "@/lib/section-page-layout";
+import { resolveEntityDetailRootClass } from "@/lib/section-page-layout";
 import { cn } from "@/lib/utils";
 import type { User } from "@/types/types";
 import { useLayoutEffect } from "react";
@@ -71,7 +71,7 @@ export function PortalAdminDetailScreen({
   const displayName = liveUser.display_name?.trim() || liveUser.email;
 
   return (
-    <div className={appPortalSectionRootClass}>
+    <div className={resolveEntityDetailRootClass("portal")}>
       <EntityDetailChromeHeader
         className={entityDetailPageHeaderClass}
         icon={Shield}
@@ -80,10 +80,11 @@ export function PortalAdminDetailScreen({
         title={displayName}
         description="Admin Account — Directory Profile"
         actions={
-          <BackNavigationLink href={backHref} className={cn(skyGlassBackButtonClass, "no-underline")}>
-            <ArrowLeft className="shrink-0" aria-hidden />
-            Back
-          </BackNavigationLink>
+          <EntityDetailBackLink
+            href={backHref}
+            placement="header"
+            backButtonClassName={slateGlassBackButtonClass}
+          />
         }
       />
 
@@ -153,12 +154,10 @@ export function PortalAdminDetailScreen({
         </CardContent>
       </Card>
 
-      <div className={entityDetailActionsRowClass}>
-        <BackNavigationLink href={backHref} className={cn(skyGlassBackButtonClass, "no-underline")}>
-          <List className="shrink-0" aria-hidden />
-          Back To List
-        </BackNavigationLink>
-      </div>
+      <EntityDetailFooterRow
+        backHref={backHref}
+        backButtonClassName={slateGlassBackButtonClass}
+      />
     </div>
   );
 }

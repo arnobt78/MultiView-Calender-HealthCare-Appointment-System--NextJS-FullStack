@@ -37,7 +37,7 @@ export function EntityDetailChromeHeader({
       title={title}
       description={description}
       actions={actions}
-      borderBottom
+      borderBottom={false}
       className={className}
     />
   );

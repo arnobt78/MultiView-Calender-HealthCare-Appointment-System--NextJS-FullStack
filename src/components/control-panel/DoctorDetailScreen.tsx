@@ -3,14 +3,15 @@
 import { useLayoutEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  ArrowLeft,
   Pencil,
   Power,
   PowerOff,
   Stethoscope,
 } from "lucide-react";
-import { BackNavigationLink } from "@/components/shared/BackNavigationLink";
 import { DemoShowcaseFeatureNote } from "@/components/shared/DemoShowcaseFeatureNote";
+import { EntityDetailBackLink } from "@/components/shared/entity-detail/EntityDetailBackLink";
+import { EntityDetailFooterRow } from "@/components/shared/entity-detail/EntityDetailFooterRow";
+import { emeraldGlassBackButtonClass } from "@/lib/calendar-header-action-styles";
 import { DoctorAvailabilityEditor } from "@/components/control-panel/DoctorAvailabilityEditor";
 import { DoctorAppointmentTypesEditor } from "@/components/control-panel/DoctorAppointmentTypesEditor";
 import { DoctorGlobalTypeConfigEditor } from "@/components/control-panel/DoctorGlobalTypeConfigEditor";
@@ -22,7 +23,6 @@ import { DOCTOR_MANAGEMENT_DEMO_NOTE } from "@/lib/demo-showcase-copy";
 import {
   doctorDetailSectionIconCircleClass,
 } from "@/lib/doctor-detail-ui-classes";
-import { entityDetailActionsRowClass } from "@/lib/patient-detail-ui-classes";
 import type { User } from "@/types/types";
 import type { DoctorSnapshot } from "@/types/types";
 import { useUser } from "@/hooks/useUsers";
@@ -123,32 +123,34 @@ export function DoctorDetailScreen({
     </>
   );
 
-  const footerSlot = canAdminEdit ? (
-    <div className={entityDetailActionsRowClass}>
-      <BackNavigationLink href={listBackHref} className="no-underline">
-        <ArrowLeft className="shrink-0" aria-hidden />
-        Back To List
-      </BackNavigationLink>
-      <div className="flex flex-wrap gap-2">
-        <ControlPanelGlassActionButton type="button" variant="emerald" onClick={openEditDialog}>
-          <Pencil className="shrink-0" aria-hidden />
-          Update Profile
-        </ControlPanelGlassActionButton>
-        <ControlPanelGlassActionButton
-          type="button"
-          variant={active ? "rose" : "emerald"}
-          onClick={() => setConfirmToggleOpen(true)}
-        >
-          {active ? (
-            <PowerOff className="shrink-0" aria-hidden />
-          ) : (
-            <Power className="shrink-0" aria-hidden />
-          )}
-          {active ? "Deactivate" : "Activate"}
-        </ControlPanelGlassActionButton>
-      </div>
-    </div>
-  ) : undefined;
+  const footerSlot = (
+    <EntityDetailFooterRow
+      backHref={listBackHref}
+      backButtonClassName={emeraldGlassBackButtonClass}
+      actions={
+        canAdminEdit ? (
+          <>
+            <ControlPanelGlassActionButton type="button" variant="emerald" onClick={openEditDialog}>
+              <Pencil className="shrink-0" aria-hidden />
+              Update Profile
+            </ControlPanelGlassActionButton>
+            <ControlPanelGlassActionButton
+              type="button"
+              variant={active ? "rose" : "emerald"}
+              onClick={() => setConfirmToggleOpen(true)}
+            >
+              {active ? (
+                <PowerOff className="shrink-0" aria-hidden />
+              ) : (
+                <Power className="shrink-0" aria-hidden />
+              )}
+              {active ? "Deactivate" : "Activate"}
+            </ControlPanelGlassActionButton>
+          </>
+        ) : undefined
+      }
+    />
+  );
 
   return (
     <>

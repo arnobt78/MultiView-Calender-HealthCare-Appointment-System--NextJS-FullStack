@@ -5,7 +5,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { clinicalEmptyOr } from "@/components/shared/ClinicalTableEmptyDash";
 import {
-  ArrowLeft,
   Calendar,
   CalendarDays,
   Clock,
@@ -17,8 +16,10 @@ import {
   User as UserIcon,
   UserCog,
 } from "lucide-react";
-import { BackNavigationLink } from "@/components/shared/BackNavigationLink";
 import { EntityDetailChromeHeader } from "@/components/shared/entity-detail/EntityDetailChromeHeader";
+import { EntityDetailBackLink } from "@/components/shared/entity-detail/EntityDetailBackLink";
+import { EntityDetailFooterRow } from "@/components/shared/entity-detail/EntityDetailFooterRow";
+import { slateGlassBackButtonClass } from "@/lib/calendar-header-action-styles";
 import { ControlPanelHeaderSubtitle } from "@/components/control-panel/ControlPanelHeaderSubtitle";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -38,7 +39,6 @@ import {
   entityDetailChromeSlateIconTileClass,
 } from "@/lib/page-chrome-classes";
 import {
-  entityDetailActionsRowClass,
   entityDetailPageHeaderClass,
   entityDetailSnapshotSectionShellClass,
   patientDetailDefinitionListClass,
@@ -63,7 +63,6 @@ import { EntityIdCopyInline } from "@/components/shared/EntityIdCopyInline";
 import { mapUserRecordAuditActors } from "@/lib/entity-detail-audit-actor";
 import { entityDetailAuditIconCircleClass } from "@/lib/patient-detail-ui-classes";
 import type { EntityRole } from "@/lib/entity-routes";
-import { skyGlassBackButtonClass } from "@/lib/calendar-header-action-styles";
 import { clinicalSnapshotAppointmentsTableMinWidthClass } from "@/lib/clinical-snapshot-table-columns";
 import { isUserAccountActive } from "@/lib/entity-active-status";
 import { buildStaffDirectoryMap } from "@/lib/staff-directory-cache";
@@ -190,13 +189,11 @@ export function AdminUserDetailScreen({
           />
         }
         actions={
-          <BackNavigationLink
+          <EntityDetailBackLink
             href={listBackHref}
-            className={cn(skyGlassBackButtonClass, "no-underline")}
-          >
-            <ArrowLeft className="shrink-0" aria-hidden />
-            Back
-          </BackNavigationLink>
+            placement="header"
+            backButtonClassName={slateGlassBackButtonClass}
+          />
         }
       />
 
@@ -294,21 +291,18 @@ export function AdminUserDetailScreen({
         </CardContent>
       </Card>
 
-      {canAdminEdit ? (
-        <div className={entityDetailActionsRowClass}>
-          <BackNavigationLink
-            href={listBackHref}
-            className={cn(skyGlassBackButtonClass, "no-underline")}
-          >
-            <ArrowLeft className="shrink-0" aria-hidden />
-            Back To List
-          </BackNavigationLink>
-          <ControlPanelGlassActionButton type="button" variant="sky" onClick={openEditDialog}>
-            <Pencil className="shrink-0" aria-hidden />
-            Update Profile
-          </ControlPanelGlassActionButton>
-        </div>
-      ) : null}
+      <EntityDetailFooterRow
+        backHref={listBackHref}
+        backButtonClassName={slateGlassBackButtonClass}
+        actions={
+          canAdminEdit ? (
+            <ControlPanelGlassActionButton type="button" variant="emerald" onClick={openEditDialog}>
+              <Pencil className="shrink-0" aria-hidden />
+              Update Profile
+            </ControlPanelGlassActionButton>
+          ) : undefined
+        }
+      />
 
       {canAdminEdit ? (
         <AdminUserFormDialog

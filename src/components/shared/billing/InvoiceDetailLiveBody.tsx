@@ -41,6 +41,7 @@ import {
   entityDetailInvoiceRecordSectionTitle,
   entityDetailOwnedSnapshotSectionTitle,
 } from "@/lib/entity-detail-snapshot-section-copy";
+import { resolveEntityDetailRootClass } from "@/lib/section-page-layout";
 import { pageChromeTitleClass } from "@/lib/page-chrome-classes";
 import { entityDetailPageHeaderClass } from "@/lib/patient-detail-ui-classes";
 import {
@@ -154,7 +155,7 @@ export function InvoiceDetailLiveBody({
     : null;
 
   return (
-    <div className="space-y-3 text-gray-700">
+    <div className={resolveEntityDetailRootClass(variant === "control-panel" ? "control-panel" : "portal")}>
       <EntityDetailChromeHeader
         className={entityDetailPageHeaderClass}
         icon={Receipt}

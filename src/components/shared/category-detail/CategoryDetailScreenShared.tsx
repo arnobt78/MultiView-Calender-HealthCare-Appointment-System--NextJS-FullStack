@@ -19,7 +19,8 @@ import {
 import { useRouter } from "next/navigation";
 import { useLayoutEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { BackNavigationLink } from "@/components/shared/BackNavigationLink";
+import { EntityDetailBackLink } from "@/components/shared/entity-detail/EntityDetailBackLink";
+import { EntityDetailFooterRow } from "@/components/shared/entity-detail/EntityDetailFooterRow";
 import { EntityDetailChromeHeader } from "@/components/shared/entity-detail/EntityDetailChromeHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -332,13 +333,11 @@ export function CategoryDetailScreenShared({
         title={showLiveBody && cat ? cat.label : <Skeleton className="h-7 w-56 max-w-full" aria-hidden />}
         description="Category Record — Schema Fields, Related Appointments"
         actions={
-          <BackNavigationLink
+          <EntityDetailBackLink
             href={backHref}
-            className={cn(toneClasses.backButtonClass, "no-underline")}
-          >
-            <ArrowLeft className="shrink-0" aria-hidden />
-            Back
-          </BackNavigationLink>
+            placement="header"
+            backButtonClassName={toneClasses.backButtonClass}
+          />
         }
       />
 
@@ -494,16 +493,12 @@ export function CategoryDetailScreenShared({
         </CardContent>
       </Card>
 
-      <div className={toneClasses.stickyFooterClass}>
-        <BackNavigationLink
-          href={backHref}
-          className={cn(toneClasses.backButtonClass, "no-underline")}
-        >
-          <List className="shrink-0" aria-hidden />
-          Back To List
-        </BackNavigationLink>
-        {isAdminMode && hasCategory ? (
-          <div className="flex flex-wrap gap-2">
+      <EntityDetailFooterRow
+        backHref={backHref}
+        backButtonClassName={toneClasses.backButtonClass}
+        actions={
+          isAdminMode && hasCategory ? (
+            <>
               <ControlPanelGlassActionButton type="button" variant="emerald" onClick={openEditDialog}>
                 <Pencil className="shrink-0" aria-hidden />
                 Update Category
@@ -534,9 +529,10 @@ export function CategoryDetailScreenShared({
                   });
                 }}
               />
-            </div>
-          ) : null}
-      </div>
+            </>
+          ) : undefined
+        }
+      />
 
       {isAdminMode && hasCategory ? (
         <CategoryFormDialog

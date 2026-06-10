@@ -20,7 +20,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BackNavigationLink } from "@/components/shared/BackNavigationLink";
+import { EntityDetailBackLink } from "@/components/shared/entity-detail/EntityDetailBackLink";
 import { EntityDetailChromeHeader } from "@/components/shared/entity-detail/EntityDetailChromeHeader";
 import { CategoryBrandMark } from "@/components/shared/category-display/CategoryBrandMark";
 import { CategoryInlineLink } from "@/components/shared/CategoryInlineLink";
@@ -309,13 +309,11 @@ export function AppointmentDetailScreenShared({
         }
         description={showLive ? headerSubtitle : "Appointment details"}
         actions={
-          <BackNavigationLink
+          <EntityDetailBackLink
             href={backHref}
-            className={cn(toneClasses.backButtonClass, "no-underline")}
-          >
-            <ArrowLeft className="shrink-0" aria-hidden />
-            Back
-          </BackNavigationLink>
+            placement="header"
+            backButtonClassName={toneClasses.backButtonClass}
+          />
         }
       />
 
