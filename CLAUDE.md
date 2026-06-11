@@ -4,9 +4,9 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-11)
 
-- **C18/C18.1 (REQ-0064/0065):** Org CP indigo shell; enriched list API (`organization-list-enrich.ts`); stats/filters/DataTable; `InvoicePortalListCard`; compact list billing (top 3, cap 20) + full detail billing; glass dialogs; `loadOrganizationDetailForUser` + detail/members seed; hover prefetch; `invalidateOrganizationDetail` cross-tab.
-- **C17.1:** dialog back tokens `cursor-pointer`; removed redundant `cursor-pointer` on glass call sites.
-- **Verify:** **954/954** · tsc · lint · build PASS.
+- **C19 (REQ-0064):** Org list UI — `indigoGlassTableFrameClass`; `EntityTitleLink`/`UserRoleBadge`/`OrganizationMembersRoleBadges`; billing filter width; vertical actions menu; demo `test@patient.com` org member.
+- **C18.2 (REQ-0065):** `useOrganizationDetail`; `organization-detail-client.ts` cache merges; enriched POST members; `prefetchOrganizationDetail` in detail page.
+- **Verify:** **961/961** · tsc · lint · build PASS.
 
 ## Never / Always
 
@@ -28,16 +28,15 @@ Cross-tab: `query-cache-cross-tab.ts` (`ORGANIZATIONS`, `INVOICES_BILLING` on or
 
 ## Key paths
 
-- **Org CP:** `OrganizationManagement.tsx`, `organization-management-columns.tsx`, `OrganizationBillingPanelCompact`/`Full`, `organization-detail-load.ts`, `organization-dialog/`
+- **Org list (C19):** `OrganizationManagement.tsx`, `organization-management-columns.tsx`, `OrganizationMembersRoleBadges.tsx`, `indigoGlassTableFrameClass`
+- **Org detail (C18.2):** `useOrganizationDetail`, `organization-detail-load.ts`, `organization-detail-client.ts`, `OrganizationDetailScreen.tsx`, `organization-dialog/`
+- **CP lists:** `cpClinicalListTableFrameClassName` + tone shells (`sky`/`violet`/`indigo`/`emerald`)
 - Entity detail: `EntityDetailPageShell.tsx`, `EntityDetailBackLink.tsx`, `EntityDetailFooterRow.tsx`
-- **CP lists:** shared `cpClinicalListTableFrameClassName` + actions shell; tone per tab (`sky`/`violet`/`indigo`/`emerald`)
-- Admin user: `admin-user-detail-ui-classes.ts`, `EntityEmailVerificationBadge.tsx`, `violet-glass-table-frame.ts`
-- Glass: `calendar-header-action-styles.ts`, `ControlPanelGlassActionButton.tsx`
 - Invoice: `InvoicePortalListCard.tsx`, `InvoiceDetailLiveBody`, `invoice-dialog/`
 
 ## Agile V
 
-`.agile-v/ACTIVATION.md` · `STATE.md` · **C18.1 shipped** (REQ-0064/0065).
+`.agile-v/ACTIVATION.md` · `STATE.md` · **C19 shipped** (REQ-0064/0065).
 
 ## Principle
 

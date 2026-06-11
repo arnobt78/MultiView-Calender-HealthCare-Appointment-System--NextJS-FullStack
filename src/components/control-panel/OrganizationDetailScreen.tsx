@@ -33,7 +33,7 @@ import { OrganizationFormDialog } from "@/components/control-panel/organization-
 import { OrganizationAddMemberDialog } from "@/components/control-panel/organization-dialog/OrganizationAddMemberDialog";
 import { Card, CardContent } from "@/components/ui/card";
 import type { Organization } from "@/hooks/useOrganization";
-import { useOrganization } from "@/hooks/useOrganization";
+import { useOrganization, useOrganizationDetail } from "@/hooks/useOrganization";
 import {
   seedOrganizationsListCacheFromSsr,
   seedOrgBillingCacheFromSsr,
@@ -62,7 +62,7 @@ import {
   buildOrganizationDeleteConfirmSubtitle,
   DELETE_ORGANIZATION_CONFIRM_TITLE,
 } from "@/lib/confirm-delete-dialog-copy";
-import { ClinicalEmptyDash, clinicalEmptyOr } from "@/components/shared/ClinicalTableEmptyDash";
+import { clinicalEmptyOr } from "@/components/shared/ClinicalTableEmptyDash";
 import type { OrgBillingCachePayload } from "@/lib/org-billing-prefetch";
 import { cn, toTitleCaseLabel } from "@/lib/utils";
 
@@ -95,7 +95,7 @@ function DefinitionRow({
 
 /** CP organization detail — indigo glass + members + full billing + CRUD (REQ-0065). */
 export function OrganizationDetailScreen({
-  org,
+  org: initialOrg,
   members: initialMembers,
   initialOrganizations,
   initialOrgBilling,
@@ -116,37 +116,35 @@ export function OrganizationDetailScreen({
     isUpdating,
   } = useOrganization();
 
-  const [members, setMembers] = useState(initialMembers);
-  const [liveOrg, setLiveOrg] = useState(org);
+  const { org, members } = useOrganizationDetail(initialOrg.id, {
+    initialOrg,
+    initialMembers,
+  });
+
+  const liveOrg = org ?? initialOrg;
+
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [addMemberOpen, setAddMemberOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [removeMemberTarget, setRemoveMemberTarget] =
     useState<OrganizationDetailMemberRow | null>(null);
-  const [editForm, setEditForm] = useState({ name: org.name });
+  const [editForm, setEditForm] = useState({ name: initialOrg.name });
 
   const isOwner = liveOrg.viewer_role === "admin";
 
-  useMemo(() => {
-    seedOrganizationsListCacheFromSsr(queryClient, initialOrganizations ?? undefined);
-    seedOrganizationDetailCacheFromSsr(queryClient, liveOrg.id, { org: liveOrg, members: initialMembers });
-    if (initialOrgBilling) {
-      seedOrgBillingCacheFromSsr(queryClient, {
-        [liveOrg.id]: initialOrgBilling,
-      });
-    }
-    return null;
-  }, [queryClient, initialOrganizations, initialOrgBilling, liveOrg, initialMembers]);
-
+  /** Seed TanStack before hooks subscribe — same pattern as PatientDetailScreen. */
   useLayoutEffect(() => {
     seedOrganizationsListCacheFromSsr(queryClient, initialOrganizations ?? undefined);
-    seedOrganizationDetailCacheFromSsr(queryClient, liveOrg.id, { org: liveOrg, members: initialMembers });
+    seedOrganizationDetailCacheFromSsr(queryClient, initialOrg.id, {
+      org: initialOrg,
+      members: initialMembers,
+    });
     if (initialOrgBilling) {
       seedOrgBillingCacheFromSsr(queryClient, {
-        [liveOrg.id]: initialOrgBilling,
+        [initialOrg.id]: initialOrgBilling,
       });
     }
-  }, [queryClient, initialOrganizations, initialOrgBilling, liveOrg, initialMembers]);
+  }, [queryClient, initialOrganizations, initialOrgBilling, initialOrg, initialMembers]);
 
   const memberColumns = useMemo(
     () =>
@@ -164,7 +162,6 @@ export function OrganizationDetailScreen({
       { orgId: liveOrg.id, name },
       {
         onSuccess: () => {
-          setLiveOrg((prev) => ({ ...prev, name }));
           setEditDialogOpen(false);
         },
       }
@@ -190,7 +187,6 @@ export function OrganizationDetailScreen({
       },
       {
         onSuccess: () => {
-          setMembers((prev) => prev.filter((m) => m.id !== member.id));
           setRemoveMemberTarget(null);
         },
       }
@@ -233,56 +229,56 @@ export function OrganizationDetailScreen({
           <div className={organizationDetailSchemaSectionClass}>
             <dl className={organizationDetailDefinitionListClass}>
               <DefinitionRow icon={Hash} label="Organization ID">
-                <EntityIdCopyInline value={org.id} />
+                <EntityIdCopyInline value={liveOrg.id} />
               </DefinitionRow>
               <DefinitionRow icon={Building2} label="Name">
                 <span className="font-semibold">{liveOrg.name}</span>
               </DefinitionRow>
               <DefinitionRow icon={Link2} label="Slug">
-                <span className="font-mono text-xs">{org.slug}</span>
+                <span className="font-mono text-xs">{liveOrg.slug}</span>
               </DefinitionRow>
               <DefinitionRow icon={UserRound} label="Owner">
-                <span>{org.owner_label}</span>
+                <span>{liveOrg.owner_label}</span>
               </DefinitionRow>
-              {org.org_type ? (
+              {liveOrg.org_type ? (
                 <DefinitionRow icon={Building2} label="Type">
-                  {clinicalEmptyOr(org.org_type, "definition")}
+                  {clinicalEmptyOr(liveOrg.org_type, "definition")}
                 </DefinitionRow>
               ) : null}
-              {org.description ? (
+              {liveOrg.description ? (
                 <DefinitionRow icon={Building2} label="Description">
-                  {org.description}
+                  {liveOrg.description}
                 </DefinitionRow>
               ) : null}
-              {org.website ? (
+              {liveOrg.website ? (
                 <DefinitionRow icon={Globe} label="Website">
                   <a
-                    href={org.website}
+                    href={liveOrg.website}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-indigo-700 hover:underline"
                   >
-                    {org.website}
+                    {liveOrg.website}
                   </a>
                 </DefinitionRow>
               ) : null}
-              {org.phone ? (
+              {liveOrg.phone ? (
                 <DefinitionRow icon={Phone} label="Phone">
-                  {org.phone}
+                  {liveOrg.phone}
                 </DefinitionRow>
               ) : null}
-              {org.address ? (
+              {liveOrg.address ? (
                 <DefinitionRow icon={MapPin} label="Address">
-                  {org.address}
+                  {liveOrg.address}
                 </DefinitionRow>
               ) : null}
-              {org.timezone ? (
+              {liveOrg.timezone ? (
                 <DefinitionRow icon={Clock} label="Timezone">
-                  {org.timezone}
+                  {liveOrg.timezone}
                 </DefinitionRow>
               ) : null}
               <DefinitionRow icon={CalendarDays} label="Created">
-                {format(new Date(org.created_at), "PPpp")}
+                {format(new Date(liveOrg.created_at), "PPpp")}
               </DefinitionRow>
             </dl>
           </div>
@@ -379,20 +375,8 @@ export function OrganizationDetailScreen({
             onOpenChange={setAddMemberOpen}
             onAdd={(args) =>
               addMember(args, {
-                onSuccess: (_data, variables) => {
+                onSuccess: () => {
                   setAddMemberOpen(false);
-                  setMembers((prev) => [
-                    ...prev,
-                    {
-                      id: `pending-${variables.userId}`,
-                      org_id: liveOrg.id,
-                      user_id: variables.userId,
-                      role: variables.role,
-                      joined_at: new Date().toISOString(),
-                      display_name: variables.memberLabel ?? null,
-                      email: null,
-                    },
-                  ]);
                 },
               })
             }

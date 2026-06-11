@@ -103,7 +103,11 @@ async function loadRefs(): Promise<Refs> {
 }
 
 /** Demo org for CP organization-management (appointments link via staff users, not FK). */
-async function ensureDemoOrganization(adminId: string, doctorIds: string[]) {
+async function ensureDemoOrganization(
+  adminId: string,
+  doctorIds: string[],
+  patientUserIds: string[] = []
+) {
   const org = await prisma.organization.upsert({
     where: { slug: ORG_SLUG },
     create: {
@@ -120,6 +124,7 @@ async function ensureDemoOrganization(adminId: string, doctorIds: string[]) {
   const memberSpecs: { user_id: string; role: string }[] = [
     { user_id: adminId, role: "admin" },
     ...doctorIds.map((id) => ({ user_id: id, role: "doctor" })),
+    ...patientUserIds.map((id) => ({ user_id: id, role: "patient" })),
   ];
 
   for (const m of memberSpecs) {
@@ -147,9 +152,15 @@ async function seedTimeline() {
   const now = new Date();
   const monthOffsets = [-3, -2, -1, 0, 1, 2];
 
+  const patientPortalUsers = await prisma.user.findMany({
+    where: { email: "test@patient.com", role: "patient" },
+    select: { id: true },
+  });
+
   await ensureDemoOrganization(
     refs.adminId,
-    refs.doctors.map((d) => d.id)
+    refs.doctors.map((d) => d.id),
+    patientPortalUsers.map((u) => u.id)
   );
 
   let created = 0;

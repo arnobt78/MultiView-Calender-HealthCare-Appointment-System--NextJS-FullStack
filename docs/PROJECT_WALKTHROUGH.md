@@ -1,19 +1,23 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-11 — C18 + C18.1)
+## Latest (2026-06-11 — C18 + C18.1 + C18.2 + C19)
 
 **C18:** Organization management CP parity — indigo list shell (`OrganizationManagement`), enriched org API (`organization-list-enrich.ts`), 6-card stats, `ClinicalListFilterToolbar`, `DataTable` + `PrefetchingLink`, glass create/edit/add-member dialogs, `InvoicePortalListCard` shared billing cards. List footer: `OrganizationBillingPanelCompact` (KPI + top 3 invoices, cap `ORG_BILLING_PREFETCH_ORG_CAP` 20). Detail: `OrganizationBillingPanelFull` + member CRUD + extended schema fields.
 
 **C18.1:** `loadOrganizationDetailForUser` + `seedOrganizationDetailCacheFromSsr` + hover prefetch on `/control-panel/organizations/:id`; `invalidateOrganizationDetail` cross-tab (`ORGANIZATIONS` + `INVOICES_BILLING`); enriched GET `/api/organizations/[id]`.
 
-**Verify:** **954/954** · tsc · lint · build.
+**C18.2:** `useOrganizationDetail(orgId)` hook (SSR `initialData`, `refetchOnMount: false` when warm); `organization-detail-client.ts` — single GET fetch + cache merges on mutations; enriched POST members API; `prefetchOrganizationDetail` in detail page.
+
+**C19:** Org list table shell `indigoGlassTableFrameClass` (patient `rounded-2xl` parity); `EntityTitleLink` sky links; `UserRoleBadge` + `OrganizationMembersRoleBadges`; billing filter width; vertical actions menu; demo seeds `test@patient.com` as org portal patient member.
+
+**Verify:** **961/961** · tsc · lint · build.
 
 ## Prior (2026-06-10 — C17 + C16)
 
 ## Prior (2026-06-10 — C15 entity detail spacing + C14 gaps)
 
 - **Layout:** `EntityDetailPageShell` — header outside body stack (no 12px gap); `appEntityDetailBodyStackClass` for card/footer rhythm; CP + portal outer roots omit `space-y-3`.
-- **Org detail:** members `ClinicalDataTable` (`organization-detail-members-columns.tsx`); SSR `loadOrganizationDetailForUser` + `prefetchOrganizations` + `seedOrganizationDetailCacheFromSsr` + billing seed on detail route.
+- **Org detail:** members `ClinicalDataTable` (`organization-detail-members-columns.tsx`); SSR `loadOrganizationDetailForUser` + `useOrganizationDetail` + `seedOrganizationDetailCacheFromSsr` + billing seed on detail route.
 - **Verify:** **916/916** · tsc · lint · build.
 
 ## Prior (2026-06-10 — C14 entity detail chrome parity)

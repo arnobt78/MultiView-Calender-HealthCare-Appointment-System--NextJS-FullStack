@@ -6,19 +6,24 @@
 
 | Field | Value |
 |-------|-------|
-| **Cycle** | **C18.1** — organization consistency gap closure |
+| **Cycle** | **C19** — organization list UI polish |
 | **Phase** | Verify |
 | **Stage** | 4 |
 | **Status** | verify PASS |
 | **Last Updated** | 2026-06-11 |
-| **Parent REQ** | REQ-0064, REQ-0065 |
+| **Parent REQ** | REQ-0064 |
 
-## Verify baseline (C18.1 close)
+## Verify baseline (C19 close)
 
-**954/954** (190 files) · tsc · lint · build — PASS
+**961/961** (192 files) · tsc · lint · build — PASS
 
-## C18.1 scope
+## C19 scope
 
-- Detail loader + TanStack seed (`loadOrganizationDetailForUser`, `seedOrganizationDetailCacheFromSsr`).
-- Hover prefetch org detail; cross-tab `invalidateOrganizationDetail`.
-- Add-member `memberLabel`; walkthrough docs refresh.
+- `indigoGlassTableFrameClass` — patient/violet table shell parity.
+- Columns: `EntityTitleLink`, `UserRoleBadge`, `OrganizationMembersRoleBadges`, muted typography, amber outstanding.
+- Billing filter width; vertical `EllipsisVertical` actions menu.
+- Demo seed: `test@patient.com` as org member role `patient`.
+
+## C18.2 scope (shipped)
+
+- `useOrganizationDetail` hook; `organization-detail-client.ts`; enriched POST members.

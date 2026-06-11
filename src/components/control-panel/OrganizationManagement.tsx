@@ -8,10 +8,10 @@ import {
   ListFilter,
   Receipt,
   Trash2,
-  UserPlus,
   Users,
 } from "lucide-react";
-import Link from "next/link";
+import { PrefetchingLink } from "@/components/shared/PrefetchingLink";
+import { Button } from "@/components/ui/button";
 import { ControlPanelPageChrome } from "@/components/control-panel/ControlPanelPageChrome";
 import { ControlPanelHeaderGlassButton } from "@/components/control-panel/ControlPanelHeaderGlassButton";
 import { ControlPanelEntityListShell } from "@/components/control-panel/ControlPanelEntityListShell";
@@ -41,10 +41,7 @@ import {
 import { OrganizationFormDialog } from "@/components/control-panel/organization-dialog/OrganizationFormDialog";
 import { OrganizationAddMemberDialog } from "@/components/control-panel/organization-dialog/OrganizationAddMemberDialog";
 import { OrganizationBillingPanelCompact } from "@/components/control-panel/OrganizationBillingPanel";
-import {
-  buildOrganizationManagementColumns,
-  OrganizationActionsTrigger,
-} from "@/lib/organization-management-columns";
+import { buildOrganizationManagementColumns } from "@/lib/organization-management-columns";
 import {
   buildOrganizationDeleteConfirmSubtitle,
   DELETE_ORGANIZATION_CONFIRM_TITLE,
@@ -97,18 +94,25 @@ function OrganizationRowActions({
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <OrganizationActionsTrigger />
+          <Button variant="ghost" size="icon" type="button" className="h-7 w-7">
+            <EllipsisVertical className="h-4 w-4" />
+            <span className="sr-only">Open menu</span>
+          </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem asChild>
-            <Link href={detailHref} className="flex items-center gap-2">
+            <PrefetchingLink
+              href={detailHref}
+              className="flex cursor-pointer items-center gap-2"
+            >
               <Eye className="h-4 w-4" aria-hidden />
               View Details
-            </Link>
+            </PrefetchingLink>
           </DropdownMenuItem>
           {isOwner ? (
             <>
               <DropdownMenuItem
+                className="flex cursor-pointer items-center gap-2"
                 onSelect={(e) => {
                   e.preventDefault();
                   onAddMember(org);
@@ -119,7 +123,7 @@ function OrganizationRowActions({
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                className="text-red-600 focus:text-red-600"
+                className="flex cursor-pointer items-center gap-2 text-red-600 focus:text-red-600"
                 onSelect={(e) => {
                   e.preventDefault();
                   setConfirmOpen(true);
@@ -314,7 +318,7 @@ function OrganizationManagementInner() {
               displayLabel={INVOICE_FILTER_LABEL[invoiceFilter]}
               icon={Receipt}
               size="toolbar"
-              triggerClassName="max-w-[200px]"
+              triggerClassName="min-w-[200px] max-w-[min(42vw,280px)]"
               ariaLabel="Filter by billing"
               options={[
                 { value: "all", label: "All Billing" },

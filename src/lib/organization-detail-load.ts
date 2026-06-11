@@ -31,6 +31,41 @@ export type OrganizationDetailPayload = {
   members: OrganizationDetailMemberRow[];
 };
 
+type PrismaOrgMember = {
+  id: string;
+  org_id: string;
+  user_id: string;
+  role: string;
+  joined_at: Date;
+};
+
+type UserPick = { id: string; email: string | null; display_name: string | null };
+
+/**
+ * Maps a Prisma member row to detail table shape — shared by SSR loader and POST members API.
+ * When `user` is omitted, loads display_name/email from the database.
+ */
+export async function enrichOrganizationMemberRow(
+  member: PrismaOrgMember,
+  user?: UserPick | null
+): Promise<OrganizationDetailMemberRow> {
+  const u =
+    user ??
+    (await prisma.user.findUnique({
+      where: { id: member.user_id },
+      select: { id: true, email: true, display_name: true },
+    }));
+  return {
+    id: member.id,
+    org_id: member.org_id,
+    user_id: member.user_id,
+    role: member.role,
+    joined_at: member.joined_at.toISOString(),
+    display_name: u?.display_name ?? null,
+    email: u?.email ?? null,
+  };
+}
+
 /** Load org + enriched members when caller is owner or member — null when forbidden/missing. */
 export async function loadOrganizationDetailForUser(
   orgId: string,
@@ -61,18 +96,9 @@ export async function loadOrganizationDetailForUser(
   const userMap = Object.fromEntries(users.map((u) => [u.id, u]));
   const ownerUser = userMap[orgSerialized.owner_user_id];
 
-  const members: OrganizationDetailMemberRow[] = raw.members.map((m) => {
-    const u = userMap[m.user_id];
-    return {
-      id: m.id,
-      org_id: m.org_id,
-      user_id: m.user_id,
-      role: m.role,
-      joined_at: m.joined_at.toISOString(),
-      display_name: u?.display_name ?? null,
-      email: u?.email ?? null,
-    };
-  });
+  const members: OrganizationDetailMemberRow[] = await Promise.all(
+    raw.members.map((m) => enrichOrganizationMemberRow(m, userMap[m.user_id]))
+  );
 
   return {
     org: {

@@ -38,7 +38,8 @@ async function resolveVisitFeeCents(
 async function ensureDemoOrganization(
   prisma: PrismaClient,
   adminId: string,
-  doctorIds: string[]
+  doctorIds: string[],
+  patientUserIds: string[] = []
 ): Promise<string> {
   const org = await prisma.organization.upsert({
     where: { slug: DEMO_CURATED_ORG_SLUG },
@@ -56,6 +57,7 @@ async function ensureDemoOrganization(
   const memberSpecs: { user_id: string; role: string }[] = [
     { user_id: adminId, role: "admin" },
     ...doctorIds.map((id) => ({ user_id: id, role: "doctor" })),
+    ...patientUserIds.map((id) => ({ user_id: id, role: "patient" })),
   ];
 
   for (const m of memberSpecs) {
@@ -202,7 +204,7 @@ export async function seedCuratedDemoAppointments(
   prisma: PrismaClient,
   options?: { skipWipe?: boolean }
 ): Promise<CuratedSeedResult> {
-  const [admin, doctors, patients, category, apptTypes] = await Promise.all([
+  const [admin, doctors, patients, patientPortalUsers, category, apptTypes] = await Promise.all([
     prisma.user.findFirst({
       where: { email: DEMO_CURATED_ADMIN_EMAIL },
       select: { id: true },
@@ -214,6 +216,10 @@ export async function seedCuratedDemoAppointments(
     prisma.patient.findMany({
       where: { email: { in: [...DEMO_CURATED_PATIENT_EMAILS] } },
       select: { id: true, email: true, firstname: true, lastname: true },
+    }),
+    prisma.user.findMany({
+      where: { email: "test@patient.com", role: "patient" },
+      select: { id: true },
     }),
     prisma.category.findFirst({
       where: { is_active: true },
@@ -254,7 +260,8 @@ export async function seedCuratedDemoAppointments(
   const orgId = await ensureDemoOrganization(
     prisma,
     admin.id,
-    doctors.map((d) => d.id)
+    doctors.map((d) => d.id),
+    patientPortalUsers.map((u) => u.id)
   );
 
   await ensureAppointmentStatusCheckIncludesCancelled(prisma);

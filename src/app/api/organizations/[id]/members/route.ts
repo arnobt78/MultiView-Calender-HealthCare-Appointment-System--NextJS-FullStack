@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import { enrichOrganizationMemberRow } from "@/lib/organization-detail-load";
 
 /** Per-request API handler (see api-route-dynamic.test.ts). */
 export const dynamic = "force-dynamic";
@@ -82,7 +83,9 @@ export async function POST(
       data: { org_id: id, user_id: userId, role },
     });
 
-    return NextResponse.json({ member }, { status: 201 });
+    const enriched = await enrichOrganizationMemberRow(member);
+
+    return NextResponse.json({ member: enriched }, { status: 201 });
   } catch (error: unknown) {
     console.error("Members POST error:", error);
     return NextResponse.json({ error: "Failed to add member" }, { status: 500 });

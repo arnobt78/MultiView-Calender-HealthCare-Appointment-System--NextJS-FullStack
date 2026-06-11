@@ -34,6 +34,10 @@ import {
   resolveDoctorPaidRevenueCents,
 } from "@/lib/doctor-revenue-aggregate";
 import { PAGINATION } from "@/lib/constants";
+import {
+  loadOrganizationDetailForUser,
+  type OrganizationDetailPayload,
+} from "@/lib/organization-detail-load";
 import { prisma } from "@/lib/prisma";
 import {
   dashboardOverviewAppointmentFilter,
@@ -170,9 +174,8 @@ export async function prefetchOrganizations(
 export async function prefetchOrganizationDetail(
   orgId: string,
   userId: string
-): Promise<import("@/lib/organization-detail-load").OrganizationDetailPayload | null> {
+): Promise<OrganizationDetailPayload | null> {
   try {
-    const { loadOrganizationDetailForUser } = await import("@/lib/organization-detail-load");
     return await loadOrganizationDetailForUser(orgId, userId);
   } catch {
     return null;

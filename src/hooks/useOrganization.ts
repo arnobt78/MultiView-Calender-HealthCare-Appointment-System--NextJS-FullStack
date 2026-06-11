@@ -7,21 +7,71 @@ import {
   invalidateOrganizations,
 } from "@/lib/query-client";
 import type { OrganizationListRow } from "@/lib/organization-list-enrich";
-
-/** List row — enriched aggregates from GET /api/organizations. */
-export type Organization = OrganizationListRow;
+import type { OrganizationDetailMemberRow } from "@/lib/organization-detail-members-columns";
+import type { OrganizationDetailOrg } from "@/lib/organization-detail-load";
+import {
+  fetchOrganizationDetailClient,
+  mergeOrganizationMemberIntoCache,
+  patchOrganizationDetailOrgCache,
+  removeOrganizationMemberFromCache,
+} from "@/lib/organization-detail-client";
 import { notify } from "@/lib/notify";
 import {
   organizationCrudMessage,
   orgMemberCrudMessage,
 } from "@/lib/crud-notify-messages";
 
-export interface OrgMember {
-  id: string;
-  org_id: string;
-  user_id: string;
-  role: string;
-  joined_at: string;
+/** List row — enriched aggregates from GET /api/organizations. */
+export type Organization = OrganizationListRow;
+
+export type UseOrganizationDetailOptions = {
+  /** SSR prefetch — stable first paint; skip mount refetch when seeded. */
+  initialOrg?: OrganizationDetailOrg | null;
+  initialMembers?: OrganizationDetailMemberRow[] | null;
+};
+
+/**
+ * Org detail + members — subscribes to TanStack cache seeded from SSR.
+ * Mirrors usePatient / useCategory detail hooks.
+ */
+export function useOrganizationDetail(
+  orgId: string | null,
+  options?: UseOrganizationDetailOptions
+) {
+  const queryClient = useQueryClient();
+  const hasSsrSeed = options?.initialOrg != null;
+
+  const detailQuery = useQuery({
+    queryKey: queryKeys.organizations.detail(orgId ?? ""),
+    queryFn: async () => {
+      const data = await fetchOrganizationDetailClient(orgId!, queryClient);
+      return data.org;
+    },
+    enabled: !!orgId,
+    initialData: options?.initialOrg ?? undefined,
+    staleTime: 60_000,
+    refetchOnMount: hasSsrSeed ? false : true,
+  });
+
+  const membersQuery = useQuery({
+    queryKey: queryKeys.organizations.members(orgId ?? ""),
+    queryFn: async () => {
+      const data = await fetchOrganizationDetailClient(orgId!, queryClient);
+      return data.members;
+    },
+    enabled: !!orgId,
+    initialData: options?.initialMembers ?? undefined,
+    staleTime: 60_000,
+    refetchOnMount: hasSsrSeed ? false : true,
+  });
+
+  return {
+    org: detailQuery.data,
+    members: membersQuery.data ?? [],
+    isLoading: detailQuery.isLoading || membersQuery.isLoading,
+    isError: detailQuery.isError || membersQuery.isError,
+    error: detailQuery.error ?? membersQuery.error,
+  };
 }
 
 export function useOrganization() {
@@ -69,11 +119,15 @@ export function useOrganization() {
       role: string;
       memberLabel?: string;
     }) =>
-      apiClient(`/api/organizations/${orgId}/members`, {
-        method: "POST",
-        body: JSON.stringify({ userId, role }),
-      }),
-    onSuccess: async (_, variables) => {
+      apiClient<{ member: OrganizationDetailMemberRow }>(
+        `/api/organizations/${orgId}/members`,
+        {
+          method: "POST",
+          body: JSON.stringify({ userId, role }),
+        }
+      ),
+    onSuccess: async (data, variables) => {
+      mergeOrganizationMemberIntoCache(queryClient, variables.orgId, data.member);
       const orgs =
         queryClient.getQueryData<Organization[]>(queryKeys.organizations.all) ?? [];
       const orgName =
@@ -81,7 +135,11 @@ export function useOrganization() {
       notify.crud(
         orgMemberCrudMessage("created", {
           orgName,
-          memberLabel: variables.memberLabel ?? "Member",
+          memberLabel:
+            variables.memberLabel ??
+            data.member.display_name ??
+            data.member.email ??
+            "Member",
           role: variables.role,
         })
       );
@@ -106,6 +164,7 @@ export function useOrganization() {
         body: JSON.stringify({ userId }),
       }),
     onSuccess: async (_, variables) => {
+      removeOrganizationMemberFromCache(queryClient, variables.orgId, variables.userId);
       const orgs =
         queryClient.getQueryData<Organization[]>(queryKeys.organizations.all) ?? [];
       const orgName =
@@ -125,11 +184,18 @@ export function useOrganization() {
 
   const updateOrgMutation = useMutation({
     mutationFn: ({ orgId, name }: { orgId: string; name: string }) =>
-      apiClient<{ organization: Organization }>(`/api/organizations/${orgId}`, {
-        method: "PATCH",
-        body: JSON.stringify({ name }),
-      }),
-    onSuccess: async (_, variables) => {
+      apiClient<{ organization: { name: string; slug: string } }>(
+        `/api/organizations/${orgId}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ name }),
+        }
+      ),
+    onSuccess: async (data, variables) => {
+      patchOrganizationDetailOrgCache(queryClient, variables.orgId, {
+        name: data.organization.name,
+        slug: data.organization.slug,
+      });
       notify.crud(
         organizationCrudMessage("updated", { name: variables.name })
       );

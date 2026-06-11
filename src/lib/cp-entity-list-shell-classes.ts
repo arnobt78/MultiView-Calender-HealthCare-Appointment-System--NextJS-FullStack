@@ -8,7 +8,7 @@ import {
 import {
   emeraldGlassTableFrameClass,
 } from "@/lib/doctor-management-toolbar-classes";
-import { skyGlassTableFrameClass } from "@/lib/calendar-header-action-styles";
+import { skyGlassTableFrameClass, indigoGlassTableFrameClass } from "@/lib/calendar-header-action-styles";
 import { violetGlassTableFrameClass } from "@/lib/violet-glass-table-frame";
 import { clinicalListStatsStripClass } from "@/lib/clinical-list-filter-toolbar-classes";
 
@@ -25,8 +25,7 @@ export const cpEntityListTableFrameClass: Record<CpEntityListTone, string> = {
   emerald: emeraldGlassTableFrameClass,
   slate: slateGlassTableFrameClass,
   amber: amberGlassTableFrameClass,
-  indigo:
-    "rounded-[28px] border bg-gradient-to-br from-indigo-500/5 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(99,102,241,0.08)]",
+  indigo: indigoGlassTableFrameClass,
 };
 
 export const cpEntityListStatsStripClass = clinicalListStatsStripClass;
