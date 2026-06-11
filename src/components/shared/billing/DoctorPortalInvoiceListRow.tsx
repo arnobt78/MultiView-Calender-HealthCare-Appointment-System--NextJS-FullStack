@@ -10,6 +10,8 @@ import {
 
 type Props = {
   invoice: Invoice;
+  /** 1-based index in filtered portal list. */
+  listIndex?: number;
   viewerUserId?: string;
   onSend: (id: string) => void;
   onDelete: (id: string) => void;
@@ -20,6 +22,7 @@ type Props = {
 /** Doctor portal billing list — wraps shared InvoicePortalListCard (sky tokens). */
 export function DoctorPortalInvoiceListRow({
   invoice,
+  listIndex,
   viewerUserId,
   onSend,
   onDelete,
@@ -33,6 +36,7 @@ export function DoctorPortalInvoiceListRow({
       <InvoicePortalListCard
         invoice={invoice}
         viewerRole={viewerRole}
+        listIndex={listIndex}
         shellClassName={doctorPortalInvoiceListItemShellClass}
         headerStripClassName={doctorPortalInvoiceHeaderStripClass}
         headerActions={

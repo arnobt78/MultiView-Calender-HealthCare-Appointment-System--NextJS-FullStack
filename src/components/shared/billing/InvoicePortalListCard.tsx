@@ -15,6 +15,8 @@ import { cn } from "@/lib/utils";
 type Props = {
   invoice: Invoice;
   viewerRole: EntityRole;
+  /** 1-based index in visible portal list — `Invoice N: #shortId` header. */
+  listIndex?: number;
   shellClassName: string;
   headerStripClassName: string;
   headerActions?: ReactNode;
@@ -28,13 +30,15 @@ type Props = {
 export function InvoicePortalListCard({
   invoice,
   viewerRole,
+  listIndex,
   shellClassName,
   headerStripClassName,
   headerActions,
   className,
 }: Props) {
   return (
-    <div className={cn(shellClassName, "w-full min-w-0", className)}>
+    // overflow-hidden — header strip bg must not square off parent rounded-xl corners
+    <div className={cn(shellClassName, "w-full min-w-0 overflow-hidden", className)}>
       <div
         className={cn(
           headerStripClassName,
@@ -46,7 +50,9 @@ export function InvoicePortalListCard({
             invoice={invoice}
             viewerRole={viewerRole}
             idLabelPrefix="Invoice"
+            listIndex={listIndex}
             showInvoiceLeadingIcon
+            compact
           />
         </div>
         <div className="inline-flex shrink-0 flex-nowrap items-center gap-1.5">
@@ -61,8 +67,12 @@ export function InvoicePortalListCard({
         </div>
       </div>
 
-      <div className="flex w-full min-w-0 flex-col gap-2 px-2.5 pt-2 pb-2.5">
-        <InvoiceDescriptionTableCell invoice={invoice} viewerRole={viewerRole} />
+      <div className="flex w-full min-w-0 flex-col gap-1 px-2.5 py-1">
+        <InvoiceDescriptionTableCell
+          invoice={invoice}
+          viewerRole={viewerRole}
+          density="portal"
+        />
         <InvoicePortalListMetaRow invoice={invoice} viewerRole={viewerRole} />
       </div>
     </div>

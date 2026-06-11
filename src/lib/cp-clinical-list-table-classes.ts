@@ -14,6 +14,10 @@ export const cpClinicalListPhoneColumnShellClass =
 export const cpClinicalListJoinedColumnShellClass =
   "w-[13.5%] min-w-[9rem] whitespace-nowrap";
 
+/** Members column — role badges + wrapping helper caption (override TableCell nowrap). */
+export const cpClinicalListMembersColumnShellClass =
+  "w-[16%] min-w-[10rem] min-w-0 max-w-[14rem] overflow-hidden whitespace-normal";
+
 /** Actions ⋮ column — right-aligned shell. */
 export const cpClinicalListActionsColumnShellClass =
   "w-[8%] min-w-[4.75rem] whitespace-nowrap text-right";

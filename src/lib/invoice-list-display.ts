@@ -42,6 +42,18 @@ function buildTitleFromVisitSummary(summary: InvoiceVisitSummary): string | null
   return null;
 }
 
+/** Portal list card header — `Invoice 1: #168da90a` (1-based position in visible list). */
+export function formatPortalInvoiceListLabel(
+  listIndex: number,
+  invoiceId: string
+): string {
+  const shortId = formatShortEntityId(invoiceId);
+  if (!Number.isFinite(listIndex) || listIndex < 1) {
+    return `Invoice ${shortId}`;
+  }
+  return `Invoice ${listIndex}: ${shortId}`;
+}
+
 /** Client-side doctor portal billing filters (no API). */
 export type DoctorPortalInvoiceStatusFilter =
   | "all"

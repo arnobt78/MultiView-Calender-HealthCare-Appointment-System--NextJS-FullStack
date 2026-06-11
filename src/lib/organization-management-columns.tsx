@@ -2,7 +2,6 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { Building2 } from "lucide-react";
 import { DataTableColumnHeader } from "@/components/shared/DataTableColumnHeader";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { OrganizationMembersRoleBadges } from "@/components/shared/OrganizationMembersRoleBadges";
@@ -14,10 +13,12 @@ import {
   cpClinicalListActionsColumnShellClass,
   cpClinicalListIdentityColumnShellClass,
   cpClinicalListJoinedColumnShellClass,
+  cpClinicalListMembersColumnShellClass,
 } from "@/lib/cp-clinical-list-table-classes";
 import {
   clinicalCellMutedTextClass,
-  clinicalTableCellMinRowClass,
+  clinicalStackGapClass,
+  clinicalTableCellWrapClass,
 } from "@/lib/table-display-styles";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
@@ -25,6 +26,12 @@ import type { ReactNode } from "react";
 type BuildColumnsArgs = {
   renderActions: (props: { org: Organization; isOwner: boolean }) => ReactNode;
 };
+
+/** Vertically centers cell content — multi-line stacks stay start-aligned. */
+const cpOrgListCellClass = cn(
+  "flex min-h-[2.75rem] flex-col justify-center",
+  clinicalStackGapClass
+);
 
 function outstandingAmountClass(cents: number): string {
   if (cents > 0) return "text-xs font-semibold tabular-nums text-amber-700";
@@ -47,16 +54,13 @@ export function buildOrganizationManagementColumns({
         const org = row.original;
         const href = organizationDetailHref("admin", org.id);
         return (
-          <div className={cn("flex min-w-0 items-center gap-2", clinicalTableCellMinRowClass)}>
-            <Building2 className="h-4 w-4 shrink-0 text-indigo-600" aria-hidden />
-            <div className="min-w-0 space-y-0.5">
-              <EntityTitleLink
-                href={href}
-                label={org.name}
-                className="font-normal text-sm"
-              />
-              <p className={clinicalCellMutedTextClass}>{org.slug}</p>
-            </div>
+          <div className={cn("min-w-0", cpOrgListCellClass)}>
+            <EntityTitleLink
+              href={href}
+              label={org.name}
+              className="font-normal text-sm"
+            />
+            <p className={clinicalCellMutedTextClass}>{org.slug}</p>
           </div>
         );
       },
@@ -69,7 +73,7 @@ export function buildOrganizationManagementColumns({
       ),
       meta: { shellClassName: "w-[10%] min-w-[6rem]" },
       cell: ({ row }) => (
-        <div className={cn("flex items-center", clinicalTableCellMinRowClass)}>
+        <div className={cpOrgListCellClass}>
           <UserRoleBadge role={row.original.role} />
         </div>
       ),
@@ -80,9 +84,11 @@ export function buildOrganizationManagementColumns({
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Members" />
       ),
-      meta: { shellClassName: "w-[16%] min-w-[10rem]" },
+      meta: { shellClassName: cpClinicalListMembersColumnShellClass, colWidth: "16%" },
       cell: ({ row }) => (
-        <OrganizationMembersRoleBadges membersByRole={row.original.members_by_role} />
+        <div className={cn("min-w-0 max-w-full", cpOrgListCellClass)}>
+          <OrganizationMembersRoleBadges membersByRole={row.original.members_by_role} />
+        </div>
       ),
     },
     {
@@ -93,7 +99,7 @@ export function buildOrganizationManagementColumns({
       ),
       meta: { shellClassName: "w-[8%] min-w-[5rem] text-center" },
       cell: ({ row }) => (
-        <div className={cn("flex items-center justify-center", clinicalTableCellMinRowClass)}>
+        <div className={cn(cpOrgListCellClass, "items-center")}>
           <span className={clinicalCellMutedTextClass}>{row.original.invoice_count}</span>
         </div>
       ),
@@ -108,7 +114,7 @@ export function buildOrganizationManagementColumns({
       cell: ({ row }) => {
         const cents = row.original.outstanding_cents;
         return (
-          <div className={cn("flex items-center", clinicalTableCellMinRowClass)}>
+          <div className={cpOrgListCellClass}>
             <span className={outstandingAmountClass(cents)}>
               {formatInvoiceMoney({
                 amount: cents,
@@ -128,7 +134,7 @@ export function buildOrganizationManagementColumns({
       ),
       meta: { shellClassName: cpClinicalListJoinedColumnShellClass },
       cell: ({ row }) => (
-        <div className={cn("flex items-center", clinicalTableCellMinRowClass)}>
+        <div className={cpOrgListCellClass}>
           <span className={cn("whitespace-nowrap", clinicalCellMutedTextClass)}>
             {format(new Date(row.original.created_at), "MMM d, yyyy")}
           </span>

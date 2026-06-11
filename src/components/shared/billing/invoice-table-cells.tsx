@@ -17,6 +17,7 @@ import { invoiceDetailHref } from "@/lib/entity-routes";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { EntityIdCopyInline } from "@/components/shared/EntityIdCopyInline";
 import { formatShortEntityId } from "@/lib/entity-id-display";
+import { formatPortalInvoiceListLabel } from "@/lib/invoice-list-display";
 
 type InvoiceTableCellsProps = {
   invoice: Invoice;
@@ -26,8 +27,12 @@ type InvoiceTableCellsProps = {
 type InvoiceNumberTableCellProps = InvoiceTableCellsProps & {
   /** e.g. "Invoice" → `Invoice #168da90a` (doctor portal list). */
   idLabelPrefix?: string;
+  /** 1-based position in visible portal list → `Invoice 1: #168da90a`. */
+  listIndex?: number;
   /** Doctor portal header — Receipt icon before label (invoice detail parity). */
   showInvoiceLeadingIcon?: boolean;
+  /** Portal list header — skip table min-row height. */
+  compact?: boolean;
 };
 
 /** Sky link + clipboard — short invoice id in list tables. */
@@ -35,15 +40,25 @@ export function InvoiceNumberTableCell({
   invoice,
   viewerRole,
   idLabelPrefix,
+  listIndex,
   showInvoiceLeadingIcon = false,
+  compact = false,
 }: InvoiceNumberTableCellProps) {
   const href = invoiceDetailHref(viewerRole, invoice.id);
   const shortId = formatShortEntityId(invoice.id);
-  const displayLabel = idLabelPrefix?.trim()
-    ? `${idLabelPrefix.trim()} ${shortId}`
-    : shortId;
+  const displayLabel =
+    listIndex != null && idLabelPrefix?.trim()
+      ? formatPortalInvoiceListLabel(listIndex, invoice.id)
+      : idLabelPrefix?.trim()
+        ? `${idLabelPrefix.trim()} ${shortId}`
+        : shortId;
   return (
-    <div className={cn(clinicalTableCellMinRowClass, "flex items-center gap-1.5")}>
+    <div
+      className={cn(
+        compact ? "min-h-0" : clinicalTableCellMinRowClass,
+        "flex items-center gap-1.5"
+      )}
+    >
       {showInvoiceLeadingIcon ? (
         <Receipt className="h-3.5 w-3.5 shrink-0 text-sky-600" aria-hidden />
       ) : null}
@@ -62,9 +77,24 @@ export function InvoiceNumberTableCell({
   );
 }
 
+type InvoiceDescriptionTableCellProps = InvoiceTableCellsProps & {
+  /** Portal billing cards — tighter vertical rhythm (tables keep default). */
+  density?: "table" | "portal";
+};
+
 /** Stacked visit context — title, type badge, when, patient, doctors, category. */
-export function InvoiceDescriptionTableCell({ invoice, viewerRole }: InvoiceTableCellsProps) {
-  return <InvoiceVisitDescriptionStack invoice={invoice} viewerRole={viewerRole} />;
+export function InvoiceDescriptionTableCell({
+  invoice,
+  viewerRole,
+  density = "table",
+}: InvoiceDescriptionTableCellProps) {
+  return (
+    <InvoiceVisitDescriptionStack
+      invoice={invoice}
+      viewerRole={viewerRole}
+      density={density}
+    />
+  );
 }
 
 export function InvoiceDueTableCell({ invoice }: { invoice: Invoice }) {

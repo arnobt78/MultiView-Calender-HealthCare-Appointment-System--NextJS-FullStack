@@ -7,6 +7,7 @@ import {
   clinicalBadgeInlineClass,
   clinicalBadgeInlineIconClass,
   clinicalCellMutedTextClass,
+  clinicalTableCellWrapClass,
 } from "@/lib/table-display-styles";
 import { cn } from "@/lib/utils";
 
@@ -54,13 +55,21 @@ export function OrganizationMembersRoleBadges({
   className?: string;
 }) {
   return (
-    <div className={cn("space-y-1", className)}>
-      <div className="flex min-h-[2.75rem] flex-wrap items-center gap-1">
+    <div className={cn("flex min-w-0 max-w-full flex-col gap-0.5", className)}>
+      <div className="flex flex-wrap items-center gap-1">
         {(Object.keys(ROLE_CHIP) as RoleKey[]).map((role) => (
           <OrganizationRoleCountBadge key={role} role={role} count={membersByRole[role]} />
         ))}
       </div>
-      <p className={clinicalCellMutedTextClass}>Portal patient members — not clinical roster count</p>
+      <p
+        className={cn(
+          clinicalCellMutedTextClass,
+          clinicalTableCellWrapClass,
+          "leading-tight whitespace-normal"
+        )}
+      >
+        Portal patient members — not clinical roster count
+      </p>
     </div>
   );
 }

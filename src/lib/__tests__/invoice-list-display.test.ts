@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   filterDoctorPortalInvoices,
+  formatPortalInvoiceListLabel,
   getInvoiceListTitle,
   countDoctorPortalOutstanding,
 } from "@/lib/invoice-list-display";
@@ -78,6 +79,20 @@ describe("filterDoctorPortalInvoices", () => {
     expect(
       filterDoctorPortalInvoices(rows, { search: "", status: "paid" }).map((r) => r.status)
     ).toEqual(["paid"]);
+  });
+});
+
+describe("formatPortalInvoiceListLabel", () => {
+  it("formats numbered portal list header", () => {
+    expect(
+      formatPortalInvoiceListLabel(1, "168da90a-1234-5678-9abc-def012345678")
+    ).toBe("Invoice 1: #168da90a");
+  });
+
+  it("falls back without index when invalid", () => {
+    expect(
+      formatPortalInvoiceListLabel(0, "168da90a-1234-5678-9abc-def012345678")
+    ).toBe("Invoice #168da90a");
   });
 });
 

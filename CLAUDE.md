@@ -4,10 +4,10 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-11)
 
-- **C19.1:** Detail members `UserRoleBadge`; idempotent `db:seed-org-portal-patient-member` (demo `1 Pt`, no appt wipe).
-- **C19 (REQ-0064):** Org list UI — `indigoGlassTableFrameClass`; `EntityTitleLink`/`UserRoleBadge`/`OrganizationMembersRoleBadges`; billing filter; vertical actions.
-- **C18.2 (REQ-0065):** `useOrganizationDetail`; `organization-detail-client.ts` cache merges; enriched POST members; `prefetchOrganizationDetail` in detail page.
-- **Verify:** **961/961** · tsc · lint · build PASS.
+- **C20 (REQ-0065):** Org billing `PortalPanelSection`; possessive title + status inline; filters compact+full; `Invoice N: #id`; Category label; portal density py; card `overflow-hidden`.
+- **C19.1:** Detail members `UserRoleBadge`; `db:seed-org-portal-patient-member`.
+- **C19 (REQ-0064):** Org list — `indigoGlassTableFrameClass`; `EntityTitleLink`/`UserRoleBadge`/`OrganizationMembersRoleBadges`.
+- **Verify:** **966/966** · tsc · lint · build PASS.
 
 ## Never / Always
 
@@ -30,14 +30,15 @@ Cross-tab: `query-cache-cross-tab.ts` (`ORGANIZATIONS`, `INVOICES_BILLING` on or
 ## Key paths
 
 - **Org list (C19):** `OrganizationManagement.tsx`, `organization-management-columns.tsx`, `OrganizationMembersRoleBadges.tsx`, `indigoGlassTableFrameClass`
-- **Org detail (C18.2):** `useOrganizationDetail`, `organization-detail-load.ts`, `organization-detail-client.ts`, detail members `UserRoleBadge`, `organization-dialog/`
+- **Org billing (C20):** `OrganizationBillingPanel.tsx`, `organization-billing-display.ts`, `InvoicePortalListCard` (portal density), `InvoiceVisitDescriptionStack`
+- **Org detail (C18.2):** `useOrganizationDetail`, `organization-detail-load.ts`, `organization-detail-client.ts`, `organization-dialog/`
 - **CP lists:** `cpClinicalListTableFrameClassName` + tone shells (`sky`/`violet`/`indigo`/`emerald`)
 - Entity detail: `EntityDetailPageShell.tsx`, `EntityDetailBackLink.tsx`, `EntityDetailFooterRow.tsx`
 - Invoice: `InvoicePortalListCard.tsx`, `InvoiceDetailLiveBody`, `invoice-dialog/`
 
 ## Agile V
 
-`.agile-v/ACTIVATION.md` · `STATE.md` · **C19 shipped** (REQ-0064/0065).
+`.agile-v/ACTIVATION.md` · `STATE.md` · **C20 shipped** (REQ-0065).
 
 ## Principle
 

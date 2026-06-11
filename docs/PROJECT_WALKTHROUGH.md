@@ -1,8 +1,10 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-11 — C18 + C18.1 + C18.2 + C19)
+## Latest (2026-06-11 — C20)
 
-**C18:** Organization management CP parity — indigo list shell (`OrganizationManagement`), enriched org API (`organization-list-enrich.ts`), 6-card stats, `ClinicalListFilterToolbar`, `DataTable` + `PrefetchingLink`, glass create/edit/add-member dialogs, `InvoicePortalListCard` shared billing cards. List footer: `OrganizationBillingPanelCompact` (KPI + top 3 invoices, cap `ORG_BILLING_PREFETCH_ORG_CAP` 20). Detail: `OrganizationBillingPanelFull` + member CRUD + extended schema fields.
+**C20:** Org billing doctor-portal chrome parity — `PortalPanelSection` + `organizationBillingPanelClass`; possessive title (`organization-billing-display.ts`); `InvoiceStatusCountInlineRow`; filters on compact + full; shared `InvoicePortalListCard` — `Invoice N: #id`, `Category:` label, `density="portal"` tight py, `overflow-hidden` shell. Doctor portal list uses same card stack.
+
+**C18:** Organization management CP parity — indigo list shell (`OrganizationManagement`), enriched org API (`organization-list-enrich.ts`), 6-card stats, `ClinicalListFilterToolbar`, `DataTable` + `PrefetchingLink`, glass create/edit/add-member dialogs. List footer: `OrganizationBillingPanelCompact` (KPI + top 3, cap 20). Detail: `OrganizationBillingPanelFull` + member CRUD.
 
 **C18.1:** `loadOrganizationDetailForUser` + `seedOrganizationDetailCacheFromSsr` + hover prefetch on `/control-panel/organizations/:id`; `invalidateOrganizationDetail` cross-tab (`ORGANIZATIONS` + `INVOICES_BILLING`); enriched GET `/api/organizations/[id]`.
 
@@ -10,7 +12,7 @@
 
 **C19:** Org list table shell `indigoGlassTableFrameClass`; `EntityTitleLink`/`UserRoleBadge`/`OrganizationMembersRoleBadges`; billing filter width; vertical actions menu. Detail members role column uses `UserRoleBadge`. Demo: `npm run db:seed-org-portal-patient-member` (idempotent, no appointment wipe) adds `test@patient.com` as org portal patient.
 
-**Verify:** **961/961** · tsc · lint · build.
+**Verify:** **966/966** · tsc · lint · build.
 
 ## Prior (2026-06-10 — C17 + C16)
 
@@ -332,7 +334,7 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Prism
 - **Libs:** `invoice-billing-totals.ts`, `billing-appointment-eligibility.ts`, `billing-appointment-options-load.ts`, `invoices-revenue-scope.ts`, `invoice-visit-summary.ts`, `billing-auto-draft.ts`, `billing-dashboard-cache.ts`.
 - **Doctor portal:** `DoctorPortalInvoicesCard` + SSR `prefetchInvoices` + `prefetchBillingAppointmentOptions` on `doctor-portal/page.tsx`.
 - **CP invoices tab:** SSR `prefetchInvoices` + `prefetchBillingAppointmentOptions` via `prefetchControlPanelSection("invoices")`.
-- **Org billing:** List — `OrganizationBillingPanelCompact` (KPI + top 3 `InvoicePortalListCard`, SSR cap 20). Detail — `OrganizationBillingPanelFull` (all invoices, status filter). SSR: `prefetchOrgBillingInvoicesByOrgIds` + `seedOrgBillingCacheFromSsr`; detail: `loadOrganizationDetailForUser` + `seedOrganizationDetailCacheFromSsr`. Invalidation: `invalidateOrganizationDetail` cross-tab.
+- **Org billing (C20):** `PortalPanelSection` stacked header (`{org}'s Related Billing`, count pill, status inline row); compact + full share filter toolbar + `InvoicePortalListCard` (`formatPortalInvoiceListLabel`, `Category:` row, portal density). SSR: `prefetchOrgBillingInvoicesByOrgIds` (cap 20) + detail `seedOrganizationDetailCacheFromSsr`. Keys: `byOrganization` / `byOrganizationTotals`. Invalidation: `invalidateOrganizationDetail` + `getOrganizationIdFromInvoiceCache` cross-tab.
 - **Env:** see `.env.example` — `STRIPE_*`, `NEXT_PUBLIC_APP_URL`. Local webhook secret from CLI; production secret from Stripe Dashboard endpoint only.
 
 ### Doctor display + `/services`
@@ -385,7 +387,7 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Prism
 - **Admin → doctor:** `notifyDoctorSettingsChangedByAdmin` (`src/lib/doctor-settings-notify.ts`) on availability/time-off/type APIs when admin mutates another doctor (in-app notification + email).
 - **API:** `PATCH /api/doctor-availability/[id]` + `PATCH /api/doctor-time-off/[id]` for inline edit (Vitest: `doctor-availability-patch.test.ts`; time-off PATCH contract not yet mirrored in tests).
 - **Related Patients:** `DoctorPortalPatientsCard` — title/subtitle/counts from `doctor-portal-patients-display.ts` (`Active: n · Inactive: n` on full roster, not toolbar-filtered). Body: `PatientListFiltersProvider` + `PatientManagementInner` `variant="doctor-portal"` (search, status, care tier; no Add/Import/Export); links `patientDetailHref("doctor", id)`.
-- **Related Billing:** `doctorPortalInvoiceListItemShellClass` card + sky header band; `Receipt` beside `Invoice #id`; `InvoiceStatusCountInlineRow`; body: visit stack + `InvoicePortalListMetaRow`. **Related Patients:** `PatientRosterStatusCountInlineRow` (Active/Inactive text colors). SSR: `prefetchInvoices`.
+- **Related Billing:** `doctorPortalInvoiceListItemShellClass` + sky header (`py-1`); `Invoice N: #id` via `formatPortalInvoiceListLabel`; labeled Patient/Treating/Category/Owner rows (`density="portal"`); `InvoiceStatusCountInlineRow`; `InvoicePortalListMetaRow`. SSR: `prefetchInvoices`.
 - **Schedule confirms:** Weekly hours + unavailable dates row delete → `ConfirmActionDialog` (`destructive`) with dynamic copy in `confirm-delete-dialog-copy.ts`; mutations still use `invalidateDoctorSchedule`.
 - **Cache:** `useLayoutEffect` always seeds `doctorPortal.all` + `patients.all` (including `[]`) so roster CRUD via `usePatients` updates portal without refresh. `prefetchDoctorPortal` and `GET /api/doctor-portal` include `primary_doctor` on roster patients (`patientUserPick`). `useQuery` uses `initialData` + `staleTime: 3min`.
 - **Invalidation:** `invalidateEntityAffectingAppointments("patients")` and `usePatients` mutations also call `invalidateDoctorPortal`; appointments → `invalidateAfterAppointmentMutation`.

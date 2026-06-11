@@ -37,13 +37,20 @@ import { cn } from "@/lib/utils";
 type Props = {
   invoice: Invoice;
   viewerRole: EntityRole;
+  /** Portal list cards — no table min-height / extra py. */
+  density?: "table" | "portal";
 };
 
 /**
- * Shared invoice description column — title, schedule, inline patient row,
- * doctor + category on one responsive wrap row (appointment detail + list tables).
+ * Shared invoice description column — title, schedule, labeled Patient / Treating /
+ * Category / Owner rows (appointment detail + portal billing list cards).
  */
-export function InvoiceVisitDescriptionStack({ invoice, viewerRole }: Props) {
+export function InvoiceVisitDescriptionStack({
+  invoice,
+  viewerRole,
+  density = "table",
+}: Props) {
+  const portalDensity = density === "portal";
   const summary = invoice.visit_summary;
   const title = getInvoiceListTitle(invoice);
   const href = invoiceDetailHref(viewerRole, invoice.id);
@@ -67,9 +74,10 @@ export function InvoiceVisitDescriptionStack({ invoice, viewerRole }: Props) {
   return (
     <div
       className={cn(
-        clinicalTableCellMinRowClass,
+        !portalDensity && clinicalTableCellMinRowClass,
         clinicalTableCellWrapClass,
-        "flex w-full min-w-0 flex-col justify-center gap-1.5 py-1"
+        "flex w-full min-w-0 flex-col justify-center",
+        portalDensity ? "gap-1 py-0" : "gap-1.5 py-1"
       )}
     >
       <div className="inline-flex min-w-0 max-w-full flex-wrap items-center gap-x-1.5 gap-y-0.5">
@@ -142,14 +150,24 @@ export function InvoiceVisitDescriptionStack({ invoice, viewerRole }: Props) {
         </div>
       ) : null}
       {summary?.category_id && summary.category_label ? (
-        <CategoryInlineLink
-          categoryId={summary.category_id}
-          label={summary.category_label}
-          color={summary.category_color}
-          icon={summary.category_icon}
-          markSize="compact"
-          className="shrink-0"
-        />
+        <div className="flex w-full min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+          <span
+            className={cn(
+              clinicalCellMutedTextClass,
+              "shrink-0 text-[10px] font-medium"
+            )}
+          >
+            Category:
+          </span>
+          <CategoryInlineLink
+            categoryId={summary.category_id}
+            label={summary.category_label}
+            color={summary.category_color}
+            icon={summary.category_icon}
+            markSize="compact"
+            className="min-h-0 shrink py-0"
+          />
+        </div>
       ) : null}
       {ownerDoctor &&
       summary?.calendar_owner_id &&

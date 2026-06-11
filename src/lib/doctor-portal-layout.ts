@@ -16,7 +16,7 @@ export const doctorPortalInvoiceListItemShellClass =
 
 /** Per-invoice header band — sky tint only (border lives on list item shell). */
 export const doctorPortalInvoiceHeaderStripClass =
-  "bg-sky-50/80 px-2.5 py-1.5 backdrop-blur-sm";
+  "bg-sky-50/80 px-2.5 py-1 backdrop-blur-sm";
 
 /** Patients roster panel — emerald tone (matches Users icon row). */
 export const doctorPortalPatientsPanelClass =

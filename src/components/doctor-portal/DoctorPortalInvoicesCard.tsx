@@ -160,10 +160,11 @@ export function DoctorPortalInvoicesCard({
           </p>
         ) : (
           <ul className="space-y-3">
-            {filtered.slice(0, 12).map((inv) => (
+            {filtered.slice(0, 12).map((inv, index) => (
               <DoctorPortalInvoiceListRow
                 key={inv.id}
                 invoice={inv}
+                listIndex={index + 1}
                 viewerUserId={sessionUserId}
                 onEdit={openEdit}
                 onSend={(id) => updateInvoice({ invoiceId: id, body: { status: "sent" } })}
