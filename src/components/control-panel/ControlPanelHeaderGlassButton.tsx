@@ -26,9 +26,10 @@ export function ControlPanelHeaderGlassButton({
   return (
     <button
       type={type}
+      // glassClassName tokens own cursor-pointer; only add disabled affordances here.
       className={cn(
         glassClassName,
-        "cursor-pointer disabled:pointer-events-none disabled:opacity-50",
+        "disabled:pointer-events-none disabled:opacity-50",
         className
       )}
       {...props}

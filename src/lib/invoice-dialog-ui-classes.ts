@@ -57,9 +57,9 @@ export const invoiceDialogPickerScrollClass = cn(
   "space-y-2 px-1 py-1 [scrollbar-gutter:stable]"
 );
 
-/** Cancel — pairs with `violetGlassPrimaryButtonClass` on submit. */
+/** Cancel — pairs with `violetGlassPrimaryButtonClass` on submit; cursor on token. */
 export const invoiceDialogGlassBackButtonClass =
-  "inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-violet-300/50 bg-white/75 px-4 text-sm font-medium text-violet-900 shadow-[0_10px_28px_rgba(139,92,246,0.2)] backdrop-blur-md transition-all duration-200 hover:border-violet-400/55 hover:bg-violet-50/90 hover:shadow-[0_12px_34px_rgba(139,92,246,0.28)] disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4";
+  "inline-flex h-10 shrink-0 cursor-pointer items-center gap-2 rounded-full border border-violet-300/50 bg-white/75 px-4 text-sm font-medium text-violet-900 shadow-[0_10px_28px_rgba(139,92,246,0.2)] backdrop-blur-md transition-all duration-200 hover:border-violet-400/55 hover:bg-violet-50/90 hover:shadow-[0_12px_34px_rgba(139,92,246,0.28)] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:size-4";
 
 export const invoiceDialogSectionHeadingClass =
   "text-xs font-semibold uppercase tracking-wide text-violet-900/80";

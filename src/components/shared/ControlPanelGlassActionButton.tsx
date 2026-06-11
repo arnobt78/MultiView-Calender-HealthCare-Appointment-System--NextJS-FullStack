@@ -29,7 +29,8 @@ export const ControlPanelGlassActionButton = React.forwardRef<
     <button
       ref={ref}
       type={type}
-      className={cn(VARIANT[variant], "cursor-pointer disabled:cursor-not-allowed", className)}
+      // VARIANT tokens already include cursor-pointer (calendar-header-action-styles).
+      className={cn(VARIANT[variant], "disabled:cursor-not-allowed", className)}
       {...props}
     />
   );

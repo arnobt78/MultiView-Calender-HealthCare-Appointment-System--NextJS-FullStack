@@ -158,3 +158,14 @@ export function seedOrgBillingCacheFromSsr(
     });
   }
 }
+
+/** Org detail + members — seeds TanStack before detail screen hooks subscribe. */
+export function seedOrganizationDetailCacheFromSsr(
+  queryClient: QueryClient,
+  orgId: string,
+  payload: import("@/lib/organization-detail-load").OrganizationDetailPayload | null | undefined
+): void {
+  if (payload == null) return;
+  seedIfAbsent(queryClient, queryKeys.organizations.detail(orgId), payload.org);
+  seedIfAbsent(queryClient, queryKeys.organizations.members(orgId), payload.members);
+}

@@ -2,11 +2,12 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { Mail } from "lucide-react";
+import { Mail, Trash2 } from "lucide-react";
 import { DataTableColumnHeader } from "@/components/shared/DataTableColumnHeader";
 import { EntityIdCopyInline } from "@/components/shared/EntityIdCopyInline";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { formatShortEntityId } from "@/lib/entity-id-display";
 import {
   clinicalCellMutedTextClass,
@@ -14,6 +15,7 @@ import {
   clinicalTableCellMinRowClass,
   clinicalTableColumnIdentityShellClass,
 } from "@/lib/table-display-styles";
+import { cpClinicalListActionsColumnShellClass } from "@/lib/cp-clinical-list-table-classes";
 
 export type OrganizationDetailMemberRow = {
   id: string;
@@ -31,9 +33,17 @@ const ROLE_COLORS: Record<string, string> = {
   patient: "bg-green-100 text-green-700",
 };
 
-/** Org detail members snapshot — ClinicalDataTable parity with patient snapshot tables. */
-export function buildOrganizationDetailMembersColumns(): ColumnDef<OrganizationDetailMemberRow>[] {
-  return [
+type BuildMembersColumnsArgs = {
+  canManage?: boolean;
+  onRemoveMember?: (member: OrganizationDetailMemberRow) => void;
+};
+
+/** Org detail members snapshot — optional remove action for org admins. */
+export function buildOrganizationDetailMembersColumns(
+  args: BuildMembersColumnsArgs = {}
+): ColumnDef<OrganizationDetailMemberRow>[] {
+  const { canManage, onRemoveMember } = args;
+  const cols: ColumnDef<OrganizationDetailMemberRow>[] = [
     {
       id: "member",
       accessorKey: "display_name",
@@ -96,4 +106,31 @@ export function buildOrganizationDetailMembersColumns(): ColumnDef<OrganizationD
       ),
     },
   ];
+
+  if (canManage && onRemoveMember) {
+    cols.push({
+      id: "actions",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Actions" className="text-right" />
+      ),
+      enableSorting: false,
+      meta: { shellClassName: cpClinicalListActionsColumnShellClass },
+      cell: ({ row }) => (
+        <div className="flex min-h-[2.75rem] items-center justify-end">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-red-600 hover:text-red-700"
+            aria-label="Remove member"
+            onClick={() => onRemoveMember(row.original)}
+          >
+            <Trash2 className="h-4 w-4" aria-hidden />
+          </Button>
+        </div>
+      ),
+    });
+  }
+
+  return cols;
 }

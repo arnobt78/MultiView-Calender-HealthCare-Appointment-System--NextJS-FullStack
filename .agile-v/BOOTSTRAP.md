@@ -1,6 +1,6 @@
 # Agile V Bootstrap — HealthCal Pro
 
-<!-- Framework initialization + cycle index | Agile V v1.4 | Last refresh: 2026-06-10 (Infinity Loop session activation) -->
+<!-- Framework initialization + cycle index | Agile V v1.4 | Last refresh: 2026-06-11 (Infinity Loop session activation) -->
 
 ## Infinity Loop (SCOPE-V)
 
@@ -31,8 +31,8 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 | 2 | `config.json` | Project metadata, cycle, authority matrix, verification commands | ✓ |
 | 3 | `POLICY.yaml` | Policy-as-code (versioned) | ✓ v1.0.0 |
 | 4 | `STATE.md` | Current cycle, phase, stage — **read first on resume** | ✓ |
-| 5 | `REQUIREMENTS.md` | Canonical REQ-XXXX + traceability index | ✓ REQ-0001..0045 |
-| 6 | `BUILD_MANIFEST.md` | ART-XXXX → code paths | ✓ ART-0001..0192 |
+| 5 | `REQUIREMENTS.md` | Canonical REQ-XXXX + traceability index | ✓ REQ-0001..0063 |
+| 6 | `BUILD_MANIFEST.md` | ART-XXXX → code paths | ✓ ART-0001..0313 |
 | 7 | `TEST_SPEC.md` | TC-XXXX (requirements-derived) | ✓ TC-0001..0024 |
 | 8 | `VALIDATION_SUMMARY.md` | VER-XXXX results + EvalGate lines | ✓ |
 | 9 | `ATM.md` | REQ → ART → VER matrix | ✓ |
@@ -146,7 +146,14 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 | C5 | Record Audit | REQ-0021..0026 | pending GATE-0010 | `cycles/C5/` |
 | C6 | Invoice violet + location + REQ-0032/0033 | REQ-0027..0033 | pending GATE-0012 | `cycles/C6/` |
 | C7 | Services + cancel + cron + phone | REQ-0034..0037 | pending GATE-0014 | `cycles/C7/` |
-| **C8/C8.1/C9** | **Page chrome + portal chrome** (active) | REQ-0038..0045 | gate TBD | `cycles/C8/` |
+| C8/C8.1/C9 | Page chrome + portal chrome | REQ-0038..0045 | gate TBD | `cycles/C8/` |
+| C10–C10.2 | CP zero-flash SSR + chrome extension | REQ-0046..0053 | pending | living |
+| C11 | Global isMounted parity | REQ-0054 | pending | living |
+| C12–C12.2 | CP chrome subtitle + tab isolation | REQ-0055..0057 | pending | living |
+| C13 | User-admin UI parity | REQ-0059 | pending | living |
+| C14–C15 | Entity detail chrome + spacing | REQ-0060..0061 | pending | living |
+| C16 | User-admin violet glass | REQ-0062 | pending | living |
+| **C17** | **Admin table columns + footer interactives** (active) | REQ-0063 | gate TBD | living |
 
 ---
 
@@ -197,11 +204,50 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 | 5 | `cycles/C8/README.md` scaffold | ✓ |
 | 6 | Gates | ⏳ TBD |
 
+## C10 Bootstrap (2026-06-10) — CP zero-flash SSR + entity list shell
+
+| Step | Artifact | Status |
+|------|----------|--------|
+| 1 | REQ-0046..0049 in `REQUIREMENTS.md` | ✓ `approved [C10]` |
+| 2 | ART-0224..0238 in `BUILD_MANIFEST.md` | ✓ |
+| 3 | Automated verify | ✓ **863/863** |
+
+## C10.1 / C10.2 Bootstrap — CP chrome extension + gap closure
+
+| Step | Artifact | Status |
+|------|----------|--------|
+| 1 | REQ-0050..0053 | ✓ shipped |
+| 2 | ART-0239..0262 | ✓ |
+
+## C11–C13 Bootstrap — isMounted parity, chrome polish, user-admin
+
+| Step | Artifact | Status |
+|------|----------|--------|
+| 1 | REQ-0054..0057, REQ-0059 | ✓ shipped |
+| 2 | ART-0263..0292 | ✓ |
+
+## C14–C16 Bootstrap — entity detail + user-admin violet glass
+
+| Step | Artifact | Status |
+|------|----------|--------|
+| 1 | REQ-0060..0062 | ✓ shipped |
+| 2 | ART-0293..0309 | ✓ |
+
+## C17 Bootstrap (2026-06-10) — Admin table columns + footer interactives (active)
+
+| Step | Artifact | Status |
+|------|----------|--------|
+| 1 | REQ-0063 in `REQUIREMENTS.md` | ✓ `approved [C17]` |
+| 2 | ART-0310..0313 in `BUILD_MANIFEST.md` | ✓ |
+| 3 | Code on `main` | ✓ `5d16082` |
+| 4 | Automated verify | ✓ **940/940** (185 files), tsc, lint, build |
+| 5 | Gates | ⏳ TBD |
+
 ## Next Actions
 
-1. Approve **GATE-0005..0014** + C8 gates in `APPROVALS.md` as cycles close.
-2. Archive C3–C8 → `cycles/CN/` after each Gate 2.
-3. New work: specify **C10** in `REQUIREMENTS.md` before coding.
+1. Approve **GATE-0005..0014** + C8–C17 gates in `APPROVALS.md` as cycles close.
+2. Archive C3–C17 → `cycles/CN/` after each Gate 2.
+3. New work: specify **C18** in `REQUIREMENTS.md` before coding.
 
 ## Verification (default)
 
@@ -209,17 +255,17 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 npm test && npx tsc --noEmit && npm run lint && npm run build
 ```
 
-Current baseline: **863** tests, **166** files (2026-06-10) · HEAD `bc97070`.
+Current baseline: **940** tests, **185** files (2026-06-11) · HEAD `5d16082`.
 
 ---
 
-## Infinity Loop Session Activation (2026-06-10)
+## Infinity Loop Session Activation (2026-06-11)
 
 | Step | Artifact | Status |
 |------|----------|--------|
 | 1 | `agile-v-core` + `pipeline` + `lifecycle` + `compliance` active every prompt | ✓ |
 | 2 | `.cursor/rules/agile-v-infinity-loop.mdc` `alwaysApply: true` | ✓ |
 | 3 | `ACTIVATION.md` + `STATE.md` + `SKILLS.md` (24) synced | ✓ |
-| 4 | C1..C9 bootstrap index intact; C1/C2 frozen | ✓ |
-| 5 | Verify regression | ✓ 863/863 |
+| 4 | C1..C17 bootstrap index intact; C1/C2 frozen | ✓ |
+| 5 | Verify regression | ✓ 940/940 |
 | 6 | `CHECKPOINTS.md` — no PENDING HITL | ✓ |

@@ -66,3 +66,44 @@ describe("prefetchQueriesForDetailHref doctors (patient RBAC)", () => {
     expect(apiClient).not.toHaveBeenCalledWith(`/api/users/${doctorId}`);
   });
 });
+
+describe("prefetchQueriesForDetailHref organizations", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("prefetches org detail + members from enriched GET", async () => {
+    const orgId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+    const detail = {
+      org: {
+        id: orgId,
+        name: "Clinic",
+        slug: "clinic",
+        owner_user_id: "u1",
+        owner_label: "Owner",
+        created_at: "2026-01-01T00:00:00.000Z",
+      },
+      members: [
+        {
+          id: "m1",
+          org_id: orgId,
+          user_id: "u1",
+          role: "admin",
+          joined_at: "2026-01-01T00:00:00.000Z",
+          display_name: "Owner",
+          email: null,
+        },
+      ],
+    };
+    apiClient.mockResolvedValue(detail);
+    const qc = new QueryClient();
+    prefetchQueriesForDetailHref(qc, `/control-panel/organizations/${orgId}`);
+    await vi.waitFor(() => {
+      expect(apiClient).toHaveBeenCalledWith(`/api/organizations/${orgId}`);
+    });
+    await vi.waitFor(() => {
+      expect(qc.getQueryData(queryKeys.organizations.detail(orgId))).toEqual(detail.org);
+      expect(qc.getQueryData(queryKeys.organizations.members(orgId))).toEqual(detail.members);
+    });
+  });
+});

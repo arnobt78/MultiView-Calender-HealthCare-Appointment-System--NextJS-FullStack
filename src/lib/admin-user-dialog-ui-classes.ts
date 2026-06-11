@@ -24,8 +24,9 @@ export const adminUserDialogGlassSelectTriggerClass = cn(
   "[&_svg:not([class*='text-'])]:text-muted-foreground"
 );
 
+/** Cancel — pairs with `violetGlassPrimaryButtonClass`; cursor on token. */
 export const adminUserDialogGlassBackButtonClass =
-  "inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-violet-300/50 bg-white/75 px-4 text-sm font-medium text-violet-900 shadow-[0_10px_28px_rgba(139,92,246,0.2)] backdrop-blur-md transition-all duration-200 hover:border-violet-400/55 hover:bg-violet-50/90 hover:shadow-[0_12px_34px_rgba(139,92,246,0.28)] disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4";
+  "inline-flex h-10 shrink-0 cursor-pointer items-center gap-2 rounded-full border border-violet-300/50 bg-white/75 px-4 text-sm font-medium text-violet-900 shadow-[0_10px_28px_rgba(139,92,246,0.2)] backdrop-blur-md transition-all duration-200 hover:border-violet-400/55 hover:bg-violet-50/90 hover:shadow-[0_12px_34px_rgba(139,92,246,0.28)] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:size-4";
 
 /** Dialog header icon tile — matches violet tab chrome. */
 export const adminUserDialogHeaderIconTileClass =

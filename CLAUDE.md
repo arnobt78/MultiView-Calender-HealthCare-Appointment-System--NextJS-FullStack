@@ -2,12 +2,11 @@
 
 Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
-## Latest (2026-06-10)
+## Latest (2026-06-11)
 
-- **C17 (REQ-0063):** `cpClinicalList*ColumnShellClass`; admin table/footer UX; violet outer frame now `rounded-2xl` patient parity (was `rounded-[28px]` gradient).
-- **C16 (REQ-0062):** user-admin violet glass; Phone column; `EntityEmailVerificationBadge`; `violetGlassTableFrameClass`.
-- **C15–C14:** `EntityDetailPageShell` spacing; `EntityDetailBackLink`/`FooterRow`; tone glass backs.
-- **Verify:** **940/940** · tsc · lint · build PASS.
+- **C18/C18.1 (REQ-0064/0065):** Org CP indigo shell; enriched list API (`organization-list-enrich.ts`); stats/filters/DataTable; `InvoicePortalListCard`; compact list billing (top 3, cap 20) + full detail billing; glass dialogs; `loadOrganizationDetailForUser` + detail/members seed; hover prefetch; `invalidateOrganizationDetail` cross-tab.
+- **C17.1:** dialog back tokens `cursor-pointer`; removed redundant `cursor-pointer` on glass call sites.
+- **Verify:** **954/954** · tsc · lint · build PASS.
 
 ## Never / Always
 
@@ -21,24 +20,24 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 |-------|--------|
 | Appointment | `invalidateAfterAppointmentMutation` |
 | Patient | `invalidateEntityAffectingAppointments` + `invalidatePatientDetailAndSnapshot` |
-| Invoice | `invalidateInvoicesAndOverview` / `invalidateInvoicesBilling` |
+| Invoice | `invalidateInvoicesAndOverview` / `invalidateInvoicesBilling` (+ `getOrganizationIdFromInvoiceCache`) |
+| Organization | `invalidateOrganizations` / `invalidateOrganizationDetail` |
 | Types/config | `invalidateAppointmentTypeDerived` |
 
-Cross-tab: `query-cache-cross-tab.ts`.
+Cross-tab: `query-cache-cross-tab.ts` (`ORGANIZATIONS`, `INVOICES_BILLING` on org detail).
 
 ## Key paths
 
+- **Org CP:** `OrganizationManagement.tsx`, `organization-management-columns.tsx`, `OrganizationBillingPanelCompact`/`Full`, `organization-detail-load.ts`, `organization-dialog/`
 - Entity detail: `EntityDetailPageShell.tsx`, `EntityDetailBackLink.tsx`, `EntityDetailFooterRow.tsx`
-- **CP lists:** patient/admin/doctor/category share `cpClinicalListTableFrameClassName` + `cpClinicalListActionsColumnShellClass`; outer frame per tone (`sky`/`violet`/`emerald`).
+- **CP lists:** shared `cpClinicalListTableFrameClassName` + actions shell; tone per tab (`sky`/`violet`/`indigo`/`emerald`)
 - Admin user: `admin-user-detail-ui-classes.ts`, `EntityEmailVerificationBadge.tsx`, `violet-glass-table-frame.ts`
-- Glass actions: `calendar-header-action-styles.ts`, `ControlPanelGlassActionButton.tsx`
-- Phone: `phone-validation.ts`, `patient-form-clinical.ts`, `PatientFormDialog`
-- Cancel: `appointment-cancel-access.ts`, `AppointmentActionsMenu`
-- Invoice: `InvoiceDetailLiveBody`, `invoice-dialog/`
+- Glass: `calendar-header-action-styles.ts`, `ControlPanelGlassActionButton.tsx`
+- Invoice: `InvoicePortalListCard.tsx`, `InvoiceDetailLiveBody`, `invoice-dialog/`
 
 ## Agile V
 
-Infinity Loop: `.agile-v/ACTIVATION.md` · `STATE.md` · `SKILLS.md`. **C17 shipped** (REQ-0063); **930/930**.
+`.agile-v/ACTIVATION.md` · `STATE.md` · **C18.1 shipped** (REQ-0064/0065).
 
 ## Principle
 

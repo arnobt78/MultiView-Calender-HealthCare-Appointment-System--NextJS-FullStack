@@ -193,6 +193,13 @@ export function serializeOrganization(o: {
   name: string;
   slug: string;
   owner_user_id: string;
+  description?: string | null;
+  website?: string | null;
+  address?: string | null;
+  phone?: string | null;
+  timezone?: string | null;
+  logo_url?: string | null;
+  org_type?: string | null;
 }) {
   return {
     ...o,

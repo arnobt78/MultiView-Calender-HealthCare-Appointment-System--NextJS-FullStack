@@ -1,19 +1,16 @@
 /**
- * SSR: Organization detail page — all schema properties.
- * Server-fetches org + members; client screen handles chrome + glass layout.
+ * SSR: Organization detail page — schema fields + members + billing prefetch.
  */
 export const dynamic = "force-dynamic";
 
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
-import { serializeOrganization } from "@/lib/serializers";
 import { isValidUUID } from "@/lib/validation";
-import {
-  OrganizationDetailScreen,
-  type OrganizationDetailMemberRow,
-} from "@/components/control-panel/OrganizationDetailScreen";
+import { OrganizationDetailScreen } from "@/components/control-panel/OrganizationDetailScreen";
+import { loadOrganizationDetailForUser } from "@/lib/organization-detail-load";
 import { prefetchOrganizations } from "@/lib/server-prefetch";
+import { prefetchOrgBillingInvoicesByOrgIds } from "@/lib/org-billing-prefetch";
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -29,55 +26,30 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
   const sessionUser = await getSessionUser();
   if (!sessionUser) notFound();
 
-  const [raw, initialOrganizations] = await Promise.all([
-    prisma.organization.findFirst({
-      where: {
-        id,
-        OR: [
-          { owner_user_id: sessionUser.userId },
-          { members: { some: { user_id: sessionUser.userId } } },
-        ],
-      },
-      include: { members: true },
-    }),
-    prefetchOrganizations(sessionUser.userId),
-  ]);
-  if (!raw) notFound();
-
-  const orgSerialized = serializeOrganization(raw);
-  const userIds = raw.members.map((m) => m.user_id).filter(Boolean);
-  const users =
-    userIds.length > 0
-      ? await prisma.user.findMany({
-          where: { id: { in: userIds } },
-          select: { id: true, email: true, display_name: true },
-        })
-      : [];
-  const userMap = Object.fromEntries(users.map((u) => [u.id, u]));
-  const ownerUser = userMap[orgSerialized.owner_user_id];
-
-  const members: OrganizationDetailMemberRow[] = raw.members.map((m) => {
-    const u = userMap[m.user_id];
-    return {
-      id: m.id,
-      org_id: m.org_id,
-      user_id: m.user_id,
-      role: m.role,
-      joined_at: m.joined_at.toISOString(),
-      display_name: u?.display_name ?? null,
-      email: u?.email ?? null,
-    };
+  const sessionDbUser = await prisma.user.findUnique({
+    where: { id: sessionUser.userId },
+    select: { role: true },
   });
+  const viewerRole = sessionDbUser?.role ?? null;
+
+  const [detail, initialOrganizations, orgBillingMap] = await Promise.all([
+    loadOrganizationDetailForUser(id, sessionUser.userId),
+    prefetchOrganizations(sessionUser.userId),
+    prefetchOrgBillingInvoicesByOrgIds(
+      [id],
+      sessionUser.userId,
+      viewerRole,
+      sessionUser.email
+    ),
+  ]);
+  if (!detail) notFound();
 
   return (
     <OrganizationDetailScreen
-      org={{
-        ...orgSerialized,
-        owner_label:
-          ownerUser?.display_name ?? ownerUser?.email ?? orgSerialized.owner_user_id,
-      }}
-      members={members}
+      org={detail.org}
+      members={detail.members}
       initialOrganizations={initialOrganizations}
+      initialOrgBilling={orgBillingMap[id] ?? null}
     />
   );
 }

@@ -52,7 +52,7 @@ export function CalendarHeaderRoleActions({
             type="button"
             variant="ghost"
             size="lg"
-            className={cn(violetGlassImportButtonClass, "cursor-pointer")}
+            className={violetGlassImportButtonClass}
           >
             <FileUp className="shrink-0" aria-hidden />
             Import .ics
@@ -67,7 +67,7 @@ export function CalendarHeaderRoleActions({
             type="button"
             variant="ghost"
             size="lg"
-            className={cn(emeraldGlassPrimaryButtonClass, "cursor-pointer")}
+            className={emeraldGlassPrimaryButtonClass}
           >
             <CalendarPlus className="shrink-0" aria-hidden />
             New Appointment

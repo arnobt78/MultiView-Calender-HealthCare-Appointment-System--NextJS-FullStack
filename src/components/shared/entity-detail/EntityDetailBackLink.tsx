@@ -28,7 +28,7 @@ export function EntityDetailBackLink({
   return (
     <BackNavigationLink
       href={href}
-      className={cn(backButtonClassName, "no-underline cursor-pointer", className)}
+      className={cn(backButtonClassName, "no-underline", className)}
     >
       <Icon className="shrink-0" aria-hidden />
       {label}

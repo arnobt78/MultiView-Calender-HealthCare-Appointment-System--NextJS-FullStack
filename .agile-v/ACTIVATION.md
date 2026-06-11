@@ -1,6 +1,6 @@
 # Agile V — Session Activation (every prompt)
 
-<!-- HealthCal Pro | v1.4 | Read with STATE.md on every chat | Activated: 2026-06-10 -->
+<!-- HealthCal Pro | v1.4 | Read with STATE.md on every chat | Activated: 2026-06-11 (session) -->
 
 ## 1. Load skills (mandatory)
 
@@ -16,41 +16,51 @@
 
 ## 2. Read (resume)
 
-1. `STATE.md` — cycle **C8.1/C9** shipped; **863/863** verify PASS
+1. `STATE.md` — cycle **C17** shipped; **940/940** verify PASS
 2. `CHECKPOINTS.md` — only if PENDING HITL (none)
-3. `REQUIREMENTS.md` — parent REQ before any work (REQ-0001..0045)
+3. `REQUIREMENTS.md` — parent REQ before any work (REQ-0001..0063)
 4. `agile-v-core.md` — repo binding
 
-## 3. Infinity Loop
+## 3. Before coding (mandatory gate)
+
+1. Read `STATE.md` + `CHECKPOINTS.md` (halt if PENDING HITL).
+2. Resolve parent `REQ-XXXX` in `REQUIREMENTS.md` — **halt if missing**.
+3. Run stage: **Specify** (scope) → **Constrain** (engineering rules) → only then **Orchestrate** (code).
+4. On CRUD: `queryKeys` + invalidation helpers — no hardcoded keys, no skip.
+5. After synthesis: **Prove** (manifest/log) → **Verify** (`npm test && tsc && lint && build`) — Red Team, not self-sign-off.
+
+## 4. Infinity Loop
 
 ```
 Specify → Constrain → [Gate1] → Orchestrate → Prove → Verify → [Gate2] → Accept
          ↑___________________________________________________________|
 ```
 
-## 4. Traceability
+## 5. Traceability
 
 `REQ-XXXX` → `ART-XXXX` → `TC-XXXX` → `VER-XXXX` → `DECISION_LOG.md`
 
-## 5. Current
+## 6. Current
 
 | Cycle | REQ | Status | Gate |
 |-------|-----|--------|------|
 | C1–C2 | 0001..0008 | closed (frozen) | ✓ |
-| C3–C7 | 0009..0037 | verify/shipped | GATE-0005..0014 pending |
-| C4 ext | 0016..0018 | billing lifecycle/dialog/issuer/PDF | GATE-0007/0008 |
-| **C8/C8.1/C9** | **0038..0045** | **verify PASS** | gate TBD |
+| C3–C9 | 0009..0045 | verify/shipped | GATE-0005..TBD pending |
+| C10–C16 | 0046..0062 | verify/shipped | pending |
+| **C17** | **0063** | **verify PASS** | gate TBD |
 
-**Baseline:** **863** tests · **166** files · HEAD `bc97070` · verified 2026-06-10
+**Baseline:** **940** tests · **185** files · HEAD `5d16082` · verified 2026-06-11
 
-## 6. Halt if
+**WIP (uncommitted):** C17.1 glass `cursor-pointer` dedupe — 20 files local; re-verify before commit.
+
+## 7. Halt if
 
 No parent REQ · ambiguous REQ · self-verify only · skip invalidation · Gate 2 without `EVAL_RESULTS.md` PASS
 
-## 7. Verify
+## 8. Verify
 
 `npm test && npx tsc --noEmit && npm run lint && npm run build`
 
-## 8. Hooks
+## 9. Hooks
 
 `AGENTS.md` · `.cursor/rules/agile-v-infinity-loop.mdc` · `CLAUDE.md` · `docs/PROJECT_WALKTHROUGH.md`

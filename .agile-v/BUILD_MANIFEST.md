@@ -215,11 +215,23 @@
 | ART-0210 | C8 | REQ-0039 | Invitation tab prefetch | built |
 | ART-0212 | C8 | REQ-0040 | `AdminPortalPage` redesign | built |
 | ART-0213 | C8 | REQ-0040 | `OrganizationDetailScreen` + indigo glass card + members ClinicalDataTable | built |
+| ART-0314 | C18 | REQ-0064 | `organization-list-enrich.ts` enriched org list API/SSR | built |
+| ART-0315 | C18 | REQ-0064 | `OrganizationManagement` indigo shell + DataTable + filters/stats | built |
+| ART-0316 | C18 | REQ-0064 | `OrganizationBillingPanelCompact` + `InvoicePortalListCard` | built |
+| ART-0317 | C18 | REQ-0065 | `OrganizationBillingPanelFull` doctor-portal billing parity | built |
+| ART-0318 | C18 | REQ-0065 | `OrganizationFormDialog` + `OrganizationAddMemberDialog` indigo glass | built |
+| ART-0319 | C18 | REQ-0065 | `OrganizationDetailScreen` billing + edit/delete/remove member | built |
+| ART-0320 | C18 | REQ-0065 | `invalidateOrganizationDetail` + invoice org-scoped bust | built |
+| ART-0321 | C18 | REQ-0064 | `organization-management-columns.tsx` + entity detail links | built |
+| ART-0322 | C18 | REQ-0064 | `useOrganizationListMetrics` + `OrganizationMetricsContext` | built |
+| ART-0323 | C18 | REQ-0064..0065 | Detail page SSR billing prefetch + seed | built |
+| ART-0324 | C18 | REQ-0064..0065 | Tests: enrich, routes, metrics, columns | built |
+| ART-0325 | C18 | REQ-0064..0065 | Verify **948/948** tsc lint build PASS | built |
 
 ## Verification Commands (project default)
 
 ```bash
-npm test        # 863 passed (C4 billing ext + C7, 2026-06-04)
+npm test        # 948 passed (C18, 2026-06-11)
 npx tsc --noEmit
 npm run lint
 npm run build

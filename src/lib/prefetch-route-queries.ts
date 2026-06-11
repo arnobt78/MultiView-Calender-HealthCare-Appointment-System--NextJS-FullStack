@@ -14,6 +14,8 @@ import { prefetchCategoryDetailStaffUsers } from "@/lib/prefetch-category-detail
 import { mapApiInvoiceToRow } from "@/lib/billing-invoice-map";
 import type { InvoiceRow } from "@/lib/billing-types";
 import { isPatientRole } from "@/lib/rbac";
+import type { OrganizationDetailOrg } from "@/lib/organization-detail-load";
+import type { OrganizationDetailMemberRow } from "@/lib/organization-detail-members-columns";
 
 type PrefetchViewer = { userId: string; role: string | null };
 
@@ -63,6 +65,7 @@ export function prefetchQueriesForControlPanelHref(
   const isDoctors = segments.includes("doctors");
   const isAdmins = segments.includes("admins");
   const isCategories = segments.includes("categories");
+  const isOrganizations = segments.includes("organizations");
   /** Portal `/invoices/:id` and CP `/control-panel/invoices/:id` share the same detail API. */
   const isInvoices = segments.includes("invoices");
   const resolvedViewer = viewer ?? getPrefetchViewer(queryClient);
@@ -139,6 +142,15 @@ export function prefetchQueriesForControlPanelHref(
       }
       if (isInvoices) {
         await prefetchInvoiceDetailQuery(queryClient, id);
+        return;
+      }
+      if (isOrganizations) {
+        const detail = await apiClient<{
+          org: OrganizationDetailOrg;
+          members: OrganizationDetailMemberRow[];
+        }>(`/api/organizations/${id}`);
+        queryClient.setQueryData(queryKeys.organizations.detail(id), detail.org);
+        queryClient.setQueryData(queryKeys.organizations.members(id), detail.members);
         return;
       }
     } catch {

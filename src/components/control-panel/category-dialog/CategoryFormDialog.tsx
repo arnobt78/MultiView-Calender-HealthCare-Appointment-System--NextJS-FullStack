@@ -207,7 +207,7 @@ export function CategoryFormDialog({
           <Button
             type="button"
             variant="ghost"
-            className={cn(categoryDialogGlassBackButtonClass, "cursor-pointer rounded-full")}
+            className={cn(categoryDialogGlassBackButtonClass, "rounded-full")}
             onClick={() => onOpenChange(false)}
             disabled={isSubmitting}
           >
@@ -219,7 +219,7 @@ export function CategoryFormDialog({
             variant="ghost"
             className={cn(
               violetGlassPrimaryButtonClass,
-              "cursor-pointer rounded-full disabled:pointer-events-none disabled:opacity-50"
+              "rounded-full disabled:pointer-events-none disabled:opacity-50"
             )}
             onClick={onSubmit}
             disabled={!canSubmit}

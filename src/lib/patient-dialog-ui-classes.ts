@@ -47,6 +47,6 @@ export const patientDialogGlassTextareaClass = cn(
   "w-full min-w-0 rounded-2xl border border-emerald-200/50 bg-white/75 px-3 py-2 text-sm text-gray-700 shadow-[0_8px_24px_rgba(16,185,129,0.14)] backdrop-blur-md transition-colors placeholder:text-gray-500 focus-visible:border-emerald-400/50 focus-visible:ring-2 focus-visible:ring-emerald-200/40 min-h-[88px] resize-y"
 );
 
-/** Cancel — pairs with `emeraldGlassPrimaryButtonClass` on submit. */
+/** Cancel — pairs with `emeraldGlassPrimaryButtonClass` on submit; cursor on token. */
 export const patientDialogGlassBackButtonClass =
-  "inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-emerald-300/50 bg-white/75 px-4 text-sm font-medium text-emerald-900 shadow-[0_10px_28px_rgba(16,185,129,0.2)] backdrop-blur-md transition-all duration-200 hover:border-emerald-400/55 hover:bg-emerald-50/90 hover:shadow-[0_12px_34px_rgba(16,185,129,0.28)] disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4";
+  "inline-flex h-10 shrink-0 cursor-pointer items-center gap-2 rounded-full border border-emerald-300/50 bg-white/75 px-4 text-sm font-medium text-emerald-900 shadow-[0_10px_28px_rgba(16,185,129,0.2)] backdrop-blur-md transition-all duration-200 hover:border-emerald-400/55 hover:bg-emerald-50/90 hover:shadow-[0_12px_34px_rgba(16,185,129,0.28)] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:size-4";

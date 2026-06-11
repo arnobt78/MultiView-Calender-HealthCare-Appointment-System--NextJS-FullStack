@@ -269,7 +269,7 @@ export function DoctorFormDialog({
             <Button
               type="button"
               variant="ghost"
-              className={cn(doctorDialogGlassBackButtonClass, "cursor-pointer rounded-full")}
+              className={cn(doctorDialogGlassBackButtonClass, "rounded-full")}
               onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
             >
@@ -279,7 +279,7 @@ export function DoctorFormDialog({
             <Button
               type="button"
               disabled={!canSubmit}
-              className={cn(emeraldGlassPrimaryButtonClass, "cursor-pointer rounded-full")}
+              className={cn(emeraldGlassPrimaryButtonClass, "rounded-full")}
               onClick={onSubmit}
             >
               {isSubmitting ? (

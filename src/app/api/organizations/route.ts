@@ -1,7 +1,7 @@
 /**
  * Organizations API
- * 
- * GET: list user's organizations
+ *
+ * GET: list user's organizations (enriched with member + invoice aggregates)
  * POST: create organization
  */
 
@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { getUserRole, isPatientRole } from "@/lib/rbac";
+import { loadOrganizationsListForUser } from "@/lib/organization-list-enrich";
 
 /** Per-request API handler (see api-route-dynamic.test.ts). */
 export const dynamic = "force-dynamic";
@@ -20,16 +21,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const memberships = await prisma.organizationMember.findMany({
-      where: { user_id: sessionUser.userId },
-      include: { organization: true },
-    });
-
-    const organizations = memberships.map((m) => ({
-      ...m.organization,
-      role: m.role,
-    }));
-
+    const organizations = await loadOrganizationsListForUser(sessionUser.userId);
     return NextResponse.json({ organizations });
   } catch (error) {
     console.error("Organizations GET error:", error);

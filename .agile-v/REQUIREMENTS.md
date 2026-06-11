@@ -1,12 +1,12 @@
 # Requirements — HealthCal Pro
 
-<!-- Revision: C1..C10 | C10 active | Last updated: 2026-06-10 -->
+<!-- Revision: C1..C18 | C18 active | Last updated: 2026-06-11 -->
 
 ## Document Control
 
 | Field | Value |
 |-------|-------|
-| Cycle | C1–C9 shipped · **C10–C16 shipped** · **C17 active** (REQ-0063) |
+| Cycle | C1–C17 shipped · **C18 active** (REQ-0064..0065) |
 | Author | Requirement Architect |
 | Gate 1 status | C1 GATE-0001 · C2 GATE-0003 approved |
 | Canonical source | this file |
@@ -108,6 +108,45 @@
 | REQ-0061 | approved [C15] | REQ-0060 | ART-0301..0304 | pending |
 | REQ-0062 | approved [C16] | REQ-0059 | ART-0305..0309 | pending |
 | REQ-0063 | approved [C17] | REQ-0062 | ART-0310..0313 | pending |
+| REQ-0064 | approved [C18] | — | ART-0314..0325 | pending |
+| REQ-0065 | approved [C18] | REQ-0064 | ART-0326..0335 | pending |
+
+### REQ-0064 — C18 organization-management list CP parity
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C18] |
+| Priority | P1 |
+| Risk | R1 |
+
+**Statement:** Organization management list matches patient-management CP shell: indigo tone, stats row, ClinicalListFilterToolbar, DataTable with enriched org aggregates, compact billing cards (top 3) per org.
+
+**Acceptance criteria:**
+1. `ControlPanelEntityListShell` tone `indigo`; Create Organization in header actions slot.
+2. Stats row (4–6 cards) from org member/invoice aggregates; responsive grid.
+3. `ClinicalListFilterToolbar` with search, role, member bucket, invoice status filters.
+4. `DataTable` + `cpClinicalList*` shells; org name links to detail via `organizationDetailHref`.
+5. Enriched list API: member counts by role, invoice count, outstanding cents.
+6. Compact billing panel: KPI + top 3 doctor-portal-style invoice cards + View all link.
+7. SSR seed + `useCpListBodyLoading`; `invalidateOrganizations` on CRUD.
+
+### REQ-0065 — C18 organization detail + full billing
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C18] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0064 |
+
+**Statement:** Organization detail page: indigo glass parity, extended schema fields, full billing (doctor-portal card list), glass create/edit dialog, add/remove member with rich picker.
+
+**Acceptance criteria:**
+1. `organizationDetailHref` + PrefetchingLink from list.
+2. Detail SSR seeds `organizations.detail` + org billing query keys.
+3. `OrganizationBillingPanelFull` with status counts, search/filter, all invoice cards.
+4. Glass `OrganizationFormDialog` create/edit; remove member UI wired.
+5. `invalidateOrganizationDetail` on org/member/invoice mutations.
 
 ### REQ-0063 — C17 admin table columns + detail footer interactives
 

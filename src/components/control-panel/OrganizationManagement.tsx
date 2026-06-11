@@ -1,42 +1,36 @@
 "use client";
 
-import React, { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
-  useReactTable,
-  getCoreRowModel,
-  getSortedRowModel,
-  getFilteredRowModel,
-  flexRender,
-  createColumnHelper,
-  type SortingState,
-} from "@tanstack/react-table";
+  Building2,
+  EllipsisVertical,
+  Eye,
+  ListFilter,
+  Receipt,
+  Trash2,
+  UserPlus,
+  Users,
+} from "lucide-react";
+import Link from "next/link";
+import { ControlPanelPageChrome } from "@/components/control-panel/ControlPanelPageChrome";
+import { ControlPanelHeaderGlassButton } from "@/components/control-panel/ControlPanelHeaderGlassButton";
+import { ControlPanelEntityListShell } from "@/components/control-panel/ControlPanelEntityListShell";
+import { OrganizationManagementStatsRow } from "@/components/control-panel/OrganizationManagementStatsRow";
+import {
+  OrganizationListFiltersProvider,
+  useOrganizationListFilters,
+  type OrganizationInvoiceFilter,
+  type OrganizationMemberSizeFilter,
+  type OrganizationRoleFilter,
+} from "@/components/control-panel/OrganizationListFiltersContext";
+import { OrganizationMetricsProvider } from "@/context/OrganizationMetricsContext";
+import { useOrganizationListMetrics } from "@/hooks/useOrganizationListMetrics";
 import { useOrganization, type Organization } from "@/hooks/useOrganization";
-import { useUsers } from "@/hooks/useUsers";
-import { CP_ALL_USERS_FILTERS } from "@/lib/control-panel-users-filters";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { DataTable } from "@/components/shared/DataTable";
+import { AppSectionErrorBanner } from "@/components/shared/AppSectionErrorBanner";
+import { ClinicalListFilterToolbar } from "@/components/shared/filters/ClinicalListFilterToolbar";
+import { FilterSelect } from "@/components/shared/filters/FilterSelect";
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
-import {
-  buildOrganizationDeleteConfirmSubtitle,
-  DELETE_ORGANIZATION_CONFIRM_TITLE,
-} from "@/lib/confirm-delete-dialog-copy";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,166 +38,47 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { OrganizationFormDialog } from "@/components/control-panel/organization-dialog/OrganizationFormDialog";
+import { OrganizationAddMemberDialog } from "@/components/control-panel/organization-dialog/OrganizationAddMemberDialog";
+import { OrganizationBillingPanelCompact } from "@/components/control-panel/OrganizationBillingPanel";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MoreHorizontal, Plus, Users, Building2 } from "lucide-react";
-import { ControlPanelPageChrome } from "@/components/control-panel/ControlPanelPageChrome";
-import { ControlPanelHeaderGlassButton } from "@/components/control-panel/ControlPanelHeaderGlassButton";
-import { PatientStatCard } from "@/components/control-panel/PatientStatCard";
-import { emeraldGlassPrimaryButtonClass } from "@/lib/calendar-header-action-styles";
-import { format } from "date-fns";
+  buildOrganizationManagementColumns,
+  OrganizationActionsTrigger,
+} from "@/lib/organization-management-columns";
+import {
+  buildOrganizationDeleteConfirmSubtitle,
+  DELETE_ORGANIZATION_CONFIRM_TITLE,
+} from "@/lib/confirm-delete-dialog-copy";
+import { indigoGlassPrimaryButtonClass } from "@/lib/calendar-header-action-styles";
+import { cpClinicalListTableFrameClassName } from "@/lib/cp-clinical-list-table-classes";
+import { organizationDetailHref } from "@/lib/entity-routes";
+import { APP_INNER_SCROLL_STICKY_TOP_CLASS } from "@/lib/portal-z-index";
 import { useCpListBodyLoading } from "@/lib/cp-list-body-loading";
 import { queryKeys } from "@/lib/query-keys";
-import { OrganizationBillingPanel } from "@/components/control-panel/OrganizationBillingPanel";
-import { ControlPanelEntityListShell } from "@/components/control-panel/ControlPanelEntityListShell";
-import { cn } from "@/lib/utils";
+import { resolveAppSectionRootClass } from "@/lib/section-page-layout";
+import { ORG_BILLING_PREFETCH_ORG_CAP } from "@/lib/org-billing-prefetch";
 
-const columnHelper = createColumnHelper<Organization>();
+const ROLE_FILTER_LABEL: Record<OrganizationRoleFilter, string> = {
+  all: "All Roles",
+  admin: "Admin",
+  doctor: "Doctor",
+  patient: "Patient",
+};
 
-function CreateOrgDialog({ onCreate }: { onCreate: (name: string) => void }) {
-  const [open, setOpen] = useState(false);
-  const [name, setName] = useState("");
+const MEMBER_SIZE_LABEL: Record<OrganizationMemberSizeFilter, string> = {
+  all: "Any Size",
+  solo: "Solo (1)",
+  small: "Small (2–5)",
+  large: "Large (6+)",
+};
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!name.trim()) return;
-    onCreate(name.trim());
-    setName("");
-    setOpen(false);
-  }
+const INVOICE_FILTER_LABEL: Record<OrganizationInvoiceFilter, string> = {
+  all: "All Billing",
+  has_invoices: "Has Invoices",
+  outstanding: "Outstanding Balance",
+  none: "No Invoices",
+};
 
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <ControlPanelHeaderGlassButton
-          glassClassName={cn(emeraldGlassPrimaryButtonClass, "cursor-pointer")}
-          icon={Building2}
-        >
-          Create Organization
-        </ControlPanelHeaderGlassButton>
-      </DialogTrigger>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Create Organization</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-2 pt-2">
-          <div className="space-y-1.5">
-            <Label htmlFor="org-name">Name</Label>
-            <Input
-              id="org-name"
-              placeholder="e.g. HealthCal Pro Clinic"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
-          </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={!name.trim()}>
-              Create
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function AddMemberDialog({
-  org,
-  onAdd,
-}: {
-  org: Organization;
-  onAdd: (args: {
-    orgId: string;
-    userId: string;
-    role: string;
-    memberLabel?: string;
-  }) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const [userId, setUserId] = useState("");
-  const [role, setRole] = useState("doctor");
-  const { data: usersData } = useUsers(CP_ALL_USERS_FILTERS);
-  const users = usersData?.users ?? [];
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!userId) return;
-    const user = users.find((u) => u.id === userId);
-    onAdd({
-      orgId: org.id,
-      userId,
-      role,
-      memberLabel: user?.display_name ?? user?.email ?? "Member",
-    });
-    setUserId("");
-    setRole("doctor");
-    setOpen(false);
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-          <Users className="h-4 w-4" /> Add Member
-        </DropdownMenuItem>
-      </DialogTrigger>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Add Member to {org.name}</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-2 pt-2">
-          <div className="space-y-1.5">
-            <Label>User</Label>
-            <Select value={userId} onValueChange={setUserId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a user" />
-              </SelectTrigger>
-              <SelectContent>
-                {users.map((u) => (
-                  <SelectItem key={u.id} value={u.id}>
-                    {u.display_name ?? u.email}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5">
-            <Label>Role</Label>
-            <Select value={role} onValueChange={setRole}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="doctor">Doctor</SelectItem>
-                <SelectItem value="patient">Patient</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={!userId}>Add Member</Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-/** Org row menu — delete uses shared `ConfirmActionDialog` (dropdown sibling pattern). */
 function OrganizationRowActions({
   org,
   isOwner,
@@ -212,28 +87,36 @@ function OrganizationRowActions({
 }: {
   org: Organization;
   isOwner: boolean;
-  onAddMember: (args: {
-    orgId: string;
-    userId: string;
-    role: string;
-    memberLabel?: string;
-  }) => void;
+  onAddMember: (org: Organization) => void;
   onDelete: (orgId: string) => void;
 }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const detailHref = organizationDetailHref("admin", org.id);
 
   return (
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
+          <OrganizationActionsTrigger />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <AddMemberDialog org={org} onAdd={onAddMember} />
+          <DropdownMenuItem asChild>
+            <Link href={detailHref} className="flex items-center gap-2">
+              <Eye className="h-4 w-4" aria-hidden />
+              View Details
+            </Link>
+          </DropdownMenuItem>
           {isOwner ? (
             <>
+              <DropdownMenuItem
+                onSelect={(e) => {
+                  e.preventDefault();
+                  onAddMember(org);
+                }}
+              >
+                <Users className="h-4 w-4" aria-hidden />
+                Add Member
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 className="text-red-600 focus:text-red-600"
@@ -242,6 +125,7 @@ function OrganizationRowActions({
                   setConfirmOpen(true);
                 }}
               >
+                <Trash2 className="h-4 w-4" aria-hidden />
                 Delete Organization
               </DropdownMenuItem>
             </>
@@ -249,255 +133,242 @@ function OrganizationRowActions({
         </DropdownMenuContent>
       </DropdownMenu>
       {isOwner ? (
-        <ConfirmActionDialog
-          open={confirmOpen}
-          onOpenChange={setConfirmOpen}
-          variant="destructive"
-          title={DELETE_ORGANIZATION_CONFIRM_TITLE}
-          subtitle={buildOrganizationDeleteConfirmSubtitle(org.name)}
-          confirmLabel="Delete"
-          cancelLabel="Cancel"
-          onConfirm={() => {
-            onDelete(org.id);
-            setConfirmOpen(false);
-          }}
-        />
+        <>
+          <ConfirmActionDialog
+            open={confirmOpen}
+            onOpenChange={setConfirmOpen}
+            variant="destructive"
+            title={DELETE_ORGANIZATION_CONFIRM_TITLE}
+            subtitle={buildOrganizationDeleteConfirmSubtitle(org.name)}
+            confirmLabel="Delete"
+            cancelLabel="Cancel"
+            onConfirm={() => {
+              onDelete(org.id);
+              setConfirmOpen(false);
+            }}
+          />
+        </>
       ) : null}
     </>
   );
 }
 
-const ROLE_COLORS: Record<string, string> = {
-  admin: "bg-red-100 text-red-700",
-  doctor: "bg-blue-100 text-blue-700",
-  patient: "bg-green-100 text-green-700",
-};
-
-/**
- * OrganizationManagement — SSR seed + useCpListBodyLoading; Create in merged header actions slot.
- */
-
-export default function OrganizationManagement() {
+function OrganizationManagementInner() {
   const {
     organizations,
     isLoading,
     isError,
-    error,
     createOrg,
     isCreating,
     addMember,
+    isAddingMember,
     deleteOrg,
   } = useOrganization();
-  const { data: allUsersData } = useUsers(CP_ALL_USERS_FILTERS);
-  const allUsers = allUsersData?.users ?? [];
 
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const [globalFilter, setGlobalFilter] = useState("");
+  const {
+    roleFilter,
+    setRoleFilter,
+    memberSizeFilter,
+    setMemberSizeFilter,
+    invoiceFilter,
+    setInvoiceFilter,
+    filterOrganizations,
+  } = useOrganizationListFilters();
+
+  const [listSearch, setListSearch] = useState("");
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [createForm, setCreateForm] = useState({ name: "" });
+  const [addMemberOrg, setAddMemberOrg] = useState<Organization | null>(null);
 
   const listBodyLoading = useCpListBodyLoading(queryKeys.organizations.all, isLoading);
+  const metrics = useOrganizationListMetrics(organizations);
 
-  const columns = [
-    columnHelper.accessor("name", {
-      header: "Organization",
-      cell: (info) => (
-        <div className="flex items-center gap-2">
-          <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
-          <div>
-            <div className="font-medium">{info.getValue()}</div>
-            <div className="text-xs text-muted-foreground">{info.row.original.slug}</div>
-          </div>
-        </div>
-      ),
-    }),
-    columnHelper.accessor("role", {
-      header: "Your Role",
-      cell: (info) => {
-        const role = info.getValue() ?? "member";
-        return (
-          <Badge className={ROLE_COLORS[role] ?? "bg-gray-100 text-gray-700"}>
-            {role}
-          </Badge>
-        );
-      },
-    }),
-    columnHelper.accessor("created_at", {
-      header: "Created",
-      cell: (info) => format(new Date(info.getValue()), "dd MMM yyyy"),
-    }),
-    columnHelper.display({
-      id: "actions",
-      header: "",
-      cell: ({ row }) => {
-        const org = row.original;
-        const isOwner = org.role === "admin" || org.owner_user_id != null;
-        return (
+  const filteredByToolbar = useMemo(
+    () => filterOrganizations(organizations),
+    [organizations, filterOrganizations]
+  );
+
+  const hasToolbarFilters =
+    roleFilter !== "all" ||
+    memberSizeFilter !== "all" ||
+    invoiceFilter !== "all" ||
+    listSearch.trim().length > 0;
+
+  const resetToolbar = useCallback(() => {
+    setListSearch("");
+    setRoleFilter("all");
+    setMemberSizeFilter("all");
+    setInvoiceFilter("all");
+  }, [setRoleFilter, setMemberSizeFilter, setInvoiceFilter]);
+
+  const columns = useMemo(
+    () =>
+      buildOrganizationManagementColumns({
+        renderActions: ({ org, isOwner }) => (
           <OrganizationRowActions
             org={org}
             isOwner={isOwner}
-            onAddMember={addMember}
+            onAddMember={setAddMemberOrg}
             onDelete={deleteOrg}
           />
-        );
-      },
-    }),
-  ];
+        ),
+      }),
+    [deleteOrg]
+  );
 
-  const table = useReactTable({
-    data: organizations,
-    columns,
-    state: { sorting, globalFilter },
-    onSortingChange: setSorting,
-    onGlobalFilterChange: setGlobalFilter,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-  });
+  const handleCreateSubmit = () => {
+    const name = createForm.name.trim();
+    if (!name) return;
+    createOrg(name, {
+      onSuccess: () => {
+        setCreateForm({ name: "" });
+        setCreateDialogOpen(false);
+      },
+    });
+  };
 
   if (isError) {
-    return <div className="p-4 text-red-500">Error: {error?.message}</div>;
+    return (
+      <div className={resolveAppSectionRootClass("control-panel")}>
+        <ControlPanelPageChrome tab="organizations" />
+        <AppSectionErrorBanner>
+          Failed to load organizations. Please refresh.
+        </AppSectionErrorBanner>
+      </div>
+    );
   }
 
   return (
-    <>
+    <OrganizationMetricsProvider
+      value={{
+        organizations,
+        metrics,
+        isLoading,
+        listBodyLoading,
+      }}
+    >
       <ControlPanelEntityListShell
-        tone="violet"
+        tone="indigo"
         headerSlot={
           <ControlPanelPageChrome
             tab="organizations"
-            actions={<CreateOrgDialog onCreate={createOrg} />}
-            toolbar={
-              <div className="flex w-full flex-wrap items-center justify-between gap-4">
-                <p className="text-sm text-muted-foreground">
-                  {listBodyLoading
-                    ? ""
-                    : `${organizations.length} organisation${organizations.length !== 1 ? "s" : ""}`}
-                </p>
-                <Input
-                  placeholder="Filter organizations..."
-                  value={globalFilter}
-                  onChange={(e) => setGlobalFilter(e.target.value)}
-                  className="w-56"
-                />
-              </div>
+            actions={
+              <ControlPanelHeaderGlassButton
+                glassClassName={indigoGlassPrimaryButtonClass}
+                icon={Building2}
+                onClick={() => setCreateDialogOpen(true)}
+              >
+                Create Organization
+              </ControlPanelHeaderGlassButton>
             }
           />
         }
-        statsSlot={
-          <>
-            <PatientStatCard
-              variant="sky"
-              icon={Building2}
-              title="Total Organisations"
-              subtitle="All registered organisations"
-              value={organizations.length}
-              valueSkeleton={listBodyLoading}
+        statsSlot={<OrganizationManagementStatsRow />}
+        toolbarSlot={
+          <ClinicalListFilterToolbar
+            stickyClassName={APP_INNER_SCROLL_STICKY_TOP_CLASS}
+            search={{
+              value: listSearch,
+              onChange: setListSearch,
+              placeholder: "Search… (name or slug)",
+              ariaLabel: "Search organizations by name or slug",
+            }}
+            showReset={hasToolbarFilters}
+            onReset={resetToolbar}
+          >
+            <FilterSelect
+              value={roleFilter}
+              onValueChange={(v) => setRoleFilter(v as OrganizationRoleFilter)}
+              displayLabel={ROLE_FILTER_LABEL[roleFilter]}
+              icon={ListFilter}
+              size="toolbar"
+              triggerClassName="max-w-[180px]"
+              ariaLabel="Filter by your role"
+              options={[
+                { value: "all", label: "All Roles" },
+                { value: "admin", label: "Admin" },
+                { value: "doctor", label: "Doctor" },
+                { value: "patient", label: "Patient" },
+              ]}
             />
-            <PatientStatCard
-              variant="violet"
+            <FilterSelect
+              value={memberSizeFilter}
+              onValueChange={(v) =>
+                setMemberSizeFilter(v as OrganizationMemberSizeFilter)
+              }
+              displayLabel={MEMBER_SIZE_LABEL[memberSizeFilter]}
               icon={Users}
-              title="Total Users"
-              subtitle="All users across the platform"
-              value={allUsers.length}
-              valueSkeleton={listBodyLoading}
+              size="toolbar"
+              triggerClassName="max-w-[180px]"
+              ariaLabel="Filter by member count"
+              options={[
+                { value: "all", label: "Any Size" },
+                { value: "solo", label: "Solo (1)" },
+                { value: "small", label: "Small (2–5)" },
+                { value: "large", label: "Large (6+)" },
+              ]}
             />
-          </>
+            <FilterSelect
+              value={invoiceFilter}
+              onValueChange={(v) => setInvoiceFilter(v as OrganizationInvoiceFilter)}
+              displayLabel={INVOICE_FILTER_LABEL[invoiceFilter]}
+              icon={Receipt}
+              size="toolbar"
+              triggerClassName="max-w-[200px]"
+              ariaLabel="Filter by billing"
+              options={[
+                { value: "all", label: "All Billing" },
+                { value: "has_invoices", label: "Has Invoices" },
+                { value: "outstanding", label: "Outstanding Balance" },
+                { value: "none", label: "No Invoices" },
+              ]}
+            />
+          </ClinicalListFilterToolbar>
         }
         tableSlot={
-          <>
-            <Table>
-              <TableHeader>
-                {table.getHeaderGroups().map((hg) => (
-                  <TableRow key={hg.id} className="bg-muted/40">
-                    {hg.headers.map((header) => (
-                      <TableHead
-                        key={header.id}
-                        className="font-semibold cursor-pointer select-none"
-                        onClick={header.column.getToggleSortingHandler()}
-                      >
-                        {flexRender(header.column.columnDef.header, header.getContext())}
-                        {header.column.getIsSorted() === "asc"
-                          ? " ↑"
-                          : header.column.getIsSorted() === "desc"
-                            ? " ↓"
-                            : ""}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {listBodyLoading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <TableRow key={i}>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Skeleton className="h-4 w-4 rounded shrink-0" />
-                          <div className="space-y-1">
-                            <Skeleton className="h-4 w-36 rounded" />
-                            <Skeleton className="h-3 w-24 rounded" />
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-5 w-16 rounded-full" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-4 w-24 rounded" />
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="h-8 w-8 ml-auto" />
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : !listBodyLoading && organizations.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={columns.length} className="text-center py-12">
-                      <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                        <Building2 className="h-10 w-10 opacity-30" />
-                        <p className="font-medium">No organizations yet</p>
-                        <p className="text-sm">
-                          Create your first organization to manage teams and members.
-                        </p>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : table.getRowModel().rows.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      className="text-center py-8 text-muted-foreground"
-                    >
-                      No results found.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  table.getRowModel().rows.map((row) => (
-                    <TableRow key={row.id} className="hover:bg-muted/30 transition-colors">
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id}>
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-            {!listBodyLoading && (
-              <div className="px-4 py-2 border-t text-xs text-muted-foreground">
-                {table.getRowModel().rows.length} of {organizations.length} organizations
-              </div>
-            )}
-          </>
+          <DataTable<Organization, unknown>
+            columns={columns}
+            data={filteredByToolbar}
+            isLoading={listBodyLoading}
+            globalFilterFn={(row, q) => {
+              const s = q.trim().toLowerCase();
+              if (!s) return true;
+              const o = row;
+              const blob = `${o.name} ${o.slug} ${o.role}`;
+              return blob.toLowerCase().includes(s);
+            }}
+            externalGlobalFilter={{ value: listSearch, onChange: setListSearch }}
+            searchPlaceholder="Search by name or slug…"
+            emptyMessage="No organizations yet. Create one to manage teams and billing."
+            tableClassName="min-w-[1080px] w-full"
+            tableFrameClassName={cpClinicalListTableFrameClassName}
+          />
         }
         footerSlot={
           <>
-            {isCreating && (
-              <p className="text-sm text-muted-foreground">Creating organization…</p>
-            )}
+            <OrganizationFormDialog
+              open={createDialogOpen}
+              onOpenChange={setCreateDialogOpen}
+              mode="create"
+              form={createForm}
+              onFormChange={(patch) => setCreateForm((p) => ({ ...p, ...patch }))}
+              onSubmit={handleCreateSubmit}
+              isSubmitting={isCreating}
+            />
+            {addMemberOrg ? (
+              <OrganizationAddMemberDialog
+                org={addMemberOrg}
+                open={!!addMemberOrg}
+                onOpenChange={(open) => {
+                  if (!open) setAddMemberOrg(null);
+                }}
+                onAdd={addMember}
+                isSubmitting={isAddingMember}
+              />
+            ) : null}
             {!listBodyLoading &&
-              organizations.map((org) => (
-                <OrganizationBillingPanel
+              filteredByToolbar.slice(0, ORG_BILLING_PREFETCH_ORG_CAP).map((org) => (
+                <OrganizationBillingPanelCompact
                   key={org.id}
                   organizationId={org.id}
                   organizationName={org.name}
@@ -506,6 +377,15 @@ export default function OrganizationManagement() {
           </>
         }
       />
-    </>
+    </OrganizationMetricsProvider>
+  );
+}
+
+/** Organization list — indigo CP shell parity with patient-management (REQ-0064). */
+export default function OrganizationManagement() {
+  return (
+    <OrganizationListFiltersProvider>
+      <OrganizationManagementInner />
+    </OrganizationListFiltersProvider>
   );
 }

@@ -1,6 +1,6 @@
 /**
  * Organization [id] API
- * GET:    get single organization
+ * GET:    get single organization (enriched detail + members)
  * PATCH:  update organization name
  * DELETE: delete organization (owner only)
  */
@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import { loadOrganizationDetailForUser } from "@/lib/organization-detail-load";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -20,22 +21,10 @@ export async function GET(_req: NextRequest, { params }: Params) {
     if (!sessionUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { id } = await params;
+    const detail = await loadOrganizationDetailForUser(id, sessionUser.userId);
+    if (!detail) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    // Only return the org if the caller is the owner or a member — prevents enumeration.
-    const org = await prisma.organization.findFirst({
-      where: {
-        id,
-        OR: [
-          { owner_user_id: sessionUser.userId },
-          { members: { some: { user_id: sessionUser.userId } } },
-        ],
-      },
-      include: { members: true },
-    });
-
-    if (!org) return NextResponse.json({ error: "Not found" }, { status: 404 });
-
-    return NextResponse.json({ organization: org });
+    return NextResponse.json(detail);
   } catch (error: unknown) {
     console.error("Org GET error:", error);
     return NextResponse.json({ error: "Failed to fetch organization" }, { status: 500 });

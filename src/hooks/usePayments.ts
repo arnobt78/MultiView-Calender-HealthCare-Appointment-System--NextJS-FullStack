@@ -4,6 +4,7 @@ import { queryKeys } from "@/lib/query-keys";
 import {
   getPatientIdFromAppointmentCache,
   getPatientIdFromInvoiceCache,
+  getOrganizationIdFromInvoiceCache,
   invalidateInvoicesAndOverview,
   invalidateInvoicesBilling,
 } from "@/lib/query-client";
@@ -27,6 +28,7 @@ async function invalidateAfterInvoiceWrite(
   opts?: {
     invoiceId?: string;
     appointmentId?: string | null;
+    organizationId?: string | null;
     /** Full bust (pay/refund/delete) vs lighter draft create/PATCH */
     scope?: "billing" | "full";
   }
@@ -36,9 +38,15 @@ async function invalidateAfterInvoiceWrite(
     : opts?.invoiceId
       ? getPatientIdFromInvoiceCache(queryClient, opts.invoiceId)
       : undefined;
+  const organizationId =
+    opts?.organizationId ??
+    (opts?.invoiceId
+      ? getOrganizationIdFromInvoiceCache(queryClient, opts.invoiceId)
+      : undefined);
   const invalidationOpts = {
     patientId: patientId ?? undefined,
     invoiceId: opts?.invoiceId ?? undefined,
+    organizationId: organizationId ?? undefined,
   };
   if (opts?.scope === "billing") {
     await invalidateInvoicesBilling(queryClient, invalidationOpts);
@@ -115,6 +123,7 @@ export function usePayments(options?: UsePaymentsOptions) {
       await invalidateAfterInvoiceWrite(queryClient, {
         invoiceId: data.invoice.id,
         appointmentId: data.invoice.appointment_id ?? variables.appointment_id,
+        organizationId: data.invoice.organization_id ?? variables.organization_id,
         scope: "billing",
       });
     },
@@ -143,6 +152,7 @@ export function usePayments(options?: UsePaymentsOptions) {
       await invalidateAfterInvoiceWrite(queryClient, {
         invoiceId: data.invoice.id,
         appointmentId: data.invoice.appointment_id,
+        organizationId: data.invoice.organization_id,
         scope: data.invoice.status === "paid" ? "full" : "billing",
       });
     },
@@ -169,6 +179,7 @@ export function usePayments(options?: UsePaymentsOptions) {
       await invalidateAfterInvoiceWrite(queryClient, {
         invoiceId: data.invoice.id,
         appointmentId: data.invoice.appointment_id,
+        organizationId: data.invoice.organization_id,
       });
     },
     onError: (error) => handleApiError(error, "Failed to record payment"),
@@ -210,6 +221,7 @@ export function usePayments(options?: UsePaymentsOptions) {
       await invalidateAfterInvoiceWrite(queryClient, {
         invoiceId,
         appointmentId: deleted?.appointment_id,
+        organizationId: deleted?.organization_id,
       });
     },
     onError: (error) => handleApiError(error, "Failed to delete invoice"),

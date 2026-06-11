@@ -242,3 +242,67 @@ human_gate_2: TBD
 | release build | npm run build | PASS | REQ-0041..0045 |
 
 **EvalGate (C8.1/C9):** PASS (automated) — Human Gate TBD before `cycles/C8/` freeze.
+
+## C17 — ER-C17-VERIFY
+
+```yaml
+eval_run_id: ER-C17-VERIFY
+eval_timestamp: "2026-06-11T11:45:00Z"
+policy_version_ref: "1.0.0"
+eval_gate_status: PASS
+eval_gate_rationale: "C17 admin table columns + footer interactives — npm test 940/940 (185 files), tsc, eslint, build PASS for REQ-0063"
+cycle: C17
+release_commit: "5d16082"
+human_gate_2: TBD
+```
+
+| Suite | Command | Result | LINKED_REQ |
+|-------|---------|--------|------------|
+| full regression | npm test | PASS 940/940 | REQ-0063 |
+| typecheck | npx tsc --noEmit | PASS | REQ-0063 |
+| lint | npm run lint | PASS | REQ-0063 |
+| release build | npm run build | PASS | REQ-0063 |
+
+**EvalGate (C17):** PASS (automated) — Human Gate TBD before archive.
+
+## C18 — ER-C18-VERIFY
+
+```yaml
+eval_run_id: ER-C18-VERIFY
+eval_timestamp: "2026-06-11T12:35:00Z"
+policy_version_ref: "1.0.0"
+eval_gate_status: PASS
+eval_gate_rationale: "C18 organization management UI parity — npm test 948/948 (189 files), tsc, eslint, build PASS for REQ-0064..0065"
+cycle: C18
+human_gate_2: TBD
+```
+
+| Suite | Command | Result | LINKED_REQ |
+|-------|---------|--------|------------|
+| full regression | npm test | PASS 948/948 | REQ-0064..0065 |
+| typecheck | npx tsc --noEmit | PASS | REQ-0064..0065 |
+| lint | npm run lint | PASS | REQ-0064..0065 |
+| release build | npm run build | PASS | REQ-0064..0065 |
+
+**EvalGate (C18):** PASS (automated) — Human Gate TBD before archive.
+
+## C18.1 — ER-C18.1-VERIFY
+
+```yaml
+eval_run_id: ER-C18.1-VERIFY
+eval_timestamp: "2026-06-11T12:44:00Z"
+policy_version_ref: "1.0.0"
+eval_gate_status: PASS
+eval_gate_rationale: "C18.1 org consistency — detail seed, cross-tab invalidation, memberLabel, docs; npm test 954/954, tsc, eslint, build PASS"
+cycle: C18.1
+human_gate_2: TBD
+```
+
+| Suite | Command | Result | LINKED_REQ |
+|-------|---------|--------|------------|
+| full regression | npm test | PASS 954/954 | REQ-0064..0065 |
+| typecheck | npx tsc --noEmit | PASS | REQ-0064..0065 |
+| lint | npm run lint | PASS | REQ-0064..0065 |
+| release build | npm run build | PASS | REQ-0064..0065 |
+
+**EvalGate (C18.1):** PASS (automated) — Human Gate TBD before archive.

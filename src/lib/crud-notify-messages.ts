@@ -224,6 +224,9 @@ export function organizationCrudMessage(
   if (action === "created") {
     return { action, entity, detail: `${quoted} created.` };
   }
+  if (action === "updated") {
+    return { action, entity, detail: `${quoted} updated.` };
+  }
   return { action: "deleted", entity, detail: `${quoted} deleted.` };
 }
 

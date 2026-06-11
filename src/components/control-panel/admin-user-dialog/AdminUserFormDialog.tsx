@@ -213,7 +213,7 @@ export function AdminUserFormDialog({
             <Button
               type="button"
               variant="ghost"
-              className={cn(adminUserDialogGlassBackButtonClass, "cursor-pointer rounded-full")}
+              className={cn(adminUserDialogGlassBackButtonClass, "rounded-full")}
               onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
             >
@@ -224,7 +224,7 @@ export function AdminUserFormDialog({
               type="button"
               onClick={onSubmit}
               disabled={!canSubmit}
-              className={cn(violetGlassPrimaryButtonClass, "cursor-pointer rounded-full")}
+              className={cn(violetGlassPrimaryButtonClass, "rounded-full")}
             >
               {isSubmitting ? (
                 <>

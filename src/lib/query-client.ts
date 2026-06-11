@@ -46,7 +46,21 @@ export {
 /** Appointment rows in cache — see `appointment-cache-read.ts`. */
 type CachedAppointmentRow = { id: string; patient?: string | null; category?: string | null };
 
-type CachedInvoiceRow = { id: string; appointment_id?: string | null };
+type CachedInvoiceRow = {
+  id: string;
+  appointment_id?: string | null;
+  organization_id?: string | null;
+};
+
+/** Resolve org id from global invoice list cache — for org billing/list aggregate bust. */
+export function getOrganizationIdFromInvoiceCache(
+  queryClient: QueryClient,
+  invoiceId: string
+): string | undefined {
+  const invoices = queryClient.getQueryData<CachedInvoiceRow[]>(queryKeys.invoices.all);
+  const inv = invoices?.find((i) => i.id === invoiceId);
+  return inv?.organization_id ?? undefined;
+}
 
 /** Invoice list cache → appointment → patient (for targeted invalidation after invoice CRUD). */
 export function getPatientIdFromInvoiceCache(
@@ -197,16 +211,36 @@ export async function invalidateOrganizations(queryClient: QueryClient) {
   publishQueryCacheCrossTab(CROSS_TAB_SCOPES.ORGANIZATIONS);
 }
 
+/** Org detail + per-org billing caches — call on member/org/invoice mutations scoped to org. */
+export async function invalidateOrganizationDetail(
+  queryClient: QueryClient,
+  orgId: string
+) {
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: queryKeys.organizations.detail(orgId) }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.organizations.members(orgId) }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.invoices.byOrganization(orgId) }),
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.invoices.byOrganizationTotals(orgId),
+    }),
+  ]);
+  publishQueryCacheCrossTab(CROSS_TAB_SCOPES.ORGANIZATIONS);
+  publishQueryCacheCrossTab(CROSS_TAB_SCOPES.INVOICES_BILLING);
+}
+
 /**
  * Lighter bust after draft create / metadata PATCH — skips insights + doctors directory.
  * Prefer `mergeInvoiceIntoListCache` in the mutation `onSuccess` before calling this.
  */
 export async function invalidateInvoicesBilling(
   queryClient: QueryClient,
-  opts?: { patientId?: string | null; invoiceId?: string | null }
+  opts?: { patientId?: string | null; invoiceId?: string | null; organizationId?: string | null }
 ) {
   const patientId = opts?.patientId;
   const invoiceId = opts?.invoiceId;
+  const organizationId =
+    opts?.organizationId ??
+    (invoiceId ? getOrganizationIdFromInvoiceCache(queryClient, invoiceId) : undefined);
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: queryKeys.invoices.all }),
     queryClient.invalidateQueries({ queryKey: queryKeys.billing.root }),
@@ -224,6 +258,12 @@ export async function invalidateInvoicesBilling(
     patientId
       ? invalidatePatientDetailAndSnapshot(queryClient, patientId)
       : [],
+    ...(organizationId
+      ? [
+          invalidateOrganizationDetail(queryClient, organizationId),
+          invalidateOrganizations(queryClient),
+        ]
+      : []),
   ]);
   publishQueryCacheCrossTab(CROSS_TAB_SCOPES.INVOICES_BILLING);
 }
@@ -234,10 +274,13 @@ export async function invalidateInvoicesBilling(
  */
 export async function invalidateInvoicesAndOverview(
   queryClient: QueryClient,
-  opts?: { patientId?: string | null; invoiceId?: string | null }
+  opts?: { patientId?: string | null; invoiceId?: string | null; organizationId?: string | null }
 ) {
   const patientId = opts?.patientId;
   const invoiceId = opts?.invoiceId;
+  const organizationId =
+    opts?.organizationId ??
+    (invoiceId ? getOrganizationIdFromInvoiceCache(queryClient, invoiceId) : undefined);
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: queryKeys.invoices.all }),
     queryClient.invalidateQueries({ queryKey: queryKeys.billing.root }),
@@ -257,6 +300,12 @@ export async function invalidateInvoicesAndOverview(
     patientId
       ? invalidatePatientDetailAndSnapshot(queryClient, patientId)
       : queryClient.invalidateQueries({ queryKey: queryKeys.patients.all }),
+    ...(organizationId
+      ? [
+          invalidateOrganizationDetail(queryClient, organizationId),
+          invalidateOrganizations(queryClient),
+        ]
+      : []),
   ]);
   publishQueryCacheCrossTab(CROSS_TAB_SCOPES.INVOICES);
 }

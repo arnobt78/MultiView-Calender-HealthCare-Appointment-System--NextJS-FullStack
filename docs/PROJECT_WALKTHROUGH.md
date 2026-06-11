@@ -1,13 +1,19 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-10 — C17 + C16)
+## Latest (2026-06-11 — C18 + C18.1)
 
-**C17+:** doctor/category lists share `cpClinicalList*` tokens (doctor Actions crush fixed). **Verify:** **940/940** · tsc · lint · build.
+**C18:** Organization management CP parity — indigo list shell (`OrganizationManagement`), enriched org API (`organization-list-enrich.ts`), 6-card stats, `ClinicalListFilterToolbar`, `DataTable` + `PrefetchingLink`, glass create/edit/add-member dialogs, `InvoicePortalListCard` shared billing cards. List footer: `OrganizationBillingPanelCompact` (KPI + top 3 invoices, cap `ORG_BILLING_PREFETCH_ORG_CAP` 20). Detail: `OrganizationBillingPanelFull` + member CRUD + extended schema fields.
+
+**C18.1:** `loadOrganizationDetailForUser` + `seedOrganizationDetailCacheFromSsr` + hover prefetch on `/control-panel/organizations/:id`; `invalidateOrganizationDetail` cross-tab (`ORGANIZATIONS` + `INVOICES_BILLING`); enriched GET `/api/organizations/[id]`.
+
+**Verify:** **954/954** · tsc · lint · build.
+
+## Prior (2026-06-10 — C17 + C16)
 
 ## Prior (2026-06-10 — C15 entity detail spacing + C14 gaps)
 
 - **Layout:** `EntityDetailPageShell` — header outside body stack (no 12px gap); `appEntityDetailBodyStackClass` for card/footer rhythm; CP + portal outer roots omit `space-y-3`.
-- **Org detail:** members `ClinicalDataTable` (`organization-detail-members-columns.tsx`); SSR `prefetchOrganizations` + `seedOrganizationsListCacheFromSsr` on detail route.
+- **Org detail:** members `ClinicalDataTable` (`organization-detail-members-columns.tsx`); SSR `loadOrganizationDetailForUser` + `prefetchOrganizations` + `seedOrganizationDetailCacheFromSsr` + billing seed on detail route.
 - **Verify:** **916/916** · tsc · lint · build.
 
 ## Prior (2026-06-10 — C14 entity detail chrome parity)
@@ -202,7 +208,7 @@
 
 ## Previous Audit (2026-06-02)
 
-- **Invoice billing KPI + org list:** `invoice-billing-totals.ts` — `INVOICE_OUTSTANDING_STATUSES` shared by UI and server aggregates. `fetchInvoiceBillingTotalsForOrganization` now actively powers org KPI cards through new API `GET /api/invoices/billing-totals?organizationId=`. Query keys: `queryKeys.invoices.byOrganization(orgId)` + `queryKeys.invoices.byOrganizationTotals(orgId)`. **Org SSR:** `prefetchOrgBillingInvoicesByOrgIds` seeds both list + totals for every org on CP organizations tab (cap 20). **Organization billing:** all org panels render (removed `slice(0,3)`), all invoices shown, `InvoiceBillingStatsRow` + `InvoiceBillingListRow`. Invalidation: `invalidateInvoices*` → `invoices.all` prefix includes both org list + totals keys.
+- **Invoice billing KPI + org list:** `invoice-billing-totals.ts` — `INVOICE_OUTSTANDING_STATUSES` shared by UI and server aggregates. `fetchInvoiceBillingTotalsForOrganization` powers org KPI cards via `GET /api/invoices/billing-totals?organizationId=`. Query keys: `queryKeys.invoices.byOrganization(orgId)` + `queryKeys.invoices.byOrganizationTotals(orgId)`. **Org SSR:** `prefetchOrgBillingInvoicesByOrgIds` seeds list + totals for CP organizations tab (cap 20) and detail route. **Organization billing (C18):** list `OrganizationBillingPanelCompact` — KPI strip + top 3 `InvoicePortalListCard`; detail `OrganizationBillingPanelFull` — status chips + search/filter + all cards. Invalidation: `invalidateOrganizationDetail` + org-scoped invoice bust via `getOrganizationIdFromInvoiceCache`; cross-tab `ORGANIZATIONS` + `INVOICES_BILLING`.
 - **Entity detail empty values:** `ClinicalEmptyDash` — single em-dash; `clinicalEmptyOr` / `clinicalEmptyOrNode` on patient, doctor, category CP detail schema rows (`patient-care-level.ts` `hasPatientCareLevel`).
 - **Dashboard calendar filters:** `CategoryFilterSelect` + `PatientFilterSelect` (brand mark / portrait + age + care tier); `ClinicalListFilterToolbar` reset right-aligned. **Clinical role** filter (`calendar-clinical-role-filter.ts`): default **All My Visits**; **Created by Me**; **Referred to Me (Treating)** — client-side on staff views; hidden for patients.
 - **Staff calendar scope:** owner **OR** treating **OR** accepted assignee — see Latest section. **Admin** overview KPIs stay org-wide via `dashboardOverviewAppointmentFilter`.
@@ -322,7 +328,7 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Prism
 - **Libs:** `invoice-billing-totals.ts`, `billing-appointment-eligibility.ts`, `billing-appointment-options-load.ts`, `invoices-revenue-scope.ts`, `invoice-visit-summary.ts`, `billing-auto-draft.ts`, `billing-dashboard-cache.ts`.
 - **Doctor portal:** `DoctorPortalInvoicesCard` + SSR `prefetchInvoices` + `prefetchBillingAppointmentOptions` on `doctor-portal/page.tsx`.
 - **CP invoices tab:** SSR `prefetchInvoices` + `prefetchBillingAppointmentOptions` via `prefetchControlPanelSection("invoices")`.
-- **Org billing:** `OrganizationBillingPanel` — `?organizationId=` filter; `InvoiceBillingStatsRow` + `InvoiceBillingListRow`; all rows (no cap); member view / admin tag on create.
+- **Org billing:** List — `OrganizationBillingPanelCompact` (KPI + top 3 `InvoicePortalListCard`, SSR cap 20). Detail — `OrganizationBillingPanelFull` (all invoices, status filter). SSR: `prefetchOrgBillingInvoicesByOrgIds` + `seedOrgBillingCacheFromSsr`; detail: `loadOrganizationDetailForUser` + `seedOrganizationDetailCacheFromSsr`. Invalidation: `invalidateOrganizationDetail` cross-tab.
 - **Env:** see `.env.example` — `STRIPE_*`, `NEXT_PUBLIC_APP_URL`. Local webhook secret from CLI; production secret from Stripe Dashboard endpoint only.
 
 ### Doctor display + `/services`

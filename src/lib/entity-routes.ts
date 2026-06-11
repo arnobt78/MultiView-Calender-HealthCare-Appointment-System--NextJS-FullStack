@@ -82,6 +82,12 @@ export function userDetailHref(role: EntityRole, id: string): string {
   return `/control-panel/users/${id}`;
 }
 
+/** Organization detail — admin CP only. */
+export function organizationDetailHref(role: EntityRole, id: string): string {
+  if (isAdminRole(role)) return `/control-panel/organizations/${id}`;
+  return `/control-panel/organizations/${id}`;
+}
+
 /** Invoice detail — admin CP; doctor/patient `/invoices/:id` (dashboard shell). */
 export function invoiceDetailHref(role: EntityRole, id: string): string {
   if (isAdminRole(role)) return `/control-panel/invoices/${id}`;

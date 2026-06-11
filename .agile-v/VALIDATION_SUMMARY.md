@@ -396,3 +396,77 @@ EvalGate (C8): status=PASS | eval_run_id=ER-C8-VERIFY | gate2_pending=TBD
 | VER-0084 | REQ-0041..0045 | PASS | Full regression **863/863** re-verify 2026-06-10 |
 
 EvalGate (C8.1/C9): status=PASS | eval_run_id=ER-C8-C9-VERIFY | gate2_pending=TBD
+
+---
+
+## C10–C16 — CP zero-flash, chrome polish, entity detail, user-admin (2026-06-10)
+
+| Item | Value |
+|------|-------|
+| Cycle | C10..C16 |
+| ART-IDs | ART-0224..ART-0309 |
+| REQ-IDs | REQ-0046..0062 |
+| Regression | **930/930** → **940/940** Vitest (185 files) |
+
+EvalGate (C10–C16): status=PASS | eval_run_id=ER-C10-C16-VERIFY | gate2_pending=TBD
+
+---
+
+## C17 — Admin table columns + detail footer interactives (2026-06-10)
+
+| Item | Value |
+|------|-------|
+| Cycle | C17 |
+| ART-IDs | ART-0310..0313 |
+| REQ-IDs | REQ-0063 |
+| Regression | **940/940** Vitest (185 files) |
+| HEAD | `5d16082` |
+
+| VER-ID | REQ-ID | Result | Description |
+|--------|--------|--------|-------------|
+| VER-0085 | REQ-0063 | PASS | `cpClinicalList*ColumnShellClass`; admin table min-w; cursor-pointer glass tokens |
+| VER-0086 | REQ-0063 | PASS | VideoCall triggerClassName + skyGlassBackButtonClass on detail footer |
+| VER-0087 | REQ-0063 | PASS | Full regression **940/940** re-verify 2026-06-11 |
+
+EvalGate (C17): status=PASS | eval_run_id=ER-C17-VERIFY | gate2_pending=TBD
+
+---
+
+## C18 — Organization management UI parity (2026-06-11)
+
+| Item | Value |
+|------|-------|
+| Cycle | C18 |
+| ART-IDs | ART-0314..0325 |
+| REQ-IDs | REQ-0064, REQ-0065 |
+| Regression | **948/948** Vitest (189 files) |
+
+| VER-ID | REQ-ID | Result | Description |
+|--------|--------|--------|-------------|
+| VER-0088 | REQ-0064 | PASS | Indigo list shell, stats, filters, DataTable, enriched org API |
+| VER-0089 | REQ-0064 | PASS | Compact billing panels — InvoicePortalListCard top-3 + KPI |
+| VER-0090 | REQ-0065 | PASS | Detail billing full panel, glass dialogs, member CRUD |
+| VER-0091 | REQ-0065 | PASS | invalidateOrganizationDetail + invoice org-scoped bust |
+| VER-0092 | REQ-0064..0065 | PASS | Full regression **948/948** |
+
+EvalGate (C18): status=PASS | eval_run_id=ER-C18-VERIFY | gate2_pending=TBD
+
+---
+
+## C18.1 — Organization consistency gap closure (2026-06-11)
+
+| Item | Value |
+|------|-------|
+| Cycle | C18.1 |
+| REQ-IDs | REQ-0064, REQ-0065 (polish) |
+| Regression | **954/954** Vitest (190 files) |
+
+| VER-ID | REQ-ID | Result | Description |
+|--------|--------|--------|-------------|
+| VER-0093 | REQ-0065 | PASS | `loadOrganizationDetailForUser` + detail/members TanStack seed |
+| VER-0094 | REQ-0065 | PASS | Hover prefetch `/control-panel/organizations/:id` |
+| VER-0095 | REQ-0065 | PASS | `invalidateOrganizationDetail` cross-tab ORGANIZATIONS + INVOICES_BILLING |
+| VER-0096 | REQ-0065 | PASS | Add-member toast `memberLabel` from picker |
+| VER-0097 | REQ-0064..0065 | PASS | Full regression **954/954** |
+
+EvalGate (C18.1): status=PASS | eval_run_id=ER-C18.1-VERIFY | gate2_pending=TBD

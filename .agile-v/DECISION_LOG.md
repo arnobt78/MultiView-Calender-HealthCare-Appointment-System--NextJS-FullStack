@@ -76,3 +76,8 @@
 | 2026-06-10T23:45:00Z | build | C12.1 CP chrome tab isolation | tab-scoped sync store reset; server snapshot; Export CSV literal; overview subtitle error path | REQ-0056 |
 | 2026-06-10T24:15:00Z | build | C12.2 CP chrome polish | slim context; aligned SSR snapshot; description wrapper fix; admin detail subtitle | REQ-0057 |
 | 2026-06-10T25:00:00Z | build | C13 user-admin UI parity + chrome remount | reinitializeControlPanelChromeTab; admin list filters/stats; emerald dialog; detail appointments SSR | REQ-0059 |
+| 2026-06-11T11:45:00Z | init | Infinity Loop session activation — resume from C17 | agile-v-core + pipeline + lifecycle + compliance loaded; STATE/ACTIVATION/BOOTSTRAP/AGENTS/config synced; npm test 940/940; HEAD 5d16082; no PENDING checkpoints | REQ-0063 |
+| 2026-06-11T12:00:00Z | init | agile-v-core activate — before-coding gate on every prompt | ACTIVATION.md §3 pipeline gate; C17 WIP cursor-pointer dedupe uncommitted; halt without REQ | REQ-0063 |
+| 2026-06-11T14:00:00Z | build | C18 specify — organization management UI parity | REQ-0064 list + REQ-0065 detail/billing; patient-management CP pattern | REQ-0064..0065 |
+| 2026-06-11T16:35:00Z | build | C18 org CP parity shipped | enriched API; indigo list shell; compact+full billing; glass dialogs; detail CRUD; 948/948 | REQ-0064..0065 |
+| 2026-06-11T17:45:00Z | build | C18.1 org consistency gaps | detail loader/seed; cross-tab invalidation; memberLabel toast; walkthrough; 954/954 | REQ-0064..0065 |

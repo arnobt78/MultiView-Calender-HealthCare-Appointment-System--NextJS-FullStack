@@ -111,7 +111,8 @@ import { buildFullAppointmentsList } from "@/lib/appointments-list-build";
 import { resolveExtraAssignedAppointmentIds } from "@/lib/appointments-calendar-assignees";
 import type { FullAppointment } from "@/hooks/useAppointments";
 import type { Invoice } from "@/hooks/usePayments";
-import type { Organization } from "@/hooks/useOrganization";
+import type { OrganizationListRow } from "@/lib/organization-list-enrich";
+import { loadOrganizationsListForUser } from "@/lib/organization-list-enrich";
 import { getUserRole, isPatientRole } from "@/lib/rbac";
 import type { InvoiceBillingTotalsPayload } from "@/lib/invoice-billing-totals";
 import { portalAppointmentListInclude } from "@/lib/portal-appointment-prisma-include";
@@ -157,17 +158,22 @@ export async function prefetchCategories(): Promise<Category[] | null> {
 /** Mirrors GET /api/organizations — cache key: queryKeys.organizations.all */
 export async function prefetchOrganizations(
   userId: string
-): Promise<Organization[] | null> {
+): Promise<OrganizationListRow[] | null> {
   try {
-    const memberships = await prisma.organizationMember.findMany({
-      where: { user_id: userId },
-      include: { organization: true },
-    });
-    return memberships.map((m) => ({
-      ...m.organization,
-      role: m.role,
-      created_at: m.organization.created_at.toISOString(),
-    })) as Organization[];
+    return await loadOrganizationsListForUser(userId);
+  } catch {
+    return null;
+  }
+}
+
+/** Mirrors enriched org detail — cache keys: organizations.detail + organizations.members */
+export async function prefetchOrganizationDetail(
+  orgId: string,
+  userId: string
+): Promise<import("@/lib/organization-detail-load").OrganizationDetailPayload | null> {
+  try {
+    const { loadOrganizationDetailForUser } = await import("@/lib/organization-detail-load");
+    return await loadOrganizationDetailForUser(orgId, userId);
   } catch {
     return null;
   }

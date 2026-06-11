@@ -622,7 +622,7 @@ export function PatientManagementInner({
                     Export CSV
                   </ControlPanelHeaderGlassButton>
                   <ControlPanelHeaderGlassButton
-                    glassClassName={cn(emeraldGlassPrimaryButtonClass, "cursor-pointer")}
+                    glassClassName={emeraldGlassPrimaryButtonClass}
                     icon={UserPlus}
                     onClick={openCreateDialog}
                   >

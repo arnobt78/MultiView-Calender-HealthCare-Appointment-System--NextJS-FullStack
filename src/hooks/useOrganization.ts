@@ -1,21 +1,20 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient, handleApiError } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
-import { invalidateOrganizations, invalidateDashboardOverview } from "@/lib/query-client";
+import {
+  invalidateDashboardOverview,
+  invalidateOrganizationDetail,
+  invalidateOrganizations,
+} from "@/lib/query-client";
+import type { OrganizationListRow } from "@/lib/organization-list-enrich";
+
+/** List row — enriched aggregates from GET /api/organizations. */
+export type Organization = OrganizationListRow;
 import { notify } from "@/lib/notify";
 import {
   organizationCrudMessage,
   orgMemberCrudMessage,
 } from "@/lib/crud-notify-messages";
-
-export interface Organization {
-  id: string;
-  name: string;
-  slug: string;
-  owner_user_id: string;
-  role: string;
-  created_at: string;
-}
 
 export interface OrgMember {
   id: string;
@@ -87,6 +86,7 @@ export function useOrganization() {
         })
       );
       await invalidateOrganizations(queryClient);
+      await invalidateOrganizationDetail(queryClient, variables.orgId);
       await invalidateDashboardOverview(queryClient);
     },
     onError: (error) => handleApiError(error, "Failed to add member"),
@@ -117,9 +117,27 @@ export function useOrganization() {
         })
       );
       await invalidateOrganizations(queryClient);
+      await invalidateOrganizationDetail(queryClient, variables.orgId);
       await invalidateDashboardOverview(queryClient);
     },
     onError: (error) => handleApiError(error, "Failed to remove member"),
+  });
+
+  const updateOrgMutation = useMutation({
+    mutationFn: ({ orgId, name }: { orgId: string; name: string }) =>
+      apiClient<{ organization: Organization }>(`/api/organizations/${orgId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ name }),
+      }),
+    onSuccess: async (_, variables) => {
+      notify.crud(
+        organizationCrudMessage("updated", { name: variables.name })
+      );
+      await invalidateOrganizations(queryClient);
+      await invalidateOrganizationDetail(queryClient, variables.orgId);
+      await invalidateDashboardOverview(queryClient);
+    },
+    onError: (error) => handleApiError(error, "Failed to update organization"),
   });
 
   const deleteOrgMutation = useMutation({
@@ -135,6 +153,7 @@ export function useOrganization() {
       const name = context?.deleted?.name ?? "Organization";
       notify.crud(organizationCrudMessage("deleted", { name }));
       await invalidateOrganizations(queryClient);
+      await invalidateOrganizationDetail(queryClient, _orgId);
       await invalidateDashboardOverview(queryClient);
     },
     onError: (error) => handleApiError(error, "Failed to delete organization"),
@@ -153,5 +172,7 @@ export function useOrganization() {
     isRemovingMember: removeMemberMutation.isPending,
     deleteOrg: deleteOrgMutation.mutate,
     isDeleting: deleteOrgMutation.isPending,
+    updateOrg: updateOrgMutation.mutate,
+    isUpdating: updateOrgMutation.isPending,
   };
 }

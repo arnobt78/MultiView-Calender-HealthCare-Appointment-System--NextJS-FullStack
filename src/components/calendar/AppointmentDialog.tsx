@@ -515,7 +515,7 @@ export default function AppointmentDialog({
             variant="ghost"
             className={cn(
               skyGlassBackButtonClass,
-              "cursor-pointer rounded-full disabled:pointer-events-none disabled:opacity-50"
+              "rounded-full disabled:pointer-events-none disabled:opacity-50"
             )}
             onClick={() => handleDialogOpenChange(false)}
             disabled={loading || uploading}
@@ -530,7 +530,7 @@ export default function AppointmentDialog({
             disabled={loading || uploading || !canSave}
             className={cn(
               skyGlassPrimaryButtonClass,
-              "cursor-pointer rounded-full disabled:pointer-events-none disabled:opacity-50"
+              "rounded-full disabled:pointer-events-none disabled:opacity-50"
             )}
           >
             {loading ? (

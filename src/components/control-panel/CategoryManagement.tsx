@@ -374,7 +374,7 @@ export function CategoryManagementInner() {
             tab="categories"
             actions={
               <ControlPanelHeaderGlassButton
-                glassClassName={cn(violetGlassPrimaryButtonClass, "cursor-pointer")}
+                glassClassName={violetGlassPrimaryButtonClass}
                 icon={Tag}
                 onClick={openCreateDialog}
               >

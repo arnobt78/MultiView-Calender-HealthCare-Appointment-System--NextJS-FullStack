@@ -43,6 +43,10 @@ export const slateGlassBackButtonClass =
 export const indigoGlassBackButtonClass =
   "inline-flex h-10 shrink-0 cursor-pointer items-center gap-2 rounded-full border border-indigo-300/50 bg-white/75 px-4 text-sm font-medium text-indigo-900 shadow-[0_10px_28px_rgba(99,102,241,0.2)] backdrop-blur-md transition-all duration-200 hover:border-indigo-400/55 hover:bg-indigo-50/90 hover:shadow-[0_12px_34px_rgba(99,102,241,0.28)] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:size-4";
 
+/** Indigo glass primary — organization create/edit dialog submit. */
+export const indigoGlassPrimaryButtonClass =
+  "inline-flex h-10 shrink-0 cursor-pointer items-center gap-2 rounded-full border border-indigo-400/45 bg-linear-to-r from-indigo-500 to-indigo-700 px-4 text-sm font-medium text-white shadow-[0_10px_40px_rgba(99,102,241,0.42)] backdrop-blur-md transition-all duration-200 hover:from-indigo-500 hover:via-indigo-600 hover:to-indigo-700 hover:text-white hover:shadow-[0_14px_48px_rgba(99,102,241,0.58)] active:text-white disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:size-4";
+
 /** Destructive glass — delete / remove. */
 export const roseGlassDangerButtonClass =
   "inline-flex h-10 shrink-0 cursor-pointer items-center gap-2 rounded-full border border-rose-300/55 bg-rose-50/85 px-4 text-sm font-medium text-rose-800 shadow-[0_10px_28px_rgba(244,63,94,0.22)] backdrop-blur-md transition-all duration-200 hover:border-rose-400/60 hover:bg-rose-100/90 hover:shadow-[0_12px_34px_rgba(244,63,94,0.3)] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:size-4";

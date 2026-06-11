@@ -304,7 +304,7 @@ export function PatientFormDialog({
           <Button
             type="button"
             variant="ghost"
-            className={cn(patientDialogGlassBackButtonClass, "cursor-pointer rounded-full")}
+            className={cn(patientDialogGlassBackButtonClass, "rounded-full")}
             onClick={() => onOpenChange(false)}
             disabled={isSubmitting}
           >
@@ -316,7 +316,7 @@ export function PatientFormDialog({
             variant="ghost"
             className={cn(
               emeraldGlassPrimaryButtonClass,
-              "cursor-pointer rounded-full disabled:pointer-events-none disabled:opacity-50"
+              "rounded-full disabled:pointer-events-none disabled:opacity-50"
             )}
             onClick={onSubmit}
             disabled={!canSubmit}
