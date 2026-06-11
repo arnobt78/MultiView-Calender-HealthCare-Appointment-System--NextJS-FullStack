@@ -10,7 +10,6 @@ import {
   type OrgMemberRole,
 } from "@/lib/organization-member-role";
 import { organizationDialogDropdownPanelClass } from "@/lib/organization-dialog-ui-classes";
-import { bookingPickerScrollClass } from "@/components/shared/patient-booking/patient-booking-dialog-styles";
 import { clinicalCellMutedTextClass, clinicalCellPrimaryTextClass } from "@/lib/table-display-styles";
 import { cn, toTitleCaseLabel } from "@/lib/utils";
 
@@ -81,8 +80,7 @@ export function OrganizationMemberRolePickerField({
       disabled={disabled}
     >
       <div className={organizationDialogDropdownPanelClass}>
-        <div className={bookingPickerScrollClass}>
-          <ul className="space-y-2">
+        <ul className="space-y-2">
             {ORG_MEMBER_ROLE_OPTIONS.map((option) => (
               <li key={option.value}>
                 <Button
@@ -102,8 +100,7 @@ export function OrganizationMemberRolePickerField({
                 </Button>
               </li>
             ))}
-          </ul>
-        </div>
+        </ul>
       </div>
     </StaffAppointmentPickerField>
   );

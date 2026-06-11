@@ -4,7 +4,7 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-11)
 
-- **C21 (REQ-0065):** Org dialogs — `OrganizationDialogHeader`, indigo rich pickers, role auto-fill, create-org optional initial members (`initialMembers` API transaction).
+- **C21 (REQ-0065):** Org dialogs — rich pickers, role auto-fill, `initialMembers` API; `OrganizationDialogPickerSearchInput`; `organizationDialogPickerScrollClass` (no stable gutter).
 - **C20 (REQ-0065):** Org billing `PortalPanelSection`; possessive title + status inline; filters compact+full; `Invoice N: #id`; Category label; portal density py.
 - **C19.1:** Detail members `UserRoleBadge`; `db:seed-org-portal-patient-member`.
 - **C19 (REQ-0064):** Org list — `indigoGlassTableFrameClass`; `EntityTitleLink`/`UserRoleBadge`/`OrganizationMembersRoleBadges`.

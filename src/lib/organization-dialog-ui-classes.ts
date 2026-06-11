@@ -26,6 +26,21 @@ export const organizationDialogDropdownPanelClass = cn(
   "w-full min-w-0 rounded-2xl border border-indigo-200/55 bg-indigo-50/35 p-2 shadow-[0_10px_28px_rgba(99,102,241,0.1)]"
 );
 
+/** Picker search — glass input with room for leading search icon (EntityListSearchInput parity). */
+export const organizationDialogSearchInputClass = cn(
+  organizationDialogGlassInputClass,
+  "pl-10 pr-3"
+);
+
+/**
+ * Org dialog picker list scroll — no `[scrollbar-gutter:stable]` so empty track does not
+ * reserve space when the list fits (bookingPickerScrollClass keeps stable gutter for patient flow).
+ */
+export const organizationDialogPickerScrollClass = cn(
+  "w-full max-h-[min(42vh,420px)] overflow-y-auto overflow-x-hidden overscroll-contain",
+  "space-y-2 px-1 py-1"
+);
+
 /** StaffAppointmentPickerField indigo tone — matches org dialog selects. */
 export const organizationDialogGlassSelectChevronClass =
   "size-4 shrink-0 opacity-50 text-muted-foreground pointer-events-none";

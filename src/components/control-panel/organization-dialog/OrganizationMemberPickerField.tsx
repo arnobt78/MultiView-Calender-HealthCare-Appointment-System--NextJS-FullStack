@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Search, UserRound } from "lucide-react";
+import { UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { OrganizationDialogPickerSearchInput } from "@/components/control-panel/organization-dialog/OrganizationDialogPickerSearchInput";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { UserRoleBadge } from "@/components/shared/UserRoleBadge";
 import { StaffAppointmentPickerField } from "@/components/shared/scheduling/StaffAppointmentPickerField";
@@ -16,10 +16,9 @@ import {
 } from "@/lib/control-panel-users-filters";
 import {
   organizationDialogDropdownPanelClass,
-  organizationDialogGlassInputClass,
+  organizationDialogPickerScrollClass,
 } from "@/lib/organization-dialog-ui-classes";
 import type { OrgMemberRole } from "@/lib/organization-member-role";
-import { bookingPickerScrollClass } from "@/components/shared/patient-booking/patient-booking-dialog-styles";
 import {
   clinicalCellMutedTextClass,
   clinicalCellPrimaryTextClass,
@@ -122,22 +121,15 @@ export function OrganizationMemberPickerField({
       disabled={disabled}
     >
       <div className={organizationDialogDropdownPanelClass}>
-        <div className="mb-2 px-1">
-          <div className="relative">
-            <Search
-              className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
-              aria-hidden
-            />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder={toTitleCaseLabel("Search by name or email")}
-              className={cn(organizationDialogGlassInputClass, "pl-9")}
-              aria-label="Search users"
-            />
-          </div>
+        <div className="mb-2">
+          <OrganizationDialogPickerSearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder={toTitleCaseLabel("Search by name or email")}
+            ariaLabel="Search users"
+          />
         </div>
-        <div className={bookingPickerScrollClass}>
+        <div className={organizationDialogPickerScrollClass}>
           {isLoading ? (
             <p className="px-2 py-4 text-sm text-muted-foreground">Loading users…</p>
           ) : users.length === 0 ? (
