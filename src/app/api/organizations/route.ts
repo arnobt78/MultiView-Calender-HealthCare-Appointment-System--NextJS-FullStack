@@ -72,6 +72,8 @@ export async function POST(request: NextRequest) {
           name,
           slug,
           owner_user_id: sessionUser.userId,
+          created_by_id: sessionUser.userId,
+          updated_by_id: sessionUser.userId,
         },
       });
       await tx.organizationMember.create({

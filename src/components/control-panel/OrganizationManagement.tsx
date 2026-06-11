@@ -227,6 +227,13 @@ function OrganizationManagementInner() {
     [deleteOrg]
   );
 
+  const handleCreateDialogOpenChange = useCallback((open: boolean) => {
+    if (!open) {
+      setCreateForm(emptyCreateForm());
+    }
+    setCreateDialogOpen(open);
+  }, []);
+
   const handleCreateSubmit = () => {
     const name = createForm.name.trim();
     if (!name) return;
@@ -365,7 +372,7 @@ function OrganizationManagementInner() {
           <>
             <OrganizationFormDialog
               open={createDialogOpen}
-              onOpenChange={setCreateDialogOpen}
+              onOpenChange={handleCreateDialogOpenChange}
               mode="create"
               form={createForm}
               onFormChange={(patch) => setCreateForm((p) => ({ ...p, ...patch }))}

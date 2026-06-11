@@ -6,16 +6,23 @@
 
 | Field | Value |
 |-------|-------|
-| **Cycle** | **C21** — org dialog UX parity |
+| **Cycle** | **C22** — org detail UI parity |
 | **Phase** | Verify |
 | **Stage** | 4 |
 | **Status** | verify PASS |
 | **Last Updated** | 2026-06-11 |
 | **Parent REQ** | REQ-0065 |
 
-## Verify baseline (C21 close)
+## Verify baseline (C22 close)
 
-**970/970** (194 files) · tsc · lint · build — PASS
+**975/975** (195 files) · tsc · lint · build — PASS
+
+## C22 scope
+
+- `EntityDetailRecordAuditCard` + org audit schema (`updated_at`, `created_by`/`updated_by`).
+- Rich owner `EntityDetailAuditActorInline`; `formatOrganizationTypeLabel`.
+- `{Org}'s Members` heading + role count summary; `cpClinicalListTableFrameClassName`.
+- Member identity: `DoctorIdentityRow` / `PatientIdentityCell` / admin avatar row; `OrganizationMemberRowActions` ⋮.
 
 ## C21 scope
 

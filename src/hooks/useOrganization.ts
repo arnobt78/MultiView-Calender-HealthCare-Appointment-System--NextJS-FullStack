@@ -195,7 +195,7 @@ export function useOrganization() {
 
   const updateOrgMutation = useMutation({
     mutationFn: ({ orgId, name }: { orgId: string; name: string }) =>
-      apiClient<{ organization: { name: string; slug: string } }>(
+      apiClient<{ organization: Record<string, unknown> }>(
         `/api/organizations/${orgId}`,
         {
           method: "PATCH",
@@ -203,9 +203,20 @@ export function useOrganization() {
         }
       ),
     onSuccess: async (data, variables) => {
+      const org = data.organization;
       patchOrganizationDetailOrgCache(queryClient, variables.orgId, {
-        name: data.organization.name,
-        slug: data.organization.slug,
+        name: typeof org.name === "string" ? org.name : variables.name,
+        slug: typeof org.slug === "string" ? org.slug : undefined,
+        updated_at: typeof org.updated_at === "string" ? org.updated_at : undefined,
+        updated_by_id: typeof org.updated_by_id === "string" ? org.updated_by_id : null,
+        updated_by_display:
+          typeof org.updated_by_display === "string" ? org.updated_by_display : null,
+        updated_by_email:
+          typeof org.updated_by_email === "string" ? org.updated_by_email : null,
+        updated_by_image:
+          typeof org.updated_by_image === "string" ? org.updated_by_image : null,
+        updated_by_role:
+          typeof org.updated_by_role === "string" ? org.updated_by_role : null,
       });
       notify.crud(
         organizationCrudMessage("updated", { name: variables.name })

@@ -52,6 +52,7 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
       members={detail.members}
       initialOrganizations={initialOrganizations}
       initialOrgBilling={orgBillingMap[id] ?? null}
+      viewerRole={viewerRole}
     />
   );
 }

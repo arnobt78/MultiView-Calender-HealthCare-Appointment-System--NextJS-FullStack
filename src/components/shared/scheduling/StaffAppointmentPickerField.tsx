@@ -3,7 +3,7 @@
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { useRef } from "react";
-import { ChevronDownIcon } from "lucide-react";
+import { ChevronDownIcon, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -49,6 +49,10 @@ type StaffAppointmentPickerFieldProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   changeLabel: string;
+  /** Optional clear — shown on collapsed selection (e.g. optional org member slots). */
+  clearable?: boolean;
+  clearLabel?: string;
+  onClear?: () => void;
   children: ReactNode;
   disabled?: boolean;
   /** `sky` = appointment; `emerald` = patient; `violet` = invoice; `indigo` = org dialog. */
@@ -69,6 +73,9 @@ export function StaffAppointmentPickerField({
   open,
   onOpenChange,
   changeLabel,
+  clearable = false,
+  clearLabel = "Clear",
+  onClear,
   children,
   disabled = false,
   tone = "sky",
@@ -133,9 +140,16 @@ export function StaffAppointmentPickerField({
       : isEmerald
         ? "text-emerald-700 hover:bg-emerald-50 hover:text-emerald-900"
         : "text-sky-700 hover:bg-sky-50 hover:text-sky-900";
-
+  const clearBtnClass = isIndigo
+    ? "text-muted-foreground hover:bg-indigo-50 hover:text-indigo-900"
+    : isViolet
+      ? "text-muted-foreground hover:bg-violet-50 hover:text-violet-900"
+      : isEmerald
+        ? "text-muted-foreground hover:bg-emerald-50 hover:text-emerald-900"
+        : "text-muted-foreground hover:bg-sky-50 hover:text-sky-900";
   const rootRef = useRef<HTMLDivElement>(null);
   const hasSelection = selectedContent != null && selectedContent !== false;
+  const showClear = clearable && hasSelection && onClear != null;
   const showTrigger = !hasSelection || open;
   const showSelectedSummary = hasSelection && !open;
 
@@ -187,20 +201,38 @@ export function StaffAppointmentPickerField({
           <div className={panelClass}>
             <div className={bookingPickerCollapsedInsetClass}>
               {selectedContent}
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className={cn("h-8 w-full cursor-pointer", changeBtnClass)}
-                onClick={() => onOpenChange(true)}
-                disabled={disabled}
-              >
-                <ChevronDownIcon
-                  className={cn(chevronClass, "mr-1 rotate-180")}
-                  aria-hidden
-                />
-                {changeLabel}
-              </Button>
+              <div className="flex flex-col gap-1.5 sm:flex-row">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className={cn("h-8 w-full cursor-pointer sm:flex-1", changeBtnClass)}
+                  onClick={() => onOpenChange(true)}
+                  disabled={disabled}
+                >
+                  <ChevronDownIcon
+                    className={cn(chevronClass, "mr-1 rotate-180")}
+                    aria-hidden
+                  />
+                  {changeLabel}
+                </Button>
+                {showClear ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className={cn("h-8 w-full cursor-pointer sm:w-auto sm:shrink-0", clearBtnClass)}
+                    onClick={() => {
+                      onClear?.();
+                      onOpenChange(false);
+                    }}
+                    disabled={disabled}
+                  >
+                    <X className="mr-1 size-3.5 shrink-0" aria-hidden />
+                    {clearLabel}
+                  </Button>
+                ) : null}
+              </div>
             </div>
           </div>
         ) : null}

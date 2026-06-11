@@ -114,11 +114,13 @@ async function ensureDemoOrganization(
       name: "HealthCal Demo Clinic",
       slug: ORG_SLUG,
       owner_user_id: adminId,
+      created_by_id: adminId,
+      updated_by_id: adminId,
       description: "Portfolio demo organization for multi-entity QA.",
       timezone: "Europe/Berlin",
       org_type: "clinic",
     },
-    update: {},
+    update: { updated_by_id: adminId },
   });
 
   const memberSpecs: { user_id: string; role: string }[] = [

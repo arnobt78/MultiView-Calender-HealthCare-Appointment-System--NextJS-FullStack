@@ -105,6 +105,7 @@ export function OrganizationFormDialog({
                     add them later from the org detail page.
                   </p>
                   <OrganizationMemberPickerField
+                    key={`admin-picker-${open}`}
                     dialogOpen={open}
                     value={form.initialAdminId ?? ""}
                     onValueChange={(id) =>
@@ -113,10 +114,12 @@ export function OrganizationFormDialog({
                     roleFilter="admin"
                     excludeUserIds={excludeExcept(form.initialAdminId)}
                     disabled={isSubmitting}
+                    clearable
                     label={toTitleCaseLabel("Admin Member")}
                     placeholder={toTitleCaseLabel("Choose an admin (optional)")}
                   />
                   <OrganizationMemberPickerField
+                    key={`doctor-picker-${open}`}
                     dialogOpen={open}
                     value={form.initialDoctorId ?? ""}
                     onValueChange={(id) =>
@@ -125,10 +128,12 @@ export function OrganizationFormDialog({
                     roleFilter="doctor"
                     excludeUserIds={excludeExcept(form.initialDoctorId)}
                     disabled={isSubmitting}
+                    clearable
                     label={toTitleCaseLabel("Doctor Member")}
                     placeholder={toTitleCaseLabel("Choose a doctor (optional)")}
                   />
                   <OrganizationMemberPickerField
+                    key={`patient-picker-${open}`}
                     dialogOpen={open}
                     value={form.initialPatientId ?? ""}
                     onValueChange={(id) =>
@@ -137,6 +142,7 @@ export function OrganizationFormDialog({
                     roleFilter="patient"
                     excludeUserIds={excludeExcept(form.initialPatientId)}
                     disabled={isSubmitting}
+                    clearable
                     label={toTitleCaseLabel("Patient Member")}
                     placeholder={toTitleCaseLabel("Choose a patient (optional)")}
                   />

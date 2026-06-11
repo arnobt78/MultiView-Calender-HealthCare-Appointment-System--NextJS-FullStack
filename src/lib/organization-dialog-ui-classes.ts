@@ -36,9 +36,11 @@ export const organizationDialogSearchInputClass = cn(
  * Org dialog picker list scroll — no `[scrollbar-gutter:stable]` so empty track does not
  * reserve space when the list fits (bookingPickerScrollClass keeps stable gutter for patient flow).
  */
+/** Overlay-style scroll — no reserved gutter; thin thumb only when scrolling. */
 export const organizationDialogPickerScrollClass = cn(
+  "org-dialog-picker-scroll",
   "w-full max-h-[min(42vh,420px)] overflow-y-auto overflow-x-hidden overscroll-contain",
-  "space-y-2 px-1 py-1"
+  "space-y-2 py-1 pl-1 pr-0 [scrollbar-gutter:auto]"
 );
 
 /** StaffAppointmentPickerField indigo tone — matches org dialog selects. */

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   mapCategoryRecordAuditActors,
   mapEntityDetailAuditActor,
+  mapOrganizationRecordAuditActors,
   mapPatientRecordAuditActors,
   mapUserRecordAuditActors,
   resolveEntityDetailAuditActorHref,
@@ -56,6 +57,25 @@ describe("mapUserRecordAuditActors", () => {
       updated_by_role: "admin",
     });
     expect(createdBy?.role).toBe("admin");
+  });
+});
+
+describe("mapOrganizationRecordAuditActors", () => {
+  it("maps denormalized organization audit fields to inline actors", () => {
+    const { createdBy, updatedBy } = mapOrganizationRecordAuditActors({
+      created_by_id: "admin-1",
+      created_by_display: "Demo Admin",
+      created_by_email: "test@admin.com",
+      created_by_image: null,
+      created_by_role: "admin",
+      updated_by_id: "admin-1",
+      updated_by_display: "Demo Admin",
+      updated_by_email: "test@admin.com",
+      updated_by_image: null,
+      updated_by_role: "admin",
+    });
+    expect(createdBy?.role).toBe("admin");
+    expect(updatedBy?.label).toBe("Demo Admin");
   });
 });
 

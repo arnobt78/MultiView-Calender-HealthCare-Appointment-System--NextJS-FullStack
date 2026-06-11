@@ -8,6 +8,20 @@ import { isAdminRole } from "@/lib/rbac";
 import { isValidUUID } from "@/lib/validation";
 import type { Category, Patient, User } from "@/types/types";
 
+/** Serialized org detail — audit denormalized fields from `serializeOrganization`. */
+export type OrganizationAuditSource = {
+  created_by_id?: string | null;
+  created_by_display?: string | null;
+  created_by_email?: string | null;
+  created_by_image?: string | null;
+  created_by_role?: string | null;
+  updated_by_id?: string | null;
+  updated_by_display?: string | null;
+  updated_by_email?: string | null;
+  updated_by_image?: string | null;
+  updated_by_role?: string | null;
+};
+
 /** Staff row on entity detail Record Audit — avatar, name, email, role badge. */
 export type EntityDetailAuditActor = {
   userId: string;
@@ -115,6 +129,29 @@ export function mapCategoryRecordAuditActors(category: Category): {
       category.updated_by_email,
       category.updated_by_image,
       category.updated_by_role
+    ),
+  };
+}
+
+/** Organization detail — map denormalized audit fields from `serializeOrganization`. */
+export function mapOrganizationRecordAuditActors(org: OrganizationAuditSource): {
+  createdBy: EntityDetailAuditActor | null;
+  updatedBy: EntityDetailAuditActor | null;
+} {
+  return {
+    createdBy: mapRecordAuditActorFromDenormalizedFields(
+      org.created_by_id,
+      org.created_by_display,
+      org.created_by_email,
+      org.created_by_image,
+      org.created_by_role
+    ),
+    updatedBy: mapRecordAuditActorFromDenormalizedFields(
+      org.updated_by_id,
+      org.updated_by_display,
+      org.updated_by_email,
+      org.updated_by_image,
+      org.updated_by_role
     ),
   };
 }

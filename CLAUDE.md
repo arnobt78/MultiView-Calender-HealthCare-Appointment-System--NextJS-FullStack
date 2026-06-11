@@ -4,11 +4,12 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-11)
 
+- **C22 (REQ-0065):** Org detail UI parity — `EntityDetailRecordAuditCard`; `owner` actor row; `{Org}'s Members` + role counts; `cpClinicalListTableFrameClassName`; `DoctorIdentityRow`/`PatientIdentityCell` member cells; `OrganizationMemberRowActions` ⋮. Schema: `organizations.updated_at` + `created_by`/`updated_by`; `npm run db:backfill-org-audit`.
 - **C21 (REQ-0065):** Org dialogs — rich pickers, role auto-fill, `initialMembers` API; `OrganizationDialogPickerSearchInput`; `organizationDialogPickerScrollClass` (no stable gutter).
 - **C20 (REQ-0065):** Org billing `PortalPanelSection`; possessive title + status inline; filters compact+full; `Invoice N: #id`; Category label; portal density py.
 - **C19.1:** Detail members `UserRoleBadge`; `db:seed-org-portal-patient-member`.
 - **C19 (REQ-0064):** Org list — `indigoGlassTableFrameClass`; `EntityTitleLink`/`UserRoleBadge`/`OrganizationMembersRoleBadges`.
-- **Verify:** **970/970** · tsc · lint · build PASS.
+- **Verify:** **975/975** · tsc · lint · build PASS.
 
 ## Never / Always
 
@@ -33,14 +34,15 @@ Cross-tab: `query-cache-cross-tab.ts` (`ORGANIZATIONS`, `INVOICES_BILLING` on or
 - **Org list (C19):** `OrganizationManagement.tsx`, `organization-management-columns.tsx`, `OrganizationMembersRoleBadges.tsx`, `indigoGlassTableFrameClass`
 - **Org dialogs (C21):** `organization-dialog/*`, `organization-member-role.ts`, `StaffAppointmentPickerField` indigo tone
 - **Org billing (C20):** `OrganizationBillingPanel.tsx`, `organization-billing-display.ts`, `InvoicePortalListCard`
-- **Org detail (C18.2):** `useOrganizationDetail`, `organization-detail-load.ts`, `organization-detail-client.ts`, `organization-dialog/`
+- **Org detail (C22):** `OrganizationDetailScreen`, `organization-detail-load.ts` (enriched members), `organization-detail-display.ts`, `organization-detail/OrganizationMemberRowActions.tsx`, `mapOrganizationRecordAuditActors`
+- **Org detail (C18.2):** `useOrganizationDetail`, `organization-detail-client.ts`, `organization-dialog/`
 - **CP lists:** `cpClinicalListTableFrameClassName` + tone shells (`sky`/`violet`/`indigo`/`emerald`)
 - Entity detail: `EntityDetailPageShell.tsx`, `EntityDetailBackLink.tsx`, `EntityDetailFooterRow.tsx`
 - Invoice: `InvoicePortalListCard.tsx`, `InvoiceDetailLiveBody`, `invoice-dialog/`
 
 ## Agile V
 
-`.agile-v/ACTIVATION.md` · `STATE.md` · **C21 shipped** (REQ-0065).
+`.agile-v/ACTIVATION.md` · `STATE.md` · **C22 shipped** (REQ-0065).
 
 ## Principle
 

@@ -9,7 +9,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-import { enrichOrganizationMemberRow } from "@/lib/organization-detail-load";
+import {
+  enrichOrganizationMemberRow,
+  loadOrganizationMemberEnrichmentMaps,
+} from "@/lib/organization-detail-load";
 
 /** Per-request API handler (see api-route-dynamic.test.ts). */
 export const dynamic = "force-dynamic";
@@ -79,11 +82,20 @@ export async function POST(
       return NextResponse.json({ error: "Only admins can add members" }, { status: 403 });
     }
 
+    const org = await prisma.organization.findUnique({
+      where: { id },
+      select: { owner_user_id: true },
+    });
+    if (!org) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
     const member = await prisma.organizationMember.create({
       data: { org_id: id, user_id: userId, role },
     });
 
-    const enriched = await enrichOrganizationMemberRow(member);
+    const maps = await loadOrganizationMemberEnrichmentMaps([member], org.owner_user_id);
+    const enriched = await enrichOrganizationMemberRow(member, maps);
 
     return NextResponse.json({ member: enriched }, { status: 201 });
   } catch (error: unknown) {

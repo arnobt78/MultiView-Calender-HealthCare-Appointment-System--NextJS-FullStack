@@ -14,10 +14,7 @@ import {
   CP_DOCTOR_USERS_FILTERS,
   CP_PATIENT_USERS_FILTERS,
 } from "@/lib/control-panel-users-filters";
-import {
-  organizationDialogDropdownPanelClass,
-  organizationDialogPickerScrollClass,
-} from "@/lib/organization-dialog-ui-classes";
+import { organizationDialogPickerScrollClass } from "@/lib/organization-dialog-ui-classes";
 import type { OrgMemberRole } from "@/lib/organization-member-role";
 import {
   clinicalCellMutedTextClass,
@@ -37,6 +34,8 @@ type Props = {
   /** Fires after pick — parent can auto-fill org member role from user.role. */
   onUserPicked?: (user: User) => void;
   disabled?: boolean;
+  /** Show clear on collapsed selection — for optional create-org slots. */
+  clearable?: boolean;
   label?: string;
   placeholder?: string;
 };
@@ -78,6 +77,7 @@ export function OrganizationMemberPickerField({
   excludeUserIds = [],
   onUserPicked,
   disabled,
+  clearable = false,
   label = toTitleCaseLabel("Select User"),
   placeholder = toTitleCaseLabel("Choose a user"),
 }: Props) {
@@ -116,46 +116,55 @@ export function OrganizationMemberPickerField({
         selected ? <UserPickerCard user={selected} selected /> : undefined
       }
       changeLabel={toTitleCaseLabel("Change user")}
+      clearable={clearable}
+      clearLabel={toTitleCaseLabel("Clear")}
+      onClear={
+        clearable && value
+          ? () => {
+              onValueChange("");
+              setSearch("");
+            }
+          : undefined
+      }
       open={pickerOpen}
       onOpenChange={setPickerOpen}
       disabled={disabled}
     >
-      <div className={organizationDialogDropdownPanelClass}>
-        <div className="mb-2">
-          <OrganizationDialogPickerSearchInput
-            value={search}
-            onChange={setSearch}
-            placeholder={toTitleCaseLabel("Search by name or email")}
-            ariaLabel="Search users"
-          />
-        </div>
-        <div className={organizationDialogPickerScrollClass}>
-          {isLoading ? (
-            <p className="px-2 py-4 text-sm text-muted-foreground">Loading users…</p>
-          ) : users.length === 0 ? (
-            <p className="px-2 py-4 text-sm text-muted-foreground">No users match.</p>
-          ) : (
-            <ul className="space-y-2">
-              {users.map((user) => (
-                <li key={user.id}>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="h-auto w-full justify-start rounded-xl p-0 hover:bg-transparent"
-                    onClick={() => {
-                      onValueChange(user.id);
-                      onUserPicked?.(user);
-                      setPickerOpen(false);
-                      setSearch("");
-                    }}
-                  >
-                    <UserPickerCard user={user} selected={user.id === value} />
-                  </Button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+      {/* StaffAppointmentPickerField already wraps open state in organizationDialogDropdownPanelClass */}
+      <div className="mb-2">
+        <OrganizationDialogPickerSearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder={toTitleCaseLabel("Search by name or email")}
+          ariaLabel="Search users"
+        />
+      </div>
+      <div className={organizationDialogPickerScrollClass}>
+        {isLoading ? (
+          <p className="px-2 py-4 text-sm text-muted-foreground">Loading users…</p>
+        ) : users.length === 0 ? (
+          <p className="px-2 py-4 text-sm text-muted-foreground">No users match.</p>
+        ) : (
+          <ul className="space-y-2">
+            {users.map((user) => (
+              <li key={user.id}>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="h-auto w-full justify-start rounded-xl p-0 hover:bg-transparent"
+                  onClick={() => {
+                    onValueChange(user.id);
+                    onUserPicked?.(user);
+                    setPickerOpen(false);
+                    setSearch("");
+                  }}
+                >
+                  <UserPickerCard user={user} selected={user.id === value} />
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </StaffAppointmentPickerField>
   );

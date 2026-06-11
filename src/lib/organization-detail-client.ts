@@ -77,11 +77,11 @@ export function removeOrganizationMemberFromCache(
   );
 }
 
-/** Patch org name/slug after PATCH — avoids stale title until invalidation completes. */
+/** Patch org fields after PATCH — instant title + audit card until invalidation refetch. */
 export function patchOrganizationDetailOrgCache(
   queryClient: QueryClient,
   orgId: string,
-  patch: Partial<Pick<OrganizationDetailOrg, "name" | "slug">>
+  patch: Partial<OrganizationDetailOrg>
 ): void {
   queryClient.setQueryData<OrganizationDetailOrg>(
     queryKeys.organizations.detail(orgId),

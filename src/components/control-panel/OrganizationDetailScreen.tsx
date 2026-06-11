@@ -1,13 +1,11 @@
 "use client";
 
-import { format } from "date-fns";
 import type { LucideIcon } from "lucide-react";
 import { useLayoutEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Building2,
-  CalendarDays,
   Globe,
   Hash,
   Link2,
@@ -23,7 +21,8 @@ import { EntityDetailChromeHeader } from "@/components/shared/entity-detail/Enti
 import { EntityDetailBackLink } from "@/components/shared/entity-detail/EntityDetailBackLink";
 import { EntityDetailFooterRow } from "@/components/shared/entity-detail/EntityDetailFooterRow";
 import { EntityDetailPageShell } from "@/components/shared/entity-detail/EntityDetailPageShell";
-import { EntityDetailSnapshotSectionHeading } from "@/components/shared/entity-detail/EntityDetailSnapshotSectionHeading";
+import { EntityDetailRecordAuditCard } from "@/components/shared/entity-detail/EntityDetailRecordAuditCard";
+import { EntityDetailAuditActorInline } from "@/components/shared/entity-detail/EntityDetailAuditActorInline";
 import { ClinicalDataTable } from "@/components/shared/ClinicalDataTable";
 import { EntityIdCopyInline } from "@/components/shared/EntityIdCopyInline";
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
@@ -31,6 +30,8 @@ import { ControlPanelGlassActionButton } from "@/components/shared/ControlPanelG
 import { OrganizationBillingPanelFull } from "@/components/control-panel/OrganizationBillingPanel";
 import { OrganizationFormDialog } from "@/components/control-panel/organization-dialog/OrganizationFormDialog";
 import { OrganizationAddMemberDialog } from "@/components/control-panel/organization-dialog/OrganizationAddMemberDialog";
+import { OrganizationDetailMembersSectionHeading } from "@/components/control-panel/organization-detail/OrganizationDetailMembersSectionHeading";
+import { OrganizationMemberRowActions } from "@/components/control-panel/organization-detail/OrganizationMemberRowActions";
 import { Card, CardContent } from "@/components/ui/card";
 import type { Organization } from "@/hooks/useOrganization";
 import { useOrganization, useOrganizationDetail } from "@/hooks/useOrganization";
@@ -39,9 +40,13 @@ import {
   seedOrgBillingCacheFromSsr,
   seedOrganizationDetailCacheFromSsr,
 } from "@/lib/cp-list-query-ssr-seed";
+import { cpClinicalListTableFrameClassName } from "@/lib/cp-clinical-list-table-classes";
 import { buildOrganizationDetailMembersColumns } from "@/lib/organization-detail-members-columns";
 import type { OrganizationDetailMemberRow } from "@/lib/organization-detail-members-columns";
 import type { OrganizationDetailOrg } from "@/lib/organization-detail-load";
+import { countOrganizationMembersByRole, formatOrganizationTypeLabel } from "@/lib/organization-detail-display";
+import { mapOrganizationRecordAuditActors } from "@/lib/entity-detail-audit-actor";
+import type { EntityRole } from "@/lib/entity-routes";
 import {
   organizationDetailBackButtonClass,
   organizationDetailCardBorderClass,
@@ -53,8 +58,6 @@ import {
   organizationDetailFieldIconCircleClass,
   organizationDetailFieldIconClass,
   organizationDetailSchemaSectionClass,
-  organizationDetailSectionIconCircleClass,
-  organizationDetailSectionIconClass,
   organizationDetailSnapshotTableFrameClass,
 } from "@/lib/organization-detail-ui-classes";
 import { entityDetailPageHeaderClass } from "@/lib/patient-detail-ui-classes";
@@ -99,11 +102,13 @@ export function OrganizationDetailScreen({
   members: initialMembers,
   initialOrganizations,
   initialOrgBilling,
+  viewerRole = "admin",
 }: {
   org: OrganizationDetailOrg;
   members: OrganizationDetailMemberRow[];
   initialOrganizations?: Organization[] | null;
   initialOrgBilling?: OrgBillingCachePayload | null;
+  viewerRole?: EntityRole;
 }) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -126,11 +131,18 @@ export function OrganizationDetailScreen({
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [addMemberOpen, setAddMemberOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [removeMemberTarget, setRemoveMemberTarget] =
-    useState<OrganizationDetailMemberRow | null>(null);
   const [editForm, setEditForm] = useState({ name: initialOrg.name });
 
   const isOwner = liveOrg.viewer_role === "admin";
+  const recordAuditActors = useMemo(
+    () => mapOrganizationRecordAuditActors(liveOrg),
+    [liveOrg]
+  );
+  const membersByRole = useMemo(
+    () => countOrganizationMembersByRole(members),
+    [members]
+  );
+  const typeLabel = formatOrganizationTypeLabel(liveOrg.org_type);
 
   /** Seed TanStack before hooks subscribe — same pattern as PatientDetailScreen. */
   useLayoutEffect(() => {
@@ -149,10 +161,27 @@ export function OrganizationDetailScreen({
   const memberColumns = useMemo(
     () =>
       buildOrganizationDetailMembersColumns({
+        viewerRole,
         canManage: isOwner,
-        onRemoveMember: isOwner ? setRemoveMemberTarget : undefined,
+        renderActions: isOwner
+          ? ({ member }) => (
+              <OrganizationMemberRowActions
+                member={member}
+                orgName={liveOrg.name}
+                viewerRole={viewerRole}
+                canManage={isOwner}
+                onRemoveMember={(m) =>
+                  removeMember({
+                    orgId: liveOrg.id,
+                    userId: m.user_id,
+                    memberLabel: m.display_name ?? m.email ?? "Member",
+                  })
+                }
+              />
+            )
+          : undefined,
       }),
-    [isOwner]
+    [isOwner, viewerRole, liveOrg.id, liveOrg.name, removeMember]
   );
 
   const handleSaveEdit = () => {
@@ -174,23 +203,6 @@ export function OrganizationDetailScreen({
         router.push(LIST_BACK_HREF);
       },
     });
-  };
-
-  const handleRemoveMember = () => {
-    if (!removeMemberTarget) return;
-    const member = removeMemberTarget;
-    removeMember(
-      {
-        orgId: liveOrg.id,
-        userId: member.user_id,
-        memberLabel: member.display_name ?? member.email ?? "Member",
-      },
-      {
-        onSuccess: () => {
-          setRemoveMemberTarget(null);
-        },
-      }
-    );
   };
 
   return (
@@ -228,6 +240,15 @@ export function OrganizationDetailScreen({
 
           <div className={organizationDetailSchemaSectionClass}>
             <dl className={organizationDetailDefinitionListClass}>
+              <EntityDetailRecordAuditCard
+                createdAt={liveOrg.created_at}
+                updatedAt={liveOrg.updated_at}
+                createdBy={recordAuditActors.createdBy}
+                updatedBy={recordAuditActors.updatedBy}
+                viewerRole={viewerRole}
+                iconCircleClass={organizationDetailFieldIconCircleClass}
+                iconClassName="h-3 w-3 text-indigo-600"
+              />
               <DefinitionRow icon={Hash} label="Organization ID">
                 <EntityIdCopyInline value={liveOrg.id} />
               </DefinitionRow>
@@ -238,11 +259,18 @@ export function OrganizationDetailScreen({
                 <span className="font-mono text-xs">{liveOrg.slug}</span>
               </DefinitionRow>
               <DefinitionRow icon={UserRound} label="Owner">
-                <span>{liveOrg.owner_label}</span>
+                {liveOrg.owner ? (
+                  <EntityDetailAuditActorInline
+                    actor={liveOrg.owner}
+                    viewerRole={viewerRole}
+                  />
+                ) : (
+                  <span>{liveOrg.owner_label}</span>
+                )}
               </DefinitionRow>
-              {liveOrg.org_type ? (
+              {typeLabel ? (
                 <DefinitionRow icon={Building2} label="Type">
-                  {clinicalEmptyOr(liveOrg.org_type, "definition")}
+                  {clinicalEmptyOr(typeLabel, "definition")}
                 </DefinitionRow>
               ) : null}
               {liveOrg.description ? (
@@ -277,28 +305,22 @@ export function OrganizationDetailScreen({
                   {liveOrg.timezone}
                 </DefinitionRow>
               ) : null}
-              <DefinitionRow icon={CalendarDays} label="Created">
-                {format(new Date(liveOrg.created_at), "PPpp")}
-              </DefinitionRow>
             </dl>
           </div>
 
           <div className="border-t border-indigo-100/80 pt-3">
-            <EntityDetailSnapshotSectionHeading
-              icon={Users}
-              sectionIconCircleClass={organizationDetailSectionIconCircleClass}
-              iconClassName={organizationDetailSectionIconClass}
-              count={members.length}
-            >
-              Members
-            </EntityDetailSnapshotSectionHeading>
+            <OrganizationDetailMembersSectionHeading
+              orgName={liveOrg.name}
+              totalCount={members.length}
+              membersByRole={membersByRole}
+            />
             <ClinicalDataTable
               columns={memberColumns}
               data={members}
               pagination={false}
               emptyMessage="No members yet."
               className={organizationDetailSnapshotTableFrameClass}
-              tableFrameClassName="rounded-md border border-slate-200/80 bg-white shadow-none"
+              tableFrameClassName={cpClinicalListTableFrameClassName}
             />
           </div>
         </CardContent>
@@ -367,7 +389,7 @@ export function OrganizationDetailScreen({
               role: liveOrg.viewer_role ?? "admin",
               created_at: liveOrg.created_at,
               member_count: members.length,
-              members_by_role: { admin: 0, doctor: 0, patient: 0 },
+              members_by_role: membersByRole,
               invoice_count: 0,
               outstanding_cents: 0,
             }}
@@ -392,18 +414,6 @@ export function OrganizationDetailScreen({
             confirmLabel="Delete"
             cancelLabel="Cancel"
             onConfirm={handleDelete}
-          />
-          <ConfirmActionDialog
-            open={!!removeMemberTarget}
-            onOpenChange={(open) => {
-              if (!open) setRemoveMemberTarget(null);
-            }}
-            variant="destructive"
-            title="Remove Member"
-            subtitle={`Remove ${removeMemberTarget?.display_name ?? removeMemberTarget?.email ?? "this member"} from ${liveOrg.name}?`}
-            confirmLabel="Remove"
-            cancelLabel="Cancel"
-            onConfirm={handleRemoveMember}
           />
         </>
       ) : null}

@@ -86,3 +86,4 @@
 | 2026-06-11T21:15:00Z | build | C19.1 detail member badges + org patient seed script | UserRoleBadge on detail members; db:seed-org-portal-patient-member | REQ-0064 |
 | 2026-06-11T22:30:00Z | build | C20 org billing UI parity | PortalPanelSection shell; possessive title + status inline row; filters on compact+full; Invoice N: #id on portal lists; 966/966 | REQ-0065 |
 | 2026-06-11T23:30:00Z | build | C21 org dialog UX parity | OrganizationDialogHeader; indigo pickers; role auto-fill; create initialMembers transaction; 970/970 | REQ-0065 |
+| 2026-06-11T16:30:00Z | build | C22 org detail UI parity | Record Audit card; org audit schema; rich owner/member rows; CP table shells; ⋮ member actions; 975/975 | REQ-0065 |

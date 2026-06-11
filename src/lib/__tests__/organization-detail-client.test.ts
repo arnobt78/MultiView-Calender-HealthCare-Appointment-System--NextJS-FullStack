@@ -26,6 +26,7 @@ const baseOrg: OrganizationDetailOrg = {
   slug: "clinic",
   owner_user_id: "u1",
   owner_label: "Owner",
+  owner: null,
   viewer_role: "admin",
 };
 
@@ -79,14 +80,21 @@ describe("organization-detail-client", () => {
     expect(qc.getQueryData(queryKeys.organizations.members(orgId))).toEqual([memberB]);
   });
 
-  it("patchOrganizationDetailOrgCache updates name and slug", () => {
+  it("patchOrganizationDetailOrgCache updates name, slug, and audit fields", () => {
     const qc = new QueryClient();
     qc.setQueryData(queryKeys.organizations.detail(orgId), baseOrg);
-    patchOrganizationDetailOrgCache(qc, orgId, { name: "New Name", slug: "new-name" });
+    patchOrganizationDetailOrgCache(qc, orgId, {
+      name: "New Name",
+      slug: "new-name",
+      updated_at: "2026-06-11T12:00:00.000Z",
+      updated_by_display: "Demo Admin",
+    });
     expect(qc.getQueryData(queryKeys.organizations.detail(orgId))).toEqual({
       ...baseOrg,
       name: "New Name",
       slug: "new-name",
+      updated_at: "2026-06-11T12:00:00.000Z",
+      updated_by_display: "Demo Admin",
     });
   });
 

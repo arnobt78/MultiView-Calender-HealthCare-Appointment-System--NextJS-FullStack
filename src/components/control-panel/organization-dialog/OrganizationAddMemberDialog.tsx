@@ -79,6 +79,7 @@ export function OrganizationAddMemberDialog({
 
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-4">
             <OrganizationMemberPickerField
+              key={`add-member-picker-${open}`}
               dialogOpen={open}
               value={userId}
               onValueChange={setUserId}

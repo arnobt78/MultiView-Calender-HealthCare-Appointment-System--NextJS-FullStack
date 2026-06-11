@@ -74,6 +74,8 @@ model User {
   updated_by                  User?                         @relation("UserUpdatedBy", fields: [updated_by_id], references: [id], onDelete: SetNull)
   users_created               User[]                        @relation("UserCreatedBy")
   users_updated               User[]                        @relation("UserUpdatedBy")
+  organizations_created       Organization[]                @relation("OrganizationCreatedBy")
+  organizations_updated       Organization[]                @relation("OrganizationUpdatedBy")
 
   @@map("users")
 }
@@ -359,24 +361,29 @@ model GoogleCalendarToken {
 
 // --- Organization (multi-tenant support)
 model Organization {
-  id            String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  created_at    DateTime @default(now())
-  name          String   @db.Text
-  slug          String   @unique @db.Text
-  owner_user_id String   @db.Uuid
-  description   String?  @db.Text
-  website       String?  @db.Text
-  address       String?  @db.Text
-  phone         String?  @db.Text
+  id            String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  created_at    DateTime  @default(now())
+  updated_at    DateTime? @updatedAt @db.Timestamptz(6)
+  name          String    @db.Text
+  slug          String    @unique @db.Text
+  owner_user_id String    @db.Uuid
+  description   String?   @db.Text
+  website       String?   @db.Text
+  address       String?   @db.Text
+  phone         String?   @db.Text
   /// IANA timezone string for the clinic (e.g. "Europe/Berlin") — used for slot display
-  timezone      String?  @db.Text
+  timezone      String?   @db.Text
   /// Public logo image URL for the clinic/hospital brand
-  logo_url      String?  @db.Text
+  logo_url      String?   @db.Text
   /// Organisation type — "clinic" | "hospital" | "private_practice"
-  org_type      String?  @db.Text
+  org_type      String?   @db.Text
+  created_by_id String?   @map("created_by") @db.Uuid
+  updated_by_id String?   @map("updated_by") @db.Uuid
 
-  members  OrganizationMember[]
-  invoices Invoice[]
+  created_by User? @relation("OrganizationCreatedBy", fields: [created_by_id], references: [id], onDelete: SetNull)
+  updated_by User? @relation("OrganizationUpdatedBy", fields: [updated_by_id], references: [id], onDelete: SetNull)
+  members    OrganizationMember[]
+  invoices   Invoice[]
 
   @@map("organizations")
 }

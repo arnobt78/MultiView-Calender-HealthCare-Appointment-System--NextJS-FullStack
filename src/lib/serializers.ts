@@ -186,10 +186,11 @@ export function serializeUser(u: {
   };
 }
 
-/** Organization row → API JSON; converts created_at Date to ISO string. */
+/** Organization row → API JSON; audit fields denormalized for Record Audit card. */
 export function serializeOrganization(o: {
   id: string;
   created_at: Date;
+  updated_at?: Date | null;
   name: string;
   slug: string;
   owner_user_id: string;
@@ -200,10 +201,35 @@ export function serializeOrganization(o: {
   timezone?: string | null;
   logo_url?: string | null;
   org_type?: string | null;
+  created_by_id?: string | null;
+  updated_by_id?: string | null;
+  created_by?: UserMini;
+  updated_by?: UserMini;
 }) {
   return {
-    ...o,
+    id: o.id,
     created_at: o.created_at?.toISOString?.(),
+    updated_at: o.updated_at?.toISOString?.() ?? null,
+    name: o.name,
+    slug: o.slug,
+    owner_user_id: o.owner_user_id,
+    description: o.description,
+    website: o.website,
+    address: o.address,
+    phone: o.phone,
+    timezone: o.timezone,
+    logo_url: o.logo_url,
+    org_type: o.org_type,
+    created_by_id: o.created_by_id ?? null,
+    updated_by_id: o.updated_by_id ?? null,
+    created_by_display: userDisplay(o.created_by),
+    updated_by_display: userDisplay(o.updated_by),
+    created_by_email: o.created_by?.email ?? null,
+    updated_by_email: o.updated_by?.email ?? null,
+    created_by_image: o.created_by?.image ?? null,
+    created_by_role: o.created_by?.role ?? null,
+    updated_by_image: o.updated_by?.image ?? null,
+    updated_by_role: o.updated_by?.role ?? null,
   };
 }
 

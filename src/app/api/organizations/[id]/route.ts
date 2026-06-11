@@ -8,7 +8,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import { organizationDetailInclude } from "@/lib/organization-api-include";
 import { loadOrganizationDetailForUser } from "@/lib/organization-detail-load";
+import { serializeOrganization } from "@/lib/serializers";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -45,9 +47,13 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     if (!org) return NextResponse.json({ error: "Not found or not owner" }, { status: 404 });
 
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-    const updated = await prisma.organization.update({ where: { id }, data: { name, slug } });
+    const updated = await prisma.organization.update({
+      where: { id },
+      data: { name, slug, updated_by_id: sessionUser.userId },
+      include: organizationDetailInclude,
+    });
 
-    return NextResponse.json({ organization: updated });
+    return NextResponse.json({ organization: serializeOrganization(updated) });
   } catch (error: unknown) {
     console.error("Org PATCH error:", error);
     return NextResponse.json({ error: "Failed to update organization" }, { status: 500 });

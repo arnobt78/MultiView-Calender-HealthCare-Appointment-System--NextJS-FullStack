@@ -1,20 +1,16 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-11 — C21)
+## Latest (2026-06-11 — C22)
 
-**C21:** Org create/add-member dialogs — white `OrganizationDialogHeader` + DialogClose; indigo `StaffAppointmentPickerField`; `OrganizationMemberPickerField` (search, role filter, `UserRoleBadge`); `OrganizationMemberRolePickerField`; role auto-fill via `mapUserRoleToOrgMemberRole`; create org optional admin/doctor/patient pickers + `POST /api/organizations` `initialMembers` transaction.
+**C22:** Org detail UI parity — `EntityDetailRecordAuditCard` + `mapOrganizationRecordAuditActors`; rich `owner` via `EntityDetailAuditActorInline`; `formatOrganizationTypeLabel`; `{Org}'s Members` heading + role count line; members table uses `cpClinicalListTableFrameClassName`; identity cells (`DoctorIdentityRow`, `PatientIdentityCell`, admin avatar row); `OrganizationMemberRowActions` ⋮ (view + remove). Loader: batch user image/specialty + patient clinical by email. Schema: `organizations.updated_at`, `created_by`, `updated_by` — `migrations/017_organization_audit_users.sql`, `npm run db:backfill-org-audit`.
 
-**C20:** Org billing doctor-portal chrome parity — `PortalPanelSection` + `organizationBillingPanelClass`; possessive title (`organization-billing-display.ts`); `InvoiceStatusCountInlineRow`; filters on compact + full; shared `InvoicePortalListCard` — `Invoice N: #id`, `Category:` label, `density="portal"` tight py, `overflow-hidden` shell. Doctor portal list uses same card stack.
+**C21:** Org dialogs — `OrganizationDialogHeader`; indigo pickers; role auto-fill; create `initialMembers` transaction; optional picker clear + form reset on close.
 
-**C18:** Organization management CP parity — indigo list shell (`OrganizationManagement`), enriched org API (`organization-list-enrich.ts`), 6-card stats, `ClinicalListFilterToolbar`, `DataTable` + `PrefetchingLink`, glass create/edit/add-member dialogs. List footer: `OrganizationBillingPanelCompact` (KPI + top 3, cap 20). Detail: `OrganizationBillingPanelFull` + member CRUD.
+**C20:** Org billing `PortalPanelSection`; possessive title; status inline; `Invoice N: #id` portal cards.
 
-**C18.1:** `loadOrganizationDetailForUser` + `seedOrganizationDetailCacheFromSsr` + hover prefetch on `/control-panel/organizations/:id`; `invalidateOrganizationDetail` cross-tab (`ORGANIZATIONS` + `INVOICES_BILLING`); enriched GET `/api/organizations/[id]`.
+**C18–C19:** Org list/detail CP shell; `useOrganizationDetail`; `invalidateOrganizationDetail`; `indigoGlassTableFrameClass`; demo org patient member seed.
 
-**C18.2:** `useOrganizationDetail(orgId)` hook (SSR `initialData`, `refetchOnMount: false` when warm); `organization-detail-client.ts` — single GET fetch + cache merges on mutations; enriched POST members API; `prefetchOrganizationDetail` in detail page.
-
-**C19:** Org list table shell `indigoGlassTableFrameClass`; `EntityTitleLink`/`UserRoleBadge`/`OrganizationMembersRoleBadges`; billing filter width; vertical actions menu. Detail members role column uses `UserRoleBadge`. Demo: `npm run db:seed-org-portal-patient-member` (idempotent, no appointment wipe) adds `test@patient.com` as org portal patient.
-
-**Verify:** **970/970** · tsc · lint · build.
+**Verify:** **975/975** · tsc · lint · build.
 
 ## Prior (2026-06-10 — C17 + C16)
 
@@ -144,7 +140,7 @@
 
 ## Prior (2026-06-04 — Entity detail Record Audit + appointment polish)
 
-- **Record Audit (shared):** `EntityDetailAuditActorInline` — inline row: `Label: timestamp · avatar · name (email) · UserRoleBadge`. Mappers: `mapPatientRecordAuditActors`, `mapCategoryRecordAuditActors`, `mapUserRecordAuditActors`; appointments via `auditCreatedBy`/`auditUpdatedBy` on `AppointmentDetailViewModel` (`appointmentAuditUserPick`).
+- **Record Audit (shared):** `EntityDetailAuditActorInline` — inline row: `Label: timestamp · avatar · name (email) · UserRoleBadge`. Mappers: `mapPatientRecordAuditActors`, `mapCategoryRecordAuditActors`, `mapUserRecordAuditActors`, `mapOrganizationRecordAuditActors`; appointments via `auditCreatedBy`/`auditUpdatedBy` on `AppointmentDetailViewModel` (`appointmentAuditUserPick`).
 - **Prisma / SQL:** `appointments.created_by`/`updated_by` (`013`); category backfill `014`; `users.updated_at` + audit FKs `015`. Seeds: `seed-extended-schema` (categories), `seed-test-user` (doctors). API writes: appt POST/PATCH/PUT, patient/category/user PATCH set `updated_by_id`.
 - **SSR includes:** `patientDetailInclude`, `categoryDetailInclude` (`*AuditUserPick`), `userDetailInclude`, `appointmentDetailInclude`. List APIs stay light (`USER_API_SELECT` scalars only).
 - **Appointment detail UI:** Live header subtitle `formatAppointmentDetailWhenRange`; Visit Overview; People inline (`DoctorIdentityRow`); invoice audit rows (`appointment-detail-invoice-audit-rows.tsx`); `issuer_email`/`issuer_role` on invoice list payload.

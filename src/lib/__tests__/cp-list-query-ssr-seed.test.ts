@@ -98,6 +98,7 @@ describe("cp-list-query-ssr-seed", () => {
         slug: "clinic",
         owner_user_id: "u1",
         owner_label: "Owner",
+        owner: null,
         created_at: "2026-01-01T00:00:00.000Z",
       },
       members: [
@@ -120,7 +121,15 @@ describe("cp-list-query-ssr-seed", () => {
   it("seedOrganizationDetailCacheFromSsr is no-op when detail cache warm", () => {
     const qc = new QueryClient();
     const orgId = "org-detail-2";
-    const warm = { id: orgId, name: "Warm", slug: "warm", owner_user_id: "u1", owner_label: "U", created_at: "2026-01-01T00:00:00.000Z" };
+    const warm = {
+      id: orgId,
+      name: "Warm",
+      slug: "warm",
+      owner_user_id: "u1",
+      owner_label: "U",
+      owner: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    };
     qc.setQueryData(queryKeys.organizations.detail(orgId), warm);
     seedOrganizationDetailCacheFromSsr(qc, orgId, {
       org: { ...warm, name: "Fresh" },

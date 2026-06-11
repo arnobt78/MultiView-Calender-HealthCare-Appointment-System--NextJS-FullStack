@@ -11,18 +11,25 @@ export const ENTITY_DETAIL_SNAPSHOT_SECTION_LABELS = {
   assignedPatients: "Assigned Patients",
   linkedVisit: "Linked Visit",
   paymentHistory: "Payment History",
+  members: "Members",
 } as const;
 
 export type EntityDetailSnapshotSectionLabelKey = keyof typeof ENTITY_DETAIL_SNAPSHOT_SECTION_LABELS;
 
 /** Fallback owner noun when live entity name is blank or placeholder during hydrate. */
-export type EntityDetailSnapshotEntityKind = "patient" | "category" | "appointment" | "doctor";
+export type EntityDetailSnapshotEntityKind =
+  | "patient"
+  | "category"
+  | "appointment"
+  | "doctor"
+  | "organization";
 
 const ENTITY_KIND_FALLBACK: Record<EntityDetailSnapshotEntityKind, string> = {
   patient: "Patient",
   category: "Category",
   appointment: "Appointment",
   doctor: "Doctor",
+  organization: "Organization",
 };
 
 const PLACEHOLDER_NAMES = new Set(["—", "-", ""]);

@@ -183,6 +183,22 @@
 }
 
 @layer utilities {
+  /* Org dialog member picker — no reserved scrollbar gutter; thin overlay thumb only. */
+  .org-dialog-picker-scroll {
+    scrollbar-gutter: auto;
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+  }
+  .org-dialog-picker-scroll::-webkit-scrollbar {
+    width: 4px;
+  }
+  .org-dialog-picker-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .org-dialog-picker-scroll::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-muted-foreground/30;
+  }
+
   .glassmorphism {
     @apply bg-background/60 backdrop-blur-xl border border-border/50 shadow-sm;
   }
