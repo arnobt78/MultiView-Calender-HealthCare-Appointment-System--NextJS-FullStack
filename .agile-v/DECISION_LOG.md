@@ -83,3 +83,4 @@
 | 2026-06-11T17:45:00Z | build | C18.1 org consistency gaps | detail loader/seed; cross-tab invalidation; memberLabel toast; walkthrough; 954/954 | REQ-0064..0065 |
 | 2026-06-11T19:00:00Z | build | C18.2 org detail hook + cache parity | useOrganizationDetail; organization-detail-client merges; enriched POST members; 960/960 | REQ-0065 |
 | 2026-06-11T20:30:00Z | build | C19 org list UI polish | indigoGlassTableFrameClass; EntityTitleLink; UserRoleBadge; actions menu; demo patient org member; 961/961 | REQ-0064 |
+| 2026-06-11T21:15:00Z | build | C19.1 detail member badges + org patient seed script | UserRoleBadge on detail members; db:seed-org-portal-patient-member | REQ-0064 |

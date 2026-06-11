@@ -4,7 +4,8 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-11)
 
-- **C19 (REQ-0064):** Org list UI — `indigoGlassTableFrameClass`; `EntityTitleLink`/`UserRoleBadge`/`OrganizationMembersRoleBadges`; billing filter width; vertical actions menu; demo `test@patient.com` org member.
+- **C19.1:** Detail members `UserRoleBadge`; idempotent `db:seed-org-portal-patient-member` (demo `1 Pt`, no appt wipe).
+- **C19 (REQ-0064):** Org list UI — `indigoGlassTableFrameClass`; `EntityTitleLink`/`UserRoleBadge`/`OrganizationMembersRoleBadges`; billing filter; vertical actions.
 - **C18.2 (REQ-0065):** `useOrganizationDetail`; `organization-detail-client.ts` cache merges; enriched POST members; `prefetchOrganizationDetail` in detail page.
 - **Verify:** **961/961** · tsc · lint · build PASS.
 
@@ -29,7 +30,7 @@ Cross-tab: `query-cache-cross-tab.ts` (`ORGANIZATIONS`, `INVOICES_BILLING` on or
 ## Key paths
 
 - **Org list (C19):** `OrganizationManagement.tsx`, `organization-management-columns.tsx`, `OrganizationMembersRoleBadges.tsx`, `indigoGlassTableFrameClass`
-- **Org detail (C18.2):** `useOrganizationDetail`, `organization-detail-load.ts`, `organization-detail-client.ts`, `OrganizationDetailScreen.tsx`, `organization-dialog/`
+- **Org detail (C18.2):** `useOrganizationDetail`, `organization-detail-load.ts`, `organization-detail-client.ts`, detail members `UserRoleBadge`, `organization-dialog/`
 - **CP lists:** `cpClinicalListTableFrameClassName` + tone shells (`sky`/`violet`/`indigo`/`emerald`)
 - Entity detail: `EntityDetailPageShell.tsx`, `EntityDetailBackLink.tsx`, `EntityDetailFooterRow.tsx`
 - Invoice: `InvoicePortalListCard.tsx`, `InvoiceDetailLiveBody`, `invoice-dialog/`

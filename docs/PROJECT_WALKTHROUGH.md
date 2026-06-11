@@ -8,7 +8,7 @@
 
 **C18.2:** `useOrganizationDetail(orgId)` hook (SSR `initialData`, `refetchOnMount: false` when warm); `organization-detail-client.ts` — single GET fetch + cache merges on mutations; enriched POST members API; `prefetchOrganizationDetail` in detail page.
 
-**C19:** Org list table shell `indigoGlassTableFrameClass` (patient `rounded-2xl` parity); `EntityTitleLink` sky links; `UserRoleBadge` + `OrganizationMembersRoleBadges`; billing filter width; vertical actions menu; demo seeds `test@patient.com` as org portal patient member.
+**C19:** Org list table shell `indigoGlassTableFrameClass`; `EntityTitleLink`/`UserRoleBadge`/`OrganizationMembersRoleBadges`; billing filter width; vertical actions menu. Detail members role column uses `UserRoleBadge`. Demo: `npm run db:seed-org-portal-patient-member` (idempotent, no appointment wipe) adds `test@patient.com` as org portal patient.
 
 **Verify:** **961/961** · tsc · lint · build.
 

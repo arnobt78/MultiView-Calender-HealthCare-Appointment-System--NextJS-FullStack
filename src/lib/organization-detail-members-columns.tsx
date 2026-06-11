@@ -6,7 +6,7 @@ import { Mail, Trash2 } from "lucide-react";
 import { DataTableColumnHeader } from "@/components/shared/DataTableColumnHeader";
 import { EntityIdCopyInline } from "@/components/shared/EntityIdCopyInline";
 import { UserAvatar } from "@/components/shared/UserAvatar";
-import { Badge } from "@/components/ui/badge";
+import { UserRoleBadge } from "@/components/shared/UserRoleBadge";
 import { Button } from "@/components/ui/button";
 import { formatShortEntityId } from "@/lib/entity-id-display";
 import {
@@ -25,12 +25,6 @@ export type OrganizationDetailMemberRow = {
   joined_at: string;
   display_name: string | null;
   email: string | null;
-};
-
-const ROLE_COLORS: Record<string, string> = {
-  admin: "bg-red-100 text-red-700",
-  doctor: "bg-blue-100 text-blue-700",
-  patient: "bg-green-100 text-green-700",
 };
 
 type BuildMembersColumnsArgs = {
@@ -78,9 +72,9 @@ export function buildOrganizationDetailMembersColumns(
       accessorKey: "role",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Role" />,
       cell: ({ row }) => (
-        <Badge className={ROLE_COLORS[row.original.role] ?? "bg-gray-100 text-gray-700"}>
-          {row.original.role}
-        </Badge>
+        <div className={clinicalTableCellMinRowClass}>
+          <UserRoleBadge role={row.original.role} />
+        </div>
       ),
     },
     {
