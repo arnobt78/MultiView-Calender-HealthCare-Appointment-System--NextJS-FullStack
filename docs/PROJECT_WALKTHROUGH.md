@@ -1,6 +1,8 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-11 — C20)
+## Latest (2026-06-11 — C21)
+
+**C21:** Org create/add-member dialogs — white `OrganizationDialogHeader` + DialogClose; indigo `StaffAppointmentPickerField`; `OrganizationMemberPickerField` (search, role filter, `UserRoleBadge`); `OrganizationMemberRolePickerField`; role auto-fill via `mapUserRoleToOrgMemberRole`; create org optional admin/doctor/patient pickers + `POST /api/organizations` `initialMembers` transaction.
 
 **C20:** Org billing doctor-portal chrome parity — `PortalPanelSection` + `organizationBillingPanelClass`; possessive title (`organization-billing-display.ts`); `InvoiceStatusCountInlineRow`; filters on compact + full; shared `InvoicePortalListCard` — `Invoice N: #id`, `Category:` label, `density="portal"` tight py, `overflow-hidden` shell. Doctor portal list uses same card stack.
 
@@ -12,7 +14,7 @@
 
 **C19:** Org list table shell `indigoGlassTableFrameClass`; `EntityTitleLink`/`UserRoleBadge`/`OrganizationMembersRoleBadges`; billing filter width; vertical actions menu. Detail members role column uses `UserRoleBadge`. Demo: `npm run db:seed-org-portal-patient-member` (idempotent, no appointment wipe) adds `test@patient.com` as org portal patient.
 
-**Verify:** **966/966** · tsc · lint · build.
+**Verify:** **970/970** · tsc · lint · build.
 
 ## Prior (2026-06-10 — C17 + C16)
 

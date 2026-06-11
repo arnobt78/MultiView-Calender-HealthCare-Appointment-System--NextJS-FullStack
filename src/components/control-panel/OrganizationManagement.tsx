@@ -39,6 +39,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { OrganizationFormDialog } from "@/components/control-panel/organization-dialog/OrganizationFormDialog";
+import { buildInitialMembersFromFormSlots } from "@/lib/organization-member-role";
 import { OrganizationAddMemberDialog } from "@/components/control-panel/organization-dialog/OrganizationAddMemberDialog";
 import { OrganizationBillingPanelCompact } from "@/components/control-panel/OrganizationBillingPanel";
 import { buildOrganizationManagementColumns } from "@/lib/organization-management-columns";
@@ -181,7 +182,13 @@ function OrganizationManagementInner() {
 
   const [listSearch, setListSearch] = useState("");
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [createForm, setCreateForm] = useState({ name: "" });
+  const emptyCreateForm = () => ({
+    name: "",
+    initialAdminId: undefined as string | undefined,
+    initialDoctorId: undefined as string | undefined,
+    initialPatientId: undefined as string | undefined,
+  });
+  const [createForm, setCreateForm] = useState(emptyCreateForm);
   const [addMemberOrg, setAddMemberOrg] = useState<Organization | null>(null);
 
   const listBodyLoading = useCpListBodyLoading(queryKeys.organizations.all, isLoading);
@@ -223,12 +230,18 @@ function OrganizationManagementInner() {
   const handleCreateSubmit = () => {
     const name = createForm.name.trim();
     if (!name) return;
-    createOrg(name, {
-      onSuccess: () => {
-        setCreateForm({ name: "" });
-        setCreateDialogOpen(false);
+    createOrg(
+      {
+        name,
+        initialMembers: buildInitialMembersFromFormSlots(createForm),
       },
-    });
+      {
+        onSuccess: () => {
+          setCreateForm(emptyCreateForm());
+          setCreateDialogOpen(false);
+        },
+      }
+    );
   };
 
   if (isError) {
@@ -366,7 +379,11 @@ function OrganizationManagementInner() {
                 onOpenChange={(open) => {
                   if (!open) setAddMemberOrg(null);
                 }}
-                onAdd={addMember}
+                onAdd={(args) =>
+                  addMember(args, {
+                    onSuccess: () => setAddMemberOrg(null),
+                  })
+                }
                 isSubmitting={isAddingMember}
               />
             ) : null}

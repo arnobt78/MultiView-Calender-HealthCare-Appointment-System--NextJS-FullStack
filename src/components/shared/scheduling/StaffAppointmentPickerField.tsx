@@ -27,6 +27,13 @@ import {
   invoiceDialogGlassSelectTriggerClass,
   invoiceDialogGlassSelectValueClass,
 } from "@/lib/invoice-dialog-ui-classes";
+import {
+  organizationDialogDropdownPanelClass,
+  organizationDialogGlassSelectChevronClass,
+  organizationDialogGlassSelectPlaceholderClass,
+  organizationDialogGlassSelectTriggerClass,
+  organizationDialogGlassSelectValueClass,
+} from "@/lib/organization-dialog-ui-classes";
 import { bookingPickerCollapsedInsetClass } from "@/components/shared/patient-booking/patient-booking-dialog-styles";
 import { useDismissOnPointerDownOutside } from "@/hooks/useDismissOnPointerDownOutside";
 import { cn } from "@/lib/utils";
@@ -44,8 +51,8 @@ type StaffAppointmentPickerFieldProps = {
   changeLabel: string;
   children: ReactNode;
   disabled?: boolean;
-  /** `sky` = appointment dialog; `emerald` = patient; `violet` = invoice dialog. */
-  tone?: "sky" | "emerald" | "violet";
+  /** `sky` = appointment; `emerald` = patient; `violet` = invoice; `indigo` = org dialog. */
+  tone?: "sky" | "emerald" | "violet" | "indigo";
   className?: string;
 };
 
@@ -67,48 +74,65 @@ export function StaffAppointmentPickerField({
   tone = "sky",
   className,
 }: StaffAppointmentPickerFieldProps) {
+  const isIndigo = tone === "indigo";
   const isEmerald = tone === "emerald";
   const isViolet = tone === "violet";
-  const triggerClass = isViolet
-    ? invoiceDialogGlassSelectTriggerClass
-    : isEmerald
-      ? patientDialogGlassSelectTriggerClass
-      : staffAppointmentGlassSelectTriggerClass;
-  const panelClass = isViolet
-    ? invoiceDialogDropdownPanelClass
-    : isEmerald
-      ? patientDialogDropdownPanelClass
-      : staffAppointmentDropdownPanelClass;
-  const chevronClass = isViolet
-    ? invoiceDialogGlassSelectChevronClass
-    : isEmerald
-      ? patientDialogGlassSelectChevronClass
-      : staffAppointmentGlassSelectChevronClass;
-  const placeholderClass = isViolet
-    ? invoiceDialogGlassSelectPlaceholderClass
-    : isEmerald
-      ? patientDialogGlassSelectPlaceholderClass
-      : staffAppointmentGlassSelectPlaceholderClass;
-  const valueClass = isViolet
-    ? invoiceDialogGlassSelectValueClass
-    : isEmerald
-      ? patientDialogGlassSelectValueClass
-      : staffAppointmentGlassSelectValueClass;
-  const labelIconClass = isViolet
-    ? "text-violet-600"
-    : isEmerald
-      ? "text-emerald-600"
-      : "text-sky-600";
-  const openRingClass = isViolet
-    ? "border-violet-400/50 ring-2 ring-violet-200/40"
-    : isEmerald
-      ? "border-emerald-400/50 ring-2 ring-emerald-200/40"
-      : "border-sky-400/50 ring-2 ring-sky-200/40";
-  const changeBtnClass = isViolet
-    ? "text-violet-800 hover:bg-violet-50 hover:text-violet-950"
-    : isEmerald
-      ? "text-emerald-700 hover:bg-emerald-50 hover:text-emerald-900"
-      : "text-sky-700 hover:bg-sky-50 hover:text-sky-900";
+  const triggerClass = isIndigo
+    ? organizationDialogGlassSelectTriggerClass
+    : isViolet
+      ? invoiceDialogGlassSelectTriggerClass
+      : isEmerald
+        ? patientDialogGlassSelectTriggerClass
+        : staffAppointmentGlassSelectTriggerClass;
+  const panelClass = isIndigo
+    ? organizationDialogDropdownPanelClass
+    : isViolet
+      ? invoiceDialogDropdownPanelClass
+      : isEmerald
+        ? patientDialogDropdownPanelClass
+        : staffAppointmentDropdownPanelClass;
+  const chevronClass = isIndigo
+    ? organizationDialogGlassSelectChevronClass
+    : isViolet
+      ? invoiceDialogGlassSelectChevronClass
+      : isEmerald
+        ? patientDialogGlassSelectChevronClass
+        : staffAppointmentGlassSelectChevronClass;
+  const placeholderClass = isIndigo
+    ? organizationDialogGlassSelectPlaceholderClass
+    : isViolet
+      ? invoiceDialogGlassSelectPlaceholderClass
+      : isEmerald
+        ? patientDialogGlassSelectPlaceholderClass
+        : staffAppointmentGlassSelectPlaceholderClass;
+  const valueClass = isIndigo
+    ? organizationDialogGlassSelectValueClass
+    : isViolet
+      ? invoiceDialogGlassSelectValueClass
+      : isEmerald
+        ? patientDialogGlassSelectValueClass
+        : staffAppointmentGlassSelectValueClass;
+  const labelIconClass = isIndigo
+    ? "text-indigo-600"
+    : isViolet
+      ? "text-violet-600"
+      : isEmerald
+        ? "text-emerald-600"
+        : "text-sky-600";
+  const openRingClass = isIndigo
+    ? "border-indigo-400/50 ring-2 ring-indigo-200/40"
+    : isViolet
+      ? "border-violet-400/50 ring-2 ring-violet-200/40"
+      : isEmerald
+        ? "border-emerald-400/50 ring-2 ring-emerald-200/40"
+        : "border-sky-400/50 ring-2 ring-sky-200/40";
+  const changeBtnClass = isIndigo
+    ? "text-indigo-800 hover:bg-indigo-50 hover:text-indigo-950"
+    : isViolet
+      ? "text-violet-800 hover:bg-violet-50 hover:text-violet-950"
+      : isEmerald
+        ? "text-emerald-700 hover:bg-emerald-50 hover:text-emerald-900"
+        : "text-sky-700 hover:bg-sky-50 hover:text-sky-900";
 
   const rootRef = useRef<HTMLDivElement>(null);
   const hasSelection = selectedContent != null && selectedContent !== false;

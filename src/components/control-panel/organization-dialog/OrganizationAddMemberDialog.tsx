@@ -1,33 +1,22 @@
 "use client";
 
 import { Loader2, UserPlus, Users, X } from "lucide-react";
-import { useMemo, useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { useState } from "react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { OrganizationDialogFieldLabel } from "@/components/control-panel/organization-dialog/OrganizationDialogFieldLabel";
+import { OrganizationDialogHeader } from "@/components/control-panel/organization-dialog/OrganizationDialogHeader";
 import { OrganizationMemberPickerField } from "@/components/control-panel/organization-dialog/OrganizationMemberPickerField";
+import { OrganizationMemberRolePickerField } from "@/components/control-panel/organization-dialog/OrganizationMemberRolePickerField";
 import {
   organizationDialogFooterStripClass,
   organizationDialogGlassBackButtonClass,
-  organizationDialogGlassSelectTriggerClass,
-  organizationDialogHeaderIconTileClass,
   organizationDialogShellClass,
 } from "@/lib/organization-dialog-ui-classes";
+import {
+  mapUserRoleToOrgMemberRole,
+  type OrgMemberRole,
+} from "@/lib/organization-member-role";
 import { indigoGlassPrimaryButtonClass } from "@/lib/calendar-header-action-styles";
-import { useUsers } from "@/hooks/useUsers";
-import { CP_ALL_USERS_FILTERS } from "@/lib/control-panel-users-filters";
 import { cn, toTitleCaseLabel } from "@/lib/utils";
 import type { Organization } from "@/hooks/useOrganization";
 
@@ -35,6 +24,8 @@ type Props = {
   org: Organization;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Existing org members — excluded from user picker. */
+  existingMemberUserIds?: string[];
   onAdd: (args: {
     orgId: string;
     userId: string;
@@ -44,77 +35,62 @@ type Props = {
   isSubmitting?: boolean;
 };
 
-/** Indigo glass add-member dialog — rich user picker + role select. */
+/** Indigo glass add-member — rich pickers; role auto-fills from selected user.role. */
 export function OrganizationAddMemberDialog({
   org,
   open,
   onOpenChange,
+  existingMemberUserIds = [],
   onAdd,
   isSubmitting,
 }: Props) {
   const [userId, setUserId] = useState("");
-  const [role, setRole] = useState("doctor");
-  const { data: usersData } = useUsers(CP_ALL_USERS_FILTERS, { enabled: open });
-  const users = useMemo(() => usersData?.users ?? [], [usersData?.users]);
+  const [role, setRole] = useState<OrgMemberRole>("doctor");
+
+  function handleOpenChange(next: boolean) {
+    if (!next) {
+      setUserId("");
+      setRole("doctor");
+    }
+    onOpenChange(next);
+  }
 
   function handleSubmit() {
     if (!userId) return;
-    const picked = users.find((u) => u.id === userId);
-    const memberLabel =
-      picked?.display_name?.trim() || picked?.email?.trim() || "Member";
     onAdd({
       orgId: org.id,
       userId,
       role,
-      memberLabel,
     });
-    setUserId("");
-    setRole("doctor");
-    onOpenChange(false);
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={cn(organizationDialogShellClass, "border-0 p-0")}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent
+        showCloseButton={false}
+        className={cn(organizationDialogShellClass, "border-0 p-0")}
+      >
         <div className="flex min-h-0 flex-1 flex-col">
-          <div className="shrink-0 border-b border-indigo-200/60 bg-indigo-50/40 px-6 py-4">
-            <div className="flex items-start gap-3">
-              <div className={organizationDialogHeaderIconTileClass} aria-hidden>
-                <Users className="h-5 w-5" />
-              </div>
-              <div className="min-w-0 space-y-1">
-                <DialogTitle className="text-lg font-semibold text-gray-900">
-                  {toTitleCaseLabel("Add Member")}
-                </DialogTitle>
-                <DialogDescription className="text-sm text-muted-foreground">
-                  Invite a user to {org.name} with a role.
-                </DialogDescription>
-              </div>
-            </div>
-          </div>
+          <OrganizationDialogHeader
+            icon={Users}
+            title={toTitleCaseLabel("Add Member")}
+            description={`Invite a user to ${org.name} with a role.`}
+          />
 
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-4">
             <OrganizationMemberPickerField
               dialogOpen={open}
               value={userId}
               onValueChange={setUserId}
+              excludeUserIds={existingMemberUserIds}
+              onUserPicked={(user) => setRole(mapUserRoleToOrgMemberRole(user.role))}
               disabled={isSubmitting}
             />
-            <div className="space-y-1.5">
-              <OrganizationDialogFieldLabel icon={UserPlus} required>
-                {toTitleCaseLabel("Member Role")}
-              </OrganizationDialogFieldLabel>
-              <Select value={role} onValueChange={setRole} disabled={isSubmitting}>
-                <SelectTrigger className={organizationDialogGlassSelectTriggerClass}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="doctor">Doctor</SelectItem>
-                  <SelectItem value="patient">Patient</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <OrganizationMemberRolePickerField
+              value={role}
+              onValueChange={setRole}
+              disabled={isSubmitting}
+            />
           </div>
 
           <div className={organizationDialogFooterStripClass}>
@@ -123,7 +99,7 @@ export function OrganizationAddMemberDialog({
                 type="button"
                 variant="ghost"
                 className={cn(organizationDialogGlassBackButtonClass, "rounded-full")}
-                onClick={() => onOpenChange(false)}
+                onClick={() => handleOpenChange(false)}
                 disabled={isSubmitting}
               >
                 <X className="size-4 shrink-0" aria-hidden />

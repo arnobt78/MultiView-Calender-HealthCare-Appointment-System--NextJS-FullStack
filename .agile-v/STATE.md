@@ -6,16 +6,22 @@
 
 | Field | Value |
 |-------|-------|
-| **Cycle** | **C20** — org billing UI parity |
+| **Cycle** | **C21** — org dialog UX parity |
 | **Phase** | Verify |
 | **Stage** | 4 |
 | **Status** | verify PASS |
 | **Last Updated** | 2026-06-11 |
 | **Parent REQ** | REQ-0065 |
 
-## Verify baseline (C20 close)
+## Verify baseline (C21 close)
 
-**966/966** (193 files) · tsc · lint · build — PASS
+**970/970** (194 files) · tsc · lint · build — PASS
+
+## C21 scope
+
+- `OrganizationDialogHeader` white header + DialogClose.
+- Rich indigo user/role pickers; role auto-fill from `user.role`.
+- Create org optional initial admin/doctor/patient members; API `$transaction`.
 
 ## C20 scope
 

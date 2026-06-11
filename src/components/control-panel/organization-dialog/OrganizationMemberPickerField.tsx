@@ -1,31 +1,53 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { UserRound } from "lucide-react";
+import { Search, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { UserAvatar } from "@/components/shared/UserAvatar";
+import { UserRoleBadge } from "@/components/shared/UserRoleBadge";
 import { StaffAppointmentPickerField } from "@/components/shared/scheduling/StaffAppointmentPickerField";
 import { useUsers } from "@/hooks/useUsers";
-import { CP_ALL_USERS_FILTERS } from "@/lib/control-panel-users-filters";
-import { organizationDialogDropdownPanelClass } from "@/lib/organization-dialog-ui-classes";
+import {
+  CP_ADMIN_USERS_FILTERS,
+  CP_ALL_USERS_FILTERS,
+  CP_DOCTOR_USERS_FILTERS,
+  CP_PATIENT_USERS_FILTERS,
+} from "@/lib/control-panel-users-filters";
+import {
+  organizationDialogDropdownPanelClass,
+  organizationDialogGlassInputClass,
+} from "@/lib/organization-dialog-ui-classes";
+import type { OrgMemberRole } from "@/lib/organization-member-role";
 import { bookingPickerScrollClass } from "@/components/shared/patient-booking/patient-booking-dialog-styles";
-import { clinicalCellMutedTextClass, clinicalCellPrimaryTextClass } from "@/lib/table-display-styles";
+import {
+  clinicalCellMutedTextClass,
+  clinicalCellPrimaryTextClass,
+} from "@/lib/table-display-styles";
 import { cn, toTitleCaseLabel } from "@/lib/utils";
 import type { User } from "@/types/types";
-
-const ROLE_COLORS: Record<string, string> = {
-  admin: "bg-red-100 text-red-700",
-  doctor: "bg-blue-100 text-blue-700",
-  patient: "bg-green-100 text-green-700",
-};
 
 type Props = {
   dialogOpen: boolean;
   value: string;
   onValueChange: (userId: string) => void;
+  /** Filter users by platform role for create-org role slots. */
+  roleFilter?: OrgMemberRole;
+  /** Skip users already in org or picked in sibling slots. */
+  excludeUserIds?: string[];
+  /** Fires after pick — parent can auto-fill org member role from user.role. */
+  onUserPicked?: (user: User) => void;
   disabled?: boolean;
+  label?: string;
+  placeholder?: string;
 };
+
+function usersFilterForRole(roleFilter?: OrgMemberRole) {
+  if (roleFilter === "admin") return CP_ADMIN_USERS_FILTERS;
+  if (roleFilter === "doctor") return CP_DOCTOR_USERS_FILTERS;
+  if (roleFilter === "patient") return CP_PATIENT_USERS_FILTERS;
+  return CP_ALL_USERS_FILTERS;
+}
 
 function UserPickerCard({ user, selected }: { user: User; selected?: boolean }) {
   const label = user.display_name?.trim() || user.email?.trim() || "User";
@@ -43,37 +65,53 @@ function UserPickerCard({ user, selected }: { user: User; selected?: boolean }) 
         <p className={clinicalCellPrimaryTextClass}>{label}</p>
         {user.email ? <p className={clinicalCellMutedTextClass}>{user.email}</p> : null}
       </div>
-      {user.role ? (
-        <Badge className={ROLE_COLORS[user.role] ?? "bg-gray-100 text-gray-700"}>
-          {user.role}
-        </Badge>
-      ) : null}
+      <UserRoleBadge role={user.role} className="shrink-0" />
     </div>
   );
 }
 
-/** Rich user picker — avatar, email, role badge (appointment picker height pattern). */
+/** Rich user picker — avatar, email, UserRoleBadge; optional role filter + search. */
 export function OrganizationMemberPickerField({
   dialogOpen,
   value,
   onValueChange,
+  roleFilter,
+  excludeUserIds = [],
+  onUserPicked,
   disabled,
+  label = toTitleCaseLabel("Select User"),
+  placeholder = toTitleCaseLabel("Choose a user"),
 }: Props) {
   const [pickerOpen, setPickerOpen] = useState(false);
-  const { data, isLoading } = useUsers(CP_ALL_USERS_FILTERS, { enabled: dialogOpen });
-  const users = useMemo(() => data?.users ?? [], [data?.users]);
-  const selected = value ? users.find((u) => u.id === value) : undefined;
+  const [search, setSearch] = useState("");
+  const filters = usersFilterForRole(roleFilter);
+  const { data, isLoading } = useUsers(filters, { enabled: dialogOpen });
+  const excludeSet = useMemo(() => new Set(excludeUserIds), [excludeUserIds]);
+
+  const users = useMemo(() => {
+    const rows = data?.users ?? [];
+    const q = search.trim().toLowerCase();
+    return rows.filter((user) => {
+      if (excludeSet.has(user.id)) return false;
+      if (!q) return true;
+      const name = user.display_name?.toLowerCase() ?? "";
+      const email = user.email?.toLowerCase() ?? "";
+      return name.includes(q) || email.includes(q);
+    });
+  }, [data?.users, excludeSet, search]);
+
+  const selected = value ? (data?.users ?? []).find((u) => u.id === value) : undefined;
 
   return (
     <StaffAppointmentPickerField
-      tone="sky"
+      tone="indigo"
       icon={UserRound}
-      label={toTitleCaseLabel("Select User")}
-      placeholder={toTitleCaseLabel("Choose a user")}
+      label={label}
+      placeholder={placeholder}
       triggerValue={
         selected
           ? selected.display_name?.trim() || selected.email?.trim() || "User"
-          : toTitleCaseLabel("Choose a user")
+          : placeholder
       }
       selectedContent={
         selected ? <UserPickerCard user={selected} selected /> : undefined
@@ -84,11 +122,26 @@ export function OrganizationMemberPickerField({
       disabled={disabled}
     >
       <div className={organizationDialogDropdownPanelClass}>
+        <div className="mb-2 px-1">
+          <div className="relative">
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
+              aria-hidden
+            />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={toTitleCaseLabel("Search by name or email")}
+              className={cn(organizationDialogGlassInputClass, "pl-9")}
+              aria-label="Search users"
+            />
+          </div>
+        </div>
         <div className={bookingPickerScrollClass}>
           {isLoading ? (
             <p className="px-2 py-4 text-sm text-muted-foreground">Loading users…</p>
           ) : users.length === 0 ? (
-            <p className="px-2 py-4 text-sm text-muted-foreground">No users found.</p>
+            <p className="px-2 py-4 text-sm text-muted-foreground">No users match.</p>
           ) : (
             <ul className="space-y-2">
               {users.map((user) => (
@@ -99,7 +152,9 @@ export function OrganizationMemberPickerField({
                     className="h-auto w-full justify-start rounded-xl p-0 hover:bg-transparent"
                     onClick={() => {
                       onValueChange(user.id);
+                      onUserPicked?.(user);
                       setPickerOpen(false);
+                      setSearch("");
                     }}
                   >
                     <UserPickerCard user={user} selected={user.id === value} />

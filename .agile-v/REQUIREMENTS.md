@@ -148,6 +148,7 @@
 4. Glass `OrganizationFormDialog` create/edit; remove member UI wired.
 5. `invalidateOrganizationDetail` on org/member/invoice mutations.
 6. **[C20]** `PortalPanelSection` chrome (doctor-portal parity): possessive `{org}'s Related Billing`, numeric count pill, `InvoiceStatusCountInlineRow`; filter toolbar on compact + full; portal list headers `Invoice N: #shortId` (doctor portal + org CP).
+7. **[C21]** Org create/add-member dialogs: patient/appointment layout parity; indigo rich pickers; role auto-fill; optional initial members on create (`initialMembers` API transaction).
 
 ### REQ-0063 — C17 admin table columns + detail footer interactives
 

@@ -20,6 +20,12 @@ import {
   organizationCrudMessage,
   orgMemberCrudMessage,
 } from "@/lib/crud-notify-messages";
+import type { InitialOrgMemberInput } from "@/lib/organization-member-role";
+
+export type CreateOrganizationInput = {
+  name: string;
+  initialMembers?: InitialOrgMemberInput[];
+};
 
 /** List row — enriched aggregates from GET /api/organizations. */
 export type Organization = OrganizationListRow;
@@ -93,11 +99,16 @@ export function useOrganization() {
   });
 
   const createOrgMutation = useMutation({
-    mutationFn: (name: string) =>
-      apiClient<{ organization: Organization }>("/api/organizations", {
+    mutationFn: (input: CreateOrganizationInput | string) => {
+      const payload =
+        typeof input === "string"
+          ? { name: input }
+          : { name: input.name, initialMembers: input.initialMembers };
+      return apiClient<{ organization: Organization }>("/api/organizations", {
         method: "POST",
-        body: JSON.stringify({ name }),
-      }),
+        body: JSON.stringify(payload),
+      });
+    },
     onSuccess: async (data) => {
       notify.crud(
         organizationCrudMessage("created", { name: data.organization.name })

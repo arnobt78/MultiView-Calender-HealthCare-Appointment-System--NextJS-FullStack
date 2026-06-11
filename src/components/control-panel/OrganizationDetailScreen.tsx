@@ -373,6 +373,7 @@ export function OrganizationDetailScreen({
             }}
             open={addMemberOpen}
             onOpenChange={setAddMemberOpen}
+            existingMemberUserIds={members.map((m) => m.user_id)}
             onAdd={(args) =>
               addMember(args, {
                 onSuccess: () => {

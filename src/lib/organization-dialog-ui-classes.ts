@@ -26,6 +26,15 @@ export const organizationDialogDropdownPanelClass = cn(
   "w-full min-w-0 rounded-2xl border border-indigo-200/55 bg-indigo-50/35 p-2 shadow-[0_10px_28px_rgba(99,102,241,0.1)]"
 );
 
+/** StaffAppointmentPickerField indigo tone — matches org dialog selects. */
+export const organizationDialogGlassSelectChevronClass =
+  "size-4 shrink-0 opacity-50 text-muted-foreground pointer-events-none";
+
+export const organizationDialogGlassSelectPlaceholderClass = "text-gray-500";
+
+export const organizationDialogGlassSelectValueClass =
+  "min-w-0 flex-1 truncate text-left line-clamp-1";
+
 /** Cancel — pairs with `indigoGlassPrimaryButtonClass` on submit; cursor on token. */
 export const organizationDialogGlassBackButtonClass = indigoGlassBackButtonClass;
 

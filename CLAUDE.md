@@ -4,10 +4,11 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-11)
 
-- **C20 (REQ-0065):** Org billing `PortalPanelSection`; possessive title + status inline; filters compact+full; `Invoice N: #id`; Category label; portal density py; card `overflow-hidden`.
+- **C21 (REQ-0065):** Org dialogs — `OrganizationDialogHeader`, indigo rich pickers, role auto-fill, create-org optional initial members (`initialMembers` API transaction).
+- **C20 (REQ-0065):** Org billing `PortalPanelSection`; possessive title + status inline; filters compact+full; `Invoice N: #id`; Category label; portal density py.
 - **C19.1:** Detail members `UserRoleBadge`; `db:seed-org-portal-patient-member`.
 - **C19 (REQ-0064):** Org list — `indigoGlassTableFrameClass`; `EntityTitleLink`/`UserRoleBadge`/`OrganizationMembersRoleBadges`.
-- **Verify:** **966/966** · tsc · lint · build PASS.
+- **Verify:** **970/970** · tsc · lint · build PASS.
 
 ## Never / Always
 
@@ -30,7 +31,8 @@ Cross-tab: `query-cache-cross-tab.ts` (`ORGANIZATIONS`, `INVOICES_BILLING` on or
 ## Key paths
 
 - **Org list (C19):** `OrganizationManagement.tsx`, `organization-management-columns.tsx`, `OrganizationMembersRoleBadges.tsx`, `indigoGlassTableFrameClass`
-- **Org billing (C20):** `OrganizationBillingPanel.tsx`, `organization-billing-display.ts`, `InvoicePortalListCard` (portal density), `InvoiceVisitDescriptionStack`
+- **Org dialogs (C21):** `organization-dialog/*`, `organization-member-role.ts`, `StaffAppointmentPickerField` indigo tone
+- **Org billing (C20):** `OrganizationBillingPanel.tsx`, `organization-billing-display.ts`, `InvoicePortalListCard`
 - **Org detail (C18.2):** `useOrganizationDetail`, `organization-detail-load.ts`, `organization-detail-client.ts`, `organization-dialog/`
 - **CP lists:** `cpClinicalListTableFrameClassName` + tone shells (`sky`/`violet`/`indigo`/`emerald`)
 - Entity detail: `EntityDetailPageShell.tsx`, `EntityDetailBackLink.tsx`, `EntityDetailFooterRow.tsx`
@@ -38,7 +40,7 @@ Cross-tab: `query-cache-cross-tab.ts` (`ORGANIZATIONS`, `INVOICES_BILLING` on or
 
 ## Agile V
 
-`.agile-v/ACTIVATION.md` · `STATE.md` · **C20 shipped** (REQ-0065).
+`.agile-v/ACTIVATION.md` · `STATE.md` · **C21 shipped** (REQ-0065).
 
 ## Principle
 
