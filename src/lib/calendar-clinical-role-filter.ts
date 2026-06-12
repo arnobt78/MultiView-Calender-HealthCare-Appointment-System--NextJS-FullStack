@@ -24,15 +24,6 @@ export const CALENDAR_CLINICAL_ROLE_FILTER_OPTIONS: readonly {
   },
 ] as const;
 
-export function calendarClinicalRoleFilterLabel(
-  value: CalendarClinicalRoleFilter
-): string {
-  return (
-    CALENDAR_CLINICAL_ROLE_FILTER_OPTIONS.find((o) => o.value === value)?.label ??
-    "All My Visits"
-  );
-}
-
 type AppointmentRoleSource = {
   user_id: string;
   treating_physician_id?: string | null;

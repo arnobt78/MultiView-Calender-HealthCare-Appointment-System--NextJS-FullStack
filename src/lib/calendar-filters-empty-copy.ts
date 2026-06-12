@@ -4,9 +4,16 @@
 
 import {
   CALENDAR_CLINICAL_ROLE_ALL,
-  calendarClinicalRoleFilterLabel,
   type CalendarClinicalRoleFilter,
 } from "@/lib/calendar-clinical-role-filter";
+import {
+  appointmentCalendarStatusFilterOptions,
+  calendarClinicalRoleFilterOptions,
+  findFilterOptionLabel,
+} from "@/lib/filter-select-option-presets";
+
+const CALENDAR_STATUS_OPTIONS = appointmentCalendarStatusFilterOptions();
+const CALENDAR_ROLE_OPTIONS = calendarClinicalRoleFilterOptions();
 
 export type CalendarFilterEmptyChipIcon =
   | "search"
@@ -40,12 +47,6 @@ export type CalendarFiltersEmptyCopy = {
   title: string;
   description: string;
   chips: CalendarFilterEmptyChip[];
-};
-
-const STATUS_LABEL: Record<string, string> = {
-  pending: "Open",
-  done: "Done",
-  alert: "Alert",
 };
 
 function formatDateFilterLabel(isoDate: string): string {
@@ -82,7 +83,11 @@ export function buildCalendarFiltersEmptyCopy(
   if (input.clinicalRole !== CALENDAR_CLINICAL_ROLE_ALL) {
     chips.push({
       icon: "visits",
-      label: calendarClinicalRoleFilterLabel(input.clinicalRole),
+      label: findFilterOptionLabel(
+        CALENDAR_ROLE_OPTIONS,
+        input.clinicalRole,
+        "All My Visits"
+      ),
     });
   }
   if (input.category && input.categoryLabel) {
@@ -97,7 +102,11 @@ export function buildCalendarFiltersEmptyCopy(
   if (input.status) {
     chips.push({
       icon: "status",
-      label: STATUS_LABEL[input.status] ?? input.status,
+      label: findFilterOptionLabel(
+        CALENDAR_STATUS_OPTIONS,
+        input.status,
+        input.status
+      ),
     });
   }
   if (input.month) {

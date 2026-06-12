@@ -6,13 +6,23 @@
 
 | Field | Value |
 |-------|-------|
-| **Cycle** | **C24** — rich filter dropdown options |
+| **Cycle** | **C25** — filter label DRY + DoctorFilterSelect |
 | **Phase** | Orchestrate → Verify |
 | **Stage** | 3 |
 | **Status** | verify PASS |
 | **Last Updated** | 2026-06-12 |
-| **Parent REQ** | REQ-0068 |
-| **HEAD** | `24aa910` |
+| **Parent REQ** | REQ-0069 |
+| **HEAD** | `3d011dc` |
+
+## Verify baseline (C25 close)
+
+**1001/1001** (201 files) · tsc · lint · build — PASS
+
+## C25 scope
+
+- `findFilterOptionLabel` for calendar clinical role + empty-state chips; remove `calendarClinicalRoleFilterLabel`.
+- `DoctorFilterSelect` + `userToDoctorIdentity`; PatientManagement primary-doctor filter.
+- Services specialty/weekday → FilterSelect presets.
 
 ## Verify baseline (C24 close)
 

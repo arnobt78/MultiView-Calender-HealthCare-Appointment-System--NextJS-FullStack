@@ -403,3 +403,20 @@ export function weekdayFilterOptions(
     textClassName: "text-gray-700",
   }));
 }
+
+/** Weekday filter with muted “all” row — value `"all"` clears the filter. */
+export function allWeekdayFilterOptions(
+  weekdayLabels: readonly string[],
+  allLabel = "All Days"
+): FilterSelectOption<string>[] {
+  return [
+    {
+      value: "all",
+      label: allLabel,
+      icon: ListFilter,
+      iconClassName: MUTED_ICON,
+      textClassName: MUTED_TEXT,
+    },
+    ...weekdayFilterOptions(weekdayLabels),
+  ];
+}

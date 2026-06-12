@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   activeInactiveFilterOptions,
+  allWeekdayFilterOptions,
   calendarClinicalRoleFilterOptions,
   careTierFilterOptions,
   findFilterOptionLabel,
@@ -50,5 +51,14 @@ describe("filter-select-option-presets", () => {
     const opts = userRoleFilterOptions();
     expect(findFilterOptionLabel(opts, "admin", "fallback")).toBe("Admin");
     expect(findFilterOptionLabel(opts, "all", "fallback")).toBe("All Roles");
+  });
+
+  it("allWeekdayFilterOptions prepends muted all row", () => {
+    const opts = allWeekdayFilterOptions(["Sunday", "Monday"]);
+    expect(opts[0]?.value).toBe("all");
+    expect(opts[0]?.label).toBe("All Days");
+    expect(opts[1]?.value).toBe("0");
+    expect(opts[1]?.label).toBe("Sunday");
+    expect(opts[2]?.icon).toBeDefined();
   });
 });

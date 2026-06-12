@@ -56,6 +56,8 @@
 | TC-0048 | C23.1 | REQ-0067 | regression | Full suite + tsc + lint + build | project default | PASS |
 | TC-0049 | C24 | REQ-0068 | unit | Filter select presets | `filter-select-option-presets.test.ts` | PASS |
 | TC-0050 | C24 | REQ-0068 | regression | Full suite + tsc + lint + build | project default | PASS |
+| TC-0051 | C25 | REQ-0069 | unit | Calendar empty copy + doctor identity + weekday presets | `calendar-filters-empty-copy.test.ts`, `doctor-identity-map.test.ts`, `filter-select-option-presets.test.ts` | PASS |
+| TC-0052 | C25 | REQ-0069 | regression | Full suite + tsc + lint + build | project default | PASS |
 
 ## Regression Baseline
 

@@ -17,6 +17,7 @@ import { DoctorSelectOption } from "@/components/shared/doctor-display/DoctorSel
 import { DoctorSelectTriggerOption } from "@/components/shared/doctor-display/DoctorSelectTriggerOption";
 import { INSIGHTS_ORG_SELECT_VALUE } from "@/lib/insights-scope";
 import { insightsGlassSelectTriggerClass } from "@/lib/insights-ui-classes";
+import { userToDoctorIdentity } from "@/lib/doctor-identity-map";
 import { cn } from "@/lib/utils";
 import type { User } from "@/types/types";
 
@@ -28,16 +29,6 @@ type Props = {
   disabled?: boolean;
   className?: string;
 };
-
-function toDoctorIdentity(doctor: User) {
-  return {
-    id: doctor.id,
-    display_name: doctor.display_name,
-    email: doctor.email,
-    image: doctor.image,
-    specialty: doctor.specialty,
-  };
-}
 
 export function InsightsDoctorScopeSelect({
   id = "insights-doctor-scope",
@@ -68,7 +59,7 @@ export function InsightsDoctorScopeSelect({
               <span className="truncate text-xs text-gray-700">Organization-wide</span>
             </span>
           ) : selectedDoctor ? (
-            <DoctorSelectTriggerOption doctor={toDoctorIdentity(selectedDoctor)} />
+            <DoctorSelectTriggerOption doctor={userToDoctorIdentity(selectedDoctor)} />
           ) : (
             <span className="truncate text-xs text-gray-500">Select doctor</span>
           )}
@@ -83,7 +74,7 @@ export function InsightsDoctorScopeSelect({
         </SelectItem>
         {doctors.map((doctor) => (
           <SelectItem key={doctor.id} value={doctor.id} textValue={doctor.display_name?.trim() || doctor.email}>
-            <DoctorSelectOption doctor={toDoctorIdentity(doctor)} />
+            <DoctorSelectOption doctor={userToDoctorIdentity(doctor)} />
           </SelectItem>
         ))}
       </SelectContent>

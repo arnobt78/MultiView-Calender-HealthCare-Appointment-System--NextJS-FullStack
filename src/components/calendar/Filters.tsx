@@ -5,10 +5,7 @@ import { Input } from "@/components/ui/input";
 import { FilterSelect } from "@/components/shared/filters/FilterSelect";
 import { CategoryFilterSelect } from "@/components/shared/filters/CategoryFilterSelect";
 import { PatientFilterSelect } from "@/components/shared/filters/PatientFilterSelect";
-import {
-  calendarClinicalRoleFilterLabel,
-  type CalendarClinicalRoleFilter,
-} from "@/lib/calendar-clinical-role-filter";
+import type { CalendarClinicalRoleFilter } from "@/lib/calendar-clinical-role-filter";
 import {
   appointmentCalendarStatusFilterOptions,
   calendarClinicalRoleFilterOptions,
@@ -61,6 +58,11 @@ export default function Filters({
 }: FiltersProps) {
   const statusValue = status ?? ALL_VALUE;
   const statusLabel = findFilterOptionLabel(CALENDAR_STATUS_OPTIONS, statusValue, "All Statuses");
+  const clinicalRoleLabel = findFilterOptionLabel(
+    CALENDAR_ROLE_OPTIONS,
+    clinicalRole,
+    "All My Visits"
+  );
   const monthLabel =
     !month
       ? "Monthly View"
@@ -72,7 +74,7 @@ export default function Filters({
         <FilterSelect
           value={clinicalRole}
           onValueChange={(v) => setClinicalRole(v as CalendarClinicalRoleFilter)}
-          displayLabel={calendarClinicalRoleFilterLabel(clinicalRole)}
+          displayLabel={clinicalRoleLabel}
           size="dashboard"
           triggerClassName="min-w-[200px]"
           ariaLabel="Filter by calendar role"

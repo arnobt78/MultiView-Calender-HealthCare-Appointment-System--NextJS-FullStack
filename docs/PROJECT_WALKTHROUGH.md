@@ -1,6 +1,8 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-12 — C24 + C23)
+## Latest (2026-06-12 — C25 + C24)
+
+**C25:** Filter label DRY — calendar clinical role + empty-state chips via `findFilterOptionLabel` (fixes cancelled chip); `DoctorFilterSelect` + `userToDoctorIdentity` for CP patient primary-doctor filter; `/services` specialty/weekday → `FilterSelect` presets.
 
 **C24:** Rich filter dropdowns — `FilterSelectOption` icon/text per option; `filter-select-option-presets.ts` (roles, invoice status, active/inactive, verification, photo, care tier, calendar status/role, specialty, org size/billing, weekdays); migrated ~12 `FilterSelect` call sites; org billing list footer `border-t` removed. Entity pickers (`CategoryFilterSelect`, `PatientFilterSelect`) + dynamic doctor list unchanged. Client-side filters only — no SSR/query/invalidation changes.
 
@@ -10,7 +12,7 @@
 
 **C22:** Org detail audit card; `{Org}'s Members`; member identity/actions; org audit schema.
 
-**Verify:** **997/997** · tsc · lint · build.
+**Verify:** **1001/1001** · tsc · lint · build.
 
 ## Prior (2026-06-10 — C17 + C16)
 

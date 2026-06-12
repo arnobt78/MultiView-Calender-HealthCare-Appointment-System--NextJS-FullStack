@@ -1,8 +1,16 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import { DoctorMiniAvatar } from "./DoctorMiniAvatar";
 import { DoctorSpecialtyBadge } from "./DoctorSpecialtyBadge";
 import type { DoctorIdentityDoctor } from "./DoctorIdentityRow";
+
+/** Taller Radix item — avatar + name + specialty badge; pair with `doctorSelectItemClass`. */
+export const doctorSelectItemClass = cn(
+  "items-start py-2.5",
+  "[&_[data-slot=select-item-text]]:block [&_[data-slot=select-item-text]]:w-full [&_[data-slot=select-item-text]]:text-left",
+  "*:[span]:last:items-start *:[span]:last:flex-col *:[span]:last:gap-1 *:[span]:last:text-left"
+);
 
 /** Row content for doctor `<SelectItem>` — avatar, name, then badge on next line. */
 export function DoctorSelectOption({ doctor }: { doctor: DoctorIdentityDoctor }) {

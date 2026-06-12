@@ -94,3 +94,5 @@
 | 2026-06-12T15:35:00Z | verify | C23.1 shipped | Members filter toolbar + pure filter lib; 990/990 | REQ-0067 |
 | 2026-06-12T16:00:00Z | specify | C24 rich filter dropdowns | REQ-0068: FilterSelect icon/color presets + billing footer border | REQ-0068 |
 | 2026-06-12T16:30:00Z | verify | C24 shipped | Rich filter presets app-wide; org billing footer border fix; 997/997 | REQ-0068 |
+| 2026-06-12T18:00:00Z | specify | C25 filter consistency | REQ-0069: findFilterOptionLabel DRY + DoctorFilterSelect + services presets | REQ-0069 |
+| 2026-06-12T18:30:00Z | verify | C25 shipped | DoctorFilterSelect; calendar label DRY; services presets; 1001/1001 | REQ-0069 |

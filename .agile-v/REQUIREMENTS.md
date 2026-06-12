@@ -113,6 +113,25 @@
 | REQ-0066 | approved [C23] | REQ-0065 | ART-0336..0345 | pending |
 | REQ-0067 | approved [C23.1] | REQ-0066 | ART-0344..0347 | pending |
 | REQ-0068 | approved [C24] | REQ-0067 | ART-0348..0355 | pending |
+| REQ-0069 | approved [C25] | REQ-0068 | ART-0356..0359 | pending |
+
+### REQ-0069 — C25 filter label DRY + DoctorFilterSelect
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C25] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0068 |
+
+**Statement:** Unify filter label resolution via `findFilterOptionLabel`; add shared `DoctorFilterSelect` for entity-rich doctor list filters; migrate `/services` specialty/weekday to presets; remove duplicate calendar label maps.
+
+**Acceptance criteria:**
+1. Calendar `Filters.tsx` + `calendar-filters-empty-copy.ts` use `findFilterOptionLabel` (incl. cancelled status chip).
+2. `DoctorFilterSelect` + `userToDoctorIdentity`; PatientManagement primary-doctor filter migrated.
+3. `ServicesDoctorFilters` specialty/weekday use `FilterSelect` + presets.
+4. `InsightsDoctorScopeSelect` uses shared `userToDoctorIdentity`.
+5. Verify PASS.
 
 ### REQ-0068 — C24 rich filter dropdown options
 

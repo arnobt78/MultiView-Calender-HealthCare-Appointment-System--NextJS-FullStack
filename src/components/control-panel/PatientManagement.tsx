@@ -44,12 +44,12 @@ import {
   Download,
   Eye,
   UserPlus,
-  Stethoscope,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import type { PatientCreateInput } from "@/hooks/usePatients";
 import { format } from "date-fns";
+import { DoctorFilterSelect } from "@/components/shared/filters/DoctorFilterSelect";
 import { FilterSelect } from "@/components/shared/filters/FilterSelect";
 import { APP_INNER_SCROLL_STICKY_TOP_CLASS } from "@/lib/portal-z-index";
 import {
@@ -282,12 +282,6 @@ export function PatientManagementInner({
   useEffect(() => {
     onFilteredCountChange?.(filteredPatients.length);
   }, [filteredPatients.length, onFilteredCountChange]);
-  const primaryDoctorTriggerLabel: string =
-    primaryDoctorId === "all"
-      ? "All Doctors"
-      : doctors.find((d) => d.id === primaryDoctorId)?.display_name?.trim() ||
-      doctors.find((d) => d.id === primaryDoctorId)?.email ||
-      "Doctor";
   /** Toolbar search — controlled so header stays stable while table rows skeleton (no duplicate search under table). */
   const [listSearch, setListSearch] = useState("");
   const hasPatientToolbarFilters = useMemo(
@@ -660,21 +654,13 @@ export function PatientManagementInner({
             options={PATIENT_CARE_TIER_OPTIONS}
           />
           {!lockPrimaryDoctor ? (
-            <FilterSelect
+            <DoctorFilterSelect
               value={primaryDoctorId}
               onValueChange={(v) => setPrimaryDoctorId(v as PatientPrimaryDoctorFilter)}
-              displayLabel={primaryDoctorTriggerLabel}
-              icon={Stethoscope}
+              doctors={doctors}
               size="toolbar"
               triggerClassName="min-w-[200px] max-w-[min(42vw,280px)]"
               ariaLabel="Filter by primary doctor"
-              options={[
-                { value: "all", label: "All Doctors" },
-                ...doctors.map((d) => ({
-                  value: d.id,
-                  label: d.display_name?.trim() || d.email,
-                })),
-              ]}
             />
           ) : null}
         </ClinicalListFilterToolbar>

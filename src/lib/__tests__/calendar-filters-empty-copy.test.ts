@@ -35,5 +35,20 @@ describe("buildCalendarFiltersEmptyCopy", () => {
     expect(copy.title).toBe("No appointments match your filters");
     expect(copy.chips.length).toBeGreaterThanOrEqual(3);
     expect(copy.description).toContain("8 appointments");
+    expect(copy.chips.find((c) => c.icon === "visits")?.label).toBe("Created by Me");
+  });
+
+  it("status chip uses preset label for cancelled", () => {
+    const copy = buildCalendarFiltersEmptyCopy({
+      search: "",
+      category: null,
+      patient: null,
+      date: null,
+      status: "cancelled",
+      month: null,
+      clinicalRole: "all",
+      totalAppointments: 3,
+    });
+    expect(copy.chips.find((c) => c.icon === "status")?.label).toBe("Cancelled");
   });
 });

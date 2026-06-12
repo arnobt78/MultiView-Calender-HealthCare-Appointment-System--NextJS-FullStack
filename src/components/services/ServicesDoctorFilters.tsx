@@ -1,29 +1,30 @@
 "use client";
 
-import { Search, Stethoscope, CalendarDays } from "lucide-react";
+import { Search, CalendarDays } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { GlassResetFilterButton } from "@/components/shared/GlassResetFilterButton";
+import { FilterSelect } from "@/components/shared/filters/FilterSelect";
 import { ServicesCatalogTypeSelect } from "@/components/services/ServicesCatalogTypeSelect";
 import { SERVICES_CATALOG_FILTER_ALL, type ServiceCatalogRow } from "@/lib/appointment-service-catalog";
 import { SPECIALTIES } from "@/lib/doctor-specialty";
+import {
+  allWeekdayFilterOptions,
+  doctorSpecialtyFilterOptions,
+  findFilterOptionLabel,
+} from "@/lib/filter-select-option-presets";
 
-const ALL = "__all__";
-const WEEKDAYS = [
-  { value: "0", label: "Sunday" },
-  { value: "1", label: "Monday" },
-  { value: "2", label: "Tuesday" },
-  { value: "3", label: "Wednesday" },
-  { value: "4", label: "Thursday" },
-  { value: "5", label: "Friday" },
-  { value: "6", label: "Saturday" },
+const WEEKDAY_LABELS = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
 ] as const;
+
+const SPECIALTY_OPTIONS = doctorSpecialtyFilterOptions(SPECIALTIES);
+const WEEKDAY_OPTIONS = allWeekdayFilterOptions(WEEKDAY_LABELS);
 
 export type ServicesDoctorFilterState = {
   search: string;
@@ -58,11 +59,14 @@ export function ServicesDoctorFilters({
   onReset,
   hasActiveFilters,
 }: Props) {
-  const specialtyLabel = filters.specialty ?? "All Specialties";
-  const dayLabel =
-    filters.weekday != null
-      ? WEEKDAYS.find((w) => Number(w.value) === filters.weekday)?.label ?? "Day"
-      : "All Days";
+  const specialtyValue = filters.specialty ?? "all";
+  const weekdayValue = filters.weekday != null ? String(filters.weekday) : "all";
+  const specialtyLabel = findFilterOptionLabel(
+    SPECIALTY_OPTIONS,
+    specialtyValue,
+    "All Specialties"
+  );
+  const dayLabel = findFilterOptionLabel(WEEKDAY_OPTIONS, weekdayValue, "All Days");
 
   return (
     <div className="flex flex-wrap items-center justify-end gap-2 w-full lg:w-auto shrink-0">
@@ -82,47 +86,33 @@ export function ServicesDoctorFilters({
         onValueChange={(serviceSelection) => onChange({ ...filters, serviceSelection })}
       />
 
-      <Select
-        value={filters.specialty ?? ALL}
-        onValueChange={(v) => onChange({ ...filters, specialty: v === ALL ? null : v })}
-      >
-        <SelectTrigger className="h-9 w-auto min-w-[150px] rounded-2xl border-gray-200 bg-white text-gray-700 shadow-sm gap-2">
-          <Stethoscope className="h-3.5 w-3.5 text-gray-400 shrink-0" />
-          <SelectValue>{specialtyLabel}</SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value={ALL}>All Specialties</SelectItem>
-          {SPECIALTIES.map((s) => (
-            <SelectItem key={s} value={s}>
-              {s}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <FilterSelect
+        value={specialtyValue}
+        onValueChange={(v) =>
+          onChange({ ...filters, specialty: v === "all" ? null : v })
+        }
+        displayLabel={specialtyLabel}
+        size="dashboard"
+        triggerClassName="min-w-[150px]"
+        ariaLabel="Filter by specialty"
+        options={SPECIALTY_OPTIONS}
+      />
 
-      <Select
-        value={filters.weekday != null ? String(filters.weekday) : ALL}
+      <FilterSelect
+        value={weekdayValue}
         onValueChange={(v) =>
           onChange({
             ...filters,
-            weekday: v === ALL ? null : Number(v),
-            date: v === ALL ? filters.date : null,
+            weekday: v === "all" ? null : Number(v),
+            date: v === "all" ? filters.date : null,
           })
         }
-      >
-        <SelectTrigger className="h-9 w-auto min-w-[130px] rounded-2xl border-gray-200 bg-white text-gray-700 shadow-sm gap-2">
-          <CalendarDays className="h-3.5 w-3.5 text-gray-400 shrink-0" />
-          <SelectValue>{dayLabel}</SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value={ALL}>All Days</SelectItem>
-          {WEEKDAYS.map((w) => (
-            <SelectItem key={w.value} value={w.value}>
-              {w.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+        displayLabel={dayLabel}
+        size="dashboard"
+        triggerClassName="min-w-[130px]"
+        ariaLabel="Filter by weekday"
+        options={WEEKDAY_OPTIONS}
+      />
 
       <div className="relative flex items-center shrink-0">
         <CalendarDays className="absolute left-3 w-3.5 h-3.5 text-gray-400 pointer-events-none" />

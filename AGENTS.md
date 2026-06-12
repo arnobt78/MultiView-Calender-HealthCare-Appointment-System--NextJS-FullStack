@@ -14,7 +14,7 @@
 
 ## Resume
 
-1. `.agile-v/STATE.md` — cycle **C24** shipped, verify PASS **997/997**
+1. `.agile-v/STATE.md` — cycle **C25** shipped, verify PASS **1001/1001**
 2. `.agile-v/CHECKPOINTS.md` if PENDING HITL
 3. Parent **`REQ-XXXX`** in `.agile-v/REQUIREMENTS.md` before any work
 

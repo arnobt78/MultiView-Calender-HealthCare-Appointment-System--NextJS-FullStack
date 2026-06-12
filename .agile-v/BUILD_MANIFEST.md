@@ -254,11 +254,15 @@
 | ART-0350 | C24 | REQ-0068 | Migrate enum FilterSelect call sites (~12 files) | built |
 | ART-0351 | C24 | REQ-0068 | Org billing footer border-t removal | built |
 | ART-0352 | C24 | REQ-0068 | Tests + verify PASS | built |
+| ART-0356 | C25 | REQ-0069 | Calendar label DRY + empty-copy chips | built |
+| ART-0357 | C25 | REQ-0069 | `doctor-identity-map.ts` + `DoctorFilterSelect` | built |
+| ART-0358 | C25 | REQ-0069 | ServicesDoctorFilters preset migration | built |
+| ART-0359 | C25 | REQ-0069 | Tests + verify PASS | built |
 
 ## Verification Commands (project default)
 
 ```bash
-npm test        # 997 passed (C24, 2026-06-12)
+npm test        # 1001 passed (C25, 2026-06-12)
 npx tsc --noEmit
 npm run lint
 npm run build
