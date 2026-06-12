@@ -172,6 +172,7 @@ async function createCuratedRow(
               ? "sent"
               : "draft";
 
+    const now = new Date();
     const invoice = await prisma.invoice.create({
       data: {
         appointment_id: appt.id,
@@ -183,6 +184,9 @@ async function createCuratedRow(
         paid_at: paidAt,
         due_date: paidAt ?? new Date(end.getTime() + 14 * 24 * 60 * 60 * 1000),
         description: `Demo curated invoice — ${title}`,
+        created_by_id: ctx.adminId,
+        updated_by_id: ctx.adminId,
+        updated_at: now,
       },
     });
 

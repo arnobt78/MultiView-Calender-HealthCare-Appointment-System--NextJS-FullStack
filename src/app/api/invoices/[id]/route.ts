@@ -8,7 +8,6 @@ import { getUserRole } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 import {
   assertInvoiceAccess,
-  resolvePatientIdForInvoice,
   type InvoiceAccessSession,
 } from "@/lib/invoice-access";
 import { assertInvoiceStatusTransition } from "@/lib/billing-status";
@@ -16,12 +15,11 @@ import { rejectPatchStatusPaid } from "@/lib/billing-patch-guard";
 import { invoicePatchSchema } from "@/lib/schemas/invoice";
 import { zodBadRequest } from "@/lib/schemas/parse";
 import { invalidateBillingRedisCaches } from "@/lib/billing-cache";
-import { notifyBillingStatusChange } from "@/lib/billing-notify";
-import { serializeInvoice } from "@/lib/serializers";
 import {
-  attachInvoiceIssuerLabels,
-  attachVisitSummariesToInvoices,
-} from "@/lib/invoice-visit-summary";
+  invoiceDetailInclude,
+  invoiceUpdateAuditFields,
+} from "@/lib/invoice-api-include";
+import { enrichInvoiceForApi } from "@/lib/invoice-api-enrich";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -47,13 +45,11 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
     const invoice = await prisma.invoice.findUnique({
       where: { id },
-      include: { payments: true },
+      include: invoiceDetailInclude,
     });
     if (!invoice) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    const [withVisit] = await attachVisitSummariesToInvoices([serializeInvoice(invoice)]);
-    const [enriched] = await attachInvoiceIssuerLabels([withVisit]);
-
+    const enriched = await enrichInvoiceForApi(invoice);
     return NextResponse.json({ invoice: enriched });
   } catch (error: unknown) {
     console.error("Invoice GET error:", error);
@@ -122,7 +118,11 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       description?: string | null;
       due_date?: Date | null;
       cancelled_at?: Date;
-    } = {};
+      updated_by_id: string;
+      updated_at: Date;
+    } = {
+      ...invoiceUpdateAuditFields(sessionUser.userId),
+    };
     if (status) patchData.status = status;
     if (description !== undefined) patchData.description = description;
     if (due_date !== undefined) {
@@ -135,7 +135,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const updated = await prisma.invoice.update({
       where: { id },
       data: patchData,
-      include: { payments: true },
+      include: invoiceDetailInclude,
     });
 
     await invalidateBillingRedisCaches({
@@ -143,7 +143,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       appointmentId: invoice.appointment_id,
     });
 
-    return NextResponse.json({ invoice: updated });
+    const enriched = await enrichInvoiceForApi(updated);
+    return NextResponse.json({ invoice: enriched });
   } catch (error: unknown) {
     console.error("Invoice PATCH error:", error);
     return NextResponse.json({ error: "Failed to update invoice" }, { status: 500 });

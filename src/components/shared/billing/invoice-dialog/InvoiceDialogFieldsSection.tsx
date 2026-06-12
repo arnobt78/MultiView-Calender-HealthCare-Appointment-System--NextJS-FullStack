@@ -14,6 +14,7 @@ import {
 import { cn } from "@/lib/utils";
 import {
   buildInvoiceAmountFeeHint,
+  INVOICE_AMOUNT_LOCKED_EDIT_HINT,
   type VisitFeeInput,
 } from "@/lib/appointment-visit-fee-display";
 
@@ -71,11 +72,9 @@ export function InvoiceDialogFieldsSection({
                   currency={readOnlyCurrency}
                 />
               </div>
-              {visitFeeHintInput ? (
-                <p className="text-[11px] text-muted-foreground">
-                  {buildInvoiceAmountFeeHint(visitFeeHintInput)}
-                </p>
-              ) : null}
+              <p className="text-[11px] text-muted-foreground">
+                {INVOICE_AMOUNT_LOCKED_EDIT_HINT}
+              </p>
             </>
           ) : (
             <>

@@ -1,14 +1,14 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-12 — C29 + filters + specialty)
+## Latest (2026-06-11 — C30 invoice audit + dialog UX)
 
-**C29 (REQ-0077):** CP invoice-management table UX — two-line invoice # (`formatInvoiceManagementSequenceLabel` + linked `#shortId`); description `InvoiceVisitListCell` with `compactStack` patient/doctor/admin (`PatientIdentityCell` / `DoctorIdentityRow` / `StaffUserIdentityCell`); merged `amount_status` column; Created row sky `InvoiceIssuedByMeta` + linked issuer. Display-only — no API/cache/invalidation changes.
+**C30 (REQ-0078):** `Invoice` audit cols (`created_by`/`updated_by`/`updated_at`); `invoice-api-include` + `invoice-api-enrich` (GET/PATCH/SSR/prefetch); write stamps on POST/PATCH/record-payment/refund/auto-draft/webhook; `mapInvoiceRecordAuditActors` + Issued-by extra row on detail; `ClinicalGlassDatePicker` close-on-select; edit amount `INVOICE_AMOUNT_LOCKED_EDIT_HINT`; `npm run db:backfill-invoice-audit`. Invalidation unchanged — `mergeInvoiceIntoScopedListCaches` + `invalidateInvoicesAndOverview`.
 
-**Filters (invoice + insights):** `ScopeFilterInlineRow`; fixed h-10 doctor select trigger (inline name + badge); `PortalPanelSubsectionHeader` separate filter row; insights admin scope reset inline.
+**C29 (REQ-0077):** CP invoice table — `cpTwoLine` #, `compactStack` description, `amount_status`, sky issuer in Created.
 
-**Specialty:** `SPECIALTIES[0]` = `Medicine`; legacy glass aliases; `npm run db:backfill-doctor-specialty-medicine`; demo seed `doctor-profile-seed-data`.
+**Filters + specialty:** `ScopeFilterInlineRow`; `Medicine` specialty; `db:backfill-doctor-specialty-medicine`.
 
-**Verify:** **1052/1052** · tsc · lint · build PASS.
+**Verify:** **1057/1057** · tsc · lint · build PASS.
 
 ## Prior (2026-06-12 — C28 invoice hub)
 

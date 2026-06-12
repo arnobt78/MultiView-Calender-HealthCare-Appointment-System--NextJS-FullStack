@@ -462,7 +462,8 @@ export async function prefetchInvoiceDetail(
 ): Promise<Invoice | null> {
   try {
     const { assertInvoiceAccess } = await import("@/lib/invoice-access");
-    const { mapApiInvoiceToRow } = await import("@/lib/billing-invoice-map");
+    const { invoiceDetailInclude } = await import("@/lib/invoice-api-include");
+    const { enrichInvoiceForApi } = await import("@/lib/invoice-api-enrich");
     const level = await assertInvoiceAccess(
       { userId, email, role },
       invoiceId,
@@ -471,26 +472,10 @@ export async function prefetchInvoiceDetail(
     if (level === "none") return null;
     const raw = await prisma.invoice.findUnique({
       where: { id: invoiceId },
-      include: { payments: { orderBy: { created_at: "desc" } } },
+      include: invoiceDetailInclude,
     });
     if (!raw) return null;
-    const base = serializeInvoice(raw);
-    const mapped = mapApiInvoiceToRow({
-      ...raw,
-      ...base,
-      appointment_id: raw.appointment_id,
-      organization_id: raw.organization_id,
-      description: raw.description,
-      due_date: base.due_date,
-      paid_at: base.paid_at,
-      created_at: base.created_at ?? raw.created_at.toISOString(),
-      payments: base.payments,
-    }) as Invoice;
-    const { attachInvoiceIssuerLabels, attachVisitSummariesToInvoices } =
-      await import("@/lib/invoice-visit-summary");
-    const [withVisit] = await attachVisitSummariesToInvoices([mapped]);
-    const [enriched] = await attachInvoiceIssuerLabels([withVisit]);
-    return (enriched ?? withVisit) as Invoice;
+    return enrichInvoiceForApi(raw);
   } catch {
     return null;
   }

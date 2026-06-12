@@ -76,6 +76,8 @@ model User {
   users_updated               User[]                        @relation("UserUpdatedBy")
   organizations_created       Organization[]                @relation("OrganizationCreatedBy")
   organizations_updated       Organization[]                @relation("OrganizationUpdatedBy")
+  invoices_created            Invoice[]                     @relation("InvoiceCreatedBy")
+  invoices_updated            Invoice[]                     @relation("InvoiceUpdatedBy")
 
   @@map("users")
 }
@@ -405,6 +407,9 @@ model OrganizationMember {
 model Invoice {
   id              String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   created_at      DateTime  @default(now())
+  updated_at      DateTime? @db.Timestamptz(6)
+  created_by_id   String?   @map("created_by") @db.Uuid
+  updated_by_id   String?   @map("updated_by") @db.Uuid
   appointment_id  String?   @db.Uuid
   user_id         String    @db.Uuid
   organization_id String?   @db.Uuid
@@ -418,6 +423,8 @@ model Invoice {
 
   organization Organization? @relation(fields: [organization_id], references: [id], onDelete: SetNull)
   appointment  Appointment?  @relation(fields: [appointment_id], references: [id], onDelete: SetNull)
+  created_by   User?         @relation("InvoiceCreatedBy", fields: [created_by_id], references: [id], onDelete: SetNull)
+  updated_by   User?         @relation("InvoiceUpdatedBy", fields: [updated_by_id], references: [id], onDelete: SetNull)
   payments     Payment[]
 
   @@index([organization_id])

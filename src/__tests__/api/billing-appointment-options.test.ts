@@ -46,6 +46,18 @@ vi.mock("@/lib/prisma", () => ({
   },
 }));
 
+vi.mock("@/lib/invoice-api-enrich", () => ({
+  enrichInvoiceForApi: vi.fn(async (row: { id: string }) => ({
+    id: row.id,
+    user_id: ADMIN,
+    amount: 5000,
+    currency: "eur",
+    status: "draft",
+    created_at: new Date().toISOString(),
+    payments: [],
+  })),
+}));
+
 import { getSessionUser } from "@/lib/session";
 import { getUserRole } from "@/lib/rbac";
 import { fetchBillingAppointmentOptions } from "@/lib/billing-appointment-options-load";

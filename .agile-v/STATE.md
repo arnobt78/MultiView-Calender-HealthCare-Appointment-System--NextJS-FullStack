@@ -6,17 +6,17 @@
 
 | Field | Value |
 |-------|-------|
-| **Cycle** | **C29** — CP invoice table UX + scope filter polish + Medicine specialty |
+| **Cycle** | **C30** — invoice Record Audit parity + dialog UX fixes |
 | **Phase** | Accept |
 | **Stage** | 5 |
 | **Status** | verify PASS |
-| **Last Updated** | 2026-06-12 |
-| **Parent REQ** | REQ-0077 |
+| **Last Updated** | 2026-06-11 |
+| **Parent REQ** | REQ-0078 |
 | **HEAD** | (pending commit) |
 
-## Verify baseline (C29 close)
+## Verify baseline (C30 close)
 
-**1052/1052** (212 files) · tsc · lint · build — PASS
+**1057/1057** (213 files) · tsc · lint · build — PASS
 
 ## C28 scope (REQ-0076)
 

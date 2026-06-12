@@ -34,6 +34,7 @@ export async function loadInvoicesListForViewer(opts: {
     due_date: row.due_date ?? undefined,
     paid_at: row.paid_at ?? undefined,
     cancelled_at: row.cancelled_at ?? undefined,
+    updated_at: row.updated_at ?? undefined,
     payments: row.payments.map((p) => ({
       id: p.id,
       amount: p.amount,

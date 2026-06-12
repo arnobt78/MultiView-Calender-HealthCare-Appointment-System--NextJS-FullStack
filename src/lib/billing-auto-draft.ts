@@ -105,6 +105,7 @@ export async function maybeCreateDraftInvoiceForCompletedVisit(
     return { created: false, reason: "org_forbidden" };
   }
 
+  const now = new Date();
   const invoice = await prisma.invoice.create({
     data: {
       user_id: billingUserId,
@@ -119,6 +120,9 @@ export async function maybeCreateDraftInvoiceForCompletedVisit(
       appointment_id: appointmentId,
       organization_id: orgResolved.organizationId,
       status: "draft",
+      created_by_id: session.userId,
+      updated_by_id: session.userId,
+      updated_at: now,
     },
     select: { id: true },
   });

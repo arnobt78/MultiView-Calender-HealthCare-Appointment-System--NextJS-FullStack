@@ -133,6 +133,58 @@ export function mapCategoryRecordAuditActors(category: Category): {
   };
 }
 
+/** Invoice detail — map denormalized audit fields from `serializeInvoice`. */
+export function mapInvoiceRecordAuditActors(invoice: {
+  created_by_id?: string | null;
+  created_by_display?: string | null;
+  created_by_email?: string | null;
+  created_by_image?: string | null;
+  created_by_role?: string | null;
+  updated_by_id?: string | null;
+  updated_by_display?: string | null;
+  updated_by_email?: string | null;
+  updated_by_image?: string | null;
+  updated_by_role?: string | null;
+  /** Billing owner fallback when `created_by_id` not yet backfilled. */
+  user_id?: string;
+  issuer_label?: string | null;
+  issuer_email?: string | null;
+  issuer_image?: string | null;
+  issuer_role?: string | null;
+}): {
+  createdBy: EntityDetailAuditActor | null;
+  updatedBy: EntityDetailAuditActor | null;
+} {
+  const createdBy =
+    mapRecordAuditActorFromDenormalizedFields(
+      invoice.created_by_id,
+      invoice.created_by_display,
+      invoice.created_by_email,
+      invoice.created_by_image,
+      invoice.created_by_role
+    ) ??
+    (invoice.user_id && invoice.issuer_label?.trim()
+      ? {
+          userId: invoice.user_id,
+          label: invoice.issuer_label.trim(),
+          email: invoice.issuer_email,
+          image: invoice.issuer_image,
+          role: invoice.issuer_role,
+        }
+      : null);
+
+  return {
+    createdBy,
+    updatedBy: mapRecordAuditActorFromDenormalizedFields(
+      invoice.updated_by_id,
+      invoice.updated_by_display,
+      invoice.updated_by_email,
+      invoice.updated_by_image,
+      invoice.updated_by_role
+    ),
+  };
+}
+
 /** Organization detail — map denormalized audit fields from `serializeOrganization`. */
 export function mapOrganizationRecordAuditActors(org: OrganizationAuditSource): {
   createdBy: EntityDetailAuditActor | null;

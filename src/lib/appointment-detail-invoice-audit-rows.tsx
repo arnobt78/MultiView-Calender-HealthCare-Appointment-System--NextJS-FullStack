@@ -5,7 +5,7 @@
 
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
-import { CalendarClock, CreditCard, Receipt } from "lucide-react";
+import { CalendarClock, CreditCard, Receipt, UserRound } from "lucide-react";
 import { format } from "date-fns";
 import type { Invoice } from "@/hooks/usePayments";
 import { invoiceDueDateTextClassForStatus } from "@/lib/invoice-status-display";
@@ -115,10 +115,25 @@ export function buildAppointmentInvoiceAuditExtraRows(
   return rows;
 }
 
-/** Invoice detail — due + paid only (Created row covers issuer; no duplicate Invoice issued). */
-export function buildInvoiceDetailAuditExtraRows(invoice: Invoice): EntityDetailAuditExtraRow[] {
-  const rows: EntityDetailAuditExtraRow[] = [
-    {
+/** Invoice detail — issued by (billing owner), due, paid. Created/Last updated use audit FKs. */
+export function buildInvoiceDetailAuditExtraRows(
+  invoice: Invoice,
+  viewerRole?: EntityRole | null
+): EntityDetailAuditExtraRow[] {
+  const issuer = mapInvoiceIssuerActor(invoice);
+  const rows: EntityDetailAuditExtraRow[] = [];
+
+  if (issuer) {
+    rows.push({
+      icon: UserRound,
+      label: "Issued by",
+      children: (
+        <EntityDetailAuditActorInline actor={issuer} viewerRole={viewerRole} />
+      ),
+    });
+  }
+
+  rows.push({
       icon: CalendarClock,
       label: "Due date",
       children: invoice.due_date ? (
@@ -133,8 +148,8 @@ export function buildInvoiceDetailAuditExtraRows(invoice: Invoice): EntityDetail
       ) : (
         <ClinicalEmptyDash layout="inline" />
       ),
-    },
-  ];
+    });
+
   if (invoice.paid_at) {
     rows.push({
       icon: CreditCard,

@@ -39,9 +39,9 @@ describe("mapInvoiceIssuerActor", () => {
 });
 
 describe("buildInvoiceDetailAuditExtraRows", () => {
-  it("includes due date and paid at only (no invoice issued duplicate)", () => {
+  it("includes issued by, due date, and paid at", () => {
     const rows = buildInvoiceDetailAuditExtraRows(baseInvoice());
-    expect(rows.map((r) => r.label)).toEqual(["Due date", "Paid at"]);
+    expect(rows.map((r) => r.label)).toEqual(["Issued by", "Due date", "Paid at"]);
   });
 
   it("includes due date dash row when unpaid without paid_at", () => {
@@ -50,6 +50,15 @@ describe("buildInvoiceDetailAuditExtraRows", () => {
       status: "sent",
       paid_at: undefined,
       due_date: undefined,
+    });
+    expect(rows.map((r) => r.label)).toEqual(["Issued by", "Due date"]);
+  });
+
+  it("omits issued by when issuer label missing", () => {
+    const rows = buildInvoiceDetailAuditExtraRows({
+      ...baseInvoice(),
+      issuer_label: null,
+      paid_at: undefined,
     });
     expect(rows.map((r) => r.label)).toEqual(["Due date"]);
   });

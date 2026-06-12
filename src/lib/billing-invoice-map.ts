@@ -42,6 +42,21 @@ type ApiInvoice = {
   paid_at?: string | Date | null;
   cancelled_at?: string | Date | null;
   created_at: string | Date;
+  updated_at?: string | Date | null;
+  created_by_id?: string | null;
+  updated_by_id?: string | null;
+  created_by_display?: string | null;
+  updated_by_display?: string | null;
+  created_by_email?: string | null;
+  updated_by_email?: string | null;
+  created_by_image?: string | null;
+  created_by_role?: string | null;
+  updated_by_image?: string | null;
+  updated_by_role?: string | null;
+  issuer_label?: string | null;
+  issuer_image?: string | null;
+  issuer_email?: string | null;
+  issuer_role?: string | null;
   payments?: ApiPayment[];
   visit_summary?: InvoiceVisitSummary;
 };
@@ -279,6 +294,21 @@ export function mapApiInvoiceToRow(raw: ApiInvoice): InvoiceRow {
       typeof raw.created_at === "string"
         ? raw.created_at
         : raw.created_at.toISOString(),
+    updated_at: toIsoDateString(raw.updated_at) ?? null,
+    created_by_id: raw.created_by_id ?? null,
+    updated_by_id: raw.updated_by_id ?? null,
+    created_by_display: raw.created_by_display ?? null,
+    updated_by_display: raw.updated_by_display ?? null,
+    created_by_email: raw.created_by_email ?? null,
+    updated_by_email: raw.updated_by_email ?? null,
+    created_by_image: raw.created_by_image ?? null,
+    created_by_role: raw.created_by_role ?? null,
+    updated_by_image: raw.updated_by_image ?? null,
+    updated_by_role: raw.updated_by_role ?? null,
+    issuer_label: raw.issuer_label ?? null,
+    issuer_image: raw.issuer_image ?? null,
+    issuer_email: raw.issuer_email ?? null,
+    issuer_role: raw.issuer_role ?? null,
     payments: (raw.payments ?? []).map(mapPayment),
     visit_summary: raw.visit_summary,
   };

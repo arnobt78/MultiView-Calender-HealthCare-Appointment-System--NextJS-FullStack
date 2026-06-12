@@ -113,3 +113,5 @@
 | 2026-06-11T18:05:00Z | verify | C27.2 shipped | 1037/1037; tsc · lint · build PASS | REQ-0075 |
 | 2026-06-11T19:00:00Z | build | C28 CP billing UX | REQ-0076: all-time KPI footers, header scope filters, slim totals, unified seed | REQ-0076 |
 | 2026-06-11T19:05:00Z | verify | C28 shipped | 1044/1044; tsc · lint · build PASS | REQ-0076 |
+| 2026-06-11T20:00:00Z | build | C30 invoice Record Audit | REQ-0078: Invoice audit FKs, enrich pipeline, detail parity, date picker close, edit amount hint | REQ-0078 |
+| 2026-06-11T20:05:00Z | verify | C30 shipped | 1057/1057; prisma push + backfill; tsc · lint · build PASS | REQ-0078 |

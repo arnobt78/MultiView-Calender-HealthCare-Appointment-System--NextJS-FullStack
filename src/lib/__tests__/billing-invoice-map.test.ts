@@ -34,6 +34,29 @@ describe("mapApiInvoiceToRow", () => {
     expect(row.due_date).toBe("2026-02-01");
     expect(row.payments[0]?.created_at).toContain("2026-01-20");
   });
+
+  it("passes through audit and issuer fields", () => {
+    const row = mapApiInvoiceToRow({
+      id: INV,
+      user_id: DOC,
+      amount: 5000,
+      currency: "eur",
+      status: "sent",
+      created_at: "2026-01-15T10:00:00.000Z",
+      updated_at: "2026-01-16T10:00:00.000Z",
+      created_by_id: "admin-1",
+      created_by_display: "Demo Admin",
+      updated_by_id: "admin-2",
+      updated_by_display: "Editor",
+      issuer_label: "Demo Doctor",
+      issuer_role: "doctor",
+      payments: [],
+    });
+    expect(row.updated_at).toBe("2026-01-16T10:00:00.000Z");
+    expect(row.created_by_display).toBe("Demo Admin");
+    expect(row.updated_by_display).toBe("Editor");
+    expect(row.issuer_label).toBe("Demo Doctor");
+  });
 });
 
 describe("mergeInvoiceIntoScopedListCaches", () => {

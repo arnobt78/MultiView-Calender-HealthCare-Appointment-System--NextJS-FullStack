@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { format, parseISO, isValid } from "date-fns";
 import { CalendarDays, ChevronDown } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
@@ -49,11 +49,12 @@ export function ClinicalGlassDatePicker({
   placeholder = "Select date",
   className,
 }: ClinicalGlassDatePickerProps) {
+  const [open, setOpen] = useState(false);
   const selected = useMemo(() => parseIsoDateOnly(value), [value]);
   const label = selected ? format(selected, "PPP") : placeholder;
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
         id={id}
         type="button"
@@ -79,7 +80,9 @@ export function ClinicalGlassDatePicker({
           mode="single"
           selected={selected}
           onSelect={(day) => {
-            if (day) onChange(toIsoDateOnly(day));
+            if (!day) return;
+            onChange(toIsoDateOnly(day));
+            setOpen(false);
           }}
         />
       </PopoverContent>

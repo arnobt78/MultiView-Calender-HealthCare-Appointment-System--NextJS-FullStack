@@ -16,6 +16,11 @@ import { invoiceRefundSchema } from "@/lib/schemas/invoice";
 import { zodBadRequest } from "@/lib/schemas/parse";
 import { invalidateBillingRedisCaches } from "@/lib/billing-cache";
 import { notifyBillingStatusChange } from "@/lib/billing-notify";
+import {
+  invoiceDetailInclude,
+  invoiceUpdateAuditFields,
+} from "@/lib/invoice-api-include";
+import { enrichInvoiceForApi } from "@/lib/invoice-api-enrich";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -82,8 +87,9 @@ export async function POST(req: NextRequest, { params }: Params) {
         data: {
           status: "cancelled",
           cancelled_at: refundedAt,
+          ...invoiceUpdateAuditFields(sessionUser.userId),
         },
-        include: { payments: true },
+        include: invoiceDetailInclude,
       });
     });
 
@@ -101,7 +107,8 @@ export async function POST(req: NextRequest, { params }: Params) {
       invoiceOwnerUserId: invoice.user_id,
     });
 
-    return NextResponse.json({ invoice: updated });
+    const enriched = await enrichInvoiceForApi(updated);
+    return NextResponse.json({ invoice: enriched });
   } catch (error: unknown) {
     console.error("Invoice refund error:", error);
     return NextResponse.json({ error: "Failed to process refund" }, { status: 500 });

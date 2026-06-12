@@ -107,7 +107,11 @@ describe("maybeCreateDraftInvoiceForCompletedVisit", () => {
     expect(result).toEqual({ created: true, invoiceId: "new-inv" });
     expect(prisma.invoice.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({ amount: 9250 }),
+        data: expect.objectContaining({
+          amount: 9250,
+          created_by_id: DOC,
+          updated_by_id: DOC,
+        }),
       })
     );
     expect(notifyPatientDraftInvoiceCreated).toHaveBeenCalled();

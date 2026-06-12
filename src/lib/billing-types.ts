@@ -91,6 +91,17 @@ export type InvoiceRow = {
   paid_at?: string;
   cancelled_at?: string | null;
   created_at: string;
+  updated_at?: string | null;
+  created_by_id?: string | null;
+  updated_by_id?: string | null;
+  created_by_display?: string | null;
+  updated_by_display?: string | null;
+  created_by_email?: string | null;
+  updated_by_email?: string | null;
+  created_by_image?: string | null;
+  created_by_role?: string | null;
+  updated_by_image?: string | null;
+  updated_by_role?: string | null;
   payments: InvoicePaymentRow[];
   visit_summary?: InvoiceVisitSummary;
   /** Billing owner display — list “Issued by” line (batch-loaded on GET /api/invoices). */

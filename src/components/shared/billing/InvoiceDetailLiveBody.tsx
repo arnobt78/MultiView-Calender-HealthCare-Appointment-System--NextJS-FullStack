@@ -23,10 +23,8 @@ import { AppointmentTypeGlassBadge } from "@/components/shared/appointment-displ
 import { EntityDetailSnapshotSectionHeading } from "@/components/shared/entity-detail/EntityDetailSnapshotSectionHeading";
 import { EntityDetailRecordAuditCard } from "@/components/shared/entity-detail/EntityDetailRecordAuditCard";
 import { EntityIdCopyInline } from "@/components/shared/EntityIdCopyInline";
-import {
-  buildInvoiceDetailAuditExtraRows,
-  mapInvoiceIssuerActor,
-} from "@/lib/appointment-detail-invoice-audit-rows";
+import { buildInvoiceDetailAuditExtraRows } from "@/lib/appointment-detail-invoice-audit-rows";
+import { mapInvoiceRecordAuditActors } from "@/lib/entity-detail-audit-actor";
 import type { InvoiceDetailUiAccess } from "@/lib/invoice-detail-ssr";
 import {
   getInvoiceAppointmentTitle,
@@ -140,9 +138,14 @@ export function InvoiceDetailLiveBody({
     "patient"
   );
 
-  const auditExtraRows = useMemo(
-    () => buildInvoiceDetailAuditExtraRows(invoice),
+  const { createdBy, updatedBy } = useMemo(
+    () => mapInvoiceRecordAuditActors(invoice),
     [invoice]
+  );
+
+  const auditExtraRows = useMemo(
+    () => buildInvoiceDetailAuditExtraRows(invoice, viewerRole),
+    [invoice, viewerRole]
   );
 
   const visitTypeName = invoice.visit_summary
@@ -229,8 +232,9 @@ export function InvoiceDetailLiveBody({
           </dl>
           <EntityDetailRecordAuditCard
             createdAt={invoice.created_at}
-            updatedAt={null}
-            createdBy={mapInvoiceIssuerActor(invoice)}
+            updatedAt={invoice.updated_at ?? null}
+            createdBy={createdBy}
+            updatedBy={updatedBy}
             viewerRole={viewerRole}
             extraRows={auditExtraRows}
             iconCircleClass={invoiceDetailAuditIconCircleClass}

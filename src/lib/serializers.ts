@@ -236,8 +236,12 @@ export function serializeOrganization(o: {
 export function serializeInvoice(i: {
   id: string;
   created_at: Date;
+  updated_at?: Date | null;
+  created_by_id?: string | null;
+  updated_by_id?: string | null;
   appointment_id: string | null;
   user_id: string;
+  organization_id?: string | null;
   amount: number;
   currency: string;
   status: string;
@@ -245,6 +249,8 @@ export function serializeInvoice(i: {
   paid_at: Date | null;
   cancelled_at?: Date | null;
   description: string | null;
+  created_by?: UserMini;
+  updated_by?: UserMini;
   payments?: {
     id: string;
     status: string;
@@ -255,11 +261,29 @@ export function serializeInvoice(i: {
   }[];
 }) {
   return {
-    ...i,
+    id: i.id,
     created_at: i.created_at?.toISOString?.(),
+    updated_at: i.updated_at?.toISOString?.() ?? null,
+    created_by_id: i.created_by_id ?? null,
+    updated_by_id: i.updated_by_id ?? null,
+    appointment_id: i.appointment_id,
+    user_id: i.user_id,
+    organization_id: i.organization_id ?? null,
+    amount: i.amount,
+    currency: i.currency,
+    status: i.status,
+    description: i.description,
     due_date: i.due_date ? i.due_date.toISOString().slice(0, 10) : null,
     paid_at: i.paid_at?.toISOString?.() ?? null,
     cancelled_at: i.cancelled_at?.toISOString?.() ?? null,
+    created_by_display: userDisplay(i.created_by),
+    updated_by_display: userDisplay(i.updated_by),
+    created_by_email: i.created_by?.email ?? null,
+    updated_by_email: i.updated_by?.email ?? null,
+    created_by_image: i.created_by?.image ?? null,
+    created_by_role: i.created_by?.role ?? null,
+    updated_by_image: i.updated_by?.image ?? null,
+    updated_by_role: i.updated_by?.role ?? null,
     payments: (i.payments ?? []).map((p) => ({
       id: p.id,
       amount: p.amount,

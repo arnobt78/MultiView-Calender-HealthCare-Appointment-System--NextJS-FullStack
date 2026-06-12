@@ -122,6 +122,25 @@
 | REQ-0075 | approved [C27.2] | REQ-0074 | ART-0388..0391 | pending |
 | REQ-0076 | approved [C28] | REQ-0075 | ART-0392..0395 | pending |
 | REQ-0077 | approved [C29] | REQ-0076 | ART-0396..0400 | pending |
+| REQ-0078 | approved [C30] | REQ-0077 | ART-0401..0406 | pending |
+
+### REQ-0078 — C30 invoice Record Audit parity + dialog UX fixes
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C30] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0077 |
+
+**Statement:** Invoice audit FKs (`created_by`, `updated_by`, `updated_at`) with API stamp + SSR enrich; invoice detail Record Audit parity with appointment; ClinicalGlassDatePicker close-on-select; edit-mode amount copy fix (amount lock unchanged).
+
+**Acceptance criteria:**
+1. Schema + backfill + seed stamp audit on invoices.
+2. PATCH/POST/record-payment/refund stamp `updated_by_id` + `updated_at`; GET/PATCH return enriched JSON.
+3. Invoice detail: Created = creator, Last updated = editor, Issued by extra row = billing owner.
+4. Date picker closes on day click; edit dialog shows locked-amount hint (no override copy).
+5. Tests; verify PASS.
 
 ### REQ-0077 — C29 CP invoice management table UX
 

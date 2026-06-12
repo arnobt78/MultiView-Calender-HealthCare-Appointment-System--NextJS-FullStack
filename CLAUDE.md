@@ -2,13 +2,11 @@
 
 Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
-## Latest (2026-06-12)
+## Latest (2026-06-11)
 
-- **C29 (REQ-0077):** CP invoice table — `cpTwoLine` # (Invoice N + linked `#id`); `compactStack` description; `amount_status`; sky linked issuer in Created.
-- **Scope filters:** `ScopeFilterInlineRow`; doctor trigger inline h-10 (`DoctorSelectTriggerOption`); insights reset inline.
-- **Specialty:** enum `Medicine` (was General Medicine); `db:backfill-doctor-specialty-medicine`.
-- **C28 (REQ-0076):** CP all-time KPI footers; org/doctor filters in billing header; status-only `billing-totals`; unified CP SSR seed.
-- **Verify:** **1052/1052** · tsc · lint · build PASS.
+- **C30 (REQ-0078):** Invoice audit FKs + `invoice-api-include`/`invoice-api-enrich`; stamps on POST/PATCH/pay/refund/draft/webhook; detail Record Audit (Created/Last updated/Issued by); `mapInvoiceRecordAuditActors`; date picker close; edit amount hint; `db:backfill-invoice-audit`.
+- **C29 (REQ-0077):** CP invoice table UX (`cpTwoLine`, `compactStack`, `amount_status`, sky issuer).
+- **Verify:** **1057/1057** · tsc · lint · build PASS.
 
 ## Never / Always
 
@@ -47,7 +45,7 @@ Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Agile V
 
-`.agile-v/ACTIVATION.md` · `STATE.md` · **C28 shipped** (REQ-0076).
+`.agile-v/ACTIVATION.md` · `STATE.md` · **C30 shipped** (REQ-0078).
 
 ## Principle
 

@@ -75,6 +75,10 @@ export function buildInvoiceVisitFeeStripLine(input: VisitFeeInput): string {
   return `Default visit fee ${label} — ${buildInvoiceAmountFeeHint(input)}`;
 }
 
+/** Edit invoice dialog — amount is immutable after create. */
+export const INVOICE_AMOUNT_LOCKED_EDIT_HINT =
+  "Amount is fixed after the invoice is created.";
+
 /** User-facing hint under amount field on create invoice. */
 export function buildInvoiceAmountFeeHint(input: VisitFeeInput): string {
   const { source } = describeVisitFeeSource(input);

@@ -12,6 +12,7 @@ import {
 import { resolvePatientIdForInvoice } from "@/lib/invoice-access";
 import { isStripePaymentAlreadyRecorded } from "@/lib/payments-webhook-idempotency";
 import { isHandledStripeWebhookEventType } from "@/lib/stripe-webhook-events";
+import { invoiceSystemUpdateAuditFields } from "@/lib/invoice-api-include";
 
 export const dynamic = "force-dynamic";
 
@@ -75,7 +76,11 @@ export async function POST(request: NextRequest) {
         if (invoice.status !== "paid") {
           await prisma.invoice.update({
             where: { id: invoiceId },
-            data: { status: "paid", paid_at: new Date() },
+            data: {
+              status: "paid",
+              paid_at: new Date(),
+              ...invoiceSystemUpdateAuditFields(),
+            },
           });
         }
 
@@ -176,7 +181,7 @@ export async function POST(request: NextRequest) {
 
         await prisma.invoice.update({
           where: { id: payment.invoice_id },
-          data: { status: "cancelled" },
+          data: { status: "cancelled", ...invoiceSystemUpdateAuditFields() },
         });
 
         await invalidateBillingRedisCaches({

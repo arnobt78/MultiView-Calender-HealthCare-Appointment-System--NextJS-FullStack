@@ -22,6 +22,12 @@ import {
 } from "@/lib/billing-cache";
 import { resolveInvoiceOrganizationId } from "@/lib/invoice-organization-resolve";
 import { assertAppointmentEligibleForNewInvoice } from "@/lib/billing-appointment-eligibility";
+import {
+  invoiceCreateAuditFields,
+  invoiceDetailInclude,
+} from "@/lib/invoice-api-include";
+import { enrichInvoiceForApi } from "@/lib/invoice-api-enrich";
+
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
@@ -121,8 +127,9 @@ export async function POST(req: NextRequest) {
         organization_id: orgResolved.organizationId,
         due_date: due_date ? new Date(due_date) : null,
         status: "draft",
+        ...invoiceCreateAuditFields(sessionUser.userId),
       },
-      include: { payments: true },
+      include: invoiceDetailInclude,
     });
 
     await invalidateBillingRedisCaches({
@@ -131,7 +138,8 @@ export async function POST(req: NextRequest) {
       patientPortalUserId,
     });
 
-    return NextResponse.json({ invoice }, { status: 201 });
+    const enriched = await enrichInvoiceForApi(invoice);
+    return NextResponse.json({ invoice: enriched }, { status: 201 });
   } catch (error: unknown) {
     console.error("Invoices POST error:", error);
     return NextResponse.json({ error: "Failed to create invoice" }, { status: 500 });

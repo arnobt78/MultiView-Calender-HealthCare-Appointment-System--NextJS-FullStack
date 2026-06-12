@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   mapCategoryRecordAuditActors,
   mapEntityDetailAuditActor,
+  mapInvoiceRecordAuditActors,
   mapOrganizationRecordAuditActors,
   mapPatientRecordAuditActors,
   mapUserRecordAuditActors,
@@ -131,6 +132,38 @@ describe("mapPatientRecordAuditActors", () => {
     });
     expect(createdBy?.role).toBe("admin");
     expect(updatedBy?.label).toBe("Demo Admin");
+  });
+});
+
+describe("mapInvoiceRecordAuditActors", () => {
+  it("maps denormalized audit fields to inline actors", () => {
+    const { createdBy, updatedBy } = mapInvoiceRecordAuditActors({
+      created_by_id: "admin-1",
+      created_by_display: "Demo Admin",
+      created_by_email: "test@admin.com",
+      created_by_image: "/admin.png",
+      created_by_role: "admin",
+      updated_by_id: "admin-2",
+      updated_by_display: "Editor Admin",
+      updated_by_email: "editor@admin.com",
+      updated_by_image: "/editor.png",
+      updated_by_role: "admin",
+    });
+    expect(createdBy?.userId).toBe("admin-1");
+    expect(createdBy?.label).toBe("Demo Admin");
+    expect(updatedBy?.userId).toBe("admin-2");
+    expect(updatedBy?.label).toBe("Editor Admin");
+  });
+
+  it("falls back to issuer when created_by_id missing", () => {
+    const { createdBy } = mapInvoiceRecordAuditActors({
+      user_id: "doc-1",
+      issuer_label: "Demo Doctor",
+      issuer_email: "doc@test.com",
+      issuer_role: "doctor",
+    });
+    expect(createdBy?.userId).toBe("doc-1");
+    expect(createdBy?.label).toBe("Demo Doctor");
   });
 });
 
