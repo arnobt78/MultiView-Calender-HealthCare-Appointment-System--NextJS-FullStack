@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ListFilter, Receipt } from "lucide-react";
+import { Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePayments, type Invoice } from "@/hooks/usePayments";
 import { PortalPanelSection } from "@/components/shared/PortalPanelSection";
@@ -25,6 +25,10 @@ import {
 } from "@/lib/invoice-list-display";
 import { queryKeys } from "@/lib/query-keys";
 import { useQueryBodyLoading } from "@/lib/query-body-loading";
+import {
+  findFilterOptionLabel,
+  invoiceStatusFilterOptions,
+} from "@/lib/filter-select-option-presets";
 
 const CreateDraftIcon = billingCreateInvoiceTriggerDoctor.triggerIcon;
 
@@ -39,15 +43,7 @@ type Props = {
   sessionUserId?: string;
 };
 
-const STATUS_OPTIONS: { value: DoctorPortalInvoiceStatusFilter; label: string }[] = [
-  { value: "all", label: "All Statuses" },
-  { value: "draft", label: "Draft" },
-  { value: "sent", label: "Sent" },
-  { value: "paid", label: "Paid" },
-  { value: "overdue", label: "Overdue" },
-  { value: "cancelled", label: "Cancelled" },
-  { value: "refunded", label: "Refunded" },
-];
+const STATUS_OPTIONS = invoiceStatusFilterOptions();
 
 /**
  * Doctor-scoped invoices — same stacked header as Weekly Hours / visit types:
@@ -136,10 +132,7 @@ export function DoctorPortalInvoicesCard({
           <FilterSelect
             value={statusFilter}
             onValueChange={(v) => setStatusFilter(v as DoctorPortalInvoiceStatusFilter)}
-            displayLabel={
-              STATUS_OPTIONS.find((o) => o.value === statusFilter)?.label ?? "All Statuses"
-            }
-            icon={ListFilter}
+            displayLabel={findFilterOptionLabel(STATUS_OPTIONS, statusFilter, "All Statuses")}
             size="toolbar"
             options={STATUS_OPTIONS}
             ariaLabel="Filter by invoice status"

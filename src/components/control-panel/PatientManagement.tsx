@@ -43,9 +43,7 @@ import {
   Trash2,
   Download,
   Eye,
-  ListFilter,
   UserPlus,
-  Activity,
   Stethoscope,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -83,7 +81,12 @@ import { prefetchDoctorsDirectory } from "@/lib/prefetch-doctors-directory";
 import { validateOptionalPatientPhoneInput } from "@/lib/phone-validation";
 import { notify } from "@/lib/notify";
 import { ControlPanelEntityListShell } from "@/components/control-panel/ControlPanelEntityListShell";
-import { PATIENT_CARE_LEVEL_STAGES, getPatientCareLevelLabel } from "@/lib/patient-care-level";
+import { getPatientCareLevelLabel } from "@/lib/patient-care-level";
+import {
+  activeInactiveFilterOptions,
+  careTierFilterOptions,
+  findFilterOptionLabel,
+} from "@/lib/filter-select-option-presets";
 import { patientDetailHref, type EntityRole } from "@/lib/entity-routes";
 
 /** Control panel full admin table vs doctor-portal scoped roster (shared filters + DataTable). */
@@ -97,20 +100,8 @@ export type PatientManagementInnerProps = {
   onFilteredCountChange?: (count: number) => void;
 };
 
-const STATUS_FILTER_LABEL: Record<PatientStatusFilter, string> = {
-  all: "All Statuses",
-  active: "Active",
-  inactive: "Inactive",
-};
-
-/** Shown inside the care-tier filter trigger — mirrors tier scale from `patient-care-level`. */
-function careTierTriggerLabel(tier: PatientCareTierFilter): string {
-  if (tier === "all") return "All Care Tiers";
-  if (tier === "unset") return "No Tier Set";
-  const n = Number(tier);
-  const s = PATIENT_CARE_LEVEL_STAGES.find((x) => x.value === n);
-  return s ? `${n} — ${s.shortLabel}` : `Tier ${n}`;
-}
+const PATIENT_STATUS_OPTIONS = activeInactiveFilterOptions();
+const PATIENT_CARE_TIER_OPTIONS = careTierFilterOptions();
 
 function exportPatientsCSV(patients: Patient[]) {
   const headers = [
@@ -649,33 +640,24 @@ export function PatientManagementInner({
           <FilterSelect
             value={status}
             onValueChange={(v) => setStatus(v as PatientStatusFilter)}
-            displayLabel={STATUS_FILTER_LABEL[status]}
-            icon={ListFilter}
+            displayLabel={findFilterOptionLabel(PATIENT_STATUS_OPTIONS, status, "All Statuses")}
             size="toolbar"
             triggerClassName="max-w-[200px]"
             ariaLabel="Filter by status"
-            options={[
-              { value: "all", label: "All Statuses" },
-              { value: "active", label: "Active" },
-              { value: "inactive", label: "Inactive" },
-            ]}
+            options={PATIENT_STATUS_OPTIONS}
           />
           <FilterSelect
             value={careTier}
             onValueChange={(v) => setCareTier(v as PatientCareTierFilter)}
-            displayLabel={careTierTriggerLabel(careTier)}
-            icon={Activity}
+            displayLabel={findFilterOptionLabel(
+              PATIENT_CARE_TIER_OPTIONS,
+              careTier,
+              "All Care Tiers"
+            )}
             size="toolbar"
             triggerClassName="min-w-[200px] max-w-[min(42vw,280px)]"
             ariaLabel="Filter by care tier"
-            options={[
-              { value: "all", label: "All Care Tiers" },
-              { value: "unset", label: "No Tier Set" },
-              ...PATIENT_CARE_LEVEL_STAGES.map((s) => ({
-                value: String(s.value),
-                label: `${s.value} — ${s.shortLabel}`,
-              })),
-            ]}
+            options={PATIENT_CARE_TIER_OPTIONS}
           />
           {!lockPrimaryDoctor ? (
             <FilterSelect

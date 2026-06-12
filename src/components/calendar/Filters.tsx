@@ -6,11 +6,15 @@ import { FilterSelect } from "@/components/shared/filters/FilterSelect";
 import { CategoryFilterSelect } from "@/components/shared/filters/CategoryFilterSelect";
 import { PatientFilterSelect } from "@/components/shared/filters/PatientFilterSelect";
 import {
-  CALENDAR_CLINICAL_ROLE_FILTER_OPTIONS,
   calendarClinicalRoleFilterLabel,
   type CalendarClinicalRoleFilter,
 } from "@/lib/calendar-clinical-role-filter";
-import { CalendarDays, Circle, CalendarRange, Stethoscope } from "lucide-react";
+import {
+  appointmentCalendarStatusFilterOptions,
+  calendarClinicalRoleFilterOptions,
+  findFilterOptionLabel,
+} from "@/lib/filter-select-option-presets";
+import { CalendarDays, CalendarRange } from "lucide-react";
 
 type FiltersProps = {
   category: string | null;
@@ -32,12 +36,9 @@ type FiltersProps = {
 };
 
 const ALL_VALUE = "__all__";
-const STATUS_LABEL: Record<string, string> = {
-  pending: "Open",
-  done: "Done",
-  alert: "Alert",
-  cancelled: "Cancelled",
-};
+
+const CALENDAR_STATUS_OPTIONS = appointmentCalendarStatusFilterOptions(ALL_VALUE);
+const CALENDAR_ROLE_OPTIONS = calendarClinicalRoleFilterOptions();
 
 /** Dashboard calendar filter controls — parent wraps with `ClinicalListFilterToolbar` + search. */
 export default function Filters({
@@ -58,7 +59,8 @@ export default function Filters({
   setClinicalRole,
   showClinicalRoleFilter,
 }: FiltersProps) {
-  const statusLabel = !status ? "All Statuses" : STATUS_LABEL[status] ?? "All Statuses";
+  const statusValue = status ?? ALL_VALUE;
+  const statusLabel = findFilterOptionLabel(CALENDAR_STATUS_OPTIONS, statusValue, "All Statuses");
   const monthLabel =
     !month
       ? "Monthly View"
@@ -71,14 +73,10 @@ export default function Filters({
           value={clinicalRole}
           onValueChange={(v) => setClinicalRole(v as CalendarClinicalRoleFilter)}
           displayLabel={calendarClinicalRoleFilterLabel(clinicalRole)}
-          icon={Stethoscope}
           size="dashboard"
           triggerClassName="min-w-[200px]"
           ariaLabel="Filter by calendar role"
-          options={CALENDAR_CLINICAL_ROLE_FILTER_OPTIONS.map((o) => ({
-            value: o.value,
-            label: o.label,
-          }))}
+          options={CALENDAR_ROLE_OPTIONS}
         />
       ) : null}
 
@@ -108,19 +106,12 @@ export default function Filters({
       </div>
 
       <FilterSelect
-        value={status ?? ALL_VALUE}
+        value={statusValue}
         onValueChange={(v) => setStatus(v === ALL_VALUE ? null : v)}
         displayLabel={statusLabel}
-        icon={Circle}
         size="dashboard"
         triggerClassName="min-w-[140px]"
-        options={[
-          { value: ALL_VALUE, label: "All Statuses" },
-          { value: "pending", label: "Open" },
-          { value: "done", label: "Done" },
-          { value: "alert", label: "Alert" },
-          { value: "cancelled", label: "Cancelled" },
-        ]}
+        options={CALENDAR_STATUS_OPTIONS}
       />
 
       <FilterSelect

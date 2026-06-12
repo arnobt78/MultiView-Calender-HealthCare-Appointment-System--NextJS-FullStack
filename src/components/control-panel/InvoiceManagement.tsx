@@ -6,7 +6,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ListFilter, Receipt } from "lucide-react";
+import { Receipt } from "lucide-react";
 import { usePayments, type Invoice } from "@/hooks/usePayments";
 import { Button } from "@/components/ui/button";
 import { ControlPanelPageChrome } from "@/components/control-panel/ControlPanelPageChrome";
@@ -29,18 +29,14 @@ import { invoiceManagementTableFrameClass } from "@/lib/invoice-management-toolb
 import { APP_INNER_SCROLL_STICKY_TOP_CLASS } from "@/lib/portal-z-index";
 import { useCpListBodyLoading } from "@/lib/cp-list-body-loading";
 import { queryKeys } from "@/lib/query-keys";
+import {
+  findFilterOptionLabel,
+  invoiceStatusFilterOptions,
+} from "@/lib/filter-select-option-presets";
 
 const CreateInvoiceIcon = billingCreateInvoiceTriggerAdmin.triggerIcon;
 
-const STATUS_FILTER_LABEL: Record<InvoiceStatusFilter, string> = {
-  all: "All Statuses",
-  draft: "Draft",
-  sent: "Sent",
-  paid: "Paid",
-  overdue: "Overdue",
-  cancelled: "Cancelled",
-  refunded: "Refunded",
-};
+const INVOICE_STATUS_OPTIONS = invoiceStatusFilterOptions();
 
 function InvoiceManagementInner() {
   const {
@@ -145,17 +141,11 @@ function InvoiceManagementInner() {
         <FilterSelect
           value={status}
           onValueChange={(v) => setStatus(v as InvoiceStatusFilter)}
-          displayLabel={STATUS_FILTER_LABEL[status]}
-          icon={ListFilter}
+          displayLabel={findFilterOptionLabel(INVOICE_STATUS_OPTIONS, status, "All Statuses")}
           size="toolbar"
           triggerClassName="max-w-[200px]"
           ariaLabel="Filter by invoice status"
-          options={(
-            Object.keys(STATUS_FILTER_LABEL) as InvoiceStatusFilter[]
-          ).map((key) => ({
-            value: key,
-            label: STATUS_FILTER_LABEL[key],
-          }))}
+          options={INVOICE_STATUS_OPTIONS}
         />
       </ClinicalListFilterToolbar>
 

@@ -30,9 +30,9 @@ type Props = {
   onChangeVisit?: () => void;
   className?: string;
 } & (
-  | { source: "option"; visit: InvoiceAppointmentOptionRow }
-  | { source: "summary"; visit: InvoiceVisitSummary }
-);
+    | { source: "option"; visit: InvoiceAppointmentOptionRow }
+    | { source: "summary"; visit: InvoiceVisitSummary }
+  );
 
 /** Collapsed selected visit — create mode after pick; edit mode read-only linked visit. */
 export function InvoiceVisitSummaryCard(props: Props) {

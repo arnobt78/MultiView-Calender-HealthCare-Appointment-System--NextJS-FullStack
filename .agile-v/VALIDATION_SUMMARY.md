@@ -470,3 +470,76 @@ EvalGate (C18): status=PASS | eval_run_id=ER-C18-VERIFY | gate2_pending=TBD
 | VER-0097 | REQ-0064..0065 | PASS | Full regression **954/954** |
 
 EvalGate (C18.1): status=PASS | eval_run_id=ER-C18.1-VERIFY | gate2_pending=TBD
+
+---
+
+## C19 — Org list UI polish (2026-06-11)
+
+| Item | Value |
+|------|-------|
+| Cycle | C19 |
+| REQ-IDs | REQ-0064 |
+| Regression | **961/961** Vitest |
+
+| VER-ID | REQ-ID | Result | Description |
+|--------|--------|--------|-------------|
+| VER-0098 | REQ-0064 | PASS | `indigoGlassTableFrameClass`; EntityTitleLink; actions menu |
+| VER-0099 | REQ-0064 | PASS | Full regression **961/961** |
+
+EvalGate (C19): status=PASS | eval_run_id=ER-C19-VERIFY | gate2_pending=TBD
+
+---
+
+## C20 — Org billing UI parity (2026-06-11)
+
+| Item | Value |
+|------|-------|
+| Cycle | C20 |
+| REQ-IDs | REQ-0065 |
+| Regression | **966/966** Vitest |
+
+| VER-ID | REQ-ID | Result | Description |
+|--------|--------|--------|-------------|
+| VER-0100 | REQ-0065 | PASS | PortalPanelSection; possessive title; status inline; portal card density |
+| VER-0101 | REQ-0065 | PASS | Full regression **966/966** |
+
+EvalGate (C20): status=PASS | eval_run_id=ER-C20-VERIFY | gate2_pending=TBD
+
+---
+
+## C21 — Org dialog UX parity (2026-06-11)
+
+| Item | Value |
+|------|-------|
+| Cycle | C21 |
+| REQ-IDs | REQ-0065 |
+| Regression | **970/970** Vitest |
+
+| VER-ID | REQ-ID | Result | Description |
+|--------|--------|--------|-------------|
+| VER-0102 | REQ-0065 | PASS | Rich indigo pickers; role auto-fill; initialMembers API |
+| VER-0103 | REQ-0065 | PASS | Picker clear + form reset on dialog close |
+| VER-0104 | REQ-0065 | PASS | Full regression **970/970** |
+
+EvalGate (C21): status=PASS | eval_run_id=ER-C21-VERIFY | gate2_pending=TBD
+
+---
+
+## C22 — Org detail UI parity (2026-06-12)
+
+| Item | Value |
+|------|-------|
+| Cycle | C22 |
+| REQ-IDs | REQ-0065 |
+| Regression | **975/975** Vitest (195 files) |
+| HEAD | `24aa910` |
+
+| VER-ID | REQ-ID | Result | Description |
+|--------|--------|--------|-------------|
+| VER-0105 | REQ-0065 | PASS | Record Audit card + org audit schema/backfill |
+| VER-0106 | REQ-0065 | PASS | Rich owner + members heading + CP table shells |
+| VER-0107 | REQ-0065 | PASS | Member identity cells + OrganizationMemberRowActions ⋮ |
+| VER-0108 | REQ-0065 | PASS | Loader enrichment; invalidateOrganizationDetail intact |
+| VER-0109 | REQ-0065 | PASS | Full regression **975/975** tsc lint build |
+
+EvalGate (C22): status=PASS | eval_run_id=ER-C22-VERIFY | gate2_pending=TBD

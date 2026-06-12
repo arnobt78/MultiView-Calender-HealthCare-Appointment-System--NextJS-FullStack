@@ -5,11 +5,10 @@ import type { ReactNode } from "react";
 import { format } from "date-fns";
 import { DataTableColumnHeader } from "@/components/shared/DataTableColumnHeader";
 import { EntityIdCopyInline } from "@/components/shared/EntityIdCopyInline";
-import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
-import { UserAvatar } from "@/components/shared/UserAvatar";
 import { UserRoleBadge } from "@/components/shared/UserRoleBadge";
 import { DoctorIdentityRow } from "@/components/shared/doctor-display/DoctorIdentityRow";
 import { PatientIdentityCell } from "@/components/shared/person-display/PatientIdentityCell";
+import { StaffUserIdentityCell } from "@/components/shared/person-display/StaffUserIdentityCell";
 import { formatShortEntityId } from "@/lib/entity-id-display";
 import { patientDetailHref, userDetailHref, type EntityRole } from "@/lib/entity-routes";
 import {
@@ -98,28 +97,24 @@ function OrganizationMemberIdentityCell({
           lastname: member.patient_lastname ?? undefined,
           clinical_profile: undefined,
         }}
-        layout="inline"
+        layout="table"
+        avatarSizeClassName="h-7 w-7"
+        tableBadgePlacement="belowEmail"
         careLevel={member.care_level}
+        className="min-h-[2.75rem]"
       />
     );
   }
 
   const href = userDetailHref(viewerRole, member.user_id);
   return (
-    <div className={clinicalTableCellMinRowClass}>
-      <UserAvatar
-        alt={label}
-        src={member.image}
-        fallbackText={label}
-        sizeClassName="h-9 w-9"
-      />
-      <div className="min-w-0">
-        <EntityTitleLink href={href} label={label} className="min-w-0 truncate font-normal" />
-        {member.email ? (
-          <p className={clinicalCellMutedTextClass}>{member.email}</p>
-        ) : null}
-      </div>
-    </div>
+    <StaffUserIdentityCell
+      displayName={label}
+      email={member.email}
+      image={member.image}
+      href={href}
+      className="min-h-[2.75rem]"
+    />
   );
 }
 

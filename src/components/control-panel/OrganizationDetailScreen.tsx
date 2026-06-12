@@ -23,14 +23,13 @@ import { EntityDetailFooterRow } from "@/components/shared/entity-detail/EntityD
 import { EntityDetailPageShell } from "@/components/shared/entity-detail/EntityDetailPageShell";
 import { EntityDetailRecordAuditCard } from "@/components/shared/entity-detail/EntityDetailRecordAuditCard";
 import { EntityDetailAuditActorInline } from "@/components/shared/entity-detail/EntityDetailAuditActorInline";
-import { ClinicalDataTable } from "@/components/shared/ClinicalDataTable";
 import { EntityIdCopyInline } from "@/components/shared/EntityIdCopyInline";
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import { ControlPanelGlassActionButton } from "@/components/shared/ControlPanelGlassActionButton";
 import { OrganizationBillingPanelFull } from "@/components/control-panel/OrganizationBillingPanel";
 import { OrganizationFormDialog } from "@/components/control-panel/organization-dialog/OrganizationFormDialog";
 import { OrganizationAddMemberDialog } from "@/components/control-panel/organization-dialog/OrganizationAddMemberDialog";
-import { OrganizationDetailMembersSectionHeading } from "@/components/control-panel/organization-detail/OrganizationDetailMembersSectionHeading";
+import { OrganizationDetailMembersSection } from "@/components/control-panel/organization-detail/OrganizationDetailMembersSection";
 import { OrganizationMemberRowActions } from "@/components/control-panel/organization-detail/OrganizationMemberRowActions";
 import { Card, CardContent } from "@/components/ui/card";
 import type { Organization } from "@/hooks/useOrganization";
@@ -309,16 +308,11 @@ export function OrganizationDetailScreen({
           </div>
 
           <div className="border-t border-indigo-100/80 pt-3">
-            <OrganizationDetailMembersSectionHeading
+            <OrganizationDetailMembersSection
               orgName={liveOrg.name}
-              totalCount={members.length}
+              members={members}
               membersByRole={membersByRole}
-            />
-            <ClinicalDataTable
               columns={memberColumns}
-              data={members}
-              pagination={false}
-              emptyMessage="No members yet."
               className={organizationDetailSnapshotTableFrameClass}
               tableFrameClassName={cpClinicalListTableFrameClassName}
             />

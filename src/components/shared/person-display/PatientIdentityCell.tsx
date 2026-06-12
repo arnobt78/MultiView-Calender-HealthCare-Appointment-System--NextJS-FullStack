@@ -42,6 +42,11 @@ type PatientIdentityCellProps = {
   avatarSizeClassName?: string;
   /** Inline layout — care tier badge beside age (entity detail Related People). */
   careLevel?: number | null;
+  /**
+   * Table layout only — `withName` keeps age on the name row (patient list default);
+   * `belowEmail` stacks badges under email (org members / doctor specialty parity).
+   */
+  tableBadgePlacement?: "withName" | "belowEmail";
 };
 
 /**
@@ -58,6 +63,7 @@ export function PatientIdentityCell({
   className,
   avatarSizeClassName,
   careLevel,
+  tableBadgePlacement = "withName",
 }: PatientIdentityCellProps) {
   const resolvedAvatarSize =
     avatarSizeClassName ??
@@ -123,6 +129,18 @@ export function PatientIdentityCell({
     );
   }
 
+  const tableBadgeRow =
+    age != null || careLevel != null ? (
+      <div className={clinicalIdentityInlineBadgeRowClass}>
+        {age != null ? <PatientAgeGlassBadge age={age} compact /> : null}
+        {careLevel != null ? (
+          <PatientCareTierGlassBadge careLevel={careLevel} compact className="shrink-0" />
+        ) : null}
+      </div>
+    ) : null;
+
+  const stackBadgesBelowEmail = tableBadgePlacement === "belowEmail";
+
   return (
     <div
       className={cn(
@@ -133,10 +151,14 @@ export function PatientIdentityCell({
     >
       <PatientPortraitAvatar patient={patient} sizeClassName={resolvedAvatarSize} />
       <div className={cn("flex min-w-0 flex-1 flex-col justify-center", clinicalStackGapClass)}>
-        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-          {tableNameNode}
-          {age != null ? <PatientAgeGlassBadge age={age} /> : null}
-        </div>
+        {stackBadgesBelowEmail ? (
+          tableNameNode
+        ) : (
+          <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+            {tableNameNode}
+            {age != null ? <PatientAgeGlassBadge age={age} /> : null}
+          </div>
+        )}
         {emailTrim ? (
           <span className={cn("truncate", clinicalCellMutedTextClass)} title={emailTrim}>
             {emailTrim}
@@ -144,6 +166,7 @@ export function PatientIdentityCell({
         ) : (
           <span className={clinicalCellMutedTextClass}>—</span>
         )}
+        {stackBadgesBelowEmail ? tableBadgeRow : null}
       </div>
     </div>
   );

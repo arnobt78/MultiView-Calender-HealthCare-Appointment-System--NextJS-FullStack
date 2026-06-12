@@ -110,6 +110,65 @@
 | REQ-0063 | approved [C17] | REQ-0062 | ART-0310..0313 | pending |
 | REQ-0064 | approved [C18] | — | ART-0314..0325 | pending |
 | REQ-0065 | approved [C18] | REQ-0064 | ART-0326..0335 | pending |
+| REQ-0066 | approved [C23] | REQ-0065 | ART-0336..0345 | pending |
+| REQ-0067 | approved [C23.1] | REQ-0066 | ART-0344..0347 | pending |
+| REQ-0068 | approved [C24] | REQ-0067 | ART-0348..0355 | pending |
+
+### REQ-0068 — C24 rich filter dropdown options
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C24] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0067 |
+
+**Statement:** Shared FilterSelect shows per-option icon + text color in trigger and menu; central presets from badge/display tokens; migrate enum filters app-wide; remove org billing list footer double border.
+
+**Acceptance criteria:**
+1. `FilterSelectOption` extended with icon/textClassName; `FilterSelectOptionLabel` component.
+2. `filter-select-option-presets.ts` — role, invoice status, active/inactive, verification, photo, care tier, appointment status, clinical role, specialty, org filters.
+3. All enum `FilterSelect` call sites use presets (~12 files).
+4. Org billing footer: remove `border-t` above count line.
+5. Verify PASS.
+
+### REQ-0067 — C23.1 org detail members filter toolbar
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C23.1] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0066 |
+
+**Statement:** Org detail Members table gets billing-parity `ClinicalListFilterToolbar` — client-side search + role dropdown above the table.
+
+**Acceptance criteria:**
+1. `filterOrganizationDetailMembers` pure lib — search haystack (name, email, role, specialty, ids) + role filter.
+2. `OrganizationDetailMembersSection` — heading + toolbar + filtered `ClinicalDataTable`.
+3. Header role counts remain full-roster totals (not filtered).
+4. Empty states: no members vs no filter matches.
+5. No API/SSR/invalidation changes; verify PASS.
+
+### REQ-0066 — C23 doctor CP + org members UI parity
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C23] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0065 |
+
+**Statement:** Org detail Members header matches Related Billing `PortalPanelSubsectionHeader` (inline role counts + subtitle); unified member identity cells (h-7 stack); doctor CP section prefetch seeds doctor users; doctor detail assigned-patients header parity.
+
+**Acceptance criteria:**
+1. `OrganizationMembersRoleCountInlineRow` — Admin/Doctor/Patient counts inline with billing-style separators (all roles shown).
+2. Members heading uses `PortalPanelSubsectionHeader` + `ORGANIZATION_MEMBERS_SUBTITLE`; tall indigo icon tile.
+3. Member table identity: doctor/patient/admin share h-7 stacked layout via `StaffUserIdentityCell` + `PatientIdentityCell` table badges below email.
+4. Doctor tab section prefetch seeds `CP_DOCTOR_USERS_FILTERS` (layout also seeds for sidebar).
+5. CP doctor detail assigned patients uses `PortalPanelSubsectionHeader` (emerald tone).
+6. `DoctorFormDialog` retains required labels + Save/Cancel icons (audit-only if already parity).
+7. SSR/invalidation unchanged; verify PASS.
 
 ### REQ-0064 — C18 organization-management list CP parity
 
@@ -149,6 +208,7 @@
 5. `invalidateOrganizationDetail` on org/member/invoice mutations.
 6. **[C20]** `PortalPanelSection` chrome (doctor-portal parity): possessive `{org}'s Related Billing`, numeric count pill, `InvoiceStatusCountInlineRow`; filter toolbar on compact + full; portal list headers `Invoice N: #shortId` (doctor portal + org CP).
 7. **[C21]** Org create/add-member dialogs: patient/appointment layout parity; indigo rich pickers; role auto-fill; optional initial members on create (`initialMembers` API transaction).
+8. **[C22]** Org detail UI parity: `EntityDetailRecordAuditCard` + org audit schema; rich owner row; `{Org}'s Members` heading + role counts; CP table shells; enriched member identity (doctor specialty / patient age+tier); `OrganizationMemberRowActions` ⋮; `npm run db:backfill-org-audit`.
 
 ### REQ-0063 — C17 admin table columns + detail footer interactives
 

@@ -37,7 +37,6 @@ import {
   Clock,
   EllipsisVertical,
   Eye,
-  ListFilter,
   Pencil,
   Tag,
   Trash2,
@@ -45,6 +44,10 @@ import {
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import { FilterSelect } from "@/components/shared/filters/FilterSelect";
+import {
+  activeInactiveFilterOptions,
+  findFilterOptionLabel,
+} from "@/lib/filter-select-option-presets";
 import { APP_INNER_SCROLL_STICKY_TOP_CLASS } from "@/lib/portal-z-index";
 import {
   CategoryListFiltersProvider,
@@ -70,11 +73,7 @@ import {
   clinicalBadgeInlineIconClass,
 } from "@/lib/table-display-styles";
 
-const STATUS_FILTER_LABEL: Record<CategoryStatusFilter, string> = {
-  all: "All Statuses",
-  active: "Active",
-  inactive: "Inactive",
-};
+const CATEGORY_STATUS_OPTIONS = activeInactiveFilterOptions();
 
 function CategoryActions({
   category,
@@ -399,16 +398,11 @@ export function CategoryManagementInner() {
           <FilterSelect
             value={status}
             onValueChange={(v) => setStatus(v as CategoryStatusFilter)}
-            displayLabel={STATUS_FILTER_LABEL[status]}
-            icon={ListFilter}
+            displayLabel={findFilterOptionLabel(CATEGORY_STATUS_OPTIONS, status, "All Statuses")}
             size="toolbar"
             triggerClassName="max-w-[200px]"
             ariaLabel="Filter by status"
-            options={[
-              { value: "all", label: "All Statuses" },
-              { value: "active", label: "Active" },
-              { value: "inactive", label: "Inactive" },
-            ]}
+            options={CATEGORY_STATUS_OPTIONS}
           />
         </ClinicalListFilterToolbar>
         }

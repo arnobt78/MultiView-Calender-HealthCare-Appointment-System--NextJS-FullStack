@@ -57,7 +57,7 @@ import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout
 import { AppSectionErrorBanner } from "@/components/shared/AppSectionErrorBanner";
 import { isUserAccountActive } from "@/lib/entity-active-status";
 import type { User } from "@/types/types";
-import { EllipsisVertical, Eye, ImageIcon, ListFilter, ShieldCheck, UserPlus } from "lucide-react";
+import { EllipsisVertical, Eye, UserPlus } from "lucide-react";
 import { useCpListBodyLoading } from "@/lib/cp-list-body-loading";
 import { queryKeys } from "@/lib/query-keys";
 import { ClinicalListFilterToolbar } from "@/components/shared/filters/ClinicalListFilterToolbar";
@@ -71,26 +71,18 @@ import {
   type AdminUserVerificationFilter,
 } from "@/components/control-panel/AdminUserListFiltersContext";
 import { AdminUserManagementStatsRow } from "@/components/control-panel/AdminUserManagementStatsRow";
+import {
+  activeInactiveFilterOptions,
+  findFilterOptionLabel,
+  photoFilterOptions,
+  verificationFilterOptions,
+} from "@/lib/filter-select-option-presets";
 
 const ADMIN_ROSTER_DEMO_NOTE = ADMIN_USER_MANAGEMENT_DEMO_NOTE;
 
-const STATUS_FILTER_LABEL: Record<AdminUserStatusFilter, string> = {
-  all: "All Statuses",
-  active: "Active",
-  inactive: "Inactive",
-};
-
-const VERIFICATION_FILTER_LABEL: Record<AdminUserVerificationFilter, string> = {
-  all: "All Verification",
-  verified: "Verified",
-  unverified: "Unverified",
-};
-
-const PHOTO_FILTER_LABEL: Record<AdminUserPhotoFilter, string> = {
-  all: "All Photos",
-  with_photo: "With Photo",
-  no_photo: "No Photo",
-};
+const ADMIN_STATUS_OPTIONS = activeInactiveFilterOptions();
+const ADMIN_VERIFICATION_OPTIONS = verificationFilterOptions();
+const ADMIN_PHOTO_OPTIONS = photoFilterOptions();
 
 function ActionsCell({ user }: { user: User }) {
   return (
@@ -297,44 +289,33 @@ function UserManagementInner() {
           <FilterSelect
             value={status}
             onValueChange={(v) => setStatus(v as AdminUserStatusFilter)}
-            displayLabel={STATUS_FILTER_LABEL[status]}
-            icon={ListFilter}
+            displayLabel={findFilterOptionLabel(ADMIN_STATUS_OPTIONS, status, "All Statuses")}
             size="toolbar"
             triggerClassName="max-w-[200px]"
             ariaLabel="Filter by status"
-            options={[
-              { value: "all", label: STATUS_FILTER_LABEL.all },
-              { value: "active", label: STATUS_FILTER_LABEL.active },
-              { value: "inactive", label: STATUS_FILTER_LABEL.inactive },
-            ]}
+            options={ADMIN_STATUS_OPTIONS}
           />
           <FilterSelect
             value={verification}
             onValueChange={(v) => setVerification(v as AdminUserVerificationFilter)}
-            displayLabel={VERIFICATION_FILTER_LABEL[verification]}
-            icon={ShieldCheck}
+            displayLabel={findFilterOptionLabel(
+              ADMIN_VERIFICATION_OPTIONS,
+              verification,
+              "All Verification"
+            )}
             size="toolbar"
             triggerClassName="max-w-[220px]"
             ariaLabel="Filter by email verification"
-            options={[
-              { value: "all", label: VERIFICATION_FILTER_LABEL.all },
-              { value: "verified", label: VERIFICATION_FILTER_LABEL.verified },
-              { value: "unverified", label: VERIFICATION_FILTER_LABEL.unverified },
-            ]}
+            options={ADMIN_VERIFICATION_OPTIONS}
           />
           <FilterSelect
             value={photo}
             onValueChange={(v) => setPhoto(v as AdminUserPhotoFilter)}
-            displayLabel={PHOTO_FILTER_LABEL[photo]}
-            icon={ImageIcon}
+            displayLabel={findFilterOptionLabel(ADMIN_PHOTO_OPTIONS, photo, "All Photos")}
             size="toolbar"
             triggerClassName="max-w-[200px]"
             ariaLabel="Filter by profile photo"
-            options={[
-              { value: "all", label: PHOTO_FILTER_LABEL.all },
-              { value: "with_photo", label: PHOTO_FILTER_LABEL.with_photo },
-              { value: "no_photo", label: PHOTO_FILTER_LABEL.no_photo },
-            ]}
+            options={ADMIN_PHOTO_OPTIONS}
           />
         </ClinicalListFilterToolbar>
       }

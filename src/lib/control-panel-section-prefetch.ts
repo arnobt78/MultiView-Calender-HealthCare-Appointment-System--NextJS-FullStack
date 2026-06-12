@@ -9,6 +9,7 @@
  *   visit_types_global→ queryKeys.appointmentTypes.all (admin-all shape)
  *   invoices          → queryKeys.invoices.all
  *   notifications     → queryKeys.notifications.all
+ *   doctors           → queryKeys.doctors.all + useUsers(CP_DOCTOR_USERS_FILTERS) (layout also seeds doctor users)
  *   appointments_mgmt / telehealth → appointments.all + categories/patients/assignees/dashboardAccess.accepted
  */
 
@@ -37,7 +38,10 @@ import {
   prefetchInvitationsForUser,
   prefetchGoogleCalendarStatus,
 } from "@/lib/server-prefetch";
-import { CP_ADMIN_USERS_FILTERS } from "@/lib/control-panel-users-filters";
+import {
+  CP_ADMIN_USERS_FILTERS,
+  CP_DOCTOR_USERS_FILTERS,
+} from "@/lib/control-panel-users-filters";
 import type { UsersListResponse } from "@/hooks/useUsers";
 import { prefetchOrgBillingInvoicesByOrgIds } from "@/lib/org-billing-prefetch";
 import type { OrgBillingCachePayload } from "@/lib/org-billing-prefetch";
@@ -70,6 +74,11 @@ export type ControlPanelSectionPrefetchPayload = {
   dashboardAccessAccepted?: DashboardAccessRow[] | null;
   /** Doctor directory — seeds queryKeys.doctors.all on doctor-management tab. */
   doctorsDirectory?: { doctors: import("@/lib/server-prefetch").DoctorPrefetchRow[] } | null;
+  /**
+   * Doctor user roster — seeds useUsers(CP_DOCTOR_USERS_FILTERS) on doctor-management tab.
+   * CP layout also seeds the same key for sidebar pickers; section prefetch keeps the tab self-contained.
+   */
+  doctorUsers?: UsersListResponse | null;
   /** Admin roster — seeds useUsers(CP_ADMIN_USERS_FILTERS) on user-admin-management tab. */
   adminUsers?: UsersListResponse | null;
   /** Every org on CP org tab — seeds `queryKeys.invoices.byOrganization(id)`. */
@@ -144,8 +153,13 @@ export async function prefetchControlPanelSection(
         notificationsPrefetchUpdatedAt,
       };
     }
-    case "doctors":
-      return { doctorsDirectory: await prefetchDoctors() };
+    case "doctors": {
+      const [doctorsDirectory, doctorUsers] = await Promise.all([
+        prefetchDoctors(),
+        prefetchUsersList(CP_DOCTOR_USERS_FILTERS),
+      ]);
+      return { doctorsDirectory, doctorUsers };
+    }
     case "users_admin":
       return { adminUsers: await prefetchUsersList(CP_ADMIN_USERS_FILTERS) };
     case "google-calendar":

@@ -1,6 +1,6 @@
 # Agile V — Session Activation (every prompt)
 
-<!-- HealthCal Pro | v1.4 | Read with STATE.md on every chat | Activated: 2026-06-11 (session) -->
+<!-- HealthCal Pro | v1.4 | Read with STATE.md on every chat | Activated: 2026-06-12 -->
 
 ## 1. Load skills (mandatory)
 
@@ -16,18 +16,18 @@
 
 ## 2. Read (resume)
 
-1. `STATE.md` — cycle **C17** shipped; **940/940** verify PASS
+1. `STATE.md` — cycle **C22** shipped; **975/975** verify PASS
 2. `CHECKPOINTS.md` — only if PENDING HITL (none)
-3. `REQUIREMENTS.md` — parent REQ before any work (REQ-0001..0063)
+3. `REQUIREMENTS.md` — parent REQ before any work (REQ-0001..0065)
 4. `agile-v-core.md` — repo binding
 
 ## 3. Before coding (mandatory gate)
 
 1. Read `STATE.md` + `CHECKPOINTS.md` (halt if PENDING HITL).
 2. Resolve parent `REQ-XXXX` in `REQUIREMENTS.md` — **halt if missing**.
-3. Run stage: **Specify** (scope) → **Constrain** (engineering rules) → only then **Orchestrate** (code).
-4. On CRUD: `queryKeys` + invalidation helpers — no hardcoded keys, no skip.
-5. After synthesis: **Prove** (manifest/log) → **Verify** (`npm test && tsc && lint && build`) — Red Team, not self-sign-off.
+3. Run stage: **Specify** → **Constrain** → only then **Orchestrate**.
+4. On CRUD: `queryKeys` + invalidation helpers — no hardcoded keys.
+5. After synthesis: **Prove** → **Verify** (`npm test && tsc && lint && build`) — Red Team, not self-sign-off.
 
 ## 4. Infinity Loop
 
@@ -45,13 +45,15 @@ Specify → Constrain → [Gate1] → Orchestrate → Prove → Verify → [Gate
 | Cycle | REQ | Status | Gate |
 |-------|-----|--------|------|
 | C1–C2 | 0001..0008 | closed (frozen) | ✓ |
-| C3–C9 | 0009..0045 | verify/shipped | GATE-0005..TBD pending |
-| C10–C16 | 0046..0062 | verify/shipped | pending |
-| **C17** | **0063** | **verify PASS** | gate TBD |
+| C3–C17 | 0009..0063 | verify/shipped | GATE-0005..TBD pending |
+| C18–C18.1 | 0064..0065 | verify/shipped | pending |
+| C19–C19.1 | 0064..0065 | verify/shipped | pending |
+| C20–C22 | 0065 | verify/shipped | pending |
+| **C22** | **0065** | **verify PASS** | gate TBD |
 
-**Baseline:** **940** tests · **185** files · HEAD `5d16082` · verified 2026-06-11
+**Baseline:** **975** tests · **195** files · HEAD `24aa910` · verified 2026-06-12
 
-**WIP (uncommitted):** C17.1 glass `cursor-pointer` dedupe — 20 files local; re-verify before commit.
+**Next:** Human Gate backlog → archive C3–C22 → **Specify C23** (new REQ) before new code.
 
 ## 7. Halt if
 

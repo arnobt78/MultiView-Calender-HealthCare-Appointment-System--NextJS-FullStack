@@ -1,21 +1,43 @@
 # Agile V — Living State
 
-<!-- Updated: 2026-06-11 | Project: HealthCal Pro | Resume: ACTIVATION.md -->
+<!-- Updated: 2026-06-12 | Project: HealthCal Pro | Resume: ACTIVATION.md -->
 
 ## Current Status
 
 | Field | Value |
 |-------|-------|
-| **Cycle** | **C22** — org detail UI parity |
-| **Phase** | Verify |
-| **Stage** | 4 |
+| **Cycle** | **C24** — rich filter dropdown options |
+| **Phase** | Orchestrate → Verify |
+| **Stage** | 3 |
 | **Status** | verify PASS |
-| **Last Updated** | 2026-06-11 |
-| **Parent REQ** | REQ-0065 |
+| **Last Updated** | 2026-06-12 |
+| **Parent REQ** | REQ-0068 |
+| **HEAD** | `24aa910` |
 
-## Verify baseline (C22 close)
+## Verify baseline (C24 close)
 
-**975/975** (195 files) · tsc · lint · build — PASS
+**997/997** (200 files) · tsc · lint · build — PASS
+
+## C24 scope
+
+- `FilterSelectOptionLabel` + rich `FilterSelect` (per-option icon + text color).
+- `filter-select-option-presets.ts` — role, invoice, active, verification, photo, care tier, calendar, specialty, org filters.
+- Migrated ~12 enum FilterSelect call sites; org billing footer `border-t` removed.
+
+## Verify baseline (C23.1 close)
+
+**990/990** (199 files) · tsc · lint · build — PASS
+
+## C23.1 scope
+
+- `OrganizationDetailMembersSection` — `ClinicalListFilterToolbar` + role `FilterSelect` above members table.
+- `filterOrganizationDetailMembers` client-side search/role filter; header counts stay full roster.
+
+## C23 scope
+
+- Members header: `PortalPanelSubsectionHeader` + `OrganizationMembersRoleCountInlineRow` + subtitle.
+- Identity parity: `StaffUserIdentityCell`; patient `tableBadgePlacement=belowEmail` h-7.
+- Doctor tab section prefetch seeds `doctorUsers`; CP assigned patients stacked header.
 
 ## C22 scope
 

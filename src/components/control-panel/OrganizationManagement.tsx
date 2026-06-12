@@ -5,8 +5,6 @@ import {
   Building2,
   EllipsisVertical,
   Eye,
-  ListFilter,
-  Receipt,
   Trash2,
   Users,
 } from "lucide-react";
@@ -30,6 +28,12 @@ import { DataTable } from "@/components/shared/DataTable";
 import { AppSectionErrorBanner } from "@/components/shared/AppSectionErrorBanner";
 import { ClinicalListFilterToolbar } from "@/components/shared/filters/ClinicalListFilterToolbar";
 import { FilterSelect } from "@/components/shared/filters/FilterSelect";
+import {
+  findFilterOptionLabel,
+  orgInvoiceBillingFilterOptions,
+  orgMemberSizeFilterOptions,
+  userRoleFilterOptions,
+} from "@/lib/filter-select-option-presets";
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import {
   DropdownMenu,
@@ -56,26 +60,9 @@ import { queryKeys } from "@/lib/query-keys";
 import { resolveAppSectionRootClass } from "@/lib/section-page-layout";
 import { ORG_BILLING_PREFETCH_ORG_CAP } from "@/lib/org-billing-prefetch";
 
-const ROLE_FILTER_LABEL: Record<OrganizationRoleFilter, string> = {
-  all: "All Roles",
-  admin: "Admin",
-  doctor: "Doctor",
-  patient: "Patient",
-};
-
-const MEMBER_SIZE_LABEL: Record<OrganizationMemberSizeFilter, string> = {
-  all: "Any Size",
-  solo: "Solo (1)",
-  small: "Small (2–5)",
-  large: "Large (6+)",
-};
-
-const INVOICE_FILTER_LABEL: Record<OrganizationInvoiceFilter, string> = {
-  all: "All Billing",
-  has_invoices: "Has Invoices",
-  outstanding: "Outstanding Balance",
-  none: "No Invoices",
-};
+const ORG_ROLE_OPTIONS = userRoleFilterOptions();
+const ORG_MEMBER_SIZE_OPTIONS = orgMemberSizeFilterOptions();
+const ORG_INVOICE_OPTIONS = orgInvoiceBillingFilterOptions();
 
 function OrganizationRowActions({
   org,
@@ -303,49 +290,39 @@ function OrganizationManagementInner() {
             <FilterSelect
               value={roleFilter}
               onValueChange={(v) => setRoleFilter(v as OrganizationRoleFilter)}
-              displayLabel={ROLE_FILTER_LABEL[roleFilter]}
-              icon={ListFilter}
+              displayLabel={findFilterOptionLabel(ORG_ROLE_OPTIONS, roleFilter, "All Roles")}
               size="toolbar"
               triggerClassName="max-w-[180px]"
               ariaLabel="Filter by your role"
-              options={[
-                { value: "all", label: "All Roles" },
-                { value: "admin", label: "Admin" },
-                { value: "doctor", label: "Doctor" },
-                { value: "patient", label: "Patient" },
-              ]}
+              options={ORG_ROLE_OPTIONS}
             />
             <FilterSelect
               value={memberSizeFilter}
               onValueChange={(v) =>
                 setMemberSizeFilter(v as OrganizationMemberSizeFilter)
               }
-              displayLabel={MEMBER_SIZE_LABEL[memberSizeFilter]}
-              icon={Users}
+              displayLabel={findFilterOptionLabel(
+                ORG_MEMBER_SIZE_OPTIONS,
+                memberSizeFilter,
+                "Any Size"
+              )}
               size="toolbar"
               triggerClassName="max-w-[180px]"
               ariaLabel="Filter by member count"
-              options={[
-                { value: "all", label: "Any Size" },
-                { value: "solo", label: "Solo (1)" },
-                { value: "small", label: "Small (2–5)" },
-                { value: "large", label: "Large (6+)" },
-              ]}
+              options={ORG_MEMBER_SIZE_OPTIONS}
             />
             <FilterSelect
               value={invoiceFilter}
               onValueChange={(v) => setInvoiceFilter(v as OrganizationInvoiceFilter)}
-              displayLabel={INVOICE_FILTER_LABEL[invoiceFilter]}
-              icon={Receipt}
+              displayLabel={findFilterOptionLabel(
+                ORG_INVOICE_OPTIONS,
+                invoiceFilter,
+                "All Billing"
+              )}
               size="toolbar"
               triggerClassName="min-w-[200px] max-w-[min(42vw,280px)]"
               ariaLabel="Filter by billing"
-              options={[
-                { value: "all", label: "All Billing" },
-                { value: "has_invoices", label: "Has Invoices" },
-                { value: "outstanding", label: "Outstanding Balance" },
-                { value: "none", label: "No Invoices" },
-              ]}
+              options={ORG_INVOICE_OPTIONS}
             />
           </ClinicalListFilterToolbar>
         }

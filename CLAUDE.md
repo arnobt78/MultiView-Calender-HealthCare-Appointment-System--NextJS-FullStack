@@ -2,14 +2,13 @@
 
 Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
-## Latest (2026-06-11)
+## Latest (2026-06-12)
 
-- **C22 (REQ-0065):** Org detail UI parity — `EntityDetailRecordAuditCard`; `owner` actor row; `{Org}'s Members` + role counts; `cpClinicalListTableFrameClassName`; `DoctorIdentityRow`/`PatientIdentityCell` member cells; `OrganizationMemberRowActions` ⋮. Schema: `organizations.updated_at` + `created_by`/`updated_by`; `npm run db:backfill-org-audit`.
-- **C21 (REQ-0065):** Org dialogs — rich pickers, role auto-fill, `initialMembers` API; `OrganizationDialogPickerSearchInput`; `organizationDialogPickerScrollClass` (no stable gutter).
-- **C20 (REQ-0065):** Org billing `PortalPanelSection`; possessive title + status inline; filters compact+full; `Invoice N: #id`; Category label; portal density py.
-- **C19.1:** Detail members `UserRoleBadge`; `db:seed-org-portal-patient-member`.
-- **C19 (REQ-0064):** Org list — `indigoGlassTableFrameClass`; `EntityTitleLink`/`UserRoleBadge`/`OrganizationMembersRoleBadges`.
-- **Verify:** **975/975** · tsc · lint · build PASS.
+- **C24 (REQ-0068):** Rich `FilterSelect` — `FilterSelectOptionLabel` + `filter-select-option-presets.ts`; ~12 enum filter call sites; org billing footer no `border-t`.
+- **C23.1 (REQ-0067):** Org detail members filter row (`OrganizationDetailMembersSection`); client search/role filter.
+- **C23 (REQ-0066):** Members header parity; `StaffUserIdentityCell`; doctor CP `doctorUsers` prefetch; doctor detail subtitle.
+- **C22 (REQ-0065):** Org detail audit card; `{Org}'s Members` + role counts; member identity/actions.
+- **Verify:** **997/997** · tsc · lint · build PASS.
 
 ## Never / Always
 
@@ -23,26 +22,24 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 |-------|--------|
 | Appointment | `invalidateAfterAppointmentMutation` |
 | Patient | `invalidateEntityAffectingAppointments` + `invalidatePatientDetailAndSnapshot` |
-| Invoice | `invalidateInvoicesAndOverview` / `invalidateInvoicesBilling` (+ `getOrganizationIdFromInvoiceCache`) |
+| Invoice | `invalidateInvoicesAndOverview` / `invalidateInvoicesBilling` |
 | Organization | `invalidateOrganizations` / `invalidateOrganizationDetail` |
 | Types/config | `invalidateAppointmentTypeDerived` |
 
-Cross-tab: `query-cache-cross-tab.ts` (`ORGANIZATIONS`, `INVOICES_BILLING` on org detail).
+Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Key paths
 
-- **Org list (C19):** `OrganizationManagement.tsx`, `organization-management-columns.tsx`, `OrganizationMembersRoleBadges.tsx`, `indigoGlassTableFrameClass`
-- **Org dialogs (C21):** `organization-dialog/*`, `organization-member-role.ts`, `StaffAppointmentPickerField` indigo tone
-- **Org billing (C20):** `OrganizationBillingPanel.tsx`, `organization-billing-display.ts`, `InvoicePortalListCard`
-- **Org detail (C22):** `OrganizationDetailScreen`, `organization-detail-load.ts` (enriched members), `organization-detail-display.ts`, `organization-detail/OrganizationMemberRowActions.tsx`, `mapOrganizationRecordAuditActors`
-- **Org detail (C18.2):** `useOrganizationDetail`, `organization-detail-client.ts`, `organization-dialog/`
+- **Filters (C24):** `FilterSelect.tsx`, `FilterSelectOptionLabel.tsx`, `filter-select-option-presets.ts`, `findFilterOptionLabel`
+- **Org members (C23.1):** `OrganizationDetailMembersSection.tsx`, `organization-detail-members-filter.ts`
+- **Org detail (C22–C23):** `OrganizationDetailScreen`, `organization-detail-members-columns.tsx`, `OrganizationMembersRoleCountInlineRow`, `StaffUserIdentityCell`
+- **Org billing (C20):** `OrganizationBillingPanel.tsx`, `InvoicePortalListCard`
 - **CP lists:** `cpClinicalListTableFrameClassName` + tone shells (`sky`/`violet`/`indigo`/`emerald`)
-- Entity detail: `EntityDetailPageShell.tsx`, `EntityDetailBackLink.tsx`, `EntityDetailFooterRow.tsx`
-- Invoice: `InvoicePortalListCard.tsx`, `InvoiceDetailLiveBody`, `invoice-dialog/`
+- Entity detail: `EntityDetailPageShell`, `EntityDetailBackLink`, `EntityDetailFooterRow`
 
 ## Agile V
 
-`.agile-v/ACTIVATION.md` · `STATE.md` · **C22 shipped** (REQ-0065).
+`.agile-v/ACTIVATION.md` · `STATE.md` · **C24 shipped** (REQ-0068).
 
 ## Principle
 

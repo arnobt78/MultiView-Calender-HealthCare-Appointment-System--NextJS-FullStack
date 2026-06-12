@@ -6,10 +6,10 @@
     "repository": "calendar-appointment",
     "initialized": "2026-05-30",
     "bootstrap_completed": "2026-06-04",
-    "bootstrap_refresh": "2026-06-11T11:45:00Z"
+    "bootstrap_refresh": "2026-06-12T10:05:00Z"
   },
   "cycle": {
-    "current": "C17",
+    "current": "C22",
     "status": "verify_complete",
     "started": "2026-06-10",
     "closed": null,

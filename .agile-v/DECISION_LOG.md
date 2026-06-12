@@ -87,3 +87,10 @@
 | 2026-06-11T22:30:00Z | build | C20 org billing UI parity | PortalPanelSection shell; possessive title + status inline row; filters on compact+full; Invoice N: #id on portal lists; 966/966 | REQ-0065 |
 | 2026-06-11T23:30:00Z | build | C21 org dialog UX parity | OrganizationDialogHeader; indigo pickers; role auto-fill; create initialMembers transaction; 970/970 | REQ-0065 |
 | 2026-06-11T16:30:00Z | build | C22 org detail UI parity | Record Audit card; org audit schema; rich owner/member rows; CP table shells; ⋮ member actions; 975/975 | REQ-0065 |
+| 2026-06-12T10:05:00Z | ops | Agile V session activation | Refreshed ACTIVATION/STATE/AGENTS/VALIDATION/EVAL/BUILD_MANIFEST; C22 Accept; ready C23 Specify | REQ-0065 |
+| 2026-06-12T14:00:00Z | specify | C23 doctor CP + org members UI | REQ-0066: billing-style members header, identity cell parity, doctorUsers section prefetch | REQ-0066 |
+| 2026-06-12T14:30:00Z | verify | C23 shipped | Members billing header, identity cells, doctorUsers prefetch, CP assigned patients header; 982/982 | REQ-0066 |
+| 2026-06-12T15:00:00Z | specify | C23.1 members filter row | REQ-0067: ClinicalListFilterToolbar + role dropdown above org members table | REQ-0067 |
+| 2026-06-12T15:35:00Z | verify | C23.1 shipped | Members filter toolbar + pure filter lib; 990/990 | REQ-0067 |
+| 2026-06-12T16:00:00Z | specify | C24 rich filter dropdowns | REQ-0068: FilterSelect icon/color presets + billing footer border | REQ-0068 |
+| 2026-06-12T16:30:00Z | verify | C24 shipped | Rich filter presets app-wide; org billing footer border fix; 997/997 | REQ-0068 |

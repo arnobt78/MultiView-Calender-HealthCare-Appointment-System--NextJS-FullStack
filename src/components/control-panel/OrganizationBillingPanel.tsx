@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowRight, ListFilter, Receipt } from "lucide-react";
+import { ArrowRight, Receipt } from "lucide-react";
 import { useMemo, useState } from "react";
 import { apiClient } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
@@ -31,18 +31,14 @@ import {
   type DoctorPortalInvoiceStatusFilter,
 } from "@/lib/invoice-list-display";
 import { countDoctorPortalInvoicesByStatus } from "@/lib/doctor-portal-billing-display";
+import {
+  findFilterOptionLabel,
+  invoiceStatusFilterOptions,
+} from "@/lib/filter-select-option-presets";
 
 const COMPACT_INVOICE_LIMIT = 3;
 
-const STATUS_OPTIONS: { value: DoctorPortalInvoiceStatusFilter; label: string }[] = [
-  { value: "all", label: "All Statuses" },
-  { value: "draft", label: "Draft" },
-  { value: "sent", label: "Sent" },
-  { value: "paid", label: "Paid" },
-  { value: "overdue", label: "Overdue" },
-  { value: "cancelled", label: "Cancelled" },
-  { value: "refunded", label: "Refunded" },
-];
+const STATUS_OPTIONS = invoiceStatusFilterOptions();
 
 type OrgBillingDataProps = {
   organizationId: string;
@@ -199,10 +195,7 @@ function OrganizationBillingPanelBody({
         <FilterSelect
           value={statusFilter}
           onValueChange={(v) => setStatusFilter(v as DoctorPortalInvoiceStatusFilter)}
-          displayLabel={
-            STATUS_OPTIONS.find((o) => o.value === statusFilter)?.label ?? "All Statuses"
-          }
-          icon={ListFilter}
+          displayLabel={findFilterOptionLabel(STATUS_OPTIONS, statusFilter, "All Statuses")}
           size="toolbar"
           triggerClassName="max-w-[200px]"
           ariaLabel="Filter invoices by status"
@@ -234,7 +227,7 @@ function OrganizationBillingPanelBody({
         <>
           <OrganizationBillingInvoiceCards invoices={visibleInvoices} />
           {variant === "compact" ? (
-            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-indigo-100/80 pt-2 text-xs text-muted-foreground">
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 text-xs text-muted-foreground">
               <span>
                 Showing {visibleInvoices.length} of {filtered.length} matching
                 {filtered.length !== invoices.length
@@ -253,7 +246,7 @@ function OrganizationBillingPanelBody({
               ) : null}
             </div>
           ) : (
-            <p className="border-t border-indigo-100/80 pt-2 text-xs text-muted-foreground">
+            <p className="pt-2 text-xs text-muted-foreground">
               {filtered.length} of {invoices.length} invoices
             </p>
           )}

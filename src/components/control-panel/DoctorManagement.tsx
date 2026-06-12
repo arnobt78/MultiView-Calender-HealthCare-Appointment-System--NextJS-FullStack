@@ -8,14 +8,11 @@
 import { type ColumnDef } from "@tanstack/react-table";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  CalendarClock,
   EllipsisVertical,
   Eye,
-  ListFilter,
   Pencil,
   Power,
   PowerOff,
-  Stethoscope,
   Trash2,
   UserPlus,
 } from "lucide-react";
@@ -35,6 +32,12 @@ import { DOCTOR_MANAGEMENT_DEMO_NOTE } from "@/lib/demo-showcase-copy";
 import { ControlPanelEntityListShell } from "@/components/control-panel/ControlPanelEntityListShell";
 import { ClinicalListFilterToolbar } from "@/components/shared/filters/ClinicalListFilterToolbar";
 import { FilterSelect } from "@/components/shared/filters/FilterSelect";
+import {
+  activeInactiveFilterOptions,
+  doctorAvailabilityFilterOptions,
+  doctorSpecialtyFilterOptions,
+  findFilterOptionLabel,
+} from "@/lib/filter-select-option-presets";
 import { APP_INNER_SCROLL_STICKY_TOP_CLASS } from "@/lib/portal-z-index";
 import {
   DoctorListFiltersProvider,
@@ -91,17 +94,9 @@ import {
 
 type DoctorTableRow = User & { directory?: DoctorDirectoryRow };
 
-const STATUS_FILTER_LABEL: Record<DoctorStatusFilter, string> = {
-  all: "All Statuses",
-  active: "Active",
-  inactive: "Inactive",
-};
-
-const AVAILABILITY_FILTER_LABEL: Record<DoctorAvailabilityFilter, string> = {
-  all: "All Availability",
-  with: "With Hours",
-  without: "No Hours",
-};
+const DOCTOR_STATUS_OPTIONS = activeInactiveFilterOptions();
+const DOCTOR_AVAILABILITY_OPTIONS = doctorAvailabilityFilterOptions();
+const DOCTOR_SPECIALTY_OPTIONS = doctorSpecialtyFilterOptions(SPECIALTIES);
 
 function DoctorActions({
   row,
@@ -451,43 +446,39 @@ function DoctorManagementInner() {
           onReset={resetFilters}
         >
           <FilterSelect
-            icon={ListFilter}
             value={status}
             onValueChange={(v) => setStatus(v as DoctorStatusFilter)}
-            displayLabel={STATUS_FILTER_LABEL[status]}
+            displayLabel={findFilterOptionLabel(DOCTOR_STATUS_OPTIONS, status, "All Statuses")}
             size="toolbar"
             triggerClassName="max-w-[200px]"
             ariaLabel="Filter by status"
-            options={(["all", "active", "inactive"] as const).map((k) => ({
-              value: k,
-              label: STATUS_FILTER_LABEL[k],
-            }))}
+            options={DOCTOR_STATUS_OPTIONS}
           />
           <FilterSelect
-            icon={Stethoscope}
             value={specialty}
             onValueChange={setSpecialty}
-            displayLabel={specialty === "all" ? "All Specialties" : specialty}
+            displayLabel={findFilterOptionLabel(
+              DOCTOR_SPECIALTY_OPTIONS,
+              specialty,
+              specialty === "all" ? "All Specialties" : specialty
+            )}
             size="toolbar"
             triggerClassName="max-w-[220px]"
             ariaLabel="Filter by specialty"
-            options={[
-              { value: "all", label: "All Specialties" },
-              ...SPECIALTIES.map((s) => ({ value: s, label: s })),
-            ]}
+            options={DOCTOR_SPECIALTY_OPTIONS}
           />
           <FilterSelect
-            icon={CalendarClock}
             value={availability}
             onValueChange={(v) => setAvailability(v as DoctorAvailabilityFilter)}
-            displayLabel={AVAILABILITY_FILTER_LABEL[availability]}
+            displayLabel={findFilterOptionLabel(
+              DOCTOR_AVAILABILITY_OPTIONS,
+              availability,
+              "All Availability"
+            )}
             size="toolbar"
             triggerClassName="max-w-[220px]"
             ariaLabel="Filter by availability"
-            options={(["all", "with", "without"] as const).map((k) => ({
-              value: k,
-              label: AVAILABILITY_FILTER_LABEL[k],
-            }))}
+            options={DOCTOR_AVAILABILITY_OPTIONS}
           />
         </ClinicalListFilterToolbar>
         }

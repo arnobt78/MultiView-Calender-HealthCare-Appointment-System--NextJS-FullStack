@@ -306,3 +306,25 @@ human_gate_2: TBD
 | release build | npm run build | PASS | REQ-0064..0065 |
 
 **EvalGate (C18.1):** PASS (automated) — Human Gate TBD before archive.
+
+## C22 — ER-C22-VERIFY
+
+```yaml
+eval_run_id: ER-C22-VERIFY
+eval_timestamp: "2026-06-12T10:02:00Z"
+policy_version_ref: "1.0.0"
+eval_gate_status: PASS
+eval_gate_rationale: "C22 org detail UI parity — Record Audit, enriched members, audit schema/backfill; npm test 975/975, tsc, eslint, build PASS"
+cycle: C22
+release_commit: "24aa910"
+human_gate_2: TBD
+```
+
+| Suite | Command | Result | LINKED_REQ |
+|-------|---------|--------|------------|
+| full regression | npm test | PASS 975/975 | REQ-0065 |
+| typecheck | npx tsc --noEmit | PASS | REQ-0065 |
+| lint | npm run lint | PASS | REQ-0065 |
+| release build | npm run build | PASS | REQ-0065 |
+
+**EvalGate (C22):** PASS (automated) — Human Gate TBD before archive.

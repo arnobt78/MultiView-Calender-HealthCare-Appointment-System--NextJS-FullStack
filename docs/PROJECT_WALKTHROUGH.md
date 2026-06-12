@@ -1,16 +1,16 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-11 — C22)
+## Latest (2026-06-12 — C24 + C23)
 
-**C22:** Org detail UI parity — `EntityDetailRecordAuditCard` + `mapOrganizationRecordAuditActors`; rich `owner` via `EntityDetailAuditActorInline`; `formatOrganizationTypeLabel`; `{Org}'s Members` heading + role count line; members table uses `cpClinicalListTableFrameClassName`; identity cells (`DoctorIdentityRow`, `PatientIdentityCell`, admin avatar row); `OrganizationMemberRowActions` ⋮ (view + remove). Loader: batch user image/specialty + patient clinical by email. Schema: `organizations.updated_at`, `created_by`, `updated_by` — `migrations/017_organization_audit_users.sql`, `npm run db:backfill-org-audit`.
+**C24:** Rich filter dropdowns — `FilterSelectOption` icon/text per option; `filter-select-option-presets.ts` (roles, invoice status, active/inactive, verification, photo, care tier, calendar status/role, specialty, org size/billing, weekdays); migrated ~12 `FilterSelect` call sites; org billing list footer `border-t` removed. Entity pickers (`CategoryFilterSelect`, `PatientFilterSelect`) + dynamic doctor list unchanged. Client-side filters only — no SSR/query/invalidation changes.
 
-**C21:** Org dialogs — `OrganizationDialogHeader`; indigo pickers; role auto-fill; create `initialMembers` transaction; optional picker clear + form reset on close.
+**C23.1:** Org detail members — `OrganizationDetailMembersSection` with `ClinicalListFilterToolbar` + role `FilterSelect`; `filterOrganizationDetailMembers` (search + role); header counts stay full roster.
 
-**C20:** Org billing `PortalPanelSection`; possessive title; status inline; `Invoice N: #id` portal cards.
+**C23:** Members header `PortalPanelSubsectionHeader` + `OrganizationMembersRoleCountInlineRow`; `StaffUserIdentityCell`; patient table `h-7`/`belowEmail`; doctor CP seeds `doctorUsers`; doctor detail assigned-patients subtitle.
 
-**C18–C19:** Org list/detail CP shell; `useOrganizationDetail`; `invalidateOrganizationDetail`; `indigoGlassTableFrameClass`; demo org patient member seed.
+**C22:** Org detail audit card; `{Org}'s Members`; member identity/actions; org audit schema.
 
-**Verify:** **975/975** · tsc · lint · build.
+**Verify:** **997/997** · tsc · lint · build.
 
 ## Prior (2026-06-10 — C17 + C16)
 

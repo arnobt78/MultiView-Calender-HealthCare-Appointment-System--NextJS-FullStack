@@ -14,6 +14,10 @@ import { Input } from "@/components/ui/input";
 import { DoctorSettingsFieldLabel } from "@/components/shared/doctor-settings/DoctorSettingsFieldLabel";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FilterSelect } from "@/components/shared/filters/FilterSelect";
+import {
+  findFilterOptionLabel,
+  weekdayFilterOptions,
+} from "@/lib/filter-select-option-presets";
 import { GlassCollapsibleDetails } from "@/components/shared/GlassCollapsibleDetails";
 import { GlassDoctorSettingsActionChip } from "@/components/shared/doctor-settings/GlassDoctorSettingsActionChip";
 import { DoctorSettingsSlotRow } from "@/components/shared/doctor-settings/DoctorSettingsSlotRow";
@@ -58,6 +62,8 @@ import {
   DELETE_WEEKLY_HOURS_WINDOW_CONFIRM_TITLE,
 } from "@/lib/confirm-delete-dialog-copy";
 import { cn, toTitleCaseLabel } from "@/lib/utils";
+
+const WEEKDAY_FILTER_OPTIONS = weekdayFilterOptions(WEEKDAY_LABELS);
 
 type Props = {
   doctorId: string;
@@ -271,13 +277,14 @@ export function DoctorWeeklyScheduleEditor({
               <FilterSelect
                 value={editWeekday}
                 onValueChange={setEditWeekday}
-                displayLabel={toTitleCaseLabel(WEEKDAY_LABELS[Number(editWeekday)] ?? "")}
+                displayLabel={findFilterOptionLabel(
+                  WEEKDAY_FILTER_OPTIONS,
+                  editWeekday,
+                  toTitleCaseLabel(WEEKDAY_LABELS[Number(editWeekday)] ?? "")
+                )}
                 size="toolbar"
                 triggerClassName={cn(doctorSettingsGlassSelectTriggerClass, "w-full")}
-                options={WEEKDAY_LABELS.map((label, i) => ({
-                  value: String(i),
-                  label,
-                }))}
+                options={WEEKDAY_FILTER_OPTIONS}
               />
             </div>
             <div className="space-y-1">
@@ -381,13 +388,14 @@ export function DoctorWeeklyScheduleEditor({
             <FilterSelect
               value={newWeekday}
               onValueChange={setNewWeekday}
-              displayLabel={toTitleCaseLabel(WEEKDAY_LABELS[Number(newWeekday)] ?? "")}
+              displayLabel={findFilterOptionLabel(
+                WEEKDAY_FILTER_OPTIONS,
+                newWeekday,
+                toTitleCaseLabel(WEEKDAY_LABELS[Number(newWeekday)] ?? "")
+              )}
               size="toolbar"
               triggerClassName={cn(doctorSettingsGlassSelectTriggerClass, "w-full")}
-              options={WEEKDAY_LABELS.map((label, i) => ({
-                value: String(i),
-                label,
-              }))}
+              options={WEEKDAY_FILTER_OPTIONS}
             />
             </div>
             <div className="space-y-1">

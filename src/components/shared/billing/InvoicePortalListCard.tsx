@@ -67,7 +67,7 @@ export function InvoicePortalListCard({
         </div>
       </div>
 
-      <div className="flex w-full min-w-0 flex-col gap-1 px-2.5 py-1">
+      <div className="flex w-full min-w-0 flex-col gap-1 px-4 py-2">
         <InvoiceDescriptionTableCell
           invoice={invoice}
           viewerRole={viewerRole}

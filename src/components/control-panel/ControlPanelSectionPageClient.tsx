@@ -17,7 +17,10 @@ import {
   seedDashboardAccessAcceptedCacheFromSsr,
   seedOrgBillingCacheFromSsr,
 } from "@/lib/cp-list-query-ssr-seed";
-import { CP_ADMIN_USERS_FILTERS } from "@/lib/control-panel-users-filters";
+import {
+  CP_ADMIN_USERS_FILTERS,
+  CP_DOCTOR_USERS_FILTERS,
+} from "@/lib/control-panel-users-filters";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { invalidateInvoicesAndOverview } from "@/lib/query-client";
@@ -81,6 +84,9 @@ export function ControlPanelSectionPageClient({
     if (initial?.doctorsDirectory != null) {
       seedDoctorsDirectoryCacheFromSsr(queryClient, initial.doctorsDirectory);
     }
+    if (initial?.doctorUsers != null) {
+      seedUsersListCacheFromSsr(queryClient, CP_DOCTOR_USERS_FILTERS, initial.doctorUsers);
+    }
     if (initial?.adminUsers != null) {
       seedUsersListCacheFromSsr(queryClient, CP_ADMIN_USERS_FILTERS, initial.adminUsers);
     }
@@ -129,6 +135,7 @@ export function ControlPanelSectionPageClient({
     initial?.patients,
     initial?.categories,
     initial?.doctorsDirectory,
+    initial?.doctorUsers,
     initial?.adminUsers,
     initial?.dashboardOverview,
     initial?.dashboardOverviewUpdatedAt,

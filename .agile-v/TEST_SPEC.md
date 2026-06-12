@@ -49,6 +49,13 @@
 | TC-0041 | C7 | REQ-0036 | unit | Cron candidates + SMS phone resolver | `cron-reminder-candidates`, `reminder-recipient-phone` | PASS |
 | TC-0042 | C7 | REQ-0037 | unit | Phone validation + form clinical | `phone-validation`, `patient-form-clinical` | PASS |
 | TC-0043 | C7 | REQ-0034..0037 | regression | Full suite + tsc + lint + build | project default | PASS |
+| TC-0044 | C23 | REQ-0066 | unit | Org members display + role count row | `organization-members-display.test.ts`, `OrganizationMembersRoleCountInlineRow.test.tsx` | PASS |
+| TC-0045 | C23 | REQ-0066 | unit | Doctor detail display subtitle | `doctor-detail-display.test.ts` | PASS |
+| TC-0046 | C23 | REQ-0066 | regression | Full suite + tsc + lint + build | project default | PASS |
+| TC-0047 | C23.1 | REQ-0067 | unit | Org members filter lib | `organization-detail-members-filter.test.ts` | PASS |
+| TC-0048 | C23.1 | REQ-0067 | regression | Full suite + tsc + lint + build | project default | PASS |
+| TC-0049 | C24 | REQ-0068 | unit | Filter select presets | `filter-select-option-presets.test.ts` | PASS |
+| TC-0050 | C24 | REQ-0068 | regression | Full suite + tsc + lint + build | project default | PASS |
 
 ## Regression Baseline
 

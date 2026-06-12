@@ -227,11 +227,38 @@
 | ART-0323 | C18 | REQ-0064..0065 | Detail page SSR billing prefetch + seed | built |
 | ART-0324 | C18 | REQ-0064..0065 | Tests: enrich, routes, metrics, columns | built |
 | ART-0325 | C18 | REQ-0064..0065 | Verify **948/948** tsc lint build PASS | built |
+| ART-0326 | C19 | REQ-0064 | `indigoGlassTableFrameClass`; org list columns polish | built |
+| ART-0327 | C19.1 | REQ-0064 | Detail members `UserRoleBadge`; `db:seed-org-portal-patient-member` | built |
+| ART-0328 | C20 | REQ-0065 | `PortalPanelSection` org billing; portal invoice card density | built |
+| ART-0329 | C21 | REQ-0065 | `organization-dialog/*`; `initialMembers` API; picker clear/reset | built |
+| ART-0330 | C22 | REQ-0065 | Org audit schema + `backfill-organization-audit.ts` | built |
+| ART-0331 | C22 | REQ-0065 | `organization-detail-load` enriched members + owner actor | built |
+| ART-0332 | C22 | REQ-0065 | `OrganizationDetailScreen` Record Audit + members table parity | built |
+| ART-0333 | C22 | REQ-0065 | `OrganizationMemberRowActions` + `OrganizationDetailMembersSectionHeading` | built |
+| ART-0334 | C22 | REQ-0065 | `mapOrganizationRecordAuditActors`; `organization-detail-display.ts` | built |
+| ART-0335 | C22 | REQ-0065 | Verify **975/975** tsc lint build PASS | built |
+| ART-0336 | C23 | REQ-0066 | `organization-members-display.ts` + role count inline row | built |
+| ART-0337 | C23 | REQ-0066 | `OrganizationDetailMembersSectionHeading` PortalPanelSubsectionHeader | built |
+| ART-0338 | C23 | REQ-0066 | `StaffUserIdentityCell` + members column identity parity | built |
+| ART-0339 | C23 | REQ-0066 | `PatientIdentityCell` table badges below email | built |
+| ART-0340 | C23 | REQ-0066 | Doctor tab `doctorUsers` section prefetch + seed | built |
+| ART-0341 | C23 | REQ-0066 | CP doctor detail assigned patients stacked header | built |
+| ART-0342 | C23 | REQ-0066 | Tests: members display, role count row, identity | built |
+| ART-0343 | C23 | REQ-0066 | Verify suite tsc lint build PASS | built |
+| ART-0344 | C23.1 | REQ-0067 | `organization-detail-members-filter.ts` | built |
+| ART-0345 | C23.1 | REQ-0067 | `OrganizationDetailMembersSection` filter toolbar | built |
+| ART-0346 | C23.1 | REQ-0067 | `OrganizationDetailScreen` wire members section | built |
+| ART-0347 | C23.1 | REQ-0067 | Verify suite tsc lint build PASS | built |
+| ART-0348 | C24 | REQ-0068 | `FilterSelectOptionLabel` + rich `FilterSelect` | built |
+| ART-0349 | C24 | REQ-0068 | `filter-select-option-presets.ts` | built |
+| ART-0350 | C24 | REQ-0068 | Migrate enum FilterSelect call sites (~12 files) | built |
+| ART-0351 | C24 | REQ-0068 | Org billing footer border-t removal | built |
+| ART-0352 | C24 | REQ-0068 | Tests + verify PASS | built |
 
 ## Verification Commands (project default)
 
 ```bash
-npm test        # 948 passed (C18, 2026-06-11)
+npm test        # 997 passed (C24, 2026-06-12)
 npx tsc --noEmit
 npm run lint
 npm run build

@@ -32,6 +32,7 @@ import { EntityActiveStatusBadge } from "@/components/shared/entity-display/Enti
 import { ClinicalDataTable } from "@/components/shared/ClinicalDataTable";
 import { PatientIdentityCell } from "@/components/shared/person-display/PatientIdentityCell";
 import { EntityDetailSnapshotSectionHeading } from "@/components/shared/entity-detail/EntityDetailSnapshotSectionHeading";
+import { PortalPanelSubsectionHeader } from "@/components/shared/PortalPanelSubsectionHeader";
 import { EntityDetailRecordAuditCard } from "@/components/shared/entity-detail/EntityDetailRecordAuditCard";
 import { EntityIdCopyInline } from "@/components/shared/EntityIdCopyInline";
 import { mapUserRecordAuditActors } from "@/lib/entity-detail-audit-actor";
@@ -55,6 +56,7 @@ import {
   resolveDoctorDetailToneClasses,
   type DoctorDetailTone,
 } from "@/lib/doctor-detail-ui-classes";
+import { DOCTOR_ASSIGNED_PATIENTS_SUBTITLE } from "@/lib/doctor-detail-display";
 import { EntityDetailPageShell } from "@/components/shared/entity-detail/EntityDetailPageShell";
 import type { AppSectionScrollShell } from "@/lib/section-page-layout";
 import { isDoctorActive } from "@/lib/entity-active-status";
@@ -465,14 +467,26 @@ export function DoctorDetailScreenShared({
 
           {showAssignedPatientsSection ? (
             <div className={entityDetailSnapshotSectionShellClass}>
-              <EntityDetailSnapshotSectionHeading
-                icon={Users}
-                sectionIconCircleClass={toneClasses.sectionIconCircleClass}
-                iconClassName={toneClasses.sectionIconClass}
-                count={assignedPatients.length}
-              >
-                {patientsSectionTitle}
-              </EntityDetailSnapshotSectionHeading>
+              {mode === "control-panel" ? (
+                <PortalPanelSubsectionHeader
+                  id="doctor-assigned-patients-heading"
+                  title={patientsSectionTitle}
+                  subtitle={DOCTOR_ASSIGNED_PATIENTS_SUBTITLE}
+                  icon={Users}
+                  iconClassName="border-emerald-100 bg-emerald-50 [&_svg]:text-emerald-600"
+                  count={assignedPatients.length}
+                  countSkeleton={assignedPatientsLoadingUi}
+                />
+              ) : (
+                <EntityDetailSnapshotSectionHeading
+                  icon={Users}
+                  sectionIconCircleClass={toneClasses.sectionIconCircleClass}
+                  iconClassName={toneClasses.sectionIconClass}
+                  count={assignedPatients.length}
+                >
+                  {patientsSectionTitle}
+                </EntityDetailSnapshotSectionHeading>
+              )}
               <ClinicalDataTable
                 columns={patientColumns}
                 data={assignedPatients}
