@@ -258,6 +258,35 @@
 | ART-0357 | C25 | REQ-0069 | `doctor-identity-map.ts` + `DoctorFilterSelect` | built |
 | ART-0358 | C25 | REQ-0069 | ServicesDoctorFilters preset migration | built |
 | ART-0359 | C25 | REQ-0069 | Tests + verify PASS | built |
+| ART-0360 | C26 | REQ-0070 | `invoice-management-display.ts` + billing section heading | built |
+| ART-0361 | C26 | REQ-0070 | `ControlPanelEntityListShell` amber + `InvoiceVisitListCell` | built |
+| ART-0362 | C26 | REQ-0070 | KPI hints + clinical list table frame + column sort fix | built |
+| ART-0363 | C26 | REQ-0070 | Tests + verify PASS | built |
+| ART-0366 | C26.1 | REQ-0071 | `invoice-management-scope.ts` URL parse/build | built |
+| ART-0367 | C26.1 | REQ-0071 | `InvoiceManagementScopeContext` + org query | built |
+| ART-0368 | C26.1 | REQ-0071 | `OrganizationFilterSelect` + SSR org seed page | built |
+| ART-0369 | C26.1 | REQ-0071 | Tests + DECISION_LOG tradeoffs | built |
+| ART-0372 | C26.2 | REQ-0072 | `invoiceMatchesDoctorScope` + doctor filter | built |
+| ART-0373 | C26.2 | REQ-0072 | Invoice hub toolbar + URL doctor scope | built |
+| ART-0374 | C26.2 | REQ-0072 | Tests + verify PASS | built |
+| ART-0378 | C27 | REQ-0073 | `invoice-doctor-scope.ts` unified rule + Prisma where | built |
+| ART-0379 | C27 | REQ-0073 | Server doctor list + billing-totals API + invoices-scope | built |
+| ART-0380 | C27 | REQ-0073 | `byDoctor`/`byDoctorTotals` keys + `useInvoiceScopedBilling` | built |
+| ART-0381 | C27 | REQ-0073 | Scope context KPI wiring + SSR doctor seed | built |
+| ART-0382 | C27 | REQ-0073 | `mergeInvoiceIntoScopedListCaches` + scoped invalidation | built |
+| ART-0383 | C27 | REQ-0073 | Tests + verify PASS | built |
+| ART-0384 | C27.1 | REQ-0074 | removeInvoice + patchScopedTotals cache helpers | built |
+| ART-0385 | C27.1 | REQ-0074 | usePayments mutation parity (record/refund/delete) | built |
+| ART-0386 | C27.1 | REQ-0074 | Viewer-scoped server KPI + SSR seed + hook | built |
+| ART-0387 | C27.1 | REQ-0074 | Tests + verify PASS | built |
+| ART-0388 | C27.2 | REQ-0075 | `invoice-billing-kpi-aggregate.ts` server period/extended KPIs | built |
+| ART-0389 | C27.2 | REQ-0075 | Enriched payload + optimistic patch + stats row server-first | built |
+| ART-0390 | C27.2 | REQ-0075 | `useInvoiceScopedBilling` KPI expose + org panel DRY | built |
+| ART-0391 | C27.2 | REQ-0075 | SSR enriched totals seed + tests + verify PASS | built |
+| ART-0392 | C28 | REQ-0076 | invoiceKpiValueRowHint + management KPI grid all-time | built |
+| ART-0393 | C28 | REQ-0076 | Billing header inline scope filters + stats row cleanup | built |
+| ART-0394 | C28 | REQ-0076 | Status-only CP billing-totals + management cache patch | built |
+| ART-0395 | C28 | REQ-0076 | Unified CP SSR seed + tests + verify PASS | built |
 
 ## Verification Commands (project default)
 

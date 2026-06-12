@@ -1,6 +1,20 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-12 — C25 + C24)
+## Latest (2026-06-12 — C28 invoice hub)
+
+**C28 (REQ-0076):** CP billing all-time KPIs — `invoiceKpiValueRowHint` footers (no calendar month); removed period comparison cards on hub; extended KPIs from scoped list client-side; org/doctor filters inline in `InvoiceManagementBillingSectionHeading`; CP `GET /api/invoices/billing-totals` status-only (`fetchInvoiceBillingStatusPayloadForWhere`); optimistic patch via `computeInvoiceBillingManagementPayloadFromList`; unified `seedControlPanelSectionCacheFromSsr` (removed duplicate layout-effect seed).
+
+**C27.2 (REQ-0075):** `invoice-billing-kpi-aggregate.ts`; `OrgBillingCachePayload.billingKpi`; org panel uses `useInvoiceScopedBilling`.
+
+**C27.1 (REQ-0074):** Mutation cache merge/remove + totals patch; `queryKeys.invoices.viewerTotals` SSR seed.
+
+**C27 (REQ-0073):** Server `doctorId` scope; `useInvoiceScopedBilling`; scoped invalidation; `invoice-doctor-scope.ts`.
+
+**Invoice hub keys:** `invoices.all` · `viewerTotals` · `byOrganization(id)` · `byOrganizationTotals` · `byDoctor` · `byDoctorTotals`. **Invalidation:** `invalidateInvoiceScopedBilling` + existing invoice write helpers.
+
+**Verify:** **1044/1044** · tsc · lint · build.
+
+## Prior (2026-06-12 — C25 + C24)
 
 **C25:** Filter label DRY — calendar clinical role + empty-state chips via `findFilterOptionLabel` (fixes cancelled chip); `DoctorFilterSelect` + `userToDoctorIdentity` for CP patient primary-doctor filter; `/services` specialty/weekday → `FilterSelect` presets.
 

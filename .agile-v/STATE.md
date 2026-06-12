@@ -1,81 +1,39 @@
 # Agile V — Living State
 
-<!-- Updated: 2026-06-12 | Project: HealthCal Pro | Resume: ACTIVATION.md -->
+<!-- Updated: 2026-06-11 | Project: HealthCal Pro | Resume: ACTIVATION.md -->
 
 ## Current Status
 
 | Field | Value |
 |-------|-------|
-| **Cycle** | **C25** — filter label DRY + DoctorFilterSelect |
-| **Phase** | Orchestrate → Verify |
-| **Stage** | 3 |
+| **Cycle** | **C28** — CP billing all-time KPI UX + seed consolidation |
+| **Phase** | Accept |
+| **Stage** | 5 |
 | **Status** | verify PASS |
-| **Last Updated** | 2026-06-12 |
-| **Parent REQ** | REQ-0069 |
-| **HEAD** | `eb3fb8f` |
+| **Last Updated** | 2026-06-11 |
+| **Parent REQ** | REQ-0076 |
+| **HEAD** | (pending commit) |
+
+## Verify baseline (C28 close)
+
+**1044/1044** (209 files) · tsc · lint · build — PASS
+
+## C28 scope (REQ-0076)
+
+- CP KPI cards: all-time count footers (`2 paids`), no calendar month hint.
+- Org/doctor scope filters inline in billing header row.
+- CP billing-totals: status aggregates only; extended KPIs from scoped list client-side.
+- `seedControlPanelSectionCacheFromSsr` — single CP SSR seed path.
+
+## C27.2 scope (REQ-0075)
+
+- Server paid-period + extended KPIs (insights path retained).
+- Org panel DRY via `useInvoiceScopedBilling`.
+
+## C27.1 scope (REQ-0074)
+
+- Mutation cache parity + viewer totals SSR seed.
 
 ## Verify baseline (C25 close)
 
 **1001/1001** (201 files) · tsc · lint · build — PASS
-
-## C25 scope
-
-- `findFilterOptionLabel` for calendar clinical role + empty-state chips; remove `calendarClinicalRoleFilterLabel`.
-- `DoctorFilterSelect` + `userToDoctorIdentity`; PatientManagement primary-doctor filter.
-- Services specialty/weekday → FilterSelect presets.
-
-## Verify baseline (C24 close)
-
-**997/997** (200 files) · tsc · lint · build — PASS
-
-## C24 scope
-
-- `FilterSelectOptionLabel` + rich `FilterSelect` (per-option icon + text color).
-- `filter-select-option-presets.ts` — role, invoice, active, verification, photo, care tier, calendar, specialty, org filters.
-- Migrated ~12 enum FilterSelect call sites; org billing footer `border-t` removed.
-
-## Verify baseline (C23.1 close)
-
-**990/990** (199 files) · tsc · lint · build — PASS
-
-## C23.1 scope
-
-- `OrganizationDetailMembersSection` — `ClinicalListFilterToolbar` + role `FilterSelect` above members table.
-- `filterOrganizationDetailMembers` client-side search/role filter; header counts stay full roster.
-
-## C23 scope
-
-- Members header: `PortalPanelSubsectionHeader` + `OrganizationMembersRoleCountInlineRow` + subtitle.
-- Identity parity: `StaffUserIdentityCell`; patient `tableBadgePlacement=belowEmail` h-7.
-- Doctor tab section prefetch seeds `doctorUsers`; CP assigned patients stacked header.
-
-## C22 scope
-
-- `EntityDetailRecordAuditCard` + org audit schema (`updated_at`, `created_by`/`updated_by`).
-- Rich owner `EntityDetailAuditActorInline`; `formatOrganizationTypeLabel`.
-- `{Org}'s Members` heading + role count summary; `cpClinicalListTableFrameClassName`.
-- Member identity: `DoctorIdentityRow` / `PatientIdentityCell` / admin avatar row; `OrganizationMemberRowActions` ⋮.
-
-## C21 scope
-
-- `OrganizationDialogHeader` white header + DialogClose.
-- Rich indigo user/role pickers; role auto-fill from `user.role`.
-- Create org optional initial admin/doctor/patient members; API `$transaction`.
-
-## C20 scope
-
-- `PortalPanelSection` + `organizationBillingPanelClass` — possessive title, numeric count, `InvoiceStatusCountInlineRow`.
-- Compact + full: `ClinicalListFilterToolbar` + status filter above list.
-- `formatPortalInvoiceListLabel` — `Invoice N: #shortId` on doctor + org portal list cards.
-- `organization-billing-display.ts` title/subtitle helpers.
-
-## C19 scope
-
-- `indigoGlassTableFrameClass` — patient/violet table shell parity.
-- Columns: `EntityTitleLink`, `UserRoleBadge`, `OrganizationMembersRoleBadges`, muted typography, amber outstanding.
-- Billing filter width; vertical `EllipsisVertical` actions menu.
-- Demo seed: `test@patient.com` as org member role `patient`.
-
-## C18.2 scope (shipped)
-
-- `useOrganizationDetail` hook; `organization-detail-client.ts`; enriched POST members.

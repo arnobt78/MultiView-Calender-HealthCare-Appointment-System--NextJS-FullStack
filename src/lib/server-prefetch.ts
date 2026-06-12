@@ -586,6 +586,66 @@ export async function prefetchInvoiceBillingTotalsForOrganization(
   }
 }
 
+/** Mirrors GET /api/invoices?doctorId= — cache: `queryKeys.invoices.byDoctor(doctorId)`. */
+export async function prefetchInvoicesForDoctor(
+  doctorId: string,
+  userId: string,
+  role: string | null,
+  email?: string | null
+): Promise<Invoice[] | null> {
+  try {
+    const { fetchInvoicesForViewer } = await import("@/lib/invoices-scope");
+    const { attachVisitSummariesToInvoices } = await import(
+      "@/lib/invoice-visit-summary"
+    );
+    const { mapApiInvoiceToRow } = await import("@/lib/billing-invoice-map");
+    const rows = await fetchInvoicesForViewer({
+      userId,
+      role,
+      email,
+      doctorId,
+    });
+    const mapped = rows.map((row) => {
+      const base = serializeInvoice(row);
+      return mapApiInvoiceToRow({
+        ...row,
+        ...base,
+        appointment_id: row.appointment_id,
+        payments: base.payments,
+      });
+    });
+    return attachVisitSummariesToInvoices(mapped);
+  } catch {
+    return null;
+  }
+}
+
+/** Mirrors GET /api/invoices/billing-totals?doctorId= — doctor KPI aggregate payload. */
+export async function prefetchInvoiceBillingTotalsForDoctor(
+  doctorId: string
+): Promise<InvoiceBillingTotalsPayload | null> {
+  try {
+    const { fetchInvoiceBillingTotalsForDoctor } = await import("@/lib/invoices-scope");
+    return await fetchInvoiceBillingTotalsForDoctor(doctorId);
+  } catch {
+    return null;
+  }
+}
+
+/** Mirrors GET /api/invoices/billing-totals — viewer-scoped KPI (invoice hub all scope). */
+export async function prefetchInvoiceBillingTotalsForViewer(
+  userId: string,
+  role: string | null,
+  email?: string | null
+): Promise<InvoiceBillingTotalsPayload | null> {
+  try {
+    const { fetchInvoiceBillingTotalsForViewer } = await import("@/lib/invoices-scope");
+    return await fetchInvoiceBillingTotalsForViewer({ userId, role, email });
+  } catch {
+    return null;
+  }
+}
+
 /** Mirrors GET /api/notifications — unread-first list + total/unread counts. */
 export async function prefetchNotifications(
   userId: string

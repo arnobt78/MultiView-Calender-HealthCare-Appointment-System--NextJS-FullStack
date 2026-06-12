@@ -13,6 +13,10 @@ type DoctorsDirectoryCachePayload =
   | DoctorsDirectoryResponse
   | { doctors: DoctorPrefetchRow[] };
 import type { UserListFilters, UsersListResponse } from "@/hooks/useUsers";
+import {
+  CP_ADMIN_USERS_FILTERS,
+  CP_DOCTOR_USERS_FILTERS,
+} from "@/lib/control-panel-users-filters";
 
 /** Seed only when cache has no data yet (safe under React strict double-render). */
 function seedIfAbsent<T>(queryClient: QueryClient, key: QueryKey, data: T): void {
@@ -147,16 +151,46 @@ export function seedOrgBillingCacheFromSsr(
     | null
     | undefined
 ): void {
-  if (orgBillingInvoicesByOrgId == null) return;
-  for (const [orgId, payload] of Object.entries(orgBillingInvoicesByOrgId)) {
-    seedIfAbsent(queryClient, queryKeys.invoices.byOrganization(orgId), {
-      invoices: payload.invoices,
-    });
-    seedIfAbsent(queryClient, queryKeys.invoices.byOrganizationTotals(orgId), {
-      totals: payload.totals,
-      statusTotals: payload.statusTotals,
-    });
+  seedScopedInvoiceBillingCacheFromSsr(queryClient, orgBillingInvoicesByOrgId, null);
+}
+
+/** Org + doctor scoped billing SSR seeds for invoice hub and org panels. */
+export function seedScopedInvoiceBillingCacheFromSsr(
+  queryClient: QueryClient,
+  orgBillingInvoicesByOrgId:
+    | Record<string, import("@/lib/org-billing-prefetch").OrgBillingCachePayload>
+    | null
+    | undefined,
+  doctorBillingByDoctorId:
+    | Record<string, import("@/lib/org-billing-prefetch").OrgBillingCachePayload>
+    | null
+    | undefined
+): void {
+  if (orgBillingInvoicesByOrgId != null) {
+    for (const [orgId, payload] of Object.entries(orgBillingInvoicesByOrgId)) {
+      seedIfAbsent(queryClient, queryKeys.invoices.byOrganization(orgId), {
+        invoices: payload.invoices,
+      });
+      seedIfAbsent(queryClient, queryKeys.invoices.byOrganizationTotals(orgId), payload.billingKpi);
+    }
   }
+  if (doctorBillingByDoctorId != null) {
+    for (const [doctorId, payload] of Object.entries(doctorBillingByDoctorId)) {
+      seedIfAbsent(queryClient, queryKeys.invoices.byDoctor(doctorId), {
+        invoices: payload.invoices,
+      });
+      seedIfAbsent(queryClient, queryKeys.invoices.byDoctorTotals(doctorId), payload.billingKpi);
+    }
+  }
+}
+
+/** Viewer-scoped invoice hub KPI totals — seeds queryKeys.invoices.viewerTotals. */
+export function seedInvoiceViewerBillingTotalsFromSsr(
+  queryClient: QueryClient,
+  payload: import("@/lib/invoice-billing-totals").InvoiceBillingTotalsPayload | null | undefined
+): void {
+  if (payload == null) return;
+  seedIfAbsent(queryClient, queryKeys.invoices.viewerTotals, payload);
 }
 
 /** Org detail + members — seeds TanStack before detail screen hooks subscribe. */
@@ -168,4 +202,92 @@ export function seedOrganizationDetailCacheFromSsr(
   if (payload == null) return;
   seedIfAbsent(queryClient, queryKeys.organizations.detail(orgId), payload.org);
   seedIfAbsent(queryClient, queryKeys.organizations.members(orgId), payload.members);
+}
+
+/**
+ * Single CP section SSR seed — seedIfAbsent only (no layout-effect overwrite).
+ * Keys must stay aligned with useDashboardOverview, usePayments, useInvoiceScopedBilling, etc.
+ */
+export function seedControlPanelSectionCacheFromSsr(
+  queryClient: QueryClient,
+  initial: import("@/lib/control-panel-section-prefetch").ControlPanelSectionPrefetchPayload
+): void {
+  if (initial.invoices != null) {
+    seedIfAbsent(queryClient, queryKeys.invoices.all, initial.invoices);
+  }
+  if (initial.patients != null) {
+    seedPatientsListCacheFromSsr(queryClient, initial.patients);
+  }
+  if (initial.categories != null) {
+    seedCategoriesListCacheFromSsr(queryClient, initial.categories);
+  }
+  if (initial.doctorsDirectory != null) {
+    seedDoctorsDirectoryCacheFromSsr(queryClient, initial.doctorsDirectory);
+  }
+  if (initial.doctorUsers != null) {
+    seedUsersListCacheFromSsr(queryClient, CP_DOCTOR_USERS_FILTERS, initial.doctorUsers);
+  }
+  if (initial.adminUsers != null) {
+    seedUsersListCacheFromSsr(queryClient, CP_ADMIN_USERS_FILTERS, initial.adminUsers);
+  }
+  if (initial.dashboardOverview != null) {
+    seedDashboardOverviewCacheFromSsr(
+      queryClient,
+      initial.dashboardOverview,
+      initial.dashboardOverviewUpdatedAt
+    );
+  }
+  if (initial.organizations != null) {
+    seedOrganizationsListCacheFromSsr(queryClient, initial.organizations);
+  }
+  if (initial.notifications != null) {
+    seedNotificationsCacheFromSsr(
+      queryClient,
+      initial.notifications,
+      initial.notificationsPrefetchUpdatedAt
+    );
+  }
+  if (initial.appointments != null) {
+    seedAppointmentsListCacheFromSsr(queryClient, initial.appointments);
+  }
+  if (initial.assignees != null) {
+    seedIfAbsent(queryClient, queryKeys.assignees.all, initial.assignees);
+  }
+  if (initial.dashboardAccessAccepted != null) {
+    seedDashboardAccessAcceptedCacheFromSsr(queryClient, initial.dashboardAccessAccepted);
+  }
+  if (initial.adminAllAppointmentTypes != null) {
+    seedAdminAllAppointmentTypesCacheFromSsr(queryClient, initial.adminAllAppointmentTypes);
+  }
+  if (initial.globalAppointmentTypes != null) {
+    seedIfAbsent(queryClient, queryKeys.appointmentTypes.global, {
+      types: initial.globalAppointmentTypes,
+    });
+  }
+  if (initial.billingAppointmentOptions != null) {
+    seedIfAbsent(
+      queryClient,
+      queryKeys.billing.appointmentOptions("", false),
+      initial.billingAppointmentOptions
+    );
+  }
+  if (initial.appointmentInvitations != null) {
+    seedInvitationsCacheFromSsr(queryClient, "appointment", initial.appointmentInvitations);
+  }
+  if (initial.dashboardInvitations != null) {
+    seedInvitationsCacheFromSsr(queryClient, "dashboard", initial.dashboardInvitations);
+  }
+  if (initial.googleCalendarStatus != null) {
+    seedGoogleCalendarStatusCacheFromSsr(queryClient, initial.googleCalendarStatus);
+  }
+  if (initial.orgBillingInvoicesByOrgId != null || initial.doctorBillingByDoctorId != null) {
+    seedScopedInvoiceBillingCacheFromSsr(
+      queryClient,
+      initial.orgBillingInvoicesByOrgId,
+      initial.doctorBillingByDoctorId
+    );
+  }
+  if (initial.invoiceViewerBillingTotals != null) {
+    seedInvoiceViewerBillingTotalsFromSsr(queryClient, initial.invoiceViewerBillingTotals);
+  }
 }

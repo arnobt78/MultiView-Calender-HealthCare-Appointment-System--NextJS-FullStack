@@ -1,5 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { mapApiInvoiceToRow } from "@/lib/billing-invoice-map";
+import { QueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
+import {
+  mapApiInvoiceToRow,
+  mergeInvoiceIntoScopedListCaches,
+  removeInvoiceFromScopedListCaches,
+} from "@/lib/billing-invoice-map";
+import type { InvoiceRow } from "@/lib/billing-types";
+
+const DOC = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+const ORG = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+const INV = "11111111-1111-4111-8111-111111111111";
 
 describe("mapApiInvoiceToRow", () => {
   it("normalizes dates and payments", () => {
@@ -22,5 +33,105 @@ describe("mapApiInvoiceToRow", () => {
     });
     expect(row.due_date).toBe("2026-02-01");
     expect(row.payments[0]?.created_at).toContain("2026-01-20");
+  });
+});
+
+describe("mergeInvoiceIntoScopedListCaches", () => {
+  const baseRow: InvoiceRow = {
+    id: INV,
+    user_id: DOC,
+    organization_id: ORG,
+    amount: 5000,
+    currency: "eur",
+    status: "sent",
+    created_at: "2026-01-01T00:00:00.000Z",
+    payments: [],
+  };
+
+  it("patches invoices.all, byOrganization, and byDoctor caches", () => {
+    const qc = new QueryClient();
+    qc.setQueryData(queryKeys.invoices.all, []);
+    qc.setQueryData(queryKeys.invoices.byOrganization(ORG), { invoices: [] });
+    qc.setQueryData(queryKeys.invoices.byDoctor(DOC), { invoices: [] });
+
+    mergeInvoiceIntoScopedListCaches(qc, baseRow);
+
+    expect(qc.getQueryData<InvoiceRow[]>(queryKeys.invoices.all)).toHaveLength(1);
+    expect(
+      qc.getQueryData<{ invoices: InvoiceRow[] }>(queryKeys.invoices.byOrganization(ORG))
+        ?.invoices
+    ).toHaveLength(1);
+    expect(
+      qc.getQueryData<{ invoices: InvoiceRow[] }>(queryKeys.invoices.byDoctor(DOC))?.invoices
+    ).toHaveLength(1);
+  });
+
+  it("removes invoice from doctor cache when no longer in scope", () => {
+    const qc = new QueryClient();
+    qc.setQueryData(queryKeys.invoices.all, [baseRow]);
+    qc.setQueryData(queryKeys.invoices.byDoctor(DOC), { invoices: [baseRow] });
+
+    mergeInvoiceIntoScopedListCaches(qc, {
+      ...baseRow,
+      user_id: "22222222-2222-4222-8222-222222222222",
+      visit_summary: undefined,
+    });
+
+    expect(
+      qc.getQueryData<{ invoices: InvoiceRow[] }>(queryKeys.invoices.byDoctor(DOC))?.invoices
+    ).toHaveLength(0);
+  });
+
+  it("patches viewerTotals from invoices.all after merge", () => {
+    const qc = new QueryClient();
+    qc.setQueryData(queryKeys.invoices.all, []);
+    qc.setQueryData(queryKeys.invoices.viewerTotals, {
+      totals: {
+        paid: { cents: 0, count: 0 },
+        outstanding: { cents: 0, count: 0 },
+        refunded: { cents: 0, count: 0 },
+        cancelled: { cents: 0, count: 0 },
+      },
+      statusTotals: {},
+    });
+
+    mergeInvoiceIntoScopedListCaches(qc, { ...baseRow, status: "paid", amount: 9000 });
+
+    const payload = qc.getQueryData(queryKeys.invoices.viewerTotals) as
+      | { totals: { paid: { cents: number } }; paidPeriod?: unknown }
+      | undefined;
+    expect(payload?.totals.paid.cents).toBe(9000);
+    expect(payload?.paidPeriod).toBeUndefined();
+  });
+});
+
+describe("removeInvoiceFromScopedListCaches", () => {
+  const baseRow: InvoiceRow = {
+    id: INV,
+    user_id: DOC,
+    organization_id: ORG,
+    amount: 5000,
+    currency: "eur",
+    status: "sent",
+    created_at: "2026-01-01T00:00:00.000Z",
+    payments: [],
+  };
+
+  it("removes from global and warm scoped caches", () => {
+    const qc = new QueryClient();
+    qc.setQueryData(queryKeys.invoices.all, [baseRow]);
+    qc.setQueryData(queryKeys.invoices.byOrganization(ORG), { invoices: [baseRow] });
+    qc.setQueryData(queryKeys.invoices.byDoctor(DOC), { invoices: [baseRow] });
+
+    removeInvoiceFromScopedListCaches(qc, baseRow);
+
+    expect(qc.getQueryData<InvoiceRow[]>(queryKeys.invoices.all)).toHaveLength(0);
+    expect(
+      qc.getQueryData<{ invoices: InvoiceRow[] }>(queryKeys.invoices.byOrganization(ORG))
+        ?.invoices
+    ).toHaveLength(0);
+    expect(
+      qc.getQueryData<{ invoices: InvoiceRow[] }>(queryKeys.invoices.byDoctor(DOC))?.invoices
+    ).toHaveLength(0);
   });
 });

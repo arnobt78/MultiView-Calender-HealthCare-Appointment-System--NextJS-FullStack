@@ -15,12 +15,14 @@ export async function loadInvoicesListForViewer(opts: {
   role: string | null;
   email?: string | null;
   organizationId?: string | null;
+  doctorId?: string | null;
 }): Promise<InvoiceRow[]> {
   const rows = await fetchInvoicesForViewer({
     userId: opts.userId,
     role: opts.role,
     email: opts.email,
     organizationId: opts.organizationId ?? undefined,
+    doctorId: opts.doctorId ?? undefined,
   });
 
   const withVisits = await attachVisitSummariesToInvoices(rows.map((row) => serializeInvoice(row)));

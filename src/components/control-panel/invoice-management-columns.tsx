@@ -7,15 +7,20 @@ import { InvoiceAmountDisplay } from "@/components/shared/billing/InvoiceAmountD
 import { InvoiceStatusBadge } from "@/components/shared/billing/InvoiceStatusBadge";
 import {
   InvoiceCreatedTableCell,
-  InvoiceDescriptionTableCell,
   InvoiceDueTableCell,
   InvoiceNumberTableCell,
 } from "@/components/shared/billing/invoice-table-cells";
+import { InvoiceVisitListCell } from "@/components/control-panel/InvoiceVisitListCell";
 import type { Invoice } from "@/hooks/usePayments";
+import { getInvoiceListSortKey } from "@/lib/invoice-list-display";
 import {
   clinicalTableCellMinRowClass,
   clinicalTableColumnWrapShellClass,
 } from "@/lib/table-display-styles";
+import {
+  cpClinicalListActionsColumnShellClass,
+  cpClinicalListIdentityColumnShellClass,
+} from "@/lib/cp-clinical-list-table-classes";
 import { cn } from "@/lib/utils";
 
 export type BuildInvoiceManagementColumnsOpts = {
@@ -61,13 +66,18 @@ export function buildInvoiceManagementColumns(
     },
     {
       id: "description",
-      accessorFn: (row) => row.description ?? row.visit_summary?.title ?? "",
+      accessorFn: (row) => getInvoiceListSortKey(row),
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Description" />
       ),
-      meta: { shellClassName: clinicalTableColumnWrapShellClass },
+      meta: {
+        shellClassName: cn(
+          clinicalTableColumnWrapShellClass,
+          cpClinicalListIdentityColumnShellClass
+        ),
+      },
       cell: ({ row }) => (
-        <InvoiceDescriptionTableCell invoice={row.original} viewerRole={viewerRole} />
+        <InvoiceVisitListCell invoice={row.original} viewerRole={viewerRole} />
       ),
     },
     {
@@ -120,8 +130,11 @@ export function buildInvoiceManagementColumns(
     },
     {
       id: "actions",
-      header: () => null,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Actions" className="text-right" />
+      ),
       enableSorting: false,
+      meta: { shellClassName: cpClinicalListActionsColumnShellClass },
       cell: ({ row }) => {
         const invoice = row.original;
         const busy = isUpdating;

@@ -114,6 +114,136 @@
 | REQ-0067 | approved [C23.1] | REQ-0066 | ART-0344..0347 | pending |
 | REQ-0068 | approved [C24] | REQ-0067 | ART-0348..0355 | pending |
 | REQ-0069 | approved [C25] | REQ-0068 | ART-0356..0359 | pending |
+| REQ-0070 | approved [C26] | REQ-0069 | ART-0360..0365 | pending |
+| REQ-0071 | approved [C26.1] | REQ-0070 | ART-0366..0371 | pending |
+| REQ-0072 | approved [C26.2] | REQ-0071 | ART-0372..0377 | pending |
+| REQ-0073 | approved [C27] | REQ-0072 | ART-0378..0385 | pending |
+| REQ-0074 | approved [C27.1] | REQ-0073 | ART-0384..0387 | pending |
+| REQ-0075 | approved [C27.2] | REQ-0074 | ART-0388..0391 | pending |
+| REQ-0076 | approved [C28] | REQ-0075 | ART-0392..0395 | pending |
+
+### REQ-0076 — C28 CP billing all-time KPI UX + seed consolidation
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C28] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0075 |
+
+**Statement:** CP invoice hub all-time KPI cards (count footers, no calendar month hint), inline org/doctor scope filters in billing header, slim server billing-totals (status-only), unified CP SSR seed path.
+
+**Acceptance criteria:**
+1. `InvoiceRevenueKpiGrid` management mode — footer count hints, no period cards, no June month label.
+2. `InvoiceBillingStatsRow` all-time extended KPIs from scoped list; org/doctor filters in billing header row.
+3. CP billing-totals API returns status aggregates only; extended derived client-side.
+4. `seedControlPanelSectionCacheFromSsr` single seed path; remove duplicate layout-effect seed.
+5. Tests; verify PASS.
+
+### REQ-0075 — C27.2 billing KPI server parity + org panel DRY
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C27.2] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0074 |
+
+**Statement:** Close remaining billing KPI gaps — server-side paid-period + extended aggregates in billing-totals payload, enriched optimistic totals patch, OrganizationBillingPanel DRY via shared hook, InvoiceBillingStatsRow server-first props.
+
+**Acceptance criteria:**
+1. `InvoiceBillingTotalsPayload` extended with `paidPeriod` + `extendedKpis`; `computeInvoiceBillingKpiPayloadFromList`.
+2. `invoice-billing-kpi-aggregate.ts` — Prisma period/extended aggregates wired into all `fetchInvoiceBillingTotalsFor*` functions.
+3. `patchScopedTotalsFromListCaches` patches full KPI payload; `InvoiceBillingStatsRow` server-first props.
+4. `useInvoiceScopedBilling` exposes `scopedPaidPeriod` / `scopedExtendedKpis`; org panel uses shared hook.
+5. SSR seeds full enriched totals payload; tests; verify PASS.
+
+### REQ-0074 — C27.1 invoice hub cache polish
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C27.1] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0073 |
+
+**Statement:** Close C27 audit gaps — optimistic scoped cache on all invoice mutations (record/refund/delete), instant KPI totals patch, server all-scope billing totals with SSR seed, tests + DECISION_LOG correction.
+
+**Acceptance criteria:**
+1. `removeInvoiceFromScopedListCaches` + `patchScopedTotalsFromListCaches` in billing-invoice-map.
+2. `usePayments` merge on record/refund; remove on delete; pay Stripe comment only.
+3. `fetchInvoiceBillingTotalsForViewer` + GET billing-totals no-params; `queryKeys.invoices.viewerTotals`.
+4. SSR seed viewer totals on invoice-management all scope; hook/context wire-up.
+5. Tests; verify PASS; DECISION_LOG supersedes stale defer-doctorId note.
+
+### REQ-0073 — C27 invoice hub performance + cache consistency
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C27] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0072 |
+
+**Statement:** Close invoice-hub performance/cache gaps — server doctor scope + KPI aggregates, org/doctor scoped totals in UI, scoped cache merge on CRUD, unified doctor-scope rule lib, SSR doctor seed — without hydration regressions.
+
+**Acceptance criteria:**
+1. `invoice-doctor-scope.ts` — Prisma where, client match, `resolveDoctorIdsFromInvoice`.
+2. GET `/api/invoices?doctorId=` and `/api/invoices/billing-totals?doctorId=` (XOR org); RBAC.
+3. `queryKeys.invoices.byDoctor` / `byDoctorTotals`; `useInvoiceScopedBilling` hook.
+4. Org/doctor KPI totals wired to `InvoiceBillingStatsRow`; SSR doctor prefetch + seed.
+5. `mergeInvoiceIntoScopedListCaches` + `invalidateInvoiceScopedBilling`; tests; verify PASS.
+
+### REQ-0072 — C26.2 invoice hub doctor scope
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C26.2] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0071 |
+
+**Statement:** CP invoice-management adds doctor scope filter with canonical `invoiceMatchesDoctorScope` lib rule, URL `?scope=doctor&doctorId=`, client filter on `invoices.all`, and DECISION_LOG note for future server `doctorId` API.
+
+**Acceptance criteria:**
+1. `invoiceMatchesDoctorScope` — issuer, treating physician, or calendar owner.
+2. `DoctorFilterSelect` in toolbar; mutually exclusive with org scope.
+3. Dynamic doctor billing title/subtitle; KPI/table/header scoped.
+4. URL round-trip; tests; verify PASS.
+
+### REQ-0071 — C26.1 invoice hub org scope + URL
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C26.1] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0070 |
+
+**Statement:** CP invoice-management org scope filter with Insights-style URL state, server `organizationId` list query, SSR org seed, unscoped-invoice subtitle, and scope provider.
+
+**Acceptance criteria:**
+1. `invoice-management-scope.ts` parse/build URL (`scope=all|org|doctor`, `orgId`, `doctorId`).
+2. Org filter dropdown; `queryKeys.invoices.byOrganization`; SSR prefetch when `orgId` in URL.
+3. Subtitle documents unscoped invoices excluded from org scope.
+4. Tests; verify PASS; DECISION_LOG tradeoffs.
+
+### REQ-0070 — C26 invoice hub UI parity
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C26] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0069 |
+
+**Statement:** CP invoice-management UI parity — `ControlPanelEntityListShell` amber, billing section heading + inline status counts, Insights-style KPI hints, compact visit list cell, clinical list table frame.
+
+**Acceptance criteria:**
+1. `invoice-management-display.ts` + `InvoiceManagementBillingSectionHeading`.
+2. `ControlPanelEntityListShell` tone amber; default "All Billing History" header.
+3. Compact description column; sort/search aligned to `getInvoiceListTitle`.
+4. KPI `valueRowHint` on management cards; tests; verify PASS.
 
 ### REQ-0069 — C25 filter label DRY + DoctorFilterSelect
 

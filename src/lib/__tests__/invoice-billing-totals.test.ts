@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
   buildInvoiceStatusTotalsFromGroupBy,
+  computeInvoiceBillingKpiPayloadFromList,
+  computeInvoiceBillingManagementPayloadFromList,
   computeInvoiceBillingStatusTotals,
   computeInvoiceBillingTotals,
   rollupInvoiceBillingTotals,
@@ -59,5 +61,46 @@ describe("buildInvoiceStatusTotalsFromGroupBy", () => {
     expect(status.paid).toEqual({ cents: 17_500, count: 2 });
     expect(status.draft).toEqual({ cents: 9_250, count: 1 });
     expect(status.sent.count).toBe(0);
+  });
+});
+
+describe("computeInvoiceBillingManagementPayloadFromList", () => {
+  it("includes status rollups only — no paid period", () => {
+    const payload = computeInvoiceBillingManagementPayloadFromList([
+      {
+        amount: 9000,
+        status: "paid",
+      },
+    ]);
+
+    expect(payload.totals.paid.cents).toBe(9000);
+    expect(payload.paidPeriod).toBeUndefined();
+    expect(payload.extendedKpis).toBeUndefined();
+  });
+});
+
+describe("computeInvoiceBillingKpiPayloadFromList", () => {
+  it("includes status rollups, paid period, and extended KPIs", () => {
+    const payload = computeInvoiceBillingKpiPayloadFromList([
+      {
+        amount: 9000,
+        status: "paid",
+        paid_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        payments: [
+          {
+            id: "pay-1",
+            amount: 9000,
+            status: "succeeded",
+            created_at: new Date().toISOString(),
+          },
+        ],
+      },
+    ]);
+
+    expect(payload.totals.paid.cents).toBe(9000);
+    expect(payload.paidPeriod).toBeDefined();
+    expect(payload.extendedKpis?.totalCount).toBe(1);
+    expect(payload.extendedKpis?.paymentSuccessPct).toBe(100);
   });
 });

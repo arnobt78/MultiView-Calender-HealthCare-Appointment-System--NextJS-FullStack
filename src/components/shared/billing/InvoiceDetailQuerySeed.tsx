@@ -3,7 +3,7 @@
 import { useLayoutEffect, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
-import { mergeInvoiceIntoListCache } from "@/lib/billing-invoice-map";
+import { mergeInvoiceIntoScopedListCaches } from "@/lib/billing-invoice-map";
 import { seedInvoicesListCacheFromSsr } from "@/lib/invoices-query-ssr-seed";
 import type { Invoice } from "@/hooks/usePayments";
 
@@ -24,7 +24,7 @@ export function InvoiceDetailQuerySeed({ invoice, initialInvoicesList }: Props) 
 
   useLayoutEffect(() => {
     queryClient.setQueryData(queryKeys.invoices.detail(invoice.id), invoice);
-    mergeInvoiceIntoListCache(queryClient, invoice);
+    mergeInvoiceIntoScopedListCaches(queryClient, invoice);
   }, [queryClient, invoice]);
 
   return null;

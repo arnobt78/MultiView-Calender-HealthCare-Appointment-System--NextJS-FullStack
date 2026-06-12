@@ -97,3 +97,19 @@
 | 2026-06-12T18:00:00Z | specify | C25 filter consistency | REQ-0069: findFilterOptionLabel DRY + DoctorFilterSelect + services presets | REQ-0069 |
 | 2026-06-12T18:30:00Z | verify | C25 shipped | DoctorFilterSelect; calendar label DRY; services presets; 1001/1001 | REQ-0069 |
 | 2026-06-12T13:50:00Z | activate | C25 Infinity Loop refresh | ACTIVATION/BOOTSTRAP/config synced; baseline 1001/1001; HEAD eb3fb8f | — |
+| 2026-06-11T14:00:00Z | specify | C26 invoice hub UI parity | REQ-0070: amber entity shell, billing heading, compact visit cell, KPI hints | REQ-0070 |
+| 2026-06-11T14:30:00Z | build | C26.1 org scope + URL | REQ-0071: scope lib, org server query, OrganizationFilterSelect, SSR org seed | REQ-0071 |
+| 2026-06-11T14:45:00Z | build | C26.2 doctor scope | REQ-0072: invoiceMatchesDoctorScope; DoctorFilterSelect; client filter | REQ-0072 |
+| 2026-06-11T14:50:00Z | decision | Invoice hub performance tradeoffs | Org scope uses server `organizationId`; doctor scope client-filters `invoices.all`; defer GET `doctorId` for scale — **superseded by C27 REQ-0073** | REQ-0071, REQ-0072 |
+| 2026-06-11T14:50:00Z | decision | Unscoped invoices | `organization_id IS NULL` in All workspace; excluded when `scope=org` (server orgWhere) | REQ-0071 |
+| 2026-06-11T14:50:00Z | decision | Doctor scope canonical rule | Match issuer (`user_id`), treating physician, or calendar owner — not org membership alone | REQ-0072 |
+| 2026-06-11T14:55:00Z | verify | C26–C26.2 shipped | Invoice hub Phases 1–3; 1014/1014; tsc · lint · build PASS | REQ-0070..0072 |
+| 2026-06-11T16:00:00Z | build | C27 invoice hub hardening | REQ-0073: server doctorId, scoped KPI totals, cache merge/invalidation, SSR doctor seed | REQ-0073 |
+| 2026-06-11T16:05:00Z | decision | Doctor scope server parity | Replaces client filter on `invoices.all`; `calendar_owner_id` ↔ `appointment.owner_id` documented in `invoice-doctor-scope.ts` | REQ-0073 |
+| 2026-06-11T16:10:00Z | verify | C27 shipped | Invoice hub performance/cache; tsc · lint · build PASS | REQ-0073 |
+| 2026-06-11T17:00:00Z | build | C27.1 cache polish | REQ-0074: mutation merge/remove, totals patch, viewer KPI SSR | REQ-0074 |
+| 2026-06-11T17:05:00Z | verify | C27.1 shipped | 1032/1032; tsc · lint · build PASS | REQ-0074 |
+| 2026-06-11T18:00:00Z | build | C27.2 KPI server parity | REQ-0075: period/extended server aggregates, enriched patch, org panel DRY, SSR billingKpi shape | REQ-0075 |
+| 2026-06-11T18:05:00Z | verify | C27.2 shipped | 1037/1037; tsc · lint · build PASS | REQ-0075 |
+| 2026-06-11T19:00:00Z | build | C28 CP billing UX | REQ-0076: all-time KPI footers, header scope filters, slim totals, unified seed | REQ-0076 |
+| 2026-06-11T19:05:00Z | verify | C28 shipped | 1044/1044; tsc · lint · build PASS | REQ-0076 |

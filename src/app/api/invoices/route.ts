@@ -31,11 +31,19 @@ export async function GET(req: NextRequest) {
 
     const role = await getUserRole(sessionUser.userId);
     const organizationId = req.nextUrl.searchParams.get("organizationId");
+    const doctorId = req.nextUrl.searchParams.get("doctorId");
+    if (organizationId && doctorId) {
+      return NextResponse.json(
+        { error: "organizationId and doctorId are mutually exclusive" },
+        { status: 400 }
+      );
+    }
     const invoices = await loadInvoicesListForViewer({
       userId: sessionUser.userId,
       role,
       email: sessionUser.email,
       organizationId,
+      doctorId,
     });
 
     return NextResponse.json({ invoices });

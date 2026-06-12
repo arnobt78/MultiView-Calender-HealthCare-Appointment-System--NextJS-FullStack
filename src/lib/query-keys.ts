@@ -66,6 +66,14 @@ export const queryKeys = {
     /** CP org billing KPI row — GET /api/invoices/billing-totals?organizationId= */
     byOrganizationTotals: (organizationId: string) =>
       [...queryKeys.invoices.all, "org", organizationId, "totals"] as const,
+    /** CP invoice hub doctor scope — GET /api/invoices?doctorId= */
+    byDoctor: (doctorId: string) =>
+      [...queryKeys.invoices.all, "doctor", doctorId] as const,
+    /** CP invoice hub doctor KPI — GET /api/invoices/billing-totals?doctorId= */
+    byDoctorTotals: (doctorId: string) =>
+      [...queryKeys.invoices.all, "doctor", doctorId, "totals"] as const,
+    /** CP invoice hub all-scope KPI — GET /api/invoices/billing-totals (viewer RBAC) */
+    viewerTotals: ["app", "invoices", "viewer-totals"] as const,
   },
   billing: {
     root: ["app", "billing"] as const,

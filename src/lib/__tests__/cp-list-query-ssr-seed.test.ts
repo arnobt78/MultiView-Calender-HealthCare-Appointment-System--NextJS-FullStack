@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import { QueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
 import {
+  seedControlPanelSectionCacheFromSsr,
   seedNotificationsCacheFromSsr,
   seedOrgBillingCacheFromSsr,
+  seedScopedInvoiceBillingCacheFromSsr,
   seedOrganizationsListCacheFromSsr,
   seedOrganizationDetailCacheFromSsr,
 } from "@/lib/cp-list-query-ssr-seed";
@@ -43,19 +45,21 @@ describe("cp-list-query-ssr-seed", () => {
     seedOrgBillingCacheFromSsr(qc, {
       org1: {
         invoices: [{ id: "inv1" }],
-        totals: {
-          paid: { cents: 100, count: 1 },
-          outstanding: { cents: 0, count: 0 },
-          refunded: { cents: 0, count: 0 },
-          cancelled: { cents: 0, count: 0 },
-        },
-        statusTotals: {
-          draft: { cents: 0, count: 0 },
-          sent: { cents: 0, count: 0 },
-          paid: { cents: 100, count: 1 },
-          overdue: { cents: 0, count: 0 },
-          cancelled: { cents: 0, count: 0 },
-          refunded: { cents: 0, count: 0 },
+        billingKpi: {
+          totals: {
+            paid: { cents: 100, count: 1 },
+            outstanding: { cents: 0, count: 0 },
+            refunded: { cents: 0, count: 0 },
+            cancelled: { cents: 0, count: 0 },
+          },
+          statusTotals: {
+            draft: { cents: 0, count: 0 },
+            sent: { cents: 0, count: 0 },
+            paid: { cents: 100, count: 1 },
+            overdue: { cents: 0, count: 0 },
+            cancelled: { cents: 0, count: 0 },
+            refunded: { cents: 0, count: 0 },
+          },
         },
       },
     } as never);
@@ -66,6 +70,40 @@ describe("cp-list-query-ssr-seed", () => {
       queryKeys.invoices.byOrganizationTotals("org1")
     );
     expect(totalsPayload?.totals).toBeDefined();
+  });
+
+  it("seedScopedInvoiceBillingCacheFromSsr seeds doctor list + totals", () => {
+    const qc = new QueryClient();
+    const docId = "doc-1";
+    seedScopedInvoiceBillingCacheFromSsr(qc, null, {
+      [docId]: {
+        invoices: [{ id: "inv-d1" }],
+        billingKpi: {
+          totals: {
+            paid: { cents: 200, count: 1 },
+            outstanding: { cents: 0, count: 0 },
+            refunded: { cents: 0, count: 0 },
+            cancelled: { cents: 0, count: 0 },
+          },
+          statusTotals: {
+            draft: { cents: 0, count: 0 },
+            sent: { cents: 0, count: 0 },
+            paid: { cents: 200, count: 1 },
+            overdue: { cents: 0, count: 0 },
+            cancelled: { cents: 0, count: 0 },
+            refunded: { cents: 0, count: 0 },
+          },
+        },
+      },
+    } as never);
+    expect(qc.getQueryData(queryKeys.invoices.byDoctor(docId))).toEqual({
+      invoices: [{ id: "inv-d1" }],
+    });
+    expect(
+      qc.getQueryData<{ totals: { paid: { cents: number } } }>(
+        queryKeys.invoices.byDoctorTotals(docId)
+      )?.totals.paid.cents
+    ).toBe(200);
   });
 
   it("seedOrganizationsListCacheFromSsr stores enriched list rows", () => {
@@ -136,5 +174,34 @@ describe("cp-list-query-ssr-seed", () => {
       members: [],
     });
     expect(qc.getQueryData(queryKeys.organizations.detail(orgId))).toEqual(warm);
+  });
+
+  it("seedControlPanelSectionCacheFromSsr seeds invoices and viewer totals", () => {
+    const qc = new QueryClient();
+    seedControlPanelSectionCacheFromSsr(qc, {
+      invoices: [{ id: "inv-all" }],
+      invoiceViewerBillingTotals: {
+        totals: {
+          paid: { cents: 100, count: 1 },
+          outstanding: { cents: 0, count: 0 },
+          refunded: { cents: 0, count: 0 },
+          cancelled: { cents: 0, count: 0 },
+        },
+        statusTotals: {
+          draft: { cents: 0, count: 0 },
+          sent: { cents: 0, count: 0 },
+          paid: { cents: 100, count: 1 },
+          overdue: { cents: 0, count: 0 },
+          cancelled: { cents: 0, count: 0 },
+          refunded: { cents: 0, count: 0 },
+        },
+      },
+    } as never);
+    expect(qc.getQueryData(queryKeys.invoices.all)).toEqual([{ id: "inv-all" }]);
+    expect(
+      qc.getQueryData<{ totals: { paid: { cents: number } } }>(
+        queryKeys.invoices.viewerTotals
+      )?.totals.paid.cents
+    ).toBe(100);
   });
 });

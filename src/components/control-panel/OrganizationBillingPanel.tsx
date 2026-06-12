@@ -1,12 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, Receipt } from "lucide-react";
 import { useMemo, useState } from "react";
-import { apiClient } from "@/lib/api-client";
-import { queryKeys } from "@/lib/query-keys";
 import type { Invoice } from "@/hooks/usePayments";
+import { useInvoiceScopedBilling } from "@/hooks/useInvoiceScopedBilling";
 import { InvoiceBillingStatsRow } from "@/components/shared/billing/InvoiceBillingStatsRow";
 import { InvoicePortalListCard } from "@/components/shared/billing/InvoicePortalListCard";
 import { InvoiceStatusCountInlineRow } from "@/components/shared/billing/InvoiceStatusCountInlineRow";
@@ -14,7 +12,6 @@ import { PortalPanelSection } from "@/components/shared/PortalPanelSection";
 import { ClinicalListFilterToolbar } from "@/components/shared/filters/ClinicalListFilterToolbar";
 import { FilterSelect } from "@/components/shared/filters/FilterSelect";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { InvoiceBillingTotalsPayload } from "@/lib/invoice-billing-totals";
 import { useCpListBodyLoading } from "@/lib/cp-list-body-loading";
 import {
   organizationBillingPanelClass,
@@ -35,6 +32,7 @@ import {
   findFilterOptionLabel,
   invoiceStatusFilterOptions,
 } from "@/lib/filter-select-option-presets";
+import { queryKeys } from "@/lib/query-keys";
 
 const COMPACT_INVOICE_LIMIT = 3;
 
@@ -44,53 +42,6 @@ type OrgBillingDataProps = {
   organizationId: string;
   organizationName: string;
 };
-
-function useOrganizationBillingQueries(organizationId: string) {
-  const queryClient = useQueryClient();
-  const orgBillingQueryKey = queryKeys.invoices.byOrganization(organizationId);
-  const orgTotalsQueryKey = queryKeys.invoices.byOrganizationTotals(organizationId);
-
-  const invoicesInitialData = queryClient.getQueryData<{ invoices: Invoice[] }>(
-    orgBillingQueryKey
-  );
-  const totalsInitialData = queryClient.getQueryData<InvoiceBillingTotalsPayload>(
-    orgTotalsQueryKey
-  );
-
-  const { data, isLoading } = useQuery({
-    queryKey: orgBillingQueryKey,
-    queryFn: () =>
-      apiClient<{ invoices: Invoice[] }>(
-        `/api/invoices?organizationId=${encodeURIComponent(organizationId)}`
-      ),
-    initialData: invoicesInitialData,
-    refetchOnMount: invoicesInitialData !== undefined ? false : true,
-    staleTime: 30_000,
-  });
-
-  const { data: totalsData, isLoading: isTotalsLoading } = useQuery({
-    queryKey: orgTotalsQueryKey,
-    queryFn: () =>
-      apiClient<InvoiceBillingTotalsPayload>(
-        `/api/invoices/billing-totals?organizationId=${encodeURIComponent(organizationId)}`
-      ),
-    initialData: totalsInitialData,
-    refetchOnMount: totalsInitialData !== undefined ? false : true,
-    staleTime: 30_000,
-  });
-
-  const invoices = data?.invoices ?? [];
-  const listBodyLoading = useCpListBodyLoading(orgBillingQueryKey, isLoading);
-  const statsLoading = useCpListBodyLoading(orgTotalsQueryKey, isTotalsLoading);
-
-  return {
-    invoices,
-    totals: totalsData?.totals,
-    statusTotals: totalsData?.statusTotals,
-    listBodyLoading,
-    statsLoading,
-  };
-}
 
 function OrganizationBillingInvoiceCards({
   invoices,
@@ -127,8 +78,18 @@ function OrganizationBillingPanelBody({
   organizationName,
   variant,
 }: OrganizationBillingPanelBodyProps) {
-  const { invoices, totals, statusTotals, listBodyLoading, statsLoading } =
-    useOrganizationBillingQueries(organizationId);
+  const {
+    scopedInvoices: invoices,
+    scopedTotals: totals,
+    scopedStatusTotals: statusTotals,
+    listLoading,
+    statsLoading,
+    listQueryKey,
+  } = useInvoiceScopedBilling({ scope: "org", orgId: organizationId });
+
+  const listBodyLoading = useCpListBodyLoading(listQueryKey, listLoading);
+  const orgTotalsKey = queryKeys.invoices.byOrganizationTotals(organizationId);
+  const statsBodyLoading = useCpListBodyLoading(orgTotalsKey, statsLoading);
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<DoctorPortalInvoiceStatusFilter>("all");
@@ -172,7 +133,7 @@ function OrganizationBillingPanelBody({
         invoices={invoices}
         totals={totals}
         statusTotals={statusTotals}
-        valueSkeleton={statsLoading}
+        valueSkeleton={statsBodyLoading}
       />
 
       <ClinicalListFilterToolbar

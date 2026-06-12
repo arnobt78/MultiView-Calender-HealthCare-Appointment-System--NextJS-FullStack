@@ -4,11 +4,8 @@
  */
 
 import type { Invoice } from "@/hooks/usePayments";
-import {
-  emptyInvoiceBillingStatusTotals,
-  type InvoiceBillingTotals,
-  type InvoiceBillingTotalsPayload,
-} from "@/lib/invoice-billing-totals";
+import type { InvoiceBillingTotalsPayload } from "@/lib/invoice-billing-totals";
+import { emptyInvoiceBillingStatusPayload } from "@/lib/invoice-billing-kpi-aggregate";
 import {
   prefetchInvoiceBillingTotalsForOrganization,
   prefetchInvoicesForOrganization,
@@ -17,18 +14,14 @@ import {
 /** Max org billing lists prefetched on one CP tab navigation (safety cap). */
 export const ORG_BILLING_PREFETCH_ORG_CAP = 20;
 
-const EMPTY_TOTALS: InvoiceBillingTotals = {
-  paid: { cents: 0, count: 0 },
-  outstanding: { cents: 0, count: 0 },
-  refunded: { cents: 0, count: 0 },
-  cancelled: { cents: 0, count: 0 },
-};
-
 export type OrgBillingCachePayload = {
   invoices: Invoice[];
-  totals: InvoiceBillingTotals;
-  statusTotals: InvoiceBillingTotalsPayload["statusTotals"];
+  /** Full KPI payload — seeds scoped totals TanStack keys (status + period + extended). */
+  billingKpi: InvoiceBillingTotalsPayload;
 };
+
+/** Alias — org + doctor scoped billing SSR seed share the same payload shape. */
+export type InvoiceScopedBillingCachePayload = OrgBillingCachePayload;
 
 /**
  * Parallel SSR seed for every org on the organizations tab (not only the first row).
@@ -44,15 +37,13 @@ export async function prefetchOrgBillingInvoicesByOrgIds(
 
   const pairs = await Promise.all(
     unique.map(async (orgId) => {
-      const [invoices, billingPayload] = await Promise.all([
+      const [invoices, billingKpi] = await Promise.all([
         prefetchInvoicesForOrganization(orgId, userId, role, email),
         prefetchInvoiceBillingTotalsForOrganization(orgId),
       ]);
       const payload: OrgBillingCachePayload = {
         invoices: invoices ?? [],
-        totals: billingPayload?.totals ?? EMPTY_TOTALS,
-        statusTotals:
-          billingPayload?.statusTotals ?? emptyInvoiceBillingStatusTotals(),
+        billingKpi: billingKpi ?? emptyInvoiceBillingStatusPayload(),
       };
       return [orgId, payload] as const;
     })

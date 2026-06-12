@@ -11,6 +11,7 @@ import DoctorManagement from "@/components/control-panel/DoctorManagement";
 import UserManagement from "@/components/control-panel/UserManagement";
 import OrganizationManagement from "@/components/control-panel/OrganizationManagement";
 import InvoiceManagement from "@/components/control-panel/InvoiceManagement";
+import { useControlPanelSectionInitial } from "@/components/control-panel/ControlPanelSectionInitialContext";
 import AppointmentsManagement from "@/components/control-panel/AppointmentsManagement";
 import NotificationsManagement from "@/components/control-panel/NotificationsManagement";
 import GoogleCalendarSettings from "@/components/control-panel/GoogleCalendarSettings";
@@ -43,6 +44,16 @@ export function ControlPanelPatientsTab() {
   }
 
   return <PatientManagement />;
+}
+
+/** Invoice hub — SSR scope filter from dedicated route searchParams. */
+function InvoiceManagementTab() {
+  const initial = useControlPanelSectionInitial();
+  return (
+    <InvoiceManagement
+      viewerRole={initial?.invoiceManagementViewerRole}
+    />
+  );
 }
 
 /** Single control-panel section body — one tab mounts at a time (dedicated routes). */
@@ -80,7 +91,7 @@ export function ControlPanelSectionContent({ tab }: { tab: ControlPanelSidebarTa
     case "organizations":
       return <OrganizationManagement />;
     case "invoices":
-      return <InvoiceManagement />;
+      return <InvoiceManagementTab />;
     case "appointments_mgmt":
       return <AppointmentsManagement />;
     case "notifications":

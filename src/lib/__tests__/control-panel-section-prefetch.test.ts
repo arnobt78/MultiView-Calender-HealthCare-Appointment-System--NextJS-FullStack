@@ -15,22 +15,26 @@ vi.mock("@/lib/org-billing-prefetch", () => ({
       string,
       {
         invoices: { id: string }[];
-        totals: {
-          paid: { cents: number; count: number };
-          outstanding: { cents: number; count: number };
-          refunded: { cents: number; count: number };
-          cancelled: { cents: number; count: number };
+        billingKpi: {
+          totals: {
+            paid: { cents: number; count: number };
+            outstanding: { cents: number; count: number };
+            refunded: { cents: number; count: number };
+            cancelled: { cents: number; count: number };
+          };
         };
       }
     > = {};
     for (const id of orgIds) {
       map[id] = {
         invoices: [{ id: `inv-${id}` }],
-        totals: {
-          paid: { cents: 100, count: 1 },
-          outstanding: { cents: 0, count: 0 },
-          refunded: { cents: 0, count: 0 },
-          cancelled: { cents: 0, count: 0 },
+        billingKpi: {
+          totals: {
+            paid: { cents: 100, count: 1 },
+            outstanding: { cents: 0, count: 0 },
+            refunded: { cents: 0, count: 0 },
+            cancelled: { cents: 0, count: 0 },
+          },
         },
       };
     }
@@ -136,7 +140,7 @@ describe("prefetchControlPanelSection", () => {
     expect(result.orgBillingInvoicesByOrgId?.o2?.invoices).toEqual([
       { id: "inv-o2" },
     ]);
-    expect(result.orgBillingInvoicesByOrgId?.o2?.totals.paid.cents).toBe(100);
+    expect(result.orgBillingInvoicesByOrgId?.o2?.billingKpi.totals.paid.cents).toBe(100);
   });
 
   it("prefetches google calendar status for google-calendar tab", async () => {

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { ColumnDef } from "@tanstack/react-table";
 import { buildInvoiceManagementColumns } from "@/components/control-panel/invoice-management-columns";
 import type { Invoice } from "@/hooks/usePayments";
+import { getInvoiceListSortKey } from "@/lib/invoice-list-display";
 
 const noop = () => {};
 
@@ -46,10 +47,12 @@ describe("buildInvoiceManagementColumns", () => {
     ]);
   });
 
-  it("description column reads visit title or description", () => {
+  it("description column uses getInvoiceListSortKey", () => {
     const descCol = columns.find((c) => c.id === "description")!;
-    expect(runAccessor(descCol, sampleInvoice)).toBe("Consultation");
-    const titleOnly: Invoice = {
+    expect(runAccessor(descCol, sampleInvoice)).toBe(
+      getInvoiceListSortKey(sampleInvoice)
+    );
+    const withPatient: Invoice = {
       ...sampleInvoice,
       description: undefined,
       visit_summary: {
@@ -57,8 +60,8 @@ describe("buildInvoiceManagementColumns", () => {
         title: "Follow-up",
         location_label: "",
         is_telehealth: false,
-        patient_id: null,
-        patient_label: null,
+        patient_id: "p1",
+        patient_label: "Jane Doe",
         patient_email: null,
         patient_birth_date: null,
         patient_care_level: null,
@@ -75,10 +78,12 @@ describe("buildInvoiceManagementColumns", () => {
         calendar_owner_id: null,
         calendar_owner_label: null,
         calendar_owner_specialty: null,
-        appointment_type_name: null,
+        appointment_type_name: "Consultation",
       },
     };
-    expect(runAccessor(descCol, titleOnly)).toBe("Follow-up");
+    expect(runAccessor(descCol, withPatient)).toBe(
+      getInvoiceListSortKey(withPatient)
+    );
   });
 
   it("actions column disables sorting", () => {

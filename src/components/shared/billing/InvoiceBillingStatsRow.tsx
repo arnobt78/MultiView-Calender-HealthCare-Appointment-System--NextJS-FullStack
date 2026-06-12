@@ -8,8 +8,6 @@ import {
   type InvoiceBillingStatusTotals,
   type InvoiceBillingTotals,
 } from "@/lib/invoice-billing-totals";
-import { formatInsightsPeriodStatValueLabel } from "@/lib/insights/insights-period-label";
-import { computeInvoicePaidPeriodComparison } from "@/lib/invoice-paid-period";
 import type { InvoiceRow } from "@/lib/billing-types";
 
 type Props = {
@@ -21,7 +19,7 @@ type Props = {
   valueSkeleton: boolean;
 };
 
-/** Glass KPI tiles — Invoice Management + org billing (incl. month vs prior month). */
+/** Glass KPI tiles — CP invoice hub + org billing (all-time scoped, count footers). */
 export function InvoiceBillingStatsRow({
   invoices,
   totals: prefetchedTotals,
@@ -31,9 +29,7 @@ export function InvoiceBillingStatsRow({
   const statusTotals =
     prefetchedStatusTotals ?? computeInvoiceBillingStatusTotals(invoices);
   const totals = prefetchedTotals ?? computeInvoiceBillingTotals(invoices);
-  const paidComparison = computeInvoicePaidPeriodComparison(invoices, "month");
   const extendedKpis = computeInvoiceExtendedKpis(invoices);
-  const periodValueHint = formatInsightsPeriodStatValueLabel("month");
 
   return (
     <InvoiceRevenueKpiGrid
@@ -41,11 +37,7 @@ export function InvoiceBillingStatsRow({
       statusTotals={statusTotals}
       totals={totals}
       valueSkeleton={valueSkeleton}
-      periodValueHint={periodValueHint}
-      showPeriodComparison
-      paidInPeriodCents={paidComparison.paidInPeriodCents}
-      paidInPeriodCount={paidComparison.paidInPeriodCount}
-      paidPrevPeriodCents={paidComparison.paidPrevPeriodCents}
+      showPeriodComparison={false}
       extendedKpis={extendedKpis}
     />
   );

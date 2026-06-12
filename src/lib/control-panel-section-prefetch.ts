@@ -45,6 +45,7 @@ import {
 import type { UsersListResponse } from "@/hooks/useUsers";
 import { prefetchOrgBillingInvoicesByOrgIds } from "@/lib/org-billing-prefetch";
 import type { OrgBillingCachePayload } from "@/lib/org-billing-prefetch";
+import type { InvoiceBillingTotalsPayload } from "@/lib/invoice-billing-totals";
 
 /** SSR payload keyed by section — seeded in `ControlPanelSectionPageClient` before paint. */
 export type ControlPanelSectionPrefetchPayload = {
@@ -83,6 +84,12 @@ export type ControlPanelSectionPrefetchPayload = {
   adminUsers?: UsersListResponse | null;
   /** Every org on CP org tab — seeds `queryKeys.invoices.byOrganization(id)`. */
   orgBillingInvoicesByOrgId?: Record<string, OrgBillingCachePayload>;
+  /** Invoice hub doctor scope — seeds `queryKeys.invoices.byDoctor(id)`. */
+  doctorBillingByDoctorId?: Record<string, OrgBillingCachePayload>;
+  /** Invoice hub all-scope KPI — seeds `queryKeys.invoices.viewerTotals`. */
+  invoiceViewerBillingTotals?: InvoiceBillingTotalsPayload;
+  /** Invoice hub URL scope — seeded from invoice-management/page.tsx searchParams. */
+  invoiceManagementViewerRole?: string | null;
 };
 
 /**

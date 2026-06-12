@@ -58,6 +58,23 @@
 | TC-0050 | C24 | REQ-0068 | regression | Full suite + tsc + lint + build | project default | PASS |
 | TC-0051 | C25 | REQ-0069 | unit | Calendar empty copy + doctor identity + weekday presets | `calendar-filters-empty-copy.test.ts`, `doctor-identity-map.test.ts`, `filter-select-option-presets.test.ts` | PASS |
 | TC-0052 | C25 | REQ-0069 | regression | Full suite + tsc + lint + build | project default | PASS |
+| TC-0053 | C26 | REQ-0070 | unit | Invoice hub display + columns | `invoice-management-display.test.ts`, `invoice-management-columns.test.ts` | PASS |
+| TC-0054 | C26 | REQ-0070 | regression | Full suite + tsc + lint + build | project default | PASS |
+| TC-0055 | C26.1 | REQ-0071 | unit | Invoice scope URL parse/build | `invoice-management-scope.test.ts` | PASS |
+| TC-0056 | C26.2 | REQ-0072 | unit | Doctor scope matching | `invoice-management-scope.test.ts` | PASS |
+| TC-0057 | C26.2 | REQ-0072 | regression | Full suite + tsc + lint + build | project default | PASS |
+| TC-0058 | C27 | REQ-0073 | unit | Doctor scope lib + scoped cache merge | `invoice-doctor-scope.test.ts`, `billing-invoice-map.test.ts` | PASS |
+| TC-0059 | C27 | REQ-0073 | unit | Scoped invalidation + invoices-scope doctorId | `query-client-invoices-scoped-invalidation.test.ts`, `invoices-scope.test.ts` | PASS |
+| TC-0060 | C27 | REQ-0073 | regression | Full suite + tsc + lint + build | project default | PASS |
+| TC-0061 | C27.1 | REQ-0074 | unit | remove + totals patch cache helpers | `billing-invoice-map.test.ts` | PASS |
+| TC-0062 | C27.1 | REQ-0074 | unit | Doctor SSR seed + viewer totals + invalidation | `cp-list-query-ssr-seed.test.ts`, `invoices-scope-viewer-totals.test.ts`, `query-client-invoices-scoped-invalidation.test.ts` | PASS |
+| TC-0063 | C27.1 | REQ-0074 | regression | Full suite + tsc + lint + build | project default | PASS |
+| TC-0064 | C27.2 | REQ-0075 | unit | Server KPI aggregate + list payload helper | `invoice-billing-kpi-aggregate.test.ts`, `invoice-billing-totals.test.ts` | PASS |
+| TC-0065 | C27.2 | REQ-0075 | unit | Enriched patch + viewer totals + SSR seed shape | `billing-invoice-map.test.ts`, `invoices-scope-viewer-totals.test.ts`, `cp-list-query-ssr-seed.test.ts` | PASS |
+| TC-0066 | C27.2 | REQ-0075 | regression | Full suite + tsc + lint + build | project default | PASS |
+| TC-0067 | C28 | REQ-0076 | unit | KPI footer hints + management grid | `invoice-revenue-kpi-presets.test.ts` | PASS |
+| TC-0068 | C28 | REQ-0076 | unit | Status-only totals + unified CP seed | `invoice-billing-kpi-aggregate.test.ts`, `cp-list-query-ssr-seed.test.ts` | PASS |
+| TC-0069 | C28 | REQ-0076 | regression | Full suite + tsc + lint + build | project default | PASS |
 
 ## Regression Baseline
 

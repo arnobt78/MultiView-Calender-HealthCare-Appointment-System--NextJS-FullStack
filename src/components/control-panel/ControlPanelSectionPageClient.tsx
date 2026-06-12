@@ -1,30 +1,10 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, type ReactNode } from "react";
-import { seedInvoicesListCacheFromSsr } from "@/lib/invoices-query-ssr-seed";
-import {
-  seedCategoriesListCacheFromSsr,
-  seedDoctorsDirectoryCacheFromSsr,
-  seedPatientsListCacheFromSsr,
-  seedUsersListCacheFromSsr,
-  seedDashboardOverviewCacheFromSsr,
-  seedOrganizationsListCacheFromSsr,
-  seedNotificationsCacheFromSsr,
-  seedAppointmentsListCacheFromSsr,
-  seedAdminAllAppointmentTypesCacheFromSsr,
-  seedInvitationsCacheFromSsr,
-  seedGoogleCalendarStatusCacheFromSsr,
-  seedDashboardAccessAcceptedCacheFromSsr,
-  seedOrgBillingCacheFromSsr,
-} from "@/lib/cp-list-query-ssr-seed";
-import {
-  CP_ADMIN_USERS_FILTERS,
-  CP_DOCTOR_USERS_FILTERS,
-} from "@/lib/control-panel-users-filters";
+import { useEffect, useMemo, type ReactNode } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { invalidateInvoicesAndOverview } from "@/lib/query-client";
-import { seedControlPanelSectionCache } from "@/lib/ssr-query-seed";
+import { seedControlPanelSectionCacheFromSsr } from "@/lib/cp-list-query-ssr-seed";
 import type { ControlPanelSidebarTabValue } from "@/lib/control-panel-nav-config";
 import type { ControlPanelSectionPrefetchPayload } from "@/lib/control-panel-section-prefetch";
 import { ControlPanelMobileNav } from "@/components/control-panel/ControlPanelMobileNav";
@@ -70,86 +50,13 @@ export function ControlPanelSectionPageClient({
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
 
-  /** Sync seed before section children subscribe (invoice parity for all entity lists). */
+  /** Sync seed before section children subscribe — single path, seedIfAbsent only. */
   useMemo(() => {
-    if (initial?.invoices != null) {
-      seedInvoicesListCacheFromSsr(queryClient, initial.invoices);
-    }
-    if (initial?.patients != null) {
-      seedPatientsListCacheFromSsr(queryClient, initial.patients);
-    }
-    if (initial?.categories != null) {
-      seedCategoriesListCacheFromSsr(queryClient, initial.categories);
-    }
-    if (initial?.doctorsDirectory != null) {
-      seedDoctorsDirectoryCacheFromSsr(queryClient, initial.doctorsDirectory);
-    }
-    if (initial?.doctorUsers != null) {
-      seedUsersListCacheFromSsr(queryClient, CP_DOCTOR_USERS_FILTERS, initial.doctorUsers);
-    }
-    if (initial?.adminUsers != null) {
-      seedUsersListCacheFromSsr(queryClient, CP_ADMIN_USERS_FILTERS, initial.adminUsers);
-    }
-    if (initial?.dashboardOverview != null) {
-      seedDashboardOverviewCacheFromSsr(
-        queryClient,
-        initial.dashboardOverview,
-        initial.dashboardOverviewUpdatedAt
-      );
-    }
-    if (initial?.organizations != null) {
-      seedOrganizationsListCacheFromSsr(queryClient, initial.organizations);
-    }
-    if (initial?.notifications != null) {
-      seedNotificationsCacheFromSsr(
-        queryClient,
-        initial.notifications,
-        initial.notificationsPrefetchUpdatedAt
-      );
-    }
-    if (initial?.appointments != null) {
-      seedAppointmentsListCacheFromSsr(queryClient, initial.appointments);
-    }
-    if (initial?.adminAllAppointmentTypes != null) {
-      seedAdminAllAppointmentTypesCacheFromSsr(queryClient, initial.adminAllAppointmentTypes);
-    }
-    if (initial?.appointmentInvitations != null) {
-      seedInvitationsCacheFromSsr(queryClient, "appointment", initial.appointmentInvitations);
-    }
-    if (initial?.dashboardInvitations != null) {
-      seedInvitationsCacheFromSsr(queryClient, "dashboard", initial.dashboardInvitations);
-    }
-    if (initial?.googleCalendarStatus != null) {
-      seedGoogleCalendarStatusCacheFromSsr(queryClient, initial.googleCalendarStatus);
-    }
-    if (initial?.dashboardAccessAccepted != null) {
-      seedDashboardAccessAcceptedCacheFromSsr(queryClient, initial.dashboardAccessAccepted);
-    }
-    if (initial?.orgBillingInvoicesByOrgId != null) {
-      seedOrgBillingCacheFromSsr(queryClient, initial.orgBillingInvoicesByOrgId);
+    if (initial != null) {
+      seedControlPanelSectionCacheFromSsr(queryClient, initial);
     }
     return null;
-  }, [
-    queryClient,
-    initial?.invoices,
-    initial?.patients,
-    initial?.categories,
-    initial?.doctorsDirectory,
-    initial?.doctorUsers,
-    initial?.adminUsers,
-    initial?.dashboardOverview,
-    initial?.dashboardOverviewUpdatedAt,
-    initial?.organizations,
-    initial?.notifications,
-    initial?.notificationsPrefetchUpdatedAt,
-    initial?.appointments,
-    initial?.adminAllAppointmentTypes,
-    initial?.appointmentInvitations,
-    initial?.dashboardInvitations,
-    initial?.googleCalendarStatus,
-    initial?.dashboardAccessAccepted,
-    initial?.orgBillingInvoicesByOrgId,
-  ]);
+  }, [queryClient, initial]);
 
   /** Stripe return on invoice tab — bust overview/invoices without full reload. */
   useEffect(() => {
@@ -158,11 +65,6 @@ export function ControlPanelSectionPageClient({
       router.replace(pathname, { scroll: false });
     }
   }, [searchParams, queryClient, router, pathname]);
-
-  useLayoutEffect(() => {
-    if (!initial) return;
-    seedControlPanelSectionCache(queryClient, initial);
-  }, [queryClient, initial]);
 
   const mergedServerChrome =
     serverChromeIcon != null && serverChromeTitle != null;

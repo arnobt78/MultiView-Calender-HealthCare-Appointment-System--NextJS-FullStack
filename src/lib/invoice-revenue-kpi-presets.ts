@@ -36,6 +36,33 @@ export function invoiceKpiCountBadge(count: number, label: string): string | und
   return `${count} ${plural}`;
 }
 
+/** CP management card footer — count label or friendly zero copy (replaces insights period hint). */
+export function invoiceKpiValueRowHint(
+  count: number,
+  label: string,
+  zeroHint?: string
+): string {
+  if (count <= 0) {
+    return zeroHint ?? `No ${label}s yet`;
+  }
+  const plural = count === 1 ? label : `${label}s`;
+  return `${count} ${plural}`;
+}
+
+/** Zero-state footers for CP billing KPI cards (all-time scoped). */
+export const INVOICE_KPI_ZERO_HINTS = {
+  paid: "No paid invoices yet",
+  open: "No open invoices yet",
+  draft: "No drafts yet",
+  sent: "No sent invoices yet",
+  overdue: "No overdue yet",
+  refunded: "No refunds yet",
+  cancelled: "No cancellations yet",
+  invoice: "No invoices yet",
+  payment: "No attempts yet",
+  change: "No change yet",
+} as const;
+
 export const INVOICE_STATUS_KPI_PRESETS: Record<
   InvoiceStatusKey,
   Omit<InvoiceRevenueKpiCardPreset, "bucket">

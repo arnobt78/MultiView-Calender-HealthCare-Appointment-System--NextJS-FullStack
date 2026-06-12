@@ -4,12 +4,10 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-12)
 
-- **C25 (REQ-0069):** `findFilterOptionLabel` DRY (calendar + empty chips); `DoctorFilterSelect` + `userToDoctorIdentity`; services specialty/weekday presets.
-- **C24 (REQ-0068):** Rich `FilterSelect` — `FilterSelectOptionLabel` + `filter-select-option-presets.ts`; ~12 enum filter call sites; org billing footer no `border-t`.
-- **C23.1 (REQ-0067):** Org detail members filter row (`OrganizationDetailMembersSection`); client search/role filter.
-- **C23 (REQ-0066):** Members header parity; `StaffUserIdentityCell`; doctor CP `doctorUsers` prefetch; doctor detail subtitle.
-- **C22 (REQ-0065):** Org detail audit card; `{Org}'s Members` + role counts; member identity/actions.
-- **Verify:** **1001/1001** · tsc · lint · build PASS.
+- **C28 (REQ-0076):** CP all-time KPI footers; org/doctor filters in billing header; status-only `billing-totals`; `seedControlPanelSectionCacheFromSsr` single seed.
+- **C27.2 (REQ-0075):** Server status KPIs; org panel DRY; management cache patch.
+- **C27/C27.1 (REQ-0073/74):** Scoped `doctorId`/`orgId` API; `useInvoiceScopedBilling`; merge/remove/patch + `viewerTotals` SSR.
+- **Verify:** **1044/1044** · tsc · lint · build PASS.
 
 ## Never / Always
 
@@ -23,24 +21,31 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 |-------|--------|
 | Appointment | `invalidateAfterAppointmentMutation` |
 | Patient | `invalidateEntityAffectingAppointments` + `invalidatePatientDetailAndSnapshot` |
-| Invoice | `invalidateInvoicesAndOverview` / `invalidateInvoicesBilling` |
+| Invoice | `invalidateInvoicesAndOverview` / `invalidateInvoicesBilling` / `invalidateInvoiceScopedBilling` |
 | Organization | `invalidateOrganizations` / `invalidateOrganizationDetail` |
 | Types/config | `invalidateAppointmentTypeDerived` |
 
 Cross-tab: `query-cache-cross-tab.ts`.
 
+## Invoice hub (C27–C28)
+
+- **Scope:** `invoice-management-scope.ts` URL; `InvoiceManagementScopeContext`; `OrganizationFilterSelect` + `DoctorFilterSelect` in billing header.
+- **Data:** `useInvoiceScopedBilling` · keys `viewerTotals` / `byOrganization` / `byDoctor` (+ totals).
+- **Server:** `invoice-doctor-scope.ts` · `invoice-billing-kpi-aggregate.ts` (status-only for CP API).
+- **Cache:** `mergeInvoiceIntoScopedListCaches` · `removeInvoiceFromScopedListCaches` · `patchScopedTotalsFromListCaches` · `computeInvoiceBillingManagementPayloadFromList`.
+- **UI:** `InvoiceManagementBillingSectionHeading` · `InvoiceBillingStatsRow` (all-time) · `invoiceKpiValueRowHint`.
+- **SSR:** `invoice-management/page.tsx` · `seedControlPanelSectionCacheFromSsr` · `OrgBillingCachePayload.billingKpi`.
+
 ## Key paths
 
-- **Filters (C24–C25):** `FilterSelect`, `FilterSelectOptionLabel`, `DoctorFilterSelect`, `filter-select-option-presets.ts`, `doctor-identity-map.ts`, `findFilterOptionLabel`
-- **Org members (C23.1):** `OrganizationDetailMembersSection.tsx`, `organization-detail-members-filter.ts`
-- **Org detail (C22–C23):** `OrganizationDetailScreen`, `organization-detail-members-columns.tsx`, `OrganizationMembersRoleCountInlineRow`, `StaffUserIdentityCell`
-- **Org billing (C20):** `OrganizationBillingPanel.tsx`, `InvoicePortalListCard`
-- **CP lists:** `cpClinicalListTableFrameClassName` + tone shells (`sky`/`violet`/`indigo`/`emerald`)
+- Filters: `FilterSelect`, `filter-select-option-presets.ts`, `DoctorFilterSelect`, `OrganizationFilterSelect`
+- Org billing: `OrganizationBillingPanel` · `org-billing-prefetch.ts`
+- CP lists: `cpClinicalListTableFrameClassName` + tone shells
 - Entity detail: `EntityDetailPageShell`, `EntityDetailBackLink`, `EntityDetailFooterRow`
 
 ## Agile V
 
-`.agile-v/ACTIVATION.md` · `STATE.md` · **C25 shipped** (REQ-0069).
+`.agile-v/ACTIVATION.md` · `STATE.md` · **C28 shipped** (REQ-0076).
 
 ## Principle
 

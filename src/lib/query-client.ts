@@ -46,10 +46,15 @@ export {
 /** Appointment rows in cache — see `appointment-cache-read.ts`. */
 type CachedAppointmentRow = { id: string; patient?: string | null; category?: string | null };
 
+import { resolveDoctorIdsFromInvoice } from "@/lib/invoice-doctor-scope";
+import type { InvoiceVisitSummary } from "@/lib/billing-types";
+
 type CachedInvoiceRow = {
   id: string;
+  user_id?: string;
   appointment_id?: string | null;
   organization_id?: string | null;
+  visit_summary?: InvoiceVisitSummary | null;
 };
 
 /** Resolve org id from global invoice list cache — for org billing/list aggregate bust. */
@@ -60,6 +65,47 @@ export function getOrganizationIdFromInvoiceCache(
   const invoices = queryClient.getQueryData<CachedInvoiceRow[]>(queryKeys.invoices.all);
   const inv = invoices?.find((i) => i.id === invoiceId);
   return inv?.organization_id ?? undefined;
+}
+
+/** Doctor ids from cached invoice row — issuer + visit treating/calendar owner. */
+export function getDoctorIdsFromInvoiceCache(
+  queryClient: QueryClient,
+  invoiceId: string
+): string[] {
+  const invoices = queryClient.getQueryData<CachedInvoiceRow[]>(queryKeys.invoices.all);
+  const inv = invoices?.find((i) => i.id === invoiceId);
+  if (!inv) return [];
+  return resolveDoctorIdsFromInvoice(inv);
+}
+
+/** Bust scoped org/doctor/viewer list + KPI totals caches after invoice CRUD. */
+export async function invalidateInvoiceScopedBilling(
+  queryClient: QueryClient,
+  opts?: { organizationId?: string | null; doctorIds?: readonly string[] }
+) {
+  const tasks: Promise<void>[] = [
+    queryClient.invalidateQueries({ queryKey: queryKeys.invoices.viewerTotals }),
+  ];
+  const orgId = opts?.organizationId?.trim();
+  if (orgId) {
+    tasks.push(
+      queryClient.invalidateQueries({ queryKey: queryKeys.invoices.byOrganization(orgId) }),
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.invoices.byOrganizationTotals(orgId),
+      })
+    );
+  }
+  for (const rawId of opts?.doctorIds ?? []) {
+    const doctorId = rawId.trim();
+    if (!doctorId) continue;
+    tasks.push(
+      queryClient.invalidateQueries({ queryKey: queryKeys.invoices.byDoctor(doctorId) }),
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.invoices.byDoctorTotals(doctorId),
+      })
+    );
+  }
+  if (tasks.length > 0) await Promise.all(tasks);
 }
 
 /** Invoice list cache → appointment → patient (for targeted invalidation after invoice CRUD). */
@@ -230,7 +276,7 @@ export async function invalidateOrganizationDetail(
 
 /**
  * Lighter bust after draft create / metadata PATCH — skips insights + doctors directory.
- * Prefer `mergeInvoiceIntoListCache` in the mutation `onSuccess` before calling this.
+ * Prefer `mergeInvoiceIntoScopedListCaches` in the mutation `onSuccess` before calling this.
  */
 export async function invalidateInvoicesBilling(
   queryClient: QueryClient,
@@ -241,6 +287,7 @@ export async function invalidateInvoicesBilling(
   const organizationId =
     opts?.organizationId ??
     (invoiceId ? getOrganizationIdFromInvoiceCache(queryClient, invoiceId) : undefined);
+  const doctorIds = invoiceId ? getDoctorIdsFromInvoiceCache(queryClient, invoiceId) : [];
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: queryKeys.invoices.all }),
     queryClient.invalidateQueries({ queryKey: queryKeys.billing.root }),
@@ -264,6 +311,7 @@ export async function invalidateInvoicesBilling(
           invalidateOrganizations(queryClient),
         ]
       : []),
+    invalidateInvoiceScopedBilling(queryClient, { doctorIds }),
   ]);
   publishQueryCacheCrossTab(CROSS_TAB_SCOPES.INVOICES_BILLING);
 }
@@ -281,6 +329,7 @@ export async function invalidateInvoicesAndOverview(
   const organizationId =
     opts?.organizationId ??
     (invoiceId ? getOrganizationIdFromInvoiceCache(queryClient, invoiceId) : undefined);
+  const doctorIds = invoiceId ? getDoctorIdsFromInvoiceCache(queryClient, invoiceId) : [];
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: queryKeys.invoices.all }),
     queryClient.invalidateQueries({ queryKey: queryKeys.billing.root }),
@@ -306,6 +355,7 @@ export async function invalidateInvoicesAndOverview(
           invalidateOrganizations(queryClient),
         ]
       : []),
+    invalidateInvoiceScopedBilling(queryClient, { doctorIds }),
   ]);
   publishQueryCacheCrossTab(CROSS_TAB_SCOPES.INVOICES);
 }

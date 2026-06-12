@@ -8,7 +8,7 @@ import {
   invalidateInvoicesAndOverview,
   invalidateInvoicesBilling,
 } from "@/lib/query-client";
-import { mapApiInvoiceToRow, mergeInvoiceIntoListCache } from "@/lib/billing-invoice-map";
+import { mapApiInvoiceToRow, mergeInvoiceIntoScopedListCaches, removeInvoiceFromScopedListCaches } from "@/lib/billing-invoice-map";
 import { notify } from "@/lib/notify";
 import {
   formatInvoiceMoney,
@@ -70,7 +70,7 @@ export function usePayments(options?: UsePaymentsOptions) {
 
   const invoicesQuery = useQuery({
     queryKey: queryKeys.invoices.all,
-    queryFn: fetchInvoicesListClient,
+    queryFn: () => fetchInvoicesListClient(),
     initialData: invoicesInitialData,
     staleTime: INVOICES_LIST_STALE_MS,
     // SSR/cache hit — skip mount refetch; invalidateAfterInvoiceWrite still busts list everywhere.
@@ -86,6 +86,7 @@ export function usePayments(options?: UsePaymentsOptions) {
       return data.url;
     },
     onSuccess: async (url, invoiceId) => {
+      // Stripe redirect — no list merge; user leaves page; return URL triggers invalidate.
       await invalidateAfterInvoiceWrite(queryClient, { invoiceId });
       // Always navigate to fresh Checkout URL (server expired prior open session).
       window.location.assign(url);
@@ -119,7 +120,7 @@ export function usePayments(options?: UsePaymentsOptions) {
         unit: variables.amount != null ? "eur" : "cents",
       });
       notify.crud(invoiceCrudMessage("created", { label, amountFormatted }));
-      mergeInvoiceIntoListCache(queryClient, mapApiInvoiceToRow(data.invoice));
+      mergeInvoiceIntoScopedListCaches(queryClient, mapApiInvoiceToRow(data.invoice));
       await invalidateAfterInvoiceWrite(queryClient, {
         invoiceId: data.invoice.id,
         appointmentId: data.invoice.appointment_id ?? variables.appointment_id,
@@ -148,7 +149,7 @@ export function usePayments(options?: UsePaymentsOptions) {
           label: data.invoice.description?.trim() || "Invoice",
         })
       );
-      mergeInvoiceIntoListCache(queryClient, mapApiInvoiceToRow(data.invoice));
+      mergeInvoiceIntoScopedListCaches(queryClient, mapApiInvoiceToRow(data.invoice));
       await invalidateAfterInvoiceWrite(queryClient, {
         invoiceId: data.invoice.id,
         appointmentId: data.invoice.appointment_id,
@@ -176,6 +177,7 @@ export function usePayments(options?: UsePaymentsOptions) {
           }),
         })
       );
+      mergeInvoiceIntoScopedListCaches(queryClient, mapApiInvoiceToRow(data.invoice));
       await invalidateAfterInvoiceWrite(queryClient, {
         invoiceId: data.invoice.id,
         appointmentId: data.invoice.appointment_id,
@@ -187,13 +189,18 @@ export function usePayments(options?: UsePaymentsOptions) {
 
   const refundInvoiceMutation = useMutation({
     mutationFn: (invoiceId: string) =>
-      apiClient(`/api/invoices/${invoiceId}/refund`, {
+      apiClient<{ invoice: Invoice }>(`/api/invoices/${invoiceId}/refund`, {
         method: "POST",
         body: JSON.stringify({}),
       }),
-    onSuccess: async (_, invoiceId) => {
+    onSuccess: async (data) => {
       notify.crud(invoiceCrudMessage("updated", { label: "Invoice refunded" }));
-      await invalidateAfterInvoiceWrite(queryClient, { invoiceId });
+      mergeInvoiceIntoScopedListCaches(queryClient, mapApiInvoiceToRow(data.invoice));
+      await invalidateAfterInvoiceWrite(queryClient, {
+        invoiceId: data.invoice.id,
+        appointmentId: data.invoice.appointment_id,
+        organizationId: data.invoice.organization_id,
+      });
     },
     onError: (error) => handleApiError(error, "Refund failed"),
   });
@@ -218,6 +225,9 @@ export function usePayments(options?: UsePaymentsOptions) {
           })
         : undefined;
       notify.crud(invoiceCrudMessage("deleted", { label, amountFormatted }));
+      if (deleted) {
+        removeInvoiceFromScopedListCaches(queryClient, deleted);
+      }
       await invalidateAfterInvoiceWrite(queryClient, {
         invoiceId,
         appointmentId: deleted?.appointment_id,

@@ -7,6 +7,10 @@
  */
 
 import type { InvoiceRow } from "@/lib/billing-types";
+import {
+  computeInvoicePaidPeriodComparison,
+  type InvoicePaidPeriodComparison,
+} from "@/lib/invoice-paid-period";
 
 /** Statuses counted as "awaiting payment" on CP dashboard + overview KPIs. */
 export const INVOICE_OUTSTANDING_STATUSES = ["draft", "sent", "overdue"] as const;
@@ -41,6 +45,10 @@ export type InvoiceBillingStatusTotals = Record<InvoiceStatusKey, InvoiceBilling
 export type InvoiceBillingTotalsPayload = {
   totals: InvoiceBillingTotals;
   statusTotals: InvoiceBillingStatusTotals;
+  /** Calendar month vs prior month — server aggregate or client patch. */
+  paidPeriod?: InvoicePaidPeriodComparison;
+  /** Volume / average / payment success — server aggregate or client patch. */
+  extendedKpis?: InvoiceExtendedKpis;
 };
 
 const EMPTY_BUCKET: InvoiceBillingBucket = { cents: 0, count: 0 };
@@ -132,6 +140,27 @@ export function computeInvoiceBillingTotalsPayload(
   return {
     statusTotals,
     totals: rollupInvoiceBillingTotals(statusTotals),
+  };
+}
+
+/** CP management optimistic patch — status rollups only (extended KPIs from list in UI). */
+export function computeInvoiceBillingManagementPayloadFromList(
+  invoices: ReadonlyArray<Pick<InvoiceRow, "amount" | "status">>
+): InvoiceBillingTotalsPayload {
+  return computeInvoiceBillingTotalsPayload(invoices);
+}
+
+/** Full KPI payload from list rows — insights-style period + extended (not used on CP hub). */
+export function computeInvoiceBillingKpiPayloadFromList(
+  invoices: ReadonlyArray<
+    Pick<InvoiceRow, "amount" | "status" | "paid_at" | "created_at" | "payments">
+  >
+): InvoiceBillingTotalsPayload {
+  const base = computeInvoiceBillingTotalsPayload(invoices);
+  return {
+    ...base,
+    paidPeriod: computeInvoicePaidPeriodComparison(invoices, "month"),
+    extendedKpis: computeInvoiceExtendedKpis(invoices),
   };
 }
 

@@ -1,9 +1,8 @@
 "use client";
 
 /**
- * Shared invoice revenue KPI grid — amount as primary value, count as title badge.
- * Insights: period hints + paid-in-period / vs-previous + extended payment KPIs.
- * CP: same cards using calendar-month paid comparison when invoice rows include paid_at.
+ * Shared invoice revenue KPI grid — amount as primary value, count as title badge (insights)
+ * or footer hint (CP management all-time).
  */
 
 import {
@@ -12,9 +11,11 @@ import {
   INVOICE_EXTRA_TOTAL_PRESET,
   INVOICE_INSIGHTS_PAID_IN_PERIOD_PRESET,
   INVOICE_INSIGHTS_VS_PREVIOUS_PRESET,
+  INVOICE_KPI_ZERO_HINTS,
   INVOICE_ROLLUP_OUTSTANDING_PRESET,
   INVOICE_STATUS_KPI_PRESETS,
   invoiceKpiCountBadge,
+  invoiceKpiValueRowHint,
 } from "@/lib/invoice-revenue-kpi-presets";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { PatientStatCard } from "@/components/control-panel/PatientStatCard";
@@ -33,6 +34,7 @@ import {
   type InvoiceBillingTotals,
   type InvoiceStatusKey,
 } from "@/lib/invoice-billing-totals";
+
 type Props = {
   statusTotals: InvoiceBillingStatusTotals;
   totals?: InvoiceBillingTotals;
@@ -86,9 +88,12 @@ export function InvoiceRevenueKpiGrid({
 }: Props) {
   const totals = totalsProp ?? rollupInvoiceBillingTotals(statusTotals);
   const outstandingBucket = sumOutstandingBucket(statusTotals);
-  const hint = periodValueHint;
+  const isManagement = mode === "management";
+  const hint = isManagement ? undefined : periodValueHint;
   const showPeriodCards =
-    showPeriodComparison && (mode === "insights" || periodValueHint != null);
+    !isManagement &&
+    showPeriodComparison &&
+    (mode === "insights" || periodValueHint != null);
 
   const comparison = formatInsightsRevenuePeriodComparison(
     paidInPeriodCents,
@@ -103,6 +108,18 @@ export function InvoiceRevenueKpiGrid({
     "refunded",
     "cancelled",
   ];
+
+  const cardFooter = (
+    count: number,
+    label: string,
+    zeroHint?: string
+  ): string | undefined =>
+    isManagement
+      ? invoiceKpiValueRowHint(count, label, zeroHint)
+      : hint;
+
+  const cardBadge = (count: number, label: string): string | undefined =>
+    isManagement ? undefined : invoiceKpiCountBadge(count, label);
 
   return (
     <div className={invoiceRevenueKpiGridClass}>
@@ -147,11 +164,15 @@ export function InvoiceRevenueKpiGrid({
         icon={INVOICE_STATUS_KPI_PRESETS.paid.icon}
         title={INVOICE_STATUS_KPI_PRESETS.paid.title}
         subtitle={INVOICE_STATUS_KPI_PRESETS.paid.subtitle}
-        badge={invoiceKpiCountBadge(statusTotals.paid.count, INVOICE_STATUS_KPI_PRESETS.paid.badgeLabel)}
+        badge={cardBadge(statusTotals.paid.count, INVOICE_STATUS_KPI_PRESETS.paid.badgeLabel)}
         value={statusTotals.paid.count}
         valueDisplay={formatBillingKpiMoney(statusTotals.paid.cents)}
         valueSkeleton={valueSkeleton}
-        valueRowHint={mode === "insights" ? hint : undefined}
+        valueRowHint={cardFooter(
+          statusTotals.paid.count,
+          INVOICE_STATUS_KPI_PRESETS.paid.badgeLabel,
+          INVOICE_KPI_ZERO_HINTS.paid
+        )}
       />
 
       <PatientStatCard
@@ -159,16 +180,30 @@ export function InvoiceRevenueKpiGrid({
         icon={INVOICE_ROLLUP_OUTSTANDING_PRESET.icon}
         title={INVOICE_ROLLUP_OUTSTANDING_PRESET.title}
         subtitle={INVOICE_ROLLUP_OUTSTANDING_PRESET.subtitle}
-        badge={invoiceKpiCountBadge(outstandingBucket.count, INVOICE_ROLLUP_OUTSTANDING_PRESET.badgeLabel)}
+        badge={cardBadge(outstandingBucket.count, INVOICE_ROLLUP_OUTSTANDING_PRESET.badgeLabel)}
         value={outstandingBucket.count}
         valueDisplay={formatBillingKpiMoney(outstandingBucket.cents)}
         valueSkeleton={valueSkeleton}
-        valueRowHint={mode === "insights" ? hint : undefined}
+        valueRowHint={cardFooter(
+          outstandingBucket.count,
+          INVOICE_ROLLUP_OUTSTANDING_PRESET.badgeLabel,
+          INVOICE_KPI_ZERO_HINTS.open
+        )}
       />
 
       {statusDetailKeys.map((key) => {
         const preset = INVOICE_STATUS_KPI_PRESETS[key];
         const bucket = statusTotals[key];
+        const zeroHint =
+          key === "overdue"
+            ? INVOICE_KPI_ZERO_HINTS.overdue
+            : key === "cancelled"
+              ? INVOICE_KPI_ZERO_HINTS.cancelled
+              : key === "refunded"
+                ? INVOICE_KPI_ZERO_HINTS.refunded
+                : key === "draft"
+                  ? INVOICE_KPI_ZERO_HINTS.draft
+                  : INVOICE_KPI_ZERO_HINTS.sent;
         return (
           <PatientStatCard
             key={preset.id}
@@ -176,11 +211,11 @@ export function InvoiceRevenueKpiGrid({
             icon={preset.icon}
             title={preset.title}
             subtitle={preset.subtitle}
-            badge={invoiceKpiCountBadge(bucket.count, preset.badgeLabel)}
+            badge={cardBadge(bucket.count, preset.badgeLabel)}
             value={bucket.count}
             valueDisplay={formatBillingKpiMoney(bucket.cents)}
             valueSkeleton={valueSkeleton}
-            valueRowHint={mode === "insights" ? hint : undefined}
+            valueRowHint={cardFooter(bucket.count, preset.badgeLabel, zeroHint)}
           />
         );
       })}
@@ -192,28 +227,30 @@ export function InvoiceRevenueKpiGrid({
             icon={INVOICE_EXTRA_TOTAL_PRESET.icon}
             title={INVOICE_EXTRA_TOTAL_PRESET.title}
             subtitle={INVOICE_EXTRA_TOTAL_PRESET.subtitle}
-            badge={invoiceKpiCountBadge(
-              extendedKpis.totalCount,
-              INVOICE_EXTRA_TOTAL_PRESET.badgeLabel
-            )}
+            badge={cardBadge(extendedKpis.totalCount, INVOICE_EXTRA_TOTAL_PRESET.badgeLabel)}
             value={extendedKpis.totalCount}
             valueDisplay={formatBillingKpiMoney(extendedKpis.totalAmountCents)}
             valueSkeleton={valueSkeleton}
-            valueRowHint={mode === "insights" ? hint : undefined}
+            valueRowHint={cardFooter(
+              extendedKpis.totalCount,
+              INVOICE_EXTRA_TOTAL_PRESET.badgeLabel,
+              INVOICE_KPI_ZERO_HINTS.invoice
+            )}
           />
           <PatientStatCard
             variant={INVOICE_EXTRA_AVG_PRESET.variant}
             icon={INVOICE_EXTRA_AVG_PRESET.icon}
             title={INVOICE_EXTRA_AVG_PRESET.title}
             subtitle={INVOICE_EXTRA_AVG_PRESET.subtitle}
-            badge={invoiceKpiCountBadge(
-              extendedKpis.totalCount,
-              INVOICE_EXTRA_AVG_PRESET.badgeLabel
-            )}
+            badge={cardBadge(extendedKpis.totalCount, INVOICE_EXTRA_AVG_PRESET.badgeLabel)}
             value={extendedKpis.totalCount}
             valueDisplay={formatBillingKpiMoney(extendedKpis.avgInvoiceCents)}
             valueSkeleton={valueSkeleton}
-            valueRowHint={mode === "insights" ? hint : undefined}
+            valueRowHint={cardFooter(
+              extendedKpis.totalCount,
+              INVOICE_EXTRA_AVG_PRESET.badgeLabel,
+              INVOICE_KPI_ZERO_HINTS.invoice
+            )}
           />
           <PatientStatCard
             variant={INVOICE_EXTRA_PAYMENT_SUCCESS_PRESET.variant}
@@ -221,14 +258,26 @@ export function InvoiceRevenueKpiGrid({
             title={INVOICE_EXTRA_PAYMENT_SUCCESS_PRESET.title}
             subtitle={INVOICE_EXTRA_PAYMENT_SUCCESS_PRESET.subtitle}
             badge={
-              extendedKpis.paymentAttemptCount > 0
-                ? `${extendedKpis.paymentAttemptCount} attempts`
-                : undefined
+              isManagement
+                ? undefined
+                : extendedKpis.paymentAttemptCount > 0
+                  ? `${extendedKpis.paymentAttemptCount} attempts`
+                  : undefined
             }
             value={0}
             valueDisplay={formatInsightsPercent(extendedKpis.paymentSuccessPct)}
             valueSkeleton={valueSkeleton}
-            valueRowHint={mode === "insights" ? hint : undefined}
+            valueRowHint={
+              isManagement
+                ? extendedKpis.paymentAttemptCount > 0
+                  ? invoiceKpiValueRowHint(
+                      extendedKpis.paymentAttemptCount,
+                      "attempt",
+                      INVOICE_KPI_ZERO_HINTS.payment
+                    )
+                  : INVOICE_KPI_ZERO_HINTS.payment
+                : hint
+            }
           />
         </>
       ) : null}

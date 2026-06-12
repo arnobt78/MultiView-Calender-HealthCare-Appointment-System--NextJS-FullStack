@@ -26,6 +26,34 @@ export function getInvoiceListTitle(invoice: Pick<InvoiceRow, "id" | "descriptio
   return `Invoice ${formatShortEntityId(invoice.id)}`;
 }
 
+/** Sort/search key — title + patient (not raw description alone). */
+export function getInvoiceListSortKey(
+  invoice: Pick<InvoiceRow, "id" | "description" | "visit_summary">
+): string {
+  const title = getInvoiceListTitle(invoice);
+  const patient = invoice.visit_summary?.patient_label?.trim() ?? "";
+  return `${title} ${patient}`.trim();
+}
+
+/** Global filter haystack for CP invoice list search. */
+export function getInvoiceListSearchBlob(
+  invoice: Pick<InvoiceRow, "id" | "description" | "visit_summary">
+): string {
+  const summary = invoice.visit_summary;
+  return [
+    invoice.id,
+    invoice.description ?? "",
+    getInvoiceListTitle(invoice),
+    summary?.title ?? "",
+    summary?.patient_label ?? "",
+    summary?.patient_email ?? "",
+    summary?.treating_physician_label ?? "",
+    summary?.appointment_type_name ?? "",
+  ]
+    .join(" ")
+    .toLowerCase();
+}
+
 function buildTitleFromVisitSummary(summary: InvoiceVisitSummary): string | null {
   const typeLabel =
     summary.appointment_type_name?.trim() || summary.category_label?.trim();

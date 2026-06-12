@@ -4,59 +4,62 @@
  * Staff/admin CP tabs use the same rules as GET /api/invoices and GET /api/payments.
  */
 
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { isAdminRole, isDoctorRole, isPatientRole } from "@/lib/rbac";
 import {
   getOrganizationMemberOrgIds,
   userCanViewOrganizationInvoices,
 } from "@/lib/organization-invoice-access";
+import { buildPrismaDoctorInvoiceWhere } from "@/lib/invoice-doctor-scope";
+import type { InvoiceBillingTotalsPayload } from "@/lib/invoice-billing-totals";
 import {
-  INVOICE_STATUS_KEYS,
-  rollupInvoiceBillingTotals,
-  type InvoiceBillingStatusTotals,
-  type InvoiceBillingTotals,
-  type InvoiceBillingTotalsPayload,
-  type InvoiceStatusKey,
-} from "@/lib/invoice-billing-totals";
+  emptyInvoiceBillingStatusPayload,
+  fetchInvoiceBillingStatusPayloadForWhere,
+} from "@/lib/invoice-billing-kpi-aggregate";
 
 const invoiceInclude = { payments: true } as const;
+
+export type InvoiceViewerScopeOpts = {
+  userId: string;
+  role: string | null;
+  email?: string | null;
+  /** Optional org filter — same as list endpoint. */
+  organizationId?: string | null;
+};
+
+/** `null` = viewer sees no invoices (patient w/o chart, etc.). */
+export type InvoiceViewerWhereResult =
+  | { kind: "where"; where: Prisma.InvoiceWhereInput }
+  | { kind: "empty" };
 
 export type InvoiceWithPaymentsRow = Awaited<
   ReturnType<typeof fetchInvoicesForViewer>
 >[number];
 
 /**
- * - Patient: invoices linked to their chart appointments (not `user_id` on invoice row).
- * - Admin: all invoices (CP billing tab).
- * - Doctor/staff: invoices they bill (`user_id`) or tied to visits they own/treat.
+ * Shared Prisma filter for viewer-scoped invoice list + KPI aggregates.
+ * Admin: all rows (optional org filter). Patient/doctor/staff: RBAC OR clauses.
  */
-export async function fetchInvoicesForViewer(opts: {
-  userId: string;
-  role: string | null;
-  email?: string | null;
-  /** CP organization tab — limit list to one clinic org. */
-  organizationId?: string | null;
-}) {
+export async function buildInvoiceViewerWhere(
+  opts: InvoiceViewerScopeOpts
+): Promise<InvoiceViewerWhereResult> {
   const orgFilterId =
     opts.organizationId != null && opts.organizationId !== ""
-      ? opts.organizationId
+      ? opts.organizationId.trim()
       : null;
 
   if (orgFilterId) {
     const allowed =
       isAdminRole(opts.role) ||
       (await userCanViewOrganizationInvoices(opts.userId, orgFilterId));
-    if (!allowed) return [];
+    if (!allowed) return { kind: "empty" };
   }
 
   const orgWhere = orgFilterId ? { organization_id: orgFilterId } : {};
 
   if (isAdminRole(opts.role)) {
-    return prisma.invoice.findMany({
-      where: orgWhere,
-      include: invoiceInclude,
-      orderBy: { created_at: "desc" },
-    });
+    return { kind: "where", where: orgWhere };
   }
 
   if (isPatientRole(opts.role) && opts.email) {
@@ -64,20 +67,19 @@ export async function fetchInvoicesForViewer(opts: {
       where: { email: opts.email },
       select: { id: true },
     });
-    if (!patient) return [];
+    if (!patient) return { kind: "empty" };
 
     const appts = await prisma.appointment.findMany({
       where: { patient_id: patient.id },
       select: { id: true },
     });
     const appointmentIds = appts.map((a) => a.id);
-    if (appointmentIds.length === 0) return [];
+    if (appointmentIds.length === 0) return { kind: "empty" };
 
-    return prisma.invoice.findMany({
+    return {
+      kind: "where",
       where: { appointment_id: { in: appointmentIds }, ...orgWhere },
-      include: invoiceInclude,
-      orderBy: { created_at: "desc" },
-    });
+    };
   }
 
   const visitIds = await prisma.appointment.findMany({
@@ -91,7 +93,8 @@ export async function fetchInvoicesForViewer(opts: {
     ? await getOrganizationMemberOrgIds(opts.userId)
     : [];
 
-  return prisma.invoice.findMany({
+  return {
+    kind: "where",
     where: {
       ...orgWhere,
       OR: [
@@ -104,39 +107,77 @@ export async function fetchInvoicesForViewer(opts: {
           : []),
       ],
     },
+  };
+}
+
+/**
+ * - Patient: invoices linked to their chart appointments (not `user_id` on invoice row).
+ * - Admin: all invoices (CP billing tab).
+ * - Doctor/staff: invoices they bill (`user_id`) or tied to visits they own/treat.
+ */
+export async function fetchInvoicesForViewer(opts: {
+  userId: string;
+  role: string | null;
+  email?: string | null;
+  organizationId?: string | null;
+  doctorId?: string | null;
+}) {
+  const orgFilterId =
+    opts.organizationId != null && opts.organizationId !== ""
+      ? opts.organizationId
+      : null;
+  const doctorFilterId =
+    opts.doctorId != null && opts.doctorId !== "" ? opts.doctorId.trim() : null;
+
+  if (orgFilterId && doctorFilterId) return [];
+
+  if (doctorFilterId) {
+    if (!isAdminRole(opts.role) && doctorFilterId !== opts.userId) return [];
+    return prisma.invoice.findMany({
+      where: buildPrismaDoctorInvoiceWhere(doctorFilterId),
+      include: invoiceInclude,
+      orderBy: { created_at: "desc" },
+    });
+  }
+
+  const viewerWhere = await buildInvoiceViewerWhere({
+    userId: opts.userId,
+    role: opts.role,
+    email: opts.email,
+    organizationId: orgFilterId,
+  });
+  if (viewerWhere.kind === "empty") return [];
+
+  return prisma.invoice.findMany({
+    where: viewerWhere.where,
     include: invoiceInclude,
     orderBy: { created_at: "desc" },
   });
 }
 
-function aggregateToBucket(agg: {
-  _sum: { amount: number | null };
-  _count: number;
-}): { cents: number; count: number } {
-  return { cents: agg._sum.amount ?? 0, count: agg._count };
+/** Viewer-scoped billing KPI aggregates — invoice hub all scope + role-aware RBAC. */
+export async function fetchInvoiceBillingTotalsForViewer(
+  opts: InvoiceViewerScopeOpts
+): Promise<InvoiceBillingTotalsPayload> {
+  const viewerWhere = await buildInvoiceViewerWhere(opts);
+  if (viewerWhere.kind === "empty") {
+    return emptyInvoiceBillingStatusPayload();
+  }
+  return fetchInvoiceBillingStatusPayloadForWhere(viewerWhere.where);
 }
 
 /** Org billing KPI aggregates — rollups + per-status buckets (Prisma). */
 export async function fetchInvoiceBillingTotalsForOrganization(
   organizationId: string
 ): Promise<InvoiceBillingTotalsPayload> {
-  const orgWhere = { organization_id: organizationId };
+  return fetchInvoiceBillingStatusPayloadForWhere({ organization_id: organizationId });
+}
 
-  const statusAggs = await Promise.all(
-    INVOICE_STATUS_KEYS.map(async (status: InvoiceStatusKey) => {
-      const agg = await prisma.invoice.aggregate({
-        where: { ...orgWhere, status },
-        _sum: { amount: true },
-        _count: true,
-      });
-      return [status, aggregateToBucket(agg)] as const;
-    })
-  );
-
-  const statusTotals = Object.fromEntries(statusAggs) as InvoiceBillingStatusTotals;
-  const totals = rollupInvoiceBillingTotals(statusTotals);
-
-  return { totals, statusTotals };
+/** Doctor-scoped billing KPI aggregates — same buckets as org panel. */
+export async function fetchInvoiceBillingTotalsForDoctor(
+  doctorId: string
+): Promise<InvoiceBillingTotalsPayload> {
+  return fetchInvoiceBillingStatusPayloadForWhere(buildPrismaDoctorInvoiceWhere(doctorId));
 }
 
 /** @deprecated Prefer `fetchInvoiceBillingTotalsForOrganization` — slim paid/outstanding only. */
