@@ -21,6 +21,7 @@ import {
 import {
   filterSelectIconClass,
   filterSelectTriggerDashboardClass,
+  filterSelectTriggerDoctorInlineValueClass,
   filterSelectTriggerToolbarClass,
 } from "@/lib/filter-select-classes";
 import { cn } from "@/lib/utils";
@@ -38,7 +39,7 @@ type DoctorFilterSelectProps = {
   ariaLabel?: string;
 };
 
-/** List-toolbar doctor filter — avatar + specialty in trigger and menu (PatientFilterSelect parity). */
+/** List-toolbar doctor filter — fixed h-10 trigger with inline avatar/name/badge row. */
 export function DoctorFilterSelect({
   value,
   onValueChange,
@@ -63,21 +64,19 @@ export function DoctorFilterSelect({
       <SelectTrigger
         className={cn(
           triggerSizeClass,
-          "min-w-[200px]",
-          selected &&
-            "max-h-10 overflow-hidden [&_[data-slot=select-value]]:hidden",
+          size === "toolbar" && filterSelectTriggerDoctorInlineValueClass,
           triggerClassName
         )}
         aria-label={ariaLabel}
       >
         <Stethoscope className={filterSelectIconClass} aria-hidden />
-        {selected ? (
-          <span className="min-w-0 flex-1 overflow-hidden">
+        <SelectValue asChild placeholder={allLabel}>
+          {selected ? (
             <DoctorSelectTriggerOption doctor={userToDoctorIdentity(selected)} />
-          </span>
-        ) : (
-          <SelectValue placeholder={allLabel}>{allLabel}</SelectValue>
-        )}
+          ) : (
+            <span className="truncate text-sm text-gray-700">{allLabel}</span>
+          )}
+        </SelectValue>
       </SelectTrigger>
       <SelectContent>
         <SelectItem value={ALL_VALUE}>{allLabel}</SelectItem>

@@ -82,6 +82,14 @@ export function formatPortalInvoiceListLabel(
   return `Invoice ${listIndex}: ${shortId}`;
 }
 
+/** CP invoice-management table — sequence label only (hex id on second line). */
+export function formatInvoiceManagementSequenceLabel(listIndex: number): string {
+  if (!Number.isFinite(listIndex) || listIndex < 1) {
+    return "Invoice";
+  }
+  return `Invoice ${listIndex}`;
+}
+
 /** Client-side doctor portal billing filters (no API). */
 export type DoctorPortalInvoiceStatusFilter =
   | "all"

@@ -4,6 +4,12 @@ import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { UserRoleBadge } from "@/components/shared/UserRoleBadge";
 import {
+  clinicalIdentityCompactStackBadgeRowClass,
+  clinicalIdentityCompactStackNameEmailRowClass,
+  clinicalIdentityCompactStackRowClass,
+  clinicalIdentityCompactStackTextColClass,
+} from "@/lib/clinical-identity-inline-ui";
+import {
   clinicalCellMutedTextClass,
   clinicalStackGapClass,
   clinicalTableCellMinRowClass,
@@ -20,6 +26,8 @@ type StaffUserIdentityCellProps = {
   showRoleBadge?: boolean;
   avatarSizeClassName?: string;
   className?: string;
+  /** `stack` = name/email/badge rows; `compactStack` = row1 name+email, row2 badge (CP invoice table). */
+  layout?: "stack" | "compactStack";
 };
 
 /**
@@ -34,9 +42,49 @@ export function StaffUserIdentityCell({
   showRoleBadge = false,
   avatarSizeClassName = "h-7 w-7",
   className,
+  layout = "stack",
 }: StaffUserIdentityCellProps) {
   const label = displayName.trim() || email?.trim() || "—";
   const emailTrim = email?.trim() ?? "";
+
+  const nameNode = (
+    <EntityTitleLink
+      href={href}
+      label={label}
+      className="min-w-0 shrink truncate text-sm font-normal"
+    />
+  );
+
+  const badgeRow =
+    showRoleBadge && role ? (
+      <UserRoleBadge role={role} className="shrink-0 self-start" />
+    ) : null;
+
+  if (layout === "compactStack") {
+    return (
+      <div className={cn(clinicalIdentityCompactStackRowClass, className)}>
+        <UserAvatar
+          alt={label}
+          src={image}
+          fallbackText={label}
+          sizeClassName={avatarSizeClassName}
+        />
+        <div className={clinicalIdentityCompactStackTextColClass}>
+          <div className={clinicalIdentityCompactStackNameEmailRowClass}>
+            {nameNode}
+            {emailTrim ? (
+              <span className={cn("shrink-0 text-xs", clinicalCellMutedTextClass)} title={emailTrim}>
+                ({emailTrim})
+              </span>
+            ) : null}
+          </div>
+          {badgeRow ? (
+            <div className={clinicalIdentityCompactStackBadgeRowClass}>{badgeRow}</div>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={cn("flex min-w-0 items-center gap-2", clinicalTableCellMinRowClass, className)}>
@@ -57,9 +105,7 @@ export function StaffUserIdentityCell({
             {emailTrim}
           </span>
         ) : null}
-        {showRoleBadge && role ? (
-          <UserRoleBadge role={role} className="shrink-0 self-start" />
-        ) : null}
+        {badgeRow}
       </div>
     </div>
   );

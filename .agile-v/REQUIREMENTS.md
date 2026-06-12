@@ -121,6 +121,25 @@
 | REQ-0074 | approved [C27.1] | REQ-0073 | ART-0384..0387 | pending |
 | REQ-0075 | approved [C27.2] | REQ-0074 | ART-0388..0391 | pending |
 | REQ-0076 | approved [C28] | REQ-0075 | ART-0392..0395 | pending |
+| REQ-0077 | approved [C29] | REQ-0076 | ART-0396..0400 | pending |
+
+### REQ-0077 — C29 CP invoice management table UX
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C29] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0076 |
+
+**Statement:** CP invoice-management DataTable display polish — two-line invoice # with list sequence, compact two-row identity blocks in Description, merged Amount+Status column, sky linked issuer in Created row.
+
+**Acceptance criteria:**
+1. Invoice # column: `Invoice N` line + `#shortId` clipboard on second line (visible list order).
+2. Description: patient/doctor/admin compactStack identity blocks (avatar + name/email row + badge row).
+3. Single Amount column with status badge below price.
+4. Created column: aligned issued icon, sky issued text, clickable issuer link.
+5. Tests; verify PASS.
 
 ### REQ-0076 — C28 CP billing all-time KPI UX + seed consolidation
 

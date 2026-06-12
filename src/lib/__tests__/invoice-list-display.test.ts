@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   filterDoctorPortalInvoices,
+  formatInvoiceManagementSequenceLabel,
   formatPortalInvoiceListLabel,
   getInvoiceListTitle,
   countDoctorPortalOutstanding,
@@ -79,6 +80,17 @@ describe("filterDoctorPortalInvoices", () => {
     expect(
       filterDoctorPortalInvoices(rows, { search: "", status: "paid" }).map((r) => r.status)
     ).toEqual(["paid"]);
+  });
+});
+
+describe("formatInvoiceManagementSequenceLabel", () => {
+  it("returns sequence label without hex id", () => {
+    expect(formatInvoiceManagementSequenceLabel(1)).toBe("Invoice 1");
+    expect(formatInvoiceManagementSequenceLabel(3)).toBe("Invoice 3");
+  });
+
+  it("falls back when index invalid", () => {
+    expect(formatInvoiceManagementSequenceLabel(0)).toBe("Invoice");
   });
 });
 

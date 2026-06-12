@@ -45,18 +45,14 @@ export function InsightsDoctorScopeSelect({
     <Select value={value} onValueChange={onValueChange} disabled={disabled}>
       <SelectTrigger
         id={id}
-        className={cn(
-          insightsGlassSelectTriggerClass,
-          "items-center overflow-hidden py-0 [&_[data-slot=select-value]]:max-h-8 [&_[data-slot=select-value]]:overflow-hidden",
-          className
-        )}
+        className={cn(insightsGlassSelectTriggerClass, "items-center", className)}
         aria-label="Insights doctor scope"
       >
         <SelectValue asChild placeholder="Select doctor">
           {isOrg ? (
-            <span className="flex min-w-0 items-center gap-2 overflow-hidden">
+            <span className="flex items-center gap-2">
               <Building2 className="h-3.5 w-3.5 shrink-0 text-sky-600" aria-hidden />
-              <span className="truncate text-xs text-gray-700">Organization-wide</span>
+              <span className="text-xs text-gray-700">Organization-wide</span>
             </span>
           ) : selectedDoctor ? (
             <DoctorSelectTriggerOption doctor={userToDoctorIdentity(selectedDoctor)} />

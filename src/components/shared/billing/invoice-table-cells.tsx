@@ -3,6 +3,8 @@
 import { Receipt } from "lucide-react";
 import { InvoiceVisitDescriptionStack } from "@/components/shared/billing/InvoiceVisitDescriptionStack";
 import { InvoiceIssuedByMeta } from "@/components/shared/billing/InvoiceIssuedByMeta";
+import { InvoiceAmountDisplay } from "@/components/shared/billing/InvoiceAmountDisplay";
+import { InvoiceStatusBadge } from "@/components/shared/billing/InvoiceStatusBadge";
 import type { Invoice } from "@/hooks/usePayments";
 import { invoiceDueDateTextClassForStatus } from "@/lib/invoice-status-display";
 import { resolveInvoiceDisplayStatus } from "@/lib/billing-appointment-eligibility";
@@ -17,7 +19,10 @@ import { invoiceDetailHref } from "@/lib/entity-routes";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { EntityIdCopyInline } from "@/components/shared/EntityIdCopyInline";
 import { formatShortEntityId } from "@/lib/entity-id-display";
-import { formatPortalInvoiceListLabel } from "@/lib/invoice-list-display";
+import {
+  formatInvoiceManagementSequenceLabel,
+  formatPortalInvoiceListLabel,
+} from "@/lib/invoice-list-display";
 
 type InvoiceTableCellsProps = {
   invoice: Invoice;
@@ -33,6 +38,8 @@ type InvoiceNumberTableCellProps = InvoiceTableCellsProps & {
   showInvoiceLeadingIcon?: boolean;
   /** Portal list header — skip table min-row height. */
   compact?: boolean;
+  /** CP management table — `Invoice N` line + `#shortId` clipboard on second line. */
+  layout?: "default" | "cpTwoLine";
 };
 
 /** Sky link + clipboard — short invoice id in list tables. */
@@ -43,9 +50,39 @@ export function InvoiceNumberTableCell({
   listIndex,
   showInvoiceLeadingIcon = false,
   compact = false,
+  layout = "default",
 }: InvoiceNumberTableCellProps) {
   const href = invoiceDetailHref(viewerRole, invoice.id);
   const shortId = formatShortEntityId(invoice.id);
+
+  if (layout === "cpTwoLine" && listIndex != null) {
+    return (
+      <div
+        className={cn(
+          compact ? "min-h-0" : clinicalTableCellMinRowClass,
+          "flex flex-col justify-center gap-0.5 py-0.5"
+        )}
+      >
+        <EntityTitleLink
+          href={href}
+          label={formatInvoiceManagementSequenceLabel(listIndex)}
+          className="text-sm font-normal"
+        />
+        <EntityIdCopyInline
+          value={invoice.id}
+          labelNode={
+            <EntityTitleLink
+              href={href}
+              label={shortId}
+              className="font-mono text-xs font-normal"
+            />
+          }
+          monospace={false}
+        />
+      </div>
+    );
+  }
+
   const displayLabel =
     listIndex != null && idLabelPrefix?.trim()
       ? formatPortalInvoiceListLabel(listIndex, invoice.id)
@@ -116,7 +153,34 @@ export function InvoiceDueTableCell({ invoice }: { invoice: Invoice }) {
   );
 }
 
-export function InvoiceCreatedTableCell({ invoice }: { invoice: Invoice }) {
+type InvoiceCreatedTableCellProps = {
+  invoice: Invoice;
+  viewerRole?: EntityRole;
+};
+
+/** CP invoice table — amount on top, status badge below. */
+export function InvoiceAmountStatusTableCell({ invoice }: { invoice: Invoice }) {
+  return (
+    <div
+      className={cn(
+        clinicalTableCellMinRowClass,
+        "flex flex-col items-start justify-center gap-1 py-0.5"
+      )}
+    >
+      <InvoiceAmountDisplay
+        amountCents={invoice.amount}
+        currency={invoice.currency}
+        invoice={invoice}
+      />
+      <InvoiceStatusBadge invoice={invoice} />
+    </div>
+  );
+}
+
+export function InvoiceCreatedTableCell({
+  invoice,
+  viewerRole = "admin",
+}: InvoiceCreatedTableCellProps) {
   return (
     <div className="flex min-w-0 flex-col gap-1 py-0.5">
       <span className={cn(clinicalCellMutedTextClass, "text-xs tabular-nums")}>
@@ -126,6 +190,11 @@ export function InvoiceCreatedTableCell({ invoice }: { invoice: Invoice }) {
         createdAt={invoice.created_at}
         issuerLabel={invoice.issuer_label}
         issuerImage={invoice.issuer_image}
+        issuerEmail={invoice.issuer_email}
+        issuerUserId={invoice.user_id}
+        issuerRole={invoice.issuer_role}
+        viewerRole={viewerRole}
+        issuedTextTone="sky"
       />
     </div>
   );

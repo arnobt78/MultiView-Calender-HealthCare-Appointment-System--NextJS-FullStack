@@ -1,6 +1,16 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-12 — C28 invoice hub)
+## Latest (2026-06-12 — C29 + filters + specialty)
+
+**C29 (REQ-0077):** CP invoice-management table UX — two-line invoice # (`formatInvoiceManagementSequenceLabel` + linked `#shortId`); description `InvoiceVisitListCell` with `compactStack` patient/doctor/admin (`PatientIdentityCell` / `DoctorIdentityRow` / `StaffUserIdentityCell`); merged `amount_status` column; Created row sky `InvoiceIssuedByMeta` + linked issuer. Display-only — no API/cache/invalidation changes.
+
+**Filters (invoice + insights):** `ScopeFilterInlineRow`; fixed h-10 doctor select trigger (inline name + badge); `PortalPanelSubsectionHeader` separate filter row; insights admin scope reset inline.
+
+**Specialty:** `SPECIALTIES[0]` = `Medicine`; legacy glass aliases; `npm run db:backfill-doctor-specialty-medicine`; demo seed `doctor-profile-seed-data`.
+
+**Verify:** **1052/1052** · tsc · lint · build PASS.
+
+## Prior (2026-06-12 — C28 invoice hub)
 
 **C28 (REQ-0076):** CP billing all-time KPIs — `invoiceKpiValueRowHint` footers (no calendar month); removed period comparison cards on hub; extended KPIs from scoped list client-side; org/doctor filters inline in `InvoiceManagementBillingSectionHeading`; CP `GET /api/invoices/billing-totals` status-only (`fetchInvoiceBillingStatusPayloadForWhere`); optimistic patch via `computeInvoiceBillingManagementPayloadFromList`; unified `seedControlPanelSectionCacheFromSsr` (removed duplicate layout-effect seed).
 

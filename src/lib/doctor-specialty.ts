@@ -4,7 +4,7 @@
  */
 
 export const SPECIALTIES = [
-  "General Medicine",
+  "Medicine",
   "Cardiology",
   "Dermatology",
   "Neurology",
@@ -30,7 +30,10 @@ export type SpecialtyGlassVariant =
   | "slate";
 
 const SPECIALTY_VARIANT: Record<string, SpecialtyGlassVariant> = {
+  Medicine: "sky",
+  /** Legacy DB / cache values — same sky token as Medicine. */
   "General Medicine": "sky",
+  "Internal Medicine": "sky",
   Cardiology: "rose",
   Dermatology: "amber",
   Neurology: "indigo",

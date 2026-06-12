@@ -25,7 +25,7 @@ describe("cp-clinical-list-table-classes C17", () => {
   });
 
   it("exports identity and phone column shells", () => {
-    expect(cpClinicalListIdentityColumnShellClass).toContain("w-[22%]");
+    expect(cpClinicalListIdentityColumnShellClass).toContain("w-[24%]");
     expect(cpClinicalListPhoneColumnShellClass).toContain("w-[12%]");
   });
 

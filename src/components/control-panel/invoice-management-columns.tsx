@@ -3,9 +3,8 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "@/components/shared/DataTableColumnHeader";
 import { InvoiceAdminActionsMenu } from "@/components/shared/billing/InvoiceAdminActionsMenu";
-import { InvoiceAmountDisplay } from "@/components/shared/billing/InvoiceAmountDisplay";
-import { InvoiceStatusBadge } from "@/components/shared/billing/InvoiceStatusBadge";
 import {
+  InvoiceAmountStatusTableCell,
   InvoiceCreatedTableCell,
   InvoiceDueTableCell,
   InvoiceNumberTableCell,
@@ -14,7 +13,6 @@ import { InvoiceVisitListCell } from "@/components/control-panel/InvoiceVisitLis
 import type { Invoice } from "@/hooks/usePayments";
 import { getInvoiceListSortKey } from "@/lib/invoice-list-display";
 import {
-  clinicalTableCellMinRowClass,
   clinicalTableColumnWrapShellClass,
 } from "@/lib/table-display-styles";
 import {
@@ -61,7 +59,12 @@ export function buildInvoiceManagementColumns(
         <DataTableColumnHeader column={column} title="Invoice #" />
       ),
       cell: ({ row }) => (
-        <InvoiceNumberTableCell invoice={row.original} viewerRole={viewerRole} />
+        <InvoiceNumberTableCell
+          invoice={row.original}
+          viewerRole={viewerRole}
+          listIndex={row.index + 1}
+          layout="cpTwoLine"
+        />
       ),
     },
     {
@@ -81,35 +84,12 @@ export function buildInvoiceManagementColumns(
       ),
     },
     {
-      id: "amount",
+      id: "amount_status",
       accessorKey: "amount",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Amount" />
       ),
-      cell: ({ row }) => {
-        const inv = row.original;
-        return (
-          <div className={cn(clinicalTableCellMinRowClass, "flex items-center")}>
-            <InvoiceAmountDisplay
-              amountCents={inv.amount}
-              currency={inv.currency}
-              invoice={inv}
-            />
-          </div>
-        );
-      },
-    },
-    {
-      id: "status",
-      accessorKey: "status",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Status" />
-      ),
-      cell: ({ row }) => (
-        <div className={cn(clinicalTableCellMinRowClass, "flex items-center")}>
-          <InvoiceStatusBadge invoice={row.original} />
-        </div>
-      ),
+      cell: ({ row }) => <InvoiceAmountStatusTableCell invoice={row.original} />,
     },
     {
       id: "due",
@@ -126,7 +106,9 @@ export function buildInvoiceManagementColumns(
         <DataTableColumnHeader column={column} title="Created" />
       ),
       meta: { shellClassName: clinicalTableColumnWrapShellClass },
-      cell: ({ row }) => <InvoiceCreatedTableCell invoice={row.original} />,
+      cell: ({ row }) => (
+        <InvoiceCreatedTableCell invoice={row.original} viewerRole={viewerRole} />
+      ),
     },
     {
       id: "actions",

@@ -83,7 +83,7 @@ describe("buildAppointmentDetailViewModel", () => {
         primary_doctor: {
           display_name: "Demo Doctor",
           email: "test@doctor.com",
-          specialty: "Internal Medicine",
+          specialty: "Medicine",
           image: null,
         },
       },

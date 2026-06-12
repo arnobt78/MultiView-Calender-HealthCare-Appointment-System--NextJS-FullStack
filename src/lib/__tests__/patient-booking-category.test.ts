@@ -48,11 +48,11 @@ describe("resolvePatientBookingCategoryId", () => {
     expect(id).toBe("cat-cardio");
   });
 
-  it("maps General Medicine doctor to Primary Care category via specialty tokens", async () => {
+  it("maps Medicine doctor to Primary Care category via specialty tokens", async () => {
     let categoryQueryCount = 0;
     const prisma = {
       appointmentType: { findFirst: async () => ({ name: "Initial Consultation" }) },
-      user: { findUnique: async () => ({ specialty: "General Medicine" }) },
+      user: { findUnique: async () => ({ specialty: "Medicine" }) },
       category: {
         findFirst: async (args: {
           where?: { OR?: Array<{ label?: { contains?: string } }> };

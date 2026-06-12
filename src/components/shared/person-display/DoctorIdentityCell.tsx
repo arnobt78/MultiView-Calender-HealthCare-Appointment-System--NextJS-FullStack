@@ -35,7 +35,7 @@ export type DoctorIdentityCellProps = {
   size?: "sm" | "md";
   showSpecialty?: boolean;
   /** `inline` — avatar + name + email + badges on one responsive row (entity detail People). */
-  layout?: "stack" | "inline";
+  layout?: "stack" | "inline" | "compactStack";
   showRoleBadge?: boolean;
   className?: string;
   /** Optional footnote under stack (e.g. primary care line on treating physician). */

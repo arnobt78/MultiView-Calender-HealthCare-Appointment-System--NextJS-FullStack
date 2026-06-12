@@ -22,7 +22,7 @@ const baseSummary = {
   location_label: "Demo Clinic",
   treating_physician_label: "Demo Doctor",
   treating_physician_id: "doc-1",
-  treating_physician_specialty: "Internal Medicine",
+  treating_physician_specialty: "Medicine",
   calendar_owner_id: null,
   calendar_owner_label: null,
   calendar_owner_specialty: null,
@@ -40,7 +40,7 @@ describe("formatStripeCheckoutVisitDescription", () => {
     expect(lines[1]).toBe("Demo Clinic — Primary Care & Preventive Medicine");
     expect(lines).toContain("Duration: 30 min");
     expect(lines).toContain("Patient: Demo Patient");
-    expect(lines).toContain("Treating physician: Demo Doctor · Internal Medicine");
+    expect(lines).toContain("Treating physician: Demo Doctor · Medicine");
     expect(lines).toContain("Issued by: Demo Admin");
   });
 });

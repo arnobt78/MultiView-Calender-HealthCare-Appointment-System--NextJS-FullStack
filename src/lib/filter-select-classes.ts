@@ -14,10 +14,16 @@ export const filterSelectTriggerDashboardClass = cn(
   "h-9 min-w-[160px]"
 );
 
-/** Doctor portal, CP patient toolbar, long labels — `h-10`. */
+/** Doctor portal, CP patient toolbar, long labels — fixed `h-10`. */
 export const filterSelectTriggerToolbarClass = cn(
   filterSelectTriggerBase,
-  "h-10 shrink-0 min-w-[160px]"
+  "h-10 max-h-10 min-h-10 shrink-0 min-w-[160px]"
+);
+
+/** Inline doctor label inside fixed h-10 triggers — width grows, height stays h-10. */
+export const filterSelectTriggerDoctorInlineValueClass = cn(
+  "h-10 max-h-10 min-h-10 items-center overflow-hidden py-0",
+  "[&_[data-slot=select-value]]:min-w-0 [&_[data-slot=select-value]]:flex-1 [&_[data-slot=select-value]]:overflow-hidden [&_[data-slot=select-value]]:items-center"
 );
 
 export const filterSelectIconClass = "h-3.5 w-3.5 shrink-0 text-gray-400";

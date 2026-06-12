@@ -7,7 +7,7 @@ import { SPECIALTIES } from "@/lib/doctor-specialty";
 
 /** Substrings matched against active category labels (seeded service categories). */
 export const SPECIALTY_CATEGORY_LABEL_TOKENS: Record<string, readonly string[]> = {
-  "General Medicine": ["Primary Care", "Preventive"],
+  Medicine: ["Primary Care", "Preventive"],
   Cardiology: ["Cardiology", "Vascular"],
   Dermatology: ["Dermatology", "Skin"],
   Neurology: ["Neurology", "Cognitive"],

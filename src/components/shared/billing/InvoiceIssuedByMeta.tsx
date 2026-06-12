@@ -21,6 +21,8 @@ type Props = {
   className?: string;
   /** Record audit row uses outer sky icon — omit inner clock. */
   showLeadingIcon?: boolean;
+  /** CP invoice table — sky tone on "Invoice issued …" text. */
+  issuedTextTone?: "muted" | "sky";
 };
 
 /** Bottom row — invoice issued + billing owner (`div` shell; avatar is not inside `p`/`span`). */
@@ -34,6 +36,7 @@ export function InvoiceIssuedByMeta({
   viewerRole,
   className,
   showLeadingIcon = true,
+  issuedTextTone = "muted",
 }: Props) {
   const when = formatInvoiceIssuedAtLabel(createdAt);
   const by = issuerLabel?.trim();
@@ -41,21 +44,30 @@ export function InvoiceIssuedByMeta({
   const userId = issuerUserId?.trim();
   const useLinkedActor = Boolean(by && userId && viewerRole != null);
 
+  const issuedTextClass =
+    issuedTextTone === "sky" ? "text-sky-700" : "text-muted-foreground";
+
   return (
     <div
       className={cn(
-        "flex min-w-0 items-center gap-1.5 text-[11px] text-muted-foreground",
+        "flex min-w-0 items-center gap-1.5 text-[11px]",
+        issuedTextTone === "muted" && "text-muted-foreground",
         className
       )}
     >
       {showLeadingIcon ? (
-        <CalendarClock className="h-3.5 w-3.5 shrink-0 text-gray-400" aria-hidden />
+        <CalendarClock
+          className="h-3.5 w-3.5 shrink-0 self-center text-gray-400"
+          aria-hidden
+        />
       ) : null}
       <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5">
-        <span>Invoice issued {when}</span>
+        <span className={cn("shrink-0", issuedTextClass)}>Invoice issued {when}</span>
         {by ? (
           <>
-            <span aria-hidden>·</span>
+            <span className={clinicalCellMutedTextClass} aria-hidden>
+              ·
+            </span>
             {useLinkedActor ? (
               <EntityDetailAuditActorInline
                 actor={{

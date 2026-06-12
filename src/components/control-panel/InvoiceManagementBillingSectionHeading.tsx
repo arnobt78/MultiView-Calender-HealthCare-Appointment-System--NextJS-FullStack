@@ -58,6 +58,7 @@ export function InvoiceManagementBillingSectionHeading({
       statusChip={<InvoiceStatusCountInlineRow counts={statusCounts} />}
       statusChipSkeleton={countSkeleton}
       headerActions={headerActions}
+      headerActionsSeparateRow={headerActions != null}
     />
   );
 }

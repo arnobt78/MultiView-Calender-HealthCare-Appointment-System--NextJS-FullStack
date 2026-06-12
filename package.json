@@ -19,6 +19,7 @@
     "db:seed-test-user": "tsx scripts/seed-test-user.ts",
     "db:backfill-user-audit": "tsx scripts/backfill-user-audit.ts",
     "db:backfill-org-audit": "tsx scripts/backfill-organization-audit.ts",
+    "db:backfill-doctor-specialty-medicine": "tsx scripts/backfill-doctor-specialty-medicine.ts",
     "db:prepare": "npm run prisma:push && npm run db:seed-test-user",
     "db:seed-demo-clinical": "tsx scripts/seed-demo-patient-clinical.ts",
     "db:seed-extended": "tsx scripts/seed-extended-schema.ts",

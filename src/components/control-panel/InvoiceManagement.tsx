@@ -15,6 +15,7 @@ import { ClinicalListFilterToolbar } from "@/components/shared/filters/ClinicalL
 import { GlassResetFilterButton } from "@/components/shared/GlassResetFilterButton";
 import { FilterSelect } from "@/components/shared/filters/FilterSelect";
 import { DoctorFilterSelect } from "@/components/shared/filters/DoctorFilterSelect";
+import { ScopeFilterInlineRow } from "@/components/shared/filters/ScopeFilterInlineRow";
 import {
   OrganizationFilterSelect,
   ORGANIZATION_FILTER_ALL_VALUE,
@@ -193,14 +194,13 @@ function InvoiceManagementInner(_props: InvoiceManagementInnerProps) {
             organizationName={selectedOrganizationName}
             doctorDisplayName={selectedDoctorDisplayName}
             headerActions={
-              <span className="flex flex-wrap items-center justify-end gap-2">
+              <ScopeFilterInlineRow>
                 <OrganizationFilterSelect
                   value={orgSelectValue}
                   onValueChange={handleOrgFilterChange}
                   organizations={organizations}
                   allInvoices={allInvoices}
                   disabled={organizationsLoading}
-                  triggerClassName="min-w-[160px] max-w-[min(42vw,240px)]"
                 />
                 <DoctorFilterSelect
                   value={doctorSelectValue}
@@ -208,13 +208,12 @@ function InvoiceManagementInner(_props: InvoiceManagementInnerProps) {
                   doctors={doctors}
                   disabled={doctorsLoading}
                   allLabel="All doctors"
-                  triggerClassName="min-w-[160px] max-w-[min(42vw,240px)]"
                   ariaLabel="Filter by doctor"
                 />
                 {hasScopeFilters ? (
                   <GlassResetFilterButton onClick={resetScope} />
                 ) : null}
-              </span>
+              </ScopeFilterInlineRow>
             }
           />
           <InvoiceBillingStatsRow

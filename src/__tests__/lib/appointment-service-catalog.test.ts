@@ -38,7 +38,7 @@ describe("buildServiceCatalog", () => {
           user_id: "d1",
           owner_display_name: "Dr. One",
           owner_email: "one@test.com",
-          owner_specialty: "General Medicine",
+          owner_specialty: "Medicine",
         },
         {
           id: "a2",
@@ -66,7 +66,7 @@ describe("buildServiceCatalog", () => {
     expect(additional?.name).toBe("Physio Theraphy");
     expect(additional?.duration_minutes).toBe(30);
     expect(additional?.doctor_offers).toEqual([
-      { id: "d1", label: "Dr. One", specialty: "General Medicine" },
+      { id: "d1", label: "Dr. One", specialty: "Medicine" },
       { id: "d2", label: "Dr. Two", specialty: "Cardiology" },
     ]);
   });

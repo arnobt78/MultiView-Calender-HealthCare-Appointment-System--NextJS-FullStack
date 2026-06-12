@@ -5,6 +5,10 @@ import { PatientAgeGlassBadge } from "@/components/shared/person-display/Patient
 import { PatientCareTierGlassBadge } from "@/components/shared/person-display/PatientCareTierGlassBadge";
 import { PatientPortraitAvatar } from "@/components/shared/person-display/PatientPortraitAvatar";
 import {
+  clinicalIdentityCompactStackBadgeRowClass,
+  clinicalIdentityCompactStackNameEmailRowClass,
+  clinicalIdentityCompactStackRowClass,
+  clinicalIdentityCompactStackTextColClass,
   clinicalIdentityInlineAvatarClass,
   clinicalIdentityInlineBadgeRowClass,
   clinicalIdentityInlineInnerClass,
@@ -35,9 +39,10 @@ type PatientIdentityCellProps = {
   /**
    * `table` = avatar + stacked name/age + email;
    * `detail` = name + email baseline row (no avatar);
-   * `inline` = avatar + name + age + email on one responsive wrap row.
+   * `inline` = avatar + name + age + email on one responsive wrap row;
+   * `compactStack` = avatar + row1 name/email + row2 age/care tier (CP invoice table).
    */
-  layout?: "table" | "detail" | "inline";
+  layout?: "table" | "detail" | "inline" | "compactStack";
   className?: string;
   avatarSizeClassName?: string;
   /** Inline layout — care tier badge beside age (entity detail Related People). */
@@ -107,6 +112,37 @@ export function PatientIdentityCell({
             </span>
           ) : null}
           {inlineBadgeRow}
+        </div>
+      </div>
+    );
+  }
+
+  if (layout === "compactStack") {
+    const compactNameNode = canLink ? (
+      <EntityTitleLink
+        href={href!}
+        label={label}
+        className="min-w-0 shrink truncate text-sm font-normal"
+      />
+    ) : (
+      <span className="min-w-0 shrink truncate text-sm font-normal text-foreground">{label}</span>
+    );
+
+    return (
+      <div className={cn(clinicalIdentityCompactStackRowClass, className)}>
+        <PatientPortraitAvatar patient={patient} sizeClassName={resolvedAvatarSize} />
+        <div className={clinicalIdentityCompactStackTextColClass}>
+          <div className={clinicalIdentityCompactStackNameEmailRowClass}>
+            {compactNameNode}
+            {emailTrim ? (
+              <span className={cn("shrink-0 text-xs", clinicalCellMutedTextClass)} title={emailTrim}>
+                ({emailTrim})
+              </span>
+            ) : null}
+          </div>
+          {inlineBadgeRow ? (
+            <div className={clinicalIdentityCompactStackBadgeRowClass}>{inlineBadgeRow}</div>
+          ) : null}
         </div>
       </div>
     );

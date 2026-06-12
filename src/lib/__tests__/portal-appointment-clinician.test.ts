@@ -29,7 +29,7 @@ describe("resolvePortalTreatingClinician", () => {
       email: "doc@test.com",
       role: "doctor",
       image: null,
-      specialty: "Internal Medicine",
+      specialty: "Medicine",
       office_location: null,
     };
     expect(

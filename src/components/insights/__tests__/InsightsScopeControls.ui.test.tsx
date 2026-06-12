@@ -33,7 +33,7 @@ describe("InsightsScopeControls", () => {
             email: "doc@test.com",
             display_name: "Demo Doctor",
             role: "doctor",
-            specialty: "General Medicine",
+            specialty: "Medicine",
           },
         ]}
       />
@@ -41,5 +41,26 @@ describe("InsightsScopeControls", () => {
     expect(markup).toContain("Organization-Wide");
     expect(markup).toContain("By Doctor");
     expect(markup).toContain('data-testid="insights-doctor-scope-select"');
+  });
+
+  it("shows inline reset when admin drills into a doctor", () => {
+    const markup = renderToStaticMarkup(
+      <InsightsScopeControls
+        filter={{ scope: "personal", doctorId: "d1" }}
+        onFilterChange={() => {}}
+        viewerRole="admin"
+        doctors={[
+          {
+            id: "d1",
+            email: "doc@test.com",
+            display_name: "Demo Doctor",
+            role: "doctor",
+            specialty: "Medicine",
+          },
+        ]}
+      />
+    );
+    expect(markup).toContain("Reset");
+    expect(markup).toContain("flex-wrap");
   });
 });

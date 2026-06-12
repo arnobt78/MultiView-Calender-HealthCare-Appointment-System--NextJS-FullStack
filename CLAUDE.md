@@ -4,10 +4,11 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-12)
 
-- **C28 (REQ-0076):** CP all-time KPI footers; org/doctor filters in billing header; status-only `billing-totals`; `seedControlPanelSectionCacheFromSsr` single seed.
-- **C27.2 (REQ-0075):** Server status KPIs; org panel DRY; management cache patch.
-- **C27/C27.1 (REQ-0073/74):** Scoped `doctorId`/`orgId` API; `useInvoiceScopedBilling`; merge/remove/patch + `viewerTotals` SSR.
-- **Verify:** **1044/1044** · tsc · lint · build PASS.
+- **C29 (REQ-0077):** CP invoice table — `cpTwoLine` # (Invoice N + linked `#id`); `compactStack` description; `amount_status`; sky linked issuer in Created.
+- **Scope filters:** `ScopeFilterInlineRow`; doctor trigger inline h-10 (`DoctorSelectTriggerOption`); insights reset inline.
+- **Specialty:** enum `Medicine` (was General Medicine); `db:backfill-doctor-specialty-medicine`.
+- **C28 (REQ-0076):** CP all-time KPI footers; org/doctor filters in billing header; status-only `billing-totals`; unified CP SSR seed.
+- **Verify:** **1052/1052** · tsc · lint · build PASS.
 
 ## Never / Always
 
@@ -34,11 +35,12 @@ Cross-tab: `query-cache-cross-tab.ts`.
 - **Server:** `invoice-doctor-scope.ts` · `invoice-billing-kpi-aggregate.ts` (status-only for CP API).
 - **Cache:** `mergeInvoiceIntoScopedListCaches` · `removeInvoiceFromScopedListCaches` · `patchScopedTotalsFromListCaches` · `computeInvoiceBillingManagementPayloadFromList`.
 - **UI:** `InvoiceManagementBillingSectionHeading` · `InvoiceBillingStatsRow` (all-time) · `invoiceKpiValueRowHint`.
+- **Table (C29):** `invoice-management-columns` — `cpTwoLine` `InvoiceNumberTableCell`, `InvoiceVisitListCell` + `compactStack`, `InvoiceAmountStatusTableCell`, `InvoiceCreatedTableCell` + linked issuer.
 - **SSR:** `invoice-management/page.tsx` · `seedControlPanelSectionCacheFromSsr` · `OrgBillingCachePayload.billingKpi`.
 
 ## Key paths
 
-- Filters: `FilterSelect`, `filter-select-option-presets.ts`, `DoctorFilterSelect`, `OrganizationFilterSelect`
+- Filters: `FilterSelect`, `ScopeFilterInlineRow`, `DoctorFilterSelect`, `OrganizationFilterSelect`, `filterSelectTriggerDoctorInlineValueClass`
 - Org billing: `OrganizationBillingPanel` · `org-billing-prefetch.ts`
 - CP lists: `cpClinicalListTableFrameClassName` + tone shells
 - Entity detail: `EntityDetailPageShell`, `EntityDetailBackLink`, `EntityDetailFooterRow`

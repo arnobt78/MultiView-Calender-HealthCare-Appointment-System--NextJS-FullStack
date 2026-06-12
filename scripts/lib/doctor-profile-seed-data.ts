@@ -18,11 +18,11 @@ export type DoctorProfileSeed = {
 /** Keys: test@doctor.com + demo.doctor2..8@healthcal.dev */
 export const DOCTOR_PROFILES: Record<string, DoctorProfileSeed> = {
   "test@doctor.com": {
-    specialty: "Internal Medicine",
+    specialty: "Medicine",
     bio: "Dr. Müller is a board-certified internist with over 8 years of clinical experience at HealthCal Berlin. She specialises in preventive care, chronic disease management, and comprehensive annual health evaluations.",
     phone: "+49 30 123 456 00",
     license_number: "MED-2018-DE-001",
-    department: "Internal Medicine",
+    department: "Medicine",
     consultation_fee: 15000,
     office_location: "Room 101, Block A — Demo Clinic",
     languages_spoken: ["English", "German"],

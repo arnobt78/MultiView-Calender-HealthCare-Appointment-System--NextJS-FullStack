@@ -1,22 +1,22 @@
 # Agile V — Living State
 
-<!-- Updated: 2026-06-11 | Project: HealthCal Pro | Resume: ACTIVATION.md -->
+<!-- Updated: 2026-06-12 | Project: HealthCal Pro | Resume: ACTIVATION.md -->
 
 ## Current Status
 
 | Field | Value |
 |-------|-------|
-| **Cycle** | **C28** — CP billing all-time KPI UX + seed consolidation |
+| **Cycle** | **C29** — CP invoice table UX + scope filter polish + Medicine specialty |
 | **Phase** | Accept |
 | **Stage** | 5 |
 | **Status** | verify PASS |
-| **Last Updated** | 2026-06-11 |
-| **Parent REQ** | REQ-0076 |
+| **Last Updated** | 2026-06-12 |
+| **Parent REQ** | REQ-0077 |
 | **HEAD** | (pending commit) |
 
-## Verify baseline (C28 close)
+## Verify baseline (C29 close)
 
-**1044/1044** (209 files) · tsc · lint · build — PASS
+**1052/1052** (212 files) · tsc · lint · build — PASS
 
 ## C28 scope (REQ-0076)
 

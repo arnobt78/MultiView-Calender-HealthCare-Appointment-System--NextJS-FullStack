@@ -8,6 +8,8 @@ import { Building2, Stethoscope, UserRound } from "lucide-react";
 import type { User } from "@/types/types";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { GlassResetFilterButton } from "@/components/shared/GlassResetFilterButton";
+import { ScopeFilterInlineRow } from "@/components/shared/filters/ScopeFilterInlineRow";
 import { InsightsDoctorScopeSelect } from "@/components/insights/InsightsDoctorScopeSelect";
 import { InsightsGlassSegment } from "@/components/insights/InsightsGlassSegment";
 import {
@@ -79,7 +81,7 @@ export function InsightsScopeControls({
     const isOrg = selectValue === INSIGHTS_ORG_SELECT_VALUE;
 
     return (
-      <div className="flex min-w-0 flex-col items-stretch gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
+      <ScopeFilterInlineRow>
         <Button
           type="button"
           size="sm"
@@ -95,28 +97,29 @@ export function InsightsScopeControls({
           <Building2 className="h-3.5 w-3.5 shrink-0 opacity-90" aria-hidden />
           {toTitleCaseLabel("Organization-wide")}
         </Button>
-        <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <Label
-            htmlFor="insights-doctor-scope"
-            className="flex shrink-0 items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-sky-600/90"
-          >
-            <Stethoscope className="h-3.5 w-3.5" aria-hidden />
-            {toTitleCaseLabel("By doctor")}
-          </Label>
-          <InsightsDoctorScopeSelect
-            value={selectValue}
-            onValueChange={(value) => {
-              if (value === INSIGHTS_ORG_SELECT_VALUE) {
-                onFilterChange({ scope: "organization" });
-                return;
-              }
-              onFilterChange({ scope: "personal", doctorId: value });
-            }}
-            doctors={doctors}
-            disabled={disabled || doctorsLoading}
-          />
-        </div>
-      </div>
+        <Label
+          htmlFor="insights-doctor-scope"
+          className="flex shrink-0 items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-sky-600/90"
+        >
+          <Stethoscope className="h-3.5 w-3.5" aria-hidden />
+          {toTitleCaseLabel("By doctor")}
+        </Label>
+        <InsightsDoctorScopeSelect
+          value={selectValue}
+          onValueChange={(value) => {
+            if (value === INSIGHTS_ORG_SELECT_VALUE) {
+              onFilterChange({ scope: "organization" });
+              return;
+            }
+            onFilterChange({ scope: "personal", doctorId: value });
+          }}
+          doctors={doctors}
+          disabled={disabled || doctorsLoading}
+        />
+        {!isOrg ? (
+          <GlassResetFilterButton onClick={() => onFilterChange({ scope: "organization" })} />
+        ) : null}
+      </ScopeFilterInlineRow>
     );
   }
 

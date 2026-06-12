@@ -4,7 +4,7 @@ export const cpClinicalListTableFrameClassName =
 
 /** Identity column — patient name / admin display (table-fixed parity). */
 export const cpClinicalListIdentityColumnShellClass =
-  "w-[22%] min-w-[11rem] min-w-0";
+  "w-[24%] min-w-[13rem] min-w-0";
 
 /** Phone column — patient + admin roster lists. */
 export const cpClinicalListPhoneColumnShellClass =

@@ -10,6 +10,10 @@ import { RoleEntityLink } from "@/components/shared/RoleEntityLink";
 import { doctorDetailHref, portalAdminDetailHref } from "@/lib/entity-routes";
 import type { EntityRole } from "@/lib/entity-routes";
 import {
+  clinicalIdentityCompactStackBadgeRowClass,
+  clinicalIdentityCompactStackNameEmailRowClass,
+  clinicalIdentityCompactStackRowClass,
+  clinicalIdentityCompactStackTextColClass,
   clinicalIdentityInlineBadgeRowClass,
   clinicalIdentityInlineInnerClass,
   clinicalIdentityInlineNameClass,
@@ -45,8 +49,9 @@ type DoctorIdentityRowProps = {
   /**
    * `stack` — table cells (name / email / badge lines).
    * `inline` — patient detail schema: avatar + name (email) + badge on one wrapped row.
+   * `compactStack` — avatar + row1 name/email + row2 specialty/role (CP invoice table).
    */
-  layout?: "stack" | "inline";
+  layout?: "stack" | "inline" | "compactStack";
   /** When set, Active/Inactive pill sits inline with specialty (doctor management table). */
   activeStatus?: boolean;
   /** Staff role pill (admin/doctor) — appointment detail People rows. */
@@ -162,6 +167,30 @@ export function DoctorIdentityRow({
             </span>
           ) : null}
           {badgeRow}
+        </div>
+      </div>
+    );
+  }
+
+  if (layout === "compactStack") {
+    return (
+      <div className={cn(clinicalIdentityCompactStackRowClass, className)}>
+        <DoctorAvatar doctor={doctor} sizeClassName={avatarSize} />
+        <div className={clinicalIdentityCompactStackTextColClass}>
+          <div className={clinicalIdentityCompactStackNameEmailRowClass}>
+            {nameLink}
+            {emailVisible && emailTrimmed ? (
+              <span
+                className={cn("shrink-0 text-xs", clinicalCellMutedTextClass)}
+                title={emailTrimmed}
+              >
+                ({emailTrimmed})
+              </span>
+            ) : null}
+          </div>
+          {badgeRow ? (
+            <div className={clinicalIdentityCompactStackBadgeRowClass}>{badgeRow}</div>
+          ) : null}
         </div>
       </div>
     );
