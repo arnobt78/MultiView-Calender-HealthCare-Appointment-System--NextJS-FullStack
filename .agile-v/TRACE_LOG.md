@@ -25,6 +25,7 @@
 | TRACE-0019 | 2026-06-10T11:50:00Z | init | bootstrap | POLICY.yaml@1.0.0 | Session activation 2026-06-10; C8.1/C9 resume; npm test 863/863; HEAD bc97070 | REQ-0038..0045 |
 | TRACE-0020 | 2026-06-11T11:45:00Z | init | bootstrap | POLICY.yaml@1.0.0 | Session activation 2026-06-11; C17 resume; npm test 940/940; HEAD 5d16082; 24 skills active | REQ-0063 |
 | TRACE-0021 | 2026-06-12T10:05:00Z | init | bootstrap | POLICY.yaml@1.0.0 | Session activation 2026-06-12; C22 shipped; npm test 975/975; HEAD 24aa910; Infinity Loop active | REQ-0065 |
+| TRACE-0022 | 2026-06-12T13:50:00Z | init | bootstrap | POLICY.yaml@1.0.0 | C25 activation refresh; npm test 1001/1001; HEAD eb3fb8f; REQ-0001..0069; 24 skills active | REQ-0069 |
 
 ## Span Types
 

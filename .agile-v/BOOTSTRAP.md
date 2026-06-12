@@ -1,6 +1,6 @@
 # Agile V Bootstrap — HealthCal Pro
 
-<!-- Framework initialization + cycle index | Agile V v1.4 | Last refresh: 2026-06-12 (C22 activation) -->
+<!-- Framework initialization + cycle index | Agile V v1.4 | Last refresh: 2026-06-12 (C25 activation) -->
 
 ## Infinity Loop (SCOPE-V)
 
@@ -31,9 +31,9 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 | 2 | `config.json` | Project metadata, cycle, authority matrix, verification commands | ✓ |
 | 3 | `POLICY.yaml` | Policy-as-code (versioned) | ✓ v1.0.0 |
 | 4 | `STATE.md` | Current cycle, phase, stage — **read first on resume** | ✓ |
-| 5 | `REQUIREMENTS.md` | Canonical REQ-XXXX + traceability index | ✓ REQ-0001..0065 |
-| 6 | `BUILD_MANIFEST.md` | ART-XXXX → code paths | ✓ ART-0001..0335 |
-| 7 | `TEST_SPEC.md` | TC-XXXX (requirements-derived) | ✓ TC-0001..0024 |
+| 5 | `REQUIREMENTS.md` | Canonical REQ-XXXX + traceability index | ✓ REQ-0001..0069 |
+| 6 | `BUILD_MANIFEST.md` | ART-XXXX → code paths | ✓ ART-0001..0359 |
+| 7 | `TEST_SPEC.md` | TC-XXXX (requirements-derived) | ✓ TC-0001..0052 |
 | 8 | `VALIDATION_SUMMARY.md` | VER-XXXX results + EvalGate lines | ✓ |
 | 9 | `ATM.md` | REQ → ART → VER matrix | ✓ |
 | 10 | `DECISION_LOG.md` | Append-only decisions | ✓ |
@@ -153,7 +153,11 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 | C13 | User-admin UI parity | REQ-0059 | pending | living |
 | C14–C15 | Entity detail chrome + spacing | REQ-0060..0061 | pending | living |
 | C16 | User-admin violet glass | REQ-0062 | pending | living |
-| **C17** | **Admin table columns + footer interactives** (active) | REQ-0063 | gate TBD | living |
+| **C17** | Admin table columns + footer interactives | REQ-0063 | gate TBD | living |
+| C18–C22 | Org CP list/detail/dialog/billing/audit | REQ-0064..0065 | pending | living |
+| C23–C23.1 | Org members parity + filter toolbar | REQ-0066..0067 | pending | living |
+| C24 | Rich filter dropdowns | REQ-0068 | pending | living |
+| **C25** | **Filter label DRY + DoctorFilterSelect** (active) | REQ-0069 | gate TBD | living |
 
 ---
 
@@ -245,9 +249,9 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 
 ## Next Actions
 
-1. Approve **GATE-0005..0014** + C8–C17 gates in `APPROVALS.md` as cycles close.
-2. Archive C3–C17 → `cycles/CN/` after each Gate 2.
-3. New work: specify **C18** in `REQUIREMENTS.md` before coding.
+1. Approve **GATE-0005..0014** + C8–C25 gates in `APPROVALS.md` as cycles close.
+2. Archive C3–C25 → `cycles/CN/` after each Gate 2.
+3. New work: specify **C26** in `REQUIREMENTS.md` before coding.
 
 ## Verification (default)
 
@@ -255,17 +259,17 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 npm test && npx tsc --noEmit && npm run lint && npm run build
 ```
 
-Current baseline: **940** tests, **185** files (2026-06-11) · HEAD `5d16082`.
+Current baseline: **1001** tests, **201** files (2026-06-12) · HEAD `eb3fb8f`.
 
 ---
 
-## Infinity Loop Session Activation (2026-06-11)
+## Infinity Loop Session Activation (2026-06-12 — C25 refresh)
 
 | Step | Artifact | Status |
 |------|----------|--------|
 | 1 | `agile-v-core` + `pipeline` + `lifecycle` + `compliance` active every prompt | ✓ |
 | 2 | `.cursor/rules/agile-v-infinity-loop.mdc` `alwaysApply: true` | ✓ |
-| 3 | `ACTIVATION.md` + `STATE.md` + `SKILLS.md` (24) synced | ✓ |
-| 4 | C1..C17 bootstrap index intact; C1/C2 frozen | ✓ |
-| 5 | Verify regression | ✓ 940/940 |
+| 3 | `ACTIVATION.md` + `STATE.md` + `SKILLS.md` (24) synced to C25 | ✓ |
+| 4 | C1..C2 frozen; C3–C25 living index | ✓ |
+| 5 | Verify regression | ✓ 1001/1001 |
 | 6 | `CHECKPOINTS.md` — no PENDING HITL | ✓ |

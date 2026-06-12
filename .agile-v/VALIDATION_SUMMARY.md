@@ -543,3 +543,59 @@ EvalGate (C21): status=PASS | eval_run_id=ER-C21-VERIFY | gate2_pending=TBD
 | VER-0109 | REQ-0065 | PASS | Full regression **975/975** tsc lint build |
 
 EvalGate (C22): status=PASS | eval_run_id=ER-C22-VERIFY | gate2_pending=TBD
+
+---
+
+## C23 — Org detail members parity (2026-06-12)
+
+| Item | Value |
+|------|-------|
+| Cycle | C23 |
+| REQ-IDs | REQ-0066 |
+| Regression | **982/982** Vitest |
+
+EvalGate (C23): status=PASS | eval_run_id=ER-C23-VERIFY | gate2_pending=TBD
+
+---
+
+## C23.1 — Org members filter toolbar (2026-06-12)
+
+| Item | Value |
+|------|-------|
+| Cycle | C23.1 |
+| REQ-IDs | REQ-0067 |
+| Regression | **990/990** Vitest |
+
+EvalGate (C23.1): status=PASS | eval_run_id=ER-C23.1-VERIFY | gate2_pending=TBD
+
+---
+
+## C24 — Rich filter dropdowns (2026-06-12)
+
+| Item | Value |
+|------|-------|
+| Cycle | C24 |
+| REQ-IDs | REQ-0068 |
+| Regression | **997/997** Vitest (200 files) |
+
+EvalGate (C24): status=PASS | eval_run_id=ER-C24-VERIFY | gate2_pending=TBD
+
+---
+
+## C25 — Filter label DRY + DoctorFilterSelect (2026-06-12)
+
+| Item | Value |
+|------|-------|
+| Cycle | C25 |
+| REQ-IDs | REQ-0069 |
+| Regression | **1001/1001** Vitest (201 files) |
+| HEAD | `eb3fb8f` |
+
+| VER-ID | REQ-ID | Result | Description |
+|--------|--------|--------|-------------|
+| VER-0110 | REQ-0069 | PASS | findFilterOptionLabel calendar + empty chips |
+| VER-0111 | REQ-0069 | PASS | DoctorFilterSelect + userToDoctorIdentity |
+| VER-0112 | REQ-0069 | PASS | Services specialty/weekday presets |
+| VER-0113 | REQ-0069 | PASS | Full regression **1001/1001** tsc lint build |
+
+EvalGate (C25): status=PASS | eval_run_id=ER-C25-VERIFY | gate2_pending=TBD

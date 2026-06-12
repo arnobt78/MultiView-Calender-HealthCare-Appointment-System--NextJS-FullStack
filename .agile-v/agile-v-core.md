@@ -46,4 +46,4 @@ Read `STATE.md` first · pass paths not dumps · fresh sub-agent context · task
 
 ## Resume (every session)
 
-Read `ACTIVATION.md` → `STATE.md` · Cycle **C17** · Stage **4 Verify** PASS **940/940** · HEAD `5d16082` · Gates C3–C17 pending · Next: gate approve → archive → **C18** Specify
+Read `ACTIVATION.md` → `STATE.md` · Cycle **C25** · Verify PASS **1001/1001** · HEAD `eb3fb8f` · Gates C3–C25 pending · Next: gate approve → archive → **C26** Specify

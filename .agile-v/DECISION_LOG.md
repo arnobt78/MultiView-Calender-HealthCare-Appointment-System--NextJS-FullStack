@@ -96,3 +96,4 @@
 | 2026-06-12T16:30:00Z | verify | C24 shipped | Rich filter presets app-wide; org billing footer border fix; 997/997 | REQ-0068 |
 | 2026-06-12T18:00:00Z | specify | C25 filter consistency | REQ-0069: findFilterOptionLabel DRY + DoctorFilterSelect + services presets | REQ-0069 |
 | 2026-06-12T18:30:00Z | verify | C25 shipped | DoctorFilterSelect; calendar label DRY; services presets; 1001/1001 | REQ-0069 |
+| 2026-06-12T13:50:00Z | activate | C25 Infinity Loop refresh | ACTIVATION/BOOTSTRAP/config synced; baseline 1001/1001; HEAD eb3fb8f | — |

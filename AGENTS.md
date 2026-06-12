@@ -20,7 +20,7 @@
 
 ## Living artifacts
 
-`STATE.md` · `REQUIREMENTS.md` (REQ-0001..0065) · `BUILD_MANIFEST.md` · `TEST_SPEC.md` · `VALIDATION_SUMMARY.md` · `DECISION_LOG.md` · `BOOTSTRAP.md` · `SKILLS.md`
+`STATE.md` · `REQUIREMENTS.md` (REQ-0001..0069) · `BUILD_MANIFEST.md` · `TEST_SPEC.md` · `VALIDATION_SUMMARY.md` · `DECISION_LOG.md` · `BOOTSTRAP.md` · `SKILLS.md`
 
 ## Engineering
 

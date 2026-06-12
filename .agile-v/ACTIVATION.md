@@ -1,6 +1,6 @@
 # Agile V — Session Activation (every prompt)
 
-<!-- HealthCal Pro | v1.4 | Read with STATE.md on every chat | Activated: 2026-06-12 -->
+<!-- HealthCal Pro | v1.4 | Read with STATE.md on every chat | Activated: 2026-06-12 C25 -->
 
 ## 1. Load skills (mandatory)
 
@@ -16,9 +16,9 @@
 
 ## 2. Read (resume)
 
-1. `STATE.md` — cycle **C22** shipped; **975/975** verify PASS
+1. `STATE.md` — cycle **C25** shipped; **1001/1001** verify PASS
 2. `CHECKPOINTS.md` — only if PENDING HITL (none)
-3. `REQUIREMENTS.md` — parent REQ before any work (REQ-0001..0065)
+3. `REQUIREMENTS.md` — parent REQ before any work (REQ-0001..0069)
 4. `agile-v-core.md` — repo binding
 
 ## 3. Before coding (mandatory gate)
@@ -46,14 +46,14 @@ Specify → Constrain → [Gate1] → Orchestrate → Prove → Verify → [Gate
 |-------|-----|--------|------|
 | C1–C2 | 0001..0008 | closed (frozen) | ✓ |
 | C3–C17 | 0009..0063 | verify/shipped | GATE-0005..TBD pending |
-| C18–C18.1 | 0064..0065 | verify/shipped | pending |
-| C19–C19.1 | 0064..0065 | verify/shipped | pending |
-| C20–C22 | 0065 | verify/shipped | pending |
-| **C22** | **0065** | **verify PASS** | gate TBD |
+| C18–C22 | 0064..0065 | verify/shipped | pending |
+| C23–C23.1 | 0066..0067 | verify/shipped | pending |
+| C24 | 0068 | verify/shipped | pending |
+| **C25** | **0069** | **verify PASS** | gate TBD |
 
-**Baseline:** **975** tests · **195** files · HEAD `24aa910` · verified 2026-06-12
+**Baseline:** **1001** tests · **201** files · HEAD `eb3fb8f` · verified 2026-06-12
 
-**Next:** Human Gate backlog → archive C3–C22 → **Specify C23** (new REQ) before new code.
+**Next:** Human Gate backlog → archive C3–C25 → **Specify C26** (new REQ) before new code.
 
 ## 7. Halt if
 

@@ -328,3 +328,25 @@ human_gate_2: TBD
 | release build | npm run build | PASS | REQ-0065 |
 
 **EvalGate (C22):** PASS (automated) — Human Gate TBD before archive.
+
+## C25 — ER-C25-VERIFY
+
+```yaml
+eval_run_id: ER-C25-VERIFY
+eval_timestamp: "2026-06-12T13:50:00Z"
+policy_version_ref: "1.0.0"
+eval_gate_status: PASS
+eval_gate_rationale: "C25 filter consistency — findFilterOptionLabel DRY, DoctorFilterSelect, services presets; npm test 1001/1001, tsc, eslint, build PASS"
+cycle: C25
+release_commit: "eb3fb8f"
+human_gate_2: TBD
+```
+
+| Suite | Command | Result | LINKED_REQ |
+|-------|---------|--------|------------|
+| full regression | npm test | PASS 1001/1001 | REQ-0069 |
+| typecheck | npx tsc --noEmit | PASS | REQ-0069 |
+| lint | npm run lint | PASS | REQ-0069 |
+| release build | npm run build | PASS | REQ-0069 |
+
+**EvalGate (C25):** PASS (automated) — Human Gate TBD before archive.

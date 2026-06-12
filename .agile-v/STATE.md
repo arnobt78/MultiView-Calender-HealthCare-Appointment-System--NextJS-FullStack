@@ -12,7 +12,7 @@
 | **Status** | verify PASS |
 | **Last Updated** | 2026-06-12 |
 | **Parent REQ** | REQ-0069 |
-| **HEAD** | `3d011dc` |
+| **HEAD** | `eb3fb8f` |
 
 ## Verify baseline (C25 close)
 
