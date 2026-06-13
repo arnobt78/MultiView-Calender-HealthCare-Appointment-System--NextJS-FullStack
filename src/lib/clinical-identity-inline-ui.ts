@@ -34,3 +34,6 @@ export const clinicalIdentityCompactStackNameEmailRowClass =
 
 export const clinicalIdentityCompactStackBadgeRowClass =
   "flex min-w-0 flex-wrap items-center gap-1";
+
+/** Doctor/admin compactStack avatar — `DoctorIdentityRow` `size="sm"` (CP invoice table). */
+export const clinicalIdentityCompactStackStaffAvatarClass = "h-7 w-7";

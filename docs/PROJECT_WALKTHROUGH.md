@@ -1,14 +1,10 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-11 — C30 invoice audit + dialog UX)
+## Latest (2026-06-13 — C31 CP invoice column merge)
+
+**C31 (REQ-0079):** CP invoice-management 5 cols — merged `Invoice` (`InvoiceManagementIdentityCell`: one-line clickable identity + inline copy + amount + badge); column shells `cpClinicalListInvoiceColumnShellClass` / Due / Created; `InvoiceIssuedByMeta` `compact` (no icon, nowrap issued stamp); issuer `EntityDetailAuditActorInline` `compactStack` parity with Description (`clinicalIdentityCompactStackStaffAvatarClass` h-7, text-sm name, badge row below). Display-only — no API/SSR/cache/invalidation changes. Dead `cpTwoLine` removed.
 
 **C30 (REQ-0078):** `Invoice` audit cols (`created_by`/`updated_by`/`updated_at`); `invoice-api-include` + `invoice-api-enrich` (GET/PATCH/SSR/prefetch); write stamps on POST/PATCH/record-payment/refund/auto-draft/webhook; `mapInvoiceRecordAuditActors` + Issued-by extra row on detail; `ClinicalGlassDatePicker` close-on-select; edit amount `INVOICE_AMOUNT_LOCKED_EDIT_HINT`; `npm run db:backfill-invoice-audit`. Invalidation unchanged — `mergeInvoiceIntoScopedListCaches` + `invalidateInvoicesAndOverview`.
-
-**C29 (REQ-0077):** CP invoice table — `cpTwoLine` #, `compactStack` description, `amount_status`, sky issuer in Created.
-
-**Filters + specialty:** `ScopeFilterInlineRow`; `Medicine` specialty; `db:backfill-doctor-specialty-medicine`.
-
-**Verify:** **1057/1057** · tsc · lint · build PASS.
 
 ## Prior (2026-06-12 — C28 invoice hub)
 

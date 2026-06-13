@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import {
   InvoiceAmountStatusTableCell,
-  InvoiceNumberTableCell,
+  InvoiceManagementIdentityCell,
 } from "@/components/shared/billing/invoice-table-cells";
 import type { Invoice } from "@/hooks/usePayments";
 
@@ -31,28 +31,26 @@ const sampleInvoice: Invoice = {
   payments: [],
 };
 
-describe("InvoiceNumberTableCell cpTwoLine", () => {
-  it("renders sequence on first line and short id on second", () => {
-    const markup = renderToStaticMarkup(
-      <InvoiceNumberTableCell
-        invoice={sampleInvoice}
-        viewerRole="admin"
-        listIndex={1}
-        layout="cpTwoLine"
-      />
-    );
-    expect(markup).toContain("Invoice 1");
-    expect(markup).toContain("#168da90a");
-    expect(markup).toContain("flex-col");
-  });
-});
-
 describe("InvoiceAmountStatusTableCell", () => {
   it("stacks amount and status badge vertically", () => {
     const markup = renderToStaticMarkup(
       <InvoiceAmountStatusTableCell invoice={sampleInvoice} />
     );
     expect(markup).toContain("flex-col");
+    expect(markup).toContain("120");
+  });
+});
+
+describe("InvoiceManagementIdentityCell", () => {
+  it("merges single clickable identity line, amount, and status badge", () => {
+    const markup = renderToStaticMarkup(
+      <InvoiceManagementIdentityCell
+        invoice={sampleInvoice}
+        viewerRole="admin"
+        listIndex={2}
+      />
+    );
+    expect(markup).toContain("Invoice 2: #168da90a");
     expect(markup).toContain("120");
   });
 });

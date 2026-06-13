@@ -37,17 +37,16 @@ describe("buildInvoiceManagementColumns", () => {
 
   it("defines expected column ids in order", () => {
     expect(columns.map((c) => c.id)).toEqual([
-      "invoice_number",
+      "invoice",
       "description",
-      "amount_status",
       "due",
       "created",
       "actions",
     ]);
   });
 
-  it("amount_status column sorts on amount accessor", () => {
-    const col = columns.find((c) => c.id === "amount_status")!;
+  it("invoice column sorts on amount accessor", () => {
+    const col = columns.find((c) => c.id === "invoice")!;
     expect("accessorKey" in col && col.accessorKey).toBe("amount");
   });
 

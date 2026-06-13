@@ -4,6 +4,12 @@ import { CalendarClock } from "lucide-react";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { EntityDetailAuditActorInline } from "@/components/shared/entity-detail/EntityDetailAuditActorInline";
 import { formatInvoiceIssuedAtLabel } from "@/lib/invoice-list-row-display";
+import {
+  clinicalIdentityCompactStackNameEmailRowClass,
+  clinicalIdentityCompactStackRowClass,
+  clinicalIdentityCompactStackStaffAvatarClass,
+  clinicalIdentityCompactStackTextColClass,
+} from "@/lib/clinical-identity-inline-ui";
 import { clinicalCellMutedTextClass } from "@/lib/table-display-styles";
 import type { EntityRole } from "@/lib/entity-routes";
 import { cn } from "@/lib/utils";
@@ -23,6 +29,8 @@ type Props = {
   showLeadingIcon?: boolean;
   /** CP invoice table — sky tone on "Invoice issued …" text. */
   issuedTextTone?: "muted" | "sky";
+  /** CP invoice table — no icon, single-line issued stamp, inline issuer row. */
+  compact?: boolean;
 };
 
 /** Bottom row — invoice issued + billing owner (`div` shell; avatar is not inside `p`/`span`). */
@@ -37,12 +45,14 @@ export function InvoiceIssuedByMeta({
   className,
   showLeadingIcon = true,
   issuedTextTone = "muted",
+  compact = false,
 }: Props) {
   const when = formatInvoiceIssuedAtLabel(createdAt);
   const by = issuerLabel?.trim();
   const emailTrimmed = issuerEmail?.trim() ?? "";
   const userId = issuerUserId?.trim();
   const useLinkedActor = Boolean(by && userId && viewerRole != null);
+  const showIcon = showLeadingIcon && !compact;
 
   const issuedTextClass =
     issuedTextTone === "sky" ? "text-sky-700" : "text-muted-foreground";
@@ -50,57 +60,72 @@ export function InvoiceIssuedByMeta({
   return (
     <div
       className={cn(
-        "flex min-w-0 items-center gap-1.5 text-[11px]",
+        "inline-flex min-w-0 max-w-full flex-col gap-0.5 text-[11px] leading-snug",
         issuedTextTone === "muted" && "text-muted-foreground",
         className
       )}
     >
-      {showLeadingIcon ? (
-        <CalendarClock
-          className="h-3.5 w-3.5 shrink-0 self-center text-gray-400"
-          aria-hidden
-        />
-      ) : null}
-      <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5">
-        <span className={cn("shrink-0", issuedTextClass)}>Invoice issued {when}</span>
-        {by ? (
-          <>
-            <span className={clinicalCellMutedTextClass} aria-hidden>
-              ·
-            </span>
-            {useLinkedActor ? (
-              <EntityDetailAuditActorInline
-                actor={{
-                  userId: userId!,
-                  label: by,
-                  email: issuerEmail,
-                  image: issuerImage,
-                  role: issuerRole,
-                }}
-                viewerRole={viewerRole}
-              />
-            ) : (
-              <>
-                <UserAvatar
-                  src={issuerImage}
-                  alt=""
-                  fallbackText={by}
-                  sizeClassName="h-4 w-4"
-                />
-                <span>{by}</span>
+      <span className={cn(compact ? "whitespace-nowrap" : undefined, issuedTextClass)}>
+        {showIcon ? (
+          <CalendarClock
+            className="mr-1 inline h-3 w-3 shrink-0 align-[-2px] text-gray-400"
+            aria-hidden
+          />
+        ) : null}
+        Invoice issued {when}
+      </span>
+      {by ? (
+        useLinkedActor ? (
+          <EntityDetailAuditActorInline
+            actor={{
+              userId: userId!,
+              label: by,
+              email: issuerEmail,
+              image: issuerImage,
+              role: issuerRole,
+            }}
+            viewerRole={viewerRole}
+            compact={compact}
+          />
+        ) : compact ? (
+          <div className={clinicalIdentityCompactStackRowClass}>
+            <UserAvatar
+              src={issuerImage}
+              alt=""
+              fallbackText={by}
+              sizeClassName={clinicalIdentityCompactStackStaffAvatarClass}
+            />
+            <div className={clinicalIdentityCompactStackTextColClass}>
+              <div className={clinicalIdentityCompactStackNameEmailRowClass}>
+                <span className="min-w-0 shrink truncate text-sm font-normal">{by}</span>
                 {emailTrimmed ? (
                   <span
-                    className={cn("shrink-0", clinicalCellMutedTextClass)}
+                    className={cn("shrink-0 text-xs", clinicalCellMutedTextClass)}
                     title={emailTrimmed}
                   >
                     ({emailTrimmed})
                   </span>
                 ) : null}
-              </>
-            )}
-          </>
-        ) : null}
-      </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <span className="inline-flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5">
+            <UserAvatar
+              src={issuerImage}
+              alt=""
+              fallbackText={by}
+              sizeClassName="h-5 w-5"
+            />
+            <span className="text-sm font-normal">{by}</span>
+            {emailTrimmed ? (
+              <span className={cn("shrink-0 text-sm", clinicalCellMutedTextClass)} title={emailTrimmed}>
+                ({emailTrimmed})
+              </span>
+            ) : null}
+          </span>
+        )
+      ) : null}
     </div>
   );
 }

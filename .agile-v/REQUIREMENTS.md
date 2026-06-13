@@ -6,7 +6,7 @@
 
 | Field | Value |
 |-------|-------|
-| Cycle | C1–C29 shipped · **C30 shipped** (REQ-0078) |
+| Cycle | C1–C29 shipped · **C30 shipped** · **C31 active** (REQ-0079) |
 | Author | Requirement Architect |
 | Gate 1 status | C1 GATE-0001 · C2 GATE-0003 approved |
 | Canonical source | this file |
@@ -123,6 +123,23 @@
 | REQ-0076 | approved [C28] | REQ-0075 | ART-0392..0395 | pending |
 | REQ-0077 | approved [C29] | REQ-0076 | ART-0396..0400 | pending |
 | REQ-0078 | approved [C30] | REQ-0077 | ART-0401..0406 | pending |
+| REQ-0079 | approved [C31] | REQ-0078 | ART-0407..0409 | pending |
+
+### REQ-0079 — C31 CP invoice column merge (identity + amount + badge)
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C31] |
+| Priority | P1 |
+| Risk | R0 |
+| Parent | REQ-0078 |
+
+**Statement:** CP invoice-management table — merge Invoice # and Amount into one responsive Invoice column (inline identity with wrap, price, status badge). Display-only.
+
+**Acceptance criteria:**
+1. Single `invoice` column: `Invoice N: #shortId` + copy (flex-wrap), amount, status badge stacked.
+2. Remove `amount_status` column; amount sort preserved on merged column.
+3. Tests; verify PASS.
 
 ### REQ-0078 — C30 invoice Record Audit parity + dialog UX fixes
 

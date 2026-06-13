@@ -38,8 +38,6 @@ type InvoiceNumberTableCellProps = InvoiceTableCellsProps & {
   showInvoiceLeadingIcon?: boolean;
   /** Portal list header — skip table min-row height. */
   compact?: boolean;
-  /** CP management table — `Invoice N` line + `#shortId` clipboard on second line. */
-  layout?: "default" | "cpTwoLine";
 };
 
 /** Sky link + clipboard — short invoice id in list tables. */
@@ -50,38 +48,9 @@ export function InvoiceNumberTableCell({
   listIndex,
   showInvoiceLeadingIcon = false,
   compact = false,
-  layout = "default",
 }: InvoiceNumberTableCellProps) {
   const href = invoiceDetailHref(viewerRole, invoice.id);
   const shortId = formatShortEntityId(invoice.id);
-
-  if (layout === "cpTwoLine" && listIndex != null) {
-    return (
-      <div
-        className={cn(
-          compact ? "min-h-0" : clinicalTableCellMinRowClass,
-          "flex flex-col justify-center gap-0.5 py-0.5"
-        )}
-      >
-        <EntityTitleLink
-          href={href}
-          label={formatInvoiceManagementSequenceLabel(listIndex)}
-          className="text-sm font-normal"
-        />
-        <EntityIdCopyInline
-          value={invoice.id}
-          labelNode={
-            <EntityTitleLink
-              href={href}
-              label={shortId}
-              className="font-mono text-xs font-normal"
-            />
-          }
-          monospace={false}
-        />
-      </div>
-    );
-  }
 
   const displayLabel =
     listIndex != null && idLabelPrefix?.trim()
@@ -159,6 +128,19 @@ type InvoiceCreatedTableCellProps = {
 };
 
 /** CP invoice table — amount on top, status badge below. */
+function InvoiceAmountStatusStack({ invoice }: { invoice: Invoice }) {
+  return (
+    <>
+      <InvoiceAmountDisplay
+        amountCents={invoice.amount}
+        currency={invoice.currency}
+        invoice={invoice}
+      />
+      <InvoiceStatusBadge invoice={invoice} />
+    </>
+  );
+}
+
 export function InvoiceAmountStatusTableCell({ invoice }: { invoice: Invoice }) {
   return (
     <div
@@ -167,12 +149,44 @@ export function InvoiceAmountStatusTableCell({ invoice }: { invoice: Invoice }) 
         "flex flex-col items-start justify-center gap-1 py-0.5"
       )}
     >
-      <InvoiceAmountDisplay
-        amountCents={invoice.amount}
-        currency={invoice.currency}
-        invoice={invoice}
+      <InvoiceAmountStatusStack invoice={invoice} />
+    </div>
+  );
+}
+
+/**
+ * CP invoice-management — merged Invoice column: inline identity + amount + badge.
+ * Identity stays one line on desktop; copy icon sits inline after the id text.
+ */
+export function InvoiceManagementIdentityCell({
+  invoice,
+  viewerRole,
+  listIndex,
+}: InvoiceTableCellsProps & { listIndex: number }) {
+  const href = invoiceDetailHref(viewerRole, invoice.id);
+  const shortId = formatShortEntityId(invoice.id);
+  const identityLabel = `${formatInvoiceManagementSequenceLabel(listIndex)}: ${shortId}`;
+
+  return (
+    <div
+      className={cn(
+        clinicalTableCellMinRowClass,
+        "flex min-w-0 flex-col gap-1 py-0.5"
+      )}
+    >
+      <EntityIdCopyInline
+        value={invoice.id}
+        className="inline-flex w-max max-w-full flex-nowrap items-center gap-0.5"
+        labelNode={
+          <EntityTitleLink
+            href={href}
+            label={identityLabel}
+            className="font-mono text-sm font-normal"
+          />
+        }
+        monospace={false}
       />
-      <InvoiceStatusBadge invoice={invoice} />
+      <InvoiceAmountStatusStack invoice={invoice} />
     </div>
   );
 }
@@ -195,6 +209,7 @@ export function InvoiceCreatedTableCell({
         issuerRole={invoice.issuer_role}
         viewerRole={viewerRole}
         issuedTextTone="sky"
+        compact
       />
     </div>
   );

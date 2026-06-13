@@ -21,3 +21,15 @@ export const cpClinicalListMembersColumnShellClass =
 /** Actions ⋮ column — right-aligned shell. */
 export const cpClinicalListActionsColumnShellClass =
   "w-[8%] min-w-[4.75rem] whitespace-nowrap text-right";
+
+/** CP invoice-management — merged identity + amount + badge column. */
+export const cpClinicalListInvoiceColumnShellClass =
+  "w-[16%] min-w-[13rem] whitespace-nowrap align-top";
+
+/** CP invoice-management — compact due date column. */
+export const cpClinicalListInvoiceDueColumnShellClass =
+  "w-[7%] min-w-[5.75rem] whitespace-nowrap align-top";
+
+/** CP invoice-management — created + issuer stack. */
+export const cpClinicalListInvoiceCreatedColumnShellClass =
+  "w-[18%] min-w-[14rem] whitespace-normal align-top";

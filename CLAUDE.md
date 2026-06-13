@@ -2,11 +2,11 @@
 
 Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
-## Latest (2026-06-11)
+## Latest (2026-06-13)
 
-- **C30 (REQ-0078):** Invoice audit FKs + `invoice-api-include`/`invoice-api-enrich`; stamps on POST/PATCH/pay/refund/draft/webhook; detail Record Audit (Created/Last updated/Issued by); `mapInvoiceRecordAuditActors`; date picker close; edit amount hint; `db:backfill-invoice-audit`.
-- **C29 (REQ-0077):** CP invoice table UX (`cpTwoLine`, `compactStack`, `amount_status`, sky issuer).
-- **Verify:** **1057/1057** · tsc · lint · build PASS.
+- **C31 (REQ-0079):** CP invoice 5-col table — `InvoiceManagementIdentityCell` (clickable `Invoice N: #id` + copy + amount + badge); shells `cpClinicalListInvoice*` / Due / Created; `InvoiceIssuedByMeta` `compact` + `EntityDetailAuditActorInline` `compactStack` issuer parity; removed dead `cpTwoLine`. Display-only.
+- **C30 (REQ-0078):** Invoice audit FKs/enrich/stamps; detail Record Audit; `db:backfill-invoice-audit`.
+- **Verify:** **1058/1058** · tsc · lint · build PASS.
 
 ## Never / Always
 
@@ -26,28 +26,20 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 Cross-tab: `query-cache-cross-tab.ts`.
 
-## Invoice hub (C27–C28)
+## Invoice hub
 
-- **Scope:** `invoice-management-scope.ts` URL; `InvoiceManagementScopeContext`; `OrganizationFilterSelect` + `DoctorFilterSelect` in billing header.
-- **Data:** `useInvoiceScopedBilling` · keys `viewerTotals` / `byOrganization` / `byDoctor` (+ totals).
-- **Server:** `invoice-doctor-scope.ts` · `invoice-billing-kpi-aggregate.ts` (status-only for CP API).
-- **Cache:** `mergeInvoiceIntoScopedListCaches` · `removeInvoiceFromScopedListCaches` · `patchScopedTotalsFromListCaches` · `computeInvoiceBillingManagementPayloadFromList`.
-- **UI:** `InvoiceManagementBillingSectionHeading` · `InvoiceBillingStatsRow` (all-time) · `invoiceKpiValueRowHint`.
-- **Table (C29):** `invoice-management-columns` — `cpTwoLine` `InvoiceNumberTableCell`, `InvoiceVisitListCell` + `compactStack`, `InvoiceAmountStatusTableCell`, `InvoiceCreatedTableCell` + linked issuer.
-- **SSR:** `invoice-management/page.tsx` · `seedControlPanelSectionCacheFromSsr` · `OrgBillingCachePayload.billingKpi`.
+- **Scope/cache:** `invoice-management-scope.ts` · `InvoiceManagementScopeContext` · `useInvoiceScopedBilling` · `mergeInvoiceIntoScopedListCaches`.
+- **CP table:** `invoice-management-columns` — `invoice` · `description` · `due` · `created` · `actions`; cells in `invoice-table-cells.tsx` + `InvoiceVisitListCell`.
+- **SSR:** `control-panel/invoice-management/page.tsx` · `seedControlPanelSectionCacheFromSsr`.
 
 ## Key paths
 
-- Filters: `FilterSelect`, `ScopeFilterInlineRow`, `DoctorFilterSelect`, `OrganizationFilterSelect`, `filterSelectTriggerDoctorInlineValueClass`
-- Org billing: `OrganizationBillingPanel` · `org-billing-prefetch.ts`
-- CP lists: `cpClinicalListTableFrameClassName` + tone shells
+- CP list shells: `cp-clinical-list-table-classes.ts` · identity tokens `clinical-identity-inline-ui.ts`
 - Entity detail: `EntityDetailPageShell`, `EntityDetailBackLink`, `EntityDetailFooterRow`
 
 ## Agile V
 
-## Agile V
-
-`.agile-v/ACTIVATION.md` · `STATE.md` · **C30 shipped** (REQ-0078) · next **C31 specify**.
+`.agile-v/ACTIVATION.md` · `STATE.md` · **C31 shipped** (REQ-0079).
 
 ## Principle
 

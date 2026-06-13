@@ -4,10 +4,9 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "@/components/shared/DataTableColumnHeader";
 import { InvoiceAdminActionsMenu } from "@/components/shared/billing/InvoiceAdminActionsMenu";
 import {
-  InvoiceAmountStatusTableCell,
   InvoiceCreatedTableCell,
   InvoiceDueTableCell,
-  InvoiceNumberTableCell,
+  InvoiceManagementIdentityCell,
 } from "@/components/shared/billing/invoice-table-cells";
 import { InvoiceVisitListCell } from "@/components/control-panel/InvoiceVisitListCell";
 import type { Invoice } from "@/hooks/usePayments";
@@ -18,6 +17,9 @@ import {
 import {
   cpClinicalListActionsColumnShellClass,
   cpClinicalListIdentityColumnShellClass,
+  cpClinicalListInvoiceColumnShellClass,
+  cpClinicalListInvoiceCreatedColumnShellClass,
+  cpClinicalListInvoiceDueColumnShellClass,
 } from "@/lib/cp-clinical-list-table-classes";
 import { cn } from "@/lib/utils";
 
@@ -53,17 +55,17 @@ export function buildInvoiceManagementColumns(
 
   return [
     {
-      id: "invoice_number",
-      accessorFn: (row) => row.id,
+      id: "invoice",
+      accessorKey: "amount",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Invoice #" />
+        <DataTableColumnHeader column={column} title="Invoice" />
       ),
+      meta: { shellClassName: cpClinicalListInvoiceColumnShellClass },
       cell: ({ row }) => (
-        <InvoiceNumberTableCell
+        <InvoiceManagementIdentityCell
           invoice={row.original}
           viewerRole={viewerRole}
           listIndex={row.index + 1}
-          layout="cpTwoLine"
         />
       ),
     },
@@ -84,19 +86,12 @@ export function buildInvoiceManagementColumns(
       ),
     },
     {
-      id: "amount_status",
-      accessorKey: "amount",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Amount" />
-      ),
-      cell: ({ row }) => <InvoiceAmountStatusTableCell invoice={row.original} />,
-    },
-    {
       id: "due",
       accessorFn: (row) => row.due_date ?? "",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Due" />
       ),
+      meta: { shellClassName: cpClinicalListInvoiceDueColumnShellClass },
       cell: ({ row }) => <InvoiceDueTableCell invoice={row.original} />,
     },
     {
@@ -105,7 +100,7 @@ export function buildInvoiceManagementColumns(
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Created" />
       ),
-      meta: { shellClassName: clinicalTableColumnWrapShellClass },
+      meta: { shellClassName: cpClinicalListInvoiceCreatedColumnShellClass },
       cell: ({ row }) => (
         <InvoiceCreatedTableCell invoice={row.original} viewerRole={viewerRole} />
       ),
