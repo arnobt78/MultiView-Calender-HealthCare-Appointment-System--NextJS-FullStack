@@ -2,9 +2,9 @@
 
 import { format } from "date-fns";
 import { Clock, MapPin } from "lucide-react";
-import { CategoryTableCell } from "@/components/control-panel/patient-detail-snapshot-columns";
 import { AppointmentListVisitFeeBadge } from "@/components/shared/appointment-display/AppointmentListVisitFeeBadge";
 import { AppointmentStatusGlassBadge } from "@/components/shared/appointments/AppointmentStatusGlassBadge";
+import { CategoryBrandMark } from "@/components/shared/category-display/CategoryBrandMark";
 import { CategoryDurationMinutesBadge } from "@/components/shared/category-display/CategoryDurationMinutesBadge";
 import { InvoiceStatusBadge } from "@/components/shared/billing/InvoiceStatusBadge";
 import { PaymentStatusBadge } from "@/components/shared/billing/PaymentStatusBadge";
@@ -16,12 +16,18 @@ import { resolveAppointmentTypeDurationMinutes } from "@/lib/appointment-type-di
 import type { InvoiceDisplayStatus } from "@/lib/billing-appointment-eligibility";
 import type { InvoiceRow } from "@/lib/billing-types";
 import { resolveLatestInvoicePayment, resolveAppointmentListBillingBadges } from "@/lib/appointment-invoice-lookup";
-import { appointmentDetailHref, patientDetailHref, type EntityRole } from "@/lib/entity-routes";
+import { appointmentDetailHref, categoryDetailHref, patientDetailHref, type EntityRole } from "@/lib/entity-routes";
 import {
   clinicalCellMutedTextClass,
   clinicalTableCellMinRowClass,
   clinicalTableCellWrapClass,
 } from "@/lib/table-display-styles";
+import {
+  clinicalIdentityCompactStackBadgeRowClass,
+  clinicalIdentityCompactStackNameEmailRowClass,
+  clinicalIdentityCompactStackRowClass,
+  clinicalIdentityCompactStackTextColClass,
+} from "@/lib/clinical-identity-inline-ui";
 import { cn } from "@/lib/utils";
 
 type DoctorLookup = {
@@ -32,7 +38,7 @@ type DoctorLookup = {
   specialty?: string | null;
 };
 
-/** Clickable title — wraps on narrow columns. */
+/** Clickable title + inline visit status badge (same row rhythm as patient name row). */
 export function AppointmentTitleTableCell({
   appointment,
   viewerRole,
@@ -48,7 +54,7 @@ export function AppointmentTitleTableCell({
       className={cn(
         clinicalTableCellMinRowClass,
         clinicalTableCellWrapClass,
-        "flex min-w-0 items-center py-0.5"
+        "flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 py-0.5"
       )}
     >
       <EntityTitleLink
@@ -57,12 +63,17 @@ export function AppointmentTitleTableCell({
         className="min-w-0 font-normal"
         wrapLabel
       />
+      <AppointmentStatusGlassBadge
+        status={appointment.status}
+        size="compact"
+        className="shrink-0"
+      />
     </div>
   );
 }
 
-/** Status + visit fee + invoice/payment badges — calendar/AppointmentCard billing parity. */
-export function AppointmentManagementStatusCell({
+/** Visit fee + invoice/payment badges — appointment status lives on title row. */
+export function AppointmentManagementBillingCell({
   appointment,
   invoiceDisplayStatus,
   invoice,
@@ -84,7 +95,6 @@ export function AppointmentManagementStatusCell({
         "flex min-w-0 flex-col items-start gap-1 py-0.5"
       )}
     >
-      <AppointmentStatusGlassBadge status={appointment.status} size="compact" />
       <AppointmentListVisitFeeBadge
         size="table"
         appointmentTypePriceCents={appointment.appointment_type_price_cents}
@@ -138,7 +148,7 @@ function resolveCategoryDurationMinutes(appointment: FullAppointment): number | 
   return resolveAppointmentTypeDurationMinutes(appointment);
 }
 
-/** Brand category mark + linked label + duration badge (Category Management parity). */
+/** Category compactStack — brand mark + label row, duration badge row (patient/treating parity). */
 export function AppointmentCategoryTableCell({
   appointment,
   viewerRole,
@@ -151,24 +161,29 @@ export function AppointmentCategoryTableCell({
     return <span className={cn(clinicalCellMutedTextClass, "text-xs")}>—</span>;
   }
   const durationMinutes = resolveCategoryDurationMinutes(appointment);
+  const label = cat.label.trim();
 
   return (
-    <div
-      className={cn(
-        clinicalTableCellMinRowClass,
-        "inline-flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 py-0.5"
-      )}
-    >
-      <CategoryTableCell
-        label={cat.label}
+    <div className={cn(clinicalIdentityCompactStackRowClass, clinicalTableCellMinRowClass, "py-0.5")}>
+      <CategoryBrandMark
         color={cat.color}
         icon={cat.icon}
-        categoryId={cat.id}
-        viewerRole={viewerRole}
-        markVariant="brand"
-        markSize="compact"
+        variant="brand"
+        size="compact"
       />
-      <CategoryDurationMinutesBadge minutes={durationMinutes} />
+      <div className={clinicalIdentityCompactStackTextColClass}>
+        <div className={clinicalIdentityCompactStackNameEmailRowClass}>
+          <EntityTitleLink
+            href={categoryDetailHref(viewerRole, cat.id)}
+            label={label}
+            className="min-w-0 shrink truncate text-sm font-normal"
+            wrapLabel
+          />
+        </div>
+        <div className={clinicalIdentityCompactStackBadgeRowClass}>
+          <CategoryDurationMinutesBadge minutes={durationMinutes} />
+        </div>
+      </div>
     </div>
   );
 }

@@ -5,7 +5,7 @@ import { DataTableColumnHeader } from "@/components/shared/DataTableColumnHeader
 import { AppointmentActionsMenu } from "@/components/shared/AppointmentActionsMenu";
 import {
   AppointmentCategoryTableCell,
-  AppointmentManagementStatusCell,
+  AppointmentManagementBillingCell,
   AppointmentPatientTableCell,
   AppointmentTitleTableCell,
   AppointmentTreatingTableCell,
@@ -84,13 +84,13 @@ export function buildAppointmentManagementColumns(
       id: "status",
       accessorKey: "status",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Status" />
+        <DataTableColumnHeader column={column} title="Billing" />
       ),
       meta: { shellClassName: cpClinicalListAppointmentStatusColumnShellClass },
       cell: ({ row }) => {
         const appt = row.original;
         return (
-          <AppointmentManagementStatusCell
+          <AppointmentManagementBillingCell
             appointment={appt}
             invoiceDisplayStatus={invoiceDisplayByAppt.get(appt.id) ?? null}
             invoice={invoiceByAppt.get(appt.id) ?? null}

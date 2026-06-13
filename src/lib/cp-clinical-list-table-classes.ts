@@ -36,7 +36,7 @@ export const cpClinicalListInvoiceCreatedColumnShellClass =
 
 /** CP appointment-management column shells. */
 export const cpClinicalListAppointmentTitleColumnShellClass =
-  "w-[18%] min-w-[12rem] min-w-0 whitespace-normal align-top";
+  "w-[20%] min-w-[14rem] min-w-0 whitespace-normal align-top";
 
 export const cpClinicalListAppointmentStatusColumnShellClass =
   "w-[10%] min-w-[8.5rem] whitespace-normal align-top";

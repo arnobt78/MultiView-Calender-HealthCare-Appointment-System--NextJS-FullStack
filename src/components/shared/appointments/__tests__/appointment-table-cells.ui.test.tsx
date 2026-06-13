@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import {
   AppointmentCategoryTableCell,
-  AppointmentManagementStatusCell,
+  AppointmentManagementBillingCell,
   AppointmentTitleTableCell,
   AppointmentWhenTableCell,
 } from "@/components/shared/appointments/appointment-table-cells";
@@ -15,7 +15,7 @@ vi.mock("@/components/shared/EntityTitleLink", () => ({
 
 vi.mock("@/components/shared/appointments/AppointmentStatusGlassBadge", () => ({
   AppointmentStatusGlassBadge: ({ status }: { status?: string | null }) => (
-    <span data-testid="status-badge">{status}</span>
+    <span data-testid="visit-status-badge">{status}</span>
   ),
 }));
 
@@ -39,10 +39,8 @@ vi.mock("@/components/shared/billing/PaymentStatusBadge", () => ({
   ),
 }));
 
-vi.mock("@/components/control-panel/patient-detail-snapshot-columns", () => ({
-  CategoryTableCell: ({ label }: { label: string }) => (
-    <span data-testid="category-label">{label}</span>
-  ),
+vi.mock("@/components/shared/category-display/CategoryBrandMark", () => ({
+  CategoryBrandMark: () => <span data-testid="category-mark" />,
 }));
 
 vi.mock("@/components/shared/category-display/CategoryDurationMinutesBadge", () => ({
@@ -57,7 +55,7 @@ const sample: FullAppointment = {
   title: "Annual Check-up",
   start: "2026-06-08T09:00:00.000Z",
   end: "2026-06-08T10:00:00.000Z",
-  status: "pending",
+  status: "done",
   location: "Demo Clinic",
   created_at: "2026-06-01T10:00:00.000Z",
   updated_at: null,
@@ -69,11 +67,13 @@ const sample: FullAppointment = {
 };
 
 describe("AppointmentTitleTableCell", () => {
-  it("renders linked title text", () => {
+  it("renders title with inline visit status badge", () => {
     const markup = renderToStaticMarkup(
       <AppointmentTitleTableCell appointment={sample} viewerRole="admin" />
     );
     expect(markup).toContain("Annual Check-up");
+    expect(markup).toContain("done");
+    expect(markup).toContain("flex-wrap");
   });
 });
 
@@ -85,14 +85,13 @@ describe("AppointmentWhenTableCell", () => {
     expect(markup).toContain("Demo Clinic");
     expect(markup).toContain("–");
     expect(markup).toContain("text-muted-foreground");
-    expect(markup).toContain('aria-hidden="true"');
   });
 });
 
-describe("AppointmentManagementStatusCell", () => {
-  it("dedupes paid invoice — payment tick only, table fee size", () => {
+describe("AppointmentManagementBillingCell", () => {
+  it("dedupes paid invoice — payment tick only, no visit status", () => {
     const markup = renderToStaticMarkup(
-      <AppointmentManagementStatusCell
+      <AppointmentManagementBillingCell
         appointment={sample}
         invoiceDisplayStatus="paid"
         invoice={{
@@ -113,42 +112,15 @@ describe("AppointmentManagementStatusCell", () => {
         }}
       />
     );
-    expect(markup).toContain("pending");
+    expect(markup).not.toContain('data-testid="visit-status-badge"');
     expect(markup).toContain('data-size="table"');
     expect(markup).not.toContain('data-testid="invoice-badge"');
     expect(markup).toContain("succeeded");
   });
-
-  it("shows both badges when invoice and payment differ", () => {
-    const markup = renderToStaticMarkup(
-      <AppointmentManagementStatusCell
-        appointment={sample}
-        invoiceDisplayStatus="sent"
-        invoice={{
-          id: "inv-2",
-          user_id: "user-1",
-          amount: 15000,
-          currency: "eur",
-          status: "sent",
-          created_at: "2026-06-01T10:00:00.000Z",
-          payments: [
-            {
-              id: "pay-2",
-              amount: 15000,
-              status: "pending",
-              created_at: "2026-06-02T10:00:00.000Z",
-            },
-          ],
-        }}
-      />
-    );
-    expect(markup).toContain("sent");
-    expect(markup).toContain("pending");
-  });
 });
 
 describe("AppointmentCategoryTableCell", () => {
-  it("renders category label and duration inline", () => {
+  it("uses compactStack — label row + duration badge row", () => {
     const appt: FullAppointment = {
       ...sample,
       category: "cat-1",
@@ -168,6 +140,7 @@ describe("AppointmentCategoryTableCell", () => {
     );
     expect(markup).toContain("Dermatology");
     expect(markup).toContain("30 min");
-    expect(markup).toContain("flex-wrap");
+    expect(markup).toContain("items-start gap-2");
+    expect(markup).toContain("flex-col");
   });
 });

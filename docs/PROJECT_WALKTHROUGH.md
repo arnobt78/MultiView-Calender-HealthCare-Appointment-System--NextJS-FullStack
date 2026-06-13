@@ -2,9 +2,9 @@
 
 ## Latest (2026-06-13 — C32 CP appointment-management parity)
 
-**C32.1 (REQ-0080):** Status col billing dedupe (`resolveAppointmentListBillingBadges` — tick Paid only when invoice+payment agree); visit fee `table` glass size; category duration inline with brand label.
+**C32.1:** Visit status inline on title row; billing column for fee/invoice/payment; category compactStack matches patient/treating.
 
-**Verify:** **1076/1076** · tsc · lint · build.
+**Verify:** **1075/1075** · tsc · lint · build.
 
 ## Prior (2026-06-13 — C31 CP invoice column merge)
 
