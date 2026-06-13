@@ -15,12 +15,11 @@
 
 ## Verify baseline (C32 close)
 
-**1076/1076** · tsc · lint · build — PASS
+**1075/1075** · tsc · lint · build — PASS
 
-## C32 scope (REQ-0080)
+## C32 shipped (REQ-0080)
 
-- Appointment-management list parity + billing/category/when column polish.
-- SSR: calendar bundle + `invoices.all` prefetch on appointments_mgmt.
+- List parity + title/billing/category layout polish; invalidation unchanged (`invalidateAfterAppointmentMutation` + invoice helpers).
 
 ## Next cycle
 

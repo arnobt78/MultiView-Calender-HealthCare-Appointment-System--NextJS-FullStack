@@ -6,7 +6,7 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 - **C32.1:** Title row inline visit status; billing col (fee/invoice/payment); category `compactStack` (mark + label / duration badge rows).
 - **C32 (REQ-0080):** CP appointment-management shell/DataTable/filters/stats; SSR `appointments_mgmt` + parallel `prefetchInvoices`.
-- **Verify:** **1076/1076** · tsc · lint · build PASS.
+- **Verify:** **1075/1075** · tsc · lint · build PASS.
 
 ## Never / Always
 
@@ -35,7 +35,7 @@ Cross-tab: `query-cache-cross-tab.ts`.
 ## Appointment CP list
 
 - **Shell:** `AppointmentsManagement` → sky tone · `ClinicalListFilterToolbar` · `AppointmentManagementStatsRow` · `AppointmentListFiltersContext`.
-- **Table:** `appointment-management-columns` + `appointment-table-cells`; `AppointmentManagementStatusCell`; `CategoryDurationMinutesBadge`; `appointment-invoice-lookup.ts`.
+- **Table:** 7-col `appointment-management-columns` · `appointment-table-cells` (`AppointmentTitleTableCell` + inline status · `AppointmentManagementBillingCell` · `compactStack` category); `resolveAppointmentListBillingBadges` · `appointment-invoice-lookup.ts`.
 - **SSR:** `prefetchCalendarAppointmentsBundle` + parallel `prefetchInvoices` on `appointments_mgmt`.
 
 ## Key paths

@@ -2,7 +2,7 @@
 
 ## Latest (2026-06-13 — C32 CP appointment-management parity)
 
-**C32.1:** Visit status inline on title row; billing column for fee/invoice/payment; category compactStack matches patient/treating.
+**C32 (REQ-0080):** CP appointment-management — sky shell · stats · toolbar filters · DataTable · header Export/New · dialog footer · SSR calendar bundle + `prefetchInvoices`.
 
 **Verify:** **1075/1075** · tsc · lint · build.
 
