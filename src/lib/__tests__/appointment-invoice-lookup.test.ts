@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildAppointmentInvoiceDisplayMap,
   getInvoiceForAppointment,
+  resolveAppointmentListBillingBadges,
   resolveLatestInvoicePayment,
 } from "@/lib/appointment-invoice-lookup";
 import type { InvoiceRow } from "@/lib/billing-types";
@@ -47,5 +48,52 @@ describe("appointment-invoice-lookup", () => {
   it("resolveLatestInvoicePayment picks newest created_at", () => {
     const latest = resolveLatestInvoicePayment(invoices[0].payments);
     expect(latest?.status).toBe("refunded");
+  });
+
+  describe("resolveAppointmentListBillingBadges", () => {
+    it("paid + succeeded shows payment tick only", () => {
+      expect(
+        resolveAppointmentListBillingBadges({
+          invoiceDisplayStatus: "paid",
+          latestPaymentStatus: "succeeded",
+        })
+      ).toEqual({ showInvoice: false, showPayment: true });
+    });
+
+    it("refunded + refunded shows payment only", () => {
+      expect(
+        resolveAppointmentListBillingBadges({
+          invoiceDisplayStatus: "refunded",
+          latestPaymentStatus: "refunded",
+        })
+      ).toEqual({ showInvoice: false, showPayment: true });
+    });
+
+    it("sent + pending shows both", () => {
+      expect(
+        resolveAppointmentListBillingBadges({
+          invoiceDisplayStatus: "sent",
+          latestPaymentStatus: "pending",
+        })
+      ).toEqual({ showInvoice: true, showPayment: true });
+    });
+
+    it("invoice only when no payment row", () => {
+      expect(
+        resolveAppointmentListBillingBadges({
+          invoiceDisplayStatus: "cancelled",
+          latestPaymentStatus: null,
+        })
+      ).toEqual({ showInvoice: true, showPayment: false });
+    });
+
+    it("payment only when no invoice display status", () => {
+      expect(
+        resolveAppointmentListBillingBadges({
+          invoiceDisplayStatus: null,
+          latestPaymentStatus: "succeeded",
+        })
+      ).toEqual({ showInvoice: false, showPayment: true });
+    });
   });
 });

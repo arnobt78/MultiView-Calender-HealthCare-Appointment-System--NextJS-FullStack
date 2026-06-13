@@ -2,9 +2,9 @@
 
 ## Latest (2026-06-13 — C32 CP appointment-management parity)
 
-**C32 (REQ-0080):** CP appointment-management parity + column polish — status stacks visit fee + invoice/payment badges (`AppointmentManagementStatusCell`, warm `invoices.all` via parallel SSR prefetch); when col muted datetime/location with Clock/MapPin; category col brand mark + `CategoryDurationMinutesBadge` (shared with Category Management).
+**C32.1 (REQ-0080):** Status col billing dedupe (`resolveAppointmentListBillingBadges` — tick Paid only when invoice+payment agree); visit fee `table` glass size; category duration inline with brand label.
 
-**Verify:** **1069/1069** · tsc · lint · build.
+**Verify:** **1076/1076** · tsc · lint · build.
 
 ## Prior (2026-06-13 — C31 CP invoice column merge)
 

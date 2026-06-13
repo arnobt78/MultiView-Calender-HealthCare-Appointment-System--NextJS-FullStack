@@ -2,6 +2,7 @@ import React from "react";
 import { describe, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import {
+  AppointmentCategoryTableCell,
   AppointmentManagementStatusCell,
   AppointmentTitleTableCell,
   AppointmentWhenTableCell,
@@ -19,7 +20,11 @@ vi.mock("@/components/shared/appointments/AppointmentStatusGlassBadge", () => ({
 }));
 
 vi.mock("@/components/shared/appointment-display/AppointmentListVisitFeeBadge", () => ({
-  AppointmentListVisitFeeBadge: () => <span data-testid="fee-badge">€150</span>,
+  AppointmentListVisitFeeBadge: ({ size }: { size?: string }) => (
+    <span data-testid="fee-badge" data-size={size}>
+      €150
+    </span>
+  ),
 }));
 
 vi.mock("@/components/shared/billing/InvoiceStatusBadge", () => ({
@@ -31,6 +36,18 @@ vi.mock("@/components/shared/billing/InvoiceStatusBadge", () => ({
 vi.mock("@/components/shared/billing/PaymentStatusBadge", () => ({
   PaymentStatusBadge: ({ status }: { status: string }) => (
     <span data-testid="payment-badge">{status}</span>
+  ),
+}));
+
+vi.mock("@/components/control-panel/patient-detail-snapshot-columns", () => ({
+  CategoryTableCell: ({ label }: { label: string }) => (
+    <span data-testid="category-label">{label}</span>
+  ),
+}));
+
+vi.mock("@/components/shared/category-display/CategoryDurationMinutesBadge", () => ({
+  CategoryDurationMinutesBadge: ({ minutes }: { minutes: number | null }) => (
+    <span data-testid="duration-badge">{minutes} min</span>
   ),
 }));
 
@@ -73,7 +90,7 @@ describe("AppointmentWhenTableCell", () => {
 });
 
 describe("AppointmentManagementStatusCell", () => {
-  it("renders status, fee, invoice, and payment badges when provided", () => {
+  it("dedupes paid invoice — payment tick only, table fee size", () => {
     const markup = renderToStaticMarkup(
       <AppointmentManagementStatusCell
         appointment={sample}
@@ -97,8 +114,60 @@ describe("AppointmentManagementStatusCell", () => {
       />
     );
     expect(markup).toContain("pending");
-    expect(markup).toContain("€150");
-    expect(markup).toContain("paid");
+    expect(markup).toContain('data-size="table"');
+    expect(markup).not.toContain('data-testid="invoice-badge"');
     expect(markup).toContain("succeeded");
+  });
+
+  it("shows both badges when invoice and payment differ", () => {
+    const markup = renderToStaticMarkup(
+      <AppointmentManagementStatusCell
+        appointment={sample}
+        invoiceDisplayStatus="sent"
+        invoice={{
+          id: "inv-2",
+          user_id: "user-1",
+          amount: 15000,
+          currency: "eur",
+          status: "sent",
+          created_at: "2026-06-01T10:00:00.000Z",
+          payments: [
+            {
+              id: "pay-2",
+              amount: 15000,
+              status: "pending",
+              created_at: "2026-06-02T10:00:00.000Z",
+            },
+          ],
+        }}
+      />
+    );
+    expect(markup).toContain("sent");
+    expect(markup).toContain("pending");
+  });
+});
+
+describe("AppointmentCategoryTableCell", () => {
+  it("renders category label and duration inline", () => {
+    const appt: FullAppointment = {
+      ...sample,
+      category: "cat-1",
+      category_data: {
+        id: "cat-1",
+        label: "Dermatology",
+        color: "#f59e0b",
+        icon: "Sun",
+        created_at: "2026-06-01T00:00:00.000Z",
+        updated_at: null,
+        description: null,
+        duration_minutes_default: 30,
+      },
+    };
+    const markup = renderToStaticMarkup(
+      <AppointmentCategoryTableCell appointment={appt} viewerRole="admin" />
+    );
+    expect(markup).toContain("Dermatology");
+    expect(markup).toContain("30 min");
+    expect(markup).toContain("flex-wrap");
   });
 });

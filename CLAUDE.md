@@ -4,8 +4,9 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-13)
 
-- **C32 (REQ-0080):** CP appointment-management — shell/DataTable/filters/stats parity; status col stacks `AppointmentManagementStatusCell` (status + `VisitFeeBadge` + invoice/payment badges via `useAppointmentInvoiceDisplayMap` + `usePayments`); when col muted `Clock`/`MapPin`; category col brand mark + `CategoryDurationMinutesBadge`; SSR `appointments_mgmt` parallel `prefetchInvoices` → warm `invoices.all`.
-- **Verify:** **1069/1069** · tsc · lint · build PASS.
+- **C32.1 (REQ-0080):** CP appointment status col — `resolveAppointmentListBillingBadges` dedupes Paid/Refunded (tick payment badge only); fee `size="table"` glass parity; category duration inline with label.
+- **C32 (REQ-0080):** CP appointment-management shell/DataTable/filters/stats; SSR `appointments_mgmt` + parallel `prefetchInvoices`.
+- **Verify:** **1076/1076** · tsc · lint · build PASS.
 
 ## Never / Always
 

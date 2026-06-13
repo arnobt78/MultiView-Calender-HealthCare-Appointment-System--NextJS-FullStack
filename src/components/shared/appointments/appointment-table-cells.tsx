@@ -15,11 +15,10 @@ import type { FullAppointment } from "@/hooks/useAppointments";
 import { resolveAppointmentTypeDurationMinutes } from "@/lib/appointment-type-display";
 import type { InvoiceDisplayStatus } from "@/lib/billing-appointment-eligibility";
 import type { InvoiceRow } from "@/lib/billing-types";
-import { resolveLatestInvoicePayment } from "@/lib/appointment-invoice-lookup";
+import { resolveLatestInvoicePayment, resolveAppointmentListBillingBadges } from "@/lib/appointment-invoice-lookup";
 import { appointmentDetailHref, patientDetailHref, type EntityRole } from "@/lib/entity-routes";
 import {
   clinicalCellMutedTextClass,
-  clinicalTableBrandMarkCellClass,
   clinicalTableCellMinRowClass,
   clinicalTableCellWrapClass,
 } from "@/lib/table-display-styles";
@@ -73,6 +72,10 @@ export function AppointmentManagementStatusCell({
   invoice?: InvoiceRow | null;
 }) {
   const latestPayment = resolveLatestInvoicePayment(invoice?.payments);
+  const { showInvoice, showPayment } = resolveAppointmentListBillingBadges({
+    invoiceDisplayStatus,
+    latestPaymentStatus: latestPayment?.status,
+  });
 
   return (
     <div
@@ -83,13 +86,16 @@ export function AppointmentManagementStatusCell({
     >
       <AppointmentStatusGlassBadge status={appointment.status} size="compact" />
       <AppointmentListVisitFeeBadge
+        size="table"
         appointmentTypePriceCents={appointment.appointment_type_price_cents}
         doctorConsultationFeeCents={appointment.doctor_consultation_fee_cents}
       />
-      {invoiceDisplayStatus ? (
+      {showInvoice && invoiceDisplayStatus ? (
         <InvoiceStatusBadge displayStatus={invoiceDisplayStatus} />
       ) : null}
-      {latestPayment ? <PaymentStatusBadge status={latestPayment.status} /> : null}
+      {showPayment && latestPayment ? (
+        <PaymentStatusBadge status={latestPayment.status} />
+      ) : null}
     </div>
   );
 }
@@ -147,18 +153,21 @@ export function AppointmentCategoryTableCell({
   const durationMinutes = resolveCategoryDurationMinutes(appointment);
 
   return (
-    <div className={cn(clinicalTableCellMinRowClass, "flex min-w-0 flex-col gap-1 py-0.5")}>
-      <div className={cn(clinicalTableBrandMarkCellClass, "min-w-0")}>
-        <CategoryTableCell
-          label={cat.label}
-          color={cat.color}
-          icon={cat.icon}
-          categoryId={cat.id}
-          viewerRole={viewerRole}
-          markVariant="brand"
-          markSize="compact"
-        />
-      </div>
+    <div
+      className={cn(
+        clinicalTableCellMinRowClass,
+        "inline-flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 py-0.5"
+      )}
+    >
+      <CategoryTableCell
+        label={cat.label}
+        color={cat.color}
+        icon={cat.icon}
+        categoryId={cat.id}
+        viewerRole={viewerRole}
+        markVariant="brand"
+        markSize="compact"
+      />
       <CategoryDurationMinutesBadge minutes={durationMinutes} />
     </div>
   );

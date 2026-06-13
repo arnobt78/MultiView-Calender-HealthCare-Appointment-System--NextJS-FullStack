@@ -38,3 +38,44 @@ export function resolveLatestInvoicePayment(
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   )[0];
 }
+
+function normStatus(value: string | null | undefined): string {
+  return (value ?? "").trim().toLowerCase();
+}
+
+/** True when invoice display status and payment row say the same thing (duplicate Paid/Refunded). */
+function isRedundantInvoiceAndPayment(
+  invoiceDisplayStatus: string,
+  paymentStatus: string
+): boolean {
+  const inv = normStatus(invoiceDisplayStatus);
+  const pay = normStatus(paymentStatus);
+  if (inv === "paid" && pay === "succeeded") return true;
+  if (inv === "refunded" && pay === "refunded") return true;
+  return false;
+}
+
+/** CP list status col — pick invoice vs payment badge without duplicate Paid/Refunded chips. */
+export function resolveAppointmentListBillingBadges(input: {
+  invoiceDisplayStatus?: InvoiceDisplayStatus | null;
+  latestPaymentStatus?: string | null;
+}): { showInvoice: boolean; showPayment: boolean } {
+  const invoiceStatus = input.invoiceDisplayStatus ?? null;
+  const paymentStatus = input.latestPaymentStatus ?? null;
+  const hasInvoice = Boolean(invoiceStatus);
+  const hasPayment = Boolean(paymentStatus?.trim());
+
+  if (!hasInvoice) {
+    return { showInvoice: false, showPayment: hasPayment };
+  }
+
+  if (!hasPayment) {
+    return { showInvoice: true, showPayment: false };
+  }
+
+  if (isRedundantInvoiceAndPayment(invoiceStatus!, paymentStatus!)) {
+    return { showInvoice: false, showPayment: true };
+  }
+
+  return { showInvoice: true, showPayment: true };
+}
