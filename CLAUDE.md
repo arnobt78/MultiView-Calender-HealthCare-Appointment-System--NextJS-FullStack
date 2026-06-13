@@ -6,7 +6,7 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 - **C32.1:** Title row inline visit status; billing col (fee/invoice/payment); category `compactStack` (mark + label / duration badge rows).
 - **C32 (REQ-0080):** CP appointment-management shell/DataTable/filters/stats; SSR `appointments_mgmt` + parallel `prefetchInvoices`.
-- **Verify:** **1075/1075** · tsc · lint · build PASS.
+- **Verify:** **1076/1076** · tsc · lint · build PASS.
 
 ## Never / Always
 
