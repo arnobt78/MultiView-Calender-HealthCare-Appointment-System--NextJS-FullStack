@@ -42,12 +42,14 @@ describe("control-panel-header-actions-config C12", () => {
     expect(shells.some((s) => s.label === "Refresh" && s.iconKey === "refresh")).toBe(true);
   });
 
-  it("notifications has Refresh + Mark All Read SSR shells", () => {
+  it("notifications has Export Refresh Mark All Read and New Appointment SSR shells", () => {
     const shells = getControlPanelHeaderActionShells("notifications", "actions");
+    expect(shells.some((s) => s.label === "Export CSV" && s.iconKey === "download")).toBe(true);
     expect(shells.some((s) => s.label === "Refresh" && s.iconKey === "refresh")).toBe(true);
     expect(shells.some((s) => s.label === "Mark All Read" && s.iconKey === "checkCheck")).toBe(
       true
     );
+    expect(shells.some((s) => s.label === "New Appointment" && s.iconKey === "plus")).toBe(true);
   });
 
   it("resolveHeaderActionIcon includes refresh", () => {

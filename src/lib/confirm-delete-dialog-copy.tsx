@@ -23,6 +23,7 @@ export const DELETE_APPOINTMENT_CONFIRM_TITLE = "Delete appointment?";
 export const DELETE_APPOINTMENT_TYPE_CONFIRM_TITLE = "Delete appointment type?";
 export const DELETE_ORGANIZATION_CONFIRM_TITLE = "Delete organization?";
 export const MARK_ALL_NOTIFICATIONS_READ_TITLE = "Mark all as read?";
+export const DELETE_READ_NOTIFICATIONS_TITLE = "Delete all read notifications?";
 export const DISCONNECT_GOOGLE_CALENDAR_CONFIRM_TITLE = "Disconnect Google Calendar?";
 export const RESET_FORM_CONFIRM_TITLE = "Reset form?";
 export const DELETE_WEEKLY_HOURS_WINDOW_CONFIRM_TITLE = "Delete weekly hours window?";
@@ -71,6 +72,17 @@ export function buildMarkAllNotificationsReadConfirmSubtitle(unreadCount: number
     <>
       This will mark all{" "}
       <span className="font-medium text-gray-800">{unreadCount}</span> unread notifications as read.
+    </>
+  );
+}
+
+/** Notifications toolbar — bulk delete read rows. */
+export function buildDeleteReadNotificationsConfirmSubtitle(readCount: number): ReactNode {
+  return (
+    <>
+      This removes{" "}
+      <span className="font-medium text-gray-800">{readCount}</span> read notification
+      {readCount === 1 ? "" : "s"}. Unread items stay in your inbox.
     </>
   );
 }

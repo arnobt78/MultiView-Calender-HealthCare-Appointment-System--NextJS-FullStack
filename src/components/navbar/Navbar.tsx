@@ -18,82 +18,15 @@ import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard, BookOpen, Activity, LogOut,
-  Bell, BellRing, CheckCheck, Search,
-  // Notification type icons
-  CalendarPlus, CalendarCheck2, AlarmClock, RefreshCcw, Trash2,
+  Bell, BellRing, CheckCheck, Search, Trash2,
   // Role portal icons
   ShieldCheck, Stethoscope, ClipboardList,
 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
 import { useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { prefetchInsightsNav } from "@/lib/prefetch-insights-nav";
-
-/**
- * Per-type visual config for notification items.
- * Drives: icon, icon background/color, glassmorphic badge style, and unread dot color.
- * Add new types here as the notification system grows — no other code needs changing.
- */
-const NOTIF_TYPE_CONFIG: Record<string, {
-  label: string;
-  icon: LucideIcon;
-  iconBg: string;
-  iconColor: string;
-  iconBorder: string;
-  badgeClass: string;
-  dotClass: string;
-}> = {
-  appointment_created: {
-    label: "Scheduled",
-    icon: CalendarPlus,
-    iconBg: "bg-sky-100/80",
-    iconColor: "text-sky-600",
-    iconBorder: "border-sky-200/80",
-    badgeClass: "bg-sky-100/80 text-sky-700 border-sky-200/70 backdrop-blur-sm",
-    dotClass: "bg-sky-500",
-  },
-  status_update: {
-    label: "Status",
-    icon: RefreshCcw,
-    iconBg: "bg-amber-100/80",
-    iconColor: "text-amber-600",
-    iconBorder: "border-amber-200/80",
-    badgeClass: "bg-amber-100/80 text-amber-700 border-amber-200/70 backdrop-blur-sm",
-    dotClass: "bg-amber-500",
-  },
-  booking: {
-    label: "Booking",
-    icon: CalendarCheck2,
-    iconBg: "bg-emerald-100/80",
-    iconColor: "text-emerald-600",
-    iconBorder: "border-emerald-200/80",
-    badgeClass: "bg-emerald-100/80 text-emerald-700 border-emerald-200/70 backdrop-blur-sm",
-    dotClass: "bg-emerald-500",
-  },
-  reminder: {
-    label: "Reminder",
-    icon: AlarmClock,
-    iconBg: "bg-purple-100/80",
-    iconColor: "text-purple-600",
-    iconBorder: "border-purple-200/80",
-    badgeClass: "bg-purple-100/80 text-purple-700 border-purple-200/70 backdrop-blur-sm",
-    dotClass: "bg-purple-500",
-  },
-};
-
-/** Returns the visual config for a given notification type, with a safe default fallback. */
-function getNotifConfig(type: string) {
-  return NOTIF_TYPE_CONFIG[type] ?? {
-    label: type.replace(/_/g, " "),
-    icon: Bell,
-    iconBg: "bg-gray-100/80",
-    iconColor: "text-gray-500",
-    iconBorder: "border-gray-200/80",
-    badgeClass: "bg-gray-100/80 text-gray-600 border-gray-200/70 backdrop-blur-sm",
-    dotClass: "bg-gray-400",
-  };
-}
+import { getNotificationTypeConfig } from "@/lib/notification-type-display";
 import { useAppStore } from "@/store/useAppStore";
 import GlobalSearch from "@/components/shared/GlobalSearch";
 import { UserAvatar } from "@/components/shared/UserAvatar";
@@ -429,9 +362,9 @@ export default function Navbar() {
                   notifications.slice(0, 10).map((n) => {
                     /*
                      * Resolve per-type visual config: icon, colors, badge label, unread dot.
-                     * `getNotifConfig` returns a safe fallback for unknown types.
+                     * `getNotificationTypeConfig` returns a safe fallback for unknown types.
                      */
-                    const cfg = getNotifConfig(n.type);
+                    const cfg = getNotificationTypeConfig(n.type);
                     const NIcon = cfg.icon;
                     return (
                       <DropdownMenuItem

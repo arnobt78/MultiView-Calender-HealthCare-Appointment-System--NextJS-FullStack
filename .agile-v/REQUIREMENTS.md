@@ -6,7 +6,7 @@
 
 | Field | Value |
 |-------|-------|
-| Cycle | C1–C31 shipped · **C32 active** (REQ-0080) |
+| Cycle | C1–C32 shipped · **C33 active** (REQ-0081) |
 | Author | Requirement Architect |
 | Gate 1 status | C1 GATE-0001 · C2 GATE-0003 approved |
 | Canonical source | this file |
@@ -125,6 +125,24 @@
 | REQ-0078 | approved [C30] | REQ-0077 | ART-0401..0406 | pending |
 | REQ-0079 | approved [C31] | REQ-0078 | ART-0407..0409 | pending |
 | REQ-0080 | approved [C32] | REQ-0079 | ART-0410..0416 | pending |
+| REQ-0081 | approved [C33] | REQ-0080 | ART-0417..0423 | pending |
+
+### REQ-0081 — C33 CP notifications UI parity
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C33] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0080 |
+
+**Statement:** Refactor CP notifications list to patient/appointment-management parity — rose EntityListShell, stat cards, ClinicalListFilterToolbar, shared DataTable, Export + session lead + New Appointment header actions. SSR prefetch and `invalidateNotificationsAndCrossTab` unchanged.
+
+**Acceptance criteria:**
+1. `ControlPanelEntityListShell` rose tone; header actions; toolbar filters; no broken merged chrome.
+2. Shared `DataTable` + type badge columns; client-side filters (read, type, link, recency).
+3. Display-only stat cards; Export CSV; Clear read confirm.
+4. Tests; verify PASS.
 
 ### REQ-0080 — C32 CP appointment-management UI parity
 

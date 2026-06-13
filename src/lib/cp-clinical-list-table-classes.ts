@@ -52,3 +52,16 @@ export const cpClinicalListAppointmentPatientColumnShellClass =
 
 export const cpClinicalListAppointmentTreatingColumnShellClass =
   "w-[14%] min-w-[10rem] min-w-0 whitespace-normal align-top";
+
+/** CP notifications list column shells. */
+export const cpClinicalListNotificationTypeColumnShellClass =
+  "w-[12%] min-w-[7.5rem] whitespace-nowrap align-top";
+
+export const cpClinicalListNotificationContentColumnShellClass =
+  "w-[36%] min-w-[14rem] min-w-0 whitespace-normal align-top";
+
+export const cpClinicalListNotificationReceivedColumnShellClass =
+  "w-[16%] min-w-[10rem] whitespace-nowrap align-top";
+
+export const cpClinicalListNotificationLinkColumnShellClass =
+  "w-[12%] min-w-[8rem] whitespace-nowrap align-top";

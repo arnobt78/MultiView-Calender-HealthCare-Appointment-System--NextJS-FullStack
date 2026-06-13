@@ -1,60 +1,58 @@
 "use client";
 
 /**
- * NotificationsManagement — merged CP chrome (SSR icon/title + live subtitle/actions).
- * Subtitle: last-updated time + total count; Refresh refetches queryKeys.notifications.all.
- * CRUD mutations use invalidateNotificationsAndCrossTab (navbar badge + this list).
+ * NotificationsManagement — CP list parity (C33 / REQ-0081):
+ * rose EntityListShell, stats, ClinicalListFilterToolbar, DataTable, session lead + header actions.
+ * SSR subtitle + cache seed unchanged; mutations use invalidateNotificationsAndCrossTab.
  */
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
-  useReactTable,
-  getCoreRowModel,
-  getSortedRowModel,
-  getFilteredRowModel,
-  flexRender,
-  createColumnHelper,
-  type SortingState,
-} from "@tanstack/react-table";
-import { useNotifications } from "@/hooks/useNotifications";
-import type { Notification } from "@/types/notification";
-import { ControlPanelPageChrome } from "@/components/control-panel/ControlPanelPageChrome";
-import { ControlPanelHeaderSubtitle } from "@/components/control-panel/ControlPanelHeaderSubtitle";
-import { ControlPanelHeaderGlassButton } from "@/components/control-panel/ControlPanelHeaderGlassButton";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
-import {
-  buildMarkAllNotificationsReadConfirmSubtitle,
-  MARK_ALL_NOTIFICATIONS_READ_TITLE,
-} from "@/lib/confirm-delete-dialog-copy";
-import {
-  BellOff,
+  CalendarPlus,
   CheckCheck,
-  ExternalLink,
+  Download,
   RefreshCw,
   Trash2,
 } from "lucide-react";
-import { format } from "date-fns";
+import { useNotifications } from "@/hooks/useNotifications";
+import { useNotificationListMetrics } from "@/hooks/useNotificationListMetrics";
+import { DataTable } from "@/components/shared/DataTable";
 import { AppSectionErrorBanner } from "@/components/shared/AppSectionErrorBanner";
-import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
+import { ClinicalListFilterToolbar } from "@/components/shared/filters/ClinicalListFilterToolbar";
+import { FilterSelect } from "@/components/shared/filters/FilterSelect";
+import { ControlPanelPageChrome } from "@/components/control-panel/ControlPanelPageChrome";
+import { ControlPanelHeaderSubtitle } from "@/components/control-panel/ControlPanelHeaderSubtitle";
+import { ControlPanelHeaderGlassButton } from "@/components/control-panel/ControlPanelHeaderGlassButton";
+import { ControlPanelEntityListShell } from "@/components/control-panel/ControlPanelEntityListShell";
+import { ControlPanelSessionActionsLead } from "@/components/control-panel/ControlPanelSessionActionsLead";
+import { NotificationManagementStatsRow } from "@/components/control-panel/NotificationManagementStatsRow";
+import {
+  NotificationListFiltersProvider,
+  useNotificationListFilters,
+} from "@/components/control-panel/NotificationListFiltersContext";
+import { buildNotificationManagementColumns } from "@/components/control-panel/notification-management-columns";
+import { NotificationMetricsProvider } from "@/context/NotificationMetricsContext";
+import AppointmentDialogController from "@/components/calendar/AppointmentDialogController";
+import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
+import {
+  buildDeleteReadNotificationsConfirmSubtitle,
+  buildMarkAllNotificationsReadConfirmSubtitle,
+  DELETE_READ_NOTIFICATIONS_TITLE,
+  MARK_ALL_NOTIFICATIONS_READ_TITLE,
+} from "@/lib/confirm-delete-dialog-copy";
 import { useCpListBodyLoading } from "@/lib/cp-list-body-loading";
 import { queryKeys } from "@/lib/query-keys";
 import { CP_NOTIFICATIONS_SUBTITLE_LEAD } from "@/lib/control-panel-page-chrome-config";
 import {
+  emeraldGlassPrimaryButtonClass,
+  roseGlassDangerButtonClass,
   skyGlassBackButtonClass,
   skyGlassResetButtonClass,
+  violetGlassImportButtonClass,
 } from "@/lib/calendar-header-action-styles";
+import { cpClinicalListTableFrameClassName } from "@/lib/cp-clinical-list-table-classes";
+import { APP_INNER_SCROLL_STICKY_TOP_CLASS } from "@/lib/portal-z-index";
+import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
 import { useControlPanelSectionInitial } from "@/components/control-panel/ControlPanelSectionInitialContext";
 import {
   buildNotificationsSubtitleTotalSuffix,
@@ -63,19 +61,29 @@ import {
   resolveNotificationsSubtitleUpdatedAt,
 } from "@/lib/notifications-subtitle";
 import { runCpSectionRefresh } from "@/lib/control-panel-refresh-notify";
+import { exportNotificationsCSV } from "@/lib/export-notifications-csv";
+import { getNotificationListSearchBlob } from "@/lib/notification-type-display";
+import {
+  findFilterOptionLabel,
+} from "@/lib/filter-select-option-presets";
+import {
+  notificationLinkFilterOptions,
+  notificationReadStatusFilterOptions,
+  notificationRecencyFilterOptions,
+  notificationTypeFilterOptions,
+  type NotificationLinkFilter,
+  type NotificationReadStatusFilter,
+  type NotificationRecencyFilter,
+  type NotificationTypeFilter,
+} from "@/lib/notification-filter-presets";
+import { cn } from "@/lib/utils";
 
-const columnHelper = createColumnHelper<Notification>();
+const READ_STATUS_OPTIONS = notificationReadStatusFilterOptions();
+const TYPE_OPTIONS = notificationTypeFilterOptions();
+const LINK_OPTIONS = notificationLinkFilterOptions();
+const RECENCY_OPTIONS = notificationRecencyFilterOptions();
 
-const TYPE_COLORS: Record<string, string> = {
-  info: "bg-blue-100 text-blue-700",
-  success: "bg-green-100 text-green-700",
-  warning: "bg-yellow-100 text-yellow-700",
-  error: "bg-red-100 text-red-700",
-  invitation: "bg-purple-100 text-purple-700",
-  reminder: "bg-orange-100 text-orange-700",
-};
-
-export default function NotificationsManagement() {
+function NotificationsManagementInner() {
   const sectionInitial = useControlPanelSectionInitial();
   const {
     notifications,
@@ -90,9 +98,37 @@ export default function NotificationsManagement() {
     isError: notificationsError,
     markAsRead,
     markAllAsRead,
+    deleteRead,
     isMarkingRead,
+    isDeletingRead,
   } = useNotifications();
+
   const listBodyLoading = useCpListBodyLoading(queryKeys.notifications.all, isLoading);
+  const metrics = useNotificationListMetrics(notifications, unreadCount);
+
+  const {
+    readStatus,
+    setReadStatus,
+    typeFilter,
+    setTypeFilter,
+    linkFilter,
+    setLinkFilter,
+    recency,
+    setRecency,
+    applyToolbarFilters,
+  } = useNotificationListFilters();
+
+  const [listSearch, setListSearch] = useState("");
+  const [composeOpen, setComposeOpen] = useState(false);
+  const [markAllConfirmOpen, setMarkAllConfirmOpen] = useState(false);
+  const [deleteReadConfirmOpen, setDeleteReadConfirmOpen] = useState(false);
+
+  const toolbarFiltered = useMemo(
+    () => applyToolbarFilters(notifications),
+    [notifications, applyToolbarFilters]
+  );
+
+  const readCount = Math.max(total - unreadCount, 0);
 
   const resolvedTotal = resolveNotificationsSubtitleTotal(
     total,
@@ -117,111 +153,115 @@ export default function NotificationsManagement() {
       total: resolvedTotal ?? total,
       unreadCount,
     });
-  const [sorting, setSorting] = useState<SortingState>([{ id: "created_at", desc: true }]);
-  const [globalFilter, setGlobalFilter] = useState("");
-  const [markAllConfirmOpen, setMarkAllConfirmOpen] = useState(false);
 
-  const columns = [
-    columnHelper.accessor("read", {
-      header: "",
-      cell: (info) =>
-        info.getValue() ? null : (
-          <span className="inline-block h-2 w-2 rounded-full bg-primary" title="Unread" />
-        ),
-      size: 24,
-    }),
-    columnHelper.accessor("type", {
-      header: "Type",
-      cell: (info) => (
-        <Badge className={`capitalize ${TYPE_COLORS[info.getValue()] ?? "bg-gray-100 text-gray-700"}`}>
-          {info.getValue()}
-        </Badge>
-      ),
-    }),
-    columnHelper.accessor("title", {
-      header: "Title",
-      cell: (info) => <span className="font-medium">{info.getValue()}</span>,
-    }),
-    columnHelper.accessor("message", {
-      header: "Message",
-      cell: (info) => (
-        <span className="text-sm text-muted-foreground line-clamp-2 max-w-sm">
-          {info.getValue()}
-        </span>
-      ),
-    }),
-    columnHelper.accessor("created_at", {
-      header: "Received",
-      cell: (info) => (
-        <span className="text-sm text-muted-foreground whitespace-nowrap">
-          {format(new Date(info.getValue()), "dd MMM yyyy, HH:mm")}
-        </span>
-      ),
-    }),
-    columnHelper.display({
-      id: "actions",
-      header: "",
-      cell: ({ row }) => {
-        const n = row.original;
-        return (
-          <div className="flex items-center gap-1">
-            {n.link && (
-              <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
-                <a href={n.link} target="_blank" rel="noopener noreferrer" title="Open link">
-                  <ExternalLink className="h-3.5 w-3.5" />
-                </a>
-              </Button>
-            )}
-            {!n.read && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                onClick={() => markAsRead(n.id)}
-                disabled={isMarkingRead}
-                title="Mark as read"
-              >
-                <CheckCheck className="h-3.5 w-3.5" />
-              </Button>
-            )}
-          </div>
-        );
-      },
-    }),
-  ];
+  const hasToolbarFilters = useMemo(
+    () =>
+      listSearch.trim().length > 0 ||
+      readStatus !== "all" ||
+      typeFilter !== "all" ||
+      linkFilter !== "all" ||
+      recency !== "all",
+    [listSearch, readStatus, typeFilter, linkFilter, recency]
+  );
 
-  const table = useReactTable({
-    data: notifications,
-    columns,
-    state: { sorting, globalFilter },
-    onSortingChange: setSorting,
-    onGlobalFilterChange: setGlobalFilter,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-  });
+  const resetToolbar = () => {
+    setListSearch("");
+    setReadStatus("all");
+    setTypeFilter("all");
+    setLinkFilter("all");
+    setRecency("all");
+  };
+
+  const columns = useMemo(
+    () =>
+      buildNotificationManagementColumns({
+        onMarkAsRead: markAsRead,
+        isMarkingRead,
+      }),
+    [markAsRead, isMarkingRead]
+  );
+
+  const metricsValue = useMemo(
+    () => ({
+      notifications,
+      metrics,
+      isLoading,
+      isFetching,
+      listBodyLoading,
+    }),
+    [notifications, metrics, isLoading, isFetching, listBodyLoading]
+  );
+
+  const subtitleNode = (
+    <ControlPanelHeaderSubtitle
+      lead={CP_NOTIFICATIONS_SUBTITLE_LEAD}
+      metric={subtitleMetric}
+      metricSuffix={subtitleTotalSuffix}
+      metricLoading={subtitleMetricLoading}
+      showMetricSlot
+    />
+  );
+
+  const headerActions = (
+    <div className="flex w-full flex-wrap items-center justify-end gap-2 self-center">
+      <ControlPanelSessionActionsLead className="mr-auto w-full sm:w-auto" />
+      <ControlPanelHeaderGlassButton
+        glassClassName={cn(violetGlassImportButtonClass, "disabled:opacity-50")}
+        icon={Download}
+        disabled={listBodyLoading || toolbarFiltered.length === 0}
+        onClick={() => exportNotificationsCSV(toolbarFiltered)}
+      >
+        Export CSV
+      </ControlPanelHeaderGlassButton>
+      <ControlPanelHeaderGlassButton
+        glassClassName={skyGlassBackButtonClass}
+        icon={fetchingDisplay ? undefined : RefreshCw}
+        disabled={fetchingDisplay}
+        aria-busy={fetchingDisplay}
+        onClick={handleRefresh}
+      >
+        {fetchingDisplay ? (
+          <>
+            <RefreshCw className="shrink-0 animate-spin" aria-hidden />
+            Refreshing...
+          </>
+        ) : (
+          "Refresh"
+        )}
+      </ControlPanelHeaderGlassButton>
+      <ControlPanelHeaderGlassButton
+        glassClassName={skyGlassResetButtonClass}
+        icon={CheckCheck}
+        disabled={unreadCount === 0 || isMarkingRead}
+        onClick={() => unreadCount > 0 && setMarkAllConfirmOpen(true)}
+      >
+        Mark all read
+      </ControlPanelHeaderGlassButton>
+      <ControlPanelHeaderGlassButton
+        glassClassName={cn(roseGlassDangerButtonClass, "disabled:opacity-50")}
+        icon={Trash2}
+        disabled={readCount === 0 || isDeletingRead}
+        onClick={() => readCount > 0 && setDeleteReadConfirmOpen(true)}
+      >
+        Clear read
+      </ControlPanelHeaderGlassButton>
+      <ControlPanelHeaderGlassButton
+        glassClassName={emeraldGlassPrimaryButtonClass}
+        icon={CalendarPlus}
+        onClick={() => setComposeOpen(true)}
+      >
+        New Appointment
+      </ControlPanelHeaderGlassButton>
+    </div>
+  );
 
   if (notificationsError) {
     return (
       <div className={controlPanelSectionRootClass}>
         <ControlPanelPageChrome
           tab="notifications"
-          description={
-            <ControlPanelHeaderSubtitle
-              lead={CP_NOTIFICATIONS_SUBTITLE_LEAD}
-              metricLoading
-              showMetricSlot
-            />
-          }
-          actions={
-            <ControlPanelHeaderGlassButton
-              glassClassName={skyGlassBackButtonClass}
-              icon={RefreshCw}
-              onClick={handleRefresh}
-            >
-              Refresh
-            </ControlPanelHeaderGlassButton>
-          }
+          description={subtitleNode}
+          actions={headerActions}
         />
         <AppSectionErrorBanner>
           Failed to load notifications. Please refresh.
@@ -231,57 +271,86 @@ export default function NotificationsManagement() {
   }
 
   return (
-    <div className={controlPanelSectionRootClass}>
-      <ControlPanelPageChrome
-        tab="notifications"
-        description={
-          <ControlPanelHeaderSubtitle
-            lead={CP_NOTIFICATIONS_SUBTITLE_LEAD}
-            metric={subtitleMetric}
-            metricSuffix={subtitleTotalSuffix}
-            metricLoading={subtitleMetricLoading}
-            showMetricSlot
+    <NotificationMetricsProvider value={metricsValue}>
+      <ControlPanelEntityListShell
+        tone="rose"
+        headerSlot={
+          <ControlPanelPageChrome
+            tab="notifications"
+            description={subtitleNode}
+            actions={headerActions}
           />
         }
-        toolbar={
-          <div className="flex w-full flex-wrap items-center justify-end gap-2">
-            <Input
-              placeholder="Filter notifications…"
-              value={globalFilter}
-              onChange={(e) => setGlobalFilter(e.target.value)}
-              className="w-52"
+        statsSlot={<NotificationManagementStatsRow />}
+        toolbarSlot={
+          <ClinicalListFilterToolbar
+            stickyClassName={APP_INNER_SCROLL_STICKY_TOP_CLASS}
+            search={{
+              value: listSearch,
+              onChange: setListSearch,
+              placeholder: "Search… (title, message, type)",
+              ariaLabel: "Search notifications",
+            }}
+            showReset={hasToolbarFilters}
+            onReset={resetToolbar}
+          >
+            <FilterSelect
+              value={readStatus}
+              onValueChange={(v) => setReadStatus(v as NotificationReadStatusFilter)}
+              displayLabel={findFilterOptionLabel(READ_STATUS_OPTIONS, readStatus, "All")}
+              size="toolbar"
+              triggerClassName="max-w-[160px]"
+              ariaLabel="Filter by read status"
+              options={READ_STATUS_OPTIONS}
             />
-          </div>
+            <FilterSelect
+              value={typeFilter}
+              onValueChange={(v) => setTypeFilter(v as NotificationTypeFilter)}
+              displayLabel={findFilterOptionLabel(TYPE_OPTIONS, typeFilter, "All types")}
+              size="toolbar"
+              triggerClassName="min-w-[160px] max-w-[min(42vw,220px)]"
+              ariaLabel="Filter by notification type"
+              options={TYPE_OPTIONS}
+            />
+            <FilterSelect
+              value={linkFilter}
+              onValueChange={(v) => setLinkFilter(v as NotificationLinkFilter)}
+              displayLabel={findFilterOptionLabel(LINK_OPTIONS, linkFilter, "All links")}
+              size="toolbar"
+              triggerClassName="max-w-[160px]"
+              ariaLabel="Filter by link presence"
+              options={LINK_OPTIONS}
+            />
+            <FilterSelect
+              value={recency}
+              onValueChange={(v) => setRecency(v as NotificationRecencyFilter)}
+              displayLabel={findFilterOptionLabel(RECENCY_OPTIONS, recency, "All time")}
+              size="toolbar"
+              triggerClassName="max-w-[180px]"
+              ariaLabel="Filter by recency"
+              options={RECENCY_OPTIONS}
+            />
+          </ClinicalListFilterToolbar>
         }
-        actions={
-          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 self-center">
-            <ControlPanelHeaderGlassButton
-              glassClassName={skyGlassBackButtonClass}
-              icon={fetchingDisplay ? undefined : RefreshCw}
-              disabled={fetchingDisplay}
-              aria-busy={fetchingDisplay}
-              onClick={handleRefresh}
-            >
-              {fetchingDisplay ? (
-                <>
-                  <RefreshCw className="shrink-0 animate-spin" aria-hidden />
-                  Refreshing...
-                </>
-              ) : (
-                "Refresh"
-              )}
-            </ControlPanelHeaderGlassButton>
-            {unreadCount > 0 ? (
-              <Badge className="bg-primary text-primary-foreground">{unreadCount} unread</Badge>
-            ) : null}
-            <ControlPanelHeaderGlassButton
-              glassClassName={skyGlassResetButtonClass}
-              icon={CheckCheck}
-              disabled={unreadCount === 0 || isMarkingRead}
-              onClick={() => unreadCount > 0 && setMarkAllConfirmOpen(true)}
-            >
-              Mark all read
-            </ControlPanelHeaderGlassButton>
+        tableSlot={
+          <DataTable
+            columns={columns}
+            data={toolbarFiltered}
+            isLoading={listBodyLoading}
+            globalFilterFn={(row, q) => {
+              const s = q.trim().toLowerCase();
+              if (!s) return true;
+              return getNotificationListSearchBlob(row).includes(s);
+            }}
+            externalGlobalFilter={{ value: listSearch, onChange: setListSearch }}
+            emptyMessage="No notifications match your filters."
+            tableClassName="min-w-[900px] w-full"
+            tableFrameClassName={cpClinicalListTableFrameClassName}
+            pagination={false}
+          />
+        }
+        footerSlot={
+          <>
             <ConfirmActionDialog
               open={markAllConfirmOpen}
               onOpenChange={setMarkAllConfirmOpen}
@@ -296,80 +365,35 @@ export default function NotificationsManagement() {
                 setMarkAllConfirmOpen(false);
               }}
             />
-          </div>
+            <ConfirmActionDialog
+              open={deleteReadConfirmOpen}
+              onOpenChange={setDeleteReadConfirmOpen}
+              variant="destructive"
+              title={DELETE_READ_NOTIFICATIONS_TITLE}
+              subtitle={buildDeleteReadNotificationsConfirmSubtitle(readCount)}
+              confirmLabel={isDeletingRead ? "Deleting..." : "Delete read"}
+              cancelLabel="Cancel"
+              confirmDisabled={isDeletingRead}
+              onConfirm={() => {
+                deleteRead();
+                setDeleteReadConfirmOpen(false);
+              }}
+            />
+            <AppointmentDialogController
+              isOpen={composeOpen}
+              onOpenChange={setComposeOpen}
+            />
+          </>
         }
       />
+    </NotificationMetricsProvider>
+  );
+}
 
-      {/* Table — glass card shell always visible; body rows pulse while loading */}
-      <div className="rounded-[28px] border bg-gradient-to-br from-purple-500/5 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(168,85,247,0.08)] overflow-hidden">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((hg) => (
-              <TableRow key={hg.id} className="bg-muted/40">
-                {hg.headers.map((header) => (
-                  <TableHead
-                    key={header.id}
-                    className="font-semibold cursor-pointer select-none"
-                    onClick={header.column.getToggleSortingHandler()}
-                  >
-                    {flexRender(header.column.columnDef.header, header.getContext())}
-                    {header.column.getIsSorted() === "asc" ? " ↑" : header.column.getIsSorted() === "desc" ? " ↓" : ""}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {listBodyLoading ? (
-              Array.from({ length: 6 }).map((_, i) => (
-                <TableRow key={i}>
-                  <TableCell><Skeleton className="h-2 w-2 rounded-full" /></TableCell>
-                  <TableCell><Skeleton className="h-5 w-16 rounded-full" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-36 rounded" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-48 rounded" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-32 rounded" /></TableCell>
-                  <TableCell><Skeleton className="h-7 w-14 rounded-lg" /></TableCell>
-                </TableRow>
-              ))
-            ) : notifications.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="text-center py-12">
-                  <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                    <BellOff className="h-10 w-10 opacity-30" />
-                    <p className="font-medium">No notifications</p>
-                    <p className="text-sm">You&apos;re all caught up!</p>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : table.getRowModel().rows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="text-center py-8 text-muted-foreground">
-                  No results found.
-                </TableCell>
-              </TableRow>
-            ) : (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  className={`hover:bg-muted/30 transition-colors ${!row.original.read ? "bg-primary/5" : ""}`}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-        {!listBodyLoading && (
-          <div className="px-4 py-2 border-t text-xs text-muted-foreground flex items-center gap-2">
-            <Trash2 className="h-3 w-3" />
-            {table.getRowModel().rows.length} of {total} notifications shown
-          </div>
-        )}
-      </div>
-    </div>
+export default function NotificationsManagement() {
+  return (
+    <NotificationListFiltersProvider>
+      <NotificationsManagementInner />
+    </NotificationListFiltersProvider>
   );
 }

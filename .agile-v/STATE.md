@@ -6,21 +6,17 @@
 
 | Field | Value |
 |-------|-------|
-| **Cycle** | **C32** — CP appointment-management UI parity |
+| **Cycle** | **C33** — CP notifications UI parity |
 | **Phase** | Verify |
 | **Stage** | 4 |
 | **Status** | verify PASS |
-| **Last Updated** | 2026-06-13 |
-| **Parent REQ** | REQ-0080 |
+| **Last Updated** | 2026-06-11 |
+| **Parent REQ** | REQ-0081 |
 
-## Verify baseline (C32 close)
+## Verify baseline (C33 close)
 
-**1076/1076** · tsc · lint · build — PASS
+**1084/1084** · tsc · lint · build — PASS
 
-## C32 shipped (REQ-0080)
+## C33 shipped (REQ-0081)
 
-- List parity + title/billing/category layout polish; invalidation unchanged (`invalidateAfterAppointmentMutation` + invoice helpers).
-
-## Next cycle
-
-**C33** — Specify after C32 gate review.
+- CP notifications EntityListShell rose + stats + filters + DataTable; invalidation unchanged (`invalidateNotificationsAndCrossTab`).

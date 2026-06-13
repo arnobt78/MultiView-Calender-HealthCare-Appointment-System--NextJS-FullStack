@@ -1,6 +1,12 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-13 — C32 CP appointment-management parity)
+## Latest (2026-06-11 — C33 CP notifications parity)
+
+**C33 (REQ-0081):** CP notifications — rose `ControlPanelEntityListShell` · 5 stat cards · `ClinicalListFilterToolbar` (read/type/link/recency) · shared `DataTable` · header session lead + Export/Refresh/Mark all/Clear read/New Appt · `notification-type-display.ts` (navbar + CP) · SSR `prefetchNotifications` unchanged · invalidation `invalidateNotificationsAndCrossTab`.
+
+**Verify:** **1084/1084** · tsc · lint · build.
+
+## Prior (2026-06-13 — C32 CP appointment-management parity)
 
 **C32 (REQ-0080):** CP appointment-management — sky shell · stats · toolbar filters · DataTable · header Export/New · dialog footer · SSR calendar bundle + `prefetchInvoices`.
 
@@ -590,7 +596,7 @@ const loading = !isMounted || isLoading;
 | Organization Mgmt | `control-panel/OrganizationManagement.tsx` | Count subtitle + table rows |
 | Invoice Mgmt | `control-panel/InvoiceManagement.tsx` | Summary card values + table rows |
 | Appointments Mgmt | `control-panel/AppointmentsManagement.tsx` | Stat card values + table rows |
-| Notifications | `control-panel/NotificationsManagement.tsx` | Table rows |
+| Notifications | `control-panel/NotificationsManagement.tsx` | Stat cards + filter toolbar + table rows |
 | Google Calendar | `control-panel/GoogleCalendarSettings.tsx` | Status badge + description + action button |
 | Insights | `pages/AnalyticsPage.tsx` | Stat values + chart bars + category rows + patient table rows |
 | Doctor Portal | `pages/DoctorPortalPage.tsx` | `PortalDoctorChromeHeader` + stat values + `PortalPanelSection` bodies; `PatientManagementInner` table body rows only |
@@ -826,7 +832,7 @@ src/
 │   │   ├── CategoryManagement.tsx / CategoryDetailForm.tsx
 │   │   ├── InvoiceManagement.tsx       Inline skeleton + glassmorphic
 │   │   ├── OrganizationManagement.tsx  Inline skeleton + glassmorphic
-│   │   ├── NotificationsManagement.tsx Inline skeleton
+│   │   ├── NotificationsManagement.tsx Rose shell · stats · filters · DataTable
 │   │   ├── GoogleCalendarSettings.tsx  Inline skeleton
 │   │   └── InvitationList.tsx          Inline skeleton (shared by Appt + User access)
 │   ├── navbar/Navbar.tsx

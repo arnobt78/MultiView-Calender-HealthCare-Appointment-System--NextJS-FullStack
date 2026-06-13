@@ -161,6 +161,13 @@ const TAB_HEADER_ACTION_SHELLS: Partial<
   ],
   notifications: [
     {
+      label: "Export CSV",
+      iconKey: "download",
+      className: violetGlassImportButtonClass,
+      slot: "actions",
+      variant: "secondary",
+    },
+    {
       label: toTitleCaseLabel("Refresh"),
       iconKey: "refresh",
       className: skyGlassBackButtonClass,
@@ -171,6 +178,13 @@ const TAB_HEADER_ACTION_SHELLS: Partial<
       label: toTitleCaseLabel("Mark All Read"),
       iconKey: "checkCheck",
       className: skyGlassResetButtonClass,
+      slot: "actions",
+      variant: "secondary",
+    },
+    {
+      label: toTitleCaseLabel("New Appointment"),
+      iconKey: "plus",
+      className: emeraldGlassPrimaryButtonClass,
       slot: "actions",
       variant: "primary",
     },
