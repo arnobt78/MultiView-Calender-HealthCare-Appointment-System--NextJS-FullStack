@@ -10,7 +10,7 @@
 | **Phase** | Orchestrate |
 | **Stage** | 3 |
 | **Status** | shipped |
-| **HEAD** | C31 commit pending |
+| **HEAD** | `6fc5cec` |
 
 ## Verify baseline (C31)
 
