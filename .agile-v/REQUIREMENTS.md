@@ -6,7 +6,7 @@
 
 | Field | Value |
 |-------|-------|
-| Cycle | C1–C32 shipped · **C33 active** (REQ-0081) |
+| Cycle | C1–C33 shipped · **C34 active** (REQ-0082) |
 | Author | Requirement Architect |
 | Gate 1 status | C1 GATE-0001 · C2 GATE-0003 approved |
 | Canonical source | this file |
@@ -126,6 +126,24 @@
 | REQ-0079 | approved [C31] | REQ-0078 | ART-0407..0409 | pending |
 | REQ-0080 | approved [C32] | REQ-0079 | ART-0410..0416 | pending |
 | REQ-0081 | approved [C33] | REQ-0080 | ART-0417..0423 | pending |
+| REQ-0082 | approved [C34] | REQ-0081 | ART-0424..0430 | pending |
+
+### REQ-0082 — C34 stale notification links
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C34] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0081 |
+
+**Statement:** On entity delete null notification deep-links + suffix message; GET enriches `link_valid`; UI hides stale View/Open link; appointment/invoice detail shows branded unavailable screen instead of raw 404.
+
+**Acceptance criteria:**
+1. DELETE appointment/invoice clears matching notification links server-side (await cleanup before response; delete still succeeds if cleanup fails).
+2. GET/SSE/prefetch return `link_valid`; CP list + navbar gate navigation; CP link filter uses `link_valid` (Navigable / Not navigable).
+3. Detail pages render EntityUnavailableScreen when target gone.
+4. Tests; verify PASS.
 
 ### REQ-0081 — C33 CP notifications UI parity
 

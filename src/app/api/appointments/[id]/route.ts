@@ -11,6 +11,7 @@ import { isValidUUID } from "@/lib/validation";
 import { APPOINTMENT_TYPE_CARD_SELECT } from "@/lib/appointment-type-include";
 import { getUserRole, isPatientRole } from "@/lib/rbac";
 import { resolveAppointmentAccess } from "@/lib/appointment-access";
+import { clearStaleNotificationLinksForEntity } from "@/lib/notification-link";
 import {
   assertAppointmentWriteAccess,
   applyAppointmentStatusFields,
@@ -432,6 +433,12 @@ export async function DELETE(_req: NextRequest, context: RouteContext) {
     }
 
     await prisma.appointment.delete({ where: { id } });
+
+    try {
+      await clearStaleNotificationLinksForEntity("appointment", id);
+    } catch (err) {
+      console.error("Notification stale-link cleanup failed:", err);
+    }
 
     void redis.invalidateDashboardOverview(ctx.sessionUser.userId);
 

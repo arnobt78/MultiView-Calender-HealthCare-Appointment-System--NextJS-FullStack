@@ -120,6 +120,7 @@ import { loadOrganizationsListForUser } from "@/lib/organization-list-enrich";
 import { getUserRole, isPatientRole } from "@/lib/rbac";
 import type { InvoiceBillingTotalsPayload } from "@/lib/invoice-billing-totals";
 import { portalAppointmentListInclude } from "@/lib/portal-appointment-prisma-include";
+import { listEnrichedNotificationsForUser } from "@/lib/notification-link-validity";
 
 // ─── Shared types ─────────────────────────────────────────────────────────────
 
@@ -631,37 +632,12 @@ export async function prefetchInvoiceBillingTotalsForViewer(
   }
 }
 
-/** Mirrors GET /api/notifications — unread-first list + total/unread counts. */
+/** Mirrors GET /api/notifications — unread-first list + total/unread counts + link_valid. */
 export async function prefetchNotifications(
   userId: string
 ): Promise<NotificationsPrefetch | null> {
   try {
-    const [notifications, total, unreadCount] = await Promise.all([
-      prisma.notification.findMany({
-        where: { user_id: userId },
-        orderBy: [{ read: "asc" }, { created_at: "desc" }],
-        take: 50,
-      }),
-      prisma.notification.count({ where: { user_id: userId } }),
-      prisma.notification.count({
-        where: { user_id: userId, read: false },
-      }),
-    ]);
-
-    return {
-      notifications: notifications.map((n) => ({
-        id: n.id,
-        user_id: n.user_id,
-        title: n.title,
-        message: n.message,
-        type: n.type,
-        read: n.read,
-        created_at: n.created_at?.toISOString?.() ?? "",
-        link: n.link ?? undefined,
-      })),
-      total,
-      unreadCount,
-    };
+    return await listEnrichedNotificationsForUser(userId);
   } catch {
     return null;
   }

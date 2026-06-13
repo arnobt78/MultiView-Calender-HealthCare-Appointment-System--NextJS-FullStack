@@ -77,8 +77,8 @@ export function notificationTypeFilterOptions(): FilterSelectOption<Notification
 export function notificationLinkFilterOptions(): FilterSelectOption<NotificationLinkFilter>[] {
   return [
     { value: "all", label: "All links", icon: ListFilter, iconClassName: MUTED_ICON, textClassName: MUTED_TEXT },
-    { value: "has_link", label: "Has link", icon: Link2, iconClassName: "text-sky-600", textClassName: "text-sky-700" },
-    { value: "no_link", label: "No link", icon: ExternalLink, iconClassName: MUTED_ICON, textClassName: MUTED_TEXT },
+    { value: "has_link", label: "Navigable", icon: Link2, iconClassName: "text-sky-600", textClassName: "text-sky-700" },
+    { value: "no_link", label: "Not navigable", icon: ExternalLink, iconClassName: MUTED_ICON, textClassName: MUTED_TEXT },
   ];
 }
 

@@ -15,6 +15,7 @@ import { rejectPatchStatusPaid } from "@/lib/billing-patch-guard";
 import { invoicePatchSchema } from "@/lib/schemas/invoice";
 import { zodBadRequest } from "@/lib/schemas/parse";
 import { invalidateBillingRedisCaches } from "@/lib/billing-cache";
+import { clearStaleNotificationLinksForEntity } from "@/lib/notification-link";
 import {
   invoiceDetailInclude,
   invoiceUpdateAuditFields,
@@ -178,6 +179,12 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     }
 
     await prisma.invoice.delete({ where: { id } });
+
+    try {
+      await clearStaleNotificationLinksForEntity("invoice", id);
+    } catch (err) {
+      console.error("Notification stale-link cleanup failed:", err);
+    }
 
     await invalidateBillingRedisCaches({
       invoiceUserId: invoice.user_id,

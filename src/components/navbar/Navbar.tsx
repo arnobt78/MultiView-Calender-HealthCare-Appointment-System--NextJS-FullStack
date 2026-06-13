@@ -27,6 +27,8 @@ import { useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { prefetchInsightsNav } from "@/lib/prefetch-insights-nav";
 import { getNotificationTypeConfig } from "@/lib/notification-type-display";
+import { isAdminRole } from "@/lib/rbac";
+import { resolveRoleHomeHref } from "@/lib/role-home-href";
 import { useAppStore } from "@/store/useAppStore";
 import GlobalSearch from "@/components/shared/GlobalSearch";
 import { UserAvatar } from "@/components/shared/UserAvatar";
@@ -371,18 +373,25 @@ export default function Navbar() {
                         key={n.id}
                         className={`flex flex-col items-start rounded-xl px-2 py-2 cursor-pointer last:mb-0 ${!n.read ? "bg-primary/5" : ""}`}
                         onClick={() => {
-                          /*
-                           * Navigate to the notification's deep-link when available.
-                           * If historical rows have null/empty link, use a meaningful
-                           * section fallback so clicking still lands in related UI.
-                           */
-                          const targetLink =
-                            n.link?.trim() ||
-                            (n.type === "appointment_created" || n.type === "status_update" || n.type === "reminder" || n.type === "info"
-                              ? "/control-panel/appointments"
-                              : "/dashboard");
                           if (!n.read) markAsRead(n.id);
-                          router.push(targetLink);
+                          const link = n.link?.trim();
+                          const navigable = n.link_valid === true && Boolean(link);
+                          if (navigable && link) {
+                            router.push(link);
+                            return;
+                          }
+                          const listFallback =
+                            n.type === "appointment_created" ||
+                            n.type === "status_update" ||
+                            n.type === "reminder" ||
+                            n.type === "info"
+                              ? isAdminRole(user?.role)
+                                ? "/control-panel/appointment-management"
+                                : resolveRoleHomeHref(user?.role)
+                              : null;
+                          if (listFallback && n.link_valid !== false) {
+                            router.push(listFallback);
+                          }
                         }}
                       >
                         {/* Row 1: type icon + title + glassmorphic badge + colored unread dot */}

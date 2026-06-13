@@ -16,6 +16,7 @@ import type {
   NotificationRecencyFilter,
   NotificationTypeFilter,
 } from "@/lib/notification-filter-presets";
+import { matchesNotificationLinkFilter } from "@/lib/notification-list-filter";
 import { isToday, subDays } from "date-fns";
 
 type Ctx = {
@@ -66,10 +67,8 @@ export function NotificationListFiltersProvider({ children }: { children: ReactN
           out = out.filter((n) => n.type === typeFilter);
         }
       }
-      if (linkFilter === "has_link") {
-        out = out.filter((n) => Boolean(n.link?.trim()));
-      } else if (linkFilter === "no_link") {
-        out = out.filter((n) => !n.link?.trim());
+      if (linkFilter !== "all") {
+        out = out.filter((n) => matchesNotificationLinkFilter(n, linkFilter));
       }
       if (recency !== "all") {
         out = out.filter((n) => matchesRecency(n.created_at, recency));

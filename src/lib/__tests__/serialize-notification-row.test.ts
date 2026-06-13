@@ -36,7 +36,25 @@ describe("serializeNotificationRow", () => {
       read: true,
       created_at: new Date("2026-01-01T00:00:00.000Z"),
       link: null,
+      link_valid: false,
     });
     expect(row.link).toBeUndefined();
+    expect(row.link_valid).toBe(false);
+  });
+
+  it("includes link_valid when provided", () => {
+    expect(
+      serializeNotificationRow({
+        id: "n3",
+        user_id: "u1",
+        title: "T",
+        message: "M",
+        type: "info",
+        read: false,
+        created_at: new Date("2026-01-01T00:00:00.000Z"),
+        link: "/appointments/a",
+        link_valid: false,
+      }).link_valid
+    ).toBe(false);
   });
 });

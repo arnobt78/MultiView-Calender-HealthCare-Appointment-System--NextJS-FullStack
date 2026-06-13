@@ -1,10 +1,20 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-11 — C33 CP notifications parity)
+## Latest (2026-06-11 — C34.1 + C34 stale notification links)
 
-**C33 (REQ-0081):** CP notifications — rose `ControlPanelEntityListShell` · 5 stat cards · `ClinicalListFilterToolbar` (read/type/link/recency) · shared `DataTable` · header session lead + Export/Refresh/Mark all/Clear read/New Appt · `notification-type-display.ts` (navbar + CP) · SSR `prefetchNotifications` unchanged · invalidation `invalidateNotificationsAndCrossTab`.
+**C34.1 (REQ-0082):** CP link filter uses `link_valid` (`notification-list-filter.ts` — Navigable / Not navigable); DELETE awaits `clearStaleNotificationLinksForEntity` (try/catch; delete still succeeds).
 
-**Verify:** **1084/1084** · tsc · lint · build.
+**C34 (REQ-0082):** On appt/invoice DELETE → null `link` + message suffix; GET/SSE/prefetch `link_valid` (batched Prisma); CP table + navbar gate View/Open; role-aware navbar fallback; `EntityUnavailableScreen` on detail routes (admin CP · doctor/patient portal); invoice delete → `invalidateNotificationsAndCrossTab`.
+
+**Key libs:** `notification-link.ts` · `notification-link-validity.ts` · `notification-list-filter.ts` · `entity-unavailable-copy.ts` · `EntityUnavailableScreen.tsx`.
+
+**Verify:** **1103/1103** · tsc · lint · build.
+
+## Prior (2026-06-11 — C33 CP notifications parity)
+
+**C33 (REQ-0081):** CP notifications — rose `ControlPanelEntityListShell` · 5 stat cards · `ClinicalListFilterToolbar` (read/type/link/recency) · shared `DataTable` · header session lead + Export/Refresh/Mark all/Clear read/New Appt · `notification-type-display.ts` (navbar + CP) · SSR `prefetchNotifications` · invalidation `invalidateNotificationsAndCrossTab`.
+
+**Verify:** **1100/1100** · tsc · lint · build.
 
 ## Prior (2026-06-13 — C32 CP appointment-management parity)
 

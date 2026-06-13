@@ -8,6 +8,9 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import {
+  enrichNotificationsWithLinkValidity,
+} from "@/lib/notification-link-validity";
 import { serializeNotificationRow } from "@/lib/serialize-notification-row";
 import {
   createSafeSseEnqueue,
@@ -69,10 +72,11 @@ export async function GET(request: Request) {
           if (safe.isClosed()) return;
 
           if (newNotifications.length > 0) {
+            const enriched = await enrichNotificationsWithLinkValidity(newNotifications);
             safe.enqueue(
               encodeSseData({
                 type: "notifications",
-                data: newNotifications.map(serializeNotificationRow),
+                data: enriched.map(serializeNotificationRow),
               })
             );
             lastCheck = new Date();

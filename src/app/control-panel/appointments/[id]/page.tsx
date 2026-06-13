@@ -10,6 +10,7 @@ import { getUserRole, isAdminRole } from "@/lib/rbac";
 import { isValidUUID } from "@/lib/validation";
 import { resolveAppointmentAccess } from "@/lib/appointment-access";
 import { AppointmentDetailScreen } from "@/components/detail/AppointmentDetailScreen";
+import { EntityUnavailableScreen } from "@/components/shared/EntityUnavailableScreen";
 import { prefetchAppointmentDetailViewModel, prefetchInvoices, prefetchUsersList } from "@/lib/server-prefetch";
 
 type PageProps = { params: Promise<{ id: string }> };
@@ -36,7 +37,9 @@ export default async function ControlPanelAppointmentDetailPage({ params }: Page
   };
 
   const { level, raw } = await resolveAppointmentAccess(session, id);
-  if (level === "none" || !raw) notFound();
+  if (level === "none" || !raw) {
+    return <EntityUnavailableScreen kind="appointment" variant="control-panel" />;
+  }
 
   const [initialDetail, initialDoctorUsers, initialAdminUsers, initialInvoices] =
     await Promise.all([
@@ -46,7 +49,9 @@ export default async function ControlPanelAppointmentDetailPage({ params }: Page
       prefetchInvoices(sessionUser.userId, role, sessionUser.email),
     ]);
 
-  if (!initialDetail) notFound();
+  if (!initialDetail) {
+    return <EntityUnavailableScreen kind="appointment" variant="control-panel" />;
+  }
 
   return (
     <AppointmentDetailScreen

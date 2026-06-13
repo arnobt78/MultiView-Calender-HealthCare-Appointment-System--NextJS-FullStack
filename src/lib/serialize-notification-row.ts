@@ -13,6 +13,7 @@ export function serializeNotificationRow(row: {
   read: boolean;
   created_at: Date;
   link: string | null;
+  link_valid?: boolean;
 }): Notification {
   return {
     id: row.id,
@@ -23,5 +24,6 @@ export function serializeNotificationRow(row: {
     read: row.read,
     created_at: row.created_at?.toISOString?.() ?? "",
     link: row.link ?? undefined,
+    link_valid: row.link_valid,
   };
 }

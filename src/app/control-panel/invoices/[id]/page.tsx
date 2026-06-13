@@ -9,6 +9,7 @@ import { invoiceDetailHref } from "@/lib/entity-routes";
 import { loadInvoiceDetailForPage } from "@/lib/invoice-detail-ssr";
 import { prefetchInvoiceDetail, prefetchInvoices } from "@/lib/server-prefetch";
 import { InvoiceDetailScreen } from "@/components/detail/InvoiceDetailScreen";
+import { EntityUnavailableScreen } from "@/components/shared/EntityUnavailableScreen";
 import type { Invoice } from "@/hooks/usePayments";
 
 export const dynamic = "force-dynamic";
@@ -45,7 +46,9 @@ export default async function ControlPanelInvoiceDetailPage({ params }: PageProp
     prefetchInvoices(sessionUser.userId, role, sessionUser.email),
   ]);
 
-  if (!payload) notFound();
+  if (!payload) {
+    return <EntityUnavailableScreen kind="invoice" variant="control-panel" />;
+  }
 
   const clientInvoice = (prefetched ?? payload.clientInvoice) as Invoice;
 

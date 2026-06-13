@@ -28,6 +28,6 @@ describe("computeNotificationListMetrics", () => {
     expect(metrics.unread).toBe(1);
     expect(metrics.read).toBe(1);
     expect(metrics.billing).toBe(1);
-    expect(metrics.last24h).toBe(1);
+    expect(metrics.today).toBe(1);
   });
 });

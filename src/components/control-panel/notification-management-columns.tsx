@@ -40,6 +40,10 @@ export type BuildNotificationManagementColumnsOpts = {
   isMarkingRead: boolean;
 };
 
+function canNavigateNotification(n: Notification): boolean {
+  return n.link_valid === true && Boolean(n.link?.trim());
+}
+
 function NotificationRowActions({
   notification: n,
   onMarkAsRead,
@@ -50,6 +54,7 @@ function NotificationRowActions({
   isMarkingRead: boolean;
 }) {
   const link = n.link?.trim();
+  const navigable = canNavigateNotification(n);
   const internal = isInternalNotificationLink(link);
 
   return (
@@ -71,7 +76,7 @@ function NotificationRowActions({
             Mark as read
           </DropdownMenuItem>
         ) : null}
-        {link ? (
+        {navigable && link ? (
           internal ? (
             <DropdownMenuItem asChild>
               <PrefetchingLink href={link} className="flex cursor-pointer items-center gap-2">
@@ -100,10 +105,14 @@ function NotificationRowActions({
 
 function NotificationLinkCell({ notification: n }: { notification: Notification }) {
   const link = n.link?.trim();
-  if (!link) {
+  const navigable = canNavigateNotification(n);
+
+  if (!navigable || !link) {
     return (
       <div className="flex min-h-[2.75rem] items-center">
-        <span className={clinicalCellMutedTextClass}>—</span>
+        <span className={cn(clinicalCellMutedTextClass, "text-xs")} title="Link unavailable">
+          {link && n.link_valid === false ? "Unavailable" : "—"}
+        </span>
       </div>
     );
   }

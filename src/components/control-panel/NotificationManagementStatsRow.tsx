@@ -1,6 +1,6 @@
 "use client";
 
-import { Banknote, Bell, BellOff, CheckCheck, Inbox } from "lucide-react";
+import { Banknote, Bell, CalendarClock, CheckCheck, Inbox } from "lucide-react";
 import { PatientStatCard } from "@/components/control-panel/PatientStatCard";
 import { useNotificationMetricsContext } from "@/context/NotificationMetricsContext";
 
@@ -45,10 +45,10 @@ export function NotificationManagementStatsRow() {
       />
       <PatientStatCard
         variant="amber"
-        icon={BellOff}
-        title="Recent"
-        subtitle="Received Last 24 Hours"
-        value={metrics.last24h}
+        icon={CalendarClock}
+        title="Today"
+        subtitle="Received Today"
+        value={metrics.today}
         valueSkeleton={skeleton}
       />
     </div>

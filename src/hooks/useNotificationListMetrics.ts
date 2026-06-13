@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import type { Notification } from "@/types/notification";
 import { isBillingNotificationDisplayType } from "@/lib/notification-type-display";
-import { subDays } from "date-fns";
+import { isToday } from "date-fns";
 
 /** Derived counts for CP notification stat cards — pure function of cached list. */
 export type NotificationListMetrics = {
@@ -9,7 +9,7 @@ export type NotificationListMetrics = {
   unread: number;
   read: number;
   billing: number;
-  last24h: number;
+  today: number;
 };
 
 export function computeNotificationListMetrics(
@@ -18,15 +18,14 @@ export function computeNotificationListMetrics(
 ): NotificationListMetrics {
   let read = 0;
   let billing = 0;
-  let last24h = 0;
-  const cutoff24h = subDays(new Date(), 1);
+  let today = 0;
 
   for (const n of notifications) {
     if (n.read) read++;
     if (isBillingNotificationDisplayType(n.type)) billing++;
     const created = new Date(n.created_at);
-    if (!Number.isNaN(created.getTime()) && created >= cutoff24h) {
-      last24h++;
+    if (!Number.isNaN(created.getTime()) && isToday(created)) {
+      today++;
     }
   }
 
@@ -40,7 +39,7 @@ export function computeNotificationListMetrics(
     unread,
     read,
     billing,
-    last24h,
+    today,
   };
 }
 

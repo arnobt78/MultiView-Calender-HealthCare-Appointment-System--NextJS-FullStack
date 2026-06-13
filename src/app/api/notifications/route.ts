@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session";
 import { isValidUUID } from "@/lib/validation";
 import { prisma } from "@/lib/prisma";
+import { listEnrichedNotificationsForUser } from "@/lib/notification-link-validity";
 
 /** Per-request API handler (see api-route-dynamic.test.ts). */
 export const dynamic = "force-dynamic";
@@ -21,21 +22,9 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const [notifications, total, unreadCount] = await Promise.all([
-      prisma.notification.findMany({
-        where: { user_id: sessionUser.userId },
-        orderBy: [{ read: "asc" }, { created_at: "desc" }],
-        take: 50,
-      }),
-      prisma.notification.count({
-        where: { user_id: sessionUser.userId },
-      }),
-      prisma.notification.count({
-        where: { user_id: sessionUser.userId, read: false },
-      }),
-    ]);
+    const payload = await listEnrichedNotificationsForUser(sessionUser.userId);
 
-    return NextResponse.json({ notifications, total, unreadCount });
+    return NextResponse.json(payload);
   } catch (error) {
     console.error("Error fetching notifications:", error);
     return NextResponse.json(

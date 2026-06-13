@@ -7,6 +7,7 @@ import {
   getOrganizationIdFromInvoiceCache,
   invalidateInvoicesAndOverview,
   invalidateInvoicesBilling,
+  invalidateNotificationsAndCrossTab,
 } from "@/lib/query-client";
 import { mapApiInvoiceToRow, mergeInvoiceIntoScopedListCaches, removeInvoiceFromScopedListCaches } from "@/lib/billing-invoice-map";
 import { notify } from "@/lib/notify";
@@ -233,6 +234,7 @@ export function usePayments(options?: UsePaymentsOptions) {
         appointmentId: deleted?.appointment_id,
         organizationId: deleted?.organization_id,
       });
+      await invalidateNotificationsAndCrossTab(queryClient);
     },
     onError: (error) => handleApiError(error, "Failed to delete invoice"),
   });

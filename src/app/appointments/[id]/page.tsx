@@ -11,6 +11,7 @@ import { resolveAppointmentAccess } from "@/lib/appointment-access";
 import { appointmentDetailHref } from "@/lib/entity-routes";
 import { canClientFetchAdminUsersList } from "@/lib/user-list-access";
 import { AppointmentDetailScreen } from "@/components/detail/AppointmentDetailScreen";
+import { EntityUnavailableScreen } from "@/components/shared/EntityUnavailableScreen";
 import { prefetchAppointmentDetailViewModel, prefetchInvoices, prefetchUsersList } from "@/lib/server-prefetch";
 
 type PageProps = { params: Promise<{ id: string }> };
@@ -40,7 +41,17 @@ export default async function PortalAppointmentDetailPage({ params }: PageProps)
   };
 
   const { level, raw } = await resolveAppointmentAccess(session, id);
-  if (level === "none" || !raw) notFound();
+  const portalBack = role === "patient" ? "/patient-portal" : "/doctor-portal";
+  if (level === "none" || !raw) {
+    return (
+      <EntityUnavailableScreen
+        kind="appointment"
+        variant="portal"
+        secondaryHref={portalBack}
+        secondaryLabel="Back to portal"
+      />
+    );
+  }
 
   const staffPrefetch = isDoctorRole(role) || isAdminRole(role);
   const [initialDetail, initialDoctorUsers, initialAdminUsers, initialInvoices] =
@@ -53,9 +64,18 @@ export default async function PortalAppointmentDetailPage({ params }: PageProps)
       prefetchInvoices(sessionUser.userId, role, sessionUser.email),
     ]);
 
-  if (!initialDetail) notFound();
+  if (!initialDetail) {
+    return (
+      <EntityUnavailableScreen
+        kind="appointment"
+        variant="portal"
+        secondaryHref={portalBack}
+        secondaryLabel="Back to portal"
+      />
+    );
+  }
 
-  const backHref = role === "patient" ? "/patient-portal" : "/doctor-portal";
+  const backHref = portalBack;
 
   return (
     <AppointmentDetailScreen
