@@ -143,6 +143,22 @@ const TAB_HEADER_ACTION_SHELLS: Partial<
       slot: "actions",
     },
   ],
+  appointments_mgmt: [
+    {
+      label: "Export CSV",
+      iconKey: "download",
+      className: violetGlassImportButtonClass,
+      slot: "actions",
+      variant: "secondary",
+    },
+    {
+      label: toTitleCaseLabel("New Appointment"),
+      iconKey: "plus",
+      className: emeraldGlassPrimaryButtonClass,
+      slot: "actions",
+      variant: "primary",
+    },
+  ],
   notifications: [
     {
       label: toTitleCaseLabel("Refresh"),

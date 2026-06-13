@@ -1,6 +1,12 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-13 — C31 CP invoice column merge)
+## Latest (2026-06-13 — C32 CP appointment-management parity)
+
+**C32 (REQ-0080):** CP appointment-management parity + column polish — status stacks visit fee + invoice/payment badges (`AppointmentManagementStatusCell`, warm `invoices.all` via parallel SSR prefetch); when col muted datetime/location with Clock/MapPin; category col brand mark + `CategoryDurationMinutesBadge` (shared with Category Management).
+
+**Verify:** **1069/1069** · tsc · lint · build.
+
+## Prior (2026-06-13 — C31 CP invoice column merge)
 
 **C31 (REQ-0079):** CP invoice-management 5 cols — merged `Invoice` (`InvoiceManagementIdentityCell`: one-line clickable identity + inline copy + amount + badge); column shells `cpClinicalListInvoiceColumnShellClass` / Due / Created; `InvoiceIssuedByMeta` `compact` (no icon, nowrap issued stamp); issuer `EntityDetailAuditActorInline` `compactStack` parity with Description (`clinicalIdentityCompactStackStaffAvatarClass` h-7, text-sm name, badge row below). Display-only — no API/SSR/cache/invalidation changes. Dead `cpTwoLine` removed.
 

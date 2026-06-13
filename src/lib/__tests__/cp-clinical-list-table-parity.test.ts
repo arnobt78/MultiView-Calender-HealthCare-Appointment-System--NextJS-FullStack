@@ -10,6 +10,7 @@ const LIST_FILES = [
   "UserManagement.tsx",
   "DoctorManagement.tsx",
   "CategoryManagement.tsx",
+  "AppointmentsManagement.tsx",
 ] as const;
 
 describe("cp clinical list table parity across CP entity lists", () => {
@@ -26,6 +27,16 @@ describe("cp clinical list table parity across CP entity lists", () => {
   ] as const)("%s uses shared actions column shell", (file) => {
     const src = readFileSync(join(ROOT, file), "utf8");
     expect(src).toContain("cpClinicalListActionsColumnShellClass");
+  });
+
+  it("appointment management columns use shared actions shell + appointment column tokens", () => {
+    const src = readFileSync(
+      join(ROOT, "appointment-management-columns.tsx"),
+      "utf8"
+    );
+    expect(src).toContain("cpClinicalListActionsColumnShellClass");
+    expect(src).toContain("cpClinicalListAppointmentTitleColumnShellClass");
+    expect(src).toContain("cpClinicalListAppointmentWhenColumnShellClass");
   });
 
   it("doctor management no longer crushes actions with w-[1%]", () => {

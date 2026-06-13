@@ -33,3 +33,22 @@ export const cpClinicalListInvoiceDueColumnShellClass =
 /** CP invoice-management — created + issuer stack. */
 export const cpClinicalListInvoiceCreatedColumnShellClass =
   "w-[18%] min-w-[14rem] whitespace-normal align-top";
+
+/** CP appointment-management column shells. */
+export const cpClinicalListAppointmentTitleColumnShellClass =
+  "w-[18%] min-w-[12rem] min-w-0 whitespace-normal align-top";
+
+export const cpClinicalListAppointmentStatusColumnShellClass =
+  "w-[10%] min-w-[8.5rem] whitespace-normal align-top";
+
+export const cpClinicalListAppointmentWhenColumnShellClass =
+  "w-[16%] min-w-[11rem] whitespace-normal align-top";
+
+export const cpClinicalListAppointmentCategoryColumnShellClass =
+  "w-[14%] min-w-[10rem] min-w-0 whitespace-normal align-top";
+
+export const cpClinicalListAppointmentPatientColumnShellClass =
+  "w-[16%] min-w-[11rem] min-w-0 whitespace-normal align-top";
+
+export const cpClinicalListAppointmentTreatingColumnShellClass =
+  "w-[14%] min-w-[10rem] min-w-0 whitespace-normal align-top";

@@ -86,14 +86,16 @@ describe("prefetchControlPanelSection", () => {
     });
   });
 
-  it("prefetches calendar bundle for appointments_mgmt tab", async () => {
+  it("prefetches calendar bundle and invoices for appointments_mgmt tab", async () => {
+    const { prefetchInvoices } = await import("@/lib/server-prefetch");
     const result = await prefetchControlPanelSection(
       "appointments_mgmt",
       "user-1",
       "u@test.com",
       "admin"
     );
-    expect(result).toEqual(mockBundle);
+    expect(prefetchInvoices).toHaveBeenCalledWith("user-1", "admin", "u@test.com");
+    expect(result).toEqual({ ...mockBundle, invoices: [{ id: "inv1" }] });
   });
 
   it("prefetches calendar bundle for telehealth tab", async () => {

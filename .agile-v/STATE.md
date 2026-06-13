@@ -6,21 +6,22 @@
 
 | Field | Value |
 |-------|-------|
-| **Cycle** | **C31** — CP invoice column merge |
-| **Phase** | Orchestrate |
-| **Stage** | 3 |
-| **Status** | shipped |
-| **HEAD** | `6fc5cec` |
+| **Cycle** | **C32** — CP appointment-management UI parity |
+| **Phase** | Verify |
+| **Stage** | 4 |
+| **Status** | verify PASS |
+| **Last Updated** | 2026-06-13 |
+| **Parent REQ** | REQ-0080 |
 
-## Verify baseline (C31)
+## Verify baseline (C32 close)
 
-**1058/1058** (213 files) · tsc · lint · build — PASS
+**1069/1069** · tsc · lint · build — PASS
 
-## C31 scope (REQ-0079)
+## C32 scope (REQ-0080)
 
-- Merge Invoice # + Amount into one `Invoice` column (responsive wrap identity, price, badge).
-- Display-only — no API/cache changes.
+- Appointment-management list parity + billing/category/when column polish.
+- SSR: calendar bundle + `invoices.all` prefetch on appointments_mgmt.
 
 ## Next cycle
 
-**C32** — Specify new REQ before new code after C31 verify.
+**C33** — Specify after C32 gate review.

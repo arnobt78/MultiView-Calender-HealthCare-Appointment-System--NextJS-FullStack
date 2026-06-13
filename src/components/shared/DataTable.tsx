@@ -267,6 +267,32 @@ export function DataTable<TData, TValue>({
                           <div className="flex min-h-[2.75rem] w-full min-w-0 flex-col justify-center">
                             <Skeleton className="h-4 w-[8.75rem] shrink-0 rounded-sm" />
                           </div>
+                        ) : columnId === "title" ? (
+                          <div className="flex min-h-[2.75rem] w-full min-w-0 flex-col justify-center gap-1">
+                            <Skeleton className="h-4 w-full max-w-[16rem] rounded-sm" />
+                          </div>
+                        ) : columnId === "when" ? (
+                          <div className="flex min-h-[2.75rem] w-full min-w-0 flex-col justify-center gap-1">
+                            <Skeleton className="h-4 w-full max-w-[12rem] rounded-sm" />
+                            <Skeleton className="h-3 w-full max-w-[14rem] rounded-sm" />
+                          </div>
+                        ) : columnId === "category" ? (
+                          <div className="flex min-h-[2.75rem] w-full min-w-0 items-center gap-1.5">
+                            <Skeleton className="h-2 w-2 shrink-0 rounded-full" />
+                            <Skeleton className="h-4 w-full max-w-[8rem] rounded-sm" />
+                          </div>
+                        ) : columnId === "patient" || columnId === "treating" ? (
+                          <div className="flex min-h-[2.75rem] w-full min-w-0 flex-row items-start gap-2">
+                            <Skeleton className="h-6 w-6 shrink-0 rounded-full" />
+                            <div className="flex min-w-0 flex-1 flex-col gap-1">
+                              <Skeleton className="h-4 w-full max-w-[12rem] rounded-sm" />
+                              <Skeleton className="h-3 w-full max-w-[14rem] rounded-sm" />
+                            </div>
+                          </div>
+                        ) : columnId === "status" ? (
+                          <div className="flex min-h-[2.75rem] w-full min-w-0 flex-col justify-center">
+                            <Skeleton className="h-5 w-[5.5rem] shrink-0 rounded-full" />
+                          </div>
                         ) : columnId === "actions" ? (
                           // Action buttons are static chrome — no skeleton placeholder needed;
                           // an empty-height div keeps the row height consistent during load.

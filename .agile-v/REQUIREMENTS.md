@@ -6,7 +6,7 @@
 
 | Field | Value |
 |-------|-------|
-| Cycle | C1–C29 shipped · **C30 shipped** · **C31 active** (REQ-0079) |
+| Cycle | C1–C31 shipped · **C32 active** (REQ-0080) |
 | Author | Requirement Architect |
 | Gate 1 status | C1 GATE-0001 · C2 GATE-0003 approved |
 | Canonical source | this file |
@@ -124,6 +124,24 @@
 | REQ-0077 | approved [C29] | REQ-0076 | ART-0396..0400 | pending |
 | REQ-0078 | approved [C30] | REQ-0077 | ART-0401..0406 | pending |
 | REQ-0079 | approved [C31] | REQ-0078 | ART-0407..0409 | pending |
+| REQ-0080 | approved [C32] | REQ-0079 | ART-0410..0416 | pending |
+
+### REQ-0080 — C32 CP appointment-management UI parity
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C32] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0079 |
+
+**Statement:** Refactor CP appointment-management to patient-management list parity — fixed chrome slots, DataTable, stats, filters, modern columns, Export + New Appointment. Display-only structure; existing SSR/cache/invalidation unchanged.
+
+**Acceptance criteria:**
+1. `ControlPanelEntityListShell` sky tone; header actions; toolbar filters; no broken chrome.
+2. Seven-column table with identity/when/category/patient/treating cells.
+3. Display-only stat cards; filters in toolbar.
+4. Tests; verify PASS.
 
 ### REQ-0079 — C31 CP invoice column merge (identity + amount + badge)
 

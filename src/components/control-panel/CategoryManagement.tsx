@@ -8,8 +8,8 @@ import { DataTableColumnHeader } from "@/components/shared/DataTableColumnHeader
 import { ControlPanelPageChrome } from "@/components/control-panel/ControlPanelPageChrome";
 import { ControlPanelHeaderGlassButton } from "@/components/control-panel/ControlPanelHeaderGlassButton";
 import { CategoryTableCell } from "@/components/control-panel/patient-detail-snapshot-columns";
+import { CategoryDurationMinutesBadge } from "@/components/shared/category-display/CategoryDurationMinutesBadge";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { EntityActiveStatusBadge } from "@/components/shared/entity-display/EntityActiveStatusBadge";
 import { Category } from "@/types/types";
 import { cn } from "@/lib/utils";
@@ -34,7 +34,6 @@ import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import { useCpListBodyLoading } from "@/lib/cp-list-body-loading";
 import { queryKeys } from "@/lib/query-keys";
 import {
-  Clock,
   EllipsisVertical,
   Eye,
   Pencil,
@@ -69,8 +68,6 @@ import {
   clinicalCellMutedTextClass,
   clinicalTableCellMinRowClass,
   clinicalTableBrandMarkCellClass,
-  clinicalBadgeInlineClass,
-  clinicalBadgeInlineIconClass,
 } from "@/lib/table-display-styles";
 
 const CATEGORY_STATUS_OPTIONS = activeInactiveFilterOptions();
@@ -288,27 +285,11 @@ export function CategoryManagementInner() {
           <DataTableColumnHeader column={column} title="Default Duration" />
         ),
         meta: { shellClassName: "w-[12%] min-w-[9rem] whitespace-nowrap" },
-        cell: ({ row }) => {
-          const d = row.original.duration_minutes_default;
-          return (
-            <div className="flex min-h-[2.75rem] min-w-0 items-center">
-              {d != null ? (
-                <Badge
-                  variant="outline"
-                  className={cn(
-                    clinicalBadgeInlineClass,
-                    "bg-sky-50 text-sky-700 border-sky-200"
-                  )}
-                >
-                  <Clock className={clinicalBadgeInlineIconClass} />
-                  {d} min
-                </Badge>
-              ) : (
-                <span className={clinicalCellMutedTextClass}>{CLINICAL_EMPTY_EM_DASH}</span>
-              )}
-            </div>
-          );
-        },
+        cell: ({ row }) => (
+          <div className="flex min-h-[2.75rem] min-w-0 items-center">
+            <CategoryDurationMinutesBadge minutes={row.original.duration_minutes_default} />
+          </div>
+        ),
       },
       {
         accessorKey: "created_at",
