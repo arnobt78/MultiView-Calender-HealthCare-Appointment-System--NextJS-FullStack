@@ -45,7 +45,9 @@ Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Agile V
 
-`.agile-v/ACTIVATION.md` · `STATE.md` · **C30 shipped** (REQ-0078).
+## Agile V
+
+`.agile-v/ACTIVATION.md` · `STATE.md` · **C30 shipped** (REQ-0078) · next **C31 specify**.
 
 ## Principle
 

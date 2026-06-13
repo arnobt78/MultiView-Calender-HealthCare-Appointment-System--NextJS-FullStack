@@ -6,14 +6,15 @@
     "repository": "calendar-appointment",
     "initialized": "2026-05-30",
     "bootstrap_completed": "2026-06-04",
-    "bootstrap_refresh": "2026-06-12T13:50:00Z"
+    "bootstrap_refresh": "2026-06-11T14:30:00Z"
   },
   "cycle": {
-    "current": "C25",
+    "current": "C30",
     "status": "verify_complete",
-    "started": "2026-06-12",
-    "closed": null,
+    "started": "2026-06-11",
+    "closed": "2026-06-11",
     "gate_2_commit": null,
+    "release_commit": "fe84f2b",
     "archive_path": null,
     "prior_cycles": [
       {

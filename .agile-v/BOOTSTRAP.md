@@ -1,6 +1,6 @@
 # Agile V Bootstrap — HealthCal Pro
 
-<!-- Framework initialization + cycle index | Agile V v1.4 | Last refresh: 2026-06-12 (C25 activation) -->
+<!-- Framework initialization + cycle index | Agile V v1.4 | Last refresh: 2026-06-11 (C30 activation) -->
 
 ## Infinity Loop (SCOPE-V)
 
@@ -31,8 +31,8 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 | 2 | `config.json` | Project metadata, cycle, authority matrix, verification commands | ✓ |
 | 3 | `POLICY.yaml` | Policy-as-code (versioned) | ✓ v1.0.0 |
 | 4 | `STATE.md` | Current cycle, phase, stage — **read first on resume** | ✓ |
-| 5 | `REQUIREMENTS.md` | Canonical REQ-XXXX + traceability index | ✓ REQ-0001..0069 |
-| 6 | `BUILD_MANIFEST.md` | ART-XXXX → code paths | ✓ ART-0001..0359 |
+| 5 | `REQUIREMENTS.md` | Canonical REQ-XXXX + traceability index | ✓ REQ-0001..0078 |
+| 6 | `BUILD_MANIFEST.md` | ART-XXXX → code paths | ✓ ART-0001..0406 |
 | 7 | `TEST_SPEC.md` | TC-XXXX (requirements-derived) | ✓ TC-0001..0052 |
 | 8 | `VALIDATION_SUMMARY.md` | VER-XXXX results + EvalGate lines | ✓ |
 | 9 | `ATM.md` | REQ → ART → VER matrix | ✓ |
@@ -249,9 +249,9 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 
 ## Next Actions
 
-1. Approve **GATE-0005..0014** + C8–C25 gates in `APPROVALS.md` as cycles close.
-2. Archive C3–C25 → `cycles/CN/` after each Gate 2.
-3. New work: specify **C26** in `REQUIREMENTS.md` before coding.
+1. Approve **GATE-0005..0014** + C8–C30 gates in `APPROVALS.md` as cycles close.
+2. Archive C3–C30 → `cycles/CN/` after each Gate 2.
+3. New work: specify **C31** in `REQUIREMENTS.md` before coding.
 
 ## Verification (default)
 
@@ -259,17 +259,18 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 npm test && npx tsc --noEmit && npm run lint && npm run build
 ```
 
-Current baseline: **1001** tests, **201** files (2026-06-12) · HEAD `eb3fb8f`.
+Current baseline: **1057** tests, **213** files (2026-06-11) · HEAD `fe84f2b`.
 
 ---
 
-## Infinity Loop Session Activation (2026-06-12 — C25 refresh)
+## Infinity Loop Session Activation (2026-06-11 — C30 refresh)
 
 | Step | Artifact | Status |
 |------|----------|--------|
-| 1 | `agile-v-core` + `pipeline` + `lifecycle` + `compliance` active every prompt | ✓ |
-| 2 | `.cursor/rules/agile-v-infinity-loop.mdc` `alwaysApply: true` | ✓ |
-| 3 | `ACTIVATION.md` + `STATE.md` + `SKILLS.md` (24) synced to C25 | ✓ |
-| 4 | C1..C2 frozen; C3–C25 living index | ✓ |
-| 5 | Verify regression | ✓ 1001/1001 |
-| 6 | `CHECKPOINTS.md` — no PENDING HITL | ✓ |
+| 1 | Load agile-v-core + pipeline + lifecycle + SKILLS.md | ✓ |
+| 2 | STATE.md C30 shipped · CHECKPOINTS clear | ✓ |
+| 3 | REQUIREMENTS REQ-0001..0078 · BUILD_MANIFEST ART-0406 | ✓ |
+| 4 | EVAL_RESULTS ER-C30-VERIFY PASS | ✓ |
+| 5 | Verify npm test 1057/1057 tsc lint build | ✓ |
+| 6 | `.cursor/rules/agile-v-infinity-loop.mdc` always on | ✓ |
+| 7 | `CHECKPOINTS.md` — no PENDING HITL | ✓ |

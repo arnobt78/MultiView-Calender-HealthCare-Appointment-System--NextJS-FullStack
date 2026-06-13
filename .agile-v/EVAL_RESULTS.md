@@ -350,3 +350,29 @@ human_gate_2: TBD
 | release build | npm run build | PASS | REQ-0069 |
 
 **EvalGate (C25):** PASS (automated) — Human Gate TBD before archive.
+
+## C30 — ER-C30-VERIFY
+
+```yaml
+eval_run_id: ER-C30-VERIFY
+eval_timestamp: "2026-06-11T20:05:00Z"
+policy_version_ref: "1.0.0"
+eval_gate_status: PASS
+eval_gate_rationale: "C30 invoice Record Audit — schema, enrich pipeline, detail parity, date picker, edit hint; npm test 1057/1057, tsc, eslint, build PASS"
+cycle: C30
+release_commit: "fe84f2b"
+human_gate_2: TBD
+```
+
+| Suite | Command | Result | LINKED_REQ |
+|-------|---------|--------|------------|
+| invoice-serialize | npm test invoice-serialize | PASS | REQ-0078 |
+| entity-detail-audit-actor | npm test entity-detail-audit-actor | PASS | REQ-0078 |
+| invoice-detail-audit-rows | npm test invoice-detail-audit-rows | PASS | REQ-0078 |
+| billing-invoice-map | npm test billing-invoice-map | PASS | REQ-0078 |
+| full regression | npm test | PASS 1057/1057 | REQ-0078 |
+| typecheck | npx tsc --noEmit | PASS | REQ-0078 |
+| lint | npm run lint | PASS | REQ-0078 |
+| release build | npm run build | PASS | REQ-0078 |
+
+**EvalGate (C30 active):** PASS (automated) — Human Gate TBD before archive.

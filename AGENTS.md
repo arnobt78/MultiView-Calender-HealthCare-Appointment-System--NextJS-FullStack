@@ -14,13 +14,13 @@
 
 ## Resume
 
-1. `.agile-v/STATE.md` — cycle **C25** shipped, verify PASS **1001/1001**
-2. `.agile-v/CHECKPOINTS.md` if PENDING HITL
+1. `.agile-v/STATE.md` — cycle **C30** shipped, verify PASS **1057/1057**
+2. `.agile-v/CHECKPOINTS.md` if PENDING HITL (none)
 3. Parent **`REQ-XXXX`** in `.agile-v/REQUIREMENTS.md` before any work
 
 ## Living artifacts
 
-`STATE.md` · `REQUIREMENTS.md` (REQ-0001..0069) · `BUILD_MANIFEST.md` · `TEST_SPEC.md` · `VALIDATION_SUMMARY.md` · `DECISION_LOG.md` · `BOOTSTRAP.md` · `SKILLS.md`
+`STATE.md` · `REQUIREMENTS.md` (REQ-0001..0078) · `BUILD_MANIFEST.md` · `TEST_SPEC.md` · `VALIDATION_SUMMARY.md` · `DECISION_LOG.md` · `BOOTSTRAP.md` · `SKILLS.md`
 
 ## Engineering
 
@@ -32,13 +32,11 @@
 npm test && npx tsc --noEmit && npm run lint && npm run build
 ```
 
-## Cycles
+## Cycles (recent)
 
 | Cycle | REQ | Status | Gates |
 |-------|-----|--------|-------|
-| C1–C2 | 0001..0008 | closed | ✓ |
-| C3–C17 | 0009..0063 | verify/shipped | pending |
-| C18–C18.1 | 0064..0065 | verify/shipped | pending |
-| C19–C22 | 0065 (+0064 list) | verify PASS **975/975** | gate TBD |
+| C26–C29 | 0070..0077 | verify/shipped | pending |
+| **C30** | **0078** | **verify PASS** | gate TBD |
 
-**Next:** approve pending gates → archive → specify **C23** before new code.
+**Next:** approve pending gates → archive C3–C30 → specify **C31** before new code.

@@ -287,11 +287,22 @@
 | ART-0393 | C28 | REQ-0076 | Billing header inline scope filters + stats row cleanup | built |
 | ART-0394 | C28 | REQ-0076 | Status-only CP billing-totals + management cache patch | built |
 | ART-0395 | C28 | REQ-0076 | Unified CP SSR seed + tests + verify PASS | built |
+| ART-0396 | C29 | REQ-0077 | `cpTwoLine` invoice # + compactStack description | built |
+| ART-0397 | C29 | REQ-0077 | `amount_status` column + sky issuer Created row | built |
+| ART-0398 | C29 | REQ-0077 | Scope filter inline row + Medicine specialty backfill | built |
+| ART-0399 | C29 | REQ-0077 | Tests + verify PASS | built |
+| ART-0400 | C29 | REQ-0077 | Docs + commit `db8dd57` | built |
+| ART-0401 | C30 | REQ-0078 | Prisma Invoice audit FKs + backfill script | built |
+| ART-0402 | C30 | REQ-0078 | `invoice-api-include` + `invoice-api-enrich` | built |
+| ART-0403 | C30 | REQ-0078 | API write stamps + enriched PATCH/GET | built |
+| ART-0404 | C30 | REQ-0078 | Detail Record Audit + `mapInvoiceRecordAuditActors` | built |
+| ART-0405 | C30 | REQ-0078 | Date picker close + edit amount hint | built |
+| ART-0406 | C30 | REQ-0078 | Tests + verify PASS + commit `fe84f2b` | built |
 
 ## Verification Commands (project default)
 
 ```bash
-npm test        # 1001 passed (C25, 2026-06-12)
+npm test        # 1057 passed (C30, 2026-06-11)
 npx tsc --noEmit
 npm run lint
 npm run build

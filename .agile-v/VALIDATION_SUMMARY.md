@@ -599,3 +599,36 @@ EvalGate (C24): status=PASS | eval_run_id=ER-C24-VERIFY | gate2_pending=TBD
 | VER-0113 | REQ-0069 | PASS | Full regression **1001/1001** tsc lint build |
 
 EvalGate (C25): status=PASS | eval_run_id=ER-C25-VERIFY | gate2_pending=TBD
+
+---
+
+## C26–C29 — Invoice hub + CP table UX (2026-06-11..12)
+
+| Cycle | REQ | Regression | HEAD |
+|-------|-----|------------|------|
+| C26–C26.2 | 0070..0072 | 1044+ | cdbee5a |
+| C27–C27.2 | 0073..0075 | 1037+ | — |
+| C28 | 0076 | 1044/1044 | — |
+| C29 | 0077 | 1052/1052 | db8dd57 |
+
+EvalGate: PASS (automated) · gate2_pending=TBD
+
+---
+
+## C30 — Invoice Record Audit parity (2026-06-11)
+
+| Item | Value |
+|------|-------|
+| Cycle | C30 |
+| REQ-IDs | REQ-0078 |
+| Regression | **1057/1057** Vitest (213 files) |
+| HEAD | `fe84f2b` |
+
+| VER-ID | REQ-ID | Result | Description |
+|--------|--------|--------|-------------|
+| VER-0114 | REQ-0078 | PASS | invoice-serialize + entity-detail-audit-actor |
+| VER-0115 | REQ-0078 | PASS | invoice-detail-audit-rows Issued by row |
+| VER-0116 | REQ-0078 | PASS | billing-invoice-map audit pass-through |
+| VER-0117 | REQ-0078 | PASS | Full regression **1057/1057** tsc lint build |
+
+EvalGate (C30): status=PASS | eval_run_id=ER-C30-VERIFY | gate2_pending=TBD

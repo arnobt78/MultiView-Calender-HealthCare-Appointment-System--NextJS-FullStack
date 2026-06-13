@@ -115,3 +115,4 @@
 | 2026-06-11T19:05:00Z | verify | C28 shipped | 1044/1044; tsc · lint · build PASS | REQ-0076 |
 | 2026-06-11T20:00:00Z | build | C30 invoice Record Audit | REQ-0078: Invoice audit FKs, enrich pipeline, detail parity, date picker close, edit amount hint | REQ-0078 |
 | 2026-06-11T20:05:00Z | verify | C30 shipped | 1057/1057; prisma push + backfill; tsc · lint · build PASS | REQ-0078 |
+| 2026-06-11T20:10:00Z | init | C30 Agile V activation sync | STATE/ACTIVATION/AGENTS/config/EVAL/VALIDATION synced; ready C31 specify | REQ-0078 |
