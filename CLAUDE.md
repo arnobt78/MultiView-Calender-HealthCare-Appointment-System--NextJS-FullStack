@@ -35,7 +35,7 @@ Cross-tab: `query-cache-cross-tab.ts`.
 ## Appointment CP list
 
 - **Shell:** `AppointmentsManagement` → sky tone · `ClinicalListFilterToolbar` · `AppointmentManagementStatsRow` · `AppointmentListFiltersContext`.
-- **Table:** 7-col `appointment-management-columns` · `appointment-table-cells` (`AppointmentTitleTableCell` + inline status · `AppointmentManagementBillingCell` · `compactStack` category); `resolveAppointmentListBillingBadges` · `appointment-invoice-lookup.ts`.
+- **Table:** 7-col · `appointment-invoice-lookup.ts` (single `buildAppointmentInvoiceDisplayMap` — hook delegates here).
 - **SSR:** `prefetchCalendarAppointmentsBundle` + parallel `prefetchInvoices` on `appointments_mgmt`.
 
 ## Key paths

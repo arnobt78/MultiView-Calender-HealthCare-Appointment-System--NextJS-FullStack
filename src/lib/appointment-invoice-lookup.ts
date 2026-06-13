@@ -14,13 +14,14 @@ export function getInvoiceForAppointment(
   return invoices.find((inv) => inv.appointment_id === appointmentId);
 }
 
-/** Build appointmentId → display status map (shared by calendar + CP list). */
+/** Build appointmentId → display status map (shared by calendar + CP list + hook). */
 export function buildAppointmentInvoiceDisplayMap(
   invoices: InvoiceRow[],
   appointmentIds: string[]
 ): Map<string, InvoiceDisplayStatus> {
   const map = new Map<string, InvoiceDisplayStatus>();
-  const idSet = new Set(appointmentIds);
+  if (!appointmentIds.length) return map;
+  const idSet = new Set(appointmentIds.filter(Boolean));
   for (const inv of invoices) {
     const aid = inv.appointment_id;
     if (!aid || !idSet.has(aid) || map.has(aid)) continue;

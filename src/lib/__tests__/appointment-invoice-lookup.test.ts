@@ -45,6 +45,10 @@ describe("appointment-invoice-lookup", () => {
     expect(map.has("appt-2")).toBe(false);
   });
 
+  it("buildAppointmentInvoiceDisplayMap returns empty map for no ids", () => {
+    expect(buildAppointmentInvoiceDisplayMap(invoices, []).size).toBe(0);
+  });
+
   it("resolveLatestInvoicePayment picks newest created_at", () => {
     const latest = resolveLatestInvoicePayment(invoices[0].payments);
     expect(latest?.status).toBe("refunded");
