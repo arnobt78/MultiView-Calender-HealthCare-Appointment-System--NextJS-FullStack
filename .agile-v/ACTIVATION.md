@@ -1,6 +1,6 @@
 # Agile V — Session Activation (every prompt)
 
-<!-- HealthCal Pro | v1.4 | Read with STATE.md on every chat | Activated: 2026-06-11 C30 sync -->
+<!-- HealthCal Pro | v1.4 | Sync: 2026-06-13 C34.1 -->
 
 ## 1. Load skills (mandatory)
 
@@ -16,10 +16,9 @@
 
 ## 2. Read (resume)
 
-1. `STATE.md` — cycle **C30** shipped; **1057/1057** verify PASS
-2. `CHECKPOINTS.md` — only if PENDING HITL (none)
-3. `REQUIREMENTS.md` — parent REQ before any work (REQ-0001..0078)
-4. `agile-v-core.md` — repo binding
+1. `STATE.md` — **C34.1 shipped** · **1103/1103** verify PASS · HEAD `768a422`
+2. `CHECKPOINTS.md` — only if PENDING HITL (**none**)
+3. `REQUIREMENTS.md` — parent REQ before any work (**REQ-0001..0082**)
 
 ## 3. Before coding (mandatory gate)
 
@@ -40,18 +39,20 @@ Specify → Constrain → [Gate1] → Orchestrate → Prove → Verify → [Gate
 
 `REQ-XXXX` → `ART-XXXX` → `TC-XXXX` → `VER-XXXX` → `DECISION_LOG.md`
 
-## 6. Current
+## 6. Current cycle index
 
 | Cycle | REQ | Status | Gate |
 |-------|-----|--------|------|
 | C1–C2 | 0001..0008 | closed (frozen) | ✓ |
-| C3–C25 | 0009..0069 | verify/shipped | pending |
-| C26–C29 | 0070..0077 | verify/shipped | pending |
-| **C30** | **0078** | **verify PASS** | gate TBD |
+| C3–C30 | 0009..0078 | verify/shipped | pending |
+| C31 | 0079 | verify PASS | pending |
+| C32 | 0080 | verify PASS | pending |
+| C33 | 0081 | verify PASS | pending |
+| **C34 / C34.1** | **0082** | **verify PASS** | pending |
 
-**Baseline:** **1057** tests · **213** files · HEAD `fe84f2b` · verified 2026-06-11
+**Baseline:** **1103** tests · **223** files · HEAD **`768a422`** · verified 2026-06-13
 
-**Next:** Human Gate backlog → archive C3–C30 → **Specify C31** (new REQ) before new code.
+**Next:** Human Gate backlog → archive C3–C34 → **Specify C35** (new REQ) before new code.
 
 ## 7. Halt if
 
@@ -59,7 +60,9 @@ No parent REQ · ambiguous REQ · self-verify only · skip invalidation · Gate 
 
 ## 8. Verify
 
-`npm test && npx tsc --noEmit && npm run lint && npm run build`
+```bash
+npm test && npx tsc --noEmit && npm run lint && npm run build
+```
 
 ## 9. Hooks
 

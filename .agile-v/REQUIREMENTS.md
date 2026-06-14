@@ -1,12 +1,12 @@
 # Requirements — HealthCal Pro
 
-<!-- Revision: C1..C30 | C30 shipped | Last updated: 2026-06-11 -->
+<!-- Revision: C1..C34.1 | C34.1 shipped | Last updated: 2026-06-13 -->
 
 ## Document Control
 
 | Field | Value |
 |-------|-------|
-| Cycle | C1–C33 shipped · **C34 active** (REQ-0082) |
+| Cycle | C1–C34.1 shipped · **next: C35 specify** |
 | Author | Requirement Architect |
 | Gate 1 status | C1 GATE-0001 · C2 GATE-0003 approved |
 | Canonical source | this file |
@@ -126,13 +126,13 @@
 | REQ-0079 | approved [C31] | REQ-0078 | ART-0407..0409 | pending |
 | REQ-0080 | approved [C32] | REQ-0079 | ART-0410..0416 | pending |
 | REQ-0081 | approved [C33] | REQ-0080 | ART-0417..0423 | pending |
-| REQ-0082 | approved [C34] | REQ-0081 | ART-0424..0430 | pending |
+| REQ-0082 | approved [C34/C34.1] | REQ-0081 | ART-0424..0431 | pending |
 
 ### REQ-0082 — C34 stale notification links
 
 | Field | Value |
 |-------|-------|
-| Status | approved [C34] |
+| Status | approved [C34/C34.1 shipped] |
 | Priority | P1 |
 | Risk | R1 |
 | Parent | REQ-0081 |

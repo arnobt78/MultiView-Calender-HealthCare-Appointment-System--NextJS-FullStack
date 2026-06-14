@@ -298,11 +298,30 @@
 | ART-0404 | C30 | REQ-0078 | Detail Record Audit + `mapInvoiceRecordAuditActors` | built |
 | ART-0405 | C30 | REQ-0078 | Date picker close + edit amount hint | built |
 | ART-0406 | C30 | REQ-0078 | Tests + verify PASS + commit `fe84f2b` | built |
+| ART-0407 | C31 | REQ-0079 | CP invoice column merge (identity + amount + badge) | built |
+| ART-0408 | C31 | REQ-0079 | `invoice-management-columns` + table cells | built |
+| ART-0409 | C31 | REQ-0079 | Tests + verify PASS | built |
+| ART-0410 | C32 | REQ-0080 | `AppointmentsManagement` CP list shell + stats/filters | built |
+| ART-0411 | C32 | REQ-0080 | `appointment-management-columns` + SSR calendar bundle | built |
+| ART-0412 | C32 | REQ-0080 | Header Export/New + dialog footer parity | built |
+| ART-0413 | C32 | REQ-0080 | Tests + verify PASS | built |
+| ART-0414 | C33 | REQ-0081 | `NotificationsManagement` rose CP shell | built |
+| ART-0415 | C33 | REQ-0081 | `notification-management-columns` + filters/metrics | built |
+| ART-0416 | C33 | REQ-0081 | `notification-type-display.ts` shared w/ navbar | built |
+| ART-0417 | C33 | REQ-0081 | Tests + commit `378a88d` verify 1084/1084 | built |
+| ART-0424 | C34 | REQ-0082 | `notification-link.ts` parse + stale cleanup | built |
+| ART-0425 | C34 | REQ-0082 | `notification-link-validity.ts` + list enrich | built |
+| ART-0426 | C34 | REQ-0082 | GET/SSE/prefetch `link_valid` + serialize type | built |
+| ART-0427 | C34 | REQ-0082 | CP/navbar gating + role-aware fallback | built |
+| ART-0428 | C34 | REQ-0082 | `EntityUnavailableScreen` + detail pages | built |
+| ART-0429 | C34 | REQ-0082 | Invoice delete → `invalidateNotificationsAndCrossTab` | built |
+| ART-0430 | C34 | REQ-0082 | Tests notification-link* + stale-cleanup | built |
+| ART-0431 | C34.1 | REQ-0082 | `notification-list-filter.ts` + awaited DELETE cleanup | built |
 
 ## Verification Commands (project default)
 
 ```bash
-npm test        # 1057 passed (C30, 2026-06-11)
+npm test        # 1103 passed (C34.1, 2026-06-13)
 npx tsc --noEmit
 npm run lint
 npm run build

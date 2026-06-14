@@ -116,3 +116,9 @@
 | 2026-06-11T20:00:00Z | build | C30 invoice Record Audit | REQ-0078: Invoice audit FKs, enrich pipeline, detail parity, date picker close, edit amount hint | REQ-0078 |
 | 2026-06-11T20:05:00Z | verify | C30 shipped | 1057/1057; prisma push + backfill; tsc · lint · build PASS | REQ-0078 |
 | 2026-06-11T20:10:00Z | init | C30 Agile V activation sync | STATE/ACTIVATION/AGENTS/config/EVAL/VALIDATION synced; ready C31 specify | REQ-0078 |
+| 2026-06-11T21:00:00Z | verify | C31–C32 shipped | Invoice column merge + appt-mgmt CP parity | REQ-0079, REQ-0080 |
+| 2026-06-11T22:00:00Z | verify | C33 shipped | CP notifications parity; 1084/1084; `378a88d` | REQ-0081 |
+| 2026-06-11T23:00:00Z | build | C34 stale notification links | link_valid enrich; delete cleanup; EntityUnavailableScreen; role routes | REQ-0082 |
+| 2026-06-13T10:30:00Z | build | C34.1 filter + DELETE sync | notification-list-filter; await cleanup try/catch | REQ-0082 |
+| 2026-06-13T10:30:00Z | verify | C34/C34.1 shipped | 1103/1103; tsc · lint · build PASS; `768a422` | REQ-0082 |
+| 2026-06-13T10:30:00Z | init | Agile V Infinity Loop activation sync | STATE/ACTIVATION/AGENTS/BOOTSTRAP/config synced C34.1; ready C35 specify | REQ-0082 |

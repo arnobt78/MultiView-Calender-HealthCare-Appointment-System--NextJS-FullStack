@@ -632,3 +632,60 @@ EvalGate: PASS (automated) · gate2_pending=TBD
 | VER-0117 | REQ-0078 | PASS | Full regression **1057/1057** tsc lint build |
 
 EvalGate (C30): status=PASS | eval_run_id=ER-C30-VERIFY | gate2_pending=TBD
+
+---
+
+## C31 — CP invoice column merge (2026-06-11)
+
+| Item | Value |
+|------|-------|
+| Cycle | C31 |
+| REQ-IDs | REQ-0079 |
+| Regression | **1075+** Vitest |
+
+EvalGate (C31): status=PASS | eval_run_id=ER-C31-VERIFY | gate2_pending=TBD
+
+---
+
+## C32 — CP appointment-management parity (2026-06-11)
+
+| Cycle | REQ | Regression |
+|-------|-----|------------|
+| C32 | REQ-0080 | 1075/1075 |
+
+EvalGate (C32): status=PASS | gate2_pending=TBD
+
+---
+
+## C33 — CP notifications parity (2026-06-11)
+
+| Item | Value |
+|------|-------|
+| Cycle | C33 |
+| REQ-IDs | REQ-0081 |
+| Regression | **1084/1084** |
+| HEAD | `378a88d` |
+
+EvalGate (C33): status=PASS | eval_run_id=ER-C33-VERIFY | gate2_pending=TBD
+
+---
+
+## C34 / C34.1 — Stale notification links (2026-06-11..13)
+
+| Item | Value |
+|------|-------|
+| Cycle | C34 + C34.1 polish |
+| REQ-IDs | REQ-0082 |
+| Regression | **1103/1103** Vitest (223 files) |
+| HEAD | `768a422` |
+
+| VER-ID | REQ-ID | Result | Description |
+|--------|--------|--------|-------------|
+| VER-0118 | REQ-0082 | PASS | notification-link + stale-cleanup tests |
+| VER-0119 | REQ-0082 | PASS | notification-link-validity batch enrich |
+| VER-0120 | REQ-0082 | PASS | EntityUnavailableScreen + detail routes |
+| VER-0121 | REQ-0082 | PASS | serialize link_valid + CP/navbar gating |
+| VER-0122 | REQ-0082 | PASS | notification-list-filter (C34.1) |
+| VER-0123 | REQ-0082 | PASS | Full regression **1103/1103** tsc lint build |
+
+EvalGate (C34): status=PASS | eval_run_id=ER-C34-VERIFY | gate2_pending=TBD

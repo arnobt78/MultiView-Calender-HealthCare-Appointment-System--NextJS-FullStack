@@ -376,3 +376,30 @@ human_gate_2: TBD
 | release build | npm run build | PASS | REQ-0078 |
 
 **EvalGate (C30 active):** PASS (automated) — Human Gate TBD before archive.
+
+## C34 — ER-C34-VERIFY
+
+```yaml
+eval_run_id: ER-C34-VERIFY
+eval_timestamp: "2026-06-13T10:30:00Z"
+policy_version_ref: "1.0.0"
+eval_gate_status: PASS
+eval_gate_rationale: "C34/C34.1 stale notification links — link_valid, delete cleanup, UI gating, EntityUnavailableScreen, filter polish; npm test 1103/1103, tsc, eslint, build PASS"
+cycle: C34
+release_commit: "768a422"
+human_gate_2: TBD
+```
+
+| Suite | Command | Result | LINKED_REQ |
+|-------|---------|--------|------------|
+| notification-link | npm test notification-link | PASS | REQ-0082 |
+| notification-link-validity | npm test notification-link-validity | PASS | REQ-0082 |
+| notification-stale-cleanup | npm test notification-stale-cleanup | PASS | REQ-0082 |
+| notification-list-filter | npm test notification-list-filter | PASS | REQ-0082 |
+| serialize-notification-row | npm test serialize-notification-row | PASS | REQ-0082 |
+| full regression | npm test | PASS 1103/1103 | REQ-0082 |
+| typecheck | npx tsc --noEmit | PASS | REQ-0082 |
+| lint | npm run lint | PASS | REQ-0082 |
+| release build | npm run build | PASS | REQ-0082 |
+
+**EvalGate (C34 active):** PASS (automated) — Human Gate TBD before archive.

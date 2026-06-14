@@ -1,6 +1,6 @@
 # Agile V Bootstrap — HealthCal Pro
 
-<!-- Framework initialization + cycle index | Agile V v1.4 | Last refresh: 2026-06-11 (C30 activation) -->
+<!-- Framework initialization + cycle index | Agile V v1.4 | Last refresh: 2026-06-13 (C34.1 activation) -->
 
 ## Infinity Loop (SCOPE-V)
 
@@ -31,8 +31,8 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 | 2 | `config.json` | Project metadata, cycle, authority matrix, verification commands | ✓ |
 | 3 | `POLICY.yaml` | Policy-as-code (versioned) | ✓ v1.0.0 |
 | 4 | `STATE.md` | Current cycle, phase, stage — **read first on resume** | ✓ |
-| 5 | `REQUIREMENTS.md` | Canonical REQ-XXXX + traceability index | ✓ REQ-0001..0078 |
-| 6 | `BUILD_MANIFEST.md` | ART-XXXX → code paths | ✓ ART-0001..0406 |
+| 5 | `REQUIREMENTS.md` | Canonical REQ-XXXX + traceability index | ✓ REQ-0001..0082 |
+| 6 | `BUILD_MANIFEST.md` | ART-XXXX → code paths | ✓ ART-0001..0431 |
 | 7 | `TEST_SPEC.md` | TC-XXXX (requirements-derived) | ✓ TC-0001..0052 |
 | 8 | `VALIDATION_SUMMARY.md` | VER-XXXX results + EvalGate lines | ✓ |
 | 9 | `ATM.md` | REQ → ART → VER matrix | ✓ |
@@ -157,9 +157,42 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 | C18–C22 | Org CP list/detail/dialog/billing/audit | REQ-0064..0065 | pending | living |
 | C23–C23.1 | Org members parity + filter toolbar | REQ-0066..0067 | pending | living |
 | C24 | Rich filter dropdowns | REQ-0068 | pending | living |
-| **C25** | **Filter label DRY + DoctorFilterSelect** (active) | REQ-0069 | gate TBD | living |
+| **C25** | Filter label DRY + DoctorFilterSelect | REQ-0069 | gate TBD | living |
+| C31 | CP invoice column merge | REQ-0079 | pending | living |
+| C32 | CP appointment-management parity | REQ-0080 | pending | living |
+| C33 | CP notifications parity | REQ-0081 | `378a88d` | living |
+| **C34 / C34.1** | **Stale notification links + filter polish** | **REQ-0082** | **`768a422`** | **living** |
 
 ---
+
+## Next Actions
+
+1. Approve **GATE-0005..0014** + C8–C34 gates in `APPROVALS.md` as cycles close.
+2. Archive C3–C34 → `cycles/CN/` after each Gate 2.
+3. New work: specify **C35** in `REQUIREMENTS.md` before coding.
+
+## Verification (default)
+
+```bash
+npm test && npx tsc --noEmit && npm run lint && npm run build
+```
+
+Current baseline: **1103** tests, **223** files (2026-06-13) · HEAD `768a422`.
+
+---
+
+## Infinity Loop Session Activation (2026-06-13 — C34.1 refresh)
+
+| Step | Artifact | Status |
+|------|----------|--------|
+| 1 | Load agile-v-core + pipeline + lifecycle + SKILLS.md | ✓ |
+| 2 | STATE.md C34.1 shipped · CHECKPOINTS clear | ✓ |
+| 3 | REQUIREMENTS REQ-0001..0082 · BUILD_MANIFEST ART-0431 | ✓ |
+| 4 | EVAL_RESULTS ER-C34-VERIFY PASS | ✓ |
+| 5 | Verify npm test 1103/1103 tsc lint build | ✓ |
+| 6 | `.cursor/rules/agile-v-infinity-loop.mdc` always on | ✓ |
+| 7 | `CHECKPOINTS.md` — no PENDING HITL | ✓ |
+| 8 | `AGENTS.md` + `config.json` synced | ✓ |
 
 ## C6 Bootstrap (2026-06-05) — Invoice violet + visit location
 
@@ -246,31 +279,3 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 | 3 | Code on `main` | ✓ `5d16082` |
 | 4 | Automated verify | ✓ **940/940** (185 files), tsc, lint, build |
 | 5 | Gates | ⏳ TBD |
-
-## Next Actions
-
-1. Approve **GATE-0005..0014** + C8–C30 gates in `APPROVALS.md` as cycles close.
-2. Archive C3–C30 → `cycles/CN/` after each Gate 2.
-3. New work: specify **C31** in `REQUIREMENTS.md` before coding.
-
-## Verification (default)
-
-```bash
-npm test && npx tsc --noEmit && npm run lint && npm run build
-```
-
-Current baseline: **1057** tests, **213** files (2026-06-11) · HEAD `fe84f2b`.
-
----
-
-## Infinity Loop Session Activation (2026-06-11 — C30 refresh)
-
-| Step | Artifact | Status |
-|------|----------|--------|
-| 1 | Load agile-v-core + pipeline + lifecycle + SKILLS.md | ✓ |
-| 2 | STATE.md C30 shipped · CHECKPOINTS clear | ✓ |
-| 3 | REQUIREMENTS REQ-0001..0078 · BUILD_MANIFEST ART-0406 | ✓ |
-| 4 | EVAL_RESULTS ER-C30-VERIFY PASS | ✓ |
-| 5 | Verify npm test 1057/1057 tsc lint build | ✓ |
-| 6 | `.cursor/rules/agile-v-infinity-loop.mdc` always on | ✓ |
-| 7 | `CHECKPOINTS.md` — no PENDING HITL | ✓ |
