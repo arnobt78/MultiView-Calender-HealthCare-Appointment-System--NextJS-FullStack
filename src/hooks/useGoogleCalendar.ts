@@ -12,6 +12,7 @@ import {
   sortGoogleCalendarEventsByStart,
 } from "@/lib/google-calendar-display";
 import type { GoogleCalendarStatus } from "@/types/google-calendar";
+import type { ApiError } from "@/types/api";
 
 export type { GoogleCalendarEvent, GoogleCalendarStatus } from "@/types/google-calendar";
 
@@ -28,8 +29,17 @@ export function useGoogleCalendar({ enabled = true }: { enabled?: boolean } = {}
           "/api/calendar/sync"
         );
         return { connected: true, events: data.events || [] };
-      } catch {
-        return { connected: false, events: [] };
+      } catch (err: unknown) {
+        const status = (err as ApiError).statusCode;
+        // 404 = no token record (genuinely not connected).
+        // 401 = session expired (treat as not connected so UI reflects reality).
+        // Any other status (500, network) = transient — throw so TanStack Query retries
+        // and the UI keeps the last-known-good cached state instead of falsely
+        // flipping to "Not connected".
+        if (status === 404 || status === 401) {
+          return { connected: false, events: [] };
+        }
+        throw err;
       }
     },
     enabled,

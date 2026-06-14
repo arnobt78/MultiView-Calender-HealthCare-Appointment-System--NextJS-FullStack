@@ -27,6 +27,7 @@ export async function GET() {
       where: { user_id: sessionUser.userId },
     });
 
+    // No token record → genuinely not connected (client should flip UI to disconnected).
     if (!tokenRecord) {
       return NextResponse.json({ error: "Google Calendar not connected", connected: false }, { status: 404 });
     }
@@ -44,9 +45,16 @@ export async function GET() {
     );
 
     const calendarId = tokenRecord.calendar_id || "primary";
-    const events = await listGoogleEvents(accessToken, calendarId);
 
-    return NextResponse.json({ events, connected: true });
+    try {
+      const events = await listGoogleEvents(accessToken, calendarId);
+      return NextResponse.json({ events, connected: true });
+    } catch (eventsError: unknown) {
+      // Token is valid but Google API call failed (rate-limit, transient, scope issue).
+      // Return connected=true with empty events — token exists, user is still connected.
+      console.error("Google Calendar events fetch error:", eventsError);
+      return NextResponse.json({ connected: true, events: [] });
+    }
   } catch (error: unknown) {
     console.error("Google Calendar sync GET error:", error);
     return NextResponse.json({ error: "Failed to fetch calendar events" }, { status: 500 });
