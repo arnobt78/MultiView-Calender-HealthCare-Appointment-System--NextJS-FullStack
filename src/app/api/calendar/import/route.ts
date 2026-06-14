@@ -9,6 +9,7 @@ import { getSessionUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { uploadMetaSchema } from "@/lib/schemas/upload";
 import { zodBadRequest } from "@/lib/schemas/parse";
+import { resolveCalendarImportTreatingPhysicianId } from "@/lib/calendar-import";
 import { redis } from "@/lib/redis";
 
 interface ParsedEvent {
@@ -124,7 +125,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No valid events found in ICS file" }, { status: 400 });
     }
 
-    // Create appointments from events
+    const treatingPhysicianId = resolveCalendarImportTreatingPhysicianId(
+      formData.get("treating_physician_id"),
+      sessionUser.userId
+    );
+
     const created = await prisma.appointment.createMany({
       data: events.map((event) => ({
         title: event.summary,
@@ -133,7 +138,7 @@ export async function POST(request: NextRequest) {
         notes: event.description || null,
         location: event.location || null,
         owner_id: sessionUser.userId,
-        treating_physician_id: sessionUser.userId,
+        treating_physician_id: treatingPhysicianId,
         status: "pending",
       })),
     });

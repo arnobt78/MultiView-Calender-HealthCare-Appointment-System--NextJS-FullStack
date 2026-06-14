@@ -19,6 +19,14 @@ vi.mock("@/context/InvoiceFormDialogContext", () => ({
   useInvoiceFormDialogOptional: () => null,
 }));
 
+vi.mock("@/context/GoogleCalendarSyncContext", () => ({
+  useGoogleCalendarSyncOptional: () => ({
+    isConnected: false,
+    syncToGoogle: vi.fn(),
+    syncingAppointmentId: null,
+  }),
+}));
+
 vi.mock("@/components/shared/AppointmentActionsMenu", () => ({
   AppointmentActionsMenu: () => <button type="button">menu</button>,
 }));

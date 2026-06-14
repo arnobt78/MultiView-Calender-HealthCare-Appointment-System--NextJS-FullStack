@@ -13,6 +13,7 @@ type DoctorsDirectoryCachePayload =
   | DoctorsDirectoryResponse
   | { doctors: DoctorPrefetchRow[] };
 import type { UserListFilters, UsersListResponse } from "@/hooks/useUsers";
+import type { GoogleCalendarStatus } from "@/types/google-calendar";
 import {
   CP_ADMIN_USERS_FILTERS,
   CP_DOCTOR_USERS_FILTERS,
@@ -129,7 +130,7 @@ export function seedInvitationsCacheFromSsr(
 
 export function seedGoogleCalendarStatusCacheFromSsr(
   queryClient: QueryClient,
-  status: { connected: boolean; events: unknown[] } | null | undefined
+  status: GoogleCalendarStatus | null | undefined
 ): void {
   if (status == null) return;
   seedIfAbsent(queryClient, [...queryKeys.googleCalendar.root, "status"] as const, status);

@@ -322,11 +322,30 @@
 | ART-0434 | C35 | REQ-0083 | Notifications header session lead removed | built |
 | ART-0435 | C35 | REQ-0083 | AppointmentDialogGeneralSection Select controlled fix | built |
 | ART-0436 | C35.1 | REQ-0083 | CSV export Link Valid audit column + file comment fix | built |
+| ART-0437 | C36 | REQ-0084 | OAuth redirect + google-calendar-routes | built |
+| ART-0438 | C36 | REQ-0084 | Glass panel components + ui-classes | built |
+| ART-0439 | C36 | REQ-0084 | Events DataTable + stats strip | built |
+| ART-0440 | C36 | REQ-0084 | Header actions + invalidateGoogleCalendarAndCrossTab | built |
+| ART-0441 | C36 | REQ-0084 | Advanced ICS import + treating_physician_id API | built |
+| ART-0442 | C36 | REQ-0084 | google-calendar-display + tests | built |
+| ART-0445 | C36.1 | REQ-0085 | Prisma google_calendar_event_id + updateGoogleEvent | built |
+| ART-0446 | C36.1 | REQ-0085 | google-calendar-sync-appointment lib | built |
+| ART-0447 | C36.1 | REQ-0085 | Auto-sync appointment POST/PATCH/DELETE routes | built |
+| ART-0448 | C36.1 | REQ-0085 | Manual sync UI (menu, card, CP columns, detail bar) | built |
+| ART-0449 | C36.1 | REQ-0085 | calendar-import resolver + OAuth param wiring | built |
+| ART-0450 | C36.1 | REQ-0085 | calendar-import + sync-appointment + routes tests | built |
+| ART-0451 | C36.2 | REQ-0086 | unlink + runAppointmentGoogleCalendarSideEffects | built |
+| ART-0452 | C36.2 | REQ-0086 | PATCH/PUT/DELETE route parity | built |
+| ART-0453 | C36.2 | REQ-0086 | GoogleCalendarSyncContext + AppProviders | built |
+| ART-0454 | C36.2 | REQ-0086 | Dashboard SSR gcal seed + maybeInvalidate helper | built |
+| ART-0455 | C36.2 | REQ-0086 | AppointmentActionsMenu sync test + SyncInfoCard copy | built |
+| ART-0456 | C36.2.1 | REQ-0087 | Appointment detail pages gcal SSR prefetch | built |
+| ART-0457 | C36.2.1 | REQ-0087 | AppointmentDetailScreenShared gcal cache seed | built |
 
 ## Verification Commands (project default)
 
 ```bash
-npm test        # 1112 passed (C35.1, 2026-06-14)
+npm test        # 1140 passed (C36.2.1, 2026-06-14)
 npx tsc --noEmit
 npm run lint
 npm run build

@@ -4,10 +4,10 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-14)
 
+- **C36.2.1 (REQ-0087):** Appointment detail SSR gcal seed — sync footer visible on first paint when deep-linking.
+- **C36.2 (REQ-0086):** Cancel/DELETE unlink · PUT sync parity · `GoogleCalendarSyncProvider` · dashboard SSR seed · targeted invalidation.
 - **C35.1 (REQ-0083):** CSV export `Link Valid` audit column · NotificationsManagement comment fix.
-- **C35 (REQ-0083):** Clickable Notification column · no Link col · disabled empty actions · no header session lead · Select fix.
-- **C34.1:** CP link filter `link_valid` · DELETE awaits stale-link cleanup.
-- **Verify:** **1112/1112** · tsc · lint · build PASS.
+- **Verify:** **1140/1140** · tsc · lint · build PASS.
 
 ## Never / Always
 
@@ -35,6 +35,13 @@ Cross-tab: `query-cache-cross-tab.ts`.
 - **Export:** `export-notifications-csv.ts` — `Link` + `Link Valid` audit cols (C35.1)
 - **SSR:** `prefetchNotifications` → `listEnrichedNotificationsForUser` · SSE invalidates → refetch enriched rows
 
+## Google Calendar (C36 / C36.1 / C36.2)
+
+- **Path:** `/control-panel/google-calendar` · `GoogleCalendarSettings` + `google-calendar/*` panels
+- **OAuth:** callback → CP `?gcal=connected` · `google-calendar-routes.ts` · `invalidateGoogleCalendarAndCrossTab`
+- **Sync:** `google-calendar-sync-appointment.ts` · cancel/DELETE unlink · PUT/PATCH shared side-effects · `GoogleCalendarSyncContext` (one hook)
+- **Hook:** `useGoogleCalendar` (CP page) · `useGoogleCalendarSyncOptional` (cards/menus/detail) · dashboard + appointment detail SSR seed
+
 ## Key paths
 
 - CP lists: `cp-clinical-list-table-classes.ts` · `notification-type-display.ts`
@@ -43,7 +50,7 @@ Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Agile V
 
-`.agile-v/STATE.md` · **C35.1 shipped** (REQ-0083).
+`.agile-v/STATE.md` · **C36.2.1 shipped** (REQ-0087).
 
 ## Principle
 

@@ -22,7 +22,9 @@ import type { Category, Patient, AppointmentAssignee } from "@/types/types";
 import type { FullAppointment } from "@/hooks/useAppointments";
 import type { DashboardAccessRow } from "@/lib/query-fetchers";
 import type { Invoice } from "@/hooks/usePayments";
+import type { GoogleCalendarStatus } from "@/types/google-calendar";
 import { seedInvoicesListCacheFromSsr } from "@/lib/invoices-query-ssr-seed";
+import { seedGoogleCalendarStatusCacheFromSsr } from "@/lib/cp-list-query-ssr-seed";
 
 const views = ["List", "Day", "Week", "Month"] as const;
 export type ViewType = (typeof views)[number];
@@ -46,6 +48,8 @@ type HomePageProps = {
   initialDashboardAccessAccepted?: DashboardAccessRow[] | null;
   /** SSR invoice list — calendar appointment invoice badges (useAppointmentInvoiceDisplayMap). */
   initialInvoices?: Invoice[] | null;
+  /** Staff Google Calendar connection flag — seeds sync menu visibility on calendar cards. */
+  initialGoogleCalendarStatus?: GoogleCalendarStatus | null;
 };
 
 const HomePage: React.FC<HomePageProps> = ({
@@ -55,6 +59,7 @@ const HomePage: React.FC<HomePageProps> = ({
   initialAppointments,
   initialDashboardAccessAccepted,
   initialInvoices,
+  initialGoogleCalendarStatus,
 }) => {
   const queryClient = useQueryClient();
 
@@ -89,6 +94,7 @@ const HomePage: React.FC<HomePageProps> = ({
       );
     }
     seedInvoicesListCacheFromSsr(queryClient, initialInvoices ?? undefined);
+    seedGoogleCalendarStatusCacheFromSsr(queryClient, initialGoogleCalendarStatus ?? undefined);
   }, [
     queryClient,
     initialCategories,
@@ -97,6 +103,7 @@ const HomePage: React.FC<HomePageProps> = ({
     initialAppointments,
     initialDashboardAccessAccepted,
     initialInvoices,
+    initialGoogleCalendarStatus,
   ]);
   const searchParams = useSearchParams();
   const initialView = useMemo(

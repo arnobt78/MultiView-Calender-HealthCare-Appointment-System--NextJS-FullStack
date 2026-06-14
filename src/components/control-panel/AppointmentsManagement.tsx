@@ -9,6 +9,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarPlus, Download } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useGoogleCalendarSyncOptional } from "@/context/GoogleCalendarSyncContext";
 import { useAppointments } from "@/hooks/useAppointments";
 import { useCategories } from "@/hooks/useCategories";
 import { useUsers } from "@/hooks/useUsers";
@@ -74,6 +75,8 @@ function AppointmentsManagementInner() {
     toggleStatus,
     cancelAppointment,
   } = useAppointments();
+  const { isConnected: isGoogleConnected, syncToGoogle, syncingAppointmentId } =
+    useGoogleCalendarSyncOptional();
   const { categories } = useCategories();
   const { data: doctorsData } = useUsers(CP_DOCTOR_USERS_FILTERS);
   const doctorById = useMemo(
@@ -151,8 +154,11 @@ function AppointmentsManagementInner() {
         onToggleStatus: (id, next) => toggleStatus({ id, status: next }),
         onDelete: deleteAppointment,
         onCancel: cancelAppointment,
+        showSyncToGoogle: isGoogleConnected,
+        onSyncToGoogle: syncToGoogle,
+        syncingAppointmentId,
       }),
-    [doctorById, invoiceDisplayByAppt, invoiceByAppt, router, toggleStatus, deleteAppointment, cancelAppointment, user]
+    [doctorById, invoiceDisplayByAppt, invoiceByAppt, router, toggleStatus, deleteAppointment, cancelAppointment, user, isGoogleConnected, syncToGoogle, syncingAppointmentId]
   );
 
   const metricsValue = useMemo(

@@ -10,6 +10,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { exchangeCodeForTokens } from "@/lib/google-calendar";
 import {
+  googleCalendarConnectedReturnUrl,
+  googleCalendarFailedReturnUrl,
+} from "@/lib/google-calendar-routes";
+import {
   GCAL_OAUTH_COOKIE_NAME,
   verifyCalendarOAuthState,
   oauthStateCookieOptions,
@@ -57,12 +61,12 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const res = NextResponse.redirect(new URL("/?gcal=connected", request.url));
+    const res = NextResponse.redirect(googleCalendarConnectedReturnUrl(request.url));
     clearGcalCookie(res);
     return res;
   } catch (error: unknown) {
     console.error("Google Calendar callback error:", error);
-    const res = NextResponse.redirect(new URL("/control-panel?error=gcal_failed", request.url));
+    const res = NextResponse.redirect(googleCalendarFailedReturnUrl(request.url));
     clearGcalCookie(res);
     return res;
   }

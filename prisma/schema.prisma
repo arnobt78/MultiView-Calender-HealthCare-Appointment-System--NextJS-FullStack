@@ -187,6 +187,8 @@ model Appointment {
   duration_minutes      Int?
   /// Video / telehealth meeting URL — shown as "Join Call" button when is_telehealth = true
   telehealth_link       String?  @db.Text
+  /// Google Calendar event id after push — enables upsert on update instead of duplicate inserts.
+  google_calendar_event_id String? @db.Text
   created_by_id         String?  @map("created_by") @db.Uuid
   updated_by_id         String?  @map("updated_by") @db.Uuid
 

@@ -44,7 +44,7 @@ export type BuildNotificationManagementColumnsOpts = {
 };
 
 const navigableTitleClass =
-  "line-clamp-1 min-w-0 font-medium text-sky-800 hover:text-sky-900";
+  "line-clamp-1 min-w-0 font-medium text-sky-700 hover:text-sky-800";
 
 /** Notification body — clickable when link_valid; static when target deleted. */
 function NotificationContentCell({

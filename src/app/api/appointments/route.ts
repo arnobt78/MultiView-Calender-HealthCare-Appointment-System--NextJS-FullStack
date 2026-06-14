@@ -29,6 +29,7 @@ import { appointmentDetailHref, appointmentNotificationLink } from "@/lib/entity
 import { buildAppointmentDetailApiPayload } from "@/lib/appointment-detail-api";
 import { redis } from "@/lib/redis";
 import { assertDoctorActiveForBooking, InactiveDoctorBookingError } from "@/lib/doctor-active-booking";
+import { syncAppointmentToGoogleCalendar } from "@/lib/google-calendar-sync-appointment";
 import { format } from "date-fns";
 import { portalAppointmentListInclude } from "@/lib/portal-appointment-prisma-include";
 
@@ -320,6 +321,12 @@ export async function POST(req: NextRequest) {
       }
     } catch {
       // Notification failures are non-critical — swallow silently.
+    }
+
+    try {
+      await syncAppointmentToGoogleCalendar(sessionUser.userId, appointment);
+    } catch {
+      // Google sync failures must not block appointment create.
     }
 
     const accessSession = {

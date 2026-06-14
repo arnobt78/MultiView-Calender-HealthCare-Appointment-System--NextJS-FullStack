@@ -1,6 +1,20 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-14 — C35.1 + C35 notifications UX)
+## Latest (2026-06-14 — C36.2.1 appointment detail gcal seed)
+
+**C36.2.1 (REQ-0087):** Staff appointment detail SSR prefetch + `seedGoogleCalendarStatusCacheFromSsr` — sync footer visible on first paint when deep-linking to CP or doctor detail.
+
+**C36.2 (REQ-0086):** Cancel/DELETE unlink · PUT/PATCH shared side-effects · `GoogleCalendarSyncProvider` · dashboard SSR seed · `maybeInvalidateGoogleCalendarIfConnected`.
+
+**C36.1 (REQ-0085):** `google_calendar_event_id` · `syncAppointmentToGoogleCalendar` upsert · auto-sync CRUD · manual sync UI · import resolver · OAuth param helpers.
+
+**C36 (REQ-0084):** CP Google Calendar glass UI — OAuth redirect · events DataTable · advanced ICS import · `invalidateGoogleCalendarAndCrossTab`.
+
+**Key libs:** `google-calendar-sync-appointment.ts` · `GoogleCalendarSyncContext.tsx` · `google-calendar-routes.ts` · `calendar-import.ts` · `components/control-panel/google-calendar/*`.
+
+**Verify:** **1117/1117** · tsc · lint · build.
+
+## Prior (2026-06-14 — C35.1 + C35 notifications UX)
 
 **C35.1 (REQ-0083):** CSV export — raw `Link` retained + `Link Valid` audit column (`yes`/`no` from `link_valid`); `buildNotificationsCsvContent` pure helper; NotificationsManagement file comment updated.
 

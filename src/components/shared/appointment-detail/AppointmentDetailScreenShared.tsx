@@ -40,6 +40,7 @@ import { buildAppointmentLinkedInvoiceColumns } from "@/components/shared/appoin
 import { clinicalEmptyOr } from "@/components/shared/ClinicalTableEmptyDash";
 import { buildStaffDirectoryMap } from "@/lib/staff-directory-cache";
 import { seedUsersListCache, seedInvoicesListCache } from "@/lib/ssr-query-seed";
+import { seedGoogleCalendarStatusCacheFromSsr } from "@/lib/cp-list-query-ssr-seed";
 import {
   APPOINTMENT_DETAIL_ADMIN_USERS_FILTERS,
   APPOINTMENT_DETAIL_DOCTOR_USERS_FILTERS,
@@ -74,6 +75,7 @@ import { usePayments, type Invoice } from "@/hooks/usePayments";
 import { cn } from "@/lib/utils";
 import type { AppointmentAssignee } from "@/types/types";
 import type { AppointmentDetailViewModel } from "@/lib/appointment-detail-view-model";
+import type { GoogleCalendarStatus } from "@/types/google-calendar";
 import {
   clinicianDisplayNameOnly,
   recomputeAppointmentDetailLabels,
@@ -87,6 +89,8 @@ export type AppointmentDetailScreenSharedProps = {
   initialDoctorUsers?: UsersListResponse | null;
   initialAdminUsers?: UsersListResponse | null;
   initialInvoices?: Invoice[] | null;
+  /** Staff Google Calendar connection — seeds sync footer on first paint. */
+  initialGoogleCalendarStatus?: GoogleCalendarStatus | null;
 };
 
 function FieldLabel({
@@ -154,6 +158,7 @@ export function AppointmentDetailScreenShared({
   initialDoctorUsers,
   initialAdminUsers,
   initialInvoices,
+  initialGoogleCalendarStatus,
 }: AppointmentDetailScreenSharedProps) {
   const queryClient = useQueryClient();
   const toneClasses = resolveAppointmentDetailToneClasses(tone);
@@ -180,8 +185,19 @@ export function AppointmentDetailScreenShared({
     if (initialInvoices != null) {
       seedInvoicesListCache(queryClient, initialInvoices);
     }
+    seedGoogleCalendarStatusCacheFromSsr(
+      queryClient,
+      initialGoogleCalendarStatus ?? undefined
+    );
     ancillarySeededRef.current = true;
-  }, [queryClient, appointmentId, initialDoctorUsers, initialAdminUsers, initialInvoices]);
+  }, [
+    queryClient,
+    appointmentId,
+    initialDoctorUsers,
+    initialAdminUsers,
+    initialInvoices,
+    initialGoogleCalendarStatus,
+  ]);
 
   const staffViewer = entityRole === "admin" || entityRole === "doctor";
   const { data: doctorUsers } = useUsers(APPOINTMENT_DETAIL_DOCTOR_USERS_FILTERS, {

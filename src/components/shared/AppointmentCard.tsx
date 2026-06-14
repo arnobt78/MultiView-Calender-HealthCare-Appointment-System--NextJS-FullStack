@@ -66,6 +66,7 @@ import { InvoiceStatusBadge } from "@/components/shared/billing/InvoiceStatusBad
 import type { InvoiceDisplayStatus } from "@/lib/billing-appointment-eligibility";
 import { useInvoiceFormDialogOptional } from "@/context/InvoiceFormDialogContext";
 import { useAuth } from "@/hooks/useAuth";
+import { useGoogleCalendarSyncOptional } from "@/context/GoogleCalendarSyncContext";
 import { canShowCreateInvoiceAction } from "@/lib/appointment-invoice-create-eligibility";
 import { resolveDisplayedVisitFeeCents } from "@/lib/appointment-visit-fee-display";
 
@@ -998,6 +999,8 @@ export function AppointmentCard({
   onTriggerClick,
 }: AppointmentCardProps) {
   const { user: authUser } = useAuth();
+  const { isConnected: isGoogleConnected, syncToGoogle, syncingAppointmentId } =
+    useGoogleCalendarSyncOptional();
   const invoiceDialog = useInvoiceFormDialogOptional();
   const showCreateInvoice = canShowCreateInvoiceAction({
     role: authUser?.role,
@@ -1040,6 +1043,9 @@ export function AppointmentCard({
       onCancel={onCancel}
       onCreateInvoice={handleCreateInvoice}
       showCreateInvoice={Boolean(handleCreateInvoice)}
+      showSyncToGoogle={isGoogleConnected}
+      onSyncToGoogle={syncToGoogle}
+      isSyncingGoogle={syncingAppointmentId === appointment.id}
       triggerClassName="h-8 w-8 rounded-full hover:bg-black/10"
       // Popover: dropdown must render above HoverCardContent z-[60]:
       contentClassName={variant === "popover" ? "w-56 z-[80]" : undefined}

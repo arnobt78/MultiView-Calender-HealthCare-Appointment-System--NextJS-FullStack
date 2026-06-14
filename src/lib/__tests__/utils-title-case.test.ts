@@ -8,9 +8,14 @@ describe("toTitleCaseLabel", () => {
     );
   });
 
-  it("title-cases multi-word stat and section labels", () => {
-    expect(toTitleCaseLabel("avg duration")).toBe("Avg Duration");
-    expect(toTitleCaseLabel("this week")).toBe("This Week");
+  it("preserves `.ics` file extension spelling in titles", () => {
+    expect(toTitleCaseLabel("Import external appointments")).toBe("Import External Appointments");
+    expect(toTitleCaseLabel("Export appointments")).toBe("Export Appointments");
+    expect(toTitleCaseLabel("Import with treating physician")).toBe(
+      "Import With Treating Physician"
+    );
+    expect(toTitleCaseLabel("Import .ics")).toBe("Import .ics");
+    expect(toTitleCaseLabel("Choose .ics file")).toBe("Choose .ics File");
   });
 });
 

@@ -45,6 +45,9 @@ export type BuildAppointmentManagementColumnsOpts = {
   onToggleStatus: (id: string, next: "done" | "pending" | "alert") => void;
   onDelete: (id: string) => void;
   onCancel: (id: string) => void;
+  showSyncToGoogle?: boolean;
+  onSyncToGoogle?: (id: string) => void;
+  syncingAppointmentId?: string | null;
 };
 
 /** CP appointment list — shared DataTable column defs. */
@@ -63,6 +66,9 @@ export function buildAppointmentManagementColumns(
     onToggleStatus,
     onDelete,
     onCancel,
+    showSyncToGoogle = false,
+    onSyncToGoogle,
+    syncingAppointmentId = null,
   } = opts;
 
   return [
@@ -180,6 +186,9 @@ export function buildAppointmentManagementColumns(
             onEdit={() => onEdit(appt.id)}
             onDelete={onDelete}
             onCancel={onCancel}
+            showSyncToGoogle={showSyncToGoogle}
+            onSyncToGoogle={onSyncToGoogle}
+            isSyncingGoogle={syncingAppointmentId === appt.id}
             triggerClassName="h-8 w-8"
           />
         );

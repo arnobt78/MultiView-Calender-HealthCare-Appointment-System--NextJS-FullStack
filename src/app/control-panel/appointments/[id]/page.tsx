@@ -11,7 +11,7 @@ import { isValidUUID } from "@/lib/validation";
 import { resolveAppointmentAccess } from "@/lib/appointment-access";
 import { AppointmentDetailScreen } from "@/components/detail/AppointmentDetailScreen";
 import { EntityUnavailableScreen } from "@/components/shared/EntityUnavailableScreen";
-import { prefetchAppointmentDetailViewModel, prefetchInvoices, prefetchUsersList } from "@/lib/server-prefetch";
+import { prefetchAppointmentDetailViewModel, prefetchInvoices, prefetchUsersList, prefetchGoogleCalendarStatus } from "@/lib/server-prefetch";
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -41,12 +41,13 @@ export default async function ControlPanelAppointmentDetailPage({ params }: Page
     return <EntityUnavailableScreen kind="appointment" variant="control-panel" />;
   }
 
-  const [initialDetail, initialDoctorUsers, initialAdminUsers, initialInvoices] =
+  const [initialDetail, initialDoctorUsers, initialAdminUsers, initialInvoices, initialGoogleCalendarStatus] =
     await Promise.all([
       prefetchAppointmentDetailViewModel(raw, role, level),
       prefetchUsersList({ role: "doctor", limit: 200 }),
       prefetchUsersList({ role: "admin", limit: 50 }),
       prefetchInvoices(sessionUser.userId, role, sessionUser.email),
+      prefetchGoogleCalendarStatus(sessionUser.userId),
     ]);
 
   if (!initialDetail) {
@@ -61,6 +62,7 @@ export default async function ControlPanelAppointmentDetailPage({ params }: Page
       initialDoctorUsers={initialDoctorUsers}
       initialAdminUsers={initialAdminUsers}
       initialInvoices={initialInvoices}
+      initialGoogleCalendarStatus={initialGoogleCalendarStatus}
     />
   );
 }

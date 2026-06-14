@@ -12,6 +12,7 @@ import {
   type QueryCacheCrossTabScope,
 } from "@/lib/query-cache-cross-tab";
 import { queryKeys } from "./query-keys";
+import type { GoogleCalendarStatus } from "@/types/google-calendar";
 import {
   getCategoryIdFromAppointmentCache,
   getPatientIdFromAppointmentCache,
@@ -174,6 +175,23 @@ export async function invalidateDashboardAccessData(queryClient: QueryClient) {
 
 export async function invalidateGoogleCalendarData(queryClient: QueryClient) {
   await queryClient.invalidateQueries({ queryKey: queryKeys.googleCalendar.root });
+}
+
+/** Connect/disconnect/sync — bust status in other tabs. */
+export async function invalidateGoogleCalendarAndCrossTab(queryClient: QueryClient) {
+  await invalidateGoogleCalendarData(queryClient);
+  publishQueryCacheCrossTab(["googleCalendar"]);
+}
+
+/** After cancel/delete removed a remote Google event — refresh pulled events when connected. */
+export async function maybeInvalidateGoogleCalendarIfConnected(
+  queryClient: QueryClient
+): Promise<void> {
+  const statusKey = [...queryKeys.googleCalendar.root, "status"] as const;
+  const status = queryClient.getQueryData<GoogleCalendarStatus>(statusKey);
+  if (status?.connected) {
+    await invalidateGoogleCalendarAndCrossTab(queryClient);
+  }
 }
 
 export async function invalidateDashboardOverview(queryClient: QueryClient) {

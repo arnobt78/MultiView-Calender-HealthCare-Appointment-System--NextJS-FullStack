@@ -189,6 +189,22 @@ const TAB_HEADER_ACTION_SHELLS: Partial<
       variant: "primary",
     },
   ],
+  "google-calendar": [
+    {
+      label: toTitleCaseLabel("Refresh"),
+      iconKey: "refresh",
+      className: skyGlassBackButtonClass,
+      slot: "actions",
+      variant: "secondary",
+    },
+    {
+      label: "Export ICS",
+      iconKey: "download",
+      className: violetGlassImportButtonClass,
+      slot: "actions",
+      variant: "secondary",
+    },
+  ],
 };
 
 export function getControlPanelHeaderActionShells(

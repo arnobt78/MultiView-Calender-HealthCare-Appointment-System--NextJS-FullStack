@@ -14,6 +14,8 @@ type EntityListSearchInputProps = {
   placeholder: string;
   ariaLabel: string;
   className?: string;
+  /** Inactive when Google Calendar is not connected — toolbar chrome stays visible. */
+  disabled?: boolean;
 };
 
 export function EntityListSearchInput({
@@ -22,6 +24,7 @@ export function EntityListSearchInput({
   placeholder,
   ariaLabel,
   className,
+  disabled = false,
 }: EntityListSearchInputProps) {
   return (
     <div className={cn("relative min-w-0 w-full flex-1 sm:max-w-md sm:flex-1", className)}>
@@ -34,6 +37,7 @@ export function EntityListSearchInput({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         aria-label={ariaLabel}
+        disabled={disabled}
         className={entityListSearchInputClass}
       />
     </div>

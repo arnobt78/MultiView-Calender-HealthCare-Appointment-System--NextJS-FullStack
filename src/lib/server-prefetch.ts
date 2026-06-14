@@ -121,6 +121,7 @@ import { getUserRole, isPatientRole } from "@/lib/rbac";
 import type { InvoiceBillingTotalsPayload } from "@/lib/invoice-billing-totals";
 import { portalAppointmentListInclude } from "@/lib/portal-appointment-prisma-include";
 import { listEnrichedNotificationsForUser } from "@/lib/notification-link-validity";
+import type { GoogleCalendarStatus } from "@/types/google-calendar";
 
 // ─── Shared types ─────────────────────────────────────────────────────────────
 
@@ -1761,7 +1762,7 @@ export async function prefetchInvitationsForUser(
 /** Token presence only — avoids Google API latency on SSR; client refetches events later. */
 export async function prefetchGoogleCalendarStatus(
   userId: string
-): Promise<{ connected: boolean; events: unknown[] } | null> {
+): Promise<GoogleCalendarStatus | null> {
   try {
     const tokenRecord = await prisma.googleCalendarToken.findUnique({
       where: { user_id: userId },

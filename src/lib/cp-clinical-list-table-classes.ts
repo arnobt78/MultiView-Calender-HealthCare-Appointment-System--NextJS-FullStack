@@ -62,3 +62,13 @@ export const cpClinicalListNotificationContentColumnShellClass =
 
 export const cpClinicalListNotificationReceivedColumnShellClass =
   "w-[18%] min-w-[10rem] whitespace-nowrap align-top";
+
+/** CP Google Calendar events preview column shells. */
+export const cpClinicalListGoogleCalendarEventColumnShellClass =
+  "w-[28%] min-w-[14rem] min-w-0 whitespace-normal align-top";
+
+export const cpClinicalListGoogleCalendarTypeColumnShellClass =
+  "w-[10%] min-w-[8rem] whitespace-normal align-top";
+
+export const cpClinicalListGoogleCalendarStatusColumnShellClass =
+  "w-[10%] min-w-[8.5rem] whitespace-normal align-top";

@@ -4,6 +4,7 @@ import { QueryProvider } from "./QueryProvider";
 import { DateProvider } from "@/context/DateContext";
 import { AppointmentColorProvider } from "@/context/AppointmentColorContext";
 import { AppointmentDataProvider } from "@/context/AppointmentDataContext";
+import { GoogleCalendarSyncProvider } from "@/context/GoogleCalendarSyncContext";
 import { CalendarFiltersProvider } from "@/context/CalendarFiltersContext";
 import { DoctorDisplayProvider } from "@/context/DoctorDisplayContext";
 import { ToastProvider } from "./ToastProvider";
@@ -25,6 +26,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
         <DateProvider>
           <AppointmentColorProvider>
             <AppointmentDataProvider>
+              <GoogleCalendarSyncProvider>
               <CalendarFiltersProvider>
                 <TooltipProvider>
                   {children}
@@ -33,6 +35,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
                   <ToastProvider />
                 </TooltipProvider>
               </CalendarFiltersProvider>
+              </GoogleCalendarSyncProvider>
             </AppointmentDataProvider>
           </AppointmentColorProvider>
         </DateProvider>

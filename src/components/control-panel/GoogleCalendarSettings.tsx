@@ -1,193 +1,169 @@
 "use client";
 
 /**
- * GoogleCalendarSettings — SSR status seed + useCpListBodyLoading; card chrome always mounted.
+ * GoogleCalendarSettings — C36 CP glass parity (REQ-0084):
+ * SSR status seed + useCpListBodyLoading; static card chrome; dynamic values pulse.
+ * OAuth return handled via ?gcal=connected → invalidate + toast + clean URL.
  */
 
-import { useRef, useState } from "react";
+import { useEffect } from "react";
+import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import { Download, RefreshCw } from "lucide-react";
 import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "@/components/ui/separator";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
-import {
-  buildGoogleCalendarDisconnectConfirmSubtitle,
-  DISCONNECT_GOOGLE_CALENDAR_CONFIRM_TITLE,
-} from "@/lib/confirm-delete-dialog-copy";
-import {
-  CalendarCheck2,
-  CalendarX2,
-  Download,
-  Upload,
-  RefreshCw,
-  ExternalLink,
-  Calendar,
-} from "lucide-react";
-import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
+import { ControlPanelPageChrome } from "@/components/control-panel/ControlPanelPageChrome";
+import { ControlPanelHeaderSubtitle } from "@/components/control-panel/ControlPanelHeaderSubtitle";
+import { ControlPanelHeaderGlassButton } from "@/components/control-panel/ControlPanelHeaderGlassButton";
+import { GoogleCalendarConnectionCard } from "@/components/control-panel/google-calendar/GoogleCalendarConnectionCard";
+import { GoogleCalendarStatsRow } from "@/components/control-panel/google-calendar/GoogleCalendarStatsRow";
+import { GoogleCalendarEventsPanel } from "@/components/control-panel/google-calendar/GoogleCalendarEventsPanel";
+import { GoogleCalendarIcsPanel } from "@/components/control-panel/google-calendar/GoogleCalendarIcsPanel";
+import { GoogleCalendarSyncInfoCard } from "@/components/control-panel/google-calendar/GoogleCalendarSyncInfoCard";
+import { GoogleCalendarAdvancedImportCard } from "@/components/control-panel/google-calendar/GoogleCalendarAdvancedImportCard";
 import { useCpListBodyLoading } from "@/lib/cp-list-body-loading";
 import { queryKeys } from "@/lib/query-keys";
+import { invalidateGoogleCalendarAndCrossTab } from "@/lib/query-client";
+import { notify } from "@/lib/notify";
+import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
+import {
+  skyGlassBackButtonClass,
+  violetGlassImportButtonClass,
+} from "@/lib/calendar-header-action-styles";
+import { googleCalendarIcsCopy } from "@/lib/google-calendar-ui-classes";
+import { cn } from "@/lib/utils";
+import { isGoogleCalendarOAuthConnectedParam } from "@/lib/google-calendar-routes";
 
 export default function GoogleCalendarSettings() {
+  const queryClient = useQueryClient();
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const {
     isConnected,
+    events,
+    eventCount,
+    upcomingCount,
     isLoading,
+    isFetching,
+    refreshStatus,
     disconnect,
     isDisconnecting,
     importICS,
+    importICSWithDoctor,
     isImporting,
     exportUrl,
   } = useGoogleCalendar();
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [disconnectConfirmOpen, setDisconnectConfirmOpen] = useState(false);
   const statusKey = [...queryKeys.googleCalendar.root, "status"] as const;
   const listBodyLoading = useCpListBodyLoading(statusKey, isLoading);
 
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (file) importICS(file);
-    if (e.target) e.target.value = "";
-  }
+  /** OAuth success — bust cache, toast, strip query param (stay on CP tab). */
+  useEffect(() => {
+    if (isGoogleCalendarOAuthConnectedParam(searchParams)) {
+      void invalidateGoogleCalendarAndCrossTab(queryClient).then(() => refreshStatus());
+      notify.crud({
+        action: "created",
+        entity: "Google Calendar",
+        detail: "Your Google Calendar is now connected.",
+      });
+      router.replace(pathname, { scroll: false });
+      return;
+    }
+    const error = searchParams.get("error");
+    if (error === "gcal_failed") {
+      notify.error({
+        title: "Google Calendar connection failed",
+        subtitle: "Please try connecting again.",
+      });
+      router.replace(pathname, { scroll: false });
+    }
+  }, [searchParams, queryClient, router, pathname, refreshStatus]);
+
+  const handleRefresh = () => {
+    void refreshStatus();
+  };
+
+  const headerActions = (
+    <div className="flex w-full flex-wrap items-center justify-end gap-2 self-center">
+      <ControlPanelHeaderGlassButton
+        glassClassName={cn(skyGlassBackButtonClass, "disabled:opacity-50")}
+        icon={isFetching ? undefined : RefreshCw}
+        disabled={isFetching}
+        aria-busy={isFetching}
+        onClick={handleRefresh}
+      >
+        {isFetching ? (
+          <>
+            <RefreshCw className="shrink-0 animate-spin" aria-hidden />
+            Refreshing…
+          </>
+        ) : (
+          "Refresh"
+        )}
+      </ControlPanelHeaderGlassButton>
+      <Link
+        href={exportUrl}
+        download="healthcalpro-appointments.ics"
+        className={cn(violetGlassImportButtonClass, "inline-flex h-10 items-center gap-2 px-4 no-underline")}
+      >
+        <Download className="h-4 w-4 shrink-0" aria-hidden />
+        {googleCalendarIcsCopy.exportHeaderButton}
+      </Link>
+    </div>
+  );
+
+  const subtitleNode = (
+    <ControlPanelHeaderSubtitle lead="Connect Google Calendar for two-way sync with HealthCal Pro." />
+  );
 
   return (
-    <div className={controlPanelSectionRootClass}>
-      {/* Status card — card frame + title stay static; badge + description pulse while loading */}
-      <Card className="rounded-[28px] border bg-gradient-to-br from-sky-500/10 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(2,132,199,0.1)]">
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            Connection Status
-            {/* Status badge: pulse while loading */}
-            {listBodyLoading ? (
-              <Skeleton className="h-5 w-24 rounded-full" />
-            ) : (
-              <Badge className={isConnected ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"}>
-                {isConnected ? "Connected" : "Not connected"}
-              </Badge>
-            )}
-          </CardTitle>
-          {/* Description: pulse while loading */}
-          {listBodyLoading ? (
-            <Skeleton className="h-4 w-4/5 rounded mt-1" />
-          ) : (
-            <CardDescription>
-              {isConnected
-                ? "Your Google Calendar is linked. Appointments can be synced bi-directionally."
-                : "Connect Google Calendar to sync appointments and receive reminders in Google Calendar."}
-            </CardDescription>
-          )}
-        </CardHeader>
-        <CardContent className="flex flex-wrap gap-2">
-          {listBodyLoading ? (
-            /* Action button: pulse while loading */
-            <Skeleton className="h-9 w-48 rounded-lg" />
-          ) : !isConnected ? (
-            <Button asChild className="gap-2">
-              <a href="/api/calendar/connect">
-                <CalendarCheck2 className="h-4 w-4" />
-                Connect Google Calendar
-                <ExternalLink className="h-3 w-3" />
-              </a>
-            </Button>
-          ) : (
-            <>
-              <Button
-                variant="destructive"
-                className="gap-2"
-                disabled={isDisconnecting}
-                onClick={() => setDisconnectConfirmOpen(true)}
-              >
-                <CalendarX2 className="h-4 w-4" />
-                {isDisconnecting ? "Disconnecting…" : "Disconnect"}
-              </Button>
-              <ConfirmActionDialog
-                open={disconnectConfirmOpen}
-                onOpenChange={setDisconnectConfirmOpen}
-                variant="warning"
-                title={DISCONNECT_GOOGLE_CALENDAR_CONFIRM_TITLE}
-                subtitle={buildGoogleCalendarDisconnectConfirmSubtitle()}
-                confirmLabel="Disconnect"
-                cancelLabel="Cancel"
-                confirmDisabled={isDisconnecting}
-                onConfirm={() => {
-                  disconnect();
-                  setDisconnectConfirmOpen(false);
-                }}
-              />
-            </>
-          )}
-        </CardContent>
-      </Card>
+    <>
+      <ControlPanelPageChrome
+        tab="google-calendar"
+        actions={headerActions}
+        description={subtitleNode}
+      />
+      <div className={controlPanelSectionRootClass}>
+        <GoogleCalendarStatsRow
+          isConnected={isConnected}
+          eventCount={eventCount}
+          upcomingCount={upcomingCount}
+          listBodyLoading={listBodyLoading}
+          isFetching={isFetching}
+        />
 
-      <Separator />
+        <GoogleCalendarConnectionCard
+          isConnected={isConnected}
+          listBodyLoading={listBodyLoading}
+          isDisconnecting={isDisconnecting}
+          onDisconnect={disconnect}
+        />
 
-      {/* ICS Import / Export — always fully static (no API data involved) */}
-      <div className="grid sm:grid-cols-2 gap-4">
-        <Card className="rounded-[28px] border bg-gradient-to-br from-emerald-500/8 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(16,185,129,0.08)]">
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Upload className="h-4 w-4" />
-              Import ICS
-            </CardTitle>
-            <CardDescription>
-              Import appointments from a .ics calendar file (Google Calendar, Outlook, Apple Calendar).
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <input
-              ref={fileInputRef}
-              id="ics-import-file"
-              type="file"
-              accept=".ics"
-              aria-label="Select .ics calendar file to import"
-              title="Select .ics calendar file to import"
-              className="hidden"
-              onChange={handleFileChange}
-            />
-            <Button variant="outline" className="gap-2" disabled={isImporting} onClick={() => fileInputRef.current?.click()}>
-              <Upload className="h-4 w-4" />
-              {isImporting ? "Importing…" : "Choose .ics file"}
-            </Button>
-          </CardContent>
-        </Card>
+        <GoogleCalendarSyncInfoCard
+          isConnected={isConnected}
+          isFetching={isFetching}
+          onRefresh={handleRefresh}
+        />
 
-        <Card className="rounded-[28px] border bg-gradient-to-br from-indigo-500/8 via-white to-white/95 backdrop-blur-sm shadow-[0_24px_60px_rgba(99,102,241,0.08)]">
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Download className="h-4 w-4" />
-              Export ICS
-            </CardTitle>
-            <CardDescription>
-              Export all your appointments as a .ics file for use in any calendar application.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button variant="outline" className="gap-2" asChild>
-              <a href={exportUrl} download="healthcalpro-appointments.ics">
-                <Download className="h-4 w-4" />
-                Download .ics
-              </a>
-            </Button>
-          </CardContent>
-        </Card>
+        <GoogleCalendarEventsPanel
+          events={events}
+          isConnected={isConnected}
+          listBodyLoading={listBodyLoading}
+        />
+
+        <GoogleCalendarIcsPanel
+          exportUrl={exportUrl}
+          isImporting={isImporting}
+          onImportFile={importICS}
+        />
+
+        <GoogleCalendarAdvancedImportCard
+          isImporting={isImporting}
+          onImport={importICSWithDoctor}
+        />
       </div>
-
-      {/* Sync info — only visible when connected (data-driven, no skeleton needed — it appears after loading) */}
-      {!listBodyLoading && isConnected && (
-        <Card className="border-blue-200 bg-blue-50/40 rounded-[28px]">
-          <CardContent className="pt-4 flex items-start gap-2">
-            <RefreshCw className="h-5 w-5 text-blue-600  shrink-0" />
-            <div>
-              <p className="font-medium text-blue-800 text-sm">Auto-sync enabled</p>
-              <p className="text-xs text-blue-700 ">
-                New appointments are automatically synced to your Google Calendar when created.
-                Use the sync button on individual appointments for manual sync.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+    </>
   );
 }

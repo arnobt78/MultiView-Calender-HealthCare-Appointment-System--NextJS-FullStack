@@ -30,6 +30,8 @@ export function cn(...inputs: ClassValue[]) {
 
 function titleCaseWordPart(part: string): string {
   if (!part) return part;
+  /** Calendar file extension — keep lowercase `.ics` (avoid `ICS` → `Ics` in panel titles). */
+  if (/^\.ics$/i.test(part)) return ".ics";
   return part
     .split("-")
     .map((seg) => (seg ? seg.charAt(0).toUpperCase() + seg.slice(1).toLowerCase() : seg))

@@ -17,6 +17,7 @@ type ClinicalListFilterToolbarProps = {
     placeholder: string;
     ariaLabel: string;
     className?: string;
+    disabled?: boolean;
   };
   children?: ReactNode;
   showReset: boolean;
@@ -46,6 +47,7 @@ export function ClinicalListFilterToolbar({
           placeholder={search.placeholder}
           ariaLabel={search.ariaLabel}
           className={search.className}
+          disabled={search.disabled}
         />
       ) : null}
       {children}

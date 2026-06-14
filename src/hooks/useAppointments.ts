@@ -4,6 +4,7 @@ import { queryKeys } from "@/lib/query-keys";
 import {
   invalidateAfterAppointmentMutation,
   invalidateAssigneesData,
+  maybeInvalidateGoogleCalendarIfConnected,
 } from "@/lib/query-client";
 import {
   appointmentDoctorFkOpts,
@@ -251,6 +252,7 @@ export function useAppointments() {
           ...appointmentDoctorFkOptsWithPrevious(null, context?.deleted),
         }),
         invalidateAssigneesData(queryClient),
+        maybeInvalidateGoogleCalendarIfConnected(queryClient),
       ]);
 
       queryClient.setQueryData<FullAppointment[]>(queryKeys.appointments.all, (old) =>
@@ -372,6 +374,7 @@ export function useAppointments() {
         categoryId: appt.category ?? undefined,
         ...appointmentDoctorFkOpts(appt),
       });
+      await maybeInvalidateGoogleCalendarIfConnected(queryClient);
       notify.crud({
         action: "updated",
         entity: "Appointment",

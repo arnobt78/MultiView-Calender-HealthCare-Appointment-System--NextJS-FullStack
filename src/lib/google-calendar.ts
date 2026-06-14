@@ -168,6 +168,33 @@ export async function insertGoogleEvent(
   return response.json();
 }
 
+/** Update an existing Google Calendar event (upsert path when local row has event id). */
+export async function updateGoogleEvent(
+  accessToken: string,
+  calendarId: string,
+  eventId: string,
+  event: GoogleCalendarEvent
+): Promise<GoogleCalendarEvent> {
+  const response = await fetch(
+    `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventId)}`,
+    {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(event),
+    }
+  );
+
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`Failed to update Google Calendar event: ${err}`);
+  }
+
+  return response.json();
+}
+
 /**
  * List events from Google Calendar
  */

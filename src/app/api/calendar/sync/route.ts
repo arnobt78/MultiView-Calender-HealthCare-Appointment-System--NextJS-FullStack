@@ -9,12 +9,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-import {
-  getValidAccessToken,
-  insertGoogleEvent,
-  listGoogleEvents,
-  appointmentToGoogleEvent,
-} from "@/lib/google-calendar";
+import { getValidAccessToken, listGoogleEvents } from "@/lib/google-calendar";
+import { syncAppointmentToGoogleCalendar } from "@/lib/google-calendar-sync-appointment";
 import { staffCalendarAppointmentByIdWhere } from "@/lib/staff-appointment-calendar-scope";
 
 /** Per-request API handler (see api-route-dynamic.test.ts). */
@@ -67,7 +63,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json() as { appointmentId?: unknown };
     const { appointmentId } = body;
 
-    // Validate presence and UUID format before touching Prisma.
     if (!appointmentId || typeof appointmentId !== "string") {
       return NextResponse.json({ error: "appointmentId is required" }, { status: 400 });
     }
@@ -75,7 +70,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid appointmentId format" }, { status: 400 });
     }
 
-    // Owner OR treating — same scope as GET /api/appointments and ICS export.
     const appointment = await prisma.appointment.findFirst({
       where: staffCalendarAppointmentByIdWhere(
         sessionUser.userId,
@@ -88,7 +82,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Appointment not found" }, { status: 404 });
     }
 
-    // Get Google Calendar tokens
     const tokenRecord = await prisma.googleCalendarToken.findUnique({
       where: { user_id: sessionUser.userId },
     });
@@ -97,30 +90,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Google Calendar not connected" }, { status: 400 });
     }
 
-    const accessToken = await getValidAccessToken(
-      tokenRecord.access_token,
-      tokenRecord.refresh_token,
-      tokenRecord.expiry_date,
-      async (newToken, newExpiry) => {
-        await prisma.googleCalendarToken.update({
-          where: { user_id: sessionUser.userId },
-          data: { access_token: newToken, expiry_date: newExpiry, updated_at: new Date() },
-        });
-      }
-    );
+    const googleEventId = await syncAppointmentToGoogleCalendar(sessionUser.userId, appointment);
+    if (!googleEventId) {
+      return NextResponse.json({ error: "Failed to sync appointment" }, { status: 500 });
+    }
 
-    const calendarId = tokenRecord.calendar_id || "primary";
-    const event = appointmentToGoogleEvent({
-      title: appointment.title,
-      notes: appointment.notes,
-      start: appointment.start.toISOString(),
-      end: appointment.end.toISOString(),
-      location: appointment.location,
-    });
-
-    const created = await insertGoogleEvent(accessToken, calendarId, event);
-
-    return NextResponse.json({ success: true, event: created });
+    return NextResponse.json({ success: true, event: { id: googleEventId } });
   } catch (error: unknown) {
     console.error("Google Calendar sync POST error:", error);
     return NextResponse.json({ error: "Failed to sync appointment" }, { status: 500 });

@@ -21,6 +21,7 @@ import type { Invoice } from "@/hooks/usePayments";
 import type { Category, Patient, AppointmentAssignee } from "@/types/types";
 import type { DashboardAccessRow } from "@/lib/query-fetchers";
 import type { GlobalAppointmentType, NotificationsPrefetch } from "@/lib/server-prefetch";
+import type { GoogleCalendarStatus } from "@/types/google-calendar";
 import type { AdminAllTypeRow } from "@/hooks/useAppointmentTypes";
 import {
   prefetchCategories,
@@ -63,7 +64,7 @@ export type ControlPanelSectionPrefetchPayload = {
   } | null;
   appointmentInvitations?: import("@/hooks/useInvitations").Invitation[] | null;
   dashboardInvitations?: import("@/hooks/useInvitations").Invitation[] | null;
-  googleCalendarStatus?: { connected: boolean; events: unknown[] } | null;
+  googleCalendarStatus?: GoogleCalendarStatus | null;
   invoices?: Invoice[] | null;
   /** Default visit picker for Create Invoice dialog (empty search, eligible visits only). */
   billingAppointmentOptions?: { options: import("@/lib/billing-types").InvoiceAppointmentOptionRow[] } | null;

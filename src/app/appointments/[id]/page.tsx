@@ -12,7 +12,7 @@ import { appointmentDetailHref } from "@/lib/entity-routes";
 import { canClientFetchAdminUsersList } from "@/lib/user-list-access";
 import { AppointmentDetailScreen } from "@/components/detail/AppointmentDetailScreen";
 import { EntityUnavailableScreen } from "@/components/shared/EntityUnavailableScreen";
-import { prefetchAppointmentDetailViewModel, prefetchInvoices, prefetchUsersList } from "@/lib/server-prefetch";
+import { prefetchAppointmentDetailViewModel, prefetchInvoices, prefetchUsersList, prefetchGoogleCalendarStatus } from "@/lib/server-prefetch";
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -54,15 +54,23 @@ export default async function PortalAppointmentDetailPage({ params }: PageProps)
   }
 
   const staffPrefetch = isDoctorRole(role) || isAdminRole(role);
-  const [initialDetail, initialDoctorUsers, initialAdminUsers, initialInvoices] =
-    await Promise.all([
-      prefetchAppointmentDetailViewModel(raw, role, level),
-      staffPrefetch ? prefetchUsersList({ role: "doctor", limit: 200 }) : Promise.resolve(null),
-      staffPrefetch && canClientFetchAdminUsersList(role)
-        ? prefetchUsersList({ role: "admin", limit: 50 })
-        : Promise.resolve(null),
-      prefetchInvoices(sessionUser.userId, role, sessionUser.email),
-    ]);
+  const [
+    initialDetail,
+    initialDoctorUsers,
+    initialAdminUsers,
+    initialInvoices,
+    initialGoogleCalendarStatus,
+  ] = await Promise.all([
+    prefetchAppointmentDetailViewModel(raw, role, level),
+    staffPrefetch ? prefetchUsersList({ role: "doctor", limit: 200 }) : Promise.resolve(null),
+    staffPrefetch && canClientFetchAdminUsersList(role)
+      ? prefetchUsersList({ role: "admin", limit: 50 })
+      : Promise.resolve(null),
+    prefetchInvoices(sessionUser.userId, role, sessionUser.email),
+    staffPrefetch
+      ? prefetchGoogleCalendarStatus(sessionUser.userId)
+      : Promise.resolve(null),
+  ]);
 
   if (!initialDetail) {
     return (
@@ -85,6 +93,7 @@ export default async function PortalAppointmentDetailPage({ params }: PageProps)
       initialDoctorUsers={initialDoctorUsers}
       initialAdminUsers={initialAdminUsers}
       initialInvoices={initialInvoices}
+      initialGoogleCalendarStatus={initialGoogleCalendarStatus}
     />
   );
 }

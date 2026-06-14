@@ -17,6 +17,7 @@ import {
   Pencil,
   Trash2,
   Ban,
+  Calendar,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -54,6 +55,10 @@ type AppointmentActionsMenuProps = {
   /** Staff billing — preset create from this visit. */
   onCreateInvoice?: (appointmentId: string) => void;
   showCreateInvoice?: boolean;
+  /** Google Calendar — manual push when connector is linked. */
+  showSyncToGoogle?: boolean;
+  onSyncToGoogle?: (id: string) => void;
+  isSyncingGoogle?: boolean;
   triggerClassName?: string;
   contentClassName?: string;
 };
@@ -97,6 +102,9 @@ export function AppointmentActionsMenu({
   onCancel,
   onCreateInvoice,
   showCreateInvoice = false,
+  showSyncToGoogle = false,
+  onSyncToGoogle,
+  isSyncingGoogle = false,
   triggerClassName,
   contentClassName,
 }: AppointmentActionsMenuProps) {
@@ -205,6 +213,22 @@ export function AppointmentActionsMenu({
           <Pencil className="h-4 w-4" />
           <span>Edit</span>
         </DropdownMenuItem>
+
+        {onSyncToGoogle && showSyncToGoogle ? (
+          <DropdownMenuItem
+            disabled={isCancelled || isSyncingGoogle}
+            className={cn(
+              !isCancelled && !isSyncingGoogle ? skyActionClass : disabledItemClass
+            )}
+            onClick={() => {
+              if (isCancelled || isSyncingGoogle) return;
+              onSyncToGoogle(appointment.id);
+            }}
+          >
+            <Calendar className="h-4 w-4" />
+            <span>{isSyncingGoogle ? "Syncing…" : "Sync to Google Calendar"}</span>
+          </DropdownMenuItem>
+        ) : null}
 
         {onCancel ? (
           <DropdownMenuItem

@@ -26,6 +26,10 @@ import {
   assertNoOwnerAppointmentOverlap,
 } from "@/lib/scheduling/validate-appointment-window";
 import { assertDoctorActiveForBooking, assertDoctorActiveForBookingUnlessCurrent, InactiveDoctorBookingError } from "@/lib/doctor-active-booking";
+import {
+  runAppointmentGoogleCalendarSideEffects,
+  unlinkAppointmentFromGoogleCalendar,
+} from "@/lib/google-calendar-sync-appointment";
 
 export const dynamic = "force-dynamic";
 
@@ -190,6 +194,13 @@ export async function PUT(req: NextRequest, context: RouteContext) {
       newStatus: updated.status,
       requestedStatus: body.status,
     });
+
+    await runAppointmentGoogleCalendarSideEffects(
+      ctx.sessionUser.userId,
+      body as Record<string, unknown>,
+      accessRow.status,
+      updated
+    );
 
     const payload = await buildAppointmentDetailApiPayload(ctx.accessSession, id);
     if (!payload) {
@@ -396,6 +407,13 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       });
     }
 
+    await runAppointmentGoogleCalendarSideEffects(
+      ctx.sessionUser.userId,
+      body as Record<string, unknown>,
+      accessRow.status,
+      updated
+    );
+
     const payload = await buildAppointmentDetailApiPayload(ctx.accessSession, id);
     if (!payload) {
       return NextResponse.json({ error: "Appointment not found or unauthorized" }, { status: 404 });
@@ -430,6 +448,21 @@ export async function DELETE(_req: NextRequest, context: RouteContext) {
     const { level } = await resolveAppointmentAccess(ctx.accessSession, id);
     if (level !== "mutate") {
       return NextResponse.json({ error: "Appointment not found or unauthorized" }, { status: 404 });
+    }
+
+    const existing = await prisma.appointment.findUnique({
+      where: { id },
+      select: { google_calendar_event_id: true },
+    });
+
+    try {
+      await unlinkAppointmentFromGoogleCalendar(
+        ctx.sessionUser.userId,
+        id,
+        existing?.google_calendar_event_id
+      );
+    } catch {
+      // Google delete failures must not block local delete.
     }
 
     await prisma.appointment.delete({ where: { id } });

@@ -6,21 +6,29 @@
 
 | Field | Value |
 |-------|-------|
-| **Cycle** | **C35.1** — notifications CSV audit polish |
+| **Cycle** | **C36.2.1** — Appointment detail gcal SSR seed |
 | **Phase** | Accept |
 | **Stage** | 5 |
 | **Status** | shipped |
 | **Last Updated** | 2026-06-14 |
-| **Parent REQ** | REQ-0083 |
+| **Parent REQ** | REQ-0087 |
 
-## Verify baseline (C35.1 close)
+## Verify baseline (C36.2.1 close)
 
-**1112/1112** · tsc · lint · build — PASS
+**1140/1140** · tsc · lint · build — PASS
 
-## C35.1 shipped (REQ-0083)
+## C36.2.1 shipped (REQ-0087)
 
-- CSV export: raw `Link` + `Link Valid` audit column; NotificationsManagement file comment updated.
+- Staff appointment detail pages prefetch + seed `googleCalendar` status for sync footer first paint.
 
-## C35 shipped (REQ-0083)
+## C36.2 shipped (REQ-0086)
 
-- Clickable Notification column; no Link column; empty actions disabled; header session lead removed; Select controlled fix.
+- Cancel/DELETE unlink Google events; PUT/PATCH shared side-effects; `GoogleCalendarSyncProvider`; dashboard SSR gcal seed; `maybeInvalidateGoogleCalendarIfConnected`; menu test.
+
+## C36.1 shipped (REQ-0085)
+
+- `google_calendar_event_id` on Appointment; auto-sync CRUD; manual sync UI; import resolver; OAuth param helpers.
+
+## C36 shipped (REQ-0084)
+
+- OAuth redirect → CP google-calendar tab; glass UI panels; events DataTable; advanced ICS import.

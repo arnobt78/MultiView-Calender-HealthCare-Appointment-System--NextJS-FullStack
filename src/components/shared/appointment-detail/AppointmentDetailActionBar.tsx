@@ -11,12 +11,14 @@ import {
   Save,
   Trash2,
   Ban,
+  Calendar,
 } from "lucide-react";
 import VideoCall from "@/components/calendar/VideoCall";
 import { EntityDetailFooterRow } from "@/components/shared/entity-detail/EntityDetailFooterRow";
 import { ControlPanelGlassActionButton } from "@/components/shared/ControlPanelGlassActionButton";
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import { useAuth } from "@/hooks/useAuth";
+import { useGoogleCalendarSyncOptional } from "@/context/GoogleCalendarSyncContext";
 import { useAppointments } from "@/hooks/useAppointments";
 import { useInvoiceFormDialogOptional } from "@/context/InvoiceFormDialogContext";
 import { useInvoiceFormDialogController } from "@/hooks/useInvoiceFormDialogController";
@@ -61,6 +63,8 @@ export function AppointmentDetailActionBar({
 }: Props) {
   const router = useRouter();
   const { user } = useAuth();
+  const { isConnected: isGoogleConnected, syncToGoogle, syncingAppointmentId } =
+    useGoogleCalendarSyncOptional();
   const navRole = useInitialNavRole();
   const role = user?.role ?? navRole;
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -104,6 +108,7 @@ export function AppointmentDetailActionBar({
   const isDone = appointment.status === "done";
   const isCancelled = appointment.status === "cancelled";
   const busy = isTogglingStatus || isDeleting || isCancelling;
+  const isSyncingGoogle = syncingAppointmentId === appointment.id;
 
   const scrollToEdit = () => {
     document.getElementById("appointment-detail-edit")?.scrollIntoView({ behavior: "smooth" });
@@ -172,6 +177,17 @@ export function AppointmentDetailActionBar({
             >
               <Pencil className="shrink-0" aria-hidden />
               Update
+            </ControlPanelGlassActionButton>
+          ) : null}
+          {canEdit && isGoogleConnected && !isCancelled ? (
+            <ControlPanelGlassActionButton
+              type="button"
+              variant="sky"
+              disabled={busy || isSyncingGoogle}
+              onClick={() => syncToGoogle(appointment.id)}
+            >
+              <Calendar className="shrink-0" aria-hidden />
+              {isSyncingGoogle ? "Syncing…" : "Sync to Google Calendar"}
             </ControlPanelGlassActionButton>
           ) : null}
           {showCreateInvoice ? (

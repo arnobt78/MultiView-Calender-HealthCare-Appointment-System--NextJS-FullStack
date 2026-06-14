@@ -6,7 +6,7 @@
 
 | Field | Value |
 |-------|-------|
-| Cycle | C1–C34.1 shipped · **C35 active** (REQ-0083) |
+| Cycle | C1–C36.2 shipped · **C36.2.1 active** (REQ-0087) |
 | Author | Requirement Architect |
 | Gate 1 status | C1 GATE-0001 · C2 GATE-0003 approved |
 | Canonical source | this file |
@@ -126,8 +126,83 @@
 | REQ-0079 | approved [C31] | REQ-0078 | ART-0407..0409 | pending |
 | REQ-0080 | approved [C32] | REQ-0079 | ART-0410..0416 | pending |
 | REQ-0081 | approved [C33] | REQ-0080 | ART-0417..0423 | pending |
-| REQ-0083 | approved [C35] | REQ-0082 | ART-0432..0435 | pending |
+| REQ-0087 | approved [C36.2.1] | REQ-0086 | ART-0456..0457 | pending |
+| REQ-0086 | approved [C36.2] | REQ-0085 | ART-0451..0455 | pending |
+| REQ-0085 | approved [C36.1] | REQ-0084 | ART-0445..0450 | pending |
+| REQ-0084 | approved [C36] | REQ-0083 | ART-0437..0444 | pending |
+| REQ-0083 | approved [C35/C35.1] | REQ-0082 | ART-0432..0436 | pending |
 | REQ-0082 | approved [C34/C34.1] | REQ-0081 | ART-0424..0431 | pending |
+
+### REQ-0087 — C36.2.1 Appointment detail Google Calendar SSR seed
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C36.2.1] |
+| Priority | P2 |
+| Risk | R1 |
+| Parent | REQ-0086 |
+
+**Statement:** Seed Google Calendar connected flag on staff appointment detail SSR so sync footer is visible on first paint when deep-linking to detail.
+
+**Acceptance criteria:**
+1. CP `/control-panel/appointments/[id]` prefetches `prefetchGoogleCalendarStatus` in parallel.
+2. Doctor `/appointments/[id]` prefetches when staff; patients skip.
+3. `AppointmentDetailScreenShared` seeds cache via `seedGoogleCalendarStatusCacheFromSsr`.
+4. Verify PASS.
+
+### REQ-0086 — C36.2 Google Calendar consistency + performance
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C36.2] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0085 |
+
+**Statement:** Close C36.1 deferred gaps — cancel unlinks Google events, PUT auto-sync parity, shared sync context, dashboard SSR seed, targeted invalidation, menu test.
+
+**Acceptance criteria:**
+1. `unlinkAppointmentFromGoogleCalendar` + `runAppointmentGoogleCalendarSideEffects` on PATCH/PUT; DELETE uses unlink.
+2. Cancel transitions delete remote Google event and clear `google_calendar_event_id`.
+3. `GoogleCalendarSyncProvider` — one hook instance; consumers use context optional hook.
+4. Dashboard SSR seeds Google Calendar connected flag; `maybeInvalidateGoogleCalendarIfConnected` on cancel/delete.
+5. `AppointmentActionsMenu` sync-item test; tests; verify PASS.
+
+### REQ-0085 — C36.1 Google Calendar gaps closure
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C36.1] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0084 |
+
+**Statement:** Close C36 deferred gaps — import physician resolver test, wire OAuth connected param, per-appointment manual sync UI, server auto-sync on appointment CRUD via shared upsert lib + `google_calendar_event_id` on Appointment.
+
+**Acceptance criteria:**
+1. Prisma `google_calendar_event_id` on Appointment; `updateGoogleEvent` + `syncAppointmentToGoogleCalendar` shared lib.
+2. Auto-sync on POST/PATCH (sync-relevant fields); DELETE removes Google event when linked.
+3. Manual sync in `AppointmentActionsMenu`, card/CP columns, and detail action bar when connected.
+4. `resolveCalendarImportTreatingPhysicianId` extracted + tested; `GOOGLE_CALENDAR_OAUTH_CONNECTED_PARAM` wired in routes + client.
+5. Tests; verify PASS.
+
+### REQ-0084 — C36 Google Calendar CP UI + OAuth redirect
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C36] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0083 |
+
+**Statement:** CP Google Calendar — glass UI parity, OAuth returns to CP tab, events preview table, header actions, optional advanced ICS import with treating physician.
+
+**Acceptance criteria:**
+1. OAuth success redirects to `/control-panel/google-calendar?gcal=connected`; user stays on CP; cache invalidates + toast.
+2. Glass panel cards (connection, stats, events, ICS, sync info) with inline skeleton on status load.
+3. Google events preview DataTable when connected; header Refresh + Export ICS shells.
+4. Optional advanced import dialog with doctor picker + `treating_physician_id` on import API.
+5. Tests; verify PASS.
 
 ### REQ-0083 — C35 notifications table UX + select fix
 
