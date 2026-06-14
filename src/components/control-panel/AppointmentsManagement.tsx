@@ -73,7 +73,8 @@ function AppointmentsManagementInner() {
     error,
     deleteAppointment,
     toggleStatus,
-    cancelAppointment,
+    cancelAppointmentAsync,
+    cancellingAppointmentId,
   } = useAppointments();
   const { isConnected: isGoogleConnected, syncToGoogle, syncingAppointmentId } =
     useGoogleCalendarSyncOptional();
@@ -153,12 +154,15 @@ function AppointmentsManagementInner() {
         onEdit: (id) => router.push(`/control-panel/appointments/${id}`),
         onToggleStatus: (id, next) => toggleStatus({ id, status: next }),
         onDelete: deleteAppointment,
-        onCancel: cancelAppointment,
+        onCancel: async (id) => {
+          await cancelAppointmentAsync(id);
+        },
+        cancellingAppointmentId,
         showSyncToGoogle: isGoogleConnected,
         onSyncToGoogle: syncToGoogle,
         syncingAppointmentId,
       }),
-    [doctorById, invoiceDisplayByAppt, invoiceByAppt, router, toggleStatus, deleteAppointment, cancelAppointment, user, isGoogleConnected, syncToGoogle, syncingAppointmentId]
+    [doctorById, invoiceDisplayByAppt, invoiceByAppt, router, toggleStatus, deleteAppointment, cancelAppointmentAsync, cancellingAppointmentId, user, isGoogleConnected, syncToGoogle, syncingAppointmentId]
   );
 
   const metricsValue = useMemo(

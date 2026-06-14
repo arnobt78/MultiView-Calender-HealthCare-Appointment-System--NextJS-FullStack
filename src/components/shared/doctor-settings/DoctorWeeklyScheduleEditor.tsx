@@ -532,11 +532,12 @@ export function DoctorWeeklyScheduleEditor({
             : ""
         }
         confirmLabel="Delete"
+        confirmPendingLabel="Deleting…"
         cancelLabel="Cancel"
-        confirmDisabled={deleteWindowMutation.isPending}
-        onConfirm={() => {
+        confirmPending={deleteWindowMutation.isPending}
+        onConfirm={async () => {
           if (deleteWindowId) {
-            deleteWindowMutation.mutate(deleteWindowId);
+            await deleteWindowMutation.mutateAsync(deleteWindowId);
           }
           setDeleteWindowId(null);
         }}

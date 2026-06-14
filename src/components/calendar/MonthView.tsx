@@ -58,8 +58,10 @@ export default function MonthView() {
     summaryStats,
     appointments: globalAppointments,
     toggleStatus: commitToggleStatus,
-    deleteAppointment,
-    cancelAppointment,
+    deleteAppointmentAsync,
+    isDeleting,
+    cancelAppointmentAsync,
+    cancellingAppointmentId,
     isError: appointmentsError,
   } = useAppointmentData();
   const { user } = useAuth();
@@ -149,13 +151,6 @@ export default function MonthView() {
       }
     },
     [commitToggleStatus]
-  );
-
-  const deleteAppt = useCallback(
-    (id: string) => {
-      deleteAppointment(id);
-    },
-    [deleteAppointment]
   );
 
   // Helper: sort appointments by start time ascending
@@ -302,7 +297,10 @@ export default function MonthView() {
                           invoiceDisplayStatus={invoiceDisplayByAppt.get(a.id)}
                           onEdit={setEditAppt}
                           onDelete={(id) => setDeleteTargetId(id)}
-                          onCancel={cancelAppointment}
+                          onCancel={async (id) => {
+                            await cancelAppointmentAsync(id);
+                          }}
+                          cancelPending={cancellingAppointmentId === a.id}
                           onToggleStatus={toggleStatus}
                           showDetails={false} // Default to false, can be overridden
                         />
@@ -325,9 +323,12 @@ export default function MonthView() {
         subtitle="This will permanently remove the appointment from your monthly calendar."
         confirmLabel="Delete"
         onConfirm={async () => {
-          if (deleteTargetId) await deleteAppt(deleteTargetId);
+          if (!deleteTargetId) return;
+          await deleteAppointmentAsync(deleteTargetId);
           setDeleteTargetId(null);
         }}
+        confirmPending={isDeleting}
+        confirmPendingLabel="Deleting…"
       />
 
       {/* Side list for selected date */}
@@ -358,7 +359,10 @@ export default function MonthView() {
                   ownerUsers={ownerUsers}
                   onEdit={(appt) => setEditAppt(appt)}
                   onDelete={(id) => setDeleteTargetId(id)}
-                  onCancel={cancelAppointment}
+                  onCancel={async (id) => {
+                    await cancelAppointmentAsync(id);
+                  }}
+                  cancelPending={cancellingAppointmentId === a.id}
                   onToggleStatus={toggleStatus}
                   appointmentTypePriceCents={fullAppt.appointment_type_price_cents}
                   doctorConsultationFeeCents={fullAppt.doctor_consultation_fee_cents}

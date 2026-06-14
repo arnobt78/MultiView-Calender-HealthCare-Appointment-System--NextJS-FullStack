@@ -47,6 +47,11 @@ export const googleCalendarIcsCopy = {
   exportSubtitle:
     "Download your scoped appointments as a calendar file (.ics) for use in other apps.",
   advancedImportTitle: "Import with treating physician / doctor",
+  advancedImportDialogDescription:
+    "Assign a treating physician and upload a .ics file. Imported visits appear in Appointment Management and the dashboard calendar.",
+  advancedImportInfoNote:
+    "Choose the doctor who will treat every imported visit, then select a calendar file (.ics) from Google, Outlook, or Apple Calendar. After import, open Control Panel → Appointment Management or the Dashboard calendar to review and edit the new appointments.",
+  advancedImportCalendarFileLabel: "Upload Calendar File (.ics)",
   advancedImportSubtitle:
     "Import calendar events from an external file and assign the doctor responsible for each visit.",
   advancedImportOpenButton: "Select Doctor & Import",
@@ -59,5 +64,6 @@ export const googleCalendarIcsCopy = {
 export const googleCalendarAdvancedImportDialogShellClass =
   "flex h-[90vh] max-h-[90vh] w-[90vw] max-w-[90vw] flex-col gap-0 overflow-hidden rounded-[28px] border border-emerald-400/30 bg-white p-0 shadow-[0_30px_80px_rgba(16,185,129,0.35)] backdrop-blur-sm";
 
-export const googleCalendarMandatoryLabelClass =
-  "after:ml-0.5 after:text-rose-600 after:content-['*']";
+/** How-it-works callout — mirrors Import ICS violet info panel with emerald glow. */
+export const googleCalendarAdvancedImportInfoNoteClass =
+  "rounded-2xl border border-emerald-200/70 bg-emerald-50/60 p-3 text-xs text-emerald-900 shadow-[0_8px_24px_rgba(16,185,129,0.12)]";

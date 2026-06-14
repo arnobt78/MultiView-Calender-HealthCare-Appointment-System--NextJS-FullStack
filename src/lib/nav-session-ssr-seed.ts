@@ -21,7 +21,25 @@ export function seedAuthMeCacheFromSsr(
   user: NavSsrUser | null | undefined
 ): void {
   if (user == null) return;
-  const state = queryClient.getQueryState(queryKeys.auth.me);
-  if (state?.data !== undefined) return;
+  const existing = queryClient.getQueryData<NavSsrUser | null>(queryKeys.auth.me);
+  /* Soft-nav after login can leave stale `null` guest cache — SSR session must win. */
+  if (existing != null && typeof existing === "object" && "id" in existing) return;
   queryClient.setQueryData(queryKeys.auth.me, user);
+}
+
+/** Seed auth.me from POST /api/auth/login response before soft navigation. */
+export function seedAuthMeFromLoginResponse(
+  queryClient: QueryClient,
+  user: {
+    id: UUID;
+    email: string;
+    role?: string;
+    display_name?: string;
+    image?: string | null;
+  }
+): void {
+  queryClient.setQueryData(queryKeys.auth.me, {
+    ...user,
+    email_verified: true,
+  });
 }

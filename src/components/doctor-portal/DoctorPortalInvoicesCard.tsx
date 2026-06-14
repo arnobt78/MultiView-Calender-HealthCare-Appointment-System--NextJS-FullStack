@@ -59,8 +59,9 @@ export function DoctorPortalInvoicesCard({
     invoices,
     isLoading,
     updateInvoice,
-    deleteInvoice,
+    deleteInvoiceAsync,
     isUpdating,
+    isDeleting,
   } = usePayments({ invoicesInitialData });
 
   const { openCreate, openEdit } = useInvoiceFormDialog();
@@ -161,8 +162,11 @@ export function DoctorPortalInvoicesCard({
                 viewerUserId={sessionUserId}
                 onEdit={openEdit}
                 onSend={(id) => updateInvoice({ invoiceId: id, body: { status: "sent" } })}
-                onDelete={deleteInvoice}
+                onDelete={async (id) => {
+                  await deleteInvoiceAsync(id);
+                }}
                 isUpdating={isUpdating}
+                isDeleting={isDeleting}
               />
             ))}
           </ul>

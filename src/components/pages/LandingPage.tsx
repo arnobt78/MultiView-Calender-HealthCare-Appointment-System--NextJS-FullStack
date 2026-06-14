@@ -4,11 +4,15 @@ import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { SafeImage } from "@/components/ui/safe-image";
-import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { queryKeys } from "@/lib/query-keys";
 import { DEMO_ACCOUNTS, DEMO_PASSWORD } from "@/lib/demo-credentials";
 import { resolveRoleHomeHref } from "@/lib/role-home-href";
+import {
+  clearAuthNavPending,
+  setPostLoginToast,
+} from "@/lib/auth-pending-toast";
+import { seedAuthMeFromLoginResponse } from "@/lib/nav-session-ssr-seed";
+import { useAuthNavButtonLoading } from "@/hooks/useAuthNavButtonLoading";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -497,10 +501,10 @@ const HIGHLIGHTS = [
 ════════════════════════════════════════════════════════════ */
 export default function LandingPage() {
   const prefersReduced = useReducedMotion();
-  const router = useRouter();
   const queryClient = useQueryClient();
+  const { loading: demoLoading, setLoading: setDemoLoading, startAuthNavigation, authTransitionActive } =
+    useAuthNavButtonLoading("/");
   const [navScrolled, setNavScrolled] = useState(false);
-  const [demoLoading, setDemoLoading] = useState(false);
   const [aboutCardIdx, setAboutCardIdx] = useState(0);
   // Track which demo account is selected; defaults to admin (index 0).
   const [selectedDemoIdx, setSelectedDemoIdx] = useState(0);
@@ -528,33 +532,32 @@ export default function LandingPage() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ email: account.email, password: DEMO_PASSWORD }),
       });
       if (res.ok) {
         const data = await res.json();
         if (data.user) {
-          queryClient.setQueryData(queryKeys.auth.me, { ...data.user, email_verified: true });
-          const payload = JSON.stringify({
+          const dest = resolveRoleHomeHref(data.user.role, null);
+          seedAuthMeFromLoginResponse(queryClient, data.user);
+          setPostLoginToast({
             name: data.user.display_name || data.user.email?.split("@")[0] || "there",
             todayCount: Number(data.today_appointments ?? 0),
+            dest,
           });
-          sessionStorage.setItem("post-login-toast", payload);
-          localStorage.setItem("post-login-toast", payload);
-          const dest = resolveRoleHomeHref(data.user.role, null);
-          // Do NOT reset loading here — keep spinner visible until the new page mounts.
-          // router.push is async; resetting before unmount causes a brief button flash.
-          router.push(dest);
+          startAuthNavigation(dest);
           return;
         }
       }
-      // Only reach here on non-ok response or missing user — reset loading for retry.
       setDemoLoading(false);
+      clearAuthNavPending();
       notify.error({ title: "Demo login failed", subtitle: "Could not start the demo session. Please try again." });
     } catch {
       setDemoLoading(false);
+      clearAuthNavPending();
       notify.error({ title: "Demo login failed", subtitle: "Could not start the demo session. Please try again." });
     }
-  }, [router, queryClient, selectedDemoIdx]);
+  }, [queryClient, selectedDemoIdx, startAuthNavigation, setDemoLoading]);
 
   return (
     <div className="relative min-h-screen text-white">

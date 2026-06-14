@@ -48,10 +48,10 @@ export default function GoogleCalendarSettings() {
     isLoading,
     isFetching,
     refreshStatus,
-    disconnect,
+    disconnectAsync,
     isDisconnecting,
     importICS,
-    importICSWithDoctor,
+    importICSWithDoctorAsync,
     isImporting,
     exportUrl,
   } = useGoogleCalendar();
@@ -138,7 +138,9 @@ export default function GoogleCalendarSettings() {
           isConnected={isConnected}
           listBodyLoading={listBodyLoading}
           isDisconnecting={isDisconnecting}
-          onDisconnect={disconnect}
+          onDisconnect={async () => {
+            await disconnectAsync();
+          }}
         />
 
         <GoogleCalendarSyncInfoCard
@@ -161,7 +163,9 @@ export default function GoogleCalendarSettings() {
 
         <GoogleCalendarAdvancedImportCard
           isImporting={isImporting}
-          onImport={importICSWithDoctor}
+          onImport={async (file, doctorId) => {
+            await importICSWithDoctorAsync(file, doctorId);
+          }}
         />
       </div>
     </>

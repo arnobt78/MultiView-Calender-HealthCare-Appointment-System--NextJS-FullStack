@@ -75,10 +75,12 @@ const CATEGORY_STATUS_OPTIONS = activeInactiveFilterOptions();
 function CategoryActions({
   category,
   onDelete,
+  confirmPending,
   onEdit,
 }: {
   category: Category;
-  onDelete: (c: Category) => void;
+  onDelete: (c: Category) => void | Promise<void>;
+  confirmPending?: boolean;
   onEdit: (c: Category) => void;
 }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -133,8 +135,10 @@ function CategoryActions({
         }
         confirmLabel="Delete"
         variant="destructive"
-        onConfirm={() => {
-          onDelete(category);
+        confirmPending={confirmPending}
+        confirmPendingLabel="Deleting…"
+        onConfirm={async () => {
+          await onDelete(category);
           setConfirmOpen(false);
         }}
       />
@@ -152,7 +156,8 @@ export function CategoryManagementInner() {
     isCreating,
     updateCategory,
     isUpdating,
-    deleteCategory,
+    deleteCategoryAsync,
+    isDeleting,
   } = useCategories();
 
   const listBodyLoading = useCpListBodyLoading(queryKeys.categories.all, isLoading);
@@ -317,13 +322,16 @@ export function CategoryManagementInner() {
             <CategoryActions
               category={row.original}
               onEdit={openEditDialog}
-              onDelete={(c) => deleteCategory(c.id)}
+              confirmPending={isDeleting}
+              onDelete={async (c) => {
+                await deleteCategoryAsync(c.id);
+              }}
             />
           </div>
         ),
       },
     ],
-    [deleteCategory, openEditDialog]
+    [deleteCategoryAsync, isDeleting, openEditDialog]
   );
 
   if (isError) {

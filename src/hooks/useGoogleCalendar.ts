@@ -113,10 +113,13 @@ export function useGoogleCalendar() {
     syncingAppointmentId:
       syncMutation.isPending && syncMutation.variables ? syncMutation.variables : null,
     disconnect: disconnectMutation.mutate,
+    disconnectAsync: disconnectMutation.mutateAsync,
     isDisconnecting: disconnectMutation.isPending,
     importICS: (file: File) => importMutation.mutate({ file }),
     importICSWithDoctor: (file: File, treatingPhysicianId: string) =>
       importMutation.mutate({ file, treatingPhysicianId }),
+    importICSWithDoctorAsync: (file: File, treatingPhysicianId: string) =>
+      importMutation.mutateAsync({ file, treatingPhysicianId }),
     isImporting: importMutation.isPending,
     exportUrl: "/api/calendar/export",
   };

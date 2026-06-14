@@ -102,10 +102,12 @@ function DoctorActions({
   row,
   onEdit,
   onToggleActive,
+  confirmPending,
 }: {
   row: DoctorTableRow;
   onEdit: (row: DoctorTableRow) => void;
-  onToggleActive: (row: DoctorTableRow) => void;
+  onToggleActive: (row: DoctorTableRow) => void | Promise<void>;
+  confirmPending?: boolean;
 }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteStubOpen, setDeleteStubOpen] = useState(false);
@@ -196,8 +198,10 @@ function DoctorActions({
         }
         confirmLabel={active ? "Deactivate" : "Activate"}
         variant={active ? "warning" : "info"}
-        onConfirm={() => {
-          onToggleActive(row);
+        confirmPending={confirmPending}
+        confirmPendingLabel={active ? "Deactivating…" : "Activating…"}
+        onConfirm={async () => {
+          await onToggleActive(row);
           setConfirmOpen(false);
         }}
       />
@@ -206,7 +210,7 @@ function DoctorActions({
 }
 
 function DoctorManagementInner() {
-  const { data: usersData, isLoading: usersLoading, isError: usersError, updateUser, isUpdating } =
+  const { data: usersData, isLoading: usersLoading, isError: usersError, updateUser, updateUserAsync, isUpdating } =
     useUsers(CP_DOCTOR_USERS_FILTERS);
   const {
     data: doctorsData,
@@ -271,19 +275,21 @@ function DoctorManagementInner() {
 
   const handleSaveEdit = useCallback(() => {
     if (!editingDoctor) return;
-    updateUser({
-      id: editingDoctor.id,
-      ...doctorFormToUpdatePayload(dialogForm),
-    });
-    setEditDialogOpen(false);
+    updateUser(
+      {
+        id: editingDoctor.id,
+        ...doctorFormToUpdatePayload(dialogForm),
+      },
+      { onSuccess: () => setEditDialogOpen(false) }
+    );
   }, [editingDoctor, dialogForm, updateUser]);
 
   const handleToggleActive = useCallback(
-    (row: DoctorTableRow) => {
+    async (row: DoctorTableRow) => {
       const nextActive = !isDoctorActive(row);
-      updateUser({ id: row.id, is_active: nextActive });
+      await updateUserAsync({ id: row.id, is_active: nextActive });
     },
-    [updateUser]
+    [updateUserAsync]
   );
 
   const columns: ColumnDef<DoctorTableRow>[] = useMemo(
@@ -383,12 +389,13 @@ function DoctorManagementInner() {
               row={row.original}
               onEdit={openEditDialog}
               onToggleActive={handleToggleActive}
+              confirmPending={isUpdating}
             />
           </div>
         ),
       },
     ],
-    [openEditDialog, handleToggleActive]
+    [openEditDialog, handleToggleActive, isUpdating]
   );
 
   if (isError) {

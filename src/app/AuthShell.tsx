@@ -25,6 +25,12 @@ import { dashboardShellClass } from "@/lib/dashboard-layout";
 import { APP_MAIN_OFFSET_CLASS } from "@/lib/portal-z-index";
 import { cn } from "@/lib/utils";
 import { notify } from "@/lib/notify";
+import {
+  AUTH_BARE_PATHS,
+  clearAuthNavPendingIfArrived,
+  consumePostLoginToastIfArrived,
+  consumePostLogoutToastIfArrived,
+} from "@/lib/auth-pending-toast";
 import { NavRoleProvider } from "@/context/NavRoleContext";
 import { NavSessionSsrSeed } from "@/components/navbar/NavSessionSsrSeed";
 import type { NavSsrUser } from "@/lib/nav-session-ssr-seed";
@@ -44,7 +50,7 @@ const useIsomorphicLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 // Paths that render without the dashboard chrome (Navbar, etc.)
-const BARE_PATHS = ["/", "/login", "/register", "/accept-invitation"];
+const BARE_PATHS: readonly string[] = AUTH_BARE_PATHS;
 
 function isBare(pathname: string): boolean {
   return BARE_PATHS.some(
@@ -93,41 +99,23 @@ function AuthShellInner({ children }: { children: React.ReactNode }) {
   useScrollLockFix();
 
   useEffect(() => {
-    const loginRaw =
-      sessionStorage.getItem("post-login-toast") || localStorage.getItem("post-login-toast");
-    if (loginRaw) {
-      sessionStorage.removeItem("post-login-toast");
-      localStorage.removeItem("post-login-toast");
-      try {
-        const parsed = JSON.parse(loginRaw) as { name?: string; todayCount?: number };
-        requestAnimationFrame(() => {
-          notify.loginWelcome({
-            name: parsed?.name || "there",
-            todayCount: Number(parsed?.todayCount ?? 0),
-          });
+    clearAuthNavPendingIfArrived(pathname);
+
+    const loginPayload = consumePostLoginToastIfArrived(pathname);
+    if (loginPayload) {
+      requestAnimationFrame(() => {
+        notify.loginWelcome({
+          name: loginPayload.name,
+          todayCount: loginPayload.todayCount,
         });
-      } catch {
-        requestAnimationFrame(() => {
-          notify.loginWelcome({ name: "there", todayCount: 0 });
-        });
-      }
+      });
     }
 
-    const logoutRaw =
-      sessionStorage.getItem("post-logout-toast") || localStorage.getItem("post-logout-toast");
-    if (logoutRaw) {
-      sessionStorage.removeItem("post-logout-toast");
-      localStorage.removeItem("post-logout-toast");
-      try {
-        const parsed = JSON.parse(logoutRaw) as { name?: string };
-        requestAnimationFrame(() => {
-          notify.logoutGoodbye({ name: parsed?.name || "there" });
-        });
-      } catch {
-        requestAnimationFrame(() => {
-          notify.logoutGoodbye({ name: "there" });
-        });
-      }
+    const logoutPayload = consumePostLogoutToastIfArrived(pathname);
+    if (logoutPayload) {
+      requestAnimationFrame(() => {
+        notify.logoutGoodbye({ name: logoutPayload.name });
+      });
     }
   }, [pathname]);
 

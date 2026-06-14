@@ -1,8 +1,8 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useCallback, useState, type MouseEvent, type ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
-import { AlertTriangle, ShieldAlert } from "lucide-react";
+import { AlertTriangle, Loader2, ShieldAlert } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,13 +27,21 @@ type ConfirmActionDialogProps = {
   /** Plain text or JSX (e.g. wrap name/email in `font-medium`) */
   subtitle: ReactNode;
   confirmLabel?: string;
+  /** Shown on confirm button while pending (defaults to confirmLabel). */
+  confirmPendingLabel?: string;
   cancelLabel?: string;
   icon?: LucideIcon;
   variant?: ConfirmVariant;
+  /**
+   * Parent closes dialog after successful async work — shell does not auto-close.
+   * Return a Promise to enable internal pending state when confirmPending is omitted.
+   */
   onConfirm: () => void | Promise<void>;
   disabled?: boolean;
   /** Blocks confirm action while still showing the dialog (demo stubs). */
   confirmDisabled?: boolean;
+  /** Hook isPending — combined with internal running state for confirm button. */
+  confirmPending?: boolean;
 };
 
 const stylesByVariant: Record<ConfirmVariant, { media: string; icon: string; action: string }> = {
@@ -67,18 +75,48 @@ export function ConfirmActionDialog({
   title,
   subtitle,
   confirmLabel = "Confirm",
+  confirmPendingLabel,
   cancelLabel = "Cancel",
   icon,
   variant = "destructive",
   onConfirm,
   disabled,
   confirmDisabled,
+  confirmPending,
 }: ConfirmActionDialogProps) {
   const style = stylesByVariant[variant];
   const Icon = icon ?? (variant === "info" ? ShieldAlert : AlertTriangle);
+  const [running, setRunning] = useState(false);
+  const pending = confirmPending ?? running;
+  const actionLabel = pending ? (confirmPendingLabel ?? confirmLabel) : confirmLabel;
+
+  const handleConfirm = useCallback(
+    async (event: MouseEvent<HTMLButtonElement>) => {
+      event.preventDefault();
+      if (confirmDisabled || disabled || pending) return;
+      const result = onConfirm();
+      if (result && typeof (result as Promise<void>).then === "function") {
+        setRunning(true);
+        try {
+          await result;
+        } finally {
+          setRunning(false);
+        }
+      }
+    },
+    [confirmDisabled, disabled, onConfirm, pending]
+  );
+
+  const handleOpenChange = useCallback(
+    (next: boolean) => {
+      if (!next && pending) return;
+      onOpenChange?.(next);
+    },
+    [onOpenChange, pending]
+  );
 
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
+    <AlertDialog open={open} onOpenChange={handleOpenChange}>
       {trigger ? (
         <AlertDialogTrigger asChild disabled={disabled}>
           {trigger}
@@ -97,15 +135,19 @@ export function ConfirmActionDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="mt-2">
-          <AlertDialogCancel className="rounded-full border-violet-200/70 bg-white text-violet-700 hover:bg-violet-50 hover:text-violet-800 focus-visible:!ring-0 focus-visible:!ring-offset-0">
+          <AlertDialogCancel
+            disabled={pending}
+            className="rounded-full border-violet-200/70 bg-white text-violet-700 hover:bg-violet-50 hover:text-violet-800 focus-visible:!ring-0 focus-visible:!ring-offset-0"
+          >
             {cancelLabel}
           </AlertDialogCancel>
           <AlertDialogAction
-            className={cn("rounded-full", style.action)}
-            disabled={confirmDisabled || disabled}
-            onClick={confirmDisabled ? undefined : onConfirm}
+            className={cn("rounded-full gap-2", style.action)}
+            disabled={confirmDisabled || disabled || pending}
+            onClick={handleConfirm}
           >
-            {confirmLabel}
+            {pending ? <Loader2 className="size-4 shrink-0 animate-spin" aria-hidden /> : null}
+            {actionLabel}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

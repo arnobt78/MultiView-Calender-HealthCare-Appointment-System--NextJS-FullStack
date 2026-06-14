@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
+import { setPostLogoutToast } from "@/lib/auth-pending-toast";
 import type { UUID } from "@/types/types";
 
 /** Shape stored at queryKeys.auth.me — mirrors /api/auth/me response.user. */
@@ -33,8 +34,9 @@ export function useAuth() {
         return null;
       }
     },
-    initialData: cachedMe,
-    refetchOnMount: cachedMe !== undefined ? false : true,
+    initialData: cachedMe !== undefined ? cachedMe : undefined,
+    /* Guest `null` cache is stale after login cookie is set — must refetch on protected routes. */
+    refetchOnMount: cachedMe == null,
     retry: false,
     staleTime: 5 * 60 * 1000,
   });
@@ -48,16 +50,12 @@ export function useAuth() {
   const logoutMutation = useMutation({
     mutationFn: () => apiClient("/api/auth/logout", { method: "POST" }),
     onSuccess: () => {
-      const payload = JSON.stringify({ name: getCachedName(), timestamp: Date.now() });
-      sessionStorage.setItem("post-logout-toast", payload);
-      localStorage.setItem("post-logout-toast", payload);
+      setPostLogoutToast({ name: getCachedName() });
       // Full reload clears all client-side React Query / store state cleanly.
       window.location.href = "/login";
     },
     onError: () => {
-      const payload = JSON.stringify({ name: getCachedName(), timestamp: Date.now() });
-      sessionStorage.setItem("post-logout-toast", payload);
-      localStorage.setItem("post-logout-toast", payload);
+      setPostLogoutToast({ name: getCachedName() });
       // Session cookie is already cleared server-side even on API error; navigate away.
       window.location.href = "/login";
     },

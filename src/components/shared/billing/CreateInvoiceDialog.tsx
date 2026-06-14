@@ -17,7 +17,8 @@ import {
 
 type Props = {
   variant: "admin" | "doctor";
-  onCreate: (body: InvoiceCreateBody) => void;
+  /** Pass `{ onSuccess }` from mutation opts — wrapper closes dialog only after success. */
+  onCreate: (body: InvoiceCreateBody, opts?: { onSuccess?: () => void }) => void;
   appointmentId?: string;
   triggerLabel?: string;
   triggerClassName?: string;
@@ -47,8 +48,7 @@ export function CreateInvoiceDialog({
       appointmentId={appointmentId}
       isSubmitting={isSubmitting}
       onCreate={(body) => {
-        onCreate(body);
-        setOpen(false);
+        onCreate(body, { onSuccess: () => setOpen(false) });
       }}
       trigger={
         <Button

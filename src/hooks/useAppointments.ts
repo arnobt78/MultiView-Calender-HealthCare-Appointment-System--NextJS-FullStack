@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { usePathname } from "next/navigation";
 import { apiClient, handleApiError } from "@/lib/api-client";
+import { shouldRunAuthenticatedAppQueries } from "@/lib/auth-pending-toast";
 import { queryKeys } from "@/lib/query-keys";
 import {
   invalidateAfterAppointmentMutation,
@@ -93,12 +95,16 @@ function getUpdatedFieldLabels(
 
 export function useAppointments() {
   const queryClient = useQueryClient();
+  const pathname = usePathname();
 
   const { user, isLoading: isAuthLoading } = useAuth();
 
   const appointmentsInitialData = queryClient.getQueryData<FullAppointment[]>(
     queryKeys.appointments.all
   );
+
+  const appQueriesEnabled =
+    !!user && shouldRunAuthenticatedAppQueries(pathname);
 
   const query = useQuery({
     queryKey: queryKeys.appointments.all,
@@ -152,7 +158,7 @@ export function useAppointments() {
     },
     initialData: appointmentsInitialData,
     refetchOnMount: appointmentsInitialData !== undefined ? false : true,
-    enabled: !!user,
+    enabled: appQueriesEnabled,
     // Appointments are invalidated after every create/update/delete/toggle mutation;
     // 30 s prevents redundant re-fetches on rapid view switches.
     staleTime: 30_000,
@@ -415,11 +421,17 @@ export function useAppointments() {
     updateAppointmentAsync: updateMutation.mutateAsync,
     isUpdating: updateMutation.isPending,
     deleteAppointment: deleteMutation.mutate,
+    deleteAppointmentAsync: deleteMutation.mutateAsync,
     isDeleting: deleteMutation.isPending,
     toggleStatus: toggleStatusMutation.mutate,
     isTogglingStatus: toggleStatusMutation.isPending,
     cancelAppointment: cancelAppointmentMutation.mutate,
+    cancelAppointmentAsync: cancelAppointmentMutation.mutateAsync,
     isCancelling: cancelAppointmentMutation.isPending,
+    cancellingAppointmentId:
+      cancelAppointmentMutation.isPending && cancelAppointmentMutation.variables
+        ? cancelAppointmentMutation.variables
+        : null,
   };
 }
 

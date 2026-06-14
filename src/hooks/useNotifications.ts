@@ -95,8 +95,11 @@ export function useNotifications() {
     refetch: query.refetch,
     markAsRead: markAsReadMutation.mutate,
     markAllAsRead: markAllAsReadMutation.mutate,
+    markAllAsReadAsync: markAllAsReadMutation.mutateAsync,
     deleteRead: deleteReadMutation.mutate,
+    deleteReadAsync: deleteReadMutation.mutateAsync,
     isMarkingRead: markAsReadMutation.isPending,
+    isMarkingAllRead: markAllAsReadMutation.isPending,
     isDeletingRead: deleteReadMutation.isPending,
   };
 }

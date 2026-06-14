@@ -66,7 +66,7 @@ export function DoctorGlobalVisitTypesEditor({
   /** Uncheck global template — warn before POST `is_enabled: false`. */
   const [disableTarget, setDisableTarget] = useState<GlobalTypeRow | null>(null);
 
-  const { mutate } = useMutation({
+  const { mutate, mutateAsync, isPending } = useMutation({
     mutationFn: ({
       appointment_type_id,
       is_enabled,
@@ -210,10 +210,10 @@ export function DoctorGlobalVisitTypesEditor({
         }
         confirmLabel="Disable"
         cancelLabel="Cancel"
-        confirmDisabled={disableTarget ? pendingIds.has(disableTarget.id) : false}
-        onConfirm={() => {
+        confirmPending={isPending}
+        onConfirm={async () => {
           if (disableTarget) {
-            mutate({
+            await mutateAsync({
               appointment_type_id: disableTarget.id,
               is_enabled: false,
             });

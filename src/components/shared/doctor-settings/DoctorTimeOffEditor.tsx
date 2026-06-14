@@ -444,11 +444,12 @@ export function DoctorTimeOffEditor({
             : ""
         }
         confirmLabel="Delete"
+        confirmPendingLabel="Deleting…"
         cancelLabel="Cancel"
-        confirmDisabled={deleteTimeOffMutation.isPending}
-        onConfirm={() => {
+        confirmPending={deleteTimeOffMutation.isPending}
+        onConfirm={async () => {
           if (deleteBlockId) {
-            deleteTimeOffMutation.mutate(deleteBlockId);
+            await deleteTimeOffMutation.mutateAsync(deleteBlockId);
           }
           setDeleteBlockId(null);
         }}

@@ -155,6 +155,9 @@ export function usePatients(options?: UsePatientsOptions) {
       input: string | { id: string; name?: string; email?: string | null },
       opts?: Parameters<typeof deleteMutation.mutate>[1]
     ) => deleteMutation.mutate(typeof input === "string" ? { id: input } : input, opts),
+    deletePatientAsync: (
+      input: string | { id: string; name?: string; email?: string | null }
+    ) => deleteMutation.mutateAsync(typeof input === "string" ? { id: input } : input),
     isDeleting: deleteMutation.isPending,
   };
 }

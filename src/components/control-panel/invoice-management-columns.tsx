@@ -30,10 +30,11 @@ export type BuildInvoiceManagementColumnsOpts = {
   onSend: (id: string) => void;
   onMarkPaid: (id: string) => void;
   onCancel: (id: string) => void;
-  onDelete: (id: string) => void;
+  onDelete: (id: string) => void | Promise<void>;
   onRefund: (id: string) => void;
   isPaying?: boolean;
   isUpdating?: boolean;
+  isDeleting?: boolean;
 };
 
 /** CP invoice list — same DataTable chrome as patient/category management. */
@@ -51,6 +52,7 @@ export function buildInvoiceManagementColumns(
     onRefund,
     isPaying,
     isUpdating,
+    isDeleting,
   } = opts;
 
   return [
@@ -128,6 +130,7 @@ export function buildInvoiceManagementColumns(
             onRefund={onRefund}
             isPaying={isPaying}
             isUpdating={busy}
+            isDeleting={isDeleting}
           />
         );
       },

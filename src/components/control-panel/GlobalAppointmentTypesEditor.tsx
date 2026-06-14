@@ -405,11 +405,11 @@ export function GlobalAppointmentTypesEditor() {
         }
         confirmLabel="Delete"
         cancelLabel="Cancel"
-        confirmDisabled={isDeleting}
-        onConfirm={() => {
-          if (deleteTarget) {
-            void handleDelete(deleteTarget.id);
-          }
+        confirmPending={isDeleting}
+        confirmPendingLabel="Deleting…"
+        onConfirm={async () => {
+          if (!deleteTarget) return;
+          await handleDelete(deleteTarget.id);
           setDeleteTarget(null);
         }}
       />

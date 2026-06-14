@@ -44,7 +44,8 @@ export type BuildAppointmentManagementColumnsOpts = {
   onEdit: (id: string) => void;
   onToggleStatus: (id: string, next: "done" | "pending" | "alert") => void;
   onDelete: (id: string) => void;
-  onCancel: (id: string) => void;
+  onCancel: (id: string) => void | Promise<void>;
+  cancellingAppointmentId?: string | null;
   showSyncToGoogle?: boolean;
   onSyncToGoogle?: (id: string) => void;
   syncingAppointmentId?: string | null;
@@ -69,6 +70,7 @@ export function buildAppointmentManagementColumns(
     showSyncToGoogle = false,
     onSyncToGoogle,
     syncingAppointmentId = null,
+    cancellingAppointmentId = null,
   } = opts;
 
   return [
@@ -186,6 +188,7 @@ export function buildAppointmentManagementColumns(
             onEdit={() => onEdit(appt.id)}
             onDelete={onDelete}
             onCancel={onCancel}
+            cancelPending={cancellingAppointmentId === appt.id}
             showSyncToGoogle={showSyncToGoogle}
             onSyncToGoogle={onSyncToGoogle}
             isSyncingGoogle={syncingAppointmentId === appt.id}

@@ -51,8 +51,10 @@ export default function DayView() {
     isLoading,
     isError: appointmentsError,
     toggleStatus,
-    deleteAppointment,
-    cancelAppointment,
+    deleteAppointmentAsync,
+    isDeleting,
+    cancelAppointmentAsync,
+    cancellingAppointmentId,
   } = useAppointmentData();
   const { user } = useAuth();
   const { category, patient, date, status, month, search, clinicalRole, hasActiveFilters } =
@@ -197,7 +199,10 @@ export default function DayView() {
                             slotHeightPx={slotHeight}
                             onEdit={(a) => setEditAppt(a as Appointment)}
                             onDelete={(id) => setDeleteTargetId(id)}
-                            onCancel={cancelAppointment}
+                            onCancel={async (id) => {
+                              await cancelAppointmentAsync(id);
+                            }}
+                            cancelPending={cancellingAppointmentId === appt.id}
                             onToggleStatus={(id, next) =>
                               handleToggleStatus(id, next as "pending" | "done" | "alert")
                             }
@@ -223,12 +228,13 @@ export default function DayView() {
         title="Delete appointment?"
         subtitle="This will permanently remove the appointment from your calendar."
         confirmLabel="Delete"
-        onConfirm={() => {
-          if (deleteTargetId) {
-            deleteAppointment(deleteTargetId);
-          }
+        onConfirm={async () => {
+          if (!deleteTargetId) return;
+          await deleteAppointmentAsync(deleteTargetId);
           setDeleteTargetId(null);
         }}
+        confirmPending={isDeleting}
+        confirmPendingLabel="Deleting…"
       />
       {editAppt ? (
         <AppointmentDialogController

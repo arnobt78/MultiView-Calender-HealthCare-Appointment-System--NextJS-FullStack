@@ -69,11 +69,13 @@ function OrganizationRowActions({
   isOwner,
   onAddMember,
   onDelete,
+  confirmPending,
 }: {
   org: Organization;
   isOwner: boolean;
   onAddMember: (org: Organization) => void;
-  onDelete: (orgId: string) => void;
+  onDelete: (orgId: string) => void | Promise<void>;
+  confirmPending?: boolean;
 }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const detailHref = organizationDetailHref("admin", org.id);
@@ -134,8 +136,10 @@ function OrganizationRowActions({
             subtitle={buildOrganizationDeleteConfirmSubtitle(org.name)}
             confirmLabel="Delete"
             cancelLabel="Cancel"
-            onConfirm={() => {
-              onDelete(org.id);
+            confirmPending={confirmPending}
+            confirmPendingLabel="Deleting…"
+            onConfirm={async () => {
+              await onDelete(org.id);
               setConfirmOpen(false);
             }}
           />
@@ -154,7 +158,8 @@ function OrganizationManagementInner() {
     isCreating,
     addMember,
     isAddingMember,
-    deleteOrg,
+    deleteOrgAsync,
+    isDeleting,
   } = useOrganization();
 
   const {
@@ -207,11 +212,14 @@ function OrganizationManagementInner() {
             org={org}
             isOwner={isOwner}
             onAddMember={setAddMemberOrg}
-            onDelete={deleteOrg}
+            onDelete={async (orgId) => {
+              await deleteOrgAsync(orgId);
+            }}
+            confirmPending={isDeleting}
           />
         ),
       }),
-    [deleteOrg]
+    [deleteOrgAsync, isDeleting]
   );
 
   const handleCreateDialogOpenChange = useCallback((open: boolean) => {

@@ -80,7 +80,10 @@ export type AppointmentCardProps = {
   className?: string;
   onEdit: (appt: FullAppointment) => void;
   onDelete: (id: string) => void;
-  onCancel?: (id: string) => void;
+  /** Await `cancelAppointmentAsync` from parent — menu confirm stays open until settled. */
+  onCancel?: (id: string) => void | Promise<void>;
+  /** Scoped pending for this card's cancel confirm. */
+  cancelPending?: boolean;
   onToggleStatus: (id: string, nextStatus: "pending" | "done" | "alert") => void;
   /** List rail only — telehealth VideoCall below ⋮ menu */
   telehealthSlot?: ReactNode;
@@ -984,6 +987,7 @@ export function AppointmentCard({
   onEdit,
   onDelete,
   onCancel,
+  cancelPending = false,
   onToggleStatus,
   telehealthSlot,
   audience = "dashboard",
@@ -1041,6 +1045,7 @@ export function AppointmentCard({
       onEdit={() => onEdit(appointment)}
       onDelete={onDelete}
       onCancel={onCancel}
+      cancelPending={cancelPending}
       onCreateInvoice={handleCreateInvoice}
       showCreateInvoice={Boolean(handleCreateInvoice)}
       showSyncToGoogle={isGoogleConnected}

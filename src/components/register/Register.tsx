@@ -19,6 +19,7 @@ import {
   Bell,
   Globe,
   Home,
+  Loader2,
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -106,15 +107,17 @@ export function Register() {
       });
 
       const data = await response.json();
-      setLoading(false);
 
       if (!response.ok) {
+        setLoading(false);
         notify.error({
           title: "Registration failed",
           subtitle: data.error || "Please try again with valid information.",
         });
         return;
       }
+
+      setLoading(false);
 
       notify.success({
         title: "Account created successfully",
@@ -314,7 +317,14 @@ export function Register() {
                       className="w-full h-11 rounded-2xl text-white font-semibold text-sm from-teal-500 to-teal-700 bg-gradient-to-r hover:from-teal-600 hover:to-teal-800 transition-colors"
                       disabled={loading}
                     >
-                      {loading ? "Creating account…" : "Create Account"}
+                      {loading ? (
+                        <span className="inline-flex items-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                          Creating account…
+                        </span>
+                      ) : (
+                        "Create Account"
+                      )}
                     </Button>
                   </div>
                 </motion.form>

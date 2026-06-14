@@ -389,7 +389,8 @@ export function PatientDetailScreen({
       icon: row.category_icon ?? null,
     };
   }, [snap.data?.appointments]);
-  const { deletePatient, isDeleting, isUpdating, updatePatient } = usePatients();
+  const { deletePatientAsync, isDeleting, isUpdating, updatePatient } = usePatients();
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const detailQueryKey = queryKeys.patients.detail(patientId);
   const detailBodyLoading = useCpListBodyLoading(detailQueryKey, isLoading);
 
@@ -815,6 +816,8 @@ export function PatientDetailScreen({
                 Update Profile
               </ControlPanelGlassActionButton>
               <ConfirmActionDialog
+                open={deleteConfirmOpen}
+                onOpenChange={setDeleteConfirmOpen}
                 trigger={
                   <ControlPanelGlassActionButton
                     type="button"
@@ -839,21 +842,18 @@ export function PatientDetailScreen({
                   </>
                 }
                 confirmLabel="Delete"
-                onConfirm={() => {
+                confirmPending={isDeleting}
+                confirmPendingLabel="Deleting…"
+                onConfirm={async () => {
                   if (!p) return;
-                  deletePatient(
-                    {
-                      id: p.id,
-                      name: `${p.firstname} ${p.lastname}`.trim(),
-                      email: p.email,
-                    },
-                    {
-                      onSuccess: async () => {
-                        await invalidateQueriesForRoute(queryClient, listBackHref);
-                        router.push(listBackHref);
-                      },
-                    }
-                  );
+                  await deletePatientAsync({
+                    id: p.id,
+                    name: `${p.firstname} ${p.lastname}`.trim(),
+                    email: p.email,
+                  });
+                  await invalidateQueriesForRoute(queryClient, listBackHref);
+                  setDeleteConfirmOpen(false);
+                  router.push(listBackHref);
                 }}
               />
             </>

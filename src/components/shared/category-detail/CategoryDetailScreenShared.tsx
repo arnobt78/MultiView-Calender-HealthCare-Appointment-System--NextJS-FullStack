@@ -181,7 +181,8 @@ export function CategoryDetailScreenShared({
   const isAdminMode = mode === "control-panel";
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { updateCategory, isUpdating, deleteCategory, isDeleting } = useCategories();
+  const { updateCategory, isUpdating, deleteCategoryAsync, isDeleting } = useCategories();
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const { data: liveCategory, isLoading } = useCategory(categoryId, {
     initialData: initialCategory ?? undefined,
   });
@@ -506,6 +507,8 @@ export function CategoryDetailScreenShared({
                 Update Category
               </ControlPanelGlassActionButton>
               <ConfirmActionDialog
+                open={deleteConfirmOpen}
+                onOpenChange={setDeleteConfirmOpen}
                 trigger={
                   <ControlPanelGlassActionButton type="button" variant="rose" disabled={isDeleting}>
                     <Trash2 className="shrink-0" aria-hidden />
@@ -521,14 +524,14 @@ export function CategoryDetailScreenShared({
                   </>
                 }
                 confirmLabel="Delete"
-                onConfirm={() => {
+                confirmPending={isDeleting}
+                confirmPendingLabel="Deleting…"
+                onConfirm={async () => {
                   if (!cat) return;
-                  deleteCategory(cat.id, {
-                    onSuccess: async () => {
-                      await invalidateQueriesForRoute(queryClient, backHref);
-                      router.push(backHref);
-                    },
-                  });
+                  await deleteCategoryAsync(cat.id);
+                  await invalidateQueriesForRoute(queryClient, backHref);
+                  setDeleteConfirmOpen(false);
+                  router.push(backHref);
                 }}
               />
             </>

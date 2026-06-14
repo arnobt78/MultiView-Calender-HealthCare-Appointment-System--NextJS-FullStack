@@ -145,13 +145,15 @@ function exportPatientsCSV(patients: Patient[]) {
 function PatientActions({
   patient,
   onDelete,
+  confirmPending,
   onEdit,
   variant,
   viewerRole = "admin",
   lockedPrimaryDoctorId,
 }: {
   patient: Patient;
-  onDelete: (p: Patient) => void;
+  onDelete: (p: Patient) => void | Promise<void>;
+  confirmPending?: boolean;
   /** Control-panel list — open glass edit dialog instead of navigating away. */
   onEdit?: (p: Patient) => void;
   variant: PatientManagementVariant;
@@ -226,8 +228,10 @@ function PatientActions({
           }
           confirmLabel="Delete"
           variant="destructive"
-          onConfirm={() => {
-            onDelete(patient);
+          confirmPending={confirmPending}
+          confirmPendingLabel="Deleting…"
+          onConfirm={async () => {
+            await onDelete(patient);
             setConfirmOpen(false);
           }}
         />
@@ -256,7 +260,8 @@ export function PatientManagementInner({
     isCreating,
     updatePatient,
     isUpdating,
-    deletePatient,
+    deletePatientAsync,
+    isDeleting,
   } = usePatients();
   const queryClient = useQueryClient();
   /** SSR-seeded cache: pulse table rows only when query has no cached data yet (empty [] counts as warm). */
@@ -500,13 +505,14 @@ export function PatientManagementInner({
             variant={variant}
             viewerRole={viewerRole}
             lockedPrimaryDoctorId={lockedPrimaryDoctorId}
-            onDelete={(pat) =>
-              deletePatient({
+            confirmPending={isDeleting}
+            onDelete={async (pat) => {
+              await deletePatientAsync({
                 id: pat.id,
                 name: `${pat.firstname} ${pat.lastname}`.trim(),
                 email: pat.email,
-              })
-            }
+              });
+            }}
             onEdit={openEditDialog}
           />
         </div>
@@ -520,7 +526,8 @@ export function PatientManagementInner({
     variant,
     lockedPrimaryDoctorId,
     doctorById,
-    deletePatient,
+    deletePatientAsync,
+    isDeleting,
     openEditDialog,
   ]);
 

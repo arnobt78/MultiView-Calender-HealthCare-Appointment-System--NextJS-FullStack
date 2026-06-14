@@ -132,8 +132,10 @@ export default function AppointmentList() {
     appointments,
     isLoading: loadingAppointments,
     isFetching: fetchingAppointments,
-    deleteAppointment,
-    cancelAppointment,
+    deleteAppointmentAsync,
+    isDeleting,
+    cancelAppointmentAsync,
+    cancellingAppointmentId,
     toggleStatus,
     refetch: refetchAppointments,
     summaryStats,
@@ -495,7 +497,10 @@ export default function AppointmentList() {
                                     doctorConsultationFeeCents={appt.doctor_consultation_fee_cents}
                                     onEdit={handleEdit}
                                     onDelete={handleDelete}
-                                    onCancel={cancelAppointment}
+                                    onCancel={async (id) => {
+                                      await cancelAppointmentAsync(id);
+                                    }}
+                                    cancelPending={cancellingAppointmentId === appt.id}
                                     onToggleStatus={handleToggleStatus}
                                     telehealthSlot={
                                       appt.is_telehealth ? (
@@ -536,12 +541,13 @@ export default function AppointmentList() {
             subtitle="This will permanently remove this appointment from your calendar."
             confirmLabel="Delete"
             cancelLabel="Cancel"
-            onConfirm={() => {
-              if (deleteTargetId) {
-                deleteAppointment(deleteTargetId);
-              }
+            onConfirm={async () => {
+              if (!deleteTargetId) return;
+              await deleteAppointmentAsync(deleteTargetId);
               setDeleteTargetId(null);
             }}
+            confirmPending={isDeleting}
+            confirmPendingLabel="Deleting…"
           />
         </>
       )}

@@ -72,10 +72,10 @@ export function AppointmentDetailActionBar({
   const {
     toggleStatus,
     isTogglingStatus,
-    deleteAppointment,
-    isDeleting,
-    cancelAppointment,
+    cancelAppointmentAsync,
     isCancelling,
+    deleteAppointmentAsync,
+    isDeleting,
     isUpdating,
   } = useAppointments();
   const invoiceMap = useAppointmentInvoiceDisplayMap([appointment.id]);
@@ -208,8 +208,11 @@ export function AppointmentDetailActionBar({
               title="Cancel appointment?"
               subtitle="This visit will be marked cancelled. Stakeholders will be notified."
               confirmLabel="Cancel visit"
-              onConfirm={() => {
-                cancelAppointment(appointment.id);
+              confirmPending={isCancelling}
+              confirmPendingLabel="Cancelling…"
+              onConfirm={async () => {
+                await cancelAppointmentAsync(appointment.id);
+                setCancelOpen(false);
               }}
               trigger={
                 <ControlPanelGlassActionButton
@@ -231,10 +234,12 @@ export function AppointmentDetailActionBar({
               title={DELETE_APPOINTMENT_CONFIRM_TITLE}
               subtitle={buildAppointmentDeleteConfirmSubtitle(appointment.title ?? "", "detail")}
               confirmLabel="Delete"
-              onConfirm={() => {
-                deleteAppointment(appointment.id, {
-                  onSuccess: () => router.push(listHref),
-                });
+              confirmPending={isDeleting}
+              confirmPendingLabel="Deleting…"
+              onConfirm={async () => {
+                await deleteAppointmentAsync(appointment.id);
+                setDeleteOpen(false);
+                router.push(listHref);
               }}
               trigger={
                 <ControlPanelGlassActionButton

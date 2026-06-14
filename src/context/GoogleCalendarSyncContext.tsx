@@ -3,6 +3,9 @@
 /**
  * Single useGoogleCalendar() instance for staff — sync actions shared by calendar cards,
  * CP appointment list, and detail footer without N hook subscriptions.
+ *
+ * The inner provider is only mounted for admin/doctor roles so the hook (and its
+ * GET /api/calendar/sync request) never fires for patients or unauthenticated users.
  */
 
 import { createContext, useContext, useMemo, type ReactNode } from "react";
@@ -29,10 +32,8 @@ const GoogleCalendarSyncContext = createContext<GoogleCalendarSyncContextValue |
   null
 );
 
-export function GoogleCalendarSyncProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
-  const role = user?.role ?? null;
-  const isStaff = isAdminRole(role) || isDoctorRole(role);
+/** Inner component — only rendered for staff, so the hook only fires for staff. */
+function GoogleCalendarSyncProviderInner({ children }: { children: ReactNode }) {
   const calendar = useGoogleCalendar();
 
   const value = useMemo<GoogleCalendarSyncContextValue>(
@@ -44,15 +45,23 @@ export function GoogleCalendarSyncProvider({ children }: { children: ReactNode }
     [calendar.isConnected, calendar.syncToGoogle, calendar.syncingAppointmentId]
   );
 
-  if (!isStaff) {
-    return <>{children}</>;
-  }
-
   return (
     <GoogleCalendarSyncContext.Provider value={value}>
       {children}
     </GoogleCalendarSyncContext.Provider>
   );
+}
+
+export function GoogleCalendarSyncProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
+  const role = user?.role ?? null;
+  const isStaff = isAdminRole(role) || isDoctorRole(role);
+
+  if (!isStaff) {
+    return <>{children}</>;
+  }
+
+  return <GoogleCalendarSyncProviderInner>{children}</GoogleCalendarSyncProviderInner>;
 }
 
 /** Calendar cards / optional surfaces — SSR cache fallback until provider mounts. */

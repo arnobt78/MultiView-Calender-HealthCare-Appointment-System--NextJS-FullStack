@@ -469,10 +469,10 @@ export function DoctorAdditionalTypesEditor({
         }
         confirmLabel="Disable"
         cancelLabel="Cancel"
-        confirmDisabled={disableTarget ? togglePendingIds.has(disableTarget.id) : false}
-        onConfirm={() => {
+        confirmPending={disableTarget ? togglePendingIds.has(disableTarget.id) : false}
+        onConfirm={async () => {
           if (disableTarget) {
-            void handleToggleActive(disableTarget, false);
+            await handleToggleActive(disableTarget, false);
           }
           setDisableTarget(null);
         }}
@@ -491,11 +491,12 @@ export function DoctorAdditionalTypesEditor({
             : ""
         }
         confirmLabel="Delete"
+        confirmPendingLabel="Deleting…"
         cancelLabel="Cancel"
-        confirmDisabled={isDeleting}
-        onConfirm={() => {
+        confirmPending={isDeleting}
+        onConfirm={async () => {
           if (deleteTypeId) {
-            void deleteType(deleteTypeId);
+            await deleteType(deleteTypeId);
           }
           setDeleteTypeId(null);
         }}

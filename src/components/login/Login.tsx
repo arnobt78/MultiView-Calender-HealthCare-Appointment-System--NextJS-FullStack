@@ -1,8 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { queryKeys } from "@/lib/query-keys";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,10 +28,17 @@ import {
   Globe,
   Home,
   ChevronDown,
+  Loader2,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { DEMO_ACCOUNTS, DEMO_PASSWORD } from "@/lib/demo-credentials";
 import { resolveRoleHomeHref } from "@/lib/role-home-href";
+import {
+  clearAuthNavPending,
+  setPostLoginToast,
+} from "@/lib/auth-pending-toast";
+import { seedAuthMeFromLoginResponse } from "@/lib/nav-session-ssr-seed";
+import { useAuthNavButtonLoading } from "@/hooks/useAuthNavButtonLoading";
 
 function GoogleIcon({ className }: { className?: string }) {
   return (
@@ -129,9 +134,10 @@ export default function Login({ redirect = null }: LoginProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [selectedRole, setSelectedRole] = useState<string>("");
-  const [loading, setLoading] = useState(false);
+  const { loading, setLoading, startAuthNavigation, authTransitionActive } =
+    useAuthNavButtonLoading("/login");
+  const [loadingGoogle, setLoadingGoogle] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
-  const router = useRouter();
   const queryClient = useQueryClient();
   const selectedAccount = selectedRole ? testAccounts[selectedRole] : null;
 
@@ -168,6 +174,7 @@ export default function Login({ redirect = null }: LoginProps) {
           subtitle: "Please fix the highlighted fields and try again.",
         });
         setLoading(false);
+        clearAuthNavPending();
         return;
       }
 
@@ -175,14 +182,15 @@ export default function Login({ redirect = null }: LoginProps) {
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(parsed.data),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        // Reset loading on error so the user can retry.
         setLoading(false);
+        clearAuthNavPending();
         notify.error({
           title: "Login failed",
           subtitle: data.error || "Please check your credentials and try again.",
@@ -191,25 +199,23 @@ export default function Login({ redirect = null }: LoginProps) {
       }
 
       if (data.user) {
-        const payload = {
-          name: data.user.display_name || data.user.email?.split("@")[0] || "there",
-          todayCount: Number(data.today_appointments ?? 0),
-        };
-        const serialized = JSON.stringify(payload);
-        sessionStorage.setItem("post-login-toast", serialized);
-        localStorage.setItem("post-login-toast", serialized);
-        /* seed the auth cache so AuthShell sees isAuthenticated=true immediately */
-        queryClient.setQueryData(queryKeys.auth.me, { ...data.user, email_verified: true });
+        const name =
+          data.user.display_name || data.user.email?.split("@")[0] || "there";
         const dest = resolveRoleHomeHref(data.user?.role, redirect);
-        // Do NOT reset loading here — keep spinner visible until the new page mounts.
-        // Resetting before unmount causes a brief button flash during navigation.
-        router.push(dest);
+        seedAuthMeFromLoginResponse(queryClient, data.user);
+        setPostLoginToast({
+          name,
+          todayCount: Number(data.today_appointments ?? 0),
+          dest,
+        });
+        startAuthNavigation(dest);
         return;
       }
-      // Fallback: unexpected shape — reset so form is interactive again.
       setLoading(false);
+      clearAuthNavPending();
     } catch (err: unknown) {
       setLoading(false);
+      clearAuthNavPending();
       const message = err instanceof Error ? err.message : "An error occurred during login";
       notify.error({
         title: "Unable to login",
@@ -219,6 +225,7 @@ export default function Login({ redirect = null }: LoginProps) {
   };
 
   const handleGoogle = () => {
+    setLoadingGoogle(true);
     const redirectParam = redirect ? `?redirect=${encodeURIComponent(redirect)}` : "";
     window.location.href = `/api/auth/google${redirectParam}`;
   };
@@ -264,7 +271,7 @@ export default function Login({ redirect = null }: LoginProps) {
           {/* ── Left info panel ── */}
           <div className="hidden lg:flex flex-1 flex-col justify-center px-12 xl:px-20 py-10 text-white overflow-y-auto">
             <motion.div
-              initial={{ opacity: 0, x: -50 }}
+              initial={authTransitionActive ? false : { opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.7, ease: "easeOut" }}
             >
@@ -291,7 +298,7 @@ export default function Login({ redirect = null }: LoginProps) {
               {features.map(({ icon: Icon, title, description }, i) => (
                 <motion.div
                   key={title}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={authTransitionActive ? false : { opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.45, ease: "easeOut", delay: 0.25 + i * 0.06 }}
                   className="flex items-start gap-2.5 p-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/15 hover:bg-white/[0.14] transition-colors duration-200"
@@ -314,16 +321,16 @@ export default function Login({ redirect = null }: LoginProps) {
           <div className="flex w-full lg:w-[460px] xl:w-[500px] shrink-0 items-center justify-center px-5 py-8 overflow-y-auto">
             <motion.div
               className="w-full max-w-sm"
-              initial={{ opacity: 0, x: 50 }}
+              initial={authTransitionActive ? false : { opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
+              transition={authTransitionActive ? { duration: 0 } : { duration: 0.6, ease: "easeOut", delay: 0.1 }}
             >
               <div className="bg-gradient-to-br from-white via-slate-50/95 to-blue-100/80 backdrop-blur-2xl rounded-3xl shadow-[0_25px_60px_rgba(0,0,0,0.4)] ring-1 ring-white/50 px-8 py-8">
 
                 <motion.div
-                  initial={{ opacity: 0, y: -10 }}
+                  initial={authTransitionActive ? false : { opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.3 }}
+                  transition={authTransitionActive ? { duration: 0 } : { duration: 0.4, delay: 0.3 }}
                   className="mb-6"
                 >
                   <div className="inline-flex p-2.5 bg-blue-50 rounded-2xl mb-4 ring-1 ring-blue-100">
@@ -336,9 +343,9 @@ export default function Login({ redirect = null }: LoginProps) {
                 <motion.form
                   onSubmit={handleLogin}
                   className="space-y-2"
-                  initial={{ opacity: 0 }}
+                  initial={authTransitionActive ? false : { opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ duration: 0.4, delay: 0.4 }}
+                  transition={authTransitionActive ? { duration: 0 } : { duration: 0.4, delay: 0.4 }}
                 >
                   <div className="flex flex-col gap-2">
                     <Label className="text-slate-500 text-xs font-semibold uppercase tracking-wide">
@@ -445,19 +452,35 @@ export default function Login({ redirect = null }: LoginProps) {
                     <Button
                       type="submit"
                       className="w-full h-11 rounded-2xl text-white font-semibold text-sm from-sky-500 to-sky-700 bg-gradient-to-r hover:from-sky-600 hover:to-sky-800 transition-colors"
-                      disabled={loading}
+                      disabled={loading || loadingGoogle}
                     >
-                      {loading ? "Signing in…" : "Sign In"}
+                      {loading ? (
+                        <span className="inline-flex items-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                          Signing in…
+                        </span>
+                      ) : (
+                        "Sign In"
+                      )}
                     </Button>
                     <Button
                       type="button"
                       variant="outline"
                       className="w-full h-11 rounded-2xl font-medium text-sm border-slate-200 bg-white hover:bg-slate-50 text-gray-700"
                       onClick={handleGoogle}
-                      disabled={loading}
+                      disabled={loading || loadingGoogle}
                     >
-                      <GoogleIcon className="mr-2 h-4 w-4 shrink-0" />
-                      {loading ? "Redirecting…" : "Continue with Google"}
+                      {loadingGoogle ? (
+                        <span className="inline-flex items-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                          Redirecting…
+                        </span>
+                      ) : (
+                        <>
+                          <GoogleIcon className="mr-2 h-4 w-4 shrink-0" />
+                          Continue with Google
+                        </>
+                      )}
                     </Button>
                   </div>
                 </motion.form>

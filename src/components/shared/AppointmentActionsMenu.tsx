@@ -51,7 +51,10 @@ type AppointmentActionsMenuProps = {
   onToggleStatus: (id: string, nextStatus: "pending" | "done") => void;
   onEdit: () => void;
   onDelete: (id: string) => void;
-  onCancel?: (id: string) => void;
+  /** Await hook `cancelAppointmentAsync` — confirm closes only after success. */
+  onCancel?: (id: string) => void | Promise<void>;
+  /** True while this row's visit is being cancelled (scoped by `cancellingAppointmentId`). */
+  cancelPending?: boolean;
   /** Staff billing — preset create from this visit. */
   onCreateInvoice?: (appointmentId: string) => void;
   showCreateInvoice?: boolean;
@@ -100,6 +103,7 @@ export function AppointmentActionsMenu({
   onEdit,
   onDelete,
   onCancel,
+  cancelPending = false,
   onCreateInvoice,
   showCreateInvoice = false,
   showSyncToGoogle = false,
@@ -286,8 +290,11 @@ export function AppointmentActionsMenu({
         title="Cancel appointment?"
         subtitle="This visit will be marked cancelled. Stakeholders will be notified."
         confirmLabel="Cancel visit"
-        onConfirm={() => {
-          onCancel(appointment.id);
+        confirmPending={cancelPending}
+        confirmPendingLabel="Cancelling…"
+        onConfirm={async () => {
+          if (!onCancel) return;
+          await onCancel(appointment.id);
           setCancelOpen(false);
         }}
       />

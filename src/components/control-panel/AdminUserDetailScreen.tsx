@@ -172,8 +172,9 @@ export function AdminUserDetailScreen({
   };
 
   const handleSaveEdit = () => {
-    updateUser(adminUserFormToUpdatePayload(dialogForm));
-    setEditDialogOpen(false);
+    updateUser(adminUserFormToUpdatePayload(dialogForm), {
+      onSuccess: () => setEditDialogOpen(false),
+    });
   };
 
   return (

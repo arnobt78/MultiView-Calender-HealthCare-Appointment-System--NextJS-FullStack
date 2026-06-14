@@ -77,7 +77,7 @@ export function DoctorDetailScreen({
     }
   }, [queryClient, doctorId, initialUser, initialAssignedPatients, initialSnapshot]);
 
-  const { data: user, updateUser, isUpdating } = useUser(doctorId);
+  const { data: user, updateUser, updateUserAsync, isUpdating } = useUser(doctorId);
   const liveUser = user ?? initialUser;
   const displayName = liveUser.display_name?.trim() || liveUser.email;
   const active = isDoctorActive(liveUser);
@@ -88,12 +88,13 @@ export function DoctorDetailScreen({
   };
 
   const handleSaveEdit = () => {
-    updateUser(doctorFormToUpdatePayload(dialogForm));
-    setEditDialogOpen(false);
+    updateUser(doctorFormToUpdatePayload(dialogForm), {
+      onSuccess: () => setEditDialogOpen(false),
+    });
   };
 
-  const handleToggleActive = () => {
-    updateUser({ is_active: !active });
+  const handleToggleActive = async () => {
+    await updateUserAsync({ is_active: !active });
     setConfirmToggleOpen(false);
   };
 
@@ -193,6 +194,8 @@ export function DoctorDetailScreen({
             }
             confirmLabel={active ? "Deactivate" : "Activate"}
             variant={active ? "warning" : "info"}
+            confirmPending={isUpdating}
+            confirmPendingLabel={active ? "Deactivating…" : "Activating…"}
             onConfirm={handleToggleActive}
           />
         </>

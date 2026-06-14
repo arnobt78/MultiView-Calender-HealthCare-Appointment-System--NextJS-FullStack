@@ -47,8 +47,10 @@ export default function WeekView() {
     summaryStats,
     appointments: globalAppointments,
     toggleStatus: commitToggleStatus,
-    deleteAppointment,
-    cancelAppointment,
+    deleteAppointmentAsync,
+    isDeleting,
+    cancelAppointmentAsync,
+    cancellingAppointmentId,
     isError: appointmentsError,
   } = useAppointmentData();
   const { user } = useAuth();
@@ -133,13 +135,6 @@ export default function WeekView() {
       }
     },
     [commitToggleStatus]
-  );
-
-  const deleteAppt = useCallback(
-    (id: string) => {
-      deleteAppointment(id);
-    },
-    [deleteAppointment]
   );
 
   // Helper for lighter color
@@ -358,7 +353,10 @@ export default function WeekView() {
                             slotHeightPx={slotHeight}
                             onEdit={setEditAppt}
                             onDelete={(id) => setDeleteTargetId(id)}
-                            onCancel={cancelAppointment}
+                            onCancel={async (id) => {
+                              await cancelAppointmentAsync(id);
+                            }}
+                            cancelPending={cancellingAppointmentId === a.id}
                             onToggleStatus={toggleStatus}
                             invoiceDisplayStatus={invoiceDisplayByAppt.get(a.id)}
                             showDetails={true}
@@ -384,9 +382,12 @@ export default function WeekView() {
         subtitle="This will permanently remove the appointment from your weekly calendar."
         confirmLabel="Delete"
         onConfirm={async () => {
-          if (deleteTargetId) await deleteAppt(deleteTargetId);
+          if (!deleteTargetId) return;
+          await deleteAppointmentAsync(deleteTargetId);
           setDeleteTargetId(null);
         }}
+        confirmPending={isDeleting}
+        confirmPendingLabel="Deleting…"
       />
 
       {/* Edit dialog */}

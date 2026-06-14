@@ -56,7 +56,7 @@ export function InvoiceDetailActionBar({
     updateInvoice,
     recordPayment,
     refundInvoice,
-    deleteInvoice,
+    deleteInvoiceAsync,
     isUpdating,
     isRecording,
     isRefunding,
@@ -197,8 +197,10 @@ export function InvoiceDetailActionBar({
                 confirmLabel="Delete"
                 cancelLabel="Cancel"
                 confirmDisabled={busy}
-                onConfirm={() => {
-                  deleteInvoice(invoice.id);
+                confirmPending={isDeleting}
+                confirmPendingLabel="Deleting…"
+                onConfirm={async () => {
+                  await deleteInvoiceAsync(invoice.id);
                   setDeleteOpen(false);
                 }}
                 trigger={

@@ -255,6 +255,7 @@ export function usePayments(options?: UsePaymentsOptions) {
     refundInvoice: refundInvoiceMutation.mutate,
     isRefunding: refundInvoiceMutation.isPending,
     deleteInvoice: deleteInvoiceMutation.mutate,
+    deleteInvoiceAsync: deleteInvoiceMutation.mutateAsync,
     isDeleting: deleteInvoiceMutation.isPending,
   };
 }

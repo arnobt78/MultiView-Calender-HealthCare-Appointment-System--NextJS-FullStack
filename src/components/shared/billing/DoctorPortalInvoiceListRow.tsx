@@ -14,9 +14,10 @@ type Props = {
   listIndex?: number;
   viewerUserId?: string;
   onSend: (id: string) => void;
-  onDelete: (id: string) => void;
+  onDelete: (id: string) => void | Promise<void>;
   onEdit?: (invoice: Invoice) => void;
   isUpdating?: boolean;
+  isDeleting?: boolean;
 };
 
 /** Doctor portal billing list — wraps shared InvoicePortalListCard (sky tokens). */
@@ -28,6 +29,7 @@ export function DoctorPortalInvoiceListRow({
   onDelete,
   onEdit,
   isUpdating,
+  isDeleting,
 }: Props) {
   const viewerRole = "doctor" as const;
 
@@ -48,6 +50,7 @@ export function DoctorPortalInvoiceListRow({
             onSend={onSend}
             onDelete={onDelete}
             isUpdating={isUpdating}
+            isDeleting={isDeleting}
           />
         }
       />

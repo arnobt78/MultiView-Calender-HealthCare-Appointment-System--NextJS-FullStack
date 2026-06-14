@@ -97,9 +97,10 @@ function NotificationsManagementInner() {
     refetch,
     isError: notificationsError,
     markAsRead,
-    markAllAsRead,
-    deleteRead,
+    markAllAsReadAsync,
+    deleteReadAsync,
     isMarkingRead,
+    isMarkingAllRead,
     isDeletingRead,
   } = useNotifications();
 
@@ -358,9 +359,10 @@ function NotificationsManagementInner() {
               subtitle={buildMarkAllNotificationsReadConfirmSubtitle(unreadCount)}
               confirmLabel="Confirm"
               cancelLabel="Cancel"
-              confirmDisabled={isMarkingRead}
-              onConfirm={() => {
-                markAllAsRead();
+              confirmPending={isMarkingAllRead}
+              confirmPendingLabel="Updating…"
+              onConfirm={async () => {
+                await markAllAsReadAsync();
                 setMarkAllConfirmOpen(false);
               }}
             />
@@ -370,11 +372,12 @@ function NotificationsManagementInner() {
               variant="destructive"
               title={DELETE_READ_NOTIFICATIONS_TITLE}
               subtitle={buildDeleteReadNotificationsConfirmSubtitle(readCount)}
-              confirmLabel={isDeletingRead ? "Deleting..." : "Delete read"}
+              confirmLabel="Delete read"
               cancelLabel="Cancel"
-              confirmDisabled={isDeletingRead}
-              onConfirm={() => {
-                deleteRead();
+              confirmPending={isDeletingRead}
+              confirmPendingLabel="Deleting…"
+              onConfirm={async () => {
+                await deleteReadAsync();
                 setDeleteReadConfirmOpen(false);
               }}
             />

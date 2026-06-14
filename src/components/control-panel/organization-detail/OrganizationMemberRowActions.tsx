@@ -40,12 +40,14 @@ export function OrganizationMemberRowActions({
   viewerRole,
   canManage,
   onRemoveMember,
+  isRemovingMember,
 }: {
   member: OrganizationDetailMemberRow;
   orgName: string;
   viewerRole: EntityRole;
   canManage: boolean;
-  onRemoveMember: (member: OrganizationDetailMemberRow) => void;
+  onRemoveMember: (member: OrganizationDetailMemberRow) => void | Promise<void>;
+  isRemovingMember?: boolean;
 }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const viewHref = resolveMemberViewHref(member, viewerRole);
@@ -98,8 +100,10 @@ export function OrganizationMemberRowActions({
           subtitle={`Remove ${memberLabel} from ${orgName}?`}
           confirmLabel="Remove"
           cancelLabel="Cancel"
-          onConfirm={() => {
-            onRemoveMember(member);
+          confirmPending={isRemovingMember}
+          confirmPendingLabel="Removing…"
+          onConfirm={async () => {
+            await onRemoveMember(member);
             setConfirmOpen(false);
           }}
         />

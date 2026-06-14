@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import type { Persister } from "@tanstack/react-query-persist-client";
@@ -9,6 +10,7 @@ import { createQueryClient } from "@/lib/query-client";
 import { useQueryCacheCrossTabSync } from "@/hooks/useQueryCacheCrossTabSync";
 import { useNotificationStream } from "@/hooks/useNotificationStream";
 import { useAuth } from "@/hooks/useAuth";
+import { shouldRunAuthenticatedAppQueries } from "@/lib/auth-pending-toast";
 
 /**
  * QueryProvider
@@ -72,8 +74,11 @@ function QueryCacheCrossTabListener() {
 
 /** One EventSource per tab — live navbar/CP notification updates via SSE invalidation. */
 function NotificationStreamListener() {
+  const pathname = usePathname();
   const { user, isLoading } = useAuth();
-  useNotificationStream(!isLoading && !!user?.id);
+  const streamEnabled =
+    !isLoading && !!user?.id && shouldRunAuthenticatedAppQueries(pathname);
+  useNotificationStream(streamEnabled);
   return null;
 }
 

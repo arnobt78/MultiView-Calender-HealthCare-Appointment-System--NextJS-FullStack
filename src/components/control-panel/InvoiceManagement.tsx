@@ -52,7 +52,8 @@ function InvoiceManagementInner(_props: InvoiceManagementInnerProps) {
   const {
     pay,
     isPaying,
-    deleteInvoice,
+    deleteInvoiceAsync,
+    isDeleting,
     updateInvoice,
     recordPayment,
     refundInvoice,
@@ -99,20 +100,24 @@ function InvoiceManagementInner(_props: InvoiceManagementInnerProps) {
         onSend: (id) => updateInvoice({ invoiceId: id, body: { status: "sent" } }),
         onMarkPaid: recordPayment,
         onCancel: (id) => updateInvoice({ invoiceId: id, body: { status: "cancelled" } }),
-        onDelete: deleteInvoice,
+        onDelete: async (id) => {
+          await deleteInvoiceAsync(id);
+        },
         onRefund: refundInvoice,
         isPaying,
         isUpdating: busyActions,
+        isDeleting,
       }),
     [
       openEdit,
       pay,
       updateInvoice,
       recordPayment,
-      deleteInvoice,
+      deleteInvoiceAsync,
       refundInvoice,
       isPaying,
       busyActions,
+      isDeleting,
     ]
   );
 

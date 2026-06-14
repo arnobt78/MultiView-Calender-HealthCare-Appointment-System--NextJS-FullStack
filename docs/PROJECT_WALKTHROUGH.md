@@ -1,6 +1,31 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-14 — C36.2.1 appointment detail gcal seed)
+## Latest (2026-06-14 — C37 auth flash + sync 404 fix)
+
+**Root causes fixed:**
+1. `beginAuthNavigation` had 5-second dedup (`AUTH_NAV_LAST_PUSH_KEY`) that set sessionStorage pending flag then returned early — button showed "Signing in…" but `window.location.replace` never fired → login page flash.
+2. Email/pw `loading` state (from `useAuthNavButtonLoading`) bled into Google OAuth button → both showed "Redirecting…" simultaneously.
+3. `GoogleCalendarSyncProvider` called `useGoogleCalendar()` unconditionally → GET `/api/calendar/sync` fired for all users including patients → 404.
+
+**Fixes:**
+- `auth-pending-toast.ts`: replaced dedup with pending-guard (`if existing?.from===from && existing?.dest===dest → return`). `AUTH_NAV_LAST_PUSH_KEY` + `peekAuthNavPending` removed as dead code.
+- `Login.tsx`: added `loadingGoogle` state for Google OAuth path; separate from email/pw `loading`.
+- `GoogleCalendarSyncContext.tsx`: split into `GoogleCalendarSyncProviderInner` (has hook, mounts only for staff) + outer `GoogleCalendarSyncProvider` (checks `isAdminRole || isDoctorRole` first).
+- All `#region agent log` debug blocks removed from Login, LandingPage, AuthShell, useAuth, useAuthNavButtonLoading.
+
+**Auth nav pattern (invariants):**
+- `AUTH_NAV_PENDING_KEY` (sessionStorage) set before `window.location.replace` → survives React remounts during server RTT.
+- `isAuthNavPendingForPath(pathname)` initializes button `loading` in `useState` — spinner persists through hard nav until destination clears it via `clearAuthNavPendingIfArrived`.
+- `seedAuthMeFromLoginResponse` → seeds `queryKeys.auth.me` from login 200 response before nav. `NavSessionSsrSeed` overwrites stale null on destination mount.
+- `shouldRunAuthenticatedAppQueries(pathname)` gates dashboard/calendar queries — blocks on `/`, `/login`, `/register`, `/accept-invitation`.
+
+**Key libs:** `auth-pending-toast.ts` · `useAuthNavButtonLoading.ts` · `nav-session-ssr-seed.ts` · `GoogleCalendarSyncContext.tsx`.
+
+**Test:** `src/lib/__tests__/auth-pending-toast.test.ts` — `beginAuthNavigation` double-fire guard asserted.
+
+**Verify:** **1154/1154** · tsc · lint · build.
+
+## Prior (2026-06-14 — C36.2.1 appointment detail gcal seed)
 
 **C36.2.1 (REQ-0087):** Staff appointment detail SSR prefetch + `seedGoogleCalendarStatusCacheFromSsr` — sync footer visible on first paint when deep-linking to CP or doctor detail.
 

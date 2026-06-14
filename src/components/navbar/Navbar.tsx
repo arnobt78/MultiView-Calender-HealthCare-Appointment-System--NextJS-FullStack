@@ -61,7 +61,7 @@ export default function Navbar() {
   const queryClient = useQueryClient();
   const openSearch = useAppStore((s) => s.openSearch);
   const toggleQuickActionModal = useAppStore((s) => s.toggleQuickActionModal);
-  const { notifications, total, unreadCount, markAsRead, markAllAsRead, deleteRead, isDeletingRead } = useNotifications();
+  const { notifications, total, unreadCount, markAsRead, markAllAsRead, deleteReadAsync, isDeletingRead } = useNotifications();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const readCount = Math.max(total - unreadCount, 0);
 
@@ -336,11 +336,12 @@ export default function Navbar() {
                   onOpenChange={setIsDeleteDialogOpen}
                   title="Delete all read notifications?"
                   subtitle="This removes only read notifications. Unread items remain in your inbox."
-                  confirmLabel={isDeletingRead ? "Deleting..." : "Delete Read"}
+                  confirmLabel="Delete Read"
+                  confirmPending={isDeletingRead}
+                  confirmPendingLabel="Deleting…"
                   variant="destructive"
-                  disabled={isDeletingRead}
-                  onConfirm={() => {
-                    deleteRead();
+                  onConfirm={async () => {
+                    await deleteReadAsync();
                     setIsDeleteDialogOpen(false);
                   }}
                 />

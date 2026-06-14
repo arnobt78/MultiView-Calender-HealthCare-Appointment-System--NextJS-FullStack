@@ -114,8 +114,10 @@ export function OrganizationDetailScreen({
   const {
     addMember,
     isAddingMember,
-    removeMember,
-    deleteOrg,
+    removeMemberAsync,
+    isRemovingMember,
+    deleteOrgAsync,
+    isDeleting,
     updateOrg,
     isUpdating,
   } = useOrganization();
@@ -169,18 +171,19 @@ export function OrganizationDetailScreen({
               orgName={liveOrg.name}
               viewerRole={viewerRole}
               canManage={isOwner}
-              onRemoveMember={(m) =>
-                removeMember({
+              onRemoveMember={async (m) => {
+                await removeMemberAsync({
                   orgId: liveOrg.id,
                   userId: m.user_id,
                   memberLabel: m.display_name ?? m.email ?? "Member",
-                })
-              }
+                });
+              }}
+              isRemovingMember={isRemovingMember}
             />
           )
           : undefined,
       }),
-    [isOwner, viewerRole, liveOrg.id, liveOrg.name, removeMember]
+    [isOwner, viewerRole, liveOrg.id, liveOrg.name, removeMemberAsync, isRemovingMember]
   );
 
   const handleSaveEdit = () => {
@@ -196,12 +199,10 @@ export function OrganizationDetailScreen({
     );
   };
 
-  const handleDelete = () => {
-    deleteOrg(liveOrg.id, {
-      onSuccess: () => {
-        router.push(LIST_BACK_HREF);
-      },
-    });
+  const handleDelete = async () => {
+    await deleteOrgAsync(liveOrg.id);
+    setDeleteConfirmOpen(false);
+    router.push(LIST_BACK_HREF);
   };
 
   return (
@@ -407,6 +408,8 @@ export function OrganizationDetailScreen({
             subtitle={buildOrganizationDeleteConfirmSubtitle(liveOrg.name)}
             confirmLabel="Delete"
             cancelLabel="Cancel"
+            confirmPending={isDeleting}
+            confirmPendingLabel="Deleting…"
             onConfirm={handleDelete}
           />
         </>

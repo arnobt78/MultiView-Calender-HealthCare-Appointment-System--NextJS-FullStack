@@ -43,11 +43,12 @@ type Props = {
   onSend?: (id: string) => void;
   onMarkPaid?: (id: string) => void;
   onCancel?: (id: string) => void;
-  onDelete?: (id: string) => void;
+  onDelete?: (id: string) => void | Promise<void>;
   onRefund?: (id: string) => void;
   onEdit?: (invoice: Invoice) => void;
   isPaying?: boolean;
   isUpdating?: boolean;
+  isDeleting?: boolean;
   /** When true, omit View link (detail page). */
   hideViewLink?: boolean;
   /** Defaults to vertical ⋮ — CP patient list parity; pass `horizontal` for dense toolbars only. */
@@ -69,6 +70,7 @@ export function InvoiceAdminActionsMenu({
   onEdit,
   isPaying,
   isUpdating,
+  isDeleting = false,
   hideViewLink = false,
   menuIcon = INVOICE_LIST_ACTIONS_MENU_ICON,
   triggerClassName,
@@ -189,8 +191,11 @@ export function InvoiceAdminActionsMenu({
         confirmLabel="Delete"
         cancelLabel="Cancel"
         confirmDisabled={isUpdating}
-        onConfirm={() => {
-          onDelete(invoice.id);
+        confirmPending={isDeleting}
+        confirmPendingLabel="Deleting…"
+        onConfirm={async () => {
+          if (!onDelete) return;
+          await onDelete(invoice.id);
           setDeleteOpen(false);
         }}
       />

@@ -24,7 +24,8 @@ type Props = {
   isConnected: boolean;
   listBodyLoading: boolean;
   isDisconnecting: boolean;
-  onDisconnect: () => void;
+  /** Resolve when disconnect succeeds — confirm closes only after this settles. */
+  onDisconnect: () => void | Promise<void>;
 };
 
 /** Sky glass — OAuth connect/disconnect; card chrome stays mounted while status pulses. */
@@ -87,9 +88,10 @@ export function GoogleCalendarConnectionCard({
                 subtitle={buildGoogleCalendarDisconnectConfirmSubtitle()}
                 confirmLabel="Disconnect"
                 cancelLabel="Cancel"
-                confirmDisabled={isDisconnecting}
-                onConfirm={() => {
-                  onDisconnect();
+                confirmPending={isDisconnecting}
+                confirmPendingLabel="Disconnecting…"
+                onConfirm={async () => {
+                  await onDisconnect();
                   setDisconnectConfirmOpen(false);
                 }}
               />

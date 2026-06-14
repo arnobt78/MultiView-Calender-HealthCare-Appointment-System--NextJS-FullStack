@@ -107,6 +107,7 @@ export function useCategories(options?: UseCategoriesOptions) {
     updateCategoryAsync: updateMutation.mutateAsync,
     isUpdating: updateMutation.isPending,
     deleteCategory: deleteMutation.mutate,
+    deleteCategoryAsync: deleteMutation.mutateAsync,
     isDeleting: deleteMutation.isPending,
   };
 }

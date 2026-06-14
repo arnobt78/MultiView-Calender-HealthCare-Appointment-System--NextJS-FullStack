@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 
 type Props = {
   isImporting: boolean;
-  onImport: (file: File, treatingPhysicianId: string) => void;
+  onImport: (file: File, treatingPhysicianId: string) => void | Promise<void>;
 };
 
 /** Amber glass — optional advanced import with treating physician assignment. */
