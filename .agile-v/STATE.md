@@ -6,29 +6,38 @@
 
 | Field | Value |
 |-------|-------|
-| **Cycle** | **C36.2.1** — Appointment detail gcal SSR seed |
+| **Cycle** | **C37.2** — Auth nav + gcal sync UX |
 | **Phase** | Accept |
 | **Stage** | 5 |
 | **Status** | shipped |
 | **Last Updated** | 2026-06-14 |
-| **Parent REQ** | REQ-0087 |
+| **Parent REQ** | — (engineering hardening; no new REQ) |
 
-## Verify baseline (C36.2.1 close)
+## Verify baseline (C37.2 close)
 
-**1140/1140** · tsc · lint · build — PASS
+**1154/1154** · tsc · lint · build — PASS · HEAD `bb17816`
 
-## C36.2.1 shipped (REQ-0087)
+## C37.2 shipped (gcal connect flip)
 
-- Staff appointment detail pages prefetch + seed `googleCalendar` status for sync footer first paint.
+- `GET /api/calendar/sync`: token exists + events fail → 200 `{connected:true,events:[]}` not 500.
+- `useGoogleCalendar` queryFn: 404/401 → disconnected; other errors throw (retry, keep cache).
 
-## C36.2 shipped (REQ-0086)
+## C37.1 shipped (auth remount root cause)
 
-- Cancel/DELETE unlink Google events; PUT/PATCH shared side-effects; `GoogleCalendarSyncProvider`; dashboard SSR gcal seed; `maybeInvalidateGoogleCalendarIfConnected`; menu test.
+- `GoogleCalendarSyncProviderInner` always mounted; `useGoogleCalendar({ enabled: isStaff })` — stable tree when `seedAuthMeFromLoginResponse` runs.
+- Login fields `disabled={loading}`; Landing `AppointmentDeck` freezes motion when `authTransitionActive`.
 
-## C36.1 shipped (REQ-0085)
+## C37 shipped (auth login transition)
 
-- `google_calendar_event_id` on Appointment; auto-sync CRUD; manual sync UI; import resolver; OAuth param helpers.
+- `beginAuthNavigation`: pending-guard (same from+dest skip) + `window.location.replace(dest)`.
+- `loadingGoogle` separate from email/pw `loading` on Login.
+- `seedAuthMeFromLoginResponse` + `shouldRunAuthenticatedAppQueries` gate dashboard prefetch on bare paths.
+- Deferred welcome toast via `auth-pending-toast.ts`; debug logs removed.
 
-## C36 shipped (REQ-0084)
+## Prior (C36.2.1 REQ-0087)
 
-- OAuth redirect → CP google-calendar tab; glass UI panels; events DataTable; advanced ICS import.
+- Staff appointment detail SSR + seed gcal status for sync footer first paint.
+
+## Next
+
+Human Gate backlog → archive C3–C36 → **Specify C38** (new REQ in REQUIREMENTS.md) before feature code.

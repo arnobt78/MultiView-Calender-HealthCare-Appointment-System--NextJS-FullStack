@@ -1,6 +1,6 @@
 # Agile V — Session Activation (every prompt)
 
-<!-- HealthCal Pro | v1.4 | Sync: 2026-06-13 C34.1 -->
+<!-- HealthCal Pro | v1.4 | Sync: 2026-06-14 C37.2 -->
 
 ## 1. Load skills (mandatory)
 
@@ -16,9 +16,9 @@
 
 ## 2. Read (resume)
 
-1. `STATE.md` — **C34.1 shipped** · **1103/1103** verify PASS · HEAD `768a422`
+1. `STATE.md` — **C37.2 shipped** · **1154/1154** verify PASS · HEAD `bb17816`
 2. `CHECKPOINTS.md` — only if PENDING HITL (**none**)
-3. `REQUIREMENTS.md` — parent REQ before any work (**REQ-0001..0082**)
+3. `REQUIREMENTS.md` — parent REQ before any work (**REQ-0001..0087**)
 
 ## 3. Before coding (mandatory gate)
 
@@ -48,11 +48,13 @@ Specify → Constrain → [Gate1] → Orchestrate → Prove → Verify → [Gate
 | C31 | 0079 | verify PASS | pending |
 | C32 | 0080 | verify PASS | pending |
 | C33 | 0081 | verify PASS | pending |
-| **C34 / C34.1** | **0082** | **verify PASS** | pending |
+| C34 / C34.1 | 0082 | verify PASS | pending |
+| C35–C36.2.1 | 0083–0087 | verify PASS | pending |
+| **C37 / C37.1 / C37.2** | **—** | **shipped (auth nav)** | — |
 
-**Baseline:** **1103** tests · **223** files · HEAD **`768a422`** · verified 2026-06-13
+**Baseline:** **1154** tests · **232** files · HEAD **`bb17816`** · verified 2026-06-14
 
-**Next:** Human Gate backlog → archive C3–C34 → **Specify C35** (new REQ) before new code.
+**Next:** Human Gate backlog → archive → **Specify C38** (new REQ) before new code.
 
 ## 7. Halt if
 

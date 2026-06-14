@@ -4,13 +4,11 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-14)
 
-- **C37.2 (gcal connect flip):** `GET /api/calendar/sync` nested try/catch — token exists but events fail → 200 `{connected:true,events:[]}` not 500. `useGoogleCalendar` queryFn only returns `{connected:false}` on 404/401; throws on 500 so TanStack retries + keeps cached state.
-- **C37.1 (auth remount):** `GoogleCalendarSyncProviderInner` always mounted + `enabled={isStaff}` gates query. Login fields `disabled={loading}`. `AppointmentDeck` `authTransitionActive` freezes `whileInView`.
-- **C37 (auth flash):** `beginAuthNavigation` dedup → pending-guard; `loadingGoogle` split; debug removed.
-- **C36.2.1 (REQ-0087):** Appointment detail SSR gcal seed.
-- **C36.2 (REQ-0086):** Cancel/DELETE unlink · PUT sync parity · dashboard SSR seed.
-- **C35.1 (REQ-0083):** CSV export `Link Valid` audit column.
-- **Verify:** **1154/1154** · tsc · lint · build PASS.
+- **C37.2:** gcal sync — events fail ≠ disconnected (200 empty events).
+- **C37.1:** GCal provider stable tree (`enabled={isStaff}`) — fixes Login/Landing remount on auth seed.
+- **C37:** auth nav — hard replace + pending-guard; `loadingGoogle`; bare-path query gate; deferred toasts.
+- **Verify:** **1154/1154** · tsc · lint · build PASS · HEAD `bb17816`.
+- **Memory:** `.claude/SESSION.md` · walkthrough § C37 audit below.
 
 ## Never / Always
 
@@ -62,7 +60,7 @@ Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Agile V
 
-`.agile-v/STATE.md` · **C37.2 shipped** (gcal connect-then-disconnect false flip fixed).
+`.agile-v/STATE.md` · **C37.2 shipped** · **1154/1154** · next **C38 specify**.
 
 ## Principle
 

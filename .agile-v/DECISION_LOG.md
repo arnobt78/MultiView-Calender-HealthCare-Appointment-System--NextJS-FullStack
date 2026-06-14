@@ -122,3 +122,8 @@
 | 2026-06-13T10:30:00Z | build | C34.1 filter + DELETE sync | notification-list-filter; await cleanup try/catch | REQ-0082 |
 | 2026-06-13T10:30:00Z | verify | C34/C34.1 shipped | 1103/1103; tsc · lint · build PASS; `768a422` | REQ-0082 |
 | 2026-06-13T10:30:00Z | init | Agile V Infinity Loop activation sync | STATE/ACTIVATION/AGENTS/BOOTSTRAP/config synced C34.1; ready C35 specify | REQ-0082 |
+| 2026-06-14T18:00:00Z | build | C37 auth login transition | pending-guard + hard replace; loadingGoogle split; auth-pending-toast; bare-path query gate | — |
+| 2026-06-14T18:10:00Z | build | C37.1 auth remount | GCal provider stable tree + enabled gate; Login disabled fields; Landing motion freeze | — |
+| 2026-06-14T18:20:00Z | build | C37.2 gcal sync flip | sync route nested catch; useGoogleCalendar error policy | — |
+| 2026-06-14T18:25:00Z | verify | C37.2 shipped | 1154/1154; tsc · lint · build PASS; HEAD bb17816 | — |
+| 2026-06-14T18:25:00Z | init | Session docs sync | CLAUDE/AGENTS/STATE/ACTIVATION/WALKTHROUGH/.claude/SESSION | — |

@@ -1,5 +1,28 @@
 # HealthCal Pro — Project Walkthrough
 
+## Agent resume (2026-06-14 — audit PASS)
+
+**Baseline:** 1154/1154 · tsc · lint · build · HEAD `bb17816`
+
+**Auth login (C37 chain — shipped):**
+
+| Issue | Root cause | Fix |
+|-------|------------|-----|
+| Page flash after login 200 | Soft nav + stale guest cache + provider remount | `window.location.replace`; pending-guard; stable GCal tree |
+| Both buttons "Redirecting…" | Shared `loading` on Google btn | `loadingGoogle` state |
+| Navbar skeleton until refresh | `auth.me` stuck null; SSR seed skipped | `seedAuthMeFromLoginResponse`; `NavSessionSsrSeed` overwrites null |
+| Dashboard APIs on login page | `setQueryData` enabled appointments | `shouldRunAuthenticatedAppQueries(pathname)` |
+| GCal sync 404 for patients | Unconditional sync hook | `useGoogleCalendar({ enabled: isStaff })` |
+| Connected → disconnected flip | sync 500 → `{connected:false}` | Nested catch; throw on 500 |
+
+**Key files:** `auth-pending-toast.ts` · `useAuthNavButtonLoading.ts` · `nav-session-ssr-seed.ts` · `Login.tsx` · `LandingPage.tsx` · `GoogleCalendarSyncContext.tsx` · `useAuth.ts` · `useAppointments.ts` · `AuthShell.tsx` · `proxy.ts`
+
+**Invariants:** inline button spinner only · no full-screen overlay · welcome toast on destination only · `force-dynamic` + SSR seed + TanStack invalidation on CRUD.
+
+**Next:** Specify C38 — add REQ to `.agile-v/REQUIREMENTS.md` before new features.
+
+---
+
 ## Latest (2026-06-14 — C37.2 gcal connect-then-disconnect false flip)
 
 **Root cause:** `GET /api/calendar/sync` had one try/catch wrapping everything. When `listGoogleEvents` threw (Google API transient error, rate-limit, scope issue), the handler returned 500. The `useGoogleCalendar` queryFn caught all errors and returned `{ connected: false }`, flipping the UI to "Not connected" even though the token existed in DB.

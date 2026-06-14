@@ -1,12 +1,12 @@
 # Requirements — HealthCal Pro
 
-<!-- Revision: C1..C34.1 | C34.1 shipped | Last updated: 2026-06-13 -->
+<!-- Revision: C1..C37.2 | C37.2 shipped | Last updated: 2026-06-14 -->
 
 ## Document Control
 
 | Field | Value |
 |-------|-------|
-| Cycle | C1–C36.2 shipped · **C36.2.1 active** (REQ-0087) |
+| Cycle | C1–C36.2.1 shipped · **C37.2 shipped** (auth nav UX, no REQ) · **C38 specify next** |
 | Author | Requirement Architect |
 | Gate 1 status | C1 GATE-0001 · C2 GATE-0003 approved |
 | Canonical source | this file |
