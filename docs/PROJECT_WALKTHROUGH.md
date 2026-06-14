@@ -1,6 +1,20 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-14 — C37 auth flash + sync 404 fix)
+## Latest (2026-06-14 — C37.1 auth remount root cause)
+
+**Root cause:** `GoogleCalendarSyncProvider` conditionally mounted `GoogleCalendarSyncProviderInner` vs `<>{children}</>` based on `isStaff`. When `seedAuthMeFromLoginResponse` seeded auth.me with admin/doctor before nav, `isStaff` flipped false→true → React tree structure changed → Login/LandingPage **remounted** → all `useState` (email, password, selectedRole) reset. Patient role never flipped isStaff → no remount.
+
+**Fixes:**
+- `GoogleCalendarSyncContext.tsx`: `GoogleCalendarSyncProviderInner` always mounted. `enabled={isStaff}` passed down — `useGoogleCalendar` query disabled for guests/patients. Tree structure stable → no remount.
+- `useGoogleCalendar.ts`: added `{ enabled?: boolean }` param → `useQuery({ enabled })`.
+- `Login.tsx`: form fields (dropdown, email, password) now `disabled={loading}` instead of hidden — stay visible with filled values while "Signing in…" spinner shows.
+- `LandingPage.tsx`: `AppointmentDeck` accepts `authTransitionActive` prop; outer `motion.div` uses `initial={false}` + skips `whileInView` when active — right-side cards don't re-animate on remount.
+
+**Key libs:** `GoogleCalendarSyncContext.tsx` · `useGoogleCalendar.ts` · `Login.tsx` · `LandingPage.tsx`.
+
+**Verify:** **1154/1154** · tsc · lint · build.
+
+## Prior (2026-06-14 — C37 auth flash + sync 404 fix)
 
 **Root causes fixed:**
 1. `beginAuthNavigation` had 5-second dedup (`AUTH_NAV_LAST_PUSH_KEY`) that set sessionStorage pending flag then returned early — button showed "Signing in…" but `window.location.replace` never fired → login page flash.

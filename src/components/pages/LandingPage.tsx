@@ -242,7 +242,7 @@ const APPOINTMENTS = [
   { id: 6, doctor: "Dr. John", specialty: "Endocrinology", time: "3:30 PM", status: "Pending", img: "/doctors/img-6.jpg", Icon: Zap, accent: "from-teal-500/20 to-teal-500/5", ic: "text-teal-300", bc: "border-teal-400/25" },
 ];
 
-function AppointmentDeck() {
+function AppointmentDeck({ authTransitionActive }: { authTransitionActive: boolean }) {
   const [offset, setOffset] = useState(0);
   const layerA = useRef<HTMLDivElement>(null);
   const layerB = useRef<HTMLDivElement>(null);
@@ -277,8 +277,8 @@ function AppointmentDeck() {
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: 40, scale: 0.97 }}
-      whileInView={{ opacity: 1, x: 0, scale: 1 }}
+      initial={authTransitionActive ? false : { opacity: 0, x: 40, scale: 0.97 }}
+      whileInView={authTransitionActive ? undefined : { opacity: 1, x: 0, scale: 1 }}
       viewport={{ once: false, amount: 0 }}
       transition={{ duration: 0.75, ease, delay: 0.15 }}
       className="relative w-full max-w-[340px] md:max-w-[380px] xl:max-w-[480px] justify-self-center xl:justify-self-end"
@@ -643,8 +643,9 @@ export default function LandingPage() {
           {/* Left: text + CTAs */}
           <motion.div
             variants={stagger}
-            initial="hidden"
-            whileInView="visible"
+            initial={authTransitionActive ? "visible" : "hidden"}
+            animate={authTransitionActive ? "visible" : undefined}
+            whileInView={authTransitionActive ? undefined : "visible"}
             viewport={{ once: false, amount: 0 }}
             className="flex flex-col gap-6"
           >
@@ -688,8 +689,8 @@ export default function LandingPage() {
 
               {/* Demo account CTA — dropdown to select role + one-click login */}
               <motion.div
-                initial={{ scale: 0.3, rotate: -8, opacity: 0 }}
-                whileInView={{
+                initial={authTransitionActive ? false : { scale: 0.3, rotate: -8, opacity: 0 }}
+                whileInView={authTransitionActive ? undefined : {
                   scale: [0.3, 1.26, 0.88, 1.08, 0.97, 1],
                   rotate: [-8, 5, -3, 2, -1, 0],
                   opacity: [0, 1, 1, 1, 1, 1],
@@ -777,7 +778,7 @@ export default function LandingPage() {
           </motion.div>
 
           {/* Right: appointment deck */}
-          <AppointmentDeck />
+          <AppointmentDeck authTransitionActive={authTransitionActive} />
         </div>
       </section>
 

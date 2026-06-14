@@ -15,7 +15,7 @@ import type { GoogleCalendarStatus } from "@/types/google-calendar";
 
 export type { GoogleCalendarEvent, GoogleCalendarStatus } from "@/types/google-calendar";
 
-export function useGoogleCalendar() {
+export function useGoogleCalendar({ enabled = true }: { enabled?: boolean } = {}) {
   const queryClient = useQueryClient();
   const statusKey = [...queryKeys.googleCalendar.root, "status"] as const;
   const statusInitialData = queryClient.getQueryData<GoogleCalendarStatus>(statusKey);
@@ -32,6 +32,7 @@ export function useGoogleCalendar() {
         return { connected: false, events: [] };
       }
     },
+    enabled,
     initialData: statusInitialData,
     refetchOnMount: statusInitialData !== undefined ? false : true,
     staleTime: 60_000,

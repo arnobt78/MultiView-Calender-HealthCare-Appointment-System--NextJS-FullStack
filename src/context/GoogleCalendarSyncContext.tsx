@@ -4,8 +4,8 @@
  * Single useGoogleCalendar() instance for staff — sync actions shared by calendar cards,
  * CP appointment list, and detail footer without N hook subscriptions.
  *
- * The inner provider is only mounted for admin/doctor roles so the hook (and its
- * GET /api/calendar/sync request) never fires for patients or unauthenticated users.
+ * Inner provider is always mounted (stable tree). Query fires only when enabled=true (staff).
+ * Patients/guests get enabled=false → no GET /api/calendar/sync.
  */
 
 import { createContext, useContext, useMemo, type ReactNode } from "react";
@@ -32,9 +32,14 @@ const GoogleCalendarSyncContext = createContext<GoogleCalendarSyncContextValue |
   null
 );
 
-/** Inner component — only rendered for staff, so the hook only fires for staff. */
-function GoogleCalendarSyncProviderInner({ children }: { children: ReactNode }) {
-  const calendar = useGoogleCalendar();
+/**
+ * Inner component — always mounted so the React tree is stable regardless of auth
+ * state changes. Query is gated via `enabled` to avoid firing for guests/patients.
+ * Conditional mounting caused remounts of Login/LandingPage when seedAuthMeFromLoginResponse
+ * flipped isStaff from false→true mid-navigation, resetting all useState in descendants.
+ */
+function GoogleCalendarSyncProviderInner({ enabled, children }: { enabled: boolean; children: ReactNode }) {
+  const calendar = useGoogleCalendar({ enabled });
 
   const value = useMemo<GoogleCalendarSyncContextValue>(
     () => ({
@@ -57,11 +62,7 @@ export function GoogleCalendarSyncProvider({ children }: { children: ReactNode }
   const role = user?.role ?? null;
   const isStaff = isAdminRole(role) || isDoctorRole(role);
 
-  if (!isStaff) {
-    return <>{children}</>;
-  }
-
-  return <GoogleCalendarSyncProviderInner>{children}</GoogleCalendarSyncProviderInner>;
+  return <GoogleCalendarSyncProviderInner enabled={isStaff}>{children}</GoogleCalendarSyncProviderInner>;
 }
 
 /** Calendar cards / optional surfaces — SSR cache fallback until provider mounts. */

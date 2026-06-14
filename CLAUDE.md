@@ -4,10 +4,11 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-14)
 
-- **C37 (auth flash):** `beginAuthNavigation` dedup → pending-guard; `loadingGoogle` split from email/pw `loading`; `GoogleCalendarSyncProvider` inner-component staff-gate (stops GET `/api/calendar/sync` 404 for patients/guests); all `#region agent log` debug blocks removed.
-- **C36.2.1 (REQ-0087):** Appointment detail SSR gcal seed — sync footer visible on first paint when deep-linking.
-- **C36.2 (REQ-0086):** Cancel/DELETE unlink · PUT sync parity · `GoogleCalendarSyncProvider` · dashboard SSR seed · targeted invalidation.
-- **C35.1 (REQ-0083):** CSV export `Link Valid` audit column · NotificationsManagement comment fix.
+- **C37.1 (auth remount):** `GoogleCalendarSyncProviderInner` always mounted (stable tree) + `enabled={isStaff}` gates query — prevents Login/LandingPage remount when `seedAuthMeFromLoginResponse` flips isStaff mid-nav. Login fields `disabled={loading}` (visible, not hidden). `AppointmentDeck` receives `authTransitionActive` prop to freeze `whileInView` on remount.
+- **C37 (auth flash):** `beginAuthNavigation` dedup → pending-guard; `loadingGoogle` split; all `#region agent log` removed.
+- **C36.2.1 (REQ-0087):** Appointment detail SSR gcal seed.
+- **C36.2 (REQ-0086):** Cancel/DELETE unlink · PUT sync parity · dashboard SSR seed.
+- **C35.1 (REQ-0083):** CSV export `Link Valid` audit column.
 - **Verify:** **1154/1154** · tsc · lint · build PASS.
 
 ## Never / Always
@@ -42,7 +43,7 @@ Cross-tab: `query-cache-cross-tab.ts`.
 - **Spinner:** `AUTH_NAV_PENDING_KEY` (sessionStorage) survives remounts; `isAuthNavPendingForPath` initializes button `loading` state
 - **Seed:** `seedAuthMeFromLoginResponse` seeds `queryKeys.auth.me` before nav; `NavSessionSsrSeed` overwrites stale null on destination mount
 - **Gate:** `shouldRunAuthenticatedAppQueries(pathname)` blocks dashboard queries on bare auth paths
-- **Provider split:** `GoogleCalendarSyncProviderInner` (with hook) mounts only for staff; outer wrapper checks `isAdminRole || isDoctorRole` first
+- **Provider:** `GoogleCalendarSyncProviderInner` always mounted; `enabled={isStaff}` gates query (stable tree — prevents Login/Landing remount on auth seed)
 
 ## Google Calendar (C36 / C36.1 / C36.2)
 
@@ -59,7 +60,7 @@ Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Agile V
 
-`.agile-v/STATE.md` · **C37 shipped** (auth flash + sync 404 + debug cleanup).
+`.agile-v/STATE.md` · **C37.1 shipped** (auth remount root cause + Login field disable + AppointmentDeck freeze).
 
 ## Principle
 

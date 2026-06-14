@@ -355,7 +355,8 @@ export default function Login({ redirect = null }: LoginProps) {
                       <DropdownMenuTrigger asChild>
                         <button
                           type="button"
-                          className="flex w-full h-11 items-center justify-between gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-left shadow-sm transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:border-blue-400 cursor-pointer"
+                          disabled={loading}
+                          className="flex w-full h-11 items-center justify-between gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-left shadow-sm transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:border-blue-400 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           <span className="flex min-w-0 items-center gap-2">
                             {selectedAccount ? (
@@ -422,6 +423,7 @@ export default function Login({ redirect = null }: LoginProps) {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
+                      disabled={loading}
                       autoComplete="email"
                       className="h-11 bg-slate-50 border-slate-200 rounded-2xl text-base focus-visible:ring-blue-500/30 focus-visible:border-blue-400"
                       aria-invalid={Boolean(errors.email)}
@@ -441,13 +443,13 @@ export default function Login({ redirect = null }: LoginProps) {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
+                      disabled={loading}
                       autoComplete="current-password"
                       className="h-11 bg-slate-50 border-slate-200 rounded-2xl text-base focus-visible:ring-blue-500/30 focus-visible:border-blue-400"
                       aria-invalid={Boolean(errors.password)}
                     />
                     {errors.password ? <p className="text-xs font-medium text-rose-600">{errors.password}</p> : null}
                   </div>
-
                   <div className="pt-1 space-y-3">
                     <Button
                       type="submit"
