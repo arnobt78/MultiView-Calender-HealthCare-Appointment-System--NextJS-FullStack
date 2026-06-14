@@ -24,7 +24,7 @@ export const patientDetailDefinitionListClass = "grid gap-2 text-sm";
 
 /** Value column — aligns with label row on sm+ grids (appointment/invoice detail). */
 export const entityDetailDefinitionValueClass =
-  "min-w-0 text-sm text-gray-800 sm:pt-0.5";
+  "min-w-0 text-sm text-gray-700 sm:pt-0.5";
 
 /** Related People / linked visit identity rows — center label + avatar row on y-axis. */
 export const entityDetailDefinitionIdentityRowClass =
@@ -32,7 +32,7 @@ export const entityDetailDefinitionIdentityRowClass =
 
 /** Identity value column — flex center, no `sm:pt-0.5` offset. */
 export const entityDetailDefinitionIdentityValueClass =
-  "min-w-0 flex items-center text-sm text-gray-800";
+  "min-w-0 flex items-center text-sm text-gray-700";
 
 /** Glass icon circle for schema field labels (sky tone). */
 export const entityDetailFieldIconCircleClass =

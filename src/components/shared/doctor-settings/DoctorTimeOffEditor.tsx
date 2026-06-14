@@ -382,7 +382,7 @@ export function DoctorTimeOffEditor({
               tone="amber"
               icon={CalendarX2}
               title={
-                <span className="break-words font-medium text-gray-800">
+                <span className="break-words font-medium text-gray-700">
                   {formatTimeOffRangeLabel(b.starts_at, b.ends_at)}
                 </span>
               }

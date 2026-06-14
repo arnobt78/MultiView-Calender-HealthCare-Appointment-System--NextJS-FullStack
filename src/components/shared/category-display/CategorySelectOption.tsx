@@ -32,7 +32,7 @@ export function CategorySelectOption({
       />
       <span
         className={cn(
-          "truncate font-medium text-gray-800",
+          "truncate font-medium text-gray-700",
           compact ? "text-xs" : "text-sm"
         )}
       >

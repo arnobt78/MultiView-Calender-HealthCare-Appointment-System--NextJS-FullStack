@@ -64,7 +64,7 @@ export function InvoiceDialogFieldsSection({
               <div
                 className={cn(
                   invoiceDialogGlassInputClass,
-                  "flex cursor-default items-center bg-violet-50/50 font-semibold text-gray-800"
+                  "flex cursor-default items-center bg-violet-50/50 font-semibold text-gray-700"
                 )}
               >
                 <InvoiceAmountDisplay

@@ -97,7 +97,7 @@ export function OrganizationFormDialog({
 
               {!isEdit ? (
                 <div className="space-y-3 border-t border-indigo-100/80 pt-4">
-                  <p className="text-sm font-medium text-gray-800">
+                  <p className="text-sm font-medium text-gray-700">
                     {toTitleCaseLabel("Optional Initial Members")}
                   </p>
                   <p className="text-xs text-muted-foreground">

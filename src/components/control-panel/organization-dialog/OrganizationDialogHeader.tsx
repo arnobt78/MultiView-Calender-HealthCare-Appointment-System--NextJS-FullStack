@@ -23,7 +23,7 @@ export function OrganizationDialogHeader({ icon: Icon, title, description }: Pro
             <Icon className="h-5 w-5" />
           </span>
           <div className="min-w-0">
-            <DialogTitle className="text-left text-lg font-semibold text-gray-900">
+            <DialogTitle className="text-left text-lg font-semibold text-gray-700">
               {title}
             </DialogTitle>
             <DialogDescription className="text-left text-sm text-muted-foreground">

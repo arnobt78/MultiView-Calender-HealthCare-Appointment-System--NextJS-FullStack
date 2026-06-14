@@ -6,7 +6,7 @@
 
 | Field | Value |
 |-------|-------|
-| Cycle | C1–C34.1 shipped · **next: C35 specify** |
+| Cycle | C1–C34.1 shipped · **C35 active** (REQ-0083) |
 | Author | Requirement Architect |
 | Gate 1 status | C1 GATE-0001 · C2 GATE-0003 approved |
 | Canonical source | this file |
@@ -126,7 +126,25 @@
 | REQ-0079 | approved [C31] | REQ-0078 | ART-0407..0409 | pending |
 | REQ-0080 | approved [C32] | REQ-0079 | ART-0410..0416 | pending |
 | REQ-0081 | approved [C33] | REQ-0080 | ART-0417..0423 | pending |
+| REQ-0083 | approved [C35] | REQ-0082 | ART-0432..0435 | pending |
 | REQ-0082 | approved [C34/C34.1] | REQ-0081 | ART-0424..0431 | pending |
+
+### REQ-0083 — C35 notifications table UX + select fix
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C35] |
+| Priority | P2 |
+| Risk | R1 |
+| Parent | REQ-0082 |
+
+**Statement:** CP notifications — clickable Notification column (no Link column), disabled empty actions menu, remove duplicate header session lead, fix appointment dialog Select controlled warning.
+
+**Acceptance criteria:**
+1. Navigable rows (`link_valid`) open detail via Notification column; stale rows static.
+2. Actions menu disabled when no items; header session lead removed from notifications page.
+3. New Appointment dialog patient/category Select stays controlled (no console warning).
+4. Tests; verify PASS.
 
 ### REQ-0082 — C34 stale notification links
 

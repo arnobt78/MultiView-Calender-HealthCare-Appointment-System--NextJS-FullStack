@@ -128,7 +128,7 @@ export function AppointmentDialogAssigneesSection({
                 )}
                 <button
                   type="button"
-                  className="ml-1 cursor-pointer text-red-500 hover:underline"
+                  className="ml-1 cursor-pointer text-red-500"
                   onClick={() => onRemoveAssignee(a.user, a.id)}
                 >
                   &times;

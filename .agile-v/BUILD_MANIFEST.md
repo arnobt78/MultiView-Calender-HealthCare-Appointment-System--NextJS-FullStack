@@ -317,11 +317,15 @@
 | ART-0429 | C34 | REQ-0082 | Invoice delete → `invalidateNotificationsAndCrossTab` | built |
 | ART-0430 | C34 | REQ-0082 | Tests notification-link* + stale-cleanup | built |
 | ART-0431 | C34.1 | REQ-0082 | `notification-list-filter.ts` + awaited DELETE cleanup | built |
+| ART-0432 | C35 | REQ-0083 | `notification-navigation.ts` + clickable content column | built |
+| ART-0433 | C35 | REQ-0083 | Remove Link column + empty actions disabled | built |
+| ART-0434 | C35 | REQ-0083 | Notifications header session lead removed | built |
+| ART-0435 | C35 | REQ-0083 | AppointmentDialogGeneralSection Select controlled fix | built |
 
 ## Verification Commands (project default)
 
 ```bash
-npm test        # 1103 passed (C34.1, 2026-06-13)
+npm test        # 1108 passed (C35, 2026-06-14)
 npx tsc --noEmit
 npm run lint
 npm run build

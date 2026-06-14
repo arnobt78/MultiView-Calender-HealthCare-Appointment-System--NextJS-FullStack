@@ -40,7 +40,7 @@ export const invoiceDialogGlassSelectChevronClass =
 export const invoiceDialogGlassSelectPlaceholderClass = "text-gray-500";
 
 export const invoiceDialogGlassSelectValueClass =
-  "min-w-0 flex-1 truncate text-left font-medium text-gray-800";
+  "min-w-0 flex-1 truncate text-left font-medium text-gray-700";
 
 /** Visit picker tiles — violet tint (parity with invoice detail cards). */
 export const invoiceDialogGlassTileClass =

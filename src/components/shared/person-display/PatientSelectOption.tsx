@@ -75,7 +75,7 @@ export function PatientSelectOption({
         >
           <span
             className={cn(
-              "truncate text-left font-medium text-gray-800",
+              "truncate text-left font-medium text-gray-700",
               compact ? "text-xs leading-tight" : "text-sm"
             )}
           >

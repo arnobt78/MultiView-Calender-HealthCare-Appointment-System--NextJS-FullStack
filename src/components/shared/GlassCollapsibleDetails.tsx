@@ -55,7 +55,7 @@ export const GlassCollapsibleDetails = forwardRef<HTMLDetailsElement, GlassColla
               {summaryChip ? (
                 <span className="block">{summaryChip}</span>
               ) : showTitle ? (
-                <span className="block min-w-0 font-medium text-gray-800">{title}</span>
+                <span className="block min-w-0 font-medium text-gray-700">{title}</span>
               ) : null}
               {hint ? (
                 <span className="mt-0.5 block text-xs font-normal text-muted-foreground">{hint}</span>

@@ -42,14 +42,14 @@ export function buildAppointmentDeleteConfirmSubtitle(
     return (
       <>
         This will permanently delete{" "}
-        <span className="font-medium text-gray-800">&ldquo;{quoted}&rdquo;</span> and all related
+        <span className="font-medium text-gray-700">&ldquo;{quoted}&rdquo;</span> and all related
         data. This cannot be undone.
       </>
     );
   }
   return (
     <>
-      <span className="font-medium text-gray-800">{quoted}</span> will be permanently deleted along
+      <span className="font-medium text-gray-700">{quoted}</span> will be permanently deleted along
       with its activities and assignees.
     </>
   );
@@ -60,7 +60,7 @@ export function buildOrganizationDeleteConfirmSubtitle(name: string): ReactNode 
   return (
     <>
       This will permanently delete{" "}
-      <span className="font-medium text-gray-800">{name.trim() || "this organization"}</span> and all
+      <span className="font-medium text-gray-700">{name.trim() || "this organization"}</span> and all
       its members. This cannot be undone.
     </>
   );
@@ -71,7 +71,7 @@ export function buildMarkAllNotificationsReadConfirmSubtitle(unreadCount: number
   return (
     <>
       This will mark all{" "}
-      <span className="font-medium text-gray-800">{unreadCount}</span> unread notifications as read.
+      <span className="font-medium text-gray-700">{unreadCount}</span> unread notifications as read.
     </>
   );
 }
@@ -81,7 +81,7 @@ export function buildDeleteReadNotificationsConfirmSubtitle(readCount: number): 
   return (
     <>
       This removes{" "}
-      <span className="font-medium text-gray-800">{readCount}</span> read notification
+      <span className="font-medium text-gray-700">{readCount}</span> read notification
       {readCount === 1 ? "" : "s"}. Unread items stay in your inbox.
     </>
   );
@@ -121,23 +121,23 @@ export function buildInvoiceDeleteConfirmSubtitle(
   return (
     <>
       This will permanently delete invoice{" "}
-      <span className="font-medium text-gray-800">#{shortId}</span>
+      <span className="font-medium text-gray-700">#{shortId}</span>
       {invoice.status ? (
         <>
           {" "}
-          (<span className="font-medium text-gray-800">{invoice.status}</span>)
+          (<span className="font-medium text-gray-700">{invoice.status}</span>)
         </>
       ) : null}
       .
       <br />
-      <span className="font-medium text-gray-800">{visitTitle}</span>
+      <span className="font-medium text-gray-700">{visitTitle}</span>
       {patient ? (
         <>
           {" "}
-          for <span className="font-medium text-gray-800">{patient}</span>
+          for <span className="font-medium text-gray-700">{patient}</span>
         </>
       ) : null}{" "}
-      — <span className="font-medium text-gray-800">{amount}</span>. This cannot be undone.
+      — <span className="font-medium text-gray-700">{amount}</span>. This cannot be undone.
     </>
   );
 }
@@ -164,10 +164,10 @@ export function buildCpAdminAppointmentTypeDeleteConfirmSubtitle(
       : null;
   const durationMeta = (
     <>
-      <span className="font-medium text-gray-800">{type.duration_minutes} min</span>
+      <span className="font-medium text-gray-700">{type.duration_minutes} min</span>
       {fee ? (
         <>
-          , <span className="font-medium text-gray-800">€{fee}</span>
+          , <span className="font-medium text-gray-700">€{fee}</span>
         </>
       ) : null}
     </>
@@ -177,7 +177,7 @@ export function buildCpAdminAppointmentTypeDeleteConfirmSubtitle(
     return (
       <>
         This will permanently delete the organization-wide template{" "}
-        <span className="font-medium text-gray-800">{type.name.trim()}</span> ({durationMeta}
+        <span className="font-medium text-gray-700">{type.name.trim()}</span> ({durationMeta}
         ). All doctors lose this visit type for new bookings. Existing appointments are not
         removed.
       </>
@@ -192,8 +192,8 @@ export function buildCpAdminAppointmentTypeDeleteConfirmSubtitle(
   return (
     <>
       This will permanently delete{" "}
-      <span className="font-medium text-gray-800">{type.name.trim()}</span> ({durationMeta}) for{" "}
-      <span className="font-medium text-gray-800">{owner}</span>. Patients can no longer book this
+      <span className="font-medium text-gray-700">{type.name.trim()}</span> ({durationMeta}) for{" "}
+      <span className="font-medium text-gray-700">{owner}</span>. Patients can no longer book this
       custom visit type.
     </>
   );
@@ -211,12 +211,12 @@ export function buildAppointmentTypeDeleteConfirmSubtitle(
   return (
     <>
       This will permanently remove{" "}
-      <span className="font-medium text-gray-800">{type.name.trim()}</span>
+      <span className="font-medium text-gray-700">{type.name.trim()}</span>
       {" "}
-      (<span className="font-medium text-gray-800">{type.duration_minutes} min</span>
+      (<span className="font-medium text-gray-700">{type.duration_minutes} min</span>
       {fee ? (
         <>
-          , <span className="font-medium text-gray-800">€{fee}</span>
+          , <span className="font-medium text-gray-700">€{fee}</span>
         </>
       ) : null}
       ) from your practice. Patients will no longer book this visit type.
@@ -239,7 +239,7 @@ export function buildWeeklyHoursWindowDeleteConfirmSubtitle(
   return (
     <>
       This will permanently remove{" "}
-      <span className="font-medium text-gray-800">{label}</span> from your weekly hours.
+      <span className="font-medium text-gray-700">{label}</span> from your weekly hours.
       Existing appointments are not changed, but new bookings will no longer use this window.
     </>
   );
@@ -254,11 +254,11 @@ export function buildUnavailableDateDeleteConfirmSubtitle(
   return (
     <>
       This will permanently remove the unavailable block{" "}
-      <span className="font-medium text-gray-800">{range}</span>
+      <span className="font-medium text-gray-700">{range}</span>
       {reason ? (
         <>
           {" "}
-          (<span className="font-medium text-gray-800">{reason}</span>)
+          (<span className="font-medium text-gray-700">{reason}</span>)
         </>
       ) : null}
       . Patients will be able to book during this period again.
@@ -286,11 +286,11 @@ export function buildDisableGlobalVisitTypeConfirmSubtitle(
   return (
     <>
       Disable{" "}
-      <span className="font-medium text-gray-800">{type.name.trim()}</span>
+      <span className="font-medium text-gray-700">{type.name.trim()}</span>
       {" "}
-      (<span className="font-medium text-gray-800">{type.duration_minutes} min</span>
+      (<span className="font-medium text-gray-700">{type.duration_minutes} min</span>
       {tele ? (
-        <span className="font-medium text-gray-800">{tele}</span>
+        <span className="font-medium text-gray-700">{tele}</span>
       ) : null}
       )? {bookingImpact} You can turn it back on anytime.
     </>
@@ -320,12 +320,12 @@ export function buildDisableOwnedVisitTypeConfirmSubtitle(
   return (
     <>
       Disable{" "}
-      <span className="font-medium text-gray-800">{type.name.trim()}</span>
+      <span className="font-medium text-gray-700">{type.name.trim()}</span>
       {" "}
-      (<span className="font-medium text-gray-800">{type.duration_minutes} min</span>
+      (<span className="font-medium text-gray-700">{type.duration_minutes} min</span>
       {fee ? (
         <>
-          , <span className="font-medium text-gray-800">€{fee}</span>
+          , <span className="font-medium text-gray-700">€{fee}</span>
         </>
       ) : null}
       )? {bookingImpact} You can turn it back on anytime.

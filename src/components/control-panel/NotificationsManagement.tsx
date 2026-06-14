@@ -24,7 +24,6 @@ import { ControlPanelPageChrome } from "@/components/control-panel/ControlPanelP
 import { ControlPanelHeaderSubtitle } from "@/components/control-panel/ControlPanelHeaderSubtitle";
 import { ControlPanelHeaderGlassButton } from "@/components/control-panel/ControlPanelHeaderGlassButton";
 import { ControlPanelEntityListShell } from "@/components/control-panel/ControlPanelEntityListShell";
-import { ControlPanelSessionActionsLead } from "@/components/control-panel/ControlPanelSessionActionsLead";
 import { NotificationManagementStatsRow } from "@/components/control-panel/NotificationManagementStatsRow";
 import {
   NotificationListFiltersProvider,
@@ -204,7 +203,6 @@ function NotificationsManagementInner() {
 
   const headerActions = (
     <div className="flex w-full flex-wrap items-center justify-end gap-2 self-center">
-      <ControlPanelSessionActionsLead className="mr-auto w-full sm:w-auto" />
       <ControlPanelHeaderGlassButton
         glassClassName={cn(violetGlassImportButtonClass, "disabled:opacity-50")}
         icon={Download}

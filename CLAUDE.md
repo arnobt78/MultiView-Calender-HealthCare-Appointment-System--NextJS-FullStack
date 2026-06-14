@@ -2,12 +2,11 @@
 
 Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
-## Latest (2026-06-11)
+## Latest (2026-06-14)
 
+- **C35 (REQ-0083):** Clickable Notification column · no Link col · disabled empty actions · no header session lead · Select fix.
 - **C34.1:** CP link filter `link_valid` · DELETE awaits stale-link cleanup.
-- **C34 (REQ-0082):** Stale notification links — `notification-link.ts` cleanup · `link_valid` GET/SSE/prefetch · CP/navbar gating · `EntityUnavailableScreen` · role routes (admin CP · portal `/appointments/[id]`).
-- **C33 (REQ-0081):** CP notifications rose shell · stats · filters · DataTable · session lead · header actions.
-- **Verify:** **1103/1103** · tsc · lint · build PASS.
+- **Verify:** **1108/1108** · tsc · lint · build PASS.
 
 ## Never / Always
 
@@ -29,8 +28,8 @@ Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Notifications (C34)
 
-- **Libs:** `notification-link.ts` · `notification-link-validity.ts` · `notification-list-filter.ts` · `entity-unavailable-copy.ts`
-- **UI:** CP `NotificationsManagement` · navbar bell · `EntityUnavailableScreen` on missing appt/invoice detail
+- **Libs:** `notification-link.ts` · `notification-link-validity.ts` · `notification-list-filter.ts` · `notification-navigation.ts` · `entity-unavailable-copy.ts`
+- **UI:** CP `NotificationsManagement` · navbar bell · `EntityUnavailableScreen` · clickable Notification column (C35)
 - **Stale policy:** delete → null link + suffix; `link_valid` gates View/Open/filter; cleanup awaited on DELETE (try/catch)
 - **SSR:** `prefetchNotifications` → `listEnrichedNotificationsForUser` · SSE invalidates → refetch enriched rows
 
@@ -42,7 +41,7 @@ Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Agile V
 
-`.agile-v/STATE.md` · **C34.1 shipped** (REQ-0082).
+`.agile-v/STATE.md` · **C35 shipped** (REQ-0083).
 
 ## Principle
 

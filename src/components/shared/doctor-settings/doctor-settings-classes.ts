@@ -28,7 +28,7 @@ export const doctorSettingsRowClass: Record<"weekly" | "timeOff", string> = {
 
 export function doctorSettingsSectionTitleClass(variant: DoctorSettingsVariant): string {
   return variant === "portal"
-    ? "text-sm font-semibold text-gray-800"
+    ? "text-sm font-semibold text-gray-700"
     : "flex items-center gap-2 text-base";
 }
 

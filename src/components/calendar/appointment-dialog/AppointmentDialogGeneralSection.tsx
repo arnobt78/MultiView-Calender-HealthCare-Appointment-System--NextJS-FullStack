@@ -591,7 +591,7 @@ export function AppointmentDialogGeneralSection({
           <FieldLabel icon={UserRound} required>
             {toTitleCaseLabel("Client/Patient")}
           </FieldLabel>
-          <Select value={patientId || undefined} onValueChange={setPatientId}>
+          <Select value={patientId} onValueChange={setPatientId}>
             <SelectTrigger
               className={cn(
                 glassSelectTriggerClass,
@@ -622,7 +622,7 @@ export function AppointmentDialogGeneralSection({
           <FieldLabel icon={LayoutGrid} required>
             {toTitleCaseLabel("Service/Medical Category")}
           </FieldLabel>
-          <Select value={categoryId || undefined} onValueChange={setCategoryId}>
+          <Select value={categoryId} onValueChange={setCategoryId}>
             {/* Swatch only via `SelectValue` — mirrors selected `SelectItem` (avoid duplicate dot in trigger). */}
             <SelectTrigger className={glassSelectTriggerClass}>
               <SelectValue placeholder={toTitleCaseLabel("Select Service/Medical Category")} />

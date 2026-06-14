@@ -62,7 +62,7 @@ export function InvoiceVisitSummaryCard(props: Props) {
         />
         <div className="min-w-0 flex-1 space-y-1">
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-base font-semibold text-gray-800">{display.patientLabel}</span>
+            <span className="text-base font-semibold text-gray-700">{display.patientLabel}</span>
             {age != null ? <PatientAgeGlassBadge age={age} /> : null}
             {display.isTelehealth ? <TelehealthSessionBadge /> : null}
             {display.patientCareLevel != null ? (

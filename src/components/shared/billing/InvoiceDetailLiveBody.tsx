@@ -87,7 +87,7 @@ function InvoiceDetailDefinitionRow({
         </span>
         {label}
       </dt>
-      <dd className="min-w-0 text-sm text-gray-800">{children}</dd>
+      <dd className="min-w-0 text-sm text-gray-700">{children}</dd>
     </div>
   );
 }
@@ -153,8 +153,8 @@ export function InvoiceDetailLiveBody({
     : null;
   const visitDurationLabel = invoice.visit_summary
     ? formatAppointmentTypeDurationLabel(
-        resolveAppointmentTypeDurationMinutes(invoice.visit_summary)
-      )
+      resolveAppointmentTypeDurationMinutes(invoice.visit_summary)
+    )
     : null;
 
   return (

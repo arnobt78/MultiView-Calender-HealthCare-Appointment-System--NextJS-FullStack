@@ -48,6 +48,8 @@ describe("cp clinical list table parity across CP entity lists", () => {
     expect(src).toContain("cpClinicalListActionsColumnShellClass");
     expect(src).toContain("cpClinicalListNotificationContentColumnShellClass");
     expect(src).toContain("cpClinicalListNotificationReceivedColumnShellClass");
+    expect(src).not.toContain("cpClinicalListNotificationLinkColumnShellClass");
+    expect(src).not.toContain('title="Link"');
   });
 
   it("doctor management no longer crushes actions with w-[1%]", () => {

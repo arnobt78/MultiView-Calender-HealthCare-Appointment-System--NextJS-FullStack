@@ -58,10 +58,7 @@ export const cpClinicalListNotificationTypeColumnShellClass =
   "w-[12%] min-w-[7.5rem] whitespace-nowrap align-top";
 
 export const cpClinicalListNotificationContentColumnShellClass =
-  "w-[36%] min-w-[14rem] min-w-0 whitespace-normal align-top";
+  "w-[48%] min-w-[16rem] min-w-0 whitespace-normal align-top";
 
 export const cpClinicalListNotificationReceivedColumnShellClass =
-  "w-[16%] min-w-[10rem] whitespace-nowrap align-top";
-
-export const cpClinicalListNotificationLinkColumnShellClass =
-  "w-[12%] min-w-[8rem] whitespace-nowrap align-top";
+  "w-[18%] min-w-[10rem] whitespace-nowrap align-top";

@@ -21,7 +21,6 @@ import type { Notification } from "@/types/notification";
 import {
   cpClinicalListActionsColumnShellClass,
   cpClinicalListNotificationContentColumnShellClass,
-  cpClinicalListNotificationLinkColumnShellClass,
   cpClinicalListNotificationReceivedColumnShellClass,
   cpClinicalListNotificationTypeColumnShellClass,
 } from "@/lib/cp-clinical-list-table-classes";
@@ -33,6 +32,10 @@ import {
   getNotificationTypeConfig,
   isInternalNotificationLink,
 } from "@/lib/notification-type-display";
+import {
+  canNavigateNotification,
+  notificationRowActionCount,
+} from "@/lib/notification-navigation";
 import { cn } from "@/lib/utils";
 
 export type BuildNotificationManagementColumnsOpts = {
@@ -40,8 +43,94 @@ export type BuildNotificationManagementColumnsOpts = {
   isMarkingRead: boolean;
 };
 
-function canNavigateNotification(n: Notification): boolean {
-  return n.link_valid === true && Boolean(n.link?.trim());
+const navigableTitleClass =
+  "line-clamp-1 min-w-0 font-medium text-sky-800 hover:text-sky-900";
+
+/** Notification body — clickable when link_valid; static when target deleted. */
+function NotificationContentCell({
+  notification: n,
+  onMarkAsRead,
+}: {
+  notification: Notification;
+  onMarkAsRead: (id: string) => void;
+}) {
+  const cfg = getNotificationTypeConfig(n.type);
+  const link = n.link?.trim();
+  const navigable = canNavigateNotification(n);
+  const internal = link ? isInternalNotificationLink(link) : false;
+
+  const handleNavigateSideEffect = () => {
+    if (!n.read) onMarkAsRead(n.id);
+  };
+
+  const titleRow = (
+    <div className="flex min-w-0 items-center gap-2">
+      {!n.read ? (
+        <span
+          className={cn("inline-block h-2 w-2 shrink-0 rounded-full", cfg.dotClass)}
+          title="Unread"
+          aria-hidden
+        />
+      ) : null}
+      <span
+        className={cn(
+          navigable ? navigableTitleClass : cn("line-clamp-1 min-w-0 font-medium", clinicalCellPrimaryTextClass)
+        )}
+      >
+        {n.title}
+      </span>
+      {navigable && internal ? (
+        <ExternalLink className="h-3.5 w-3.5 shrink-0 text-sky-600/80" aria-hidden />
+      ) : null}
+    </div>
+  );
+
+  const messageRow = (
+    <span className={cn("line-clamp-2 text-xs", clinicalCellMutedTextClass)}>{n.message}</span>
+  );
+
+  const shellClass = cn(
+    "flex min-h-[2.75rem] min-w-0 flex-col justify-center gap-0.5 py-0.5",
+    !n.read && "border-l-2 border-rose-400 pl-2",
+    navigable && "cursor-pointer"
+  );
+
+  if (!navigable || !link) {
+    return (
+      <div className={shellClass}>
+        {titleRow}
+        {messageRow}
+      </div>
+    );
+  }
+
+  if (internal) {
+    return (
+      <PrefetchingLink
+        href={link}
+        className={cn(shellClass, "block min-w-0 no-underline")}
+        title={link}
+        onClick={handleNavigateSideEffect}
+      >
+        {titleRow}
+        {messageRow}
+      </PrefetchingLink>
+    );
+  }
+
+  return (
+    <a
+      href={link}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={cn(shellClass, "block min-w-0 no-underline")}
+      title={link}
+      onClick={handleNavigateSideEffect}
+    >
+      {titleRow}
+      {messageRow}
+    </a>
+  );
 }
 
 function NotificationRowActions({
@@ -56,6 +145,22 @@ function NotificationRowActions({
   const link = n.link?.trim();
   const navigable = canNavigateNotification(n);
   const internal = isInternalNotificationLink(link);
+  const actionCount = notificationRowActionCount(n);
+
+  if (actionCount === 0) {
+    return (
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-7 w-7"
+        disabled
+        title="No actions available"
+        aria-label="No actions available"
+      >
+        <EllipsisVertical className="h-4 w-4 opacity-40" />
+      </Button>
+    );
+  }
 
   return (
     <DropdownMenu>
@@ -103,49 +208,7 @@ function NotificationRowActions({
   );
 }
 
-function NotificationLinkCell({ notification: n }: { notification: Notification }) {
-  const link = n.link?.trim();
-  const navigable = canNavigateNotification(n);
-
-  if (!navigable || !link) {
-    return (
-      <div className="flex min-h-[2.75rem] items-center">
-        <span className={cn(clinicalCellMutedTextClass, "text-xs")} title="Link unavailable">
-          {link && n.link_valid === false ? "Unavailable" : "—"}
-        </span>
-      </div>
-    );
-  }
-  if (isInternalNotificationLink(link)) {
-    return (
-      <div className="flex min-h-[2.75rem] items-center">
-        <PrefetchingLink
-          href={link}
-          className={cn(
-            "inline-flex max-w-full items-center gap-1 truncate text-sm text-sky-700 hover:text-sky-900",
-            clinicalCellMutedTextClass
-          )}
-          title={link}
-        >
-          <ExternalLink className="h-3.5 w-3.5 shrink-0" aria-hidden />
-          <span className="truncate">View</span>
-        </PrefetchingLink>
-      </div>
-    );
-  }
-  return (
-    <div className="flex min-h-[2.75rem] items-center">
-      <Button variant="ghost" size="sm" className="h-8 gap-1 px-2" asChild>
-        <a href={link} target="_blank" rel="noopener noreferrer" title={link}>
-          <ExternalLink className="h-3.5 w-3.5" aria-hidden />
-          External
-        </a>
-      </Button>
-    </div>
-  );
-}
-
-/** CP notifications list — shared DataTable column defs. */
+/** CP notifications list — shared DataTable column defs (no separate Link column). */
 export function buildNotificationManagementColumns(
   opts: BuildNotificationManagementColumnsOpts
 ): ColumnDef<Notification>[] {
@@ -172,34 +235,12 @@ export function buildNotificationManagementColumns(
         <DataTableColumnHeader column={column} title="Notification" />
       ),
       meta: { shellClassName: cpClinicalListNotificationContentColumnShellClass },
-      cell: ({ row }) => {
-        const n = row.original;
-        const cfg = getNotificationTypeConfig(n.type);
-        return (
-          <div
-            className={cn(
-              "flex min-h-[2.75rem] min-w-0 flex-col justify-center gap-0.5 py-0.5",
-              !n.read && "border-l-2 border-rose-400 pl-2"
-            )}
-          >
-            <div className="flex min-w-0 items-center gap-2">
-              {!n.read ? (
-                <span
-                  className={cn("inline-block h-2 w-2 shrink-0 rounded-full", cfg.dotClass)}
-                  title="Unread"
-                  aria-hidden
-                />
-              ) : null}
-              <span className={cn("line-clamp-1 min-w-0 font-medium", clinicalCellPrimaryTextClass)}>
-                {n.title}
-              </span>
-            </div>
-            <span className={cn("line-clamp-2 text-xs", clinicalCellMutedTextClass)}>
-              {n.message}
-            </span>
-          </div>
-        );
-      },
+      cell: ({ row }) => (
+        <NotificationContentCell
+          notification={row.original}
+          onMarkAsRead={onMarkAsRead}
+        />
+      ),
     },
     {
       id: "received",
@@ -229,16 +270,6 @@ export function buildNotificationManagementColumns(
           </div>
         );
       },
-    },
-    {
-      id: "link",
-      accessorFn: (row) => row.link ?? "",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Link" />
-      ),
-      enableSorting: false,
-      meta: { shellClassName: cpClinicalListNotificationLinkColumnShellClass },
-      cell: ({ row }) => <NotificationLinkCell notification={row.original} />,
     },
     {
       id: "actions",

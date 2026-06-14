@@ -1,45 +1,22 @@
 # Agile V — Living State
 
-<!-- Updated: 2026-06-13 | Project: HealthCal Pro | Resume: ACTIVATION.md -->
+<!-- Updated: 2026-06-14 | Project: HealthCal Pro | Resume: ACTIVATION.md -->
 
 ## Current Status
 
 | Field | Value |
 |-------|-------|
-| **Cycle** | **C34.1** — notification link filter polish (closed) |
+| **Cycle** | **C35** — notifications table UX |
 | **Phase** | Accept |
 | **Stage** | 5 |
 | **Status** | shipped |
-| **Last Updated** | 2026-06-13 |
-| **Parent REQ** | REQ-0082 |
-| **Release commit** | `768a422` |
+| **Last Updated** | 2026-06-14 |
+| **Parent REQ** | REQ-0083 |
 
-## Verify baseline
+## Verify baseline (C35 close)
 
-**1103/1103** · **223** test files · tsc · lint · build — PASS (2026-06-13)
+**1108/1108** · tsc · lint · build — PASS
 
-## Infinity Loop position
+## C35 shipped (REQ-0083)
 
-```
-Specify → Constrain → [Gate1] → Orchestrate → Prove → Verify → [Gate2] → Accept ✓
-```
-
-**Next:** Human Gate backlog (C3–C34) → archive cycles → **Specify C35** (new REQ) before code.
-
-## Recent cycles (shipped, verify PASS)
-
-| Cycle | REQ | Summary |
-|-------|-----|---------|
-| C31 | REQ-0079 | CP invoice column merge |
-| C32 | REQ-0080 | CP appointment-management parity |
-| C33 | REQ-0081 | CP notifications parity |
-| C34 | REQ-0082 | Stale notification links + `link_valid` + EntityUnavailableScreen |
-| C34.1 | REQ-0082 | CP filter `link_valid`; DELETE awaits cleanup |
-
-## HITL
-
-`CHECKPOINTS.md` — **no PENDING** interrupts.
-
-## Engineering hooks (every CRUD)
-
-`queryKeys` · invalidation helpers · SSR prefetch · SSE notifications · `dynamic = "force-dynamic"` APIs · `rbac.ts`
+- Clickable Notification column; no Link column; empty actions disabled; header session lead removed; Select controlled fix.

@@ -90,7 +90,7 @@ function DefinitionRow({
         </span>
         {label}
       </dt>
-      <dd className="min-w-0 text-sm text-gray-800">{children}</dd>
+      <dd className="min-w-0 text-sm text-gray-700">{children}</dd>
     </div>
   );
 }
@@ -164,20 +164,20 @@ export function OrganizationDetailScreen({
         canManage: isOwner,
         renderActions: isOwner
           ? ({ member }) => (
-              <OrganizationMemberRowActions
-                member={member}
-                orgName={liveOrg.name}
-                viewerRole={viewerRole}
-                canManage={isOwner}
-                onRemoveMember={(m) =>
-                  removeMember({
-                    orgId: liveOrg.id,
-                    userId: m.user_id,
-                    memberLabel: m.display_name ?? m.email ?? "Member",
-                  })
-                }
-              />
-            )
+            <OrganizationMemberRowActions
+              member={member}
+              orgName={liveOrg.name}
+              viewerRole={viewerRole}
+              canManage={isOwner}
+              onRemoveMember={(m) =>
+                removeMember({
+                  orgId: liveOrg.id,
+                  userId: m.user_id,
+                  memberLabel: m.display_name ?? m.email ?? "Member",
+                })
+              }
+            />
+          )
           : undefined,
       }),
     [isOwner, viewerRole, liveOrg.id, liveOrg.name, removeMember]
@@ -283,7 +283,7 @@ export function OrganizationDetailScreen({
                     href={liveOrg.website}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-indigo-700 hover:underline"
+                    className="text-indigo-700 hover:text-indigo-900"
                   >
                     {liveOrg.website}
                   </a>

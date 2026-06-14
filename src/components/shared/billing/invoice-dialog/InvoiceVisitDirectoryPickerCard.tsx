@@ -78,7 +78,7 @@ export function InvoiceVisitDirectoryPickerCard({
         />
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="truncate text-sm font-semibold text-gray-800">
+            <span className="truncate text-sm font-semibold text-gray-700">
               {display.patientLabel}
             </span>
             {display.birthDate ? (

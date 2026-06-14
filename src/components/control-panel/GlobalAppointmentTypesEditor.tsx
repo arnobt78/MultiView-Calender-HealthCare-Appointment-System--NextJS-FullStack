@@ -239,7 +239,7 @@ export function GlobalAppointmentTypesEditor() {
       <section className="space-y-3">
         <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
           <Globe className="h-4 w-4 text-sky-600 shrink-0" aria-hidden />
-          <h3 className="text-sm font-semibold text-gray-800">Global Types</h3>
+          <h3 className="text-sm font-semibold text-gray-700">Global Types</h3>
           <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-normal text-sky-700">
             {globalTypes.length}
           </span>
@@ -347,7 +347,7 @@ export function GlobalAppointmentTypesEditor() {
         <section className="space-y-3">
           <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
             <UserCog className="h-4 w-4 text-violet-600 shrink-0" aria-hidden />
-            <h3 className="text-sm font-semibold text-gray-800">Custom Types by Doctor</h3>
+            <h3 className="text-sm font-semibold text-gray-700">Custom Types by Doctor</h3>
             <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-normal text-violet-700">
               {data?.customTypes?.length ?? 0}
             </span>
@@ -519,7 +519,7 @@ function TypeRow({
       )}
     >
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-        <span className="truncate font-medium text-gray-800">{type.name}</span>
+        <span className="truncate font-medium text-gray-700">{type.name}</span>
         <Badge
           variant="outline"
           className="gap-1 text-[10px] calendar-glass-badge calendar-glass-badge-sky"

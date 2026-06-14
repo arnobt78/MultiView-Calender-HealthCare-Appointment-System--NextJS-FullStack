@@ -47,7 +47,7 @@ export function PortalPanelSubsectionHeader({
       <div className="flex flex-wrap items-center gap-2">
         <h3
           id={id}
-          className="flex shrink-0 items-center gap-2 text-sm font-semibold text-gray-800"
+          className="flex shrink-0 items-center gap-2 text-sm font-semibold text-gray-700"
         >
           <span className="min-w-0">
             {typeof title === "string" ? toTitleCaseLabel(title) : title}

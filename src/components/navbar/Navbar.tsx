@@ -27,6 +27,7 @@ import { useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { prefetchInsightsNav } from "@/lib/prefetch-insights-nav";
 import { getNotificationTypeConfig } from "@/lib/notification-type-display";
+import { canNavigateNotification } from "@/lib/notification-navigation";
 import { isAdminRole } from "@/lib/rbac";
 import { resolveRoleHomeHref } from "@/lib/role-home-href";
 import { useAppStore } from "@/store/useAppStore";
@@ -375,7 +376,7 @@ export default function Navbar() {
                         onClick={() => {
                           if (!n.read) markAsRead(n.id);
                           const link = n.link?.trim();
-                          const navigable = n.link_valid === true && Boolean(link);
+                          const navigable = canNavigateNotification(n);
                           if (navigable && link) {
                             router.push(link);
                             return;

@@ -66,7 +66,7 @@ export const analyticsChartTooltipZClass = "z-[200] pointer-events-none";
 export const analyticsChartPanelIconTileClass =
   "flex w-10 shrink-0 items-center justify-center self-stretch rounded-xl border border-sky-100 bg-sky-50 [&_svg]:text-sky-600";
 
-export const analyticsChartPanelTitleClass = "text-sm font-medium text-gray-800";
+export const analyticsChartPanelTitleClass = "text-sm font-medium text-gray-700";
 
 /** Legacy muted subtitle — prefer `insightsChartPeriodSubtitleClass` on insights charts. */
 export const analyticsChartPanelSubtitleClass = "text-xs leading-snug text-muted-foreground";
