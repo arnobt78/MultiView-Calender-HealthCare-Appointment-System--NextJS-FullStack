@@ -1,6 +1,16 @@
 # HealthCal Pro — Project Walkthrough
 
-## Latest (2026-06-14 — C37.1 auth remount root cause)
+## Latest (2026-06-14 — C37.2 gcal connect-then-disconnect false flip)
+
+**Root cause:** `GET /api/calendar/sync` had one try/catch wrapping everything. When `listGoogleEvents` threw (Google API transient error, rate-limit, scope issue), the handler returned 500. The `useGoogleCalendar` queryFn caught all errors and returned `{ connected: false }`, flipping the UI to "Not connected" even though the token existed in DB.
+
+**Fixes:**
+- `sync/route.ts` GET: nested try/catch — token-not-found → 404 `{connected:false}`; token-found but events-fail → 200 `{connected:true, events:[]}`.
+- `useGoogleCalendar.ts` queryFn: 404/401 → return `{connected:false}`; any other error → rethrow so TanStack Query retries with backoff and UI keeps last-cached state.
+
+**Verify:** **1154/1154** · tsc · lint · build.
+
+## Prior (2026-06-14 — C37.1 auth remount root cause)
 
 **Root cause:** `GoogleCalendarSyncProvider` conditionally mounted `GoogleCalendarSyncProviderInner` vs `<>{children}</>` based on `isStaff`. When `seedAuthMeFromLoginResponse` seeded auth.me with admin/doctor before nav, `isStaff` flipped false→true → React tree structure changed → Login/LandingPage **remounted** → all `useState` (email, password, selectedRole) reset. Patient role never flipped isStaff → no remount.
 

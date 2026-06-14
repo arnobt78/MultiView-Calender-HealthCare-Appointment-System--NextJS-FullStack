@@ -4,8 +4,9 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-14)
 
-- **C37.1 (auth remount):** `GoogleCalendarSyncProviderInner` always mounted (stable tree) + `enabled={isStaff}` gates query — prevents Login/LandingPage remount when `seedAuthMeFromLoginResponse` flips isStaff mid-nav. Login fields `disabled={loading}` (visible, not hidden). `AppointmentDeck` receives `authTransitionActive` prop to freeze `whileInView` on remount.
-- **C37 (auth flash):** `beginAuthNavigation` dedup → pending-guard; `loadingGoogle` split; all `#region agent log` removed.
+- **C37.2 (gcal connect flip):** `GET /api/calendar/sync` nested try/catch — token exists but events fail → 200 `{connected:true,events:[]}` not 500. `useGoogleCalendar` queryFn only returns `{connected:false}` on 404/401; throws on 500 so TanStack retries + keeps cached state.
+- **C37.1 (auth remount):** `GoogleCalendarSyncProviderInner` always mounted + `enabled={isStaff}` gates query. Login fields `disabled={loading}`. `AppointmentDeck` `authTransitionActive` freezes `whileInView`.
+- **C37 (auth flash):** `beginAuthNavigation` dedup → pending-guard; `loadingGoogle` split; debug removed.
 - **C36.2.1 (REQ-0087):** Appointment detail SSR gcal seed.
 - **C36.2 (REQ-0086):** Cancel/DELETE unlink · PUT sync parity · dashboard SSR seed.
 - **C35.1 (REQ-0083):** CSV export `Link Valid` audit column.
@@ -50,7 +51,8 @@ Cross-tab: `query-cache-cross-tab.ts`.
 - **Path:** `/control-panel/google-calendar` · `GoogleCalendarSettings` + `google-calendar/*` panels
 - **OAuth:** callback → CP `?gcal=connected` · `google-calendar-routes.ts` · `invalidateGoogleCalendarAndCrossTab`
 - **Sync:** `google-calendar-sync-appointment.ts` · cancel/DELETE unlink · PUT/PATCH shared side-effects · `GoogleCalendarSyncContext` (one hook)
-- **Hook:** `useGoogleCalendar` (CP page) · `useGoogleCalendarSyncOptional` (cards/menus/detail) · dashboard + appointment detail SSR seed
+- **Hook:** `useGoogleCalendar({ enabled? })` (CP page) · `useGoogleCalendarSyncOptional` (cards/menus/detail) · dashboard + appointment detail SSR seed
+- **Error policy:** 404/401 → `{connected:false}`; 500/network → throw (retry, keep cache). Events failure ≠ disconnected.
 
 ## Key paths
 
@@ -60,7 +62,7 @@ Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Agile V
 
-`.agile-v/STATE.md` · **C37.1 shipped** (auth remount root cause + Login field disable + AppointmentDeck freeze).
+`.agile-v/STATE.md` · **C37.2 shipped** (gcal connect-then-disconnect false flip fixed).
 
 ## Principle
 
