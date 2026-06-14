@@ -1,8 +1,9 @@
 "use client";
 
 /**
- * NotificationsManagement — CP list parity (C33 / REQ-0081):
- * rose EntityListShell, stats, ClinicalListFilterToolbar, DataTable, session lead + header actions.
+ * NotificationsManagement — CP list parity (C33/C35 / REQ-0081, REQ-0083):
+ * rose EntityListShell, stats, ClinicalListFilterToolbar, DataTable, clickable Notification column.
+ * Header actions: Export CSV, Refresh, Mark all read, Clear read, New Appointment.
  * SSR subtitle + cache seed unchanged; mutations use invalidateNotificationsAndCrossTab.
  */
 

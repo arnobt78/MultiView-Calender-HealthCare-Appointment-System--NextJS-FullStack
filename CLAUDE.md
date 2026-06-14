@@ -4,9 +4,10 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-14)
 
+- **C35.1 (REQ-0083):** CSV export `Link Valid` audit column · NotificationsManagement comment fix.
 - **C35 (REQ-0083):** Clickable Notification column · no Link col · disabled empty actions · no header session lead · Select fix.
 - **C34.1:** CP link filter `link_valid` · DELETE awaits stale-link cleanup.
-- **Verify:** **1108/1108** · tsc · lint · build PASS.
+- **Verify:** **1112/1112** · tsc · lint · build PASS.
 
 ## Never / Always
 
@@ -31,6 +32,7 @@ Cross-tab: `query-cache-cross-tab.ts`.
 - **Libs:** `notification-link.ts` · `notification-link-validity.ts` · `notification-list-filter.ts` · `notification-navigation.ts` · `entity-unavailable-copy.ts`
 - **UI:** CP `NotificationsManagement` · navbar bell · `EntityUnavailableScreen` · clickable Notification column (C35)
 - **Stale policy:** delete → null link + suffix; `link_valid` gates View/Open/filter; cleanup awaited on DELETE (try/catch)
+- **Export:** `export-notifications-csv.ts` — `Link` + `Link Valid` audit cols (C35.1)
 - **SSR:** `prefetchNotifications` → `listEnrichedNotificationsForUser` · SSE invalidates → refetch enriched rows
 
 ## Key paths
@@ -41,7 +43,7 @@ Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Agile V
 
-`.agile-v/STATE.md` · **C35 shipped** (REQ-0083).
+`.agile-v/STATE.md` · **C35.1 shipped** (REQ-0083).
 
 ## Principle
 

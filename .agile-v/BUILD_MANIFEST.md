@@ -321,11 +321,12 @@
 | ART-0433 | C35 | REQ-0083 | Remove Link column + empty actions disabled | built |
 | ART-0434 | C35 | REQ-0083 | Notifications header session lead removed | built |
 | ART-0435 | C35 | REQ-0083 | AppointmentDialogGeneralSection Select controlled fix | built |
+| ART-0436 | C35.1 | REQ-0083 | CSV export Link Valid audit column + file comment fix | built |
 
 ## Verification Commands (project default)
 
 ```bash
-npm test        # 1108 passed (C35, 2026-06-14)
+npm test        # 1112 passed (C35.1, 2026-06-14)
 npx tsc --noEmit
 npm run lint
 npm run build

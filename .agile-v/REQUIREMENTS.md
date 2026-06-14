@@ -145,6 +145,7 @@
 2. Actions menu disabled when no items; header session lead removed from notifications page.
 3. New Appointment dialog patient/category Select stays controlled (no console warning).
 4. Tests; verify PASS.
+5. CSV export retains raw `Link` and adds `Link Valid` (`yes`/`no` from `link_valid`) for audit.
 
 ### REQ-0082 — C34 stale notification links
 
