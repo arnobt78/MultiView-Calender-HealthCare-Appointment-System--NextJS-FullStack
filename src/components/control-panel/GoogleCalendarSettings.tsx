@@ -20,6 +20,7 @@ import { GoogleCalendarStatsRow } from "@/components/control-panel/google-calend
 import { GoogleCalendarEventsPanel } from "@/components/control-panel/google-calendar/GoogleCalendarEventsPanel";
 import { GoogleCalendarIcsPanel } from "@/components/control-panel/google-calendar/GoogleCalendarIcsPanel";
 import { GoogleCalendarSyncInfoCard } from "@/components/control-panel/google-calendar/GoogleCalendarSyncInfoCard";
+import { GoogleCalendarEventsFetchWarningBanner } from "@/components/control-panel/google-calendar/GoogleCalendarEventsFetchWarningBanner";
 import { GoogleCalendarAdvancedImportCard } from "@/components/control-panel/google-calendar/GoogleCalendarAdvancedImportCard";
 import { useCpListBodyLoading } from "@/lib/cp-list-body-loading";
 import { queryKeys } from "@/lib/query-keys";
@@ -45,9 +46,12 @@ export default function GoogleCalendarSettings() {
     events,
     eventCount,
     upcomingCount,
+    eventsFetchWarning,
     isLoading,
     isFetching,
     refreshStatus,
+    backfillToGoogleAsync,
+    isBackfilling,
     disconnectAsync,
     isDisconnecting,
     importICS,
@@ -59,10 +63,18 @@ export default function GoogleCalendarSettings() {
   const statusKey = [...queryKeys.googleCalendar.root, "status"] as const;
   const listBodyLoading = useCpListBodyLoading(statusKey, isLoading);
 
-  /** OAuth success — bust cache, toast, strip query param (stay on CP tab). */
+  /** OAuth success — backfill unsynced visits, bust cache, toast, strip query param. */
   useEffect(() => {
     if (isGoogleCalendarOAuthConnectedParam(searchParams)) {
-      void invalidateGoogleCalendarAndCrossTab(queryClient).then(() => refreshStatus());
+      void (async () => {
+        await invalidateGoogleCalendarAndCrossTab(queryClient);
+        try {
+          await backfillToGoogleAsync();
+        } catch {
+          // Toast handled in hook; stay on page.
+        }
+        await refreshStatus();
+      })();
       notify.crud({
         action: "created",
         entity: "Google Calendar",
@@ -79,7 +91,7 @@ export default function GoogleCalendarSettings() {
       });
       router.replace(pathname, { scroll: false });
     }
-  }, [searchParams, queryClient, router, pathname, refreshStatus]);
+  }, [searchParams, queryClient, router, pathname, refreshStatus, backfillToGoogleAsync]);
 
   const handleRefresh = () => {
     void refreshStatus();
@@ -131,8 +143,16 @@ export default function GoogleCalendarSettings() {
           eventCount={eventCount}
           upcomingCount={upcomingCount}
           listBodyLoading={listBodyLoading}
-          isFetching={isFetching}
+          isFetching={isFetching || isBackfilling}
         />
+
+        {isConnected && eventsFetchWarning ? (
+          <GoogleCalendarEventsFetchWarningBanner
+            warning={eventsFetchWarning}
+            isRefreshing={isFetching}
+            onRefresh={handleRefresh}
+          />
+        ) : null}
 
         <GoogleCalendarConnectionCard
           isConnected={isConnected}

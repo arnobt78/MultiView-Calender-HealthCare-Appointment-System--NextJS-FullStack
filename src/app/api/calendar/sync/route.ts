@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { getValidAccessToken, listGoogleEvents } from "@/lib/google-calendar";
+import { classifyGoogleCalendarListError } from "@/lib/google-calendar-api-error";
 import { syncAppointmentToGoogleCalendar } from "@/lib/google-calendar-sync-appointment";
 import { staffCalendarAppointmentByIdWhere } from "@/lib/staff-appointment-calendar-scope";
 
@@ -48,12 +49,16 @@ export async function GET() {
 
     try {
       const events = await listGoogleEvents(accessToken, calendarId);
-      return NextResponse.json({ events, connected: true });
+      return NextResponse.json({ events, connected: true, eventsFetchWarning: null });
     } catch (eventsError: unknown) {
-      // Token is valid but Google API call failed (rate-limit, transient, scope issue).
-      // Return connected=true with empty events — token exists, user is still connected.
+      // Token valid — stay connected; surface API/config errors to UI banner.
       console.error("Google Calendar events fetch error:", eventsError);
-      return NextResponse.json({ connected: true, events: [] });
+      const eventsFetchWarning = classifyGoogleCalendarListError(eventsError);
+      return NextResponse.json({
+        connected: true,
+        events: [],
+        eventsFetchWarning,
+      });
     }
   } catch (error: unknown) {
     console.error("Google Calendar sync GET error:", error);

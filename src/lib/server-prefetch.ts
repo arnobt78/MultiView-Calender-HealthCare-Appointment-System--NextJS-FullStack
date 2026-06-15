@@ -1768,7 +1768,7 @@ export async function prefetchGoogleCalendarStatus(
       where: { user_id: userId },
       select: { user_id: true },
     });
-    return { connected: Boolean(tokenRecord), events: [] };
+    return { connected: Boolean(tokenRecord), events: [], eventsFetchWarning: null };
   } catch {
     return null;
   }

@@ -4,12 +4,13 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-15)
 
-- **C37.3:** GCal Sync Behavior card — `headerActionsSeparateRow`; `PortalPanelSubsectionHeader` icon `self-stretch` with title+subtitle; `StaffAppointmentPickerField` skips label row when `label={null}` (advanced ICS import).
+- **C38 (REQ-0088):** GCal `eventsFetchWarning` banner (403/API disabled); `POST /api/calendar/backfill` on OAuth connect.
+- **C37.3:** GCal Sync Behavior card layout; subsection icon stretch; ICS import label null guard.
 - **C37.2:** gcal sync — events fail ≠ disconnected (200 empty events).
 - **C37.1:** GCal provider stable tree (`enabled={isStaff}`) — fixes Login/Landing remount on auth seed.
 - **C37:** auth nav — hard replace + pending-guard; `loadingGoogle`; bare-path query gate; deferred toasts.
-- **Verify:** **1154/1154** · tsc · lint · build PASS.
-- **Agile V:** C37.3 closed · **C38 specify idle** — halt without REQ-0088.
+- **Verify:** **1162/1162** · tsc · lint · build PASS.
+- **Agile V:** C38 shipped · **C39 specify idle**.
 
 ## Never / Always
 
@@ -51,7 +52,8 @@ Cross-tab: `query-cache-cross-tab.ts`.
 - **OAuth:** callback → CP `?gcal=connected` · `google-calendar-routes.ts` · `invalidateGoogleCalendarAndCrossTab`
 - **Sync:** `google-calendar-sync-appointment.ts` · cancel/DELETE unlink · PUT/PATCH shared side-effects · `GoogleCalendarSyncContext` (one hook)
 - **Hook:** `useGoogleCalendar({ enabled? })` (CP page) · `useGoogleCalendarSyncOptional` (cards/menus/detail) · dashboard + appointment detail SSR seed
-- **Error policy:** 404/401 → `{connected:false}`; 500/network → throw (retry, keep cache). Events failure ≠ disconnected.
+- **Error policy:** 404/401 → `{connected:false}`; 500/network → throw. Events failure → `eventsFetchWarning` banner, stays connected.
+- **Backfill:** `POST /api/calendar/backfill` on `?gcal=connected` — pushes unsynced staff-scope appointments; invalidates appointments + gcal cache.
 
 ## Key paths
 
@@ -61,7 +63,7 @@ Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Agile V
 
-`.agile-v/STATE.md` · **C37.3 closed** · **C38 specify** · **1154/1154**.
+`.agile-v/STATE.md` · **C38 closed** · **1162/1162**.
 
 ## Principle
 

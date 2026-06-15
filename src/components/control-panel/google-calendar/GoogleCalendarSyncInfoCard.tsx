@@ -25,7 +25,7 @@ export function GoogleCalendarSyncInfoCard({ isConnected, isFetching, onRefresh 
       <CardContent className={googleCalendarPanelCardContentClass}>
         <PortalPanelSubsectionHeader
           title="Sync Behavior"
-          subtitle="New and updated appointments auto-sync when Google Calendar is connected. Cancelled or deleted visits remove the linked Google event. Use the appointment ⋮ menu or detail footer to push manually. Pull loads the preview table above."
+          subtitle="New and updated appointments auto-sync when Google Calendar is connected. On connect, existing visits in your scope are pushed once. Cancelled or deleted visits remove the linked Google event. Use the appointment ⋮ menu or detail footer to push manually. Pull loads the preview table above."
           icon={Info}
           iconClassName="border-sky-100 bg-sky-50 [&_svg]:text-sky-600"
           // Page-header parity: title + subtitle stack left; refresh action right (no flex gap between title rows).

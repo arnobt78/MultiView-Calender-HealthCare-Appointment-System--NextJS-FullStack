@@ -1,15 +1,17 @@
 # HealthCal Pro — Project Walkthrough
 
-## Agent resume (2026-06-15 — C37.3 UI polish)
+## Agent resume (2026-06-15 — C38 GCal warning + backfill)
 
-**Baseline:** 1154/1154 · tsc · lint · build PASS · **C38 specify idle**
+**Baseline:** 1162/1162 · tsc · lint · build PASS · **C39 specify idle**
 
-**C37.3 (UI — no REQ):**
-- `GoogleCalendarSyncInfoCard` — `headerActionsSeparateRow` (title/subtitle left, Refresh right).
-- `PortalPanelSubsectionHeader` — separate-row icon `self-stretch` matches title+subtitle height.
-- `StaffAppointmentPickerField` — label row only when `label != null` (fixes duplicate stethoscope in advanced ICS import).
+**C38 (REQ-0088):**
+- `classifyGoogleCalendarListError` → GET `/api/calendar/sync` returns `eventsFetchWarning` (connected + banner).
+- `GoogleCalendarEventsFetchWarningBanner` on CP tab when API disabled/403.
+- `backfillAppointmentsToGoogleCalendar` + `POST /api/calendar/backfill` — OAuth `?gcal=connected` pushes unsynced visits; invalidates appointments + gcal.
 
-**GCal integration (user-verified):** connect · preview pull · create auto-push · manual ⋮ sync — OK. ICS import/export optional. GCP Calendar API must be enabled on OAuth project.
+**C37.3 (UI):** Sync Behavior header layout · subsection icon stretch · ICS import label null guard.
+
+**GCal integration:** connect · preview · create auto-push · manual ⋮ sync · connect backfill.
 
 **Auth login (C37 chain — shipped):**
 

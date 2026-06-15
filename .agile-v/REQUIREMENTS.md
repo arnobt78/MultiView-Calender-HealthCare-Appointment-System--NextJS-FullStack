@@ -6,7 +6,7 @@
 
 | Field | Value |
 |-------|-------|
-| Cycle | C1–C37.2 shipped · **C38 specify next** (add REQ-0088 before code) |
+| Cycle | C1–C38 shipped · **C39 specify next** |
 | Author | Requirement Architect |
 | Gate 1 status | C1 GATE-0001 · C2 GATE-0003 approved |
 | Canonical source | this file |
@@ -126,12 +126,30 @@
 | REQ-0079 | approved [C31] | REQ-0078 | ART-0407..0409 | pending |
 | REQ-0080 | approved [C32] | REQ-0079 | ART-0410..0416 | pending |
 | REQ-0081 | approved [C33] | REQ-0080 | ART-0417..0423 | pending |
+| REQ-0088 | approved [C38] | REQ-0087 | ART-0458..0460 | verify PASS |
 | REQ-0087 | approved [C36.2.1] | REQ-0086 | ART-0456..0457 | pending |
 | REQ-0086 | approved [C36.2] | REQ-0085 | ART-0451..0455 | pending |
 | REQ-0085 | approved [C36.1] | REQ-0084 | ART-0445..0450 | pending |
 | REQ-0084 | approved [C36] | REQ-0083 | ART-0437..0444 | pending |
 | REQ-0083 | approved [C35/C35.1] | REQ-0082 | ART-0432..0436 | pending |
 | REQ-0082 | approved [C34/C34.1] | REQ-0081 | ART-0424..0431 | pending |
+
+### REQ-0088 — C38 Google Calendar API warning + connect backfill
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C38] |
+| Priority | P2 |
+| Risk | R1 |
+| Parent | REQ-0087 |
+
+**Statement:** When OAuth is connected but Google list API fails (e.g. Calendar API disabled), show an inline warning banner without flipping to disconnected. On OAuth connect, backfill staff-scope appointments missing `google_calendar_event_id` to Google.
+
+**Acceptance criteria:**
+1. GET `/api/calendar/sync` returns `eventsFetchWarning` with stable codes; `connected: true` preserved.
+2. `GoogleCalendarEventsFetchWarningBanner` on CP Google Calendar tab with activation link when applicable.
+3. POST `/api/calendar/backfill` pushes unsynced visits; triggered on `?gcal=connected`; invalidates gcal + appointments cache.
+4. Tests + verify PASS.
 
 ### REQ-0087 — C36.2.1 Appointment detail Google Calendar SSR seed
 

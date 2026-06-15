@@ -6,7 +6,7 @@
 
 | Field | Value |
 |-------|-------|
-| **Cycle** | **C37.3** closed · **C38** — Specify (idle) |
+| **Cycle** | **C38** closed · **C39** — Specify (idle) |
 | **Phase** | — (awaiting new REQ) |
 | **Stage** | 0 — Specify next |
 | **Status** | **ready** |
@@ -15,7 +15,7 @@
 
 ## Verify baseline (session activation)
 
-**1154/1154** · tsc · lint · build — PASS · HEAD `ea40860`
+**1162/1162** · tsc · lint · build — PASS
 
 ## Last shipped (C37 chain — engineering hardening, no REQ)
 
@@ -25,6 +25,7 @@
 | C37.1 | GCal provider stable tree — no Login/Landing remount on auth seed |
 | C37.2 | GCal sync error policy — events fail ≠ disconnected |
 | C37.3 | GCal Sync Behavior header layout; subsection icon stretch; ICS import label null guard |
+| **C38** | **REQ-0088** — GCal API warning banner + connect backfill |
 
 ## Last REQ-backed (C36.2.1)
 

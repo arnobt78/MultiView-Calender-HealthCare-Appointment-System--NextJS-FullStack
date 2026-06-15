@@ -11,7 +11,7 @@ import {
   countUpcomingGoogleCalendarEvents,
   sortGoogleCalendarEventsByStart,
 } from "@/lib/google-calendar-display";
-import type { GoogleCalendarStatus } from "@/types/google-calendar";
+import type { GoogleCalendarStatus, GoogleCalendarBackfillSummary } from "@/types/google-calendar";
 import type { ApiError } from "@/types/api";
 
 export type { GoogleCalendarEvent, GoogleCalendarStatus } from "@/types/google-calendar";
@@ -25,10 +25,15 @@ export function useGoogleCalendar({ enabled = true }: { enabled?: boolean } = {}
     queryKey: statusKey,
     queryFn: async () => {
       try {
-        const data = await apiClient<{ events?: GoogleCalendarStatus["events"] }>(
-          "/api/calendar/sync"
-        );
-        return { connected: true, events: data.events || [] };
+        const data = await apiClient<{
+          events?: GoogleCalendarStatus["events"];
+          eventsFetchWarning?: GoogleCalendarStatus["eventsFetchWarning"];
+        }>("/api/calendar/sync");
+        return {
+          connected: true,
+          events: data.events || [],
+          eventsFetchWarning: data.eventsFetchWarning ?? null,
+        };
       } catch (err: unknown) {
         const status = (err as ApiError).statusCode;
         // 404 = no token record (genuinely not connected).
@@ -37,7 +42,7 @@ export function useGoogleCalendar({ enabled = true }: { enabled?: boolean } = {}
         // and the UI keeps the last-known-good cached state instead of falsely
         // flipping to "Not connected".
         if (status === 404 || status === 401) {
-          return { connected: false, events: [] };
+          return { connected: false, events: [], eventsFetchWarning: null };
         }
         throw err;
       }
@@ -55,6 +60,34 @@ export function useGoogleCalendar({ enabled = true }: { enabled?: boolean } = {}
 
   const eventCount = events.length;
   const upcomingCount = useMemo(() => countUpcomingGoogleCalendarEvents(events), [events]);
+  const eventsFetchWarning = statusQuery.data?.eventsFetchWarning ?? null;
+
+  const backfillMutation = useMutation({
+    mutationFn: () =>
+      apiClient<{ backfill: GoogleCalendarBackfillSummary }>("/api/calendar/backfill", {
+        method: "POST",
+      }),
+    onSuccess: async (data) => {
+      const { synced, attempted } = data.backfill;
+      if (synced > 0) {
+        notify.crud({
+          action: "created",
+          entity: "Google Calendar sync",
+          detail: `${synced} existing appointment(s) were pushed to Google Calendar.`,
+        });
+      } else if (attempted > 0) {
+        notify.error({
+          title: "Google Calendar backfill incomplete",
+          subtitle: "Some appointments could not be synced. Try Sync to Google Calendar per visit.",
+        });
+      }
+      await invalidateGoogleCalendarAndCrossTab(queryClient);
+      if (synced > 0) {
+        await invalidateAfterAppointmentMutation(queryClient, { bustAllCategorySnapshots: false });
+      }
+    },
+    onError: (error) => handleApiError(error, "Failed to backfill appointments to Google Calendar"),
+  });
 
   const syncMutation = useMutation({
     mutationFn: (appointmentId: string) =>
@@ -116,9 +149,13 @@ export function useGoogleCalendar({ enabled = true }: { enabled?: boolean } = {}
     events,
     eventCount,
     upcomingCount,
+    eventsFetchWarning,
     isLoading: statusQuery.isLoading,
     isFetching: statusQuery.isFetching,
     refreshStatus: () => statusQuery.refetch(),
+    backfillToGoogle: backfillMutation.mutate,
+    backfillToGoogleAsync: backfillMutation.mutateAsync,
+    isBackfilling: backfillMutation.isPending,
     syncToGoogle: syncMutation.mutate,
     isSyncing: syncMutation.isPending,
     syncingAppointmentId:

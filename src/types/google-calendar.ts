@@ -13,7 +13,31 @@ export interface GoogleCalendarEvent {
   [key: string]: unknown;
 }
 
+/** Stable codes when connected but Google list/push API fails. */
+export type GoogleCalendarEventsFetchWarningCode =
+  | "SERVICE_DISABLED"
+  | "PERMISSION_DENIED"
+  | "RATE_LIMIT"
+  | "UNKNOWN";
+
+export interface GoogleCalendarEventsFetchWarning {
+  code: GoogleCalendarEventsFetchWarningCode;
+  message: string;
+  /** GCP Console link when Calendar API is disabled. */
+  activationUrl?: string;
+}
+
+/** Result of POST /api/calendar/backfill after OAuth connect. */
+export interface GoogleCalendarBackfillSummary {
+  attempted: number;
+  synced: number;
+  skipped: number;
+  failed: number;
+}
+
 export interface GoogleCalendarStatus {
   connected: boolean;
   events?: GoogleCalendarEvent[];
+  /** Set when token exists but list-events failed — UI shows banner, stays connected. */
+  eventsFetchWarning?: GoogleCalendarEventsFetchWarning | null;
 }

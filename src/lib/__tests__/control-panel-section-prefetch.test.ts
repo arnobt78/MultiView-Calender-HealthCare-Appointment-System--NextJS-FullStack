@@ -58,7 +58,7 @@ vi.mock("@/lib/server-prefetch", () => ({
     appointmentInvitations: [{ id: "i1" }],
     dashboardInvitations: [{ id: "d1" }],
   })),
-  prefetchGoogleCalendarStatus: vi.fn(async () => ({ connected: false, events: [] })),
+  prefetchGoogleCalendarStatus: vi.fn(async () => ({ connected: false, events: [], eventsFetchWarning: null })),
   prefetchInvoices: vi.fn(async () => [{ id: "inv1" }]),
   prefetchBillingAppointmentOptions: vi.fn(async () => ({
     options: [{ id: "appt-bill", eligible: true }],
@@ -152,7 +152,11 @@ describe("prefetchControlPanelSection", () => {
       "u@test.com",
       "admin"
     );
-    expect(result.googleCalendarStatus).toEqual({ connected: false, events: [] });
+    expect(result.googleCalendarStatus).toEqual({
+      connected: false,
+      events: [],
+      eventsFetchWarning: null,
+    });
   });
 
   it("prefetches appointment invitations for appointment tab", async () => {

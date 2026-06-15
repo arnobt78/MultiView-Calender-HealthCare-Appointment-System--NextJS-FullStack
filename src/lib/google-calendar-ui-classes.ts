@@ -67,3 +67,11 @@ export const googleCalendarAdvancedImportDialogShellClass =
 /** How-it-works callout — mirrors Import ICS violet info panel with emerald glow. */
 export const googleCalendarAdvancedImportInfoNoteClass =
   "rounded-2xl border border-emerald-200/70 bg-emerald-50/60 p-3 text-xs text-emerald-900 shadow-[0_8px_24px_rgba(16,185,129,0.12)]";
+
+/** Inline warning when connected but Google list API fails (e.g. Calendar API disabled). */
+export const googleCalendarEventsFetchWarningBannerClass =
+  "flex flex-col gap-3 rounded-xl border border-amber-200/80 bg-amber-50/90 p-4 text-sm text-amber-950 shadow-[0_8px_24px_rgba(245,158,11,0.12)] sm:flex-row sm:items-start sm:justify-between";
+
+export const googleCalendarWarningCopy = {
+  enableApiLinkLabel: "Enable Google Calendar API",
+} as const;
