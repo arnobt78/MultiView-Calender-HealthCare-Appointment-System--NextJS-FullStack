@@ -1,0 +1,76 @@
+"use client";
+
+import { Calendar } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { DashboardQueuePanelCard } from "@/components/control-panel/dashboard/DashboardQueuePanelCard";
+import { TelehealthQueueRow } from "@/components/control-panel/telehealth/TelehealthQueueRow";
+import { TelehealthQueueScheduleEmptyState } from "@/components/control-panel/telehealth/TelehealthQueueScheduleEmptyState";
+import { buildTelehealthQueueEmptyCopy } from "@/lib/telehealth-queue-empty-copy";
+import {
+  telehealthQueueSchedulePanelClass,
+  telehealthQueueSchedulePanelIconClass,
+} from "@/lib/telehealth-queue-ui-classes";
+import type { TelehealthQueueDateFilter } from "@/lib/telehealth-queue-filter";
+import type { DoctorDirectoryRow } from "@/lib/doctor-directory";
+import type { FullAppointment } from "@/hooks/useAppointments";
+
+type Props = {
+  appointments: FullAppointment[];
+  dateFilter: TelehealthQueueDateFilter;
+  doctors?: DoctorDirectoryRow[] | null;
+  listBodyLoading: boolean;
+  onJoin: (appointmentId: string) => void;
+};
+
+function scheduleTitle(filter: TelehealthQueueDateFilter): string {
+  if (filter === "today") return "Today's Schedule";
+  if (filter === "upcoming") return "Upcoming Queue";
+  return "All Telehealth Visits";
+}
+
+/** Schedule list inside sky glass panel — filter-aware centered empty state. */
+export function TelehealthQueueList({
+  appointments,
+  dateFilter,
+  doctors,
+  listBodyLoading,
+  onJoin,
+}: Props) {
+  const emptyCopy = buildTelehealthQueueEmptyCopy(dateFilter);
+
+  return (
+    <DashboardQueuePanelCard
+      title={scheduleTitle(dateFilter)}
+      subtitle="Video visits only — join or open detail"
+      icon={Calendar}
+      iconClassName={telehealthQueueSchedulePanelIconClass}
+      count={listBodyLoading ? undefined : appointments.length}
+      className={telehealthQueueSchedulePanelClass}
+    >
+      {listBodyLoading ? (
+        <div className="space-y-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="space-y-2 rounded-2xl border border-sky-100/80 p-4">
+              <Skeleton className="h-5 w-3/4 rounded" />
+              <Skeleton className="h-4 w-1/2 rounded" />
+              <Skeleton className="h-6 w-full max-w-[14rem] rounded" />
+            </div>
+          ))}
+        </div>
+      ) : appointments.length === 0 ? (
+        <TelehealthQueueScheduleEmptyState icon={Calendar} copy={emptyCopy} />
+      ) : (
+        <div className="space-y-2">
+          {appointments.map((appt) => (
+            <TelehealthQueueRow
+              key={appt.id}
+              appointment={appt}
+              doctors={doctors}
+              onJoin={() => onJoin(appt.id)}
+            />
+          ))}
+        </div>
+      )}
+    </DashboardQueuePanelCard>
+  );
+}

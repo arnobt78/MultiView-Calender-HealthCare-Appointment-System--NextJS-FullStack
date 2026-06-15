@@ -21,6 +21,8 @@ type Props = {
   dateVariant?: "full" | "short";
   /** When `today`, datetime line uses emerald (upcoming queue). */
   relativeTone?: DashboardAppointmentRelativeTone;
+  /** Default true — telehealth queue passes false to avoid duplicate badges. */
+  showTelehealthBadge?: boolean;
   className?: string;
 };
 
@@ -32,6 +34,7 @@ export function DashboardAppointmentScheduleMetaRow({
   isTelehealth = false,
   dateVariant = "full",
   relativeTone,
+  showTelehealthBadge = true,
   className,
 }: Props) {
   const dateLabel =
@@ -55,7 +58,7 @@ export function DashboardAppointmentScheduleMetaRow({
           {place}
         </DashboardMetaIconRow>
       ) : null}
-      {isTelehealth ? <TelehealthSessionBadge /> : null}
+      {isTelehealth && showTelehealthBadge ? <TelehealthSessionBadge /> : null}
     </div>
   );
 }

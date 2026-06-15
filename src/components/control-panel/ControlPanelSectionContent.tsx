@@ -17,7 +17,7 @@ import NotificationsManagement from "@/components/control-panel/NotificationsMan
 import GoogleCalendarSettings from "@/components/control-panel/GoogleCalendarSettings";
 import { GlobalAppointmentTypesEditor } from "@/components/control-panel/GlobalAppointmentTypesEditor";
 import DashboardOverviewComponent from "@/components/control-panel/DashboardOverview";
-import TelehealthDashboard from "@/components/pages/TelehealthDashboard";
+import TelehealthQueuePage from "@/components/control-panel/telehealth/TelehealthQueuePage";
 import PatientDetailView from "@/components/pages/PatientDetailView";
 import type { ControlPanelSidebarTabValue } from "@/lib/control-panel-nav-config";
 import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
@@ -62,7 +62,7 @@ export function ControlPanelSectionContent({ tab }: { tab: ControlPanelSidebarTa
     case "overview":
       return <DashboardOverviewComponent />;
     case "telehealth":
-      return <TelehealthDashboard />;
+      return <TelehealthQueuePage />;
     case "appointment":
       return (
         <div className={controlPanelSectionRootClass}>

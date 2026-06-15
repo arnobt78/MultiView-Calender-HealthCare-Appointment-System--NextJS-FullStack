@@ -1,20 +1,20 @@
 # HealthCal Pro — Project Walkthrough
 
-## Agent resume (2026-06-15 — C38.4 silent OAuth + Sentry tunnel)
+## Agent resume (2026-06-15 — C39 telehealth queue)
 
-**Baseline:** 1186/1186 · tsc · lint · build PASS
+**Baseline:** 1203/1203 · tsc · lint · build PASS
 
-**C38.4:** OAuth return — stats/buttons skip `isFetching` skeleton; `manualRefreshPending` for user Refresh only; table loading via `isGoogleCalendarEventsPreviewLoading`.
+**C39.2:** Doctor from `queryKeys.doctors.all` · clock-in-time + status chips · category inline (list) · full datetime · REQ-0090.
 
-**C38.3:** `gcalOAuthReturn` page SSR flag · `oauthLatched` · `refetchOnMount` when connected+empty events.
+**C39.1:** Rose all-time KPI · violet tab glow · filter empty copy · sky schedule panel · glass Join · REQ-0089.
 
-**Sentry:** `@sentry/nextjs` · client `tunnel: /api/monitoring` · `forwardSentryEnvelope` DSN guard · prod-only `enabled`.
+**C39:** `is_telehealth` filter only · violet glass · detail links · SSR `prefetchCalendarAppointmentsBundle` · `invalidateAfterAppointmentMutation`.
 
-**C38.2:** preview table spinner · **C38.1:** OAuth loop guard · **C38 (REQ-0088):** `eventsFetchWarning` · backfill.
+**Keys:** `telehealth-queue-filter.ts` · `telehealth-queue-display.ts` · `telehealth-queue-empty-copy.ts` · `telehealth-queue-ui-classes.ts` · `control-panel/telehealth/*`
 
-**GCal keys:** `google-calendar-status-ui.ts` · `google-calendar-preview-loading.ts` · `GoogleCalendarSettings.tsx` · `sentry-tunnel.ts` · `api/monitoring/route.ts`
+**C38.4:** GCal silent OAuth refresh · **Sentry** `/api/monitoring` tunnel.
 
-**Invariants:** `force-dynamic` · SSR seed · TanStack invalidation on CRUD · no KPI pulse on background refetch.
+**Invariants:** `force-dynamic` · SSR seed · `invalidateAfterAppointmentMutation` refreshes queue.
 
 ---
 
@@ -691,7 +691,7 @@ const loading = !isMounted || isLoading;
 | Page | File | Skeleton areas |
 |---|---|---|
 | Dashboard Overview | `control-panel/DashboardOverview.tsx` | Stat value slots + next-appt/recent list content |
-| Telehealth Queue | `pages/TelehealthDashboard.tsx` | Up Next card body + queue rows |
+| Telehealth Queue | `control-panel/telehealth/TelehealthQueuePage.tsx` | Stats + Up Next + schedule rows (`is_telehealth` only) |
 | Appointment Access | `control-panel/InvitationList.tsx` | Invitation table rows |
 | User Access | `control-panel/InvitationList.tsx` | Invitation table rows (shared component) |
 | Organization Mgmt | `control-panel/OrganizationManagement.tsx` | Count subtitle + table rows |
@@ -913,7 +913,7 @@ src/
 │   │   ├── AnalyticsPage.tsx        Insights — inline skeleton
 │   │   ├── PatientPortalPage.tsx    Patient portal — inline skeleton
 │   │   ├── PatientDetailView.tsx
-│   │   └── TelehealthDashboard.tsx  Telehealth queue — inline skeleton
+│   │   └── control-panel/telehealth/TelehealthQueuePage.tsx  Telehealth queue (violet glass)
 │   ├── calendar/
 │   │   ├── AppointmentList.tsx      List tab → `AppointmentCard variant="list"`
 │   │   ├── WeekView.tsx / MonthView.tsx / DayView.tsx  Grid + side panel → `AppointmentHoverCard` + `AppointmentCard`

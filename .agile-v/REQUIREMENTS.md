@@ -126,6 +126,8 @@
 | REQ-0079 | approved [C31] | REQ-0078 | ART-0407..0409 | pending |
 | REQ-0080 | approved [C32] | REQ-0079 | ART-0410..0416 | pending |
 | REQ-0081 | approved [C33] | REQ-0080 | ART-0417..0423 | pending |
+| REQ-0090 | approved [C39.2] | REQ-0089 | ART-0469..0474 | pending |
+| REQ-0089 | approved [C39.1] | — | ART-0461..0468 | pending |
 | REQ-0088 | approved [C38] | REQ-0087 | ART-0458..0460 | verify PASS |
 | REQ-0087 | approved [C36.2.1] | REQ-0086 | ART-0456..0457 | pending |
 | REQ-0086 | approved [C36.2] | REQ-0085 | ART-0451..0455 | pending |
@@ -133,6 +135,42 @@
 | REQ-0084 | approved [C36] | REQ-0083 | ART-0437..0444 | pending |
 | REQ-0083 | approved [C35/C35.1] | REQ-0082 | ART-0432..0436 | pending |
 | REQ-0082 | approved [C34/C34.1] | REQ-0081 | ART-0424..0431 | pending |
+
+### REQ-0090 — C39.2 Telehealth queue identity + status UX
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C39.2] |
+| Priority | P2 |
+| Risk | R1 |
+| Parent | REQ-0089 |
+
+**Statement:** Up Next and schedule rows show clock + glass status beside time, treating physician + clickable appointment category, full datetime on list rows, status inline after title, remove redundant chevron. Reuse `CategoryInlineLink`, `AppointmentStatusGlassBadge`. No new APIs.
+
+**Acceptance criteria:**
+1. Up Next header: Clock + time + status badge; doctor + category block.
+2. List rows: full date range, status after title, doctor + category, no chevron.
+3. Shared appointments cache + invalidation unchanged.
+4. Tests + verify PASS.
+
+### REQ-0089 — C39.1 Telehealth queue UI polish
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C39.1] |
+| Priority | P2 |
+| Risk | R1 |
+| Parent | — |
+
+**Statement:** Polish Control Panel Telehealth Queue — rose “Total all time” KPI, violet glow on date filter tabs, dedupe telehealth badges, show physical location when set, treating physician identity, glass Join buttons, schedule list alignment. No new APIs or query keys.
+
+**Acceptance criteria:**
+1. Four responsive stat cards including rose all-time telehealth count.
+2. Filter pill group outer violet shadow glow.
+3. Up Next: single telehealth badge; visit-type chip only when non-redundant; MapPin location when `appointment.location` is physical; doctor row; violet glass Join.
+4. Schedule rows match dashboard queue stack; glass Join sm.
+5. Shared appointments cache + existing invalidation unchanged.
+6. Tests + verify PASS.
 
 ### REQ-0088 — C38 Google Calendar API warning + connect backfill
 
