@@ -75,3 +75,9 @@ export const googleCalendarEventsFetchWarningBannerClass =
 export const googleCalendarWarningCopy = {
   enableApiLinkLabel: "Enable Google Calendar API",
 } as const;
+
+/** Google Events Preview table — loading body copy. */
+export const googleCalendarPreviewCopy = {
+  loadingEvents: "Loading events from Google Calendar…",
+  loadingEventsHint: "This may take a few seconds after connecting.",
+} as const;

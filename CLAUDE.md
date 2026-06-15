@@ -4,12 +4,13 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-15)
 
-- **C38.1:** fix OAuth connect loop — one-shot sessionStorage guard; stable `gcalParam` effect deps (was backfill/sync storm).
+- **C38.2:** GCal events preview loading — spinner while first sync fetch (SSR empty seed + isFetching).
+- **C38.1:** fix OAuth connect loop — one-shot sessionStorage guard.
 - **C37.3:** GCal Sync Behavior card layout; subsection icon stretch; ICS import label null guard.
 - **C37.2:** gcal sync — events fail ≠ disconnected (200 empty events).
 - **C37.1:** GCal provider stable tree (`enabled={isStaff}`) — fixes Login/Landing remount on auth seed.
 - **C37:** auth nav — hard replace + pending-guard; `loadingGoogle`; bare-path query gate; deferred toasts.
-- **Verify:** **1162/1162** · tsc · lint · build PASS.
+- **Verify:** **1170/1170** · tsc · lint · build PASS.
 - **Agile V:** C38 shipped · **C39 specify idle**.
 
 ## Never / Always

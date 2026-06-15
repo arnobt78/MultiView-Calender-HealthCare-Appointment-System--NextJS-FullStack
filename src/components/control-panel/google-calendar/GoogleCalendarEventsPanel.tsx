@@ -8,6 +8,7 @@ import { ClinicalListFilterToolbar } from "@/components/shared/filters/ClinicalL
 import { FilterSelect } from "@/components/shared/filters/FilterSelect";
 import { PortalPanelSubsectionHeader } from "@/components/shared/PortalPanelSubsectionHeader";
 import { ControlPanelEntityListShell } from "@/components/control-panel/ControlPanelEntityListShell";
+import { GoogleCalendarEventsPreviewLoadingBody } from "@/components/control-panel/google-calendar/GoogleCalendarEventsPreviewLoadingBody";
 import { buildGoogleCalendarEventColumns } from "@/components/control-panel/google-calendar/google-calendar-event-columns";
 import {
   filterGoogleCalendarEvents,
@@ -37,6 +38,8 @@ type Props = {
   events: GoogleCalendarEvent[];
   isConnected: boolean;
   listBodyLoading: boolean;
+  /** First pull / post-connect — spinner instead of empty/disconnected copy. */
+  eventsPreviewLoading: boolean;
 };
 
 /** Indigo glass — preview of Google events pulled via GET /api/calendar/sync. */
@@ -44,6 +47,7 @@ export function GoogleCalendarEventsPanel({
   events,
   isConnected,
   listBodyLoading,
+  eventsPreviewLoading,
 }: Props) {
   const [windowFilter, setWindowFilter] = useState<GoogleCalendarEventWindowFilter>(
     DEFAULT_GOOGLE_CALENDAR_EVENT_FILTERS.window
@@ -104,7 +108,7 @@ export function GoogleCalendarEventsPanel({
           icon={CalendarRange}
           iconClassName="border-indigo-100/80 bg-indigo-50/70 [&_svg]:text-indigo-600"
           count={isConnected ? events.length : undefined}
-          countSkeleton={listBodyLoading}
+          countSkeleton={listBodyLoading || eventsPreviewLoading}
         />
 
         {/* CP list shell — toolbar above indigo table frame (patient-management parity). */}
@@ -172,6 +176,9 @@ export function GoogleCalendarEventsPanel({
             </ClinicalListFilterToolbar>
           }
           tableSlot={
+            eventsPreviewLoading ? (
+              <GoogleCalendarEventsPreviewLoadingBody />
+            ) : (
             <DataTable
               columns={columns}
               data={isConnected ? filteredEvents : []}
@@ -193,6 +200,7 @@ export function GoogleCalendarEventsPanel({
               pagination={isConnected && filteredEvents.length > 10}
               pageSize={10}
             />
+            )
           }
         />
       </CardContent>

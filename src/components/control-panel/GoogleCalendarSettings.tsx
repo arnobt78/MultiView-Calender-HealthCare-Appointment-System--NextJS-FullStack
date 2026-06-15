@@ -39,6 +39,7 @@ import {
   GOOGLE_CALENDAR_CONNECTED_QUERY_VALUE,
 } from "@/lib/google-calendar-routes";
 import { shouldRunGoogleCalendarOAuthBackfill } from "@/lib/google-calendar-oauth-connect";
+import { isGoogleCalendarEventsPreviewLoading } from "@/lib/google-calendar-preview-loading";
 import { apiClient } from "@/lib/api-client";
 import type { GoogleCalendarBackfillSummary } from "@/types/google-calendar";
 
@@ -67,6 +68,13 @@ export default function GoogleCalendarSettings() {
 
   const statusKey = [...queryKeys.googleCalendar.root, "status"] as const;
   const listBodyLoading = useCpListBodyLoading(statusKey, isLoading);
+  const eventsPreviewLoading = isGoogleCalendarEventsPreviewLoading({
+    isConnected,
+    isFetching,
+    listBodyLoading,
+    eventCount,
+    eventsFetchWarning,
+  });
   const gcalParam = searchParams.get(GOOGLE_CALENDAR_CONNECTED_QUERY_KEY);
   /** In-flight guard — pairs with sessionStorage in shouldRunGoogleCalendarOAuthBackfill. */
   const oauthConnectHandlingRef = useRef(false);
@@ -216,6 +224,7 @@ export default function GoogleCalendarSettings() {
           events={events}
           isConnected={isConnected}
           listBodyLoading={listBodyLoading}
+          eventsPreviewLoading={eventsPreviewLoading}
         />
 
         <GoogleCalendarIcsPanel

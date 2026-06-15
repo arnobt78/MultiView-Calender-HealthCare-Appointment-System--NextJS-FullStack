@@ -1,13 +1,12 @@
 # HealthCal Pro — Project Walkthrough
 
-## Agent resume (2026-06-15 — C38 GCal warning + backfill)
+## Agent resume (2026-06-15 — C38.2 events preview loading)
 
-**Baseline:** 1162/1162 · tsc · lint · build PASS · **C39 specify idle**
+**Baseline:** 1170/1170 · tsc · lint · build PASS · **C39 specify idle**
 
-**C38 (REQ-0088):**
-- `classifyGoogleCalendarListError` → GET `/api/calendar/sync` returns `eventsFetchWarning` (connected + banner).
-- `GoogleCalendarEventsFetchWarningBanner` on CP tab when API disabled/403.
-- `backfillAppointmentsToGoogleCalendar` + `POST /api/calendar/backfill` — OAuth `?gcal=connected` pushes unsynced visits; invalidates appointments + gcal.
+**C38.2:** `isGoogleCalendarEventsPreviewLoading` — connected + isFetching + 0 events → spinner in preview table (not empty/disconnected copy).
+
+**C38 (REQ-0088):** `eventsFetchWarning` banner · connect backfill · OAuth loop guard.
 
 **C37.3 (UI):** Sync Behavior header layout · subsection icon stretch · ICS import label null guard.
 
