@@ -13,6 +13,7 @@ import {
 } from "@/lib/google-calendar-display";
 import type { GoogleCalendarStatus, GoogleCalendarBackfillSummary } from "@/types/google-calendar";
 import type { ApiError } from "@/types/api";
+import { clearGoogleCalendarOAuthBackfillGuard } from "@/lib/google-calendar-oauth-connect";
 
 export type { GoogleCalendarEvent, GoogleCalendarStatus } from "@/types/google-calendar";
 
@@ -109,6 +110,7 @@ export function useGoogleCalendar({ enabled = true }: { enabled?: boolean } = {}
   const disconnectMutation = useMutation({
     mutationFn: () => apiClient("/api/calendar/sync", { method: "DELETE" }),
     onSuccess: async () => {
+      clearGoogleCalendarOAuthBackfillGuard();
       notify.crud({
         action: "deleted",
         entity: "Google Calendar",

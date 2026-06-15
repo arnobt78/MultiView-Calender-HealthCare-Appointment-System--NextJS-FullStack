@@ -6,7 +6,7 @@
  * OAuth return handled via ?gcal=connected → invalidate + toast + clean URL.
  */
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
@@ -24,7 +24,7 @@ import { GoogleCalendarEventsFetchWarningBanner } from "@/components/control-pan
 import { GoogleCalendarAdvancedImportCard } from "@/components/control-panel/google-calendar/GoogleCalendarAdvancedImportCard";
 import { useCpListBodyLoading } from "@/lib/cp-list-body-loading";
 import { queryKeys } from "@/lib/query-keys";
-import { invalidateGoogleCalendarAndCrossTab } from "@/lib/query-client";
+import { invalidateGoogleCalendarAndCrossTab, invalidateAfterAppointmentMutation } from "@/lib/query-client";
 import { notify } from "@/lib/notify";
 import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
 import {
@@ -33,7 +33,14 @@ import {
 } from "@/lib/calendar-header-action-styles";
 import { googleCalendarIcsCopy } from "@/lib/google-calendar-ui-classes";
 import { cn } from "@/lib/utils";
-import { isGoogleCalendarOAuthConnectedParam } from "@/lib/google-calendar-routes";
+import {
+  isGoogleCalendarOAuthConnectedParam,
+  GOOGLE_CALENDAR_CONNECTED_QUERY_KEY,
+  GOOGLE_CALENDAR_CONNECTED_QUERY_VALUE,
+} from "@/lib/google-calendar-routes";
+import { shouldRunGoogleCalendarOAuthBackfill } from "@/lib/google-calendar-oauth-connect";
+import { apiClient } from "@/lib/api-client";
+import type { GoogleCalendarBackfillSummary } from "@/types/google-calendar";
 
 export default function GoogleCalendarSettings() {
   const queryClient = useQueryClient();
@@ -50,8 +57,6 @@ export default function GoogleCalendarSettings() {
     isLoading,
     isFetching,
     refreshStatus,
-    backfillToGoogleAsync,
-    isBackfilling,
     disconnectAsync,
     isDisconnecting,
     importICS,
@@ -62,27 +67,65 @@ export default function GoogleCalendarSettings() {
 
   const statusKey = [...queryKeys.googleCalendar.root, "status"] as const;
   const listBodyLoading = useCpListBodyLoading(statusKey, isLoading);
+  const gcalParam = searchParams.get(GOOGLE_CALENDAR_CONNECTED_QUERY_KEY);
+  /** In-flight guard — pairs with sessionStorage in shouldRunGoogleCalendarOAuthBackfill. */
+  const oauthConnectHandlingRef = useRef(false);
 
-  /** OAuth success — backfill unsynced visits, bust cache, toast, strip query param. */
+  /** OAuth success — once: strip param, backfill, invalidate, toast. */
   useEffect(() => {
-    if (isGoogleCalendarOAuthConnectedParam(searchParams)) {
-      void (async () => {
-        await invalidateGoogleCalendarAndCrossTab(queryClient);
-        try {
-          await backfillToGoogleAsync();
-        } catch {
-          // Toast handled in hook; stay on page.
-        }
-        await refreshStatus();
-      })();
-      notify.crud({
-        action: "created",
-        entity: "Google Calendar",
-        detail: "Your Google Calendar is now connected.",
-      });
+    if (gcalParam !== GOOGLE_CALENDAR_CONNECTED_QUERY_VALUE) return;
+    if (oauthConnectHandlingRef.current) return;
+    if (!shouldRunGoogleCalendarOAuthBackfill(gcalParam)) {
       router.replace(pathname, { scroll: false });
       return;
     }
+
+    oauthConnectHandlingRef.current = true;
+    router.replace(pathname, { scroll: false });
+
+    notify.crud({
+      action: "created",
+      entity: "Google Calendar",
+      detail: "Your Google Calendar is now connected.",
+    });
+
+    void (async () => {
+      try {
+        await invalidateGoogleCalendarAndCrossTab(queryClient);
+        const result = await apiClient<{ backfill: GoogleCalendarBackfillSummary }>(
+          "/api/calendar/backfill",
+          { method: "POST" }
+        );
+        const { synced, attempted } = result.backfill;
+        if (synced > 0) {
+          notify.crud({
+            action: "created",
+            entity: "Google Calendar sync",
+            detail: `${synced} existing appointment(s) were pushed to Google Calendar.`,
+          });
+          await invalidateAfterAppointmentMutation(queryClient, {
+            bustAllCategorySnapshots: false,
+          });
+        } else if (attempted > 0) {
+          notify.error({
+            title: "Google Calendar backfill incomplete",
+            subtitle:
+              "Some appointments could not be synced. Try Sync to Google Calendar per visit.",
+          });
+        }
+        await invalidateGoogleCalendarAndCrossTab(queryClient);
+      } catch {
+        // Non-blocking — user can refresh manually.
+      } finally {
+        oauthConnectHandlingRef.current = false;
+      }
+    })();
+
+    return;
+  }, [gcalParam, queryClient, router, pathname]);
+
+  useEffect(() => {
+    if (isGoogleCalendarOAuthConnectedParam(searchParams)) return;
     const error = searchParams.get("error");
     if (error === "gcal_failed") {
       notify.error({
@@ -91,7 +134,7 @@ export default function GoogleCalendarSettings() {
       });
       router.replace(pathname, { scroll: false });
     }
-  }, [searchParams, queryClient, router, pathname, refreshStatus, backfillToGoogleAsync]);
+  }, [searchParams, router, pathname]);
 
   const handleRefresh = () => {
     void refreshStatus();
@@ -143,7 +186,7 @@ export default function GoogleCalendarSettings() {
           eventCount={eventCount}
           upcomingCount={upcomingCount}
           listBodyLoading={listBodyLoading}
-          isFetching={isFetching || isBackfilling}
+          isFetching={isFetching}
         />
 
         {isConnected && eventsFetchWarning ? (

@@ -4,7 +4,7 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-15)
 
-- **C38 (REQ-0088):** GCal `eventsFetchWarning` banner (403/API disabled); `POST /api/calendar/backfill` on OAuth connect.
+- **C38.1:** fix OAuth connect loop — one-shot sessionStorage guard; stable `gcalParam` effect deps (was backfill/sync storm).
 - **C37.3:** GCal Sync Behavior card layout; subsection icon stretch; ICS import label null guard.
 - **C37.2:** gcal sync — events fail ≠ disconnected (200 empty events).
 - **C37.1:** GCal provider stable tree (`enabled={isStaff}`) — fixes Login/Landing remount on auth seed.
