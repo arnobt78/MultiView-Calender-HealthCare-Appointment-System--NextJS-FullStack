@@ -4,14 +4,11 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-15)
 
-- **C38.2:** GCal events preview loading — spinner while first sync fetch (SSR empty seed + isFetching).
-- **C38.1:** fix OAuth connect loop — one-shot sessionStorage guard.
-- **C37.3:** GCal Sync Behavior card layout; subsection icon stretch; ICS import label null guard.
-- **C37.2:** gcal sync — events fail ≠ disconnected (200 empty events).
-- **C37.1:** GCal provider stable tree (`enabled={isStaff}`) — fixes Login/Landing remount on auth seed.
-- **C37:** auth nav — hard replace + pending-guard; `loadingGoogle`; bare-path query gate; deferred toasts.
-- **Verify:** **1170/1170** · tsc · lint · build PASS.
-- **Agile V:** C38 shipped · **C39 specify idle**.
+- **C38.4:** GCal OAuth return — KPIs/buttons stable; manual refresh only; table spinner when empty (`google-calendar-status-ui.ts`).
+- **C38.3:** `gcalOAuthReturn` SSR latch + `refetchOnMount` connected+empty — no empty-text flash after OAuth.
+- **Sentry:** `@sentry/nextjs` · tunnel `POST /api/monitoring` · DSN-guard (`sentry-tunnel.ts`).
+- **C38.2:** events preview loading spinner · **C38.1:** OAuth loop guard · **C38:** backfill + `eventsFetchWarning`.
+- **Verify:** **1186/1186** · tsc · lint · build PASS.
 
 ## Never / Always
 
@@ -54,7 +51,9 @@ Cross-tab: `query-cache-cross-tab.ts`.
 - **Sync:** `google-calendar-sync-appointment.ts` · cancel/DELETE unlink · PUT/PATCH shared side-effects · `GoogleCalendarSyncContext` (one hook)
 - **Hook:** `useGoogleCalendar({ enabled? })` (CP page) · `useGoogleCalendarSyncOptional` (cards/menus/detail) · dashboard + appointment detail SSR seed
 - **Error policy:** 404/401 → `{connected:false}`; 500/network → throw. Events failure → `eventsFetchWarning` banner, stays connected.
-- **Backfill:** `POST /api/calendar/backfill` on `?gcal=connected` — pushes unsynced staff-scope appointments; invalidates appointments + gcal cache.
+- **Preview loading:** `isGoogleCalendarEventsPreviewLoading` · `GoogleCalendarEventsPreviewLoadingBody`
+- **OAuth UX:** `gcalOAuthReturn` SSR · `oauthLatched` · `google-calendar-status-ui.ts` (silent KPI refetch)
+- **Sentry:** `sentry.*.config.ts` · `instrumentation.ts` · `/api/monitoring` tunnel · env: `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT`
 
 ## Key paths
 
@@ -64,7 +63,7 @@ Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Agile V
 
-`.agile-v/STATE.md` · **C38 closed** · **1162/1162**.
+`.agile-v/STATE.md` · **C38.4 closed** · **1186/1186**.
 
 ## Principle
 

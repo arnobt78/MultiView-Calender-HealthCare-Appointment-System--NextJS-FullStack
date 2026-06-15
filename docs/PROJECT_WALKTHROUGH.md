@@ -1,33 +1,20 @@
 # HealthCal Pro — Project Walkthrough
 
-## Agent resume (2026-06-15 — C38.2 events preview loading)
+## Agent resume (2026-06-15 — C38.4 silent OAuth + Sentry tunnel)
 
-**Baseline:** 1170/1170 · tsc · lint · build PASS · **C39 specify idle**
+**Baseline:** 1186/1186 · tsc · lint · build PASS
 
-**C38.2:** `isGoogleCalendarEventsPreviewLoading` — connected + isFetching + 0 events → spinner in preview table (not empty/disconnected copy).
+**C38.4:** OAuth return — stats/buttons skip `isFetching` skeleton; `manualRefreshPending` for user Refresh only; table loading via `isGoogleCalendarEventsPreviewLoading`.
 
-**C38 (REQ-0088):** `eventsFetchWarning` banner · connect backfill · OAuth loop guard.
+**C38.3:** `gcalOAuthReturn` page SSR flag · `oauthLatched` · `refetchOnMount` when connected+empty events.
 
-**C37.3 (UI):** Sync Behavior header layout · subsection icon stretch · ICS import label null guard.
+**Sentry:** `@sentry/nextjs` · client `tunnel: /api/monitoring` · `forwardSentryEnvelope` DSN guard · prod-only `enabled`.
 
-**GCal integration:** connect · preview · create auto-push · manual ⋮ sync · connect backfill.
+**C38.2:** preview table spinner · **C38.1:** OAuth loop guard · **C38 (REQ-0088):** `eventsFetchWarning` · backfill.
 
-**Auth login (C37 chain — shipped):**
+**GCal keys:** `google-calendar-status-ui.ts` · `google-calendar-preview-loading.ts` · `GoogleCalendarSettings.tsx` · `sentry-tunnel.ts` · `api/monitoring/route.ts`
 
-| Issue | Root cause | Fix |
-|-------|------------|-----|
-| Page flash after login 200 | Soft nav + stale guest cache + provider remount | `window.location.replace`; pending-guard; stable GCal tree |
-| Both buttons "Redirecting…" | Shared `loading` on Google btn | `loadingGoogle` state |
-| Navbar skeleton until refresh | `auth.me` stuck null; SSR seed skipped | `seedAuthMeFromLoginResponse`; `NavSessionSsrSeed` overwrites null |
-| Dashboard APIs on login page | `setQueryData` enabled appointments | `shouldRunAuthenticatedAppQueries(pathname)` |
-| GCal sync 404 for patients | Unconditional sync hook | `useGoogleCalendar({ enabled: isStaff })` |
-| Connected → disconnected flip | sync 500 → `{connected:false}` | Nested catch; throw on 500 |
-
-**Key files:** `auth-pending-toast.ts` · `useAuthNavButtonLoading.ts` · `nav-session-ssr-seed.ts` · `Login.tsx` · `LandingPage.tsx` · `GoogleCalendarSyncContext.tsx` · `useAuth.ts` · `useAppointments.ts` · `AuthShell.tsx` · `proxy.ts`
-
-**Invariants:** inline button spinner only · no full-screen overlay · welcome toast on destination only · `force-dynamic` + SSR seed + TanStack invalidation on CRUD.
-
-**Next:** Specify C38 — add REQ to `.agile-v/REQUIREMENTS.md` before new features.
+**Invariants:** `force-dynamic` · SSR seed · TanStack invalidation on CRUD · no KPI pulse on background refetch.
 
 ---
 

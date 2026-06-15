@@ -12,12 +12,13 @@ import { cn } from "@/lib/utils";
 
 type Props = {
   isConnected: boolean;
-  isFetching: boolean;
+  /** User-initiated refresh only — not OAuth/invalidate background fetch. */
+  isRefreshing: boolean;
   onRefresh: () => void;
 };
 
 /** Sky info card — honest sync copy + manual refresh when connected. */
-export function GoogleCalendarSyncInfoCard({ isConnected, isFetching, onRefresh }: Props) {
+export function GoogleCalendarSyncInfoCard({ isConnected, isRefreshing, onRefresh }: Props) {
   if (!isConnected) return null;
 
   return (
@@ -33,11 +34,11 @@ export function GoogleCalendarSyncInfoCard({ isConnected, isFetching, onRefresh 
           headerActions={
             <ControlPanelGlassActionButton
               variant="sky"
-              disabled={isFetching}
+              disabled={isRefreshing}
               onClick={onRefresh}
             >
-              <RefreshCw className={cn("h-4 w-4", isFetching && "animate-spin")} aria-hidden />
-              {isFetching ? "Refreshing…" : "Refresh Events"}
+              <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} aria-hidden />
+              {isRefreshing ? "Refreshing…" : "Refresh Events"}
             </ControlPanelGlassActionButton>
           }
         />

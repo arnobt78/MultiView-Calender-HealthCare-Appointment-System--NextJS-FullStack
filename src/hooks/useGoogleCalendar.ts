@@ -50,7 +50,19 @@ export function useGoogleCalendar({ enabled = true }: { enabled?: boolean } = {}
     },
     enabled,
     initialData: statusInitialData,
-    refetchOnMount: statusInitialData !== undefined ? false : true,
+    // SSR seeds connected+empty without events — always client-refetch so preview shows loading not empty copy.
+    refetchOnMount: (query) => {
+      const data = query.state.data as GoogleCalendarStatus | undefined;
+      if (data === undefined) return true;
+      if (
+        data.connected &&
+        (data.events?.length ?? 0) === 0 &&
+        !data.eventsFetchWarning
+      ) {
+        return true;
+      }
+      return statusInitialData === undefined;
+    },
     staleTime: 60_000,
   });
 
@@ -154,6 +166,10 @@ export function useGoogleCalendar({ enabled = true }: { enabled?: boolean } = {}
     eventsFetchWarning,
     isLoading: statusQuery.isLoading,
     isFetching: statusQuery.isFetching,
+    isStatusPending:
+      statusQuery.isFetching ||
+      statusQuery.isLoading ||
+      statusQuery.fetchStatus === "fetching",
     refreshStatus: () => statusQuery.refetch(),
     backfillToGoogle: backfillMutation.mutate,
     backfillToGoogleAsync: backfillMutation.mutateAsync,

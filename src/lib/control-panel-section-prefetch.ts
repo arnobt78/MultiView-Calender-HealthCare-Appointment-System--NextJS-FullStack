@@ -65,6 +65,8 @@ export type ControlPanelSectionPrefetchPayload = {
   appointmentInvitations?: import("@/hooks/useInvitations").Invitation[] | null;
   dashboardInvitations?: import("@/hooks/useInvitations").Invitation[] | null;
   googleCalendarStatus?: GoogleCalendarStatus | null;
+  /** Server read of ?gcal=connected — first-paint spinner before useSearchParams hydrates. */
+  gcalOAuthReturn?: boolean;
   invoices?: Invoice[] | null;
   /** Default visit picker for Create Invoice dialog (empty search, eligible visits only). */
   billingAppointmentOptions?: { options: import("@/lib/billing-types").InvoiceAppointmentOptionRow[] } | null;

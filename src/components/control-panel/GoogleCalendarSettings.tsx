@@ -6,7 +6,7 @@
  * OAuth return handled via ?gcal=connected → invalidate + toast + clean URL.
  */
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
@@ -40,6 +40,10 @@ import {
 } from "@/lib/google-calendar-routes";
 import { shouldRunGoogleCalendarOAuthBackfill } from "@/lib/google-calendar-oauth-connect";
 import { isGoogleCalendarEventsPreviewLoading } from "@/lib/google-calendar-preview-loading";
+import {
+  isGoogleCalendarManualRefreshUi,
+} from "@/lib/google-calendar-status-ui";
+import { useControlPanelSectionInitial } from "@/components/control-panel/ControlPanelSectionInitialContext";
 import { apiClient } from "@/lib/api-client";
 import type { GoogleCalendarBackfillSummary } from "@/types/google-calendar";
 
@@ -48,6 +52,7 @@ export default function GoogleCalendarSettings() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const sectionInitial = useControlPanelSectionInitial();
 
   const {
     isConnected,
@@ -57,6 +62,7 @@ export default function GoogleCalendarSettings() {
     eventsFetchWarning,
     isLoading,
     isFetching,
+    isStatusPending,
     refreshStatus,
     disconnectAsync,
     isDisconnecting,
@@ -66,18 +72,39 @@ export default function GoogleCalendarSettings() {
     exportUrl,
   } = useGoogleCalendar();
 
-  const statusKey = [...queryKeys.googleCalendar.root, "status"] as const;
+  const statusKey = useMemo(
+    () => [...queryKeys.googleCalendar.root, "status"] as const,
+    []
+  );
   const listBodyLoading = useCpListBodyLoading(statusKey, isLoading);
+  const gcalParam = searchParams.get(GOOGLE_CALENDAR_CONNECTED_QUERY_KEY);
+  const oauthReturnFromUrl =
+    gcalParam === GOOGLE_CALENDAR_CONNECTED_QUERY_VALUE ||
+    sectionInitial?.gcalOAuthReturn === true;
+  /** In-flight guard — pairs with sessionStorage in shouldRunGoogleCalendarOAuthBackfill. */
+  const oauthConnectHandlingRef = useRef(false);
+  /** Latched on first paint from SSR URL read — survives router.replace stripping ?gcal=. */
+  const [oauthLatched] = useState(oauthReturnFromUrl);
+  const [oauthSettled, setOauthSettled] = useState(false);
+  const oauthConnectPhase = !oauthSettled && oauthLatched;
+  const [manualRefreshPending, setManualRefreshPending] = useState(false);
+  const manualRefreshUi = isGoogleCalendarManualRefreshUi(manualRefreshPending);
+
+  const finishOAuthConnectPhase = useCallback(async () => {
+    await queryClient.refetchQueries({ queryKey: statusKey });
+    setOauthSettled(true);
+  }, [queryClient, statusKey]);
+
   const eventsPreviewLoading = isGoogleCalendarEventsPreviewLoading({
     isConnected,
     isFetching,
+    isStatusPending,
+    isLoading,
     listBodyLoading,
     eventCount,
     eventsFetchWarning,
+    oauthConnectPhase,
   });
-  const gcalParam = searchParams.get(GOOGLE_CALENDAR_CONNECTED_QUERY_KEY);
-  /** In-flight guard — pairs with sessionStorage in shouldRunGoogleCalendarOAuthBackfill. */
-  const oauthConnectHandlingRef = useRef(false);
 
   /** OAuth success — once: strip param, backfill, invalidate, toast. */
   useEffect(() => {
@@ -85,6 +112,9 @@ export default function GoogleCalendarSettings() {
     if (oauthConnectHandlingRef.current) return;
     if (!shouldRunGoogleCalendarOAuthBackfill(gcalParam)) {
       router.replace(pathname, { scroll: false });
+      void refreshStatus().finally(() => {
+        void finishOAuthConnectPhase();
+      });
       return;
     }
 
@@ -126,11 +156,12 @@ export default function GoogleCalendarSettings() {
         // Non-blocking — user can refresh manually.
       } finally {
         oauthConnectHandlingRef.current = false;
+        await finishOAuthConnectPhase();
       }
     })();
 
     return;
-  }, [gcalParam, queryClient, router, pathname]);
+  }, [gcalParam, queryClient, router, pathname, refreshStatus, finishOAuthConnectPhase]);
 
   useEffect(() => {
     if (isGoogleCalendarOAuthConnectedParam(searchParams)) return;
@@ -144,20 +175,23 @@ export default function GoogleCalendarSettings() {
     }
   }, [searchParams, router, pathname]);
 
-  const handleRefresh = () => {
-    void refreshStatus();
-  };
+  const handleManualRefresh = useCallback(() => {
+    setManualRefreshPending(true);
+    void refreshStatus().finally(() => {
+      setManualRefreshPending(false);
+    });
+  }, [refreshStatus]);
 
   const headerActions = (
     <div className="flex w-full flex-wrap items-center justify-end gap-2 self-center">
       <ControlPanelHeaderGlassButton
         glassClassName={cn(skyGlassBackButtonClass, "disabled:opacity-50")}
-        icon={isFetching ? undefined : RefreshCw}
-        disabled={isFetching}
-        aria-busy={isFetching}
-        onClick={handleRefresh}
+        icon={manualRefreshUi ? undefined : RefreshCw}
+        disabled={manualRefreshUi}
+        aria-busy={manualRefreshUi}
+        onClick={handleManualRefresh}
       >
-        {isFetching ? (
+        {manualRefreshUi ? (
           <>
             <RefreshCw className="shrink-0 animate-spin" aria-hidden />
             Refreshing…
@@ -194,14 +228,13 @@ export default function GoogleCalendarSettings() {
           eventCount={eventCount}
           upcomingCount={upcomingCount}
           listBodyLoading={listBodyLoading}
-          isFetching={isFetching}
         />
 
         {isConnected && eventsFetchWarning ? (
           <GoogleCalendarEventsFetchWarningBanner
             warning={eventsFetchWarning}
-            isRefreshing={isFetching}
-            onRefresh={handleRefresh}
+            isRefreshing={manualRefreshUi}
+            onRefresh={handleManualRefresh}
           />
         ) : null}
 
@@ -216,8 +249,8 @@ export default function GoogleCalendarSettings() {
 
         <GoogleCalendarSyncInfoCard
           isConnected={isConnected}
-          isFetching={isFetching}
-          onRefresh={handleRefresh}
+          isRefreshing={manualRefreshUi}
+          onRefresh={handleManualRefresh}
         />
 
         <GoogleCalendarEventsPanel

@@ -6,24 +6,23 @@ import {
   googleCalendarConnectionConnectedValueClass,
   googleCalendarConnectionDisconnectedValueClass,
 } from "@/lib/google-calendar-ui-classes";
+import { isGoogleCalendarStatsSkeleton } from "@/lib/google-calendar-status-ui";
 
 type Props = {
   isConnected: boolean;
   eventCount: number;
   upcomingCount: number;
   listBodyLoading: boolean;
-  isFetching: boolean;
 };
 
-/** Display-only KPI strip — values pulse while status query warms. */
+/** Display-only KPI strip — skeleton only on cold load, not background refetch. */
 export function GoogleCalendarStatsRow({
   isConnected,
   eventCount,
   upcomingCount,
   listBodyLoading,
-  isFetching,
 }: Props) {
-  const skeleton = listBodyLoading || isFetching;
+  const skeleton = isGoogleCalendarStatsSkeleton(listBodyLoading);
 
   return (
     <div className="grid grid-cols-1 gap-2 overflow-visible sm:grid-cols-2 lg:grid-cols-4">

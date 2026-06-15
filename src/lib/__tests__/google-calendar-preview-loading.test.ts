@@ -7,6 +7,7 @@ const base = {
   listBodyLoading: false,
   eventCount: 0,
   eventsFetchWarning: null,
+  oauthConnectPhase: false,
 };
 
 describe("isGoogleCalendarEventsPreviewLoading", () => {
@@ -22,6 +23,15 @@ describe("isGoogleCalendarEventsPreviewLoading", () => {
         ...base,
         isFetching: true,
         eventCount: 0,
+      })
+    ).toBe(true);
+  });
+
+  it("returns true during oauth connect phase before isFetching", () => {
+    expect(
+      isGoogleCalendarEventsPreviewLoading({
+        ...base,
+        oauthConnectPhase: true,
       })
     ).toBe(true);
   });
@@ -57,5 +67,18 @@ describe("isGoogleCalendarEventsPreviewLoading", () => {
         isFetching: true,
       })
     ).toBe(false);
+  });
+
+  it("returns true when isStatusPending before isFetching", () => {
+    expect(
+      isGoogleCalendarEventsPreviewLoading({
+        ...base,
+        isStatusPending: true,
+      })
+    ).toBe(true);
+  });
+
+  it("returns false when connected, settled, and genuinely empty", () => {
+    expect(isGoogleCalendarEventsPreviewLoading({ ...base })).toBe(false);
   });
 });

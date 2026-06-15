@@ -16,15 +16,22 @@ import { ControlPanelSectionPageClient } from "@/components/control-panel/Contro
  */
 export async function ControlPanelSectionServerPage({
   tab,
+  gcalOAuthReturn,
 }: {
   tab: ControlPanelSidebarTabValue;
+  /** When true, seeds OAuth-return loading on Google Calendar tab first paint. */
+  gcalOAuthReturn?: boolean;
 }) {
   const sessionUser = await getSessionUser();
   const role = sessionUser ? await getUserRole(sessionUser.userId) : null;
-  const initial =
+  const prefetched =
     sessionUser != null
       ? await prefetchControlPanelSection(tab, sessionUser.userId, sessionUser.email, role)
       : null;
+  const initial =
+    gcalOAuthReturn === true
+      ? { ...(prefetched ?? {}), gcalOAuthReturn: true as const }
+      : prefetched;
 
   const chromeConfig = getControlPanelPageChromeConfig(tab);
 
