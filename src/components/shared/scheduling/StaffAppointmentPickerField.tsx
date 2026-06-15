@@ -164,10 +164,12 @@ export function StaffAppointmentPickerField({
 
   return (
     <div className={cn("space-y-2", className)}>
-      <div className="flex items-center gap-1.5 text-gray-700">
-        <Icon className={cn("h-3.5 w-3.5 shrink-0", labelIconClass)} aria-hidden />
-        <Label className="text-gray-700">{label}</Label>
-      </div>
+      {label != null ? (
+        <div className="flex items-center gap-1.5 text-gray-700">
+          <Icon className={cn("h-3.5 w-3.5 shrink-0", labelIconClass)} aria-hidden />
+          <Label className="text-gray-700">{label}</Label>
+        </div>
+      ) : null}
 
       <div ref={rootRef} className="space-y-2">
         {showTrigger ? (

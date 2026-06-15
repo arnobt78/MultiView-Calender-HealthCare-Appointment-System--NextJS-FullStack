@@ -403,3 +403,26 @@ human_gate_2: TBD
 | release build | npm run build | PASS | REQ-0082 |
 
 **EvalGate (C34 active):** PASS (automated) — Human Gate TBD before archive.
+
+## C37 — ER-C37-VERIFY
+
+```yaml
+eval_run_id: ER-C37-VERIFY
+eval_timestamp: "2026-06-15T12:24:00Z"
+policy_version_ref: "1.0.0"
+eval_gate_status: PASS
+eval_gate_rationale: "C37/C37.1/C37.2 auth login transition + GCal provider remount + sync error policy; npm test 1154/1154, tsc, eslint, build PASS"
+cycle: C37
+release_commit: "ea40860"
+human_gate_2: N/A
+```
+
+| Suite | Command | Result | LINKED_REQ |
+|-------|---------|--------|------------|
+| auth-pending-toast | npm test auth-pending-toast | PASS | — |
+| full regression | npm test | PASS 1154/1154 | — |
+| typecheck | npx tsc --noEmit | PASS | — |
+| lint | npm run lint | PASS | — |
+| release build | npm run build | PASS | — |
+
+**EvalGate (C37):** PASS (automated) — engineering hardening; no REQ archive required.

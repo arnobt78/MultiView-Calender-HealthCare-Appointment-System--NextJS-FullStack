@@ -1,8 +1,15 @@
 # HealthCal Pro — Project Walkthrough
 
-## Agent resume (2026-06-14 — audit PASS)
+## Agent resume (2026-06-15 — C37.3 UI polish)
 
-**Baseline:** 1154/1154 · tsc · lint · build · HEAD `bb17816`
+**Baseline:** 1154/1154 · tsc · lint · build PASS · **C38 specify idle**
+
+**C37.3 (UI — no REQ):**
+- `GoogleCalendarSyncInfoCard` — `headerActionsSeparateRow` (title/subtitle left, Refresh right).
+- `PortalPanelSubsectionHeader` — separate-row icon `self-stretch` matches title+subtitle height.
+- `StaffAppointmentPickerField` — label row only when `label != null` (fixes duplicate stethoscope in advanced ICS import).
+
+**GCal integration (user-verified):** connect · preview pull · create auto-push · manual ⋮ sync — OK. ICS import/export optional. GCP Calendar API must be enabled on OAuth project.
 
 **Auth login (C37 chain — shipped):**
 

@@ -2,13 +2,14 @@
 
 Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
-## Latest (2026-06-14)
+## Latest (2026-06-15)
 
+- **C37.3:** GCal Sync Behavior card — `headerActionsSeparateRow`; `PortalPanelSubsectionHeader` icon `self-stretch` with title+subtitle; `StaffAppointmentPickerField` skips label row when `label={null}` (advanced ICS import).
 - **C37.2:** gcal sync — events fail ≠ disconnected (200 empty events).
 - **C37.1:** GCal provider stable tree (`enabled={isStaff}`) — fixes Login/Landing remount on auth seed.
 - **C37:** auth nav — hard replace + pending-guard; `loadingGoogle`; bare-path query gate; deferred toasts.
-- **Verify:** **1154/1154** · tsc · lint · build PASS · HEAD `bb17816`.
-- **Memory:** `.claude/SESSION.md` · walkthrough § C37 audit below.
+- **Verify:** **1154/1154** · tsc · lint · build PASS.
+- **Agile V:** C37.3 closed · **C38 specify idle** — halt without REQ-0088.
 
 ## Never / Always
 
@@ -60,7 +61,7 @@ Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Agile V
 
-`.agile-v/STATE.md` · **C37.2 shipped** · **1154/1154** · next **C38 specify**.
+`.agile-v/STATE.md` · **C37.3 closed** · **C38 specify** · **1154/1154**.
 
 ## Principle
 

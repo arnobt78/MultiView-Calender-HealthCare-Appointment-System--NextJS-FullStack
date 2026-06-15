@@ -1,6 +1,6 @@
 # Agile V Bootstrap — HealthCal Pro
 
-<!-- Framework initialization + cycle index | Agile V v1.4 | Last refresh: 2026-06-13 (C34.1 activation) -->
+<!-- Framework initialization + cycle index | Agile V v1.4 | Last refresh: 2026-06-15 (C38 activation) -->
 
 ## Infinity Loop (SCOPE-V)
 
@@ -31,7 +31,7 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 | 2 | `config.json` | Project metadata, cycle, authority matrix, verification commands | ✓ |
 | 3 | `POLICY.yaml` | Policy-as-code (versioned) | ✓ v1.0.0 |
 | 4 | `STATE.md` | Current cycle, phase, stage — **read first on resume** | ✓ |
-| 5 | `REQUIREMENTS.md` | Canonical REQ-XXXX + traceability index | ✓ REQ-0001..0082 |
+| 5 | `REQUIREMENTS.md` | Canonical REQ-XXXX + traceability index | ✓ REQ-0001..0087 |
 | 6 | `BUILD_MANIFEST.md` | ART-XXXX → code paths | ✓ ART-0001..0431 |
 | 7 | `TEST_SPEC.md` | TC-XXXX (requirements-derived) | ✓ TC-0001..0052 |
 | 8 | `VALIDATION_SUMMARY.md` | VER-XXXX results + EvalGate lines | ✓ |
@@ -162,14 +162,18 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 | C32 | CP appointment-management parity | REQ-0080 | pending | living |
 | C33 | CP notifications parity | REQ-0081 | `378a88d` | living |
 | **C34 / C34.1** | **Stale notification links + filter polish** | **REQ-0082** | **`768a422`** | **living** |
+| C35 / C35.1 | Notifications UX + CSV audit | REQ-0083 | shipped | living |
+| C36–C36.2.1 | Google Calendar CP + sync | REQ-0084..0087 | shipped | living |
+| **C37 / C37.1 / C37.2** | **Auth nav + gcal sync UX** | **—** | **`ea40860`** | **`cycles/C37/`** |
+| **C38** | **TBD** | **REQ-0088+** | — | **specify next** |
 
 ---
 
 ## Next Actions
 
-1. Approve **GATE-0005..0014** + C8–C34 gates in `APPROVALS.md` as cycles close.
-2. Archive C3–C34 → `cycles/CN/` after each Gate 2.
-3. New work: specify **C35** in `REQUIREMENTS.md` before coding.
+1. Approve **GATE-0005..0014** + C8–C36 gates in `APPROVALS.md` as cycles close.
+2. Archive C3–C37 → `cycles/CN/` after each Gate 2 (C37 optional — no REQ).
+3. New work: **Specify C38** — add `REQ-0088` in `REQUIREMENTS.md` before coding.
 
 ## Verification (default)
 
@@ -177,7 +181,7 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 npm test && npx tsc --noEmit && npm run lint && npm run build
 ```
 
-Current baseline: **1103** tests, **223** files (2026-06-13) · HEAD `768a422`.
+Current baseline: **1154** tests, **232** files (2026-06-15) · HEAD `ea40860`.
 
 ---
 
@@ -270,7 +274,7 @@ Current baseline: **1103** tests, **223** files (2026-06-13) · HEAD `768a422`.
 | 1 | REQ-0060..0062 | ✓ shipped |
 | 2 | ART-0293..0309 | ✓ |
 
-## C17 Bootstrap (2026-06-10) — Admin table columns + footer interactives (active)
+## C17 Bootstrap (2026-06-10) — Admin table columns + footer interactives
 
 | Step | Artifact | Status |
 |------|----------|--------|
@@ -279,3 +283,45 @@ Current baseline: **1103** tests, **223** files (2026-06-13) · HEAD `768a422`.
 | 3 | Code on `main` | ✓ `5d16082` |
 | 4 | Automated verify | ✓ **940/940** (185 files), tsc, lint, build |
 | 5 | Gates | ⏳ TBD |
+
+## C35 / C35.1 Bootstrap — Notifications UX + CSV export
+
+| Step | Artifact | Status |
+|------|----------|--------|
+| 1 | REQ-0083 in `REQUIREMENTS.md` | ✓ `approved [C35]` |
+| 2 | ART-0432..0436 | ✓ |
+| 3 | Automated verify | ✓ shipped |
+
+## C36–C36.2.1 Bootstrap — Google Calendar
+
+| Step | Artifact | Status |
+|------|----------|--------|
+| 1 | REQ-0084..0087 | ✓ shipped |
+| 2 | ART-0437..0457 | ✓ |
+| 3 | OAuth, sync, SSR seed, detail footer | ✓ |
+
+## C37 Bootstrap (2026-06-14) — Auth login + GCal sync UX
+
+| Step | Artifact | Status |
+|------|----------|--------|
+| 1 | Engineering hardening (no REQ) | ✓ DECISION_LOG |
+| 2 | `auth-pending-toast.ts` + `useAuthNavButtonLoading` | ✓ |
+| 3 | GCal provider stable tree + sync error policy | ✓ |
+| 4 | Automated verify | ✓ **1154/1154** |
+| 5 | Archive | `cycles/C37/README.md` |
+
+---
+
+## Infinity Loop Session Activation (2026-06-15 — C38 ready)
+
+| Step | Artifact | Status |
+|------|----------|--------|
+| 1 | Load agile-v-core + pipeline + lifecycle + SKILLS.md | ✓ ACTIVE |
+| 2 | STATE.md C37.2 closed · C38 specify idle | ✓ |
+| 3 | REQUIREMENTS REQ-0001..0087 · BUILD_MANIFEST current | ✓ |
+| 4 | EVAL_RESULTS ER-C37-VERIFY PASS | ✓ |
+| 5 | Verify npm test 1154/1154 tsc lint build | ✓ HEAD `ea40860` |
+| 6 | `.cursor/rules/agile-v-infinity-loop.mdc` always on | ✓ |
+| 7 | `CHECKPOINTS.md` — no PENDING HITL | ✓ |
+| 8 | `AGENTS.md` + `config.json` + `.claude/SESSION.md` synced | ✓ |
+| 9 | **Halt until REQ-0088** specified for C38 feature work | ✓ |

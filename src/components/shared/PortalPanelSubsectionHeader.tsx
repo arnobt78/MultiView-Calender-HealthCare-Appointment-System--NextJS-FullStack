@@ -20,7 +20,7 @@ type PortalPanelSubsectionHeaderProps = {
   statusChip?: ReactNode;
   statusChipSkeleton?: boolean;
   headerActions?: ReactNode;
-  /** When true, `headerActions` render in their own row — title/subtitle height stays independent. */
+  /** When true, actions sit right of title block; icon tile stretches to title + subtitle height. */
   headerActionsSeparateRow?: boolean;
 };
 
@@ -90,10 +90,10 @@ export function PortalPanelSubsectionHeader({
           className
         )}
       >
-        <div className="flex min-w-0 flex-1 gap-3">
+        <div className="flex min-w-0 flex-1 items-stretch gap-3">
           <span
             className={cn(
-              "flex w-10 shrink-0 items-center justify-center self-start rounded-xl border",
+              "flex w-10 shrink-0 items-center justify-center self-stretch rounded-xl border",
               iconClassName
             )}
             aria-hidden

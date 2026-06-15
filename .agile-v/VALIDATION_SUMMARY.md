@@ -689,3 +689,33 @@ EvalGate (C33): status=PASS | eval_run_id=ER-C33-VERIFY | gate2_pending=TBD
 | VER-0123 | REQ-0082 | PASS | Full regression **1103/1103** tsc lint build |
 
 EvalGate (C34): status=PASS | eval_run_id=ER-C34-VERIFY | gate2_pending=TBD
+
+---
+
+## C35–C36.2.1 — Notifications UX + Google Calendar (2026-06-14)
+
+| Item | Value |
+|------|-------|
+| Cycle | C35 / C35.1 / C36 / C36.1 / C36.2 / C36.2.1 |
+| REQ-IDs | REQ-0083..0087 |
+| Regression | shipped on main |
+
+EvalGate: status=PASS | automated verify on main | gate2_pending=TBD
+
+---
+
+## C37 — Auth login transition (2026-06-14..15)
+
+| Item | Value |
+|------|-------|
+| Cycle | C37 + C37.1 + C37.2 |
+| REQ-IDs | — (engineering hardening) |
+| Regression | **1154/1154** Vitest (232 files) |
+| HEAD | `ea40860` |
+
+| VER-ID | REQ-ID | Result | Description |
+|--------|--------|--------|-------------|
+| VER-0124 | — | PASS | auth-pending-toast + beginAuthNavigation guard |
+| VER-0125 | — | PASS | Full regression **1154/1154** tsc lint build |
+
+EvalGate (C37): status=PASS | eval_run_id=ER-C37-VERIFY | gate2=N/A

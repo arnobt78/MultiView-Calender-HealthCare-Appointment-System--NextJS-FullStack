@@ -1,43 +1,49 @@
 # Agile V — Living State
 
-<!-- Updated: 2026-06-14 | Project: HealthCal Pro | Resume: ACTIVATION.md -->
+<!-- Updated: 2026-06-15 | Project: HealthCal Pro | Resume: ACTIVATION.md -->
 
 ## Current Status
 
 | Field | Value |
 |-------|-------|
-| **Cycle** | **C37.2** — Auth nav + gcal sync UX |
-| **Phase** | Accept |
-| **Stage** | 5 |
-| **Status** | shipped |
-| **Last Updated** | 2026-06-14 |
-| **Parent REQ** | — (engineering hardening; no new REQ) |
+| **Cycle** | **C37.3** closed · **C38** — Specify (idle) |
+| **Phase** | — (awaiting new REQ) |
+| **Stage** | 0 — Specify next |
+| **Status** | **ready** |
+| **Last Updated** | 2026-06-15 |
+| **Parent REQ** | — (add REQ-0088+ in REQUIREMENTS.md before code) |
 
-## Verify baseline (C37.2 close)
+## Verify baseline (session activation)
 
-**1154/1154** · tsc · lint · build — PASS · HEAD `bb17816`
+**1154/1154** · tsc · lint · build — PASS · HEAD `ea40860`
 
-## C37.2 shipped (gcal connect flip)
+## Last shipped (C37 chain — engineering hardening, no REQ)
 
-- `GET /api/calendar/sync`: token exists + events fail → 200 `{connected:true,events:[]}` not 500.
-- `useGoogleCalendar` queryFn: 404/401 → disconnected; other errors throw (retry, keep cache).
+| Sub | Theme |
+|-----|-------|
+| C37 | Auth login transition — hard replace, pending-guard, `loadingGoogle`, deferred toasts |
+| C37.1 | GCal provider stable tree — no Login/Landing remount on auth seed |
+| C37.2 | GCal sync error policy — events fail ≠ disconnected |
+| C37.3 | GCal Sync Behavior header layout; subsection icon stretch; ICS import label null guard |
 
-## C37.1 shipped (auth remount root cause)
+## Last REQ-backed (C36.2.1)
 
-- `GoogleCalendarSyncProviderInner` always mounted; `useGoogleCalendar({ enabled: isStaff })` — stable tree when `seedAuthMeFromLoginResponse` runs.
-- Login fields `disabled={loading}`; Landing `AppointmentDeck` freezes motion when `authTransitionActive`.
+**REQ-0087** — Staff appointment detail gcal SSR seed.
 
-## C37 shipped (auth login transition)
+## HITL
 
-- `beginAuthNavigation`: pending-guard (same from+dest skip) + `window.location.replace(dest)`.
-- `loadingGoogle` separate from email/pw `loading` on Login.
-- `seedAuthMeFromLoginResponse` + `shouldRunAuthenticatedAppQueries` gate dashboard prefetch on bare paths.
-- Deferred welcome toast via `auth-pending-toast.ts`; debug logs removed.
+| Gate | Status |
+|------|--------|
+| CHECKPOINTS | none PENDING |
+| GATE-0005..0014 + C8–C36 | backlog pending archive |
 
-## Prior (C36.2.1 REQ-0087)
+## Next (Infinity Loop entry)
 
-- Staff appointment detail SSR + seed gcal status for sync footer first paint.
+1. **Specify C38** — requirement-architect → `REQ-0088` in `REQUIREMENTS.md`
+2. **Constrain** — logic-gatekeeper → Gate 1 if needed
+3. **Orchestrate** — `build-agent-js` + `test-designer` (halt without parent REQ)
+4. **Verify** — `npm test && npx tsc --noEmit && npm run lint && npm run build`
 
-## Next
+## Engineering hooks (every prompt)
 
-Human Gate backlog → archive C3–C36 → **Specify C38** (new REQ in REQUIREMENTS.md) before feature code.
+`queryKeys` + invalidation · `getSessionUser()` · `dynamic = "force-dynamic"` APIs · `rbac.ts` · `Link` internal · `CLAUDE.md` · `docs/PROJECT_WALKTHROUGH.md` · `.claude/SESSION.md`
