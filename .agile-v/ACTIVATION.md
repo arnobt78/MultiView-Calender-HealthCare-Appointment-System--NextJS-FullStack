@@ -17,9 +17,9 @@
 
 ## 2. Read (resume — in order)
 
-1. `STATE.md` — **C40 verify PASS** · **1206/1206** · committed `3fd00b1` (C39) · C40 WIP uncommitted
+1. `STATE.md` — **C42.2 shipped** · **1220/1220** · HEAD **`2b53b92`**
 2. `CHECKPOINTS.md` — halt if any **PENDING** HITL (**none**)
-3. `REQUIREMENTS.md` — parent **REQ-XXXX** before any code (**REQ-0001..0091**)
+3. `REQUIREMENTS.md` — parent **REQ-XXXX** before any code (**REQ-0001..0093**)
 
 ## 3. Before coding (mandatory gate)
 
@@ -43,15 +43,15 @@ Specify → Constrain → [Gate1] → Orchestrate → Prove → Verify → [Gate
 
 ## 6. Cycle index (living)
 
-| Cycle | REQ | Status | Gate |
+| Cycle | REQ | Status | HEAD |
 |-------|-----|--------|------|
-| C1–C2 | 0001..0008 | archived frozen | ✓ |
-| C3–C37.2 | 0009..0087 + eng | verify/shipped | pending |
-| **C38** | **0088** | verify PASS | pending |
-| **C39 / C39.1 / C39.2** | **0089..0090** | shipped `3fd00b1` | pending |
-| **C40** | **0091** | **verify PASS** (WIP) | pending |
+| C38 | 0088 | shipped | — |
+| C39 / C39.1 / C39.2 | 0089–0090 | shipped | `3fd00b1` |
+| C40 | 0091 | shipped | `091bb70` |
+| C41 / C41.1 | 0092 | shipped | `e8544ee` |
+| **C42 / C42.2** | **0093** | **shipped** | **`2b53b92`** |
 
-**Baseline:** **1206** tests · **242** files · committed **`3fd00b1`** · 2026-06-15
+**Baseline:** **1220** tests · **245** files · committed **`2b53b92`** · 2026-06-16
 
 ## 7. Halt if
 

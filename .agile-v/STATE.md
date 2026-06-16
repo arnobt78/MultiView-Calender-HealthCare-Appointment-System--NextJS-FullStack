@@ -6,44 +6,44 @@
 
 | Field | Value |
 |-------|-------|
-| **Cycle** | **C40** — Verify PASS · **Accept** (commit pending) |
-| **Phase** | 4 — Verify complete |
-| **Stage** | 5 — Accept / ship |
-| **Status** | **ready** |
+| **Cycle** | **C42.2** — **shipped** |
+| **Phase** | 5 — Accept complete |
+| **Stage** | Ready for **C43 Specify** |
+| **Status** | **idle** |
 | **Last Updated** | 2026-06-16 |
-| **Parent REQ** | **REQ-0091** (C40 portal telehealth queue + booking preset) |
+| **Parent REQ** | **REQ-0093** (C42/C42.2 glass badge UX) |
 
-## Verify baseline (session activation)
+## Verify baseline
 
-**1206/1206** · tsc · lint · build — PASS
+**1220/1220** · tsc · lint · build — PASS
 
-| Layer | HEAD / WIP |
-|-------|------------|
-| **Committed** | `3fd00b1` — C39 (REQ-0089/0090) |
-| **WIP** | C40 (REQ-0091) — local verify PASS, not committed |
+| Layer | HEAD |
+|-------|------|
+| **Committed** | `2b53b92` — C42.2 queue list glass + row glow |
+| **WIP** | none |
 
 ## Last shipped (by commit)
 
-| Cycle | REQ | Theme |
-|-------|-----|-------|
-| **C40** | **0091** | Portal `/telehealth-queue`, navbar, role links, telehealth booking preset |
-| **C39.2** | **0090** | Telehealth identity + status UX |
-| **C39.1** | **0089** | Telehealth queue violet glass polish |
-| **C38** | **0088** | GCal API warning + connect backfill |
-| C37.2 | — | GCal sync error policy |
+| Cycle | REQ | Commit | Theme |
+|-------|-----|--------|-------|
+| **C42.2** | 0093 | `2b53b92` | `queueListHero` · tonal left clock · violet glass row glow |
+| **C42** | 0093 | `8b7fcac` | Up Next `upNextHero` glass chips |
+| **C41.1** | 0092 | `e8544ee` | Billing skeleton + Sentry client tunnel |
+| **C41** | 0092 | `091bb70` | Visit-meta badges · invoice SSR · portal detail links |
+| **C40** | 0091 | `091bb70` | Portal `/telehealth-queue` · booking preset |
+| **C39** | 0089–0090 | `3fd00b1` | Violet glass + identity UX |
 
 ## HITL
 
 | Gate | Status |
 |------|--------|
 | CHECKPOINTS | none PENDING |
-| GATE-0005..0014 + C8–C40 | backlog pending archive |
+| GATE-0005..0014 + C8–C42 | backlog pending archive |
 
 ## Next (Infinity Loop entry)
 
-1. **Accept C40** — commit REQ-0091 artifacts → optional Human Gate 2
-2. **Specify C41** — requirement-architect → new REQ in `REQUIREMENTS.md` before code
-3. **Verify** — `npm test && npx tsc --noEmit && npm run lint && npm run build`
+1. **Specify C43** — requirement-architect → new **REQ-0094+** in `REQUIREMENTS.md` before code
+2. **Verify** — `npm test && npx tsc --noEmit && npm run lint && npm run build`
 
 ## Engineering hooks (every prompt)
 

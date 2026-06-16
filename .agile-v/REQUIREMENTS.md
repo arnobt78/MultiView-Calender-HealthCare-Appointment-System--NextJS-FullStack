@@ -1,12 +1,12 @@
 # Requirements — HealthCal Pro
 
-<!-- Revision: C1..C40 | C41 WIP | Last updated: 2026-06-16 -->
+<!-- Revision: C1..C42.2 | Last updated: 2026-06-16 -->
 
 ## Document Control
 
 | Field | Value |
 |-------|-------|
-| Cycle | C1–C40 shipped · **C41 WIP** |
+| Cycle | C1–C42.2 shipped |
 | Author | Requirement Architect |
 | Gate 1 status | C1 GATE-0001 · C2 GATE-0003 approved |
 | Canonical source | this file |
@@ -126,8 +126,9 @@
 | REQ-0079 | approved [C31] | REQ-0078 | ART-0407..0409 | pending |
 | REQ-0080 | approved [C32] | REQ-0079 | ART-0410..0416 | pending |
 | REQ-0081 | approved [C33] | REQ-0080 | ART-0417..0423 | pending |
+| REQ-0093 | approved [C42] | REQ-0092 | ART-0495..0502 | verify PASS |
+| REQ-0092 | approved [C41] | REQ-0091 | ART-0487..0494 | verify PASS |
 | REQ-0091 | approved [C40] | REQ-0090 | ART-0475..0486 | verify PASS |
-| REQ-0092 | approved [C41] | REQ-0091 | ART-0487..0494 | pending |
 | REQ-0090 | approved [C39.2] | REQ-0089 | ART-0469..0474 | verify PASS |
 | REQ-0089 | approved [C39.1] | — | ART-0461..0468 | verify PASS |
 | REQ-0088 | approved [C38] | REQ-0087 | ART-0458..0460 | verify PASS |
@@ -137,6 +138,24 @@
 | REQ-0084 | approved [C36] | REQ-0083 | ART-0437..0444 | pending |
 | REQ-0083 | approved [C35/C35.1] | REQ-0082 | ART-0432..0436 | pending |
 | REQ-0082 | approved [C34/C34.1] | REQ-0081 | ART-0424..0431 | pending |
+
+### REQ-0093 — C42 Telehealth queue glass badge UX
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C42/C42.2] |
+| Priority | P2 |
+| Risk | R1 |
+| Parent | REQ-0092 |
+
+**Statement:** Polish telehealth queue badge layouts — Up Next `upNextHero` glass chips; schedule list `queueListHero` (duration·status·fee·billing·telehealth); shared `TelehealthQueueTimeGlassChip` (Up Next); tonal `TelehealthQueueListTimeColumn` left gutter (no duplicate time chip); violet glassmorphic list row glow. UI-only; no new query keys or SSR changes.
+
+**Acceptance criteria:**
+1. `AppointmentVisitMetaBadgeRow` supports `upNextHero` + `queueListHero` with `VisitMetaDurationChip` hero glass.
+2. Schedule list: no redundant time chip; left column tonal clock via `telehealth-queue-list-time.ts`.
+3. List rows: violet glass border + shadow glow (`telehealth-queue-ui-classes.ts`).
+4. Up Next: telehealth badge beside duration footer (not top row).
+5. Verify 1220/1220 PASS.
 
 ### REQ-0092 — C41 Telehealth badge parity + appointment detail links/billing
 

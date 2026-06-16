@@ -770,3 +770,44 @@ EvalGate: status=PASS | eval_run_id=ER-C39-VERIFY | gate2_pending=TBD
 | VER-0132 | REQ-0091 | PASS | Full regression **1206/1206** tsc lint build |
 
 EvalGate: status=PASS | eval_run_id=ER-C40-VERIFY | gate2_pending=TBD | commit_pending=yes
+
+---
+
+## C41 — Badge parity + invoice SSR (2026-06-16)
+
+| Item | Value |
+|------|-------|
+| Cycle | C41 / C41.1 |
+| REQ-IDs | REQ-0092 |
+| Regression | **1220/1220** Vitest (245 files) |
+| HEAD | `e8544ee` |
+
+| VER-ID | REQ-ID | Result | Description |
+|--------|--------|--------|-------------|
+| VER-0133 | REQ-0092 | PASS | `AppointmentVisitMetaBadgeRow` + resolve lib tests |
+| VER-0134 | REQ-0092 | PASS | Invoice SSR telehealth prefetch |
+| VER-0135 | REQ-0092 | PASS | Portal appointment detail link policy |
+| VER-0136 | REQ-0092 | PASS | Billing skeleton invoices.all cold |
+| VER-0137 | REQ-0092 | PASS | Full regression **1220/1220** tsc lint build |
+
+EvalGate: status=PASS | eval_run_id=ER-C41-VERIFY | shipped `e8544ee`
+
+---
+
+## C42 — Queue glass badge UX (2026-06-16)
+
+| Item | Value |
+|------|-------|
+| Cycle | C42 / C42.2 |
+| REQ-IDs | REQ-0093 |
+| Regression | **1220/1220** Vitest (245 files) |
+| HEAD | `2b53b92` |
+
+| VER-ID | REQ-ID | Result | Description |
+|--------|--------|--------|-------------|
+| VER-0138 | REQ-0093 | PASS | Up Next `upNextHero` glass chips |
+| VER-0139 | REQ-0093 | PASS | List `queueListHero` + tonal left clock |
+| VER-0140 | REQ-0093 | PASS | Violet glass row glow |
+| VER-0141 | REQ-0093 | PASS | Full regression **1220/1220** tsc lint build |
+
+EvalGate: status=PASS | eval_run_id=ER-C42-VERIFY | shipped `2b53b92`

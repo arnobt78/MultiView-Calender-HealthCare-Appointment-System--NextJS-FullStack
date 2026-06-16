@@ -369,12 +369,24 @@
 | ART-0483 | C40 | REQ-0091 | `telehealthBookingPreset` / `telehealthOnly` dialogs | built |
 | ART-0484 | C40 | REQ-0091 | Identity inlines `viewerRole` prop | built |
 | ART-0485 | C40 | REQ-0091 | `usePatientBookableAppointmentTypes` telehealthOnly | built |
-| ART-0486 | C40 | REQ-0091 | Verify 1206/1206 (WIP uncommitted) | built |
+| ART-0486 | C40 | REQ-0091 | Verify 1206/1206 commit `091bb70` | built |
+| ART-0487 | C41 | REQ-0092 | `appointment-visit-meta-resolve.ts` + tests | built |
+| ART-0488 | C41 | REQ-0092 | `AppointmentVisitMetaBadgeRow` | built |
+| ART-0489 | C41 | REQ-0092 | Invoice SSR `telehealth-queue-portal-prefetch` | built |
+| ART-0490 | C41 | REQ-0092 | `resolvePortalAppointmentDetailLinkPolicy` | built |
+| ART-0491 | C41 | REQ-0092 | Billing map + skeleton gate | built |
+| ART-0492 | C41.1 | REQ-0092 | Sentry client tunnel | built |
+| ART-0493 | C41 | REQ-0092 | Verify 1220/1220 commit `e8544ee` | built |
+| ART-0494 | C42 | REQ-0093 | `upNextHero` + `TelehealthQueueTimeGlassChip` | built |
+| ART-0495 | C42.2 | REQ-0093 | `queueListHero` + `VisitMetaDurationChip` | built |
+| ART-0496 | C42.2 | REQ-0093 | `TelehealthQueueListTimeColumn` + list-time lib | built |
+| ART-0497 | C42.2 | REQ-0093 | Violet glass list row glow tokens | built |
+| ART-0498 | C42.2 | REQ-0093 | Verify 1220/1220 commit `2b53b92` | built |
 
 ## Verification Commands (project default)
 
 ```bash
-npm test        # 1206 passed (C40, 2026-06-15)
+npm test        # 1220 passed (C42.2, 2026-06-16)
 npx tsc --noEmit
 npm run lint
 npm run build

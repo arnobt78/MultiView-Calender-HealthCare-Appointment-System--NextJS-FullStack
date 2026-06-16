@@ -137,3 +137,9 @@
 | 2026-06-15T17:10:00Z | verify | C40 automated verify PASS | 1206/1206; tsc · lint · build PASS; WIP uncommitted | REQ-0091 |
 | 2026-06-15T17:10:00Z | init | Agile V Infinity Loop activation C40 | STATE/ACTIVATION/AGENTS/BOOTSTRAP/config synced; ready C41 specify | REQ-0091 |
 | 2026-06-16T14:36:00Z | init | Agile V Infinity Loop session activation | C40 verify re-confirmed 1206/1206 tsc lint PASS; HEAD 3fd00b1; C40 WIP uncommitted; 24 skills active; ready C41 specify | REQ-0091 |
+| 2026-06-16T15:00:00Z | build | C40+C41 portal queue + badge parity | REQ-0091 portal route; REQ-0092 visit-meta badges + invoice SSR | REQ-0091, REQ-0092 |
+| 2026-06-16T15:30:00Z | build | C41.1 billing skeleton + Sentry tunnel | invoices.all cold skeleton; client monitoring tunnel | REQ-0092 |
+| 2026-06-16T16:00:00Z | build | C42 Up Next hero glass chips | upNextHero layout; TelehealthQueueTimeGlassChip | REQ-0093 |
+| 2026-06-16T17:00:00Z | build | C42.2 queue list glass parity | queueListHero; TelehealthQueueListTimeColumn; row glow | REQ-0093 |
+| 2026-06-16T17:50:00Z | verify | C42.2 shipped | 1220/1220; tsc · lint · build PASS; commit `2b53b92` pushed | REQ-0093 |
+| 2026-06-16T17:50:00Z | init | Agile V session close C42.2 | STATE/ACTIVATION/AGENTS/config synced; ready C43 specify | REQ-0093 |

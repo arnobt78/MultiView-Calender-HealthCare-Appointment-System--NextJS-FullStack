@@ -483,3 +483,42 @@ human_gate_2: TBD
 | release build | npm run build | PASS | REQ-0091 |
 
 **EvalGate (C40 active):** PASS (automated) — commit pending; Human Gate TBD before archive.
+
+## C41 — ER-C41-VERIFY
+
+```yaml
+eval_run_id: ER-C41-VERIFY
+eval_timestamp: "2026-06-16T15:30:00Z"
+eval_gate_status: PASS
+eval_gate_rationale: "REQ-0092 visit-meta badges + invoice SSR; 1220/1220; tsc; eslint; build PASS"
+cycle: C41
+release_commit: "e8544ee"
+```
+
+| Suite | Command | Result | LINKED_REQ |
+|-------|---------|--------|------------|
+| appointment-visit-meta | npm test appointment-visit-meta | PASS | REQ-0092 |
+| full regression | npm test | PASS 1220/1220 | REQ-0092 |
+| typecheck | npx tsc --noEmit | PASS | REQ-0092 |
+| lint | npm run lint | PASS | REQ-0092 |
+| release build | npm run build | PASS | REQ-0092 |
+
+## C42 — ER-C42-VERIFY
+
+```yaml
+eval_run_id: ER-C42-VERIFY
+eval_timestamp: "2026-06-16T17:50:00Z"
+eval_gate_status: PASS
+eval_gate_rationale: "REQ-0093 queue glass badges + row glow; 1220/1220; tsc; eslint; build PASS"
+cycle: C42.2
+release_commit: "2b53b92"
+```
+
+| Suite | Command | Result | LINKED_REQ |
+|-------|---------|--------|------------|
+| full regression | npm test | PASS 1220/1220 | REQ-0093 |
+| typecheck | npx tsc --noEmit | PASS | REQ-0093 |
+| lint | npm run lint | PASS | REQ-0093 |
+| release build | npm run build | PASS | REQ-0093 |
+
+**EvalGate (C42 active):** PASS (automated) — shipped `2b53b92`; ready C43 specify.

@@ -312,7 +312,21 @@ Current baseline: **1154** tests, **232** files (2026-06-15) · HEAD `ea40860`.
 
 ---
 
-## Infinity Loop Session Activation (2026-06-15 — C40 ready) — **CURRENT**
+## Infinity Loop Session Activation (2026-06-16 — C42.2 shipped) — **CURRENT**
+
+| Step | Artifact | Status |
+|------|----------|--------|
+| 1 | Load agile-v-core + pipeline + lifecycle + SKILLS.md | ✓ ACTIVE |
+| 2 | STATE.md C42.2 shipped · C43 specify next | ✓ |
+| 3 | REQUIREMENTS REQ-0001..0093 · BUILD_MANIFEST ART-0498 | ✓ |
+| 4 | EVAL_RESULTS ER-C42-VERIFY PASS | ✓ |
+| 5 | Verify npm test **1220/1220** tsc lint build | ✓ HEAD `2b53b92` |
+| 6 | `.cursor/rules/agile-v-infinity-loop.mdc` always on | ✓ |
+| 7 | `CHECKPOINTS.md` — no PENDING HITL | ✓ |
+| 8 | `AGENTS.md` + `config.json` synced | ✓ |
+| 9 | **Halt until REQ-0094+** for C43 feature work | ✓ |
+
+## Infinity Loop Session Activation (2026-06-15 — C40 ready) — archived
 
 | Step | Artifact | Status |
 |------|----------|--------|
