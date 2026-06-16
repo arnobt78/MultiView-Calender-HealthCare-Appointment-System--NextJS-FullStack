@@ -4,9 +4,9 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-16)
 
-- **C41.1:** Targeted billing chip skeleton when `invoices.all` cold only · `instrumentation-client.ts` + `sentry-client-init.ts` Sentry tunnel `/api/monitoring`.
-- **C40 (REQ-0091):** `/telehealth-queue` portal · navbar · role-aware links · telehealth booking preset · `?filter=` URL tabs (no sessionStorage) · `useCpListBodyLoading(appointments.all)` only.
-- **C39:** `is_telehealth` filter · violet glass · `telehealth/*` · SSR appointments + doctors seed.
+- **C42 UX:** Up Next `layout="upNextHero"` · unified `calendar-glass-badge` hero chips (`appointmentVisitMetaHeroGlassChipClass`) · duration footer only.
+- **C41:** visit-meta badges · invoice SSR telehealth · doctor patient link on detail · billing skeleton when `invoices.all` cold.
+- **C40 (REQ-0091):** `/telehealth-queue` portal · `?filter=` tabs · appointments-only skeleton.
 - **Verify:** **1220/1220** · tsc · lint · build PASS.
 
 ## Never / Always

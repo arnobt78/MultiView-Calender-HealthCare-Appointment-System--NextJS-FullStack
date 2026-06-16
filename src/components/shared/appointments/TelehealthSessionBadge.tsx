@@ -1,14 +1,34 @@
 "use client";
 
 import { Video } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { appointmentVisitMetaHeroGlassChipClass } from "@/lib/appointment-visit-meta-badge-ui";
 import { cn } from "@/lib/utils";
 
 type TelehealthSessionBadgeProps = {
   className?: string;
+  /** Up Next hero — calendar glass sky pill (matches status/fee/billing chips). */
+  glass?: boolean;
 };
 
 /** Matches dashboard list cards + doctor-portal upcoming rows. */
-export function TelehealthSessionBadge({ className }: TelehealthSessionBadgeProps) {
+export function TelehealthSessionBadge({ className, glass = false }: TelehealthSessionBadgeProps) {
+  if (glass) {
+    return (
+      <Badge
+        variant="outline"
+        className={cn(
+          "calendar-glass-badge calendar-glass-badge-sky inline-flex items-center font-normal",
+          appointmentVisitMetaHeroGlassChipClass,
+          className
+        )}
+      >
+        <Video className="shrink-0" aria-hidden />
+        Telehealth
+      </Badge>
+    );
+  }
+
   return (
     <span
       className={cn(

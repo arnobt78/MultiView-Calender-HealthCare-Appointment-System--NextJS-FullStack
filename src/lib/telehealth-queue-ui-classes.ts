@@ -93,11 +93,6 @@ export const telehealthQueueSectionTitleClass =
 export const telehealthQueueHeaderChipClass =
   "inline-flex h-6 min-h-6 items-center gap-1 rounded-full px-2 text-[10px] font-normal leading-none";
 
-export const telehealthQueueTimeBadgeClass = cn(
-  telehealthQueueHeaderChipClass,
-  "border-violet-200 bg-violet-100 text-violet-800 [&_svg]:size-3"
-);
-
 export const telehealthQueueTelehealthHeaderBadgeClass = cn(
   telehealthQueueHeaderChipClass,
   "border-sky-200/60 bg-sky-100/80 text-sky-700 [&_svg]:size-3"

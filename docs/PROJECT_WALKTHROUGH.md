@@ -4,9 +4,9 @@
 
 **Baseline:** 1220/1220 · tsc · lint · build PASS
 
-**C41.1:** Billing badge skeleton only when `invoices.all` cache cold (`useCpListBodyLoading`) — appointments list skeleton unchanged · Sentry v10 `instrumentation-client.ts` tunnel `/api/monitoring`.
+**C42 UX:** Up Next `upNextHero` — time · status · fee · billing | telehealth; all chips `calendar-glass-badge` + `appointmentVisitMetaHeroGlassChipClass`; duration in footer only.
 
-**C41 (REQ-0092):** `AppointmentVisitMetaBadgeRow` · `appointment-visit-meta-resolve.ts` · telehealth queue + detail billing chips · doctor portal patient link · telehealth SSR seeds `invoices.all` + `doctors.all`.
+**C41:** `AppointmentVisitMetaBadgeRow` · invoice SSR on telehealth · `resolvePortalAppointmentDetailLinkPolicy` · billing skeleton (`invoices.all` cold).
 
 **C40 (REQ-0091):** `/telehealth-queue` doctor/patient · navbar · role-aware links · `TelehealthQueueChromeActions` · `telehealth-scheduling-types.ts` · `?filter=today|upcoming|all` URL tabs · appointments-only skeleton gate.
 

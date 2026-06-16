@@ -2,6 +2,7 @@
 
 import { format } from "date-fns";
 import { Clock, FileText, Timer, Video } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
@@ -17,7 +18,6 @@ import {
   resolveAppointmentVisitMetaFromFullAppointmentTelehealth,
 } from "@/lib/appointment-visit-meta-resolve";
 import {
-  isRedundantTelehealthVisitTypeLabel,
   mapTelehealthQueueCategory,
   mapTelehealthQueuePatient,
   mapTelehealthQueueTreatingDoctor,
@@ -26,9 +26,10 @@ import {
 } from "@/lib/telehealth-queue-display";
 import {
   telehealthQueueJoinButtonClass,
-  telehealthQueueTimeBadgeClass,
   telehealthQueueUpNextCardClass,
 } from "@/lib/telehealth-queue-ui-classes";
+import { appointmentVisitMetaHeroGlassChipClass } from "@/lib/appointment-visit-meta-badge-ui";
+import { cn } from "@/lib/utils";
 import type { DoctorDirectoryRow } from "@/lib/doctor-directory";
 import type { FullAppointment } from "@/hooks/useAppointments";
 
@@ -42,8 +43,8 @@ type Props = {
 };
 
 /**
- * Violet glass hero — clock anchor + shared visit-meta chips, patient (non-patient viewer),
- * doctor + category inline, glass Join.
+ * Violet glass hero — top meta bar (time · status · fee · billing | telehealth),
+ * title, schedule meta, duration footer (no duplicate duration chip in hero).
  */
 export function TelehealthUpNextCard({
   appointment,
@@ -62,43 +63,42 @@ export function TelehealthUpNextCard({
   const physicalLocation = resolveTelehealthQueuePhysicalLocation(appointment);
 
   const meta = resolveAppointmentVisitMetaFromFullAppointmentTelehealth(appointment);
-  const typeName =
-    meta.appointmentTypeName &&
-    !isRedundantTelehealthVisitTypeLabel(meta.appointmentTypeName)
-      ? meta.appointmentTypeName
-      : null;
+
+  const timeChip = (
+    <Badge
+      variant="outline"
+      className={cn(
+        "calendar-glass-badge calendar-glass-badge-violet inline-flex items-center font-normal",
+        appointmentVisitMetaHeroGlassChipClass
+      )}
+    >
+      <Clock className="shrink-0" aria-hidden />
+      {format(new Date(appointment.start), "h:mm a")}
+    </Badge>
+  );
 
   return (
     <Card className={telehealthQueueUpNextCardClass}>
       <CardContent className="pt-4">
-        <div className="mb-2 flex flex-wrap items-center gap-2">
-          <span className={telehealthQueueTimeBadgeClass}>
-            <Clock className="size-3 shrink-0" aria-hidden />
-            {format(new Date(appointment.start), "h:mm a")}
-          </span>
-        </div>
+        <AppointmentVisitMetaBadgeRow
+          layout="upNextHero"
+          leadingSlot={timeChip}
+          visitFeeCents={meta.visitFeeCents}
+          showVisitFeeEstimateHint={meta.showVisitFeeEstimateHint}
+          status={appointment.status}
+          showTelehealthBadge
+          invoiceDisplayStatus={billing?.invoiceDisplayStatus}
+          showInvoiceBadge={billing?.showInvoice}
+          paymentStatus={billing?.latestPayment?.status}
+          showPaymentBadge={billing?.showPayment}
+          billingBadgesLoading={billingBadgesLoading}
+        />
 
         <EntityTitleLink
           href={detailHref}
           label={appointment.title}
-          className="block text-sm font-medium"
+          className="mt-2 block text-sm font-medium"
         />
-
-        <div className="mt-2">
-          <AppointmentVisitMetaBadgeRow
-            appointmentTypeName={typeName}
-            durationMinutes={meta.durationMinutes}
-            visitFeeCents={meta.visitFeeCents}
-            showVisitFeeEstimateHint={meta.showVisitFeeEstimateHint}
-            status={appointment.status}
-            showTelehealthBadge
-            invoiceDisplayStatus={billing?.invoiceDisplayStatus}
-            showInvoiceBadge={billing?.showInvoice}
-            paymentStatus={billing?.latestPayment?.status}
-            showPaymentBadge={billing?.showPayment}
-            billingBadgesLoading={billingBadgesLoading}
-          />
-        </div>
 
         <DashboardAppointmentScheduleMetaRow
           start={appointment.start}
