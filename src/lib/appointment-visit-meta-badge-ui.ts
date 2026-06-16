@@ -38,9 +38,5 @@ export const appointmentVisitMetaBillingChipSkeletonClass = cn(
 export const appointmentVisitMetaHeroGlassChipClass =
   "calendar-glass-badge h-6 min-h-6 shrink-0 gap-1 py-0 text-[10px] font-normal leading-none [&_svg]:h-3 [&_svg]:w-3";
 
-/** Up Next hero — time · status · fee · billing left; telehealth right. */
-export const appointmentVisitMetaUpNextHeroRowClass =
-  "flex w-full min-w-0 items-center justify-between gap-2";
-
 export const appointmentVisitMetaUpNextHeroLeftClass =
-  "flex min-w-0 flex-1 flex-wrap items-center gap-2";
+  "flex min-w-0 flex-wrap items-center gap-2";

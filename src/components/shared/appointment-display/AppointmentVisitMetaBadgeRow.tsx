@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Euro } from "lucide-react";
+import { Euro, Timer } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AppointmentStatusGlassBadge } from "@/components/shared/appointments/AppointmentStatusGlassBadge";
@@ -17,13 +17,12 @@ import {
   appointmentVisitMetaHeroGlassChipClass,
   appointmentVisitMetaTypeChipClass,
   appointmentVisitMetaUpNextHeroLeftClass,
-  appointmentVisitMetaUpNextHeroRowClass,
 } from "@/lib/appointment-visit-meta-badge-ui";
 import type { InvoiceDisplayStatus } from "@/lib/billing-appointment-eligibility";
 import { telehealthQueueHeaderChipClass } from "@/lib/telehealth-queue-ui-classes";
 import { cn } from "@/lib/utils";
 
-export type AppointmentVisitMetaBadgeRowLayout = "default" | "upNextHero";
+export type AppointmentVisitMetaBadgeRowLayout = "default" | "upNextHero" | "queueListHero";
 
 type Props = {
   appointmentTypeName?: string | null;
@@ -43,11 +42,11 @@ type Props = {
   /** True only when invoices.all is loading and SSR/cache has no seed — targeted chip skeleton. */
   billingBadgesLoading?: boolean;
   /**
-   * `upNextHero` — Up Next card only: leading slot + status · fee · billing left,
-   * telehealth right; skips type/duration chips (duration lives in card footer).
+   * `upNextHero` — Up Next top row: time · status · fee · billing (telehealth beside duration footer).
+   * `queueListHero` — schedule list: duration · status · fee · billing · telehealth (clock in left gutter).
    */
   layout?: AppointmentVisitMetaBadgeRowLayout;
-  /** Clock chip — only with `layout="upNextHero"`. */
+  /** Clock chip — `upNextHero` only. */
   leadingSlot?: ReactNode;
   className?: string;
 };
@@ -99,6 +98,37 @@ function VisitMetaFeeChip({
       {showVisitFeeEstimateHint ? (
         <span className="text-[9px] font-normal text-emerald-500/90">· est.</span>
       ) : null}
+    </span>
+  );
+}
+
+function VisitMetaDurationChip({
+  durationMinutes,
+  heroGlass = false,
+}: {
+  durationMinutes?: number | null;
+  heroGlass?: boolean;
+}) {
+  if (durationMinutes == null || durationMinutes <= 0) return null;
+
+  if (heroGlass) {
+    return (
+      <Badge
+        variant="outline"
+        className={cn(
+          "calendar-glass-badge calendar-glass-badge-violet inline-flex items-center font-normal",
+          appointmentVisitMetaHeroGlassChipClass
+        )}
+      >
+        <Timer className="shrink-0" aria-hidden />
+        {durationMinutes} min
+      </Badge>
+    );
+  }
+
+  return (
+    <span className={appointmentVisitMetaTypeChipClass}>
+      {durationMinutes} min
     </span>
   );
 }
@@ -176,30 +206,47 @@ export function AppointmentVisitMetaBadgeRow({
   className,
 }: Props) {
   if (layout === "upNextHero") {
+    /** Top row only — telehealth lives in Up Next duration footer (see TelehealthUpNextCard). */
     return (
-      <div className={cn(appointmentVisitMetaUpNextHeroRowClass, className)}>
-        <div className={appointmentVisitMetaUpNextHeroLeftClass}>
-          {leadingSlot}
-          <VisitMetaStatusChip status={status} heroGlass />
-          <VisitMetaFeeChip
-            visitFeeCents={visitFeeCents}
-            showVisitFeeEstimateHint={showVisitFeeEstimateHint}
-            heroGlass
-          />
-          <VisitMetaBillingChips
-            billingBadgesLoading={billingBadgesLoading}
-            invoiceDisplayStatus={invoiceDisplayStatus}
-            showInvoiceBadge={showInvoiceBadge}
-            paymentStatus={paymentStatus}
-            showPaymentBadge={showPaymentBadge}
-            heroGlass
-          />
-        </div>
-        {showTelehealthBadge ? (
-          <div className="ml-auto shrink-0">
-            <TelehealthSessionBadge glass />
-          </div>
-        ) : null}
+      <div className={cn(appointmentVisitMetaUpNextHeroLeftClass, className)}>
+        {leadingSlot}
+        <VisitMetaStatusChip status={status} heroGlass />
+        <VisitMetaFeeChip
+          visitFeeCents={visitFeeCents}
+          showVisitFeeEstimateHint={showVisitFeeEstimateHint}
+          heroGlass
+        />
+        <VisitMetaBillingChips
+          billingBadgesLoading={billingBadgesLoading}
+          invoiceDisplayStatus={invoiceDisplayStatus}
+          showInvoiceBadge={showInvoiceBadge}
+          paymentStatus={paymentStatus}
+          showPaymentBadge={showPaymentBadge}
+          heroGlass
+        />
+      </div>
+    );
+  }
+
+  if (layout === "queueListHero") {
+    return (
+      <div className={cn(appointmentVisitMetaUpNextHeroLeftClass, className)}>
+        <VisitMetaDurationChip durationMinutes={durationMinutes} heroGlass />
+        <VisitMetaStatusChip status={status} heroGlass />
+        <VisitMetaFeeChip
+          visitFeeCents={visitFeeCents}
+          showVisitFeeEstimateHint={showVisitFeeEstimateHint}
+          heroGlass
+        />
+        <VisitMetaBillingChips
+          billingBadgesLoading={billingBadgesLoading}
+          invoiceDisplayStatus={invoiceDisplayStatus}
+          showInvoiceBadge={showInvoiceBadge}
+          paymentStatus={paymentStatus}
+          showPaymentBadge={showPaymentBadge}
+          heroGlass
+        />
+        {showTelehealthBadge ? <TelehealthSessionBadge glass /> : null}
       </div>
     );
   }

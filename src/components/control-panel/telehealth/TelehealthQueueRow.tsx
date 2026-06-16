@@ -1,11 +1,11 @@
 "use client";
 
-import { format, isToday } from "date-fns";
 import { Video } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { AppointmentVisitMetaBadgeRow } from "@/components/shared/appointment-display/AppointmentVisitMetaBadgeRow";
+import { TelehealthQueueListTimeColumn } from "@/components/control-panel/telehealth/TelehealthQueueListTimeColumn";
 import { ControlPanelGlassActionButton } from "@/components/shared/ControlPanelGlassActionButton";
 import { DashboardAppointmentScheduleMetaRow } from "@/components/control-panel/dashboard/DashboardAppointmentScheduleMetaRow";
 import { DashboardPatientIdentityInline } from "@/components/control-panel/dashboard/DashboardPatientIdentityInline";
@@ -17,7 +17,6 @@ import {
   resolveAppointmentVisitMetaFromFullAppointmentTelehealth,
 } from "@/lib/appointment-visit-meta-resolve";
 import {
-  isRedundantTelehealthVisitTypeLabel,
   mapTelehealthQueueCategory,
   mapTelehealthQueuePatient,
   mapTelehealthQueueTreatingDoctor,
@@ -48,8 +47,7 @@ type Props = {
 };
 
 /**
- * Single telehealth queue row — title link + shared visit-meta chips (type, fee, status,
- * telehealth, invoice/payment), schedule meta, patient (non-patient viewer), doctor + category.
+ * Single telehealth queue row — tonal left clock + glass meta chips (duration · status · fee · billing · telehealth).
  */
 export function TelehealthQueueRow({
   appointment,
@@ -69,11 +67,6 @@ export function TelehealthQueueRow({
   const physicalLocation = resolveTelehealthQueuePhysicalLocation(appointment);
 
   const meta = resolveAppointmentVisitMetaFromFullAppointmentTelehealth(appointment);
-  const typeName =
-    meta.appointmentTypeName &&
-    !isRedundantTelehealthVisitTypeLabel(meta.appointmentTypeName)
-      ? meta.appointmentTypeName
-      : null;
 
   return (
     <div
@@ -84,19 +77,11 @@ export function TelehealthQueueRow({
       )}
     >
       <div className="flex items-start gap-3">
-        <div className="w-16 shrink-0 pt-0.5 text-center">
-          <p className={cn("text-lg font-bold leading-tight", inProgress && "text-violet-800")}>
-            {format(new Date(appointment.start), "h:mm")}
-          </p>
-          <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-            {format(new Date(appointment.start), "a")}
-          </p>
-          {!isToday(new Date(appointment.start)) ? (
-            <p className="mt-1 text-[10px] font-medium text-muted-foreground">
-              {format(new Date(appointment.start), "MMM d")}
-            </p>
-          ) : null}
-        </div>
+        <TelehealthQueueListTimeColumn
+          start={appointment.start}
+          inProgress={inProgress}
+          ended={ended}
+        />
         <div
           className={cn(
             "mt-1 h-12 w-1 shrink-0 rounded-full",
@@ -122,7 +107,7 @@ export function TelehealthQueueRow({
             ) : null}
           </div>
           <AppointmentVisitMetaBadgeRow
-            appointmentTypeName={typeName}
+            layout="queueListHero"
             durationMinutes={meta.durationMinutes}
             visitFeeCents={meta.visitFeeCents}
             showVisitFeeEstimateHint={meta.showVisitFeeEstimateHint}

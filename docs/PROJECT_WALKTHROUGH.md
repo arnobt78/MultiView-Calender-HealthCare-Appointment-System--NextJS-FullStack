@@ -1,22 +1,20 @@
 # HealthCal Pro — Project Walkthrough
 
-## Agent resume (2026-06-16 — C41 badge parity + invoice SSR)
+## Agent resume (2026-06-16 — C42.2 queue list glass)
 
 **Baseline:** 1220/1220 · tsc · lint · build PASS
 
-**C42 UX:** Up Next `upNextHero` — time · status · fee · billing | telehealth; all chips `calendar-glass-badge` + `appointmentVisitMetaHeroGlassChipClass`; duration in footer only.
+**C42.2:** `queueListHero` (no duplicate time chip) · `TelehealthQueueListTimeColumn` + `telehealth-queue-list-time.ts` · violet glass row glow · `TelehealthQueueTimeGlassChip` Up Next only.
 
-**C41:** `AppointmentVisitMetaBadgeRow` · invoice SSR on telehealth · `resolvePortalAppointmentDetailLinkPolicy` · billing skeleton (`invoices.all` cold).
+**C42:** `upNextHero` · `appointmentVisitMetaHeroGlassChipClass` · telehealth beside duration footer.
 
-**C40 (REQ-0091):** `/telehealth-queue` doctor/patient · navbar · role-aware links · `TelehealthQueueChromeActions` · `telehealth-scheduling-types.ts` · `?filter=today|upcoming|all` URL tabs · appointments-only skeleton gate.
+**C41:** `AppointmentVisitMetaBadgeRow` · invoice SSR telehealth · billing skeleton (`invoices.all` cold).
 
-**C39.2:** Doctor from `queryKeys.doctors.all` · clock-in-time + status chips · category inline · full datetime.
+**C40:** `/telehealth-queue` · `?filter=` URL tabs · appointments-only skeleton.
 
-**C39:** `is_telehealth` filter · violet glass · SSR `prefetchCalendarAppointmentsBundle` · admin CP `/control-panel/telehealth-queue`.
+**Keys:** `telehealth-queue-list-time.ts` · `telehealth-queue-ui-classes.ts` · `appointment-visit-meta-badge-ui.ts` · `control-panel/telehealth/*`
 
-**Keys:** `appointment-visit-meta-resolve.ts` · `appointment-visit-meta-badge-ui.ts` · `entity-detail-snapshot-links.ts` (`APPOINTMENT_DETAIL_PORTAL_*`) · `telehealth-queue-portal-prefetch.ts` · `telehealth-queue-ui-state.ts` · `control-panel/telehealth/*`
-
-**Invariants:** `force-dynamic` · SSR seed · `invalidateAfterAppointmentMutation` + `invalidateInvoicesAndOverview` refresh queue/detail badges without refresh.
+**Invariants:** no new query keys · SSR/invalidation unchanged · `invalidateAfterAppointmentMutation` + `invalidateInvoicesAndOverview` refresh badges.
 
 ---
 

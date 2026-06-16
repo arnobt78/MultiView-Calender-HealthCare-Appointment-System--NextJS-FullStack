@@ -1,12 +1,11 @@
 "use client";
 
-import { format } from "date-fns";
-import { Clock, FileText, Timer, Video } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { FileText, Timer, Video } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { AppointmentVisitMetaBadgeRow } from "@/components/shared/appointment-display/AppointmentVisitMetaBadgeRow";
+import { TelehealthSessionBadge } from "@/components/shared/appointments/TelehealthSessionBadge";
 import { ControlPanelGlassActionButton } from "@/components/shared/ControlPanelGlassActionButton";
 import { DashboardPatientIdentityInline } from "@/components/control-panel/dashboard/DashboardPatientIdentityInline";
 import { DashboardAppointmentScheduleMetaRow } from "@/components/control-panel/dashboard/DashboardAppointmentScheduleMetaRow";
@@ -28,8 +27,7 @@ import {
   telehealthQueueJoinButtonClass,
   telehealthQueueUpNextCardClass,
 } from "@/lib/telehealth-queue-ui-classes";
-import { appointmentVisitMetaHeroGlassChipClass } from "@/lib/appointment-visit-meta-badge-ui";
-import { cn } from "@/lib/utils";
+import { TelehealthQueueTimeGlassChip } from "@/components/control-panel/telehealth/TelehealthQueueTimeGlassChip";
 import type { DoctorDirectoryRow } from "@/lib/doctor-directory";
 import type { FullAppointment } from "@/hooks/useAppointments";
 
@@ -43,8 +41,8 @@ type Props = {
 };
 
 /**
- * Violet glass hero — top meta bar (time · status · fee · billing | telehealth),
- * title, schedule meta, duration footer (no duplicate duration chip in hero).
+ * Violet glass hero — top meta bar (time · status · fee · billing),
+ * telehealth badge beside duration footer, title, schedule meta.
  */
 export function TelehealthUpNextCard({
   appointment,
@@ -64,29 +62,16 @@ export function TelehealthUpNextCard({
 
   const meta = resolveAppointmentVisitMetaFromFullAppointmentTelehealth(appointment);
 
-  const timeChip = (
-    <Badge
-      variant="outline"
-      className={cn(
-        "calendar-glass-badge calendar-glass-badge-violet inline-flex items-center font-normal",
-        appointmentVisitMetaHeroGlassChipClass
-      )}
-    >
-      <Clock className="shrink-0" aria-hidden />
-      {format(new Date(appointment.start), "h:mm a")}
-    </Badge>
-  );
-
   return (
     <Card className={telehealthQueueUpNextCardClass}>
       <CardContent className="pt-4">
         <AppointmentVisitMetaBadgeRow
           layout="upNextHero"
-          leadingSlot={timeChip}
+          leadingSlot={<TelehealthQueueTimeGlassChip start={appointment.start} />}
           visitFeeCents={meta.visitFeeCents}
           showVisitFeeEstimateHint={meta.showVisitFeeEstimateHint}
           status={appointment.status}
-          showTelehealthBadge
+          showTelehealthBadge={false}
           invoiceDisplayStatus={billing?.invoiceDisplayStatus}
           showInvoiceBadge={billing?.showInvoice}
           paymentStatus={billing?.latestPayment?.status}
@@ -130,13 +115,21 @@ export function TelehealthUpNextCard({
 
         <div className="mb-2 grid gap-2 text-xs text-muted-foreground">
           {duration > 0 ? (
-            <div className="flex items-start gap-2">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
               <Timer className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-              <span>
-                Duration: <span className="font-medium text-emerald-700">{duration} mins</span>
+              <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-1">
+                <span>
+                  Duration:{" "}
+                  <span className="font-medium text-emerald-700">{duration} mins</span>
+                </span>
+                <TelehealthSessionBadge glass />
               </span>
             </div>
-          ) : null}
+          ) : (
+            <div className="flex flex-wrap items-center gap-2">
+              <TelehealthSessionBadge glass />
+            </div>
+          )}
           {appointment.chief_complaint?.trim() ? (
             <div className="flex items-start gap-2">
               <FileText className="size-4 shrink-0 text-muted-foreground" aria-hidden />

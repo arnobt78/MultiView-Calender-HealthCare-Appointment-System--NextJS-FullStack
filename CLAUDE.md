@@ -4,9 +4,10 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-16)
 
-- **C42 UX:** Up Next `layout="upNextHero"` · unified `calendar-glass-badge` hero chips (`appointmentVisitMetaHeroGlassChipClass`) · duration footer only.
-- **C41:** visit-meta badges · invoice SSR telehealth · doctor patient link on detail · billing skeleton when `invoices.all` cold.
-- **C40 (REQ-0091):** `/telehealth-queue` portal · `?filter=` tabs · appointments-only skeleton.
+- **C42.2:** List `queueListHero` glass chips (duration·status·fee·billing·telehealth) · `TelehealthQueueListTimeColumn` tonal left clock · violet glass row glow · `TelehealthQueueTimeGlassChip` Up Next only.
+- **C42:** Up Next `upNextHero` · `calendar-glass-badge` hero chips · telehealth in duration footer.
+- **C41:** visit-meta badges · invoice SSR telehealth · billing skeleton `invoices.all` cold.
+- **C40:** `/telehealth-queue` portal · `?filter=` tabs.
 - **Verify:** **1220/1220** · tsc · lint · build PASS.
 
 ## Never / Always

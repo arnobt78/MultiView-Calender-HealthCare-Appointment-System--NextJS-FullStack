@@ -58,7 +58,10 @@ export function TelehealthQueueList({
       {listBodyLoading ? (
         <div className="space-y-3">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="space-y-2 rounded-2xl border border-sky-100/80 p-4">
+            <div
+              key={i}
+              className="space-y-2 rounded-2xl border border-violet-200/40 bg-gradient-to-br from-violet-500/[0.06] via-white/90 to-white/95 p-4 shadow-[0_6px_22px_rgba(139,92,246,0.12)]"
+            >
               <Skeleton className="h-5 w-3/4 rounded" />
               <Skeleton className="h-4 w-1/2 rounded" />
               <Skeleton className="h-6 w-full max-w-[14rem] rounded" />
@@ -68,7 +71,7 @@ export function TelehealthQueueList({
       ) : appointments.length === 0 ? (
         <TelehealthQueueScheduleEmptyState icon={Calendar} copy={emptyCopy} />
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {appointments.map((appt) => (
             <TelehealthQueueRow
               key={appt.id}

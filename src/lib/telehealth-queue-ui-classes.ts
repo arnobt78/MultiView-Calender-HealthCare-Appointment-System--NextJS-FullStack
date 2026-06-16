@@ -4,7 +4,6 @@
 
 import {
   CONTROL_PANEL_GLASS_CARD_VARIANT,
-  controlPanelDashboardListRowClass,
   controlPanelGlassCardBaseClass,
 } from "@/lib/control-panel-glass-card";
 import { violetGlassPrimaryButtonClass } from "@/lib/calendar-header-action-styles";
@@ -17,14 +16,24 @@ export const telehealthQueueUpNextCardClass = cn(
 );
 
 export const telehealthQueueListRowClass = cn(
-  controlPanelDashboardListRowClass,
-  "rounded-2xl border border-violet-100/80 bg-white/70 px-3 py-3 backdrop-blur-sm transition-shadow hover:shadow-[0_8px_24px_rgba(139,92,246,0.08)] last:border-b"
+  "rounded-2xl border border-violet-300/40 bg-gradient-to-br from-violet-500/[0.09] via-white/92 to-white/98",
+  "px-3 py-3 backdrop-blur-md",
+  "shadow-[0_8px_28px_rgba(139,92,246,0.16),0_2px_10px_rgba(139,92,246,0.08)]",
+  "transition-all duration-200",
+  "hover:border-violet-400/50 hover:shadow-[0_14px_40px_rgba(139,92,246,0.24),0_4px_14px_rgba(139,92,246,0.12)]"
 );
 
-export const telehealthQueueListRowActiveClass =
-  "border-violet-400/40 bg-violet-50/50 shadow-[0_8px_24px_rgba(139,92,246,0.12)]";
+export const telehealthQueueListRowActiveClass = cn(
+  "border-violet-400/55 bg-gradient-to-br from-violet-500/15 via-violet-50/70 to-white/95",
+  "shadow-[0_14px_44px_rgba(139,92,246,0.3),0_0_0_1px_rgba(167,139,250,0.35)]",
+  "hover:border-violet-500/60 hover:shadow-[0_16px_48px_rgba(139,92,246,0.34),0_0_0_1px_rgba(167,139,250,0.4)]"
+);
 
-export const telehealthQueueListRowMutedClass = "opacity-60 bg-muted/20";
+export const telehealthQueueListRowMutedClass = cn(
+  "border-slate-200/55 bg-gradient-to-br from-slate-100/50 via-white/75 to-white/85",
+  "opacity-70 shadow-[0_4px_20px_rgba(100,116,139,0.12)]",
+  "hover:border-slate-300/60 hover:shadow-[0_8px_28px_rgba(100,116,139,0.16)]"
+);
 
 /** Date filter tabs — violet outer glow (chrome actions slot). */
 export const telehealthQueueFilterPillGroupClass = cn(
