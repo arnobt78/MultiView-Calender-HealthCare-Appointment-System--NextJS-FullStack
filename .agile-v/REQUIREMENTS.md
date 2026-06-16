@@ -1,12 +1,12 @@
 # Requirements — HealthCal Pro
 
-<!-- Revision: C1..C37.2 | C38 specify next | Last updated: 2026-06-15 -->
+<!-- Revision: C1..C40 | C41 WIP | Last updated: 2026-06-16 -->
 
 ## Document Control
 
 | Field | Value |
 |-------|-------|
-| Cycle | C1–C38 shipped · **C39 specify next** |
+| Cycle | C1–C40 shipped · **C41 WIP** |
 | Author | Requirement Architect |
 | Gate 1 status | C1 GATE-0001 · C2 GATE-0003 approved |
 | Canonical source | this file |
@@ -126,8 +126,10 @@
 | REQ-0079 | approved [C31] | REQ-0078 | ART-0407..0409 | pending |
 | REQ-0080 | approved [C32] | REQ-0079 | ART-0410..0416 | pending |
 | REQ-0081 | approved [C33] | REQ-0080 | ART-0417..0423 | pending |
-| REQ-0090 | approved [C39.2] | REQ-0089 | ART-0469..0474 | pending |
-| REQ-0089 | approved [C39.1] | — | ART-0461..0468 | pending |
+| REQ-0091 | approved [C40] | REQ-0090 | ART-0475..0486 | verify PASS |
+| REQ-0092 | approved [C41] | REQ-0091 | ART-0487..0494 | pending |
+| REQ-0090 | approved [C39.2] | REQ-0089 | ART-0469..0474 | verify PASS |
+| REQ-0089 | approved [C39.1] | — | ART-0461..0468 | verify PASS |
 | REQ-0088 | approved [C38] | REQ-0087 | ART-0458..0460 | verify PASS |
 | REQ-0087 | approved [C36.2.1] | REQ-0086 | ART-0456..0457 | pending |
 | REQ-0086 | approved [C36.2] | REQ-0085 | ART-0451..0455 | pending |
@@ -135,6 +137,43 @@
 | REQ-0084 | approved [C36] | REQ-0083 | ART-0437..0444 | pending |
 | REQ-0083 | approved [C35/C35.1] | REQ-0082 | ART-0432..0436 | pending |
 | REQ-0082 | approved [C34/C34.1] | REQ-0081 | ART-0424..0431 | pending |
+
+### REQ-0092 — C41 Telehealth badge parity + appointment detail links/billing
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C41] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0091 |
+
+**Statement:** Unify visit-meta chips (type, fee, appointment status, telehealth, invoice/payment) across telehealth queue rows and appointment detail Visit Overview via `AppointmentVisitMetaBadgeRow`. Doctor portal appointment detail enables patient chart links (separate from doctor-entity snapshot policy). Billing badges reuse `resolveAppointmentListBillingBadges` + warm `invoices.all` cache.
+
+**Acceptance criteria:**
+1. `AppointmentVisitMetaBadgeRow` renders invoice + payment chips with h-6 parity on detail + telehealth queue.
+2. `TelehealthQueuePage` uses `useAppointmentInvoiceDisplayMap` once; Row + Up Next delegate to shared meta row.
+3. `resolvePortalAppointmentDetailLinkPolicy` — doctor portal `/appointments/:id` patient row clickable; snapshot policies unchanged.
+4. `appointment-visit-meta-resolve.ts` centralizes fee + billing resolution; unit tests.
+5. No new query keys; existing invoice/appointment invalidation unchanged; verify PASS.
+
+### REQ-0091 — C40 Portal telehealth queue + telehealth booking preset
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C40] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0090 |
+
+**Statement:** Doctor and patient roles access the same telehealth queue UI at `/telehealth-queue` (navbar link); admin stays on `/control-panel/telehealth-queue`. Role-aware entity links via `entity-routes`; patient queue is join-only (no appointment detail link). Book/New from queue pre-selects telehealth visit types; inactive doctor-disabled telehealth types display but are not selectable.
+
+**Acceptance criteria:**
+1. `/telehealth-queue` SSR (`force-dynamic`); doctor/patient only; admin redirects to CP route.
+2. Navbar **Telehealth Queue** for doctor + patient; shared `TelehealthQueuePage` with portal vs CP shell.
+3. Doctor/admin title links use `appointmentDetailHref(viewerRole, id)`; patient plain title; identity inlines accept `viewerRole`.
+4. Chrome CTA: telehealth-preset `BookAppointmentDialog` (patient) / `AppointmentDialog` (staff).
+5. `partitionTelehealthTypesForDoctorFromApi` + `VisitTypePickerList` inactive rows; no new query keys.
+6. `invalidateAfterAppointmentMutation` unchanged; tests + verify PASS.
 
 ### REQ-0090 — C39.2 Telehealth queue identity + status UX
 

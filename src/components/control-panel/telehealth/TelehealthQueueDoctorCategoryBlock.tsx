@@ -6,6 +6,7 @@ import type {
   TelehealthQueueCategory,
 } from "@/lib/telehealth-queue-display";
 import type { DashboardOverviewQueueDoctor } from "@/lib/dashboard-overview-queue";
+import type { EntityRole } from "@/lib/entity-routes";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -14,6 +15,7 @@ type Props = {
   /** `stacked` = Up Next hero; `inline` = schedule list row (doctor + category same line). */
   layout?: "stacked" | "inline";
   className?: string;
+  viewerRole?: EntityRole;
 };
 
 /**
@@ -24,6 +26,7 @@ export function TelehealthQueueDoctorCategoryBlock({
   category,
   layout = "stacked",
   className,
+  viewerRole = "admin",
 }: Props) {
   if (!doctor && !category) return null;
 
@@ -39,7 +42,7 @@ export function TelehealthQueueDoctorCategoryBlock({
         className
       )}
     >
-      {doctor ? <DashboardDoctorIdentityInline doctor={doctor} /> : null}
+      {doctor ? <DashboardDoctorIdentityInline doctor={doctor} viewerRole={viewerRole} /> : null}
       {category ? (
         <CategoryInlineLink
           categoryId={category.id}

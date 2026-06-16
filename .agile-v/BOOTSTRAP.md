@@ -1,6 +1,6 @@
 # Agile V Bootstrap — HealthCal Pro
 
-<!-- Framework initialization + cycle index | Agile V v1.4 | Last refresh: 2026-06-15 (C38 activation) -->
+<!-- Framework initialization + cycle index | Agile V v1.4 | Last refresh: 2026-06-16 (session activation) -->
 
 ## Infinity Loop (SCOPE-V)
 
@@ -31,8 +31,8 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 | 2 | `config.json` | Project metadata, cycle, authority matrix, verification commands | ✓ |
 | 3 | `POLICY.yaml` | Policy-as-code (versioned) | ✓ v1.0.0 |
 | 4 | `STATE.md` | Current cycle, phase, stage — **read first on resume** | ✓ |
-| 5 | `REQUIREMENTS.md` | Canonical REQ-XXXX + traceability index | ✓ REQ-0001..0087 |
-| 6 | `BUILD_MANIFEST.md` | ART-XXXX → code paths | ✓ ART-0001..0431 |
+| 5 | `REQUIREMENTS.md` | Canonical REQ-XXXX + traceability index | ✓ REQ-0001..0091 |
+| 6 | `BUILD_MANIFEST.md` | ART-XXXX → code paths | ✓ ART-0001..0486 |
 | 7 | `TEST_SPEC.md` | TC-XXXX (requirements-derived) | ✓ TC-0001..0052 |
 | 8 | `VALIDATION_SUMMARY.md` | VER-XXXX results + EvalGate lines | ✓ |
 | 9 | `ATM.md` | REQ → ART → VER matrix | ✓ |
@@ -312,16 +312,27 @@ Current baseline: **1154** tests, **232** files (2026-06-15) · HEAD `ea40860`.
 
 ---
 
-## Infinity Loop Session Activation (2026-06-15 — C38 ready)
+## Infinity Loop Session Activation (2026-06-15 — C40 ready) — **CURRENT**
 
 | Step | Artifact | Status |
 |------|----------|--------|
 | 1 | Load agile-v-core + pipeline + lifecycle + SKILLS.md | ✓ ACTIVE |
-| 2 | STATE.md C37.2 closed · C38 specify idle | ✓ |
-| 3 | REQUIREMENTS REQ-0001..0087 · BUILD_MANIFEST current | ✓ |
-| 4 | EVAL_RESULTS ER-C37-VERIFY PASS | ✓ |
-| 5 | Verify npm test 1154/1154 tsc lint build | ✓ HEAD `ea40860` |
+| 2 | STATE.md C40 verify PASS · C41 specify next | ✓ |
+| 3 | REQUIREMENTS REQ-0001..0091 · BUILD_MANIFEST ART-0486 | ✓ |
+| 4 | EVAL_RESULTS ER-C40-VERIFY PASS | ✓ |
+| 5 | Verify npm test 1206/1206 tsc lint build | ✓ C40 WIP |
 | 6 | `.cursor/rules/agile-v-infinity-loop.mdc` always on | ✓ |
 | 7 | `CHECKPOINTS.md` — no PENDING HITL | ✓ |
-| 8 | `AGENTS.md` + `config.json` + `.claude/SESSION.md` synced | ✓ |
-| 9 | **Halt until REQ-0088** specified for C38 feature work | ✓ |
+| 8 | `AGENTS.md` + `config.json` synced | ✓ |
+| 9 | **Halt until REQ-0092+** for C41 feature work | ✓ |
+
+## C38–C40 Bootstrap (2026-06-15)
+
+| Step | Artifact | Status |
+|------|----------|--------|
+| 1 | REQ-0088 C38 GCal warning | ✓ verify PASS |
+| 2 | REQ-0089/0090 C39 telehealth queue | ✓ shipped `3fd00b1` |
+| 3 | REQ-0091 C40 portal telehealth | ✓ verify PASS (WIP) |
+| 4 | ART-0458..0486 in BUILD_MANIFEST | ✓ |
+| 5 | ER-C38/C39/C40 in EVAL_RESULTS | ✓ |
+| 6 | `cycles/C38` `C39` `C40` README | ✓ |

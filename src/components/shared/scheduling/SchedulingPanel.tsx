@@ -94,9 +94,9 @@ export function SchedulingPanel({
         />
       ) : (
         <div className="flex flex-1 flex-col items-center justify-center rounded-2xl border border-dashed border-sky-200/80 bg-sky-50/30 p-6 text-center">
-          <Clock className="mb-2 h-8 w-8 text-sky-400/80" />
+          <Clock className="size-8 text-sky-400/80" />
           <p className="text-sm font-medium text-sky-900">Select a date</p>
-          <p className="mt-1 text-xs text-muted-foreground break-words">
+          <p className="text-xs text-muted-foreground break-words">
             Available time slots will appear here after you pick a day on the calendar.
           </p>
         </div>

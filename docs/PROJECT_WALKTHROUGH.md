@@ -1,20 +1,20 @@
 # HealthCal Pro — Project Walkthrough
 
-## Agent resume (2026-06-15 — C39 telehealth queue)
+## Agent resume (2026-06-16 — C41 badge parity + invoice SSR)
 
-**Baseline:** 1203/1203 · tsc · lint · build PASS
+**Baseline:** 1220/1220 · tsc · lint · build PASS
 
-**C39.2:** Doctor from `queryKeys.doctors.all` · clock-in-time + status chips · category inline (list) · full datetime · REQ-0090.
+**C41 (REQ-0092):** `AppointmentVisitMetaBadgeRow` · `appointment-visit-meta-resolve.ts` · telehealth queue + detail billing chips · doctor portal patient link on `/appointments/:id` (`resolvePortalAppointmentDetailLinkPolicy`) · telehealth SSR seeds `invoices.all` + `doctors.all` (CP + portal).
 
-**C39.1:** Rose all-time KPI · violet tab glow · filter empty copy · sky schedule panel · glass Join · REQ-0089.
+**C40 (REQ-0091):** `/telehealth-queue` doctor/patient · navbar · role-aware links · `TelehealthQueueChromeActions` · `telehealth-scheduling-types.ts` · `?filter=today|upcoming|all` URL tabs · appointments-only skeleton gate.
 
-**C39:** `is_telehealth` filter only · violet glass · detail links · SSR `prefetchCalendarAppointmentsBundle` · `invalidateAfterAppointmentMutation`.
+**C39.2:** Doctor from `queryKeys.doctors.all` · clock-in-time + status chips · category inline · full datetime.
 
-**Keys:** `telehealth-queue-filter.ts` · `telehealth-queue-display.ts` · `telehealth-queue-empty-copy.ts` · `telehealth-queue-ui-classes.ts` · `control-panel/telehealth/*`
+**C39:** `is_telehealth` filter · violet glass · SSR `prefetchCalendarAppointmentsBundle` · admin CP `/control-panel/telehealth-queue`.
 
-**C38.4:** GCal silent OAuth refresh · **Sentry** `/api/monitoring` tunnel.
+**Keys:** `appointment-visit-meta-resolve.ts` · `appointment-visit-meta-badge-ui.ts` · `entity-detail-snapshot-links.ts` (`APPOINTMENT_DETAIL_PORTAL_*`) · `telehealth-queue-portal-prefetch.ts` · `telehealth-queue-ui-state.ts` · `control-panel/telehealth/*`
 
-**Invariants:** `force-dynamic` · SSR seed · `invalidateAfterAppointmentMutation` refreshes queue.
+**Invariants:** `force-dynamic` · SSR seed · `invalidateAfterAppointmentMutation` + `invalidateInvoicesAndOverview` refresh queue/detail badges without refresh.
 
 ---
 
@@ -691,7 +691,7 @@ const loading = !isMounted || isLoading;
 | Page | File | Skeleton areas |
 |---|---|---|
 | Dashboard Overview | `control-panel/DashboardOverview.tsx` | Stat value slots + next-appt/recent list content |
-| Telehealth Queue | `control-panel/telehealth/TelehealthQueuePage.tsx` | Stats + Up Next + schedule rows (`is_telehealth` only) |
+| Telehealth Queue | `telehealth-queue/page.tsx` + `control-panel/telehealth/TelehealthQueuePage.tsx` | Portal + CP · `AppointmentVisitMetaBadgeRow` · invoice SSR · `?filter=` tabs · role-aware links |
 | Appointment Access | `control-panel/InvitationList.tsx` | Invitation table rows |
 | User Access | `control-panel/InvitationList.tsx` | Invitation table rows (shared component) |
 | Organization Mgmt | `control-panel/OrganizationManagement.tsx` | Count subtitle + table rows |

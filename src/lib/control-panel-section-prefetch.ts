@@ -10,7 +10,9 @@
  *   invoices          → queryKeys.invoices.all
  *   notifications     → queryKeys.notifications.all
  *   doctors           → queryKeys.doctors.all + useUsers(CP_DOCTOR_USERS_FILTERS) (layout also seeds doctor users)
- *   appointments_mgmt / telehealth → appointments.all + categories/patients/assignees/dashboardAccess.accepted (+ invoices.all on appointments_mgmt)
+ *   appointments_mgmt / telehealth → appointments.all + categories/patients/assignees/dashboardAccess.accepted
+ *     + invoices.all (visit-meta billing badges on first paint)
+ *     (+ doctors.all on telehealth for treating-physician identity on first paint)
  */
 
 import type { ControlPanelSidebarTabValue } from "@/lib/control-panel-nav-config";
@@ -144,8 +146,14 @@ export async function prefetchControlPanelSection(
       ]);
       return { ...bundle, invoices };
     }
-    case "telehealth":
-      return prefetchCalendarAppointmentsBundle(userId, email);
+    case "telehealth": {
+      const [bundle, doctorsDirectory, invoices] = await Promise.all([
+        prefetchCalendarAppointmentsBundle(userId, email),
+        prefetchDoctors(),
+        prefetchInvoices(userId, role, email),
+      ]);
+      return { ...bundle, doctorsDirectory, invoices };
+    }
     case "appointment": {
       const bundle = await prefetchInvitationsForUser(userId, email);
       return {

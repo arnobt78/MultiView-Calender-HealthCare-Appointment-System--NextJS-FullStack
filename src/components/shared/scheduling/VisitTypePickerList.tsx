@@ -52,6 +52,8 @@ type VisitTypePickerListProps = {
   className?: string;
   /** Treating / calendar owner fee — drives disclaimer when type has no price_cents. */
   doctorConsultationFeeCents?: number | null;
+  /** Disabled telehealth types — shown below selectable tiles, not clickable (REQ-0091). */
+  inactiveTypes?: VisitTypePickerItem[];
 };
 
 /** Collapsed visit-type row — patient step 1 and staff appointment dropdown field. */
@@ -121,6 +123,7 @@ export function VisitTypePickerList({
   onAfterSelect,
   className,
   doctorConsultationFeeCents,
+  inactiveTypes = [],
 }: VisitTypePickerListProps) {
   const collapsedInset = bookingPickerCollapsedInsetClass;
   const [pickerOpen, setPickerOpen] = useState(true);
@@ -274,6 +277,32 @@ export function VisitTypePickerList({
           })()}
         </button>
       ))}
+      {inactiveTypes.length > 0 ? (
+        <>
+          <div className="my-2 border-t border-sky-200/60" role="separator" />
+          <p className="px-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            Unavailable for this doctor
+          </p>
+          {inactiveTypes.map((t) => (
+            <div
+              key={t.id}
+              className={cn(
+                patientBookingGlassTileClass,
+                "cursor-not-allowed opacity-55"
+              )}
+              aria-disabled
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm font-medium text-muted-foreground">{t.name}</span>
+                <Badge variant="outline" className={bookingWizardTypeBadgeClass}>
+                  <Clock className="h-3 w-3" />
+                  {t.duration_minutes} min
+                </Badge>
+              </div>
+            </div>
+          ))}
+        </>
+      ) : null}
       {types.length > 0 ? (
         <VisitFeeInfoNoteCard variant="compact">{feeInfoNote}</VisitFeeInfoNoteCard>
       ) : null}

@@ -11,6 +11,8 @@ import {
   telehealthQueueSchedulePanelIconClass,
 } from "@/lib/telehealth-queue-ui-classes";
 import type { TelehealthQueueDateFilter } from "@/lib/telehealth-queue-filter";
+import type { EntityRole } from "@/lib/entity-routes";
+import type { AppointmentVisitMetaBilling } from "@/lib/appointment-visit-meta-resolve";
 import type { DoctorDirectoryRow } from "@/lib/doctor-directory";
 import type { FullAppointment } from "@/hooks/useAppointments";
 
@@ -18,8 +20,10 @@ type Props = {
   appointments: FullAppointment[];
   dateFilter: TelehealthQueueDateFilter;
   doctors?: DoctorDirectoryRow[] | null;
+  billingByAppointmentId?: Map<string, AppointmentVisitMetaBilling>;
   listBodyLoading: boolean;
   onJoin: (appointmentId: string) => void;
+  viewerRole?: EntityRole;
 };
 
 function scheduleTitle(filter: TelehealthQueueDateFilter): string {
@@ -33,8 +37,10 @@ export function TelehealthQueueList({
   appointments,
   dateFilter,
   doctors,
+  billingByAppointmentId,
   listBodyLoading,
   onJoin,
+  viewerRole = "admin",
 }: Props) {
   const emptyCopy = buildTelehealthQueueEmptyCopy(dateFilter);
 
@@ -66,7 +72,9 @@ export function TelehealthQueueList({
               key={appt.id}
               appointment={appt}
               doctors={doctors}
+              billing={billingByAppointmentId?.get(appt.id)}
               onJoin={() => onJoin(appt.id)}
+              viewerRole={viewerRole}
             />
           ))}
         </div>

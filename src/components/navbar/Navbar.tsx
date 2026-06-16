@@ -55,6 +55,7 @@ export default function Navbar() {
     showAdminPortalLink,
     showDoctorPortalLink,
     showControlPanelLink,
+    showTelehealthQueueNavLink,
   } = useNavSession();
   const pathname = usePathname();
   const router = useRouter();
@@ -151,6 +152,15 @@ export default function Navbar() {
               className={navLinkClass(Boolean(pathname?.includes("/control-panel")))}
             >
               Control Panel
+            </Link>
+          )}
+
+          {showTelehealthQueueNavLink && (
+            <Link
+              href="/telehealth-queue"
+              className={navLinkClass(Boolean(pathname?.startsWith("/telehealth-queue")))}
+            >
+              Telehealth Queue
             </Link>
           )}
 

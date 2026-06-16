@@ -25,6 +25,7 @@ type PatientBookingDoctorTypeSectionProps = {
   onFlexDurationChange: (minutes: number) => void;
   /** Step 1 only — split panels flex-fill to footer; each panel scrolls internally. */
   fillLayout?: boolean;
+  inactiveTypes?: PatientBookingAppointmentType[];
 };
 
 /** Step 1 — directory cards (availabilities + service labels) or locked card; visit type below. */
@@ -43,6 +44,7 @@ export function PatientBookingDoctorTypeSection({
   flexDuration,
   onFlexDurationChange,
   fillLayout = false,
+  inactiveTypes = [],
 }: PatientBookingDoctorTypeSectionProps) {
   const doctorPanel = (
     <div
@@ -94,6 +96,7 @@ export function PatientBookingDoctorTypeSection({
         onFlexDurationChange={onFlexDurationChange}
         fillLayout={fillLayout}
         doctorConsultationFeeCents={selectedDoctor?.consultation_fee}
+        inactiveTypes={inactiveTypes}
       />
     </div>
   ) : null;

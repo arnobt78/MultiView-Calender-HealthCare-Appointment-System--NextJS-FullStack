@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   Stethoscope,
   TrendingUp,
+  Video,
 } from "lucide-react";
 import type { PageChromeTone } from "@/lib/page-chrome-classes";
 import {
@@ -20,6 +21,7 @@ export type PortalPageChromeRouteKey =
   | "patient_portal"
   | "services"
   | "insights"
+  | "telehealth_queue"
   | "admin_portal"
   | "api_docs"
   | "api_status";
@@ -54,6 +56,13 @@ const PORTAL_PAGE_CHROME: Record<PortalPageChromeRouteKey, PortalPageChromeConfi
     tone: "violet",
     title: INSIGHTS_PAGE_TITLE,
     description: INSIGHTS_PAGE_BODY,
+  },
+  telehealth_queue: {
+    route: "telehealth_queue",
+    icon: Video,
+    tone: "violet",
+    title: "Telehealth Queue",
+    description: "Live video visits — filter by date, join sessions, and book new telehealth appointments.",
   },
   admin_portal: {
     route: "admin_portal",

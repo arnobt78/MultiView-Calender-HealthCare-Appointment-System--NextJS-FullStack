@@ -5,19 +5,23 @@ import { Video } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
+import { AppointmentVisitMetaBadgeRow } from "@/components/shared/appointment-display/AppointmentVisitMetaBadgeRow";
 import { ControlPanelGlassActionButton } from "@/components/shared/ControlPanelGlassActionButton";
-import { AppointmentStatusGlassBadge } from "@/components/shared/appointments/AppointmentStatusGlassBadge";
 import { DashboardAppointmentScheduleMetaRow } from "@/components/control-panel/dashboard/DashboardAppointmentScheduleMetaRow";
 import { DashboardPatientIdentityInline } from "@/components/control-panel/dashboard/DashboardPatientIdentityInline";
 import { TelehealthQueueDoctorCategoryBlock } from "@/components/control-panel/telehealth/TelehealthQueueDoctorCategoryBlock";
-import { appointmentDetailHref } from "@/lib/entity-routes";
+import { appointmentDetailHref, type EntityRole } from "@/lib/entity-routes";
+import { isPatientRole } from "@/lib/rbac";
+import type { AppointmentVisitMetaBilling } from "@/lib/appointment-visit-meta-resolve";
+import {
+  resolveAppointmentVisitMetaFromFullAppointmentTelehealth,
+} from "@/lib/appointment-visit-meta-resolve";
 import {
   isRedundantTelehealthVisitTypeLabel,
   mapTelehealthQueueCategory,
   mapTelehealthQueuePatient,
   mapTelehealthQueueTreatingDoctor,
   resolveTelehealthQueuePhysicalLocation,
-  resolveTelehealthVisitTypeLabel,
 } from "@/lib/telehealth-queue-display";
 import {
   isTelehealthSessionEnded,
@@ -37,20 +41,37 @@ import { cn } from "@/lib/utils";
 type Props = {
   appointment: FullAppointment;
   doctors?: DoctorDirectoryRow[] | null;
+  billing?: AppointmentVisitMetaBilling;
   onJoin: () => void;
+  viewerRole?: EntityRole;
 };
 
-/** Single telehealth queue row — status after title, full date, doctor + category. */
-export function TelehealthQueueRow({ appointment, doctors, onJoin }: Props) {
+/**
+ * Single telehealth queue row — title link + shared visit-meta chips (type, fee, status,
+ * telehealth, invoice/payment), schedule meta, patient (non-patient viewer), doctor + category.
+ */
+export function TelehealthQueueRow({
+  appointment,
+  doctors,
+  billing,
+  onJoin,
+  viewerRole = "admin",
+}: Props) {
   const inProgress = isTelehealthSessionInProgress(appointment);
   const ended = isTelehealthSessionEnded(appointment);
   const patient = mapTelehealthQueuePatient(appointment);
   const doctor = mapTelehealthQueueTreatingDoctor(appointment, doctors);
   const category = mapTelehealthQueueCategory(appointment);
-  const detailHref = appointmentDetailHref("admin", appointment.id);
-  const visitType = resolveTelehealthVisitTypeLabel(appointment);
+  const detailHref = appointmentDetailHref(viewerRole, appointment.id);
+  const patientViewer = isPatientRole(viewerRole);
   const physicalLocation = resolveTelehealthQueuePhysicalLocation(appointment);
-  const showVisitTypeBadge = !isRedundantTelehealthVisitTypeLabel(visitType);
+
+  const meta = resolveAppointmentVisitMetaFromFullAppointmentTelehealth(appointment);
+  const typeName =
+    meta.appointmentTypeName &&
+    !isRedundantTelehealthVisitTypeLabel(meta.appointmentTypeName)
+      ? meta.appointmentTypeName
+      : null;
 
   return (
     <div
@@ -97,13 +118,19 @@ export function TelehealthQueueRow({ appointment, doctors, onJoin }: Props) {
                 NOW
               </Badge>
             ) : null}
-            <AppointmentStatusGlassBadge status={appointment.status} size="compact" />
           </div>
-          {showVisitTypeBadge ? (
-            <Badge variant="outline" className="w-fit text-[10px] text-gray-700">
-              {visitType}
-            </Badge>
-          ) : null}
+          <AppointmentVisitMetaBadgeRow
+            appointmentTypeName={typeName}
+            durationMinutes={meta.durationMinutes}
+            visitFeeCents={meta.visitFeeCents}
+            showVisitFeeEstimateHint={meta.showVisitFeeEstimateHint}
+            status={appointment.status}
+            showTelehealthBadge
+            invoiceDisplayStatus={billing?.invoiceDisplayStatus}
+            showInvoiceBadge={billing?.showInvoice}
+            paymentStatus={billing?.latestPayment?.status}
+            showPaymentBadge={billing?.showPayment}
+          />
           <DashboardAppointmentScheduleMetaRow
             start={appointment.start}
             end={appointment.end}
@@ -112,12 +139,15 @@ export function TelehealthQueueRow({ appointment, doctors, onJoin }: Props) {
             showTelehealthBadge={false}
             dateVariant="full"
           />
-          {patient ? <DashboardPatientIdentityInline patient={patient} /> : null}
+          {patient && !patientViewer ? (
+            <DashboardPatientIdentityInline patient={patient} viewerRole={viewerRole} />
+          ) : null}
           {doctor || category ? (
             <TelehealthQueueDoctorCategoryBlock
               doctor={doctor}
               category={category}
               layout="inline"
+              viewerRole={viewerRole}
             />
           ) : null}
         </div>

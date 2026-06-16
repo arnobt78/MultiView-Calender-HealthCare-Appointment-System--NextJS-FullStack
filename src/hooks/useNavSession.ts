@@ -48,5 +48,6 @@ export function useNavSession() {
     showControlPanelLink: isAdmin,
     showStaffNavLinks: isStaff,
     showPatientPortalNavLink: isPatient,
+    showTelehealthQueueNavLink: isDoctor || isPatient,
   };
 }

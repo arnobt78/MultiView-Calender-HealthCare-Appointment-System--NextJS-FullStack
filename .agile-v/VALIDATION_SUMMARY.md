@@ -719,3 +719,54 @@ EvalGate: status=PASS | automated verify on main | gate2_pending=TBD
 | VER-0125 | — | PASS | Full regression **1154/1154** tsc lint build |
 
 EvalGate (C37): status=PASS | eval_run_id=ER-C37-VERIFY | gate2=N/A
+
+---
+
+## C38 — Google Calendar API warning (2026-06-15)
+
+| Item | Value |
+|------|-------|
+| Cycle | C38 |
+| REQ-IDs | REQ-0088 |
+| Regression | shipped on main |
+
+EvalGate: status=PASS | eval_run_id=ER-C38-VERIFY | gate2_pending=TBD
+
+---
+
+## C39 — Telehealth queue UI (2026-06-15)
+
+| Item | Value |
+|------|-------|
+| Cycle | C39 + C39.1 + C39.2 |
+| REQ-IDs | REQ-0089, REQ-0090 |
+| Regression | **1203/1203** Vitest |
+| HEAD | `3fd00b1` |
+
+| VER-ID | REQ-ID | Result | Description |
+|--------|--------|--------|-------------|
+| VER-0126 | REQ-0089 | PASS | telehealth-queue-filter/display/empty-copy tests |
+| VER-0127 | REQ-0090 | PASS | telehealth identity + status UX |
+| VER-0128 | REQ-0089/0090 | PASS | Full regression **1203/1203** tsc lint build |
+
+EvalGate: status=PASS | eval_run_id=ER-C39-VERIFY | gate2_pending=TBD
+
+---
+
+## C40 — Portal telehealth queue (2026-06-15)
+
+| Item | Value |
+|------|-------|
+| Cycle | C40 |
+| REQ-IDs | REQ-0091 |
+| Regression | **1206/1206** Vitest (242 files) |
+| HEAD | WIP (uncommitted) |
+
+| VER-ID | REQ-ID | Result | Description |
+|--------|--------|--------|-------------|
+| VER-0129 | REQ-0091 | PASS | telehealth-scheduling-types partition tests |
+| VER-0130 | REQ-0091 | PASS | `/telehealth-queue` route + navbar + role links |
+| VER-0131 | REQ-0091 | PASS | telehealth booking preset (staff + patient dialogs) |
+| VER-0132 | REQ-0091 | PASS | Full regression **1206/1206** tsc lint build |
+
+EvalGate: status=PASS | eval_run_id=ER-C40-VERIFY | gate2_pending=TBD | commit_pending=yes

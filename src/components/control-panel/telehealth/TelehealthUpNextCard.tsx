@@ -3,16 +3,19 @@
 import { format } from "date-fns";
 import { Clock, FileText, Timer, Video } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
-import { TelehealthSessionBadge } from "@/components/shared/appointments/TelehealthSessionBadge";
-import { AppointmentStatusGlassBadge } from "@/components/shared/appointments/AppointmentStatusGlassBadge";
+import { AppointmentVisitMetaBadgeRow } from "@/components/shared/appointment-display/AppointmentVisitMetaBadgeRow";
 import { ControlPanelGlassActionButton } from "@/components/shared/ControlPanelGlassActionButton";
 import { DashboardPatientIdentityInline } from "@/components/control-panel/dashboard/DashboardPatientIdentityInline";
 import { DashboardAppointmentScheduleMetaRow } from "@/components/control-panel/dashboard/DashboardAppointmentScheduleMetaRow";
 import { TelehealthQueueDoctorCategoryBlock } from "@/components/control-panel/telehealth/TelehealthQueueDoctorCategoryBlock";
-import { appointmentDetailHref } from "@/lib/entity-routes";
+import { appointmentDetailHref, type EntityRole } from "@/lib/entity-routes";
+import { isPatientRole } from "@/lib/rbac";
+import type { AppointmentVisitMetaBilling } from "@/lib/appointment-visit-meta-resolve";
+import {
+  resolveAppointmentVisitMetaFromFullAppointmentTelehealth,
+} from "@/lib/appointment-visit-meta-resolve";
 import {
   isRedundantTelehealthVisitTypeLabel,
   mapTelehealthQueueCategory,
@@ -20,12 +23,9 @@ import {
   mapTelehealthQueueTreatingDoctor,
   resolveTelehealthDurationMinutes,
   resolveTelehealthQueuePhysicalLocation,
-  resolveTelehealthVisitTypeLabel,
 } from "@/lib/telehealth-queue-display";
 import {
-  telehealthQueueHeaderChipClass,
   telehealthQueueJoinButtonClass,
-  telehealthQueueTelehealthHeaderBadgeClass,
   telehealthQueueTimeBadgeClass,
   telehealthQueueUpNextCardClass,
 } from "@/lib/telehealth-queue-ui-classes";
@@ -35,49 +35,68 @@ import type { FullAppointment } from "@/hooks/useAppointments";
 type Props = {
   appointment: FullAppointment;
   doctors?: DoctorDirectoryRow[] | null;
+  billing?: AppointmentVisitMetaBilling;
   onJoin: () => void;
+  viewerRole?: EntityRole;
 };
 
-/** Violet glass hero — clock + status header, doctor + category, glass Join. */
-export function TelehealthUpNextCard({ appointment, doctors, onJoin }: Props) {
+/**
+ * Violet glass hero — clock anchor + shared visit-meta chips, patient (non-patient viewer),
+ * doctor + category inline, glass Join.
+ */
+export function TelehealthUpNextCard({
+  appointment,
+  doctors,
+  billing,
+  onJoin,
+  viewerRole = "admin",
+}: Props) {
   const patient = mapTelehealthQueuePatient(appointment);
   const doctor = mapTelehealthQueueTreatingDoctor(appointment, doctors);
   const category = mapTelehealthQueueCategory(appointment);
-  const detailHref = appointmentDetailHref("admin", appointment.id);
-  const visitType = resolveTelehealthVisitTypeLabel(appointment);
+  const detailHref = appointmentDetailHref(viewerRole, appointment.id);
+  const patientViewer = isPatientRole(viewerRole);
   const duration = resolveTelehealthDurationMinutes(appointment);
   const physicalLocation = resolveTelehealthQueuePhysicalLocation(appointment);
-  const showVisitTypeBadge = !isRedundantTelehealthVisitTypeLabel(visitType);
+
+  const meta = resolveAppointmentVisitMetaFromFullAppointmentTelehealth(appointment);
+  const typeName =
+    meta.appointmentTypeName &&
+    !isRedundantTelehealthVisitTypeLabel(meta.appointmentTypeName)
+      ? meta.appointmentTypeName
+      : null;
 
   return (
     <Card className={telehealthQueueUpNextCardClass}>
       <CardContent className="pt-4">
-        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge className={telehealthQueueTimeBadgeClass}>
-              <Clock className="shrink-0" aria-hidden />
-              {format(new Date(appointment.start), "h:mm a")}
-            </Badge>
-            <AppointmentStatusGlassBadge
-              status={appointment.status}
-              size="compact"
-              className={telehealthQueueHeaderChipClass}
-            />
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <TelehealthSessionBadge className={telehealthQueueTelehealthHeaderBadgeClass} />
-            {showVisitTypeBadge ? (
-              <Badge variant="outline" className="text-xs text-gray-700">
-                {visitType}
-              </Badge>
-            ) : null}
-          </div>
+        <div className="mb-2 flex flex-wrap items-center gap-2">
+          <span className={telehealthQueueTimeBadgeClass}>
+            <Clock className="size-3 shrink-0" aria-hidden />
+            {format(new Date(appointment.start), "h:mm a")}
+          </span>
         </div>
+
         <EntityTitleLink
           href={detailHref}
           label={appointment.title}
           className="block text-sm font-medium"
         />
+
+        <div className="mt-2">
+          <AppointmentVisitMetaBadgeRow
+            appointmentTypeName={typeName}
+            durationMinutes={meta.durationMinutes}
+            visitFeeCents={meta.visitFeeCents}
+            showVisitFeeEstimateHint={meta.showVisitFeeEstimateHint}
+            status={appointment.status}
+            showTelehealthBadge
+            invoiceDisplayStatus={billing?.invoiceDisplayStatus}
+            showInvoiceBadge={billing?.showInvoice}
+            paymentStatus={billing?.latestPayment?.status}
+            showPaymentBadge={billing?.showPayment}
+          />
+        </div>
+
         <DashboardAppointmentScheduleMetaRow
           start={appointment.start}
           end={appointment.end}
@@ -86,17 +105,26 @@ export function TelehealthUpNextCard({ appointment, doctors, onJoin }: Props) {
           showTelehealthBadge={false}
           dateVariant="full"
         />
-        {patient ? (
+
+        {patient && !patientViewer ? (
           <div className="mt-2">
-            <DashboardPatientIdentityInline patient={patient} />
+            <DashboardPatientIdentityInline patient={patient} viewerRole={viewerRole} />
           </div>
         ) : null}
+
         {doctor || category ? (
           <div className="mt-2">
-            <TelehealthQueueDoctorCategoryBlock doctor={doctor} category={category} />
+            <TelehealthQueueDoctorCategoryBlock
+              doctor={doctor}
+              category={category}
+              layout="inline"
+              viewerRole={viewerRole}
+            />
           </div>
         ) : null}
+
         <Separator className="my-2" />
+
         <div className="mb-2 grid gap-2 text-xs text-muted-foreground">
           {duration > 0 ? (
             <div className="flex items-start gap-2">
@@ -113,11 +141,12 @@ export function TelehealthUpNextCard({ appointment, doctors, onJoin }: Props) {
             </div>
           ) : appointment.notes?.trim() ? (
             <div className="flex items-start gap-2">
-              <FileText className="size-4 shrink-0" aria-hidden />
+              <FileText className="size-4 shrink-0 text-muted-foreground" aria-hidden />
               <span className="line-clamp-2">{appointment.notes}</span>
             </div>
           ) : null}
         </div>
+
         <ControlPanelGlassActionButton
           type="button"
           variant="violet"

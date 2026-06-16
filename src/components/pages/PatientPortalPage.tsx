@@ -221,9 +221,9 @@ function AppointmentTimeline({
           ) : appointments.length === 0 ? (
             /* Empty state */
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <Stethoscope className="mb-3 h-10 w-10 text-gray-400" />
+              <Stethoscope className="size-10 text-gray-400" />
               <p className="font-medium text-gray-700">No appointments yet</p>
-              <p className="mt-1 text-xs text-gray-600">Your history will appear here once you&apos;ve had appointments.</p>
+              <p className="text-xs text-gray-600">Your history will appear here once you&apos;ve had appointments.</p>
             </div>
           ) : filtered.length === 0 ? (
             <p className="py-6 text-center text-sm text-gray-700">No {filter} appointments.</p>
@@ -261,8 +261,8 @@ function AppointmentTimeline({
                       <div className="relative space-y-3 before:absolute before:inset-y-0 before:left-[18px] before:w-0.5 before:bg-linear-to-b before:from-sky-300/60 before:via-sky-200/40 before:to-transparent">
                         {groups.flatMap((group) =>
                           group.items.map((appt) => (
-                              <PortalTimelineRailItem key={appt.id} appt={appt} />
-                            ))
+                            <PortalTimelineRailItem key={appt.id} appt={appt} />
+                          ))
                         )}
                       </div>
                     )}

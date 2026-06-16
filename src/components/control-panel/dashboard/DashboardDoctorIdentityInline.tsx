@@ -4,17 +4,19 @@ import { Stethoscope } from "lucide-react";
 import { DoctorMiniAvatar } from "@/components/shared/doctor-display/DoctorMiniAvatar";
 import { DoctorSpecialtyBadge } from "@/components/shared/doctor-display/DoctorSpecialtyBadge";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
-import { doctorDetailHref } from "@/lib/entity-routes";
+import { doctorDetailHref, type EntityRole } from "@/lib/entity-routes";
 import type { DashboardOverviewQueueDoctor } from "@/lib/dashboard-overview-queue";
 import { cn } from "@/lib/utils";
 
 type Props = {
   doctor: DashboardOverviewQueueDoctor;
   className?: string;
+  /** Role-aware doctor detail href — defaults to admin CP route. */
+  viewerRole?: EntityRole;
 };
 
 /** Inline treating doctor row — avatar, sky link name, specialty badge. */
-export function DashboardDoctorIdentityInline({ doctor, className }: Props) {
+export function DashboardDoctorIdentityInline({ doctor, className, viewerRole = "admin" }: Props) {
   const label = doctor.display_name?.trim() || doctor.email?.trim() || "Doctor";
   return (
     <span
@@ -34,7 +36,7 @@ export function DashboardDoctorIdentityInline({ doctor, className }: Props) {
         className="h-6 w-6 shrink-0"
       />
       <EntityTitleLink
-        href={doctorDetailHref("admin", doctor.id)}
+        href={doctorDetailHref(viewerRole, doctor.id)}
         label={label}
         className="text-xs font-medium"
       />

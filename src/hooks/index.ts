@@ -29,6 +29,7 @@ export * from "./useAvailabilitySlots";
 export * from "./useSchedulingDayGrid";
 export * from "./useSchedulingMonthDates";
 export * from "./useBookableTypesForDoctor";
+export * from "./useTelehealthSchedulingTypesForDoctor";
 export * from "./useAppointmentTypes";
 export * from "./useCategories";
 export * from "./useDashboardAccess";

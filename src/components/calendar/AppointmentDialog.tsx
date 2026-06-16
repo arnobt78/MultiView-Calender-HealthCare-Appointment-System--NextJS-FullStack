@@ -50,6 +50,8 @@ type Props = {
   onSuccess?: () => void;
   isOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
+  /** Telehealth queue CTA — pre-filter visit types to video only (REQ-0091). */
+  telehealthBookingPreset?: boolean;
 };
 
 /**
@@ -66,6 +68,7 @@ export default function AppointmentDialog({
   onSuccess,
   isOpen,
   onOpenChange,
+  telehealthBookingPreset = false,
 }: Props) {
   const isEditMode = Boolean(appointment);
   const [open, setOpen] = useState(isEditMode);
@@ -505,6 +508,7 @@ export default function AppointmentDialog({
                 chiefComplaint={chiefComplaint}
                 setChiefComplaint={setChiefComplaint}
                 excludeAppointmentId={appointment?.id}
+                telehealthBookingPreset={telehealthBookingPreset}
               />
             </section>
           </div>

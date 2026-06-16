@@ -426,3 +426,60 @@ human_gate_2: N/A
 | release build | npm run build | PASS | — |
 
 **EvalGate (C37):** PASS (automated) — engineering hardening; no REQ archive required.
+
+## C38 — ER-C38-VERIFY
+
+```yaml
+eval_run_id: ER-C38-VERIFY
+eval_timestamp: "2026-06-15T14:00:00Z"
+policy_version_ref: "1.0.0"
+eval_gate_status: PASS
+eval_gate_rationale: "REQ-0088 GCal API warning + connect backfill; regression PASS"
+cycle: C38
+release_commit: "shipped-on-main"
+human_gate_2: TBD
+```
+
+## C39 — ER-C39-VERIFY
+
+```yaml
+eval_run_id: ER-C39-VERIFY
+eval_timestamp: "2026-06-15T16:30:00Z"
+policy_version_ref: "1.0.0"
+eval_gate_status: PASS
+eval_gate_rationale: "REQ-0089/0090 telehealth queue UI + identity UX; 1203/1203; commit 3fd00b1"
+cycle: C39
+release_commit: "3fd00b1"
+human_gate_2: TBD
+```
+
+| Suite | Command | Result | LINKED_REQ |
+|-------|---------|--------|------------|
+| telehealth-queue-* | npm test telehealth-queue | PASS | REQ-0089, REQ-0090 |
+| full regression | npm test | PASS 1203/1203 | REQ-0089, REQ-0090 |
+| typecheck | npx tsc --noEmit | PASS | REQ-0089, REQ-0090 |
+| lint | npm run lint | PASS | REQ-0089, REQ-0090 |
+| release build | npm run build | PASS | REQ-0089, REQ-0090 |
+
+## C40 — ER-C40-VERIFY
+
+```yaml
+eval_run_id: ER-C40-VERIFY
+eval_timestamp: "2026-06-15T17:10:00Z"
+policy_version_ref: "1.0.0"
+eval_gate_status: PASS
+eval_gate_rationale: "REQ-0091 portal telehealth queue + booking preset; 1206/1206; tsc; eslint; build PASS"
+cycle: C40
+release_commit: "WIP-uncommitted"
+human_gate_2: TBD
+```
+
+| Suite | Command | Result | LINKED_REQ |
+|-------|---------|--------|------------|
+| telehealth-scheduling-types | npm test telehealth-scheduling-types | PASS | REQ-0091 |
+| full regression | npm test | PASS 1206/1206 | REQ-0091 |
+| typecheck | npx tsc --noEmit | PASS | REQ-0091 |
+| lint | npm run lint | PASS | REQ-0091 |
+| release build | npm run build | PASS | REQ-0091 |
+
+**EvalGate (C40 active):** PASS (automated) — commit pending; Human Gate TBD before archive.

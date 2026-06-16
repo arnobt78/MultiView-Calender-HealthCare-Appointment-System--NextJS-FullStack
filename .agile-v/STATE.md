@@ -1,50 +1,50 @@
 # Agile V — Living State
 
-<!-- Updated: 2026-06-15 | Project: HealthCal Pro | Resume: ACTIVATION.md -->
+<!-- Updated: 2026-06-16 | Project: HealthCal Pro | Resume: ACTIVATION.md -->
 
 ## Current Status
 
 | Field | Value |
 |-------|-------|
-| **Cycle** | **C38** closed · **C39** — Specify (idle) |
-| **Phase** | — (awaiting new REQ) |
-| **Stage** | 0 — Specify next |
+| **Cycle** | **C40** — Verify PASS · **Accept** (commit pending) |
+| **Phase** | 4 — Verify complete |
+| **Stage** | 5 — Accept / ship |
 | **Status** | **ready** |
-| **Last Updated** | 2026-06-15 |
-| **Parent REQ** | — (add REQ-0088+ in REQUIREMENTS.md before code) |
+| **Last Updated** | 2026-06-16 |
+| **Parent REQ** | **REQ-0091** (C40 portal telehealth queue + booking preset) |
 
 ## Verify baseline (session activation)
 
-**1162/1162** · tsc · lint · build — PASS
+**1206/1206** · tsc · lint · build — PASS
 
-## Last shipped (C37 chain — engineering hardening, no REQ)
+| Layer | HEAD / WIP |
+|-------|------------|
+| **Committed** | `3fd00b1` — C39 (REQ-0089/0090) |
+| **WIP** | C40 (REQ-0091) — local verify PASS, not committed |
 
-| Sub | Theme |
-|-----|-------|
-| C37 | Auth login transition — hard replace, pending-guard, `loadingGoogle`, deferred toasts |
-| C37.1 | GCal provider stable tree — no Login/Landing remount on auth seed |
-| C37.2 | GCal sync error policy — events fail ≠ disconnected |
-| C37.3 | GCal Sync Behavior header layout; subsection icon stretch; ICS import label null guard |
-| **C38** | **REQ-0088** — GCal API warning banner + connect backfill |
+## Last shipped (by commit)
 
-## Last REQ-backed (C36.2.1)
-
-**REQ-0087** — Staff appointment detail gcal SSR seed.
+| Cycle | REQ | Theme |
+|-------|-----|-------|
+| **C40** | **0091** | Portal `/telehealth-queue`, navbar, role links, telehealth booking preset |
+| **C39.2** | **0090** | Telehealth identity + status UX |
+| **C39.1** | **0089** | Telehealth queue violet glass polish |
+| **C38** | **0088** | GCal API warning + connect backfill |
+| C37.2 | — | GCal sync error policy |
 
 ## HITL
 
 | Gate | Status |
 |------|--------|
 | CHECKPOINTS | none PENDING |
-| GATE-0005..0014 + C8–C36 | backlog pending archive |
+| GATE-0005..0014 + C8–C40 | backlog pending archive |
 
 ## Next (Infinity Loop entry)
 
-1. **Specify C38** — requirement-architect → `REQ-0088` in `REQUIREMENTS.md`
-2. **Constrain** — logic-gatekeeper → Gate 1 if needed
-3. **Orchestrate** — `build-agent-js` + `test-designer` (halt without parent REQ)
-4. **Verify** — `npm test && npx tsc --noEmit && npm run lint && npm run build`
+1. **Accept C40** — commit REQ-0091 artifacts → optional Human Gate 2
+2. **Specify C41** — requirement-architect → new REQ in `REQUIREMENTS.md` before code
+3. **Verify** — `npm test && npx tsc --noEmit && npm run lint && npm run build`
 
 ## Engineering hooks (every prompt)
 
-`queryKeys` + invalidation · `getSessionUser()` · `dynamic = "force-dynamic"` APIs · `rbac.ts` · `Link` internal · `CLAUDE.md` · `docs/PROJECT_WALKTHROUGH.md` · `.claude/SESSION.md`
+`queryKeys` + invalidation · `getSessionUser()` · `dynamic = "force-dynamic"` APIs · `rbac.ts` · `Link` internal · `entity-routes.ts` · `CLAUDE.md` · `docs/PROJECT_WALKTHROUGH.md`

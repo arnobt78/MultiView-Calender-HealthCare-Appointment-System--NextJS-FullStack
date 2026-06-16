@@ -1,6 +1,6 @@
 # Agile V — Session Activation (every prompt)
 
-<!-- HealthCal Pro | v1.4 | Sync: 2026-06-15 Infinity Loop ACTIVE -->
+<!-- HealthCal Pro | v1.4 | Sync: 2026-06-16 Infinity Loop ACTIVE -->
 
 ## 1. Load skills (mandatory — every prompt)
 
@@ -17,14 +17,14 @@
 
 ## 2. Read (resume — in order)
 
-1. `STATE.md` — **C37.2 closed** · **C38 specify idle** · **1154/1154** · HEAD `ea40860`
+1. `STATE.md` — **C40 verify PASS** · **1206/1206** · committed `3fd00b1` (C39) · C40 WIP uncommitted
 2. `CHECKPOINTS.md` — halt if any **PENDING** HITL (**none**)
-3. `REQUIREMENTS.md` — parent **REQ-XXXX** before any code (**REQ-0001..0087**)
+3. `REQUIREMENTS.md` — parent **REQ-XXXX** before any code (**REQ-0001..0091**)
 
 ## 3. Before coding (mandatory gate)
 
 1. Read `STATE.md` + `CHECKPOINTS.md`.
-2. Resolve parent `REQ-XXXX` — **halt if missing** (C37 was engineering-only).
+2. Resolve parent `REQ-XXXX` — **halt if missing**.
 3. Pipeline: **Specify → Constrain → [Gate1] → Orchestrate → Prove → Verify → [Gate2] → Accept**
 4. CRUD: `queryKeys` + invalidation helpers — never hardcode keys.
 5. Verify: Red Team suite — `npm test && npx tsc --noEmit && npm run lint && npm run build`
@@ -46,12 +46,12 @@ Specify → Constrain → [Gate1] → Orchestrate → Prove → Verify → [Gate
 | Cycle | REQ | Status | Gate |
 |-------|-----|--------|------|
 | C1–C2 | 0001..0008 | archived frozen | ✓ |
-| C3–C34.1 | 0009..0082 | verify/shipped | pending |
-| C35–C36.2.1 | 0083..0087 | verify/shipped | pending |
-| **C37 / C37.1 / C37.2** | **—** | **shipped** | — |
-| **C38** | **TBD** | **specify idle** | — |
+| C3–C37.2 | 0009..0087 + eng | verify/shipped | pending |
+| **C38** | **0088** | verify PASS | pending |
+| **C39 / C39.1 / C39.2** | **0089..0090** | shipped `3fd00b1` | pending |
+| **C40** | **0091** | **verify PASS** (WIP) | pending |
 
-**Baseline:** **1154** tests · **232** files · HEAD **`ea40860`** · 2026-06-15
+**Baseline:** **1206** tests · **242** files · committed **`3fd00b1`** · 2026-06-15
 
 ## 7. Halt if
 
@@ -59,7 +59,7 @@ No parent REQ · ambiguous REQ · self-verify only · skip invalidation · Gate 
 
 ## 8. Project hooks
 
-`AGENTS.md` · `CLAUDE.md` · `.claude/SESSION.md` · `docs/PROJECT_WALKTHROUGH.md` · `.cursor/rules/agile-v-infinity-loop.mdc` (always on)
+`AGENTS.md` · `CLAUDE.md` · `docs/PROJECT_WALKTHROUGH.md` · `.cursor/rules/agile-v-infinity-loop.mdc` (always on)
 
 ## 9. Default role map (this repo)
 

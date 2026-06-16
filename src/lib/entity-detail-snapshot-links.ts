@@ -47,6 +47,30 @@ export const DOCTOR_DETAIL_DOCTOR_SNAPSHOT_LINKS: RelatedAppointmentsLinkPolicy 
 };
 
 /**
+ * Portal `/appointments/:id` — doctor viewer: full People links when appointment is on their queue.
+ * Differs from doctor-entity snapshot tables where other patients stay plain.
+ */
+export const APPOINTMENT_DETAIL_PORTAL_DOCTOR_LINKS: RelatedAppointmentsLinkPolicy = {
+  appointmentTitle: true,
+  patientInTitle: true,
+  categoryLink: true,
+  treatingPhysicianLink: true,
+  calendarOwner: DOCTOR_DETAIL_DOCTOR_SNAPSHOT_LINKS.calendarOwner,
+};
+
+/**
+ * Portal `/appointments/:id` — patient viewer: own chart link optional plain in People row.
+ */
+export const APPOINTMENT_DETAIL_PORTAL_PATIENT_LINKS: RelatedAppointmentsLinkPolicy = {
+  appointmentTitle: true,
+  patientInTitle: false,
+  categoryLink: true,
+  treatingPhysicianLink: true,
+  calendarOwner: ({ ownerRole }) =>
+    ownerRole === "admin" ? "none" : ownerRole === "doctor" ? "role" : "none",
+};
+
+/**
  * Portal entity detail (`/doctors/:id`, `/categories/:id`) — related appointments table.
  * CP admin keeps full links when policy omitted.
  */
@@ -55,6 +79,18 @@ export function resolvePortalEntityDetailSnapshotLinkPolicy(
 ): RelatedAppointmentsLinkPolicy | undefined {
   if (isPatientRole(viewerRole)) return DOCTOR_DETAIL_PATIENT_SNAPSHOT_LINKS;
   if (isDoctorRole(viewerRole)) return DOCTOR_DETAIL_DOCTOR_SNAPSHOT_LINKS;
+  return undefined;
+}
+
+/**
+ * Portal `/appointments/:id` — People + category links (not doctor-entity snapshot tables).
+ * CP / admin callers omit policy for full default links.
+ */
+export function resolvePortalAppointmentDetailLinkPolicy(
+  viewerRole: EntityRole
+): RelatedAppointmentsLinkPolicy | undefined {
+  if (isPatientRole(viewerRole)) return APPOINTMENT_DETAIL_PORTAL_PATIENT_LINKS;
+  if (isDoctorRole(viewerRole)) return APPOINTMENT_DETAIL_PORTAL_DOCTOR_LINKS;
   return undefined;
 }
 

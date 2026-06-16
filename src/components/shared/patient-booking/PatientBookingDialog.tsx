@@ -5,7 +5,7 @@
  * Three steps (one panel each): doctor & type → date & time → details.
  */
 
-import { useRef, useState, type ReactNode } from "react";
+import { useRef, useState, useEffect, type ReactNode } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { addMinutes, format } from "date-fns";
 import { motion, useReducedMotion } from "framer-motion";
@@ -72,6 +72,8 @@ export type PatientBookingDialogProps = {
   preselectedDoctorId?: string;
   /** Hide doctor dropdown and show identity card (services book CTA) */
   lockDoctor?: boolean;
+  /** Telehealth queue CTA — only video visit types; inactive shown disabled (REQ-0091). */
+  telehealthOnly?: boolean;
   trigger?: ReactNode;
 };
 
@@ -122,6 +124,7 @@ function BookingSectionMotion({
 export function PatientBookingDialog({
   preselectedDoctorId,
   lockDoctor = false,
+  telehealthOnly = false,
   trigger,
 }: PatientBookingDialogProps = {}) {
   const queryClient = useQueryClient();
@@ -143,10 +146,11 @@ export function PatientBookingDialog({
   });
   const doctors: DoctorDirectoryRow[] = doctorsData?.doctors ?? [];
 
-  const { types, typesLoading, isFlexible } = usePatientBookableAppointmentTypes({
+  const { types, inactiveTypes, typesLoading, isFlexible } = usePatientBookableAppointmentTypes({
     doctorId,
     enabled: open,
     doctors,
+    telehealthOnly,
   });
   const wizardState: PatientBookingWizardState = {
     doctorId,
@@ -159,6 +163,15 @@ export function PatientBookingDialog({
     isFlexible,
     typesLoading,
   };
+
+  /** Telehealth queue preset — auto-select first enabled video visit type when doctor changes. */
+  useEffect(() => {
+    if (!telehealthOnly || !doctorId || typesLoading) return;
+    if (types.length === 0) return;
+    if (selectedType && types.some((t) => t.id === selectedType.id)) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync preset when types query settles
+    setSelectedType(types[0] ?? null);
+  }, [telehealthOnly, doctorId, types, typesLoading, selectedType]);
 
   const duration = isFlexible ? flexDuration : (selectedType?.duration_minutes ?? 30);
 
@@ -432,6 +445,7 @@ export function PatientBookingDialog({
                 flexDuration={flexDuration}
                 onFlexDurationChange={handleFlexDurationChange}
                 fillLayout
+                inactiveTypes={inactiveTypes}
               />
             </BookingSectionMotion>
 

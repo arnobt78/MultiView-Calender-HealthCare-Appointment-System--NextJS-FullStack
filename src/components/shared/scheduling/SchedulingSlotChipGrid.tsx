@@ -78,12 +78,12 @@ export function SchedulingSlotChipGrid({
 
   const scrollClass = isRail
     ? cn(
-        schedulingSlotGridScrollClass.rail,
-        !fillLayout && "sm:max-h-[min(320px,45vh)]"
-      )
+      schedulingSlotGridScrollClass.rail,
+      !fillLayout && "sm:max-h-[min(320px,45vh)]"
+    )
     : cn(
-        fillLayout ? cn("min-h-0 flex-1", schedulingSlotGridScrollClass.default) : schedulingSlotGridScrollClass.defaultCapped
-      );
+      fillLayout ? cn("min-h-0 flex-1", schedulingSlotGridScrollClass.default) : schedulingSlotGridScrollClass.defaultCapped
+    );
 
   const slotGrid = (gridClassName: string) => (
     <div className={gridClassName}>
@@ -101,7 +101,7 @@ export function SchedulingSlotChipGrid({
               className={cn(
                 "flex w-full items-center justify-center rounded-xl border px-2 py-2 transition-all",
                 selectable &&
-                  (selected ? schedulingSlotChipSelectedClass : schedulingSlotChipAvailableClass),
+                (selected ? schedulingSlotChipSelectedClass : schedulingSlotChipAvailableClass),
                 !selectable && schedulingSlotChipDisabledClass,
                 cell.status === "booked" && "line-through decoration-slate-400/80"
               )}
@@ -148,9 +148,9 @@ export function SchedulingSlotChipGrid({
       ) : cells.length === 0 ? (
         <div className="flex flex-1 items-center justify-center rounded-2xl border border-dashed border-sky-200/80 p-6 text-center">
           <div>
-            <CalendarX className="mx-auto mb-2 h-8 w-8 text-muted-foreground/60" />
-            <p className="text-sm font-medium">No slots available</p>
-            <p className="mt-1 text-xs text-muted-foreground break-words">
+            <CalendarX className="mx-auto size-8 text-muted-foreground/60" />
+            <p className="text-base font-medium text-gray-600">No slots available</p>
+            <p className="text-xs text-muted-foreground break-words">
               Try a different date or doctor.
             </p>
           </div>

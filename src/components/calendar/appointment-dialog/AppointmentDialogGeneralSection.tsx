@@ -76,6 +76,7 @@ import {
 } from "@/components/shared/scheduling/VisitTypePickerList";
 import type { VisitTypePickerItem } from "@/components/shared/scheduling/VisitTypePickerList";
 import { useBookableTypesForDoctor } from "@/hooks/useBookableTypesForDoctor";
+import { useTelehealthSchedulingTypesForDoctor } from "@/hooks/useTelehealthSchedulingTypesForDoctor";
 import { SafeImage } from "@/components/ui/safe-image";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -168,6 +169,8 @@ type Props = {
   setChiefComplaint: (v: string) => void;
   /** Edit mode — keeps the appointment's slot selectable in the grid. */
   excludeAppointmentId?: string;
+  /** Telehealth queue CTA — only telehealth visit types; inactive shown disabled (REQ-0091). */
+  telehealthBookingPreset?: boolean;
 };
 
 /** Safe swatch for category `color` (hex) — invalid values fall back to neutral slate. */
@@ -268,6 +271,7 @@ export function AppointmentDialogGeneralSection({
   chiefComplaint,
   setChiefComplaint,
   excludeAppointmentId,
+  telehealthBookingPreset = false,
 }: Props) {
   const queryClient = useQueryClient();
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
@@ -283,9 +287,40 @@ export function AppointmentDialogGeneralSection({
     ? treatingPhysicianId
     : availabilityDoctorId;
 
-  const { types, typesLoading, isStaffFlexible } = useBookableTypesForDoctor(
-    staffSchedulingDoctorId
+  const { types: bookableTypes, typesLoading: bookableTypesLoading, isStaffFlexible: bookableFlexible } =
+    useBookableTypesForDoctor(telehealthBookingPreset ? null : staffSchedulingDoctorId);
+
+  const {
+    types: telehealthTypes,
+    inactiveTypes: telehealthInactiveTypes,
+    typesLoading: telehealthTypesLoading,
+    defaultTypeId: telehealthDefaultTypeId,
+  } = useTelehealthSchedulingTypesForDoctor(
+    telehealthBookingPreset ? staffSchedulingDoctorId : null
   );
+
+  const types = telehealthBookingPreset ? telehealthTypes : bookableTypes;
+  const typesLoading = telehealthBookingPreset ? telehealthTypesLoading : bookableTypesLoading;
+  const isStaffFlexible = telehealthBookingPreset ? false : bookableFlexible;
+  const inactiveTypes = telehealthBookingPreset ? telehealthInactiveTypes : [];
+
+  /** Auto-select first enabled telehealth type when doctor changes (queue booking preset). */
+  useEffect(() => {
+    if (!telehealthBookingPreset || !isValidUUID(staffSchedulingDoctorId)) return;
+    if (!telehealthDefaultTypeId) return;
+    if (slotPickTypeId === telehealthDefaultTypeId) return;
+    const stillValid = types.some((t) => t.id === slotPickTypeId);
+    if (!stillValid) {
+      setSlotPickTypeId(telehealthDefaultTypeId);
+    }
+  }, [
+    telehealthBookingPreset,
+    staffSchedulingDoctorId,
+    telehealthDefaultTypeId,
+    slotPickTypeId,
+    types,
+    setSlotPickTypeId,
+  ]);
 
   /** Typed visits default to first bookable type; flexible physicians skip auto-select. */
   const resolvedSlotTypeId = useMemo(() => {
@@ -549,7 +584,16 @@ export function AppointmentDialogGeneralSection({
             dropdownMode
             onAfterSelect={() => setTypePickerOpen(false)}
             doctorConsultationFeeCents={staffSchedulingDoctor?.consultation_fee}
+            inactiveTypes={inactiveTypes}
           />
+          {telehealthBookingPreset &&
+          !typesLoading &&
+          types.length === 0 &&
+          inactiveTypes.length === 0 ? (
+            <p className="mt-2 text-xs text-muted-foreground">
+              This doctor has no telehealth visit types enabled. Enable a video visit type in doctor settings first.
+            </p>
+          ) : null}
         </StaffAppointmentPickerField>
       ) : null}
 

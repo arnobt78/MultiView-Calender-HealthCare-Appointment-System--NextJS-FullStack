@@ -341,11 +341,40 @@
 | ART-0455 | C36.2 | REQ-0086 | AppointmentActionsMenu sync test + SyncInfoCard copy | built |
 | ART-0456 | C36.2.1 | REQ-0087 | Appointment detail pages gcal SSR prefetch | built |
 | ART-0457 | C36.2.1 | REQ-0087 | AppointmentDetailScreenShared gcal cache seed | built |
+| ART-0458 | C38 | REQ-0088 | GCal API warning banner + connect backfill | built |
+| ART-0459 | C38 | REQ-0088 | Tests + verify PASS | built |
+| ART-0460 | C38 | REQ-0088 | Docs sync | built |
+| ART-0461 | C39.1 | REQ-0089 | `telehealth-queue-filter.ts` + UI classes | built |
+| ART-0462 | C39.1 | REQ-0089 | `TelehealthQueuePage` + stats/filter pills | built |
+| ART-0463 | C39.1 | REQ-0089 | `TelehealthUpNextCard` + `TelehealthQueueList` | built |
+| ART-0464 | C39.1 | REQ-0089 | `TelehealthQueueRow` + schedule empty state | built |
+| ART-0465 | C39.1 | REQ-0089 | `telehealth-queue-empty-copy.ts` + tests | built |
+| ART-0466 | C39.1 | REQ-0089 | `telehealth-queue-display.ts` + tests | built |
+| ART-0467 | C39.1 | REQ-0089 | CP route `control-panel/telehealth-queue` | built |
+| ART-0468 | C39.1 | REQ-0089 | Verify 1203/1203 commit `3fd00b1` | built |
+| ART-0469 | C39.2 | REQ-0090 | `TelehealthQueueDoctorCategoryBlock` | built |
+| ART-0470 | C39.2 | REQ-0090 | Doctor from `doctors.all` + identity inline | built |
+| ART-0471 | C39.2 | REQ-0090 | Clock + status header chips | built |
+| ART-0472 | C39.2 | REQ-0090 | List row full date + status after title | built |
+| ART-0473 | C39.2 | REQ-0090 | `telehealth-queue-display` category mapper | built |
+| ART-0474 | C39.2 | REQ-0090 | Tests + verify PASS | built |
+| ART-0475 | C40 | REQ-0091 | `app/telehealth-queue/page.tsx` portal route | built |
+| ART-0476 | C40 | REQ-0091 | `telehealth-queue-portal-prefetch.ts` | built |
+| ART-0477 | C40 | REQ-0091 | `telehealth-scheduling-types.ts` + tests | built |
+| ART-0478 | C40 | REQ-0091 | `useTelehealthSchedulingTypesForDoctor` hook | built |
+| ART-0479 | C40 | REQ-0091 | `TelehealthQueueChromeActions` + navbar link | built |
+| ART-0480 | C40 | REQ-0091 | `viewerRole` threading + patient plain title | built |
+| ART-0481 | C40 | REQ-0091 | `portal-page-chrome-config` telehealth_queue | built |
+| ART-0482 | C40 | REQ-0091 | `VisitTypePickerList` inactive type tiles | built |
+| ART-0483 | C40 | REQ-0091 | `telehealthBookingPreset` / `telehealthOnly` dialogs | built |
+| ART-0484 | C40 | REQ-0091 | Identity inlines `viewerRole` prop | built |
+| ART-0485 | C40 | REQ-0091 | `usePatientBookableAppointmentTypes` telehealthOnly | built |
+| ART-0486 | C40 | REQ-0091 | Verify 1206/1206 (WIP uncommitted) | built |
 
 ## Verification Commands (project default)
 
 ```bash
-npm test        # 1140 passed (C36.2.1, 2026-06-14)
+npm test        # 1206 passed (C40, 2026-06-15)
 npx tsc --noEmit
 npm run lint
 npm run build

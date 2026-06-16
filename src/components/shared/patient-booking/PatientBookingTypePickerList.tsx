@@ -22,6 +22,7 @@ type PatientBookingTypePickerListProps = {
   fillLayout?: boolean;
   className?: string;
   doctorConsultationFeeCents?: number | null;
+  inactiveTypes?: PatientBookingAppointmentType[];
 };
 
 export function PatientBookingTypePickerList(props: PatientBookingTypePickerListProps) {
@@ -31,6 +32,7 @@ export function PatientBookingTypePickerList(props: PatientBookingTypePickerList
     onSelectType,
     flexDuration,
     onFlexDurationChange,
+    inactiveTypes,
     ...rest
   } = props;
 
@@ -42,6 +44,7 @@ export function PatientBookingTypePickerList(props: PatientBookingTypePickerList
       onSelectType={onSelectType as (t: VisitTypePickerItem) => void}
       flexDuration={flexDuration as FlexDurationMinutes}
       onFlexDurationChange={onFlexDurationChange as (m: FlexDurationMinutes) => void}
+      inactiveTypes={inactiveTypes as VisitTypePickerItem[] | undefined}
     />
   );
 }

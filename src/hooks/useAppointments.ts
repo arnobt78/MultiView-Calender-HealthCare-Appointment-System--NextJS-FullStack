@@ -145,7 +145,7 @@ export function useAppointments() {
 
       const assignedAppointmentsData = await fetchAppointmentsByIds(extraAssignedIds);
 
-      return buildFullAppointmentsList({
+      const builtAppointments = buildFullAppointmentsList({
         userId: user.id,
         userEmail: user.email,
         userRole: user.role ?? "",
@@ -155,6 +155,8 @@ export function useAppointments() {
         ownedAppointments: owned,
         assignedAppointmentRows: assignedAppointmentsData,
       });
+
+      return builtAppointments;
     },
     initialData: appointmentsInitialData,
     refetchOnMount: appointmentsInitialData !== undefined ? false : true,

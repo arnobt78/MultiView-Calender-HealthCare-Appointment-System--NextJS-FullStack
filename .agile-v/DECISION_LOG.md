@@ -128,3 +128,12 @@
 | 2026-06-14T18:25:00Z | verify | C37.2 shipped | 1154/1154; tsc · lint · build PASS; HEAD bb17816 | — |
 | 2026-06-14T18:25:00Z | init | Session docs sync | CLAUDE/AGENTS/STATE/ACTIVATION/WALKTHROUGH/.claude/SESSION | — |
 | 2026-06-15T12:24:00Z | init | Agile V Infinity Loop activation C38 ready | STATE/ACTIVATION/BOOTSTRAP/config/EVAL/VALIDATION synced; 1154/1154; HEAD ea40860 | — |
+| 2026-06-15T14:00:00Z | build | C38 GCal API warning + connect backfill | REQ-0088 warning banner + backfill | REQ-0088 |
+| 2026-06-15T15:00:00Z | build | C39.1 telehealth queue UI polish | violet KPI, tab glow, glass Join, empty states | REQ-0089 |
+| 2026-06-15T16:00:00Z | build | C39.2 telehealth identity UX | doctor directory, status inline, category block | REQ-0090 |
+| 2026-06-15T16:30:00Z | verify | C39 shipped | 1203/1203; commit `3fd00b1` | REQ-0089, REQ-0090 |
+| 2026-06-15T17:00:00Z | specify | C40 portal telehealth queue | REQ-0091 navbar + `/telehealth-queue` + booking preset | REQ-0091 |
+| 2026-06-15T17:05:00Z | build | C40 portal telehealth implementation | role-aware links, SSR prefetch, telehealth-scheduling-types | REQ-0091 |
+| 2026-06-15T17:10:00Z | verify | C40 automated verify PASS | 1206/1206; tsc · lint · build PASS; WIP uncommitted | REQ-0091 |
+| 2026-06-15T17:10:00Z | init | Agile V Infinity Loop activation C40 | STATE/ACTIVATION/AGENTS/BOOTSTRAP/config synced; ready C41 specify | REQ-0091 |
+| 2026-06-16T14:36:00Z | init | Agile V Infinity Loop session activation | C40 verify re-confirmed 1206/1206 tsc lint PASS; HEAD 3fd00b1; C40 WIP uncommitted; 24 skills active; ready C41 specify | REQ-0091 |

@@ -14,6 +14,7 @@ type AppointmentDialogControllerProps = {
   onOpenChange?: (open: boolean) => void;
   onSuccess?: () => void | Promise<void>;
   openOnAppointmentChange?: boolean;
+  telehealthBookingPreset?: boolean;
 };
 
 export default function AppointmentDialogController({
@@ -23,6 +24,7 @@ export default function AppointmentDialogController({
   onOpenChange,
   onSuccess,
   openOnAppointmentChange = false,
+  telehealthBookingPreset = false,
 }: AppointmentDialogControllerProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const isControlled = typeof isOpen === "boolean";
@@ -56,6 +58,7 @@ export default function AppointmentDialogController({
         onOpenChange={handleOpenChange}
         appointment={appointment}
         onSuccess={handleSuccess}
+        telehealthBookingPreset={telehealthBookingPreset}
       />
     </>
   );

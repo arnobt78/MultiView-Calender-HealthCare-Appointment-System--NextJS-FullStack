@@ -14,7 +14,7 @@ import {
   Users,
 } from "lucide-react";
 import { format } from "date-fns";
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,8 +24,7 @@ import { EntityDetailChromeHeader } from "@/components/shared/entity-detail/Enti
 import { CategoryBrandMark } from "@/components/shared/category-display/CategoryBrandMark";
 import { CategoryInlineLink } from "@/components/shared/CategoryInlineLink";
 import { ClinicalAppointmentStatusBadge } from "@/components/shared/entity-detail/ClinicalAppointmentStatusBadge";
-import { AppointmentTypeGlassBadge } from "@/components/shared/appointment-display/AppointmentTypeGlassBadge";
-import { VisitFeeBadge } from "@/components/shared/billing/VisitFeeBadge";
+import { AppointmentVisitMetaBadgeRow } from "@/components/shared/appointment-display/AppointmentVisitMetaBadgeRow";
 import { TelehealthSessionBadge } from "@/components/shared/appointments/TelehealthSessionBadge";
 import { resolveAppointmentDisplayLocation } from "@/lib/appointment-visit-location";
 import { ClinicalDataTable } from "@/components/shared/ClinicalDataTable";
@@ -64,7 +63,7 @@ import type { AppSectionScrollShell } from "@/lib/section-page-layout";
 import { categoryDetailHref, patientDetailHref, type EntityRole } from "@/lib/entity-routes";
 import {
   resolveCalendarOwnerLinkKind,
-  resolvePortalEntityDetailSnapshotLinkPolicy,
+  resolvePortalAppointmentDetailLinkPolicy,
   resolveTreatingPhysicianLinkKind,
 } from "@/lib/entity-detail-snapshot-links";
 import { canShowAppointmentClinicalNotes } from "@/lib/portal-appointment-card-visibility";
@@ -80,6 +79,10 @@ import {
   clinicianDisplayNameOnly,
   recomputeAppointmentDetailLabels,
 } from "@/lib/appointment-detail-view-model";
+import {
+  resolveAppointmentVisitMetaBilling,
+  resolveAppointmentVisitMetaFromFullAppointment,
+} from "@/lib/appointment-visit-meta-resolve";
 export type AppointmentDetailScreenSharedProps = {
   tone: AppointmentDetailTone;
   mode: "portal" | "control-panel";
@@ -220,7 +223,7 @@ export function AppointmentDetailScreenShared({
   );
 
   const linkPolicy = useMemo(
-    () => (mode === "portal" ? resolvePortalEntityDetailSnapshotLinkPolicy(entityRole) : undefined),
+    () => (mode === "portal" ? resolvePortalAppointmentDetailLinkPolicy(entityRole) : undefined),
     [mode, entityRole]
   );
 
@@ -234,6 +237,16 @@ export function AppointmentDetailScreenShared({
   const linkedInvoices = useMemo(
     () => (invoices ?? []).filter((inv) => inv.appointment_id === appointment.id),
     [invoices, appointment.id]
+  );
+
+  const visitMeta = useMemo(
+    () => resolveAppointmentVisitMetaFromFullAppointment(appointment),
+    [appointment]
+  );
+
+  const visitMetaBilling = useMemo(
+    () => resolveAppointmentVisitMetaBilling(linkedInvoices[0] ?? null),
+    [linkedInvoices]
   );
 
   const invoiceColumns = useMemo(
@@ -266,6 +279,7 @@ export function AppointmentDetailScreenShared({
     linkPolicy,
     detail.treatingPhysician?.role ?? "doctor"
   );
+
 
   const primaryDoctorName = useMemo(
     () =>
@@ -370,34 +384,19 @@ export function AppointmentDetailScreenShared({
                 <Skeleton className="h-16 w-16 shrink-0 rounded-full" aria-hidden />
               )}
               <div className="min-w-0 flex-1 space-y-2">
-                <div className="flex min-w-0 flex-wrap items-center gap-2">
-                  {appointment.appointment_type_name ? (
-                    <AppointmentTypeGlassBadge
-                      name={appointment.appointment_type_name}
-                      durationLabel={
-                        detail.durationMinutes != null
-                          ? `${detail.durationMinutes} min`
-                          : appointment.appointment_type_duration_minutes != null
-                            ? `${appointment.appointment_type_duration_minutes} min`
-                            : null
-                      }
-                    />
-                  ) : detail.durationMinutes != null ? (
-                    <Badge variant="outline" className={toneClasses.durationBadgeClass}>
-                      {detail.durationMinutes} min
-                    </Badge>
-                  ) : null}
-                  {detail.visitFeeCents > 0 ? (
-                    <VisitFeeBadge
-                      size="cardMeta"
-                      priceCents={detail.visitFeeCents}
-                      showEstimateHint={
-                        (appointment.appointment_type_price_cents ?? 0) <= 0
-                      }
-                    />
-                  ) : null}
-                  <ClinicalAppointmentStatusBadge status={appointment.status} />
-                </div>
+                {/* Visit meta chips — type + duration · fee · status · telehealth (inline wrap, uniform h-6). */}
+                <AppointmentVisitMetaBadgeRow
+                  appointmentTypeName={visitMeta.appointmentTypeName}
+                  durationMinutes={visitMeta.durationMinutes}
+                  visitFeeCents={visitMeta.visitFeeCents}
+                  showVisitFeeEstimateHint={visitMeta.showVisitFeeEstimateHint}
+                  status={appointment.status}
+                  showTelehealthBadge={appointment.is_telehealth ?? false}
+                  invoiceDisplayStatus={visitMetaBilling.invoiceDisplayStatus}
+                  showInvoiceBadge={visitMetaBilling.showInvoice}
+                  paymentStatus={visitMetaBilling.latestPayment?.status}
+                  showPaymentBadge={visitMetaBilling.showPayment}
+                />
                 <p className="text-sm text-gray-600">
                   <Calendar className="mr-1 inline h-3.5 w-3.5" aria-hidden />
                   {appointment.start

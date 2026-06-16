@@ -5,7 +5,7 @@ import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { PatientAgeGlassBadge } from "@/components/shared/person-display/PatientAgeGlassBadge";
 import { PatientCareTierGlassBadge } from "@/components/shared/person-display/PatientCareTierGlassBadge";
 import { PatientPortraitAvatar } from "@/components/shared/person-display/PatientPortraitAvatar";
-import { patientDetailHref } from "@/lib/entity-routes";
+import { patientDetailHref, type EntityRole } from "@/lib/entity-routes";
 import { patientAgeYears } from "@/lib/patient-age";
 import type { DashboardOverviewQueuePatient } from "@/lib/dashboard-overview-queue";
 import { cn } from "@/lib/utils";
@@ -13,10 +13,12 @@ import { cn } from "@/lib/utils";
 type Props = {
   patient: DashboardOverviewQueuePatient;
   className?: string;
+  /** Role-aware patient chart href — defaults to admin CP route. */
+  viewerRole?: EntityRole;
 };
 
 /** Inline patient row — avatar, sky link name, age + care tier badges. */
-export function DashboardPatientIdentityInline({ patient, className }: Props) {
+export function DashboardPatientIdentityInline({ patient, className, viewerRole = "admin" }: Props) {
   const age = patientAgeYears(patient.birth_date);
   return (
     <span
@@ -36,7 +38,7 @@ export function DashboardPatientIdentityInline({ patient, className }: Props) {
         className="shrink-0"
       />
       <EntityTitleLink
-        href={patientDetailHref("admin", patient.id)}
+        href={patientDetailHref(viewerRole, patient.id)}
         label={patient.name}
         className="text-xs font-medium"
       />

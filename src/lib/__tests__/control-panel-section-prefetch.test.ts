@@ -69,6 +69,8 @@ vi.mock("@/lib/server-prefetch", () => ({
     unreadCount: 1,
   })),
   prefetchCalendarAppointmentsBundle: vi.fn(async () => mockBundle),
+  prefetchDoctors: vi.fn(async () => ({ doctors: [{ id: "doc1" }] })),
+  prefetchUsersList: vi.fn(async () => ({ users: [], total: 0 })),
 }));
 
 describe("prefetchControlPanelSection", () => {
@@ -98,10 +100,14 @@ describe("prefetchControlPanelSection", () => {
     expect(result).toEqual({ ...mockBundle, invoices: [{ id: "inv1" }] });
   });
 
-  it("prefetches calendar bundle for telehealth tab", async () => {
+  it("prefetches calendar bundle, doctors directory, and invoices for telehealth tab", async () => {
+    const { prefetchInvoices } = await import("@/lib/server-prefetch");
     const result = await prefetchControlPanelSection("telehealth", "user-1", "u@test.com", "admin");
+    expect(prefetchInvoices).toHaveBeenCalledWith("user-1", "admin", "u@test.com");
     expect(result.appointments).toEqual([{ id: "appt1" }]);
     expect(result.categories).toEqual([{ id: "c1" }]);
+    expect(result.doctorsDirectory).toEqual({ doctors: [{ id: "doc1" }] });
+    expect(result.invoices).toEqual([{ id: "inv1" }]);
   });
 
   it("prefetches notifications for notifications tab", async () => {

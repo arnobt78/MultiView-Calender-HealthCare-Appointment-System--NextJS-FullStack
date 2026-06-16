@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+  APPOINTMENT_DETAIL_PORTAL_DOCTOR_LINKS,
+  APPOINTMENT_DETAIL_PORTAL_PATIENT_LINKS,
   DOCTOR_DETAIL_DOCTOR_SNAPSHOT_LINKS,
   DOCTOR_DETAIL_PATIENT_SNAPSHOT_LINKS,
   resolveCalendarOwnerLinkKind,
   resolveDoctorDetailSnapshotLinkPolicy,
+  resolvePortalAppointmentDetailLinkPolicy,
   resolvePortalEntityDetailSnapshotLinkPolicy,
   resolveTreatingPhysicianLinkKind,
 } from "@/lib/entity-detail-snapshot-links";
@@ -24,6 +27,27 @@ describe("resolvePortalEntityDetailSnapshotLinkPolicy", () => {
   it("aliases resolveDoctorDetailSnapshotLinkPolicy", () => {
     expect(resolveDoctorDetailSnapshotLinkPolicy("patient")).toBe(
       resolvePortalEntityDetailSnapshotLinkPolicy("patient")
+    );
+  });
+});
+
+describe("resolvePortalAppointmentDetailLinkPolicy", () => {
+  it("doctor portal appointment detail links patient in title", () => {
+    const policy = resolvePortalAppointmentDetailLinkPolicy("doctor");
+    expect(policy).toBe(APPOINTMENT_DETAIL_PORTAL_DOCTOR_LINKS);
+    expect(policy?.patientInTitle).toBe(true);
+  });
+
+  it("patient portal appointment detail keeps patient title plain", () => {
+    const policy = resolvePortalAppointmentDetailLinkPolicy("patient");
+    expect(policy).toBe(APPOINTMENT_DETAIL_PORTAL_PATIENT_LINKS);
+    expect(policy?.patientInTitle).toBe(false);
+  });
+
+  it("does not change doctor detail snapshot policy", () => {
+    expect(DOCTOR_DETAIL_DOCTOR_SNAPSHOT_LINKS.patientInTitle).toBe(false);
+    expect(resolvePortalEntityDetailSnapshotLinkPolicy("doctor")?.patientInTitle).toBe(
+      false
     );
   });
 });
