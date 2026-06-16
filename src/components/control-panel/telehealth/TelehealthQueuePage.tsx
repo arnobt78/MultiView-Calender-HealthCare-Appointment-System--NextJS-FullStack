@@ -122,7 +122,11 @@ export function TelehealthQueuePage({
   );
 
   /** Billing badges — warm from SSR-seeded `queryKeys.invoices.all` (CP + portal prefetch). */
-  const { invoices } = usePayments();
+  const { invoices, isLoading: invoicesLoading } = usePayments();
+  const billingBadgesLoading = useCpListBodyLoading(
+    queryKeys.invoices.all,
+    invoicesLoading
+  );
 
   const billingByAppointmentId = useMemo(() => {
     const map = new Map<string, AppointmentVisitMetaBilling>();
@@ -205,6 +209,7 @@ export function TelehealthQueuePage({
               appointment={upNext}
               doctors={doctors}
               billing={billingByAppointmentId.get(upNext.id)}
+              billingBadgesLoading={billingBadgesLoading}
               onJoin={() => handleJoin(upNext.id)}
               viewerRole={resolvedViewerRole}
             />
@@ -225,6 +230,7 @@ export function TelehealthQueuePage({
             dateFilter={dateFilter}
             doctors={doctors}
             billingByAppointmentId={billingByAppointmentId}
+            billingBadgesLoading={billingBadgesLoading}
             listBodyLoading={listBodyLoading}
             onJoin={handleJoin}
             viewerRole={resolvedViewerRole}

@@ -4,7 +4,7 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-16)
 
-- **C41 (REQ-0092):** `AppointmentVisitMetaBadgeRow` + `appointment-visit-meta-resolve.ts` — unified type/fee/status/telehealth/invoice/payment chips on telehealth queue + appointment detail · doctor portal `/appointments/:id` patient link (`resolvePortalAppointmentDetailLinkPolicy`) · invoice SSR on telehealth routes (`prefetchInvoices` CP + portal).
+- **C41.1:** Targeted billing chip skeleton when `invoices.all` cold only · `instrumentation-client.ts` + `sentry-client-init.ts` Sentry tunnel `/api/monitoring`.
 - **C40 (REQ-0091):** `/telehealth-queue` portal · navbar · role-aware links · telehealth booking preset · `?filter=` URL tabs (no sessionStorage) · `useCpListBodyLoading(appointments.all)` only.
 - **C39:** `is_telehealth` filter · violet glass · `telehealth/*` · SSR appointments + doctors seed.
 - **Verify:** **1220/1220** · tsc · lint · build PASS.
@@ -52,7 +52,7 @@ Cross-tab: `query-cache-cross-tab.ts`.
 - **Error policy:** 404/401 → `{connected:false}`; 500/network → throw. Events failure → `eventsFetchWarning` banner, stays connected.
 - **Telehealth:** `TelehealthQueuePage` · `AppointmentVisitMetaBadgeRow` · `appointment-visit-meta-resolve.ts` · `?filter=` URL tabs · invoice SSR (`invoices.all` + `doctors.all`) · join→`VideoCall` · detail `resolvePortalAppointmentDetailLinkPolicy`
 - **OAuth UX:** `gcalOAuthReturn` SSR · `oauthLatched` · `google-calendar-status-ui.ts` (silent KPI refetch)
-- **Sentry:** `sentry.*.config.ts` · `instrumentation.ts` · `/api/monitoring` tunnel · env: `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT`
+- **Sentry:** `instrumentation-client.ts` · `sentry-client-init.ts` · tunnel `POST /api/monitoring` · `sentry-tunnel.ts` DSN guard
 
 ## Key paths
 

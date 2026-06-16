@@ -71,6 +71,8 @@ import { canClientFetchAdminUsersList } from "@/lib/user-list-access";
 import { useAppointmentDetail } from "@/hooks/useAppointmentDetail";
 import { useUsers, type UsersListResponse } from "@/hooks/useUsers";
 import { usePayments, type Invoice } from "@/hooks/usePayments";
+import { useCpListBodyLoading } from "@/lib/cp-list-body-loading";
+import { queryKeys } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
 import type { AppointmentAssignee } from "@/types/types";
 import type { AppointmentDetailViewModel } from "@/lib/appointment-detail-view-model";
@@ -211,7 +213,13 @@ export function AppointmentDetailScreenShared({
     enabled: staffViewer && canClientFetchAdminUsersList(entityRole),
     initialData: staffViewer ? initialAdminUsers ?? undefined : undefined,
   });
-  const { invoices } = usePayments({ invoicesInitialData: initialInvoices ?? undefined });
+  const { invoices, isLoading: invoicesLoading } = usePayments({
+    invoicesInitialData: initialInvoices ?? undefined,
+  });
+  const billingBadgesLoading = useCpListBodyLoading(
+    queryKeys.invoices.all,
+    invoicesLoading
+  );
 
   const staffById = useMemo(
     () =>
@@ -396,6 +404,7 @@ export function AppointmentDetailScreenShared({
                   showInvoiceBadge={visitMetaBilling.showInvoice}
                   paymentStatus={visitMetaBilling.latestPayment?.status}
                   showPaymentBadge={visitMetaBilling.showPayment}
+                  billingBadgesLoading={billingBadgesLoading}
                 />
                 <p className="text-sm text-gray-600">
                   <Calendar className="mr-1 inline h-3.5 w-3.5" aria-hidden />

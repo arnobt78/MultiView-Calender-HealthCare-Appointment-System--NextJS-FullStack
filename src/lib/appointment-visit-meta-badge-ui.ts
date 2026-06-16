@@ -24,3 +24,9 @@ export const appointmentVisitMetaFeeChipClass = cn(
   appointmentVisitMetaChipClass,
   "border border-emerald-200/70 bg-emerald-50/80 text-emerald-700 shadow-[0_2px_8px_rgba(16,185,129,0.15)]"
 );
+
+/** Billing chip placeholder — only when queryKeys.invoices.all cache is cold. */
+export const appointmentVisitMetaBillingChipSkeletonClass = cn(
+  appointmentVisitMetaChipClass,
+  "h-6 w-14 animate-pulse border border-slate-200/70 bg-slate-100/80"
+);

@@ -42,6 +42,7 @@ type Props = {
   appointment: FullAppointment;
   doctors?: DoctorDirectoryRow[] | null;
   billing?: AppointmentVisitMetaBilling;
+  billingBadgesLoading?: boolean;
   onJoin: () => void;
   viewerRole?: EntityRole;
 };
@@ -54,6 +55,7 @@ export function TelehealthQueueRow({
   appointment,
   doctors,
   billing,
+  billingBadgesLoading = false,
   onJoin,
   viewerRole = "admin",
 }: Props) {
@@ -130,6 +132,7 @@ export function TelehealthQueueRow({
             showInvoiceBadge={billing?.showInvoice}
             paymentStatus={billing?.latestPayment?.status}
             showPaymentBadge={billing?.showPayment}
+            billingBadgesLoading={billingBadgesLoading}
           />
           <DashboardAppointmentScheduleMetaRow
             start={appointment.start}

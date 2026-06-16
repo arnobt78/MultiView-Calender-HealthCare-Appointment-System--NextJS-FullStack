@@ -4,6 +4,7 @@ import { forwardSentryEnvelope } from "@/lib/sentry-tunnel";
 
 /**
  * Sentry tunnel — same-origin POST so client SDK bypasses ad-blocker blocklists.
+ * Client init: instrumentation-client.ts → tunnel `/api/monitoring`.
  * Validates envelope DSN matches NEXT_PUBLIC_SENTRY_DSN before forwarding.
  */
 export async function POST(request: Request) {

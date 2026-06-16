@@ -21,6 +21,7 @@ type Props = {
   dateFilter: TelehealthQueueDateFilter;
   doctors?: DoctorDirectoryRow[] | null;
   billingByAppointmentId?: Map<string, AppointmentVisitMetaBilling>;
+  billingBadgesLoading?: boolean;
   listBodyLoading: boolean;
   onJoin: (appointmentId: string) => void;
   viewerRole?: EntityRole;
@@ -38,6 +39,7 @@ export function TelehealthQueueList({
   dateFilter,
   doctors,
   billingByAppointmentId,
+  billingBadgesLoading = false,
   listBodyLoading,
   onJoin,
   viewerRole = "admin",
@@ -73,6 +75,7 @@ export function TelehealthQueueList({
               appointment={appt}
               doctors={doctors}
               billing={billingByAppointmentId?.get(appt.id)}
+              billingBadgesLoading={billingBadgesLoading}
               onJoin={() => onJoin(appt.id)}
               viewerRole={viewerRole}
             />

@@ -1,6 +1,7 @@
 "use client";
 
 import { Euro } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { AppointmentStatusGlassBadge } from "@/components/shared/appointments/AppointmentStatusGlassBadge";
 import { TelehealthSessionBadge } from "@/components/shared/appointments/TelehealthSessionBadge";
 import { InvoiceStatusBadge } from "@/components/shared/billing/InvoiceStatusBadge";
@@ -8,6 +9,7 @@ import { PaymentStatusBadge } from "@/components/shared/billing/PaymentStatusBad
 import { formatVisitFeeAmountLabel } from "@/lib/appointment-type-price";
 import {
   appointmentVisitMetaBadgeRowClass,
+  appointmentVisitMetaBillingChipSkeletonClass,
   appointmentVisitMetaChipClass,
   appointmentVisitMetaFeeChipClass,
   appointmentVisitMetaTypeChipClass,
@@ -31,6 +33,8 @@ type Props = {
   /** Latest payment row status — paired with invoice dedupe rules. */
   paymentStatus?: string | null;
   showPaymentBadge?: boolean;
+  /** True only when invoices.all is loading and SSR/cache has no seed — targeted chip skeleton. */
+  billingBadgesLoading?: boolean;
   className?: string;
 };
 
@@ -52,6 +56,7 @@ export function AppointmentVisitMetaBadgeRow({
   showInvoiceBadge = false,
   paymentStatus,
   showPaymentBadge = false,
+  billingBadgesLoading = false,
   className,
 }: Props) {
   const typeName = appointmentTypeName?.trim();
@@ -86,15 +91,24 @@ export function AppointmentVisitMetaBadgeRow({
           className={metaChipClass}
         />
       ) : null}
-      {showInvoiceBadge && invoiceDisplayStatus ? (
-        <InvoiceStatusBadge
-          displayStatus={invoiceDisplayStatus}
-          className={metaChipClass}
+      {billingBadgesLoading ? (
+        <Skeleton
+          className={appointmentVisitMetaBillingChipSkeletonClass}
+          aria-label="Loading billing status"
         />
-      ) : null}
-      {showPaymentBadge && paymentStatus ? (
-        <PaymentStatusBadge status={paymentStatus} className={metaChipClass} />
-      ) : null}
+      ) : (
+        <>
+          {showInvoiceBadge && invoiceDisplayStatus ? (
+            <InvoiceStatusBadge
+              displayStatus={invoiceDisplayStatus}
+              className={metaChipClass}
+            />
+          ) : null}
+          {showPaymentBadge && paymentStatus ? (
+            <PaymentStatusBadge status={paymentStatus} className={metaChipClass} />
+          ) : null}
+        </>
+      )}
       {showTelehealthBadge ? (
         <TelehealthSessionBadge className={metaChipClass} />
       ) : null}

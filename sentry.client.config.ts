@@ -1,17 +1,7 @@
 /**
- * Sentry client — tunnel via /api/monitoring so ad blockers do not block ingest.
- * No-op when NEXT_PUBLIC_SENTRY_DSN is unset (local dev without Sentry).
+ * Legacy client entry — v10 primary loader is instrumentation-client.ts.
+ * Kept so older Sentry webpack hooks still resolve; init is idempotent.
  */
-import * as Sentry from "@sentry/nextjs";
+import { initSentryClient } from "@/lib/sentry-client-init";
 
-const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
-
-if (dsn) {
-  Sentry.init({
-    dsn,
-    tunnel: "/api/monitoring",
-    tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1,
-    enabled: process.env.NODE_ENV === "production",
-    debug: false,
-  });
-}
+initSentryClient();
