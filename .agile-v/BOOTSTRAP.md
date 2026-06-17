@@ -31,8 +31,8 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 | 2 | `config.json` | Project metadata, cycle, authority matrix, verification commands | ✓ |
 | 3 | `POLICY.yaml` | Policy-as-code (versioned) | ✓ v1.0.0 |
 | 4 | `STATE.md` | Current cycle, phase, stage — **read first on resume** | ✓ |
-| 5 | `REQUIREMENTS.md` | Canonical REQ-XXXX + traceability index | ✓ REQ-0001..0091 |
-| 6 | `BUILD_MANIFEST.md` | ART-XXXX → code paths | ✓ ART-0001..0486 |
+| 5 | `REQUIREMENTS.md` | Canonical REQ-XXXX + traceability index | ✓ REQ-0001..0093 |
+| 6 | `BUILD_MANIFEST.md` | ART-XXXX → code paths | ✓ ART-0001..0498 |
 | 7 | `TEST_SPEC.md` | TC-XXXX (requirements-derived) | ✓ TC-0001..0052 |
 | 8 | `VALIDATION_SUMMARY.md` | VER-XXXX results + EvalGate lines | ✓ |
 | 9 | `ATM.md` | REQ → ART → VER matrix | ✓ |
@@ -312,7 +312,21 @@ Current baseline: **1154** tests, **232** files (2026-06-15) · HEAD `ea40860`.
 
 ---
 
-## Infinity Loop Session Activation (2026-06-16 — C42.2 shipped) — **CURRENT**
+## Infinity Loop Session Activation (2026-06-17) — **CURRENT**
+
+| Step | Artifact | Status |
+|------|----------|--------|
+| 1 | Load agile-v-core + pipeline + lifecycle + SKILLS.md (24) | ✓ ACTIVE |
+| 2 | STATE.md C42.2 shipped · C43 specify next | ✓ |
+| 3 | REQUIREMENTS REQ-0001..0093 · BUILD_MANIFEST ART-0498 | ✓ |
+| 4 | EVAL_RESULTS ER-C42-VERIFY PASS | ✓ |
+| 5 | PLAYBOOK.md + `.claude/SESSION.md` synced | ✓ |
+| 6 | Verify npm test **1220/1220** | ✓ 2026-06-17 |
+| 7 | CHECKPOINTS.md — no PENDING HITL | ✓ |
+| 8 | HEAD `eb3d576` · Infinity Loop rule always on | ✓ |
+| 9 | **Halt until REQ-0094+** for C43 feature work | ✓ |
+
+## Infinity Loop Session Activation (2026-06-16 — C42.2 shipped) — archived
 
 | Step | Artifact | Status |
 |------|----------|--------|

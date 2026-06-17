@@ -1,6 +1,6 @@
 # Agile V — Living State
 
-<!-- Updated: 2026-06-16 | Project: HealthCal Pro | Resume: ACTIVATION.md -->
+<!-- Updated: 2026-06-17 | Project: HealthCal Pro | Resume: ACTIVATION.md -->
 
 ## Current Status
 
@@ -10,7 +10,7 @@
 | **Phase** | 5 — Accept complete |
 | **Stage** | Ready for **C43 Specify** |
 | **Status** | **idle** |
-| **Last Updated** | 2026-06-16 |
+| **Last Updated** | 2026-06-17 |
 | **Parent REQ** | **REQ-0093** (C42/C42.2 glass badge UX) |
 
 ## Verify baseline
@@ -19,7 +19,7 @@
 
 | Layer | HEAD |
 |-------|------|
-| **Committed** | `2b53b92` — C42.2 queue list glass + row glow |
+| **Committed** | `eb3d576` — agile-v sync (feature `2b53b92` C42.2) |
 | **WIP** | none |
 
 ## Last shipped (by commit)

@@ -10,7 +10,7 @@
 
 ## Resume
 
-1. `.agile-v/STATE.md` — **C42.2 shipped** · **1220/1220** · HEAD `2b53b92`
+1. `.agile-v/STATE.md` — **C42.2 shipped** · **1220/1220** · HEAD `eb3d576`
 2. `.agile-v/CHECKPOINTS.md` if PENDING HITL (**none**)
 3. Parent **`REQ-XXXX`** in `.agile-v/REQUIREMENTS.md` before any code (**halt if missing**)
 

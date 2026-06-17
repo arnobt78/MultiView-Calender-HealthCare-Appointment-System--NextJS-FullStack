@@ -32,6 +32,7 @@
 | TRACE-0026 | 2026-06-15T17:10:00Z | init | bootstrap | POLICY.yaml@1.0.0 | C40 activation sync; C39 shipped 3fd00b1; C40 verify 1206/1206; REQ-0001..0091; 24 skills active | REQ-0091 |
 | TRACE-0027 | 2026-06-16T14:36:00Z | init | bootstrap | POLICY.yaml@1.0.0 | Session activation 2026-06-16; C40 verify re-run 1206/1206 tsc lint PASS; HEAD 3fd00b1; Infinity Loop active; ready C41 | REQ-0091 |
 | TRACE-0028 | 2026-06-16T17:50:00Z | accept | ship | POLICY.yaml@1.0.0 | C40–C42.2 shipped; HEAD 2b53b92; 1220/1220 verify PASS; REQ-0091..0093; ready C43 specify | REQ-0093 |
+| TRACE-0029 | 2026-06-17T12:45:00Z | init | bootstrap | POLICY.yaml@1.0.0 | Infinity Loop activation; HEAD eb3d576; 1220/1220; PLAYBOOK+SESSION; C43 specify idle | REQ-0093 |
 
 ## Span Types
 

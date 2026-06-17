@@ -6,16 +6,17 @@ Living AQMS — **Infinity Loop ACTIVE on every prompt.**
 
 1. **`ACTIVATION.md`** + **`STATE.md`** — resume here
 2. Load **`agile-v-core`** → **`agile-v-pipeline`** → **`agile-v-lifecycle`** → role (`SKILLS.md` 24) → **`agile-v-compliance`**
-3. **`BOOTSTRAP.md`** — C1..C37 index + activation checklist
-4. Parent **`REQ-XXXX`** in **`REQUIREMENTS.md`** before any code — **halt if missing**
+3. **`PLAYBOOK.md`** — pipeline + halt rules + verify
+4. **`BOOTSTRAP.md`** — C1..C42 index + activation checklist
+5. Parent **`REQ-XXXX`** in **`REQUIREMENTS.md`** before any code — **halt if missing**
 
 ## Current
 
 | Field | Value |
 |-------|-------|
-| **Cycle** | C37.2 closed · **C38 specify idle** |
-| **REQ range** | REQ-0001..0087 (add 0088+ for C38) |
-| **Verify** | **1154/1154** · HEAD `ea40860` |
+| **Cycle** | C42.2 shipped · **C43 specify idle** |
+| **REQ range** | REQ-0001..0093 (add 0094+ for C43) |
+| **Verify** | **1220/1220** · HEAD `eb3d576` |
 | **HITL** | CHECKPOINTS clear |
 
 ## Cycles (summary)
@@ -23,10 +24,10 @@ Living AQMS — **Infinity Loop ACTIVE on every prompt.**
 | Cycle | Status | REQ |
 |-------|--------|-----|
 | C1–C2 | archived frozen | 0001..0008 |
-| C3–C34.1 | shipped | 0009..0082 |
-| C35–C36.2.1 | shipped | 0083..0087 |
-| C37 | shipped (no REQ) | — |
-| **C38** | **specify next** | TBD |
+| C3–C37.2 | shipped | 0009..0087 |
+| C38–C39.2 | shipped | 0088..0090 |
+| C40–C42.2 | shipped | 0091..0093 |
+| **C43** | **specify next** | TBD |
 
 ## Hooks
 

@@ -96,6 +96,7 @@ Skills load from user skills directory (Read tool). Primary paths:
 | Cursor rule (always on) | `.cursor/rules/agile-v-infinity-loop.mdc` |
 | Living state | `.agile-v/STATE.md` |
 | Session activation | `.agile-v/ACTIVATION.md` |
+| Playbook | `.agile-v/PLAYBOOK.md` |
 | Project core binding | `.agile-v/agile-v-core.md` |
 | Requirements | `.agile-v/REQUIREMENTS.md` |
 | This registry | `.agile-v/SKILLS.md` |

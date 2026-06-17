@@ -1,6 +1,6 @@
 # Agile V — Session Activation (every prompt)
 
-<!-- HealthCal Pro | v1.4 | Sync: 2026-06-16 Infinity Loop ACTIVE -->
+<!-- HealthCal Pro | v1.4 | Sync: 2026-06-17 Infinity Loop ACTIVE -->
 
 ## 1. Load skills (mandatory — every prompt)
 
@@ -17,7 +17,7 @@
 
 ## 2. Read (resume — in order)
 
-1. `STATE.md` — **C42.2 shipped** · **1220/1220** · HEAD **`2b53b92`**
+1. `STATE.md` — **C42.2 shipped** · **1220/1220** · HEAD **`eb3d576`**
 2. `CHECKPOINTS.md` — halt if any **PENDING** HITL (**none**)
 3. `REQUIREMENTS.md` — parent **REQ-XXXX** before any code (**REQ-0001..0093**)
 
@@ -51,7 +51,7 @@ Specify → Constrain → [Gate1] → Orchestrate → Prove → Verify → [Gate
 | C41 / C41.1 | 0092 | shipped | `e8544ee` |
 | **C42 / C42.2** | **0093** | **shipped** | **`2b53b92`** |
 
-**Baseline:** **1220** tests · **245** files · committed **`2b53b92`** · 2026-06-16
+**Baseline:** **1220** tests · **245** files · committed **`eb3d576`** · 2026-06-17
 
 ## 7. Halt if
 
