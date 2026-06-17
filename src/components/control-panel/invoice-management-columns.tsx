@@ -25,6 +25,8 @@ import { cn } from "@/lib/utils";
 
 export type BuildInvoiceManagementColumnsOpts = {
   viewerRole: "admin" | "doctor";
+  /** Doctor session id — gates mutate menu items to linked visit roles. */
+  viewerUserId?: string;
   /** Patient portal detail — identity links only, no row menu. */
   includeActionsColumn?: boolean;
   onEdit: (invoice: Invoice) => void;
@@ -45,6 +47,7 @@ export function buildInvoiceManagementColumns(
 ): ColumnDef<Invoice>[] {
   const {
     viewerRole,
+    viewerUserId,
     includeActionsColumn = true,
     onEdit,
     onPay,
@@ -127,6 +130,7 @@ export function buildInvoiceManagementColumns(
           <InvoiceAdminActionsMenu
             invoice={invoice}
             viewerRole={viewerRole}
+            viewerUserId={viewerUserId}
             onEdit={onEdit}
             onPay={onPay}
             onSend={onSend}

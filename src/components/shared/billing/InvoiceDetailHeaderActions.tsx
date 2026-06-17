@@ -6,6 +6,7 @@ import { EntityDetailBackLink } from "@/components/shared/entity-detail/EntityDe
 import { ControlPanelGlassActionButton } from "@/components/shared/ControlPanelGlassActionButton";
 import { useInvoice } from "@/hooks/useInvoice";
 import { usePayments, type Invoice } from "@/hooks/usePayments";
+import { useAuth } from "@/hooks/useAuth";
 import {
   resolveInvoiceDetailActionCapabilities,
   resolveInvoiceDetailGenerateInHeader,
@@ -39,12 +40,16 @@ export function InvoiceDetailHeaderActions({
     initialData: initialInvoice,
   });
   const { updateInvoice, isUpdating } = usePayments({ invoicesInitialData });
+  const { user } = useAuth();
   const [isDownloading, setIsDownloading] = useState(false);
 
   const capsRole = accessLevel === "admin" ? "admin" : "doctor";
   const caps = useMemo(
-    () => resolveInvoiceDetailActionCapabilities(invoice, capsRole),
-    [invoice, capsRole]
+    () =>
+      resolveInvoiceDetailActionCapabilities(invoice, capsRole, {
+        viewerUserId: capsRole === "doctor" ? user?.id : undefined,
+      }),
+    [invoice, capsRole, user?.id]
   );
 
   const canGenerate = resolveInvoiceDetailGenerateInHeader(accessLevel, caps);

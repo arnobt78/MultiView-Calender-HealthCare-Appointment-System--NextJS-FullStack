@@ -126,6 +126,8 @@
 | REQ-0079 | approved [C31] | REQ-0078 | ART-0407..0409 | pending |
 | REQ-0080 | approved [C32] | REQ-0079 | ART-0410..0416 | pending |
 | REQ-0081 | approved [C33] | REQ-0080 | ART-0417..0423 | pending |
+| REQ-0099 | approved [C48] | REQ-0098 | ART-0533..0539 | pending |
+| REQ-0098 | approved [C47] | REQ-0097 | ART-0526..0532 | pending |
 | REQ-0097 | approved [C46] | REQ-0096 | ART-0520..0525 | pending |
 | REQ-0096 | approved [C45] | REQ-0095 | ART-0513..0519 | pending |
 | REQ-0095 | approved [C44] | REQ-0094 | ART-0506..0512 | pending |
@@ -142,6 +144,44 @@
 | REQ-0084 | approved [C36] | REQ-0083 | ART-0437..0444 | pending |
 | REQ-0083 | approved [C35/C35.1] | REQ-0082 | ART-0432..0436 | pending |
 | REQ-0082 | approved [C34/C34.1] | REQ-0081 | ART-0424..0431 | pending |
+
+### REQ-0099 — C48 Appointment/invoice UX regressions + doctor RBAC parity
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C48] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0098 |
+
+**Statement:** Restore doctor location prefill, dialog close + Sonner on save, Mark done glass parity, invoice visit title → appointment detail, owner/treating doctor mutate on linked visits/invoices, inline category duration in appointment management.
+
+**Acceptance criteria:**
+1. `prefetchDoctors` includes `office_location`; create dialog prefills location on doctor pick.
+2. Appointment dialog closes on create/edit; no inline success banner or post-create Done step; `notify.crud` only.
+3. Mark done uses `emeraldGlassBackButtonClass` (h-10 outline glass).
+4. Invoice description visit title links to appointment detail when `appointment_id` present.
+5. Calendar owner + treating physician get appointment `mutate` and invoice `mutate` (not admin pay/refund).
+6. Category column shows duration badge inline beside category label.
+7. Verify suite PASS.
+
+### REQ-0098 — C47 Appointment detail audit, billing UX, telehealth video, header actions
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C47] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0097 |
+
+**Statement:** Fix appointment detail Record Audit invoice actor, instant New Invoice dialog, footer Edit Invoice, telehealth-only Video Call, header quick actions.
+
+**Acceptance criteria:**
+1. "Invoice issued" audit row shows `created_by` (session actor), not billing owner `issuer_*`.
+2. Invoice list include `created_by`; billing option cache seeded from detail — no visit skeleton flash.
+3. Footer **Edit Invoice** when linked invoice editable; global label rename from "Edit details".
+4. Video Call gated on `appointment.is_telehealth`; Video + Mark done in header beside Back.
+5. Verify suite PASS.
 
 ### REQ-0097 — C46 Portal patient invoice shell + snapshot slimming
 

@@ -1,21 +1,31 @@
 import type { Invoice } from "@/hooks/usePayments";
 import type { InvoiceDetailUiAccess } from "@/lib/invoice-detail-ssr";
+import type { InvoiceVisitSummary } from "@/lib/billing-types";
 
 export type InvoiceDetailActionCapabilities = ReturnType<
   typeof resolveInvoiceDetailActionCapabilities
 >;
 
 export type ResolveInvoiceDetailActionCapabilitiesOpts = {
-  /** Signed-in doctor id — gates mutate menu items to invoice issuer (invoice.user_id). */
+  /** Signed-in doctor id — gates mutate menu items to linked visit roles. */
   viewerUserId?: string;
 };
 
-/** Doctor mutate UI — issuer only; mirrors resolveInvoiceAccess mutate rule. */
+type DoctorMutateInvoicePick = Pick<Invoice, "user_id" | "appointment_id"> & {
+  visit_summary?: InvoiceVisitSummary | null;
+};
+
+/** Doctor mutate UI — issuer, treating physician, or calendar owner on linked visit. */
 export function doctorCanMutateInvoice(
-  invoice: Pick<Invoice, "user_id">,
+  invoice: DoctorMutateInvoicePick,
   viewerUserId: string | null | undefined
 ): boolean {
-  return Boolean(viewerUserId && invoice.user_id === viewerUserId);
+  if (!viewerUserId) return false;
+  if (invoice.user_id === viewerUserId) return true;
+  const summary = invoice.visit_summary;
+  if (summary?.treating_physician_id === viewerUserId) return true;
+  if (summary?.calendar_owner_id === viewerUserId) return true;
+  return false;
 }
 
 /** Shared invoice action visibility — used by dropdown menu, detail footer, and header actions. */

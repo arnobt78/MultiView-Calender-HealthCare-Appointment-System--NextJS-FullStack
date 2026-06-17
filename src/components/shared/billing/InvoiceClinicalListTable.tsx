@@ -9,6 +9,7 @@ import { DataTable } from "@/components/shared/DataTable";
 import { InvoiceClinicalListToolbar } from "@/components/shared/billing/InvoiceClinicalListToolbar";
 import { buildInvoiceManagementColumns } from "@/components/control-panel/invoice-management-columns";
 import { usePayments, type Invoice } from "@/hooks/usePayments";
+import { useAuth } from "@/hooks/useAuth";
 import { useInvoiceFormDialogOptional } from "@/context/InvoiceFormDialogContext";
 import type { EntityRole } from "@/lib/entity-routes";
 import { useInvoiceListToolbarFilters, type InvoiceListToolbarFilters } from "@/hooks/useInvoiceListToolbarFilters";
@@ -73,6 +74,7 @@ export function InvoiceClinicalListTable({
   } = usePayments();
 
   const invoiceDialog = useInvoiceFormDialogOptional();
+  const { user } = useAuth();
   const openEdit = useMemo(
     () => invoiceDialog?.openEdit ?? (() => {}),
     [invoiceDialog?.openEdit]
@@ -89,6 +91,7 @@ export function InvoiceClinicalListTable({
     () =>
       buildInvoiceManagementColumns({
         viewerRole: columnRole,
+        viewerUserId: columnRole === "doctor" ? user?.id : undefined,
         includeActionsColumn,
         onEdit: openEdit,
         onPay: pay,
@@ -105,6 +108,7 @@ export function InvoiceClinicalListTable({
       }),
     [
       columnRole,
+      user?.id,
       includeActionsColumn,
       openEdit,
       pay,

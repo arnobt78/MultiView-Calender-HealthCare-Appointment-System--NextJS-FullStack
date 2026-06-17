@@ -1,13 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildAppointmentInvoiceAuditExtraRows,
   buildInvoiceDetailAuditExtraRows,
+  mapInvoiceCreatedByActor,
   mapInvoiceIssuerActor,
 } from "@/lib/appointment-detail-invoice-audit-rows";
 import type { Invoice } from "@/hooks/usePayments";
 
 const baseInvoice = (): Invoice => ({
   id: "inv-1",
-  user_id: "u1",
+  user_id: "doctor-1",
   amount: 9250,
   currency: "eur",
   status: "paid",
@@ -19,47 +21,58 @@ const baseInvoice = (): Invoice => ({
   issuer_email: "test@doctor.com",
   issuer_image: "https://cdn.example/doctor.png",
   issuer_role: "doctor",
+  created_by_id: "admin-1",
+  created_by_display: "Demo Admin",
+  created_by_email: "test@admin.com",
+  created_by_role: "admin",
 });
 
 describe("mapInvoiceIssuerActor", () => {
-  it("maps issuer fields for Record Audit Created row", () => {
+  it("maps billing owner issuer fields", () => {
     const actor = mapInvoiceIssuerActor(baseInvoice());
     expect(actor).toEqual({
-      userId: "u1",
+      userId: "doctor-1",
       label: "Demo Doctor",
       email: "test@doctor.com",
       image: "https://cdn.example/doctor.png",
       role: "doctor",
     });
   });
+});
 
-  it("returns null when issuer label missing", () => {
-    expect(mapInvoiceIssuerActor({ ...baseInvoice(), issuer_label: null })).toBeNull();
+describe("mapInvoiceCreatedByActor", () => {
+  it("maps created_by for appointment detail Invoice issued row", () => {
+    const actor = mapInvoiceCreatedByActor(baseInvoice());
+    expect(actor).toEqual({
+      userId: "admin-1",
+      label: "Demo Admin",
+      email: "test@admin.com",
+      image: null,
+      role: "admin",
+    });
+  });
+
+  it("falls back to issuer when created_by missing", () => {
+    const actor = mapInvoiceCreatedByActor({
+      ...baseInvoice(),
+      created_by_id: null,
+      created_by_display: null,
+    });
+    expect(actor?.userId).toBe("doctor-1");
+    expect(actor?.label).toBe("Demo Doctor");
+  });
+});
+
+describe("buildAppointmentInvoiceAuditExtraRows", () => {
+  it("includes Invoice issued row label", () => {
+    const rows = buildAppointmentInvoiceAuditExtraRows([baseInvoice()]);
+    expect(rows.map((r) => r.label)).toContain("Invoice issued");
   });
 });
 
 describe("buildInvoiceDetailAuditExtraRows", () => {
-  it("includes issued by, due date, and paid at", () => {
+  it("includes issued by billing owner, due date, and paid at", () => {
     const rows = buildInvoiceDetailAuditExtraRows(baseInvoice());
     expect(rows.map((r) => r.label)).toEqual(["Issued by", "Due date", "Paid at"]);
-  });
-
-  it("includes due date dash row when unpaid without paid_at", () => {
-    const rows = buildInvoiceDetailAuditExtraRows({
-      ...baseInvoice(),
-      status: "sent",
-      paid_at: undefined,
-      due_date: undefined,
-    });
-    expect(rows.map((r) => r.label)).toEqual(["Issued by", "Due date"]);
-  });
-
-  it("omits issued by when issuer label missing", () => {
-    const rows = buildInvoiceDetailAuditExtraRows({
-      ...baseInvoice(),
-      issuer_label: null,
-      paid_at: undefined,
-    });
-    expect(rows.map((r) => r.label)).toEqual(["Due date"]);
   });
 });

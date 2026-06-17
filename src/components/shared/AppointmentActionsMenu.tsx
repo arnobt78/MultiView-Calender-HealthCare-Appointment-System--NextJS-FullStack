@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Global appointment ⋮ menu — View Details, Mark done/open, Edit, Delete.
+ * Global appointment ⋮ menu — View Details, Mark Done/Open, Edit, Delete.
  * All four items always visible; disabled when role/assignee denies action.
  * View href: admin → control-panel; doctor/patient → /appointments/:id.
  */
@@ -134,171 +134,171 @@ export function AppointmentActionsMenu({
 
   return (
     <>
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className={
-            triggerClassName ??
-            "h-8 w-8 rounded-full hover:bg-black/10"
-          }
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={
+              triggerClassName ??
+              "h-8 w-8 rounded-full hover:bg-black/10"
+            }
+          >
+            <MoreVertical className="h-4 w-4 text-gray-500" />
+            <span className="sr-only">Open menu</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          align="end"
+          className={contentClassName ?? "w-56"}
         >
-          <MoreVertical className="h-4 w-4 text-gray-500" />
-          <span className="sr-only">Open menu</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="end"
-        className={contentClassName ?? "w-56"}
-      >
-        <DropdownMenuItem
-          asChild={capabilities.canView}
-          disabled={!capabilities.canView}
-          className={cn(
-            capabilities.canView ? skyActionClass : disabledItemClass
-          )}
-        >
-          {capabilities.canView ? (
-            <Link
-              href={viewHref}
-              className="flex w-full items-center gap-2 outline-none"
+          <DropdownMenuItem
+            asChild={capabilities.canView}
+            disabled={!capabilities.canView}
+            className={cn(
+              capabilities.canView ? skyActionClass : disabledItemClass
+            )}
+          >
+            {capabilities.canView ? (
+              <Link
+                href={viewHref}
+                className="flex w-full items-center gap-2 outline-none"
+              >
+                <Eye className="h-4 w-4" />
+                <span>View Details</span>
+              </Link>
+            ) : (
+              <span className="flex items-center gap-2">
+                <Eye className="h-4 w-4" />
+                <span>View Details</span>
+              </span>
+            )}
+          </DropdownMenuItem>
+
+          <DropdownMenuSeparator />
+
+          <DropdownMenuItem
+            disabled={!capabilities.canToggleStatus}
+            className={cn(
+              capabilities.canToggleStatus
+                ? isDone
+                  ? toggleOpenClass
+                  : toggleDoneClass
+                : disabledItemClass
+            )}
+            onClick={() => {
+              if (!capabilities.canToggleStatus) return;
+              onToggleStatus(appointment.id, isDone ? "pending" : "done");
+            }}
+          >
+            {isDone ? (
+              <>
+                <Circle className="h-4 w-4" />
+                <span>Mark as Open</span>
+              </>
+            ) : (
+              <>
+                <CheckCircle className="h-4 w-4" />
+                <span>Mark as Done</span>
+              </>
+            )}
+          </DropdownMenuItem>
+
+          <DropdownMenuItem
+            disabled={!capabilities.canEdit || isCancelled}
+            className={cn(
+              capabilities.canEdit && !isCancelled ? skyActionClass : disabledItemClass
+            )}
+            onClick={() => {
+              if (!capabilities.canEdit || isCancelled) return;
+              onEdit();
+            }}
+          >
+            <Pencil className="h-4 w-4" />
+            <span>Edit</span>
+          </DropdownMenuItem>
+
+          {onSyncToGoogle && showSyncToGoogle ? (
+            <DropdownMenuItem
+              disabled={isCancelled || isSyncingGoogle}
+              className={cn(
+                !isCancelled && !isSyncingGoogle ? skyActionClass : disabledItemClass
+              )}
+              onClick={() => {
+                if (isCancelled || isSyncingGoogle) return;
+                onSyncToGoogle(appointment.id);
+              }}
             >
-              <Eye className="h-4 w-4" />
-              <span>View Details</span>
-            </Link>
-          ) : (
-            <span className="flex items-center gap-2">
-              <Eye className="h-4 w-4" />
-              <span>View Details</span>
-            </span>
-          )}
-        </DropdownMenuItem>
+              <Calendar className="h-4 w-4" />
+              <span>{isSyncingGoogle ? "Syncing…" : "Sync to Google Calendar"}</span>
+            </DropdownMenuItem>
+          ) : null}
 
-        <DropdownMenuSeparator />
+          {onCancel ? (
+            <DropdownMenuItem
+              disabled={!capabilities.canCancel}
+              className={cn(
+                capabilities.canCancel ? cancelActionClass : disabledItemClass
+              )}
+              onClick={() => {
+                if (!capabilities.canCancel) return;
+                setCancelOpen(true);
+              }}
+            >
+              <Ban className="h-4 w-4" />
+              <span>Cancel appointment</span>
+            </DropdownMenuItem>
+          ) : null}
 
-        <DropdownMenuItem
-          disabled={!capabilities.canToggleStatus}
-          className={cn(
-            capabilities.canToggleStatus
-              ? isDone
-                ? toggleOpenClass
-                : toggleDoneClass
-              : disabledItemClass
+          {onCreateInvoice && (
+            <DropdownMenuItem
+              disabled={!showCreateInvoice}
+              className={cn(
+                showCreateInvoice ? createInvoiceClass : disabledItemClass
+              )}
+              onClick={() => {
+                if (!showCreateInvoice) return;
+                onCreateInvoice(appointment.id);
+              }}
+            >
+              <Receipt className="h-4 w-4" />
+              <span>Create invoice</span>
+            </DropdownMenuItem>
           )}
-          onClick={() => {
-            if (!capabilities.canToggleStatus) return;
-            onToggleStatus(appointment.id, isDone ? "pending" : "done");
-          }}
-        >
-          {isDone ? (
-            <>
-              <Circle className="h-4 w-4" />
-              <span>Mark as open</span>
-            </>
-          ) : (
-            <>
-              <CheckCircle className="h-4 w-4" />
-              <span>Mark as done</span>
-            </>
-          )}
-        </DropdownMenuItem>
 
-        <DropdownMenuItem
-          disabled={!capabilities.canEdit || isCancelled}
-          className={cn(
-            capabilities.canEdit && !isCancelled ? skyActionClass : disabledItemClass
-          )}
-          onClick={() => {
-            if (!capabilities.canEdit || isCancelled) return;
-            onEdit();
-          }}
-        >
-          <Pencil className="h-4 w-4" />
-          <span>Edit</span>
-        </DropdownMenuItem>
-
-        {onSyncToGoogle && showSyncToGoogle ? (
           <DropdownMenuItem
-            disabled={isCancelled || isSyncingGoogle}
+            disabled={!capabilities.canDelete}
             className={cn(
-              !isCancelled && !isSyncingGoogle ? skyActionClass : disabledItemClass
+              capabilities.canDelete ? deleteActionClass : disabledItemClass
             )}
             onClick={() => {
-              if (isCancelled || isSyncingGoogle) return;
-              onSyncToGoogle(appointment.id);
+              if (!capabilities.canDelete) return;
+              onDelete(appointment.id);
             }}
           >
-            <Calendar className="h-4 w-4" />
-            <span>{isSyncingGoogle ? "Syncing…" : "Sync to Google Calendar"}</span>
+            <Trash2 className="h-4 w-4" />
+            <span>Delete</span>
           </DropdownMenuItem>
-        ) : null}
+        </DropdownMenuContent>
+      </DropdownMenu>
 
-        {onCancel ? (
-          <DropdownMenuItem
-            disabled={!capabilities.canCancel}
-            className={cn(
-              capabilities.canCancel ? cancelActionClass : disabledItemClass
-            )}
-            onClick={() => {
-              if (!capabilities.canCancel) return;
-              setCancelOpen(true);
-            }}
-          >
-            <Ban className="h-4 w-4" />
-            <span>Cancel appointment</span>
-          </DropdownMenuItem>
-        ) : null}
-
-        {onCreateInvoice && (
-          <DropdownMenuItem
-            disabled={!showCreateInvoice}
-            className={cn(
-              showCreateInvoice ? createInvoiceClass : disabledItemClass
-            )}
-            onClick={() => {
-              if (!showCreateInvoice) return;
-              onCreateInvoice(appointment.id);
-            }}
-          >
-            <Receipt className="h-4 w-4" />
-            <span>Create invoice</span>
-          </DropdownMenuItem>
-        )}
-
-        <DropdownMenuItem
-          disabled={!capabilities.canDelete}
-          className={cn(
-            capabilities.canDelete ? deleteActionClass : disabledItemClass
-          )}
-          onClick={() => {
-            if (!capabilities.canDelete) return;
-            onDelete(appointment.id);
+      {onCancel ? (
+        <ConfirmActionDialog
+          open={cancelOpen}
+          onOpenChange={setCancelOpen}
+          variant="warning"
+          title="Cancel appointment?"
+          subtitle="This visit will be marked cancelled. Stakeholders will be notified."
+          confirmLabel="Cancel Appointment"
+          confirmPending={cancelPending}
+          confirmPendingLabel="Cancelling…"
+          onConfirm={async () => {
+            if (!onCancel) return;
+            await onCancel(appointment.id);
+            setCancelOpen(false);
           }}
-        >
-          <Trash2 className="h-4 w-4" />
-          <span>Delete</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-
-    {onCancel ? (
-      <ConfirmActionDialog
-        open={cancelOpen}
-        onOpenChange={setCancelOpen}
-        variant="warning"
-        title="Cancel appointment?"
-        subtitle="This visit will be marked cancelled. Stakeholders will be notified."
-        confirmLabel="Cancel visit"
-        confirmPending={cancelPending}
-        confirmPendingLabel="Cancelling…"
-        onConfirm={async () => {
-          if (!onCancel) return;
-          await onCancel(appointment.id);
-          setCancelOpen(false);
-        }}
-      />
-    ) : null}
+        />
+      ) : null}
     </>
   );
 }

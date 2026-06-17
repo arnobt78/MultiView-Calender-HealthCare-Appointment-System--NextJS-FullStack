@@ -116,7 +116,7 @@ export function InvoiceAdminActionsMenu({
             disabled={isUpdating}
             onClick={() => onEdit(invoice)}
           >
-            <Pencil className="h-4 w-4" /> Edit details
+            <Pencil className="h-4 w-4" /> Edit Invoice
           </DropdownMenuItem>
         )}
         {canSend && onSend && (

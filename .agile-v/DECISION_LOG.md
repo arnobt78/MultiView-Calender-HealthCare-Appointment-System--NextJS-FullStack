@@ -149,5 +149,7 @@
 | 2026-06-17T13:35:00Z | build | C43.1 polish — assignees + invalidation | post-create sharing step; email toast; drop router.refresh; Sentry tunnel test | REQ-0094 |
 | 2026-06-17T13:35:00Z | verify | C43.1 automated verify PASS | 1227/1227; tsc · lint · build PASS | REQ-0094 |
 | 2026-06-17T14:10:00Z | fix | Title-click dialog over-scope revert | kept AppointmentDialog controlled isOpen init only; restored calendar edit dialogs + menu onEdit | REQ-0094 |
-| 2026-06-17T15:50:00Z | build | C46 portal patient invoice shell + snapshot slim | patients layout ClinicianInvoiceDialogShell; dedupe prefetch; count-only snapshot invoices | REQ-0097 |
-| 2026-06-17T15:50:00Z | verify | C46 automated verify PASS | 1254/1254; tsc · lint · build PASS | REQ-0097 |
+| 2026-06-17T16:20:00Z | build | C47 appointment detail audit + billing UX | created_by audit actor; billing option seed; Edit Invoice; telehealth video; header actions | REQ-0098 |
+| 2026-06-17T16:20:00Z | verify | C47 automated verify PASS | 1261/1261; tsc · lint · build PASS | REQ-0098 |
+| 2026-06-17T18:00:00Z | build | C48 UX regressions + doctor RBAC | office_location prefetch; dialog Sonner-only close; visit title href; owner/treating mutate; inline category duration | REQ-0099 |
+| 2026-06-17T18:15:00Z | verify | C48 automated verify PASS | 1270/1270; tsc · lint · build PASS | REQ-0099 |

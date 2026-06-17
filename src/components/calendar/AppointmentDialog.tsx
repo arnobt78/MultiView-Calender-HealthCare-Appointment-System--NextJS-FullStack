@@ -35,7 +35,7 @@ import { invalidateAssigneesActivitiesAppointment } from "@/lib/query-client";
 import { notify } from "@/lib/notify";
 import { appointmentCreateSchema } from "@/lib/schemas/appointment";
 import { prefetchSchedulingMonthWithAdjacent } from "@/lib/prefetch-scheduling";
-import { Calendar, CalendarCheck, Loader2, X } from "lucide-react";
+import { Calendar, Loader2, X } from "lucide-react";
 
 /** Client-side upload cap (bytes) — keep in sync with UI note in `AppointmentDialogGeneralSection`. */
 const MAX_ATTACHMENT_BYTES = 1048576;
@@ -162,17 +162,12 @@ export default function AppointmentDialog({
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
   const [fileProgress, setFileProgress] = useState<Record<string, number>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   /** Edit-mode share list — synced from appointment seed + live GET after add/remove mutations. */
   const [dialogAssignees, setDialogAssignees] = useState<AppointmentAssignee[]>([]);
   const [assigneeMutationBusy, setAssigneeMutationBusy] = useState(false);
-  /** Set after create succeeds — enables assignee sharing before dialog closes (C43.1). */
-  const [savedAppointmentId, setSavedAppointmentId] = useState<string | null>(null);
-  const activeAppointmentId = appointment?.id ?? savedAppointmentId ?? null;
-  /** Create flow: appointment persisted; user can share then tap Done (no re-save). */
-  const isPostCreateSharingStep = Boolean(savedAppointmentId) && !isEditMode;
+  const editAppointmentId = appointment?.id ?? null;
 
   const resetFormState = () => {
     setTitle("");
@@ -192,7 +187,6 @@ export default function AppointmentDialog({
     setSlotPickStartIso(null);
     setUploadedFiles([]);
     setError(null);
-    setSuccess(false);
     setUploading(false);
     setLoading(false);
     setFileProgress({});
@@ -201,7 +195,6 @@ export default function AppointmentDialog({
     }
     setDialogAssignees([]);
     setAssigneeMutationBusy(false);
-    setSavedAppointmentId(null);
   };
 
   const syncDialogAssigneesFromServer = useCallback(
@@ -273,15 +266,15 @@ export default function AppointmentDialog({
 
   /** Re-map assignee chips when the patients cache hydrates after SSR seed. */
   useEffect(() => {
-    if (!activeAppointmentId || dialogAssignees.length === 0) return;
+    if (!editAppointmentId || dialogAssignees.length === 0) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setDialogAssignees((prev) =>
       enrichAssigneesWithPatientIds(prev, patients, appointment?.appointment_assignee)
     );
-  }, [patients, activeAppointmentId, appointment?.appointment_assignee, dialogAssignees.length]);
+  }, [patients, editAppointmentId, appointment?.appointment_assignee, dialogAssignees.length]);
 
   const handleAddDialogAssignee = async (patientId: string) => {
-    if (!activeAppointmentId || !isValidUUID(activeAppointmentId)) return;
+    if (!editAppointmentId || !isValidUUID(editAppointmentId)) return;
     if (dialogAssignees.some((a) => a.user === patientId)) return;
     const patient = patients.find((p) => p.id === patientId);
     if (!patient) return;
@@ -296,9 +289,9 @@ export default function AppointmentDialog({
     setAssigneeMutationBusy(true);
     setError(null);
     try {
-      await addPatientAssigneeToAppointment(activeAppointmentId, patientId, patient.email);
-      await invalidateAssigneesActivitiesAppointment(queryClient, activeAppointmentId);
-      await syncDialogAssigneesFromServer(activeAppointmentId, dialogAssignees);
+      await addPatientAssigneeToAppointment(editAppointmentId, patientId, patient.email);
+      await invalidateAssigneesActivitiesAppointment(queryClient, editAppointmentId);
+      await syncDialogAssigneesFromServer(editAppointmentId, dialogAssignees);
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : "Failed to add assignee";
       setError(message);
@@ -312,7 +305,7 @@ export default function AppointmentDialog({
     userId: string | null,
     assigneeId?: string
   ) => {
-    if (!activeAppointmentId) return;
+    if (!editAppointmentId) return;
     if (!assigneeId) {
       setDialogAssignees((prev) => prev.filter((a) => a.user !== userId));
       return;
@@ -322,8 +315,8 @@ export default function AppointmentDialog({
     setError(null);
     try {
       await removeAppointmentAssignee(assigneeId);
-      await invalidateAssigneesActivitiesAppointment(queryClient, activeAppointmentId);
-      await syncDialogAssigneesFromServer(activeAppointmentId);
+      await invalidateAssigneesActivitiesAppointment(queryClient, editAppointmentId);
+      await syncDialogAssigneesFromServer(editAppointmentId);
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : "Failed to remove assignee";
       setError(message);
@@ -368,7 +361,6 @@ export default function AppointmentDialog({
   const handleSave = async () => {
     setLoading(true);
     setError(null);
-    setSuccess(false);
     try {
       if (!title || !start || !end || !patientId || !categoryId) {
         setError("Please fill in all required fields.");
@@ -463,19 +455,8 @@ export default function AppointmentDialog({
         await invalidateAssigneesActivitiesAppointment(queryClient, apptId);
       }
 
-      setSuccess(true);
-
-      const stayOpenForSharing =
-        apptId && !isEditMode && showTreatingPhysicianPicker && isValidUUID(apptId);
-      if (stayOpenForSharing) {
-        setSavedAppointmentId(apptId);
-        void syncDialogAssigneesFromServer(apptId).catch(() => {
-          /* empty list is fine on first open */
-        });
-      } else {
-        handleDialogOpenChange(false);
-        onSuccess?.();
-      }
+      handleDialogOpenChange(false);
+      onSuccess?.();
     } catch (e: unknown) {
       if (typeof e === "object" && e && "message" in e) {
         notify.error({
@@ -493,12 +474,6 @@ export default function AppointmentDialog({
     } finally {
       setLoading(false);
     }
-  };
-
-  /** Post-create sharing step — appointment already saved; close without re-submitting form. */
-  const handleDoneAfterCreate = () => {
-    onSuccess?.();
-    handleDialogOpenChange(false);
   };
 
   // Handle file upload — reject individual files over MAX_ATTACHMENT_BYTES before hitting the API.
@@ -597,11 +572,9 @@ export default function AppointmentDialog({
                     : toTitleCaseLabel("Create New Appointment")}
                 </DialogTitle>
                 <DialogDescription className="text-left text-sm text-muted-foreground">
-                  {isPostCreateSharingStep
-                    ? toTitleCaseLabel("Optionally share calendar access, then tap Done.")
-                    : isEditMode
-                      ? toTitleCaseLabel("Update scheduling details and appointment type.")
-                      : toTitleCaseLabel("Set the client, time, and appointment type.")}
+                  {isEditMode
+                    ? toTitleCaseLabel("Update scheduling details and appointment type.")
+                    : toTitleCaseLabel("Set the client, time, and appointment type.")}
                 </DialogDescription>
               </div>
               <DialogClose asChild>
@@ -621,11 +594,6 @@ export default function AppointmentDialog({
         </div>
         {error && (
           <div className="shrink-0 px-6 pt-2 text-xs text-red-600">{error}</div>
-        )}
-        {success && (
-          <div className="shrink-0 px-6 pt-2 text-xs text-green-600">
-            {toTitleCaseLabel("Successfully saved!")}
-          </div>
         )}
         <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4 text-gray-700">
           <div className="grid grid-cols-1 gap-6">
@@ -682,11 +650,11 @@ export default function AppointmentDialog({
                 setSlotPickStartIso={setSlotPickStartIso}
                 chiefComplaint={chiefComplaint}
                 setChiefComplaint={setChiefComplaint}
-                excludeAppointmentId={activeAppointmentId ?? undefined}
+                excludeAppointmentId={editAppointmentId ?? undefined}
                 telehealthBookingPreset={telehealthBookingPreset}
               />
             </section>
-            {activeAppointmentId && showTreatingPhysicianPicker ? (
+            {editAppointmentId && showTreatingPhysicianPicker ? (
               <section className="min-w-0">
                 <h3 className="mb-2 text-sm font-semibold tracking-tight text-gray-700">
                   {toTitleCaseLabel("Access & Sharing")}
@@ -720,46 +688,30 @@ export default function AppointmentDialog({
             <X className="size-4 shrink-0" aria-hidden />
             {toTitleCaseLabel("Cancel")}
           </Button>
-          {isPostCreateSharingStep ? (
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={handleDoneAfterCreate}
-              disabled={loading || uploading || assigneeMutationBusy}
-              className={cn(
-                skyGlassPrimaryButtonClass,
-                "rounded-full disabled:pointer-events-none disabled:opacity-50"
-              )}
-            >
-              <CalendarCheck className="size-4 shrink-0" aria-hidden />
-              {toTitleCaseLabel("Done")}
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={handleSave}
-              disabled={loading || uploading || assigneeMutationBusy || !canSave}
-              className={cn(
-                skyGlassPrimaryButtonClass,
-                "rounded-full disabled:pointer-events-none disabled:opacity-50"
-              )}
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="size-4 shrink-0 animate-spin" aria-hidden />
-                  {toTitleCaseLabel("Saving…")}
-                </>
-              ) : (
-                <>
-                  <CalendarCheck className="size-4 shrink-0" aria-hidden />
-                  {isEditMode
-                    ? toTitleCaseLabel("Update Appointment")
-                    : toTitleCaseLabel("Save New Appointment")}
-                </>
-              )}
-            </Button>
-          )}
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={handleSave}
+            disabled={loading || uploading || assigneeMutationBusy || !canSave}
+            className={cn(
+              skyGlassPrimaryButtonClass,
+              "rounded-full disabled:pointer-events-none disabled:opacity-50"
+            )}
+          >
+            {loading ? (
+              <>
+                <Loader2 className="size-4 shrink-0 animate-spin" aria-hidden />
+                {toTitleCaseLabel("Saving…")}
+              </>
+            ) : (
+              <>
+                <Calendar className="size-4 shrink-0" aria-hidden />
+                {isEditMode
+                  ? toTitleCaseLabel("Update Appointment")
+                  : toTitleCaseLabel("Save New Appointment")}
+              </>
+            )}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

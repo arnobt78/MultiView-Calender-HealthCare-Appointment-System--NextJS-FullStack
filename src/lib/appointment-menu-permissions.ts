@@ -78,6 +78,8 @@ export function getAppointmentMenuCapabilities({
     userEmail
   );
   const isOwner = !!userId && appointment.user_id === userId;
+  const isTreating =
+    !!userId && appointment.treating_physician_id === userId;
   const perm = ownerPerm ?? assigneePerm;
 
   const assigneeRows =
@@ -104,11 +106,11 @@ export function getAppointmentMenuCapabilities({
     canView: true,
     canToggleStatus:
       !isTerminal &&
-      (isOwner || perm === "owner" || perm === "full" || perm === "write"),
+      (isOwner || isTreating || perm === "owner" || perm === "full" || perm === "write"),
     canEdit:
       appointment.status !== "cancelled" &&
-      (isOwner || perm === "owner" || perm === "full"),
-    canDelete: isOwner || perm === "owner" || perm === "full",
+      (isOwner || isTreating || perm === "owner" || perm === "full"),
+    canDelete: isOwner || isTreating || perm === "owner" || perm === "full",
     canCancel: canCancel || (isAdminRole(userRole) && !isTerminal),
   };
 }

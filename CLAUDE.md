@@ -4,11 +4,14 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-17)
 
-- **C46:** Portal `/patients/*` `ClinicianInvoiceDialogShell` + SSR `prefetchInvoices` (Edit invoice works). Snapshot slim — `invoices:[]`, patient-scoped `invoice.count` only.
-- **C45:** `InvoiceClinicalListTable` on appt/patient detail Related Billing; `invoice-entity-list-filters.ts`; hub DRY.
-- **C44:** Dialog parity — `enrichFullAppointmentDialogSeeds`, `AppointmentStatusSelect`, past slot chip highlight.
-- **C43:** Detail edit via `AppointmentDialogController`; body skeleton; assignees + invalidation (no `router.refresh`).
-- **Verify:** **1254/1254** · tsc · lint · build PASS.
+- **C48 (REQ-0099):** `office_location` in `prefetchDoctors` · dialog close + Sonner only · Mark done `emeraldGlassBackButtonClass` · `resolveInvoiceVisitTitleHref` · owner+treating mutate (appt+invoice) · inline category duration.
+- **C47 (REQ-0098):** Invoice audit `created_by` · billing option cache seed · footer Edit Invoice · telehealth Video gate · `AppointmentDetailHeaderQuickActions`.
+- **Verify:** **1270/1270** · tsc · lint · build PASS.
+
+## Doctor invoice RBAC (C48)
+
+- **API:** `invoice-access` `doctorCanMutateLinkedInvoice` — issuer OR calendar owner OR treating on linked visit.
+- **UI:** `doctorCanMutateInvoice` + `viewerUserId` on list/detail menus (`InvoiceClinicalListTable`, `InvoiceDetailActionBar`).
 
 ## Never / Always
 
@@ -57,7 +60,7 @@ Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Agile V
 
-`.agile-v/STATE.md` · **C46 verify PASS** · **1254/1254**.
+`.agile-v/STATE.md` · **C48 verify PASS** · **1270/1270**.
 
 ## Principle
 

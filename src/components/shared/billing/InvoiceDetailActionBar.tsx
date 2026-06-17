@@ -18,6 +18,7 @@ import { usePayments, type Invoice } from "@/hooks/usePayments";
 import { useInvoice } from "@/hooks/useInvoice";
 import { useInvoiceFormDialogOptional } from "@/context/InvoiceFormDialogContext";
 import { useInvoiceFormDialogController } from "@/hooks/useInvoiceFormDialogController";
+import { useAuth } from "@/hooks/useAuth";
 import {
   buildInvoiceDeleteConfirmSubtitle,
   DELETE_INVOICE_CONFIRM_TITLE,
@@ -64,6 +65,7 @@ export function InvoiceDetailActionBar({
   } = usePayments({ invoicesInitialData });
 
   const ctx = useInvoiceFormDialogOptional();
+  const { user } = useAuth();
   const local = useInvoiceFormDialogController({
     variant: accessLevel === "admin" ? "admin" : "doctor",
   });
@@ -74,8 +76,11 @@ export function InvoiceDetailActionBar({
 
   const viewerRole = accessLevel === "admin" ? "admin" : "doctor";
   const caps = useMemo(
-    () => resolveInvoiceDetailActionCapabilities(invoice, viewerRole),
-    [invoice, viewerRole]
+    () =>
+      resolveInvoiceDetailActionCapabilities(invoice, viewerRole, {
+        viewerUserId: viewerRole === "doctor" ? user?.id : undefined,
+      }),
+    [invoice, viewerRole, user?.id]
   );
   const canEditDetails = caps.canEditDetails && (accessLevel === "admin" || accessLevel === "mutate");
   const canSendInFooter = resolveInvoiceDetailSendInFooter(accessLevel, caps);
@@ -109,7 +114,7 @@ export function InvoiceDetailActionBar({
                 onClick={() => openEdit(invoice)}
               >
                 <Pencil className="shrink-0" aria-hidden />
-                Edit details
+                Edit Invoice
               </ControlPanelGlassActionButton>
             ) : null}
 

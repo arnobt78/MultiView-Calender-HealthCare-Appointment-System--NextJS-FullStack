@@ -1,20 +1,16 @@
 # HealthCal Pro — Project Walkthrough
 
-## Agent resume (2026-06-17 — C46 portal patient invoice + snapshot slim)
+## Agent resume (2026-06-17 — C47 + C48)
 
-**Baseline:** 1254/1254 · tsc · lint · build PASS
+**Baseline:** 1270/1270 · tsc · lint · build PASS
 
-**C46:** `patients/layout.tsx` + `PatientsClinicianLayoutClient` → `ClinicianInvoiceDialogShell`; dedupe page `prefetchInvoices`. `loadPatientSnapshotData` — `invoices:[]`, patient-scoped `invoice.count`.
+**C48 (REQ-0099):** `prefetchDoctors` `office_location` · `AppointmentDialog` close on save (Sonner only) · Mark done glass · `resolveInvoiceVisitTitleHref` · owner+treating mutate · inline category duration badge.
 
-**C45:** `InvoiceClinicalListTable` · `invoice-entity-list-filters.ts` · appt/patient Related Billing tables · hub DRY.
+**C47 (REQ-0098):** Invoice issued → `created_by` · `billing-appointment-option-from-detail` cache seed · footer Edit Invoice · telehealth Video gate · `AppointmentDetailHeaderQuickActions`.
 
-**C44:** `appointment-detail-dialog.ts` · `AppointmentStatusSelect` · past slot chip styling on edit.
+**Keys:** `invoice-visit-title-href.ts` · `appointment-access.ts` · `invoice-access.ts` · `AppointmentDetailHeaderQuickActions.tsx` · `billing-appointment-option-from-detail.ts`
 
-**C43:** `AppointmentDialogController` edit · `AppointmentDetailBodySkeleton` · assignees · TanStack invalidation.
-
-**Keys:** `patient-snapshot-data.ts` · `patients/layout.tsx` · `InvoiceClinicalListTable.tsx` · `PatientDetailScreen.tsx`
-
-**Invariants:** `queryKeys.invoices.all` layout seed · `invalidateInvoicesAndOverview` on CRUD · no `router.refresh`.
+**Invariants:** `invalidateAfterAppointmentMutation` / `invalidateInvoicesAndOverview` on CRUD · no `router.refresh`.
 
 ---
 
@@ -220,7 +216,7 @@
 
 ## Prior (2026-06-04 — Doctor portal invoice issuer UI gate)
 
-- **RBAC UI:** `doctorCanMutateInvoice` in `invoice-detail-action-capabilities.ts`; doctor portal billing ⋮ menu gates Send/Edit/Delete/Cancel on `invoice.user_id === sessionUserId` — linked calendar owner sees View only; issuer + admin unchanged on API.
+- **RBAC UI (C48):** `doctorCanMutateInvoice` — issuer OR `visit_summary` calendar owner OR treating physician; `viewerUserId` on list/detail menus. API: `doctorCanMutateLinkedInvoice` in `invoice-access.ts`.
 - **Wire:** `DoctorPortalPage` → `DoctorPortalInvoicesCard` → `DoctorPortalInvoiceListRow` → `InvoiceAdminActionsMenu` (`viewerUserId`).
 - **List labels:** `InvoiceVisitDescriptionStack` — `Patient:` / `Treating:` / `Owner:` inline rows on billing cards.
 - **Verify:** **863** / **166** · tsc · lint · build.
@@ -315,7 +311,7 @@
 
 - **InvoiceFormDialog:** amber glass 90vw shell; create (picker/preset) + edit; `invoice-dialog-ui-classes.ts`, `InvoiceVisitDirectoryPickerCard` / `InvoiceVisitSummaryCard`; `billing-appointment-options-load` + SSR `queryKeys.billing.appointmentOptions`.
 - **Shared dialog:** `ClinicianInvoiceDialogShell` → `InvoiceFormDialogProvider` on CP, dashboard, doctor portal, `/appointments`, `/invoices` layouts (`StaffInvoiceDialogShell` deprecated alias).
-- **Preset create:** `openCreateForAppointment(id)` from calendar ⋮ or `AppointmentDetailBillingActions`; `useBillingAppointmentOptionById` + amount prefill via `invoice-form-guards.ts`.
+- **Preset create:** `openCreateForAppointment(id)` from calendar ⋮ or appointment detail footer; `useBillingAppointmentOptionById` + amount prefill via `invoice-form-guards.ts`.
 - **Detail live edit:** `InvoiceDetailLiveBody` subscribes `useInvoice`; `InvoiceDetailClient` **Edit details**; `hideViewLink` on detail; doctor mutate on sent/overdue own invoices.
 - **API parity:** `GET /api/invoices/[id]`, `GET /api/payments`, `prefetchInvoiceDetail` attach `visit_summary`.
 - **SSE hardening:** `createSafeSseEnqueue`; poll error → single error event + stop (no `ERR_INVALID_STATE` heartbeat spam).

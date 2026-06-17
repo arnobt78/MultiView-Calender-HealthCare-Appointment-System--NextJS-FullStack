@@ -34,6 +34,7 @@ import { EntityDetailRecordAuditCard } from "@/components/shared/entity-detail/E
 import { EntityIdCopyInline } from "@/components/shared/EntityIdCopyInline";
 import { AppointmentDetailBodySkeleton } from "@/components/shared/appointment-detail/AppointmentDetailBodySkeleton";
 import { AppointmentDetailActionBar } from "@/components/shared/appointment-detail/AppointmentDetailActionBar";
+import { AppointmentDetailHeaderQuickActions } from "@/components/shared/appointment-detail/AppointmentDetailHeaderQuickActions";
 import AppointmentDialogController from "@/components/calendar/AppointmentDialogController";
 import { InvoiceClinicalListTable } from "@/components/shared/billing/InvoiceClinicalListTable";
 import { clinicalEmptyOr } from "@/components/shared/ClinicalTableEmptyDash";
@@ -76,6 +77,8 @@ import { usePayments, type Invoice } from "@/hooks/usePayments";
 import { useCpListBodyLoading } from "@/lib/cp-list-body-loading";
 import { queryKeys } from "@/lib/query-keys";
 import { filterInvoicesForAppointment } from "@/lib/invoice-entity-list-filters";
+import { mapAppointmentDetailToBillingOption } from "@/lib/billing-appointment-option-from-detail";
+import { seedBillingAppointmentOptionsCache } from "@/lib/billing-appointment-options-cache";
 import { cn } from "@/lib/utils";
 import type { AppointmentAssignee } from "@/types/types";
 import type { AppointmentDetailViewModel } from "@/lib/appointment-detail-view-model";
@@ -284,6 +287,15 @@ export function AppointmentDetailScreenShared({
     [invoices, appointment.id]
   );
 
+  /** Warm invoice create picker from detail cache — avoids VisitPickerSkeleton on New Invoice. */
+  useLayoutEffect(() => {
+    if (!hasAppointmentBody) return;
+    const option = mapAppointmentDetailToBillingOption(detail, linkedInvoices);
+    seedBillingAppointmentOptionsCache(queryClient, appointment.id, false, {
+      options: [option],
+    });
+  }, [queryClient, detail, linkedInvoices, appointment.id, hasAppointmentBody]);
+
   const visitMeta = useMemo(
     () => resolveAppointmentVisitMetaFromFullAppointment(appointment),
     [appointment]
@@ -403,11 +415,20 @@ export function AppointmentDetailScreenShared({
           }
           description={showLive ? headerSubtitle : "Appointment details"}
           actions={
-            <EntityDetailBackLink
-              href={backHref}
-              placement="header"
-              backButtonClassName={toneClasses.backButtonClass}
-            />
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <EntityDetailBackLink
+                href={backHref}
+                placement="header"
+                backButtonClassName={toneClasses.backButtonClass}
+              />
+              {showLiveBody ? (
+                <AppointmentDetailHeaderQuickActions
+                  appointment={appointment}
+                  assignees={assigneesForMenu}
+                  canEdit={canEdit}
+                />
+              ) : null}
+            </div>
           }
         />
       }
@@ -708,6 +729,7 @@ export function AppointmentDetailScreenShared({
         <AppointmentDetailActionBar
           appointment={appointment}
           assignees={assigneesForMenu}
+          linkedInvoices={linkedInvoices}
           backHref={backHref}
           backLabel={backListLabel}
           toneClasses={toneClasses}

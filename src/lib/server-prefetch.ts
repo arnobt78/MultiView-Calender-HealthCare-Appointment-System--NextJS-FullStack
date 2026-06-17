@@ -1004,6 +1004,8 @@ export type DoctorPrefetchRow = {
   is_active?: boolean;
   active_since?: string | null;
   paid_revenue_cents?: number;
+  /** Default visit location — mirrors GET /api/doctors for dialog prefill. */
+  office_location: string | null;
 };
 
 /**
@@ -1027,6 +1029,7 @@ export async function prefetchDoctors(): Promise<{ doctors: DoctorPrefetchRow[] 
           role: true,
           is_active: true,
           active_since: true,
+          office_location: true,
           doctor_availabilities: {
             select: { weekday: true, start_min: true, end_min: true, timezone: true },
           },
@@ -1087,6 +1090,7 @@ export async function prefetchDoctors(): Promise<{ doctors: DoctorPrefetchRow[] 
         bookable_appointment_types,
         patient_count: d._count.patients_primary_doctor,
         paid_revenue_cents: resolveDoctorPaidRevenueCents(d.id, revenueByDoctor),
+        office_location: d.office_location,
       };
     });
 

@@ -120,7 +120,7 @@ describe("AppointmentManagementBillingCell", () => {
 });
 
 describe("AppointmentCategoryTableCell", () => {
-  it("uses compactStack — label row + duration badge row", () => {
+  it("renders inline category label + duration badge beside title", () => {
     const appt: FullAppointment = {
       ...sample,
       category: "cat-1",
@@ -140,7 +140,7 @@ describe("AppointmentCategoryTableCell", () => {
     );
     expect(markup).toContain("Dermatology");
     expect(markup).toContain("30 min");
-    expect(markup).toContain("items-start gap-2");
-    expect(markup).toContain("flex-col");
+    expect(markup).toContain("flex-wrap");
+    expect(markup).not.toContain("flex-col");
   });
 });

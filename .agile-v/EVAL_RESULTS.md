@@ -544,3 +544,25 @@ release_commit: "WIP"
 | release build | npm run build | PASS | REQ-0097 |
 
 **EvalGate (C46 active):** PASS (automated) — commit pending.
+
+## C47 — ER-C47-VERIFY
+
+```yaml
+eval_run_id: ER-C47-VERIFY
+eval_timestamp: "2026-06-17T16:20:00Z"
+eval_gate_status: PASS
+eval_gate_rationale: "REQ-0098 appointment detail audit + billing UX; 1261/1261; tsc; eslint; build PASS"
+cycle: C47
+release_commit: "WIP"
+```
+
+| Suite | Command | Result | LINKED_REQ |
+|-------|---------|--------|------------|
+| invoice-detail-audit-rows | npm test invoice-detail-audit-rows | PASS | REQ-0098 |
+| appointment-detail-c47 | npm test appointment-detail-c47 | PASS | REQ-0098 |
+| full regression | npm test | PASS 1261/1261 | REQ-0098 |
+| typecheck | npx tsc --noEmit | PASS | REQ-0098 |
+| lint | npm run lint | PASS | REQ-0098 |
+| release build | npm run build | PASS | REQ-0098 |
+
+**EvalGate (C47 active):** PASS (automated) — commit pending.

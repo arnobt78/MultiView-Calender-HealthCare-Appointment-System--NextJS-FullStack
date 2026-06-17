@@ -17,6 +17,7 @@ import {
   userDetailHref,
   type EntityRole,
 } from "@/lib/entity-routes";
+import { resolveInvoiceVisitTitleHref } from "@/lib/invoice-visit-title-href";
 import {
   resolveCalendarOwnerLinkKind,
   resolveTreatingPhysicianLinkKind,
@@ -39,7 +40,7 @@ type Props = {
 export function InvoiceVisitListCell({ invoice, viewerRole }: Props) {
   const summary = invoice.visit_summary;
   const title = getInvoiceListTitle(invoice);
-  const href = invoiceDetailHref(viewerRole, invoice.id);
+  const href = resolveInvoiceVisitTitleHref(invoice, viewerRole);
   const patientHref = summary?.patient_id
     ? patientDetailHref(viewerRole, summary.patient_id)
     : href;

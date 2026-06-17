@@ -23,10 +23,7 @@ import {
   clinicalTableCellWrapClass,
 } from "@/lib/table-display-styles";
 import {
-  clinicalIdentityCompactStackBadgeRowClass,
-  clinicalIdentityCompactStackNameEmailRowClass,
   clinicalIdentityCompactStackRowClass,
-  clinicalIdentityCompactStackTextColClass,
 } from "@/lib/clinical-identity-inline-ui";
 import { cn } from "@/lib/utils";
 
@@ -148,7 +145,7 @@ function resolveCategoryDurationMinutes(appointment: FullAppointment): number | 
   return resolveAppointmentTypeDurationMinutes(appointment);
 }
 
-/** Category compactStack — brand mark + label row, duration badge row (patient/treating parity). */
+/** Category compactStack — brand mark + inline label + duration badge (title row parity). */
 export function AppointmentCategoryTableCell({
   appointment,
   viewerRole,
@@ -164,25 +161,27 @@ export function AppointmentCategoryTableCell({
   const label = cat.label.trim();
 
   return (
-    <div className={cn(clinicalIdentityCompactStackRowClass, clinicalTableCellMinRowClass, "py-0.5")}>
+    <div
+      className={cn(
+        clinicalIdentityCompactStackRowClass,
+        clinicalTableCellMinRowClass,
+        "py-0.5"
+      )}
+    >
       <CategoryBrandMark
         color={cat.color}
         icon={cat.icon}
         variant="brand"
         size="compact"
       />
-      <div className={clinicalIdentityCompactStackTextColClass}>
-        <div className={clinicalIdentityCompactStackNameEmailRowClass}>
-          <EntityTitleLink
-            href={categoryDetailHref(viewerRole, cat.id)}
-            label={label}
-            className="min-w-0 shrink truncate text-sm font-normal"
-            wrapLabel
-          />
-        </div>
-        <div className={clinicalIdentityCompactStackBadgeRowClass}>
-          <CategoryDurationMinutesBadge minutes={durationMinutes} />
-        </div>
+      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 gap-y-1">
+        <EntityTitleLink
+          href={categoryDetailHref(viewerRole, cat.id)}
+          label={label}
+          className="min-w-0 shrink font-normal"
+          wrapLabel
+        />
+        <CategoryDurationMinutesBadge minutes={durationMinutes} className="shrink-0" />
       </div>
     </div>
   );

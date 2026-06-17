@@ -13,6 +13,7 @@ import { resolveInvoiceDisplayStatus } from "@/lib/billing-appointment-eligibili
 import { ClinicalEmptyDash } from "@/components/shared/ClinicalTableEmptyDash";
 import { EntityDetailAuditActorInline } from "@/components/shared/entity-detail/EntityDetailAuditActorInline";
 import type { EntityDetailAuditActor } from "@/lib/entity-detail-audit-actor";
+import { mapInvoiceRecordAuditActors } from "@/lib/entity-detail-audit-actor";
 import type { EntityRole } from "@/lib/entity-routes";
 import { cn } from "@/lib/utils";
 
@@ -22,7 +23,7 @@ export type EntityDetailAuditExtraRow = {
   children: ReactNode;
 };
 
-/** Invoice issuer — avatar, email, role for Record Audit Created row. */
+/** Invoice billing owner — avatar, email, role (invoice detail "Issued by" row). */
 export function mapInvoiceIssuerActor(invoice: Invoice): EntityDetailAuditActor | null {
   const label = invoice.issuer_label?.trim();
   if (!invoice.user_id || !label) return null;
@@ -33,6 +34,11 @@ export function mapInvoiceIssuerActor(invoice: Invoice): EntityDetailAuditActor 
     image: invoice.issuer_image,
     role: invoice.issuer_role,
   };
+}
+
+/** Invoice create actor — session user who issued the draft (appointment detail "Invoice issued" row). */
+export function mapInvoiceCreatedByActor(invoice: Invoice): EntityDetailAuditActor | null {
+  return mapInvoiceRecordAuditActors(invoice).createdBy;
 }
 
 /** Issued row — same layout as Created/Last Updated (`Label: time · actor`). */
@@ -79,7 +85,7 @@ export function buildAppointmentInvoiceAuditExtraRows(
       children: (
         <InvoiceRecordAuditIssuedContent
           createdAt={invoice.created_at}
-          actor={mapInvoiceIssuerActor(invoice)}
+          actor={mapInvoiceCreatedByActor(invoice)}
           viewerRole={viewerRole}
         />
       ),

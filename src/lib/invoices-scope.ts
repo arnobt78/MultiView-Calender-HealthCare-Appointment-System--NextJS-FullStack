@@ -17,8 +17,12 @@ import {
   emptyInvoiceBillingStatusPayload,
   fetchInvoiceBillingStatusPayloadForWhere,
 } from "@/lib/invoice-billing-kpi-aggregate";
+import { invoiceAuditUserPick } from "@/lib/invoice-api-include";
 
-const invoiceInclude = { payments: true } as const;
+const invoiceInclude = {
+  payments: true,
+  created_by: invoiceAuditUserPick,
+} as const;
 
 export type InvoiceViewerScopeOpts = {
   userId: string;

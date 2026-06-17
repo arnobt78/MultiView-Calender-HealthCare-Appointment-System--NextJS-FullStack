@@ -3,8 +3,6 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  CheckCircle,
-  Circle,
   Pencil,
   Printer,
   Receipt,
@@ -12,7 +10,6 @@ import {
   Ban,
   Calendar,
 } from "lucide-react";
-import VideoCall from "@/components/calendar/VideoCall";
 import { EntityDetailFooterRow } from "@/components/shared/entity-detail/EntityDetailFooterRow";
 import { ControlPanelGlassActionButton } from "@/components/shared/ControlPanelGlassActionButton";
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
@@ -25,21 +22,23 @@ import { useAppointmentInvoiceDisplayMap } from "@/hooks/useAppointmentInvoiceDi
 import { useInitialNavRole } from "@/context/NavRoleContext";
 import { getAppointmentMenuCapabilities } from "@/lib/appointment-menu-permissions";
 import { canShowCreateInvoiceAction } from "@/lib/appointment-invoice-create-eligibility";
+import { resolveInvoiceDetailActionCapabilities } from "@/lib/invoice-detail-action-capabilities";
 import {
   buildAppointmentDeleteConfirmSubtitle,
   DELETE_APPOINTMENT_CONFIRM_TITLE,
 } from "@/lib/confirm-delete-dialog-copy";
 import { billingCreateInvoiceTriggerDefault } from "@/lib/billing-ui-presets";
-import { skyGlassBackButtonClass } from "@/lib/calendar-header-action-styles";
 import { cn } from "@/lib/utils";
 import { isAdminRole, isDoctorRole } from "@/lib/rbac";
 import type { AppointmentDetailToneClasses } from "@/lib/appointment-detail-ui-classes";
 import type { Appointment } from "@/types/types";
 import type { AppointmentAssignee } from "@/types/types";
+import type { Invoice } from "@/hooks/usePayments";
 
 type Props = {
   appointment: Appointment;
   assignees: AppointmentAssignee[];
+  linkedInvoices: Invoice[];
   backHref: string;
   backLabel: string;
   toneClasses: AppointmentDetailToneClasses;
@@ -50,11 +49,13 @@ type Props = {
 };
 
 /**
- * Footer actions — mirrors calendar ⋮ menu; Update Visit opens glass dialog (not inline form).
+ * Footer actions — Print, Update Visit, billing, GCal, cancel/delete.
+ * Video + Mark done live in `AppointmentDetailHeaderQuickActions`.
  */
 export function AppointmentDetailActionBar({
   appointment,
   assignees,
+  linkedInvoices,
   backHref,
   backLabel,
   toneClasses,
@@ -68,15 +69,15 @@ export function AppointmentDetailActionBar({
     useGoogleCalendarSyncOptional();
   const navRole = useInitialNavRole();
   const role = user?.role ?? navRole;
+  const viewerRole = isAdminRole(role) ? "admin" : "doctor";
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const {
-    toggleStatus,
-    isTogglingStatus,
     cancelAppointmentAsync,
     isCancelling,
     deleteAppointmentAsync,
     isDeleting,
+    isTogglingStatus,
   } = useAppointments();
   const invoiceMap = useAppointmentInvoiceDisplayMap([appointment.id]);
   const invoiceDisplayStatus = invoiceMap.get(appointment.id) ?? null;
@@ -84,7 +85,7 @@ export function AppointmentDetailActionBar({
   const local = useInvoiceFormDialogController({
     variant: isAdminRole(role) ? "admin" : "doctor",
   });
-  const { openCreateForAppointment, dialogNode } = ctx ?? local;
+  const { openCreateForAppointment, openEdit, dialogNode } = ctx ?? local;
 
   const capabilities = useMemo(
     () =>
@@ -105,7 +106,15 @@ export function AppointmentDetailActionBar({
     [role, invoiceDisplayStatus]
   );
 
-  const isDone = appointment.status === "done";
+  const editableLinkedInvoice = useMemo(() => {
+    if (showCreateInvoice || linkedInvoices.length === 0) return null;
+    const primary = linkedInvoices[0];
+    const caps = resolveInvoiceDetailActionCapabilities(primary, viewerRole, {
+      viewerUserId: user?.id,
+    });
+    return caps.canEditDetails ? primary : null;
+  }, [showCreateInvoice, linkedInvoices, viewerRole, user?.id]);
+
   const isCancelled = appointment.status === "cancelled";
   const busy = isTogglingStatus || isDeleting || isCancelling;
   const isSyncingGoogle = syncingAppointmentId === appointment.id;
@@ -120,40 +129,13 @@ export function AppointmentDetailActionBar({
         actions={
           <>
             {canEdit && !isCancelled ? (
-              <>
-                <VideoCall
-                  appointmentId={appointment.id}
-                  appointmentTitle={appointment.title ?? "Video Consultation"}
-                  triggerClassName={skyGlassBackButtonClass}
-                />
-                <ControlPanelGlassActionButton
-                  type="button"
-                  variant="sky"
-                  onClick={() => window.print()}
-                >
-                  <Printer className="shrink-0" aria-hidden />
-                  Print
-                </ControlPanelGlassActionButton>
-              </>
-            ) : null}
-            {canEdit && capabilities.canToggleStatus && !isCancelled ? (
               <ControlPanelGlassActionButton
                 type="button"
-                variant={isDone ? "sky" : "emerald"}
-                disabled={busy}
-                onClick={() =>
-                  toggleStatus({
-                    id: appointment.id,
-                    status: isDone ? "pending" : "done",
-                  })
-                }
+                variant="sky"
+                onClick={() => window.print()}
               >
-                {isDone ? (
-                  <Circle className="shrink-0" aria-hidden />
-                ) : (
-                  <CheckCircle className="shrink-0" aria-hidden />
-                )}
-                {isDone ? "Mark open" : "Mark done"}
+                <Printer className="shrink-0" aria-hidden />
+                Print
               </ControlPanelGlassActionButton>
             ) : null}
             {canEdit && capabilities.canEdit && !isCancelled ? (
@@ -188,6 +170,16 @@ export function AppointmentDetailActionBar({
                 {billingCreateInvoiceTriggerDefault.triggerLabel}
               </ControlPanelGlassActionButton>
             ) : null}
+            {editableLinkedInvoice ? (
+              <ControlPanelGlassActionButton
+                type="button"
+                variant="violet"
+                onClick={() => openEdit(editableLinkedInvoice)}
+              >
+                <Pencil className="shrink-0" aria-hidden />
+                Edit Invoice
+              </ControlPanelGlassActionButton>
+            ) : null}
             {canEdit && capabilities.canCancel ? (
               <ConfirmActionDialog
                 open={cancelOpen}
@@ -195,7 +187,7 @@ export function AppointmentDetailActionBar({
                 variant="warning"
                 title="Cancel appointment?"
                 subtitle="This visit will be marked cancelled. Stakeholders will be notified."
-                confirmLabel="Cancel visit"
+                confirmLabel="Cancel Appointment"
                 confirmPending={isCancelling}
                 confirmPendingLabel="Cancelling…"
                 onConfirm={async () => {
@@ -209,7 +201,7 @@ export function AppointmentDetailActionBar({
                     disabled={busy}
                   >
                     <Ban className="shrink-0" aria-hidden />
-                    {isCancelling ? "Cancelling…" : "Cancel visit"}
+                    {isCancelling ? "Cancelling…" : "Cancel Appointment"}
                   </ControlPanelGlassActionButton>
                 }
               />

@@ -23,10 +23,10 @@ import {
 } from "@/lib/invoice-visit-doctor";
 import { invoiceVisitSummaryToPatientPortrait } from "@/lib/invoice-visit-patient-portrait";
 import {
-  invoiceDetailHref,
   patientDetailHref,
   type EntityRole,
 } from "@/lib/entity-routes";
+import { resolveInvoiceVisitTitleHref } from "@/lib/invoice-visit-title-href";
 import {
   clinicalCellMutedTextClass,
   clinicalTableCellMinRowClass,
@@ -53,7 +53,7 @@ export function InvoiceVisitDescriptionStack({
   const portalDensity = density === "portal";
   const summary = invoice.visit_summary;
   const title = getInvoiceListTitle(invoice);
-  const href = invoiceDetailHref(viewerRole, invoice.id);
+  const href = resolveInvoiceVisitTitleHref(invoice, viewerRole);
 
   const patientHref = summary?.patient_id
     ? patientDetailHref(viewerRole, summary.patient_id)

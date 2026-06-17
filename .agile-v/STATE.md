@@ -6,31 +6,29 @@
 
 | Field | Value |
 |-------|-------|
-| **Cycle** | **C46** — **verify PASS** |
+| **Cycle** | **C48** — **verify PASS** |
 | **Phase** | 5 — Accept |
 | **Stage** | Ready for commit |
 | **Status** | **idle** |
 | **Last Updated** | 2026-06-17 |
-| **Parent REQ** | **REQ-0097** (portal patient invoice shell + snapshot slimming) |
+| **Parent REQ** | **REQ-0099** (appointment/invoice UX + doctor RBAC) |
 
 ## Verify baseline
 
-**1254/1254** · tsc · lint · build — PASS
+**1270/1270** · tsc · lint · build — PASS
 
 | Layer | HEAD |
 |-------|------|
-| **Committed** | WIP local |
-| **Feature** | C46 portal patients invoice shell + snapshot slimming |
+| **Committed** | `45c87e5` + WIP C47/C48 |
+| **Feature** | C48 UX regressions + doctor RBAC |
 
 ## Last shipped
 
 | Cycle | REQ | Theme |
 |-------|-----|-------|
+| **C46** | 0097 | Portal patients invoice shell · snapshot slim |
 | **C45** | 0096 | Shared invoice table on entity detail |
-| **C44** | 0095 | Dialog parity (seeds, status, past slots) |
-| **C43** | 0094 | Dialog edit · body skeleton |
 
 ## Next
 
-1. **Accept C46** commit
-2. **Specify C47** — REQ-0098+ before feature code
+1. **Accept** C47 + C48 commits

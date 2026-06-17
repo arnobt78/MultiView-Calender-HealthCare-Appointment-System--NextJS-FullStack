@@ -41,8 +41,8 @@ describe("enrichAssigneesWithPatientIds", () => {
   });
 });
 
-describe("AppointmentDialog C43 assignees", () => {
-  it("mounts AppointmentDialogAssigneesSection and post-create sharing", async () => {
+describe("AppointmentDialog assignees (edit mode)", () => {
+  it("mounts AppointmentDialogAssigneesSection on edit and closes on save", async () => {
     const { readFileSync } = await import("node:fs");
     const { resolve } = await import("node:path");
     const src = readFileSync(
@@ -51,8 +51,10 @@ describe("AppointmentDialog C43 assignees", () => {
     );
     expect(src).toContain("AppointmentDialogAssigneesSection");
     expect(src).toContain("invalidateAssigneesActivitiesAppointment");
-    expect(src).toContain("savedAppointmentId");
+    expect(src).toContain("editAppointmentId");
     expect(src).toContain("Patient needs an email to share.");
-    expect(src).toContain("handleDoneAfterCreate");
+    expect(src).toContain("handleDialogOpenChange(false)");
+    expect(src).not.toContain("savedAppointmentId");
+    expect(src).not.toContain("handleDoneAfterCreate");
   });
 });

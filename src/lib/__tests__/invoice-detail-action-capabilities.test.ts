@@ -62,10 +62,65 @@ describe("resolveInvoiceDetailActionCapabilities", () => {
     expect(caps.canCancel).toBe(true);
   });
 
-  it("doctor draft non-issuer: no send, edit, delete, or cancel", () => {
+  it("doctor draft calendar owner (non-issuer): send and edit when visit_summary matches", () => {
+    const inv = {
+      ...invoice("draft"),
+      user_id: "doc-issuer",
+      visit_summary: {
+        appointment_id: "appt-1",
+        treating_physician_id: "doc-issuer",
+        treating_physician_label: "Issuer",
+        treating_physician_specialty: null,
+        calendar_owner_id: "doc-owner",
+        calendar_owner_label: "Owner",
+        calendar_owner_specialty: null,
+        patient_id: null,
+        patient_label: null,
+        category_id: null,
+        category_label: null,
+        category_color: null,
+        category_icon: null,
+      },
+    };
+    const caps = resolveInvoiceDetailActionCapabilities(inv as Invoice, "doctor", {
+      viewerUserId: "doc-owner",
+    });
+    expect(caps.canSend).toBe(true);
+    expect(caps.canEditDetails).toBe(true);
+    expect(caps.canDelete).toBe(true);
+  });
+
+  it("doctor draft treating physician (non-issuer): mutate caps", () => {
+    const inv = {
+      ...invoice("draft"),
+      user_id: "doc-owner",
+      visit_summary: {
+        appointment_id: "appt-1",
+        treating_physician_id: "doc-treating",
+        treating_physician_label: "Treating",
+        treating_physician_specialty: null,
+        calendar_owner_id: "doc-owner",
+        calendar_owner_label: "Owner",
+        calendar_owner_specialty: null,
+        patient_id: null,
+        patient_label: null,
+        category_id: null,
+        category_label: null,
+        category_color: null,
+        category_icon: null,
+      },
+    };
+    const caps = resolveInvoiceDetailActionCapabilities(inv as Invoice, "doctor", {
+      viewerUserId: "doc-treating",
+    });
+    expect(caps.canSend).toBe(true);
+    expect(caps.canEditDetails).toBe(true);
+  });
+
+  it("doctor draft unrelated: no send, edit, delete, or cancel", () => {
     const inv = { ...invoice("draft"), user_id: "doc-issuer" };
     const caps = resolveInvoiceDetailActionCapabilities(inv, "doctor", {
-      viewerUserId: "doc-owner-only",
+      viewerUserId: "doc-unrelated",
     });
     expect(caps.canSend).toBe(false);
     expect(caps.canEditDetails).toBe(false);

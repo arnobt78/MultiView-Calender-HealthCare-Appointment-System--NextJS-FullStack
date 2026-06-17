@@ -22,6 +22,7 @@ describe("staff-directory-cache", () => {
             appointment_types: [],
             bookable_appointment_types: [],
             patient_count: 0,
+            office_location: null,
           },
         ],
       },

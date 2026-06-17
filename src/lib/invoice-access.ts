@@ -79,6 +79,20 @@ async function patientOwnsInvoiceAppointment(
   return appt != null;
 }
 
+async function doctorCanMutateLinkedInvoice(
+  doctorId: string,
+  row: InvoiceAccessRow
+): Promise<boolean> {
+  if (row.user_id === doctorId) return true;
+  if (!row.appointment_id) return false;
+  const appt = await prisma.appointment.findUnique({
+    where: { id: row.appointment_id },
+    select: { owner_id: true, treating_physician_id: true },
+  });
+  if (!appt) return false;
+  return appt.owner_id === doctorId || appt.treating_physician_id === doctorId;
+}
+
 async function doctorIsLinkedToInvoice(
   doctorId: string,
   row: InvoiceAccessRow
@@ -174,8 +188,8 @@ export async function resolveInvoiceAccess(
     if (row.status === "paid" || row.status === "cancelled" || row.status === "refunded") {
       return "view";
     }
-    // Own invoice (draft/sent/overdue) — description/due_date PATCH + draft→send.
-    if (row.user_id === userId) return "mutate";
+    // Issuer or calendar owner / treating physician on linked visit — draft/sent/overdue mutate.
+    if (await doctorCanMutateLinkedInvoice(userId, row)) return "mutate";
     return "view";
   }
 

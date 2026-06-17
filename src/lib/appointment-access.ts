@@ -7,7 +7,7 @@
  *   - patient: appointments for their own patient record (email match)
  *
  * Mutate (save/delete/PATCH fields):
- *   - admin/doctor: calendar owner OR accepted assignee with permission write|full
+ *   - admin/doctor: calendar owner, treating physician, OR accepted assignee with permission write|full
  *   - patient: never on detail page (read-only UI)
  *
  * Assignee = per-appointment invite (read/write/full). Dashboard access = whole-calendar share (view path only).
@@ -129,7 +129,8 @@ export async function computeAppointmentAccessLevel(
   }
 
   const canMutate =
-    !isPatientRole(role) && (isOwner || assigneeCanMutate(assignees, userId, email));
+    !isPatientRole(role) &&
+    (isOwner || isTreating || assigneeCanMutate(assignees, userId, email));
 
   if (isAdminRole(role)) {
     return canMutate ? "mutate" : "view";
