@@ -17,14 +17,14 @@
 
 ## 2. Read (resume — in order)
 
-1. `STATE.md` — **C42.2 shipped** · **1220/1220** · HEAD **`eb3d576`**
+1. `STATE.md` — **C48.1 shipped** · **1270/1270** · HEAD **`8ba3acf`**
 2. `CHECKPOINTS.md` — halt if any **PENDING** HITL (**none**)
-3. `REQUIREMENTS.md` — parent **REQ-XXXX** before any code (**REQ-0001..0093**)
+3. `REQUIREMENTS.md` — parent **REQ-XXXX** before any code (**REQ-0001..0099 shipped**)
 
 ## 3. Before coding (mandatory gate)
 
 1. Read `STATE.md` + `CHECKPOINTS.md`.
-2. Resolve parent `REQ-XXXX` — **halt if missing**.
+2. Resolve parent `REQ-XXXX` — **halt if missing** (need **REQ-0100+** for C49).
 3. Pipeline: **Specify → Constrain → [Gate1] → Orchestrate → Prove → Verify → [Gate2] → Accept**
 4. CRUD: `queryKeys` + invalidation helpers — never hardcode keys.
 5. Verify: Red Team suite — `npm test && npx tsc --noEmit && npm run lint && npm run build`
@@ -45,13 +45,14 @@ Specify → Constrain → [Gate1] → Orchestrate → Prove → Verify → [Gate
 
 | Cycle | REQ | Status | HEAD |
 |-------|-----|--------|------|
-| C38 | 0088 | shipped | — |
-| C39 / C39.1 / C39.2 | 0089–0090 | shipped | `3fd00b1` |
-| C40 | 0091 | shipped | `091bb70` |
-| C41 / C41.1 | 0092 | shipped | `e8544ee` |
-| **C42 / C42.2** | **0093** | **shipped** | **`2b53b92`** |
+| C43 / C43.1 | 0094 | shipped | — |
+| C44 | 0095 | shipped | — |
+| C45 | 0096 | shipped | — |
+| C46 | 0097 | shipped | `45c87e5` |
+| C47 | 0098 | shipped | `1e252b0` |
+| C48 / C48.1 | 0099 | shipped | `8ba3acf` |
 
-**Baseline:** **1220** tests · **245** files · committed **`eb3d576`** · 2026-06-17
+**Baseline:** **1270** tests · **259** files · committed **`8ba3acf`** · 2026-06-17
 
 ## 7. Halt if
 

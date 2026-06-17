@@ -531,7 +531,7 @@ eval_timestamp: "2026-06-17T15:50:00Z"
 eval_gate_status: PASS
 eval_gate_rationale: "REQ-0097 portal patients invoice shell + snapshot slimming; 1254/1254; tsc; eslint; build PASS"
 cycle: C46
-release_commit: "WIP"
+release_commit: "45c87e5"
 ```
 
 | Suite | Command | Result | LINKED_REQ |
@@ -543,7 +543,7 @@ release_commit: "WIP"
 | lint | npm run lint | PASS | REQ-0097 |
 | release build | npm run build | PASS | REQ-0097 |
 
-**EvalGate (C46 active):** PASS (automated) — commit pending.
+**EvalGate (C46):** PASS — shipped `45c87e5`.
 
 ## C47 — ER-C47-VERIFY
 
@@ -553,7 +553,7 @@ eval_timestamp: "2026-06-17T16:20:00Z"
 eval_gate_status: PASS
 eval_gate_rationale: "REQ-0098 appointment detail audit + billing UX; 1261/1261; tsc; eslint; build PASS"
 cycle: C47
-release_commit: "WIP"
+release_commit: "1e252b0"
 ```
 
 | Suite | Command | Result | LINKED_REQ |
@@ -565,4 +565,47 @@ release_commit: "WIP"
 | lint | npm run lint | PASS | REQ-0098 |
 | release build | npm run build | PASS | REQ-0098 |
 
-**EvalGate (C47 active):** PASS (automated) — commit pending.
+**EvalGate (C47):** PASS — shipped `1e252b0` (with C48).
+
+## C48 — ER-C48-VERIFY
+
+```yaml
+eval_run_id: ER-C48-VERIFY
+eval_timestamp: "2026-06-17T18:15:00Z"
+eval_gate_status: PASS
+eval_gate_rationale: "REQ-0099 UX regressions + doctor RBAC; 1270/1270; tsc; eslint; build PASS"
+cycle: C48
+release_commit: "1e252b0"
+```
+
+| Suite | Command | Result | LINKED_REQ |
+|-------|---------|--------|------------|
+| invoice-visit-title-href | npm test invoice-visit-title-href | PASS | REQ-0099 |
+| appointment-access | npm test appointment-access | PASS | REQ-0099 |
+| invoice-detail-action-capabilities | npm test invoice-detail-action-capabilities | PASS | REQ-0099 |
+| full regression | npm test | PASS 1270/1270 | REQ-0099 |
+| typecheck | npx tsc --noEmit | PASS | REQ-0099 |
+| lint | npm run lint | PASS | REQ-0099 |
+| release build | npm run build | PASS | REQ-0099 |
+
+**EvalGate (C48):** PASS — shipped `1e252b0`.
+
+## C48.1 — ER-C48-1-VERIFY
+
+```yaml
+eval_run_id: ER-C48-1-VERIFY
+eval_timestamp: "2026-06-17T17:12:00Z"
+eval_gate_status: PASS
+eval_gate_rationale: "When column inline datetime; 1270/1270; tsc; eslint; build PASS"
+cycle: C48.1
+release_commit: "8ba3acf"
+```
+
+| Suite | Command | Result | LINKED_REQ |
+|-------|---------|--------|------------|
+| appointment-table-cells.ui | npm test appointment-table-cells.ui | PASS | REQ-0099 |
+| full regression | npm test | PASS 1270/1270 | REQ-0099 |
+| typecheck | npx tsc --noEmit | PASS | REQ-0099 |
+| lint | npm run lint | PASS | REQ-0099 |
+
+**EvalGate (C48.1 active):** PASS — shipped `8ba3acf`.

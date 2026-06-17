@@ -126,8 +126,8 @@
 | REQ-0079 | approved [C31] | REQ-0078 | ART-0407..0409 | pending |
 | REQ-0080 | approved [C32] | REQ-0079 | ART-0410..0416 | pending |
 | REQ-0081 | approved [C33] | REQ-0080 | ART-0417..0423 | pending |
-| REQ-0099 | approved [C48] | REQ-0098 | ART-0533..0539 | pending |
-| REQ-0098 | approved [C47] | REQ-0097 | ART-0526..0532 | pending |
+| REQ-0099 | verify PASS [C48] | REQ-0098 | ART-0533..0539 | `8ba3acf` |
+| REQ-0098 | verify PASS [C47] | REQ-0097 | ART-0526..0532 | `1e252b0` |
 | REQ-0097 | approved [C46] | REQ-0096 | ART-0520..0525 | pending |
 | REQ-0096 | approved [C45] | REQ-0095 | ART-0513..0519 | pending |
 | REQ-0095 | approved [C44] | REQ-0094 | ART-0506..0512 | pending |
@@ -149,7 +149,7 @@
 
 | Field | Value |
 |-------|-------|
-| Status | approved [C48] |
+| Status | verify PASS [C48] · shipped `8ba3acf` |
 | Priority | P1 |
 | Risk | R1 |
 | Parent | REQ-0098 |
@@ -169,7 +169,7 @@
 
 | Field | Value |
 |-------|-------|
-| Status | approved [C47] |
+| Status | verify PASS [C47] · shipped `1e252b0` |
 | Priority | P1 |
 | Risk | R1 |
 | Parent | REQ-0097 |

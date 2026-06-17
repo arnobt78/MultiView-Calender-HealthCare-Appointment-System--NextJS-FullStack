@@ -61,7 +61,7 @@ Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Agile V
 
-`.agile-v/STATE.md` · **C48 verify PASS** · **1270/1270**.
+`.agile-v/STATE.md` · **C48.1 shipped** · **1270/1270** · HEAD **`8ba3acf`**.
 
 ## Principle
 

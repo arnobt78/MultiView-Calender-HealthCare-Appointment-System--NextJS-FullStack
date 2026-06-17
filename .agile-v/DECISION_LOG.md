@@ -153,3 +153,6 @@
 | 2026-06-17T16:20:00Z | verify | C47 automated verify PASS | 1261/1261; tsc · lint · build PASS | REQ-0098 |
 | 2026-06-17T18:00:00Z | build | C48 UX regressions + doctor RBAC | office_location prefetch; dialog Sonner-only close; visit title href; owner/treating mutate; inline category duration | REQ-0099 |
 | 2026-06-17T18:15:00Z | verify | C48 automated verify PASS | 1270/1270; tsc · lint · build PASS | REQ-0099 |
+| 2026-06-17T18:30:00Z | accept | C47+C48 shipped to main | `1e252b0` feat appointments C47–C48 | REQ-0098, REQ-0099 |
+| 2026-06-17T17:12:00Z | fix | C48.1 When column inline datetime | `AppointmentWhenTableCell` self-start single label | REQ-0099 |
+| 2026-06-17T17:15:00Z | accept | C48.1 shipped to main | `8ba3acf` fix ui When column | REQ-0099 |
