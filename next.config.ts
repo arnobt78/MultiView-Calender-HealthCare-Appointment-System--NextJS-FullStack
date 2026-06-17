@@ -41,4 +41,6 @@ export default withSentryConfig(nextConfig, {
   // Source map upload only when auth token present (CI / release builds).
   authToken: process.env.SENTRY_AUTH_TOKEN,
   widenClientFileUpload: true,
+  /** Aligns webpack SDK with initSentryClient tunnel — ad-blocker safe same-origin ingest. */
+  tunnelRoute: "/api/monitoring",
 });

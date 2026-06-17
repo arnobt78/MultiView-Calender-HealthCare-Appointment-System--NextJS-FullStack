@@ -3,8 +3,6 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { DataTableColumnHeader } from "@/components/shared/DataTableColumnHeader";
-import { InvoiceStatusBadge } from "@/components/shared/billing/InvoiceStatusBadge";
-import { InvoiceVisitSummaryLine } from "@/components/shared/billing/InvoiceVisitSummaryLine";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { ClinicalAppointmentStatusBadge } from "@/components/shared/entity-detail/ClinicalAppointmentStatusBadge";
 import {
@@ -19,7 +17,6 @@ import { PatientIdentityCell } from "@/components/shared/person-display/PatientI
 import {
   appointmentDetailHref,
   categoryDetailHref,
-  invoiceDetailHref,
   patientDetailHref,
 } from "@/lib/entity-routes";
 import {
@@ -43,7 +40,7 @@ import { isAdminRole } from "@/lib/rbac";
 import { isValidUUID } from "@/lib/validation";
 import { CategoryBrandMark } from "@/components/shared/category-display/CategoryBrandMark";
 import { cn } from "@/lib/utils";
-import type { AppointmentSnapshotRow, SnapshotInvoice } from "@/types/types";
+import type { AppointmentSnapshotRow } from "@/types/types";
 import type { EntityRole } from "@/lib/entity-routes";
 import { CLINICAL_SNAPSHOT_APPOINTMENT_COL_WIDTH } from "@/lib/clinical-snapshot-table-columns";
 import type { RelatedAppointmentsColumnId } from "@/lib/clinical-snapshot-table-columns";
@@ -444,134 +441,4 @@ export function buildRelatedAppointmentsColumns(
     if (!id || typeof id !== "string") return true;
     return !hidden.has(id as RelatedAppointmentsColumnId);
   });
-}
-
-/** Invoices linked to patient appointments — same clinical table chrome as management lists. */
-export function buildPatientInvoicesColumns(viewerRole: EntityRole): ColumnDef<SnapshotInvoice>[] {
-  return [
-    {
-      id: "amount",
-      accessorKey: "amount",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Amount" />,
-      cell: ({ row }) => {
-        const inv = row.original;
-        const label = `${(inv.amount / 100).toFixed(2)} ${inv.currency.toUpperCase()}`;
-        return (
-          <div className={cn(clinicalTableCellMinRowClass, "flex items-center tabular-nums", clinicalCellPrimaryTextClass)}>
-            {isAdminRole(viewerRole) ? (
-              <EntityTitleLink href={invoiceDetailHref(viewerRole, inv.id)} label={label} className="font-normal" />
-            ) : (
-              <span>{label}</span>
-            )}
-          </div>
-        );
-      },
-    },
-    {
-      id: "description",
-      accessorKey: "description",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Description" />,
-      meta: { shellClassName: clinicalTableColumnWrapShellClass },
-      cell: ({ row }) =>
-        clinicalEmptyOrNode(
-          clinicalHasTextValue(row.original.description),
-          () => (
-            <div
-              className={cn(
-                clinicalTableCellMinRowClass,
-                clinicalTableCellWrapClass,
-                clinicalCellPrimaryTextClass,
-                "flex min-w-0 items-start"
-              )}
-            >
-              <div className="min-w-0 space-y-0.5">
-                <span>{row.original.description!.trim()}</span>
-                <InvoiceVisitSummaryLine summary={row.original.visit_summary} />
-              </div>
-            </div>
-          ),
-          "table"
-        ),
-    },
-    {
-      id: "appointment",
-      accessorKey: "appointment_id",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Appointment" />,
-      cell: ({ row }) => {
-        const inv = row.original;
-        return clinicalEmptyOrNode(
-          Boolean(inv.appointment_id),
-          () => (
-            <div className={cn(clinicalTableCellMinRowClass, "flex items-center")}>
-              <EntityTitleLink
-                href={appointmentDetailHref(viewerRole, inv.appointment_id!)}
-                label="View"
-                className="text-xs font-normal"
-              />
-            </div>
-          ),
-          "table"
-        );
-      },
-    },
-    {
-      id: "status",
-      accessorKey: "status",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Status" />,
-      cell: ({ row }) => (
-        <div className={cn(clinicalTableCellMinRowClass, "flex items-center")}>
-          <InvoiceStatusBadge
-            invoice={{
-              status: row.original.status,
-              payments: row.original.payments,
-            }}
-          />
-        </div>
-      ),
-    },
-    {
-      id: "due_date",
-      accessorKey: "due_date",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Due" />,
-      meta: { shellClassName: "whitespace-nowrap" },
-      cell: ({ row }) =>
-        clinicalEmptyOrNode(
-          Boolean(row.original.due_date),
-          () => (
-            <div
-              className={cn(
-                clinicalTableCellMinRowClass,
-                "flex items-center whitespace-nowrap",
-                clinicalCellMutedTextClass
-              )}
-            >
-              {format(new Date(row.original.due_date!), "MMM d, yyyy")}
-            </div>
-          ),
-          "table"
-        ),
-    },
-    {
-      id: "paid_at",
-      accessorKey: "paid_at",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Paid" />,
-      meta: { shellClassName: "whitespace-nowrap" },
-      cell: ({ row }) =>
-        clinicalEmptyOrNode(
-          Boolean(row.original.paid_at),
-          () => (
-            <div
-              className={cn(
-                clinicalTableCellMinRowClass,
-                "flex items-center whitespace-nowrap",
-                clinicalCellMutedTextClass
-              )}
-            >
-              {format(new Date(row.original.paid_at!), "MMM d, yyyy")}
-            </div>
-          ),
-          "table"
-        ),
-    },
-  ];
 }

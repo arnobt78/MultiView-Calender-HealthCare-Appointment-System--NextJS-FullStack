@@ -49,10 +49,10 @@ import { seedUsersListCache } from "@/lib/ssr-query-seed";
 import { DoctorIdentityRow } from "@/components/shared/doctor-display/DoctorIdentityRow";
 import { ClinicalDataTable } from "@/components/shared/ClinicalDataTable";
 import {
-  buildPatientInvoicesColumns,
   buildRelatedAppointmentsColumns,
   CategoryTableCell,
 } from "@/components/control-panel/patient-detail-snapshot-columns";
+import { InvoiceClinicalListTable } from "@/components/shared/billing/InvoiceClinicalListTable";
 import {
   ClinicalEmptyDash,
   clinicalEmptyOr,
@@ -64,6 +64,9 @@ import { useUsers } from "@/hooks/useUsers";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import { usePatients } from "@/hooks/usePatients";
+import { usePayments, type Invoice } from "@/hooks/usePayments";
+import { filterInvoicesForPatient } from "@/lib/invoice-entity-list-filters";
+import { seedInvoicesListCache } from "@/lib/ssr-query-seed";
 import {
   getPatientCareLevelLabel,
   hasPatientCareLevel,
@@ -261,7 +264,7 @@ type PatientDetailScreenProps = {
    */
   initialPatient?: Patient | null;
   /**
-   * Server-prefetched snapshot (appointments, activities, invoices) — seeds
+   * Server-prefetched snapshot (appointments + counts) — seeds
    * queryKeys.patients.snapshot(patientId) so the tables render on first paint.
    */
   initialSnapshot?: PatientSnapshot | null;
@@ -271,6 +274,8 @@ type PatientDetailScreenProps = {
   initialDoctorUsers?: UsersListResponse | null;
   /** SSR admin users — calendar owners in snapshot tables may be admin accounts. */
   initialAdminUsers?: UsersListResponse | null;
+  /** Optional SSR invoice list — canonical seed is layout `ClinicianInvoiceDialogShell` / `InvoicesListSsrSeed`. */
+  initialInvoices?: Invoice[] | null;
   /** SSR scroll shell — CP right pane needs bottom inset; portal uses `dashboardShellClass`. */
   scrollShell?: AppSectionScrollShell;
 };
@@ -286,6 +291,7 @@ export function PatientDetailScreen({
   initialDoctors,
   initialDoctorUsers,
   initialAdminUsers,
+  initialInvoices,
 }: PatientDetailScreenProps) {
   const scrollShellResolved = scrollShell;
 
@@ -323,6 +329,9 @@ export function PatientDetailScreen({
     if (initialAdminUsers != null) {
       seedUsersListCache(queryClient, PATIENT_DETAIL_ADMIN_USERS_FILTERS, initialAdminUsers);
     }
+    if (initialInvoices != null) {
+      seedInvoicesListCache(queryClient, initialInvoices);
+    }
   }, [
     queryClient,
     patientId,
@@ -331,6 +340,7 @@ export function PatientDetailScreen({
     initialDoctors,
     initialDoctorUsers,
     initialAdminUsers,
+    initialInvoices,
   ]);
 
   const { data: patient, isLoading, isError, error } = usePatient(patientId, rosterDoctorId, {
@@ -339,6 +349,17 @@ export function PatientDetailScreen({
   const snap = usePatientSnapshot(patientId, rosterDoctorId, {
     initialData: initialSnapshot ?? undefined,
   });
+  const { invoices: allInvoices, isLoading: invoicesLoading } = usePayments({
+    invoicesInitialData: initialInvoices ?? undefined,
+  });
+  const relatedInvoices = useMemo(
+    () => filterInvoicesForPatient(allInvoices ?? [], patientId),
+    [allInvoices, patientId]
+  );
+  const relatedInvoicesLoading = useCpListBodyLoading(
+    queryKeys.invoices.all,
+    invoicesLoading
+  );
   const staffViewer = isAdminRole(viewerRole) || isDoctorRole(viewerRole);
   const { data: doctorsData } = useUsers(PATIENT_DETAIL_DOCTOR_USERS_FILTERS, {
     initialData: initialDoctorUsers ?? undefined,
@@ -492,14 +513,11 @@ export function PatientDetailScreen({
     [viewerRole, patientDisplayName, staffById, p]
   );
 
-  const invoiceColumns = useMemo(
-    () => buildPatientInvoicesColumns(viewerRole),
-    [viewerRole]
-  );
-
   const appointmentTotalCount =
     snap.data?.appointmentTotalCount ?? snap.data?.appointments?.length ?? 0;
-  const invoiceTotalCount = snap.data?.invoiceTotalCount ?? snap.data?.invoices?.length ?? 0;
+  const invoiceTotalCount = invoicesLoading
+    ? (snap.data?.invoiceTotalCount ?? 0)
+    : relatedInvoices.length;
   const snapshotSectionsLoading = snap.isLoading && !snap.data;
 
   const relatedAppointmentsSectionTitle = entityDetailOwnedSnapshotSectionTitle(
@@ -780,18 +798,15 @@ export function PatientDetailScreen({
                 <SectionHeading
                   icon={Receipt}
                   count={invoiceTotalCount}
-                  countSkeleton={snapshotSectionsLoading}
+                  countSkeleton={snapshotSectionsLoading || relatedInvoicesLoading}
                 >
                   {relatedInvoicesSectionTitle}
                 </SectionHeading>
-                <ClinicalDataTable
-                  columns={invoiceColumns}
-                  data={(snap.data?.invoices ?? []).slice(0, 12)}
-                  isLoading={snap.isLoading}
-                  pagination={false}
+                <InvoiceClinicalListTable
+                  invoices={relatedInvoices}
+                  viewerRole={viewerRole}
+                  isLoading={relatedInvoicesLoading}
                   emptyMessage="No Invoices"
-                  tableClassName="min-w-[720px] w-full"
-                  className={patientDetailSnapshotTableFrameClass}
                   tableFrameClassName="rounded-md border border-slate-200/80 bg-white shadow-none"
                 />
               </div>

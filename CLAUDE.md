@@ -2,13 +2,13 @@
 
 Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
-## Latest (2026-06-16)
+## Latest (2026-06-17)
 
-- **C42.2:** List `queueListHero` glass chips (duration·status·fee·billing·telehealth) · `TelehealthQueueListTimeColumn` tonal left clock · violet glass row glow · `TelehealthQueueTimeGlassChip` Up Next only.
-- **C42:** Up Next `upNextHero` · `calendar-glass-badge` hero chips · telehealth in duration footer.
-- **C41:** visit-meta badges · invoice SSR telehealth · billing skeleton `invoices.all` cold.
-- **C40:** `/telehealth-queue` portal · `?filter=` tabs.
-- **Verify:** **1220/1220** · tsc · lint · build PASS.
+- **C46:** Portal `/patients/*` `ClinicianInvoiceDialogShell` + SSR `prefetchInvoices` (Edit invoice works). Snapshot slim — `invoices:[]`, patient-scoped `invoice.count` only.
+- **C45:** `InvoiceClinicalListTable` on appt/patient detail Related Billing; `invoice-entity-list-filters.ts`; hub DRY.
+- **C44:** Dialog parity — `enrichFullAppointmentDialogSeeds`, `AppointmentStatusSelect`, past slot chip highlight.
+- **C43:** Detail edit via `AppointmentDialogController`; body skeleton; assignees + invalidation (no `router.refresh`).
+- **Verify:** **1254/1254** · tsc · lint · build PASS.
 
 ## Never / Always
 
@@ -28,42 +28,36 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 Cross-tab: `query-cache-cross-tab.ts`.
 
-## Notifications (C34)
+## Invoice SSR shells
 
-- **Libs:** `notification-link.ts` · `notification-link-validity.ts` · `notification-list-filter.ts` · `notification-navigation.ts` · `entity-unavailable-copy.ts`
-- **UI:** CP `NotificationsManagement` · navbar bell · `EntityUnavailableScreen` · clickable Notification column (C35)
-- **Stale policy:** delete → null link + suffix; `link_valid` gates View/Open/filter; cleanup awaited on DELETE (try/catch)
-- **Export:** `export-notifications-csv.ts` — `Link` + `Link Valid` audit cols (C35.1)
-- **SSR:** `prefetchNotifications` → `listEnrichedNotificationsForUser` · SSE invalidates → refetch enriched rows
+- **CP:** `control-panel/layout.tsx` → `ClinicianInvoiceDialogShell` + `ControlPanelSsrCacheSeed`
+- **Portal:** `appointments/layout.tsx` · `patients/layout.tsx` · `invoices/layout.tsx` — each SSR `prefetchInvoices`
+- **Patient detail:** `usePayments` + `filterInvoicesForPatient`; snapshot badge count only (`patient-snapshot-data.ts`)
 
 ## Auth Navigation (C37)
 
-- **Nav:** `beginAuthNavigation` → `window.location.replace(dest)` (hard nav, no proxy flash); pending-guard skips double-fire same from+dest
-- **Spinner:** `AUTH_NAV_PENDING_KEY` (sessionStorage) survives remounts; `isAuthNavPendingForPath` initializes button `loading` state
-- **Seed:** `seedAuthMeFromLoginResponse` seeds `queryKeys.auth.me` before nav; `NavSessionSsrSeed` overwrites stale null on destination mount
-- **Gate:** `shouldRunAuthenticatedAppQueries(pathname)` blocks dashboard queries on bare auth paths
-- **Provider:** `GoogleCalendarSyncProviderInner` always mounted; `enabled={isStaff}` gates query (stable tree — prevents Login/Landing remount on auth seed)
+- **Nav:** `beginAuthNavigation` → `window.location.replace(dest)`; pending-guard skips double-fire
+- **Spinner:** `AUTH_NAV_PENDING_KEY` (sessionStorage); `isAuthNavPendingForPath` init loading
+- **Seed:** `seedAuthMeFromLoginResponse` → `queryKeys.auth.me`; `NavSessionSsrSeed` on dest mount
+- **Gate:** `shouldRunAuthenticatedAppQueries(pathname)` blocks dashboard on auth paths
+- **Provider:** `GoogleCalendarSyncProviderInner` always mounted; `enabled={isStaff}` gates query
 
-## Google Calendar (C36 / C36.1 / C36.2)
+## Google Calendar (C36)
 
-- **Path:** `/control-panel/google-calendar` · `GoogleCalendarSettings` + `google-calendar/*` panels
-- **OAuth:** callback → CP `?gcal=connected` · `google-calendar-routes.ts` · `invalidateGoogleCalendarAndCrossTab`
-- **Sync:** `google-calendar-sync-appointment.ts` · cancel/DELETE unlink · PUT/PATCH shared side-effects · `GoogleCalendarSyncContext` (one hook)
-- **Hook:** `useGoogleCalendar({ enabled? })` (CP page) · `useGoogleCalendarSyncOptional` (cards/menus/detail) · dashboard + appointment detail SSR seed
-- **Error policy:** 404/401 → `{connected:false}`; 500/network → throw. Events failure → `eventsFetchWarning` banner, stays connected.
-- **Telehealth:** `TelehealthQueuePage` · `AppointmentVisitMetaBadgeRow` · `appointment-visit-meta-resolve.ts` · `?filter=` URL tabs · invoice SSR (`invoices.all` + `doctors.all`) · join→`VideoCall` · detail `resolvePortalAppointmentDetailLinkPolicy`
-- **OAuth UX:** `gcalOAuthReturn` SSR · `oauthLatched` · `google-calendar-status-ui.ts` (silent KPI refetch)
-- **Sentry:** `instrumentation-client.ts` · `sentry-client-init.ts` · tunnel `POST /api/monitoring` · `sentry-tunnel.ts` DSN guard
+- **Path:** `/control-panel/google-calendar` · OAuth → `?gcal=connected` · `invalidateGoogleCalendarAndCrossTab`
+- **Sync:** `google-calendar-sync-appointment.ts` · `GoogleCalendarSyncContext` · dashboard + detail SSR seed
+- **Telehealth:** `TelehealthQueuePage` · `is_telehealth` filter · join→`VideoCall`
+- **Sentry:** tunnel `POST /api/monitoring` · `sentry-client-init.ts`
 
 ## Key paths
 
-- CP lists: `cp-clinical-list-table-classes.ts` · `notification-type-display.ts`
-- Entity detail: `EntityDetailPageShell` · `EntityUnavailableScreen`
-- Role routes: `entity-routes.ts` — admin `/control-panel/*` · doctor/patient portal routes
+- Entity detail: `EntityDetailPageShell` · `InvoiceClinicalListTable` · `PatientDetailScreen`
+- Role routes: `entity-routes.ts` — admin CP · doctor/patient portal
+- CP lists: `cp-clinical-list-table-classes.ts`
 
 ## Agile V
 
-`.agile-v/STATE.md` · **C41 verify PASS** · **1220/1220**.
+`.agile-v/STATE.md` · **C46 verify PASS** · **1254/1254**.
 
 ## Principle
 

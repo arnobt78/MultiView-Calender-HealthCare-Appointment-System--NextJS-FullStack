@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Clock } from "lucide-react";
 import { SchedulingMonthCalendar } from "@/components/shared/scheduling/SchedulingMonthCalendar";
 import { SchedulingSlotChipGrid } from "@/components/shared/scheduling/SchedulingSlotChipGrid";
@@ -9,6 +9,10 @@ import type { FlexDurationMinutes } from "@/lib/scheduling/flexible-type-config"
 import type { SchedulingScopeKey } from "@/lib/scheduling/scheduling-types";
 import { cn } from "@/lib/utils";
 import { schedulingSplitSlotsRailBoundsClass } from "@/lib/scheduling/scheduling-ui-classes";
+import {
+  resolveSlotPickIsoFromCells,
+  slotStartsMatch,
+} from "@/lib/scheduling/slot-pick-selection";
 
 export type SchedulingPanelProps = {
   doctorId: string;
@@ -72,6 +76,22 @@ export function SchedulingPanel({
     enabled: showTypedSlots,
   });
 
+  const cells = useMemo(() => gridData?.cells ?? [], [gridData?.cells]);
+
+  /** After day grid loads, snap edit seed to canonical `cell.start` for chip highlight. */
+  useEffect(() => {
+    if (!selectedSlot || cells.length === 0 || slotsLoading) return;
+    const snapped = resolveSlotPickIsoFromCells(selectedSlot, cells, typeDuration);
+    if (snapped && !slotStartsMatch(snapped, selectedSlot)) {
+      onSelectSlot(snapped);
+    }
+  }, [selectedSlot, cells, slotsLoading, typeDuration, onSelectSlot]);
+
+  const resolvedSelectedSlot = useMemo(() => {
+    if (!selectedSlot || cells.length === 0) return selectedSlot;
+    return resolveSlotPickIsoFromCells(selectedSlot, cells, typeDuration) ?? selectedSlot;
+  }, [selectedSlot, cells, typeDuration]);
+
   const slotsRail = (
     <>
       {isFlexible ? (
@@ -85,8 +105,8 @@ export function SchedulingPanel({
         <SchedulingSlotChipGrid
           dateStr={dateStr}
           duration={typeDuration}
-          cells={gridData?.cells ?? []}
-          selectedStart={selectedSlot}
+          cells={cells}
+          selectedStart={resolvedSelectedSlot}
           onSelect={onSelectSlot}
           isLoading={slotsLoading}
           variant={isSplit ? "rail" : "default"}

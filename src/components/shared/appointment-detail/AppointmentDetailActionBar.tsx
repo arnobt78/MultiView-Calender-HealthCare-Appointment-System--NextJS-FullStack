@@ -8,7 +8,6 @@ import {
   Pencil,
   Printer,
   Receipt,
-  Save,
   Trash2,
   Ban,
   Calendar,
@@ -32,7 +31,6 @@ import {
 } from "@/lib/confirm-delete-dialog-copy";
 import { billingCreateInvoiceTriggerDefault } from "@/lib/billing-ui-presets";
 import { skyGlassBackButtonClass } from "@/lib/calendar-header-action-styles";
-import { APPOINTMENT_DETAIL_EDIT_FORM_ID } from "@/lib/appointment-detail-form-id";
 import { cn } from "@/lib/utils";
 import { isAdminRole, isDoctorRole } from "@/lib/rbac";
 import type { AppointmentDetailToneClasses } from "@/lib/appointment-detail-ui-classes";
@@ -47,10 +45,12 @@ type Props = {
   toneClasses: AppointmentDetailToneClasses;
   canEdit: boolean;
   listHref: string;
+  /** Opens shared `AppointmentDialog` edit mode (entity-detail pattern). */
+  onEditClick?: () => void;
 };
 
 /**
- * Footer actions — mirrors calendar ⋮ menu (toggle status, edit, delete, create invoice).
+ * Footer actions — mirrors calendar ⋮ menu; Update Visit opens glass dialog (not inline form).
  */
 export function AppointmentDetailActionBar({
   appointment,
@@ -60,6 +60,7 @@ export function AppointmentDetailActionBar({
   toneClasses,
   canEdit,
   listHref,
+  onEditClick,
 }: Props) {
   const router = useRouter();
   const { user } = useAuth();
@@ -76,7 +77,6 @@ export function AppointmentDetailActionBar({
     isCancelling,
     deleteAppointmentAsync,
     isDeleting,
-    isUpdating,
   } = useAppointments();
   const invoiceMap = useAppointmentInvoiceDisplayMap([appointment.id]);
   const invoiceDisplayStatus = invoiceMap.get(appointment.id) ?? null;
@@ -109,10 +109,7 @@ export function AppointmentDetailActionBar({
   const isCancelled = appointment.status === "cancelled";
   const busy = isTogglingStatus || isDeleting || isCancelling;
   const isSyncingGoogle = syncingAppointmentId === appointment.id;
-
-  const scrollToEdit = () => {
-    document.getElementById("appointment-detail-edit")?.scrollIntoView({ behavior: "smooth" });
-  };
+  const updateVariant = toneClasses.footerPrimaryVariant;
 
   return (
     <>
@@ -124,15 +121,6 @@ export function AppointmentDetailActionBar({
           <>
             {canEdit && !isCancelled ? (
               <>
-                <ControlPanelGlassActionButton
-                  type="submit"
-                  form={APPOINTMENT_DETAIL_EDIT_FORM_ID}
-                  variant="emerald"
-                  disabled={busy || isUpdating}
-                >
-                  <Save className="shrink-0" aria-hidden />
-                  {isUpdating ? "Saving…" : "Save changes"}
-                </ControlPanelGlassActionButton>
                 <VideoCall
                   appointmentId={appointment.id}
                   appointmentTitle={appointment.title ?? "Video Consultation"}
@@ -149,110 +137,110 @@ export function AppointmentDetailActionBar({
               </>
             ) : null}
             {canEdit && capabilities.canToggleStatus && !isCancelled ? (
-            <ControlPanelGlassActionButton
-              type="button"
-              variant={isDone ? "sky" : "emerald"}
-              disabled={busy}
-              onClick={() =>
-                toggleStatus({
-                  id: appointment.id,
-                  status: isDone ? "pending" : "done",
-                })
-              }
-            >
-              {isDone ? (
-                <Circle className="shrink-0" aria-hidden />
-              ) : (
-                <CheckCircle className="shrink-0" aria-hidden />
-              )}
-              {isDone ? "Mark open" : "Mark done"}
-            </ControlPanelGlassActionButton>
-          ) : null}
-          {canEdit && capabilities.canEdit && !isCancelled ? (
-            <ControlPanelGlassActionButton
-              type="button"
-              variant="emerald"
-              disabled={busy}
-              onClick={scrollToEdit}
-            >
-              <Pencil className="shrink-0" aria-hidden />
-              Update
-            </ControlPanelGlassActionButton>
-          ) : null}
-          {canEdit && isGoogleConnected && !isCancelled ? (
-            <ControlPanelGlassActionButton
-              type="button"
-              variant="sky"
-              disabled={busy || isSyncingGoogle}
-              onClick={() => syncToGoogle(appointment.id)}
-            >
-              <Calendar className="shrink-0" aria-hidden />
-              {isSyncingGoogle ? "Syncing…" : "Sync to Google Calendar"}
-            </ControlPanelGlassActionButton>
-          ) : null}
-          {showCreateInvoice ? (
-            <ControlPanelGlassActionButton
-              type="button"
-              variant="violet"
-              onClick={() => openCreateForAppointment(appointment.id)}
-            >
-              <Receipt className="shrink-0" aria-hidden />
-              {billingCreateInvoiceTriggerDefault.triggerLabel}
-            </ControlPanelGlassActionButton>
-          ) : null}
-          {canEdit && capabilities.canCancel ? (
-            <ConfirmActionDialog
-              open={cancelOpen}
-              onOpenChange={setCancelOpen}
-              variant="warning"
-              title="Cancel appointment?"
-              subtitle="This visit will be marked cancelled. Stakeholders will be notified."
-              confirmLabel="Cancel visit"
-              confirmPending={isCancelling}
-              confirmPendingLabel="Cancelling…"
-              onConfirm={async () => {
-                await cancelAppointmentAsync(appointment.id);
-                setCancelOpen(false);
-              }}
-              trigger={
-                <ControlPanelGlassActionButton
-                  type="button"
-                  variant="sky"
-                  disabled={busy}
-                >
-                  <Ban className="shrink-0" aria-hidden />
-                  {isCancelling ? "Cancelling…" : "Cancel visit"}
-                </ControlPanelGlassActionButton>
-              }
-            />
-          ) : null}
-          {canEdit && capabilities.canDelete ? (
-            <ConfirmActionDialog
-              open={deleteOpen}
-              onOpenChange={setDeleteOpen}
-              variant="destructive"
-              title={DELETE_APPOINTMENT_CONFIRM_TITLE}
-              subtitle={buildAppointmentDeleteConfirmSubtitle(appointment.title ?? "", "detail")}
-              confirmLabel="Delete"
-              confirmPending={isDeleting}
-              confirmPendingLabel="Deleting…"
-              onConfirm={async () => {
-                await deleteAppointmentAsync(appointment.id);
-                setDeleteOpen(false);
-                router.push(listHref);
-              }}
-              trigger={
-                <ControlPanelGlassActionButton
-                  type="button"
-                  variant="rose"
-                  disabled={busy}
-                >
-                  <Trash2 className="shrink-0" aria-hidden />
-                  {isDeleting ? "Deleting…" : "Delete"}
-                </ControlPanelGlassActionButton>
-              }
-            />
-          ) : null}
+              <ControlPanelGlassActionButton
+                type="button"
+                variant={isDone ? "sky" : "emerald"}
+                disabled={busy}
+                onClick={() =>
+                  toggleStatus({
+                    id: appointment.id,
+                    status: isDone ? "pending" : "done",
+                  })
+                }
+              >
+                {isDone ? (
+                  <Circle className="shrink-0" aria-hidden />
+                ) : (
+                  <CheckCircle className="shrink-0" aria-hidden />
+                )}
+                {isDone ? "Mark open" : "Mark done"}
+              </ControlPanelGlassActionButton>
+            ) : null}
+            {canEdit && capabilities.canEdit && !isCancelled ? (
+              <ControlPanelGlassActionButton
+                type="button"
+                variant={updateVariant}
+                disabled={busy}
+                onClick={() => onEditClick?.()}
+              >
+                <Pencil className="shrink-0" aria-hidden />
+                Update Visit
+              </ControlPanelGlassActionButton>
+            ) : null}
+            {canEdit && isGoogleConnected && !isCancelled ? (
+              <ControlPanelGlassActionButton
+                type="button"
+                variant="sky"
+                disabled={busy || isSyncingGoogle}
+                onClick={() => syncToGoogle(appointment.id)}
+              >
+                <Calendar className="shrink-0" aria-hidden />
+                {isSyncingGoogle ? "Syncing…" : "Sync to Google Calendar"}
+              </ControlPanelGlassActionButton>
+            ) : null}
+            {showCreateInvoice ? (
+              <ControlPanelGlassActionButton
+                type="button"
+                variant="violet"
+                onClick={() => openCreateForAppointment(appointment.id)}
+              >
+                <Receipt className="shrink-0" aria-hidden />
+                {billingCreateInvoiceTriggerDefault.triggerLabel}
+              </ControlPanelGlassActionButton>
+            ) : null}
+            {canEdit && capabilities.canCancel ? (
+              <ConfirmActionDialog
+                open={cancelOpen}
+                onOpenChange={setCancelOpen}
+                variant="warning"
+                title="Cancel appointment?"
+                subtitle="This visit will be marked cancelled. Stakeholders will be notified."
+                confirmLabel="Cancel visit"
+                confirmPending={isCancelling}
+                confirmPendingLabel="Cancelling…"
+                onConfirm={async () => {
+                  await cancelAppointmentAsync(appointment.id);
+                  setCancelOpen(false);
+                }}
+                trigger={
+                  <ControlPanelGlassActionButton
+                    type="button"
+                    variant="sky"
+                    disabled={busy}
+                  >
+                    <Ban className="shrink-0" aria-hidden />
+                    {isCancelling ? "Cancelling…" : "Cancel visit"}
+                  </ControlPanelGlassActionButton>
+                }
+              />
+            ) : null}
+            {canEdit && capabilities.canDelete ? (
+              <ConfirmActionDialog
+                open={deleteOpen}
+                onOpenChange={setDeleteOpen}
+                variant="destructive"
+                title={DELETE_APPOINTMENT_CONFIRM_TITLE}
+                subtitle={buildAppointmentDeleteConfirmSubtitle(appointment.title ?? "", "detail")}
+                confirmLabel="Delete"
+                confirmPending={isDeleting}
+                confirmPendingLabel="Deleting…"
+                onConfirm={async () => {
+                  await deleteAppointmentAsync(appointment.id);
+                  setDeleteOpen(false);
+                  router.push(listHref);
+                }}
+                trigger={
+                  <ControlPanelGlassActionButton
+                    type="button"
+                    variant="rose"
+                    disabled={busy}
+                  >
+                    <Trash2 className="shrink-0" aria-hidden />
+                    {isDeleting ? "Deleting…" : "Delete"}
+                  </ControlPanelGlassActionButton>
+                }
+              />
+            ) : null}
           </>
         }
       />

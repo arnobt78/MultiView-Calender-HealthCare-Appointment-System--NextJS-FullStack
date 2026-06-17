@@ -522,3 +522,25 @@ release_commit: "2b53b92"
 | release build | npm run build | PASS | REQ-0093 |
 
 **EvalGate (C42 active):** PASS (automated) — shipped `2b53b92`; ready C43 specify.
+
+## C46 — ER-C46-VERIFY
+
+```yaml
+eval_run_id: ER-C46-VERIFY
+eval_timestamp: "2026-06-17T15:50:00Z"
+eval_gate_status: PASS
+eval_gate_rationale: "REQ-0097 portal patients invoice shell + snapshot slimming; 1254/1254; tsc; eslint; build PASS"
+cycle: C46
+release_commit: "WIP"
+```
+
+| Suite | Command | Result | LINKED_REQ |
+|-------|---------|--------|------------|
+| patient-snapshot-data | npm test patient-snapshot-data | PASS | REQ-0097 |
+| portal-patients-layout | npm test portal-patients-layout | PASS | REQ-0097 |
+| full regression | npm test | PASS 1254/1254 | REQ-0097 |
+| typecheck | npx tsc --noEmit | PASS | REQ-0097 |
+| lint | npm run lint | PASS | REQ-0097 |
+| release build | npm run build | PASS | REQ-0097 |
+
+**EvalGate (C46 active):** PASS (automated) — commit pending.

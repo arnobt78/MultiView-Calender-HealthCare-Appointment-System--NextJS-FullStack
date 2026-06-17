@@ -5,7 +5,6 @@ import {
   useCallback,
   useContext,
   useMemo,
-  useState,
   type ReactNode,
 } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -24,8 +23,6 @@ import {
   type InvoiceManagementFilterKey,
 } from "@/lib/invoice-management-scope";
 import type { User } from "@/types/types";
-import { resolveInvoiceDisplayStatus } from "@/lib/billing-appointment-eligibility";
-import type { InvoiceStatusFilter } from "@/lib/invoice-management-filters";
 import type {
   InvoiceBillingStatusTotals,
   InvoiceBillingTotals,
@@ -34,16 +31,12 @@ import type {
 type Ctx = {
   filter: InvoiceManagementFilterKey;
   setScopeFilter: (next: InvoiceManagementFilterKey) => void;
-  activeInvoices: Invoice[];
   scopedInvoices: Invoice[];
   scopedTotals?: InvoiceBillingTotals;
   scopedStatusTotals?: InvoiceBillingStatusTotals;
   allInvoices: Invoice[];
   listBodyLoading: boolean;
   statsLoading: boolean;
-  status: InvoiceStatusFilter;
-  setStatus: (s: InvoiceStatusFilter) => void;
-  filterInvoicesByStatus: (list: Invoice[]) => Invoice[];
   hasScopeFilters: boolean;
   resetScope: () => void;
   organizations: ReturnType<typeof useOrganization>["organizations"];
@@ -76,8 +69,6 @@ export function InvoiceManagementScopeProvider({
       ),
     [searchParams, viewerRole]
   );
-
-  const [status, setStatus] = useState<InvoiceStatusFilter>("all");
 
   const syncUrl = useCallback(
     (next: InvoiceManagementFilterKey) => {
@@ -113,19 +104,6 @@ export function InvoiceManagementScopeProvider({
   const scopedInvoices =
     filter.scope === "all" ? allInvoices : scopedListFromQuery;
 
-  const filterInvoicesByStatus = useCallback(
-    (list: Invoice[]) => {
-      if (status === "all") return list;
-      return list.filter((inv) => resolveInvoiceDisplayStatus(inv) === status);
-    },
-    [status]
-  );
-
-  const activeInvoices = useMemo(
-    () => filterInvoicesByStatus(scopedInvoices),
-    [scopedInvoices, filterInvoicesByStatus]
-  );
-
   const listBodyLoading = useCpListBodyLoading(
     filter.scope === "all" ? queryKeys.invoices.all : listQueryKey,
     filter.scope === "all" ? allLoading : scopedListLoading
@@ -157,16 +135,12 @@ export function InvoiceManagementScopeProvider({
     (): Ctx => ({
       filter,
       setScopeFilter,
-      activeInvoices,
       scopedInvoices,
       scopedTotals,
       scopedStatusTotals,
       allInvoices,
       listBodyLoading,
       statsLoading,
-      status,
-      setStatus,
-      filterInvoicesByStatus,
       hasScopeFilters,
       resetScope,
       organizations,
@@ -179,15 +153,12 @@ export function InvoiceManagementScopeProvider({
     [
       filter,
       setScopeFilter,
-      activeInvoices,
       scopedInvoices,
       scopedTotals,
       scopedStatusTotals,
       allInvoices,
       listBodyLoading,
       statsLoading,
-      status,
-      filterInvoicesByStatus,
       hasScopeFilters,
       resetScope,
       organizations,

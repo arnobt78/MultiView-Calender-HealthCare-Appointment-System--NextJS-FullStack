@@ -12,7 +12,7 @@ import { appointmentDetailHref } from "@/lib/entity-routes";
 import { canClientFetchAdminUsersList } from "@/lib/user-list-access";
 import { AppointmentDetailScreen } from "@/components/detail/AppointmentDetailScreen";
 import { EntityUnavailableScreen } from "@/components/shared/EntityUnavailableScreen";
-import { prefetchAppointmentDetailViewModel, prefetchInvoices, prefetchUsersList, prefetchGoogleCalendarStatus } from "@/lib/server-prefetch";
+import { prefetchAppointmentDetailViewModel, prefetchInvoices, prefetchUsersList, prefetchGoogleCalendarStatus, prefetchDoctors } from "@/lib/server-prefetch";
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -60,6 +60,7 @@ export default async function PortalAppointmentDetailPage({ params }: PageProps)
     initialAdminUsers,
     initialInvoices,
     initialGoogleCalendarStatus,
+    initialDoctorsDirectory,
   ] = await Promise.all([
     prefetchAppointmentDetailViewModel(raw, role, level),
     staffPrefetch ? prefetchUsersList({ role: "doctor", limit: 200 }) : Promise.resolve(null),
@@ -70,6 +71,7 @@ export default async function PortalAppointmentDetailPage({ params }: PageProps)
     staffPrefetch
       ? prefetchGoogleCalendarStatus(sessionUser.userId)
       : Promise.resolve(null),
+    staffPrefetch ? prefetchDoctors() : Promise.resolve(null),
   ]);
 
   if (!initialDetail) {
@@ -94,6 +96,7 @@ export default async function PortalAppointmentDetailPage({ params }: PageProps)
       initialAdminUsers={initialAdminUsers}
       initialInvoices={initialInvoices}
       initialGoogleCalendarStatus={initialGoogleCalendarStatus}
+      initialDoctorsDirectory={initialDoctorsDirectory}
     />
   );
 }

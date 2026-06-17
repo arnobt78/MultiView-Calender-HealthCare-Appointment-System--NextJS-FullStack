@@ -94,3 +94,15 @@ describe("AppointmentActionsMenu Google sync item", () => {
     expect(markup).toContain("Syncing…");
   });
 });
+
+describe("AppointmentActionsMenu Edit", () => {
+  it("uses onEdit callback — not a detail Link for Edit row", async () => {
+    const { readFileSync } = await import("node:fs");
+    const { resolve } = await import("node:path");
+    const src = readFileSync(
+      resolve(process.cwd(), "src/components/shared/AppointmentActionsMenu.tsx"),
+      "utf8"
+    );
+    expect(src).toContain("onEdit()");
+  });
+});

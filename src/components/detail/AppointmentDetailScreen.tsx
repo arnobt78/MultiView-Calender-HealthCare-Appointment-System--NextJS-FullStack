@@ -8,6 +8,7 @@ import type { AppointmentDetailViewModel } from "@/lib/appointment-detail-view-m
 import type { UsersListResponse } from "@/hooks/useUsers";
 import type { Invoice } from "@/hooks/usePayments";
 import type { GoogleCalendarStatus } from "@/types/google-calendar";
+import type { DoctorPrefetchRow } from "@/lib/server-prefetch";
 
 export type AppointmentDetailScreenProps = {
   backHref: string;
@@ -18,6 +19,8 @@ export type AppointmentDetailScreenProps = {
   initialInvoices?: Invoice[] | null;
   /** Staff Google Calendar connection — seeds sync footer on first paint. */
   initialGoogleCalendarStatus?: GoogleCalendarStatus | null;
+  /** Doctor directory — warms edit-dialog treating-physician picker on first paint. */
+  initialDoctorsDirectory?: { doctors: DoctorPrefetchRow[] } | null;
 };
 
 export function AppointmentDetailScreen({
@@ -28,6 +31,7 @@ export function AppointmentDetailScreen({
   initialAdminUsers,
   initialInvoices,
   initialGoogleCalendarStatus,
+  initialDoctorsDirectory,
 }: AppointmentDetailScreenProps) {
   const tone = variant === "control-panel" ? "violet" : "sky";
   const backListLabel =
@@ -44,6 +48,7 @@ export function AppointmentDetailScreen({
       initialAdminUsers={initialAdminUsers}
       initialInvoices={initialInvoices}
       initialGoogleCalendarStatus={initialGoogleCalendarStatus}
+      initialDoctorsDirectory={initialDoctorsDirectory}
     />
   );
 }

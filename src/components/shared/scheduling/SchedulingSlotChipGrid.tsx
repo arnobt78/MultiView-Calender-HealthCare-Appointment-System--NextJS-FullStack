@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { SlotCell } from "@/lib/scheduling/scheduling-types";
+import { slotStartsMatch } from "@/lib/scheduling/slot-pick-selection";
 import { patientBookingGlassInputClass } from "@/components/shared/patient-booking/patient-booking-dialog-styles";
 import {
   schedulingSlotChipAvailableClass,
@@ -90,7 +91,7 @@ export function SchedulingSlotChipGrid({
       {cells.map((cell) => {
         const slotTime = format(new Date(cell.start), "HH:mm");
         const endTime = format(addMinutes(new Date(cell.start), duration), "HH:mm");
-        const selected = selectedStart === cell.start;
+        const selected = slotStartsMatch(selectedStart, cell.start);
         const selectable = cell.status === "available";
         return (
           <div key={cell.start} className={schedulingSlotChipCellClass}>
@@ -100,10 +101,15 @@ export function SchedulingSlotChipGrid({
               onClick={() => selectable && onSelect(cell.start)}
               className={cn(
                 "flex w-full items-center justify-center rounded-xl border px-2 py-2 transition-all",
-                selectable &&
-                (selected ? schedulingSlotChipSelectedClass : schedulingSlotChipAvailableClass),
-                !selectable && schedulingSlotChipDisabledClass,
-                cell.status === "booked" && "line-through decoration-slate-400/80"
+                selected
+                  ? cn(
+                      schedulingSlotChipSelectedClass,
+                      !selectable && "cursor-not-allowed opacity-95"
+                    )
+                  : selectable
+                    ? schedulingSlotChipAvailableClass
+                    : schedulingSlotChipDisabledClass,
+                cell.status === "booked" && !selected && "line-through decoration-slate-400/80"
               )}
               aria-pressed={selected}
               aria-disabled={!selectable}
@@ -111,7 +117,7 @@ export function SchedulingSlotChipGrid({
               <SchedulingSlotTimeInline
                 startLabel={slotTime}
                 endLabel={endTime}
-                muted={!selectable}
+                muted={!selectable && !selected}
               />
             </button>
           </div>

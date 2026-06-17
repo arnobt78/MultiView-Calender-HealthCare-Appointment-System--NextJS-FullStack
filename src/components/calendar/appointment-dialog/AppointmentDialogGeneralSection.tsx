@@ -93,6 +93,7 @@ import type { Category, Patient } from "@/types/types";
 import type { DoctorDirectoryRow } from "@/lib/doctor-directory";
 import { DoctorDirectoryPickerCard } from "@/components/shared/doctor-display/DoctorDirectoryPickerCard";
 import { DoctorDirectoryPickerList } from "@/components/shared/doctor-display/DoctorDirectoryPickerList";
+import { AppointmentStatusSelect } from "@/components/shared/appointments/AppointmentStatusSelect";
 
 /** Matches `MAX_ATTACHMENT_BYTES` in `AppointmentDialog.tsx` — keep both in sync. */
 const MAX_ATTACHMENT_BYTES_LABEL = "1 MB";
@@ -152,6 +153,10 @@ type Props = {
   showTreatingPhysicianPicker: boolean;
   directoryDoctors: DoctorDirectoryRow[];
   directoryDoctorsLoading?: boolean;
+  /** SSR/detail seed — first-paint doctor label before `doctors.all` hydrates. */
+  treatingPhysicianDirectorySeed?: DoctorDirectoryRow;
+  /** SSR/detail seed — visit type summary before `appointmentTypes.byDoctor` hydrates. */
+  visitTypeSeed?: VisitTypePickerItem;
   treatingPhysicianId: string;
   setTreatingPhysicianId: (v: string) => void;
   /**
@@ -164,6 +169,9 @@ type Props = {
   setSlotPickDateStr: (v: string) => void;
   slotPickTypeId: string;
   setSlotPickTypeId: (v: string) => void;
+  /** UTC ISO — lifted to parent so edit re-seed highlights the existing slot chip. */
+  slotPickStartIso: string | null;
+  setSlotPickStartIso: (v: string | null) => void;
   /** Chief complaint / presenting symptom from the patient — stored on appointment for clinical context. */
   chiefComplaint: string;
   setChiefComplaint: (v: string) => void;
@@ -261,6 +269,8 @@ export function AppointmentDialogGeneralSection({
   showTreatingPhysicianPicker,
   directoryDoctors,
   directoryDoctorsLoading = false,
+  treatingPhysicianDirectorySeed,
+  visitTypeSeed,
   treatingPhysicianId,
   setTreatingPhysicianId,
   availabilityDoctorId,
@@ -268,6 +278,8 @@ export function AppointmentDialogGeneralSection({
   setSlotPickDateStr,
   slotPickTypeId,
   setSlotPickTypeId,
+  slotPickStartIso,
+  setSlotPickStartIso,
   chiefComplaint,
   setChiefComplaint,
   excludeAppointmentId,
@@ -275,7 +287,6 @@ export function AppointmentDialogGeneralSection({
 }: Props) {
   const queryClient = useQueryClient();
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
-  const [slotPickStartIso, setSlotPickStartIso] = useState<string | null>(null);
   const [staffFlexDuration, setStaffFlexDuration] = useState<FlexDurationMinutes>(30);
   const [physicianPickerOpen, setPhysicianPickerOpen] = useState(false);
   const [typePickerOpen, setTypePickerOpen] = useState(false);
@@ -328,25 +339,37 @@ export function AppointmentDialogGeneralSection({
     return slotPickTypeId || types[0]?.id || "";
   }, [slotPickTypeId, types, isStaffFlexible]);
 
-  const selectedSlotType = useMemo(
-    () => types.find((t) => t.id === resolvedSlotTypeId),
-    [types, resolvedSlotTypeId]
-  );
+  const selectedSlotType = useMemo(() => {
+    const fromTypes = types.find((t) => t.id === resolvedSlotTypeId);
+    if (fromTypes) return fromTypes;
+    if (visitTypeSeed && visitTypeSeed.id === resolvedSlotTypeId) return visitTypeSeed;
+    return undefined;
+  }, [types, resolvedSlotTypeId, visitTypeSeed]);
 
-  const selectedStaffType = useMemo(
-    () => types.find((t) => t.id === slotPickTypeId) ?? null,
-    [types, slotPickTypeId]
-  );
+  const selectedStaffType = useMemo(() => {
+    const fromTypes = types.find((t) => t.id === slotPickTypeId);
+    if (fromTypes) return fromTypes;
+    if (visitTypeSeed?.id === slotPickTypeId) return visitTypeSeed;
+    return null;
+  }, [types, slotPickTypeId, visitTypeSeed]);
 
-  const selectedDirectoryDoctor = useMemo(
-    () => directoryDoctors.find((d) => d.id === treatingPhysicianId),
-    [directoryDoctors, treatingPhysicianId]
-  );
+  const selectedDirectoryDoctor = useMemo(() => {
+    const fromDirectory = directoryDoctors.find((d) => d.id === treatingPhysicianId);
+    if (fromDirectory) return fromDirectory;
+    if (treatingPhysicianDirectorySeed?.id === treatingPhysicianId) {
+      return treatingPhysicianDirectorySeed;
+    }
+    return undefined;
+  }, [directoryDoctors, treatingPhysicianId, treatingPhysicianDirectorySeed]);
 
-  const staffSchedulingDoctor = useMemo(
-    () => directoryDoctors.find((d) => d.id === staffSchedulingDoctorId),
-    [directoryDoctors, staffSchedulingDoctorId]
-  );
+  const staffSchedulingDoctor = useMemo(() => {
+    const fromDirectory = directoryDoctors.find((d) => d.id === staffSchedulingDoctorId);
+    if (fromDirectory) return fromDirectory;
+    if (treatingPhysicianDirectorySeed?.id === staffSchedulingDoctorId) {
+      return treatingPhysicianDirectorySeed;
+    }
+    return undefined;
+  }, [directoryDoctors, staffSchedulingDoctorId, treatingPhysicianDirectorySeed]);
 
   const prefetchStaffSchedulingScope = useCallback(
     (scope: { kind: "type"; typeId: string } | { kind: "flex"; durationMinutes: number }) => {
@@ -720,16 +743,12 @@ export function AppointmentDialogGeneralSection({
         </div>
         <div className="space-y-2">
           <FieldLabel icon={ListTodo}>{toTitleCaseLabel("Select Status")}</FieldLabel>
-          <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger className={glassSelectTriggerClass}>
-              <SelectValue placeholder={toTitleCaseLabel("Select Status")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="pending">{toTitleCaseLabel("Open")}</SelectItem>
-              <SelectItem value="done">{toTitleCaseLabel("Done")}</SelectItem>
-              <SelectItem value="alert">{toTitleCaseLabel("Alert")}</SelectItem>
-            </SelectContent>
-          </Select>
+          <AppointmentStatusSelect
+            value={status}
+            onValueChange={setStatus}
+            mode={excludeAppointmentId ? "edit" : "create"}
+            triggerClassName={glassSelectTriggerClass}
+          />
         </div>
       </div>
 

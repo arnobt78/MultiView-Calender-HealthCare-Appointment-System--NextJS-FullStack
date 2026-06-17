@@ -165,6 +165,7 @@ export type AppointmentSnapshotRow = Appointment & {
 export type PatientSnapshot = {
   patient: Patient;
   appointments: AppointmentSnapshotRow[];
+  /** Always `[]` post-C46 — related invoices load via `queryKeys.invoices.all` + patient filter. */
   invoices: SnapshotInvoice[];
   /** Full appointment count for section badge (table rows capped at 50). */
   appointmentTotalCount: number;

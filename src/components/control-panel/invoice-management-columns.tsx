@@ -25,6 +25,8 @@ import { cn } from "@/lib/utils";
 
 export type BuildInvoiceManagementColumnsOpts = {
   viewerRole: "admin" | "doctor";
+  /** Patient portal detail — identity links only, no row menu. */
+  includeActionsColumn?: boolean;
   onEdit: (invoice: Invoice) => void;
   onPay: (id: string) => void;
   onSend: (id: string) => void;
@@ -43,6 +45,7 @@ export function buildInvoiceManagementColumns(
 ): ColumnDef<Invoice>[] {
   const {
     viewerRole,
+    includeActionsColumn = true,
     onEdit,
     onPay,
     onSend,
@@ -55,7 +58,7 @@ export function buildInvoiceManagementColumns(
     isDeleting,
   } = opts;
 
-  return [
+  const columns: ColumnDef<Invoice>[] = [
     {
       id: "invoice",
       accessorKey: "amount",
@@ -107,7 +110,10 @@ export function buildInvoiceManagementColumns(
         <InvoiceCreatedTableCell invoice={row.original} viewerRole={viewerRole} />
       ),
     },
-    {
+  ];
+
+  if (includeActionsColumn) {
+    columns.push({
       id: "actions",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Actions" className="text-right" />
@@ -134,6 +140,8 @@ export function buildInvoiceManagementColumns(
           />
         );
       },
-    },
-  ];
+    });
+  }
+
+  return columns;
 }

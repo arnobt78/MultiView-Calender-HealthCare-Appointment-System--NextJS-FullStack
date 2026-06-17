@@ -126,6 +126,10 @@
 | REQ-0079 | approved [C31] | REQ-0078 | ART-0407..0409 | pending |
 | REQ-0080 | approved [C32] | REQ-0079 | ART-0410..0416 | pending |
 | REQ-0081 | approved [C33] | REQ-0080 | ART-0417..0423 | pending |
+| REQ-0097 | approved [C46] | REQ-0096 | ART-0520..0525 | pending |
+| REQ-0096 | approved [C45] | REQ-0095 | ART-0513..0519 | pending |
+| REQ-0095 | approved [C44] | REQ-0094 | ART-0506..0512 | pending |
+| REQ-0094 | approved [C43] | REQ-0093 | ART-0499..0505 | verify PASS |
 | REQ-0093 | approved [C42] | REQ-0092 | ART-0495..0502 | verify PASS |
 | REQ-0092 | approved [C41] | REQ-0091 | ART-0487..0494 | verify PASS |
 | REQ-0091 | approved [C40] | REQ-0090 | ART-0475..0486 | verify PASS |
@@ -138,6 +142,78 @@
 | REQ-0084 | approved [C36] | REQ-0083 | ART-0437..0444 | pending |
 | REQ-0083 | approved [C35/C35.1] | REQ-0082 | ART-0432..0436 | pending |
 | REQ-0082 | approved [C34/C34.1] | REQ-0081 | ART-0424..0431 | pending |
+
+### REQ-0097 — C46 Portal patient invoice shell + snapshot slimming
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C46] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0096 |
+
+**Statement:** Close C45 deferred gaps — mount `ClinicianInvoiceDialogShell` on portal `/patients/*` so staff Edit invoice actions work; slim patient snapshot loader to stop invoice row over-fetch while keeping accurate `invoiceTotalCount`.
+
+**Acceptance criteria:**
+1. `patients/layout.tsx` mirrors `appointments/layout.tsx` — SSR `prefetchInvoices` + `ClinicianInvoiceDialogShell`.
+2. Duplicate `prefetchInvoices` removed from portal + CP patient `[id]` pages (layout seeds `queryKeys.invoices.all`).
+3. `loadPatientSnapshotData` returns `invoices: []` + patient-scoped `invoice.count` (no `findMany` / visit-summary attach).
+4. `PatientDetailScreen` badge uses `invoiceTotalCount` while loading, `relatedInvoices.length` when warm.
+5. Verify suite PASS.
+
+### REQ-0096 — C45 Shared invoice table on entity detail pages
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C45] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0095 |
+
+**Statement:** Reuse CP invoice-management table (5 columns, search + status toolbar, role-aware actions) on appointment and patient detail Related Billing / Related Invoices sections.
+
+**Acceptance criteria:**
+1. `InvoiceClinicalListTable` shared component + `invoice-entity-list-filters.ts`.
+2. Appointment detail + patient detail replace legacy column builders.
+3. Patient pages SSR `prefetchInvoices`; `usePayments` + patient filter.
+4. Hub `InvoiceManagement` DRY refactor — no behavior change.
+5. Verify suite PASS.
+
+### REQ-0095 — C44 Appointment dialog parity (seeds, status picker, past slots)
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C44] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0094 |
+
+**Statement:** Calendar/list edit dialog matches detail edit UX: client-enriched physician/visit-type seeds, dashboard-style status picker (create disables Cancelled; edit allows), past appointments show read-only selected slot chip.
+
+**Acceptance criteria:**
+1. `enrichFullAppointmentDialogSeeds` — list row + `doctors.all` / portal fallback; idempotent with SSR seeds.
+2. `AppointmentStatusSelect` — icons/colors aligned with calendar filter row; create `cancelled` disabled.
+3. `SchedulingSlotChipGrid` — selected styling on past/disabled cells when editing existing appointment time.
+4. No new query keys; invalidation unchanged.
+5. Verify suite PASS.
+
+### REQ-0094 — C43 Appointment detail dialog edit + body skeleton
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C43] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0093 |
+
+**Statement:** Appointment detail (admin CP + doctor portal mutate; patient read-only) matches entity-detail shell: stable chrome, inner body skeleton, glass card styling, dialog-based edit via shared `AppointmentDialog` (no embedded Edit visit form).
+
+**Acceptance criteria:**
+1. Remove embedded `AppointmentDetailForm` section from detail card.
+2. `canEdit` opens `AppointmentDialogController` with `appointment` prop; patient read-only unchanged.
+3. Footer `Update Visit` opens dialog; `EntityDetailFooterRow` + glass action buttons.
+4. `AppointmentDetailBodySkeleton` when detail cache cold; SSR seed + invalidation unchanged.
+5. Verify 1220+ PASS.
 
 ### REQ-0093 — C42 Telehealth queue glass badge UX
 

@@ -21,6 +21,8 @@ import {
 } from "@/lib/query-fetchers";
 import { resolveExtraAssignedAppointmentIds } from "@/lib/appointments-calendar-assignees";
 import { Appointment, Category, Patient, AppointmentAssignee } from "@/types/types";
+import type { DoctorDirectoryRow } from "@/lib/doctor-directory";
+import type { VisitTypePickerItem } from "@/components/shared/scheduling/VisitTypePickerList";
 import type { PortalAppointmentClinicianUser } from "@/lib/serializers";
 import { buildFullAppointmentsList } from "@/lib/appointments-list-build";
 import type { AppointmentDetailApiPayload } from "@/lib/appointment-detail-api";
@@ -43,6 +45,10 @@ export type FullAppointment = Appointment & {
   /** Patient portal joins — staff links without `/api/users/search`. */
   portal_owner?: PortalAppointmentClinicianUser;
   portal_treating_physician?: PortalAppointmentClinicianUser;
+  /** Detail SSR or client-enriched from list row + `doctors.all` — instant treating-physician picker label. */
+  treating_physician_directory_seed?: DoctorDirectoryRow;
+  /** Detail SSR or client-enriched from appointment row — instant visit type summary before types query hydrates. */
+  appointment_type_visit_seed?: VisitTypePickerItem;
 };
 
 function formatAppointmentRange(start?: string, end?: string) {

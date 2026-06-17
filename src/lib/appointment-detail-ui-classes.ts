@@ -3,7 +3,6 @@
  */
 import {
   skyGlassBackButtonClass,
-  skyGlassTableFrameClass,
   violetGlassBackButtonClass,
 } from "@/lib/calendar-header-action-styles";
 import {
@@ -41,7 +40,12 @@ export type AppointmentDetailToneClasses = {
   schemaSectionClass: string;
   chromeIconTileClass: string;
   chromeIconClass: string;
+  /** Footer primary action (Update Visit) — violet CP / emerald portal. */
+  footerPrimaryVariant: "violet" | "emerald";
 };
+
+const SKY_CARD =
+  "rounded-[20px] border border-sky-100/50 bg-white/90 text-gray-700 shadow-[0_14px_48px_-12px_rgba(2,132,199,0.28)]";
 
 const VIOLET_CARD =
   "rounded-[20px] border border-violet-100/50 bg-white/90 text-gray-700 shadow-[0_14px_48px_-12px_rgba(139,92,246,0.28)]";
@@ -75,11 +79,12 @@ export function resolveAppointmentDetailToneClasses(
       schemaSectionClass: patientDetailSchemaSectionClass,
       chromeIconTileClass: entityDetailChromeVioletIconTileClass,
       chromeIconClass: entityDetailChromeVioletIconClass,
+      footerPrimaryVariant: "violet",
     };
   }
   return {
     backButtonClass: skyGlassBackButtonClass,
-    cardFrameClass: skyGlassTableFrameClass,
+    cardFrameClass: SKY_CARD,
     cardBorderClass: "border-sky-100/50",
     sectionDividerClass: "border-sky-100/80",
     fieldIconCircleClass: entityDetailFieldIconCircleClass,
@@ -94,6 +99,7 @@ export function resolveAppointmentDetailToneClasses(
     schemaSectionClass: patientDetailSchemaSectionClass,
     chromeIconTileClass: entityDetailChromeSkyIconTileClass,
     chromeIconClass: entityDetailChromeSkyIconClass,
+    footerPrimaryVariant: "emerald",
   };
 }
 

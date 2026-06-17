@@ -111,13 +111,33 @@ export async function POST(req: NextRequest, context: RouteContext) {
     }
 
     for (const assignee of assignees) {
-      const userId = assignee.user_type === "users" ? assignee.user || null : null;
+      let userId: string | null = null;
+      let invitedEmail: string | null = assignee.invited_email ?? null;
+      const userType = assignee.user_type ?? null;
+
+      if (userType === "users" && assignee.user) {
+        userId = assignee.user;
+      } else if (userType === "patients" && assignee.user) {
+        const patient = await prisma.patient.findUnique({
+          where: { id: assignee.user },
+          select: { email: true },
+        });
+        invitedEmail = invitedEmail ?? patient?.email ?? null;
+        if (invitedEmail) {
+          const linkedUser = await prisma.user.findFirst({
+            where: { email: invitedEmail },
+            select: { id: true },
+          });
+          userId = linkedUser?.id ?? null;
+        }
+      }
+
       await prisma.appointmentAssignee.create({
         data: {
           appointment_id: id,
           user_id: userId,
-          user_type: assignee.user_type ?? null,
-          invited_email: assignee.invited_email ?? null,
+          user_type: userType,
+          invited_email: invitedEmail,
           status: assignee.status ?? "pending",
           permission: assignee.permission ?? "read",
           invited_by_id: sessionUser.userId,

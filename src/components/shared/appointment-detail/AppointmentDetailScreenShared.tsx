@@ -14,7 +14,8 @@ import {
   Users,
 } from "lucide-react";
 import { format } from "date-fns";
-import { useLayoutEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,23 +24,22 @@ import { EntityDetailBackLink } from "@/components/shared/entity-detail/EntityDe
 import { EntityDetailChromeHeader } from "@/components/shared/entity-detail/EntityDetailChromeHeader";
 import { CategoryBrandMark } from "@/components/shared/category-display/CategoryBrandMark";
 import { CategoryInlineLink } from "@/components/shared/CategoryInlineLink";
-import { ClinicalAppointmentStatusBadge } from "@/components/shared/entity-detail/ClinicalAppointmentStatusBadge";
 import { AppointmentVisitMetaBadgeRow } from "@/components/shared/appointment-display/AppointmentVisitMetaBadgeRow";
 import { TelehealthSessionBadge } from "@/components/shared/appointments/TelehealthSessionBadge";
 import { resolveAppointmentDisplayLocation } from "@/lib/appointment-visit-location";
-import { ClinicalDataTable } from "@/components/shared/ClinicalDataTable";
 import { PatientIdentityCell } from "@/components/shared/person-display/PatientIdentityCell";
 import { DoctorIdentityCell } from "@/components/shared/person-display/DoctorIdentityCell";
 import { EntityDetailSnapshotSectionHeading } from "@/components/shared/entity-detail/EntityDetailSnapshotSectionHeading";
 import { EntityDetailRecordAuditCard } from "@/components/shared/entity-detail/EntityDetailRecordAuditCard";
 import { EntityIdCopyInline } from "@/components/shared/EntityIdCopyInline";
-import { AppointmentDetailForm } from "@/components/control-panel/AppointmentDetailForm";
+import { AppointmentDetailBodySkeleton } from "@/components/shared/appointment-detail/AppointmentDetailBodySkeleton";
 import { AppointmentDetailActionBar } from "@/components/shared/appointment-detail/AppointmentDetailActionBar";
-import { buildAppointmentLinkedInvoiceColumns } from "@/components/shared/appointment-detail/appointment-linked-invoice-columns";
+import AppointmentDialogController from "@/components/calendar/AppointmentDialogController";
+import { InvoiceClinicalListTable } from "@/components/shared/billing/InvoiceClinicalListTable";
 import { clinicalEmptyOr } from "@/components/shared/ClinicalTableEmptyDash";
 import { buildStaffDirectoryMap } from "@/lib/staff-directory-cache";
 import { seedUsersListCache, seedInvoicesListCache } from "@/lib/ssr-query-seed";
-import { seedGoogleCalendarStatusCacheFromSsr } from "@/lib/cp-list-query-ssr-seed";
+import { seedGoogleCalendarStatusCacheFromSsr, seedDoctorsDirectoryCacheFromSsr } from "@/lib/cp-list-query-ssr-seed";
 import {
   APPOINTMENT_DETAIL_ADMIN_USERS_FILTERS,
   APPOINTMENT_DETAIL_DOCTOR_USERS_FILTERS,
@@ -55,6 +55,8 @@ import {
 } from "@/lib/patient-detail-ui-classes";
 import { entityDetailOwnedSnapshotSectionTitle } from "@/lib/entity-detail-snapshot-section-copy";
 import { buildAppointmentInvoiceAuditExtraRows } from "@/lib/appointment-detail-invoice-audit-rows";
+import { buildFullAppointmentForDialog } from "@/lib/appointment-detail-dialog";
+import { prefetchAppointmentDetailEditWarmup } from "@/lib/prefetch-appointment-detail-edit";
 import {
   resolvePrimaryDoctorDisplayName,
 } from "@/lib/staff-directory-cache";
@@ -73,10 +75,12 @@ import { useUsers, type UsersListResponse } from "@/hooks/useUsers";
 import { usePayments, type Invoice } from "@/hooks/usePayments";
 import { useCpListBodyLoading } from "@/lib/cp-list-body-loading";
 import { queryKeys } from "@/lib/query-keys";
+import { filterInvoicesForAppointment } from "@/lib/invoice-entity-list-filters";
 import { cn } from "@/lib/utils";
 import type { AppointmentAssignee } from "@/types/types";
 import type { AppointmentDetailViewModel } from "@/lib/appointment-detail-view-model";
 import type { GoogleCalendarStatus } from "@/types/google-calendar";
+import type { DoctorPrefetchRow } from "@/lib/server-prefetch";
 import {
   clinicianDisplayNameOnly,
   recomputeAppointmentDetailLabels,
@@ -96,6 +100,8 @@ export type AppointmentDetailScreenSharedProps = {
   initialInvoices?: Invoice[] | null;
   /** Staff Google Calendar connection — seeds sync footer on first paint. */
   initialGoogleCalendarStatus?: GoogleCalendarStatus | null;
+  /** Doctor directory — seeds `queryKeys.doctors.all` for edit-dialog picker. */
+  initialDoctorsDirectory?: { doctors: DoctorPrefetchRow[] } | null;
 };
 
 function FieldLabel({
@@ -164,8 +170,15 @@ export function AppointmentDetailScreenShared({
   initialAdminUsers,
   initialInvoices,
   initialGoogleCalendarStatus,
+  initialDoctorsDirectory,
 }: AppointmentDetailScreenSharedProps) {
   const queryClient = useQueryClient();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const didOpenEditFromUrlRef = useRef(false);
+
   const toneClasses = resolveAppointmentDetailToneClasses(tone);
   const scrollShell: AppSectionScrollShell =
     mode === "control-panel" ? "control-panel" : "portal";
@@ -173,9 +186,18 @@ export function AppointmentDetailScreenShared({
   const canEdit = initialDetail.accessLevel === "mutate";
 
   const appointmentId = initialDetail.appointmentId;
-  const { data: detail = initialDetail } = useAppointmentDetail(appointmentId, {
-    initialData: initialDetail,
-  });
+
+  const detailQueryKey = queryKeys.appointments.detail(appointmentId);
+  const { data: detail = initialDetail, isLoading: detailQueryLoading } = useAppointmentDetail(
+    appointmentId,
+    {
+      initialData: initialDetail,
+    }
+  );
+  const detailBodyLoading = useCpListBodyLoading(detailQueryKey, detailQueryLoading);
+  const hasAppointmentBody = Boolean(detail?.appointment?.id);
+  const showBodySkeleton = !hasAppointmentBody && detailBodyLoading;
+  const showLiveBody = hasAppointmentBody;
 
   /** One-shot SSR seeds — keyed by id so object identity changes do not re-trigger setQueryData loops. */
   const ancillarySeededRef = useRef(false);
@@ -194,6 +216,7 @@ export function AppointmentDetailScreenShared({
       queryClient,
       initialGoogleCalendarStatus ?? undefined
     );
+    seedDoctorsDirectoryCacheFromSsr(queryClient, initialDoctorsDirectory ?? undefined);
     ancillarySeededRef.current = true;
   }, [
     queryClient,
@@ -202,7 +225,21 @@ export function AppointmentDetailScreenShared({
     initialAdminUsers,
     initialInvoices,
     initialGoogleCalendarStatus,
+    initialDoctorsDirectory,
   ]);
+
+  /** Warm doctor directory before first Update Visit — complements SSR seed + dialog mount query. */
+  useEffect(() => {
+    if (!canEdit || !hasAppointmentBody) return;
+    const appt = detail.appointment;
+    prefetchAppointmentDetailEditWarmup(queryClient, {
+      treatingPhysicianId: appt.treating_physician_id ?? detail.treatingPhysician?.id,
+      calendarOwnerId: appt.user_id ?? detail.calendarOwner?.id,
+      appointmentTypeId: appt.appointment_type_id,
+      appointmentStart: appt.start,
+      excludeAppointmentId: appt.id,
+    });
+  }, [canEdit, hasAppointmentBody, detail, queryClient]);
 
   const staffViewer = entityRole === "admin" || entityRole === "doctor";
   const { data: doctorUsers } = useUsers(APPOINTMENT_DETAIL_DOCTOR_USERS_FILTERS, {
@@ -243,7 +280,7 @@ export function AppointmentDetailScreenShared({
   const showNotes = canShowAppointmentClinicalNotes(entityRole);
 
   const linkedInvoices = useMemo(
-    () => (invoices ?? []).filter((inv) => inv.appointment_id === appointment.id),
+    () => filterInvoicesForAppointment(invoices ?? [], appointment.id),
     [invoices, appointment.id]
   );
 
@@ -255,11 +292,6 @@ export function AppointmentDetailScreenShared({
   const visitMetaBilling = useMemo(
     () => resolveAppointmentVisitMetaBilling(linkedInvoices[0] ?? null),
     [linkedInvoices]
-  );
-
-  const invoiceColumns = useMemo(
-    () => buildAppointmentLinkedInvoiceColumns(entityRole),
-    [entityRole]
   );
 
   const assigneesForMenu: AppointmentAssignee[] = useMemo(
@@ -276,6 +308,28 @@ export function AppointmentDetailScreenShared({
       })),
     [detail.assignees, appointment.id, appointment.created_at]
   );
+
+  const fullAppointmentForDialog = useMemo(
+    () => buildFullAppointmentForDialog(detail, assigneesForMenu),
+    [detail, assigneesForMenu]
+  );
+
+  const openEditDialog = useCallback(() => {
+    if (!canEdit || !hasAppointmentBody) return;
+    setEditDialogOpen(true);
+  }, [canEdit, hasAppointmentBody]);
+
+  /** Legacy `?mode=edit` deep links open the shared glass dialog (not inline form). */
+  useEffect(() => {
+    if (didOpenEditFromUrlRef.current) return;
+    if (!canEdit || searchParams.get("mode") !== "edit" || !hasAppointmentBody) return;
+    didOpenEditFromUrlRef.current = true;
+    const raf = window.requestAnimationFrame(() => {
+      openEditDialog();
+      router.replace(pathname);
+    });
+    return () => window.cancelAnimationFrame(raf);
+  }, [canEdit, searchParams, hasAppointmentBody, openEditDialog, router, pathname]);
 
   const ownerLinkKind = resolveCalendarOwnerLinkKind(
     entityRole,
@@ -325,8 +379,8 @@ export function AppointmentDetailScreenShared({
       ? categoryDetailHref(entityRole, category.id)
       : null;
 
-  /** SSR `initialDetail` is required — render live chrome immediately (no isMounted gate). */
-  const showLive = true;
+  /** SSR seed paints chrome immediately; body skeleton only when detail cache is cold. */
+  const showLive = showLiveBody;
 
   return (
     <EntityDetailPageShell
@@ -359,7 +413,7 @@ export function AppointmentDetailScreenShared({
       }
     >
 
-      {!canEdit && showLive ? (
+      {!canEdit && showLiveBody ? (
         <div className="flex items-center gap-2 rounded-lg border border-amber-200/80 bg-amber-50/90 px-3 py-2 text-sm text-amber-900">
           <Lock className="h-4 w-4 shrink-0" aria-hidden />
           Read-only — only the calendar owner or invited editors can change this visit.
@@ -378,6 +432,10 @@ export function AppointmentDetailScreenShared({
             <h2 className="text-lg font-semibold text-gray-700">Visit Overview</h2>
           </div>
 
+          {showBodySkeleton ? (
+            <AppointmentDetailBodySkeleton tone={tone} toneClasses={toneClasses} />
+          ) : (
+            <>
           <div className={toneClasses.schemaSectionClass}>
             <div className="flex flex-wrap items-start gap-3">
               {category ? (
@@ -632,30 +690,21 @@ export function AppointmentDetailScreenShared({
             >
               {relatedBillingTitle}
             </EntityDetailSnapshotSectionHeading>
-            <ClinicalDataTable
-              data={linkedInvoices}
-              columns={invoiceColumns}
-              pagination={false}
+            <InvoiceClinicalListTable
+              invoices={linkedInvoices}
+              viewerRole={entityRole}
+              isLoading={billingBadgesLoading}
               emptyMessage="No invoice for this visit"
-              tableClassName="min-w-[640px] w-full"
-              className={toneClasses.snapshotTableFrameClass}
               tableFrameClassName="rounded-md border border-slate-200/80 bg-white shadow-none"
             />
           </div>
 
-          {canEdit && showLive ? (
-            <div
-              id="appointment-detail-edit"
-              className={cn("border-t pt-3", toneClasses.sectionDividerClass)}
-            >
-              <h3 className="mb-2 text-sm font-semibold text-gray-700">Edit visit</h3>
-              <AppointmentDetailForm appointment={appointment} />
-            </div>
-          ) : null}
+            </>
+          )}
         </CardContent>
       </Card>
 
-      {showLive ? (
+      {showLiveBody ? (
         <AppointmentDetailActionBar
           appointment={appointment}
           assignees={assigneesForMenu}
@@ -664,6 +713,15 @@ export function AppointmentDetailScreenShared({
           toneClasses={toneClasses}
           canEdit={canEdit}
           listHref={backHref}
+          onEditClick={openEditDialog}
+        />
+      ) : null}
+
+      {canEdit && showLiveBody ? (
+        <AppointmentDialogController
+          appointment={fullAppointmentForDialog}
+          isOpen={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
         />
       ) : null}
     </EntityDetailPageShell>

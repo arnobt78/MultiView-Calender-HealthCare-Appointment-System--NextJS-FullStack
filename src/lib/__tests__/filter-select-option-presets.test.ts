@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   activeInactiveFilterOptions,
   allWeekdayFilterOptions,
+  appointmentDialogStatusSelectOptions,
   calendarClinicalRoleFilterOptions,
   careTierFilterOptions,
   findFilterOptionLabel,
@@ -60,5 +61,15 @@ describe("filter-select-option-presets", () => {
     expect(opts[1]?.value).toBe("0");
     expect(opts[1]?.label).toBe("Sunday");
     expect(opts[2]?.icon).toBeDefined();
+  });
+
+  it("appointmentDialogStatusSelectOptions disables cancelled on create", () => {
+    const createOpts = appointmentDialogStatusSelectOptions("create");
+    expect(createOpts.find((o) => o.value === "cancelled")?.disabled).toBe(true);
+    expect(createOpts.find((o) => o.value === "pending")?.icon).toBeDefined();
+
+    const editOpts = appointmentDialogStatusSelectOptions("edit");
+    expect(editOpts.find((o) => o.value === "cancelled")?.disabled).toBeFalsy();
+    expect(editOpts).toHaveLength(4);
   });
 });

@@ -15,7 +15,7 @@ import {
   skyGlassPrimaryButtonClass,
 } from "@/lib/calendar-header-action-styles";
 
-import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
+import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Category,
   Patient,
@@ -42,7 +42,23 @@ const MAX_ATTACHMENT_BYTES = 1048576;
 // Using Vercel Blob for file storage (better for demo projects on Vercel)
 import { uploadFileViaAPI } from "@/lib/vercelBlob";
 import { AppointmentDialogGeneralSection } from "@/components/calendar/appointment-dialog/AppointmentDialogGeneralSection";
+import { AppointmentDialogAssigneesSection } from "@/components/calendar/appointment-dialog/AppointmentDialogAssigneesSection";
+import {
+  addPatientAssigneeToAppointment,
+  enrichAssigneesWithPatientIds,
+  fetchAppointmentAssigneesForDialog,
+  removeAppointmentAssignee,
+} from "@/lib/appointment-dialog-assignees";
 import { utcToLocalInputValue, localInputValueToUTC } from "@/lib/datetime-local";
+import { appointmentStartToSlotPickDateStr } from "@/lib/prefetch-appointment-detail-edit";
+import { appointmentStartToSlotPickIso } from "@/lib/scheduling/slot-pick-selection";
+import { prefetchAppointmentTypesForDoctor } from "@/lib/prefetch-appointment-types";
+import { enrichFullAppointmentDialogSeeds } from "@/lib/appointment-detail-dialog";
+import {
+  normalizeAppointmentStatus,
+  type AppointmentStatus,
+} from "@/lib/appointment-status-display";
+import type { AppointmentAssignee } from "@/types/types";
 
 type Props = {
   trigger?: React.ReactNode;
@@ -71,13 +87,12 @@ export default function AppointmentDialog({
   telehealthBookingPreset = false,
 }: Props) {
   const isEditMode = Boolean(appointment);
-  const [open, setOpen] = useState(isEditMode);
-
-  // Sync open state with parent if controlled
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (typeof isOpen === "boolean") setOpen(isOpen);
-  }, [isOpen]);
+  const isControlled = typeof isOpen === "boolean";
+  // Controlled + closed: must not flash open on detail mount when `appointment` is seeded for edit.
+  const [open, setOpen] = useState(() =>
+    isControlled ? isOpen : isEditMode
+  );
+  const prevControlledIsOpenRef = useRef(isControlled ? isOpen : false);
 
   const { patients = [] } = usePatients();
   const { categories = [] } = useCategories();
@@ -85,11 +100,18 @@ export default function AppointmentDialog({
   const { user } = useAuth();
   const showTreatingPhysicianPicker = Boolean(user) && (user?.role ?? "") !== "patient";
   const { data: directoryData, isLoading: directoryDoctorsLoading } = useDoctorsDirectory({
-    enabled: open && showTreatingPhysicianPicker,
+    // Warm directory while detail mounts dialog closed (edit seed present) — avoids picker flash on open.
+    enabled: showTreatingPhysicianPicker && (open || Boolean(appointment?.id)),
   });
   const directoryDoctors = useMemo(
     () => directoryData?.doctors ?? [],
     [directoryData?.doctors]
+  );
+  /** Calendar/list edit — enrich list row with picker seeds before `doctors.all` fully hydrates. */
+  const enrichedAppointment = useMemo(
+    () =>
+      appointment ? enrichFullAppointmentDialogSeeds(appointment, directoryDoctors) : undefined,
+    [appointment, directoryDoctors]
   );
   const { createAppointmentAsync, updateAppointmentAsync } = useAppointments();
 
@@ -109,30 +131,32 @@ export default function AppointmentDialog({
   /** Cal-style slot picker — reset in `resetFormState` when the dialog closes so the next open is clean. */
   const [slotPickDateStr, setSlotPickDateStr] = useState("");
   const [slotPickTypeId, setSlotPickTypeId] = useState("");
+  /** UTC ISO of picked slot — lifted for edit re-seed + chip highlight on reopen. */
+  const [slotPickStartIso, setSlotPickStartIso] = useState<string | null>(null);
   /**
-   * When the sheet opens, prefetch visit types for the calendar owner — matches the child `useQuery` key /
-   * `staleTime` so the first paint often skips a loading skeleton (TanStack dedupes with `CalendarHeader`).
+   * Warm visit types + scheduling while edit dialog is mounted (detail page) or open.
+   * Prefers treating physician over session user for admin scheduling another doctor's calendar.
    */
   useEffect(() => {
-    if (!open || !user?.id) return;
-    if (!isValidUUID(user.id)) return;
-    void queryClient.prefetchQuery({
-      queryKey: queryKeys.appointmentTypes.byDoctor(user.id),
-      queryFn: () =>
-        apiClient<{ types: unknown[] }>(
-          `/api/appointment-types?doctorId=${encodeURIComponent(user.id)}`
-        ),
-      staleTime: 5 * 60 * 1000,
-    });
-    const schedDoctor = treatingPhysicianId || user.id;
-    if (isValidUUID(schedDoctor) && slotPickTypeId) {
+    if (!open && !appointment?.id) return;
+    const schedDoctor = treatingPhysicianId || user?.id;
+    if (!schedDoctor || !isValidUUID(schedDoctor)) return;
+    prefetchAppointmentTypesForDoctor(queryClient, schedDoctor);
+    if (slotPickTypeId && isValidUUID(slotPickTypeId)) {
       prefetchSchedulingMonthWithAdjacent(queryClient, {
         doctorId: schedDoctor,
         schedulingScope: { kind: "type", typeId: slotPickTypeId },
         excludeAppointmentId: appointment?.id,
       });
     }
-  }, [open, user?.id, queryClient, treatingPhysicianId, slotPickTypeId, appointment?.id]);
+  }, [
+    open,
+    appointment?.id,
+    user?.id,
+    queryClient,
+    treatingPhysicianId,
+    slotPickTypeId,
+  ]);
 
   const [uploading, setUploading] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
@@ -141,6 +165,14 @@ export default function AppointmentDialog({
   const [success, setSuccess] = useState(false);
   const [fileProgress, setFileProgress] = useState<Record<string, number>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
+  /** Edit-mode share list — synced from appointment seed + live GET after add/remove mutations. */
+  const [dialogAssignees, setDialogAssignees] = useState<AppointmentAssignee[]>([]);
+  const [assigneeMutationBusy, setAssigneeMutationBusy] = useState(false);
+  /** Set after create succeeds — enables assignee sharing before dialog closes (C43.1). */
+  const [savedAppointmentId, setSavedAppointmentId] = useState<string | null>(null);
+  const activeAppointmentId = appointment?.id ?? savedAppointmentId ?? null;
+  /** Create flow: appointment persisted; user can share then tap Done (no re-save). */
+  const isPostCreateSharingStep = Boolean(savedAppointmentId) && !isEditMode;
 
   const resetFormState = () => {
     setTitle("");
@@ -157,6 +189,7 @@ export default function AppointmentDialog({
     setTreatingPhysicianId("");
     setSlotPickDateStr("");
     setSlotPickTypeId("");
+    setSlotPickStartIso(null);
     setUploadedFiles([]);
     setError(null);
     setSuccess(false);
@@ -166,39 +199,151 @@ export default function AppointmentDialog({
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
+    setDialogAssignees([]);
+    setAssigneeMutationBusy(false);
+    setSavedAppointmentId(null);
   };
+
+  const syncDialogAssigneesFromServer = useCallback(
+    async (appointmentId: string, seed?: AppointmentAssignee[]) => {
+      const rows = await fetchAppointmentAssigneesForDialog(appointmentId);
+      setDialogAssignees(enrichAssigneesWithPatientIds(rows, patients, seed));
+    },
+    [patients]
+  );
+
+  /**
+   * Populate edit fields from appointment row. Called on appointment change and on every open
+   * (controlled detail: close resets form; reopen must re-seed because `appointment` ref is stable).
+   */
+  const seedFormFromAppointment = useCallback(
+    (appt: FullAppointment) => {
+      setTitle(appt.title || "");
+      setNotes(appt.notes || "");
+      setStart(utcToLocalInputValue(appt.start));
+      setEnd(utcToLocalInputValue(appt.end));
+      setPatientId(appt.patient || "");
+      setCategoryId(appt.category || "");
+      setLocation(appt.location || "");
+      setAttachments((appt.attachments || []).join(", "));
+      setStatus(appt.status || "pending");
+      setChiefComplaint(appt.chief_complaint || "");
+      setSlotPickTypeId(appt.appointment_type_id || "");
+      setSlotPickDateStr(appointmentStartToSlotPickDateStr(appt.start));
+      setSlotPickStartIso(appointmentStartToSlotPickIso(appt.start));
+      setTreatingPhysicianId(
+        appt.treating_physician_id ?? appt.user_id ?? user?.id ?? ""
+      );
+      const seed = appt.appointment_assignee ?? [];
+      setDialogAssignees(enrichAssigneesWithPatientIds(seed, patients, seed));
+      if (appt.id && isValidUUID(appt.id)) {
+        void syncDialogAssigneesFromServer(appt.id, seed).catch(() => {
+          /* keep seed on fetch failure */
+        });
+      }
+    },
+    [patients, user?.id, syncDialogAssigneesFromServer]
+  );
+
+  useEffect(() => {
+    if (!isControlled) return;
+    const wasOpen = prevControlledIsOpenRef.current;
+    prevControlledIsOpenRef.current = Boolean(isOpen);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setOpen(isOpen);
+    // Update Visit sets `isOpen` directly — does not call handleDialogOpenChange; re-seed after close reset.
+    if (isOpen && !wasOpen && appointment) {
+      seedFormFromAppointment(appointment);
+    }
+  }, [isOpen, isControlled, appointment, seedFormFromAppointment]);
 
   useEffect(() => {
     if (appointment) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setTitle(appointment.title || "");
-      setNotes(appointment.notes || "");
-      setStart(utcToLocalInputValue(appointment.start));
-      setEnd(utcToLocalInputValue(appointment.end));
-      setPatientId(appointment.patient || "");
-      setCategoryId(appointment.category || "");
-      setLocation(appointment.location || "");
-      setAttachments((appointment.attachments || []).join(", "));
-      setStatus(appointment.status || "pending");
-      setChiefComplaint(appointment.chief_complaint || "");
-      setSlotPickTypeId(appointment.appointment_type_id || "");
-      setOpen(true);
-
-      setTreatingPhysicianId(
-        appointment.treating_physician_id ?? appointment.user_id ?? user?.id ?? ""
-      );
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sync form from appointment prop / live detail updates
+      seedFormFromAppointment(appointment);
+      // Controlled parents own dialog visibility — seed fields only (detail mount must stay closed).
+      if (!isControlled) {
+        setOpen(true);
+      }
     } else {
       setTreatingPhysicianId("");
+      setDialogAssignees([]);
     }
-  }, [appointment, user?.id]);
+  }, [appointment, seedFormFromAppointment, isControlled]);
+
+  /** Re-map assignee chips when the patients cache hydrates after SSR seed. */
+  useEffect(() => {
+    if (!activeAppointmentId || dialogAssignees.length === 0) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDialogAssignees((prev) =>
+      enrichAssigneesWithPatientIds(prev, patients, appointment?.appointment_assignee)
+    );
+  }, [patients, activeAppointmentId, appointment?.appointment_assignee, dialogAssignees.length]);
+
+  const handleAddDialogAssignee = async (patientId: string) => {
+    if (!activeAppointmentId || !isValidUUID(activeAppointmentId)) return;
+    if (dialogAssignees.some((a) => a.user === patientId)) return;
+    const patient = patients.find((p) => p.id === patientId);
+    if (!patient) return;
+    if (!patient.email?.trim()) {
+      notify.error({
+        title: "Cannot share",
+        subtitle: "Patient needs an email to share.",
+      });
+      return;
+    }
+
+    setAssigneeMutationBusy(true);
+    setError(null);
+    try {
+      await addPatientAssigneeToAppointment(activeAppointmentId, patientId, patient.email);
+      await invalidateAssigneesActivitiesAppointment(queryClient, activeAppointmentId);
+      await syncDialogAssigneesFromServer(activeAppointmentId, dialogAssignees);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Failed to add assignee";
+      setError(message);
+      notify.error({ title: "Share failed", subtitle: message });
+    } finally {
+      setAssigneeMutationBusy(false);
+    }
+  };
+
+  const handleRemoveDialogAssignee = async (
+    userId: string | null,
+    assigneeId?: string
+  ) => {
+    if (!activeAppointmentId) return;
+    if (!assigneeId) {
+      setDialogAssignees((prev) => prev.filter((a) => a.user !== userId));
+      return;
+    }
+
+    setAssigneeMutationBusy(true);
+    setError(null);
+    try {
+      await removeAppointmentAssignee(assigneeId);
+      await invalidateAssigneesActivitiesAppointment(queryClient, activeAppointmentId);
+      await syncDialogAssigneesFromServer(activeAppointmentId);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Failed to remove assignee";
+      setError(message);
+      notify.error({ title: "Remove share failed", subtitle: message });
+    } finally {
+      setAssigneeMutationBusy(false);
+    }
+  };
 
   const handleDialogOpenChange = (nextOpen: boolean) => {
     setOpen(nextOpen);
     onOpenChange?.(nextOpen);
-    if (nextOpen && showTreatingPhysicianPicker) {
-      prefetchDoctorsDirectory(queryClient);
-    }
-    if (!nextOpen) {
+    if (nextOpen) {
+      if (showTreatingPhysicianPicker) {
+        prefetchDoctorsDirectory(queryClient);
+      }
+      if (appointment) {
+        seedFormFromAppointment(appointment);
+      }
+    } else {
       resetFormState();
     }
   };
@@ -236,6 +381,12 @@ export default function AppointmentDialog({
       /** Comma-separated UI string → URL list for Zod + API (same field name end-to-end: `attachments`). */
       const parsedAttachments = attachments.split(",").map((s) => s.trim()).filter(Boolean);
 
+      const saveStatus: AppointmentStatus = isEditMode
+        ? normalizeAppointmentStatus(status)
+        : status === "cancelled"
+          ? "pending"
+          : normalizeAppointmentStatus(status);
+
       const parsed = appointmentCreateSchema.safeParse({
         title,
         start: safeStart,
@@ -244,7 +395,7 @@ export default function AppointmentDialog({
         category: categoryId || null,
         location: location || null,
         notes: notes || "",
-        status: status as "pending" | "done" | "alert",
+        status: saveStatus,
         attachments: parsedAttachments,
       });
       if (!parsed.success) {
@@ -269,7 +420,7 @@ export default function AppointmentDialog({
         if (categoryId !== appointment?.category) updates.category = categoryId;
         if (location !== appointment?.location) updates.location = location;
         if (attachments !== (appointment?.attachments || []).join(", ")) updates.attachments = parsedAttachments;
-        if (status !== appointment?.status) updates.status = status as "pending" | "done" | "alert";
+        if (status !== appointment?.status) updates.status = saveStatus;
         if (chiefComplaint !== (appointment?.chief_complaint ?? "")) {
           (updates as Record<string, unknown>).chief_complaint = chiefComplaint.trim() || null;
         }
@@ -299,7 +450,7 @@ export default function AppointmentDialog({
           category: categoryId,
           location,
           attachments: parsedAttachments,
-          status: status as "pending" | "done" | "alert",
+          status: saveStatus,
           treating_physician: treatingPhysicianId || user?.id,
           // New clinical fields — appointment_type_id drives is_telehealth derivation server-side
           ...(slotPickTypeId ? { appointment_type_id: slotPickTypeId } : {}),
@@ -313,8 +464,18 @@ export default function AppointmentDialog({
       }
 
       setSuccess(true);
-      handleDialogOpenChange(false);
-      onSuccess?.();
+
+      const stayOpenForSharing =
+        apptId && !isEditMode && showTreatingPhysicianPicker && isValidUUID(apptId);
+      if (stayOpenForSharing) {
+        setSavedAppointmentId(apptId);
+        void syncDialogAssigneesFromServer(apptId).catch(() => {
+          /* empty list is fine on first open */
+        });
+      } else {
+        handleDialogOpenChange(false);
+        onSuccess?.();
+      }
     } catch (e: unknown) {
       if (typeof e === "object" && e && "message" in e) {
         notify.error({
@@ -332,6 +493,12 @@ export default function AppointmentDialog({
     } finally {
       setLoading(false);
     }
+  };
+
+  /** Post-create sharing step — appointment already saved; close without re-submitting form. */
+  const handleDoneAfterCreate = () => {
+    onSuccess?.();
+    handleDialogOpenChange(false);
   };
 
   // Handle file upload — reject individual files over MAX_ATTACHMENT_BYTES before hitting the API.
@@ -430,9 +597,11 @@ export default function AppointmentDialog({
                     : toTitleCaseLabel("Create New Appointment")}
                 </DialogTitle>
                 <DialogDescription className="text-left text-sm text-muted-foreground">
-                  {isEditMode
-                    ? toTitleCaseLabel("Update scheduling details and appointment type.")
-                    : toTitleCaseLabel("Set the client, time, and appointment type.")}
+                  {isPostCreateSharingStep
+                    ? toTitleCaseLabel("Optionally share calendar access, then tap Done.")
+                    : isEditMode
+                      ? toTitleCaseLabel("Update scheduling details and appointment type.")
+                      : toTitleCaseLabel("Set the client, time, and appointment type.")}
                 </DialogDescription>
               </div>
               <DialogClose asChild>
@@ -494,6 +663,10 @@ export default function AppointmentDialog({
                 showTreatingPhysicianPicker={showTreatingPhysicianPicker}
                 directoryDoctors={directoryDoctors}
                 directoryDoctorsLoading={directoryDoctorsLoading}
+                treatingPhysicianDirectorySeed={
+                  enrichedAppointment?.treating_physician_directory_seed
+                }
+                visitTypeSeed={enrichedAppointment?.appointment_type_visit_seed}
                 treatingPhysicianId={treatingPhysicianId}
                 setTreatingPhysicianId={setTreatingPhysicianId}
                 /**
@@ -505,12 +678,32 @@ export default function AppointmentDialog({
                 setSlotPickDateStr={setSlotPickDateStr}
                 slotPickTypeId={slotPickTypeId}
                 setSlotPickTypeId={setSlotPickTypeId}
+                slotPickStartIso={slotPickStartIso}
+                setSlotPickStartIso={setSlotPickStartIso}
                 chiefComplaint={chiefComplaint}
                 setChiefComplaint={setChiefComplaint}
-                excludeAppointmentId={appointment?.id}
+                excludeAppointmentId={activeAppointmentId ?? undefined}
                 telehealthBookingPreset={telehealthBookingPreset}
               />
             </section>
+            {activeAppointmentId && showTreatingPhysicianPicker ? (
+              <section className="min-w-0">
+                <h3 className="mb-2 text-sm font-semibold tracking-tight text-gray-700">
+                  {toTitleCaseLabel("Access & Sharing")}
+                </h3>
+                <AppointmentDialogAssigneesSection
+                  assignees={dialogAssignees}
+                  patients={patients}
+                  selectedPatientId={patientId}
+                  onAddAssignee={(id) => {
+                    void handleAddDialogAssignee(id);
+                  }}
+                  onRemoveAssignee={(uid, assigneeId) => {
+                    void handleRemoveDialogAssignee(uid, assigneeId);
+                  }}
+                />
+              </section>
+            ) : null}
           </div>
         </div>
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 border-t border-sky-200/60 bg-sky-50/40 px-6 py-3">
@@ -522,35 +715,51 @@ export default function AppointmentDialog({
               "rounded-full disabled:pointer-events-none disabled:opacity-50"
             )}
             onClick={() => handleDialogOpenChange(false)}
-            disabled={loading || uploading}
+            disabled={loading || uploading || assigneeMutationBusy}
           >
             <X className="size-4 shrink-0" aria-hidden />
             {toTitleCaseLabel("Cancel")}
           </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={handleSave}
-            disabled={loading || uploading || !canSave}
-            className={cn(
-              skyGlassPrimaryButtonClass,
-              "rounded-full disabled:pointer-events-none disabled:opacity-50"
-            )}
-          >
-            {loading ? (
-              <>
-                <Loader2 className="size-4 shrink-0 animate-spin" aria-hidden />
-                {toTitleCaseLabel("Saving…")}
-              </>
-            ) : (
-              <>
-                <CalendarCheck className="size-4 shrink-0" aria-hidden />
-                {isEditMode
-                  ? toTitleCaseLabel("Update Appointment")
-                  : toTitleCaseLabel("Save New Appointment")}
-              </>
-            )}
-          </Button>
+          {isPostCreateSharingStep ? (
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={handleDoneAfterCreate}
+              disabled={loading || uploading || assigneeMutationBusy}
+              className={cn(
+                skyGlassPrimaryButtonClass,
+                "rounded-full disabled:pointer-events-none disabled:opacity-50"
+              )}
+            >
+              <CalendarCheck className="size-4 shrink-0" aria-hidden />
+              {toTitleCaseLabel("Done")}
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={handleSave}
+              disabled={loading || uploading || assigneeMutationBusy || !canSave}
+              className={cn(
+                skyGlassPrimaryButtonClass,
+                "rounded-full disabled:pointer-events-none disabled:opacity-50"
+              )}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="size-4 shrink-0 animate-spin" aria-hidden />
+                  {toTitleCaseLabel("Saving…")}
+                </>
+              ) : (
+                <>
+                  <CalendarCheck className="size-4 shrink-0" aria-hidden />
+                  {isEditMode
+                    ? toTitleCaseLabel("Update Appointment")
+                    : toTitleCaseLabel("Save New Appointment")}
+                </>
+              )}
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>

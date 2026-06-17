@@ -282,6 +282,25 @@ export function appointmentCalendarStatusFilterOptions(
   ];
 }
 
+/** Dialog status picker row — same icons/colors as calendar filter (no "All Statuses"). */
+export type AppointmentDialogStatusOption = FilterSelectOption<string> & {
+  disabled?: boolean;
+};
+
+export function appointmentDialogStatusSelectOptions(
+  mode: "create" | "edit"
+): AppointmentDialogStatusOption[] {
+  return [
+    richOption("pending", "Open", Clock, "text-sky-700", "text-sky-600"),
+    richOption("done", "Done", CheckCircle2, "text-emerald-700", "text-emerald-600"),
+    richOption("alert", "Alert", AlertTriangle, "text-amber-800", "text-amber-700"),
+    {
+      ...richOption("cancelled", "Cancelled", XCircle, "text-rose-700", "text-rose-600"),
+      disabled: mode === "create",
+    },
+  ];
+}
+
 export function calendarClinicalRoleFilterOptions(): FilterSelectOption<string>[] {
   const iconByValue: Record<string, { icon: LucideIcon; textClassName: string; iconClassName: string }> = {
     [CALENDAR_CLINICAL_ROLE_ALL]: {

@@ -1,20 +1,20 @@
 # HealthCal Pro — Project Walkthrough
 
-## Agent resume (2026-06-16 — C42.2 queue list glass)
+## Agent resume (2026-06-17 — C46 portal patient invoice + snapshot slim)
 
-**Baseline:** 1220/1220 · tsc · lint · build PASS
+**Baseline:** 1254/1254 · tsc · lint · build PASS
 
-**C42.2:** `queueListHero` (no duplicate time chip) · `TelehealthQueueListTimeColumn` + `telehealth-queue-list-time.ts` · violet glass row glow · `TelehealthQueueTimeGlassChip` Up Next only.
+**C46:** `patients/layout.tsx` + `PatientsClinicianLayoutClient` → `ClinicianInvoiceDialogShell`; dedupe page `prefetchInvoices`. `loadPatientSnapshotData` — `invoices:[]`, patient-scoped `invoice.count`.
 
-**C42:** `upNextHero` · `appointmentVisitMetaHeroGlassChipClass` · telehealth beside duration footer.
+**C45:** `InvoiceClinicalListTable` · `invoice-entity-list-filters.ts` · appt/patient Related Billing tables · hub DRY.
 
-**C41:** `AppointmentVisitMetaBadgeRow` · invoice SSR telehealth · billing skeleton (`invoices.all` cold).
+**C44:** `appointment-detail-dialog.ts` · `AppointmentStatusSelect` · past slot chip styling on edit.
 
-**C40:** `/telehealth-queue` · `?filter=` URL tabs · appointments-only skeleton.
+**C43:** `AppointmentDialogController` edit · `AppointmentDetailBodySkeleton` · assignees · TanStack invalidation.
 
-**Keys:** `telehealth-queue-list-time.ts` · `telehealth-queue-ui-classes.ts` · `appointment-visit-meta-badge-ui.ts` · `control-panel/telehealth/*`
+**Keys:** `patient-snapshot-data.ts` · `patients/layout.tsx` · `InvoiceClinicalListTable.tsx` · `PatientDetailScreen.tsx`
 
-**Invariants:** no new query keys · SSR/invalidation unchanged · `invalidateAfterAppointmentMutation` + `invalidateInvoicesAndOverview` refresh badges.
+**Invariants:** `queryKeys.invoices.all` layout seed · `invalidateInvoicesAndOverview` on CRUD · no `router.refresh`.
 
 ---
 
@@ -926,7 +926,7 @@ src/
 │   ├── control-panel/
 │   │   ├── ControlPanelSidebarNav.tsx  Desktop sidebar (client, pathname-aware, scroll indicator)
 │   │   ├── DashboardOverview.tsx       Inline skeleton + glassmorphic
-│   │   ├── AppointmentsManagement.tsx / AppointmentDetailForm.tsx — inline skeleton + glassmorphic
+│   │   ├── AppointmentsManagement.tsx — inline skeleton + glassmorphic
 │   │   ├── DoctorManagement.tsx / DoctorDetailForm.tsx
 │   │   ├── PatientManagement.tsx — reference inline skeleton pattern; list Edit uses PatientFormDialog
 │   │   ├── PatientStatCard.tsx         Reference value-slot skeleton
@@ -1229,7 +1229,7 @@ Set by `proxy.ts` on every response. CDN headers use both `CDN-Cache-Control` an
 
 - `src/components/shared/ConfirmActionDialog.tsx` — shadcn `AlertDialog`; variants `destructive` | `warning` | `info`; rose/amber/sky media + violet cancel + glow confirm.
 - Dynamic copy: `src/lib/confirm-delete-dialog-copy.tsx` (invoice delete, owned-type delete/disable, global-type disable, weekly window delete, time-off delete).
-- Wired: calendar, navbar, doctor portal, CP category/patient/doctor deletes, **`GlobalAppointmentTypesEditor`**, **`OrganizationManagement`**, **`AppointmentsManagement`**, **`AppointmentDetailForm`**, **`NotificationsManagement`** (mark all read, `info`), **`GoogleCalendarSettings`** (disconnect, `warning`), **`DoctorDetailForm`** (reset, `warning`). Copy in `confirm-delete-dialog-copy.tsx`. Dropdown/dialog: controlled `open` + sibling of `DropdownMenu` where applicable.
+- Wired: calendar, navbar, doctor portal, CP category/patient/doctor deletes, **`GlobalAppointmentTypesEditor`**, **`OrganizationManagement`**, **`AppointmentsManagement`**, **`NotificationsManagement`** (mark all read, `info`), **`GoogleCalendarSettings`** (disconnect, `warning`), **`DoctorDetailForm`** (reset, `warning`). Copy in `confirm-delete-dialog-copy.tsx`. Dropdown/dialog: controlled `open` + sibling of `DropdownMenu` where applicable.
 
 ### Typed Validation Foundation (Zod)
 

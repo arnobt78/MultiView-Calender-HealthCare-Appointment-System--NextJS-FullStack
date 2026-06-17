@@ -1,19 +1,15 @@
 "use client";
 
 /**
- * InvoiceManagement — CP billing hub: amber entity shell, scope filters, KPI + DataTable.
+ * InvoiceManagement — CP billing hub: amber entity shell, scope filters, KPI + shared invoice table.
  * SSR seeds queryKeys.invoices.all (+ org scope when ?orgId=) via invoice-management/page.tsx.
  */
 
-import { useCallback, useMemo, useState } from "react";
-import { usePayments, type Invoice } from "@/hooks/usePayments";
+import { useCallback } from "react";
 import { ControlPanelPageChrome } from "@/components/control-panel/ControlPanelPageChrome";
 import { ControlPanelHeaderGlassButton } from "@/components/control-panel/ControlPanelHeaderGlassButton";
 import { ControlPanelEntityListShell } from "@/components/control-panel/ControlPanelEntityListShell";
-import { DataTable } from "@/components/shared/DataTable";
-import { ClinicalListFilterToolbar } from "@/components/shared/filters/ClinicalListFilterToolbar";
 import { GlassResetFilterButton } from "@/components/shared/GlassResetFilterButton";
-import { FilterSelect } from "@/components/shared/filters/FilterSelect";
 import { DoctorFilterSelect } from "@/components/shared/filters/DoctorFilterSelect";
 import { ScopeFilterInlineRow } from "@/components/shared/filters/ScopeFilterInlineRow";
 import {
@@ -22,60 +18,37 @@ import {
 } from "@/components/shared/filters/OrganizationFilterSelect";
 import { AppSectionErrorBanner } from "@/components/shared/AppSectionErrorBanner";
 import { InvoiceBillingStatsRow } from "@/components/shared/billing/InvoiceBillingStatsRow";
+import { InvoiceClinicalListTable } from "@/components/shared/billing/InvoiceClinicalListTable";
+import { InvoiceClinicalListToolbar } from "@/components/shared/billing/InvoiceClinicalListToolbar";
 import { InvoiceManagementBillingSectionHeading } from "@/components/control-panel/InvoiceManagementBillingSectionHeading";
 import { useInvoiceFormDialog } from "@/context/InvoiceFormDialogContext";
-import { buildInvoiceManagementColumns } from "@/components/control-panel/invoice-management-columns";
 import {
   InvoiceManagementScopeProvider,
   useInvoiceManagementScope,
 } from "@/components/control-panel/InvoiceManagementScopeContext";
-import type { InvoiceStatusFilter } from "@/lib/invoice-management-filters";
 import { controlPanelSectionRootClass } from "@/lib/control-panel-section-layout";
 import { billingCreateInvoiceTriggerAdmin } from "@/lib/billing-ui-presets";
-import { cpClinicalListTableFrameClassName } from "@/lib/cp-clinical-list-table-classes";
-import { APP_INNER_SCROLL_STICKY_TOP_CLASS } from "@/lib/portal-z-index";
-import {
-  findFilterOptionLabel,
-  invoiceStatusFilterOptions,
-} from "@/lib/filter-select-option-presets";
-import { getInvoiceListSearchBlob } from "@/lib/invoice-list-display";
+import { usePayments } from "@/hooks/usePayments";
+import { useInvoiceListToolbarFilters } from "@/hooks/useInvoiceListToolbarFilters";
 
 const CreateInvoiceIcon = billingCreateInvoiceTriggerAdmin.triggerIcon;
-
-const INVOICE_STATUS_OPTIONS = invoiceStatusFilterOptions();
 
 type InvoiceManagementInnerProps = {
   viewerRole?: string | null;
 };
 
 function InvoiceManagementInner(_props: InvoiceManagementInnerProps) {
-  const {
-    pay,
-    isPaying,
-    deleteInvoiceAsync,
-    isDeleting,
-    updateInvoice,
-    recordPayment,
-    refundInvoice,
-    isUpdating,
-    isRecording,
-    isRefunding,
-    isError,
-    error,
-  } = usePayments();
+  const { isError, error } = usePayments();
 
   const {
     filter,
     setScopeFilter,
-    activeInvoices,
     scopedInvoices,
     scopedTotals,
     scopedStatusTotals,
     allInvoices,
     listBodyLoading,
     statsLoading,
-    status,
-    setStatus,
     hasScopeFilters,
     resetScope,
     organizations,
@@ -86,54 +59,8 @@ function InvoiceManagementInner(_props: InvoiceManagementInnerProps) {
     selectedDoctorDisplayName,
   } = useInvoiceManagementScope();
 
-  const { openCreate, openEdit } = useInvoiceFormDialog();
-  const [listSearch, setListSearch] = useState("");
-
-  const busyActions = isUpdating || isRecording || isRefunding;
-
-  const columns = useMemo(
-    () =>
-      buildInvoiceManagementColumns({
-        viewerRole: "admin",
-        onEdit: openEdit,
-        onPay: pay,
-        onSend: (id) => updateInvoice({ invoiceId: id, body: { status: "sent" } }),
-        onMarkPaid: recordPayment,
-        onCancel: (id) => updateInvoice({ invoiceId: id, body: { status: "cancelled" } }),
-        onDelete: async (id) => {
-          await deleteInvoiceAsync(id);
-        },
-        onRefund: refundInvoice,
-        isPaying,
-        isUpdating: busyActions,
-        isDeleting,
-      }),
-    [
-      openEdit,
-      pay,
-      updateInvoice,
-      recordPayment,
-      deleteInvoiceAsync,
-      refundInvoice,
-      isPaying,
-      busyActions,
-      isDeleting,
-    ]
-  );
-
-  const searchFilteredInvoices = useMemo(() => {
-    const q = listSearch.trim().toLowerCase();
-    if (!q) return activeInvoices;
-    return activeInvoices.filter((inv) => getInvoiceListSearchBlob(inv).includes(q));
-  }, [activeInvoices, listSearch]);
-
-  const hasToolbarFilters =
-    status !== "all" || listSearch.trim().length > 0;
-
-  const resetToolbar = useCallback(() => {
-    setStatus("all");
-    setListSearch("");
-  }, [setStatus]);
+  const { openCreate } = useInvoiceFormDialog();
+  const toolbarState = useInvoiceListToolbarFilters(scopedInvoices);
 
   const orgSelectValue =
     filter.scope === "org" && filter.orgId ? filter.orgId : ORGANIZATION_FILTER_ALL_VALUE;
@@ -230,43 +157,25 @@ function InvoiceManagementInner(_props: InvoiceManagementInnerProps) {
         </>
       }
       toolbarSlot={
-        <ClinicalListFilterToolbar
-          stickyClassName={APP_INNER_SCROLL_STICKY_TOP_CLASS}
-          search={{
-            value: listSearch,
-            onChange: setListSearch,
-            placeholder: "Search… (patient, visit title, invoice #)",
-            ariaLabel: "Search invoices",
-          }}
-          showReset={hasToolbarFilters}
-          onReset={resetToolbar}
-        >
-          <FilterSelect
-            value={status}
-            onValueChange={(v) => setStatus(v as InvoiceStatusFilter)}
-            displayLabel={findFilterOptionLabel(INVOICE_STATUS_OPTIONS, status, "All Statuses")}
-            size="toolbar"
-            triggerClassName="max-w-[200px]"
-            ariaLabel="Filter by invoice status"
-            options={INVOICE_STATUS_OPTIONS}
-          />
-        </ClinicalListFilterToolbar>
+        <InvoiceClinicalListToolbar
+          listSearch={toolbarState.listSearch}
+          setListSearch={toolbarState.setListSearch}
+          status={toolbarState.status}
+          setStatus={toolbarState.setStatus}
+          hasToolbarFilters={toolbarState.hasToolbarFilters}
+          resetToolbar={toolbarState.resetToolbar}
+          sticky
+        />
       }
       tableSlot={
-        <DataTable<Invoice, unknown>
-          columns={columns}
-          data={searchFilteredInvoices}
+        <InvoiceClinicalListTable
+          invoices={scopedInvoices}
+          viewerRole="admin"
           isLoading={listBodyLoading}
-          globalFilterFn={(row, q) => {
-            const s = q.trim().toLowerCase();
-            if (!s) return true;
-            return getInvoiceListSearchBlob(row).includes(s);
-          }}
-          externalGlobalFilter={{ value: listSearch, onChange: setListSearch }}
+          showToolbar={false}
+          toolbarPlacement="external"
+          toolbarState={toolbarState}
           emptyMessage="No invoices yet. Create your first invoice to track payments."
-          tableClassName="min-w-[1100px] w-full"
-          tableFrameClassName={cpClinicalListTableFrameClassName}
-          pagination={false}
         />
       }
     />
