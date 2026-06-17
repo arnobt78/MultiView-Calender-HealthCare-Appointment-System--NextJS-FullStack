@@ -84,6 +84,7 @@ describe("AppointmentWhenTableCell", () => {
     );
     expect(markup).toContain("Demo Clinic");
     expect(markup).toContain("–");
+    expect(markup).toContain("self-start");
     expect(markup).toContain("text-muted-foreground");
   });
 });

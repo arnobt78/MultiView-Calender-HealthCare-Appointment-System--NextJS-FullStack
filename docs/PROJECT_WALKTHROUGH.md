@@ -4,6 +4,8 @@
 
 **Baseline:** 1270/1270 · tsc · lint · build PASS
 
+**C48.1:** `AppointmentWhenTableCell` inline datetime (no stretched end-time gap).
+
 **C48 (REQ-0099):** `prefetchDoctors` `office_location` · `AppointmentDialog` close on save (Sonner only) · Mark done glass · `resolveInvoiceVisitTitleHref` · owner+treating mutate · inline category duration badge.
 
 **C47 (REQ-0098):** Invoice issued → `created_by` · `billing-appointment-option-from-detail` cache seed · footer Edit Invoice · telehealth Video gate · `AppointmentDetailHeaderQuickActions`.

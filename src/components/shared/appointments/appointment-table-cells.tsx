@@ -112,23 +112,24 @@ export function AppointmentWhenTableCell({ appointment }: { appointment: FullApp
   const start = new Date(appointment.start);
   const end = new Date(appointment.end);
   const location = appointment.location?.trim();
+  const whenLabel = `${format(start, "dd MMM yyyy, HH:mm")} – ${format(end, "HH:mm")}`;
 
   return (
     <div className={cn(clinicalTableCellMinRowClass, "flex min-w-0 flex-col gap-0.5 py-0.5")}>
       <span
         className={cn(
-          "inline-flex min-w-0 items-center gap-1 tabular-nums",
+          "inline-flex max-w-full min-w-0 items-start gap-1 self-start",
           clinicalCellMutedTextClass
         )}
       >
-        <Clock className="h-3 w-3 shrink-0" aria-hidden />
-        {format(start, "dd MMM yyyy, HH:mm")}
-        <span className="mx-0.5">–</span>
-        {format(end, "HH:mm")}
+        <Clock className="mt-0.5 h-3 w-3 shrink-0" aria-hidden />
+        <span className="min-w-0 break-words tabular-nums [overflow-wrap:break-word]">
+          {whenLabel}
+        </span>
       </span>
       <span
         className={cn(
-          "inline-flex min-w-0 items-start gap-1 break-words [overflow-wrap:break-word]",
+          "inline-flex max-w-full min-w-0 items-start gap-1 self-start break-words [overflow-wrap:break-word]",
           clinicalCellMutedTextClass
         )}
       >

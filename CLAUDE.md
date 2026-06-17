@@ -4,6 +4,7 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-17)
 
+- **C48.1:** `AppointmentWhenTableCell` — inline datetime range (`self-start`, single label; matches location row).
 - **C48 (REQ-0099):** `office_location` in `prefetchDoctors` · dialog close + Sonner only · Mark done `emeraldGlassBackButtonClass` · `resolveInvoiceVisitTitleHref` · owner+treating mutate (appt+invoice) · inline category duration.
 - **C47 (REQ-0098):** Invoice audit `created_by` · billing option cache seed · footer Edit Invoice · telehealth Video gate · `AppointmentDetailHeaderQuickActions`.
 - **Verify:** **1270/1270** · tsc · lint · build PASS.
