@@ -9,7 +9,7 @@
 | **Cycle** | **C51** — cache-first appointment invalidation |
 | **Phase** | Verify |
 | **Stage** | **Gate 2** (REQ-0102) |
-| **Status** | **shipped** · Infinity Loop **ACTIVE** |
+| **Status** | **shipped** `354be2d` · Infinity Loop **ACTIVE** |
 | **Last Updated** | 2026-06-18 |
 | **Last REQ** | **REQ-0102** (C51) |
 
