@@ -61,7 +61,7 @@ Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Agile V
 
-`.agile-v/STATE.md` · **C61 shipped** · **1354/1354** · REQ-0112.
+`.agile-v/STATE.md` · **C61.1 shipped** · **1356/1356** · HEAD **`a37727b`** · REQ-0112.
 
 ## Principle
 

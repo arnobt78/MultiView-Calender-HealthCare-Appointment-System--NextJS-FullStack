@@ -609,3 +609,28 @@ release_commit: "8ba3acf"
 | lint | npm run lint | PASS | REQ-0099 |
 
 **EvalGate (C48.1 active):** PASS — shipped `8ba3acf`.
+
+## C60–C61.1 — ER-C61-VERIFY
+
+```yaml
+eval_run_id: ER-C61-VERIFY
+eval_timestamp: "2026-06-18T17:55:00Z"
+eval_gate_status: PASS
+eval_gate_rationale: "REQ-0111 billing gates + REQ-0112 portal refund + C61.1 cancel cleanup; 1356/1356; tsc; eslint; build PASS"
+cycle: C61.1
+release_commit: "a37727b"
+```
+
+| Suite | Command | Result | LINKED_REQ |
+|-------|---------|--------|------------|
+| visit-billing-action-gates | npm test visit-billing-action-gates | PASS | REQ-0111 |
+| appointment-cancel-refund | npm test appointment-cancel-refund | PASS | REQ-0112 |
+| AppointmentCancelConfirmDialog.ui | npm test AppointmentCancelConfirmDialog | PASS | REQ-0112 |
+| invoice-access | npm test invoice-access | PASS | REQ-0112 |
+| invoice-detail-action-capabilities | npm test invoice-detail-action-capabilities | PASS | REQ-0111, REQ-0112 |
+| full regression | npm test | PASS 1356/1356 | REQ-0111, REQ-0112 |
+| typecheck | npx tsc --noEmit | PASS | REQ-0111, REQ-0112 |
+| lint | npm run lint | PASS | REQ-0111, REQ-0112 |
+| release build | npm run build | PASS | REQ-0111, REQ-0112 |
+
+**EvalGate (C61.1):** PASS — shipped `a37727b`. **HITL:** manual QA pending.

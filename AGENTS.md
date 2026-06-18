@@ -10,7 +10,7 @@
 
 ## Resume
 
-1. `.agile-v/STATE.md` — **C61.1 shipped** · **1356/1356**
+1. `.agile-v/STATE.md` — **C61.1 shipped** · **1356/1356** · HEAD **`a37727b`** · manual QA pending
 2. `.agile-v/CHECKPOINTS.md` if PENDING HITL (**none**)
 3. Parent **`REQ-XXXX`** in `.agile-v/REQUIREMENTS.md` before any code (**halt if missing**)
 
@@ -28,9 +28,9 @@ npm test && npx tsc --noEmit && npm run lint && npm run build
 
 | Cycle | REQ | Status |
 |-------|-----|--------|
-| C61.1 | 0112 | cancel dialog test + dead-code cleanup + onCancel prop removal |
-| C61 | 0112 | doctor portal refund + paid-cancel optional refund |
-| C60 | 0111 | billing gates + invoice/appointment action parity |
+| C61.1 | 0112 | shipped `a37727b` |
+| C61 | 0112 | shipped `a37727b` |
+| C60 | 0111 | shipped `a37727b` |
 | C59 | 0110 | default bookable date + local today + slot grid on open |
 | C58 | 0109 | portal summary status buckets + doctor row spacing |
 | C57 | 0108 | portal profile referral label + inline primary doctor |

@@ -1,12 +1,12 @@
 # Requirements — HealthCal Pro
 
-<!-- Revision: C1..C48.1 | Last updated: 2026-06-18 -->
+<!-- Revision: C1..C61.1 | Last updated: 2026-06-18 EOD -->
 
 ## Document Control
 
 | Field | Value |
 |-------|-------|
-| Cycle | C1–C48.1 shipped |
+| Cycle | C1–C61.1 shipped |
 | Author | Requirement Architect |
 | Gate 1 status | C1 GATE-0001 · C2 GATE-0003 approved |
 | Canonical source | this file |
@@ -126,9 +126,9 @@
 | REQ-0079 | approved [C31] | REQ-0078 | ART-0407..0409 | pending |
 | REQ-0080 | approved [C32] | REQ-0079 | ART-0410..0416 | pending |
 | REQ-0081 | approved [C33] | REQ-0080 | ART-0417..0423 | pending |
-| REQ-0112 | approved [C61] | REQ-0111 | ART-0611..0618 | pending |
-| REQ-0111 | approved [C60] | REQ-0110 | ART-0601..0608 | pending |
-| REQ-0110 | approved [C59] | REQ-0109 | ART-0591..0594 | pending |
+| REQ-0112 | shipped [C61/C61.1] | REQ-0111 | ART-0611..0618 | `a37727b` |
+| REQ-0111 | shipped [C60] | REQ-0110 | ART-0601..0608 | `a37727b` |
+| REQ-0110 | shipped [C59] | REQ-0109 | ART-0591..0594 | `40ed2cd` |
 | REQ-0109 | approved [C58] | REQ-0108 | ART-0587..0590 | pending |
 | REQ-0108 | approved [C57] | REQ-0107 | ART-0583..0586 | pending |
 | REQ-0107 | approved [C56] | REQ-0106 | ART-0579..0582 | pending |
@@ -162,7 +162,7 @@
 
 | Field | Value |
 |-------|-------|
-| Status | approved [C61] |
+| Status | shipped [C61 / C61.1] |
 | Priority | P1 |
 | Risk | R1 |
 | Parent | REQ-0111 |
@@ -180,12 +180,15 @@
 1. `AppointmentCancelConfirmDialog.ui.test.tsx` — checkbox, amount, refund gates.
 2. Remove dead `buildAppointmentCancelConfirmSubtitle` + `shouldWarnRefundOnVisitCancel` (superseded by C61 cancel dialog).
 3. `AppointmentActionsMenu` owns cancel via `capabilities.canCancel` + `useAppointmentCancelWithRefund`; drop `onCancel`/`cancelPending`/`invoiceDisplayStatus` prop chain.
+4. Remove dead `hideActionsRail` on `AppointmentCard`.
+
+**Out of scope (deferred):** refund API integration test; patient self-cancel/reschedule.
 
 ### REQ-0111 — C60 Appointment/invoice action parity + billing gates
 
 | Field | Value |
 |-------|-------|
-| Status | approved [C60] |
+| Status | shipped [C60] |
 | Priority | P1 |
 | Risk | R1 |
 | Parent | REQ-0110 |

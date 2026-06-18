@@ -1,6 +1,6 @@
 # Agile V — Session Activation (every prompt)
 
-<!-- HealthCal Pro | v1.4 | Sync: 2026-06-18 Infinity Loop ACTIVE -->
+<!-- HealthCal Pro | v1.4 | Sync: 2026-06-18 EOD | Infinity Loop ACTIVE -->
 
 ## 1. Load skills (mandatory — every prompt)
 
@@ -17,17 +17,17 @@
 
 ## 2. Read (resume — in order)
 
-1. `STATE.md` — **C48.1 shipped** · **1270/1270** · HEAD **`8cd0d6e`**
+1. `STATE.md` — **C61.1 shipped** · **1356/1356** · HEAD **`a37727b`** · **manual QA pending**
 2. `CHECKPOINTS.md` — halt if any **PENDING** HITL (**none**)
-3. `REQUIREMENTS.md` — parent **REQ-XXXX** before any code (**REQ-0001..0099 shipped**)
+3. `REQUIREMENTS.md` — parent **REQ-XXXX** before any code (**REQ-0112 shipped**; need **REQ-0113** for C62)
 
 ## 3. Before coding (mandatory gate)
 
 1. Read `STATE.md` + `CHECKPOINTS.md`.
-2. Resolve parent `REQ-XXXX` — **halt if missing** (need **REQ-0100+** for C49).
+2. Resolve parent `REQ-XXXX` — **halt if missing**.
 3. Pipeline: **Specify → Constrain → [Gate1] → Orchestrate → Prove → Verify → [Gate2] → Accept**
 4. CRUD: `queryKeys` + invalidation helpers — never hardcode keys.
-5. Verify: Red Team suite — `npm test && npx tsc --noEmit && npm run lint && npm run build`
+5. Verify: `npm test && npx tsc --noEmit && npm run lint && npm run build`
 6. Gate 2: `EVAL_RESULTS.md` `eval_gate_status: PASS` required.
 
 ## 4. Infinity Loop
@@ -45,14 +45,12 @@ Specify → Constrain → [Gate1] → Orchestrate → Prove → Verify → [Gate
 
 | Cycle | REQ | Status | HEAD |
 |-------|-----|--------|------|
-| C43 / C43.1 | 0094 | shipped | — |
-| C44 | 0095 | shipped | — |
-| C45 | 0096 | shipped | — |
-| C46 | 0097 | shipped | `45c87e5` |
-| C47 | 0098 | shipped | `1e252b0` |
-| C48 / C48.1 | 0099 | shipped | `8ba3acf` |
+| C57–C59 | 0108–0110 | shipped | `40ed2cd` |
+| C60 | 0111 | shipped | `a37727b` |
+| C61 | 0112 | shipped | `a37727b` |
+| C61.1 | 0112 | shipped | `a37727b` |
 
-**Baseline:** **1270** tests · **259** files · committed **`8cd0d6e`** · 2026-06-18
+**Baseline:** **1356** tests · **281** files · committed **`a37727b`** · 2026-06-18
 
 ## 7. Halt if
 
@@ -71,3 +69,10 @@ No parent REQ · ambiguous REQ · self-verify only · skip invalidation · Gate 
 | Orchestrate | `build-agent-js` ∥ `test-designer` |
 | Verify | `red-team-verifier` |
 | Accept / gates | `agile-v-compliance` + `compliance-auditor` |
+
+## 10. Today’s workflow (2026-06-18) — closed
+
+- Shipped C60–C61.1 in one commit; pushed `main`.
+- Patient portal: **no** self-cancel/edit (confirmed product decision).
+- **You:** manual QA billing gates + cancel/refund flows.
+- **Next agent:** C62 specify only after QA or explicit new feature ask.

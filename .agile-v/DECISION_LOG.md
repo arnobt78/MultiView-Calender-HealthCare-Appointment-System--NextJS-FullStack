@@ -157,3 +157,10 @@
 | 2026-06-17T17:12:00Z | fix | C48.1 When column inline datetime | `AppointmentWhenTableCell` self-start single label | REQ-0099 |
 | 2026-06-17T17:15:00Z | accept | C48.1 shipped to main | `8ba3acf` fix ui When column | REQ-0099 |
 | 2026-06-18T12:18:00Z | init | Infinity Loop session activation | agile-v-core+pipeline+lifecycle+compliance loaded; 1270/1270 PASS; HEAD 8cd0d6e; 24 skills active; STATE/ACTIVATION/config synced; ready C49 specify | REQ-0099 |
+| 2026-06-18T16:00:00Z | build | C60 billing gates + invoice/appointment parity | `visit-billing-action-gates`; cancelled visit freeze; portal patient link on invoice detail | REQ-0111 |
+| 2026-06-18T16:30:00Z | build | C61 doctor portal refund + paid-cancel refund | `assertInvoiceRefundAccess`; `AppointmentCancelConfirmDialog`; `useAppointmentCancelWithRefund` | REQ-0112 |
+| 2026-06-18T17:30:00Z | build | C61.1 cancel cleanup | menu-owned cancel; drop `onCancel` chain; dialog UI test; remove `hideActionsRail` | REQ-0112 |
+| 2026-06-18T17:55:00Z | verify | C60–C61.1 automated verify PASS | 1356/1356; tsc · lint · build PASS | REQ-0111, REQ-0112 |
+| 2026-06-18T17:55:00Z | accept | C60–C61.1 shipped to main | `a37727b` feat billing C60–C61.1 | REQ-0111, REQ-0112 |
+| 2026-06-18T18:00:00Z | product | Patient self-cancel deferred | Patients read-only on visits; doctor is calendar owner; revisit as new REQ if needed | — |
+| 2026-06-18T18:05:00Z | init | EOD Agile V session close | STATE/ACTIVATION/REQUIREMENTS synced; manual QA pending; next C62 + REQ-0113 | REQ-0112 |
