@@ -187,6 +187,7 @@ export function useAppointments() {
         appointmentId: appointment?.id,
         patientId: appointment?.patient ?? undefined,
         categoryId: appointment?.category ?? undefined,
+        scope: "schedule",
         ...appointmentDoctorFkOpts(appointment),
       });
       notify.crud({
@@ -228,6 +229,7 @@ export function useAppointments() {
         categoryId: appointment?.category ?? undefined,
         previousPatientId: context?.previous?.patient ?? undefined,
         previousCategoryId: context?.previous?.category ?? undefined,
+        scope: "schedule",
         ...appointmentDoctorFkOptsWithPrevious(appointment, context?.previous),
       });
       notify.crud({
@@ -263,6 +265,7 @@ export function useAppointments() {
           appointmentId: deletedId,
           patientId: context?.deleted?.patient ?? undefined,
           categoryId: context?.deleted?.category ?? undefined,
+          scope: "billing",
           ...appointmentDoctorFkOptsWithPrevious(null, context?.deleted),
         }),
         invalidateAssigneesData(queryClient),
@@ -330,6 +333,7 @@ export function useAppointments() {
         appointmentId: appt.id,
         patientId: appt.patient ?? undefined,
         categoryId: appt.category ?? undefined,
+        scope: "status",
         ...appointmentDoctorFkOpts(appt),
       });
       notify.crud({
@@ -386,6 +390,7 @@ export function useAppointments() {
         appointmentId: appt.id,
         patientId: appt.patient ?? undefined,
         categoryId: appt.category ?? undefined,
+        scope: "status",
         ...appointmentDoctorFkOpts(appt),
       });
       await maybeInvalidateGoogleCalendarIfConnected(queryClient);

@@ -6,16 +6,16 @@
     "repository": "calendar-appointment",
     "initialized": "2026-05-30",
     "bootstrap_completed": "2026-06-04",
-    "bootstrap_refresh": "2026-06-17T12:45:00Z"
+    "bootstrap_refresh": "2026-06-18T12:18:00Z"
   },
   "cycle": {
-    "current": "C42.2",
-    "status": "shipped",
-    "started": "2026-06-16",
-    "closed": "2026-06-16",
-    "prior_shipped": "C42.2",
-    "gate_2_commit": "eb3d576",
-    "release_commit": "eb3d576",
+    "current": "C48.1",
+    "status": "idle",
+    "started": "2026-06-17",
+    "closed": "2026-06-17",
+    "prior_shipped": "C48.1",
+    "gate_2_commit": "8ba3acf",
+    "release_commit": "8ba3acf",
     "archive_path": null,
     "prior_cycles": [
       {

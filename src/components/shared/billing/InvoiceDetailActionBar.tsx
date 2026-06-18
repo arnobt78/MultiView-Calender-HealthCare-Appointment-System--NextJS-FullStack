@@ -94,128 +94,128 @@ export function InvoiceDetailActionBar({
         actions={
           accessLevel === "view" ? undefined : (
             <>
-            {accessLevel === "pay" ? (
-              <ControlPanelGlassActionButton
-                type="button"
-                variant="emerald"
-                disabled={isPaying}
-                onClick={() => pay(invoice.id)}
-              >
-                <CreditCard className="shrink-0" aria-hidden />
-                {isPaying ? "Processing…" : "Pay via Stripe"}
-              </ControlPanelGlassActionButton>
-            ) : null}
+              {accessLevel === "pay" ? (
+                <ControlPanelGlassActionButton
+                  type="button"
+                  variant="emerald"
+                  disabled={isPaying}
+                  onClick={() => pay(invoice.id)}
+                >
+                  <CreditCard className="shrink-0" aria-hidden />
+                  {isPaying ? "Processing…" : "Pay via Stripe"}
+                </ControlPanelGlassActionButton>
+              ) : null}
 
-            {canEditDetails ? (
-              <ControlPanelGlassActionButton
-                type="button"
-                variant="emerald"
-                disabled={busy}
-                onClick={() => openEdit(invoice)}
-              >
-                <Pencil className="shrink-0" aria-hidden />
-                Edit Invoice
-              </ControlPanelGlassActionButton>
-            ) : null}
+              {canEditDetails ? (
+                <ControlPanelGlassActionButton
+                  type="button"
+                  variant="emerald"
+                  disabled={busy}
+                  onClick={() => openEdit(invoice)}
+                >
+                  <Pencil className="shrink-0" aria-hidden />
+                  Edit Invoice
+                </ControlPanelGlassActionButton>
+              ) : null}
 
-            {accessLevel === "admin" && canSendInFooter ? (
-              <ControlPanelGlassActionButton
-                type="button"
-                variant="sky"
-                disabled={busy}
-                onClick={() => updateInvoice({ invoiceId: invoice.id, body: { status: "sent" } })}
-              >
-                <Send className="shrink-0" aria-hidden />
-                Send to patient
-              </ControlPanelGlassActionButton>
-            ) : null}
+              {accessLevel === "admin" && canSendInFooter ? (
+                <ControlPanelGlassActionButton
+                  type="button"
+                  variant="sky"
+                  disabled={busy}
+                  onClick={() => updateInvoice({ invoiceId: invoice.id, body: { status: "sent" } })}
+                >
+                  <Send className="shrink-0" aria-hidden />
+                  Send to patient
+                </ControlPanelGlassActionButton>
+              ) : null}
 
-            {accessLevel === "admin" && caps.canMarkPaid ? (
-              <ControlPanelGlassActionButton
-                type="button"
-                variant="emerald"
-                disabled={busy}
-                onClick={() => recordPayment(invoice.id)}
-              >
-                <CheckCircle2 className="shrink-0" aria-hidden />
-                Mark paid (manual)
-              </ControlPanelGlassActionButton>
-            ) : null}
+              {accessLevel === "admin" && caps.canMarkPaid ? (
+                <ControlPanelGlassActionButton
+                  type="button"
+                  variant="emerald"
+                  disabled={busy}
+                  onClick={() => recordPayment(invoice.id)}
+                >
+                  <CheckCircle2 className="shrink-0" aria-hidden />
+                  Mark Paid (Manual)
+                </ControlPanelGlassActionButton>
+              ) : null}
 
-            {accessLevel === "admin" && caps.canPay ? (
-              <ControlPanelGlassActionButton
-                type="button"
-                variant="violet"
-                disabled={isPaying}
-                onClick={() => pay(invoice.id)}
-              >
-                <CreditCard className="shrink-0" aria-hidden />
-                Pay via Stripe
-              </ControlPanelGlassActionButton>
-            ) : null}
+              {accessLevel === "admin" && caps.canPay ? (
+                <ControlPanelGlassActionButton
+                  type="button"
+                  variant="violet"
+                  disabled={isPaying}
+                  onClick={() => pay(invoice.id)}
+                >
+                  <CreditCard className="shrink-0" aria-hidden />
+                  Pay via Stripe
+                </ControlPanelGlassActionButton>
+              ) : null}
 
-            {accessLevel === "mutate" && canSendInFooter ? (
-              <ControlPanelGlassActionButton
-                type="button"
-                variant="sky"
-                disabled={busy}
-                onClick={() => updateInvoice({ invoiceId: invoice.id, body: { status: "sent" } })}
-              >
-                <Send className="shrink-0" aria-hidden />
-                Send to patient
-              </ControlPanelGlassActionButton>
-            ) : null}
+              {accessLevel === "mutate" && canSendInFooter ? (
+                <ControlPanelGlassActionButton
+                  type="button"
+                  variant="sky"
+                  disabled={busy}
+                  onClick={() => updateInvoice({ invoiceId: invoice.id, body: { status: "sent" } })}
+                >
+                  <Send className="shrink-0" aria-hidden />
+                  Send to patient
+                </ControlPanelGlassActionButton>
+              ) : null}
 
-            {caps.canCancel && (accessLevel === "admin" || accessLevel === "mutate") ? (
-              <ControlPanelGlassActionButton
-                type="button"
-                variant="sky"
-                disabled={busy}
-                onClick={() =>
-                  updateInvoice({ invoiceId: invoice.id, body: { status: "cancelled" } })
-                }
-              >
-                <Ban className="shrink-0" aria-hidden />
-                Cancel
-              </ControlPanelGlassActionButton>
-            ) : null}
+              {caps.canCancel && (accessLevel === "admin" || accessLevel === "mutate") ? (
+                <ControlPanelGlassActionButton
+                  type="button"
+                  variant="sky"
+                  disabled={busy}
+                  onClick={() =>
+                    updateInvoice({ invoiceId: invoice.id, body: { status: "cancelled" } })
+                  }
+                >
+                  <Ban className="shrink-0" aria-hidden />
+                  Cancel
+                </ControlPanelGlassActionButton>
+              ) : null}
 
-            {accessLevel === "admin" && caps.canRefund ? (
-              <ControlPanelGlassActionButton
-                type="button"
-                variant="sky"
-                disabled={busy}
-                onClick={() => refundInvoice(invoice.id)}
-              >
-                <RotateCcw className="shrink-0" aria-hidden />
-                Refund
-              </ControlPanelGlassActionButton>
-            ) : null}
+              {accessLevel === "admin" && caps.canRefund ? (
+                <ControlPanelGlassActionButton
+                  type="button"
+                  variant="sky"
+                  disabled={busy}
+                  onClick={() => refundInvoice(invoice.id)}
+                >
+                  <RotateCcw className="shrink-0" aria-hidden />
+                  Refund
+                </ControlPanelGlassActionButton>
+              ) : null}
 
-            {caps.canDelete && (accessLevel === "admin" || accessLevel === "mutate") ? (
-              <ConfirmActionDialog
-                open={deleteOpen}
-                onOpenChange={setDeleteOpen}
-                variant="destructive"
-                title={DELETE_INVOICE_CONFIRM_TITLE}
-                subtitle={buildInvoiceDeleteConfirmSubtitle(invoice)}
-                confirmLabel="Delete"
-                cancelLabel="Cancel"
-                confirmDisabled={busy}
-                confirmPending={isDeleting}
-                confirmPendingLabel="Deleting…"
-                onConfirm={async () => {
-                  await deleteInvoiceAsync(invoice.id);
-                  setDeleteOpen(false);
-                }}
-                trigger={
-                  <ControlPanelGlassActionButton type="button" variant="rose" disabled={busy}>
-                    <Trash2 className="shrink-0" aria-hidden />
-                    {isDeleting ? "Deleting…" : "Delete"}
-                  </ControlPanelGlassActionButton>
-                }
-              />
-            ) : null}
+              {caps.canDelete && (accessLevel === "admin" || accessLevel === "mutate") ? (
+                <ConfirmActionDialog
+                  open={deleteOpen}
+                  onOpenChange={setDeleteOpen}
+                  variant="destructive"
+                  title={DELETE_INVOICE_CONFIRM_TITLE}
+                  subtitle={buildInvoiceDeleteConfirmSubtitle(invoice)}
+                  confirmLabel="Delete"
+                  cancelLabel="Cancel"
+                  confirmDisabled={busy}
+                  confirmPending={isDeleting}
+                  confirmPendingLabel="Deleting…"
+                  onConfirm={async () => {
+                    await deleteInvoiceAsync(invoice.id);
+                    setDeleteOpen(false);
+                  }}
+                  trigger={
+                    <ControlPanelGlassActionButton type="button" variant="rose" disabled={busy}>
+                      <Trash2 className="shrink-0" aria-hidden />
+                      {isDeleting ? "Deleting…" : "Delete"}
+                    </ControlPanelGlassActionButton>
+                  }
+                />
+              ) : null}
             </>
           )
         }

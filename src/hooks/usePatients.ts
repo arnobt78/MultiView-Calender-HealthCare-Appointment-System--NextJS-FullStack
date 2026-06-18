@@ -2,15 +2,16 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient, handleApiError } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import {
-  invalidateDoctorPortal,
-  invalidateDoctorsAffectedByPatientWrite,
   invalidateEntityAffectingAppointments,
-  invalidatePatientDetailAndSnapshot,
+  invalidateDoctorsAffectedByPatientWrite,
+  syncAppointmentsAfterPatientWrite,
 } from "@/lib/query-client";
+import { invalidatePatientSnapshotOnly } from "@/lib/entity-snapshot-invalidation";
 import { getPrimaryDoctorIdFromPatientCache } from "@/lib/patient-cache-read";
 import { Patient, type PatientSnapshot } from "@/types/types";
 import { notify } from "@/lib/notify";
 import { fetchPatients } from "@/lib/query-fetchers";
+import { EMPTY_PATIENTS } from "@/lib/stable-query-fallbacks";
 
 export type PatientCreateInput = Pick<Patient, "firstname" | "lastname"> &
   Partial<
@@ -74,8 +75,6 @@ export function usePatients(options?: UsePatientsOptions) {
       }),
     onSuccess: async (data) => {
       await invalidateEntityAffectingAppointments(queryClient, "patients");
-      await invalidateDoctorPortal(queryClient);
-      await invalidatePatientDetailAndSnapshot(queryClient, data.patient.id);
       await invalidateDoctorsAffectedByPatientWrite(queryClient, {
         primaryDoctorId: data.patient.primary_doctor_id,
       });
@@ -94,11 +93,17 @@ export function usePatients(options?: UsePatientsOptions) {
       previousPrimaryDoctorId: getPrimaryDoctorIdFromPatientCache(queryClient, id) ?? null,
     }),
     onSuccess: async (data, _vars, context) => {
-      // PUT returns full patient + audit includes — paint detail immediately before refetch.
       queryClient.setQueryData(queryKeys.patients.detail(data.patient.id), data.patient);
-      await invalidateEntityAffectingAppointments(queryClient, "patients");
-      await invalidateDoctorPortal(queryClient);
-      await invalidatePatientDetailAndSnapshot(queryClient, data.patient.id);
+      queryClient.setQueryData<Patient[]>(queryKeys.patients.all, (old) => {
+        const list = old ?? [];
+        const idx = list.findIndex((p) => p.id === data.patient.id);
+        if (idx < 0) return list;
+        const next = [...list];
+        next[idx] = data.patient;
+        return next;
+      });
+      await syncAppointmentsAfterPatientWrite(queryClient);
+      await invalidatePatientSnapshotOnly(queryClient, data.patient.id);
       await invalidateDoctorsAffectedByPatientWrite(queryClient, {
         primaryDoctorId: data.patient.primary_doctor_id,
         previousPrimaryDoctorId: context?.previousPrimaryDoctorId,
@@ -125,7 +130,6 @@ export function usePatients(options?: UsePatientsOptions) {
       queryClient.removeQueries({ queryKey: queryKeys.patients.detail(vars.id) });
       queryClient.removeQueries({ queryKey: queryKeys.patients.snapshot(vars.id) });
       await invalidateEntityAffectingAppointments(queryClient, "patients");
-      await invalidateDoctorPortal(queryClient);
       await invalidateDoctorsAffectedByPatientWrite(queryClient, {
         previousPrimaryDoctorId: context?.previousPrimaryDoctorId,
       });
@@ -138,7 +142,7 @@ export function usePatients(options?: UsePatientsOptions) {
   });
 
   return {
-    patients: query.data ?? [],
+    patients: query.data ?? EMPTY_PATIENTS,
     isLoading: query.isLoading,
     /** True during background refetch after invalidation — stats UI can use without blocking static labels */
     isFetching: query.isFetching,

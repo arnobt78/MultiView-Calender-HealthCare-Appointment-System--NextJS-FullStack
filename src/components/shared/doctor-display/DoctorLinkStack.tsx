@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils";
 import { RoleEntityLink } from "@/components/shared/RoleEntityLink";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
-import { doctorDetailHref } from "@/lib/entity-routes";
+import { controlPanelStaffDetailHref } from "@/lib/entity-routes";
 import { DoctorSpecialtyBadge } from "./DoctorSpecialtyBadge";
 
 type DoctorLinkStackProps = {
@@ -12,6 +12,8 @@ type DoctorLinkStackProps = {
   email?: string | null;
   specialty?: string | null;
   linkKind?: "role" | "admin-cp";
+  /** Snapshot/API role — routes admin accounts to CP `/users/:id`. */
+  staffRole?: string | null;
   className?: string;
   nameClassName?: string;
 };
@@ -26,6 +28,7 @@ export function DoctorLinkStack({
   email,
   specialty,
   linkKind = "role",
+  staffRole = null,
   className,
   nameClassName,
 }: DoctorLinkStackProps) {
@@ -35,7 +38,7 @@ export function DoctorLinkStack({
     <div className={cn("flex min-w-0 flex-col gap-1", className)}>
       {linkKind === "admin-cp" ? (
         <EntityTitleLink
-          href={doctorDetailHref("admin", doctorId)}
+          href={controlPanelStaffDetailHref(doctorId, staffRole)}
           label={label}
           className={cn("font-medium text-sm self-start", nameClassName)}
         />

@@ -10,7 +10,7 @@
 
 ## Resume
 
-1. `.agile-v/STATE.md` — **C48.1 shipped** · **1270/1270** · HEAD **`8ba3acf`**
+1. `.agile-v/STATE.md` — **C50** · **1284/1284**
 2. `.agile-v/CHECKPOINTS.md` if PENDING HITL (**none**)
 3. Parent **`REQ-XXXX`** in `.agile-v/REQUIREMENTS.md` before any code (**halt if missing**)
 
@@ -30,6 +30,8 @@ npm test && npx tsc --noEmit && npm run lint && npm run build
 |-------|-----|--------|
 | C46 | 0097 | shipped `45c87e5` |
 | C47 | 0098 | shipped `1e252b0` |
+| C50 | 0101 | cache-first invalidation |
+| C49 | 0100 | stable fallbacks + admin staff href |
 | C48 / C48.1 | 0099 | shipped `8ba3acf` |
 
 **Next:** Specify **C49** — add **REQ-0100** before feature code.

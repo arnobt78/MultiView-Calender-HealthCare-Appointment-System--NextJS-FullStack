@@ -811,3 +811,62 @@ EvalGate: status=PASS | eval_run_id=ER-C41-VERIFY | shipped `e8544ee`
 | VER-0141 | REQ-0093 | PASS | Full regression **1220/1220** tsc lint build |
 
 EvalGate: status=PASS | eval_run_id=ER-C42-VERIFY | shipped `2b53b92`
+
+---
+
+## C43 — Appointment detail dialog edit (2026-06-17)
+
+| Item | Value |
+|------|-------|
+| Cycle | C43 / C43.1 |
+| REQ-IDs | REQ-0094 |
+| Regression | **1227/1227** Vitest |
+| HEAD | `eb3d576` |
+
+| VER-ID | REQ-ID | Result | Description |
+|--------|--------|--------|-------------|
+| VER-0142 | REQ-0094 | PASS | AppointmentDialogController + footer Update Appointment |
+| VER-0143 | REQ-0094 | PASS | Post-create sharing step + invalidation polish |
+| VER-0144 | REQ-0094 | PASS | Full regression **1227/1227** tsc lint build |
+
+EvalGate: status=PASS | eval_run_id=ER-C43-VERIFY | shipped
+
+---
+
+## C47 — Appointment detail audit + billing UX (2026-06-17)
+
+| Item | Value |
+|------|-------|
+| Cycle | C47 |
+| REQ-IDs | REQ-0098 |
+| Regression | **1261/1261** Vitest |
+| HEAD | `1e252b0` |
+
+| VER-ID | REQ-ID | Result | Description |
+|--------|--------|--------|-------------|
+| VER-0145 | REQ-0098 | PASS | Invoice audit `created_by` + billing option cache seed |
+| VER-0146 | REQ-0098 | PASS | Footer Edit Invoice + telehealth Video gate |
+| VER-0147 | REQ-0098 | PASS | `AppointmentDetailHeaderQuickActions` |
+| VER-0148 | REQ-0098 | PASS | Full regression **1261/1261** tsc lint build |
+
+EvalGate: status=PASS | eval_run_id=ER-C47-VERIFY | shipped `1e252b0`
+
+---
+
+## C48 — Appointment/invoice UX + doctor RBAC (2026-06-17)
+
+| Item | Value |
+|------|-------|
+| Cycle | C48 / C48.1 |
+| REQ-IDs | REQ-0099 |
+| Regression | **1270/1270** Vitest (259 files) |
+| HEAD | `8ba3acf` |
+
+| VER-ID | REQ-ID | Result | Description |
+|--------|--------|--------|-------------|
+| VER-0149 | REQ-0099 | PASS | `office_location` prefetch + dialog Sonner-only close |
+| VER-0150 | REQ-0099 | PASS | `resolveInvoiceVisitTitleHref` + owner/treating mutate |
+| VER-0151 | REQ-0099 | PASS | `AppointmentWhenTableCell` inline datetime (C48.1) |
+| VER-0152 | REQ-0099 | PASS | Full regression **1270/1270** tsc lint build |
+
+EvalGate: status=PASS | eval_run_id=ER-C48-1-VERIFY | shipped `8ba3acf` · **active baseline**

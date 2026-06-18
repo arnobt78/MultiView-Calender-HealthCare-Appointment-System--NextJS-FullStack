@@ -142,8 +142,8 @@ export default function AppointmentList() {
     dailyStatsMap,
   } = useAppointmentData();
 
-  const { categories = [] } = useCategories();
-  const { patients = [] } = usePatients();
+  const { categories } = useCategories();
+  const { patients } = usePatients();
   const {
     category,
     patient,

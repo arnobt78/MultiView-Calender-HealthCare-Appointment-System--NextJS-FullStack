@@ -1,7 +1,7 @@
 "use client";
 
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
-import { doctorDetailHref, type EntityRole } from "@/lib/entity-routes";
+import { controlPanelStaffDetailHref, doctorDetailHref, type EntityRole } from "@/lib/entity-routes";
 import { isAdminRole } from "@/lib/rbac";
 import { isValidUUID } from "@/lib/validation";
 
@@ -10,6 +10,8 @@ type EntityDetailAuditStaffLinkProps = {
   label?: string | null;
   email?: string | null;
   viewerRole?: EntityRole | null;
+  /** When known, admin accounts link to CP `/users/:id` instead of `/doctors/:id`. */
+  staffRole?: string | null;
 };
 
 /** Role-aware staff link in entity detail audit rows (CP doctors tab vs portal `/doctors/:id`). */
@@ -18,6 +20,7 @@ export function EntityDetailAuditStaffLink({
   label,
   email,
   viewerRole,
+  staffRole,
 }: EntityDetailAuditStaffLinkProps) {
   const name = label?.trim();
   if (!name) return null;
@@ -25,7 +28,7 @@ export function EntityDetailAuditStaffLink({
   const canLink = userId && isValidUUID(userId);
   const href = canLink
     ? isAdminRole(viewerRole ?? null)
-      ? `/control-panel/doctors/${userId}`
+      ? controlPanelStaffDetailHref(userId, staffRole)
       : doctorDetailHref(viewerRole ?? "doctor", userId)
     : null;
 

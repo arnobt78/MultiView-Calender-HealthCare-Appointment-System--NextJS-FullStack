@@ -5,6 +5,7 @@
  * Cache keys: queryKeys.invoices.all + viewerTotals | byOrganization | byDoctor (+ totals).
  */
 
+import { useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Invoice } from "@/hooks/usePayments";
 import { queryKeys } from "@/lib/query-keys";
@@ -15,6 +16,7 @@ import {
 } from "@/lib/invoices-list-client";
 import type { InvoiceBillingTotalsPayload } from "@/lib/invoice-billing-totals";
 import type { InvoiceManagementFilterKey } from "@/lib/invoice-management-scope";
+import { EMPTY_INVOICES } from "@/lib/stable-query-fallbacks";
 
 type ScopedListCache = { invoices: Invoice[] };
 
@@ -99,12 +101,15 @@ export function useInvoiceScopedBilling(filter: InvoiceManagementFilterKey) {
     refetchOnMount: viewerTotalsInitial !== undefined ? false : true,
   });
 
-  const scopedInvoices =
-    filter.scope === "org"
-      ? (orgListQuery.data?.invoices ?? [])
-      : filter.scope === "doctor"
-        ? (doctorListQuery.data?.invoices ?? [])
-        : [];
+  const scopedInvoices = useMemo(() => {
+    if (filter.scope === "org") {
+      return orgListQuery.data?.invoices ?? EMPTY_INVOICES;
+    }
+    if (filter.scope === "doctor") {
+      return doctorListQuery.data?.invoices ?? EMPTY_INVOICES;
+    }
+    return EMPTY_INVOICES;
+  }, [filter.scope, orgListQuery.data?.invoices, doctorListQuery.data?.invoices]);
 
   const scopedTotals =
     filter.scope === "org"

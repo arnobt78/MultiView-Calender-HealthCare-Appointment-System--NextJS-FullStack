@@ -17,6 +17,15 @@ export async function invalidatePatientDetailAndSnapshot(
   ]);
 }
 
+/** Snapshot only — detail was just patched via setQueryData in the mutation onSuccess. */
+export async function invalidatePatientSnapshotOnly(
+  queryClient: QueryClient,
+  patientId: string | null | undefined
+): Promise<void> {
+  if (!patientId) return;
+  await queryClient.invalidateQueries({ queryKey: queryKeys.patients.snapshot(patientId) });
+}
+
 /** Detail + snapshot for one category — CP/portal appointments panel. */
 export async function invalidateCategoryDetailAndSnapshot(
   queryClient: QueryClient,

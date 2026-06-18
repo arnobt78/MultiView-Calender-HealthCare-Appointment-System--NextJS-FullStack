@@ -4,14 +4,14 @@ import { resolve } from "node:path";
 
 /** C43 — detail edit uses dialog; action bar must not submit inline form. */
 describe("AppointmentDetailActionBar C43", () => {
-  it("opens dialog via Update Visit — no inline form submit", () => {
+  it("opens dialog via Update Appointment — no inline form submit", () => {
     const src = readFileSync(
       resolve(process.cwd(), "src/components/shared/appointment-detail/AppointmentDetailActionBar.tsx"),
       "utf8"
     );
     expect(src).not.toContain("APPOINTMENT_DETAIL_EDIT_FORM_ID");
     expect(src).not.toContain("appointment-detail-edit");
-    expect(src).toContain("Update Visit");
+    expect(src).toContain("Update Appointment");
     expect(src).toContain("onEditClick");
   });
 
@@ -46,7 +46,7 @@ describe("AppointmentDetailActionBar C43", () => {
     );
     expect(src).toContain("seedFormFromAppointment");
     expect(src).toContain("prevControlledIsOpenRef");
-    expect(src).toContain("isOpen && !wasOpen && appointment");
+    expect(src).toContain("nextOpen && !wasOpen && appointmentRef.current");
   });
 });
 

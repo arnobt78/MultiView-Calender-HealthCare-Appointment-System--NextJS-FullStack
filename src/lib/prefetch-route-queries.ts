@@ -13,7 +13,7 @@ import type {
 import { prefetchCategoryDetailStaffUsers } from "@/lib/prefetch-category-detail-staff";
 import { mapApiInvoiceToRow } from "@/lib/billing-invoice-map";
 import type { InvoiceRow } from "@/lib/billing-types";
-import { isPatientRole } from "@/lib/rbac";
+import { isPatientRole, isAdminRole } from "@/lib/rbac";
 import type { OrganizationDetailOrg } from "@/lib/organization-detail-load";
 import type { OrganizationDetailMemberRow } from "@/lib/organization-detail-members-columns";
 
@@ -91,24 +91,24 @@ export function prefetchQueriesForControlPanelHref(
       }
       if (isDoctors) {
         /** Patients use `/api/doctors/:id/snapshot` on portal detail — `GET /api/users/:id` is 403. */
-        const doctorPrefetches: Promise<unknown>[] = [
-          queryClient.prefetchQuery({
-            queryKey: queryKeys.doctors.snapshot(id),
-            queryFn: () => apiClient<DoctorSnapshot>(`/api/doctors/${id}/snapshot`),
-          }),
-        ];
         if (!isPatientRole(resolvedViewer?.role)) {
-          doctorPrefetches.unshift(
-            queryClient.prefetchQuery({
-              queryKey: queryKeys.users.detail(id),
-              queryFn: async () => {
-                const res = await apiClient<{ user: User }>(`/api/users/${id}`);
-                return res.user;
-              },
-            })
-          );
+          await queryClient.prefetchQuery({
+            queryKey: queryKeys.users.detail(id),
+            queryFn: async () => {
+              const res = await apiClient<{ user: User }>(`/api/users/${id}`);
+              return res.user;
+            },
+          });
+          const cachedUser = queryClient.getQueryData<User>(queryKeys.users.detail(id));
+          /** Admin accounts have no doctor row — skip snapshot prefetch (avoids 404 noise). */
+          if (isAdminRole(cachedUser?.role)) {
+            return;
+          }
         }
-        await Promise.all(doctorPrefetches);
+        await queryClient.prefetchQuery({
+          queryKey: queryKeys.doctors.snapshot(id),
+          queryFn: () => apiClient<DoctorSnapshot>(`/api/doctors/${id}/snapshot`),
+        });
         return;
       }
       if (isAdmins) {

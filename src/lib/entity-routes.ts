@@ -48,6 +48,19 @@ export function doctorDetailHref(role: EntityRole, id: string): string {
 }
 
 /**
+ * CP staff identity link — admin accounts use `/users/:id`; clinicians use `/doctors/:id`.
+ * Pass `staffRole` from snapshot/API when known to avoid doctor-snapshot 404 on admin owners.
+ */
+export function controlPanelStaffDetailHref(
+  userId: string,
+  staffRole?: string | null
+): string {
+  return isAdminRole(staffRole)
+    ? userDetailHref("admin", userId)
+    : doctorDetailHref("admin", userId);
+}
+
+/**
  * Portal admin account profile — doctors only (`/admins/:id`).
  * Patients get null (plain text in snapshot tables). Admins use control-panel `/users/:id`.
  */

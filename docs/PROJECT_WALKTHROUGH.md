@@ -1,18 +1,18 @@
 # HealthCal Pro — Project Walkthrough
 
-## Agent resume (2026-06-17 — C47 + C48)
+## Agent resume (2026-06-18 — C49 + C50)
 
-**Baseline:** 1270/1270 · tsc · lint · build PASS
+**Baseline:** 1284/1284 · tsc · lint · build PASS
 
-**C48.1:** `AppointmentWhenTableCell` inline datetime (no stretched end-time gap).
+**C50 (REQ-0101):** Invoice cache-first — `mergeInvoiceIntoAllCaches` · `syncInvoicesAfterWrite` · `publishInvoiceMergeCrossTab` · `resolvePatientIdFromInvoiceRow` · appointment mutation scopes · `syncAppointmentsAfterPatientWrite` / `syncAppointmentsAfterCategoryWrite`.
 
-**C48 (REQ-0099):** `prefetchDoctors` `office_location` · `AppointmentDialog` close on save (Sonner only) · Mark done glass · `resolveInvoiceVisitTitleHref` · owner+treating mutate · inline category duration badge.
+**C49 (REQ-0100):** `stable-query-fallbacks.ts` · `controlPanelStaffDetailHref` · admin doctor-snapshot prefetch guard · calendar `= []` destructuring removed · `AppointmentDialog` controlled-open loop fix.
 
-**C47 (REQ-0098):** Invoice issued → `created_by` · `billing-appointment-option-from-detail` cache seed · footer Edit Invoice · telehealth Video gate · `AppointmentDetailHeaderQuickActions`.
+**C48.1:** `AppointmentWhenTableCell` inline datetime.
 
-**Keys:** `invoice-visit-title-href.ts` · `appointment-access.ts` · `invoice-access.ts` · `AppointmentDetailHeaderQuickActions.tsx` · `billing-appointment-option-from-detail.ts`
+**Keys:** `billing-invoice-map.ts` · `query-cache-cross-tab.ts` · `syncInvoicesAfterWrite` · `stable-query-fallbacks.ts` · `entity-routes.ts` `controlPanelStaffDetailHref`
 
-**Invariants:** `invalidateAfterAppointmentMutation` / `invalidateInvoicesAndOverview` on CRUD · no `router.refresh`.
+**Invariants:** SSR seed + `refetchOnMount: false` when warm · SSE external writes still full invalidation · no `router.refresh`.
 
 ---
 

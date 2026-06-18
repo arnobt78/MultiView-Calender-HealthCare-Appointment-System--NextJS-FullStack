@@ -28,6 +28,8 @@ export type AppointmentMutationInvalidationOpts = {
   previousTreatingPhysicianId?: string | null;
   /** ICS / Google calendar import — rows may lack category_id; bust entire categories tree */
   bustAllCategorySnapshots?: boolean;
+  /** Narrow invalidation fan-out — default `schedule` for create/update, `billing` for delete. */
+  scope?: "status" | "schedule" | "billing";
 };
 
 export type AppointmentMutationInvalidationTargets = {

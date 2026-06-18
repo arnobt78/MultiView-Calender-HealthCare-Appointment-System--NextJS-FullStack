@@ -67,7 +67,7 @@ export default function MonthView() {
   const { user } = useAuth();
   const userId = user?.id ?? null;
   const userEmail = user?.email ?? null;
-  const { categories = [] } = useCategories();
+  const { categories } = useCategories();
   const { patients: filterPatients = [] } = usePatients();
   const { assignees } = useAssignees();
   const ownerUsers = useOwnerUserSummaries(

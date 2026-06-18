@@ -21,7 +21,7 @@ export type UseInvoiceFormDialogControllerOptions = {
 
 /**
  * Shared create/edit invoice dialog state — used by list pages, detail, calendar surfaces.
- * Mutations invalidate via usePayments → invalidateAfterInvoiceWrite (invoices + billing picker).
+ * Mutations invalidate via usePayments → syncAfterInvoiceWrite (cache merge + billing picker sync).
  */
 export function useInvoiceFormDialogController(
   opts?: UseInvoiceFormDialogControllerOptions

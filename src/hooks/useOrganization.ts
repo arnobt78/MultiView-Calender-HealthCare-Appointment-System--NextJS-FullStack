@@ -21,6 +21,10 @@ import {
   orgMemberCrudMessage,
 } from "@/lib/crud-notify-messages";
 import type { InitialOrgMemberInput } from "@/lib/organization-member-role";
+import {
+  EMPTY_ORGANIZATIONS,
+  EMPTY_ORG_MEMBERS,
+} from "@/lib/stable-query-fallbacks";
 
 export type CreateOrganizationInput = {
   name: string;
@@ -73,7 +77,7 @@ export function useOrganizationDetail(
 
   return {
     org: detailQuery.data,
-    members: membersQuery.data ?? [],
+    members: membersQuery.data ?? EMPTY_ORG_MEMBERS,
     isLoading: detailQuery.isLoading || membersQuery.isLoading,
     isError: detailQuery.isError || membersQuery.isError,
     error: detailQuery.error ?? membersQuery.error,
@@ -140,7 +144,8 @@ export function useOrganization() {
     onSuccess: async (data, variables) => {
       mergeOrganizationMemberIntoCache(queryClient, variables.orgId, data.member);
       const orgs =
-        queryClient.getQueryData<Organization[]>(queryKeys.organizations.all) ?? [];
+        queryClient.getQueryData<Organization[]>(queryKeys.organizations.all) ??
+        EMPTY_ORGANIZATIONS;
       const orgName =
         orgs.find((o) => o.id === variables.orgId)?.name ?? "Organization";
       notify.crud(
@@ -155,7 +160,6 @@ export function useOrganization() {
         })
       );
       await invalidateOrganizations(queryClient);
-      await invalidateOrganizationDetail(queryClient, variables.orgId);
       await invalidateDashboardOverview(queryClient);
     },
     onError: (error) => handleApiError(error, "Failed to add member"),
@@ -177,7 +181,8 @@ export function useOrganization() {
     onSuccess: async (_, variables) => {
       removeOrganizationMemberFromCache(queryClient, variables.orgId, variables.userId);
       const orgs =
-        queryClient.getQueryData<Organization[]>(queryKeys.organizations.all) ?? [];
+        queryClient.getQueryData<Organization[]>(queryKeys.organizations.all) ??
+        EMPTY_ORGANIZATIONS;
       const orgName =
         orgs.find((o) => o.id === variables.orgId)?.name ?? "Organization";
       notify.crud(
@@ -187,7 +192,6 @@ export function useOrganization() {
         })
       );
       await invalidateOrganizations(queryClient);
-      await invalidateOrganizationDetail(queryClient, variables.orgId);
       await invalidateDashboardOverview(queryClient);
     },
     onError: (error) => handleApiError(error, "Failed to remove member"),
@@ -222,7 +226,6 @@ export function useOrganization() {
         organizationCrudMessage("updated", { name: variables.name })
       );
       await invalidateOrganizations(queryClient);
-      await invalidateOrganizationDetail(queryClient, variables.orgId);
       await invalidateDashboardOverview(queryClient);
     },
     onError: (error) => handleApiError(error, "Failed to update organization"),
@@ -233,7 +236,8 @@ export function useOrganization() {
       apiClient(`/api/organizations/${orgId}`, { method: "DELETE" }),
     onMutate: async (orgId) => {
       const orgs =
-        queryClient.getQueryData<Organization[]>(queryKeys.organizations.all) ?? [];
+        queryClient.getQueryData<Organization[]>(queryKeys.organizations.all) ??
+        EMPTY_ORGANIZATIONS;
       const deleted = orgs.find((o) => o.id === orgId) ?? null;
       return { deleted };
     },
@@ -248,7 +252,7 @@ export function useOrganization() {
   });
 
   return {
-    organizations: orgsQuery.data || [],
+    organizations: orgsQuery.data ?? EMPTY_ORGANIZATIONS,
     isLoading: orgsQuery.isLoading,
     isError: orgsQuery.isError,
     error: orgsQuery.error,

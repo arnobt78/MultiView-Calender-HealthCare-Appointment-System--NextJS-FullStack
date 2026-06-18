@@ -59,8 +59,8 @@ export default function DayView() {
   const { user } = useAuth();
   const { category, patient, date, status, month, search, clinicalRole, hasActiveFilters } =
     useCalendarFilters();
-  const { categories = [] } = useCategories();
-  const { patients = [] } = usePatients();
+  const { categories } = useCategories();
+  const { patients } = usePatients();
   const { assignees } = useAssignees();
   const ownerUsers = useOwnerUserSummaries(
     collectAppointmentStaffUserIds(appointments),

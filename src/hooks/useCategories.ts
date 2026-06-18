@@ -2,8 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient, handleApiError } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import {
-  invalidateCategoryDetailAndSnapshot,
   invalidateEntityAffectingAppointments,
+  syncAppointmentsAfterCategoryWrite,
 } from "@/lib/query-client";
 import {
   patchCategoryListCache,
@@ -12,6 +12,7 @@ import {
 import { Category, type CategorySnapshot } from "@/types/types";
 import { notify } from "@/lib/notify";
 import { fetchCategories } from "@/lib/query-fetchers";
+import { EMPTY_CATEGORIES } from "@/lib/stable-query-fallbacks";
 
 export type CategoryCreateInput = Pick<Category, "label"> &
   Partial<
@@ -58,8 +59,7 @@ export function useCategories(options?: UseCategoriesOptions) {
     onSuccess: async (data) => {
       seedCategoryDetailCache(queryClient, data.category);
       patchCategoryListCache(queryClient, data.category);
-      await invalidateEntityAffectingAppointments(queryClient, "categories");
-      await invalidateCategoryDetailAndSnapshot(queryClient, data.category.id);
+      await syncAppointmentsAfterCategoryWrite(queryClient);
       notify.crud({ action: "created", entity: "Category", detail: `"${data.category.label}" is ready to use.` });
     },
     onError: (e) => handleApiError(e, "Failed to create category"),
@@ -74,8 +74,7 @@ export function useCategories(options?: UseCategoriesOptions) {
     onSuccess: async (data) => {
       seedCategoryDetailCache(queryClient, data.category);
       patchCategoryListCache(queryClient, data.category);
-      await invalidateEntityAffectingAppointments(queryClient, "categories");
-      await invalidateCategoryDetailAndSnapshot(queryClient, data.category.id);
+      await syncAppointmentsAfterCategoryWrite(queryClient);
       notify.crud({ action: "updated", entity: "Category", detail: `"${data.category.label}" was updated.` });
     },
     onError: (e) => handleApiError(e, "Failed to update category"),
@@ -94,7 +93,7 @@ export function useCategories(options?: UseCategoriesOptions) {
   });
 
   return {
-    categories: query.data ?? [],
+    categories: query.data ?? EMPTY_CATEGORIES,
     isLoading: query.isLoading,
     isFetching: query.isFetching,
     isError: query.isError,

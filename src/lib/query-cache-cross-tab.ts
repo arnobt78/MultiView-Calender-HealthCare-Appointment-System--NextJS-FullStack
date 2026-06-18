@@ -6,6 +6,7 @@
 
 import type { QueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
+import type { InvoiceRow } from "@/lib/billing-types";
 
 export type QueryCacheCrossTabScope =
   | "app"
@@ -46,6 +47,36 @@ export const CROSS_TAB_SCOPES = {
     "doctorPortal",
     "adminPortal",
     "dashboard",
+    "patients",
+    "categories",
+  ] as const satisfies readonly QueryCacheCrossTabScope[],
+
+  /** Status toggle/cancel — skips invoices + appointmentTypes directory refetch. */
+  APPOINTMENT_STATUS: [
+    "appointments",
+    "notifications",
+    "patientPortal",
+    "doctorPortal",
+    "adminPortal",
+    "dashboard",
+    "insights",
+    "analytics",
+    "patients",
+    "categories",
+  ] as const satisfies readonly QueryCacheCrossTabScope[],
+
+  /** Create/reschedule — adds availability + appointmentTypes; still skips invoices. */
+  APPOINTMENT_SCHEDULE: [
+    "appointments",
+    "notifications",
+    "appointmentTypes",
+    "availability",
+    "patientPortal",
+    "doctorPortal",
+    "adminPortal",
+    "dashboard",
+    "insights",
+    "analytics",
     "patients",
     "categories",
   ] as const satisfies readonly QueryCacheCrossTabScope[],
@@ -92,7 +123,7 @@ export const CROSS_TAB_SCOPES = {
 
   INVOICES: ["invoices", "dashboard", "insights", "analytics", "patients"] as const satisfies readonly QueryCacheCrossTabScope[],
 
-  /** Draft/create/update — skips insights + doctors.all refetch (paid/refund still uses INVOICES). */
+  /** Legacy broad bust — SSE + callers without cache merge (still includes invoices prefix). */
   INVOICES_BILLING: [
     "invoices",
     "dashboard",
@@ -100,6 +131,25 @@ export const CROSS_TAB_SCOPES = {
     "doctorPortal",
     "adminPortal",
     "patients",
+  ] as const satisfies readonly QueryCacheCrossTabScope[],
+
+  /** Cache-first billing write — portals + dashboard only; invoice row merged cross-tab. */
+  INVOICES_BILLING_SYNC: [
+    "dashboard",
+    "patientPortal",
+    "doctorPortal",
+    "adminPortal",
+  ] as const satisfies readonly QueryCacheCrossTabScope[],
+
+  /** Cache-first full invoice write — adds insights/analytics/doctors. */
+  INVOICES_FULL_SYNC: [
+    "dashboard",
+    "patientPortal",
+    "doctorPortal",
+    "adminPortal",
+    "insights",
+    "analytics",
+    "doctors",
   ] as const satisfies readonly QueryCacheCrossTabScope[],
 
   APPOINTMENT_TYPE_DERIVED: [
@@ -149,6 +199,10 @@ export type QueryCacheCrossTabMessage = {
   tabId: string;
   scopes: QueryCacheCrossTabScope[];
   ts: number;
+  /** Listening tabs merge row without busting invoices.all prefix. */
+  invoiceMerge?: InvoiceRow;
+  /** Listening tabs remove row from warm list caches when DELETE propagates. */
+  invoiceRemovedId?: string;
 };
 
 function isBrowser(): boolean {
@@ -249,13 +303,28 @@ export async function applyCrossTabScopes(
 function parseMessage(raw: unknown): QueryCacheCrossTabMessage | null {
   if (!raw || typeof raw !== "object") return null;
   const msg = raw as Partial<QueryCacheCrossTabMessage>;
-  if (typeof msg.tabId !== "string" || !Array.isArray(msg.scopes)) return null;
-  const scopes = msg.scopes.filter(
-    (s): s is QueryCacheCrossTabScope =>
-      typeof s === "string" && isQueryCacheCrossTabScope(s)
-  );
-  if (scopes.length === 0) return null;
-  return { tabId: msg.tabId, scopes, ts: typeof msg.ts === "number" ? msg.ts : Date.now() };
+  if (typeof msg.tabId !== "string") return null;
+  const scopes = Array.isArray(msg.scopes)
+    ? msg.scopes.filter(
+        (s): s is QueryCacheCrossTabScope =>
+          typeof s === "string" && isQueryCacheCrossTabScope(s)
+      )
+    : [];
+  const hasInvoicePayload =
+    (msg.invoiceMerge != null && typeof msg.invoiceMerge === "object") ||
+    typeof msg.invoiceRemovedId === "string";
+  if (scopes.length === 0 && !hasInvoicePayload) return null;
+  return {
+    tabId: msg.tabId,
+    scopes,
+    ts: typeof msg.ts === "number" ? msg.ts : Date.now(),
+    invoiceMerge:
+      msg.invoiceMerge != null && typeof msg.invoiceMerge === "object"
+        ? (msg.invoiceMerge as InvoiceRow)
+        : undefined,
+    invoiceRemovedId:
+      typeof msg.invoiceRemovedId === "string" ? msg.invoiceRemovedId : undefined,
+  };
 }
 
 function isQueryCacheCrossTabScope(value: string): value is QueryCacheCrossTabScope {
@@ -408,6 +477,48 @@ export function publishQueryCacheCrossTab(
     tabId: getLocalTabId(),
     scopes: unique,
     ts: Date.now(),
+  });
+}
+
+/** Cache-first invoice write — merge row in other tabs; narrow scope invalidation only. */
+export function publishInvoiceMergeCrossTab(
+  invoice: InvoiceRow,
+  opts: { scope: "billing" | "full"; patientId?: string }
+): void {
+  if (!isBrowser()) return;
+  const scopes: QueryCacheCrossTabScope[] =
+    opts.scope === "full"
+      ? [...CROSS_TAB_SCOPES.INVOICES_FULL_SYNC]
+      : [...CROSS_TAB_SCOPES.INVOICES_BILLING_SYNC];
+  if (opts.scope === "full" && !opts.patientId) {
+    scopes.push("patients");
+  }
+  postMessagePayload({
+    tabId: getLocalTabId(),
+    scopes: dedupeScopes(scopes),
+    ts: Date.now(),
+    invoiceMerge: invoice,
+  });
+}
+
+/** Invoice DELETE — remove from warm caches in other tabs without full list refetch. */
+export function publishInvoiceRemoveCrossTab(
+  invoiceId: string,
+  opts: { scope: "billing" | "full"; patientId?: string }
+): void {
+  if (!isBrowser()) return;
+  const scopes: QueryCacheCrossTabScope[] =
+    opts.scope === "full"
+      ? [...CROSS_TAB_SCOPES.INVOICES_FULL_SYNC]
+      : [...CROSS_TAB_SCOPES.INVOICES_BILLING_SYNC];
+  if (opts.scope === "full" && !opts.patientId) {
+    scopes.push("patients");
+  }
+  postMessagePayload({
+    tabId: getLocalTabId(),
+    scopes: dedupeScopes(scopes),
+    ts: Date.now(),
+    invoiceRemovedId: invoiceId,
   });
 }
 

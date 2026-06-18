@@ -7,7 +7,7 @@ import { EntityActiveStatusBadge } from "@/components/shared/entity-display/Enti
 import { UserRoleBadge } from "@/components/shared/UserRoleBadge";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { RoleEntityLink } from "@/components/shared/RoleEntityLink";
-import { doctorDetailHref, portalAdminDetailHref } from "@/lib/entity-routes";
+import { doctorDetailHref, portalAdminDetailHref, controlPanelStaffDetailHref } from "@/lib/entity-routes";
 import type { EntityRole } from "@/lib/entity-routes";
 import {
   clinicalIdentityCompactStackBadgeRowClass,
@@ -112,7 +112,7 @@ export function DoctorIdentityRow({
       </span>
     ) : linkKind === "admin-cp" ? (
       <EntityTitleLink
-        href={doctorDetailHref("admin", doctor.id)}
+        href={controlPanelStaffDetailHref(doctor.id, staffRole)}
         label={label}
         className={cn(
           layout === "inline" ? inlineNameClass : "min-w-0 self-start truncate font-normal",

@@ -1,12 +1,12 @@
 # Requirements — HealthCal Pro
 
-<!-- Revision: C1..C42.2 | Last updated: 2026-06-16 -->
+<!-- Revision: C1..C48.1 | Last updated: 2026-06-18 -->
 
 ## Document Control
 
 | Field | Value |
 |-------|-------|
-| Cycle | C1–C42.2 shipped |
+| Cycle | C1–C48.1 shipped |
 | Author | Requirement Architect |
 | Gate 1 status | C1 GATE-0001 · C2 GATE-0003 approved |
 | Canonical source | this file |
@@ -126,6 +126,8 @@
 | REQ-0079 | approved [C31] | REQ-0078 | ART-0407..0409 | pending |
 | REQ-0080 | approved [C32] | REQ-0079 | ART-0410..0416 | pending |
 | REQ-0081 | approved [C33] | REQ-0080 | ART-0417..0423 | pending |
+| REQ-0101 | approved [C50] | REQ-0100 | ART-0546..0552 | pending |
+| REQ-0100 | verify PASS [C49] | REQ-0099 | ART-0540..0545 | pending |
 | REQ-0099 | verify PASS [C48] | REQ-0098 | ART-0533..0539 | `8ba3acf` |
 | REQ-0098 | verify PASS [C47] | REQ-0097 | ART-0526..0532 | `1e252b0` |
 | REQ-0097 | approved [C46] | REQ-0096 | ART-0520..0525 | pending |
@@ -144,6 +146,42 @@
 | REQ-0084 | approved [C36] | REQ-0083 | ART-0437..0444 | pending |
 | REQ-0083 | approved [C35/C35.1] | REQ-0082 | ART-0432..0436 | pending |
 | REQ-0082 | approved [C34/C34.1] | REQ-0081 | ART-0424..0431 | pending |
+
+### REQ-0101 — C50 Cache-first invalidation (fewer GETs, same instant UI)
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C50] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0100 |
+
+**Statement:** Patch TanStack caches synchronously from mutation responses; invalidate only keys that cannot be merged locally. Narrow appointment invalidation scopes; cross-tab invoice merge without refetch storms.
+
+**Acceptance criteria:**
+1. `mergeInvoiceIntoAllCaches` patches list + detail + scoped totals; `syncInvoicesAfterWrite` skips patched keys.
+2. `resolvePatientIdFromInvoiceRow` prevents `patients.all` fallback on invoice writes.
+3. Cross-tab `invoice-merge` message applies row in other tabs without full invoices prefix bust.
+4. Appointment mutations use `status` / `schedule` / `billing` scopes; no duplicate assignee invalidation after create/update.
+5. Patient/category/org hooks patch OR invalidate, not both on same key; verify suite PASS.
+
+### REQ-0100 — C49 Stable query fallbacks + admin staff CP routing
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C49] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0099 |
+
+**Statement:** Centralize stable TanStack empty-collection fallbacks to prevent render-loop regressions; route admin staff identity links in CP to `/users/:id`; skip doctor-snapshot hover prefetch when target user is admin.
+
+**Acceptance criteria:**
+1. `stable-query-fallbacks.ts` exports frozen `EMPTY_*` arrays; list hooks use them instead of `?? []` in render paths.
+2. Calendar components drop `= []` destructuring defaults that reintroduce unstable refs.
+3. `controlPanelStaffDetailHref` routes admin `staffRole` to `userDetailHref`; wired in doctor identity link components.
+4. `prefetch-route-queries` skips `doctors.snapshot` when cached `users.detail` role is admin.
+5. Google Calendar sync 404-as-disconnected unchanged; verify suite PASS.
 
 ### REQ-0099 — C48 Appointment/invoice UX regressions + doctor RBAC parity
 
@@ -251,7 +289,7 @@
 **Acceptance criteria:**
 1. Remove embedded `AppointmentDetailForm` section from detail card.
 2. `canEdit` opens `AppointmentDialogController` with `appointment` prop; patient read-only unchanged.
-3. Footer `Update Visit` opens dialog; `EntityDetailFooterRow` + glass action buttons.
+3. Footer `Update Appointment` opens dialog; `EntityDetailFooterRow` + glass action buttons.
 4. `AppointmentDetailBodySkeleton` when detail cache cold; SSR seed + invalidation unchanged.
 5. Verify 1220+ PASS.
 

@@ -40,7 +40,7 @@ export type AppointmentDetailToneClasses = {
   schemaSectionClass: string;
   chromeIconTileClass: string;
   chromeIconClass: string;
-  /** Footer primary action (Update Visit) — violet CP / emerald portal. */
+  /** Footer primary action (Update Appointment) — violet CP / emerald portal. */
   footerPrimaryVariant: "violet" | "emerald";
 };
 

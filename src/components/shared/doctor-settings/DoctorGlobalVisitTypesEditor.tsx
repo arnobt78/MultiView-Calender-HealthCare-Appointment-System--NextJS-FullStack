@@ -97,7 +97,7 @@ export function DoctorGlobalVisitTypesEditor({
       await Promise.all(tasks);
     },
     onError: (error, { appointment_type_id }) => {
-      handleApiError(error, "Failed to update visit type");
+      handleApiError(error, "Failed to Update Appointment type");
       setPendingIds((prev) => {
         const next = new Set(prev);
         next.delete(appointment_type_id);

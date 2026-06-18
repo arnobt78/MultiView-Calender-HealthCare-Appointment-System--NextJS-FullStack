@@ -94,8 +94,8 @@ export default function AppointmentDialog({
   );
   const prevControlledIsOpenRef = useRef(isControlled ? isOpen : false);
 
-  const { patients = [] } = usePatients();
-  const { categories = [] } = useCategories();
+  const { patients } = usePatients();
+  const { categories } = useCategories();
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const showTreatingPhysicianPicker = Boolean(user) && (user?.role ?? "") !== "patient";
@@ -168,6 +168,11 @@ export default function AppointmentDialog({
   const [dialogAssignees, setDialogAssignees] = useState<AppointmentAssignee[]>([]);
   const [assigneeMutationBusy, setAssigneeMutationBusy] = useState(false);
   const editAppointmentId = appointment?.id ?? null;
+  /** Latest appointment row for effects — avoid re-running when parent rebuilds object identity. */
+  const appointmentRef = useRef(appointment);
+  useEffect(() => {
+    appointmentRef.current = appointment;
+  }, [appointment]);
 
   const resetFormState = () => {
     setTitle("");
@@ -241,28 +246,28 @@ export default function AppointmentDialog({
   useEffect(() => {
     if (!isControlled) return;
     const wasOpen = prevControlledIsOpenRef.current;
-    prevControlledIsOpenRef.current = Boolean(isOpen);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setOpen(isOpen);
-    // Update Visit sets `isOpen` directly — does not call handleDialogOpenChange; re-seed after close reset.
-    if (isOpen && !wasOpen && appointment) {
-      seedFormFromAppointment(appointment);
+    const nextOpen = Boolean(isOpen);
+    prevControlledIsOpenRef.current = nextOpen;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync controlled `isOpen` prop to internal dialog state
+    setOpen((prev) => (prev === nextOpen ? prev : nextOpen));
+    // Update Appointment sets `isOpen` directly — does not call handleDialogOpenChange; re-seed after close reset.
+    if (nextOpen && !wasOpen && appointmentRef.current) {
+      seedFormFromAppointment(appointmentRef.current);
     }
-  }, [isOpen, isControlled, appointment, seedFormFromAppointment]);
+  }, [isOpen, isControlled, seedFormFromAppointment]);
 
   useEffect(() => {
-    if (appointment) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- sync form from appointment prop / live detail updates
-      seedFormFromAppointment(appointment);
-      // Controlled parents own dialog visibility — seed fields only (detail mount must stay closed).
-      if (!isControlled) {
-        setOpen(true);
-      }
-    } else {
+    const appt = appointmentRef.current;
+    if (!appt) {
       setTreatingPhysicianId("");
       setDialogAssignees([]);
+      return;
     }
-  }, [appointment, seedFormFromAppointment, isControlled]);
+    // Controlled detail mounts dialog closed — seed only on open (controlled effect / handleDialogOpenChange).
+    if (isControlled) return;
+    seedFormFromAppointment(appt);
+    setOpen(true);
+  }, [appointment?.id, isControlled, seedFormFromAppointment]);
 
   /** Re-map assignee chips when the patients cache hydrates after SSR seed. */
   useEffect(() => {
@@ -449,10 +454,6 @@ export default function AppointmentDialog({
           ...(chiefComplaint.trim() ? { chief_complaint: chiefComplaint.trim() } : {}),
         } as Partial<Appointment> & { treating_physician?: string; appointment_type_id?: string; chief_complaint?: string });
         apptId = createResult.appointment.id;
-      }
-
-      if (apptId) {
-        await invalidateAssigneesActivitiesAppointment(queryClient, apptId);
       }
 
       handleDialogOpenChange(false);

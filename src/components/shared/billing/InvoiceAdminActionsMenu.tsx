@@ -91,115 +91,115 @@ export function InvoiceAdminActionsMenu({
 
   return (
     <>
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className={cn(invoiceActionsMenuTriggerClassName, triggerClassName)}
-        >
-          <MenuIcon className="h-4 w-4" aria-hidden />
-          <span className="sr-only">Open invoice menu</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        {!hideViewLink && (
-          <DropdownMenuItem asChild>
-            <Link href={invoiceDetailHref(viewerRole, invoice.id)} className="gap-2">
-              <Eye className="h-4 w-4" /> View
-            </Link>
-          </DropdownMenuItem>
-        )}
-        {canEditDetails && onEdit && (
-          <DropdownMenuItem
-            className="gap-2"
-            disabled={isUpdating}
-            onClick={() => onEdit(invoice)}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={cn(invoiceActionsMenuTriggerClassName, triggerClassName)}
           >
-            <Pencil className="h-4 w-4" /> Edit Invoice
-          </DropdownMenuItem>
-        )}
-        {canSend && onSend && (
-          <DropdownMenuItem
-            className="gap-2"
-            disabled={isUpdating}
-            onClick={() => onSend(invoice.id)}
-          >
-            <Send className="h-4 w-4" /> Send to patient
-          </DropdownMenuItem>
-        )}
-        {canMarkPaid && onMarkPaid && viewerRole === "admin" && (
-          <DropdownMenuItem
-            className="gap-2"
-            disabled={isUpdating}
-            onClick={() => onMarkPaid(invoice.id)}
-          >
-            <CheckCircle2 className="h-4 w-4" /> Mark paid (manual)
-          </DropdownMenuItem>
-        )}
-        {canPay && onPay && (
-          <DropdownMenuItem
-            className="gap-2"
-            disabled={isPaying}
-            onClick={() => onPay(invoice.id)}
-          >
-            <CreditCard className="h-4 w-4" /> Pay via Stripe
-          </DropdownMenuItem>
-        )}
-        {canCancel && onCancel && (
-          <DropdownMenuItem
-            className="gap-2 text-amber-700"
-            disabled={isUpdating}
-            onClick={() => onCancel(invoice.id)}
-          >
-            <Ban className="h-4 w-4" /> Cancel
-          </DropdownMenuItem>
-        )}
-        {canRefund && onRefund && (
-          <DropdownMenuItem
-            className="gap-2"
-            disabled={isUpdating}
-            onClick={() => onRefund(invoice.id)}
-          >
-            <RotateCcw className="h-4 w-4" /> Refund
-          </DropdownMenuItem>
-        )}
-        {canDelete && onDelete && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              className="gap-2 text-red-600 focus:text-red-600"
-              disabled={isUpdating}
-              onSelect={(e) => {
-                e.preventDefault();
-                setDeleteOpen(true);
-              }}
-            >
-              <Trash2 className="h-4 w-4" /> Delete
+            <MenuIcon className="h-4 w-4" aria-hidden />
+            <span className="sr-only">Open invoice menu</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {!hideViewLink && (
+            <DropdownMenuItem asChild>
+              <Link href={invoiceDetailHref(viewerRole, invoice.id)} className="gap-2">
+                <Eye className="h-4 w-4" /> View
+              </Link>
             </DropdownMenuItem>
-          </>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
-    {canDelete && onDelete ? (
-      <ConfirmActionDialog
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-        variant="destructive"
-        title={DELETE_INVOICE_CONFIRM_TITLE}
-        subtitle={buildInvoiceDeleteConfirmSubtitle(invoice)}
-        confirmLabel="Delete"
-        cancelLabel="Cancel"
-        confirmDisabled={isUpdating}
-        confirmPending={isDeleting}
-        confirmPendingLabel="Deleting…"
-        onConfirm={async () => {
-          if (!onDelete) return;
-          await onDelete(invoice.id);
-          setDeleteOpen(false);
-        }}
-      />
-    ) : null}
+          )}
+          {canEditDetails && onEdit && (
+            <DropdownMenuItem
+              className="gap-2"
+              disabled={isUpdating}
+              onClick={() => onEdit(invoice)}
+            >
+              <Pencil className="h-4 w-4" /> Edit Invoice
+            </DropdownMenuItem>
+          )}
+          {canSend && onSend && (
+            <DropdownMenuItem
+              className="gap-2"
+              disabled={isUpdating}
+              onClick={() => onSend(invoice.id)}
+            >
+              <Send className="h-4 w-4" /> Send to patient
+            </DropdownMenuItem>
+          )}
+          {canMarkPaid && onMarkPaid && viewerRole === "admin" && (
+            <DropdownMenuItem
+              className="gap-2"
+              disabled={isUpdating}
+              onClick={() => onMarkPaid(invoice.id)}
+            >
+              <CheckCircle2 className="h-4 w-4" /> Mark Paid (Manual)
+            </DropdownMenuItem>
+          )}
+          {canPay && onPay && (
+            <DropdownMenuItem
+              className="gap-2"
+              disabled={isPaying}
+              onClick={() => onPay(invoice.id)}
+            >
+              <CreditCard className="h-4 w-4" /> Pay via Stripe
+            </DropdownMenuItem>
+          )}
+          {canCancel && onCancel && (
+            <DropdownMenuItem
+              className="gap-2 text-amber-700"
+              disabled={isUpdating}
+              onClick={() => onCancel(invoice.id)}
+            >
+              <Ban className="h-4 w-4" /> Cancel
+            </DropdownMenuItem>
+          )}
+          {canRefund && onRefund && (
+            <DropdownMenuItem
+              className="gap-2"
+              disabled={isUpdating}
+              onClick={() => onRefund(invoice.id)}
+            >
+              <RotateCcw className="h-4 w-4" /> Refund
+            </DropdownMenuItem>
+          )}
+          {canDelete && onDelete && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="gap-2 text-red-600 focus:text-red-600"
+                disabled={isUpdating}
+                onSelect={(e) => {
+                  e.preventDefault();
+                  setDeleteOpen(true);
+                }}
+              >
+                <Trash2 className="h-4 w-4" /> Delete
+              </DropdownMenuItem>
+            </>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+      {canDelete && onDelete ? (
+        <ConfirmActionDialog
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+          variant="destructive"
+          title={DELETE_INVOICE_CONFIRM_TITLE}
+          subtitle={buildInvoiceDeleteConfirmSubtitle(invoice)}
+          confirmLabel="Delete"
+          cancelLabel="Cancel"
+          confirmDisabled={isUpdating}
+          confirmPending={isDeleting}
+          confirmPendingLabel="Deleting…"
+          onConfirm={async () => {
+            if (!onDelete) return;
+            await onDelete(invoice.id);
+            setDeleteOpen(false);
+          }}
+        />
+      ) : null}
     </>
   );
 }

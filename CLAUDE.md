@@ -2,12 +2,12 @@
 
 Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
-## Latest (2026-06-17)
+## Latest (2026-06-18)
 
-- **C48.1:** `AppointmentWhenTableCell` — inline datetime range (`self-start`, single label; matches location row).
-- **C48 (REQ-0099):** `office_location` in `prefetchDoctors` · dialog close + Sonner only · Mark done `emeraldGlassBackButtonClass` · `resolveInvoiceVisitTitleHref` · owner+treating mutate (appt+invoice) · inline category duration.
-- **C47 (REQ-0098):** Invoice audit `created_by` · billing option cache seed · footer Edit Invoice · telehealth Video gate · `AppointmentDetailHeaderQuickActions`.
-- **Verify:** **1270/1270** · tsc · lint · build PASS.
+- **C50 (REQ-0101):** Cache-first invoice writes — `mergeInvoiceIntoAllCaches` + `syncInvoicesAfterWrite`; cross-tab `publishInvoiceMergeCrossTab`; appointment invalidation scopes (`status`/`schedule`/`billing`); patient/category/org patch-or-invalidate.
+- **C49 (REQ-0100):** `stable-query-fallbacks.ts` `EMPTY_*`; `controlPanelStaffDetailHref`; doctor snapshot prefetch skip for admin users; `AppointmentDialog` loop fix retained.
+- **C48.1:** `AppointmentWhenTableCell` inline datetime.
+- **Verify:** **1284/1284** · tsc · lint · build PASS.
 
 ## Doctor invoice RBAC (C48)
 
@@ -24,10 +24,10 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 | Write | Helper |
 |-------|--------|
-| Appointment | `invalidateAfterAppointmentMutation` (+ notifications) |
-| Patient | `invalidateEntityAffectingAppointments` + `invalidatePatientDetailAndSnapshot` |
-| Invoice | `invalidateInvoicesAndOverview` / billing helpers + `invalidateNotificationsAndCrossTab` on delete |
-| Organization | `invalidateOrganizations` / `invalidateOrganizationDetail` |
+| Appointment | `invalidateAfterAppointmentMutation` (scope: `status` \| `schedule` \| `billing`) |
+| Patient | `syncAppointmentsAfterPatientWrite` or `invalidateEntityAffectingAppointments` (create/delete) |
+| Invoice | `mergeInvoiceIntoAllCaches` + `syncInvoicesAfterWrite` + `publishInvoiceMergeCrossTab`; SSE still `invalidateInvoicesAndOverview` |
+| Organization | `invalidateOrganizations` (+ dashboard); skip `organizations.members` when cache merged |
 | Types/config | `invalidateAppointmentTypeDerived` |
 
 Cross-tab: `query-cache-cross-tab.ts`.
@@ -61,7 +61,7 @@ Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Agile V
 
-`.agile-v/STATE.md` · **C48.1 shipped** · **1270/1270** · HEAD **`8ba3acf`**.
+`.agile-v/STATE.md` · **C50 shipped (pending commit)** · **1284/1284**.
 
 ## Principle
 

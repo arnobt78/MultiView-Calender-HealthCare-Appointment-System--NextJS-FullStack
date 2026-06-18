@@ -65,6 +65,25 @@ describe("prefetchQueriesForDetailHref doctors (patient RBAC)", () => {
     });
     expect(apiClient).not.toHaveBeenCalledWith(`/api/users/${doctorId}`);
   });
+
+  it("skips doctor snapshot prefetch when cached user role is admin", async () => {
+    const adminUserId = "8f365018-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+    const qc = new QueryClient();
+    qc.setQueryData(queryKeys.auth.me, { id: "admin-1", role: "admin" });
+    apiClient.mockImplementation(async (url: string) => {
+      if (url === `/api/users/${adminUserId}`) {
+        return { user: { id: adminUserId, role: "admin" } };
+      }
+      throw new Error(`unexpected ${url}`);
+    });
+
+    prefetchQueriesForDetailHref(qc, `/control-panel/doctors/${adminUserId}`);
+
+    await vi.waitFor(() => {
+      expect(apiClient).toHaveBeenCalledWith(`/api/users/${adminUserId}`);
+    });
+    expect(apiClient).not.toHaveBeenCalledWith(`/api/doctors/${adminUserId}/snapshot`);
+  });
 });
 
 describe("prefetchQueriesForDetailHref organizations", () => {

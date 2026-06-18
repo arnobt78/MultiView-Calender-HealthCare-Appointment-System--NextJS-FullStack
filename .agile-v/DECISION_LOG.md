@@ -144,7 +144,7 @@
 | 2026-06-16T17:50:00Z | verify | C42.2 shipped | 1220/1220; tsc · lint · build PASS; commit `2b53b92` pushed | REQ-0093 |
 | 2026-06-16T17:50:00Z | init | Agile V session close C42.2 | STATE/ACTIVATION/AGENTS/config synced; ready C43 specify | REQ-0093 |
 | 2026-06-17T12:45:00Z | init | Infinity Loop session activation | agile-v-core+pipeline+lifecycle loaded; 1220/1220 PASS; HEAD eb3d576; 24 skills; PLAYBOOK+SESSION synced; ready C43 | REQ-0093 |
-| 2026-06-17T13:15:00Z | build | C43 appointment detail dialog edit | remove inline form; AppointmentDialogController; body skeleton; footer Update Visit | REQ-0094 |
+| 2026-06-17T13:15:00Z | build | C43 appointment detail dialog edit | remove inline form; AppointmentDialogController; body skeleton; footer Update Appointment | REQ-0094 |
 | 2026-06-17T13:15:00Z | verify | C43 automated verify PASS | 1223/1223; tsc · lint · build PASS | REQ-0094 |
 | 2026-06-17T13:35:00Z | build | C43.1 polish — assignees + invalidation | post-create sharing step; email toast; drop router.refresh; Sentry tunnel test | REQ-0094 |
 | 2026-06-17T13:35:00Z | verify | C43.1 automated verify PASS | 1227/1227; tsc · lint · build PASS | REQ-0094 |
@@ -156,3 +156,4 @@
 | 2026-06-17T18:30:00Z | accept | C47+C48 shipped to main | `1e252b0` feat appointments C47–C48 | REQ-0098, REQ-0099 |
 | 2026-06-17T17:12:00Z | fix | C48.1 When column inline datetime | `AppointmentWhenTableCell` self-start single label | REQ-0099 |
 | 2026-06-17T17:15:00Z | accept | C48.1 shipped to main | `8ba3acf` fix ui When column | REQ-0099 |
+| 2026-06-18T12:18:00Z | init | Infinity Loop session activation | agile-v-core+pipeline+lifecycle+compliance loaded; 1270/1270 PASS; HEAD 8cd0d6e; 24 skills active; STATE/ACTIVATION/config synced; ready C49 specify | REQ-0099 |

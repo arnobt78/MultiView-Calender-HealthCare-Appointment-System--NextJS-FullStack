@@ -2,9 +2,12 @@
  * Invoice row normalization + TanStack cache patch helpers.
  *
  * - mergeInvoiceIntoScopedListCaches — upsert after create/update (lists)
+ * - mergeInvoiceIntoDetailCache — upsert detail row after create/update
+ * - mergeInvoiceIntoAllCaches — list + scoped + detail (cache-first writes)
+ * - resolvePatientIdFromInvoiceRow — targeted patient invalidation without patients.all
  * - removeInvoiceFromScopedListCaches — remove after delete (lists)
  * - patchScopedTotalsFromListCaches — instant KPI from warm list caches (before invalidation refetch)
- * - invalidateAfterInvoiceWrite — server truth via query invalidation (cross-tab)
+ * - syncInvoicesAfterWrite — selective background sync after cache merge (cross-tab via invoice-merge)
  */
 
 import type { QueryClient } from "@tanstack/react-query";
@@ -201,6 +204,32 @@ function collectScopedPatchTargets(
     doctorIds: [...doctorIds],
     viewerTotals: true,
   };
+}
+
+/** Detail panel — PATCH response paints immediately without GET /api/invoices/:id. */
+export function mergeInvoiceIntoDetailCache(
+  queryClient: QueryClient,
+  invoice: InvoiceRow
+): void {
+  queryClient.setQueryData(queryKeys.invoices.detail(invoice.id), invoice);
+}
+
+/** Cache-first invoice write — list, scoped KPIs, and detail in one synchronous pass. */
+export function mergeInvoiceIntoAllCaches(
+  queryClient: QueryClient,
+  invoice: InvoiceRow
+): void {
+  mergeInvoiceIntoScopedListCaches(queryClient, invoice);
+  mergeInvoiceIntoDetailCache(queryClient, invoice);
+}
+
+/** Prefer invoice row fields before walking appointments cache (avoids patients.all bust). */
+export function resolvePatientIdFromInvoiceRow(
+  invoice: Pick<InvoiceRow, "visit_summary">
+): string | undefined {
+  const fromSummary = invoice.visit_summary?.patient_id?.trim();
+  if (fromSummary) return fromSummary;
+  return undefined;
 }
 
 /** Immediate list update after POST/PATCH — global + scoped org/doctor caches. */

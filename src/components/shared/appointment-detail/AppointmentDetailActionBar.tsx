@@ -49,7 +49,7 @@ type Props = {
 };
 
 /**
- * Footer actions — Print, Update Visit, billing, GCal, cancel/delete.
+ * Footer actions — Print, Update Appointment, billing, GCal, cancel/delete.
  * Video + Mark done live in `AppointmentDetailHeaderQuickActions`.
  */
 export function AppointmentDetailActionBar({
@@ -146,7 +146,7 @@ export function AppointmentDetailActionBar({
                 onClick={() => onEditClick?.()}
               >
                 <Pencil className="shrink-0" aria-hidden />
-                Update Visit
+                Update Appointment
               </ControlPanelGlassActionButton>
             ) : null}
             {canEdit && isGoogleConnected && !isCancelled ? (

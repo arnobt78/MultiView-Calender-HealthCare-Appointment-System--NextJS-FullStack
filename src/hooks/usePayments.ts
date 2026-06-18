@@ -1,15 +1,25 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { QueryClient } from "@tanstack/react-query";
 import { apiClient, handleApiError } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import {
   getPatientIdFromAppointmentCache,
   getPatientIdFromInvoiceCache,
+  getDoctorIdsFromInvoiceCache,
   getOrganizationIdFromInvoiceCache,
-  invalidateInvoicesAndOverview,
-  invalidateInvoicesBilling,
+  syncInvoicesAfterWrite,
   invalidateNotificationsAndCrossTab,
 } from "@/lib/query-client";
-import { mapApiInvoiceToRow, mergeInvoiceIntoScopedListCaches, removeInvoiceFromScopedListCaches } from "@/lib/billing-invoice-map";
+import {
+  mapApiInvoiceToRow,
+  mergeInvoiceIntoAllCaches,
+  removeInvoiceFromScopedListCaches,
+  resolvePatientIdFromInvoiceRow,
+} from "@/lib/billing-invoice-map";
+import {
+  publishInvoiceMergeCrossTab,
+  publishInvoiceRemoveCrossTab,
+} from "@/lib/query-cache-cross-tab";
 import { notify } from "@/lib/notify";
 import {
   formatInvoiceMoney,
@@ -20,40 +30,82 @@ import {
   fetchInvoicesListClient,
   INVOICES_LIST_STALE_MS,
 } from "@/lib/invoices-list-client";
+import { EMPTY_INVOICES } from "@/lib/stable-query-fallbacks";
 
 export type InvoicePayment = InvoicePaymentRow;
 export type Invoice = InvoiceRow;
 
-async function invalidateAfterInvoiceWrite(
-  queryClient: ReturnType<typeof useQueryClient>,
-  opts?: {
-    invoiceId?: string;
+function resolveInvoicePatientId(
+  queryClient: QueryClient,
+  row: InvoiceRow,
+  appointmentId?: string | null,
+  previousRow?: InvoiceRow | null
+): string | undefined {
+  return (
+    resolvePatientIdFromInvoiceRow(row) ??
+    (appointmentId ? getPatientIdFromAppointmentCache(queryClient, appointmentId) : undefined) ??
+    (previousRow ? resolvePatientIdFromInvoiceRow(previousRow) : undefined)
+  );
+}
+
+/** Cache-first path — merge locally, selective background sync, cross-tab row broadcast. */
+async function syncAfterInvoiceWrite(
+  queryClient: QueryClient,
+  row: InvoiceRow,
+  opts: {
+    scope: "billing" | "full";
+    previousRow?: InvoiceRow | null;
+    deleted?: boolean;
     appointmentId?: string | null;
     organizationId?: string | null;
-    /** Full bust (pay/refund/delete) vs lighter draft create/PATCH */
-    scope?: "billing" | "full";
   }
-) {
-  const patientId = opts?.appointmentId
-    ? getPatientIdFromAppointmentCache(queryClient, opts.appointmentId)
-    : opts?.invoiceId
-      ? getPatientIdFromInvoiceCache(queryClient, opts.invoiceId)
-      : undefined;
+): Promise<void> {
+  const previous = opts.previousRow ?? null;
+  const totalsChanged =
+    Boolean(opts.deleted) ||
+    !previous ||
+    previous.amount !== row.amount ||
+    previous.status !== row.status;
+
+  const patientId = resolveInvoicePatientId(
+    queryClient,
+    row,
+    opts.appointmentId ?? row.appointment_id,
+    previous
+  );
   const organizationId =
-    opts?.organizationId ??
-    (opts?.invoiceId
-      ? getOrganizationIdFromInvoiceCache(queryClient, opts.invoiceId)
-      : undefined);
-  const invalidationOpts = {
-    patientId: patientId ?? undefined,
-    invoiceId: opts?.invoiceId ?? undefined,
-    organizationId: organizationId ?? undefined,
-  };
-  if (opts?.scope === "billing") {
-    await invalidateInvoicesBilling(queryClient, invalidationOpts);
+    opts.organizationId ?? row.organization_id ?? previous?.organization_id ?? undefined;
+
+  if (opts.deleted && previous) {
+    removeInvoiceFromScopedListCaches(queryClient, previous);
+    await syncInvoicesAfterWrite(queryClient, {
+      invoiceId: row.id,
+      patientId,
+      organizationId,
+      scope: opts.scope,
+      totalsChanged: true,
+      status: previous.status,
+      cachesMerged: true,
+      deleted: true,
+    });
+    publishInvoiceRemoveCrossTab(row.id, { scope: opts.scope, patientId });
     return;
   }
-  await invalidateInvoicesAndOverview(queryClient, invalidationOpts);
+
+  mergeInvoiceIntoAllCaches(queryClient, row);
+  const doctorIds = getDoctorIdsFromInvoiceCache(queryClient, row.id);
+
+  await syncInvoicesAfterWrite(queryClient, {
+    invoiceId: row.id,
+    patientId,
+    organizationId,
+    doctorIds,
+    scope: opts.scope,
+    totalsChanged,
+    status: row.status,
+    cachesMerged: true,
+  });
+  publishInvoiceMergeCrossTab(row, { scope: opts.scope, patientId });
 }
 
 export type UsePaymentsOptions = {
@@ -74,7 +126,6 @@ export function usePayments(options?: UsePaymentsOptions) {
     queryFn: () => fetchInvoicesListClient(),
     initialData: invoicesInitialData,
     staleTime: INVOICES_LIST_STALE_MS,
-    // SSR/cache hit — skip mount refetch; invalidateAfterInvoiceWrite still busts list everywhere.
     refetchOnMount: invoicesInitialData !== undefined ? false : true,
   });
 
@@ -87,9 +138,15 @@ export function usePayments(options?: UsePaymentsOptions) {
       return data.url;
     },
     onSuccess: async (url, invoiceId) => {
-      // Stripe redirect — no list merge; user leaves page; return URL triggers invalidate.
-      await invalidateAfterInvoiceWrite(queryClient, { invoiceId });
-      // Always navigate to fresh Checkout URL (server expired prior open session).
+      await syncInvoicesAfterWrite(queryClient, {
+        invoiceId,
+        patientId: getPatientIdFromInvoiceCache(queryClient, invoiceId),
+        organizationId: getOrganizationIdFromInvoiceCache(queryClient, invoiceId),
+        doctorIds: getDoctorIdsFromInvoiceCache(queryClient, invoiceId),
+        scope: "full",
+        totalsChanged: true,
+        cachesMerged: false,
+      });
       window.location.assign(url);
     },
     onError: (error) => {
@@ -121,12 +178,11 @@ export function usePayments(options?: UsePaymentsOptions) {
         unit: variables.amount != null ? "eur" : "cents",
       });
       notify.crud(invoiceCrudMessage("created", { label, amountFormatted }));
-      mergeInvoiceIntoScopedListCaches(queryClient, mapApiInvoiceToRow(data.invoice));
-      await invalidateAfterInvoiceWrite(queryClient, {
-        invoiceId: data.invoice.id,
+      const row = mapApiInvoiceToRow(data.invoice);
+      await syncAfterInvoiceWrite(queryClient, row, {
+        scope: "billing",
         appointmentId: data.invoice.appointment_id ?? variables.appointment_id,
         organizationId: data.invoice.organization_id ?? variables.organization_id,
-        scope: "billing",
       });
     },
     onError: (error) => handleApiError(error, "Failed to create invoice"),
@@ -150,12 +206,16 @@ export function usePayments(options?: UsePaymentsOptions) {
           label: data.invoice.description?.trim() || "Invoice",
         })
       );
-      mergeInvoiceIntoScopedListCaches(queryClient, mapApiInvoiceToRow(data.invoice));
-      await invalidateAfterInvoiceWrite(queryClient, {
-        invoiceId: data.invoice.id,
+      const row = mapApiInvoiceToRow(data.invoice);
+      const previous =
+        queryClient.getQueryData<Invoice[]>(queryKeys.invoices.all)?.find((i) => i.id === row.id) ??
+        queryClient.getQueryData<Invoice>(queryKeys.invoices.detail(row.id)) ??
+        null;
+      await syncAfterInvoiceWrite(queryClient, row, {
+        scope: data.invoice.status === "paid" ? "full" : "billing",
+        previousRow: previous,
         appointmentId: data.invoice.appointment_id,
         organizationId: data.invoice.organization_id,
-        scope: data.invoice.status === "paid" ? "full" : "billing",
       });
     },
     onError: (error) => handleApiError(error, "Failed to update invoice"),
@@ -178,9 +238,13 @@ export function usePayments(options?: UsePaymentsOptions) {
           }),
         })
       );
-      mergeInvoiceIntoScopedListCaches(queryClient, mapApiInvoiceToRow(data.invoice));
-      await invalidateAfterInvoiceWrite(queryClient, {
-        invoiceId: data.invoice.id,
+      const row = mapApiInvoiceToRow(data.invoice);
+      const previous =
+        queryClient.getQueryData<Invoice[]>(queryKeys.invoices.all)?.find((i) => i.id === row.id) ??
+        null;
+      await syncAfterInvoiceWrite(queryClient, row, {
+        scope: "full",
+        previousRow: previous,
         appointmentId: data.invoice.appointment_id,
         organizationId: data.invoice.organization_id,
       });
@@ -196,9 +260,13 @@ export function usePayments(options?: UsePaymentsOptions) {
       }),
     onSuccess: async (data) => {
       notify.crud(invoiceCrudMessage("updated", { label: "Invoice refunded" }));
-      mergeInvoiceIntoScopedListCaches(queryClient, mapApiInvoiceToRow(data.invoice));
-      await invalidateAfterInvoiceWrite(queryClient, {
-        invoiceId: data.invoice.id,
+      const row = mapApiInvoiceToRow(data.invoice);
+      const previous =
+        queryClient.getQueryData<Invoice[]>(queryKeys.invoices.all)?.find((i) => i.id === row.id) ??
+        null;
+      await syncAfterInvoiceWrite(queryClient, row, {
+        scope: "full",
+        previousRow: previous,
         appointmentId: data.invoice.appointment_id,
         organizationId: data.invoice.organization_id,
       });
@@ -211,7 +279,7 @@ export function usePayments(options?: UsePaymentsOptions) {
       apiClient(`/api/invoices/${invoiceId}`, { method: "DELETE" }),
     onMutate: async (invoiceId) => {
       const invoices =
-        queryClient.getQueryData<Invoice[]>(queryKeys.invoices.all) ?? [];
+        queryClient.getQueryData<Invoice[]>(queryKeys.invoices.all) ?? EMPTY_INVOICES;
       const deleted = invoices.find((inv) => inv.id === invoiceId) ?? null;
       return { deleted };
     },
@@ -227,20 +295,30 @@ export function usePayments(options?: UsePaymentsOptions) {
         : undefined;
       notify.crud(invoiceCrudMessage("deleted", { label, amountFormatted }));
       if (deleted) {
-        removeInvoiceFromScopedListCaches(queryClient, deleted);
+        await syncAfterInvoiceWrite(queryClient, deleted, {
+          scope: "full",
+          previousRow: deleted,
+          deleted: true,
+          appointmentId: deleted.appointment_id,
+          organizationId: deleted.organization_id,
+        });
+      } else {
+        await syncInvoicesAfterWrite(queryClient, {
+          invoiceId,
+          scope: "full",
+          totalsChanged: true,
+          cachesMerged: false,
+          deleted: true,
+        });
+        publishInvoiceRemoveCrossTab(invoiceId, { scope: "full" });
       }
-      await invalidateAfterInvoiceWrite(queryClient, {
-        invoiceId,
-        appointmentId: deleted?.appointment_id,
-        organizationId: deleted?.organization_id,
-      });
       await invalidateNotificationsAndCrossTab(queryClient);
     },
     onError: (error) => handleApiError(error, "Failed to delete invoice"),
   });
 
   return {
-    invoices: invoicesQuery.data || [],
+    invoices: invoicesQuery.data ?? EMPTY_INVOICES,
     isLoading: invoicesQuery.isLoading,
     isError: invoicesQuery.isError,
     error: invoicesQuery.error,

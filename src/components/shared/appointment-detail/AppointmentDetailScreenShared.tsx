@@ -231,7 +231,7 @@ export function AppointmentDetailScreenShared({
     initialDoctorsDirectory,
   ]);
 
-  /** Warm doctor directory before first Update Visit — complements SSR seed + dialog mount query. */
+  /** Warm doctor directory before first Update Appointment — complements SSR seed + dialog mount query. */
   useEffect(() => {
     if (!canEdit || !hasAppointmentBody) return;
     const appt = detail.appointment;
@@ -457,268 +457,268 @@ export function AppointmentDetailScreenShared({
             <AppointmentDetailBodySkeleton tone={tone} toneClasses={toneClasses} />
           ) : (
             <>
-          <div className={toneClasses.schemaSectionClass}>
-            <div className="flex flex-wrap items-start gap-3">
-              {category ? (
-                <CategoryBrandMark
-                  color={category.color}
-                  icon={category.icon}
-                  variant="brand"
-                  size="hero"
-                  className="shrink-0"
-                />
-              ) : (
-                <Skeleton className="h-16 w-16 shrink-0 rounded-full" aria-hidden />
-              )}
-              <div className="min-w-0 flex-1 space-y-2">
-                {/* Visit meta chips — type + duration · fee · status · telehealth (inline wrap, uniform h-6). */}
-                <AppointmentVisitMetaBadgeRow
-                  appointmentTypeName={visitMeta.appointmentTypeName}
-                  durationMinutes={visitMeta.durationMinutes}
-                  visitFeeCents={visitMeta.visitFeeCents}
-                  showVisitFeeEstimateHint={visitMeta.showVisitFeeEstimateHint}
-                  status={appointment.status}
-                  showTelehealthBadge={appointment.is_telehealth ?? false}
-                  invoiceDisplayStatus={visitMetaBilling.invoiceDisplayStatus}
-                  showInvoiceBadge={visitMetaBilling.showInvoice}
-                  paymentStatus={visitMetaBilling.latestPayment?.status}
-                  showPaymentBadge={visitMetaBilling.showPayment}
-                  billingBadgesLoading={billingBadgesLoading}
-                />
-                <p className="text-sm text-gray-600">
-                  <Calendar className="mr-1 inline h-3.5 w-3.5" aria-hidden />
-                  {appointment.start
-                    ? format(new Date(appointment.start), "PPP · p")
-                    : "—"}
-                  {appointment.end ? ` – ${format(new Date(appointment.end), "p")}` : ""}
-                </p>
-                {(() => {
-                  const place = resolveAppointmentDisplayLocation(appointment);
-                  return place ? (
-                    <p className="text-sm text-gray-600">
-                      <MapPin className="mr-1 inline h-3.5 w-3.5" aria-hidden />
-                      {place}
-                    </p>
-                  ) : null;
-                })()}
-              </div>
-            </div>
-
-            <dl className={toneClasses.definitionListClass}>
-              <DefinitionRow icon={Hash} label="Appointment ID" toneClasses={toneClasses}>
-                <EntityIdCopyInline value={appointment.id} />
-              </DefinitionRow>
-              {appointment.chief_complaint ? (
-                <DefinitionRow icon={Stethoscope} label="Chief complaint" toneClasses={toneClasses}>
-                  {appointment.chief_complaint}
-                </DefinitionRow>
-              ) : null}
-              {category ? (
-                <DefinitionRow icon={Tags} label="Category" toneClasses={toneClasses}>
-                  {categoryHref ? (
-                    <CategoryInlineLink
-                      categoryId={category.id}
-                      label={category.label}
+              <div className={toneClasses.schemaSectionClass}>
+                <div className="flex flex-wrap items-start gap-3">
+                  {category ? (
+                    <CategoryBrandMark
                       color={category.color}
                       icon={category.icon}
-                      markSize="compact"
-                      linkClassName="text-sm font-medium"
+                      variant="brand"
+                      size="hero"
+                      className="shrink-0"
                     />
                   ) : (
-                    <span className="inline-flex items-center gap-1.5">
-                      <CategoryBrandMark
-                        color={category.color}
-                        icon={category.icon}
-                        variant="brand"
-                        size="compact"
-                      />
-                      <span className="font-medium text-sky-700">{category.label}</span>
-                    </span>
+                    <Skeleton className="h-16 w-16 shrink-0 rounded-full" aria-hidden />
                   )}
-                </DefinitionRow>
-              ) : null}
-            </dl>
-          </div>
+                  <div className="min-w-0 flex-1 space-y-2">
+                    {/* Visit meta chips — type + duration · fee · status · telehealth (inline wrap, uniform h-6). */}
+                    <AppointmentVisitMetaBadgeRow
+                      appointmentTypeName={visitMeta.appointmentTypeName}
+                      durationMinutes={visitMeta.durationMinutes}
+                      visitFeeCents={visitMeta.visitFeeCents}
+                      showVisitFeeEstimateHint={visitMeta.showVisitFeeEstimateHint}
+                      status={appointment.status}
+                      showTelehealthBadge={appointment.is_telehealth ?? false}
+                      invoiceDisplayStatus={visitMetaBilling.invoiceDisplayStatus}
+                      showInvoiceBadge={visitMetaBilling.showInvoice}
+                      paymentStatus={visitMetaBilling.latestPayment?.status}
+                      showPaymentBadge={visitMetaBilling.showPayment}
+                      billingBadgesLoading={billingBadgesLoading}
+                    />
+                    <p className="text-sm text-gray-600">
+                      <Calendar className="mr-1 inline h-3.5 w-3.5" aria-hidden />
+                      {appointment.start
+                        ? format(new Date(appointment.start), "PPP · p")
+                        : "—"}
+                      {appointment.end ? ` – ${format(new Date(appointment.end), "p")}` : ""}
+                    </p>
+                    {(() => {
+                      const place = resolveAppointmentDisplayLocation(appointment);
+                      return place ? (
+                        <p className="text-sm text-gray-600">
+                          <MapPin className="mr-1 inline h-3.5 w-3.5" aria-hidden />
+                          {place}
+                        </p>
+                      ) : null;
+                    })()}
+                  </div>
+                </div>
 
-          <div
-            className={cn(
-              entityDetailSnapshotSectionShellClass,
-              tone === "violet" && "border-violet-100/80"
-            )}
-          >
-            <EntityDetailSnapshotSectionHeading
-              icon={Users}
-              sectionIconCircleClass={toneClasses.sectionIconCircleClass}
-              iconClassName={toneClasses.sectionIconClass}
-            >
-              {relatedPeopleTitle}
-            </EntityDetailSnapshotSectionHeading>
-            <dl className={toneClasses.definitionListClass}>
-              {patient ? (
-                <DefinitionRow icon={User} label="Patient" toneClasses={toneClasses} identity>
-                  <PatientIdentityCell
-                    href={patientDetailHref(entityRole, patient.id)}
-                    linkPatient={linkPatientInTitle}
-                    name={`${patient.firstname} ${patient.lastname}`.trim()}
-                    email={patient.email}
-                    layout="inline"
-                    careLevel={patient.care_level}
-                    patient={{
-                      id: patient.id,
-                      firstname: patient.firstname,
-                      lastname: patient.lastname,
-                      email: patient.email ?? "",
-                      birth_date: patient.birth_date,
-                      clinical_profile: patient.clinical_profile,
-                    }}
-                  />
-                </DefinitionRow>
-              ) : null}
-              {detail.calendarOwner ? (
-                <DefinitionRow icon={Calendar} label="Calendar owner" toneClasses={toneClasses} identity>
-                  <DoctorIdentityCell
-                    doctorId={detail.calendarOwner.id}
-                    name={clinicianDisplayNameOnly(detail.calendarOwner)}
-                    email={detail.calendarOwner.email}
-                    image={detail.calendarOwner.image}
-                    viewerRole={entityRole}
-                    linkKind={ownerLinkKind}
-                    staffRole={detail.calendarOwner.role}
-                    doctorById={staffById}
-                    layout="inline"
-                    showRoleBadge
-                    showSpecialty={detail.calendarOwner.role === "doctor"}
-                  />
-                </DefinitionRow>
-              ) : null}
-              {detail.treatingPhysician &&
-              detail.treatingPhysician.id !== detail.calendarOwner?.id ? (
-                <DefinitionRow icon={Stethoscope} label="Treating physician" toneClasses={toneClasses} identity>
-                  <DoctorIdentityCell
-                    doctorId={detail.treatingPhysician.id}
-                    name={clinicianDisplayNameOnly(detail.treatingPhysician)}
-                    email={detail.treatingPhysician.email}
-                    image={detail.treatingPhysician.image}
-                    specialty={detail.treatingPhysician.specialty}
-                    viewerRole={entityRole}
-                    linkKind={treatingLinkKind}
-                    staffRole={detail.treatingPhysician.role}
-                    doctorById={staffById}
-                    layout="inline"
-                    showRoleBadge
-                    showSpecialty
-                  />
-                </DefinitionRow>
-              ) : null}
-              {patient?.primary_doctor_id ? (
-                <DefinitionRow icon={Stethoscope} label="Primary doctor" toneClasses={toneClasses} identity>
-                  <DoctorIdentityCell
-                    doctorId={patient.primary_doctor_id}
-                    name={primaryDoctorName}
-                    email={patient.primary_doctor_email}
-                    image={patient.primary_doctor_image}
-                    specialty={patient.primary_doctor_specialty}
-                    viewerRole={entityRole}
-                    linkKind={treatingLinkKind}
-                    staffRole="doctor"
-                    doctorById={staffById}
-                    layout="inline"
-                    showRoleBadge
-                    showSpecialty
-                  />
-                </DefinitionRow>
-              ) : null}
-            </dl>
-          </div>
-
-          {(showNotes && appointment.notes) || (appointment.attachments?.length ?? 0) > 0 ? (
-            <div className={cn("border-t pt-3", toneClasses.sectionDividerClass)}>
-              <EntityDetailSnapshotSectionHeading
-                icon={FileText}
-                sectionIconCircleClass={toneClasses.sectionIconCircleClass}
-                iconClassName={toneClasses.sectionIconClass}
-              >
-                Clinical
-              </EntityDetailSnapshotSectionHeading>
-              <dl className={cn(toneClasses.definitionListClass, "mt-2")}>
-                {showNotes ? (
-                  <DefinitionRow icon={FileText} label="Notes" toneClasses={toneClasses}>
-                    {clinicalEmptyOr(appointment.notes, "inline")}
+                <dl className={toneClasses.definitionListClass}>
+                  <DefinitionRow icon={Hash} label="Appointment ID" toneClasses={toneClasses}>
+                    <EntityIdCopyInline value={appointment.id} />
                   </DefinitionRow>
-                ) : null}
-                <DefinitionRow icon={FileText} label="Attachments" toneClasses={toneClasses}>
-                  {appointment.attachments?.length
-                    ? `${appointment.attachments.length} file(s)`
-                    : "—"}
-                </DefinitionRow>
-              </dl>
-            </div>
-          ) : null}
+                  {appointment.chief_complaint ? (
+                    <DefinitionRow icon={Stethoscope} label="Chief complaint" toneClasses={toneClasses}>
+                      {appointment.chief_complaint}
+                    </DefinitionRow>
+                  ) : null}
+                  {category ? (
+                    <DefinitionRow icon={Tags} label="Category" toneClasses={toneClasses}>
+                      {categoryHref ? (
+                        <CategoryInlineLink
+                          categoryId={category.id}
+                          label={category.label}
+                          color={category.color}
+                          icon={category.icon}
+                          markSize="compact"
+                          linkClassName="text-sm font-medium"
+                        />
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5">
+                          <CategoryBrandMark
+                            color={category.color}
+                            icon={category.icon}
+                            variant="brand"
+                            size="compact"
+                          />
+                          <span className="font-medium text-sky-700">{category.label}</span>
+                        </span>
+                      )}
+                    </DefinitionRow>
+                  ) : null}
+                </dl>
+              </div>
 
-          <EntityDetailRecordAuditCard
-            createdAt={appointment.created_at}
-            updatedAt={appointment.updated_at}
-            createdBy={detail.auditCreatedBy}
-            updatedBy={detail.auditUpdatedBy}
-            viewerRole={entityRole}
-            extraRows={invoiceAuditExtraRows}
-            iconCircleClass={toneClasses.fieldIconCircleClass}
-            iconClassName={toneClasses.fieldIconClass}
-          />
-
-          {detail.assignees.length > 0 ? (
-            <div className={cn(entityDetailSnapshotSectionShellClass, tone === "violet" && "border-violet-100/80")}>
-              <EntityDetailSnapshotSectionHeading
-                icon={Users}
-                sectionIconCircleClass={toneClasses.sectionIconCircleClass}
-                iconClassName={toneClasses.sectionIconClass}
-                count={detail.assignees.length}
+              <div
+                className={cn(
+                  entityDetailSnapshotSectionShellClass,
+                  tone === "violet" && "border-violet-100/80"
+                )}
               >
-                Assignees
-              </EntityDetailSnapshotSectionHeading>
-              <ul className="mt-2 space-y-1 text-sm">
-                {detail.assignees.map((a) => (
-                  <li
-                    key={a.id}
-                    className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 py-1 last:border-0"
-                  >
-                    <span>{a.displayLabel}</span>
-                    <span className="flex gap-1">
-                      <Badge variant="outline" className="text-xs capitalize">
-                        {a.permission ?? "read"}
-                      </Badge>
-                      <Badge variant="secondary" className="text-xs capitalize">
-                        {a.status ?? "pending"}
-                      </Badge>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
+                <EntityDetailSnapshotSectionHeading
+                  icon={Users}
+                  sectionIconCircleClass={toneClasses.sectionIconCircleClass}
+                  iconClassName={toneClasses.sectionIconClass}
+                >
+                  {relatedPeopleTitle}
+                </EntityDetailSnapshotSectionHeading>
+                <dl className={toneClasses.definitionListClass}>
+                  {patient ? (
+                    <DefinitionRow icon={User} label="Patient" toneClasses={toneClasses} identity>
+                      <PatientIdentityCell
+                        href={patientDetailHref(entityRole, patient.id)}
+                        linkPatient={linkPatientInTitle}
+                        name={`${patient.firstname} ${patient.lastname}`.trim()}
+                        email={patient.email}
+                        layout="inline"
+                        careLevel={patient.care_level}
+                        patient={{
+                          id: patient.id,
+                          firstname: patient.firstname,
+                          lastname: patient.lastname,
+                          email: patient.email ?? "",
+                          birth_date: patient.birth_date,
+                          clinical_profile: patient.clinical_profile,
+                        }}
+                      />
+                    </DefinitionRow>
+                  ) : null}
+                  {detail.calendarOwner ? (
+                    <DefinitionRow icon={Calendar} label="Calendar owner" toneClasses={toneClasses} identity>
+                      <DoctorIdentityCell
+                        doctorId={detail.calendarOwner.id}
+                        name={clinicianDisplayNameOnly(detail.calendarOwner)}
+                        email={detail.calendarOwner.email}
+                        image={detail.calendarOwner.image}
+                        viewerRole={entityRole}
+                        linkKind={ownerLinkKind}
+                        staffRole={detail.calendarOwner.role}
+                        doctorById={staffById}
+                        layout="inline"
+                        showRoleBadge
+                        showSpecialty={detail.calendarOwner.role === "doctor"}
+                      />
+                    </DefinitionRow>
+                  ) : null}
+                  {detail.treatingPhysician &&
+                    detail.treatingPhysician.id !== detail.calendarOwner?.id ? (
+                    <DefinitionRow icon={Stethoscope} label="Treating physician" toneClasses={toneClasses} identity>
+                      <DoctorIdentityCell
+                        doctorId={detail.treatingPhysician.id}
+                        name={clinicianDisplayNameOnly(detail.treatingPhysician)}
+                        email={detail.treatingPhysician.email}
+                        image={detail.treatingPhysician.image}
+                        specialty={detail.treatingPhysician.specialty}
+                        viewerRole={entityRole}
+                        linkKind={treatingLinkKind}
+                        staffRole={detail.treatingPhysician.role}
+                        doctorById={staffById}
+                        layout="inline"
+                        showRoleBadge
+                        showSpecialty
+                      />
+                    </DefinitionRow>
+                  ) : null}
+                  {patient?.primary_doctor_id ? (
+                    <DefinitionRow icon={Stethoscope} label="Primary doctor" toneClasses={toneClasses} identity>
+                      <DoctorIdentityCell
+                        doctorId={patient.primary_doctor_id}
+                        name={primaryDoctorName}
+                        email={patient.primary_doctor_email}
+                        image={patient.primary_doctor_image}
+                        specialty={patient.primary_doctor_specialty}
+                        viewerRole={entityRole}
+                        linkKind={treatingLinkKind}
+                        staffRole="doctor"
+                        doctorById={staffById}
+                        layout="inline"
+                        showRoleBadge
+                        showSpecialty
+                      />
+                    </DefinitionRow>
+                  ) : null}
+                </dl>
+              </div>
 
-          <div
-            className={cn(
-              entityDetailSnapshotSectionShellClass,
-              tone === "violet" && "border-violet-100/80"
-            )}
-          >
-            <EntityDetailSnapshotSectionHeading
-              icon={Receipt}
-              sectionIconCircleClass={toneClasses.sectionIconCircleClass}
-              iconClassName={toneClasses.sectionIconClass}
-              count={linkedInvoices.length}
-            >
-              {relatedBillingTitle}
-            </EntityDetailSnapshotSectionHeading>
-            <InvoiceClinicalListTable
-              invoices={linkedInvoices}
-              viewerRole={entityRole}
-              isLoading={billingBadgesLoading}
-              emptyMessage="No invoice for this visit"
-              tableFrameClassName="rounded-md border border-slate-200/80 bg-white shadow-none"
-            />
-          </div>
+              {(showNotes && appointment.notes) || (appointment.attachments?.length ?? 0) > 0 ? (
+                <div className={cn("border-t pt-3", toneClasses.sectionDividerClass)}>
+                  <EntityDetailSnapshotSectionHeading
+                    icon={FileText}
+                    sectionIconCircleClass={toneClasses.sectionIconCircleClass}
+                    iconClassName={toneClasses.sectionIconClass}
+                  >
+                    Clinical
+                  </EntityDetailSnapshotSectionHeading>
+                  <dl className={cn(toneClasses.definitionListClass, "mt-2")}>
+                    {showNotes ? (
+                      <DefinitionRow icon={FileText} label="Notes" toneClasses={toneClasses}>
+                        {clinicalEmptyOr(appointment.notes, "inline")}
+                      </DefinitionRow>
+                    ) : null}
+                    <DefinitionRow icon={FileText} label="Attachments" toneClasses={toneClasses}>
+                      {appointment.attachments?.length
+                        ? `${appointment.attachments.length} file(s)`
+                        : "—"}
+                    </DefinitionRow>
+                  </dl>
+                </div>
+              ) : null}
+
+              <EntityDetailRecordAuditCard
+                createdAt={appointment.created_at}
+                updatedAt={appointment.updated_at}
+                createdBy={detail.auditCreatedBy}
+                updatedBy={detail.auditUpdatedBy}
+                viewerRole={entityRole}
+                extraRows={invoiceAuditExtraRows}
+                iconCircleClass={toneClasses.fieldIconCircleClass}
+                iconClassName={toneClasses.fieldIconClass}
+              />
+
+              {detail.assignees.length > 0 ? (
+                <div className={cn(entityDetailSnapshotSectionShellClass, tone === "violet" && "border-violet-100/80")}>
+                  <EntityDetailSnapshotSectionHeading
+                    icon={Users}
+                    sectionIconCircleClass={toneClasses.sectionIconCircleClass}
+                    iconClassName={toneClasses.sectionIconClass}
+                    count={detail.assignees.length}
+                  >
+                    Assignees
+                  </EntityDetailSnapshotSectionHeading>
+                  <ul className="mt-2 space-y-1 text-sm">
+                    {detail.assignees.map((a) => (
+                      <li
+                        key={a.id}
+                        className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 py-1 last:border-0"
+                      >
+                        <span>{a.displayLabel}</span>
+                        <span className="flex gap-1">
+                          <Badge variant="outline" className="text-xs capitalize">
+                            {a.permission ?? "read"}
+                          </Badge>
+                          <Badge variant="secondary" className="text-xs capitalize">
+                            {a.status ?? "pending"}
+                          </Badge>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+
+              <div
+                className={cn(
+                  entityDetailSnapshotSectionShellClass,
+                  tone === "violet" && "border-violet-100/80"
+                )}
+              >
+                <EntityDetailSnapshotSectionHeading
+                  icon={Receipt}
+                  sectionIconCircleClass={toneClasses.sectionIconCircleClass}
+                  iconClassName={toneClasses.sectionIconClass}
+                  count={linkedInvoices.length}
+                >
+                  {relatedBillingTitle}
+                </EntityDetailSnapshotSectionHeading>
+                <InvoiceClinicalListTable
+                  invoices={linkedInvoices}
+                  viewerRole={entityRole}
+                  isLoading={billingBadgesLoading}
+                  emptyMessage="No invoice for this visit"
+                  tableFrameClassName="rounded-md border border-slate-200/80 bg-white shadow-none"
+                />
+              </div>
 
             </>
           )}

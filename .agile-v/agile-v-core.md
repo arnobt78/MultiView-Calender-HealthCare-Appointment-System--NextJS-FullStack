@@ -46,4 +46,4 @@ Read `STATE.md` first · pass paths not dumps · fresh sub-agent context · task
 
 ## Resume (every session)
 
-Read `ACTIVATION.md` → `STATE.md` · Cycle **C34.1 shipped** · Verify PASS **1103/1103** · HEAD `768a422` · Gates C3–C34 pending · Next: gate approve → archive → **C35 Specify**
+Read `ACTIVATION.md` → `STATE.md` · Cycle **C48.1 shipped** · Verify PASS **1270/1270** · HEAD `8cd0d6e` · Infinity Loop ACTIVE · Next: **C49 Specify** — **REQ-0100** before code

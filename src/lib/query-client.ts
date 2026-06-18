@@ -235,6 +235,37 @@ export async function invalidateEntityAffectingAppointments(
   );
 }
 
+/**
+ * After category list/detail cache patch — bust appointments + analytics only (not categories.all).
+ */
+export async function syncAppointmentsAfterCategoryWrite(queryClient: QueryClient) {
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all }),
+    invalidateDashboardOverview(queryClient),
+    invalidateInsightsAndAnalytics(queryClient),
+    invalidateDoctorPortal(queryClient),
+    invalidateAdminPortal(queryClient),
+  ]);
+  publishQueryCacheCrossTab(CROSS_TAB_SCOPES.ENTITY_CATEGORIES);
+}
+
+/**
+ * After patient list/detail cache patch — bust appointments + portals without re-fetching patients.all.
+ */
+export async function syncAppointmentsAfterPatientWrite(queryClient: QueryClient) {
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all }),
+    invalidateDashboardOverview(queryClient),
+    invalidateInsightsAndAnalytics(queryClient),
+    invalidateDoctorPortal(queryClient),
+    invalidateAdminPortal(queryClient),
+    invalidatePatientPortal(queryClient),
+    invalidateDoctorAssignedPatients(queryClient),
+    queryClient.invalidateQueries({ queryKey: queryKeys.doctors.all }),
+  ]);
+  publishQueryCacheCrossTab(CROSS_TAB_SCOPES.ENTITY_PATIENTS);
+}
+
 /** Doctor detail primary-doctor roster — bust on patient CRUD / primary_doctor_id changes. */
 export async function invalidateDoctorAssignedPatients(queryClient: QueryClient) {
   await queryClient.invalidateQueries({
@@ -294,7 +325,7 @@ export async function invalidateOrganizationDetail(
 
 /**
  * Lighter bust after draft create / metadata PATCH — skips insights + doctors directory.
- * Prefer `mergeInvoiceIntoScopedListCaches` in the mutation `onSuccess` before calling this.
+ * Prefer `mergeInvoiceIntoAllCaches` in mutation `onSuccess`, then `syncInvoicesAfterWrite`.
  */
 export async function invalidateInvoicesBilling(
   queryClient: QueryClient,
@@ -378,6 +409,80 @@ export async function invalidateInvoicesAndOverview(
   publishQueryCacheCrossTab(CROSS_TAB_SCOPES.INVOICES);
 }
 
+/** Options for cache-first invoice writes — lists/detail merged before this runs. */
+export type InvoiceWriteSyncOpts = {
+  invoiceId: string;
+  patientId?: string;
+  organizationId?: string;
+  doctorIds?: string[];
+  scope: "billing" | "full";
+  /** Status or amount changed — dashboard KPI tiles need server totals. */
+  totalsChanged?: boolean;
+  status?: string;
+  /** False when cold tab has no merged caches (falls back to list/detail invalidation). */
+  cachesMerged?: boolean;
+  /** DELETE path — row removed from warm caches; still bust billing pickers. */
+  deleted?: boolean;
+};
+
+function invoiceStatusAffectsDashboardTotals(
+  status?: string,
+  totalsChanged?: boolean
+): boolean {
+  if (totalsChanged) return true;
+  return status === "paid" || status === "cancelled" || status === "refunded";
+}
+
+/**
+ * Selective background sync after invoice CRUD when TanStack caches were patched first.
+ * Skips invoices.all / detail / scoped lists when `cachesMerged` — UI already fresh.
+ */
+export async function syncInvoicesAfterWrite(
+  queryClient: QueryClient,
+  opts: InvoiceWriteSyncOpts
+): Promise<void> {
+  const organizationId =
+    opts.organizationId ??
+    getOrganizationIdFromInvoiceCache(queryClient, opts.invoiceId);
+  const doctorIds =
+    opts.doctorIds ?? getDoctorIdsFromInvoiceCache(queryClient, opts.invoiceId);
+  const cachesMerged = opts.cachesMerged !== false && !opts.deleted;
+
+  const tasks: Promise<void>[] = [
+    queryClient.invalidateQueries({ queryKey: queryKeys.billing.root }),
+    invalidatePatientPortal(queryClient),
+    invalidateDoctorPortal(queryClient),
+    invalidateAdminPortal(queryClient),
+  ];
+
+  if (!cachesMerged) {
+    tasks.push(
+      queryClient.invalidateQueries({ queryKey: queryKeys.invoices.all }),
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.invoices.detail(opts.invoiceId),
+      }),
+      invalidateInvoiceScopedBilling(queryClient, { organizationId, doctorIds })
+    );
+  }
+
+  if (invoiceStatusAffectsDashboardTotals(opts.status, opts.totalsChanged)) {
+    tasks.push(invalidateDashboardOverview(queryClient));
+  }
+
+  if (opts.patientId) {
+    tasks.push(invalidatePatientDetailAndSnapshot(queryClient, opts.patientId));
+  }
+
+  if (opts.scope === "full") {
+    tasks.push(
+      queryClient.invalidateQueries({ queryKey: queryKeys.doctors.all }),
+      invalidateInsightsAndAnalytics(queryClient)
+    );
+  }
+
+  await Promise.all(tasks);
+}
+
 export async function invalidateAvailabilitySlots(queryClient: QueryClient) {
   await queryClient.invalidateQueries({ queryKey: queryKeys.availability.root });
 }
@@ -430,6 +535,7 @@ export async function invalidateAfterAppointmentMutation(
   queryClient: QueryClient,
   opts?: AppointmentMutationInvalidationOpts
 ) {
+  const scope = opts?.scope ?? "schedule";
   const targets = resolveAppointmentMutationTargets(queryClient, opts);
 
   const detailInvalidations: Promise<void>[] = [];
@@ -441,6 +547,38 @@ export async function invalidateAfterAppointmentMutation(
     );
   }
 
+  const sharedTasks: Promise<void>[] = [
+    invalidateAppointmentData(queryClient),
+    invalidateNotificationsData(queryClient),
+    invalidatePatientPortal(queryClient),
+    invalidateDoctorPortal(queryClient),
+    invalidateAdminPortal(queryClient),
+    invalidateAppointmentEntitySnapshots(queryClient, targets),
+    ...detailInvalidations,
+  ];
+
+  if (scope === "status") {
+    await Promise.all([
+      ...sharedTasks,
+      invalidateDashboardOverview(queryClient),
+      invalidateInsightsAndAnalytics(queryClient),
+    ]);
+    publishQueryCacheCrossTab(CROSS_TAB_SCOPES.APPOINTMENT_STATUS);
+    return;
+  }
+
+  if (scope === "schedule") {
+    await Promise.all([
+      ...sharedTasks,
+      invalidateAvailabilitySlots(queryClient),
+      invalidateAppointmentTypesData(queryClient),
+      invalidateDashboardOverview(queryClient),
+      invalidateInsightsAndAnalytics(queryClient),
+    ]);
+    publishQueryCacheCrossTab(CROSS_TAB_SCOPES.APPOINTMENT_SCHEDULE);
+    return;
+  }
+
   await Promise.all([
     invalidateAppointmentData(queryClient),
     invalidateNotificationsData(queryClient),
@@ -448,10 +586,6 @@ export async function invalidateAfterAppointmentMutation(
     invalidateInvoicesAndOverview(queryClient, {
       patientId: opts?.patientId ?? targets.patientIds[0] ?? undefined,
     }),
-    invalidateInsightsAndAnalytics(queryClient),
-    invalidatePatientPortal(queryClient),
-    invalidateDoctorPortal(queryClient),
-    invalidateAdminPortal(queryClient),
     invalidateAppointmentEntitySnapshots(queryClient, targets),
     ...detailInvalidations,
   ]);
