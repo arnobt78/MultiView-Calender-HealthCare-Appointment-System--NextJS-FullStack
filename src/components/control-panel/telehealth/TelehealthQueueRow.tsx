@@ -108,6 +108,7 @@ export function TelehealthQueueRow({
           </div>
           <AppointmentVisitMetaBadgeRow
             layout="queueListHero"
+            appointmentTypeName={meta.appointmentTypeName}
             durationMinutes={meta.durationMinutes}
             visitFeeCents={meta.visitFeeCents}
             showVisitFeeEstimateHint={meta.showVisitFeeEstimateHint}

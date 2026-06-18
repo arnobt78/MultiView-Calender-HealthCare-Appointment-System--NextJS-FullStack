@@ -10,7 +10,7 @@
 
 ## Resume
 
-1. `.agile-v/STATE.md` — **C53 shipped** · **1305/1305**
+1. `.agile-v/STATE.md` — **C56 shipped** · **1315/1315**
 2. `.agile-v/CHECKPOINTS.md` if PENDING HITL (**none**)
 3. Parent **`REQ-XXXX`** in `.agile-v/REQUIREMENTS.md` before any code (**halt if missing**)
 
@@ -28,8 +28,9 @@ npm test && npx tsc --noEmit && npm run lint && npm run build
 
 | Cycle | REQ | Status |
 |-------|-----|--------|
-| C46 | 0097 | shipped `45c87e5` |
-| C47 | 0098 | shipped `1e252b0` |
+| C56 | 0107 | patient portal Pay Now + timeline admin badge |
+| C55 | 0106 | patient portal invoice + timeline polish |
+| C54 | 0105 | picker + portal type+duration |
 | C53 | 0104 | inline visit type on When columns |
 | C52 | 0103 | due-date tones + inline badges |
 | C51 | 0102 | cache-first appointments |
@@ -37,4 +38,4 @@ npm test && npx tsc --noEmit && npm run lint && npm run build
 | C49 | 0100 | stable fallbacks + admin staff href |
 | C48 / C48.1 | 0099 | shipped `8ba3acf` |
 
-**Next:** Specify **C54** — add **REQ-0105** before feature code.
+**Next:** Specify **C57** — add **REQ-0108** before feature code.

@@ -3,6 +3,7 @@
  */
 
 import type { Prisma } from "@prisma/client";
+import { APPOINTMENT_TYPE_CARD_SELECT, appointmentTypeSerializedFields } from "@/lib/appointment-type-include";
 import {
   resolveAppointmentActivityAt,
   resolveAppointmentActivityKind,
@@ -80,6 +81,8 @@ export const dashboardOverviewAppointmentQueueSelect = {
   location: true,
   status: true,
   is_telehealth: true,
+  duration_minutes: true,
+  appointment_type: { select: APPOINTMENT_TYPE_CARD_SELECT },
   patient: {
     select: {
       id: true,
@@ -148,6 +151,9 @@ export type DashboardOverviewQueueAppointment = {
   location: string | null;
   status: string | null;
   is_telehealth: boolean;
+  appointment_type_name: string | null;
+  duration_minutes: number | null;
+  appointment_type_duration_minutes: number | null;
   patient: DashboardOverviewQueuePatient | null;
   treatingDoctor: DashboardOverviewQueueDoctor | null;
   /** Calendar owner — office fallback when `location` unset (legacy rows). */
@@ -162,6 +168,12 @@ type AppointmentQueueRow = {
   location: string | null;
   status: string | null;
   is_telehealth: boolean;
+  duration_minutes: number | null;
+  appointment_type: {
+    name: string;
+    price_cents: number;
+    duration_minutes: number | null;
+  } | null;
   patient: {
     id: string;
     firstname: string;
@@ -224,6 +236,7 @@ function mapDoctor(
 export function mapDashboardOverviewQueueAppointment(
   row: AppointmentQueueRow
 ): DashboardOverviewQueueAppointment {
+  const typeFields = appointmentTypeSerializedFields(row.appointment_type);
   return {
     id: row.id,
     title: row.title,
@@ -232,6 +245,9 @@ export function mapDashboardOverviewQueueAppointment(
     location: row.location,
     status: row.status,
     is_telehealth: row.is_telehealth === true,
+    appointment_type_name: typeFields.appointment_type_name,
+    duration_minutes: row.duration_minutes,
+    appointment_type_duration_minutes: typeFields.appointment_type_duration_minutes,
     patient: row.patient ? mapPatient(row.patient) : null,
     treatingDoctor: row.treating_physician ? mapDoctor(row.treating_physician) : null,
     calendarOwner: row.owner ? mapDoctor(row.owner) : null,

@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { AppointmentCardMetaRow } from "@/components/shared/AppointmentCardMetaRow";
 import { DoctorAvatar } from "@/components/shared/doctor-display/DoctorAvatar";
 import { DoctorSpecialtyBadge } from "@/components/shared/doctor-display/DoctorSpecialtyBadge";
+import { UserRoleBadge } from "@/components/shared/UserRoleBadge";
 import { PortalClinicianLink } from "@/components/shared/PortalClinicianLink";
 import type { PortalAppointmentClinicianUser } from "@/lib/serializers";
 import { cn } from "@/lib/utils";
@@ -55,6 +56,9 @@ export function PortalAppointmentClinicianIdentityBlock({
         ) : null}
         {clinician.specialty?.trim() ? (
           <DoctorSpecialtyBadge specialty={clinician.specialty} className="shrink-0" />
+        ) : null}
+        {clinician.role ? (
+          <UserRoleBadge role={clinician.role} className="shrink-0" />
         ) : null}
       </span>
     </AppointmentCardMetaRow>

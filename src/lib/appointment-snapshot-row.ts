@@ -3,6 +3,7 @@
  * Shared by patient + category snapshot loaders and API routes.
  */
 import { resolveTreatingPhysicianUserId } from "@/lib/appointment-display-doctor";
+import { appointmentTypeSerializedFields } from "@/lib/appointment-type-include";
 import { serializeAppointment } from "@/lib/serializers";
 import type { AppointmentSnapshotRow, Patient } from "@/types/types";
 
@@ -34,7 +35,7 @@ export type AppointmentSnapshotPrismaRow = Parameters<typeof serializeAppointmen
     color: string | null;
     icon: string | null;
   } | null;
-  appointment_type?: { name: string; price_cents?: number } | null;
+  appointment_type?: { name: string; price_cents?: number; duration_minutes?: number | null } | null;
   owner?: SnapshotUserPick | null;
   treating_physician?: SnapshotUserPick | null;
   patient?: SnapshotPatientPick | null;
@@ -46,7 +47,7 @@ export function mapAppointmentToSnapshotRow(
   const feeDoc = row.treating_physician ?? row.owner;
   const serialized = serializeAppointment({
     ...row,
-    appointment_type_price_cents: row.appointment_type?.price_cents ?? null,
+    ...appointmentTypeSerializedFields(row.appointment_type),
     doctor_consultation_fee_cents: feeDoc?.consultation_fee ?? null,
   });
   const clinicalId = resolveTreatingPhysicianUserId(serialized);
@@ -88,7 +89,7 @@ export function mapAppointmentToSnapshotRow(
 /** Prisma `include` for category/patient snapshot appointment queries. */
 export const appointmentSnapshotInclude = {
   category: true,
-  appointment_type: { select: { name: true, price_cents: true } },
+  appointment_type: { select: { name: true, price_cents: true, duration_minutes: true } },
   owner: {
     select: {
       id: true,

@@ -52,8 +52,14 @@ describe("invoice visit meta line", () => {
       when_label: "Tue 14:00",
       location_label: "Wing B",
       is_telehealth: true,
+      title: "Follow-up",
+      appointment_type_name: "Consultation",
+      duration_minutes: 30,
+      appointment_type_duration_minutes: 45,
     });
     expect(input.is_telehealth).toBe(true);
+    expect(input.appointment_type_name).toBe("Consultation");
+    expect(input.duration_minutes).toBe(30);
     expect(formatInvoiceVisitMetaTextLine(input)).toBe("Tue 14:00");
   });
 

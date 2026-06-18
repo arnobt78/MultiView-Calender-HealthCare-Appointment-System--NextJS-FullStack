@@ -1,6 +1,6 @@
 "use client";
 
-import { format, isToday } from "date-fns";
+import { format } from "date-fns";
 import {
   Calendar,
   Clock3,
@@ -126,11 +126,6 @@ export function PortalAppointmentTimelineCard({
                   }
                   appointment={appt}
                   displayFeeCents={displayFeeCents}
-                  timeRangeLabel={
-                    isToday(startDate)
-                      ? `Today · ${format(startDate, "HH:mm")} – ${format(new Date(appt.end), "HH:mm")}`
-                      : `${format(startDate, "dd MMM yyyy, HH:mm")} – ${format(new Date(appt.end), "HH:mm")}`
-                  }
                 />
               ) : null}
 

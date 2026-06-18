@@ -31,6 +31,8 @@ type Props = {
   issuedTextTone?: "muted" | "sky";
   /** CP invoice table — no icon, single-line issued stamp, inline issuer row. */
   compact?: boolean;
+  /** Patient portal sidebar — issued stamp + issuer actor on one wrap row. */
+  layout?: "stack" | "wrapInline";
 };
 
 /** Bottom row — invoice issued + billing owner (`div` shell; avatar is not inside `p`/`span`). */
@@ -46,16 +48,65 @@ export function InvoiceIssuedByMeta({
   showLeadingIcon = true,
   issuedTextTone = "muted",
   compact = false,
+  layout = "stack",
 }: Props) {
   const when = formatInvoiceIssuedAtLabel(createdAt);
   const by = issuerLabel?.trim();
   const emailTrimmed = issuerEmail?.trim() ?? "";
   const userId = issuerUserId?.trim();
   const useLinkedActor = Boolean(by && userId && viewerRole != null);
-  const showIcon = showLeadingIcon && !compact;
+  const showIcon = showLeadingIcon && !compact && layout !== "wrapInline";
 
   const issuedTextClass =
     issuedTextTone === "sky" ? "text-sky-700" : "text-muted-foreground";
+
+  const issuedStamp = (
+    <span className={cn(compact ? "whitespace-nowrap" : undefined, issuedTextClass)}>
+      {showIcon ? (
+        <CalendarClock
+          className="mr-1 inline h-3 w-3 shrink-0 align-[-2px] text-gray-400"
+          aria-hidden
+        />
+      ) : null}
+      Invoice issued {when}
+    </span>
+  );
+
+  if (layout === "wrapInline") {
+    return (
+      <div
+        className={cn(
+          "flex min-w-0 max-w-full flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] leading-snug",
+          issuedTextTone === "muted" && "text-muted-foreground",
+          className
+        )}
+      >
+        {issuedStamp}
+        {by && useLinkedActor ? (
+          <EntityDetailAuditActorInline
+            actor={{
+              userId: userId!,
+              label: by,
+              email: issuerEmail,
+              image: issuerImage,
+              role: issuerRole,
+            }}
+            viewerRole={viewerRole}
+          />
+        ) : by ? (
+          <span className="inline-flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5">
+            <UserAvatar src={issuerImage} alt="" fallbackText={by} sizeClassName="h-5 w-5" />
+            <span className="text-sm font-normal">{by}</span>
+            {emailTrimmed ? (
+              <span className={cn("shrink-0 text-sm", clinicalCellMutedTextClass)} title={emailTrimmed}>
+                ({emailTrimmed})
+              </span>
+            ) : null}
+          </span>
+        ) : null}
+      </div>
+    );
+  }
 
   return (
     <div
@@ -65,15 +116,7 @@ export function InvoiceIssuedByMeta({
         className
       )}
     >
-      <span className={cn(compact ? "whitespace-nowrap" : undefined, issuedTextClass)}>
-        {showIcon ? (
-          <CalendarClock
-            className="mr-1 inline h-3 w-3 shrink-0 align-[-2px] text-gray-400"
-            aria-hidden
-          />
-        ) : null}
-        Invoice issued {when}
-      </span>
+      {issuedStamp}
       {by ? (
         useLinkedActor ? (
           <EntityDetailAuditActorInline

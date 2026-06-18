@@ -68,6 +68,8 @@ export function TelehealthUpNextCard({
         <AppointmentVisitMetaBadgeRow
           layout="upNextHero"
           leadingSlot={<TelehealthQueueTimeGlassChip start={appointment.start} />}
+          appointmentTypeName={meta.appointmentTypeName}
+          durationMinutes={meta.durationMinutes}
           visitFeeCents={meta.visitFeeCents}
           showVisitFeeEstimateHint={meta.showVisitFeeEstimateHint}
           status={appointment.status}

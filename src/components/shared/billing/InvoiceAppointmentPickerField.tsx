@@ -8,6 +8,7 @@ import { queryKeys } from "@/lib/query-keys";
 import type { InvoiceAppointmentOptionRow } from "@/lib/billing-types";
 import { InvoiceVisitPickerList } from "@/components/shared/billing/InvoiceVisitPickerList";
 import { InvoiceVisitSummaryCard } from "@/components/shared/billing/invoice-dialog/InvoiceVisitSummaryCard";
+import { formatInvoiceAppointmentOptionPickerTriggerLabel } from "@/lib/invoice-dialog-visit-display";
 import { StaffAppointmentPickerField } from "@/components/shared/scheduling/StaffAppointmentPickerField";
 import { FormRequiredMark } from "@/components/shared/form/FormRequiredMark";
 import { invoiceDialogGlassInputClass } from "@/lib/invoice-dialog-ui-classes";
@@ -98,11 +99,7 @@ export function InvoiceAppointmentPickerField({
           </>
         }
         placeholder={toTitleCaseLabel("Select a visit")}
-        triggerValue={
-          selected
-            ? `${selected.patient_label} · ${selected.when_label ?? selected.appointment_type_name ?? "Visit"}`
-            : undefined
-        }
+        triggerValue={selected ? formatInvoiceAppointmentOptionPickerTriggerLabel(selected) : undefined}
         selectedContent={
           selected ? (
             <InvoiceVisitSummaryCard

@@ -92,16 +92,24 @@ export function PatientPortalInvoiceCard({ invoice, onPay, isPaying }: Props) {
             <DoctorIdentityRow
               doctor={treatingDoctor}
               linkKind="role"
+              viewerRole="patient"
               size="sm"
               showEmail
               showSpecialty
-              layout="inline"
+              showRoleBadge
+              staffRole={summary?.treating_physician_role ?? null}
+              layout="compactStack"
             />
           ) : null}
           <InvoiceIssuedByMeta
             createdAt={invoice.created_at}
             issuerLabel={invoice.issuer_label}
             issuerImage={invoice.issuer_image}
+            issuerEmail={invoice.issuer_email}
+            issuerUserId={invoice.user_id}
+            issuerRole={invoice.issuer_role}
+            viewerRole="patient"
+            layout="wrapInline"
           />
         </div>
 

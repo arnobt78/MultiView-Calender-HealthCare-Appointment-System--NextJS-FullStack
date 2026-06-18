@@ -184,3 +184,31 @@ export function invoiceAppointmentOptionToDialogDisplay(
     },
   };
 }
+
+/** Collapsed picker trigger — patient · when · type · duration. */
+export function formatInvoiceAppointmentOptionPickerTriggerLabel(
+  option: Pick<
+    InvoiceAppointmentOptionRow,
+    | "patient_label"
+    | "when_label"
+    | "title"
+    | "appointment_type_name"
+    | "duration_minutes"
+    | "appointment_type_duration_minutes"
+  >
+): string {
+  const typeSource = {
+    appointment_type_name: option.appointment_type_name,
+    title: option.title,
+    duration_minutes: option.duration_minutes,
+    appointment_type_duration_minutes: option.appointment_type_duration_minutes,
+  };
+  const typeName = resolveAppointmentTypeDisplayName(typeSource);
+  const durationLabel = formatAppointmentTypeDurationLabel(
+    resolveAppointmentTypeDurationMinutes(typeSource)
+  );
+  const whenPart = option.when_label?.trim() || typeName || "Visit";
+  const typePart = [typeName, durationLabel].filter(Boolean).join(" · ");
+  const tail = typePart && typePart !== whenPart ? typePart : durationLabel;
+  return [option.patient_label, whenPart, tail].filter(Boolean).join(" · ");
+}

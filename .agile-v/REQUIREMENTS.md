@@ -126,6 +126,9 @@
 | REQ-0079 | approved [C31] | REQ-0078 | ART-0407..0409 | pending |
 | REQ-0080 | approved [C32] | REQ-0079 | ART-0410..0416 | pending |
 | REQ-0081 | approved [C33] | REQ-0080 | ART-0417..0423 | pending |
+| REQ-0107 | approved [C56] | REQ-0106 | ART-0579..0582 | pending |
+| REQ-0106 | approved [C55] | REQ-0105 | ART-0575..0578 | pending |
+| REQ-0105 | approved [C54] | REQ-0104 | ART-0569..0574 | pending |
 | REQ-0104 | approved [C53] | REQ-0103 | ART-0564..0568 | pending |
 | REQ-0103 | approved [C52] | REQ-0102 | ART-0559..0563 | pending |
 | REQ-0102 | approved [C51] | REQ-0101 | ART-0553..0558 | pending |
@@ -149,6 +152,57 @@
 | REQ-0084 | approved [C36] | REQ-0083 | ART-0437..0444 | pending |
 | REQ-0083 | approved [C35/C35.1] | REQ-0082 | ART-0432..0436 | pending |
 | REQ-0082 | approved [C34/C34.1] | REQ-0081 | ART-0424..0431 | pending |
+
+### REQ-0107 — C56 Patient portal Pay Now + timeline admin badge
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C56] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0106 |
+
+**Statement:** Patient portal invoice Pay Now shows per-card loading state, recovers after browser-back from Stripe checkout, and timeline clinician rows show role badges (Admin/Doctor).
+
+**Acceptance criteria:**
+1. Only the clicked invoice card shows "Redirecting…" (`payingInvoiceId` per row).
+2. Browser back from Stripe clears stuck pay mutation (bfcache `pageshow` reset); redirect before cache sync.
+3. `PortalAppointmentClinicianIdentityBlock` renders `UserRoleBadge` when `clinician.role` is set.
+4. Verify PASS; client display/state only — no API changes.
+
+### REQ-0106 — C55 Patient portal invoice + timeline card polish
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C55] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0105 |
+
+**Statement:** Patient portal sidebar invoice cards use compactStack identity + issuer role badge; timeline cards drop duplicate datetime from category row.
+
+**Acceptance criteria:**
+1. `InvoiceIssuedByMeta` `wrapInline` layout; full issuer props on patient invoice card.
+2. Treating doctor `compactStack` + role badge in narrow sidebar.
+3. `PortalAppointmentTimelineCard` removes `timeRangeLabel` duplicate.
+4. Verify PASS; display-only.
+
+### REQ-0105 — C54 Visit type + duration on picker and portal surfaces
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C54] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0104 |
+
+**Statement:** Close invoice picker meta gap; show visit type + duration on portal list rows, dashboard queue, and telehealth queue.
+
+**Acceptance criteria:**
+1. `invoiceAppointmentOptionToMetaInput` carries type fields; picker uses icons meta (no title duplicate).
+2. Snapshot loader includes `appointment_type.duration_minutes`.
+3. Doctor/admin portal list rows + dashboard queue + telehealth show type+duration.
+4. Verify PASS; display-only except existing SSR select extensions.
 
 ### REQ-0104 — C53 Inline visit type + duration on When columns
 

@@ -3,6 +3,7 @@
  */
 
 import type { Prisma } from "@prisma/client";
+import { APPOINTMENT_TYPE_CARD_SELECT } from "@/lib/appointment-type-include";
 
 /** Rows fetched before in-memory sort by latest create/update activity. */
 export const DASHBOARD_RECENT_ACTIVITY_FETCH_CAP = 40;
@@ -54,6 +55,8 @@ export const dashboardOverviewRecentQueueSelect = {
   location: true,
   status: true,
   is_telehealth: true,
+  duration_minutes: true,
+  appointment_type: { select: APPOINTMENT_TYPE_CARD_SELECT },
   created_at: true,
   updated_at: true,
   patient: {

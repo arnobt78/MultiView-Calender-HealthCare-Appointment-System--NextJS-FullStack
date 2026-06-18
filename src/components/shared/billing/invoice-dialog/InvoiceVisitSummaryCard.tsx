@@ -7,7 +7,6 @@ import { PatientAgeGlassBadge } from "@/components/shared/person-display/Patient
 import { PatientCareTierGlassBadge } from "@/components/shared/person-display/PatientCareTierGlassBadge";
 import { CategoryBrandMark } from "@/components/shared/category-display/CategoryBrandMark";
 import { TelehealthSessionBadge } from "@/components/shared/appointments/TelehealthSessionBadge";
-import { AppointmentTypeGlassBadge } from "@/components/shared/appointment-display/AppointmentTypeGlassBadge";
 import { DoctorIdentityCell } from "@/components/shared/person-display/DoctorIdentityCell";
 import { InvoiceVisitMetaLine } from "@/components/shared/billing/InvoiceVisitMetaLine";
 import type { InvoiceAppointmentOptionRow, InvoiceVisitSummary } from "@/lib/billing-types";
@@ -71,12 +70,6 @@ export function InvoiceVisitSummaryCard(props: Props) {
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
             <p className="text-sm font-medium text-gray-700">{display.title}</p>
-            {display.appointmentTypeName ? (
-              <AppointmentTypeGlassBadge
-                name={display.appointmentTypeName}
-                durationLabel={display.typeDurationLabel}
-              />
-            ) : null}
           </div>
         </div>
         {onChangeVisit ? (

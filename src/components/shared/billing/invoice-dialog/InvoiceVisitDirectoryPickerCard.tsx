@@ -8,7 +8,6 @@ import { PatientAgeGlassBadge } from "@/components/shared/person-display/Patient
 import { PatientCareTierGlassBadge } from "@/components/shared/person-display/PatientCareTierGlassBadge";
 import { CategoryBrandMark } from "@/components/shared/category-display/CategoryBrandMark";
 import { TelehealthSessionBadge } from "@/components/shared/appointments/TelehealthSessionBadge";
-import { AppointmentTypeGlassBadge } from "@/components/shared/appointment-display/AppointmentTypeGlassBadge";
 import { DoctorIdentityCell } from "@/components/shared/person-display/DoctorIdentityCell";
 import { InvoiceStatusBadge } from "@/components/shared/billing/InvoiceStatusBadge";
 import { InvoiceAmountDisplay } from "@/components/shared/billing/InvoiceAmountDisplay";
@@ -94,12 +93,6 @@ export function InvoiceVisitDirectoryPickerCard({
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="truncate text-xs font-medium text-gray-700">{display.title}</span>
-            {display.appointmentTypeName ? (
-              <AppointmentTypeGlassBadge
-                name={display.appointmentTypeName}
-                durationLabel={display.typeDurationLabel}
-              />
-            ) : null}
             {display.categoryLabel ? (
               <span className="inline-flex items-center gap-1 rounded-full border border-violet-200/60 bg-violet-50/80 px-2 py-0.5 text-[10px] font-normal text-violet-900">
                 <CategoryBrandMark color={display.categoryColor} size="compact" />
@@ -107,7 +100,7 @@ export function InvoiceVisitDirectoryPickerCard({
               </span>
             ) : null}
           </div>
-          <InvoiceVisitMetaLine source={display.visitMeta} variant="text" />
+          <InvoiceVisitMetaLine source={display.visitMeta} variant="icons" className="text-xs" />
           {display.treating ? (
             <div className="space-y-0.5">
               <span className="inline-flex items-center gap-1 text-[9px] font-medium uppercase tracking-wide text-muted-foreground">

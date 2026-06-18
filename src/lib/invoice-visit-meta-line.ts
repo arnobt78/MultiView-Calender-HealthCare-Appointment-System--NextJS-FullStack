@@ -45,7 +45,15 @@ export function invoiceVisitSummaryToMetaInput(
 export function invoiceAppointmentOptionToMetaInput(
   option: Pick<
     InvoiceAppointmentOptionRow,
-    "start" | "end" | "when_label" | "location_label" | "is_telehealth"
+    | "start"
+    | "end"
+    | "when_label"
+    | "location_label"
+    | "is_telehealth"
+    | "title"
+    | "appointment_type_name"
+    | "duration_minutes"
+    | "appointment_type_duration_minutes"
   >
 ): InvoiceVisitMetaInput {
   return {
@@ -54,6 +62,10 @@ export function invoiceAppointmentOptionToMetaInput(
     when_label: option.when_label ?? null,
     location_label: option.location_label ?? null,
     is_telehealth: option.is_telehealth ?? false,
+    title: option.title,
+    appointment_type_name: option.appointment_type_name,
+    duration_minutes: option.duration_minutes,
+    appointment_type_duration_minutes: option.appointment_type_duration_minutes,
   };
 }
 

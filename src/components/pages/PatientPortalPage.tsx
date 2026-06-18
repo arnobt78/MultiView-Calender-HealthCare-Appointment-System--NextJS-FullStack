@@ -349,7 +349,7 @@ export default function PatientPortalPage({
     isLoading: invoicesLoading,
     isError: invoicesError,
     pay,
-    isPaying,
+    payingInvoiceId,
   } = usePayments({ invoicesInitialData: initialInvoices });
 
   // Seed cache synchronously before first paint to avoid skeleton flash
@@ -708,7 +708,7 @@ export default function PatientPortalPage({
                           key={inv.id}
                           invoice={inv}
                           onPay={() => pay(inv.id)}
-                          isPaying={isPaying}
+                          isPaying={payingInvoiceId === inv.id}
                         />
                       ))}
                     </div>

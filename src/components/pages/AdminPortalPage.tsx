@@ -52,6 +52,12 @@ import {
   Video,
 } from "lucide-react";
 import { AppointmentListVisitFeeBadge } from "@/components/shared/appointment-display/AppointmentListVisitFeeBadge";
+import { AppointmentTypeGlassBadge } from "@/components/shared/appointment-display/AppointmentTypeGlassBadge";
+import {
+  formatAppointmentTypeDurationLabel,
+  resolveAppointmentTypeDisplayName,
+  resolveAppointmentTypeDurationMinutes,
+} from "@/lib/appointment-type-display";
 import { cn } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
@@ -69,6 +75,10 @@ function formatCents(cents: number): string {
 
 function RecentAppointmentRow({ appt }: { appt: Appointment & { patient_name?: string | null; owner_display?: string | null } }) {
   const start = parseISO(appt.start);
+  const typeName = resolveAppointmentTypeDisplayName(appt);
+  const typeDurationLabel = formatAppointmentTypeDurationLabel(
+    resolveAppointmentTypeDurationMinutes(appt)
+  );
 
   return (
     <div className="flex items-start gap-2 py-3 border-b border-border/40 last:border-0">
@@ -83,6 +93,15 @@ function RecentAppointmentRow({ appt }: { appt: Appointment & { patient_name?: s
           label={appt.title}
           className="text-sm font-medium block truncate"
         />
+        {typeName ? (
+          <div className="mt-0.5 flex flex-wrap items-center gap-1">
+            <AppointmentTypeGlassBadge
+              name={typeName}
+              durationLabel={typeDurationLabel}
+              className="shrink-0"
+            />
+          </div>
+        ) : null}
         <div className="flex items-center gap-2 flex-wrap ">
           {(appt as { patient_name?: string | null }).patient_name && (
             <span className="text-[11px] text-muted-foreground">

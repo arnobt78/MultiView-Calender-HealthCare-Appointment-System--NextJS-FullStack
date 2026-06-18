@@ -20,6 +20,12 @@ import {
 } from "@/lib/control-panel-glass-card";
 import type { DashboardOverviewQueueAppointment } from "@/lib/dashboard-overview-queue";
 import { resolveAppointmentDisplayLocation } from "@/lib/appointment-visit-location";
+import { AppointmentTypeGlassBadge } from "@/components/shared/appointment-display/AppointmentTypeGlassBadge";
+import {
+  formatAppointmentTypeDurationLabel,
+  resolveAppointmentTypeDisplayName,
+  resolveAppointmentTypeDurationMinutes,
+} from "@/lib/appointment-type-display";
 
 type Props = {
   appointment: DashboardOverviewQueueAppointment;
@@ -48,6 +54,10 @@ export function DashboardQueueAppointmentRow({
       ? { office_location: appointment.calendarOwner.office_location ?? null }
       : null,
   });
+  const typeName = resolveAppointmentTypeDisplayName(appointment);
+  const typeDurationLabel = formatAppointmentTypeDurationLabel(
+    resolveAppointmentTypeDurationMinutes(appointment)
+  );
 
   return (
     <div className={embedded ? controlPanelDashboardQueueItemStackClass : controlPanelDashboardListRowClass}>
@@ -60,6 +70,13 @@ export function DashboardQueueAppointmentRow({
         />
         <DashboardAppointmentStatusBadge status={appointment.status} />
       </div>
+      {typeName ? (
+        <AppointmentTypeGlassBadge
+          name={typeName}
+          durationLabel={typeDurationLabel}
+          className="shrink-0"
+        />
+      ) : null}
       <DashboardAppointmentScheduleMetaRow
         start={appointment.start}
         end={appointment.end}

@@ -7,6 +7,12 @@ import { AppointmentScheduleColorDot } from "@/components/shared/appointments/Ap
 import { AppointmentStatusGlassBadge } from "@/components/shared/appointments/AppointmentStatusGlassBadge";
 import { TelehealthSessionBadge } from "@/components/shared/appointments/TelehealthSessionBadge";
 import { AppointmentListVisitFeeBadge } from "@/components/shared/appointment-display/AppointmentListVisitFeeBadge";
+import { AppointmentTypeGlassBadge } from "@/components/shared/appointment-display/AppointmentTypeGlassBadge";
+import {
+  formatAppointmentTypeDurationLabel,
+  resolveAppointmentTypeDisplayName,
+  resolveAppointmentTypeDurationMinutes,
+} from "@/lib/appointment-type-display";
 import { resolveAppointmentLineColor } from "@/context/AppointmentColorContext";
 import { resolveAppointmentDisplayLocation } from "@/lib/appointment-visit-location";
 import type { DoctorPortalAppointmentRow } from "@/types/types";
@@ -28,6 +34,10 @@ export function DoctorPortalAppointmentListRow({
   const lineColor = resolveAppointmentLineColor(appt.id);
   const overdue = isPast(end) && appt.status !== "done" && appt.status !== "cancelled";
   const locationLabel = resolveAppointmentDisplayLocation(appt);
+  const typeName = resolveAppointmentTypeDisplayName(appt);
+  const typeDurationLabel = formatAppointmentTypeDurationLabel(
+    resolveAppointmentTypeDurationMinutes(appt)
+  );
 
   return (
     <div className="flex items-start gap-2 border-b border-border/40 py-3 last:border-0">
@@ -59,6 +69,15 @@ export function DoctorPortalAppointmentListRow({
           label={appt.title}
           className="block truncate text-sm font-medium"
         />
+        {typeName ? (
+          <div className="mt-0.5 flex flex-wrap items-center gap-1">
+            <AppointmentTypeGlassBadge
+              name={typeName}
+              durationLabel={typeDurationLabel}
+              className="shrink-0"
+            />
+          </div>
+        ) : null}
         {locationLabel ? (
           <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
             <MapPin className="h-3 w-3 shrink-0" aria-hidden />

@@ -6,17 +6,17 @@
 
 | Field | Value |
 |-------|-------|
-| **Cycle** | **C53 shipped** |
+| **Cycle** | **C56 shipped** |
 | **Phase** | Accept |
 | **Stage** | **verify PASS** |
 | **Status** | shipped |
 | **Last Updated** | 2026-06-18 |
-| **Last REQ** | **REQ-0104** (C53) |
+| **Last REQ** | **REQ-0107** (C56) |
 
 ## Verify baseline
 
-**1305/1305** · tsc · lint · build — PASS
+**1315/1315** · tsc · lint · build — PASS
 
-## Key paths (C53)
+## Key paths (C56)
 
-`appointment-when-schedule-display.ts` · `AppointmentWhenScheduleCell.tsx` · `InvoiceVisitMetaLine.tsx`
+`usePayments.ts` · `PatientPortalPage.tsx` · `PortalAppointmentClinicianIdentityBlock.tsx`

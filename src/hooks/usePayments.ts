@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import type { QueryClient } from "@tanstack/react-query";
 import { apiClient, handleApiError } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
@@ -137,8 +138,9 @@ export function usePayments(options?: UsePaymentsOptions) {
       });
       return data.url;
     },
-    onSuccess: async (url, invoiceId) => {
-      await syncInvoicesAfterWrite(queryClient, {
+    onSuccess: (url, invoiceId) => {
+      // Redirect immediately — user leaves the app; Stripe return invalidates via ?status= on portal.
+      void syncInvoicesAfterWrite(queryClient, {
         invoiceId,
         patientId: getPatientIdFromInvoiceCache(queryClient, invoiceId),
         organizationId: getOrganizationIdFromInvoiceCache(queryClient, invoiceId),
@@ -153,6 +155,19 @@ export function usePayments(options?: UsePaymentsOptions) {
       handleApiError(error, "Payment failed");
     },
   });
+
+  const resetPayMutation = payMutation.reset;
+
+  // BFCache: browser back from Stripe can restore the page with payMutation still pending.
+  useEffect(() => {
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        resetPayMutation();
+      }
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, [resetPayMutation]);
 
   const createInvoiceMutation = useMutation({
     mutationFn: (body: {
@@ -324,6 +339,8 @@ export function usePayments(options?: UsePaymentsOptions) {
     error: invoicesQuery.error,
     pay: payMutation.mutate,
     isPaying: payMutation.isPending,
+    /** Per-invoice Pay Now — use on list surfaces (patient portal sidebar). */
+    payingInvoiceId: payMutation.isPending ? (payMutation.variables ?? null) : null,
     createInvoice: createInvoiceMutation.mutate,
     isCreating: createInvoiceMutation.isPending,
     updateInvoice: updateInvoiceMutation.mutate,

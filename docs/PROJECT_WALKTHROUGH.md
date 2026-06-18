@@ -1,24 +1,18 @@
 # HealthCal Pro — Project Walkthrough
 
-## Agent resume (2026-06-18 — C53)
+## Agent resume (2026-06-18 — C56)
 
-**Baseline:** 1305/1305 · tsc · lint · build PASS
+**1315/1315** · tsc · lint · build PASS
 
-**C53 (REQ-0104):** `AppointmentWhenScheduleCell` · inline type+duration+telehealth on When · clock+datetime grouped · snapshot when `9rem`.
+| Cycle | REQ | Highlights |
+|-------|-----|------------|
+| C56 | 0107 | `payingInvoiceId` · bfcache pay reset · timeline `UserRoleBadge` |
+| C55 | 0106 | invoice `compactStack`/`wrapInline` · timeline datetime dedupe |
+| C54 | 0105 | type+duration picker/portal/queue/telehealth/snapshot |
 
-**C52 (REQ-0103):** `invoiceDueDateTextClassForInvoice` · inline telehealth in `InvoiceLinkedVisitPanel` · inline category duration in `AppointmentCategoryTableCell`.
+**Keys:** `usePayments.ts` · `PatientPortalPage.tsx` · `PortalAppointmentClinicianIdentityBlock.tsx` · `invoice-dialog-visit-display.ts`
 
-**C51 (REQ-0102):** Appointment cache-first — `appointment-cache-merge.ts` · `syncAppointmentsAfterWrite` · `syncAfterAppointmentWrite` · `publishAppointmentMergeCrossTab` · `APPOINTMENT_*_SYNC` cross-tab scopes.
-
-**C50 (REQ-0101):** Invoice cache-first — `mergeInvoiceIntoAllCaches` · `syncInvoicesAfterWrite` · `publishInvoiceMergeCrossTab` · `resolvePatientIdFromInvoiceRow` · appointment mutation scopes · `syncAppointmentsAfterPatientWrite` / `syncAppointmentsAfterCategoryWrite`.
-
-**C49 (REQ-0100):** `stable-query-fallbacks.ts` · `controlPanelStaffDetailHref` · admin doctor-snapshot prefetch guard · calendar `= []` destructuring removed · `AppointmentDialog` controlled-open loop fix.
-
-**C48.1:** `AppointmentWhenTableCell` inline datetime.
-
-**Keys:** `appointment-cache-merge.ts` · `billing-invoice-map.ts` · `query-cache-cross-tab.ts` · `syncAppointmentsAfterWrite` · `syncInvoicesAfterWrite` · `stable-query-fallbacks.ts` · `entity-routes.ts` `controlPanelStaffDetailHref`
-
-**Invariants:** SSR seed + `refetchOnMount: false` when warm · SSE external writes still full invalidation · no `router.refresh`.
+**Invariants:** SSR seed + warm `refetchOnMount: false` · Stripe return `?status=` → `invalidateInvoicesAndOverview` · no `router.refresh`
 
 ---
 
