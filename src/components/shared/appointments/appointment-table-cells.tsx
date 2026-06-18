@@ -1,7 +1,5 @@
 "use client";
 
-import { format } from "date-fns";
-import { Clock, MapPin } from "lucide-react";
 import { AppointmentListVisitFeeBadge } from "@/components/shared/appointment-display/AppointmentListVisitFeeBadge";
 import { AppointmentStatusGlassBadge } from "@/components/shared/appointments/AppointmentStatusGlassBadge";
 import { CategoryBrandMark } from "@/components/shared/category-display/CategoryBrandMark";
@@ -12,6 +10,8 @@ import { DoctorIdentityCell } from "@/components/shared/person-display/DoctorIde
 import { PatientIdentityCell } from "@/components/shared/person-display/PatientIdentityCell";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import type { FullAppointment } from "@/hooks/useAppointments";
+import { toWhenScheduleSourceFromAppointment } from "@/lib/appointment-when-schedule-display";
+import { AppointmentWhenScheduleCell } from "@/components/shared/appointments/AppointmentWhenScheduleCell";
 import { resolveAppointmentTypeDurationMinutes } from "@/lib/appointment-type-display";
 import type { InvoiceDisplayStatus } from "@/lib/billing-appointment-eligibility";
 import type { InvoiceRow } from "@/lib/billing-types";
@@ -107,36 +107,13 @@ export function AppointmentManagementBillingCell({
   );
 }
 
-/** Muted datetime + location rows with Clock/MapPin icons. */
+/** Muted datetime + location — delegates to shared When schedule cell. */
 export function AppointmentWhenTableCell({ appointment }: { appointment: FullAppointment }) {
-  const start = new Date(appointment.start);
-  const end = new Date(appointment.end);
-  const location = appointment.location?.trim();
-  const whenLabel = `${format(start, "dd MMM yyyy, HH:mm")} – ${format(end, "HH:mm")}`;
-
   return (
-    <div className={cn(clinicalTableCellMinRowClass, "flex min-w-0 flex-col gap-0.5 py-0.5")}>
-      <span
-        className={cn(
-          "inline-flex max-w-full min-w-0 items-start gap-1 self-start",
-          clinicalCellMutedTextClass
-        )}
-      >
-        <Clock className="mt-0.5 h-3 w-3 shrink-0" aria-hidden />
-        <span className="min-w-0 break-words tabular-nums [overflow-wrap:break-word]">
-          {whenLabel}
-        </span>
-      </span>
-      <span
-        className={cn(
-          "inline-flex max-w-full min-w-0 items-start gap-1 self-start break-words [overflow-wrap:break-word]",
-          clinicalCellMutedTextClass
-        )}
-      >
-        <MapPin className="mt-0.5 h-3 w-3 shrink-0" aria-hidden />
-        {location || "—"}
-      </span>
-    </div>
+    <AppointmentWhenScheduleCell
+      source={toWhenScheduleSourceFromAppointment(appointment)}
+      layout="management"
+    />
   );
 }
 
@@ -175,15 +152,23 @@ export function AppointmentCategoryTableCell({
         variant="brand"
         size="compact"
       />
-      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 gap-y-1">
+      <p className="min-w-0 flex-1 text-sm leading-snug [overflow-wrap:break-word]">
         <EntityTitleLink
           href={categoryDetailHref(viewerRole, cat.id)}
           label={label}
-          className="min-w-0 shrink font-normal"
+          className="inline font-normal"
           wrapLabel
         />
-        <CategoryDurationMinutesBadge minutes={durationMinutes} className="shrink-0" />
-      </div>
+        {durationMinutes != null && durationMinutes > 0 ? (
+          <>
+            {" "}
+            <CategoryDurationMinutesBadge
+              minutes={durationMinutes}
+              className="inline-flex align-middle whitespace-nowrap"
+            />
+          </>
+        ) : null}
+      </p>
     </div>
   );
 }

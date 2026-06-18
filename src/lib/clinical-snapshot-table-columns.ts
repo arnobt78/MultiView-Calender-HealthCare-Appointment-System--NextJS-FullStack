@@ -25,7 +25,7 @@ const RELATED_APPOINTMENTS_COL_WIDTH_REM: Record<RelatedAppointmentsColumnId, nu
 export const CLINICAL_SNAPSHOT_APPOINTMENT_COL_WIDTH = {
   title: "10rem",
   /** Fits `PP` date + `h:mm a – h:mm a` on two lines without clipping. */
-  when: "7.5rem",
+  when: "9rem",
   category: "11rem",
   identity: "10rem",
   location: "8.5rem",

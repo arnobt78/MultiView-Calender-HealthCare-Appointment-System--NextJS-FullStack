@@ -126,6 +126,8 @@
 | REQ-0079 | approved [C31] | REQ-0078 | ART-0407..0409 | pending |
 | REQ-0080 | approved [C32] | REQ-0079 | ART-0410..0416 | pending |
 | REQ-0081 | approved [C33] | REQ-0080 | ART-0417..0423 | pending |
+| REQ-0104 | approved [C53] | REQ-0103 | ART-0564..0568 | pending |
+| REQ-0103 | approved [C52] | REQ-0102 | ART-0559..0563 | pending |
 | REQ-0102 | approved [C51] | REQ-0101 | ART-0553..0558 | pending |
 | REQ-0101 | approved [C50] | REQ-0100 | ART-0546..0552 | pending |
 | REQ-0100 | verify PASS [C49] | REQ-0099 | ART-0540..0545 | pending |
@@ -147,6 +149,40 @@
 | REQ-0084 | approved [C36] | REQ-0083 | ART-0437..0444 | pending |
 | REQ-0083 | approved [C35/C35.1] | REQ-0082 | ART-0432..0436 | pending |
 | REQ-0082 | approved [C34/C34.1] | REQ-0081 | ART-0424..0431 | pending |
+
+### REQ-0104 — C53 Inline visit type + duration on When columns
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C53] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0103 |
+
+**Statement:** Shared When cell shows visit type + duration + telehealth inline with date/time on appointment-management, related-appointments snapshot tables, and invoice when-lines.
+
+**Acceptance criteria:**
+1. `AppointmentWhenScheduleCell` with `management` + `snapshot` layouts.
+2. Related appointments tables (patient/category/doctor/admin) use shared When cell.
+3. Invoice description when-line includes type+duration; removed from title row duplicate.
+4. Snapshot when column width bumped; verify PASS; display-only.
+
+### REQ-0103 — C52 Invoice due-date tones + inline badges
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C52] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0102 |
+
+**Statement:** Date-aware due-date text colors (rose when past and unpaid); inline telehealth badge on invoice linked-visit When row; inline category duration badge in appointment-management table.
+
+**Acceptance criteria:**
+1. `invoiceDueDateTextClassForInvoice` colors past-due unpaid rose, future sent sky, draft slate, paid emerald — all due-date display sites wired.
+2. `InvoiceLinkedVisitPanel` When row shows telehealth badge inline with date/time.
+3. `AppointmentCategoryTableCell` keeps duration badge on same line as category label when space allows.
+4. Verify suite PASS; display-only (no API/cache changes).
 
 ### REQ-0102 — C51 Cache-first appointment invalidation
 

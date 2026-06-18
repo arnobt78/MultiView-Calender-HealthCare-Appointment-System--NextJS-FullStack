@@ -6,17 +6,17 @@
 
 | Field | Value |
 |-------|-------|
-| **Cycle** | **C51** — cache-first appointment invalidation |
-| **Phase** | Verify |
-| **Stage** | **Gate 2** (REQ-0102) |
-| **Status** | **shipped** `354be2d` · Infinity Loop **ACTIVE** |
+| **Cycle** | **C53 shipped** |
+| **Phase** | Accept |
+| **Stage** | **verify PASS** |
+| **Status** | shipped |
 | **Last Updated** | 2026-06-18 |
-| **Last REQ** | **REQ-0102** (C51) |
+| **Last REQ** | **REQ-0104** (C53) |
 
 ## Verify baseline
 
-**1296/1296** · tsc · lint · build — PASS (C51)
+**1305/1305** · tsc · lint · build — PASS
 
-## Key paths (C51)
+## Key paths (C53)
 
-`appointment-cache-merge.ts` · `syncAppointmentsAfterWrite` · `syncAfterAppointmentWrite` · `query-cache-cross-tab.ts` · `useAppointments.ts`
+`appointment-when-schedule-display.ts` · `AppointmentWhenScheduleCell.tsx` · `InvoiceVisitMetaLine.tsx`

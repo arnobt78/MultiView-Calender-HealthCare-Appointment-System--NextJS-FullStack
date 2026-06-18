@@ -3,6 +3,7 @@
  * ISO `start_iso` / `end_iso` match API; `when_label` is preformatted fallback from billing load.
  */
 
+import type { AppointmentTypeDisplaySource } from "@/lib/appointment-type-display";
 import type { InvoiceAppointmentOptionRow, InvoiceVisitSummary } from "@/lib/billing-types";
 import {
   formatInvoiceVisitDateLabel,
@@ -17,7 +18,7 @@ function resolveVisitLocationLabel(input: InvoiceVisitMetaInput): string | null 
   return loc;
 }
 
-export type InvoiceVisitMetaInput = {
+export type InvoiceVisitMetaInput = AppointmentTypeDisplaySource & {
   start_iso?: string | null;
   end_iso?: string | null;
   when_label?: string | null;
@@ -34,6 +35,10 @@ export function invoiceVisitSummaryToMetaInput(
     when_label: summary.when_label,
     location_label: summary.location_label,
     is_telehealth: summary.is_telehealth,
+    appointment_type_name: summary.appointment_type_name,
+    title: summary.title,
+    duration_minutes: summary.duration_minutes,
+    appointment_type_duration_minutes: summary.appointment_type_duration_minutes,
   };
 }
 

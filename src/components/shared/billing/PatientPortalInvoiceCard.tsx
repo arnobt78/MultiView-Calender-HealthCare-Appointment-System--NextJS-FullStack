@@ -14,8 +14,7 @@ import type { Invoice } from "@/hooks/usePayments";
 import { getInvoiceListTitle } from "@/lib/invoice-list-display";
 import { invoiceDetailHref } from "@/lib/entity-routes";
 import { invoiceVisitSummaryToMetaInput } from "@/lib/invoice-visit-meta-line";
-import { invoiceDueDateTextClassForStatus } from "@/lib/invoice-status-display";
-import { resolveInvoiceDisplayStatus } from "@/lib/billing-appointment-eligibility";
+import { invoiceDueDateTextClassForInvoice } from "@/lib/invoice-status-display";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -29,7 +28,6 @@ type Props = {
  */
 export function PatientPortalInvoiceCard({ invoice, onPay, isPaying }: Props) {
   const summary = invoice.visit_summary;
-  const displayStatus = resolveInvoiceDisplayStatus(invoice);
   const title = getInvoiceListTitle(invoice);
   const href = invoiceDetailHref("patient", invoice.id);
 
@@ -61,7 +59,7 @@ export function PatientPortalInvoiceCard({ invoice, onPay, isPaying }: Props) {
             className={cn(
               "flex min-w-0 items-center gap-1.5 text-[11px]",
               invoice.due_date
-                ? invoiceDueDateTextClassForStatus(displayStatus)
+                ? invoiceDueDateTextClassForInvoice(invoice)
                 : "text-muted-foreground"
             )}
           >

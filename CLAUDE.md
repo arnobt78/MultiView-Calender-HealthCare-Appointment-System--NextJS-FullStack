@@ -4,11 +4,13 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-18)
 
+- **C53 (REQ-0104):** `AppointmentWhenScheduleCell` — inline type+duration+telehealth on When (management, snapshot, invoice meta); clock+datetime nested inline-flex; snapshot when `9rem`.
+- **C52 (REQ-0103):** Date-aware due-date tones (`invoiceDueDateTextClassForInvoice`); inline telehealth on invoice linked-visit When row; inline category duration in appointment-management table.
 - **C51 (REQ-0102):** Cache-first appointment writes — `mergeAppointmentIntoAllCaches` + `syncAppointmentsAfterWrite` + `syncAfterAppointmentWrite`; cross-tab `publishAppointmentMergeCrossTab`; bulk/ICS/GCal keep `invalidateAfterAppointmentMutation`.
 - **C50 (REQ-0101):** Cache-first invoice writes — `mergeInvoiceIntoAllCaches` + `syncInvoicesAfterWrite`; cross-tab `publishInvoiceMergeCrossTab`; appointment invalidation scopes (`status`/`schedule`/`billing`); patient/category/org patch-or-invalidate.
 - **C49 (REQ-0100):** `stable-query-fallbacks.ts` `EMPTY_*`; `controlPanelStaffDetailHref`; doctor snapshot prefetch skip for admin users; `AppointmentDialog` loop fix retained.
 - **C48.1:** `AppointmentWhenTableCell` inline datetime.
-- **Verify:** **1296/1296** · tsc · lint · build PASS.
+- **Verify:** **1305/1305** · tsc · lint · build PASS.
 
 ## Doctor invoice RBAC (C48)
 
@@ -62,7 +64,7 @@ Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Agile V
 
-`.agile-v/STATE.md` · **C51 shipped** · **1296/1296** · REQ-0102.
+`.agile-v/STATE.md` · **C52 shipped** · **1301/1301** · REQ-0103.
 
 ## Principle
 

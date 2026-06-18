@@ -139,21 +139,19 @@ export function InvoiceLinkedVisitPanel({
               ) : (
                 <span className="min-w-0">{visitTitle}</span>
               )}
+            </div>
+          </VisitDefinitionRow>
+          <VisitDefinitionRow icon={Calendar} label="When">
+            <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1">
+              <span className="text-muted-foreground">{summary.when_label}</span>
               {summary.appointment_type_name ? (
                 <AppointmentTypeGlassBadge
                   name={summary.appointment_type_name}
                   durationLabel={visitTypeDurationLabel}
                 />
               ) : null}
+              {summary.is_telehealth ? <TelehealthSessionBadge /> : null}
             </div>
-          </VisitDefinitionRow>
-          <VisitDefinitionRow icon={Calendar} label="When">
-            <span className="text-muted-foreground">{summary.when_label}</span>
-            {summary.is_telehealth ? (
-              <span className="mt-1 block">
-                <TelehealthSessionBadge />
-              </span>
-            ) : null}
           </VisitDefinitionRow>
           <VisitDefinitionRow icon={User} label="Patient" identity>
             {summary.patient_label && patientPortrait ? (

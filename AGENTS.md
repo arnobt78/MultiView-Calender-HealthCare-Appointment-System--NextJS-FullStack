@@ -10,7 +10,7 @@
 
 ## Resume
 
-1. `.agile-v/STATE.md` — **C51 shipped** · **1296/1296**
+1. `.agile-v/STATE.md` — **C53 shipped** · **1305/1305**
 2. `.agile-v/CHECKPOINTS.md` if PENDING HITL (**none**)
 3. Parent **`REQ-XXXX`** in `.agile-v/REQUIREMENTS.md` before any code (**halt if missing**)
 
@@ -30,9 +30,11 @@ npm test && npx tsc --noEmit && npm run lint && npm run build
 |-------|-----|--------|
 | C46 | 0097 | shipped `45c87e5` |
 | C47 | 0098 | shipped `1e252b0` |
+| C53 | 0104 | inline visit type on When columns |
+| C52 | 0103 | due-date tones + inline badges |
 | C51 | 0102 | cache-first appointments |
 | C50 | 0101 | cache-first invoices |
 | C49 | 0100 | stable fallbacks + admin staff href |
 | C48 / C48.1 | 0099 | shipped `8ba3acf` |
 
-**Next:** Specify **C49** — add **REQ-0100** before feature code.
+**Next:** Specify **C54** — add **REQ-0105** before feature code.

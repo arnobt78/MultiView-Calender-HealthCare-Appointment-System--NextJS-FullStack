@@ -49,6 +49,18 @@ vi.mock("@/components/shared/category-display/CategoryDurationMinutesBadge", () 
   ),
 }));
 
+vi.mock("@/components/shared/appointment-display/AppointmentTypeGlassBadge", () => ({
+  AppointmentTypeGlassBadge: ({ name }: { name: string }) => (
+    <span data-testid="type-badge">{name}</span>
+  ),
+}));
+
+vi.mock("@/components/shared/appointments/AppointmentWhenScheduleCell", () => ({
+  AppointmentWhenScheduleCell: ({ source }: { source: { location?: string | null } }) => (
+    <div data-testid="when-schedule-cell">{source.location}</div>
+  ),
+}));
+
 const sample: FullAppointment = {
   id: "11111111-1111-4111-8111-111111111111",
   user_id: "user-1",
@@ -78,14 +90,24 @@ describe("AppointmentTitleTableCell", () => {
 });
 
 describe("AppointmentWhenTableCell", () => {
-  it("renders muted datetime range and location with icons", () => {
+  it("delegates to AppointmentWhenScheduleCell with management layout", () => {
     const markup = renderToStaticMarkup(
       <AppointmentWhenTableCell appointment={sample} />
     );
+    expect(markup).toContain('data-testid="when-schedule-cell"');
     expect(markup).toContain("Demo Clinic");
-    expect(markup).toContain("–");
-    expect(markup).toContain("self-start");
-    expect(markup).toContain("text-muted-foreground");
+  });
+
+  it("passes appointment type through to schedule cell", () => {
+    const appt: FullAppointment = {
+      ...sample,
+      appointment_type_name: "Follow-up",
+      duration_minutes: 30,
+    };
+    const markup = renderToStaticMarkup(
+      <AppointmentWhenTableCell appointment={appt} />
+    );
+    expect(markup).toContain("Demo Clinic");
   });
 });
 
@@ -141,7 +163,9 @@ describe("AppointmentCategoryTableCell", () => {
     );
     expect(markup).toContain("Dermatology");
     expect(markup).toContain("30 min");
-    expect(markup).toContain("flex-wrap");
+    expect(markup).toContain("leading-snug");
+    expect(markup).toContain("<p class=");
+    expect(markup.indexOf("Dermatology")).toBeLessThan(markup.indexOf("duration-badge"));
     expect(markup).not.toContain("flex-col");
   });
 });

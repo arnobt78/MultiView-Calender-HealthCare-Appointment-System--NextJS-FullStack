@@ -1,8 +1,12 @@
 # HealthCal Pro — Project Walkthrough
 
-## Agent resume (2026-06-18 — C51)
+## Agent resume (2026-06-18 — C53)
 
-**Baseline:** 1296/1296 · tsc · lint · build PASS
+**Baseline:** 1305/1305 · tsc · lint · build PASS
+
+**C53 (REQ-0104):** `AppointmentWhenScheduleCell` · inline type+duration+telehealth on When · clock+datetime grouped · snapshot when `9rem`.
+
+**C52 (REQ-0103):** `invoiceDueDateTextClassForInvoice` · inline telehealth in `InvoiceLinkedVisitPanel` · inline category duration in `AppointmentCategoryTableCell`.
 
 **C51 (REQ-0102):** Appointment cache-first — `appointment-cache-merge.ts` · `syncAppointmentsAfterWrite` · `syncAfterAppointmentWrite` · `publishAppointmentMergeCrossTab` · `APPOINTMENT_*_SYNC` cross-tab scopes.
 

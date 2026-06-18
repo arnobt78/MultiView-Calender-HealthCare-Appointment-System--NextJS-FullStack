@@ -6,8 +6,7 @@ import { InvoiceIssuedByMeta } from "@/components/shared/billing/InvoiceIssuedBy
 import { InvoiceAmountDisplay } from "@/components/shared/billing/InvoiceAmountDisplay";
 import { InvoiceStatusBadge } from "@/components/shared/billing/InvoiceStatusBadge";
 import type { Invoice } from "@/hooks/usePayments";
-import { invoiceDueDateTextClassForStatus } from "@/lib/invoice-status-display";
-import { resolveInvoiceDisplayStatus } from "@/lib/billing-appointment-eligibility";
+import { invoiceDueDateTextClassForInvoice } from "@/lib/invoice-status-display";
 import {
   clinicalCellMutedTextClass,
   clinicalTableCellMinRowClass,
@@ -104,7 +103,6 @@ export function InvoiceDescriptionTableCell({
 }
 
 export function InvoiceDueTableCell({ invoice }: { invoice: Invoice }) {
-  const displayStatus = resolveInvoiceDisplayStatus(invoice);
   if (!invoice.due_date) {
     return (
       <span className={cn(clinicalCellMutedTextClass, "text-xs")}>—</span>
@@ -114,7 +112,7 @@ export function InvoiceDueTableCell({ invoice }: { invoice: Invoice }) {
     <span
       className={cn(
         "text-xs tabular-nums",
-        invoiceDueDateTextClassForStatus(displayStatus)
+        invoiceDueDateTextClassForInvoice(invoice)
       )}
     >
       {format(new Date(invoice.due_date), "dd MMM yyyy")}

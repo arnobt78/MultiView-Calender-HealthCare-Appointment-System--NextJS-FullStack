@@ -1,6 +1,5 @@
 "use client";
 
-import { AppointmentTypeGlassBadge } from "@/components/shared/appointment-display/AppointmentTypeGlassBadge";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { PatientIdentityCell } from "@/components/shared/person-display/PatientIdentityCell";
 import { DoctorIdentityCell } from "@/components/shared/person-display/DoctorIdentityCell";
@@ -8,11 +7,6 @@ import { CategoryInlineLink } from "@/components/shared/CategoryInlineLink";
 import { InvoiceVisitSummaryLine } from "@/components/shared/billing/InvoiceVisitSummaryLine";
 import type { Invoice } from "@/hooks/usePayments";
 import { getInvoiceListTitle } from "@/lib/invoice-list-display";
-import {
-  formatAppointmentTypeDurationLabel,
-  resolveAppointmentTypeDurationMinutes,
-  resolveAppointmentTypeDisplayName,
-} from "@/lib/appointment-type-display";
 import {
   resolveCalendarOwnerLinkKind,
   resolveTreatingPhysicianLinkKind,
@@ -60,10 +54,6 @@ export function InvoiceVisitDescriptionStack({
     : href;
 
   const patientPortrait = invoiceVisitSummaryToPatientPortrait(summary);
-  const typeName = summary ? resolveAppointmentTypeDisplayName(summary) : null;
-  const typeDurationLabel = summary
-    ? formatAppointmentTypeDurationLabel(resolveAppointmentTypeDurationMinutes(summary))
-    : null;
 
   const treatingDoctor = invoiceTreatingDoctorFromSummary(summary);
   const ownerDoctor = invoiceCalendarOwnerDoctorFromSummary(summary);
@@ -80,21 +70,12 @@ export function InvoiceVisitDescriptionStack({
         portalDensity ? "gap-1 py-0" : "gap-1.5 py-1"
       )}
     >
-      <div className="inline-flex min-w-0 max-w-full flex-wrap items-center gap-x-1.5 gap-y-0.5">
-        <EntityTitleLink
-          href={href}
-          label={title}
-          className="min-w-0 shrink font-normal"
-          wrapLabel
-        />
-        {typeName ? (
-          <AppointmentTypeGlassBadge
-            name={typeName}
-            durationLabel={typeDurationLabel}
-            className="shrink-0"
-          />
-        ) : null}
-      </div>
+      <EntityTitleLink
+        href={href}
+        label={title}
+        className="min-w-0 shrink font-normal"
+        wrapLabel
+      />
       <InvoiceVisitSummaryLine summary={summary} className="w-full min-w-0" />
       {summary?.patient_label && patientPortrait ? (
         <div className="flex w-full min-w-0 flex-wrap items-center gap-x-2 gap-y-1">

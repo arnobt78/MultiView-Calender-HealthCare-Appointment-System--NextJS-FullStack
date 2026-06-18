@@ -1,8 +1,8 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import { format } from "date-fns";
 import { DataTableColumnHeader } from "@/components/shared/DataTableColumnHeader";
+import { AppointmentWhenScheduleCell } from "@/components/shared/appointments/AppointmentWhenScheduleCell";
 import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { ClinicalAppointmentStatusBadge } from "@/components/shared/entity-detail/ClinicalAppointmentStatusBadge";
 import {
@@ -12,6 +12,7 @@ import {
 } from "@/components/shared/ClinicalTableEmptyDash";
 import { clinicalHasTextValue } from "@/lib/clinical-empty-value";
 import { resolveSnapshotAppointmentDisplayLocation } from "@/lib/appointment-visit-location";
+import { toWhenScheduleSourceFromSnapshot } from "@/lib/appointment-when-schedule-display";
 import { DoctorIdentityCell } from "@/components/shared/person-display/DoctorIdentityCell";
 import { PatientIdentityCell } from "@/components/shared/person-display/PatientIdentityCell";
 import {
@@ -298,19 +299,10 @@ export function buildRelatedAppointmentsColumns(
         return clinicalEmptyOrNode(
           Boolean(a.start),
           () => (
-            <div
-              className={cn(
-                "min-w-0 whitespace-nowrap",
-                clinicalTableCellMinRowClass,
-                "flex flex-col justify-center"
-              )}
-            >
-              <p className={clinicalCellMutedTextClass}>{format(new Date(a.start!), "PP")}</p>
-              <p className={clinicalCellMutedTextClass}>
-                {format(new Date(a.start!), "p")}
-                {a.end ? ` – ${format(new Date(a.end), "p")}` : ""}
-              </p>
-            </div>
+            <AppointmentWhenScheduleCell
+              source={toWhenScheduleSourceFromSnapshot(a)}
+              layout="snapshot"
+            />
           ),
           "table"
         );

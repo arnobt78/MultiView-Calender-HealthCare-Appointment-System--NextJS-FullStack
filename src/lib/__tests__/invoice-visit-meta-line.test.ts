@@ -56,4 +56,32 @@ describe("invoice visit meta line", () => {
     expect(input.is_telehealth).toBe(true);
     expect(formatInvoiceVisitMetaTextLine(input)).toBe("Tue 14:00");
   });
+
+  it("carries visit type fields from invoice visit summary", () => {
+    const input = invoiceVisitSummaryToMetaInput({
+      appointment_id: "a1",
+      title: "V",
+      start_iso: "2026-06-15T09:00:00.000Z",
+      end_iso: "2026-06-15T09:30:00.000Z",
+      when_label: "",
+      location_label: "Clinic A",
+      is_telehealth: false,
+      patient_id: null,
+      patient_label: null,
+      category_id: null,
+      category_label: null,
+      category_color: null,
+      category_icon: null,
+      treating_physician_id: null,
+      treating_physician_label: null,
+      treating_physician_specialty: null,
+      calendar_owner_id: null,
+      calendar_owner_label: null,
+      calendar_owner_specialty: null,
+      appointment_type_name: "Consultation",
+      duration_minutes: 30,
+    });
+    expect(input.appointment_type_name).toBe("Consultation");
+    expect(input.duration_minutes).toBe(30);
+  });
 });

@@ -11,8 +11,7 @@ import { InvoiceIssuedByMeta } from "@/components/shared/billing/InvoiceIssuedBy
 import { getInvoiceListTitle } from "@/lib/invoice-list-display";
 import { invoiceTreatingDoctorFromSummary } from "@/lib/invoice-visit-doctor";
 import { invoiceDetailHref } from "@/lib/entity-routes";
-import { invoiceDueDateTextClassForStatus } from "@/lib/invoice-status-display";
-import { resolveInvoiceDisplayStatus } from "@/lib/billing-appointment-eligibility";
+import { invoiceDueDateTextClassForInvoice } from "@/lib/invoice-status-display";
 import {
   clinicalCellMutedTextClass,
   entityDetailLinkClass,
@@ -38,7 +37,6 @@ export function InvoiceBillingListRow({
   const summary = invoice.visit_summary;
   const href = invoiceDetailHref(viewerRole, invoice.id);
   const title = getInvoiceListTitle(invoice);
-  const displayStatus = resolveInvoiceDisplayStatus(invoice);
   const treatingDoctor = invoiceTreatingDoctorFromSummary(summary);
 
   return (
@@ -59,7 +57,7 @@ export function InvoiceBillingListRow({
               className={cn(
                 "inline-flex items-center gap-1 text-[11px]",
                 invoice.due_date
-                  ? invoiceDueDateTextClassForStatus(displayStatus)
+                  ? invoiceDueDateTextClassForInvoice(invoice)
                   : clinicalCellMutedTextClass
               )}
             >

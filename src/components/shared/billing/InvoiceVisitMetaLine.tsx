@@ -1,9 +1,15 @@
 "use client";
 
 import { Calendar, Clock3, MapPin } from "lucide-react";
+import { AppointmentTypeGlassBadge } from "@/components/shared/appointment-display/AppointmentTypeGlassBadge";
 import { AppointmentCardMetaRow } from "@/components/shared/AppointmentCardMetaRow";
 import { TelehealthSessionBadge } from "@/components/shared/appointments/TelehealthSessionBadge";
 import type { InvoiceVisitMetaInput } from "@/lib/invoice-visit-meta-line";
+import {
+  formatAppointmentTypeDurationLabel,
+  resolveAppointmentTypeDurationMinutes,
+  resolveAppointmentTypeDisplayName,
+} from "@/lib/appointment-type-display";
 import {
   formatInvoiceVisitMetaTextLine,
   resolveInvoiceVisitMetaIcons,
@@ -35,8 +41,12 @@ export function InvoiceVisitMetaLine({
 
   const { dateLabel, timeLabel, locationLabel, isTelehealth } =
     resolveInvoiceVisitMetaIcons(source);
+  const typeName = resolveAppointmentTypeDisplayName(source);
+  const typeDurationLabel = formatAppointmentTypeDurationLabel(
+    resolveAppointmentTypeDurationMinutes(source)
+  );
 
-  if (!dateLabel && !timeLabel && !locationLabel && !isTelehealth) {
+  if (!dateLabel && !timeLabel && !locationLabel && !isTelehealth && !typeName) {
     return null;
   }
 
@@ -54,15 +64,35 @@ export function InvoiceVisitMetaLine({
       ) : null}
       {timeLabel ? (
         <AppointmentCardMetaRow icon={<Clock3 className="h-3.5 w-3.5" />}>
-          {timeLabel}
+          <span className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+            <span>{timeLabel}</span>
+            {typeName ? (
+              <AppointmentTypeGlassBadge
+                name={typeName}
+                durationLabel={typeDurationLabel}
+                className="shrink-0"
+              />
+            ) : null}
+            {isTelehealth ? <TelehealthSessionBadge /> : null}
+          </span>
         </AppointmentCardMetaRow>
-      ) : null}
+      ) : (
+        <>
+          {typeName ? (
+            <AppointmentTypeGlassBadge
+              name={typeName}
+              durationLabel={typeDurationLabel}
+              className="shrink-0"
+            />
+          ) : null}
+          {!timeLabel && isTelehealth ? <TelehealthSessionBadge /> : null}
+        </>
+      )}
       {locationLabel ? (
         <AppointmentCardMetaRow icon={<MapPin className="h-3.5 w-3.5" />}>
           <span className="truncate">{locationLabel}</span>
         </AppointmentCardMetaRow>
       ) : null}
-      {isTelehealth ? <TelehealthSessionBadge /> : null}
     </div>
   );
 }

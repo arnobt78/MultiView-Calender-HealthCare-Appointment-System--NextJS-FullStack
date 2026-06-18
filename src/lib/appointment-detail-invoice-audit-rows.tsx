@@ -8,8 +8,7 @@ import type { LucideIcon } from "lucide-react";
 import { CalendarClock, CreditCard, Receipt, UserRound } from "lucide-react";
 import { format } from "date-fns";
 import type { Invoice } from "@/hooks/usePayments";
-import { invoiceDueDateTextClassForStatus } from "@/lib/invoice-status-display";
-import { resolveInvoiceDisplayStatus } from "@/lib/billing-appointment-eligibility";
+import { invoiceDueDateTextClassForInvoice } from "@/lib/invoice-status-display";
 import { ClinicalEmptyDash } from "@/components/shared/ClinicalTableEmptyDash";
 import { EntityDetailAuditActorInline } from "@/components/shared/entity-detail/EntityDetailAuditActorInline";
 import type { EntityDetailAuditActor } from "@/lib/entity-detail-audit-actor";
@@ -97,7 +96,7 @@ export function buildAppointmentInvoiceAuditExtraRows(
         <span
           className={cn(
             "text-xs tabular-nums",
-            invoiceDueDateTextClassForStatus(resolveInvoiceDisplayStatus(invoice))
+            invoiceDueDateTextClassForInvoice(invoice)
           )}
         >
           {format(new Date(invoice.due_date), "PPP · p")}
@@ -146,7 +145,7 @@ export function buildInvoiceDetailAuditExtraRows(
         <span
           className={cn(
             "text-xs tabular-nums",
-            invoiceDueDateTextClassForStatus(resolveInvoiceDisplayStatus(invoice))
+            invoiceDueDateTextClassForInvoice(invoice)
           )}
         >
           {format(new Date(invoice.due_date), "PPP · p")}
