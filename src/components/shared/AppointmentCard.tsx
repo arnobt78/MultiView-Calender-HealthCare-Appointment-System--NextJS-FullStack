@@ -10,7 +10,7 @@
  * - compact / minimal: grid triggers; density from slotHeightPx
  *
  * CRUD must use parent callbacks wired to useAppointmentData mutations so
- * invalidateAfterAppointmentMutation runs (see useAppointments).
+ * syncAfterAppointmentWrite runs (see useAppointments).
  */
 
 import clsx from "clsx";

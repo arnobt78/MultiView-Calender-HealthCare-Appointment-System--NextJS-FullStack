@@ -15,6 +15,10 @@ import {
   mergeInvoiceIntoAllCaches,
   removeInvoiceFromScopedListCaches,
 } from "@/lib/billing-invoice-map";
+import {
+  mergeAppointmentWritePayload,
+  removeAppointmentFromListCache,
+} from "@/lib/appointment-cache-merge";
 import { queryKeys } from "@/lib/query-keys";
 import type { InvoiceRow } from "@/lib/billing-types";
 
@@ -38,6 +42,11 @@ export function useQueryCacheCrossTabSync(): void {
           removeInvoiceFromScopedListCaches(queryClient, row);
         }
         queryClient.removeQueries({ queryKey: queryKeys.invoices.detail(removedId) });
+      }
+      if (message.appointmentMerge) {
+        mergeAppointmentWritePayload(queryClient, message.appointmentMerge);
+      } else if (message.appointmentRemovedId) {
+        removeAppointmentFromListCache(queryClient, message.appointmentRemovedId);
       }
       if (message.scopes.length > 0) {
         void applyCrossTabScopes(queryClient, message.scopes);

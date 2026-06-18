@@ -6,17 +6,17 @@
 
 | Field | Value |
 |-------|-------|
-| **Cycle** | **C50** — cache-first invalidation |
+| **Cycle** | **C51** — cache-first appointment invalidation |
 | **Phase** | Verify |
-| **Stage** | **Gate 2** (REQ-0101) |
-| **Status** | **shipped pending commit** · Infinity Loop **ACTIVE** |
+| **Stage** | **Gate 2** (REQ-0102) |
+| **Status** | **shipped** · Infinity Loop **ACTIVE** |
 | **Last Updated** | 2026-06-18 |
-| **Last REQ** | **REQ-0101** (C50) |
+| **Last REQ** | **REQ-0102** (C51) |
 
 ## Verify baseline
 
-**1284/1284** · tsc · lint · build — PASS (C50)
+**1296/1296** · tsc · lint · build — PASS (C51)
 
-## Key paths (C50)
+## Key paths (C51)
 
-`billing-invoice-map.ts` · `syncInvoicesAfterWrite` · `query-cache-cross-tab.ts` · `usePayments.ts` · `appointment-mutation-invalidation.ts`
+`appointment-cache-merge.ts` · `syncAppointmentsAfterWrite` · `syncAfterAppointmentWrite` · `query-cache-cross-tab.ts` · `useAppointments.ts`

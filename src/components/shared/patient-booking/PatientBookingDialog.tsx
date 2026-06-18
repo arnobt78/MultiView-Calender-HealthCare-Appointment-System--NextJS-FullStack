@@ -28,7 +28,8 @@ import { patientBookingCreatedMessage } from "@/lib/crud-notify-messages";
 import { notify } from "@/lib/notify";
 import { useAuth } from "@/hooks/useAuth";
 import { useDoctorsDirectory } from "@/hooks/useDoctorsDirectory";
-import { invalidateAfterAppointmentMutation } from "@/lib/query-client";
+import { invalidateAssigneesData } from "@/lib/query-client";
+import { syncAfterAppointmentWrite } from "@/lib/appointment-cache-merge";
 import { appointmentDoctorFkOpts } from "@/lib/appointment-invalidation-fk";
 import type { FullAppointment } from "@/hooks/useAppointments";
 import { prefetchAppointmentTypesForDoctor } from "@/lib/prefetch-appointment-types";
@@ -317,12 +318,17 @@ export function PatientBookingDialog({
           end: variables.end,
         })
       );
-      await invalidateAfterAppointmentMutation(queryClient, {
-        appointmentId: appointment?.id,
-        patientId: appointment?.patient ?? undefined,
-        categoryId: appointment?.category ?? undefined,
-        ...appointmentDoctorFkOpts(appointment),
-      });
+      await syncAfterAppointmentWrite(
+        queryClient,
+        { appointment: data.appointment },
+        {
+          appointmentId: appointment?.id,
+          patientId: appointment?.patient ?? undefined,
+          categoryId: appointment?.category ?? undefined,
+          scope: "schedule",
+          ...appointmentDoctorFkOpts(appointment),
+        }
+      );
       handleOpenChange(false);
     },
     onError: (e) => handleApiError(e, "Failed to book appointment"),

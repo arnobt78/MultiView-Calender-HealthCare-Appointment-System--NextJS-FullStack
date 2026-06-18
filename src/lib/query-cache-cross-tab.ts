@@ -7,6 +7,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
 import type { InvoiceRow } from "@/lib/billing-types";
+import type { AppointmentCrossTabMergePayload } from "@/lib/appointment-detail-api";
 
 export type QueryCacheCrossTabScope =
   | "app"
@@ -71,6 +72,50 @@ export const CROSS_TAB_SCOPES = {
     "notifications",
     "appointmentTypes",
     "availability",
+    "patientPortal",
+    "doctorPortal",
+    "adminPortal",
+    "dashboard",
+    "insights",
+    "analytics",
+    "patients",
+    "categories",
+  ] as const satisfies readonly QueryCacheCrossTabScope[],
+
+  /** Cache-first status write — portals + KPIs; appointment row merged cross-tab. */
+  APPOINTMENT_STATUS_SYNC: [
+    "notifications",
+    "patientPortal",
+    "doctorPortal",
+    "adminPortal",
+    "dashboard",
+    "insights",
+    "analytics",
+    "patients",
+    "categories",
+  ] as const satisfies readonly QueryCacheCrossTabScope[],
+
+  /** Cache-first schedule write — adds availability + appointmentTypes. */
+  APPOINTMENT_SCHEDULE_SYNC: [
+    "notifications",
+    "appointmentTypes",
+    "availability",
+    "patientPortal",
+    "doctorPortal",
+    "adminPortal",
+    "dashboard",
+    "insights",
+    "analytics",
+    "patients",
+    "categories",
+  ] as const satisfies readonly QueryCacheCrossTabScope[],
+
+  /** Cache-first delete — adds invoices prefix for billing-linked overview. */
+  APPOINTMENT_BILLING_SYNC: [
+    "notifications",
+    "appointmentTypes",
+    "availability",
+    "invoices",
     "patientPortal",
     "doctorPortal",
     "adminPortal",
@@ -203,6 +248,10 @@ export type QueryCacheCrossTabMessage = {
   invoiceMerge?: InvoiceRow;
   /** Listening tabs remove row from warm list caches when DELETE propagates. */
   invoiceRemovedId?: string;
+  /** Listening tabs merge appointment without busting appointments.all prefix. */
+  appointmentMerge?: AppointmentCrossTabMergePayload;
+  /** Listening tabs remove appointment from warm list caches when DELETE propagates. */
+  appointmentRemovedId?: string;
 };
 
 function isBrowser(): boolean {
@@ -313,7 +362,10 @@ function parseMessage(raw: unknown): QueryCacheCrossTabMessage | null {
   const hasInvoicePayload =
     (msg.invoiceMerge != null && typeof msg.invoiceMerge === "object") ||
     typeof msg.invoiceRemovedId === "string";
-  if (scopes.length === 0 && !hasInvoicePayload) return null;
+  const hasAppointmentPayload =
+    (msg.appointmentMerge != null && typeof msg.appointmentMerge === "object") ||
+    typeof msg.appointmentRemovedId === "string";
+  if (scopes.length === 0 && !hasInvoicePayload && !hasAppointmentPayload) return null;
   return {
     tabId: msg.tabId,
     scopes,
@@ -324,6 +376,12 @@ function parseMessage(raw: unknown): QueryCacheCrossTabMessage | null {
         : undefined,
     invoiceRemovedId:
       typeof msg.invoiceRemovedId === "string" ? msg.invoiceRemovedId : undefined,
+    appointmentMerge:
+      msg.appointmentMerge != null && typeof msg.appointmentMerge === "object"
+        ? (msg.appointmentMerge as AppointmentCrossTabMergePayload)
+        : undefined,
+    appointmentRemovedId:
+      typeof msg.appointmentRemovedId === "string" ? msg.appointmentRemovedId : undefined,
   };
 }
 
@@ -519,6 +577,50 @@ export function publishInvoiceRemoveCrossTab(
     scopes: dedupeScopes(scopes),
     ts: Date.now(),
     invoiceRemovedId: invoiceId,
+  });
+}
+
+function appointmentSyncScopesForScope(
+  scope: "status" | "schedule" | "billing"
+): readonly QueryCacheCrossTabScope[] {
+  if (scope === "status") return CROSS_TAB_SCOPES.APPOINTMENT_STATUS_SYNC;
+  if (scope === "billing") return CROSS_TAB_SCOPES.APPOINTMENT_BILLING_SYNC;
+  return CROSS_TAB_SCOPES.APPOINTMENT_SCHEDULE_SYNC;
+}
+
+/** Cache-first appointment write — merge row in other tabs; narrow scope invalidation only. */
+export function publishAppointmentMergeCrossTab(
+  payload: AppointmentCrossTabMergePayload,
+  opts: { scope: "status" | "schedule" | "billing"; patientId?: string }
+): void {
+  if (!isBrowser()) return;
+  const scopes: QueryCacheCrossTabScope[] = [...appointmentSyncScopesForScope(opts.scope)];
+  if (!opts.patientId) {
+    scopes.push("patients");
+  }
+  postMessagePayload({
+    tabId: getLocalTabId(),
+    scopes: dedupeScopes(scopes),
+    ts: Date.now(),
+    appointmentMerge: payload,
+  });
+}
+
+/** Appointment DELETE — remove from warm caches in other tabs without full list refetch. */
+export function publishAppointmentRemoveCrossTab(
+  appointmentId: string,
+  opts: { scope: "status" | "schedule" | "billing"; patientId?: string }
+): void {
+  if (!isBrowser()) return;
+  const scopes: QueryCacheCrossTabScope[] = [...appointmentSyncScopesForScope(opts.scope)];
+  if (!opts.patientId) {
+    scopes.push("patients");
+  }
+  postMessagePayload({
+    tabId: getLocalTabId(),
+    scopes: dedupeScopes(scopes),
+    ts: Date.now(),
+    appointmentRemovedId: appointmentId,
   });
 }
 

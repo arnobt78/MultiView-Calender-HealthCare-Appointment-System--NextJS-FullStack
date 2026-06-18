@@ -22,6 +22,16 @@ export type AppointmentDetailApiPayload = {
   detail: AppointmentDetailViewModel;
 };
 
+/** Cross-tab + cache-first write — detail optional when API returns list row only (patient booking). */
+export type AppointmentCrossTabMergePayload = {
+  appointment: Appointment;
+  detail?: AppointmentDetailViewModel;
+};
+
+export type AppointmentWritePayload =
+  | AppointmentDetailApiPayload
+  | AppointmentCrossTabMergePayload;
+
 function serializeAppointmentFromDetailRaw(raw: AppointmentDetailRaw): Appointment {
   const feeDoc = raw as AppointmentDetailRaw & {
     treating_physician?: { consultation_fee: number | null } | null;

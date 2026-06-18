@@ -530,31 +530,50 @@ export async function invalidateAppointmentTypeDerived(queryClient: QueryClient)
  * After appointment create/update/import — pass `patientId` when known for cheaper patient cache updates.
  * Also invalidates insights/analytics since all charts aggregate appointment data.
  * Portal caches (doctor, admin, patient) are included because portals show appointment counts and lists.
+ *
+ * Prefer `mergeAppointmentIntoAllCaches` + `syncAfterAppointmentWrite` for client mutations (C51).
  */
-export async function invalidateAfterAppointmentMutation(
-  queryClient: QueryClient,
-  opts?: AppointmentMutationInvalidationOpts
-) {
-  const scope = opts?.scope ?? "schedule";
-  const targets = resolveAppointmentMutationTargets(queryClient, opts);
+export type AppointmentWriteSyncOpts = AppointmentMutationInvalidationOpts & {
+  /** True when list + detail were patched locally — skips appointments.all + detail bust. */
+  cachesMerged?: boolean;
+  /** DELETE path — list row removed; detail query dropped instead of invalidated. */
+  deleted?: boolean;
+};
 
-  const detailInvalidations: Promise<void>[] = [];
-  if (opts?.appointmentId) {
-    detailInvalidations.push(
-      queryClient
-        .invalidateQueries({ queryKey: queryKeys.appointments.detail(opts.appointmentId) })
-        .then(() => undefined)
-    );
+/**
+ * Selective background sync after appointment CRUD when TanStack caches were patched first.
+ * Skips appointments.all / detail when `cachesMerged` — UI already fresh on current tab.
+ */
+export async function syncAppointmentsAfterWrite(
+  queryClient: QueryClient,
+  opts: AppointmentWriteSyncOpts
+): Promise<void> {
+  const scope = opts.scope ?? "schedule";
+  const targets = resolveAppointmentMutationTargets(queryClient, opts);
+  const cachesMerged = opts.cachesMerged === true;
+  const deleted = opts.deleted === true;
+
+  const appointmentListTasks: Promise<void>[] = [];
+  if (!cachesMerged) {
+    appointmentListTasks.push(invalidateAppointmentData(queryClient));
+    if (opts.appointmentId) {
+      appointmentListTasks.push(
+        queryClient
+          .invalidateQueries({ queryKey: queryKeys.appointments.detail(opts.appointmentId) })
+          .then(() => undefined)
+      );
+    }
+  } else if (deleted && opts.appointmentId) {
+    queryClient.removeQueries({ queryKey: queryKeys.appointments.detail(opts.appointmentId) });
   }
 
   const sharedTasks: Promise<void>[] = [
-    invalidateAppointmentData(queryClient),
+    ...appointmentListTasks,
     invalidateNotificationsData(queryClient),
     invalidatePatientPortal(queryClient),
     invalidateDoctorPortal(queryClient),
     invalidateAdminPortal(queryClient),
     invalidateAppointmentEntitySnapshots(queryClient, targets),
-    ...detailInvalidations,
   ];
 
   if (scope === "status") {
@@ -563,7 +582,6 @@ export async function invalidateAfterAppointmentMutation(
       invalidateDashboardOverview(queryClient),
       invalidateInsightsAndAnalytics(queryClient),
     ]);
-    publishQueryCacheCrossTab(CROSS_TAB_SCOPES.APPOINTMENT_STATUS);
     return;
   }
 
@@ -575,20 +593,37 @@ export async function invalidateAfterAppointmentMutation(
       invalidateDashboardOverview(queryClient),
       invalidateInsightsAndAnalytics(queryClient),
     ]);
-    publishQueryCacheCrossTab(CROSS_TAB_SCOPES.APPOINTMENT_SCHEDULE);
     return;
   }
 
   await Promise.all([
-    invalidateAppointmentData(queryClient),
+    ...appointmentListTasks,
     invalidateNotificationsData(queryClient),
     invalidateAppointmentTypeDerived(queryClient),
     invalidateInvoicesAndOverview(queryClient, {
-      patientId: opts?.patientId ?? targets.patientIds[0] ?? undefined,
+      patientId: opts.patientId ?? targets.patientIds[0] ?? undefined,
     }),
     invalidateAppointmentEntitySnapshots(queryClient, targets),
-    ...detailInvalidations,
   ]);
+}
+
+export async function invalidateAfterAppointmentMutation(
+  queryClient: QueryClient,
+  opts?: AppointmentMutationInvalidationOpts
+) {
+  const scope = opts?.scope ?? "schedule";
+  await syncAppointmentsAfterWrite(queryClient, { ...opts, scope, cachesMerged: false });
+
+  if (scope === "status") {
+    publishQueryCacheCrossTab(CROSS_TAB_SCOPES.APPOINTMENT_STATUS);
+    return;
+  }
+
+  if (scope === "schedule") {
+    publishQueryCacheCrossTab(CROSS_TAB_SCOPES.APPOINTMENT_SCHEDULE);
+    return;
+  }
+
   publishQueryCacheCrossTab(CROSS_TAB_SCOPES.APPOINTMENT_MUTATION);
 }
 

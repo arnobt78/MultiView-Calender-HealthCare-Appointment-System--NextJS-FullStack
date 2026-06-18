@@ -1,8 +1,10 @@
 # HealthCal Pro — Project Walkthrough
 
-## Agent resume (2026-06-18 — C49 + C50)
+## Agent resume (2026-06-18 — C51)
 
-**Baseline:** 1284/1284 · tsc · lint · build PASS
+**Baseline:** 1296/1296 · tsc · lint · build PASS
+
+**C51 (REQ-0102):** Appointment cache-first — `appointment-cache-merge.ts` · `syncAppointmentsAfterWrite` · `syncAfterAppointmentWrite` · `publishAppointmentMergeCrossTab` · `APPOINTMENT_*_SYNC` cross-tab scopes.
 
 **C50 (REQ-0101):** Invoice cache-first — `mergeInvoiceIntoAllCaches` · `syncInvoicesAfterWrite` · `publishInvoiceMergeCrossTab` · `resolvePatientIdFromInvoiceRow` · appointment mutation scopes · `syncAppointmentsAfterPatientWrite` / `syncAppointmentsAfterCategoryWrite`.
 
@@ -10,7 +12,7 @@
 
 **C48.1:** `AppointmentWhenTableCell` inline datetime.
 
-**Keys:** `billing-invoice-map.ts` · `query-cache-cross-tab.ts` · `syncInvoicesAfterWrite` · `stable-query-fallbacks.ts` · `entity-routes.ts` `controlPanelStaffDetailHref`
+**Keys:** `appointment-cache-merge.ts` · `billing-invoice-map.ts` · `query-cache-cross-tab.ts` · `syncAppointmentsAfterWrite` · `syncInvoicesAfterWrite` · `stable-query-fallbacks.ts` · `entity-routes.ts` `controlPanelStaffDetailHref`
 
 **Invariants:** SSR seed + `refetchOnMount: false` when warm · SSE external writes still full invalidation · no `router.refresh`.
 

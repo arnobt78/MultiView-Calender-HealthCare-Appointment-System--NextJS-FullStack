@@ -126,6 +126,7 @@
 | REQ-0079 | approved [C31] | REQ-0078 | ART-0407..0409 | pending |
 | REQ-0080 | approved [C32] | REQ-0079 | ART-0410..0416 | pending |
 | REQ-0081 | approved [C33] | REQ-0080 | ART-0417..0423 | pending |
+| REQ-0102 | approved [C51] | REQ-0101 | ART-0553..0558 | pending |
 | REQ-0101 | approved [C50] | REQ-0100 | ART-0546..0552 | pending |
 | REQ-0100 | verify PASS [C49] | REQ-0099 | ART-0540..0545 | pending |
 | REQ-0099 | verify PASS [C48] | REQ-0098 | ART-0533..0539 | `8ba3acf` |
@@ -146,6 +147,24 @@
 | REQ-0084 | approved [C36] | REQ-0083 | ART-0437..0444 | pending |
 | REQ-0083 | approved [C35/C35.1] | REQ-0082 | ART-0432..0436 | pending |
 | REQ-0082 | approved [C34/C34.1] | REQ-0081 | ART-0424..0431 | pending |
+
+### REQ-0102 — C51 Cache-first appointment invalidation
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C51] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0101 |
+
+**Statement:** Patch TanStack appointment list + detail from mutation `AppointmentDetailApiPayload`; selective `syncAppointmentsAfterWrite` skips patched keys; cross-tab appointment merge without `appointments` prefix bust. Bulk/external callers (ICS, GCal) keep broad invalidation.
+
+**Acceptance criteria:**
+1. `mergeAppointmentIntoAllCaches` patches `appointments.all` + detail from API payload.
+2. `syncAppointmentsAfterWrite` skips `appointments.all` + detail when `cachesMerged`.
+3. Cross-tab `appointmentMerge` / `appointmentRemovedId` paints other tabs without list refetch storm.
+4. `useAppointments` + `PatientBookingDialog` use cache-first path; delete removes cache before sync.
+5. Patients/categories/org unchanged; verify suite PASS.
 
 ### REQ-0101 — C50 Cache-first invalidation (fewer GETs, same instant UI)
 

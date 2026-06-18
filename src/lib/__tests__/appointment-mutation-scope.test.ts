@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { QueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
-import { invalidateAfterAppointmentMutation } from "@/lib/query-client";
+import { invalidateAfterAppointmentMutation, syncAppointmentsAfterWrite } from "@/lib/query-client";
 
 describe("invalidateAfterAppointmentMutation scope", () => {
   beforeEach(() => {
@@ -28,5 +28,28 @@ describe("invalidateAfterAppointmentMutation scope", () => {
     });
     const keys = spy.mock.calls.map((call) => call[0]?.queryKey);
     expect(keys).toContainEqual(queryKeys.invoices.all);
+  });
+
+  it("external path busts appointments.all via invalidateAfterAppointmentMutation", async () => {
+    const qc = new QueryClient();
+    const spy = vi.spyOn(qc, "invalidateQueries");
+    await invalidateAfterAppointmentMutation(qc, {
+      appointmentId: "appt-1",
+      scope: "schedule",
+    });
+    const keys = spy.mock.calls.map((call) => call[0]?.queryKey);
+    expect(keys).toContainEqual(queryKeys.appointments.all);
+  });
+
+  it("syncAppointmentsAfterWrite with cachesMerged skips appointments.all", async () => {
+    const qc = new QueryClient();
+    const spy = vi.spyOn(qc, "invalidateQueries");
+    await syncAppointmentsAfterWrite(qc, {
+      appointmentId: "appt-1",
+      scope: "schedule",
+      cachesMerged: true,
+    });
+    const keys = spy.mock.calls.map((call) => call[0]?.queryKey);
+    expect(keys).not.toContainEqual(queryKeys.appointments.all);
   });
 });

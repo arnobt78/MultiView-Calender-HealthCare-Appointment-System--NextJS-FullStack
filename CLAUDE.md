@@ -4,10 +4,11 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-18)
 
+- **C51 (REQ-0102):** Cache-first appointment writes — `mergeAppointmentIntoAllCaches` + `syncAppointmentsAfterWrite` + `syncAfterAppointmentWrite`; cross-tab `publishAppointmentMergeCrossTab`; bulk/ICS/GCal keep `invalidateAfterAppointmentMutation`.
 - **C50 (REQ-0101):** Cache-first invoice writes — `mergeInvoiceIntoAllCaches` + `syncInvoicesAfterWrite`; cross-tab `publishInvoiceMergeCrossTab`; appointment invalidation scopes (`status`/`schedule`/`billing`); patient/category/org patch-or-invalidate.
 - **C49 (REQ-0100):** `stable-query-fallbacks.ts` `EMPTY_*`; `controlPanelStaffDetailHref`; doctor snapshot prefetch skip for admin users; `AppointmentDialog` loop fix retained.
 - **C48.1:** `AppointmentWhenTableCell` inline datetime.
-- **Verify:** **1284/1284** · tsc · lint · build PASS.
+- **Verify:** **1296/1296** · tsc · lint · build PASS.
 
 ## Doctor invoice RBAC (C48)
 
@@ -24,7 +25,7 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 | Write | Helper |
 |-------|--------|
-| Appointment | `invalidateAfterAppointmentMutation` (scope: `status` \| `schedule` \| `billing`) |
+| Appointment | `syncAfterAppointmentWrite` (client CRUD) or `invalidateAfterAppointmentMutation` (ICS/GCal/SSE); scope: `status` \| `schedule` \| `billing` |
 | Patient | `syncAppointmentsAfterPatientWrite` or `invalidateEntityAffectingAppointments` (create/delete) |
 | Invoice | `mergeInvoiceIntoAllCaches` + `syncInvoicesAfterWrite` + `publishInvoiceMergeCrossTab`; SSE still `invalidateInvoicesAndOverview` |
 | Organization | `invalidateOrganizations` (+ dashboard); skip `organizations.members` when cache merged |
@@ -61,7 +62,7 @@ Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Agile V
 
-`.agile-v/STATE.md` · **C50 shipped (pending commit)** · **1284/1284**.
+`.agile-v/STATE.md` · **C51 shipped** · **1296/1296** · REQ-0102.
 
 ## Principle
 

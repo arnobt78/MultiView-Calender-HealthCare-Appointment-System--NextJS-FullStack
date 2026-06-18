@@ -4,10 +4,10 @@ import { apiClient, handleApiError } from "@/lib/api-client";
 import { shouldRunAuthenticatedAppQueries } from "@/lib/auth-pending-toast";
 import { queryKeys } from "@/lib/query-keys";
 import {
-  invalidateAfterAppointmentMutation,
   invalidateAssigneesData,
   maybeInvalidateGoogleCalendarIfConnected,
 } from "@/lib/query-client";
+import { syncAfterAppointmentWrite } from "@/lib/appointment-cache-merge";
 import {
   appointmentDoctorFkOpts,
   appointmentDoctorFkOptsWithPrevious,
@@ -180,10 +180,7 @@ export function useAppointments() {
       }),
     onSuccess: async (data) => {
       const appointment = data.appointment as FullAppointment;
-      if (data.detail && appointment?.id) {
-        patchAppointmentDetailCache(queryClient, appointment.id, data.detail);
-      }
-      await invalidateAfterAppointmentMutation(queryClient, {
+      await syncAfterAppointmentWrite(queryClient, data, {
         appointmentId: appointment?.id,
         patientId: appointment?.patient ?? undefined,
         categoryId: appointment?.category ?? undefined,
@@ -219,11 +216,8 @@ export function useAppointments() {
     },
     onSuccess: async (data, variables, context) => {
       const appointment = data.appointment as FullAppointment;
-      if (data.detail) {
-        patchAppointmentDetailCache(queryClient, variables.id, data.detail);
-      }
       const updatedLabels = getUpdatedFieldLabels(variables);
-      await invalidateAfterAppointmentMutation(queryClient, {
+      await syncAfterAppointmentWrite(queryClient, data, {
         appointmentId: appointment?.id,
         patientId: appointment?.patient ?? undefined,
         categoryId: appointment?.category ?? undefined,
@@ -258,11 +252,10 @@ export function useAppointments() {
       return { deleted };
     },
     onSuccess: async (_, deletedId, context) => {
-      // Dashboard/overview is already busted inside `invalidateAfterAppointmentMutation`
-      // (via `invalidateInvoicesAndOverview`); assignee rows are a separate cache tree.
       await Promise.all([
-        invalidateAfterAppointmentMutation(queryClient, {
+        syncAfterAppointmentWrite(queryClient, null, {
           appointmentId: deletedId,
+          deleted: true,
           patientId: context?.deleted?.patient ?? undefined,
           categoryId: context?.deleted?.category ?? undefined,
           scope: "billing",
@@ -271,10 +264,6 @@ export function useAppointments() {
         invalidateAssigneesData(queryClient),
         maybeInvalidateGoogleCalendarIfConnected(queryClient),
       ]);
-
-      queryClient.setQueryData<FullAppointment[]>(queryKeys.appointments.all, (old) =>
-        old ? old.filter((appt) => appt.id !== deletedId) : []
-      );
 
       const deleted = context?.deleted;
       notify.crud({
@@ -316,20 +305,9 @@ export function useAppointments() {
       patchAppointmentDetailCacheOptimistic(queryClient, id, { id, status });
       return { previousAppointments, previousDetail };
     },
-    onSuccess: async (data) => {
+    onSuccess: async (data, variables) => {
       const appt = data.appointment as FullAppointment;
-      if (data.detail) {
-        patchAppointmentDetailCache(queryClient, appt.id, data.detail);
-      }
-      queryClient.setQueryData<FullAppointment[]>(queryKeys.appointments.all, (old = []) =>
-        old.map((item) => (item.id === appt.id ? { ...item, ...appt } : item))
-      );
-      // Status changes affect done/pending/alert counters in overview and insights by-status chart.
-      // The PATCH handler also creates a notification row — invalidate so the bell reflects it instantly.
-      // Portal timeline reads appointment status — invalidate so patient-facing portal refetches without navigation.
-      // Status labels can affect scheduling UX copy; also bust slot/type caches so any UI that keys off
-      // `invalidateAfterAppointmentMutation` stays on the same invalidation contract as full PATCH flows.
-      await invalidateAfterAppointmentMutation(queryClient, {
+      await syncAfterAppointmentWrite(queryClient, data, {
         appointmentId: appt.id,
         patientId: appt.patient ?? undefined,
         categoryId: appt.category ?? undefined,
@@ -380,13 +358,7 @@ export function useAppointments() {
     },
     onSuccess: async (data) => {
       const appt = data.appointment as FullAppointment;
-      if (data.detail) {
-        patchAppointmentDetailCache(queryClient, appt.id, data.detail);
-      }
-      queryClient.setQueryData<FullAppointment[]>(queryKeys.appointments.all, (old = []) =>
-        old.map((item) => (item.id === appt.id ? { ...item, ...appt } : item))
-      );
-      await invalidateAfterAppointmentMutation(queryClient, {
+      await syncAfterAppointmentWrite(queryClient, data, {
         appointmentId: appt.id,
         patientId: appt.patient ?? undefined,
         categoryId: appt.category ?? undefined,
