@@ -4,10 +4,11 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-18)
 
-- **C56:** `payingInvoiceId` per-card Pay Now · bfcache pay reset · timeline `UserRoleBadge`
-- **C55:** invoice card `compactStack`/`wrapInline` issuer badge · timeline dedupe datetime
-- **C54:** visit type+duration on picker/portal/queue/telehealth/snapshot
-- **Verify:** **1315/1315** · tsc · lint · build PASS
+- **C59.1:** `getSchedulingUiToday` (local, not UTC) · today default even when month `full` · calendar disables only `unavailable`
+- **C59:** `resolveDefaultSchedulingDateStr` · auto date on scheduling open · `SchedulingPanel` day prefetch
+- **C58:** `summarizePatientPortalSidebar` · Cancelled summary row · doctor row spacing fix
+- **C57:** `formatPatientReferralDisplay` · portal Primary Doctor `DoctorIdentityRow` inline
+- **Verify:** **1332/1332** · tsc · lint · build PASS
 
 ## Doctor invoice RBAC (C48)
 
@@ -61,7 +62,7 @@ Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Agile V
 
-`.agile-v/STATE.md` · **C56 shipped** · **1315/1315** · REQ-0107.
+`.agile-v/STATE.md` · **C59 shipped** · **1332/1332** · REQ-0110.
 
 ## Principle
 

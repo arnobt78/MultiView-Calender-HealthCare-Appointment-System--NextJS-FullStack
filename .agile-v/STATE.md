@@ -6,17 +6,17 @@
 
 | Field | Value |
 |-------|-------|
-| **Cycle** | **C56 shipped** |
+| **Cycle** | **C59 shipped** |
 | **Phase** | Accept |
 | **Stage** | **verify PASS** |
 | **Status** | shipped |
 | **Last Updated** | 2026-06-18 |
-| **Last REQ** | **REQ-0107** (C56) |
+| **Last REQ** | **REQ-0110** (C59) |
 
 ## Verify baseline
 
-**1315/1315** · tsc · lint · build — PASS
+**1332/1332** · tsc · lint · build — PASS
 
-## Key paths (C56)
+## Key paths (C59)
 
-`usePayments.ts` · `PatientPortalPage.tsx` · `PortalAppointmentClinicianIdentityBlock.tsx`
+`scheduling-ui-today.ts` · `default-scheduling-date.ts` · `SchedulingMonthCalendar.tsx` · `SchedulingPanel.tsx`

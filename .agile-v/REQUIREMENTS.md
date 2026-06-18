@@ -126,6 +126,9 @@
 | REQ-0079 | approved [C31] | REQ-0078 | ART-0407..0409 | pending |
 | REQ-0080 | approved [C32] | REQ-0079 | ART-0410..0416 | pending |
 | REQ-0081 | approved [C33] | REQ-0080 | ART-0417..0423 | pending |
+| REQ-0110 | approved [C59] | REQ-0109 | ART-0591..0594 | pending |
+| REQ-0109 | approved [C58] | REQ-0108 | ART-0587..0590 | pending |
+| REQ-0108 | approved [C57] | REQ-0107 | ART-0583..0586 | pending |
 | REQ-0107 | approved [C56] | REQ-0106 | ART-0579..0582 | pending |
 | REQ-0106 | approved [C55] | REQ-0105 | ART-0575..0578 | pending |
 | REQ-0105 | approved [C54] | REQ-0104 | ART-0569..0574 | pending |
@@ -152,6 +155,58 @@
 | REQ-0084 | approved [C36] | REQ-0083 | ART-0437..0444 | pending |
 | REQ-0083 | approved [C35/C35.1] | REQ-0082 | ART-0432..0436 | pending |
 | REQ-0082 | approved [C34/C34.1] | REQ-0081 | ART-0424..0431 | pending |
+
+### REQ-0110 — C59 Default bookable date on scheduling panel open
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C59] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0109 |
+
+**Statement:** Booking dialogs (patient portal, telehealth, staff calendar create) auto-select the first bookable day (prefer today) when doctor + visit scope are ready and `dateStr` is empty, so the slot grid loads without a manual calendar click.
+
+**Acceptance criteria:**
+1. `resolveDefaultSchedulingDateStr` in `default-scheduling-date.ts` — today when `open`, else earliest `open` day `>= today` in month map.
+2. `SchedulingMonthCalendar` calls `onDateStrChange` when month data settles and `dateStr` is empty.
+3. `SchedulingPanel` prefetches day grid when typed slots become visible (patient + staff parity).
+4. Doctor/type change still clears date+slot; auto-default re-runs; edit appointment seed unchanged.
+5. Unit tests + verify PASS.
+
+### REQ-0109 — C58 Portal summary status buckets + Primary Doctor spacing
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C58] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0108 |
+
+**Statement:** Patient portal sidebar Summary uses status-based buckets (Upcoming = open+alert forward, separate Cancelled row) and Primary Doctor profile row drops excess min-height.
+
+**Acceptance criteria:**
+1. `summarizePatientPortalSidebar` in `appointment-stats.ts` with tests.
+2. Summary shows Total, Completed, Upcoming, Cancelled — upcoming excludes cancelled/done.
+3. `ProfileDefinitionRow` doctorStack removes `min-h-[2.75rem]`; icon centers with inline doctor.
+4. Verify PASS; display-only.
+
+### REQ-0108 — C57 Patient portal profile referral label + inline primary doctor
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C57] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0107 |
+
+**Statement:** Patient portal My Profile maps referral_source codes to human labels and shows Primary Doctor inline (avatar + name + email + specialty badge).
+
+**Acceptance criteria:**
+1. Shared `formatPatientReferralDisplay` maps `PATIENT_REFERRAL_SOURCES` labels (not raw codes).
+2. Primary Doctor uses `DoctorIdentityRow` `layout="inline"` with responsive wrap.
+3. `ProfileDefinitionRow` doctor skeleton matches inline footprint.
+4. Verify PASS; display-only.
 
 ### REQ-0107 — C56 Patient portal Pay Now + timeline admin badge
 

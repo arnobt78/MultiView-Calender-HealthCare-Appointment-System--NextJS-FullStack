@@ -30,7 +30,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { AppointmentListSectionAccordion } from "@/components/shared/AppointmentListSectionAccordion";
-import { summarizeDayAppointments } from "@/lib/appointment-stats";
+import { summarizeDayAppointments, summarizePatientPortalSidebar } from "@/lib/appointment-stats";
 import { PortalAppointmentTimelineCard } from "@/components/shared/PortalAppointmentTimelineCard";
 import { useAppointmentColor } from "@/context/AppointmentColorContext";
 import {
@@ -45,6 +45,7 @@ import {
   Activity,
   AlertCircle,
   AlertTriangle,
+  Ban,
   Cake,
   Calendar,
   CalendarCheck,
@@ -82,6 +83,7 @@ import { AppointmentStatusGlassBadge } from "@/components/shared/appointments/Ap
 import { resolveAppointmentStatusMeta } from "@/lib/appointment-status-display";
 import { prefetchDoctorsDirectory } from "@/lib/prefetch-doctors-directory";
 import { getPatientCareLevelLabel } from "@/lib/patient-care-level";
+import { formatPatientReferralDisplay } from "@/lib/patient-referral-display";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -294,6 +296,7 @@ function renderPrimaryDoctor(patient: Patient, portalDoctors: AppUser[]): ReactN
       pRow.primary_doctor_image?.trim() || doc?.image?.trim() || null;
     return (
       <DoctorIdentityRow
+        layout="inline"
         doctor={{
           id: pRow.primary_doctor_id,
           display_name: pRow.primary_doctor_display.trim(),
@@ -303,6 +306,7 @@ function renderPrimaryDoctor(patient: Patient, portalDoctors: AppUser[]): ReactN
         }}
         size="sm"
         showEmail
+        showSpecialty
         linkKind="role"
       />
     );
@@ -390,9 +394,10 @@ export default function PatientPortalPage({
   const userImage = data?.userImage ?? null;
   const appointments = data?.appointments ?? [];
 
-  const done = appointments.filter((a) => a.status === "done").length;
-  const upcoming = appointments.filter((a) => isFuture(new Date(a.start)) || isToday(new Date(a.start))).length;
-  const total = appointments.length;
+  const summaryStats = useMemo(
+    () => summarizePatientPortalSidebar(data?.appointments ?? []),
+    [data?.appointments]
+  );
 
   // Derive age from birth_date
   const age = patient?.birth_date
@@ -417,7 +422,8 @@ export default function PatientPortalPage({
   const clinicalProfile = patient?.clinical_profile as PatientClinicalProfile;
   const invoices = invoicesList ?? [];
   /**
-   * Keep Primary Doctor row in doctorStack skeleton state until doctor directory metadata
+   * Keep Primary Doctor row in doctorStack skeleton until doctor directory metadata
+   * resolves specialty for inline badge (SSR display_name is enough for first paint).
    * is available; prevents specialty-badge pop-in from expanding the row after first paint.
    */
   const primaryDoctorRowLoading = profileLoading;
@@ -570,9 +576,7 @@ export default function PatientPortalPage({
                           label="Referral"
                           loading={profileLoading}
                         >
-                          {clinicalProfile?.referral_source
-                            ? `${clinicalProfile.referral_source}${clinicalProfile.referral_detail ? ` — ${clinicalProfile.referral_detail}` : ""}`
-                            : "—"}
+                          {formatPatientReferralDisplay(clinicalProfile) ?? "—"}
                         </ProfileDefinitionRow>
 
                         <ProfileDefinitionRow
@@ -625,21 +629,27 @@ export default function PatientPortalPage({
                     [
                       {
                         label: "Total Appointments",
-                        value: total,
+                        value: summaryStats.total,
                         icon: <CalendarDays className="h-4 w-4 text-sky-500" />,
                         glassCls: "calendar-glass-badge-sky",
                       },
                       {
                         label: "Completed",
-                        value: done,
+                        value: summaryStats.completed,
                         icon: <CheckCircle2 className="h-4 w-4 text-emerald-500" />,
                         glassCls: "calendar-glass-badge-emerald",
                       },
                       {
                         label: "Upcoming",
-                        value: upcoming,
+                        value: summaryStats.upcoming,
                         icon: <CalendarClock className="h-4 w-4 text-blue-500" />,
                         glassCls: "calendar-glass-badge-blue",
+                      },
+                      {
+                        label: "Cancelled",
+                        value: summaryStats.cancelled,
+                        icon: <Ban className="h-4 w-4 text-slate-500" />,
+                        glassCls: "calendar-glass-badge-slate",
                       },
                     ] as const
                   ).map(({ label, value, icon, glassCls }) => (

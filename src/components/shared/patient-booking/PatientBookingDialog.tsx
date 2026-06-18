@@ -67,6 +67,7 @@ import { patientBookingDialogContentClass } from "@/components/shared/patient-bo
 import { DoctorDirectoryPickerCard } from "@/components/shared/doctor-display/DoctorDirectoryPickerCard";
 import type { DoctorDirectoryRow } from "@/lib/doctor-directory";
 import { isDoctorActive } from "@/lib/entity-active-status";
+import { getSchedulingUiToday } from "@/lib/scheduling/scheduling-ui-today";
 
 export type PatientBookingDialogProps = {
   /** Pre-select doctor when opened from /services */
@@ -370,7 +371,7 @@ export function PatientBookingDialog({
     !doctorsDirectoryLoading &&
     selectedDoctor != null &&
     !isDoctorActive(selectedDoctor);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getSchedulingUiToday();
   const backStep = getBackStep(step);
   const canAdvance = canAdvanceFromStep(step, wizardState);
   const showDoctorType = shouldShowDoctorTypeSection(step);

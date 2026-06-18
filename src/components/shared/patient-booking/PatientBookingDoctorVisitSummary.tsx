@@ -9,7 +9,6 @@ import type { ReactNode } from "react";
 
 import { addMinutes, format } from "date-fns";
 import { CalendarDays, Clock, MapPin, Timer } from "lucide-react";
-import { TelehealthSessionBadge } from "@/components/shared/appointments/TelehealthSessionBadge";
 import { AppointmentVisitScheduleMeta } from "@/components/shared/appointments/AppointmentVisitScheduleMeta";
 import { resolveAppointmentVisitLocationLabel } from "@/lib/appointment-visit-location";
 import { Badge } from "@/components/ui/badge";
@@ -119,7 +118,8 @@ function BookingVisitLocationPreview({
     is_telehealth: isTelehealth,
   });
   if (!label) {
-    return isTelehealth ? <TelehealthSessionBadge /> : null;
+    // Visit type badge already labels telehealth sessions — no extra location/badge row.
+    return null;
   }
   return (
     <p className="flex items-center gap-1.5 text-[10px] leading-snug text-sky-800">

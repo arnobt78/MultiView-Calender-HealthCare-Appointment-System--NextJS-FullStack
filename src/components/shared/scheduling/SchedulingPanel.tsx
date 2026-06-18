@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Clock } from "lucide-react";
 import { SchedulingMonthCalendar } from "@/components/shared/scheduling/SchedulingMonthCalendar";
 import { SchedulingSlotChipGrid } from "@/components/shared/scheduling/SchedulingSlotChipGrid";
@@ -13,6 +14,7 @@ import {
   resolveSlotPickIsoFromCells,
   slotStartsMatch,
 } from "@/lib/scheduling/slot-pick-selection";
+import { prefetchSchedulingDay } from "@/lib/prefetch-scheduling";
 
 export type SchedulingPanelProps = {
   doctorId: string;
@@ -56,6 +58,7 @@ export function SchedulingPanel({
   hideCalendarCaption = false,
   className,
 }: SchedulingPanelProps) {
+  const queryClient = useQueryClient();
   const isSplit = layout === "split";
   const railFill = fillLayout || isSplit;
 
@@ -67,6 +70,17 @@ export function SchedulingPanel({
   }, [isFlexible, flexDurationMinutes, typeId]);
 
   const showTypedSlots = Boolean(dateStr && !isFlexible && typeId);
+
+  // Warm day grid for patient + staff as soon as a typed date is selected (incl. auto-default).
+  useEffect(() => {
+    if (!showTypedSlots) return;
+    prefetchSchedulingDay(queryClient, {
+      doctorId,
+      typeId,
+      dateStr,
+      excludeAppointmentId,
+    });
+  }, [showTypedSlots, queryClient, doctorId, typeId, dateStr, excludeAppointmentId]);
 
   const { data: gridData, isLoading: slotsLoading } = useSchedulingDayGrid({
     doctorId,

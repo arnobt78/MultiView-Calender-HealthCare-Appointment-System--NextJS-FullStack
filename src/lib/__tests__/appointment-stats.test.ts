@@ -5,6 +5,7 @@ import {
   resolveDayStatsForDate,
   summarizeAppointments,
   summarizeDayAppointments,
+  summarizePatientPortalSidebar,
 } from "@/lib/appointment-stats";
 import type { FullAppointment } from "@/hooks/useAppointments";
 
@@ -90,6 +91,54 @@ describe("resolveDayStatsForDate", () => {
     });
     expect(stats.done).toBe(1);
     expect(stats.alert).toBe(0);
+  });
+});
+
+describe("summarizePatientPortalSidebar", () => {
+  const referenceDate = new Date("2026-06-18T12:00:00");
+
+  it("matches portal screenshot buckets — open+alert upcoming, cancelled separate", () => {
+    const stats = summarizePatientPortalSidebar(
+      [
+        { start: "2026-06-18T10:00:00Z", status: "cancelled" },
+        { start: "2026-06-17T10:00:00Z", status: "cancelled" },
+        { start: "2026-06-25T10:00:00Z", status: "pending" },
+        { start: "2026-06-26T10:00:00Z", status: "alert" },
+        { start: "2026-06-27T10:00:00Z", status: "done" },
+      ],
+      referenceDate
+    );
+    expect(stats).toEqual({
+      total: 5,
+      completed: 1,
+      upcoming: 2,
+      cancelled: 2,
+    });
+  });
+
+  it("excludes past open/alert from upcoming", () => {
+    const stats = summarizePatientPortalSidebar(
+      [
+        { start: "2026-06-17T10:00:00Z", status: "pending" },
+        { start: "2026-06-25T10:00:00Z", status: "alert" },
+      ],
+      referenceDate
+    );
+    expect(stats.upcoming).toBe(1);
+    expect(stats.completed).toBe(0);
+    expect(stats.cancelled).toBe(0);
+  });
+
+  it("counts all cancelled regardless of date", () => {
+    const stats = summarizePatientPortalSidebar(
+      [
+        { start: "2026-06-18T10:00:00Z", status: "cancelled" },
+        { start: "2026-06-30T10:00:00Z", status: "cancelled" },
+      ],
+      referenceDate
+    );
+    expect(stats.cancelled).toBe(2);
+    expect(stats.upcoming).toBe(0);
   });
 });
 

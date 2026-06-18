@@ -46,7 +46,11 @@ export function AppointmentVisitScheduleMeta({
           <span className="font-medium text-gray-700">{locationLabel}</span>
         </AppointmentCardMetaRow>
       ) : null}
-      {showTelehealthBadge && is_telehealth ? <TelehealthSessionBadge /> : null}
+      {showTelehealthBadge && is_telehealth ? (
+        <div className="self-start">
+          <TelehealthSessionBadge />
+        </div>
+      ) : null}
     </div>
   );
 }

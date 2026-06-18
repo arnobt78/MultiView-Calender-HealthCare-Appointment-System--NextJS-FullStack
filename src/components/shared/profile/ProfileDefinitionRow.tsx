@@ -3,9 +3,10 @@
 import type { LucideIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  clinicalStackGapClass,
-  clinicalTableCellMinRowClass,
-} from "@/lib/table-display-styles";
+  clinicalIdentityInlineAvatarClass,
+  clinicalIdentityInlineInnerClass,
+  clinicalIdentityInlineRowClass,
+} from "@/lib/clinical-identity-inline-ui";
 import { cn } from "@/lib/utils";
 
 export type ProfileDefinitionRowVariant = "text" | "mono" | "multiline" | "doctorStack";
@@ -20,17 +21,15 @@ type ProfileDefinitionRowProps = {
   className?: string;
 };
 
-/** Pulse skeleton inside `dd` — matches DoctorIdentityRow text-only stack (no avatar in portal dl). */
+/** Pulse skeleton inside `dd` — matches DoctorIdentityRow inline wrap (portal Primary Doctor). */
 function DoctorStackValueSkeleton() {
   return (
-    <div className={cn("flex min-w-0 items-center gap-2", clinicalTableCellMinRowClass)}>
-      {/* Mirror DoctorIdentityRow avatar footprint to avoid profile row height jump on refresh. */}
-      <Skeleton className="h-7 w-7 shrink-0 rounded-full" />
-      <div className={cn("flex min-w-0 flex-1 flex-col justify-center", clinicalStackGapClass)}>
-        <Skeleton className="h-4 w-28 max-w-full rounded-sm" />
-        <Skeleton className="h-3 w-36 max-w-full rounded-sm" />
-        {/* Specialty badge placeholder keeps referral row from collapsing/expanding on swap. */}
-        <Skeleton className="h-5 w-24 rounded-full" />
+    <div className={cn(clinicalIdentityInlineRowClass, "min-h-[1.75rem]")}>
+      <Skeleton className={cn(clinicalIdentityInlineAvatarClass, "shrink-0 rounded-full")} />
+      <div className={clinicalIdentityInlineInnerClass}>
+        <Skeleton className="h-4 w-24 max-w-full rounded-sm" />
+        <Skeleton className="h-3 w-32 max-w-full rounded-sm" />
+        <Skeleton className="h-5 w-20 rounded-full" />
       </div>
     </div>
   );
@@ -56,7 +55,13 @@ export function ProfileDefinitionRow({
   className,
 }: ProfileDefinitionRowProps) {
   return (
-    <div className={cn("flex items-start gap-2.5", className)}>
+    <div
+      className={cn(
+        "flex gap-2.5",
+        variant === "doctorStack" ? "items-center" : "items-start",
+        className
+      )}
+    >
       <span
         className={cn(
           "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border",
@@ -71,8 +76,7 @@ export function ProfileDefinitionRow({
           className={cn(
             "font-medium text-gray-700",
             variant === "mono" && "break-all font-mono text-[10px]",
-            variant === "multiline" && "leading-relaxed",
-            variant === "doctorStack" && "min-h-[2.75rem]"
+            variant === "multiline" && "leading-relaxed"
           )}
         >
           {loading ? <ValueSkeleton variant={variant} /> : children}

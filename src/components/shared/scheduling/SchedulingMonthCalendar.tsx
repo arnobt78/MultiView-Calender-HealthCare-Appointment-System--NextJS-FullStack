@@ -15,6 +15,11 @@ import { schedulingMonthCalendarClassNames } from "@/lib/scheduling/scheduling-u
 import { SchedulingMonthCaptionBar } from "@/components/shared/scheduling/SchedulingMonthCaptionBar";
 import { queryKeys } from "@/lib/query-keys";
 import { useQueryBodyLoading } from "@/lib/query-body-loading";
+import {
+  isSchedulingMonthDayDisabled,
+  resolveDefaultSchedulingDateStr,
+} from "@/lib/scheduling/default-scheduling-date";
+import { isValidUUID } from "@/lib/validation";
 
 type SchedulingMonthCalendarProps = {
   doctorId: string;
@@ -27,6 +32,8 @@ type SchedulingMonthCalendarProps = {
   compact?: boolean;
   /** Staff dialog — parent section already titles the block; omit inner "Pick a Date" row. */
   hideCaption?: boolean;
+  /** When true (default), pick first bookable day once month map loads if `dateStr` is empty. */
+  autoSelectDefaultDate?: boolean;
   className?: string;
 };
 
@@ -53,6 +60,7 @@ export function SchedulingMonthCalendar({
   today,
   compact = false,
   hideCaption = false,
+  autoSelectDefaultDate = true,
   className,
 }: SchedulingMonthCalendarProps) {
   const queryClient = useQueryClient();
@@ -88,6 +96,24 @@ export function SchedulingMonthCalendar({
 
   const monthBodyLoading = useQueryBodyLoading(monthDatesKey, isLoading);
 
+  // Seed parent dateStr from month map so slot grid loads without a manual calendar click.
+  useEffect(() => {
+    if (!autoSelectDefaultDate || dateStr) return;
+    if (!isValidUUID(doctorId) || isLoading) return;
+    const days = data?.days;
+    if (!days?.length) return;
+    const next = resolveDefaultSchedulingDateStr(today, days);
+    if (next) onDateStrChange(next);
+  }, [
+    autoSelectDefaultDate,
+    dateStr,
+    doctorId,
+    isLoading,
+    data?.days,
+    today,
+    onDateStrChange,
+  ]);
+
   const statusByDate = useMemo(() => {
     const map = new Map<string, MonthDayStatus>();
     for (const d of data?.days ?? []) {
@@ -103,7 +129,7 @@ export function SchedulingMonthCalendar({
       (day: Date) => {
         const key = format(day, "yyyy-MM-dd");
         const status = statusByDate.get(key);
-        return status !== "open";
+        return isSchedulingMonthDayDisabled(status);
       },
     ];
   }, [statusByDate, today]);

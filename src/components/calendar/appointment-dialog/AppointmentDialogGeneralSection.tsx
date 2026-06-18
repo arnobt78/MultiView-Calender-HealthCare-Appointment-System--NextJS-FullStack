@@ -68,6 +68,7 @@ import {
 import { prefetchSchedulingMonthWithAdjacent } from "@/lib/prefetch-scheduling";
 import type { FlexDurationMinutes } from "@/lib/scheduling/flexible-type-config";
 import { SchedulingPanel } from "@/components/shared/scheduling/SchedulingPanel";
+import { getSchedulingUiToday } from "@/lib/scheduling/scheduling-ui-today";
 import { SchedulingManualOverride } from "@/components/shared/scheduling/SchedulingManualOverride";
 import { StaffAppointmentPickerField } from "@/components/shared/scheduling/StaffAppointmentPickerField";
 import {
@@ -286,7 +287,7 @@ export function AppointmentDialogGeneralSection({
   telehealthBookingPreset = false,
 }: Props) {
   const queryClient = useQueryClient();
-  const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const today = useMemo(() => getSchedulingUiToday(), []);
   const [staffFlexDuration, setStaffFlexDuration] = useState<FlexDurationMinutes>(30);
   const [physicianPickerOpen, setPhysicianPickerOpen] = useState(false);
   const [typePickerOpen, setTypePickerOpen] = useState(false);

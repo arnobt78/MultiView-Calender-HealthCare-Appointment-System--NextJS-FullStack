@@ -23,7 +23,7 @@ import {
   portalClinicianDisplayLabel,
   resolvePrimaryDoctorCardLabel,
 } from "@/lib/portal-appointment";
-import { PATIENT_REFERRAL_SOURCES } from "@/lib/patient-referral-sources";
+import { formatPatientReferralDisplay } from "@/lib/patient-referral-display";
 import type { AppointmentAssignee, Patient } from "@/types/types";
 
 export type AppointmentCardAudience = "dashboard" | "patient-portal";
@@ -140,17 +140,10 @@ export function useAppointmentCardModel({
     [appointment.patient_data, primaryDoctorId, resolveClinicianLabel]
   );
 
-  const referralLabel = useMemo(() => {
-    const profile = appointment.patient_data?.clinical_profile;
-    const source = profile?.referral_source?.trim();
-    if (!source) return null;
-    const mapped = PATIENT_REFERRAL_SOURCES.find((s) => s.value === source)?.label ?? source;
-    const detail = profile?.referral_detail?.trim();
-    if (detail && (source === "external_partner" || source === "other")) {
-      return `${mapped} — ${detail}`;
-    }
-    return mapped;
-  }, [appointment.patient_data?.clinical_profile]);
+  const referralLabel = useMemo(
+    () => formatPatientReferralDisplay(appointment.patient_data?.clinical_profile),
+    [appointment.patient_data?.clinical_profile]
+  );
 
   const capabilities = useMemo(
     () =>

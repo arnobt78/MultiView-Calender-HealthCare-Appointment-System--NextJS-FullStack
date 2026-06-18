@@ -71,7 +71,7 @@ import {
   getPatientCareLevelLabel,
   hasPatientCareLevel,
 } from "@/lib/patient-care-level";
-import { PATIENT_REFERRAL_SOURCES } from "@/lib/patient-referral-sources";
+import { formatPatientReferralDisplay } from "@/lib/patient-referral-display";
 import { patientAgeYears } from "@/lib/patient-age";
 import { skyGlassBackButtonClass, skyGlassTableFrameClass } from "@/lib/calendar-header-action-styles";
 import {
@@ -143,29 +143,10 @@ function PatientDetailDefinitionRow({
   );
 }
 
-/** Referral source + detail — uses shared `clinicalEmptyOrNode` when both empty. */
+/** Referral source + detail — uses shared formatter + `clinicalEmptyOrNode` when empty. */
 function renderPatientReferralValue(cp: Patient["clinical_profile"]) {
-  const source =
-    cp && typeof cp === "object" && typeof cp.referral_source === "string"
-      ? cp.referral_source.trim()
-      : "";
-  const detail =
-    cp && typeof cp === "object" && typeof cp.referral_detail === "string"
-      ? cp.referral_detail.trim()
-      : "";
-  const label = source
-    ? (PATIENT_REFERRAL_SOURCES.find((x) => x.value === source)?.label ?? source)
-    : "";
-  return clinicalEmptyOrNode(
-    Boolean(label || detail),
-    (
-      <>
-        {label}
-        {detail ? `${label ? " — " : ""}${detail}` : null}
-      </>
-    ),
-    "definition"
-  );
+  const text = formatPatientReferralDisplay(cp);
+  return clinicalEmptyOrNode(Boolean(text), text, "definition");
 }
 
 function SectionHeading({

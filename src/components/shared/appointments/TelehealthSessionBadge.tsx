@@ -18,7 +18,7 @@ export function TelehealthSessionBadge({ className, glass = false }: TelehealthS
       <Badge
         variant="outline"
         className={cn(
-          "calendar-glass-badge calendar-glass-badge-sky inline-flex items-center font-normal",
+          "calendar-glass-badge calendar-glass-badge-sky inline-flex w-fit shrink-0 self-start items-center font-normal",
           appointmentVisitMetaHeroGlassChipClass,
           className
         )}
@@ -32,7 +32,7 @@ export function TelehealthSessionBadge({ className, glass = false }: TelehealthS
   return (
     <span
       className={cn(
-        "inline-flex shrink-0 items-center gap-1 rounded-full border border-sky-200/60 bg-sky-100/80 px-2 py-0.5 text-[10px] font-normal text-sky-700",
+        "inline-flex w-fit shrink-0 self-start items-center gap-1 rounded-full border border-sky-200/60 bg-sky-100/80 px-2 py-0.5 text-[10px] font-normal text-sky-700",
         className
       )}
     >

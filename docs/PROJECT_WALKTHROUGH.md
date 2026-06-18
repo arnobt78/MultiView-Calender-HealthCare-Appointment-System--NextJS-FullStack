@@ -1,16 +1,16 @@
 # HealthCal Pro — Project Walkthrough
 
-## Agent resume (2026-06-18 — C56)
+## Agent resume (2026-06-18 — C59)
 
-**1315/1315** · tsc · lint · build PASS
+**1332/1332** · tsc · lint · build PASS
 
 | Cycle | REQ | Highlights |
 |-------|-----|------------|
-| C56 | 0107 | `payingInvoiceId` · bfcache pay reset · timeline `UserRoleBadge` |
-| C55 | 0106 | invoice `compactStack`/`wrapInline` · timeline datetime dedupe |
-| C54 | 0105 | type+duration picker/portal/queue/telehealth/snapshot |
+| C59 | 0110 | `getSchedulingUiToday` · auto today on scheduling open · day prefetch · `full` days clickable |
+| C58 | 0109 | `summarizePatientPortalSidebar` · Cancelled row · doctor spacing |
+| C57 | 0108 | `formatPatientReferralDisplay` · inline Primary Doctor |
 
-**Keys:** `usePayments.ts` · `PatientPortalPage.tsx` · `PortalAppointmentClinicianIdentityBlock.tsx` · `invoice-dialog-visit-display.ts`
+**Keys:** `default-scheduling-date.ts` · `scheduling-ui-today.ts` · `SchedulingMonthCalendar.tsx` · `SchedulingPanel.tsx` · `PatientBookingDialog.tsx` · `AppointmentDialogGeneralSection.tsx`
 
 **Invariants:** SSR seed + warm `refetchOnMount: false` · Stripe return `?status=` → `invalidateInvoicesAndOverview` · no `router.refresh`
 
@@ -1302,6 +1302,7 @@ Shared demo credentials live in `src/lib/demo-credentials.ts` (`test@admin.com`,
 - **Query keys:** `dates(doctorId, scopeKey, monthYm)`; bust via `availability.root` invalidation helpers.
 - **Prefetch:** `prefetchSchedulingMonthWithAdjacent` + `prefetchSchedulingMonthsAdjacent` on calendar month change.
 - **UI:** `VisitTypePickerList` (patient re-export `PatientBookingTypePickerList`); `SchedulingPanel` `layout="split"` (calendar + slot rail side-by-side on `sm+`; flex = calendar + hint in rail).
+- **C59 default date:** `getSchedulingUiToday()` (browser-local `yyyy-MM-dd`, not UTC `toISOString`); `resolveDefaultSchedulingDateStr` defaults to today unless month marks `unavailable`; `SchedulingMonthCalendar` auto-seeds `dateStr` + disables only `unavailable` (not `full`); `SchedulingPanel` prefetches day grid when typed slots visible — patient portal, telehealth, staff `AppointmentDialog`.
 - **Staff:** `useBookableTypesForDoctor` + `VisitTypePickerList`; `isStaffFlexible` + flex duration chips; open prefetch for flex + typed (`types[0]` when `slotPickTypeId` empty).
 - **Tests:** `availability-api-query.test.ts`, `scheduling-scope.test.ts`, `availability-routes.test.ts`, `availability-slot-grid.test.ts`.
 - **Persist buster:** `v4` in `QueryProvider.tsx`.
