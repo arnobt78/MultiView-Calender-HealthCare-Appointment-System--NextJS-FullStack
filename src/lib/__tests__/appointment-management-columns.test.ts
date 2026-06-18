@@ -14,7 +14,6 @@ describe("buildAppointmentManagementColumns", () => {
     onEdit: noop,
     onToggleStatus: noop,
     onDelete: noop,
-    onCancel: noop,
   });
 
   it("defines expected column ids in order", () => {

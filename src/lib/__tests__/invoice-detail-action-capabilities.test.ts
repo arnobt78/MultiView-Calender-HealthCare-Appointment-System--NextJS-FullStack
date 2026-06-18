@@ -147,4 +147,104 @@ describe("resolveInvoiceDetailActionCapabilities", () => {
     expect(resolveInvoiceDetailGenerateInHeader("mutate", caps)).toBe(true);
     expect(resolveInvoiceDetailSendInFooter("mutate", caps)).toBe(false);
   });
+
+  it("draft with cancelled linked visit: no edit/send/cancel; admin may delete draft", () => {
+    const inv = {
+      ...invoice("draft"),
+      visit_summary: {
+        appointment_id: "appt-1",
+        appointment_status: "cancelled",
+        title: "Visit",
+        start_iso: "",
+        end_iso: "",
+        when_label: "",
+        location_label: "",
+        is_telehealth: false,
+        patient_id: null,
+        patient_label: null,
+        category_id: null,
+        category_label: null,
+        category_color: null,
+        category_icon: null,
+        treating_physician_id: null,
+        treating_physician_label: null,
+        treating_physician_specialty: null,
+        calendar_owner_id: null,
+        calendar_owner_label: null,
+        calendar_owner_specialty: null,
+      },
+    };
+    const adminCaps = resolveInvoiceDetailActionCapabilities(inv as Invoice, "admin");
+    expect(adminCaps.canEditDetails).toBe(false);
+    expect(adminCaps.canSend).toBe(false);
+    expect(adminCaps.canCancel).toBe(false);
+    expect(adminCaps.canDelete).toBe(true);
+    expect(adminCaps.canDownloadPdf).toBe(true);
+
+    const doctorCaps = resolveInvoiceDetailActionCapabilities(inv as Invoice, "doctor", {
+      viewerUserId: "doc-1",
+    });
+    expect(doctorCaps.canDelete).toBe(false);
+  });
+
+  it("admin paid invoice keeps refund cap (admin CP path)", () => {
+    const inv = {
+      ...invoice("paid"),
+      visit_summary: { appointment_status: "cancelled" },
+    };
+    const caps = resolveInvoiceDetailActionCapabilities(inv as Invoice, "admin");
+    expect(caps.canRefund).toBe(true);
+    expect(caps.canEditDetails).toBe(false);
+  });
+
+  it("doctor issuer on paid invoice can refund in portal", () => {
+    const inv = { ...invoice("paid"), user_id: "doc-issuer" };
+    const caps = resolveInvoiceDetailActionCapabilities(inv, "doctor", {
+      viewerUserId: "doc-issuer",
+    });
+    expect(caps.canRefund).toBe(true);
+    expect(caps.canEditDetails).toBe(false);
+  });
+
+  it("doctor unrelated on paid invoice cannot refund", () => {
+    const inv = { ...invoice("paid"), user_id: "doc-issuer" };
+    const caps = resolveInvoiceDetailActionCapabilities(inv, "doctor", {
+      viewerUserId: "doc-other",
+    });
+    expect(caps.canRefund).toBe(false);
+  });
+
+  it("paid invoice on cancelled visit still allows refund", () => {
+    const inv = {
+      ...invoice("paid"),
+      user_id: "doc-issuer",
+      visit_summary: {
+        appointment_id: "appt-1",
+        appointment_status: "cancelled",
+        title: "Visit",
+        start_iso: "",
+        end_iso: "",
+        when_label: "",
+        location_label: "",
+        is_telehealth: false,
+        patient_id: null,
+        patient_label: null,
+        category_id: null,
+        category_label: null,
+        category_color: null,
+        category_icon: null,
+        treating_physician_id: null,
+        treating_physician_label: null,
+        treating_physician_specialty: null,
+        calendar_owner_id: null,
+        calendar_owner_label: null,
+        calendar_owner_specialty: null,
+      },
+    };
+    const caps = resolveInvoiceDetailActionCapabilities(inv as Invoice, "doctor", {
+      viewerUserId: "doc-issuer",
+    });
+    expect(caps.canRefund).toBe(true);
+    expect(caps.canEditDetails).toBe(false);
+  });
 });

@@ -1,5 +1,6 @@
 /**
- * POST /api/invoices/[id]/refund — admin Stripe refund on last succeeded payment.
+ * POST /api/invoices/[id]/refund — Stripe refund on last succeeded payment.
+ * Admin CP or doctor portal (issuer / calendar owner / treating on linked visit).
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -8,7 +9,7 @@ import { getUserRole } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 import { createRefund } from "@/lib/stripe";
 import {
-  assertInvoiceAccess,
+  assertInvoiceRefundAccess,
   resolvePatientIdForInvoice,
   type InvoiceAccessSession,
 } from "@/lib/invoice-access";
@@ -41,8 +42,8 @@ export async function POST(req: NextRequest, { params }: Params) {
     };
 
     const { id } = await params;
-    const level = await assertInvoiceAccess(session, id, "admin");
-    if (level !== "admin") {
+    const level = await assertInvoiceRefundAccess(session, id);
+    if (level === "none") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

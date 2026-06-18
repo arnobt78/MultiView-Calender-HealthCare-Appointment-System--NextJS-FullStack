@@ -201,7 +201,7 @@ function formatScheduleSelectedLine(
     return `${datePart} · ${start} → ${end}`;
   }
   if (isFlexible) return `${datePart} · ${flexDuration} min`;
-  return `${datePart} · choose a slot below`;
+  return `${datePart} · Choose a Slot Below`;
 }
 
 /** Avatar + stacked meta — `gap` only (no per-row margins). */

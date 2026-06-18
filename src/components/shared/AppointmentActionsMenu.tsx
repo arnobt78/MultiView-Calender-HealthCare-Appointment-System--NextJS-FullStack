@@ -1,9 +1,8 @@
 "use client";
 
 /**
- * Global appointment ⋮ menu — View Details, Mark Done/Open, Edit, Delete.
- * All four items always visible; disabled when role/assignee denies action.
- * View href: admin → control-panel; doctor/patient → /appointments/:id.
+ * Global appointment ⋮ menu — View Details, Mark Done/Open, Edit, Cancel, Delete.
+ * Cancel + optional refund via internal `useAppointmentCancelWithRefund` when `capabilities.canCancel`.
  */
 
 import { useMemo, useState } from "react";
@@ -27,7 +26,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
+import { AppointmentCancelConfirmDialog } from "@/components/shared/appointment-detail/AppointmentCancelConfirmDialog";
+import { useAppointmentCancelWithRefund } from "@/hooks/useAppointmentCancelWithRefund";
+import { usePayments } from "@/hooks/usePayments";
+import { resolvePaidInvoiceForAppointment } from "@/lib/appointment-cancel-refund";
 import { appointmentDetailHref } from "@/lib/entity-routes";
 import { getAppointmentMenuCapabilities } from "@/lib/appointment-menu-permissions";
 import { useInitialNavRole } from "@/context/NavRoleContext";
@@ -51,10 +53,6 @@ type AppointmentActionsMenuProps = {
   onToggleStatus: (id: string, nextStatus: "pending" | "done") => void;
   onEdit: () => void;
   onDelete: (id: string) => void;
-  /** Await hook `cancelAppointmentAsync` — confirm closes only after success. */
-  onCancel?: (id: string) => void | Promise<void>;
-  /** True while this row's visit is being cancelled (scoped by `cancellingAppointmentId`). */
-  cancelPending?: boolean;
   /** Staff billing — preset create from this visit. */
   onCreateInvoice?: (appointmentId: string) => void;
   showCreateInvoice?: boolean;
@@ -102,8 +100,6 @@ export function AppointmentActionsMenu({
   onToggleStatus,
   onEdit,
   onDelete,
-  onCancel,
-  cancelPending = false,
   onCreateInvoice,
   showCreateInvoice = false,
   showSyncToGoogle = false,
@@ -117,6 +113,17 @@ export function AppointmentActionsMenu({
   const isDone = appointment.status === "done";
   const isCancelled = appointment.status === "cancelled";
   const [cancelOpen, setCancelOpen] = useState(false);
+  const { invoices } = usePayments();
+  const { cancelWithOptionalRefundAsync, isCancelFlowPending, cancellingAppointmentId } =
+    useAppointmentCancelWithRefund();
+
+  const paidInvoiceForCancel = useMemo(
+    () => resolvePaidInvoiceForAppointment(invoices, appointment.id),
+    [invoices, appointment.id]
+  );
+
+  const cancelPendingForRow =
+    isCancelFlowPending && cancellingAppointmentId === appointment.id;
 
   const capabilities = useMemo(
     () =>
@@ -234,21 +241,19 @@ export function AppointmentActionsMenu({
             </DropdownMenuItem>
           ) : null}
 
-          {onCancel ? (
-            <DropdownMenuItem
-              disabled={!capabilities.canCancel}
-              className={cn(
-                capabilities.canCancel ? cancelActionClass : disabledItemClass
-              )}
-              onClick={() => {
-                if (!capabilities.canCancel) return;
-                setCancelOpen(true);
-              }}
-            >
-              <Ban className="h-4 w-4" />
-              <span>Cancel appointment</span>
-            </DropdownMenuItem>
-          ) : null}
+          <DropdownMenuItem
+            disabled={!capabilities.canCancel}
+            className={cn(
+              capabilities.canCancel ? cancelActionClass : disabledItemClass
+            )}
+            onClick={() => {
+              if (!capabilities.canCancel) return;
+              setCancelOpen(true);
+            }}
+          >
+            <Ban className="h-4 w-4" />
+            <span>Cancel appointment</span>
+          </DropdownMenuItem>
 
           {onCreateInvoice && (
             <DropdownMenuItem
@@ -282,19 +287,19 @@ export function AppointmentActionsMenu({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {onCancel ? (
-        <ConfirmActionDialog
+      {capabilities.canCancel ? (
+        <AppointmentCancelConfirmDialog
           open={cancelOpen}
           onOpenChange={setCancelOpen}
-          variant="warning"
-          title="Cancel appointment?"
-          subtitle="This visit will be marked cancelled. Stakeholders will be notified."
-          confirmLabel="Cancel Appointment"
-          confirmPending={cancelPending}
-          confirmPendingLabel="Cancelling…"
-          onConfirm={async () => {
-            if (!onCancel) return;
-            await onCancel(appointment.id);
+          role={role}
+          userId={userId}
+          paidInvoice={paidInvoiceForCancel}
+          confirmPending={cancelPendingForRow}
+          onConfirm={async ({ refundInvoiceId }) => {
+            await cancelWithOptionalRefundAsync({
+              appointmentId: appointment.id,
+              refundInvoiceId,
+            });
             setCancelOpen(false);
           }}
         />

@@ -60,8 +60,6 @@ export default function MonthView() {
     toggleStatus: commitToggleStatus,
     deleteAppointmentAsync,
     isDeleting,
-    cancelAppointmentAsync,
-    cancellingAppointmentId,
     isError: appointmentsError,
   } = useAppointmentData();
   const { user } = useAuth();
@@ -297,10 +295,6 @@ export default function MonthView() {
                           invoiceDisplayStatus={invoiceDisplayByAppt.get(a.id)}
                           onEdit={setEditAppt}
                           onDelete={(id) => setDeleteTargetId(id)}
-                          onCancel={async (id) => {
-                            await cancelAppointmentAsync(id);
-                          }}
-                          cancelPending={cancellingAppointmentId === a.id}
                           onToggleStatus={toggleStatus}
                           showDetails={false} // Default to false, can be overridden
                         />
@@ -359,10 +353,6 @@ export default function MonthView() {
                   ownerUsers={ownerUsers}
                   onEdit={(appt) => setEditAppt(appt)}
                   onDelete={(id) => setDeleteTargetId(id)}
-                  onCancel={async (id) => {
-                    await cancelAppointmentAsync(id);
-                  }}
-                  cancelPending={cancellingAppointmentId === a.id}
                   onToggleStatus={toggleStatus}
                   appointmentTypePriceCents={fullAppt.appointment_type_price_cents}
                   doctorConsultationFeeCents={fullAppt.doctor_consultation_fee_cents}

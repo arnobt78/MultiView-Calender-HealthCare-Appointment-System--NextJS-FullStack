@@ -33,8 +33,17 @@ import {
 } from "@/lib/invoices-list-client";
 import { EMPTY_INVOICES } from "@/lib/stable-query-fallbacks";
 
+export type RefundInvoiceInput =
+  | string
+  | { invoiceId: string; suppressSuccessNotify?: boolean };
+
 export type InvoicePayment = InvoicePaymentRow;
 export type Invoice = InvoiceRow;
+
+function resolveRefundInvoiceId(input: RefundInvoiceInput): string {
+  return typeof input === "string" ? input : input.invoiceId;
+}
+
 
 function resolveInvoicePatientId(
   queryClient: QueryClient,
@@ -268,13 +277,19 @@ export function usePayments(options?: UsePaymentsOptions) {
   });
 
   const refundInvoiceMutation = useMutation({
-    mutationFn: (invoiceId: string) =>
-      apiClient<{ invoice: Invoice }>(`/api/invoices/${invoiceId}/refund`, {
+    mutationFn: (input: RefundInvoiceInput) => {
+      const invoiceId = resolveRefundInvoiceId(input);
+      return apiClient<{ invoice: Invoice }>(`/api/invoices/${invoiceId}/refund`, {
         method: "POST",
         body: JSON.stringify({}),
-      }),
-    onSuccess: async (data) => {
-      notify.crud(invoiceCrudMessage("updated", { label: "Invoice refunded" }));
+      });
+    },
+    onSuccess: async (data, input) => {
+      const suppress =
+        typeof input === "object" && Boolean(input.suppressSuccessNotify);
+      if (!suppress) {
+        notify.crud(invoiceCrudMessage("updated", { label: "Invoice refunded" }));
+      }
       const row = mapApiInvoiceToRow(data.invoice);
       const previous =
         queryClient.getQueryData<Invoice[]>(queryKeys.invoices.all)?.find((i) => i.id === row.id) ??
@@ -348,6 +363,7 @@ export function usePayments(options?: UsePaymentsOptions) {
     recordPayment: recordPaymentMutation.mutate,
     isRecording: recordPaymentMutation.isPending,
     refundInvoice: refundInvoiceMutation.mutate,
+    refundInvoiceAsync: refundInvoiceMutation.mutateAsync,
     isRefunding: refundInvoiceMutation.isPending,
     deleteInvoice: deleteInvoiceMutation.mutate,
     deleteInvoiceAsync: deleteInvoiceMutation.mutateAsync,

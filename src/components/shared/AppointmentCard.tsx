@@ -68,6 +68,7 @@ import { useInvoiceFormDialogOptional } from "@/context/InvoiceFormDialogContext
 import { useAuth } from "@/hooks/useAuth";
 import { useGoogleCalendarSyncOptional } from "@/context/GoogleCalendarSyncContext";
 import { canShowCreateInvoiceAction } from "@/lib/appointment-invoice-create-eligibility";
+import { isAdminRole, isDoctorRole } from "@/lib/rbac";
 import { resolveDisplayedVisitFeeCents } from "@/lib/appointment-visit-fee-display";
 
 export type AppointmentCardProps = {
@@ -80,17 +81,11 @@ export type AppointmentCardProps = {
   className?: string;
   onEdit: (appt: FullAppointment) => void;
   onDelete: (id: string) => void;
-  /** Await `cancelAppointmentAsync` from parent — menu confirm stays open until settled. */
-  onCancel?: (id: string) => void | Promise<void>;
-  /** Scoped pending for this card's cancel confirm. */
-  cancelPending?: boolean;
   onToggleStatus: (id: string, nextStatus: "pending" | "done" | "alert") => void;
   /** List rail only — telehealth VideoCall below ⋮ menu */
   telehealthSlot?: ReactNode;
   /** Dashboard calendar vs patient portal timeline — portal shows staff rows for patients. */
   audience?: AppointmentCardAudience;
-  /** Patient portal: hide right ⋮ rail (read-only history). */
-  hideActionsRail?: boolean;
   /** Portal API labels — avoids `/api/users/search` for patients. */
   portalOwnerLabel?: string;
   portalTreatingLabel?: string;
@@ -986,12 +981,9 @@ export function AppointmentCard({
   className,
   onEdit,
   onDelete,
-  onCancel,
-  cancelPending = false,
   onToggleStatus,
   telehealthSlot,
   audience = "dashboard",
-  hideActionsRail = false,
   portalOwnerLabel,
   portalTreatingLabel,
   invoiceDisplayStatus,
@@ -1006,12 +998,14 @@ export function AppointmentCard({
   const { isConnected: isGoogleConnected, syncToGoogle, syncingAppointmentId } =
     useGoogleCalendarSyncOptional();
   const invoiceDialog = useInvoiceFormDialogOptional();
-  const showCreateInvoice = canShowCreateInvoiceAction({
+  const isStaff = isAdminRole(authUser?.role) || isDoctorRole(authUser?.role);
+  const createInvoiceEligible = canShowCreateInvoiceAction({
     role: authUser?.role,
     invoiceDisplayStatus,
+    appointmentStatus: appointment.status,
   });
   const handleCreateInvoice =
-    invoiceDialog && showCreateInvoice
+    invoiceDialog && isStaff
       ? (id: string) => invoiceDialog.openCreateForAppointment(id)
       : undefined;
 
@@ -1044,10 +1038,8 @@ export function AppointmentCard({
       onToggleStatus={onToggleStatus}
       onEdit={() => onEdit(appointment)}
       onDelete={onDelete}
-      onCancel={onCancel}
-      cancelPending={cancelPending}
       onCreateInvoice={handleCreateInvoice}
-      showCreateInvoice={Boolean(handleCreateInvoice)}
+      showCreateInvoice={createInvoiceEligible}
       showSyncToGoogle={isGoogleConnected}
       onSyncToGoogle={syncToGoogle}
       isSyncingGoogle={syncingAppointmentId === appointment.id}
@@ -1209,15 +1201,10 @@ export function AppointmentCard({
       }}
     >
       <AppointmentListColorBar color={colorToken.lineColor} />
-      <div
-        className={clsx(
-          "flex min-w-0 flex-1 flex-col justify-center gap-1 py-3 pl-6",
-          hideActionsRail ? "pr-4" : "pr-4"
-        )}
-      >
+      <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 py-3 pl-6 pr-4">
         {inner}
       </div>
-      {variant === "list" && !hideActionsRail ? (
+      {variant === "list" ? (
         <div className="flex min-w-[56px] flex-col items-center justify-between rounded-r-2xl border-l border-gray-100 bg-gray-50/80 px-2 py-3">
           {menu}
           {telehealthSlot}

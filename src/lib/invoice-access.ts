@@ -79,7 +79,8 @@ async function patientOwnsInvoiceAppointment(
   return appt != null;
 }
 
-async function doctorCanMutateLinkedInvoice(
+/** Issuer, calendar owner, or treating physician on linked visit — mutate + refund (C48/C61). */
+export async function doctorCanMutateLinkedInvoice(
   doctorId: string,
   row: InvoiceAccessRow
 ): Promise<boolean> {
@@ -185,7 +186,11 @@ export async function resolveInvoiceAccess(
       (await doctorIsLinkedToInvoice(userId, row)) ||
       (await orgMemberCanViewInvoice(userId, row));
     if (!linked) return "none";
-    if (row.status === "paid" || row.status === "cancelled" || row.status === "refunded") {
+    if (row.status === "paid") {
+      if (await doctorCanMutateLinkedInvoice(userId, row)) return "mutate";
+      return "view";
+    }
+    if (row.status === "cancelled" || row.status === "refunded") {
       return "view";
     }
     // Issuer or calendar owner / treating physician on linked visit — draft/sent/overdue mutate.
@@ -218,4 +223,27 @@ export async function assertInvoiceAccess(
   const level = await resolveInvoiceAccess(session, invoiceId);
   if (!accessLevelAllows(level, required)) return "none";
   return level;
+}
+
+/** POST /api/invoices/[id]/refund — admin or linked doctor on paid invoice. */
+export async function assertInvoiceRefundAccess(
+  session: InvoiceAccessSession,
+  invoiceId: string
+): Promise<InvoiceAccessLevel> {
+  if (!isValidUUID(invoiceId)) return "none";
+
+  const row = await loadInvoiceAccessRow(invoiceId);
+  if (!row) return "none";
+
+  if (isAdminRole(session.role)) return "admin";
+
+  if (
+    isDoctorRole(session.role) &&
+    row.status === "paid" &&
+    (await doctorCanMutateLinkedInvoice(session.userId, row))
+  ) {
+    return "mutate";
+  }
+
+  return "none";
 }

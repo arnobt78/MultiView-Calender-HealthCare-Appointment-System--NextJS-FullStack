@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { InvoiceLinkedVisitPanel } from "@/components/shared/billing/InvoiceLinkedVisitPanel";
 import type { InvoiceVisitSummary } from "@/lib/billing-types";
+import { APPOINTMENT_DETAIL_PORTAL_DOCTOR_LINKS } from "@/lib/entity-detail-snapshot-links";
 
 vi.mock("@/components/shared/EntityTitleLink", () => ({
   EntityTitleLink: ({ label }: { label: string }) => <span>{label}</span>,
@@ -13,7 +14,17 @@ vi.mock("@/components/shared/PrefetchingLink", () => ({
 }));
 
 vi.mock("@/components/shared/person-display/PatientIdentityCell", () => ({
-  PatientIdentityCell: () => <span>Patient</span>,
+  PatientIdentityCell: ({
+    linkPatient,
+    href,
+  }: {
+    linkPatient: boolean;
+    href?: string;
+  }) => (
+    <span data-testid="patient-cell" data-link-patient={String(linkPatient)} data-href={href ?? ""}>
+      Patient
+    </span>
+  ),
 }));
 
 vi.mock("@/components/shared/person-display/DoctorIdentityCell", () => ({
@@ -61,5 +72,20 @@ describe("InvoiceLinkedVisitPanel", () => {
     expect(markup).toContain("Telehealth Session");
     expect(markup).toContain("flex-wrap items-center");
     expect(markup).not.toContain("mt-1 block");
+  });
+
+  it("doctor portal patient row links when appointment-detail policy is used", () => {
+    const markup = renderToStaticMarkup(
+      <InvoiceLinkedVisitPanel
+        summary={summary}
+        appointmentHref="/appointments/a"
+        patientHref="/patients/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+        viewerRole="doctor"
+        visitTitle="Telehealth Session — Maria Schmidt"
+        linkPolicy={APPOINTMENT_DETAIL_PORTAL_DOCTOR_LINKS}
+      />
+    );
+    expect(markup).toContain('data-link-patient="true"');
+    expect(markup).toContain('data-href="/patients/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"');
   });
 });

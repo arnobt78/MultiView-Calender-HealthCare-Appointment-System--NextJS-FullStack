@@ -53,8 +53,6 @@ export default function DayView() {
     toggleStatus,
     deleteAppointmentAsync,
     isDeleting,
-    cancelAppointmentAsync,
-    cancellingAppointmentId,
   } = useAppointmentData();
   const { user } = useAuth();
   const { category, patient, date, status, month, search, clinicalRole, hasActiveFilters } =
@@ -199,10 +197,6 @@ export default function DayView() {
                             slotHeightPx={slotHeight}
                             onEdit={(a) => setEditAppt(a as Appointment)}
                             onDelete={(id) => setDeleteTargetId(id)}
-                            onCancel={async (id) => {
-                              await cancelAppointmentAsync(id);
-                            }}
-                            cancelPending={cancellingAppointmentId === appt.id}
                             onToggleStatus={(id, next) =>
                               handleToggleStatus(id, next as "pending" | "done" | "alert")
                             }

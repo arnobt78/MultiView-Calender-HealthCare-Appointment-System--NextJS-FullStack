@@ -50,6 +50,7 @@ export const invoiceAppointmentVisitInclude = {
 type VisitApptRow = {
   id: string;
   title: string;
+  status: string | null;
   start: Date;
   end: Date;
   location: string | null;
@@ -133,6 +134,7 @@ export function mapAppointmentToInvoiceVisitSummary(
   return {
     appointment_id: row.id,
     title: row.title,
+    appointment_status: row.status,
     start_iso: row.start.toISOString(),
     end_iso: row.end.toISOString(),
     when_label: whenLabel,
@@ -199,6 +201,7 @@ export async function attachVisitSummariesToInvoices<
     select: {
       id: true,
       title: true,
+      status: true,
       start: true,
       end: true,
       location: true,
@@ -282,6 +285,7 @@ export async function loadInvoiceVisitSummary(
     select: {
       id: true,
       title: true,
+      status: true,
       start: true,
       end: true,
       location: true,

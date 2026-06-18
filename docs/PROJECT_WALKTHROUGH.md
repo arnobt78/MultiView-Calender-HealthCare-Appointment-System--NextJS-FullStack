@@ -1,16 +1,17 @@
 # HealthCal Pro — Project Walkthrough
 
-## Agent resume (2026-06-18 — C59)
+## Agent resume (2026-06-18 — C61.1)
 
-**1332/1332** · tsc · lint · build PASS
+**1356/1356** · tsc · lint · build PASS
 
 | Cycle | REQ | Highlights |
 |-------|-----|------------|
-| C59 | 0110 | `getSchedulingUiToday` · auto today on scheduling open · day prefetch · `full` days clickable |
-| C58 | 0109 | `summarizePatientPortalSidebar` · Cancelled row · doctor spacing |
-| C57 | 0108 | `formatPatientReferralDisplay` · inline Primary Doctor |
+| C61.1 | 0112 | menu-owned cancel (disabled RBAC) · dead `hideActionsRail` removed · cancel dialog UI test |
+| C61 | 0112 | doctor portal refund · `assertInvoiceRefundAccess` · cancel confirm default-on refund |
+| C60 | 0111 | `visit-billing-action-gates` · cancelled visit billing freeze · invoice detail patient link |
+| C59 | 0110 | `getSchedulingUiToday` · auto today on scheduling open · day prefetch |
 
-**Keys:** `default-scheduling-date.ts` · `scheduling-ui-today.ts` · `SchedulingMonthCalendar.tsx` · `SchedulingPanel.tsx` · `PatientBookingDialog.tsx` · `AppointmentDialogGeneralSection.tsx`
+**Keys:** `appointment-cancel-refund.ts` · `AppointmentCancelConfirmDialog` · `useAppointmentCancelWithRefund` · `assertInvoiceRefundAccess`
 
 **Invariants:** SSR seed + warm `refetchOnMount: false` · Stripe return `?status=` → `invalidateInvoicesAndOverview` · no `router.refresh`
 
@@ -762,7 +763,7 @@ Shared primitives keep layout fixed while data loads:
 | Month/Day/Week cells | `AppointmentHoverCard` | Fixed-width popover; `slotHeightPx` for compact/minimal triggers |
 | Day / Week | `DayView` / `WeekView` | `useOwnerUserSummaries`; hover replaces old inline dropdown |
 
-**Patient portal:** Timeline rail (status dot) wraps `AppointmentCard` `variant="list"` `hideActionsRail`. API `mapPortalAppointmentsFromRows` includes `category_data`, `portal_owner` / `portal_treating_physician` (`id`, `role`). Booking still uses `invalidatePatientPortal`.
+**Patient portal:** Timeline uses `PortalAppointmentTimelineCard` (not `AppointmentCard` ⋮ rail). API `mapPortalAppointmentsFromRows` includes `category_data`, `portal_owner` / `portal_treating_physician` (`id`, `role`). Booking still uses `invalidatePatientPortal`.
 
 ---
 

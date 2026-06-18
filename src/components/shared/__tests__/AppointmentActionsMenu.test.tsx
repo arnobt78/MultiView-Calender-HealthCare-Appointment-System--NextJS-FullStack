@@ -11,6 +11,22 @@ vi.mock("@/components/shared/ConfirmActionDialog", () => ({
   ConfirmActionDialog: () => null,
 }));
 
+vi.mock("@/components/shared/appointment-detail/AppointmentCancelConfirmDialog", () => ({
+  AppointmentCancelConfirmDialog: () => null,
+}));
+
+vi.mock("@/hooks/usePayments", () => ({
+  usePayments: () => ({ invoices: [] }),
+}));
+
+vi.mock("@/hooks/useAppointmentCancelWithRefund", () => ({
+  useAppointmentCancelWithRefund: () => ({
+    cancelWithOptionalRefundAsync: vi.fn(),
+    isCancelFlowPending: false,
+    cancellingAppointmentId: null,
+  }),
+}));
+
 vi.mock("@/components/ui/dropdown-menu", () => ({
   DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   DropdownMenuTrigger: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -104,5 +120,15 @@ describe("AppointmentActionsMenu Edit", () => {
       "utf8"
     );
     expect(src).toContain("onEdit()");
+  });
+});
+
+describe("AppointmentActionsMenu Cancel", () => {
+  it("shows cancel label for admin on pending visit", () => {
+    const markup = renderMenu({
+      userRole: "admin",
+      appointment: { ...baseAppointment, status: "pending" },
+    });
+    expect(markup).toContain("Cancel appointment");
   });
 });

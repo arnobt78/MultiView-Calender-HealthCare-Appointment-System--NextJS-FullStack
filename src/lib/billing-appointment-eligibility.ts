@@ -4,6 +4,7 @@
 
 import { prisma } from "@/lib/prisma";
 import type { InvoicePaymentRow, InvoiceStatus } from "@/lib/billing-types";
+import { isVisitBillingFrozen } from "@/lib/visit-billing-action-gates";
 
 /** Blocks a new invoice for the same appointment_id. */
 export const BLOCKING_INVOICE_STATUSES = [
@@ -196,6 +197,27 @@ export async function mapLatestInvoiceDisplayByAppointmentIds(
 export async function assertAppointmentEligibleForNewInvoice(
   appointmentId: string
 ): Promise<AssertAppointmentEligibleResult> {
+  const appointment = await prisma.appointment.findUnique({
+    where: { id: appointmentId },
+    select: { status: true },
+  });
+  if (!appointment) {
+    return {
+      ok: false,
+      status: 409,
+      message: "Appointment not found.",
+      invoiceId: "",
+    };
+  }
+  if (isVisitBillingFrozen(appointment.status)) {
+    return {
+      ok: false,
+      status: 409,
+      message: "Cannot create an invoice for a cancelled visit.",
+      invoiceId: "",
+    };
+  }
+
   const blocking = await findBlockingInvoiceForAppointment(appointmentId);
   if (!blocking) return { ok: true };
   return {

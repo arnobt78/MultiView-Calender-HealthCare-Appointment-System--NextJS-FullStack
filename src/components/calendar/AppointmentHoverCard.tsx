@@ -53,8 +53,6 @@ export interface AppointmentHoverCardProps {
     appt: Appointment & { category_data?: Category; appointment_assignee?: AppointmentAssignee[] }
   ) => void;
   onDelete: (id: string) => void;
-  onCancel?: (id: string) => void | Promise<void>;
-  cancelPending?: boolean;
   onToggleStatus: (id: string, newStatus: string) => void;
   /** Latest invoice status for billing badge + create menu gate. */
   invoiceDisplayStatus?: InvoiceDisplayStatus | null;
@@ -75,8 +73,6 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
   slotHeightPx,
   onEdit,
   onDelete,
-  onCancel,
-  cancelPending,
   onToggleStatus,
   invoiceDisplayStatus,
   showDetails = false,
@@ -115,8 +111,6 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
               slotHeightPx={slotHeightPx}
               onEdit={onEdit}
               onDelete={onDelete}
-              onCancel={onCancel}
-              cancelPending={cancelPending}
               onToggleStatus={handleToggle}
               invoiceDisplayStatus={invoiceDisplayStatus}
               asTrigger
@@ -144,8 +138,6 @@ const AppointmentHoverCard: React.FC<AppointmentHoverCardProps> = ({
           ownerUsers={ownerUsers}
           onEdit={onEdit}
           onDelete={onDelete}
-          onCancel={onCancel}
-          cancelPending={cancelPending}
           onToggleStatus={handleToggle}
           appointmentTypePriceCents={fullAppt.appointment_type_price_cents}
           doctorConsultationFeeCents={fullAppt.doctor_consultation_fee_cents}

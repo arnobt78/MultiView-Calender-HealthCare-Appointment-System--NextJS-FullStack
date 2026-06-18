@@ -6,17 +6,17 @@
 
 | Field | Value |
 |-------|-------|
-| **Cycle** | **C59 shipped** |
+| **Cycle** | **C61.1 shipped** |
 | **Phase** | Accept |
 | **Stage** | **verify PASS** |
 | **Status** | shipped |
 | **Last Updated** | 2026-06-18 |
-| **Last REQ** | **REQ-0110** (C59) |
+| **Last REQ** | **REQ-0112** (C61 / C61.1) |
 
 ## Verify baseline
 
-**1332/1332** · tsc · lint · build — PASS
+**1356/1356** · tsc · lint · build — PASS
 
-## Key paths (C59)
+## Key paths (C61.1)
 
-`scheduling-ui-today.ts` · `default-scheduling-date.ts` · `SchedulingMonthCalendar.tsx` · `SchedulingPanel.tsx`
+`AppointmentCancelConfirmDialog.ui.test` · menu-owned cancel (`capabilities.canCancel`) · removed `hideActionsRail` dead prop

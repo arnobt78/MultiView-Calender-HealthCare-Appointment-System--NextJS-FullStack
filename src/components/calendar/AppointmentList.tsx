@@ -134,8 +134,6 @@ export default function AppointmentList() {
     isFetching: fetchingAppointments,
     deleteAppointmentAsync,
     isDeleting,
-    cancelAppointmentAsync,
-    cancellingAppointmentId,
     toggleStatus,
     refetch: refetchAppointments,
     summaryStats,
@@ -497,10 +495,6 @@ export default function AppointmentList() {
                                     doctorConsultationFeeCents={appt.doctor_consultation_fee_cents}
                                     onEdit={handleEdit}
                                     onDelete={handleDelete}
-                                    onCancel={async (id) => {
-                                      await cancelAppointmentAsync(id);
-                                    }}
-                                    cancelPending={cancellingAppointmentId === appt.id}
                                     onToggleStatus={handleToggleStatus}
                                     telehealthSlot={
                                       appt.is_telehealth ? (

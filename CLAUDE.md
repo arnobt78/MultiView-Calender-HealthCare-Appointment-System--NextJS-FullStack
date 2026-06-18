@@ -4,11 +4,10 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-18)
 
-- **C59.1:** `getSchedulingUiToday` (local, not UTC) · today default even when month `full` · calendar disables only `unavailable`
-- **C59:** `resolveDefaultSchedulingDateStr` · auto date on scheduling open · `SchedulingPanel` day prefetch
-- **C58:** `summarizePatientPortalSidebar` · Cancelled summary row · doctor row spacing fix
-- **C57:** `formatPatientReferralDisplay` · portal Primary Doctor `DoctorIdentityRow` inline
-- **Verify:** **1332/1332** · tsc · lint · build PASS
+- **C61.1 (REQ-0112):** cancel dialog UI test · menu owns cancel (`capabilities.canCancel`; disabled row) · drop `onCancel` chain · removed dead `hideActionsRail`
+- **C61 (REQ-0112):** doctor portal refund · `assertInvoiceRefundAccess` · cancel confirm default-on refund · `useAppointmentCancelWithRefund`
+- **C60 (REQ-0111):** `visit-billing-action-gates` · cancelled visit billing freeze · invoice detail doctor patient link
+- **Verify:** **1356/1356** · tsc · lint · build PASS
 
 ## Doctor invoice RBAC (C48)
 
@@ -62,7 +61,7 @@ Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Agile V
 
-`.agile-v/STATE.md` · **C59 shipped** · **1332/1332** · REQ-0110.
+`.agile-v/STATE.md` · **C61 shipped** · **1354/1354** · REQ-0112.
 
 ## Principle
 

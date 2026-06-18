@@ -23,7 +23,7 @@ vi.mock("@/lib/organization-invoice-access", () => ({
   userCanViewOrganizationInvoices: vi.fn(async () => false),
 }));
 
-import { accessLevelAllows, resolveInvoiceAccess } from "@/lib/invoice-access";
+import { accessLevelAllows, assertInvoiceRefundAccess, resolveInvoiceAccess } from "@/lib/invoice-access";
 import { canPatientPayInvoiceStatus } from "@/lib/billing-status";
 
 const INVOICE_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
@@ -147,7 +147,7 @@ describe("resolveInvoiceAccess", () => {
     expect(level).toBe("view");
   });
 
-  it("returns view for doctor owner on paid invoice", async () => {
+  it("returns mutate for doctor issuer on paid invoice (portal refund)", async () => {
     invoiceFindUnique.mockResolvedValue({
       id: INVOICE_ID,
       user_id: "doc-1",
@@ -161,6 +161,74 @@ describe("resolveInvoiceAccess", () => {
       { userId: "doc-1", email: "doc@test.com", role: "doctor" },
       INVOICE_ID
     );
+    expect(level).toBe("mutate");
+  });
+
+  it("returns view for unrelated linked doctor on paid invoice", async () => {
+    invoiceFindUnique.mockResolvedValue({
+      id: INVOICE_ID,
+      user_id: "doc-issuer",
+      appointment_id: APPT_ID,
+      organization_id: null,
+      status: "paid",
+    });
+    appointmentFindFirst.mockResolvedValue({ id: APPT_ID });
+
+    const level = await resolveInvoiceAccess(
+      { userId: "doc-unrelated", email: "x@test.com", role: "doctor" },
+      INVOICE_ID
+    );
     expect(level).toBe("view");
+  });
+});
+
+describe("assertInvoiceRefundAccess", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("allows admin on paid invoice", async () => {
+    invoiceFindUnique.mockResolvedValue({
+      id: INVOICE_ID,
+      user_id: "doc-1",
+      appointment_id: APPT_ID,
+      organization_id: null,
+      status: "paid",
+    });
+    const level = await assertInvoiceRefundAccess(
+      { userId: "admin-1", email: "a@test.com", role: "admin" },
+      INVOICE_ID
+    );
+    expect(level).toBe("admin");
+  });
+
+  it("allows doctor issuer on paid invoice", async () => {
+    invoiceFindUnique.mockResolvedValue({
+      id: INVOICE_ID,
+      user_id: "doc-1",
+      appointment_id: APPT_ID,
+      organization_id: null,
+      status: "paid",
+    });
+    const level = await assertInvoiceRefundAccess(
+      { userId: "doc-1", email: "doc@test.com", role: "doctor" },
+      INVOICE_ID
+    );
+    expect(level).toBe("mutate");
+  });
+
+  it("denies unrelated doctor", async () => {
+    invoiceFindUnique.mockResolvedValue({
+      id: INVOICE_ID,
+      user_id: "doc-issuer",
+      appointment_id: APPT_ID,
+      organization_id: null,
+      status: "paid",
+    });
+    const level = await assertInvoiceRefundAccess(
+      { userId: "doc-other", email: "x@test.com", role: "doctor" },
+      INVOICE_ID
+    );
+    expect(level).toBe("none");
   });
 });

@@ -23,6 +23,10 @@ import { useInitialNavRole } from "@/context/NavRoleContext";
 import { getAppointmentMenuCapabilities } from "@/lib/appointment-menu-permissions";
 import { canShowCreateInvoiceAction } from "@/lib/appointment-invoice-create-eligibility";
 import { resolveInvoiceDetailActionCapabilities } from "@/lib/invoice-detail-action-capabilities";
+import { AppointmentCancelConfirmDialog } from "@/components/shared/appointment-detail/AppointmentCancelConfirmDialog";
+import { useAppointmentCancelWithRefund } from "@/hooks/useAppointmentCancelWithRefund";
+import { usePayments } from "@/hooks/usePayments";
+import { resolvePaidInvoiceForAppointment } from "@/lib/appointment-cancel-refund";
 import {
   buildAppointmentDeleteConfirmSubtitle,
   DELETE_APPOINTMENT_CONFIRM_TITLE,
@@ -73,12 +77,13 @@ export function AppointmentDetailActionBar({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const {
-    cancelAppointmentAsync,
-    isCancelling,
     deleteAppointmentAsync,
     isDeleting,
     isTogglingStatus,
   } = useAppointments();
+  const { cancelWithOptionalRefundAsync, isCancelFlowPending } =
+    useAppointmentCancelWithRefund();
+  const { invoices } = usePayments();
   const invoiceMap = useAppointmentInvoiceDisplayMap([appointment.id]);
   const invoiceDisplayStatus = invoiceMap.get(appointment.id) ?? null;
   const ctx = useInvoiceFormDialogOptional();
@@ -99,24 +104,37 @@ export function AppointmentDetailActionBar({
     [appointment, assignees, user?.id, user?.email, role]
   );
 
-  const showCreateInvoice = useMemo(
+  const createInvoiceEligible = useMemo(
     () =>
-      canShowCreateInvoiceAction({ role, invoiceDisplayStatus }) &&
-      (isAdminRole(role) || isDoctorRole(role)),
-    [role, invoiceDisplayStatus]
+      canShowCreateInvoiceAction({
+        role,
+        invoiceDisplayStatus,
+        appointmentStatus: appointment.status,
+      }) && (isAdminRole(role) || isDoctorRole(role)),
+    [role, invoiceDisplayStatus, appointment.status]
   );
 
-  const editableLinkedInvoice = useMemo(() => {
-    if (showCreateInvoice || linkedInvoices.length === 0) return null;
+  const hasLinkedInvoice = linkedInvoices.length > 0;
+  const showStaffBilling = canEdit && (isAdminRole(role) || isDoctorRole(role));
+
+  const editInvoiceEligible = useMemo(() => {
+    if (!hasLinkedInvoice) return false;
     const primary = linkedInvoices[0];
     const caps = resolveInvoiceDetailActionCapabilities(primary, viewerRole, {
       viewerUserId: user?.id,
+      linkedAppointmentStatus: appointment.status,
     });
-    return caps.canEditDetails ? primary : null;
-  }, [showCreateInvoice, linkedInvoices, viewerRole, user?.id]);
+    return caps.canEditDetails;
+  }, [hasLinkedInvoice, linkedInvoices, viewerRole, user?.id, appointment.status]);
+
+  const paidInvoiceForCancel = useMemo(() => {
+    const fromLinked = linkedInvoices.find((inv) => inv.status === "paid");
+    if (fromLinked) return fromLinked;
+    return resolvePaidInvoiceForAppointment(invoices, appointment.id);
+  }, [linkedInvoices, invoices, appointment.id]);
 
   const isCancelled = appointment.status === "cancelled";
-  const busy = isTogglingStatus || isDeleting || isCancelling;
+  const busy = isTogglingStatus || isDeleting || isCancelFlowPending;
   const isSyncingGoogle = syncingAppointmentId === appointment.id;
   const updateVariant = toneClasses.footerPrimaryVariant;
 
@@ -160,38 +178,41 @@ export function AppointmentDetailActionBar({
                 {isSyncingGoogle ? "Syncing…" : "Sync to Google Calendar"}
               </ControlPanelGlassActionButton>
             ) : null}
-            {showCreateInvoice ? (
+            {showStaffBilling && !hasLinkedInvoice ? (
               <ControlPanelGlassActionButton
                 type="button"
                 variant="violet"
+                disabled={!createInvoiceEligible || busy}
                 onClick={() => openCreateForAppointment(appointment.id)}
               >
                 <Receipt className="shrink-0" aria-hidden />
                 {billingCreateInvoiceTriggerDefault.triggerLabel}
               </ControlPanelGlassActionButton>
             ) : null}
-            {editableLinkedInvoice ? (
+            {showStaffBilling && hasLinkedInvoice ? (
               <ControlPanelGlassActionButton
                 type="button"
                 variant="violet"
-                onClick={() => openEdit(editableLinkedInvoice)}
+                disabled={!editInvoiceEligible || busy}
+                onClick={() => openEdit(linkedInvoices[0])}
               >
                 <Pencil className="shrink-0" aria-hidden />
                 Edit Invoice
               </ControlPanelGlassActionButton>
             ) : null}
             {canEdit && capabilities.canCancel ? (
-              <ConfirmActionDialog
+              <AppointmentCancelConfirmDialog
                 open={cancelOpen}
                 onOpenChange={setCancelOpen}
-                variant="warning"
-                title="Cancel appointment?"
-                subtitle="This visit will be marked cancelled. Stakeholders will be notified."
-                confirmLabel="Cancel Appointment"
-                confirmPending={isCancelling}
-                confirmPendingLabel="Cancelling…"
-                onConfirm={async () => {
-                  await cancelAppointmentAsync(appointment.id);
+                role={role}
+                userId={user?.id}
+                paidInvoice={paidInvoiceForCancel}
+                confirmPending={isCancelFlowPending}
+                onConfirm={async ({ refundInvoiceId }) => {
+                  await cancelWithOptionalRefundAsync({
+                    appointmentId: appointment.id,
+                    refundInvoiceId,
+                  });
                   setCancelOpen(false);
                 }}
                 trigger={
@@ -201,7 +222,7 @@ export function AppointmentDetailActionBar({
                     disabled={busy}
                   >
                     <Ban className="shrink-0" aria-hidden />
-                    {isCancelling ? "Cancelling…" : "Cancel Appointment"}
+                    {isCancelFlowPending ? "Cancelling…" : "Cancel Appointment"}
                   </ControlPanelGlassActionButton>
                 }
               />

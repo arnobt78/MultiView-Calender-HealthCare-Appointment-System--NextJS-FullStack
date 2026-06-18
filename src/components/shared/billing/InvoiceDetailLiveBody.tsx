@@ -14,7 +14,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { EntityDetailChromeHeader } from "@/components/shared/entity-detail/EntityDetailChromeHeader";
 import { InvoiceDetailActionBar } from "@/components/shared/billing/InvoiceDetailActionBar";
 import { InvoiceDetailHeaderActions } from "@/components/shared/billing/InvoiceDetailHeaderActions";
-import { resolvePortalEntityDetailSnapshotLinkPolicy } from "@/lib/entity-detail-snapshot-links";
+import { resolvePortalAppointmentDetailLinkPolicy } from "@/lib/entity-detail-snapshot-links";
 import { InvoiceStatusBadge } from "@/components/shared/billing/InvoiceStatusBadge";
 import { InvoiceAmountDisplay } from "@/components/shared/billing/InvoiceAmountDisplay";
 import { InvoiceLinkedVisitPanel } from "@/components/shared/billing/InvoiceLinkedVisitPanel";
@@ -130,7 +130,7 @@ export function InvoiceDetailLiveBody({
         : null;
 
   const linkPolicy =
-    variant === "portal" ? resolvePortalEntityDetailSnapshotLinkPolicy(viewerRole) : undefined;
+    variant === "portal" ? resolvePortalAppointmentDetailLinkPolicy(viewerRole) : undefined;
 
   const paymentHistoryTitle = entityDetailOwnedSnapshotSectionTitle(
     invoice.visit_summary?.patient_label,

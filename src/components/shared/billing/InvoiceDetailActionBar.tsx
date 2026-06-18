@@ -180,7 +180,7 @@ export function InvoiceDetailActionBar({
                 </ControlPanelGlassActionButton>
               ) : null}
 
-              {accessLevel === "admin" && caps.canRefund ? (
+              {caps.canRefund && (accessLevel === "admin" || accessLevel === "mutate") ? (
                 <ControlPanelGlassActionButton
                   type="button"
                   variant="sky"

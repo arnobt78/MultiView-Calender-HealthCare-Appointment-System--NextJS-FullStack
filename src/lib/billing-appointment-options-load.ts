@@ -67,6 +67,7 @@ export async function fetchBillingAppointmentOptions(
     select: {
       id: true,
       title: true,
+      status: true,
       start: true,
       end: true,
       location: true,

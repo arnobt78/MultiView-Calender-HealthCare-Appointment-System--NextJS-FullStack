@@ -126,6 +126,8 @@
 | REQ-0079 | approved [C31] | REQ-0078 | ART-0407..0409 | pending |
 | REQ-0080 | approved [C32] | REQ-0079 | ART-0410..0416 | pending |
 | REQ-0081 | approved [C33] | REQ-0080 | ART-0417..0423 | pending |
+| REQ-0112 | approved [C61] | REQ-0111 | ART-0611..0618 | pending |
+| REQ-0111 | approved [C60] | REQ-0110 | ART-0601..0608 | pending |
 | REQ-0110 | approved [C59] | REQ-0109 | ART-0591..0594 | pending |
 | REQ-0109 | approved [C58] | REQ-0108 | ART-0587..0590 | pending |
 | REQ-0108 | approved [C57] | REQ-0107 | ART-0583..0586 | pending |
@@ -155,6 +157,48 @@
 | REQ-0084 | approved [C36] | REQ-0083 | ART-0437..0444 | pending |
 | REQ-0083 | approved [C35/C35.1] | REQ-0082 | ART-0432..0436 | pending |
 | REQ-0082 | approved [C34/C34.1] | REQ-0081 | ART-0424..0431 | pending |
+
+### REQ-0112 — C61 Doctor portal refund + paid-cancel optional refund
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C61] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0111 |
+
+**Statement:** Doctors who can mutate linked invoices (issuer / calendar owner / treating) may refund paid invoices in the doctor portal; cancel-visit confirm offers default-on optional Stripe refund when a paid invoice exists.
+
+**Acceptance criteria:**
+1. `assertInvoiceRefundAccess` + `resolveInvoiceAccess` paid → `mutate` for linked doctors; refund API gated server-side.
+2. `canRefund` in capability lib for admin + `doctorCanMutateInvoice`; invoice detail footer + list menus.
+3. `appointment-cancel-refund.ts` + `AppointmentCancelConfirmDialog` with default-on checkbox.
+4. `cancelAppointmentWithOptionalRefundAsync` + cache invalidation via existing merge helpers.
+5. Unit/API tests + verify PASS.
+
+**C61.1 polish:**
+1. `AppointmentCancelConfirmDialog.ui.test.tsx` — checkbox, amount, refund gates.
+2. Remove dead `buildAppointmentCancelConfirmSubtitle` + `shouldWarnRefundOnVisitCancel` (superseded by C61 cancel dialog).
+3. `AppointmentActionsMenu` owns cancel via `capabilities.canCancel` + `useAppointmentCancelWithRefund`; drop `onCancel`/`cancelPending`/`invoiceDisplayStatus` prop chain.
+
+### REQ-0111 — C60 Appointment/invoice action parity + billing gates
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C60] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0110 |
+
+**Statement:** Align appointment and invoice action surfaces via shared capability libs — fix doctor portal patient link on invoice detail, freeze staff billing mutate when visit is cancelled, warn (not block) on cancel-with-paid-invoice, disabled-visible footer parity with ⋮ menus; admin CP refund unchanged.
+
+**Acceptance criteria:**
+1. `visit-billing-action-gates.ts` — `isVisitBillingFrozen` (paid-cancel refund UI in `appointment-cancel-refund.ts` since C61).
+2. `InvoiceVisitSummary.appointment_status` + `loadInvoiceVisitSummary` / batch attach.
+3. `resolveInvoiceDetailActionCapabilities` + `canShowCreateInvoiceAction` + `assertAppointmentEligibleForNewInvoice` gate cancelled visits.
+4. `InvoiceDetailLiveBody` uses `resolvePortalAppointmentDetailLinkPolicy` for portal patient links.
+5. Wire gates through appointment/invoice detail footers, menus, cards; paid cancel warning on confirm dialogs.
+6. Unit tests + verify PASS.
 
 ### REQ-0110 — C59 Default bookable date on scheduling panel open
 

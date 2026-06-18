@@ -1,6 +1,10 @@
 import type { Invoice } from "@/hooks/usePayments";
 import type { InvoiceDetailUiAccess } from "@/lib/invoice-detail-ssr";
 import type { InvoiceVisitSummary } from "@/lib/billing-types";
+import {
+  isVisitBillingFrozen,
+  linkedAppointmentStatusFromInvoice,
+} from "@/lib/visit-billing-action-gates";
 
 export type InvoiceDetailActionCapabilities = ReturnType<
   typeof resolveInvoiceDetailActionCapabilities
@@ -9,6 +13,8 @@ export type InvoiceDetailActionCapabilities = ReturnType<
 export type ResolveInvoiceDetailActionCapabilitiesOpts = {
   /** Signed-in doctor id — gates mutate menu items to linked visit roles. */
   viewerUserId?: string;
+  /** When omitted, read from `invoice.visit_summary.appointment_status`. */
+  linkedAppointmentStatus?: string | null;
 };
 
 type DoctorMutateInvoicePick = Pick<Invoice, "user_id" | "appointment_id"> & {
@@ -46,7 +52,7 @@ export function resolveInvoiceDetailActionCapabilities(
       ? doctorCanMutateInvoice(invoice, opts.viewerUserId)
       : viewerRole === "doctor";
 
-  return {
+  const caps = {
     /** Draft → sent; shown as "Generate invoice" in detail header. */
     canGenerateInvoice: invoice.status === "draft",
     /** All roles with invoice access may open the printable PDF route. */
@@ -60,8 +66,28 @@ export function resolveInvoiceDetailActionCapabilities(
     canMarkPaid: statusAllowsWrite && viewerRole === "admin",
     canCancel: statusAllowsWrite && (viewerRole === "admin" || doctorMutate),
     canDelete: invoice.status !== "paid" && (viewerRole === "admin" || doctorMutate),
-    canRefund: viewerRole === "admin" && invoice.status === "paid",
+    canRefund:
+      invoice.status === "paid" &&
+      (viewerRole === "admin" ||
+        (viewerRole === "doctor" && doctorCanMutateInvoice(invoice, opts?.viewerUserId))),
     canEditDetails: statusAllowsEdit && (viewerRole === "admin" || doctorMutate),
+  };
+
+  const linkedStatus =
+    opts?.linkedAppointmentStatus ?? linkedAppointmentStatusFromInvoice(invoice);
+  if (!isVisitBillingFrozen(linkedStatus)) return caps;
+
+  return {
+    ...caps,
+    canGenerateInvoice: false,
+    canSend: false,
+    canCancel: false,
+    canEditDetails: false,
+    canMarkPaid: false,
+    canPay: false,
+    canDelete: viewerRole === "admin" && invoice.status === "draft",
+    // Paid refund still allowed when visit is cancelled (REQ-0112).
+    canRefund: caps.canRefund,
   };
 }
 

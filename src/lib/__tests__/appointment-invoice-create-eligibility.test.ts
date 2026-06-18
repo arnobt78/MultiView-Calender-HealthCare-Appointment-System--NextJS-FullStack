@@ -26,4 +26,14 @@ describe("canShowCreateInvoiceAction", () => {
       canShowCreateInvoiceAction({ role: "doctor", invoiceDisplayStatus: "cancelled" })
     ).toBe(true);
   });
+
+  it("blocks when visit is cancelled", () => {
+    expect(
+      canShowCreateInvoiceAction({
+        role: "doctor",
+        invoiceDisplayStatus: null,
+        appointmentStatus: "cancelled",
+      })
+    ).toBe(false);
+  });
 });

@@ -49,8 +49,6 @@ export default function WeekView() {
     toggleStatus: commitToggleStatus,
     deleteAppointmentAsync,
     isDeleting,
-    cancelAppointmentAsync,
-    cancellingAppointmentId,
     isError: appointmentsError,
   } = useAppointmentData();
   const { user } = useAuth();
@@ -353,10 +351,6 @@ export default function WeekView() {
                             slotHeightPx={slotHeight}
                             onEdit={setEditAppt}
                             onDelete={(id) => setDeleteTargetId(id)}
-                            onCancel={async (id) => {
-                              await cancelAppointmentAsync(id);
-                            }}
-                            cancelPending={cancellingAppointmentId === a.id}
                             onToggleStatus={toggleStatus}
                             invoiceDisplayStatus={invoiceDisplayByAppt.get(a.id)}
                             showDetails={true}

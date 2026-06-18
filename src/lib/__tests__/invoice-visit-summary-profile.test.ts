@@ -6,6 +6,7 @@ describe("mapAppointmentToInvoiceVisitSummary patient_clinical_profile", () => {
     const summary = mapAppointmentToInvoiceVisitSummary({
       id: "a1",
       title: "Follow-up",
+      status: "pending",
       start: new Date("2026-05-28T09:00:00.000Z"),
       end: new Date("2026-05-28T09:30:00.000Z"),
       location: "Room 1",

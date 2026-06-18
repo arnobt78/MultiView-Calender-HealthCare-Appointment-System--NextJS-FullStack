@@ -43,6 +43,8 @@ export type InvoiceVisitSummary = {
   when_label: string;
   location_label: string;
   is_telehealth: boolean;
+  /** Linked visit status — gates billing mutate when cancelled (REQ-0111). */
+  appointment_status?: string | null;
   patient_id: string | null;
   patient_label: string | null;
   patient_email?: string | null;

@@ -51,6 +51,14 @@ export type FullAppointment = Appointment & {
   appointment_type_visit_seed?: VisitTypePickerItem;
 };
 
+export type CancelAppointmentInput =
+  | string
+  | { appointmentId: string; suppressSuccessNotify?: boolean };
+
+function resolveCancelAppointmentId(input: CancelAppointmentInput): string {
+  return typeof input === "string" ? input : input.appointmentId;
+}
+
 function formatAppointmentRange(start?: string, end?: string) {
   if (!start || !end) return "Date and time saved.";
   const startDate = new Date(start);
@@ -332,12 +340,15 @@ export function useAppointments() {
   });
 
   const cancelAppointmentMutation = useMutation({
-    mutationFn: (id: string) =>
-      apiClient<AppointmentDetailApiPayload>(`/api/appointments/${id}`, {
+    mutationFn: (input: CancelAppointmentInput) => {
+      const id = resolveCancelAppointmentId(input);
+      return apiClient<AppointmentDetailApiPayload>(`/api/appointments/${id}`, {
         method: "PATCH",
         body: JSON.stringify({ status: "cancelled" }),
-      }),
-    onMutate: async (id) => {
+      });
+    },
+    onMutate: async (input) => {
+      const id = resolveCancelAppointmentId(input);
       await queryClient.cancelQueries({ queryKey: queryKeys.appointments.all });
       const previousAppointments = queryClient.getQueryData<FullAppointment[]>(
         queryKeys.appointments.all
@@ -356,7 +367,7 @@ export function useAppointments() {
       patchAppointmentDetailCacheOptimistic(queryClient, id, { id, status: "cancelled" });
       return { previousAppointments, previousDetail };
     },
-    onSuccess: async (data) => {
+    onSuccess: async (data, input) => {
       const appt = data.appointment as FullAppointment;
       await syncAfterAppointmentWrite(queryClient, data, {
         appointmentId: appt.id,
@@ -366,13 +377,18 @@ export function useAppointments() {
         ...appointmentDoctorFkOpts(appt),
       });
       await maybeInvalidateGoogleCalendarIfConnected(queryClient);
-      notify.crud({
-        action: "updated",
-        entity: "Appointment",
-        detail: `"${getSafeAppointmentTitle(appt)}" was cancelled (${formatAppointmentRange(appt?.start, appt?.end)}).`,
-      });
+      const suppress =
+        typeof input === "object" && Boolean(input.suppressSuccessNotify);
+      if (!suppress) {
+        notify.crud({
+          action: "updated",
+          entity: "Appointment",
+          detail: `"${getSafeAppointmentTitle(appt)}" was cancelled (${formatAppointmentRange(appt?.start, appt?.end)}).`,
+        });
+      }
     },
-    onError: (error, id, context) => {
+    onError: (error, input, context) => {
+      const id = resolveCancelAppointmentId(input);
       if (context?.previousAppointments) {
         queryClient.setQueryData(queryKeys.appointments.all, context.previousAppointments);
       }
@@ -415,7 +431,7 @@ export function useAppointments() {
     isCancelling: cancelAppointmentMutation.isPending,
     cancellingAppointmentId:
       cancelAppointmentMutation.isPending && cancelAppointmentMutation.variables
-        ? cancelAppointmentMutation.variables
+        ? resolveCancelAppointmentId(cancelAppointmentMutation.variables)
         : null,
   };
 }
