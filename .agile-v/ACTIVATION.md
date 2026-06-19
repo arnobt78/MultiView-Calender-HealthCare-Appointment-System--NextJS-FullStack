@@ -17,7 +17,7 @@
 
 ## 2. Read (resume — in order)
 
-1. `STATE.md` — **C68 shipped** · **1413/1413** · HEAD **`7b800c6`**
+1. `STATE.md` — **C68 shipped** · **1413/1413** · HEAD **`a07b3b6`**
 2. `CHECKPOINTS.md` — halt if any **PENDING** HITL (**none**)
 3. `REQUIREMENTS.md` — parent **REQ-XXXX** before code (**REQ-0117 shipped**; need **REQ-0118** for C69)
 
@@ -49,7 +49,7 @@ Specify → Constrain → [Gate1] → Orchestrate → Prove → Verify → [Gate
 | C68 | 0117 | shipped | `a78db70` |
 | C61.1 | 0112 | shipped | `a37727b` |
 
-**Baseline:** **1413** tests · **295** files · HEAD **`7b800c6`** · pushed `origin/main` · 2026-06-19
+**Baseline:** **1413** tests · **295** files · HEAD **`a07b3b6`** · pushed `origin/main` · 2026-06-19
 
 ## 7. Halt if
 
@@ -73,7 +73,7 @@ No parent REQ · ambiguous REQ · self-verify only · skip invalidation · Gate 
 
 - agile-v-core + pipeline + lifecycle + compliance loaded; **24 skills** active.
 - Verify **1413/1413** · tsc · lint · build PASS · pushed `main`.
-- HEAD **`7b800c6`**; C68 feature **`a78db70`**.
+- HEAD **`a07b3b6`**; C68 feature **`a78db70`**.
 - CHECKPOINTS clear · no PENDING HITL.
 - **Idle** — manual QA optional; **halt until REQ-0118** for C69 feature work.
 - Key C68 paths: `admin-portal-load.ts` · `components/admin-portal/*` · `invalidateAdminPortal`.

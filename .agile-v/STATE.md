@@ -12,7 +12,7 @@
 | **Status** | **ER-C68-ACCEPT** |
 | **Last Updated** | 2026-06-19 |
 | **Last REQ** | **REQ-0117** (C68) |
-| **HEAD** | **`7b800c6`** (docs) · feature **`a78db70`** (C68) |
+| **HEAD** | **`a07b3b6`** (agile-v handoff) · feature **`a78db70`** (C68) |
 
 ## Verify baseline
 
