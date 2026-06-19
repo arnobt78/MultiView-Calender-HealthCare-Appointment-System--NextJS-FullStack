@@ -1,39 +1,61 @@
 # Agile V — Living State
 
-<!-- Updated: 2026-06-19 | Project: HealthCal Pro | Resume: ACTIVATION.md -->
+<!-- Updated: 2026-06-19 EOD | Project: HealthCal Pro | Resume: ACTIVATION.md -->
 
 ## Current Status
 
 | Field | Value |
 |-------|-------|
 | **Cycle** | **C68 shipped** |
-| **Phase** | Accept |
+| **Phase** | Accept (idle) |
 | **Stage** | **shipped** |
 | **Status** | **ER-C68-ACCEPT** |
 | **Last Updated** | 2026-06-19 |
 | **Last REQ** | **REQ-0117** (C68) |
-| **HEAD** | **`a78db70`** |
+| **HEAD** | **`7b800c6`** (docs) · feature **`a78db70`** (C68) |
 
 ## Verify baseline
 
-**1413/1413** · tsc · lint · build PASS
+**1413/1413** · tsc · lint · build PASS · pushed `origin/main`
 
-## Shipped (C68 — REQ-0117)
+## Shipped this session (C62–C68)
 
-| Area | Summary |
-|------|---------|
-| Loader | `admin-portal-load.ts` — API + SSR parity, 100 appts |
-| SSR | `force-dynamic` · skeleton fallback · invoice prefetch |
-| UI | `PortalPanelSection` · rich rows · client pagination 25/page |
-| Doctors | Full directory scroll · enriched cards |
+| Cycle | REQ | Commit | Summary |
+|-------|-----|--------|---------|
+| C62–C67 | 0113–0116 + UX | `226271e` | billing/portal polish · month edit/invoice · en-US dates |
+| C68 | 0117 | `a78db70` | admin portal SSR redesign |
+| docs | — | `7b800c6` | audit pass + agile-v sync |
 
-## Key paths (C68)
+## C68 deliverables (REQ-0117)
 
-- **Load:** `admin-portal-load.ts` · `admin-portal-pagination.ts`
-- **UI:** `components/admin-portal/*` · `AdminPortalPageSkeleton.tsx`
+| Area | Path / behavior |
+|------|-----------------|
+| Loader | `admin-portal-load.ts` — API + `prefetchAdminPortal` parity, 100 appts `start desc` |
+| Pagination | `admin-portal-pagination.ts` — client 25/page, no extra DB |
+| SSR | `admin-portal/page.tsx` — `force-dynamic`, skeleton, parallel `prefetchInvoices` |
+| UI | `components/admin-portal/*`, `AdminPortalPageSkeleton`, `PortalPanelSection` |
+| Invalidation | `invalidateAdminPortal` unchanged — appt/patient/doctor/invoice/category writes |
+
+## Open / deferred
+
+| Item | Notes |
+|------|-------|
+| Manual QA | `/admin-portal` pagination, doctor cards, CP detail links, invoice badges |
+| Patient self-cancel | Product deferred — new REQ if revisited |
+| `/admin-portal/[id]` | Out of scope — links go to CP via `entity-routes.ts` |
 
 ## Next session start
 
-1. Read this file + `CHECKPOINTS.md` (none pending).
-2. Manual QA: admin portal appointment pagination + doctor cards + CP detail links.
-3. Specify C69 / REQ-0118 when ready.
+1. Read `ACTIVATION.md` → this file → `CHECKPOINTS.md` (**none pending**).
+2. Optional manual QA on admin portal (above).
+3. **Specify C69** — add **REQ-0118** in `REQUIREMENTS.md` before any feature code.
+4. Verify if stale: `npm test && npx tsc --noEmit && npm run lint && npm run build`
+
+## Recent cycle index
+
+| Cycle | REQ | HEAD | Status |
+|-------|-----|------|--------|
+| C68 | 0117 | `a78db70` | shipped |
+| C67 | — | `226271e` | shipped (month view / invoice seed) |
+| C65 | 0116 | `226271e` | shipped |
+| C61.1 | 0112 | `a37727b` | shipped |

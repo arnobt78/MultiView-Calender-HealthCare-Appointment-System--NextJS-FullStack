@@ -1,12 +1,12 @@
 # Requirements — HealthCal Pro
 
-<!-- Revision: C1..C61.1 | Last updated: 2026-06-18 EOD -->
+<!-- Revision: C1..C68 | Last updated: 2026-06-19 EOD -->
 
 ## Document Control
 
 | Field | Value |
 |-------|-------|
-| Cycle | C1–C61.1 shipped |
+| Cycle | C1–C68 shipped |
 | Author | Requirement Architect |
 | Gate 1 status | C1 GATE-0001 · C2 GATE-0003 approved |
 | Canonical source | this file |
@@ -126,6 +126,7 @@
 | REQ-0079 | approved [C31] | REQ-0078 | ART-0407..0409 | pending |
 | REQ-0080 | approved [C32] | REQ-0079 | ART-0410..0416 | pending |
 | REQ-0081 | approved [C33] | REQ-0080 | ART-0417..0423 | pending |
+| REQ-0117 | shipped [C68] | REQ-0040 | admin-portal-load + SSR UI | verify PASS `a78db70` |
 | REQ-0116 | shipped [C65] | REQ-0115 | ART-0651..0656 | verify PASS |
 | REQ-0115 | shipped [C64] | REQ-0114 | ART-0643..0650 | verify PASS |
 | REQ-0114 | shipped [C63] | REQ-0113 | ART-0631..0642 | verify PASS |
@@ -1995,10 +1996,11 @@
 
 | Field | Value |
 |-------|-------|
-| Status | approved [C68] |
+| Status | shipped [C68] |
 | Priority | P1 |
 | Risk | R1 |
 | Parent | REQ-0040 |
+| Shipped | `a78db70` |
 
 **Statement:** Shared `admin-portal-load` for SSR/API parity; static chrome + targeted skeletons; rich appointment rows (up to 100, client paginate 25/page); full doctor directory without inner scroll; `prefetchInvoices` for invoice badges; `invalidateAdminPortal` unchanged.
 

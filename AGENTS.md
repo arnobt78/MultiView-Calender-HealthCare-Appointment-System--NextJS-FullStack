@@ -10,7 +10,7 @@
 
 ## Resume
 
-1. `.agile-v/STATE.md` — **C68 shipped** · **1413/1413** · manual QA pending
+1. `.agile-v/STATE.md` — **C68 shipped** · **1413/1413** · HEAD **`7b800c6`**
 2. `.agile-v/CHECKPOINTS.md` if PENDING HITL (**none**)
 3. Parent **`REQ-XXXX`** in `.agile-v/REQUIREMENTS.md` before any code (**halt if missing**)
 
@@ -50,4 +50,4 @@ npm test && npx tsc --noEmit && npm run lint && npm run build
 | C49 | 0100 | stable fallbacks + admin staff href |
 | C48 / C48.1 | 0099 | shipped `8ba3acf` |
 
-**Next:** Manual QA admin portal (C68), then **Specify C69** + **REQ-0118**.
+**Next:** Manual QA admin portal (optional) · **Specify C69** + **REQ-0118**.

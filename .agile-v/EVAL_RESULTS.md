@@ -728,3 +728,26 @@ release_commit: "pending"
 | db seed | npm run db:reset-demo-appointments | PASS 10/10 | REQ-0116 |
 
 **EvalGate (C65):** PASS — awaiting commit.
+
+## C68 — ER-C68-VERIFY
+
+```yaml
+eval_run_id: ER-C68-VERIFY
+eval_timestamp: "2026-06-19T15:36:00Z"
+eval_gate_status: PASS
+eval_gate_rationale: "REQ-0117 admin portal SSR redesign; shared loader; rich lists; 1413/1413; tsc; eslint; build PASS"
+cycle: C68
+release_commit: "a78db70"
+```
+
+| Suite | Command | Result | LINKED_REQ |
+|-------|---------|--------|------------|
+| admin-portal-load | npm test admin-portal-load | PASS | REQ-0117 |
+| admin-portal-pagination | npm test admin-portal-pagination | PASS | REQ-0117 |
+| AdminPortalAppointmentListRow.ui | npm test AdminPortalAppointmentListRow | PASS | REQ-0117 |
+| full regression | npm test | PASS 1413/1413 | REQ-0117 |
+| typecheck | npx tsc --noEmit | PASS | REQ-0117 |
+| lint | npm run lint | PASS | REQ-0117 |
+| release build | npm run build | PASS | REQ-0117 |
+
+**EvalGate (C68):** PASS — shipped `a78db70` · pushed `7b800c6` · **active baseline**

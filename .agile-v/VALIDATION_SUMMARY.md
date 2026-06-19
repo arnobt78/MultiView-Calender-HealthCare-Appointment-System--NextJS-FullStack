@@ -870,3 +870,23 @@ EvalGate: status=PASS | eval_run_id=ER-C47-VERIFY | shipped `1e252b0`
 | VER-0152 | REQ-0099 | PASS | Full regression **1270/1270** tsc lint build |
 
 EvalGate: status=PASS | eval_run_id=ER-C48-1-VERIFY | shipped `8ba3acf` · **active baseline**
+
+---
+
+## C68 — Admin portal SSR (2026-06-19)
+
+| Item | Value |
+|------|-------|
+| Cycle | C68 |
+| REQ-IDs | REQ-0117 |
+| Regression | **1413/1413** Vitest (295 files) |
+| HEAD | `a78db70` · docs `7b800c6` |
+
+| VER-ID | REQ-ID | Result | Description |
+|--------|--------|--------|-------------|
+| VER-0160 | REQ-0117 | PASS | `fetchAdminPortalData` loader mapping + limit 100 |
+| VER-0161 | REQ-0117 | PASS | `paginateAdminPortalAppointments` client slice |
+| VER-0162 | REQ-0117 | PASS | `AdminPortalAppointmentListRow` rich embeds |
+| VER-0163 | REQ-0117 | PASS | Full regression **1413/1413** tsc lint build |
+
+EvalGate: status=PASS | eval_run_id=ER-C68-VERIFY | shipped `a78db70` · **active baseline**

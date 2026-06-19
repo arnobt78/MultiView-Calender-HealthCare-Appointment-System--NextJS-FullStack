@@ -173,3 +173,10 @@
 | 2026-06-19T12:16:00Z | verify | C64 automated verify PASS | 1382/1382; tsc · lint · build PASS | REQ-0115 |
 | 2026-06-19T12:42:00Z | build | C65 issued-by actor + seed v3 | created_by display; 10-row curated wipe; invoiceCreatedByEmail | REQ-0116 |
 | 2026-06-19T12:42:00Z | verify | C65 automated verify PASS | 1389/1389; db reset 10/10; tsc · lint · build PASS | REQ-0116 |
+| 2026-06-19T14:00:00Z | build | C62–C67 billing + month view tranche | month edit dialog; invoice seed; en-US dates; visit snapshot | REQ-0113..0116 |
+| 2026-06-19T14:00:00Z | verify | C62–C67 automated verify PASS | 1404/1404; tsc · lint · build PASS | REQ-0113..0116 |
+| 2026-06-19T14:00:00Z | accept | C62–C67 shipped to main | `226271e` feat billing C62–C67 | REQ-0113..0116 |
+| 2026-06-19T15:00:00Z | build | C68 admin portal SSR redesign | `admin-portal-load`; skeleton; rich rows; pagination 25/page | REQ-0117 |
+| 2026-06-19T15:36:00Z | verify | C68 automated verify PASS | 1413/1413; tsc · lint · build PASS | REQ-0117 |
+| 2026-06-19T15:36:00Z | accept | C68 shipped + audit pushed | `a78db70` feat · `7b800c6` docs | REQ-0117 |
+| 2026-06-19T15:45:00Z | init | EOD Agile V session close | STATE/ACTIVATION/REQUIREMENTS synced; idle C69 | REQ-0117 |
