@@ -70,29 +70,27 @@ export function EntityDetailRecordAuditCard({
             ) : null}
           </div>
         </div>
-        <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 text-sm">
-          <span className={iconCircleClass} aria-hidden>
-            <CalendarClock className={iconClassName} />
-          </span>
-          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 gap-y-1">
-            <span>
-              <span className="text-gray-500">Last updated: </span>
-              {updatedAt ? (
-                format(new Date(updatedAt), "M/d/yyyy, h:mm:ss a")
-              ) : (
-                <ClinicalEmptyDash layout="inline" />
-              )}
+        {updatedAt ? (
+          <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 text-sm">
+            <span className={iconCircleClass} aria-hidden>
+              <CalendarClock className={iconClassName} />
             </span>
-            {updatedBy ? (
-              <>
-                <span className="text-gray-500" aria-hidden>
-                  ·
-                </span>
-                <EntityDetailAuditActorInline actor={updatedBy} viewerRole={viewerRole} />
-              </>
-            ) : null}
+            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 gap-y-1">
+              <span>
+                <span className="text-gray-500">Last updated: </span>
+                {format(new Date(updatedAt), "M/d/yyyy, h:mm:ss a")}
+              </span>
+              {updatedBy ? (
+                <>
+                  <span className="text-gray-500" aria-hidden>
+                    ·
+                  </span>
+                  <EntityDetailAuditActorInline actor={updatedBy} viewerRole={viewerRole} />
+                </>
+              ) : null}
+            </div>
           </div>
-        </div>
+        ) : null}
         {extraRows?.map((row, index) => (
           <div
             key={`${row.label ?? "row"}-${index}`}

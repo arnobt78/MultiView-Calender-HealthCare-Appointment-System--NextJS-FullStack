@@ -92,7 +92,7 @@ export default function AppointmentDialog({
   const [open, setOpen] = useState(() =>
     isControlled ? isOpen : isEditMode
   );
-  const prevControlledIsOpenRef = useRef(isControlled ? isOpen : false);
+  const prevControlledIsOpenRef = useRef(false);
 
   const { patients } = usePatients();
   const { categories } = useCategories();

@@ -62,4 +62,4 @@ npm test && npx tsc --noEmit && npm run lint && npm run build
 
 ## Next cycle entry
 
-**C49:** requirement-architect → **REQ-0100+** in `REQUIREMENTS.md` → Gate 1 → build → verify → accept
+**C62:** requirement-architect → **REQ-0113+** in `REQUIREMENTS.md` → Gate 1 → build → verify → accept

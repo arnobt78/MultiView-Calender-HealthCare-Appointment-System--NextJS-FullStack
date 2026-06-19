@@ -16,10 +16,13 @@ import type { AppointmentDetailViewModel } from "@/lib/appointment-detail-view-m
 import type { EntityRole } from "@/lib/entity-routes";
 import { serializeAppointment } from "@/lib/serializers";
 import type { Appointment } from "@/types/types";
+import type { InvoiceRow } from "@/lib/billing-types";
 
 export type AppointmentDetailApiPayload = {
   appointment: Appointment;
   detail: AppointmentDetailViewModel;
+  /** Set when staff marks visit done and auto-draft invoice was created (REQ-0115). */
+  auto_draft_invoice?: InvoiceRow;
 };
 
 /** Cross-tab + cache-first write — detail optional when API returns list row only (patient booking). */

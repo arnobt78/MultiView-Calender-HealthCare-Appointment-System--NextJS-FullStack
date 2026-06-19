@@ -65,6 +65,14 @@ export function resolvePaymentStatusIcon(
   return PAYMENT_STATUS_ICON[key] ?? Clock;
 }
 
+/** Seeded demo PaymentIntent ids — no live Stripe object; local refund only. */
+export function isDemoCuratedStripePaymentId(
+  stripePaymentId: string | null | undefined
+): boolean {
+  const trimmed = stripePaymentId?.trim();
+  return Boolean(trimmed && /^pi_demo_curated_/i.test(trimmed));
+}
+
 /** Human-readable payment reference — demo seeds vs live Stripe IDs. */
 export function formatPaymentReferenceLabel(stripePaymentId: string | null | undefined): {
   label: string;

@@ -106,7 +106,23 @@ export type InvoiceRow = {
   updated_by_role?: string | null;
   payments: InvoicePaymentRow[];
   visit_summary?: InvoiceVisitSummary;
-  /** Billing owner display — list “Issued by” line (batch-loaded on GET /api/invoices). */
+  /** Set when linked appointment was deleted — drives rose meta + snapshot hydration (REQ-0113). */
+  visit_detached_at?: string | null;
+  visit_snapshot?: InvoiceVisitSummary | null;
+  /** Frozen actor when visit detached (REQ-0114). */
+  visit_detached_by_id?: string | null;
+  visit_detached_by_display?: string | null;
+  visit_detached_by_email?: string | null;
+  visit_detached_by_image?: string | null;
+  visit_detached_by_role?: string | null;
+  /** Soft-delete tombstone (REQ-0114). */
+  deleted_at?: string | null;
+  deleted_by_id?: string | null;
+  deleted_by_display?: string | null;
+  deleted_by_email?: string | null;
+  deleted_by_image?: string | null;
+  deleted_by_role?: string | null;
+  /** Billing owner display (`user_id`) — not the session actor who issued the draft. */
   issuer_label?: string | null;
   issuer_image?: string | null;
   issuer_email?: string | null;

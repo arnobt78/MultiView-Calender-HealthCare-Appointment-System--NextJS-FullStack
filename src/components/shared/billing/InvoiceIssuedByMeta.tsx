@@ -35,7 +35,7 @@ type Props = {
   layout?: "stack" | "wrapInline";
 };
 
-/** Bottom row — invoice issued + billing owner (`div` shell; avatar is not inside `p`/`span`). */
+/** Bottom row — invoice issued timestamp + session creator (`created_by_*`), not billing owner. */
 export function InvoiceIssuedByMeta({
   createdAt,
   issuerLabel,

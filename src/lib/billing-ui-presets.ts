@@ -35,7 +35,7 @@ export const billingCreateInvoiceTriggerDoctor: BillingCreateInvoiceTriggerPrese
 
 /** Compact default when no glass preset is passed (legacy call sites). */
 export const billingCreateInvoiceTriggerDefault: BillingCreateInvoiceTriggerPreset = {
-  triggerLabel: "New Invoice",
+  triggerLabel: "Create Invoice",
   triggerClassName: "",
   triggerIcon: Plus,
 };

@@ -99,3 +99,35 @@ export function invoiceStatusInlineTextClass(
   const key = (status ?? "draft").toLowerCase();
   return STATUS_TEXT_CLASS[key] ?? STATUS_TEXT_CLASS.draft;
 }
+
+/** True when linked visit was deleted but invoice retained snapshot (REQ-0113). */
+export function isInvoiceVisitDetached(invoice: {
+  visit_detached_at?: string | null;
+}): boolean {
+  return Boolean(invoice.visit_detached_at?.trim());
+}
+
+/** True when invoice was soft-deleted — tombstone row (REQ-0114). */
+export function isInvoiceSoftDeleted(invoice: {
+  deleted_at?: string | null;
+}): boolean {
+  return Boolean(invoice.deleted_at?.trim());
+}
+
+/** Rose meta styling — visit detached and/or invoice soft-deleted. */
+export function isInvoiceTombstone(invoice: {
+  visit_detached_at?: string | null;
+  deleted_at?: string | null;
+}): boolean {
+  return isInvoiceVisitDetached(invoice) || isInvoiceSoftDeleted(invoice);
+}
+
+/** Rose tone for detached-visit meta rows (Due / Created / Paid / deleted stamp). */
+export function invoiceDetachedVisitMetaTextClass(): string {
+  return "text-rose-700";
+}
+
+/** Due-date text when visit detached — rose regardless of status. */
+export function invoiceDueDateTextClassForDetachedVisit(): string {
+  return "text-rose-600";
+}

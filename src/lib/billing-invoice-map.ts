@@ -16,6 +16,7 @@ import type {
   InvoicePaymentRow,
   InvoiceVisitSummary,
 } from "@/lib/billing-types";
+import { isInvoiceSoftDeleted } from "@/lib/invoice-status-display";
 import { queryKeys } from "@/lib/query-keys";
 import {
   invoiceMatchesDoctorScope,
@@ -62,6 +63,19 @@ type ApiInvoice = {
   issuer_role?: string | null;
   payments?: ApiPayment[];
   visit_summary?: InvoiceVisitSummary;
+  visit_detached_at?: string | Date | null;
+  visit_snapshot?: unknown;
+  visit_detached_by_id?: string | null;
+  visit_detached_by_display?: string | null;
+  visit_detached_by_email?: string | null;
+  visit_detached_by_image?: string | null;
+  visit_detached_by_role?: string | null;
+  deleted_at?: string | Date | null;
+  deleted_by_id?: string | null;
+  deleted_by_display?: string | null;
+  deleted_by_email?: string | null;
+  deleted_by_image?: string | null;
+  deleted_by_role?: string | null;
 };
 
 type ScopedListCache = { invoices: InvoiceRow[] };
@@ -223,6 +237,64 @@ export function mergeInvoiceIntoAllCaches(
   mergeInvoiceIntoDetailCache(queryClient, invoice);
 }
 
+function patchInvoiceRowVisitAppointmentStatus(
+  row: InvoiceRow,
+  appointmentId: string,
+  appointmentStatus: string
+): InvoiceRow {
+  if (row.appointment_id !== appointmentId || !row.visit_summary) return row;
+  if (row.visit_summary.appointment_status === appointmentStatus) return row;
+  return {
+    ...row,
+    visit_summary: {
+      ...row.visit_summary,
+      appointment_status: appointmentStatus,
+    },
+  };
+}
+
+/** Keep invoice list/detail visit_summary status in sync after appointment cancel (portal cards). */
+export function patchLinkedInvoiceAppointmentStatusInCaches(
+  queryClient: QueryClient,
+  appointmentId: string,
+  appointmentStatus: string
+): void {
+  let touched: InvoiceRow[] = [];
+
+  queryClient.setQueryData<InvoiceRow[]>(queryKeys.invoices.all, (old) => {
+    if (!old?.length) return old;
+    let changed = false;
+    const next = old.map((row) => {
+      const patched = patchInvoiceRowVisitAppointmentStatus(
+        row,
+        appointmentId,
+        appointmentStatus
+      );
+      if (patched !== row) {
+        changed = true;
+        touched.push(patched);
+      }
+      return patched;
+    });
+    return changed ? next : old;
+  });
+
+  if (!touched.length) {
+    touched =
+      queryClient
+        .getQueryData<InvoiceRow[]>(queryKeys.invoices.all)
+        ?.filter((row) => row.appointment_id === appointmentId) ?? [];
+    touched = touched.map((row) =>
+      patchInvoiceRowVisitAppointmentStatus(row, appointmentId, appointmentStatus)
+    );
+  }
+
+  for (const invoice of touched) {
+    mergeInvoiceIntoScopedListCaches(queryClient, invoice);
+    mergeInvoiceIntoDetailCache(queryClient, invoice);
+  }
+}
+
 /** Prefer invoice row fields before walking appointments cache (avoids patients.all bust). */
 export function resolvePatientIdFromInvoiceRow(
   invoice: Pick<InvoiceRow, "visit_summary">
@@ -340,5 +412,17 @@ export function mapApiInvoiceToRow(raw: ApiInvoice): InvoiceRow {
     issuer_role: raw.issuer_role ?? null,
     payments: (raw.payments ?? []).map(mapPayment),
     visit_summary: raw.visit_summary,
+    visit_detached_at: toIsoDateString(raw.visit_detached_at) ?? null,
+    visit_detached_by_id: raw.visit_detached_by_id ?? null,
+    visit_detached_by_display: raw.visit_detached_by_display ?? null,
+    visit_detached_by_email: raw.visit_detached_by_email ?? null,
+    visit_detached_by_image: raw.visit_detached_by_image ?? null,
+    visit_detached_by_role: raw.visit_detached_by_role ?? null,
+    deleted_at: toIsoDateString(raw.deleted_at) ?? null,
+    deleted_by_id: raw.deleted_by_id ?? null,
+    deleted_by_display: raw.deleted_by_display ?? null,
+    deleted_by_email: raw.deleted_by_email ?? null,
+    deleted_by_image: raw.deleted_by_image ?? null,
+    deleted_by_role: raw.deleted_by_role ?? null,
   };
 }

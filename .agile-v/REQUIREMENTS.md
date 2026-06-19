@@ -126,6 +126,10 @@
 | REQ-0079 | approved [C31] | REQ-0078 | ART-0407..0409 | pending |
 | REQ-0080 | approved [C32] | REQ-0079 | ART-0410..0416 | pending |
 | REQ-0081 | approved [C33] | REQ-0080 | ART-0417..0423 | pending |
+| REQ-0116 | shipped [C65] | REQ-0115 | ART-0651..0656 | verify PASS |
+| REQ-0115 | shipped [C64] | REQ-0114 | ART-0643..0650 | verify PASS |
+| REQ-0114 | shipped [C63] | REQ-0113 | ART-0631..0642 | verify PASS |
+| REQ-0113 | shipped [C62] | REQ-0112 | ART-0621..0630 | verify PASS |
 | REQ-0112 | shipped [C61/C61.1] | REQ-0111 | ART-0611..0618 | `a37727b` |
 | REQ-0111 | shipped [C60] | REQ-0110 | ART-0601..0608 | `a37727b` |
 | REQ-0110 | shipped [C59] | REQ-0109 | ART-0591..0594 | `40ed2cd` |
@@ -157,6 +161,81 @@
 | REQ-0084 | approved [C36] | REQ-0083 | ART-0437..0444 | pending |
 | REQ-0083 | approved [C35/C35.1] | REQ-0082 | ART-0432..0436 | pending |
 | REQ-0082 | approved [C34/C34.1] | REQ-0081 | ART-0424..0431 | pending |
+
+### REQ-0116 — C65 Invoice issued actor + curated seed v3
+
+| Field | Value |
+|-------|-------|
+| Status | shipped [C65] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0115 |
+
+**Statement:** "Invoice issued" UI shows session creator (`created_by_*`), not billing owner. Curated seed v3 wipes appointments/billing and inserts 10 QA rows with varied admin/doctor invoice creators (mostly test@admin/doctor/patient).
+
+**Acceptance criteria:**
+1. `InvoiceIssuedByMeta` documents creator vs billing owner; all list surfaces use `invoiceIssuedByMetaProps`.
+2. `DEMO_CURATED_ROWS` v3 with `invoiceCreatedByEmail` on invoice rows.
+3. `npm run db:reset-demo-appointments` produces 10 deterministic rows.
+4. Unit tests + verify PASS.
+
+### REQ-0115 — C64 Done → draft invoice sync + invoice card UX
+
+| Field | Value |
+|-------|-------|
+| Status | shipped [C64] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0114 |
+
+**Statement:** When staff marks a visit done, calendar/dashboard cards and doctor-portal invoice list show the auto-created draft invoice immediately. Invoice portal cards use appointment title (text-sm) and inline meta footer.
+
+**Acceptance criteria:**
+1. PATCH/PUT returns optional `auto_draft_invoice` when auto-draft created on done transition.
+2. `toggleStatus` + `updateMutation` merge invoice cache + billing invalidation on done.
+3. `getInvoiceListTitle` prefers `visit_summary.title`; portal stack uses `text-sm`.
+4. `InvoicePortalListMetaRow` uses `wrapInline` issued-by layout.
+5. Unit tests + verify PASS.
+
+### REQ-0114 — C63 Deletion actor audit (visit detached + invoice soft-delete)
+
+| Field | Value |
+|-------|-------|
+| Status | shipped [C63] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0113 |
+
+**Statement:** When an appointment is hard-deleted, linked invoices freeze who deleted the visit (denormalized actor + timestamp) and show clickable avatar/badge in list/detail UI. Invoice DELETE becomes soft-delete with the same actor pattern; tombstones stay list-visible; KPI aggregates exclude deleted rows.
+
+**Acceptance criteria:**
+1. Migration adds `visit_detached_by_*` and `deleted_at` / `deleted_by_*` on `Invoice`.
+2. `snapshotInvoicesForDeletedAppointment(id, detachedByUserId)` stores frozen actor at appointment DELETE.
+3. `DELETE /api/invoices/[id]` soft-deletes; returns tombstone JSON; PATCH/pay/PDF blocked on deleted rows.
+4. `InvoiceDeletionActorMeta` in portal list + CP table + invoice detail audit rows (rose tone).
+5. KPI / appointment-options exclude `deleted_at IS NOT NULL`; list includes tombstones.
+6. `usePayments` delete merges tombstone into cache (no hard remove).
+7. `CANCEL_APPOINTMENT_CONFIRM_TITLE` used as blank-title fallback.
+8. Unit/UI tests + verify PASS.
+
+### REQ-0113 — C62 Portal billing & calendar UX fixes (QA)
+
+| Field | Value |
+|-------|-------|
+| Status | shipped [C62] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0112 |
+
+**Statement:** Fix manual QA regressions on doctor/admin invoice lists, cancel-confirm dialog, appointment list cards, and calendar edit dialog — detached-visit invoice metadata, cancel loading/copy, owner row parity, duplicate time, controlled edit seed.
+
+**Acceptance criteria:**
+1. On appointment DELETE, linked invoices persist `visit_snapshot` + `visit_detached_at`; list UI shows visit rows + rose-toned Due/Created/Paid + "Visit deleted" timestamp.
+2. Cancel confirm keeps spinner through cancel+refund; dynamic title/subtitle; aligned refund checkbox.
+3. Invoice cards always show Calendar owner row when data exists (even if owner === treating).
+4. List appointment cards show time once (no duplicate in category row).
+5. Calendar List/Day/Week edit dialog prefills; Week opens dialog on edit.
+6. Unit tests + verify PASS.
 
 ### REQ-0112 — C61 Doctor portal refund + paid-cancel optional refund
 

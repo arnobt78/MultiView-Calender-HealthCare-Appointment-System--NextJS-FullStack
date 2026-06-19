@@ -7,6 +7,7 @@ import type { Category, Patient } from "@/types/types";
 import { useAuth } from "@/hooks/useAuth";
 import { isPatientRole } from "@/lib/rbac";
 import { ClinicalListFilterToolbar } from "@/components/shared/filters/ClinicalListFilterToolbar";
+import { buildCalendarMonthFilterOptions } from "@/lib/calendar-date-display";
 import Filters from "./Filters";
 
 type GlobalCalendarFiltersProps = {
@@ -45,23 +46,10 @@ export default function GlobalCalendarFilters({
     hasActiveFilters,
   } = useCalendarFilters();
 
-  const monthOptions = useMemo(() => {
-    const all = new Set<string>();
-    appointments.forEach((a) => {
-      const d = new Date(a.start);
-      all.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
-    });
-    return Array.from(all)
-      .sort((a, b) => b.localeCompare(a))
-      .map((value) => {
-        const [year, monthPart] = value.split("-");
-        const formatted = new Intl.DateTimeFormat("de-DE", {
-          month: "long",
-          year: "numeric",
-        }).format(new Date(Number(year), Number(monthPart) - 1, 1));
-        return { value, label: formatted };
-      });
-  }, [appointments]);
+  const monthOptions = useMemo(
+    () => buildCalendarMonthFilterOptions(appointments.map((a) => a.start)),
+    [appointments]
+  );
 
   return (
     <ClinicalListFilterToolbar

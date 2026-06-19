@@ -4,8 +4,13 @@
 
 import { format } from "date-fns";
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@prisma/client";
 import { resolveAppointmentVisitLocationLabel } from "@/lib/appointment-visit-location";
 import type { InvoiceVisitSummary } from "@/lib/billing-types";
+import {
+  invoiceAuditUserPick,
+  invoiceVisitDetachedByFields,
+} from "@/lib/invoice-api-include";
 
 export const invoiceAppointmentVisitInclude = {
   category: { select: { id: true, label: true, color: true, icon: true } },
@@ -183,21 +188,21 @@ export function formatInvoiceVisitSummaryLine(summary: InvoiceVisitSummary): str
   return parts.join(" · ");
 }
 
-/** Batch-load visit summaries for invoice list responses (no N+1). */
-export async function attachVisitSummariesToInvoices<
-  T extends { appointment_id?: string | null },
->(invoices: T[]): Promise<(T & { visit_summary?: InvoiceVisitSummary })[]> {
-  const ids = [
-    ...new Set(
-      invoices
-        .map((i) => i.appointment_id)
-        .filter((id): id is string => typeof id === "string" && id.length > 0)
-    ),
-  ];
-  if (ids.length === 0) return invoices;
+/** Parse JSON snapshot stored on invoice when visit was deleted. */
+export function parseStoredVisitSnapshot(raw: unknown): InvoiceVisitSummary | null {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const o = raw as Record<string, unknown>;
+  if (typeof o.appointment_id !== "string" || typeof o.title !== "string") return null;
+  return raw as InvoiceVisitSummary;
+}
 
-  const appts = await prisma.appointment.findMany({
-    where: { id: { in: ids } },
+/** Before hard-delete, freeze visit rows on linked invoices (appointment_id → SetNull). */
+export async function snapshotInvoicesForDeletedAppointment(
+  appointmentId: string,
+  detachedByUserId: string
+): Promise<void> {
+  const row = await prisma.appointment.findUnique({
+    where: { id: appointmentId },
     select: {
       id: true,
       title: true,
@@ -214,16 +219,77 @@ export async function attachVisitSummariesToInvoices<
       treating_physician: invoiceAppointmentVisitInclude.treating_physician,
     },
   });
+  if (!row) return;
 
-  const byId = new Map(
-    appts.map((a) => [a.id, mapAppointmentToInvoiceVisitSummary(a as VisitApptRow)])
-  );
+  const snapshot = mapAppointmentToInvoiceVisitSummary(row as VisitApptRow);
+  const detachedAt = new Date();
+
+  const actor = await prisma.user.findUnique({
+    where: { id: detachedByUserId },
+    select: invoiceAuditUserPick.select,
+  });
+  const actorFields = actor ? invoiceVisitDetachedByFields(actor) : {};
+
+  await prisma.invoice.updateMany({
+    where: { appointment_id: appointmentId },
+    data: {
+      visit_snapshot: snapshot as unknown as Prisma.InputJsonValue,
+      visit_detached_at: detachedAt,
+      ...actorFields,
+    },
+  });
+}
+
+/** Batch-load visit summaries for invoice list responses (no N+1). */
+export async function attachVisitSummariesToInvoices<
+  T extends {
+    appointment_id?: string | null;
+    visit_snapshot?: unknown;
+    visit_detached_at?: string | null;
+  },
+>(invoices: T[]): Promise<(T & { visit_summary?: InvoiceVisitSummary })[]> {
+  const ids = [
+    ...new Set(
+      invoices
+        .map((i) => i.appointment_id)
+        .filter((id): id is string => typeof id === "string" && id.length > 0)
+    ),
+  ];
+
+  const byId = new Map<string, InvoiceVisitSummary>();
+  if (ids.length > 0) {
+    const appts = await prisma.appointment.findMany({
+      where: { id: { in: ids } },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        start: true,
+        end: true,
+        location: true,
+        duration_minutes: true,
+        is_telehealth: true,
+        category: invoiceAppointmentVisitInclude.category,
+        appointment_type: invoiceAppointmentVisitInclude.appointment_type,
+        patient: invoiceAppointmentVisitInclude.patient,
+        owner: invoiceAppointmentVisitInclude.owner,
+        treating_physician: invoiceAppointmentVisitInclude.treating_physician,
+      },
+    });
+
+    for (const a of appts) {
+      byId.set(a.id, mapAppointmentToInvoiceVisitSummary(a as VisitApptRow));
+    }
+  }
 
   return invoices.map((inv) => {
     const aid = inv.appointment_id;
-    if (!aid) return inv;
-    const visit_summary = byId.get(aid);
-    return visit_summary ? { ...inv, visit_summary } : inv;
+    if (aid) {
+      const visit_summary = byId.get(aid);
+      return visit_summary ? { ...inv, visit_summary } : inv;
+    }
+    const stored = parseStoredVisitSnapshot(inv.visit_snapshot);
+    return stored ? { ...inv, visit_summary: stored } : inv;
   });
 }
 

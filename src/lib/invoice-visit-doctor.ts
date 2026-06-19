@@ -21,15 +21,11 @@ export function invoiceTreatingDoctorFromSummary(
   };
 }
 
-/** Calendar owner when different from treating physician (CP table). */
+/** Calendar owner from visit summary (shown even when same person as treating). */
 export function invoiceCalendarOwnerDoctorFromSummary(
   summary: InvoiceVisitSummary | null | undefined
 ): DoctorIdentityDoctor | null {
-  if (
-    !summary?.calendar_owner_id ||
-    !summary.calendar_owner_label?.trim() ||
-    summary.calendar_owner_id === summary.treating_physician_id
-  ) {
+  if (!summary?.calendar_owner_id || !summary.calendar_owner_label?.trim()) {
     return null;
   }
   return {

@@ -40,10 +40,13 @@ import { collectAppointmentStaffUserIds } from "@/lib/appointment-card";
 import { useCategories } from "@/hooks/useCategories";
 import { usePatients } from "@/hooks/usePatients";
 import AppointmentHoverCard from "./AppointmentHoverCard";
+import { X } from "lucide-react";
 import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
 import GlobalCalendarFilters from "./GlobalCalendarFilters";
 import CalendarStickyHeader from "./CalendarStickyHeader";
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
+import { formatCalendarListDayHeadline } from "@/lib/calendar-date-display";
 import { useAppointmentInvoiceDisplayMap } from "@/hooks/useAppointmentInvoiceDisplayMap";
 import { summarizeDayAppointments } from "@/lib/appointment-stats";
 import { AppointmentOpenAlertDoneBadges } from "@/components/shared/appointments/AppointmentOpenAlertDoneBadges";
@@ -76,6 +79,14 @@ export default function MonthView() {
     useCalendarFilters();
   const { currentDate } = useDateContext();
   const [editAppt, setEditAppt] = useState<AppointmentWithCategory | null>(null);
+
+  const handleEdit = useCallback((appt: AppointmentWithCategory) => {
+    setEditAppt(appt);
+  }, []);
+
+  const handleEditDialogChange = useCallback((open: boolean) => {
+    if (!open) setEditAppt(null);
+  }, []);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
@@ -293,7 +304,7 @@ export default function MonthView() {
                           ownerUsers={ownerUsers}
                           detailWrap
                           invoiceDisplayStatus={invoiceDisplayByAppt.get(a.id)}
-                          onEdit={setEditAppt}
+                          onEdit={handleEdit}
                           onDelete={(id) => setDeleteTargetId(id)}
                           onToggleStatus={toggleStatus}
                           showDetails={false} // Default to false, can be overridden
@@ -328,14 +339,20 @@ export default function MonthView() {
       {/* Side list for selected date */}
       {selectedDate && (
         <div className={clsx(calendarGridMonthSidePanel, "md:self-start")}>
-          <div className="flex items-center gap-2 mb-2">
+          <div className="mb-2 flex items-center justify-between gap-2">
             <span className="text-lg font-semibold text-gray-700">
-              {new Intl.DateTimeFormat("de-DE", {
-                weekday: "long",
-                day: "numeric",
-                month: "long",
-              }).format(selectedDate)}
+              {formatCalendarListDayHeadline(selectedDate)}
             </span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 shrink-0 text-gray-500 hover:text-gray-800"
+              aria-label="Close day list"
+              onClick={() => setSelectedDate(null)}
+            >
+              <X className="h-4 w-4" aria-hidden />
+            </Button>
           </div>
           <div className="space-y-2">
             {sortByTime(
@@ -351,7 +368,7 @@ export default function MonthView() {
                   patients={filterPatients}
                   assignees={assignees}
                   ownerUsers={ownerUsers}
-                  onEdit={(appt) => setEditAppt(appt)}
+                  onEdit={handleEdit}
                   onDelete={(id) => setDeleteTargetId(id)}
                   onToggleStatus={toggleStatus}
                   appointmentTypePriceCents={fullAppt.appointment_type_price_cents}
@@ -368,13 +385,14 @@ export default function MonthView() {
         </div>
       )}
 
-      {/* Edit dialog */}
-      {editAppt && (
+      {editAppt ? (
         <AppointmentDialogController
           appointment={editAppt}
           onSuccess={() => setEditAppt(null)}
+          isOpen={Boolean(editAppt)}
+          onOpenChange={handleEditDialogChange}
         />
-      )}
+      ) : null}
     </div>
   );
 }

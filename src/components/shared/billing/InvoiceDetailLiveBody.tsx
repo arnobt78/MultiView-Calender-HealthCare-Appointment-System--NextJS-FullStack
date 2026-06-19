@@ -13,6 +13,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { EntityDetailChromeHeader } from "@/components/shared/entity-detail/EntityDetailChromeHeader";
 import { InvoiceDetailActionBar } from "@/components/shared/billing/InvoiceDetailActionBar";
+import { InvoiceDetailTombstoneBanner } from "@/components/shared/billing/InvoiceDetailTombstoneBanner";
 import { InvoiceDetailHeaderActions } from "@/components/shared/billing/InvoiceDetailHeaderActions";
 import { resolvePortalAppointmentDetailLinkPolicy } from "@/lib/entity-detail-snapshot-links";
 import { InvoiceStatusBadge } from "@/components/shared/billing/InvoiceStatusBadge";
@@ -194,6 +195,8 @@ export function InvoiceDetailLiveBody({
         />
       }
     >
+
+      <InvoiceDetailTombstoneBanner invoice={invoice} viewerRole={viewerRole} className="mb-3" />
 
       <Card className={cn(invoiceDetailCardFrameClass, invoiceDetailCardBorderClass)}>
         <CardContent className="space-y-3 p-4 sm:p-5">

@@ -5,6 +5,7 @@
 
 import type { InvoiceRow, InvoiceVisitSummary } from "@/lib/billing-types";
 import { getInvoiceListTitle } from "@/lib/invoice-list-display";
+import { mapInvoiceIssuedByActor } from "@/lib/invoice-issued-by-display";
 import {
   formatAppointmentTypeDurationLabel,
   resolveAppointmentTypeDurationMinutes,
@@ -115,7 +116,8 @@ export function buildStripeCheckoutProductCopy(
   }
 
   const desc = formatStripeCheckoutVisitDescription(summary, {
-    issuer_label: invoice.issuer_label,
+    issuer_label:
+      mapInvoiceIssuedByActor(invoice)?.label ?? invoice.issuer_label ?? undefined,
   });
   const body = desc.trim() || clip(summary.title || name, STRIPE_DESC_MAX);
   return { name, description: clip(body, STRIPE_DESC_MAX) };

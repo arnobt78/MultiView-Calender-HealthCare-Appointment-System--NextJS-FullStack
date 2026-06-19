@@ -20,7 +20,9 @@ import {
   loadAppointmentAccessRow,
 } from "@/lib/appointment-id-write";
 import { buildAppointmentDetailApiPayload } from "@/lib/appointment-detail-api";
+import type { InvoiceRow } from "@/lib/billing-types";
 import { redis } from "@/lib/redis";
+import { snapshotInvoicesForDeletedAppointment } from "@/lib/invoice-visit-summary";
 import {
   AppointmentSchedulingConflictError,
   assertNoOwnerAppointmentOverlap,
@@ -174,15 +176,23 @@ export async function PUT(req: NextRequest, context: RouteContext) {
       },
     });
 
+    let autoDraftInvoice: InvoiceRow | undefined;
+
     if (
       body.status === "done" &&
       previousStatus !== "done" &&
       updated.status === "done"
     ) {
-      const { maybeCreateDraftInvoiceForCompletedVisit } = await import(
-        "@/lib/billing-auto-draft"
+      const { resolveAutoDraftInvoiceOnDoneTransition } = await import(
+        "@/lib/appointment-auto-draft-response"
       );
-      await maybeCreateDraftInvoiceForCompletedVisit(id, ctx.accessSession);
+      autoDraftInvoice = await resolveAutoDraftInvoiceOnDoneTransition({
+        appointmentId: id,
+        session: ctx.accessSession,
+        previousStatus,
+        requestedStatus: body.status,
+        updatedStatus: updated.status,
+      });
     }
 
     void redis.invalidateDashboardOverview(ctx.sessionUser.userId);
@@ -207,7 +217,9 @@ export async function PUT(req: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Appointment not found or unauthorized" }, { status: 404 });
     }
 
-    return NextResponse.json(payload);
+    return NextResponse.json(
+      autoDraftInvoice ? { ...payload, auto_draft_invoice: autoDraftInvoice } : payload
+    );
   } catch (err: unknown) {
     if (err && typeof err === "object" && "code" in err && err.code === "P2025") {
       return NextResponse.json({ error: "Appointment not found or unauthorized" }, { status: 404 });
@@ -384,15 +396,23 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       },
     });
 
+    let autoDraftInvoice: InvoiceRow | undefined;
+
     if (
       body.status === "done" &&
       previousStatus !== "done" &&
       updated.status === "done"
     ) {
-      const { maybeCreateDraftInvoiceForCompletedVisit } = await import(
-        "@/lib/billing-auto-draft"
+      const { resolveAutoDraftInvoiceOnDoneTransition } = await import(
+        "@/lib/appointment-auto-draft-response"
       );
-      await maybeCreateDraftInvoiceForCompletedVisit(id, ctx.accessSession);
+      autoDraftInvoice = await resolveAutoDraftInvoiceOnDoneTransition({
+        appointmentId: id,
+        session: ctx.accessSession,
+        previousStatus,
+        requestedStatus: body.status,
+        updatedStatus: updated.status,
+      });
     }
 
     void redis.invalidateDashboardOverview(ctx.sessionUser.userId);
@@ -419,7 +439,9 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Appointment not found or unauthorized" }, { status: 404 });
     }
 
-    return NextResponse.json(payload);
+    return NextResponse.json(
+      autoDraftInvoice ? { ...payload, auto_draft_invoice: autoDraftInvoice } : payload
+    );
   } catch (err: unknown) {
     if (err && typeof err === "object" && "code" in err && err.code === "P2025") {
       return NextResponse.json({ error: "Appointment not found or unauthorized" }, { status: 404 });
@@ -464,6 +486,8 @@ export async function DELETE(_req: NextRequest, context: RouteContext) {
     } catch {
       // Google delete failures must not block local delete.
     }
+
+    await snapshotInvoicesForDeletedAppointment(id, ctx.sessionUser.userId);
 
     await prisma.appointment.delete({ where: { id } });
 

@@ -187,6 +187,21 @@ describe("resolveInvoiceDetailActionCapabilities", () => {
     expect(doctorCaps.canDelete).toBe(false);
   });
 
+  it("soft-deleted tombstone: all mutate actions disabled", () => {
+    const inv = {
+      ...invoice("draft"),
+      deleted_at: "2026-06-19T12:00:00.000Z",
+      deleted_by_id: "admin-1",
+      deleted_by_display: "Admin",
+    };
+    const caps = resolveInvoiceDetailActionCapabilities(inv, "admin");
+    expect(caps.canDownloadPdf).toBe(false);
+    expect(caps.canDelete).toBe(false);
+    expect(caps.canEditDetails).toBe(false);
+    expect(caps.canPay).toBe(false);
+    expect(caps.canRefund).toBe(false);
+  });
+
   it("admin paid invoice keeps refund cap (admin CP path)", () => {
     const inv = {
       ...invoice("paid"),

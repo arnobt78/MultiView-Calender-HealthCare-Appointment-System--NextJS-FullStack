@@ -1,5 +1,5 @@
 /**
- * Invoice list title + filter helpers — avoids demo seed description / visit title duplication in UI.
+ * Invoice list title + filter helpers — single source for visit-linked invoice titles.
  */
 
 import { format } from "date-fns";
@@ -10,7 +10,7 @@ import type { InvoiceRow, InvoiceVisitSummary } from "@/lib/billing-types";
 const DEMO_DESC_PREFIX = /^demo curated invoice/i;
 const MAX_FALLBACK_DESC_LEN = 48;
 
-/** Prefer visit type label + patient; skip long seeded descriptions and appointment titles. */
+/** Linked visit `title` when present; else type + patient / description / invoice id. */
 export function getInvoiceListTitle(invoice: Pick<InvoiceRow, "id" | "description" | "visit_summary">): string {
   const summary = invoice.visit_summary;
   if (summary) {
@@ -55,6 +55,9 @@ export function getInvoiceListSearchBlob(
 }
 
 function buildTitleFromVisitSummary(summary: InvoiceVisitSummary): string | null {
+  const appointmentTitle = summary.title?.trim();
+  if (appointmentTitle) return appointmentTitle;
+
   const typeLabel =
     summary.appointment_type_name?.trim() || summary.category_label?.trim();
   const patient = summary.patient_label?.trim();

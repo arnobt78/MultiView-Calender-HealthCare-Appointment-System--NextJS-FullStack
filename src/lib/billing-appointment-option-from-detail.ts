@@ -1,6 +1,6 @@
 /**
  * Map appointment detail view-model → invoice create picker row.
- * Seeds `queryKeys.billing.appointmentOptions(id)` so New Invoice dialog skips fetch skeleton.
+ * Seeds `queryKeys.billing.appointmentOptions(id)` so Create Invoice dialog skips fetch skeleton.
  */
 import type { AppointmentDetailViewModel } from "@/lib/appointment-detail-view-model";
 import { formatAppointmentDetailWhenRange } from "@/lib/appointment-detail-view-model";
@@ -32,7 +32,7 @@ function mapLinkedInvoicesToLatest(
   return latest ?? null;
 }
 
-/** Build picker row from SSR detail cache — parity with billing-appointment-options-load. */
+/** Build create invoice picker row from SSR detail cache — parity with billing-appointment-options-load. */
 export function mapAppointmentDetailToBillingOption(
   detail: AppointmentDetailViewModel,
   linkedInvoices: readonly Invoice[] = []

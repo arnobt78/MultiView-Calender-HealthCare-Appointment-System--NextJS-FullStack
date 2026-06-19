@@ -31,6 +31,7 @@ import { DoctorPortalStatsRow } from "@/components/doctor-portal/DoctorPortalSta
 import { DoctorPortalInvoicesCard } from "@/components/doctor-portal/DoctorPortalInvoicesCard";
 import { DoctorPortalPatientsCard } from "@/components/doctor-portal/DoctorPortalPatientsCard";
 import { DoctorPortalAppointmentListRow } from "@/components/shared/appointments/DoctorPortalAppointmentListRow";
+import { useAppointmentInvoiceDisplayMap } from "@/hooks/useAppointmentInvoiceDisplayMap";
 import {
   DoctorPortalWeeklyHoursCard,
   DoctorPortalTimeOffCard,
@@ -121,8 +122,14 @@ export default function DoctorPortalPage({
     [doctorTypesCatalog?.types]
   );
 
-  const todayAppts = data?.todayAppointments ?? [];
-  const upcomingAppts = data?.upcomingAppointments ?? [];
+  const todayAppts = useMemo(() => data?.todayAppointments ?? [], [data?.todayAppointments]);
+  const upcomingAppts = useMemo(() => data?.upcomingAppointments ?? [], [data?.upcomingAppointments]);
+
+  const portalAppointmentIds = useMemo(
+    () => [...todayAppts, ...upcomingAppts].map((appt) => appt.id),
+    [todayAppts, upcomingAppts]
+  );
+  const invoiceDisplayByAppt = useAppointmentInvoiceDisplayMap(portalAppointmentIds);
 
   const sortedToday = [...todayAppts].sort(
     (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()
@@ -188,7 +195,12 @@ export default function DoctorPortalPage({
           ) : (
             <div>
               {sortedToday.map((appt) => (
-                <DoctorPortalAppointmentListRow key={appt.id} appt={appt} variant="today" />
+                <DoctorPortalAppointmentListRow
+                  key={appt.id}
+                  appt={appt}
+                  variant="today"
+                  invoiceDisplayStatus={invoiceDisplayByAppt.get(appt.id)}
+                />
               ))}
             </div>
           )}
@@ -224,7 +236,12 @@ export default function DoctorPortalPage({
           ) : (
             <div>
               {upcomingAppts.map((appt) => (
-                <DoctorPortalAppointmentListRow key={appt.id} appt={appt} variant="upcoming" />
+                <DoctorPortalAppointmentListRow
+                  key={appt.id}
+                  appt={appt}
+                  variant="upcoming"
+                  invoiceDisplayStatus={invoiceDisplayByAppt.get(appt.id)}
+                />
               ))}
             </div>
           )}

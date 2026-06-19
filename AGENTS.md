@@ -10,7 +10,7 @@
 
 ## Resume
 
-1. `.agile-v/STATE.md` — **C61.1 shipped** · **1356/1356** · HEAD **`a37727b`** · manual QA pending
+1. `.agile-v/STATE.md` — **C67 shipped** · **1404/1404** · manual QA pending
 2. `.agile-v/CHECKPOINTS.md` if PENDING HITL (**none**)
 3. Parent **`REQ-XXXX`** in `.agile-v/REQUIREMENTS.md` before any code (**halt if missing**)
 
@@ -28,7 +28,12 @@ npm test && npx tsc --noEmit && npm run lint && npm run build
 
 | Cycle | REQ | Status |
 |-------|-----|--------|
-| C61.1 | 0112 | shipped `a37727b` |
+| C67 | — | month edit/invoice parity · en-US dates |
+| C66 | — | InvoiceVisitTitleRow · cancel/refund polish |
+| C65 | 0116 | shipped verify PASS |
+| C64 | 0115 | shipped verify PASS |
+| C63 | 0114 | shipped verify PASS |
+| C62 | 0113 | shipped verify PASS |
 | C61 | 0112 | shipped `a37727b` |
 | C60 | 0111 | shipped `a37727b` |
 | C59 | 0110 | default bookable date + local today + slot grid on open |
@@ -44,4 +49,4 @@ npm test && npx tsc --noEmit && npm run lint && npm run build
 | C49 | 0100 | stable fallbacks + admin staff href |
 | C48 / C48.1 | 0099 | shipped `8ba3acf` |
 
-**Next:** Specify **C62** — add **REQ-0113** before feature code.
+**Next:** Manual QA seed v3, commit C62–C65, then **Specify C66** + **REQ-0117**.

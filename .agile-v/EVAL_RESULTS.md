@@ -634,3 +634,97 @@ release_commit: "a37727b"
 | release build | npm run build | PASS | REQ-0111, REQ-0112 |
 
 **EvalGate (C61.1):** PASS — shipped `a37727b`. **HITL:** manual QA pending.
+
+## C62 — ER-C62-VERIFY
+
+```yaml
+eval_run_id: ER-C62-VERIFY
+eval_timestamp: "2026-06-19T11:30:00Z"
+eval_gate_status: PASS
+eval_gate_rationale: "REQ-0113 portal billing + calendar UX; detached visit snapshot; cancel dialog; edit seed; 1361/1361; tsc; eslint; build PASS"
+cycle: C62
+release_commit: "pending"
+```
+
+| Suite | Command | Result | LINKED_REQ |
+|-------|---------|--------|------------|
+| invoice-visit-detached | npm test invoice-visit-detached | PASS | REQ-0113 |
+| confirm-delete-dialog-copy | npm test confirm-delete-dialog-copy | PASS | REQ-0113 |
+| AppointmentCancelConfirmDialog.ui | npm test AppointmentCancelConfirmDialog | PASS | REQ-0113 |
+| full regression | npm test | PASS 1361/1361 | REQ-0113 |
+| typecheck | npx tsc --noEmit | PASS | REQ-0113 |
+| lint | npm run lint | PASS | REQ-0113 |
+| release build | npm run build | PASS | REQ-0113 |
+
+**EvalGate (C62):** PASS — awaiting commit.
+
+## C63 — ER-C63-VERIFY
+
+```yaml
+eval_run_id: ER-C63-VERIFY
+eval_timestamp: "2026-06-19T11:55:00Z"
+eval_gate_status: PASS
+eval_gate_rationale: "REQ-0114 deletion actor audit; visit detached-by; invoice soft-delete tombstones; 1374/1374; tsc; eslint; build PASS"
+cycle: C63
+release_commit: "pending"
+```
+
+| Suite | Command | Result | LINKED_REQ |
+|-------|---------|--------|------------|
+| invoice-soft-delete | npm test invoice-soft-delete | PASS | REQ-0114 |
+| InvoiceDeletionActorMeta.ui | npm test InvoiceDeletionActorMeta | PASS | REQ-0114 |
+| invoice-detail-audit-rows | npm test invoice-detail-audit-rows | PASS | REQ-0114 |
+| invoice-billing-kpi-aggregate | npm test invoice-billing-kpi-aggregate | PASS | REQ-0114 |
+| confirm-delete-dialog-copy | npm test confirm-delete-dialog-copy | PASS | REQ-0114 |
+| full regression | npm test | PASS 1374/1374 | REQ-0114 |
+| typecheck | npx tsc --noEmit | PASS | REQ-0114 |
+| lint | npm run lint | PASS | REQ-0114 |
+| release build | npm run build | PASS | REQ-0114 |
+
+**EvalGate (C63):** PASS — awaiting commit.
+
+## C64 — ER-C64-VERIFY
+
+```yaml
+eval_run_id: ER-C64-VERIFY
+eval_timestamp: "2026-06-19T12:16:00Z"
+eval_gate_status: PASS
+eval_gate_rationale: "REQ-0115 done→draft invoice cache sync; portal invoice title + inline meta; 1382/1382; tsc; eslint; build PASS"
+cycle: C64
+release_commit: "pending"
+```
+
+| Suite | Command | Result | LINKED_REQ |
+|-------|---------|--------|------------|
+| appointment-done-billing-sync | npm test appointment-done-billing-sync | PASS | REQ-0115 |
+| invoice-list-display | npm test invoice-list-display | PASS | REQ-0115 |
+| InvoicePortalListMetaRow.ui | npm test InvoicePortalListMetaRow | PASS | REQ-0115 |
+| full regression | npm test | PASS 1382/1382 | REQ-0115 |
+| typecheck | npx tsc --noEmit | PASS | REQ-0115 |
+| lint | npm run lint | PASS | REQ-0115 |
+| release build | npm run build | PASS | REQ-0115 |
+
+**EvalGate (C64):** PASS — awaiting commit.
+
+## C65 — ER-C65-VERIFY
+
+```yaml
+eval_run_id: ER-C65-VERIFY
+eval_timestamp: "2026-06-19T12:42:00Z"
+eval_gate_status: PASS
+eval_gate_rationale: "REQ-0116 issued-by creator display + curated seed v3; 1389/1389; tsc; eslint; build PASS"
+cycle: C65
+release_commit: "pending"
+```
+
+| Suite | Command | Result | LINKED_REQ |
+|-------|---------|--------|------------|
+| invoice-issued-by-display | npm test invoice-issued-by-display | PASS | REQ-0116 |
+| demo-appointment-curated-spec | npm test demo-appointment-curated-spec | PASS | REQ-0116 |
+| full regression | npm test | PASS 1389/1389 | REQ-0116 |
+| typecheck | npx tsc --noEmit | PASS | REQ-0116 |
+| lint | npm run lint | PASS | REQ-0116 |
+| release build | npm run build | PASS | REQ-0116 |
+| db seed | npm run db:reset-demo-appointments | PASS 10/10 | REQ-0116 |
+
+**EvalGate (C65):** PASS — awaiting commit.

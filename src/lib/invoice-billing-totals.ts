@@ -7,6 +7,7 @@
  */
 
 import type { InvoiceRow } from "@/lib/billing-types";
+import { isInvoiceSoftDeleted } from "@/lib/invoice-status-display";
 import {
   computeInvoicePaidPeriodComparison,
   type InvoicePaidPeriodComparison,
@@ -145,22 +146,24 @@ export function computeInvoiceBillingTotalsPayload(
 
 /** CP management optimistic patch — status rollups only (extended KPIs from list in UI). */
 export function computeInvoiceBillingManagementPayloadFromList(
-  invoices: ReadonlyArray<Pick<InvoiceRow, "amount" | "status">>
+  invoices: ReadonlyArray<Pick<InvoiceRow, "amount" | "status" | "deleted_at">>
 ): InvoiceBillingTotalsPayload {
-  return computeInvoiceBillingTotalsPayload(invoices);
+  const active = invoices.filter((row) => !isInvoiceSoftDeleted(row));
+  return computeInvoiceBillingTotalsPayload(active);
 }
 
 /** Full KPI payload from list rows — insights-style period + extended (not used on CP hub). */
 export function computeInvoiceBillingKpiPayloadFromList(
   invoices: ReadonlyArray<
-    Pick<InvoiceRow, "amount" | "status" | "paid_at" | "created_at" | "payments">
+    Pick<InvoiceRow, "amount" | "status" | "paid_at" | "created_at" | "payments" | "deleted_at">
   >
 ): InvoiceBillingTotalsPayload {
-  const base = computeInvoiceBillingTotalsPayload(invoices);
+  const active = invoices.filter((row) => !isInvoiceSoftDeleted(row));
+  const base = computeInvoiceBillingTotalsPayload(active);
   return {
     ...base,
-    paidPeriod: computeInvoicePaidPeriodComparison(invoices, "month"),
-    extendedKpis: computeInvoiceExtendedKpis(invoices),
+    paidPeriod: computeInvoicePaidPeriodComparison(active, "month"),
+    extendedKpis: computeInvoiceExtendedKpis(active),
   };
 }
 

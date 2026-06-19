@@ -23,7 +23,8 @@ vi.mock("@/hooks/useAppointmentCancelWithRefund", () => ({
   useAppointmentCancelWithRefund: () => ({
     cancelWithOptionalRefundAsync: vi.fn(),
     isCancelFlowPending: false,
-    cancellingAppointmentId: null,
+    isCancelFlowPendingFor: () => false,
+    pendingFlowAppointmentId: null,
   }),
 }));
 
@@ -129,6 +130,6 @@ describe("AppointmentActionsMenu Cancel", () => {
       userRole: "admin",
       appointment: { ...baseAppointment, status: "pending" },
     });
-    expect(markup).toContain("Cancel appointment");
+    expect(markup).toContain("Cancel Appointment");
   });
 });

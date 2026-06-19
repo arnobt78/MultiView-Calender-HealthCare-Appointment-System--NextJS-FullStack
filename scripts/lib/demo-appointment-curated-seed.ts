@@ -1,6 +1,6 @@
 /**
  * Inserts exactly 10 curated demo appointments after wipe.
- * Admin is created_by/updated_by on every row; one visit-cancelled with audit fields.
+ * v3: varied invoice `created_by` (admin vs doctor); admin `created_by` on appointments.
  */
 
 import type { PrismaClient } from "@prisma/client";
@@ -172,6 +172,11 @@ async function createCuratedRow(
               ? "sent"
               : "draft";
 
+    const invoiceCreatorEmail =
+      ctx.row.invoiceCreatedByEmail ?? DEMO_CURATED_ADMIN_EMAIL;
+    const invoiceCreatorId =
+      ctx.userByEmail.get(invoiceCreatorEmail) ?? ctx.adminId;
+
     const now = new Date();
     const invoice = await prisma.invoice.create({
       data: {
@@ -184,8 +189,8 @@ async function createCuratedRow(
         paid_at: paidAt,
         due_date: paidAt ?? new Date(end.getTime() + 14 * 24 * 60 * 60 * 1000),
         description: `Demo curated invoice — ${title}`,
-        created_by_id: ctx.adminId,
-        updated_by_id: ctx.adminId,
+        created_by_id: invoiceCreatorId,
+        updated_by_id: invoiceCreatorId,
         updated_at: now,
       },
     });

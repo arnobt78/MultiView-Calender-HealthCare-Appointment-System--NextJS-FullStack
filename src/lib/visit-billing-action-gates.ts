@@ -15,3 +15,13 @@ export function linkedAppointmentStatusFromInvoice(invoice: {
 }): string | null {
   return invoice.visit_summary?.appointment_status ?? null;
 }
+
+/** Portal invoice card shell — muted when linked visit is cancelled (matches timeline cards). */
+export function invoicePortalCardVisitToneClass(
+  appointmentStatus: string | null | undefined
+): string | undefined {
+  if (appointmentStatus === "cancelled") {
+    return "opacity-75 border-slate-200/80 bg-slate-50/40";
+  }
+  return undefined;
+}

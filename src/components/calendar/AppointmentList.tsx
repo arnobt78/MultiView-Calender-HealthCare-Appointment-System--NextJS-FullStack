@@ -56,6 +56,7 @@ import { buildCalendarFiltersEmptyCopy } from "@/lib/calendar-filters-empty-copy
 import { motion } from "framer-motion";
 import CalendarStickyHeader from "./CalendarStickyHeader";
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
+import { buildCalendarMonthFilterOptions, formatCalendarListDayHeadline } from "@/lib/calendar-date-display";
 
 // Types imported from hooks
 
@@ -88,12 +89,8 @@ function DateHeadline({
 }) {
   return (
     <div className="my-2 flex flex-wrap items-center gap-2">
-      <div className="text-lg font-bold text-gray-700">
-        {new Intl.DateTimeFormat("de-DE", {
-          weekday: "long",
-          day: "numeric",
-          month: "long",
-        }).format(date)}
+      <div className="text-md font-semibold text-gray-700">
+        {formatCalendarListDayHeadline(date)}
       </div>
       {(() => {
         const now = new Date();
@@ -154,23 +151,10 @@ export default function AppointmentList() {
     resetFilters,
   } = useCalendarFilters();
 
-  const monthOptions = useMemo(() => {
-    const all = new Set<string>();
-    appointments.forEach((a) => {
-      const d = new Date(a.start);
-      all.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
-    });
-    return Array.from(all)
-      .sort((a, b) => b.localeCompare(a))
-      .map((value) => {
-        const [year, monthPart] = value.split("-");
-        const formatted = new Intl.DateTimeFormat("de-DE", {
-          month: "long",
-          year: "numeric",
-        }).format(new Date(Number(year), Number(monthPart) - 1, 1));
-        return { value, label: formatted };
-      });
-  }, [appointments]);
+  const monthOptions = useMemo(
+    () => buildCalendarMonthFilterOptions(appointments.map((a) => a.start)),
+    [appointments]
+  );
 
   const filtersEmptyCopy = useMemo(() => {
     const selectedCategory = category

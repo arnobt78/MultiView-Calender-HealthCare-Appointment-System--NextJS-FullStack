@@ -24,6 +24,7 @@ import { useAppointmentColor } from "@/context/AppointmentColorContext";
 import { useAuth } from "@/hooks/useAuth";
 import { portalAppointmentDetailStackClass } from "@/lib/appointment-card";
 import type { PortalAppointmentRow } from "@/lib/serializers";
+import type { InvoiceDisplayStatus } from "@/lib/billing-appointment-eligibility";
 import { cn } from "@/lib/utils";
 
 export type PortalAppointmentTimelineCardProps = {
@@ -31,12 +32,14 @@ export type PortalAppointmentTimelineCardProps = {
   className?: string;
   /** Override notes visibility — default: admin/doctor only (hidden on patient portal). */
   showClinicalNotes?: boolean;
+  invoiceDisplayStatus?: InvoiceDisplayStatus | null;
 };
 
 export function PortalAppointmentTimelineCard({
   appointment: appt,
   className,
   showClinicalNotes,
+  invoiceDisplayStatus,
 }: PortalAppointmentTimelineCardProps) {
   const { user } = useAuth();
   const showNotes =
@@ -126,6 +129,8 @@ export function PortalAppointmentTimelineCard({
                   }
                   appointment={appt}
                   displayFeeCents={displayFeeCents}
+                  showFeeEstimateHint={!invoiceDisplayStatus}
+                  invoiceDisplayStatus={invoiceDisplayStatus}
                 />
               ) : null}
 

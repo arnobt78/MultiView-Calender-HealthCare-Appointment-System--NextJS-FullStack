@@ -1,12 +1,12 @@
 /**
- * One active invoice per visit — picker eligibility + UI display status (incl. refunded).
+ * One active create invoice per visit — picker eligibility + UI display status (incl. refunded).
  */
 
 import { prisma } from "@/lib/prisma";
 import type { InvoicePaymentRow, InvoiceStatus } from "@/lib/billing-types";
 import { isVisitBillingFrozen } from "@/lib/visit-billing-action-gates";
 
-/** Blocks a new invoice for the same appointment_id. */
+/** Blocks a create invoice for the same appointment_id. */
 export const BLOCKING_INVOICE_STATUSES = [
   "draft",
   "sent",
@@ -16,7 +16,7 @@ export const BLOCKING_INVOICE_STATUSES = [
 
 export type BlockingInvoiceStatus = (typeof BLOCKING_INVOICE_STATUSES)[number];
 
-/** After cancel/refund, staff may create a new bill for the visit. */
+/** After cancel/refund, staff may create a create invoice for the visit. */
 export const REBILLABLE_INVOICE_STATUSES = ["cancelled"] as const satisfies readonly InvoiceStatus[];
 
 /** UI-only label when invoice is cancelled and payment was refunded. */
@@ -100,6 +100,7 @@ export function resolveAppointmentBillingSummary(
 type InvoiceRowWithAppointment = LatestInvoiceForAppointment & {
   appointment_id: string | null;
   created_at: Date;
+  deleted_at?: Date | string | null;
 };
 
 /** Latest invoice row per appointment_id (by created_at desc input order). */
@@ -110,6 +111,7 @@ export function mapLatestInvoicesByAppointmentId(
   for (const row of rows) {
     const apptId = row.appointment_id;
     if (!apptId) continue;
+    if (row.deleted_at != null && String(row.deleted_at).trim() !== "") continue;
     const existing = map.get(apptId);
     if (!existing) {
       map.set(apptId, {
@@ -130,6 +132,7 @@ export async function findBlockingInvoiceForAppointment(
   const row = await prisma.invoice.findFirst({
     where: {
       appointment_id: appointmentId,
+      deleted_at: null,
       status: { in: [...BLOCKING_INVOICE_STATUSES] },
     },
     orderBy: { created_at: "desc" },
@@ -164,7 +167,7 @@ export async function mapLatestInvoiceDisplayByAppointmentIds(
   if (appointmentIds.length === 0) return map;
 
   const rows = await prisma.invoice.findMany({
-    where: { appointment_id: { in: appointmentIds } },
+    where: { appointment_id: { in: appointmentIds }, deleted_at: null },
     orderBy: { created_at: "desc" },
     select: {
       appointment_id: true,

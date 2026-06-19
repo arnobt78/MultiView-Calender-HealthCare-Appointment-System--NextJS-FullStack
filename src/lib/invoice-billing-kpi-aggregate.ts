@@ -121,7 +121,8 @@ export async function fetchInvoiceExtendedKpisForWhere(
 export async function fetchInvoiceBillingStatusPayloadForWhere(
   where: Prisma.InvoiceWhereInput
 ): Promise<InvoiceBillingTotalsPayload> {
-  const statusPayload = await aggregateStatusTotals(where);
+  const activeWhere: Prisma.InvoiceWhereInput = { AND: [where, { deleted_at: null }] };
+  const statusPayload = await aggregateStatusTotals(activeWhere);
   return {
     totals: statusPayload.totals,
     statusTotals: statusPayload.statusTotals,
@@ -132,10 +133,11 @@ export async function fetchInvoiceBillingStatusPayloadForWhere(
 export async function fetchInvoiceBillingKpiPayloadForWhere(
   where: Prisma.InvoiceWhereInput
 ): Promise<InvoiceBillingTotalsPayload> {
+  const activeWhere: Prisma.InvoiceWhereInput = { AND: [where, { deleted_at: null }] };
   const [statusPayload, paidPeriod, extendedKpis] = await Promise.all([
-    aggregateStatusTotals(where),
-    fetchInvoicePaidPeriodForWhere(where),
-    fetchInvoiceExtendedKpisForWhere(where),
+    aggregateStatusTotals(activeWhere),
+    fetchInvoicePaidPeriodForWhere(activeWhere),
+    fetchInvoiceExtendedKpisForWhere(activeWhere),
   ]);
 
   return {

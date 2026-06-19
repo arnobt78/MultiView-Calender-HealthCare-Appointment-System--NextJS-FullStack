@@ -2,7 +2,7 @@
 
 import { Calendar } from "lucide-react";
 import { format } from "date-fns";
-import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
+import { InvoiceVisitTitleRow } from "@/components/shared/billing/InvoiceVisitTitleRow";
 import { InvoiceAmountDisplay } from "@/components/shared/billing/InvoiceAmountDisplay";
 import { InvoiceStatusBadge } from "@/components/shared/billing/InvoiceStatusBadge";
 import { InvoiceVisitMetaLine } from "@/components/shared/billing/InvoiceVisitMetaLine";
@@ -10,6 +10,7 @@ import { InvoicePayActions } from "@/components/shared/billing/InvoicePayActions
 import { DoctorIdentityRow } from "@/components/shared/doctor-display/DoctorIdentityRow";
 import { invoiceTreatingDoctorFromSummary } from "@/lib/invoice-visit-doctor";
 import { InvoiceIssuedByMeta } from "@/components/shared/billing/InvoiceIssuedByMeta";
+import { invoiceIssuedByMetaProps } from "@/lib/invoice-issued-by-display";
 import type { Invoice } from "@/hooks/usePayments";
 import { getInvoiceListTitle } from "@/lib/invoice-list-display";
 import { invoiceDetailHref } from "@/lib/entity-routes";
@@ -48,10 +49,13 @@ export function PatientPortalInvoiceCard({ invoice, onPay, isPaying }: Props) {
       )}
     >
       <div className="min-w-0 space-y-2">
-        <EntityTitleLink
+        <InvoiceVisitTitleRow
           href={href}
-          label={title}
-          className="block w-full text-sm font-medium"
+          title={title}
+          invoice={invoice}
+          wrapLabel
+          linkClassName="text-sm font-medium"
+          className="w-full"
         />
 
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -102,13 +106,7 @@ export function PatientPortalInvoiceCard({ invoice, onPay, isPaying }: Props) {
             />
           ) : null}
           <InvoiceIssuedByMeta
-            createdAt={invoice.created_at}
-            issuerLabel={invoice.issuer_label}
-            issuerImage={invoice.issuer_image}
-            issuerEmail={invoice.issuer_email}
-            issuerUserId={invoice.user_id}
-            issuerRole={invoice.issuer_role}
-            viewerRole="patient"
+            {...invoiceIssuedByMetaProps(invoice, "patient")}
             layout="wrapInline"
           />
         </div>

@@ -249,6 +249,19 @@ export function serializeInvoice(i: {
   paid_at: Date | null;
   cancelled_at?: Date | null;
   description: string | null;
+  visit_snapshot?: unknown;
+  visit_detached_at?: Date | null;
+  visit_detached_by_id?: string | null;
+  visit_detached_by_display?: string | null;
+  visit_detached_by_email?: string | null;
+  visit_detached_by_image?: string | null;
+  visit_detached_by_role?: string | null;
+  deleted_at?: Date | null;
+  deleted_by_id?: string | null;
+  deleted_by_display?: string | null;
+  deleted_by_email?: string | null;
+  deleted_by_image?: string | null;
+  deleted_by_role?: string | null;
   created_by?: UserMini;
   updated_by?: UserMini;
   payments?: {
@@ -276,6 +289,19 @@ export function serializeInvoice(i: {
     due_date: i.due_date ? i.due_date.toISOString().slice(0, 10) : null,
     paid_at: i.paid_at?.toISOString?.() ?? null,
     cancelled_at: i.cancelled_at?.toISOString?.() ?? null,
+    visit_snapshot: i.visit_snapshot ?? null,
+    visit_detached_at: i.visit_detached_at?.toISOString?.() ?? null,
+    visit_detached_by_id: i.visit_detached_by_id ?? null,
+    visit_detached_by_display: i.visit_detached_by_display ?? null,
+    visit_detached_by_email: i.visit_detached_by_email ?? null,
+    visit_detached_by_image: i.visit_detached_by_image ?? null,
+    visit_detached_by_role: i.visit_detached_by_role ?? null,
+    deleted_at: i.deleted_at?.toISOString?.() ?? null,
+    deleted_by_id: i.deleted_by_id ?? null,
+    deleted_by_display: i.deleted_by_display ?? null,
+    deleted_by_email: i.deleted_by_email ?? null,
+    deleted_by_image: i.deleted_by_image ?? null,
+    deleted_by_role: i.deleted_by_role ?? null,
     created_by_display: userDisplay(i.created_by),
     updated_by_display: userDisplay(i.updated_by),
     created_by_email: i.created_by?.email ?? null,

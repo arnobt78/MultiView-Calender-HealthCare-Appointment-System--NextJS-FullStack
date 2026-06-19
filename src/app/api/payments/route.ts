@@ -21,6 +21,7 @@ import {
   attachVisitSummariesToInvoices,
 } from "@/lib/invoice-visit-summary";
 import { buildStripeCheckoutProductCopy } from "@/lib/stripe-checkout-product";
+import { isPrismaInvoiceSoftDeleted, INVOICE_SOFT_DELETED_ERROR } from "@/lib/invoice-soft-delete-guard";
 
 export const dynamic = "force-dynamic";
 
@@ -83,6 +84,10 @@ export async function POST(request: NextRequest) {
 
     if (!invoice) {
       return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
+    }
+
+    if (isPrismaInvoiceSoftDeleted(invoice)) {
+      return NextResponse.json({ error: INVOICE_SOFT_DELETED_ERROR }, { status: 403 });
     }
 
     if (invoice.status === "paid") {

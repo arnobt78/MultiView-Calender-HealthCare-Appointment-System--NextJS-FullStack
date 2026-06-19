@@ -1,10 +1,10 @@
 "use client";
 
-import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
 import { PatientIdentityCell } from "@/components/shared/person-display/PatientIdentityCell";
 import { DoctorIdentityCell } from "@/components/shared/person-display/DoctorIdentityCell";
 import { CategoryInlineLink } from "@/components/shared/CategoryInlineLink";
 import { InvoiceVisitSummaryLine } from "@/components/shared/billing/InvoiceVisitSummaryLine";
+import { InvoiceVisitTitleRow } from "@/components/shared/billing/InvoiceVisitTitleRow";
 import type { Invoice } from "@/hooks/usePayments";
 import { getInvoiceListTitle } from "@/lib/invoice-list-display";
 import {
@@ -70,11 +70,12 @@ export function InvoiceVisitDescriptionStack({
         portalDensity ? "gap-1 py-0" : "gap-1.5 py-1"
       )}
     >
-      <EntityTitleLink
+      <InvoiceVisitTitleRow
         href={href}
-        label={title}
-        className="min-w-0 shrink font-normal"
+        title={title}
+        invoice={invoice}
         wrapLabel
+        linkClassName={portalDensity ? "text-sm" : undefined}
       />
       <InvoiceVisitSummaryLine summary={summary} className="w-full min-w-0" />
       {summary?.patient_label && patientPortrait ? (
@@ -150,10 +151,7 @@ export function InvoiceVisitDescriptionStack({
           />
         </div>
       ) : null}
-      {ownerDoctor &&
-      summary?.calendar_owner_id &&
-      summary.calendar_owner_label &&
-      ownerDoctor.id !== treatingDoctor?.id ? (
+      {ownerDoctor && summary?.calendar_owner_id && summary.calendar_owner_label ? (
         <div className="flex w-full min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
           <span
             className={cn(
@@ -161,7 +159,7 @@ export function InvoiceVisitDescriptionStack({
               "shrink-0 text-[10px] font-medium"
             )}
           >
-            Owner:
+            Calendar owner:
           </span>
           <DoctorIdentityCell
             doctorId={summary.calendar_owner_id}

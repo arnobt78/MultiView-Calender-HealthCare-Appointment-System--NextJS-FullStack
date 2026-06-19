@@ -5,7 +5,9 @@ import { PatientPortalInvoiceCard } from "@/components/shared/billing/PatientPor
 import type { Invoice } from "@/hooks/usePayments";
 
 vi.mock("@/components/shared/EntityTitleLink", () => ({
-  EntityTitleLink: ({ label }: { label: string }) => <span>{label}</span>,
+  EntityTitleLink: ({ label, wrapLabel }: { label: string; wrapLabel?: boolean }) => (
+    <span data-wrap-label={wrapLabel ? "1" : "0"}>{label}</span>
+  ),
 }));
 
 vi.mock("@/components/shared/billing/InvoiceAmountDisplay", () => ({
@@ -49,6 +51,9 @@ const invoice = {
   created_at: "2026-06-01T10:00:00.000Z",
   issuer_label: "Demo Doctor",
   issuer_role: "doctor",
+  created_by_id: "admin-1",
+  created_by_display: "Demo Admin",
+  created_by_role: "admin",
   visit_summary: {
     appointment_id: "a1",
     title: "Check-up",
@@ -74,14 +79,21 @@ const invoice = {
 } as Invoice;
 
 describe("PatientPortalInvoiceCard", () => {
-  it("uses compactStack doctor row and wrapInline issued meta with issuer role", () => {
+  it("wraps long invoice titles across lines in the sidebar card", () => {
+    const markup = renderToStaticMarkup(
+      <PatientPortalInvoiceCard invoice={invoice} onPay={() => undefined} />
+    );
+    expect(markup).toContain('data-wrap-label="1"');
+  });
+
+  it("uses compactStack doctor row and wrapInline issued meta with creator role", () => {
     const markup = renderToStaticMarkup(
       <PatientPortalInvoiceCard invoice={invoice} onPay={() => undefined} />
     );
     expect(markup).toContain('data-layout="compactStack"');
     expect(markup).toContain('data-role-badge="1"');
     expect(markup).toContain('data-layout="wrapInline"');
-    expect(markup).toContain('data-role="doctor"');
+    expect(markup).toContain('data-role="admin"');
   });
 
   it("forwards isPaying to Pay Now for per-invoice loading state", () => {

@@ -1,6 +1,6 @@
 # Agile V — Session Activation (every prompt)
 
-<!-- HealthCal Pro | v1.4 | Sync: 2026-06-18 EOD | Infinity Loop ACTIVE -->
+<!-- HealthCal Pro | v1.4 | Sync: 2026-06-19 | Infinity Loop ACTIVE -->
 
 ## 1. Load skills (mandatory — every prompt)
 
@@ -17,7 +17,7 @@
 
 ## 2. Read (resume — in order)
 
-1. `STATE.md` — **C61.1 shipped** · **1356/1356** · HEAD **`a37727b`** · **manual QA pending**
+1. `STATE.md` — **C61.1 shipped** · **1356/1356** · HEAD **`1873fd5`** · **manual QA pending**
 2. `CHECKPOINTS.md` — halt if any **PENDING** HITL (**none**)
 3. `REQUIREMENTS.md` — parent **REQ-XXXX** before any code (**REQ-0112 shipped**; need **REQ-0113** for C62)
 
@@ -50,7 +50,7 @@ Specify → Constrain → [Gate1] → Orchestrate → Prove → Verify → [Gate
 | C61 | 0112 | shipped | `a37727b` |
 | C61.1 | 0112 | shipped | `a37727b` |
 
-**Baseline:** **1356** tests · **281** files · committed **`a37727b`** · 2026-06-18
+**Baseline:** **1356** tests · **281** files · feature **`a37727b`** · docs **`1873fd5`** · 2026-06-19
 
 ## 7. Halt if
 
@@ -70,9 +70,16 @@ No parent REQ · ambiguous REQ · self-verify only · skip invalidation · Gate 
 | Verify | `red-team-verifier` |
 | Accept / gates | `agile-v-compliance` + `compliance-auditor` |
 
-## 10. Today’s workflow (2026-06-18) — closed
+## 10. Session activation (2026-06-19) — **CURRENT**
+
+- agile-v-core + pipeline + lifecycle + compliance loaded; **24 skills** active.
+- Verify re-confirmed **1356/1356** · tsc · lint · build PASS.
+- HEAD **`1873fd5`** (agile-v docs sync); feature ship **`a37727b`**.
+- CHECKPOINTS clear · no PENDING HITL.
+- **Halt until REQ-0113+** for C62 feature work (or C61.2 fix under REQ-0112 if QA fails).
+- Patient portal: **no** self-cancel/edit (product decision — deferred to new REQ).
+
+## 11. Prior session (2026-06-18) — closed
 
 - Shipped C60–C61.1 in one commit; pushed `main`.
-- Patient portal: **no** self-cancel/edit (confirmed product decision).
-- **You:** manual QA billing gates + cancel/refund flows.
-- **Next agent:** C62 specify only after QA or explicit new feature ask.
+- Manual QA billing gates + cancel/refund flows still pending.

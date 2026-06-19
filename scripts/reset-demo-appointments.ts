@@ -1,5 +1,5 @@
 /**
- * Wipe all appointments (+ invoices/payments/assignees) and seed exactly 10 curated rows.
+ * Wipe all appointments (+ invoices/payments/assignees) and seed exactly 10 curated v3 rows.
  *
  * Prereq:
  *   npm run prisma:push

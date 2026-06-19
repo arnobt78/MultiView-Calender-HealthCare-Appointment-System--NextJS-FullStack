@@ -2,19 +2,19 @@
 
 import { format } from "date-fns";
 import { CalendarClock } from "lucide-react";
-import { PrefetchingLink } from "@/components/shared/PrefetchingLink";
+import { InvoiceVisitTitleRow } from "@/components/shared/billing/InvoiceVisitTitleRow";
 import { DoctorIdentityRow } from "@/components/shared/doctor-display/DoctorIdentityRow";
 import { InvoiceAmountDisplay } from "@/components/shared/billing/InvoiceAmountDisplay";
 import { InvoiceStatusBadge } from "@/components/shared/billing/InvoiceStatusBadge";
 import { InvoiceVisitSummaryLine } from "@/components/shared/billing/InvoiceVisitSummaryLine";
 import { InvoiceIssuedByMeta } from "@/components/shared/billing/InvoiceIssuedByMeta";
+import { invoiceIssuedByMetaProps } from "@/lib/invoice-issued-by-display";
 import { getInvoiceListTitle } from "@/lib/invoice-list-display";
 import { invoiceTreatingDoctorFromSummary } from "@/lib/invoice-visit-doctor";
 import { invoiceDetailHref } from "@/lib/entity-routes";
 import { invoiceDueDateTextClassForInvoice } from "@/lib/invoice-status-display";
 import {
   clinicalCellMutedTextClass,
-  entityDetailLinkClass,
 } from "@/lib/table-display-styles";
 import { cn } from "@/lib/utils";
 import type { InvoiceRow } from "@/lib/billing-types";
@@ -43,15 +43,13 @@ export function InvoiceBillingListRow({
     <li className={cn(invoiceBillingListRowShellClass, className)}>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1 space-y-1">
-          <PrefetchingLink
+          <InvoiceVisitTitleRow
             href={href}
-            className={cn(
-              entityDetailLinkClass,
-              "block truncate text-sm font-semibold no-underline"
-            )}
-          >
-            {title}
-          </PrefetchingLink>
+            title={title}
+            invoice={invoice}
+            wrapLabel
+            linkClassName="text-sm font-semibold"
+          />
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div
               className={cn(
@@ -82,11 +80,7 @@ export function InvoiceBillingListRow({
               showSpecialty
             />
           ) : null}
-          <InvoiceIssuedByMeta
-            createdAt={invoice.created_at}
-            issuerLabel={invoice.issuer_label}
-            issuerImage={invoice.issuer_image}
-          />
+          <InvoiceIssuedByMeta {...invoiceIssuedByMetaProps(invoice, viewerRole)} />
         </div>
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 sm:flex-col sm:items-end">
           <InvoiceAmountDisplay

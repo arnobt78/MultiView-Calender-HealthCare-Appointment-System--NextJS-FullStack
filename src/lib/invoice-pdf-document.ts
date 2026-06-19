@@ -2,6 +2,7 @@
  * Printable invoice HTML — shared by `/api/invoices/[id]/pdf` and client download trigger.
  */
 import { formatInvoiceMoney } from "@/lib/crud-notify-messages";
+import { mapInvoiceIssuedByActor } from "@/lib/invoice-issued-by-display";
 import type { Invoice } from "@/hooks/usePayments";
 import type { InvoicePaymentRow } from "@/lib/billing-types";
 
@@ -54,7 +55,7 @@ export function buildInvoicePrintHtml(invoice: Invoice, options?: { autoPrint?: 
     ? escapeHtml(new Date(invoice.due_date).toLocaleDateString("de-DE"))
     : "—";
   const created = escapeHtml(new Date(invoice.created_at).toLocaleString("de-DE"));
-  const issuer = escapeHtml(invoice.issuer_label ?? "—");
+  const issuer = escapeHtml(mapInvoiceIssuedByActor(invoice)?.label ?? invoice.issuer_label ?? "—");
 
   const paymentRows = invoice.payments
     .map((p) => {

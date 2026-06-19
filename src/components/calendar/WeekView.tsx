@@ -204,6 +204,11 @@ export default function WeekView() {
   // Helper: get position of red line (in px from top)
   const getRedLinePosition = () => (now ? getNowLineTop(now, hourHeight) : 0);
 
+  const handleEdit = (appt: AppointmentWithCategory) => {
+    setEditAppt(appt);
+    setEditOpen(true);
+  };
+
   const handleEditDialogChange = (open: boolean) => {
     setEditOpen(open);
     if (!open) setEditAppt(null);
@@ -349,7 +354,7 @@ export default function WeekView() {
                             ownerUsers={ownerUsers}
                             detailWrap
                             slotHeightPx={slotHeight}
-                            onEdit={setEditAppt}
+                            onEdit={handleEdit}
                             onDelete={(id) => setDeleteTargetId(id)}
                             onToggleStatus={toggleStatus}
                             invoiceDisplayStatus={invoiceDisplayByAppt.get(a.id)}

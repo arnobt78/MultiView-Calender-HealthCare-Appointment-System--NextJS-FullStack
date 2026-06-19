@@ -3,6 +3,7 @@
  */
 
 import type { ReactNode } from "react";
+import { format } from "date-fns";
 import { formatInvoiceMoney } from "@/lib/crud-notify-messages";
 import { getInvoiceAppointmentTitle } from "@/lib/invoice-list-row-display";
 import { formatCentsToPriceInput } from "@/lib/appointment-type-price";
@@ -20,6 +21,58 @@ import type {
 
 export const DELETE_INVOICE_CONFIRM_TITLE = "Delete invoice?";
 export const DELETE_APPOINTMENT_CONFIRM_TITLE = "Delete appointment?";
+export const CANCEL_APPOINTMENT_CONFIRM_TITLE = "Cancel appointment?";
+
+/** Cancel visit confirm — dynamic title + range (REQ-0113). */
+export function buildAppointmentCancelConfirmTitle(title: string): string {
+  const trimmed = title.trim();
+  if (!trimmed) return CANCEL_APPOINTMENT_CONFIRM_TITLE;
+  return `Cancel "${trimmed}"?`;
+}
+
+export type AppointmentCancelConfirmSubtitleInput = {
+  start?: string | null;
+  end?: string | null;
+  patientLabel?: string | null;
+};
+
+/** Cancel visit confirm subtitle — visit range + optional patient. */
+export function buildAppointmentCancelConfirmSubtitle(
+  title: string,
+  opts: AppointmentCancelConfirmSubtitleInput = {}
+): ReactNode {
+  const quoted = title.trim() || "this appointment";
+  const { start, end, patientLabel } = opts;
+  let rangeLabel = "";
+  if (start && end) {
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    if (!Number.isNaN(startDate.getTime()) && !Number.isNaN(endDate.getTime())) {
+      rangeLabel = `${format(startDate, "dd.MM.yyyy")} · ${format(startDate, "HH:mm")} – ${format(endDate, "HH:mm")}`;
+    }
+  }
+  const patient = patientLabel?.trim();
+
+  return (
+    <>
+      <span className="font-medium text-gray-700">&ldquo;{quoted}&rdquo;</span>
+      {rangeLabel ? (
+        <>
+          {" "}
+          (<span className="font-medium text-gray-700">{rangeLabel}</span>)
+        </>
+      ) : null}{" "}
+      will be marked cancelled. Stakeholders will be notified.
+      {patient ? (
+        <>
+          {" "}
+          Patient: <span className="font-medium text-gray-700">{patient}</span>.
+        </>
+      ) : null}
+    </>
+  );
+}
+
 export const DELETE_APPOINTMENT_TYPE_CONFIRM_TITLE = "Delete appointment type?";
 export const DELETE_ORGANIZATION_CONFIRM_TITLE = "Delete organization?";
 export const MARK_ALL_NOTIFICATIONS_READ_TITLE = "Mark all as read?";

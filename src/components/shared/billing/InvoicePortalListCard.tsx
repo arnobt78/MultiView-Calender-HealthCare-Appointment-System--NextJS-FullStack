@@ -10,6 +10,10 @@ import {
 } from "@/components/shared/billing/invoice-table-cells";
 import type { Invoice } from "@/hooks/usePayments";
 import type { EntityRole } from "@/lib/entity-routes";
+import {
+  invoicePortalCardVisitToneClass,
+  linkedAppointmentStatusFromInvoice,
+} from "@/lib/visit-billing-action-gates";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -36,9 +40,19 @@ export function InvoicePortalListCard({
   headerActions,
   className,
 }: Props) {
+  const appointmentStatus = linkedAppointmentStatusFromInvoice(invoice);
+  const visitToneClass = invoicePortalCardVisitToneClass(appointmentStatus);
+
   return (
     // overflow-hidden — header strip bg must not square off parent rounded-xl corners
-    <div className={cn(shellClassName, "w-full min-w-0 overflow-hidden", className)}>
+    <div
+      className={cn(
+        shellClassName,
+        "w-full min-w-0 overflow-hidden",
+        visitToneClass,
+        className
+      )}
+    >
       <div
         className={cn(
           headerStripClassName,

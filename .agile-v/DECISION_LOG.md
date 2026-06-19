@@ -164,3 +164,12 @@
 | 2026-06-18T17:55:00Z | accept | C60–C61.1 shipped to main | `a37727b` feat billing C60–C61.1 | REQ-0111, REQ-0112 |
 | 2026-06-18T18:00:00Z | product | Patient self-cancel deferred | Patients read-only on visits; doctor is calendar owner; revisit as new REQ if needed | — |
 | 2026-06-18T18:05:00Z | init | EOD Agile V session close | STATE/ACTIVATION/REQUIREMENTS synced; manual QA pending; next C62 + REQ-0113 | REQ-0112 |
+| 2026-06-19T10:30:00Z | init | Infinity Loop session activation | agile-v-core+pipeline+lifecycle+compliance loaded; 1356/1356 PASS; HEAD 1873fd5; config/README/PLAYBOOK synced; 24 skills active; ready C62 specify | REQ-0112 |
+| 2026-06-19T11:30:00Z | build | C62 portal billing + calendar UX | detached visit snapshot; cancel dialog polish; invoice owner; list time; edit seed | REQ-0113 |
+| 2026-06-19T11:30:00Z | verify | C62 automated verify PASS | 1361/1361; tsc · lint · build PASS | REQ-0113 |
+| 2026-06-19T11:55:00Z | build | C63 deletion actor audit | visit detached-by; invoice soft-delete; deletion meta UI; KPI scope | REQ-0114 |
+| 2026-06-19T11:55:00Z | verify | C63 automated verify PASS | 1374/1374; tsc · lint · build PASS | REQ-0114 |
+| 2026-06-19T12:16:00Z | build | C64 done→draft invoice sync + card UX | auto_draft_invoice API; billing cache merge; title + wrapInline meta | REQ-0115 |
+| 2026-06-19T12:16:00Z | verify | C64 automated verify PASS | 1382/1382; tsc · lint · build PASS | REQ-0115 |
+| 2026-06-19T12:42:00Z | build | C65 issued-by actor + seed v3 | created_by display; 10-row curated wipe; invoiceCreatedByEmail | REQ-0116 |
+| 2026-06-19T12:42:00Z | verify | C65 automated verify PASS | 1389/1389; db reset 10/10; tsc · lint · build PASS | REQ-0116 |

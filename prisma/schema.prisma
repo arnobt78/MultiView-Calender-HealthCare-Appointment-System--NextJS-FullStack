@@ -422,6 +422,22 @@ model Invoice {
   paid_at         DateTime? @db.Timestamptz(6)
   cancelled_at    DateTime? @db.Timestamptz(6)
   description     String?   @db.Text
+  /** Frozen visit context when linked appointment is deleted — list/detail UI (REQ-0113). */
+  visit_snapshot  Json?     @db.JsonB
+  visit_detached_at DateTime? @db.Timestamptz(6)
+  /** Frozen actor when appointment hard-deleted — immutable audit (REQ-0114). */
+  visit_detached_by_id      String? @db.Uuid
+  visit_detached_by_display String? @db.Text
+  visit_detached_by_email   String? @db.Text
+  visit_detached_by_image   String? @db.Text
+  visit_detached_by_role    String? @db.Text
+  /** Soft-delete tombstone — row stays for audit (REQ-0114). */
+  deleted_at            DateTime? @db.Timestamptz(6)
+  deleted_by_id         String?   @db.Uuid
+  deleted_by_display    String?   @db.Text
+  deleted_by_email      String?   @db.Text
+  deleted_by_image      String?   @db.Text
+  deleted_by_role       String?   @db.Text
 
   organization Organization? @relation(fields: [organization_id], references: [id], onDelete: SetNull)
   appointment  Appointment?  @relation(fields: [appointment_id], references: [id], onDelete: SetNull)

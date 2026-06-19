@@ -17,7 +17,13 @@ vi.mock("@/components/ui/alert-dialog", () => ({
   ),
   AlertDialogFooter: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   AlertDialogCancel: ({ children }: { children: React.ReactNode }) => <button>{children}</button>,
-  AlertDialogAction: ({ children }: { children: React.ReactNode }) => <button>{children}</button>,
+  AlertDialogAction: ({
+    children,
+    disabled,
+  }: {
+    children: React.ReactNode;
+    disabled?: boolean;
+  }) => <button disabled={disabled}>{children}</button>,
 }));
 
 const paidStripe = {
@@ -31,7 +37,27 @@ const paidStripe = {
 };
 
 describe("AppointmentCancelConfirmDialog", () => {
-  it("renders base cancel copy", () => {
+  it("renders dynamic cancel copy when appointment title provided", () => {
+    const markup = renderToStaticMarkup(
+      <AppointmentCancelConfirmDialog
+        open
+        role="doctor"
+        userId="doc-1"
+        paidInvoice={null}
+        appointmentTitle="Initial Consultation"
+        appointmentStart="2026-06-22T14:00:00.000Z"
+        appointmentEnd="2026-06-22T15:00:00.000Z"
+        patientLabel="Demo Patient"
+        onConfirm={vi.fn()}
+      />
+    );
+    expect(markup).toContain("Initial Consultation");
+    expect(markup).toContain("Cancel &quot;Initial Consultation&quot;?");
+    expect(markup).toContain("marked cancelled");
+    expect(markup).toContain("Demo Patient");
+  });
+
+  it("renders base cancel copy without appointment context", () => {
     const markup = renderToStaticMarkup(
       <AppointmentCancelConfirmDialog
         open
@@ -88,5 +114,21 @@ describe("AppointmentCancelConfirmDialog", () => {
       />
     );
     expect(markup).not.toContain("Also refund");
+  });
+
+  it("shows spinner label while confirmPending", () => {
+    const markup = renderToStaticMarkup(
+      <AppointmentCancelConfirmDialog
+        open
+        role="doctor"
+        userId="doc-1"
+        paidInvoice={null}
+        confirmPending
+        onConfirm={vi.fn()}
+      />
+    );
+    expect(markup).toContain("Cancelling…");
+    expect(markup).toContain("animate-spin");
+    expect(markup).toContain("disabled");
   });
 });

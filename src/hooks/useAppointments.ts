@@ -8,6 +8,8 @@ import {
   maybeInvalidateGoogleCalendarIfConnected,
 } from "@/lib/query-client";
 import { syncAfterAppointmentWrite } from "@/lib/appointment-cache-merge";
+import { syncInvoicesAfterAppointmentDone } from "@/lib/appointment-done-billing-sync";
+import { patchLinkedInvoiceAppointmentStatusInCaches } from "@/lib/billing-invoice-map";
 import {
   appointmentDoctorFkOpts,
   appointmentDoctorFkOptsWithPrevious,
@@ -234,6 +236,13 @@ export function useAppointments() {
         scope: "schedule",
         ...appointmentDoctorFkOptsWithPrevious(appointment, context?.previous),
       });
+      await syncInvoicesAfterAppointmentDone(queryClient, {
+        appointmentId: appointment.id,
+        patientId: appointment.patient ?? undefined,
+        previousStatus: context?.previous?.status,
+        nextStatus: appointment.status,
+        autoDraftInvoice: data.auto_draft_invoice,
+      });
       notify.crud({
         action: "updated",
         entity: "Appointment",
@@ -311,9 +320,10 @@ export function useAppointments() {
         );
       }
       patchAppointmentDetailCacheOptimistic(queryClient, id, { id, status });
-      return { previousAppointments, previousDetail };
+      const previousRow = previousAppointments?.find((appt) => appt.id === id);
+      return { previousAppointments, previousDetail, previousStatus: previousRow?.status };
     },
-    onSuccess: async (data, variables) => {
+    onSuccess: async (data, variables, context) => {
       const appt = data.appointment as FullAppointment;
       await syncAfterAppointmentWrite(queryClient, data, {
         appointmentId: appt.id,
@@ -321,6 +331,13 @@ export function useAppointments() {
         categoryId: appt.category ?? undefined,
         scope: "status",
         ...appointmentDoctorFkOpts(appt),
+      });
+      await syncInvoicesAfterAppointmentDone(queryClient, {
+        appointmentId: appt.id,
+        patientId: appt.patient ?? undefined,
+        previousStatus: context?.previousStatus,
+        nextStatus: appt.status,
+        autoDraftInvoice: data.auto_draft_invoice,
       });
       notify.crud({
         action: "updated",
@@ -365,6 +382,7 @@ export function useAppointments() {
         );
       }
       patchAppointmentDetailCacheOptimistic(queryClient, id, { id, status: "cancelled" });
+      patchLinkedInvoiceAppointmentStatusInCaches(queryClient, id, "cancelled");
       return { previousAppointments, previousDetail };
     },
     onSuccess: async (data, input) => {

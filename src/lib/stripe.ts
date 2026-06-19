@@ -11,6 +11,7 @@ import {
   expireStoredCheckoutSessionForInvoice,
   storeCheckoutSessionForInvoice,
 } from "@/lib/stripe-checkout-session-track";
+import { isDemoCuratedStripePaymentId } from "@/lib/payment-status-display";
 
 // File-local only — never re-exported so secrets cannot be imported by client bundles.
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || "";
@@ -161,6 +162,10 @@ export function verifyWebhookSignature(rawBody: string, signatureHeader: string)
 
 /** Full refund on a succeeded PaymentIntent (Stripe REST, no SDK). */
 export async function createRefund(paymentIntentId: string): Promise<{ id: string }> {
+  if (isDemoCuratedStripePaymentId(paymentIntentId)) {
+    return { id: `re_demo_${paymentIntentId}` };
+  }
+
   if (!STRIPE_SECRET_KEY) {
     throw new Error("Stripe is not configured (STRIPE_SECRET_KEY missing)");
   }

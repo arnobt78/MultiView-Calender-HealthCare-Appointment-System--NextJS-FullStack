@@ -382,11 +382,47 @@
 | ART-0496 | C42.2 | REQ-0093 | `TelehealthQueueListTimeColumn` + list-time lib | built |
 | ART-0497 | C42.2 | REQ-0093 | Violet glass list row glow tokens | built |
 | ART-0498 | C42.2 | REQ-0093 | Verify 1220/1220 commit `2b53b92` | built |
+| ART-0621 | C62 | REQ-0113 | `prisma` visit_snapshot + visit_detached_at migration | built |
+| ART-0622 | C62 | REQ-0113 | `invoice-visit-summary.ts` snapshot on delete + hydrate | built |
+| ART-0623 | C62 | REQ-0113 | `InvoicePortalListMetaRow` + detached rose meta | built |
+| ART-0624 | C62 | REQ-0113 | `useAppointmentCancelWithRefund` full-flow pending | built |
+| ART-0625 | C62 | REQ-0113 | `AppointmentCancelConfirmDialog` dynamic copy + alignment | built |
+| ART-0626 | C62 | REQ-0113 | Invoice Calendar owner row always visible | built |
+| ART-0627 | C62 | REQ-0113 | `AppointmentCard` list duplicate time fix | built |
+| ART-0628 | C62 | REQ-0113 | `AppointmentDialog` controlled seed + WeekView edit | built |
+| ART-0629 | C62 | REQ-0113 | Tests: cancel copy, visit detached, dialog UI | built |
+| ART-0630 | C62 | REQ-0113 | Verify 1361/1361 tsc lint build PASS | built |
+| ART-0631 | C63 | REQ-0114 | Migration visit_detached_by_* + deleted_at/deleted_by_* | built |
+| ART-0632 | C63 | REQ-0114 | `snapshotInvoicesForDeletedAppointment` actor denorm | built |
+| ART-0633 | C63 | REQ-0114 | Invoice soft-delete API + mutation guards | built |
+| ART-0634 | C63 | REQ-0114 | `InvoiceDeletionActorMeta` shared component | built |
+| ART-0635 | C63 | REQ-0114 | Portal + CP list meta + detail audit rows | built |
+| ART-0636 | C63 | REQ-0114 | KPI/picker exclude deleted; list includes tombstones | built |
+| ART-0637 | C63 | REQ-0114 | `usePayments` delete merges tombstone cache | built |
+| ART-0638 | C63 | REQ-0114 | `CANCEL_APPOINTMENT_CONFIRM_TITLE` fallback | built |
+| ART-0639 | C63 | REQ-0114 | Tests: soft-delete, deletion meta, KPI filter | built |
+| ART-0640 | C63 | REQ-0114 | `invoice-detail-action-capabilities` tombstone caps | built |
+| ART-0641 | C63 | REQ-0114 | Serializers/types/list pipeline actor fields | built |
+| ART-0642 | C63 | REQ-0114 | Verify 1374/1374 tsc lint build PASS | built |
+| ART-0643 | C64 | REQ-0115 | `appointment-auto-draft-response.ts` | built |
+| ART-0644 | C64 | REQ-0115 | `appointments/[id]/route.ts` auto_draft_invoice | built |
+| ART-0645 | C64 | REQ-0115 | `appointment-done-billing-sync.ts` | built |
+| ART-0646 | C64 | REQ-0115 | `useAppointments.ts` done billing sync | built |
+| ART-0647 | C64 | REQ-0115 | `invoice-list-display.ts` title preference | built |
+| ART-0648 | C64 | REQ-0115 | `InvoiceVisitDescriptionStack.tsx` portal text-sm | built |
+| ART-0649 | C64 | REQ-0115 | `InvoicePortalListMetaRow.tsx` wrapInline meta | built |
+| ART-0650 | C64 | REQ-0115 | Verify 1382/1382 tsc lint build PASS | built |
+| ART-0651 | C65 | REQ-0116 | `invoice-issued-by-display` creator actor docs | built |
+| ART-0652 | C65 | REQ-0116 | `demo-appointment-curated-spec` v3 + invoiceCreatedByEmail | built |
+| ART-0653 | C65 | REQ-0116 | `demo-appointment-curated-seed` invoice creator wiring | built |
+| ART-0654 | C65 | REQ-0116 | `demo-appointment-curated-spec.test` v3 assertions | built |
+| ART-0655 | C65 | REQ-0116 | `db:reset-demo-appointments` 10/10 seeded | built |
+| ART-0656 | C65 | REQ-0116 | Verify 1389/1389 tsc lint build PASS | built |
 
 ## Verification Commands (project default)
 
 ```bash
-npm test        # 1220 passed (C42.2, 2026-06-16)
+npm test        # 1374 passed (C63, 2026-06-19)
 npx tsc --noEmit
 npm run lint
 npm run build

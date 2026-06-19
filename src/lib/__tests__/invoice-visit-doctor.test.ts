@@ -50,10 +50,13 @@ describe("invoiceTreatingDoctorFromSummary", () => {
 });
 
 describe("invoiceCalendarOwnerDoctorFromSummary", () => {
-  it("skips when same as treating", () => {
+  it("returns owner when same as treating", () => {
     const s = baseSummary();
     s.calendar_owner_id = "d1";
-    expect(invoiceCalendarOwnerDoctorFromSummary(s)).toBeNull();
+    s.calendar_owner_label = "Dr. A";
+    const doc = invoiceCalendarOwnerDoctorFromSummary(s);
+    expect(doc?.id).toBe("d1");
+    expect(doc?.display_name).toBe("Dr. A");
   });
 
   it("returns owner when distinct", () => {

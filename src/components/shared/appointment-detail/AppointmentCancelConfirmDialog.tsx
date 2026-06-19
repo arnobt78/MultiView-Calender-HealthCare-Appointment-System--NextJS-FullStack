@@ -20,6 +20,10 @@ import {
   formatRefundAmountLabel,
   type AppointmentCancelRefundInvoicePick,
 } from "@/lib/appointment-cancel-refund";
+import {
+  buildAppointmentCancelConfirmSubtitle,
+  buildAppointmentCancelConfirmTitle,
+} from "@/lib/confirm-delete-dialog-copy";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -30,11 +34,15 @@ type Props = {
   userId: string | null | undefined;
   paidInvoice: AppointmentCancelRefundInvoicePick | null;
   confirmPending?: boolean;
+  appointmentTitle?: string | null;
+  appointmentStart?: string | null;
+  appointmentEnd?: string | null;
+  patientLabel?: string | null;
   onConfirm: (opts: { refund: boolean; refundInvoiceId?: string }) => void | Promise<void>;
 };
 
 const cancelCheckboxClass =
-  "size-4 shrink-0 rounded border-amber-300/80 text-amber-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/60";
+  "mt-px size-4 shrink-0 rounded border-amber-300/80 text-amber-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/60";
 
 /**
  * Cancel visit confirm — optional default-on Stripe refund when paid invoice + mutate access.
@@ -47,6 +55,10 @@ export function AppointmentCancelConfirmDialog({
   userId,
   paidInvoice,
   confirmPending = false,
+  appointmentTitle,
+  appointmentStart,
+  appointmentEnd,
+  patientLabel,
   onConfirm,
 }: Props) {
   const offerRefund = useMemo(
@@ -57,8 +69,25 @@ export function AppointmentCancelConfirmDialog({
   const [refundChecked, setRefundChecked] = useState(() =>
     defaultRefundCheckedOnCancel({ role, userId, paidInvoice })
   );
+  const [isConfirming, setIsConfirming] = useState(false);
+  const pending = confirmPending || isConfirming;
 
   const refundLabel = paidInvoice ? formatRefundAmountLabel(paidInvoice) : null;
+
+  const dialogTitle = useMemo(
+    () => buildAppointmentCancelConfirmTitle(appointmentTitle ?? ""),
+    [appointmentTitle]
+  );
+
+  const dialogSubtitle = useMemo(
+    () =>
+      buildAppointmentCancelConfirmSubtitle(appointmentTitle ?? "", {
+        start: appointmentStart,
+        end: appointmentEnd,
+        patientLabel,
+      }),
+    [appointmentTitle, appointmentStart, appointmentEnd, patientLabel]
+  );
 
   const handleOpenChange = useCallback(
     (next: boolean) => {
@@ -67,23 +96,29 @@ export function AppointmentCancelConfirmDialog({
           defaultRefundCheckedOnCancel({ role, userId, paidInvoice })
         );
       }
-      if (!next && confirmPending) return;
+      if (!next && pending) return;
       onOpenChange?.(next);
     },
-    [confirmPending, onOpenChange, role, userId, paidInvoice]
+    [pending, onOpenChange, role, userId, paidInvoice]
   );
 
   const handleConfirm = useCallback(
     async (event: React.MouseEvent<HTMLButtonElement>) => {
       event.preventDefault();
-      if (confirmPending) return;
-      await onConfirm({
-        refund: offerRefund && refundChecked,
-        refundInvoiceId:
-          offerRefund && refundChecked && paidInvoice ? paidInvoice.id : undefined,
-      });
+      if (pending) return;
+      setIsConfirming(true);
+      try {
+        await onConfirm({
+          refund: offerRefund && refundChecked,
+          refundInvoiceId:
+            offerRefund && refundChecked && paidInvoice ? paidInvoice.id : undefined,
+        });
+        onOpenChange?.(false);
+      } finally {
+        setIsConfirming(false);
+      }
     },
-    [confirmPending, onConfirm, offerRefund, refundChecked, paidInvoice]
+    [pending, onConfirm, offerRefund, refundChecked, paidInvoice, onOpenChange]
   );
 
   return (
@@ -95,24 +130,23 @@ export function AppointmentCancelConfirmDialog({
             <AlertTriangle className="size-7 text-amber-700" />
           </AlertDialogMedia>
           <AlertDialogTitle className="text-lg font-semibold text-gray-700">
-            Cancel appointment?
+            {dialogTitle}
           </AlertDialogTitle>
           <AlertDialogDescription asChild>
             <div className="space-y-3 text-sm leading-relaxed text-gray-600">
-              <p>
-                This visit will be marked cancelled. Stakeholders will be notified.
-              </p>
+              <p>{dialogSubtitle}</p>
               {offerRefund && refundLabel ? (
-                <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-amber-200/80 bg-amber-50/60 px-3 py-2.5">
+                <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-amber-200/80 bg-amber-50/60 px-3 py-2.5">
                   <input
                     type="checkbox"
                     className={cancelCheckboxClass}
                     checked={refundChecked}
+                    disabled={pending}
                     onChange={(e) => setRefundChecked(e.target.checked)}
                   />
-                  <span>
+                  <span className="leading-snug">
                     Also refund{" "}
-                    <span className="font-medium text-gray-800">{refundLabel}</span> to the
+                    <span className="font-medium text-emerald-700">{refundLabel}</span> to the
                     patient via Stripe.
                   </span>
                 </label>
@@ -122,22 +156,22 @@ export function AppointmentCancelConfirmDialog({
         </AlertDialogHeader>
         <AlertDialogFooter className="mt-2">
           <AlertDialogCancel
-            disabled={confirmPending}
+            disabled={pending}
             className="rounded-full border-violet-200/70 bg-white text-violet-700 hover:bg-violet-50 hover:text-violet-800 focus-visible:!ring-0 focus-visible:!ring-offset-0"
           >
-            Keep visit
+            Keep Appointment
           </AlertDialogCancel>
           <AlertDialogAction
             className={cn(
               "rounded-full gap-2 border border-amber-400/55 bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-[0_14px_34px_rgba(245,158,11,0.28)] hover:from-amber-500/95 hover:to-amber-600/95"
             )}
-            disabled={confirmPending}
+            disabled={pending}
             onClick={handleConfirm}
           >
-            {confirmPending ? (
+            {pending ? (
               <Loader2 className="size-4 shrink-0 animate-spin" aria-hidden />
             ) : null}
-            {confirmPending ? "Cancelling…" : "Cancel Appointment"}
+            {pending ? "Cancelling…" : "Cancel Appointment"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

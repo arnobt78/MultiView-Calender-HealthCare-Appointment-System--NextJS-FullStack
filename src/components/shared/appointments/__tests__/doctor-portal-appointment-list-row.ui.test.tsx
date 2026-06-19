@@ -18,6 +18,12 @@ vi.mock("@/components/shared/appointment-display/AppointmentTypeGlassBadge", () 
   ),
 }));
 
+vi.mock("@/components/shared/billing/InvoiceStatusBadge", () => ({
+  InvoiceStatusBadge: ({ displayStatus }: { displayStatus?: string }) => (
+    <span data-testid="invoice-badge">{displayStatus}</span>
+  ),
+}));
+
 const appt = {
   id: "11111111-1111-4111-8111-111111111111",
   user_id: "user-1",
@@ -43,5 +49,17 @@ describe("DoctorPortalAppointmentListRow", () => {
     );
     expect(markup).toContain('data-testid="type-badge"');
     expect(markup).toContain("Annual Check-up");
+  });
+
+  it("renders invoice badge when invoiceDisplayStatus is set", () => {
+    const markup = renderToStaticMarkup(
+      <DoctorPortalAppointmentListRow
+        appt={appt}
+        variant="today"
+        invoiceDisplayStatus="draft"
+      />
+    );
+    expect(markup).toContain('data-testid="invoice-badge"');
+    expect(markup).toContain("draft");
   });
 });

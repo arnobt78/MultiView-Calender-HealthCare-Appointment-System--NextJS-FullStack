@@ -2,12 +2,13 @@
 
 Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
-## Latest (2026-06-18)
+## Latest (2026-06-19)
 
-- **C61.1 (REQ-0112):** cancel dialog UI test · menu owns cancel (`capabilities.canCancel`; disabled row) · drop `onCancel` chain · removed dead `hideActionsRail`
-- **C61 (REQ-0112):** doctor portal refund · `assertInvoiceRefundAccess` · cancel confirm default-on refund · `useAppointmentCancelWithRefund`
-- **C60 (REQ-0111):** `visit-billing-action-gates` · cancelled visit billing freeze · invoice detail doctor patient link
-- **Verify:** **1356/1356** · tsc · lint · build PASS
+- **C67:** month view parity — `AppointmentDialogController` `isOpen` · side-panel close · `calendar-date-display` en-US · Create Invoice seeds `billing-appointment-option-from-calendar` + `queryKeys.users.search`
+- **C66:** `InvoiceVisitTitleRow` · cancel dialog pending · demo `pi_demo_curated_*` refund local-only · portal invoice/timeline polish
+- **C65 (REQ-0116):** issued-by = `created_by_*` · curated seed v3
+- **C64 (REQ-0115):** done→draft invoice cache · `appointment-done-billing-sync` · visit snapshot soft-delete
+- **Verify:** **1404/1404** · tsc · lint · build PASS
 
 ## Doctor invoice RBAC (C48)
 
@@ -61,7 +62,7 @@ Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Agile V
 
-`.agile-v/STATE.md` · **C61.1 shipped** · **1356/1356** · HEAD **`a37727b`** · REQ-0112.
+`.agile-v/STATE.md` · **C67 shipped** · **1404/1404** · REQ-0116.
 
 ## Principle
 

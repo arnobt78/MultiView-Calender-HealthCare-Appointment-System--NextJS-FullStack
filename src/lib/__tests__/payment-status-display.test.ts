@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   formatPaymentReferenceLabel,
+  isDemoCuratedStripePaymentId,
   paymentAmountTextClassForStatus,
   resolvePaymentDisplayLabel,
 } from "@/lib/payment-status-display";
@@ -12,6 +13,11 @@ describe("payment-status-display", () => {
 
   it("tints succeeded amount emerald", () => {
     expect(paymentAmountTextClassForStatus("succeeded")).toContain("emerald");
+  });
+
+  it("detects demo curated payment intent ids", () => {
+    expect(isDemoCuratedStripePaymentId("pi_demo_curated_v3_paid_04")).toBe(true);
+    expect(isDemoCuratedStripePaymentId("pi_3abc1234567890xyz")).toBe(false);
   });
 
   it("formats demo curated paid stripe id", () => {

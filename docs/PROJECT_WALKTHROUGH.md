@@ -1,19 +1,20 @@
 # HealthCal Pro — Project Walkthrough
 
-## Agent resume (2026-06-18 — C61.1)
+## Agent resume (2026-06-19 — C67)
 
-**1356/1356** · tsc · lint · build PASS
+**1404/1404** · tsc · lint · build PASS
 
 | Cycle | REQ | Highlights |
 |-------|-----|------------|
-| C61.1 | 0112 | menu-owned cancel (disabled RBAC) · dead `hideActionsRail` removed · cancel dialog UI test |
-| C61 | 0112 | doctor portal refund · `assertInvoiceRefundAccess` · cancel confirm default-on refund |
-| C60 | 0111 | `visit-billing-action-gates` · cancelled visit billing freeze · invoice detail patient link |
-| C59 | 0110 | `getSchedulingUiToday` · auto today on scheduling open · day prefetch |
+| C67 | — | month edit/invoice parity · `calendar-date-display` en-US · `billing-appointment-option-from-calendar` cache seed |
+| C66 | — | `InvoiceVisitTitleRow` · cancel dialog spinner · demo Stripe refund guard |
+| C65 | 0116 | issued-by `created_by_*` · curated seed v3 |
+| C64 | 0115 | done→draft sync · `appointment-done-billing-sync` · invoice visit snapshot / soft-delete |
+| C61.1 | 0112 | menu-owned cancel · cancel dialog UI test |
 
-**Keys:** `appointment-cancel-refund.ts` · `AppointmentCancelConfirmDialog` · `useAppointmentCancelWithRefund` · `assertInvoiceRefundAccess`
+**Keys:** `billing-appointment-option-from-calendar.ts` · `calendar-date-display.ts` · `useInvoiceFormDialogController` · `InvoiceVisitTitleRow` · `appointment-done-billing-sync.ts`
 
-**Invariants:** SSR seed + warm `refetchOnMount: false` · Stripe return `?status=` → `invalidateInvoicesAndOverview` · no `router.refresh`
+**Invariants:** calendar Create Invoice seeds `queryKeys.billing.appointmentOptions(id)` from `appointments.all` + `users.search` · invoice writes → `syncInvoicesAfterWrite` / `mergeInvoiceIntoAllCaches` · weekday/month copy en-US (EUR amounts still de-DE)
 
 ---
 

@@ -20,6 +20,10 @@ import {
   invoiceUpdateAuditFields,
 } from "@/lib/invoice-api-include";
 import { enrichInvoiceForApi } from "@/lib/invoice-api-enrich";
+import {
+  INVOICE_SOFT_DELETED_ERROR,
+  isPrismaInvoiceSoftDeleted,
+} from "@/lib/invoice-soft-delete-guard";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -55,6 +59,9 @@ export async function POST(req: NextRequest, { params }: Params) {
     });
     if (!invoice) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+    if (isPrismaInvoiceSoftDeleted(invoice)) {
+      return NextResponse.json({ error: INVOICE_SOFT_DELETED_ERROR }, { status: 403 });
     }
     if (invoice.status === "paid") {
       return NextResponse.json({ error: "Invoice already paid" }, { status: 400 });

@@ -8,6 +8,8 @@ import { AppointmentStatusGlassBadge } from "@/components/shared/appointments/Ap
 import { TelehealthSessionBadge } from "@/components/shared/appointments/TelehealthSessionBadge";
 import { AppointmentListVisitFeeBadge } from "@/components/shared/appointment-display/AppointmentListVisitFeeBadge";
 import { AppointmentTypeGlassBadge } from "@/components/shared/appointment-display/AppointmentTypeGlassBadge";
+import { InvoiceStatusBadge } from "@/components/shared/billing/InvoiceStatusBadge";
+import type { InvoiceDisplayStatus } from "@/lib/billing-appointment-eligibility";
 import {
   formatAppointmentTypeDurationLabel,
   resolveAppointmentTypeDisplayName,
@@ -23,11 +25,13 @@ type DoctorPortalAppointmentListRowProps = {
   appt: DoctorPortalAppointmentRow;
   /** Today panel shows status + overdue; upcoming shows Today/Tomorrow/Later glass tag. */
   variant: "today" | "upcoming";
+  invoiceDisplayStatus?: InvoiceDisplayStatus | null;
 };
 
 export function DoctorPortalAppointmentListRow({
   appt,
   variant,
+  invoiceDisplayStatus,
 }: DoctorPortalAppointmentListRowProps) {
   const start = parseISO(appt.start);
   const end = parseISO(appt.end);
@@ -94,6 +98,9 @@ export function DoctorPortalAppointmentListRow({
         ) : (
           <AppointmentStatusGlassBadge status={appt.status} size="compact" />
         )}
+        {invoiceDisplayStatus ? (
+          <InvoiceStatusBadge displayStatus={invoiceDisplayStatus} />
+        ) : null}
         {appt.is_telehealth ? <TelehealthSessionBadge /> : null}
         {variant === "today" && overdue ? (
           <span className="inline-flex items-center gap-1 rounded-full border border-red-200/60 bg-red-100/80 px-2 py-0.5 text-[10px] font-normal text-red-700">

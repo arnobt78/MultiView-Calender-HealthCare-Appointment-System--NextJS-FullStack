@@ -507,7 +507,7 @@ function AppointmentCardMeta({
             appointment={appointment}
             displayFeeCents={displayFeeCents}
             showFeeEstimateHint={!invoiceDisplayStatus}
-            timeRangeLabel={useInlinePeopleRows ? formattedTime : null}
+            timeRangeLabel={null}
             wrap={useInlinePeopleRows || wrapValues}
           />
         ) : null}
@@ -1021,7 +1021,7 @@ export function AppointmentCard({
     portalTreatingLabel,
   } as UseAppointmentCardModelParams);
 
-  const { density, colorToken, isDone, isCancelled, start, user } = model;
+  const { density, colorToken, isDone, isCancelled, start, user, patientLabel } = model;
   const wrapValues =
     density === "full" && (variant === "month-panel" || variant === "popover");
   /** List keeps single-line title; month panel + popover wrap with break-words. */
@@ -1031,7 +1031,10 @@ export function AppointmentCard({
 
   const menu = (
     <AppointmentActionsMenu
-      appointment={appointment}
+      appointment={{
+        ...appointment,
+        patient_name: patientLabel,
+      }}
       userId={authUser?.id}
       userEmail={authUser?.email}
       userRole={authUser?.role}

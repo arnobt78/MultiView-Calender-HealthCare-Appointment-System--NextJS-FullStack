@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useAppointments } from "@/hooks/useAppointments";
 import { usePayments } from "@/hooks/usePayments";
 import type { AppointmentDetailApiPayload } from "@/lib/appointment-detail-api";
@@ -29,44 +29,60 @@ function getSafeAppointmentTitle(appt?: { title?: string | null }) {
 
 /**
  * Cancel visit then optional Stripe refund — one combined toast when refund runs.
+ * Tracks pendingFlowAppointmentId for full cancel+refund span (REQ-0113).
  */
 export function useAppointmentCancelWithRefund() {
-  const { cancelAppointmentAsync, isCancelling, cancellingAppointmentId } = useAppointments();
+  const { cancelAppointmentAsync, isCancelling } = useAppointments();
   const { refundInvoiceAsync, isRefunding } = usePayments();
+  const [pendingFlowAppointmentId, setPendingFlowAppointmentId] = useState<string | null>(
+    null
+  );
 
   const cancelWithOptionalRefundAsync = useCallback(
     async ({
       appointmentId,
       refundInvoiceId,
     }: CancelAppointmentWithRefundInput): Promise<AppointmentDetailApiPayload> => {
-      const data = await cancelAppointmentAsync({
-        appointmentId,
-        suppressSuccessNotify: Boolean(refundInvoiceId),
-      });
-      const appt = data.appointment as FullAppointment;
+      setPendingFlowAppointmentId(appointmentId);
+      try {
+        const data = await cancelAppointmentAsync({
+          appointmentId,
+          suppressSuccessNotify: Boolean(refundInvoiceId),
+        });
+        const appt = data.appointment as FullAppointment;
 
-      if (refundInvoiceId) {
-        await refundInvoiceAsync({
-          invoiceId: refundInvoiceId,
-          suppressSuccessNotify: true,
-        });
-        notify.crud({
-          action: "updated",
-          entity: "Appointment",
-          detail: `"${getSafeAppointmentTitle(appt)}" was cancelled and the invoice was refunded (${formatAppointmentRange(appt?.start, appt?.end)}).`,
-        });
+        if (refundInvoiceId) {
+          await refundInvoiceAsync({
+            invoiceId: refundInvoiceId,
+            suppressSuccessNotify: true,
+          });
+          notify.crud({
+            action: "updated",
+            entity: "Appointment",
+            detail: `"${getSafeAppointmentTitle(appt)}" was cancelled and the invoice was refunded (${formatAppointmentRange(appt?.start, appt?.end)}).`,
+          });
+        }
+
+        return data;
+      } finally {
+        setPendingFlowAppointmentId(null);
       }
-
-      return data;
     },
     [cancelAppointmentAsync, refundInvoiceAsync]
   );
 
-  const isCancelFlowPending = isCancelling || isRefunding;
+  const isCancelFlowPending = isCancelling || isRefunding || Boolean(pendingFlowAppointmentId);
+
+  const isCancelFlowPendingFor = useCallback(
+    (appointmentId: string) =>
+      isCancelFlowPending && pendingFlowAppointmentId === appointmentId,
+    [isCancelFlowPending, pendingFlowAppointmentId]
+  );
 
   return {
     cancelWithOptionalRefundAsync,
     isCancelFlowPending,
-    cancellingAppointmentId: isCancelFlowPending ? cancellingAppointmentId : null,
+    isCancelFlowPendingFor,
+    pendingFlowAppointmentId,
   };
 }

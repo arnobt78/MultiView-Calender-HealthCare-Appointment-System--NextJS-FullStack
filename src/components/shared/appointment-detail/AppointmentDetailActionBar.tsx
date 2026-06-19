@@ -27,6 +27,8 @@ import { AppointmentCancelConfirmDialog } from "@/components/shared/appointment-
 import { useAppointmentCancelWithRefund } from "@/hooks/useAppointmentCancelWithRefund";
 import { usePayments } from "@/hooks/usePayments";
 import { resolvePaidInvoiceForAppointment } from "@/lib/appointment-cancel-refund";
+import { resolvePatientDisplayName } from "@/lib/appointment-card";
+import { usePatients } from "@/hooks/usePatients";
 import {
   buildAppointmentDeleteConfirmSubtitle,
   DELETE_APPOINTMENT_CONFIRM_TITLE,
@@ -81,9 +83,14 @@ export function AppointmentDetailActionBar({
     isDeleting,
     isTogglingStatus,
   } = useAppointments();
-  const { cancelWithOptionalRefundAsync, isCancelFlowPending } =
+  const { cancelWithOptionalRefundAsync, isCancelFlowPendingFor } =
     useAppointmentCancelWithRefund();
   const { invoices } = usePayments();
+  const { patients } = usePatients();
+  const patientLabel = useMemo(
+    () => resolvePatientDisplayName(appointment, patients),
+    [appointment, patients]
+  );
   const invoiceMap = useAppointmentInvoiceDisplayMap([appointment.id]);
   const invoiceDisplayStatus = invoiceMap.get(appointment.id) ?? null;
   const ctx = useInvoiceFormDialogOptional();
@@ -134,7 +141,8 @@ export function AppointmentDetailActionBar({
   }, [linkedInvoices, invoices, appointment.id]);
 
   const isCancelled = appointment.status === "cancelled";
-  const busy = isTogglingStatus || isDeleting || isCancelFlowPending;
+  const cancelFlowPending = isCancelFlowPendingFor(appointment.id);
+  const busy = isTogglingStatus || isDeleting || cancelFlowPending;
   const isSyncingGoogle = syncingAppointmentId === appointment.id;
   const updateVariant = toneClasses.footerPrimaryVariant;
 
@@ -207,13 +215,16 @@ export function AppointmentDetailActionBar({
                 role={role}
                 userId={user?.id}
                 paidInvoice={paidInvoiceForCancel}
-                confirmPending={isCancelFlowPending}
+                confirmPending={cancelFlowPending}
+                appointmentTitle={appointment.title}
+                appointmentStart={appointment.start}
+                appointmentEnd={appointment.end}
+                patientLabel={patientLabel}
                 onConfirm={async ({ refundInvoiceId }) => {
                   await cancelWithOptionalRefundAsync({
                     appointmentId: appointment.id,
                     refundInvoiceId,
                   });
-                  setCancelOpen(false);
                 }}
                 trigger={
                   <ControlPanelGlassActionButton
@@ -222,7 +233,7 @@ export function AppointmentDetailActionBar({
                     disabled={busy}
                   >
                     <Ban className="shrink-0" aria-hidden />
-                    {isCancelFlowPending ? "Cancelling…" : "Cancel Appointment"}
+                    {cancelFlowPending ? "Cancelling…" : "Cancel Appointment"}
                   </ControlPanelGlassActionButton>
                 }
               />

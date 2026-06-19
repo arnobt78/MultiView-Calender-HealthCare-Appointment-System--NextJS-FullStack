@@ -5,6 +5,7 @@ import {
   isVisitBillingFrozen,
   linkedAppointmentStatusFromInvoice,
 } from "@/lib/visit-billing-action-gates";
+import { isInvoiceSoftDeleted } from "@/lib/invoice-status-display";
 
 export type InvoiceDetailActionCapabilities = ReturnType<
   typeof resolveInvoiceDetailActionCapabilities
@@ -40,6 +41,20 @@ export function resolveInvoiceDetailActionCapabilities(
   viewerRole: "admin" | "doctor",
   opts?: ResolveInvoiceDetailActionCapabilitiesOpts
 ) {
+  if (isInvoiceSoftDeleted(invoice)) {
+    return {
+      canGenerateInvoice: false,
+      canDownloadPdf: false,
+      canPay: false,
+      canSend: false,
+      canMarkPaid: false,
+      canCancel: false,
+      canDelete: false,
+      canRefund: false,
+      canEditDetails: false,
+    };
+  }
+
   const statusAllowsEdit =
     invoice.status === "draft" ||
     invoice.status === "sent" ||

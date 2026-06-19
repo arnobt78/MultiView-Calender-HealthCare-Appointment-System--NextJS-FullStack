@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import {
+  buildAppointmentCancelConfirmSubtitle,
+  buildAppointmentCancelConfirmTitle,
   buildAppointmentDeleteConfirmSubtitle,
   buildCpAdminAppointmentTypeDeleteConfirmSubtitle,
   buildOrganizationDeleteConfirmSubtitle,
@@ -51,5 +53,33 @@ describe("buildAppointmentDeleteConfirmSubtitle", () => {
     expect(
       renderToStaticMarkup(<>{buildAppointmentDeleteConfirmSubtitle("Check-up", "list")}</>)
     ).toContain("Check-up");
+  });
+});
+
+describe("buildAppointmentCancelConfirmTitle", () => {
+  it("quotes appointment title", () => {
+    expect(buildAppointmentCancelConfirmTitle("Follow-up")).toBe('Cancel "Follow-up"?');
+  });
+
+  it("uses CANCEL_APPOINTMENT_CONFIRM_TITLE when title blank", () => {
+    expect(buildAppointmentCancelConfirmTitle("")).toBe("Cancel appointment?");
+    expect(buildAppointmentCancelConfirmTitle("   ")).toBe("Cancel appointment?");
+  });
+});
+
+describe("buildAppointmentCancelConfirmSubtitle", () => {
+  it("includes title range and patient", () => {
+    const text = renderToStaticMarkup(
+      <>
+        {buildAppointmentCancelConfirmSubtitle("Check-up", {
+          start: "2026-06-22T14:00:00.000Z",
+          end: "2026-06-22T15:00:00.000Z",
+          patientLabel: "Jane Doe",
+        })}
+      </>
+    );
+    expect(text).toContain("Check-up");
+    expect(text).toContain("marked cancelled");
+    expect(text).toContain("Jane Doe");
   });
 });

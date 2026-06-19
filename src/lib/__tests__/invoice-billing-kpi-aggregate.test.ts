@@ -72,6 +72,26 @@ describe("fetchInvoiceBillingStatusPayloadForWhere", () => {
     expect(result.extendedKpis).toBeUndefined();
     expect(prisma.invoice.findMany).not.toHaveBeenCalled();
   });
+
+  it("excludes soft-deleted invoices from KPI aggregates", async () => {
+    vi.mocked(prisma.invoice.aggregate).mockResolvedValue({
+      _sum: { amount: 0 },
+      _count: 0,
+    } as never);
+
+    await fetchInvoiceBillingStatusPayloadForWhere({ user_id: "doc-1" });
+
+    expect(prisma.invoice.aggregate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          AND: expect.arrayContaining([
+            { user_id: "doc-1" },
+            { deleted_at: null },
+          ]),
+        }),
+      })
+    );
+  });
 });
 
 describe("fetchInvoiceBillingKpiPayloadForWhere", () => {

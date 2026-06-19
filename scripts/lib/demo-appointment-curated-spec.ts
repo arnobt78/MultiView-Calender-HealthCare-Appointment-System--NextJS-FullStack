@@ -1,9 +1,9 @@
 /**
  * Deterministic 10-row demo appointment matrix — exported for seed + unit tests.
- * Marker v2: admin created_by, one visit-cancelled row, relative scheduling.
+ * Marker v3: varied invoice `created_by` (admin vs doctor), primary demo users.
  */
 
-export const DEMO_CURATED_SEED_MARKER = "seed-demo-curated:v2";
+export const DEMO_CURATED_SEED_MARKER = "seed-demo-curated:v3";
 
 export const DEMO_CURATED_ORG_SLUG = "healthcal-demo-clinic";
 
@@ -36,6 +36,8 @@ export const DEMO_CURATED_PATIENT_EMAILS = [
 ] as const;
 
 export const DEMO_CURATED_ADMIN_EMAIL = "test@admin.com";
+export const DEMO_CURATED_PRIMARY_DOCTOR_EMAIL = "test@doctor.com";
+export const DEMO_CURATED_PRIMARY_PATIENT_EMAIL = "test@patient.com";
 
 export type DemoCuratedInvoiceSpec =
   | { kind: "none" }
@@ -61,85 +63,105 @@ export type DemoCuratedRow = {
   telehealth: boolean;
   typeKey: DemoCuratedTypeKey;
   invoice: DemoCuratedInvoiceSpec;
+  /** Who created the invoice row — defaults to admin if omitted. */
+  invoiceCreatedByEmail?: string;
   /** When status is cancelled — who cancelled (defaults to admin). */
   cancelledByEmail?: string;
 };
 
-/** Exactly 10 rows — varied owners, patients, billing, one visit-cancelled. */
+/** Exactly 10 rows — primary demo users, varied invoice creators for issued-by QA. */
 export const DEMO_CURATED_ROWS: DemoCuratedRow[] = [
   {
-    titleSuffix: "01-admin-owner-historical-paid",
-    patientEmail: "test@patient.com",
+    titleSuffix: "01-admin-owner-doctor-treating-draft-by-admin",
+    patientEmail: DEMO_CURATED_PRIMARY_PATIENT_EMAIL,
     ownerEmail: DEMO_CURATED_ADMIN_EMAIL,
-    treatingEmail: "test@doctor.com",
+    treatingEmail: DEMO_CURATED_PRIMARY_DOCTOR_EMAIL,
     status: "done",
-    daysFromNow: -14,
+    daysFromNow: -7,
     hourUtc: 9,
     durationMin: 30,
     telehealth: false,
     typeKey: "followUp",
-    invoice: { kind: "paid", stripeId: "pi_demo_curated_paid_01" },
+    invoice: { kind: "draft" },
+    invoiceCreatedByEmail: DEMO_CURATED_ADMIN_EMAIL,
   },
   {
-    titleSuffix: "02-doctor-owner-today-pending-cancel-qa",
-    patientEmail: "test@patient.com",
-    ownerEmail: "test@doctor.com",
-    treatingEmail: "test@doctor.com",
+    titleSuffix: "02-doctor-owner-treating-draft-by-doctor",
+    patientEmail: DEMO_CURATED_PRIMARY_PATIENT_EMAIL,
+    ownerEmail: DEMO_CURATED_PRIMARY_DOCTOR_EMAIL,
+    treatingEmail: DEMO_CURATED_PRIMARY_DOCTOR_EMAIL,
+    status: "done",
+    daysFromNow: -5,
+    hourUtc: 10,
+    durationMin: 30,
+    telehealth: false,
+    typeKey: "initial",
+    invoice: { kind: "draft" },
+    invoiceCreatedByEmail: DEMO_CURATED_PRIMARY_DOCTOR_EMAIL,
+  },
+  {
+    titleSuffix: "03-admin-owner-today-pending-mark-done-qa",
+    patientEmail: DEMO_CURATED_PRIMARY_PATIENT_EMAIL,
+    ownerEmail: DEMO_CURATED_ADMIN_EMAIL,
+    treatingEmail: DEMO_CURATED_PRIMARY_DOCTOR_EMAIL,
     status: "pending",
     daysFromNow: 0,
-    hourUtc: 10,
+    hourUtc: 11,
     durationMin: 30,
     telehealth: false,
     typeKey: "initial",
     invoice: { kind: "none" },
   },
   {
-    titleSuffix: "03-doc4-owner-cross-doctor-paid",
-    patientEmail: "thomas.weber@demo.healthcal",
-    ownerEmail: "demo.doctor4@healthcal.dev",
-    treatingEmail: "test@doctor.com",
+    titleSuffix: "04-doctor-owner-paid-by-admin",
+    patientEmail: "maria.schmidt@demo.healthcal",
+    ownerEmail: DEMO_CURATED_PRIMARY_DOCTOR_EMAIL,
+    treatingEmail: DEMO_CURATED_PRIMARY_DOCTOR_EMAIL,
     status: "done",
     daysFromNow: -21,
-    hourUtc: 11,
+    hourUtc: 8,
     durationMin: 45,
     telehealth: false,
     typeKey: "annual",
-    invoice: { kind: "paid", stripeId: "pi_demo_curated_paid_03" },
+    invoice: { kind: "paid", stripeId: "pi_demo_curated_v3_paid_04" },
+    invoiceCreatedByEmail: DEMO_CURATED_ADMIN_EMAIL,
   },
   {
-    titleSuffix: "04-doctor-owner-today-alert-telehealth",
+    titleSuffix: "05-admin-owner-sent-by-doctor",
     patientEmail: "maria.schmidt@demo.healthcal",
-    ownerEmail: "test@doctor.com",
-    treatingEmail: "demo.doctor2@healthcal.dev",
-    status: "alert",
-    daysFromNow: 0,
-    hourUtc: 11,
-    durationMin: 30,
-    telehealth: true,
-    typeKey: "telehealth",
-    invoice: { kind: "draft" },
-  },
-  {
-    titleSuffix: "05-doc2-owner-sent-invoice",
-    patientEmail: "jan.mueller@demo.healthcal",
-    ownerEmail: "demo.doctor2@healthcal.dev",
-    treatingEmail: "demo.doctor3@healthcal.dev",
+    ownerEmail: DEMO_CURATED_ADMIN_EMAIL,
+    treatingEmail: DEMO_CURATED_PRIMARY_DOCTOR_EMAIL,
     status: "done",
     daysFromNow: -10,
-    hourUtc: 8,
+    hourUtc: 13,
     durationMin: 30,
     telehealth: false,
     typeKey: "followUp",
     invoice: { kind: "sent" },
+    invoiceCreatedByEmail: DEMO_CURATED_PRIMARY_DOCTOR_EMAIL,
   },
   {
-    titleSuffix: "06-doc5-owner-visit-cancelled-audit",
-    patientEmail: "anya.petrov@demo.healthcal",
-    ownerEmail: "demo.doctor5@healthcal.dev",
-    treatingEmail: "test@doctor.com",
+    titleSuffix: "06-doctor-owner-telehealth-alert-draft-by-doctor",
+    patientEmail: DEMO_CURATED_PRIMARY_PATIENT_EMAIL,
+    ownerEmail: DEMO_CURATED_PRIMARY_DOCTOR_EMAIL,
+    treatingEmail: "demo.doctor2@healthcal.dev",
+    status: "alert",
+    daysFromNow: 0,
+    hourUtc: 14,
+    durationMin: 30,
+    telehealth: true,
+    typeKey: "telehealth",
+    invoice: { kind: "draft" },
+    invoiceCreatedByEmail: DEMO_CURATED_PRIMARY_DOCTOR_EMAIL,
+  },
+  {
+    titleSuffix: "07-admin-owner-visit-cancelled-audit",
+    patientEmail: "thomas.weber@demo.healthcal",
+    ownerEmail: DEMO_CURATED_ADMIN_EMAIL,
+    treatingEmail: DEMO_CURATED_PRIMARY_DOCTOR_EMAIL,
     status: "cancelled",
-    daysFromNow: -7,
-    hourUtc: 13,
+    daysFromNow: -3,
+    hourUtc: 15,
     durationMin: 30,
     telehealth: false,
     typeKey: "initial",
@@ -147,25 +169,26 @@ export const DEMO_CURATED_ROWS: DemoCuratedRow[] = [
     cancelledByEmail: DEMO_CURATED_ADMIN_EMAIL,
   },
   {
-    titleSuffix: "07-doc6-owner-refunded",
+    titleSuffix: "08-doctor-owner-refunded-by-admin",
     patientEmail: "thomas.weber@demo.healthcal",
-    ownerEmail: "demo.doctor6@healthcal.dev",
-    treatingEmail: "test@doctor.com",
+    ownerEmail: DEMO_CURATED_PRIMARY_DOCTOR_EMAIL,
+    treatingEmail: DEMO_CURATED_PRIMARY_DOCTOR_EMAIL,
     status: "done",
     daysFromNow: -30,
-    hourUtc: 15,
+    hourUtc: 16,
     durationMin: 45,
     telehealth: false,
     typeKey: "annual",
-    invoice: { kind: "refunded", stripeId: "pi_demo_curated_ref_07" },
+    invoice: { kind: "refunded", stripeId: "pi_demo_curated_v3_ref_08" },
+    invoiceCreatedByEmail: DEMO_CURATED_ADMIN_EMAIL,
   },
   {
-    titleSuffix: "08-doc7-owner-future-pending",
-    patientEmail: "maria.schmidt@demo.healthcal",
-    ownerEmail: "demo.doctor7@healthcal.dev",
-    treatingEmail: "demo.doctor8@healthcal.dev",
-    status: "pending",
-    daysFromNow: 14,
+    titleSuffix: "09-admin-owner-done-no-invoice-auto-draft-qa",
+    patientEmail: DEMO_CURATED_PRIMARY_PATIENT_EMAIL,
+    ownerEmail: DEMO_CURATED_ADMIN_EMAIL,
+    treatingEmail: DEMO_CURATED_PRIMARY_DOCTOR_EMAIL,
+    status: "done",
+    daysFromNow: -2,
     hourUtc: 9,
     durationMin: 30,
     telehealth: false,
@@ -173,26 +196,13 @@ export const DEMO_CURATED_ROWS: DemoCuratedRow[] = [
     invoice: { kind: "none" },
   },
   {
-    titleSuffix: "09-doc8-owner-done-no-invoice",
-    patientEmail: "anya.petrov@demo.healthcal",
-    ownerEmail: "demo.doctor8@healthcal.dev",
-    treatingEmail: "demo.doctor7@healthcal.dev",
-    status: "done",
-    daysFromNow: -5,
-    hourUtc: 10,
-    durationMin: 30,
-    telehealth: true,
-    typeKey: "telehealth",
-    invoice: { kind: "none" },
-  },
-  {
-    titleSuffix: "10-doctor-owner-today-afternoon",
-    patientEmail: "jan.mueller@demo.healthcal",
-    ownerEmail: "test@doctor.com",
-    treatingEmail: "demo.doctor4@healthcal.dev",
+    titleSuffix: "10-doctor-owner-future-pending",
+    patientEmail: DEMO_CURATED_PRIMARY_PATIENT_EMAIL,
+    ownerEmail: DEMO_CURATED_PRIMARY_DOCTOR_EMAIL,
+    treatingEmail: DEMO_CURATED_PRIMARY_DOCTOR_EMAIL,
     status: "pending",
-    daysFromNow: 0,
-    hourUtc: 16,
+    daysFromNow: 14,
+    hourUtc: 10,
     durationMin: 30,
     telehealth: false,
     typeKey: "followUp",

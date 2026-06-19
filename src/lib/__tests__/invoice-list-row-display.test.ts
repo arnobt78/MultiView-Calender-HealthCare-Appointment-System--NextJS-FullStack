@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   getInvoiceAppointmentTitle,
-  isSeededDemoAppointmentTitle,
   resolveInvoiceDetailHeaderTitle,
   resolveInvoiceLocationDisplay,
 } from "@/lib/invoice-list-row-display";
@@ -40,7 +39,7 @@ describe("getInvoiceAppointmentTitle", () => {
     ).toBe("Testing Custom Date");
   });
 
-  it("falls back to list title for demo curated seed slug", () => {
+  it("uses demo curated visit title via list title helper", () => {
     expect(
       getInvoiceAppointmentTitle({
         id: "inv-1",
@@ -51,14 +50,7 @@ describe("getInvoiceAppointmentTitle", () => {
           appointment_type_name: "Follow-up Visit",
         },
       })
-    ).toBe("Follow-up Visit — Demo Patient");
-  });
-});
-
-describe("isSeededDemoAppointmentTitle", () => {
-  it("detects demo curated prefix", () => {
-    expect(isSeededDemoAppointmentTitle("Demo curated — slug")).toBe(true);
-    expect(isSeededDemoAppointmentTitle("Testing Custom Date")).toBe(false);
+    ).toBe("Demo curated — 01-admin-treating-demo-paid — Demo Patient");
   });
 });
 

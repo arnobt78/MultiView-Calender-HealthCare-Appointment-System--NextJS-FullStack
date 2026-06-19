@@ -7,6 +7,7 @@ import { serializeInvoice } from "@/lib/serializers";
 import {
   attachInvoiceIssuerLabels,
   attachVisitSummariesToInvoices,
+  parseStoredVisitSnapshot,
 } from "@/lib/invoice-visit-summary";
 import type { InvoiceRow } from "@/lib/billing-types";
 
@@ -34,6 +35,19 @@ export async function loadInvoicesListForViewer(opts: {
     due_date: row.due_date ?? undefined,
     paid_at: row.paid_at ?? undefined,
     cancelled_at: row.cancelled_at ?? undefined,
+    visit_detached_at: row.visit_detached_at ?? undefined,
+    visit_detached_by_id: row.visit_detached_by_id ?? undefined,
+    visit_detached_by_display: row.visit_detached_by_display ?? undefined,
+    visit_detached_by_email: row.visit_detached_by_email ?? undefined,
+    visit_detached_by_image: row.visit_detached_by_image ?? undefined,
+    visit_detached_by_role: row.visit_detached_by_role ?? undefined,
+    deleted_at: row.deleted_at ?? undefined,
+    deleted_by_id: row.deleted_by_id ?? undefined,
+    deleted_by_display: row.deleted_by_display ?? undefined,
+    deleted_by_email: row.deleted_by_email ?? undefined,
+    deleted_by_image: row.deleted_by_image ?? undefined,
+    deleted_by_role: row.deleted_by_role ?? undefined,
+    visit_snapshot: parseStoredVisitSnapshot(row.visit_snapshot) ?? undefined,
     updated_at: row.updated_at ?? undefined,
     payments: row.payments.map((p) => ({
       id: p.id,

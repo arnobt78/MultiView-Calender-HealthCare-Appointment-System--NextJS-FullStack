@@ -20,14 +20,75 @@ const baseInvoice = (overrides: Partial<InvoiceRow> = {}): InvoiceRow => ({
 });
 
 describe("getInvoiceListTitle", () => {
-  it("prefers category + patient over demo description", () => {
+  it("prefers appointment title over type + patient", () => {
     const title = getInvoiceListTitle(
       baseInvoice({
         description:
           "Demo curated invoice — Demo curated — 07-doc6-owner-demo-refunded — Thomas Weber",
         visit_summary: {
           appointment_id: "a1",
-          title: "Demo curated — 07-doc6-owner-demo-refunded — Thomas Weber",
+          title: "Follow-up with Thomas",
+          start_iso: "2026-03-25T15:30:00.000Z",
+          end_iso: "2026-03-25T16:15:00.000Z",
+          when_label: "Wed, 25 Mar 2026 · 15:30 – 16:15",
+          location_label: "—",
+          is_telehealth: false,
+          patient_id: "p1",
+          patient_label: "Thomas Weber",
+          category_id: "cat-1",
+          category_label: "Follow-Up Visit",
+          category_color: null,
+          category_icon: null,
+          treating_physician_id: null,
+          treating_physician_label: null,
+          treating_physician_specialty: null,
+          calendar_owner_id: null,
+          calendar_owner_label: null,
+          calendar_owner_specialty: null,
+        },
+      })
+    );
+    expect(title).toBe("Follow-up with Thomas");
+  });
+
+  it("uses demo curated appointment title verbatim", () => {
+    const title = getInvoiceListTitle(
+      baseInvoice({
+        visit_summary: {
+          appointment_id: "a1",
+          title: "Demo curated — 08-doctor-owner-refunded-by-admin — Thomas Weber",
+          start_iso: "2026-05-20T16:00:00.000Z",
+          end_iso: "2026-05-20T16:45:00.000Z",
+          when_label: "Wed, 20 May 2026 · 18:00 – 18:45",
+          location_label: "Demo Clinic",
+          is_telehealth: false,
+          patient_id: "p1",
+          patient_label: "Thomas Weber",
+          category_id: "cat-1",
+          category_label: "Annual Check-up",
+          category_color: null,
+          category_icon: null,
+          appointment_type_name: "Annual Check-up",
+          treating_physician_id: "d1",
+          treating_physician_label: "Demo Doctor",
+          treating_physician_specialty: "Medicine",
+          calendar_owner_id: "d1",
+          calendar_owner_label: "Demo Doctor",
+          calendar_owner_specialty: "Medicine",
+        },
+      })
+    );
+    expect(title).toBe(
+      "Demo curated — 08-doctor-owner-refunded-by-admin — Thomas Weber"
+    );
+  });
+
+  it("falls back to category + patient when title missing", () => {
+    const title = getInvoiceListTitle(
+      baseInvoice({
+        visit_summary: {
+          appointment_id: "a1",
+          title: "",
           start_iso: "2026-03-25T15:30:00.000Z",
           end_iso: "2026-03-25T16:15:00.000Z",
           when_label: "Wed, 25 Mar 2026 · 15:30 – 16:15",

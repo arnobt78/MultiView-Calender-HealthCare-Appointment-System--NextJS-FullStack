@@ -1,6 +1,6 @@
 "use client";
 
-import { EntityTitleLink } from "@/components/shared/EntityTitleLink";
+import { InvoiceVisitTitleRow } from "@/components/shared/billing/InvoiceVisitTitleRow";
 import { PatientIdentityCell } from "@/components/shared/person-display/PatientIdentityCell";
 import { DoctorIdentityCell } from "@/components/shared/person-display/DoctorIdentityCell";
 import { StaffUserIdentityCell } from "@/components/shared/person-display/StaffUserIdentityCell";
@@ -51,9 +51,7 @@ export function InvoiceVisitListCell({ invoice, viewerRole }: Props) {
     : "role";
 
   const showOwnerBlock =
-    summary?.calendar_owner_id &&
-    summary.calendar_owner_label &&
-    summary.calendar_owner_id !== summary.treating_physician_id;
+    summary?.calendar_owner_id && summary.calendar_owner_label;
 
   const ownerIsAdmin = isAdminRole(summary?.calendar_owner_role);
 
@@ -65,10 +63,10 @@ export function InvoiceVisitListCell({ invoice, viewerRole }: Props) {
         "flex w-full min-w-0 flex-col justify-center gap-1 py-1"
       )}
     >
-      <EntityTitleLink
+      <InvoiceVisitTitleRow
         href={href}
-        label={title}
-        className="min-w-0 font-normal"
+        title={title}
+        invoice={invoice}
         wrapLabel
       />
       <InvoiceVisitSummaryLine summary={summary} className="w-full min-w-0" />

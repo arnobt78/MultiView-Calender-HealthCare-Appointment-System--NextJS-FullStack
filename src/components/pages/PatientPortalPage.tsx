@@ -32,6 +32,8 @@ import { UserAvatar } from "@/components/shared/UserAvatar";
 import { AppointmentListSectionAccordion } from "@/components/shared/AppointmentListSectionAccordion";
 import { summarizeDayAppointments, summarizePatientPortalSidebar } from "@/lib/appointment-stats";
 import { PortalAppointmentTimelineCard } from "@/components/shared/PortalAppointmentTimelineCard";
+import { useAppointmentInvoiceDisplayMap } from "@/hooks/useAppointmentInvoiceDisplayMap";
+import type { InvoiceDisplayStatus } from "@/lib/billing-appointment-eligibility";
 import { useAppointmentColor } from "@/context/AppointmentColorContext";
 import {
   appointmentListSectionConfig,
@@ -108,7 +110,13 @@ const PORTAL_LIST_SECTION_ICONS: Record<
   later: CalendarDays,
 };
 
-function PortalTimelineRailItem({ appt }: { appt: ApptRow }) {
+function PortalTimelineRailItem({
+  appt,
+  invoiceDisplayStatus,
+}: {
+  appt: ApptRow;
+  invoiceDisplayStatus?: InvoiceDisplayStatus | null;
+}) {
   const { getAppointmentColorToken } = useAppointmentColor();
   const lineColor = getAppointmentColorToken(appt.id, null).lineColor;
   const StatusIcon = resolveAppointmentStatusMeta(appt.status).Icon;
@@ -120,7 +128,10 @@ function PortalTimelineRailItem({ appt }: { appt: ApptRow }) {
       >
         {createElement(StatusIcon, { className: "h-3 w-3", "aria-hidden": true })}
       </div>
-      <PortalAppointmentTimelineCard appointment={appt} />
+      <PortalAppointmentTimelineCard
+        appointment={appt}
+        invoiceDisplayStatus={invoiceDisplayStatus}
+      />
     </div>
   );
 }
@@ -155,6 +166,9 @@ function AppointmentTimeline({
   }, [filtered]);
 
   const visibleSectionKeys = listSectionsForPortalFilter(filter);
+
+  const appointmentIds = useMemo(() => appointments.map((a) => a.id), [appointments]);
+  const invoiceDisplayByAppt = useAppointmentInvoiceDisplayMap(appointmentIds);
 
   const filterTabs: { key: "all" | "upcoming" | "past"; label: string; icon: React.ReactNode }[] = [
     { key: "all", label: "All", icon: <List className="h-3.5 w-3.5" /> },
@@ -263,7 +277,11 @@ function AppointmentTimeline({
                       <div className="relative space-y-3 before:absolute before:inset-y-0 before:left-[18px] before:w-0.5 before:bg-linear-to-b before:from-sky-300/60 before:via-sky-200/40 before:to-transparent">
                         {groups.flatMap((group) =>
                           group.items.map((appt) => (
-                            <PortalTimelineRailItem key={appt.id} appt={appt} />
+                            <PortalTimelineRailItem
+                              key={appt.id}
+                              appt={appt}
+                              invoiceDisplayStatus={invoiceDisplayByAppt.get(appt.id)}
+                            />
                           ))
                         )}
                       </div>

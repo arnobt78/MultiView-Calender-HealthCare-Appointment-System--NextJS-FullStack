@@ -87,7 +87,7 @@ export async function fetchBillingAppointmentOptions(
   const invoiceRows =
     apptIds.length > 0
       ? await prisma.invoice.findMany({
-          where: { appointment_id: { in: apptIds } },
+          where: { appointment_id: { in: apptIds }, deleted_at: null },
           orderBy: { created_at: "desc" },
           select: {
             id: true,
@@ -107,7 +107,9 @@ export async function fetchBillingAppointmentOptions(
   for (const row of rows) {
     const latest = latestByAppt.get(row.id) ?? null;
     const billing = resolveAppointmentBillingSummary(latest);
-    if (!billing.eligible && !includeBilled) continue;
+    const isExactIdSearch =
+      search.length > 0 && isValidUUID(search) && row.id === search;
+    if (!billing.eligible && !includeBilled && !isExactIdSearch) continue;
 
     const feeDoctor = row.treating_physician ?? row.owner;
     const visitFeeCents = resolveVisitFeeCents({

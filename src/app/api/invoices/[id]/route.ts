@@ -19,8 +19,14 @@ import { clearStaleNotificationLinksForEntity } from "@/lib/notification-link";
 import {
   invoiceDetailInclude,
   invoiceUpdateAuditFields,
+  loadInvoiceAuditActorUser,
+  invoiceSoftDeleteByFields,
 } from "@/lib/invoice-api-include";
 import { enrichInvoiceForApi } from "@/lib/invoice-api-enrich";
+import {
+  INVOICE_SOFT_DELETED_ERROR,
+  isPrismaInvoiceSoftDeleted,
+} from "@/lib/invoice-soft-delete-guard";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -86,6 +92,10 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
     const invoice = await prisma.invoice.findUnique({ where: { id } });
     if (!invoice) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+    if (isPrismaInvoiceSoftDeleted(invoice)) {
+      return NextResponse.json({ error: INVOICE_SOFT_DELETED_ERROR }, { status: 403 });
+    }
 
     const { status, description, due_date } = parsed.data;
 
@@ -174,11 +184,24 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     const invoice = await prisma.invoice.findUnique({ where: { id } });
     if (!invoice) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
+    if (isPrismaInvoiceSoftDeleted(invoice)) {
+      return NextResponse.json({ error: "Invoice already deleted" }, { status: 409 });
+    }
+
     if (invoice.status === "paid") {
       return NextResponse.json({ error: "Cannot delete a paid invoice" }, { status: 400 });
     }
 
-    await prisma.invoice.delete({ where: { id } });
+    const actor = await loadInvoiceAuditActorUser(sessionUser.userId);
+    if (!actor) {
+      return NextResponse.json({ error: "User not found" }, { status: 500 });
+    }
+
+    const updated = await prisma.invoice.update({
+      where: { id },
+      data: invoiceSoftDeleteByFields(actor),
+      include: invoiceDetailInclude,
+    });
 
     try {
       await clearStaleNotificationLinksForEntity("invoice", id);
@@ -191,7 +214,8 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
       appointmentId: invoice.appointment_id,
     });
 
-    return NextResponse.json({ success: true });
+    const enriched = await enrichInvoiceForApi(updated);
+    return NextResponse.json({ invoice: enriched });
   } catch (error: unknown) {
     console.error("Invoice DELETE error:", error);
     return NextResponse.json({ error: "Failed to delete invoice" }, { status: 500 });

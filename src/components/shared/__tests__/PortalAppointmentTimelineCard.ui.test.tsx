@@ -26,13 +26,16 @@ vi.mock("@/components/shared/appointment-display/AppointmentCategoryTypeMetaRow"
   AppointmentCategoryTypeMetaRow: ({
     timeRangeLabel,
     appointment,
+    invoiceDisplayStatus,
   }: {
     timeRangeLabel?: string | null;
     appointment: { appointment_type_name?: string | null };
+    invoiceDisplayStatus?: string | null;
   }) => (
     <span data-testid="category-meta">
       {appointment.appointment_type_name}
       {timeRangeLabel ? ` · ${timeRangeLabel}` : ""}
+      {invoiceDisplayStatus ? ` · invoice:${invoiceDisplayStatus}` : ""}
     </span>
   ),
 }));
@@ -99,5 +102,12 @@ describe("PortalAppointmentTimelineCard", () => {
     expect(markup).toContain("Calendar owner:");
     expect(markup).toContain("Demo Admin");
     expect(markup).toContain("Admin");
+  });
+
+  it("forwards invoice display status into category meta row", () => {
+    const markup = renderToStaticMarkup(
+      <PortalAppointmentTimelineCard appointment={appointment} invoiceDisplayStatus="paid" />
+    );
+    expect(markup).toContain("invoice:paid");
   });
 });

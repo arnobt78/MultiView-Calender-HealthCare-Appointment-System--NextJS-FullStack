@@ -287,7 +287,7 @@ export function AppointmentDetailScreenShared({
     [invoices, appointment.id]
   );
 
-  /** Warm invoice create picker from detail cache — avoids VisitPickerSkeleton on New Invoice. */
+  /** Warm invoice create picker from detail cache — avoids VisitPickerSkeleton on Create Invoice. */
   useLayoutEffect(() => {
     if (!hasAppointmentBody) return;
     const option = mapAppointmentDetailToBillingOption(detail, linkedInvoices);

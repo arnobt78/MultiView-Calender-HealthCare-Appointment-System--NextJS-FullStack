@@ -1,6 +1,6 @@
 # Agile V Bootstrap — HealthCal Pro
 
-<!-- Framework initialization + cycle index | Agile V v1.4 | Last refresh: 2026-06-18 (session activation) -->
+<!-- Framework initialization + cycle index | Agile V v1.4 | Last refresh: 2026-06-19 (session activation) -->
 
 ## Infinity Loop (SCOPE-V)
 
@@ -31,7 +31,7 @@ Specify → Constrain → Orchestrate → Prove → Evolve → Verify
 | 2 | `config.json` | Project metadata, cycle, authority matrix, verification commands | ✓ |
 | 3 | `POLICY.yaml` | Policy-as-code (versioned) | ✓ v1.0.0 |
 | 4 | `STATE.md` | Current cycle, phase, stage — **read first on resume** | ✓ |
-| 5 | `REQUIREMENTS.md` | Canonical REQ-XXXX + traceability index | ✓ REQ-0001..0099 |
+| 5 | `REQUIREMENTS.md` | Canonical REQ-XXXX + traceability index | ✓ REQ-0001..0112 |
 | 6 | `BUILD_MANIFEST.md` | ART-XXXX → code paths | ✓ ART-0001..0498 |
 | 7 | `TEST_SPEC.md` | TC-XXXX (requirements-derived) | ✓ TC-0001..0052 |
 | 8 | `VALIDATION_SUMMARY.md` | VER-XXXX results + EvalGate lines | ✓ |
@@ -312,7 +312,21 @@ Current baseline: **1154** tests, **232** files (2026-06-15) · HEAD `ea40860`.
 
 ---
 
-## Infinity Loop Session Activation (2026-06-18) — **CURRENT**
+## Infinity Loop Session Activation (2026-06-19) — **CURRENT**
+
+| Step | Artifact | Status |
+|------|----------|--------|
+| 1 | Load agile-v-core + pipeline + lifecycle + SKILLS.md (24) + compliance | ✓ ACTIVE |
+| 2 | STATE.md C61.1 shipped · C62 specify next | ✓ |
+| 3 | REQUIREMENTS REQ-0001..0112 · BUILD_MANIFEST ART-0618 | ✓ |
+| 4 | EVAL_RESULTS ER-C61-VERIFY PASS | ✓ |
+| 5 | PLAYBOOK + README + agile-v-core.md + config.json synced | ✓ |
+| 6 | Verify npm test **1356/1356** | ✓ 2026-06-19 |
+| 7 | CHECKPOINTS.md — no PENDING HITL | ✓ |
+| 8 | HEAD `1873fd5` (docs) · feature `a37727b` · Infinity Loop rule always on | ✓ |
+| 9 | **Halt until REQ-0113+** for C62 feature work | ✓ |
+
+## Infinity Loop Session Activation (2026-06-18) — archived
 
 | Step | Artifact | Status |
 |------|----------|--------|
@@ -325,6 +339,16 @@ Current baseline: **1154** tests, **232** files (2026-06-15) · HEAD `ea40860`.
 | 7 | CHECKPOINTS.md — no PENDING HITL | ✓ |
 | 8 | HEAD `8cd0d6e` · Infinity Loop rule always on | ✓ |
 | 9 | **Halt until REQ-0100+** for C49 feature work | ✓ |
+
+## Infinity Loop Session Activation (2026-06-18 EOD C60–C61.1) — archived
+
+| Step | Artifact | Status |
+|------|----------|--------|
+| 1 | C60–C61.1 shipped `a37727b` | ✓ |
+| 2 | ER-C61-VERIFY PASS 1356/1356 | ✓ |
+| 3 | Manual QA pending | ✓ HITL |
+
+## Infinity Loop Session Activation (2026-06-18) — superseded
 
 ## Infinity Loop Session Activation (2026-06-17) — archived
 

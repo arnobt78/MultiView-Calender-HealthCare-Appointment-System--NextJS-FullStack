@@ -42,6 +42,10 @@ type AppointmentMenuTarget = {
   status?: string | null;
   treating_physician_id?: string | null;
   appointment_assignee?: AppointmentAssignee[];
+  title?: string | null;
+  start?: string | null;
+  end?: string | null;
+  patient_name?: string | null;
 };
 
 type AppointmentActionsMenuProps = {
@@ -114,7 +118,7 @@ export function AppointmentActionsMenu({
   const isCancelled = appointment.status === "cancelled";
   const [cancelOpen, setCancelOpen] = useState(false);
   const { invoices } = usePayments();
-  const { cancelWithOptionalRefundAsync, isCancelFlowPending, cancellingAppointmentId } =
+  const { cancelWithOptionalRefundAsync, isCancelFlowPendingFor } =
     useAppointmentCancelWithRefund();
 
   const paidInvoiceForCancel = useMemo(
@@ -122,8 +126,7 @@ export function AppointmentActionsMenu({
     [invoices, appointment.id]
   );
 
-  const cancelPendingForRow =
-    isCancelFlowPending && cancellingAppointmentId === appointment.id;
+  const cancelPendingForRow = isCancelFlowPendingFor(appointment.id);
 
   const capabilities = useMemo(
     () =>
@@ -222,7 +225,7 @@ export function AppointmentActionsMenu({
             }}
           >
             <Pencil className="h-4 w-4" />
-            <span>Edit</span>
+            <span>Edit Appointment</span>
           </DropdownMenuItem>
 
           {onSyncToGoogle && showSyncToGoogle ? (
@@ -252,7 +255,7 @@ export function AppointmentActionsMenu({
             }}
           >
             <Ban className="h-4 w-4" />
-            <span>Cancel appointment</span>
+            <span>Cancel Appointment</span>
           </DropdownMenuItem>
 
           {onCreateInvoice && (
@@ -267,7 +270,7 @@ export function AppointmentActionsMenu({
               }}
             >
               <Receipt className="h-4 w-4" />
-              <span>Create invoice</span>
+              <span>Create Invoice</span>
             </DropdownMenuItem>
           )}
 
@@ -282,7 +285,7 @@ export function AppointmentActionsMenu({
             }}
           >
             <Trash2 className="h-4 w-4" />
-            <span>Delete</span>
+            <span>Delete Appointment</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -295,12 +298,15 @@ export function AppointmentActionsMenu({
           userId={userId}
           paidInvoice={paidInvoiceForCancel}
           confirmPending={cancelPendingForRow}
+          appointmentTitle={appointment.title}
+          appointmentStart={appointment.start}
+          appointmentEnd={appointment.end}
+          patientLabel={appointment.patient_name}
           onConfirm={async ({ refundInvoiceId }) => {
             await cancelWithOptionalRefundAsync({
               appointmentId: appointment.id,
               refundInvoiceId,
             });
-            setCancelOpen(false);
           }}
         />
       ) : null}

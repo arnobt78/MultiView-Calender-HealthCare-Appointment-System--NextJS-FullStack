@@ -2,11 +2,19 @@
 
 import { format } from "date-fns";
 import { InvoiceIssuedByMeta } from "@/components/shared/billing/InvoiceIssuedByMeta";
+import { invoiceIssuedByMetaProps } from "@/lib/invoice-issued-by-display";
+import { InvoiceDeletionActorMeta } from "@/components/shared/billing/InvoiceDeletionActorMeta";
 import { InvoiceDueTableCell } from "@/components/shared/billing/invoice-table-cells";
 import type { Invoice } from "@/hooks/usePayments";
 import {
+  listInvoiceDeletionMetaSlices,
+} from "@/lib/entity-detail-audit-actor";
+import {
   invoiceDueDateTextClassForStatus,
+  invoiceDetachedVisitMetaTextClass,
+  invoiceDueDateTextClassForDetachedVisit,
   invoiceStatusInlineTextClass,
+  isInvoiceTombstone,
 } from "@/lib/invoice-status-display";
 import { resolveInvoiceDisplayStatus } from "@/lib/billing-appointment-eligibility";
 import { resolveInvoiceListMetaStatusDates } from "@/lib/invoice-list-meta-status-dates";
@@ -28,6 +36,10 @@ export function InvoicePortalListMetaRow({
 }: Props) {
   const displayStatus = resolveInvoiceDisplayStatus(invoice);
   const statusDates = resolveInvoiceListMetaStatusDates(invoice);
+  const tombstone = isInvoiceTombstone(invoice);
+  const deletionSlices = listInvoiceDeletionMetaSlices(invoice);
+  const detachedLabelClass = invoiceDetachedVisitMetaTextClass();
+  const detachedValueClass = invoiceDueDateTextClassForDetachedVisit();
 
   return (
     <div
@@ -36,18 +48,37 @@ export function InvoicePortalListMetaRow({
         className
       )}
     >
+      {deletionSlices.map((slice) => (
+        <InvoiceDeletionActorMeta
+          key={slice.kind}
+          kind={slice.kind}
+          at={slice.at}
+          actor={slice.actor}
+          viewerRole={viewerRole}
+        />
+      ))}
       <span className="inline-flex min-w-0 items-center gap-1">
         <span className="shrink-0 font-medium text-slate-600">Due:</span>
-        <InvoiceDueTableCell invoice={invoice} />
+        {tombstone ? (
+          <span className={cn("text-xs tabular-nums", detachedValueClass)}>
+            {invoice.due_date
+              ? format(new Date(invoice.due_date), "dd MMM yyyy")
+              : "—"}
+          </span>
+        ) : (
+          <InvoiceDueTableCell invoice={invoice} />
+        )}
       </span>
       <span className="inline-flex min-w-0 items-center gap-1">
         <span className="shrink-0 font-medium text-slate-600">Created:</span>
         <span
           className={cn(
             "tabular-nums",
-            invoice.due_date
-              ? clinicalCellMutedTextClass
-              : invoiceDueDateTextClassForStatus(displayStatus)
+            tombstone
+              ? detachedValueClass
+              : invoice.due_date
+                ? clinicalCellMutedTextClass
+                : invoiceDueDateTextClassForStatus(displayStatus)
           )}
         >
           {format(new Date(invoice.created_at), "dd MMM yyyy")}
@@ -58,7 +89,9 @@ export function InvoicePortalListMetaRow({
           <span
             className={cn(
               "shrink-0 font-medium",
-              invoiceStatusInlineTextClass(segment.label.toLowerCase())
+              tombstone
+                ? detachedLabelClass
+                : invoiceStatusInlineTextClass(segment.label.toLowerCase())
             )}
           >
             {segment.label}:
@@ -66,7 +99,9 @@ export function InvoicePortalListMetaRow({
           <span
             className={cn(
               "tabular-nums",
-              invoiceStatusInlineTextClass(segment.label.toLowerCase())
+              tombstone
+                ? detachedValueClass
+                : invoiceStatusInlineTextClass(segment.label.toLowerCase())
             )}
           >
             {format(new Date(segment.iso), "dd MMM yyyy")}
@@ -74,14 +109,9 @@ export function InvoicePortalListMetaRow({
         </span>
       ))}
       <InvoiceIssuedByMeta
-        createdAt={invoice.created_at}
-        issuerLabel={invoice.issuer_label}
-        issuerImage={invoice.issuer_image}
-        issuerEmail={invoice.issuer_email}
-        issuerUserId={invoice.user_id}
-        issuerRole={invoice.issuer_role}
-        viewerRole={viewerRole}
-        className="min-w-0 shrink"
+        {...invoiceIssuedByMetaProps(invoice, viewerRole)}
+        issuedTextTone="sky"
+        layout="wrapInline"
       />
     </div>
   );

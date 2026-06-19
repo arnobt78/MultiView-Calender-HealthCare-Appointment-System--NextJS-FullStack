@@ -5,14 +5,15 @@
 
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
-import { CalendarClock, CreditCard, Receipt, UserRound } from "lucide-react";
+import { CalendarClock, CreditCard, Receipt, Trash2, UserRound } from "lucide-react";
 import { format } from "date-fns";
 import type { Invoice } from "@/hooks/usePayments";
 import { invoiceDueDateTextClassForInvoice } from "@/lib/invoice-status-display";
 import { ClinicalEmptyDash } from "@/components/shared/ClinicalTableEmptyDash";
 import { EntityDetailAuditActorInline } from "@/components/shared/entity-detail/EntityDetailAuditActorInline";
 import type { EntityDetailAuditActor } from "@/lib/entity-detail-audit-actor";
-import { mapInvoiceRecordAuditActors } from "@/lib/entity-detail-audit-actor";
+import { mapInvoiceRecordAuditActors, listInvoiceDeletionMetaSlices } from "@/lib/entity-detail-audit-actor";
+import { InvoiceDeletionActorMeta } from "@/components/shared/billing/InvoiceDeletionActorMeta";
 import type { EntityRole } from "@/lib/entity-routes";
 import { cn } from "@/lib/utils";
 
@@ -127,6 +128,22 @@ export function buildInvoiceDetailAuditExtraRows(
 ): EntityDetailAuditExtraRow[] {
   const issuer = mapInvoiceIssuerActor(invoice);
   const rows: EntityDetailAuditExtraRow[] = [];
+
+  for (const slice of listInvoiceDeletionMetaSlices(invoice)) {
+    rows.push({
+      icon: slice.kind === "visit" ? CalendarClock : Trash2,
+      label: slice.kind === "visit" ? "Visit deleted" : "Invoice deleted",
+      children: (
+        <InvoiceDeletionActorMeta
+          kind={slice.kind}
+          at={slice.at}
+          actor={slice.actor}
+          viewerRole={viewerRole ?? undefined}
+          layout="wrapInline"
+        />
+      ),
+    });
+  }
 
   if (issuer) {
     rows.push({

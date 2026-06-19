@@ -5,6 +5,7 @@ import {
   mapApiInvoiceToRow,
   mergeInvoiceIntoDetailCache,
   mergeInvoiceIntoScopedListCaches,
+  patchLinkedInvoiceAppointmentStatusInCaches,
   removeInvoiceFromScopedListCaches,
   resolvePatientIdFromInvoiceRow,
 } from "@/lib/billing-invoice-map";
@@ -206,5 +207,52 @@ describe("removeInvoiceFromScopedListCaches", () => {
     expect(
       qc.getQueryData<{ invoices: InvoiceRow[] }>(queryKeys.invoices.byDoctor(DOC))?.invoices
     ).toHaveLength(0);
+  });
+});
+
+describe("patchLinkedInvoiceAppointmentStatusInCaches", () => {
+  const APPT = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+
+  it("updates visit_summary.appointment_status on linked invoice rows", () => {
+    const qc = new QueryClient();
+    const row: InvoiceRow = {
+      id: INV,
+      user_id: DOC,
+      appointment_id: APPT,
+      amount: 5000,
+      currency: "eur",
+      status: "draft",
+      created_at: "2026-01-01T00:00:00.000Z",
+      payments: [],
+      visit_summary: {
+        appointment_id: APPT,
+        title: "Visit",
+        appointment_status: "done",
+        start_iso: "2026-06-01T10:00:00.000Z",
+        end_iso: "2026-06-01T10:30:00.000Z",
+        when_label: "Mon",
+        location_label: "Clinic",
+        is_telehealth: false,
+        patient_id: null,
+        patient_label: null,
+        category_id: null,
+        category_label: null,
+        category_color: null,
+        category_icon: null,
+        treating_physician_id: null,
+        treating_physician_label: null,
+        treating_physician_specialty: null,
+        calendar_owner_id: null,
+        calendar_owner_label: null,
+        calendar_owner_specialty: null,
+      },
+    };
+    qc.setQueryData(queryKeys.invoices.all, [row]);
+
+    patchLinkedInvoiceAppointmentStatusInCaches(qc, APPT, "cancelled");
+
+    const updated = qc.getQueryData<InvoiceRow[]>(queryKeys.invoices.all)?.[0];
+    expect(updated?.visit_summary?.appointment_status).toBe("cancelled");
+    expect(qc.getQueryData(queryKeys.invoices.detail(INV))).toEqual(updated);
   });
 });

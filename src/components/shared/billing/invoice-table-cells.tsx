@@ -3,10 +3,13 @@
 import { Receipt } from "lucide-react";
 import { InvoiceVisitDescriptionStack } from "@/components/shared/billing/InvoiceVisitDescriptionStack";
 import { InvoiceIssuedByMeta } from "@/components/shared/billing/InvoiceIssuedByMeta";
+import { invoiceIssuedByMetaProps } from "@/lib/invoice-issued-by-display";
+import { InvoiceDeletionActorMeta } from "@/components/shared/billing/InvoiceDeletionActorMeta";
 import { InvoiceAmountDisplay } from "@/components/shared/billing/InvoiceAmountDisplay";
 import { InvoiceStatusBadge } from "@/components/shared/billing/InvoiceStatusBadge";
 import type { Invoice } from "@/hooks/usePayments";
-import { invoiceDueDateTextClassForInvoice } from "@/lib/invoice-status-display";
+import { invoiceDueDateTextClassForInvoice, isInvoiceTombstone, invoiceDueDateTextClassForDetachedVisit } from "@/lib/invoice-status-display";
+import { listInvoiceDeletionMetaSlices } from "@/lib/entity-detail-audit-actor";
 import {
   clinicalCellMutedTextClass,
   clinicalTableCellMinRowClass,
@@ -103,16 +106,27 @@ export function InvoiceDescriptionTableCell({
 }
 
 export function InvoiceDueTableCell({ invoice }: { invoice: Invoice }) {
+  const tombstone = isInvoiceTombstone(invoice);
   if (!invoice.due_date) {
     return (
-      <span className={cn(clinicalCellMutedTextClass, "text-xs")}>—</span>
+      <span
+        className={cn(
+          clinicalCellMutedTextClass,
+          "text-xs",
+          tombstone ? invoiceDueDateTextClassForDetachedVisit() : null
+        )}
+      >
+        —
+      </span>
     );
   }
   return (
     <span
       className={cn(
         "text-xs tabular-nums",
-        invoiceDueDateTextClassForInvoice(invoice)
+        tombstone
+          ? invoiceDueDateTextClassForDetachedVisit()
+          : invoiceDueDateTextClassForInvoice(invoice)
       )}
     >
       {format(new Date(invoice.due_date), "dd MMM yyyy")}
@@ -193,19 +207,31 @@ export function InvoiceCreatedTableCell({
   invoice,
   viewerRole = "admin",
 }: InvoiceCreatedTableCellProps) {
+  const tombstone = isInvoiceTombstone(invoice);
+  const deletionSlices = listInvoiceDeletionMetaSlices(invoice);
   return (
     <div className="flex min-w-0 flex-col gap-1 py-0.5">
-      <span className={cn(clinicalCellMutedTextClass, "text-xs tabular-nums")}>
+      {deletionSlices.map((slice) => (
+        <InvoiceDeletionActorMeta
+          key={slice.kind}
+          kind={slice.kind}
+          at={slice.at}
+          actor={slice.actor}
+          viewerRole={viewerRole}
+          layout="compact"
+        />
+      ))}
+      <span
+        className={cn(
+          clinicalCellMutedTextClass,
+          "text-xs tabular-nums",
+          tombstone ? invoiceDueDateTextClassForDetachedVisit() : null
+        )}
+      >
         {format(new Date(invoice.created_at), "dd MMM yyyy")}
       </span>
       <InvoiceIssuedByMeta
-        createdAt={invoice.created_at}
-        issuerLabel={invoice.issuer_label}
-        issuerImage={invoice.issuer_image}
-        issuerEmail={invoice.issuer_email}
-        issuerUserId={invoice.user_id}
-        issuerRole={invoice.issuer_role}
-        viewerRole={viewerRole}
+        {...invoiceIssuedByMetaProps(invoice, viewerRole)}
         issuedTextTone="sky"
         compact
       />

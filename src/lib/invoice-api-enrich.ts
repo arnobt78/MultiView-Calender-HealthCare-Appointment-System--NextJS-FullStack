@@ -7,6 +7,7 @@ import { serializeInvoice } from "@/lib/serializers";
 import {
   attachInvoiceIssuerLabels,
   attachVisitSummariesToInvoices,
+  parseStoredVisitSnapshot,
 } from "@/lib/invoice-visit-summary";
 import type { InvoiceRow } from "@/lib/billing-types";
 
@@ -30,6 +31,19 @@ export async function enrichInvoiceForApi(row: InvoicePrismaRow): Promise<Invoic
     due_date: invoice.due_date ?? undefined,
     paid_at: invoice.paid_at ?? undefined,
     cancelled_at: invoice.cancelled_at ?? undefined,
+    visit_detached_at: invoice.visit_detached_at ?? undefined,
+    visit_detached_by_id: invoice.visit_detached_by_id ?? undefined,
+    visit_detached_by_display: invoice.visit_detached_by_display ?? undefined,
+    visit_detached_by_email: invoice.visit_detached_by_email ?? undefined,
+    visit_detached_by_image: invoice.visit_detached_by_image ?? undefined,
+    visit_detached_by_role: invoice.visit_detached_by_role ?? undefined,
+    deleted_at: invoice.deleted_at ?? undefined,
+    deleted_by_id: invoice.deleted_by_id ?? undefined,
+    deleted_by_display: invoice.deleted_by_display ?? undefined,
+    deleted_by_email: invoice.deleted_by_email ?? undefined,
+    deleted_by_image: invoice.deleted_by_image ?? undefined,
+    deleted_by_role: invoice.deleted_by_role ?? undefined,
+    visit_snapshot: parseStoredVisitSnapshot(invoice.visit_snapshot) ?? undefined,
     updated_at: invoice.updated_at ?? undefined,
     payments: invoice.payments.map((p) => ({
       id: p.id,

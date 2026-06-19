@@ -75,4 +75,28 @@ describe("buildInvoiceDetailAuditExtraRows", () => {
     const rows = buildInvoiceDetailAuditExtraRows(baseInvoice());
     expect(rows.map((r) => r.label)).toEqual(["Issued by", "Due date", "Paid at"]);
   });
+
+  it("includes visit deleted row when visit_detached_at set", () => {
+    const rows = buildInvoiceDetailAuditExtraRows({
+      ...baseInvoice(),
+      visit_detached_at: "2026-06-19T12:00:00.000Z",
+      visit_detached_by_id: "admin-1",
+      visit_detached_by_display: "Demo Admin",
+      visit_detached_by_email: "test@admin.com",
+      visit_detached_by_role: "admin",
+    });
+    expect(rows.map((r) => r.label)).toContain("Visit deleted");
+  });
+
+  it("includes invoice deleted row when deleted_at set", () => {
+    const rows = buildInvoiceDetailAuditExtraRows({
+      ...baseInvoice(),
+      deleted_at: "2026-06-19T13:00:00.000Z",
+      deleted_by_id: "doctor-1",
+      deleted_by_display: "Demo Doctor",
+      deleted_by_email: "test@doctor.com",
+      deleted_by_role: "doctor",
+    });
+    expect(rows.map((r) => r.label)).toContain("Invoice deleted");
+  });
 });

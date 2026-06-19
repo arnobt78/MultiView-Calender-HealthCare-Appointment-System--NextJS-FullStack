@@ -30,7 +30,7 @@ export function CreateInvoiceDialog({
   variant,
   onCreate,
   appointmentId,
-  triggerLabel = "New Invoice",
+  triggerLabel = "Create Invoice",
   triggerClassName,
   triggerIcon: TriggerIcon = Plus,
   isSubmitting = false,

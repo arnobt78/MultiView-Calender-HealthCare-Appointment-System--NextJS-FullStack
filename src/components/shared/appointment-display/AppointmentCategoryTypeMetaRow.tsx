@@ -12,6 +12,8 @@ import {
   resolveAppointmentTypeDurationMinutes,
   type AppointmentTypeDisplaySource,
 } from "@/lib/appointment-type-display";
+import type { InvoiceDisplayStatus } from "@/lib/billing-appointment-eligibility";
+import { InvoiceStatusBadge } from "@/components/shared/billing/InvoiceStatusBadge";
 import { cn } from "@/lib/utils";
 
 type CategoryProps = {
@@ -28,6 +30,8 @@ type Props = {
   appointment: AppointmentTypeDisplaySource;
   displayFeeCents?: number | null;
   showFeeEstimateHint?: boolean;
+  /** Linked invoice status — inline after fee on portal history cards. */
+  invoiceDisplayStatus?: InvoiceDisplayStatus | null;
   timeRangeLabel?: string | null;
   wrap?: boolean;
   className?: string;
@@ -42,6 +46,7 @@ export function AppointmentCategoryTypeMetaRow({
   appointment,
   displayFeeCents,
   showFeeEstimateHint = false,
+  invoiceDisplayStatus,
   timeRangeLabel,
   wrap = true,
   className,
@@ -93,6 +98,9 @@ export function AppointmentCategoryTypeMetaRow({
             priceCents={feeCents}
             showEstimateHint={showFeeEstimateHint}
           />
+        ) : null}
+        {invoiceDisplayStatus ? (
+          <InvoiceStatusBadge displayStatus={invoiceDisplayStatus} />
         ) : null}
       </span>
     </AppointmentCardMetaRow>

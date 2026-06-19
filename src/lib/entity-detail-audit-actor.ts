@@ -185,6 +185,98 @@ export function mapInvoiceRecordAuditActors(invoice: {
   };
 }
 
+/** Visit detached — map frozen actor from denormalized invoice fields (REQ-0114). */
+export function mapInvoiceVisitDetachedByActor(invoice: {
+  visit_detached_by_id?: string | null;
+  visit_detached_by_display?: string | null;
+  visit_detached_by_email?: string | null;
+  visit_detached_by_image?: string | null;
+  visit_detached_by_role?: string | null;
+}): EntityDetailAuditActor | null {
+  return mapRecordAuditActorFromDenormalizedFields(
+    invoice.visit_detached_by_id,
+    invoice.visit_detached_by_display,
+    invoice.visit_detached_by_email,
+    invoice.visit_detached_by_image,
+    invoice.visit_detached_by_role
+  );
+}
+
+/** Invoice soft-delete — map frozen actor from denormalized invoice fields (REQ-0114). */
+export function mapInvoiceSoftDeletedByActor(invoice: {
+  deleted_by_id?: string | null;
+  deleted_by_display?: string | null;
+  deleted_by_email?: string | null;
+  deleted_by_image?: string | null;
+  deleted_by_role?: string | null;
+}): EntityDetailAuditActor | null {
+  return mapRecordAuditActorFromDenormalizedFields(
+    invoice.deleted_by_id,
+    invoice.deleted_by_display,
+    invoice.deleted_by_email,
+    invoice.deleted_by_image,
+    invoice.deleted_by_role
+  );
+}
+
+/** Shared invoice slice for deletion meta UI (list, detail banner, audit rows). */
+export type InvoiceDeletionMetaSlice = {
+  kind: "visit" | "invoice";
+  at: string;
+  actor: EntityDetailAuditActor | null;
+};
+
+export type InvoiceDeletionMetaSource = {
+  visit_detached_at?: string | null;
+  visit_detached_by_id?: string | null;
+  visit_detached_by_display?: string | null;
+  visit_detached_by_email?: string | null;
+  visit_detached_by_image?: string | null;
+  visit_detached_by_role?: string | null;
+  deleted_at?: string | null;
+  deleted_by_id?: string | null;
+  deleted_by_display?: string | null;
+  deleted_by_email?: string | null;
+  deleted_by_image?: string | null;
+  deleted_by_role?: string | null;
+};
+
+export function resolveInvoiceVisitDeletionMeta(
+  invoice: InvoiceDeletionMetaSource
+): InvoiceDeletionMetaSlice | null {
+  const at = invoice.visit_detached_at?.trim();
+  if (!at) return null;
+  return {
+    kind: "visit",
+    at,
+    actor: mapInvoiceVisitDetachedByActor(invoice),
+  };
+}
+
+export function resolveInvoiceSoftDeletionMeta(
+  invoice: InvoiceDeletionMetaSource
+): InvoiceDeletionMetaSlice | null {
+  const at = invoice.deleted_at?.trim();
+  if (!at) return null;
+  return {
+    kind: "invoice",
+    at,
+    actor: mapInvoiceSoftDeletedByActor(invoice),
+  };
+}
+
+/** Visit detached first, then invoice soft-delete — detail banner + audit rows. */
+export function listInvoiceDeletionMetaSlices(
+  invoice: InvoiceDeletionMetaSource
+): InvoiceDeletionMetaSlice[] {
+  const slices: InvoiceDeletionMetaSlice[] = [];
+  const visit = resolveInvoiceVisitDeletionMeta(invoice);
+  if (visit) slices.push(visit);
+  const deleted = resolveInvoiceSoftDeletionMeta(invoice);
+  if (deleted) slices.push(deleted);
+  return slices;
+}
+
 /** Organization detail — map denormalized audit fields from `serializeOrganization`. */
 export function mapOrganizationRecordAuditActors(org: OrganizationAuditSource): {
   createdBy: EntityDetailAuditActor | null;

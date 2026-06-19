@@ -55,8 +55,8 @@ describe("buildStripeCheckoutProductCopy", () => {
       visit_summary: baseSummary,
     });
 
-    expect(copy.name).toContain("Initial Consultation");
-    expect(copy.name).not.toContain("02-demo-owner-today-pending");
+    expect(copy.name).toContain("Demo curated — 02-demo-owner-today-pending");
+    expect(copy.name).not.toContain("Initial Consultation");
     expect(copy.description).toContain(
       "Initial Consultation Mon, 01 Jun 2026 · 12:00 – 12:30"
     );

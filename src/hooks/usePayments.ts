@@ -305,43 +305,34 @@ export function usePayments(options?: UsePaymentsOptions) {
   });
 
   const deleteInvoiceMutation = useMutation({
-    mutationFn: (invoiceId: string) =>
-      apiClient(`/api/invoices/${invoiceId}`, { method: "DELETE" }),
+    mutationFn: async (invoiceId: string) => {
+      const data = await apiClient<{ invoice: Parameters<typeof mapApiInvoiceToRow>[0] }>(
+        `/api/invoices/${invoiceId}`,
+        { method: "DELETE" }
+      );
+      return mapApiInvoiceToRow(data.invoice);
+    },
     onMutate: async (invoiceId) => {
       const invoices =
         queryClient.getQueryData<Invoice[]>(queryKeys.invoices.all) ?? EMPTY_INVOICES;
-      const deleted = invoices.find((inv) => inv.id === invoiceId) ?? null;
-      return { deleted };
+      const previousRow = invoices.find((inv) => inv.id === invoiceId) ?? null;
+      return { previousRow };
     },
-    onSuccess: async (_, invoiceId, context) => {
-      const deleted = context?.deleted;
-      const label = deleted?.description?.trim() || "Invoice";
-      const amountFormatted = deleted
-        ? formatInvoiceMoney({
-            amount: deleted.amount,
-            currency: deleted.currency,
-            unit: "cents",
-          })
-        : undefined;
+    onSuccess: async (row, _invoiceId, context) => {
+      const previousRow = context?.previousRow;
+      const label = previousRow?.description?.trim() || row.description?.trim() || "Invoice";
+      const amountFormatted = formatInvoiceMoney({
+        amount: row.amount,
+        currency: row.currency,
+        unit: "cents",
+      });
       notify.crud(invoiceCrudMessage("deleted", { label, amountFormatted }));
-      if (deleted) {
-        await syncAfterInvoiceWrite(queryClient, deleted, {
-          scope: "full",
-          previousRow: deleted,
-          deleted: true,
-          appointmentId: deleted.appointment_id,
-          organizationId: deleted.organization_id,
-        });
-      } else {
-        await syncInvoicesAfterWrite(queryClient, {
-          invoiceId,
-          scope: "full",
-          totalsChanged: true,
-          cachesMerged: false,
-          deleted: true,
-        });
-        publishInvoiceRemoveCrossTab(invoiceId, { scope: "full" });
-      }
+      await syncAfterInvoiceWrite(queryClient, row, {
+        scope: "full",
+        previousRow,
+        appointmentId: row.appointment_id,
+        organizationId: row.organization_id,
+      });
       await invalidateNotificationsAndCrossTab(queryClient);
     },
     onError: (error) => handleApiError(error, "Failed to delete invoice"),
