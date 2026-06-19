@@ -317,6 +317,7 @@ export interface DoctorRow {
   languages_spoken?: string[];
   years_of_experience?: number | null;
   office_location?: string | null;
+  department?: string | null;
   availabilities: { weekday: number; start_min: number; end_min: number; timezone: string }[];
   appointment_types: Pick<AppointmentType, "id" | "name" | "duration_minutes" | "is_telehealth" | "price_cents">[];
   patient_count: number;
@@ -358,6 +359,27 @@ export interface DoctorPortalData {
 }
 
 // AdminPortalData — shape returned by GET /api/admin-portal (SSR prefetch)
+export type AdminPortalClinicianEmbed = {
+  id: string;
+  display_name: string | null;
+  email: string;
+  image?: string | null;
+  specialty?: string | null;
+  role?: string | null;
+};
+
+/** Admin portal appointment list row — enriched joins for rich portal cards. */
+export type AdminPortalAppointmentRow = Appointment & {
+  patient_name?: string | null;
+  patient_email?: string | null;
+  patient_image?: string | null;
+  /** @deprecated use owner_clinician */
+  owner_display?: string | null;
+  category_data?: Pick<Category, "id" | "label" | "color" | "icon"> | null;
+  owner_clinician?: AdminPortalClinicianEmbed | null;
+  treating_clinician?: AdminPortalClinicianEmbed | null;
+};
+
 export interface AdminPortalData {
   overview: {
     totalAppointments: number;
@@ -370,5 +392,8 @@ export interface AdminPortalData {
     outstandingRevenueCents: number;
   };
   doctors: DoctorRow[];
-  recentAppointments: Appointment[];
+  /** Alias kept for older consumers — same array as `appointments`. */
+  recentAppointments: AdminPortalAppointmentRow[];
+  appointments: AdminPortalAppointmentRow[];
+  appointmentTotal: number;
 }

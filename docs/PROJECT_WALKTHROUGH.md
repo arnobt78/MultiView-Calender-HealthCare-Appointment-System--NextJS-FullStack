@@ -1,18 +1,19 @@
 # HealthCal Pro — Project Walkthrough
 
-## Agent resume (2026-06-19 — C67)
+## Agent resume (2026-06-19 — C68)
 
-**1404/1404** · tsc · lint · build PASS
+**1413/1413** · tsc · lint · build PASS
 
 | Cycle | REQ | Highlights |
 |-------|-----|------------|
+| C68 | 0117 | admin portal SSR — `admin-portal-load.ts` · skeleton · invoice prefetch · rich rows · 25/page pagination |
 | C67 | — | month edit/invoice parity · `calendar-date-display` en-US · `billing-appointment-option-from-calendar` cache seed |
 | C66 | — | `InvoiceVisitTitleRow` · cancel dialog spinner · demo Stripe refund guard |
 | C65 | 0116 | issued-by `created_by_*` · curated seed v3 |
 | C64 | 0115 | done→draft sync · `appointment-done-billing-sync` · invoice visit snapshot / soft-delete |
 | C61.1 | 0112 | menu-owned cancel · cancel dialog UI test |
 
-**Keys:** `billing-appointment-option-from-calendar.ts` · `calendar-date-display.ts` · `useInvoiceFormDialogController` · `InvoiceVisitTitleRow` · `appointment-done-billing-sync.ts`
+**Keys:** `admin-portal-load.ts` · `admin-portal-pagination.ts` · `components/admin-portal/*` · `billing-appointment-option-from-calendar.ts` · `calendar-date-display.ts`
 
 **Invariants:** calendar Create Invoice seeds `queryKeys.billing.appointmentOptions(id)` from `appointments.all` + `users.search` · invoice writes → `syncInvoicesAfterWrite` / `mergeInvoiceIntoAllCaches` · weekday/month copy en-US (EUR amounts still de-DE)
 

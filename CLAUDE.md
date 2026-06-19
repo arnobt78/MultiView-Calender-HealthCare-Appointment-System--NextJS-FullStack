@@ -4,11 +4,12 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 
 ## Latest (2026-06-19)
 
+- **C68 (REQ-0117):** admin portal SSR redesign — `admin-portal-load.ts` shared loader · `force-dynamic` + skeleton · invoice prefetch · rich appointment rows · doctor directory (no inner scroll) · client pagination 25/page (100 cap)
 - **C67:** month view parity — `AppointmentDialogController` `isOpen` · side-panel close · `calendar-date-display` en-US · Create Invoice seeds `billing-appointment-option-from-calendar` + `queryKeys.users.search`
 - **C66:** `InvoiceVisitTitleRow` · cancel dialog pending · demo `pi_demo_curated_*` refund local-only · portal invoice/timeline polish
 - **C65 (REQ-0116):** issued-by = `created_by_*` · curated seed v3
 - **C64 (REQ-0115):** done→draft invoice cache · `appointment-done-billing-sync` · visit snapshot soft-delete
-- **Verify:** **1404/1404** · tsc · lint · build PASS
+- **Verify:** **1413/1413** · tsc · lint · build PASS
 
 ## Doctor invoice RBAC (C48)
 
@@ -58,11 +59,12 @@ Cross-tab: `query-cache-cross-tab.ts`.
 
 - Entity detail: `EntityDetailPageShell` · `InvoiceClinicalListTable` · `PatientDetailScreen`
 - Role routes: `entity-routes.ts` — admin CP · doctor/patient portal
+- Admin portal: `admin-portal-load.ts` · `components/admin-portal/*` · `AdminPortalPageSkeleton`
 - CP lists: `cp-clinical-list-table-classes.ts`
 
 ## Agile V
 
-`.agile-v/STATE.md` · **C67 shipped** · **1404/1404** · REQ-0116.
+`.agile-v/STATE.md` · **C68 shipped** · **1413/1413** · REQ-0117.
 
 ## Principle
 

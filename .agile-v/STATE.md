@@ -6,34 +6,34 @@
 
 | Field | Value |
 |-------|-------|
-| **Cycle** | **C65 shipped** (verify PASS, uncommitted) |
+| **Cycle** | **C68 shipped** |
 | **Phase** | Accept |
-| **Stage** | **verify PASS** |
-| **Status** | **ER-C65-VERIFY PASS** · **1389/1389** |
+| **Stage** | **shipped** |
+| **Status** | **ER-C68-ACCEPT** |
 | **Last Updated** | 2026-06-19 |
-| **Last REQ** | **REQ-0116** (C65) |
-| **HEAD** | C62–C65 changes uncommitted |
+| **Last REQ** | **REQ-0117** (C68) |
+| **HEAD** | C68 pending commit |
 
 ## Verify baseline
 
-**1389/1389** · tsc · lint · build — PASS · DB seeded v3 (`db:reset-demo-appointments`)
+**1413/1413** · tsc · lint · build PASS
 
-## Shipped (C65 — REQ-0116)
+## Shipped (C68 — REQ-0117)
 
 | Area | Summary |
 |------|---------|
-| Issued-by actor | `invoice-issued-by-display` — `created_by_*` on all list/portal meta surfaces |
-| Seed v3 | 10 curated rows; `invoiceCreatedByEmail` admin vs doctor; marker `v3` |
-| Demo users | Mostly test@admin / test@doctor / test@patient + 2 mixed patients |
+| Loader | `admin-portal-load.ts` — API + SSR parity, 100 appts |
+| SSR | `force-dynamic` · skeleton fallback · invoice prefetch |
+| UI | `PortalPanelSection` · rich rows · client pagination 25/page |
+| Doctors | Full directory scroll · enriched cards |
 
-## Key paths (C65)
+## Key paths (C68)
 
-- **Display:** `invoice-issued-by-display.ts` · `InvoiceIssuedByMeta.tsx`
-- **Seed:** `demo-appointment-curated-spec.ts` · `demo-appointment-curated-seed.ts` · `db:reset-demo-appointments`
+- **Load:** `admin-portal-load.ts` · `admin-portal-pagination.ts`
+- **UI:** `components/admin-portal/*` · `AdminPortalPageSkeleton.tsx`
 
 ## Next session start
 
 1. Read this file + `CHECKPOINTS.md` (none pending).
-2. Manual QA: row #01 admin issued vs #02 doctor issued on patient portal; row #03 mark-done.
-3. Commit C62–C65 batch when ready.
-4. New feature → **Specify C66** + **REQ-0117**.
+2. Manual QA: admin portal appointment pagination + doctor cards + CP detail links.
+3. Specify C69 / REQ-0118 when ready.

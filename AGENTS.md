@@ -10,7 +10,7 @@
 
 ## Resume
 
-1. `.agile-v/STATE.md` — **C67 shipped** · **1404/1404** · manual QA pending
+1. `.agile-v/STATE.md` — **C68 shipped** · **1413/1413** · manual QA pending
 2. `.agile-v/CHECKPOINTS.md` if PENDING HITL (**none**)
 3. Parent **`REQ-XXXX`** in `.agile-v/REQUIREMENTS.md` before any code (**halt if missing**)
 
@@ -28,6 +28,7 @@ npm test && npx tsc --noEmit && npm run lint && npm run build
 
 | Cycle | REQ | Status |
 |-------|-----|--------|
+| C68 | 0117 | shipped verify PASS |
 | C67 | — | month edit/invoice parity · en-US dates |
 | C66 | — | InvoiceVisitTitleRow · cancel/refund polish |
 | C65 | 0116 | shipped verify PASS |
@@ -49,4 +50,4 @@ npm test && npx tsc --noEmit && npm run lint && npm run build
 | C49 | 0100 | stable fallbacks + admin staff href |
 | C48 / C48.1 | 0099 | shipped `8ba3acf` |
 
-**Next:** Manual QA seed v3, commit C62–C65, then **Specify C66** + **REQ-0117**.
+**Next:** Manual QA admin portal (C68), then **Specify C69** + **REQ-0118**.

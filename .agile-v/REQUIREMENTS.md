@@ -1990,3 +1990,22 @@
 2. KPI grid uses `PatientStatCard`; pulse only when `!hasCache && isLoading`.
 3. Recent appointments + doctor directory reuse shared clinical list components.
 4. CRUD elsewhere updates admin portal in-place without refresh.
+
+### REQ-0117 — Admin portal SSR shell + rich lists (C68)
+
+| Field | Value |
+|-------|-------|
+| Status | approved [C68] |
+| Priority | P1 |
+| Risk | R1 |
+| Parent | REQ-0040 |
+
+**Statement:** Shared `admin-portal-load` for SSR/API parity; static chrome + targeted skeletons; rich appointment rows (up to 100, client paginate 25/page); full doctor directory without inner scroll; `prefetchInvoices` for invoice badges; `invalidateAdminPortal` unchanged.
+
+**Acceptance criteria:**
+1. `fetchAdminPortalData` in `admin-portal-load.ts` — API route + `prefetchAdminPortal` delegate.
+2. `force-dynamic` + skeleton fallback + parallel invoice SSR seed on `/admin-portal`.
+3. `PortalPanelSection` panels; `useQueryBodyLoading` for list body pulse only.
+4. Appointment rows reuse portal list patterns (patient, clinicians, category, invoice badge).
+5. Doctor directory shows full list (no `max-h` scroll); enriched doctor cards.
+6. CRUD elsewhere refreshes admin portal without navigation.

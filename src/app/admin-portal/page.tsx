@@ -1,15 +1,15 @@
-// Admin Portal — async Server Component
-// Pre-fetches global clinic KPIs, doctor directory, and recent appointments
-// so AdminPortalPage seeds TanStack Query cache before first paint.
-//
-// RBAC: only users with the "admin" role (new user default) may access this route.
+// Admin Portal — SSR prefetch + invoice seed; skeleton when prefetch fails.
 
 import AdminPortalPage from "@/components/pages/AdminPortalPage";
+import { AdminPortalPageSkeleton } from "@/components/pages/AdminPortalPageSkeleton";
 import { getSessionUser } from "@/lib/session";
 import { redirect } from "next/navigation";
-import { prefetchAdminPortal } from "@/lib/server-prefetch";
+import { prefetchAdminPortal, prefetchInvoices } from "@/lib/server-prefetch";
 import type { AdminPortalData } from "@/types/types";
+import type { Invoice } from "@/hooks/usePayments";
 import { getUserRole, isAdminRole } from "@/lib/rbac";
+
+export const dynamic = "force-dynamic";
 
 export const metadata = { title: "Admin Portal — HealthCal Pro" };
 
@@ -20,7 +20,19 @@ export default async function AdminPortalRoute() {
   const role = await getUserRole(session.userId);
   if (!isAdminRole(role)) redirect("/control-panel/dashboard-overview");
 
-  const initialData: AdminPortalData | null = await prefetchAdminPortal();
+  const [initialData, initialInvoices] = await Promise.all([
+    prefetchAdminPortal(),
+    prefetchInvoices(session.userId, role, session.email),
+  ]);
 
-  return <AdminPortalPage initialData={initialData} />;
+  if (!initialData) {
+    return <AdminPortalPageSkeleton />;
+  }
+
+  return (
+    <AdminPortalPage
+      initialData={initialData as AdminPortalData}
+      initialInvoices={(initialInvoices ?? []) as Invoice[]}
+    />
+  );
 }
