@@ -15,7 +15,7 @@
 
 **Keys:** `admin-portal-load.ts` · `admin-portal-pagination.ts` · `components/admin-portal/*` · `billing-appointment-option-from-calendar.ts` · `calendar-date-display.ts`
 
-**Invariants:** calendar Create Invoice seeds `queryKeys.billing.appointmentOptions(id)` from `appointments.all` + `users.search` · invoice writes → `syncInvoicesAfterWrite` / `mergeInvoiceIntoAllCaches` · weekday/month copy en-US (EUR amounts still de-DE)
+**Invariants:** admin portal → `fetchAdminPortalData` + `invalidateAdminPortal` · invoice badges SSR via `prefetchInvoices` + `seedInvoicesListCacheFromSsr` · calendar Create Invoice seeds `queryKeys.billing.appointmentOptions(id)` · invoice writes → `syncInvoicesAfterWrite` / `mergeInvoiceIntoAllCaches` · weekday/month copy en-US
 
 ---
 

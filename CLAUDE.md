@@ -31,6 +31,7 @@ Agent guide. Narrative: `docs/PROJECT_WALKTHROUGH.md`.
 | Invoice | `mergeInvoiceIntoAllCaches` + `syncInvoicesAfterWrite` + `publishInvoiceMergeCrossTab`; SSE still `invalidateInvoicesAndOverview` |
 | Organization | `invalidateOrganizations` (+ dashboard); skip `organizations.members` when cache merged |
 | Types/config | `invalidateAppointmentTypeDerived` |
+| Admin portal | `invalidateAdminPortal` (KPIs + lists on appt/patient/doctor/invoice/category writes) |
 
 Cross-tab: `query-cache-cross-tab.ts`.
 
@@ -64,7 +65,7 @@ Cross-tab: `query-cache-cross-tab.ts`.
 
 ## Agile V
 
-`.agile-v/STATE.md` · **C68 shipped** · **1413/1413** · REQ-0117.
+`.agile-v/STATE.md` · **C68 shipped** · **1413/1413** · HEAD **`a78db70`** · REQ-0117.
 
 ## Principle
 

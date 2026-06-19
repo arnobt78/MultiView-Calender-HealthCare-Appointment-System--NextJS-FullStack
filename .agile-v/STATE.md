@@ -12,7 +12,7 @@
 | **Status** | **ER-C68-ACCEPT** |
 | **Last Updated** | 2026-06-19 |
 | **Last REQ** | **REQ-0117** (C68) |
-| **HEAD** | C68 pending commit |
+| **HEAD** | **`a78db70`** |
 
 ## Verify baseline
 
